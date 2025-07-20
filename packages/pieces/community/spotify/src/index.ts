@@ -15,7 +15,7 @@ export const spotify = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/spotify.png',
   categories: [],
-  authors: ["JanHolger","kishanprmr","MoShizzle","abuaboud"],
+  authors: ["JanHolger","kishanprmr","MoShizzle","abuaboud","jerboa88"],
   actions: [
     ...actions,
     createCustomApiCallAction({

@@ -17,6 +17,7 @@ import { discordCreateGuildRole } from './lib/actions/create-guild-role';
 import { discordDeleteGuildRole } from './lib/actions/delete-guild-role';
 import { discordBanGuildMember } from './lib/actions/ban-a-guild-member';
 import { newMember } from './lib/triggers/new-member';
+import { sendMessageWithBot } from './lib/actions/send-message-with-bot'
 
 const markdown = `
 To obtain a token, follow these steps:
@@ -40,6 +41,7 @@ export const discord = createPiece({
   categories: [PieceCategory.COMMUNICATION],
   auth: discordAuth,
   actions: [
+    sendMessageWithBot,
     discordSendMessageWebhook,
     discordSendApprovalMessage,
     discordAddRoleToMember,
@@ -77,6 +79,7 @@ export const discord = createPiece({
     'khaledmashaly',
     'abuaboud',
     'tintinthedev',
+    'AshotZaqoyan'
   ],
   triggers: [newMessage, newMember],
 });

@@ -1,6 +1,6 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import { FastifyBaseLogger } from 'fastify'
 import { QueueMode, system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import { memoryConsumer } from '../memory/memory-consumer'
 import { redisConsumer } from '../redis/redis-consumer'
 

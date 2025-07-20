@@ -26,6 +26,7 @@ export const uploadFile = createAction({
       description: 'The file URL or base64 to upload',
       required: true,
     }),
+    markdown:oneDriveCommon.parentFolderInfo,
     parentId: oneDriveCommon.parentFolder,
   },
   async run(context) {

@@ -38,17 +38,17 @@ export const findAssociationsAction = createAction({
 		let after: string | undefined;
 
 		do {
-			const reponse = await client.crm.associations.v4.basicApi.getPage(
+			const response = await client.crm.associations.v4.basicApi.getPage(
 				fromObjectType as string,
 				fromObjectId as string,
 				toObjectType as string,
 				after,
 				limit,
 			);
-            for(const association of reponse.results) {
+            for(const association of response.results) {
                 results.push(association);
             }
-			after = reponse.paging?.next?.after;
+			after = response.paging?.next?.after;
 		} while (after);
 
         return results;

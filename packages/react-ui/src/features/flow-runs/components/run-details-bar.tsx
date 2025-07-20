@@ -22,7 +22,11 @@ type RunDetailsBarProps = {
   isLoading: boolean;
 };
 
-function getStatusText(status: FlowRunStatus, timeout: number, memoryLimit: number) {
+function getStatusText(
+  status: FlowRunStatus,
+  timeout: number,
+  memoryLimit: number,
+) {
   switch (status) {
     case FlowRunStatus.STOPPED:
     case FlowRunStatus.SUCCEEDED:
@@ -34,9 +38,12 @@ function getStatusText(status: FlowRunStatus, timeout: number, memoryLimit: numb
     case FlowRunStatus.QUOTA_EXCEEDED:
       return t('Run Failed due to quota exceeded');
     case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
-      return t('Run failed due to exceeding the memory limit of {memoryLimit} MB', {
-        memoryLimit: Math.floor(memoryLimit / 1024),
-      });
+      return t(
+        'Run failed due to exceeding the memory limit of {memoryLimit} MB',
+        {
+          memoryLimit: Math.floor(memoryLimit / 1024),
+        },
+      );
     case FlowRunStatus.RUNNING:
       return t('Running');
     case FlowRunStatus.TIMEOUT:

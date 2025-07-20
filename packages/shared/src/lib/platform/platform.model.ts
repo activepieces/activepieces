@@ -59,6 +59,13 @@ export const CopilotSettingsWithoutSensitiveData = Type.Object({
 })
 export type CopilotSettingsWithoutSensitiveData = Static<typeof CopilotSettingsWithoutSensitiveData>
 
+export const PlatformUsage = Type.Object({
+    tasks: Type.Number(),
+    aiCredits: Type.Number(),
+})
+
+export type PlatformUsage = Static<typeof PlatformUsage>
+
 export const Platform = Type.Object({
     ...BaseModelSchema,
     ownerId: ApId,
@@ -75,7 +82,7 @@ export const Platform = Type.Object({
     * @deprecated Use projects filter instead.
     */
     filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
-    smtp: Type.Optional(SMTPInformation),
+    smtp: Nullable(SMTPInformation),
     cloudAuthEnabled: Type.Boolean(),
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
@@ -91,6 +98,9 @@ export const Platform = Type.Object({
     globalConnectionsEnabled: Type.Boolean(),
     customRolesEnabled: Type.Boolean(),
     apiKeysEnabled: Type.Boolean(),
+    /**
+     * @deprecated flow issues is open source
+     */
     flowIssuesEnabled: Type.Boolean(),
     alertsEnabled: Type.Boolean(),
     defaultLocale: Type.Optional(Type.Enum(LocalesEnum)),
@@ -108,10 +118,12 @@ export type Platform = Static<typeof Platform>
 
 
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
-    federatedAuthProviders: FederatedAuthnProviderConfigWithoutSensitiveData,
+    federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     defaultLocale: Nullable(Type.String()),
     copilotSettings: Type.Optional(CopilotSettingsWithoutSensitiveData),
-    smtp: Type.Optional(Type.Object({})),
+    smtp: Nullable(Type.Object({})),
+    hasLicenseKey: Type.Optional(Type.Boolean()),
+    licenseExpiresAt: Type.Optional(Type.String()),
 }), Type.Pick(Platform, [
     'id',
     'created',

@@ -35,7 +35,7 @@ export const APITableAuth = PieceAuth.CustomAuth({
       displayName: 'Instance Url',
       description: 'The url of the AITable instance.',
       required: true,
-      defaultValue: 'https://api.aitable.ai',
+      defaultValue: 'https://aitable.ai',
     }),
   },
   validate: async ({ auth }) => {

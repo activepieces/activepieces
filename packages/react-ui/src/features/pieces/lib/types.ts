@@ -27,6 +27,14 @@ export type PieceStepMetadata = BaseStepMetadata & {
   packageType: PackageType;
   pieceType: PieceType;
   auth: PieceAuthProperty | undefined;
+  errorHandlingOptions?: {
+    continueOnFailure: {
+      hide: boolean;
+    };
+    retryOnFailure: {
+      hide: boolean;
+    };
+  };
 };
 
 type PrimitiveStepMetadata = BaseStepMetadata & {
@@ -88,4 +96,5 @@ export type PieceSelectorItem =
 export type HandleSelectCallback = (
   piece: StepMetadata,
   item: PieceSelectorItem,
+  type?: string,
 ) => void;

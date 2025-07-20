@@ -95,7 +95,7 @@ export const ActivateLicenseDialog = ({
         <DialogHeader>
           <DialogTitle className="text-center">
             {showCelebration
-              ? t('Woohoo! It worked')
+              ? t('License activated!')
               : t('Activate License Key')}
           </DialogTitle>
         </DialogHeader>
@@ -133,7 +133,7 @@ export const ActivateLicenseDialog = ({
             <Lottie options={defaultOptions} height={200} width={200} />
             <div className="text-center mt-4">
               <p className="text-md text-gray-500">
-                {t('Enjoy the awesome enterprise features')}
+                {t('Let the magic begin!')}
               </p>
             </div>
           </div>
@@ -142,7 +142,11 @@ export const ActivateLicenseDialog = ({
           {showCelebration ? (
             <div className="flex justify-center w-full">
               <DialogClose asChild>
-                <Button size={'sm'} onClick={() => onOpenChange(false)}>
+                <Button
+                  size={'sm'}
+                  variant={'outline'}
+                  onClick={() => onOpenChange(false)}
+                >
                   {t('Close')}
                 </Button>
               </DialogClose>

@@ -3,7 +3,7 @@ import { OnStartContext, ActionContext, TestOrRunHookContext, TriggerHookContext
 import { TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
-import { isNil, TriggerTestStrategy } from '@activepieces/shared';
+import { isNil, TriggerTestStrategy, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared';
 
 export const DEDUPE_KEY_PROPERTY = '_dedupe_key'
 
@@ -13,26 +13,15 @@ export enum TriggerStrategy {
   APP_WEBHOOK = "APP_WEBHOOK",
 }
 
-export enum WebhookHandshakeStrategy {
-  NONE = 'NONE',
-  HEADER_PRESENT = 'HEADER_PRESENT',
-  QUERY_PRESENT = 'QUERY_PRESENT',
-  BODY_PARAM_PRESENT = 'BODY_PARAM_PRESENT'
-}
 
 export enum WebhookRenewStrategy {
   CRON = 'CRON',
   NONE = 'NONE',
 }
 
-export const WebhookHandshakeConfiguration = Type.Object({
-  strategy: Type.Enum(WebhookHandshakeStrategy),
-  paramName: Type.Optional(Type.String()),
-})
-
 type OnStartRunner<PieceAuth extends PieceAuthProperty, TriggerProps extends InputPropertyMap> = (ctx: OnStartContext<PieceAuth, TriggerProps>) => Promise<unknown | void>
 
-export type WebhookHandshakeConfiguration = Static<typeof WebhookHandshakeConfiguration>
+
 
 export const WebhookRenewConfiguration = Type.Union([
   Type.Object({

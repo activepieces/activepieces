@@ -1,18 +1,16 @@
-import { useMutation } from '@tanstack/react-query';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
-import React, { useEffect, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import React, { useState } from 'react';
 
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
+import { todosApi } from '@/features/todos/lib/todos-api';
 import {
   Action,
   ActionType,
-  StepRunResponse,
+  Step,
+  TodoType,
+  TodoWithAssignee,
   flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
@@ -20,125 +18,111 @@ import {
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 import { useBuilderStateContext } from '../builder-hooks';
 
+import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
+import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
+import testStepHooks from './test-step-hooks';
 import { TestButtonTooltip } from './test-step-tooltip';
-import { testStepUtils } from './test-step-utils';
 
 type TestActionComponentProps = {
   isSaving: boolean;
   flowVersionId: string;
+  projectId: string;
 };
 
-const TestActionSection = React.memo(
-  ({ isSaving, flowVersionId }: TestActionComponentProps) => {
-    const { toast } = useToast();
+const isTodoCreateTask = (step: Action) => {
+  return (
+    step.type === ActionType.PIECE &&
+    step.settings.pieceName === '@activepieces/piece-todos' &&
+    step.settings.actionName === 'createTodoAndWait'
+  );
+};
+
+const isReturnResponseAndWaitForWebhook = (step: Action) => {
+  return (
+    step.type === ActionType.PIECE &&
+    step.settings.pieceName === '@activepieces/piece-webhook' &&
+    step.settings.actionName === 'return_response_and_wait_for_next_webhook'
+  );
+};
+
+const TestStepSectionImplementation = React.memo(
+  ({
+    isSaving,
+    flowVersionId,
+    projectId,
+    currentStep,
+  }: TestActionComponentProps & { currentStep: Action }) => {
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
     );
-    const form = useFormContext<Pick<Action, 'settings' | 'name'>>();
-    const formValues = form.getValues();
     const [consoleLogs, setConsoleLogs] = useState<null | string>(null);
-    const { sampleData, setSampleData, selectedStep, trigger } =
-      useBuilderStateContext((state) => {
-        return {
-          sampleData: state.sampleData[formValues.name],
-          setSampleData: state.setSampleData,
-          selectedStep: state.selectedStep,
-          trigger: state.flowVersion.trigger,
-        };
-      });
-    const [isValid, setIsValid] = useState(false);
+    const socket = useSocket();
+    const [isTodoCreateTaskDialogOpen, setIsTodoCreateTaskDialogOpen] =
+      useState(false);
+    const [todo, setTodo] = useState<TodoWithAssignee | null>(null);
+    const [
+      isReturnResponseAndWaitForWebhookDialogOpen,
+      setIsReturnResponseAndWaitForWebhookDialogOpen,
+    ] = useState(false);
+    const { sampleData, sampleDataInput } = useBuilderStateContext((state) => {
+      return {
+        sampleData: state.sampleData[currentStep.name],
+        sampleDataInput: state.sampleDataInput[currentStep.name],
+      };
+    });
+    const { mutate, isPending: isTesting } = testStepHooks.useTestAction({
+      currentStep,
+      setErrorMessage,
+      setConsoleLogs,
+      onSuccess: undefined,
+    });
 
-    useEffect(() => {
-      setIsValid(form.formState.isValid);
-    }, [form.formState.isValid]);
-
-    const [lastTestDate, setLastTestDate] = useState(
-      formValues.settings.inputUiInfo?.lastTestDate,
-    );
+    const lastTestDate = currentStep.settings.inputUiInfo?.lastTestDate;
 
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
-    const socket = useSocket();
+    const handleTodoCreateTask = async () => {
+      setIsTodoCreateTaskDialogOpen(true);
+      const testStepResponse = await flowRunsApi.testStep(socket, {
+        flowVersionId,
+        stepName: currentStep.name,
+      });
+      const output = testStepResponse.output as TodoWithAssignee;
+      if (testStepResponse.success && !isNil(output)) {
+        const task = await todosApi.get(output.id as string);
+        setTodo(task);
+      }
+    };
 
-    const { mutate, isPending: isTesting } = useMutation<
-      StepRunResponse & { sampleDataFileId?: string },
-      Error,
-      void
-    >({
-      mutationFn: async () => {
-        const testStepResponse = await flowRunsApi.testStep(socket, {
-          flowVersionId,
-          stepName: formValues.name,
-        });
-        let sampleDataFileId: string | undefined = undefined;
-        if (testStepResponse.success && !isNil(testStepResponse.output)) {
-          const sampleFile = await sampleDataApi.save({
-            flowVersionId,
-            stepName: formValues.name,
-            payload: testStepResponse.output,
-          });
-          sampleDataFileId = sampleFile.id;
-        }
-        return {
-          ...testStepResponse,
-          sampleDataFileId,
-        };
-      },
-      onSuccess: ({
-        success,
-        output,
-        sampleDataFileId,
-        standardOutput,
-        standardError,
-      }) => {
-        if (success) {
-          setErrorMessage(undefined);
-
-          const newInputUiInfo = {
-            ...formValues.settings.inputUiInfo,
-            sampleDataFileId,
-            currentSelectedData: undefined,
-            lastTestDate: dayjs().toISOString(),
-          };
-          form.setValue(
-            'settings.inputUiInfo',
-            newInputUiInfo as typeof formValues.settings.inputUiInfo,
-            {
-              shouldValidate: true,
-            },
-          );
-        } else {
-          setErrorMessage(
-            testStepUtils.formatErrorMessage(
-              JSON.stringify(output) ||
-                t('Failed to run test step and no error message was returned'),
-            ),
-          );
-        }
-        setSampleData(formValues.name, output);
-        setConsoleLogs(standardOutput || standardError);
-        setLastTestDate(dayjs().toISOString());
-      },
-      onError: (error) => {
-        console.error(error);
-        toast(INTERNAL_ERROR_TOAST);
-      },
-    });
-
+    const onTestButtonClick = async () => {
+      if (isTodoCreateTask(currentStep)) {
+        handleTodoCreateTask();
+      } else if (isReturnResponseAndWaitForWebhook(currentStep)) {
+        setIsReturnResponseAndWaitForWebhookDialogOpen(true);
+      } else {
+        mutate(undefined);
+      }
+    };
     return (
       <>
         {!sampleDataExists && (
           <div className="flex-grow flex justify-center items-center w-full h-full">
-            <TestButtonTooltip disabled={!isValid}>
+            <TestButtonTooltip disabled={!currentStep.valid}>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => mutate()}
+                onClick={onTestButtonClick}
                 keyboardShortcut="G"
-                onKeyboardShortcut={mutate}
-                loading={isTesting}
-                disabled={!isValid}
+                onKeyboardShortcut={() => {
+                  if (isTodoCreateTask(currentStep)) {
+                    handleTodoCreateTask();
+                  } else {
+                    mutate(undefined);
+                  }
+                }}
+                loading={isTesting || isTodoCreateTaskDialogOpen}
+                disabled={!currentStep.valid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
                 {t('Test Step')}
@@ -148,26 +132,67 @@ const TestActionSection = React.memo(
         )}
         {sampleDataExists && (
           <TestSampleDataViewer
-            onRetest={mutate}
-            isValid={isValid}
-            isSaving={isSaving}
-            isTesting={isTesting}
+            isValid={currentStep.valid}
+            isTesting={isTesting || isTodoCreateTaskDialogOpen}
             sampleData={sampleData}
+            sampleDataInput={sampleDataInput ?? null}
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
             consoleLogs={
-              selectedStep &&
-              flowStructureUtil.getStep(selectedStep, trigger)?.type ===
-                ActionType.CODE
-                ? consoleLogs
-                : null
+              currentStep.type === ActionType.CODE ? consoleLogs : null
             }
+            isSaving={isSaving}
+            onRetest={onTestButtonClick}
           ></TestSampleDataViewer>
+        )}
+        {isTodoCreateTaskDialogOpen &&
+          currentStep.type === ActionType.PIECE &&
+          todo && (
+            <TodoTestingDialog
+              open={isTodoCreateTaskDialogOpen}
+              onOpenChange={setIsTodoCreateTaskDialogOpen}
+              todo={todo}
+              flowVersionId={flowVersionId}
+              projectId={projectId}
+              currentStep={currentStep}
+              setErrorMessage={setErrorMessage}
+              type={
+                currentStep.settings.actionName === 'createTodoAndWait'
+                  ? TodoType.INTERNAL
+                  : TodoType.EXTERNAL
+              }
+            />
+          )}
+        {isReturnResponseAndWaitForWebhookDialogOpen && (
+          <TestWebhookDialog
+            testingMode="returnResponseAndWaitForNextWebhook"
+            open={isReturnResponseAndWaitForWebhookDialogOpen}
+            onOpenChange={setIsReturnResponseAndWaitForWebhookDialogOpen}
+            currentStep={currentStep}
+          />
         )}
       </>
     );
   },
 );
+
+const isAction = (step: Step): step is Action => {
+  return flowStructureUtil.isAction(step.type);
+};
+const TestActionSection = React.memo((props: TestActionComponentProps) => {
+  const currentStep = useBuilderStateContext((state) =>
+    state.selectedStep
+      ? flowStructureUtil.getStep(state.selectedStep, state.flowVersion.trigger)
+      : null,
+  );
+  if (isNil(currentStep) || !isAction(currentStep)) {
+    return null;
+  }
+
+  return <TestStepSectionImplementation {...props} currentStep={currentStep} />;
+});
+
+TestStepSectionImplementation.displayName = 'TestStepSectionImplementation';
 TestActionSection.displayName = 'TestActionSection';
 
 export { TestActionSection };

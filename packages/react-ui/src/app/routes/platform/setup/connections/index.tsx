@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash, Pencil } from 'lucide-react';
+import { CheckIcon, Trash, Globe } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -224,20 +224,11 @@ const GlobalConnectionsTable = () => {
               connectionId={row.original.id}
               currentName={row.original.displayName}
               projectIds={row.original.projectIds}
+              userHasPermissionToEdit={true}
               onEdit={() => {
                 refetch();
               }}
-            >
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t('Edit')}</TooltipContent>
-              </Tooltip>
-            </EditGlobalConnectionDialog>
-
+            />
             <ReconnectButtonDialog
               connection={row.original}
               onConnectionCreated={() => {
@@ -369,6 +360,11 @@ const GlobalConnectionsTable = () => {
           {t('Global Connections')}
         </TableTitle>
         <DataTable
+          emptyStateTextTitle={t('No global connections found')}
+          emptyStateTextDescription={t(
+            'Create a global connection that can be shared to multiple projects',
+          )}
+          emptyStateIcon={<Globe className="size-14" />}
           columns={columns}
           page={data}
           isLoading={isLoading}

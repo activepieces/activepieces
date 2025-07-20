@@ -5,13 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import {
-  Action,
-  ActionType,
-  flowStructureUtil,
-  isNil,
-  Trigger,
-} from '@activepieces/shared';
+import { flowStructureUtil, isNil } from '@activepieces/shared';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { BuilderState, useBuilderStateContext } from '../builder-hooks';
@@ -21,72 +15,12 @@ import {
   DataSelectorSizeState,
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
-import { dataSelectorUtils, MentionTreeNode } from './data-selector-utils';
+import { DataSelectorTreeNode } from './type';
+import { dataSelectorUtils } from './utils';
 
-const createTestNode = (
-  step: Action | Trigger,
-  displayName: string,
-): MentionTreeNode => {
-  return {
-    key: step.name,
-    data: {
-      displayName,
-      insertable: false,
-      propertyPath: step.name,
-    },
-    children: [
-      {
-        data: {
-          displayName: displayName,
-          propertyPath: step.name,
-          isTestStepNode: true,
-          insertable: false,
-        },
-        key: `test_${step.name}`,
-      },
-    ],
-  };
-};
-
-function filterBy(arr: MentionTreeNode[], query: string): MentionTreeNode[] {
-  if (!query) {
-    return arr;
-  }
-
-  return arr.reduce((acc, item) => {
-    const isTestNode =
-      !isNil(item.children) && item?.children?.[0]?.data?.isTestStepNode;
-    if (isTestNode) {
-      return acc;
-    }
-
-    if (item.children?.length) {
-      const filteredChildren = filterBy(item.children, query);
-      if (filteredChildren.length) {
-        acc.push({ ...item, children: filteredChildren });
-        return acc; // return acc as we have handled this item
-      }
-    }
-
-    const normalizedValue = item?.data?.value;
-    const value = isNil(normalizedValue)
-      ? ''
-      : JSON.stringify(normalizedValue).toLowerCase();
-    const displayName = item?.data?.displayName?.toLowerCase();
-
-    if (
-      displayName?.includes(query.toLowerCase()) ||
-      value.includes(query.toLowerCase())
-    ) {
-      acc.push({ ...item, children: undefined });
-    }
-
-    return acc; // Always return acc
-  }, [] as MentionTreeNode[]);
-}
-const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
-  state,
-) => {
+const getDataSelectorStructure: (
+  state: BuilderState,
+) => DataSelectorTreeNode[] = (state) => {
   const { selectedStep, flowVersion } = state;
   if (!selectedStep || !flowVersion || !flowVersion.trigger) {
     return [];
@@ -95,19 +29,23 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
     flowVersion.trigger,
     selectedStep,
   );
-
   return pathToTargetStep.map((step) => {
-    const stepNeedsTesting = isNil(step.settings.inputUiInfo?.lastTestDate);
-    const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
-    if (stepNeedsTesting) {
-      return createTestNode(step, displayName);
+    try {
+      return dataSelectorUtils.traverseStep(
+        step,
+        state.sampleData,
+        state.isFocusInsideListMapperModeInput,
+      );
+    } catch (error) {
+      console.error('Failed to traverse step:', error);
+      return {
+        key: `error-${step.name}`,
+        data: {
+          type: 'chunk',
+          displayName: `Error loading ${step.name}`,
+        },
+      };
     }
-    return dataSelectorUtils.traverseStepOutputAndReturnMentionTree({
-      insertable: step.type !== ActionType.LOOP_ON_ITEMS,
-      stepOutput: state.sampleData[step.name],
-      propertyPath: step.name,
-      displayName: displayName,
-    });
   });
 };
 
@@ -116,18 +54,18 @@ type DataSelectorProps = {
   parentWidth: number;
 };
 
-const doesHaveInputThatUsesMentionClass = (
+const doesElementHaveAnInputThatUsesMentions = (
   element: Element | null,
 ): boolean => {
   if (isNil(element)) {
     return false;
   }
-  if (element.classList.contains(textMentionUtils.inputThatUsesMentionClass)) {
+  if (element.classList.contains(textMentionUtils.inputWithMentionsCssClass)) {
     return true;
   }
   const parent = element.parentElement;
   if (parent) {
-    return doesHaveInputThatUsesMentionClass(parent);
+    return parent && doesElementHaveAnInputThatUsesMentions(parent);
   }
   return false;
 };
@@ -137,16 +75,20 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const [DataSelectorSize, setDataSelectorSize] =
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
   const [searchTerm, setSearchTerm] = useState('');
-  const mentions = useBuilderStateContext(getAllStepsMentions);
-  const filteredMentions = filterBy(structuredClone(mentions), searchTerm);
+  const dataSelectorStructure = useBuilderStateContext(
+    getDataSelectorStructure,
+  );
+  const filteredNodes = dataSelectorUtils.filterBy(
+    dataSelectorStructure,
+    searchTerm,
+  );
   const [showDataSelector, setShowDataSelector] = useState(false);
 
   const checkFocus = useCallback(() => {
     const isTextMentionInputFocused =
       (!isNil(containerRef.current) &&
         containerRef.current.contains(document.activeElement)) ||
-      doesHaveInputThatUsesMentionClass(document.activeElement);
-
+      doesElementHaveAnInputThatUsesMentions(document.activeElement);
     setShowDataSelector(isTextMentionInputFocused);
   }, []);
 
@@ -169,6 +111,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         {
           'opacity-0 pointer-events-none': !showDataSelector,
         },
+        textMentionUtils.dataSelectorCssClassSelector,
       )}
     >
       <div className="text-lg items-center font-semibold px-5 py-2 flex gap-2">
@@ -202,8 +145,8 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         </div>
 
         <ScrollArea className="transition-all h-[calc(100%-56px)] w-full ">
-          {filteredMentions &&
-            filteredMentions.map((node) => (
+          {filteredNodes &&
+            filteredNodes.map((node) => (
               <DataSelectorNode
                 depth={0}
                 key={node.key}
@@ -211,7 +154,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
                 searchTerm={searchTerm}
               ></DataSelectorNode>
             ))}
-          {filteredMentions.length === 0 && (
+          {filteredNodes.length === 0 && (
             <div className="flex items-center justify-center gap-2 mt-5  flex-col">
               <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
               <div className="text-center font-semibold text-md">

@@ -17,6 +17,7 @@ import {
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { validationUtils } from '@/lib/utils';
 import { Folder } from '@activepieces/shared';
 
 import { foldersApi } from '../lib/folders-api';
@@ -46,10 +47,11 @@ const RenameFolderDialog = ({
   });
 
   const { mutate, isPending } = useMutation<Folder, Error, RenameFolderSchema>({
-    mutationFn: async (data) =>
-      await foldersApi.renameFolder(folderId, {
+    mutationFn: async (data) => {
+      return await foldersApi.renameFolder(folderId, {
         displayName: data.displayName,
-      }),
+      });
+    },
     onSuccess: () => {
       setIsOpen(false);
       onRename();
@@ -57,7 +59,15 @@ const RenameFolderDialog = ({
         title: t('Renamed flow successfully'),
       });
     },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
+    onError: (err) => {
+      if (validationUtils.isValidationError(err)) {
+        form.setError('displayName', {
+          message: t('Folder name already used'),
+        });
+      } else {
+        toast(INTERNAL_ERROR_TOAST);
+      }
+    },
   });
 
   return (
@@ -83,6 +93,12 @@ const RenameFolderDialog = ({
                     id="displayName"
                     placeholder={t('New Folder Name')}
                     className="rounded-sm"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        form.handleSubmit((data) => mutate(data))();
+                      }
+                    }}
                   />
                   <FormMessage />
                 </FormItem>
@@ -94,6 +110,16 @@ const RenameFolderDialog = ({
               </FormMessage>
             )}
             <DialogFooter>
+              <Button
+                variant={'outline'}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsOpen(false);
+                }}
+              >
+                {t('Cancel')}
+              </Button>
               <Button type="submit" loading={isPending}>
                 {t('Confirm')}
               </Button>

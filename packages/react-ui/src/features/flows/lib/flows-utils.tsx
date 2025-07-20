@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import JSZip from 'jszip';
 import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
 
+import { downloadFile } from '@/lib/utils';
 import {
   Flow,
   FlowVersion,
@@ -12,30 +13,16 @@ import {
 
 import { flowsApi } from './flows-api';
 
-const downloadFile = (
-  obj: any,
-  fileName: string,
-  extension: 'txt' | 'json',
-) => {
-  const blob = new Blob([obj], {
-    type: 'application/json',
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${fileName}.${extension}`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-};
-
 const downloadFlow = async (flowId: string) => {
   const template = await flowsApi.getTemplate(flowId, {});
-  downloadFile(JSON.stringify(template, null, 2), template.name, 'json');
+  downloadFile({
+    obj: JSON.stringify(template, null, 2),
+    fileName: template.name,
+    extension: 'json',
+  });
 };
 
-const downloadFlowsIntoZip = async (flows: PopulatedFlow[]) => {
+const zipFlows = async (flows: PopulatedFlow[]) => {
   const zip = new JSZip();
   for (const flow of flows) {
     const template = await flowsApi.getTemplate(flow.id, {});
@@ -49,7 +36,7 @@ const downloadFlowsIntoZip = async (flows: PopulatedFlow[]) => {
 
 export const flowsUtils = {
   downloadFlow,
-  downloadFlowsIntoZip,
+  zipFlows,
   flowStatusToolTipRenderer: (flow: Flow, version: FlowVersion) => {
     const trigger = version.trigger;
     switch (trigger.type) {

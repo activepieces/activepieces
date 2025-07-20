@@ -1,54 +1,65 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 import {
     ArrayContains,
     DataSource,
     EntitySchema,
     FindOperator,
+    ObjectLiteral,
     Raw,
+    SelectQueryBuilder,
 } from 'typeorm'
 import { AiProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
+import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
+import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 import { AppSumoEntity } from '../ee/billing/appsumo/appsumo.entity'
-import { ProjectBillingEntity } from '../ee/billing/project-billing/project-billing.entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
-import { IssueEntity } from '../ee/issues/issues-entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
-import { OtpEntity } from '../ee/otp/otp-entity'
+import { PlatformBillingEntity } from '../ee/platform-billing/platform-billing.entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
 import { ProjectPlanEntity } from '../ee/project-plan/project-plan.entity'
 import { GitRepoEntity } from '../ee/project-release/git-sync/git-sync.entity'
 import { ProjectReleaseEntity } from '../ee/project-release/project-release.entity'
 import { ProjectRoleEntity } from '../ee/project-role/project-role.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
+import { TodoCommentEntity } from '../ee/todos/comment/todos-comment.entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
+import { IssueEntity } from '../flows/issues/issues-entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { DatabaseType, system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-prop'
+import { McpEntity } from '../mcp/mcp-entity'
+import { McpPieceEntity } from '../mcp/mcp-piece-entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
 import { StoreEntryEntity } from '../store-entry/store-entry-entity'
+import { FieldEntity } from '../tables/field/field.entity'
+import { CellEntity } from '../tables/record/cell.entity'
+import { RecordEntity } from '../tables/record/record.entity'
+import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
+import { TableEntity } from '../tables/table/table.entity'
 import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
 import { TagEntity } from '../tags/tag-entity'
+import { TodoEntity } from '../todos/todo.entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {
@@ -78,6 +89,15 @@ function getEntities(): EntitySchema<unknown>[] {
         WorkerMachineEntity,
         AiProviderEntity,
         ProjectRoleEntity,
+        TableEntity,
+        FieldEntity,
+        RecordEntity,
+        CellEntity,
+        TableWebhookEntity,
+        UserIdentityEntity,
+        TodoEntity,
+        McpEntity,
+        McpPieceEntity,
     ]
 
     switch (edition) {
@@ -95,12 +115,13 @@ function getEntities(): EntitySchema<unknown>[] {
                 GitRepoEntity,
                 AuditEventEntity,
                 ProjectReleaseEntity,
+                TodoCommentEntity,
 
                 // CLOUD
                 AppSumoEntity,
                 ConnectionKeyEntity,
                 AppCredentialEntity,
-                ProjectBillingEntity,
+                PlatformBillingEntity,
             )
             break
         case ApEdition.COMMUNITY:
@@ -139,14 +160,39 @@ export const databaseConnection = () => {
     return _databaseConnection
 }
 
+export function getDatabaseType(): DatabaseType {
+    return system.getOrThrow<DatabaseType>(AppSystemProp.DB_TYPE)
+}
+
+
+export function AddAPArrayContainsToQueryBuilder<T extends ObjectLiteral>(
+    queryBuilder: SelectQueryBuilder<T>,
+    columnName: string,
+    values: string[],
+): void {
+    switch (getDatabaseType()) {
+        case DatabaseType.POSTGRES:
+            queryBuilder.andWhere(`${columnName} @> :values`, { values })
+            break
+        case DatabaseType.SQLITE3:{
+            for (const value of values) {
+                queryBuilder.andWhere(`${columnName} LIKE :value${values.indexOf(value)}`, { [`value${values.indexOf(value)}`]: `%${value}%` })
+            }
+            break
+        }
+    }
+}
+
 export function APArrayContains<T>(
     columnName: string,
     values: string[],
-): FindOperator<T> {
-    const databaseType = system.get(AppSystemProp.DB_TYPE)
+): Record<string, FindOperator<T>> {
+    const databaseType = getDatabaseType()
     switch (databaseType) {
         case DatabaseType.POSTGRES:
-            return ArrayContains(values)
+            return {
+                [columnName]: ArrayContains(values),
+            }
         case DatabaseType.SQLITE3: {
             const likeConditions = values
                 .map((_, index) => `${columnName} LIKE :value${index}`)
@@ -155,12 +201,14 @@ export function APArrayContains<T>(
                 params[`value${index}`] = `%${value}%`
                 return params
             }, {} as Record<string, string>)
-            return Raw(_ => `(${likeConditions})`, likeParams)
+            return {
+                [columnName]: Raw(_ => `(${likeConditions})`, likeParams),
+            }
         }
         default:
             throw new Error(`Unsupported database type: ${databaseType}`)
     }
 }
 
-// Uncomment the below line when running `nx db-migration server-api name=<MIGRATION_NAME>` and recomment it after the migration is generated
+// Uncomment the below line when running `nx db-migration server-api --name=<MIGRATION_NAME>` and recomment it after the migration is generated
 // export const exportedConnection = databaseConnection()

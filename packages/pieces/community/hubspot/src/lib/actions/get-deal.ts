@@ -40,10 +40,10 @@ export const getDealAction = createAction({
 
 		const client = new Client({ accessToken: context.auth.access_token });
 
-		const dealDeatils = await client.crm.deals.basicApi.getById(dealId, [
+		const dealDetails = await client.crm.deals.basicApi.getById(dealId, [
 			...defaultDealProperties,
 			...additionalPropertiesToRetrieve,
 		]);
-		return dealDeatils;
+		return dealDetails;
 	},
 });

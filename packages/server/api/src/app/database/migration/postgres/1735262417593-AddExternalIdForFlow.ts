@@ -21,9 +21,9 @@ export class AddExternalIdForFlow1735262417593 implements MigrationInterface {
                 if (!repo.mapping) {
                     continue
                 }
-                const mapping = repo.mapping
-                for (const [key, value] of Object.entries(mapping)) {
-                    const sourceId = (value as { sourceId: string })?.sourceId
+                const mapping = repo.mapping as { flows: Record<string, { sourceId: string }> }
+                for (const [key, value] of Object.entries(mapping?.flows ?? {})) {
+                    const sourceId = value.sourceId
                     if (!sourceId) {
                         continue
                     }

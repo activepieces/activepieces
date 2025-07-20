@@ -1,6 +1,6 @@
-import { isEmpty, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 import { googleSheetsAuth } from '../../';
-import { columnToLabel, googleSheetsCommon, labelToColumn } from '../common/common';
+import { areSheetIdsValid, columnToLabel, labelToColumn } from '../common/common';
 import {
 	createFileNotification,
 	deleteFileNotification,
@@ -24,6 +24,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 import crypto from 'crypto';
+import { commonProps } from '../common/props';
 
 const ALL_COLUMNS = 'all_columns';
 
@@ -37,16 +38,14 @@ export const newOrUpdatedRowTrigger = createTrigger({
 			value:
 				'Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.',
 		}),
-		spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-		sheet_id: googleSheetsCommon.sheet_id,
-		include_team_drives: googleSheetsCommon.include_team_drives,
+		...commonProps,
 		trigger_column: Property.Dropdown({
 			displayName: 'Trigger Column',
 			description: `Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.`,
 			required: false,
-			refreshers: ['spreadsheet_id', 'sheet_id'],
-			options: async ({ auth, spreadsheet_id, sheet_id }) => {
-				if (!auth || !spreadsheet_id || isNil(sheet_id)) {
+			refreshers: ['spreadsheetId', 'sheetId'],
+			options: async ({ auth, spreadsheetId, sheetId }) => {
+				if (!auth || !spreadsheetId || isNil(sheetId)) {
 					return {
 						disabled: true,
 						options: [],
@@ -55,20 +54,20 @@ export const newOrUpdatedRowTrigger = createTrigger({
 				}
 
 				const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
-				const spreadSheetId = spreadsheet_id as string;
-				const sheetId = sheet_id as number;
+				const spreadsheet_id = spreadsheetId as string;
+				const sheet_id = sheetId as number;
 
-				const sheetName = await getWorkSheetName(authValue, spreadSheetId, sheetId);
+				const sheetName = await getWorkSheetName(authValue, spreadsheet_id, sheet_id);
 
 				const firstRowValues = await getWorkSheetValues(
 					authValue,
-					spreadSheetId,
+					spreadsheet_id,
 					`${sheetName}!1:1`,
 				);
 
 				const headers = firstRowValues[0] ?? [];
 				const headerCount = headers.length;
-				const labeledRowValues = transformWorkSheetValues(firstRowValues, 0,headerCount);
+				const labeledRowValues = transformWorkSheetValues(firstRowValues, 0, headerCount);
 
 				const options: DropdownOption<string>[] = [{ label: 'All Columns', value: ALL_COLUMNS }];
 
@@ -92,13 +91,19 @@ export const newOrUpdatedRowTrigger = createTrigger({
 	type: TriggerStrategy.WEBHOOK,
 
 	async onEnable(context) {
-		const spreadSheetId = context.propsValue.spreadsheet_id;
-		const sheetId = context.propsValue.sheet_id;
+		const inputSpreadsheetId = context.propsValue.spreadsheetId;
+		const inputSheetId = context.propsValue.sheetId;
 		const triggerColumn = context.propsValue.trigger_column ?? ALL_COLUMNS;
 
-		const sheetName = await getWorkSheetName(context.auth, spreadSheetId, sheetId);
+		if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
+					throw new Error('Please select a spreadsheet and sheet first.');
+				}
+		const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
 
-		const sheetValues = await getWorkSheetValues(context.auth, spreadSheetId, sheetName);
+		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
+
+		const sheetValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
 
 		const rowHashes = [];
 
@@ -126,9 +131,9 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		// create file watch notification
 		const fileNotificationRes = await createFileNotification(
 			context.auth,
-			spreadSheetId,
+			spreadsheetId,
 			context.webhookUrl,
-			context.propsValue.include_team_drives,
+			context.propsValue.includeTeamDrives,
 		);
 
 		await context.store.put<WebhookInformation>(
@@ -154,17 +159,24 @@ export const newOrUpdatedRowTrigger = createTrigger({
 			return [];
 		}
 
-		const spreadSheetId = context.propsValue.spreadsheet_id;
-		const sheetId = context.propsValue.sheet_id;
+		const inputSpreadsheetId = context.propsValue.spreadsheetId;
+    	const inputSheetId = context.propsValue.sheetId;
 		const triggerColumn = context.propsValue.trigger_column ?? ALL_COLUMNS;
 
-		const sheetName = await getWorkSheetName(context.auth, spreadSheetId, sheetId);
+		if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
+
+		const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
+
+		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 
 		const oldValuesHashes = (await context.store.get(`${sheetId}`)) as any[];
 
 		/* Fetch rows values with all columns as this will be used on returning updated/new row data
 		 */
-		const currentValues = await getWorkSheetValues(context.auth, spreadSheetId, sheetName);
+		const currentValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
 
 		const headers = currentValues[0] ?? [];
 		const headerCount = headers.length;
@@ -179,7 +191,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
 			/**
 			 * This variable store value based on trigger column.
-			 * If trigger column is all_columns then store entrie row as target value, else store only column value.
+			 * If trigger column is all_columns then store entry row as target value, else store only column value.
 			 */
 			let targetValue;
 			if (triggerColumn === ALL_COLUMNS) {
@@ -205,15 +217,14 @@ export const newOrUpdatedRowTrigger = createTrigger({
 				continue;
 			}
 
-			const oldRowHash = !isNil(oldValuesHashes) && row < oldValuesHashes.length
-				? oldValuesHashes[row]
-				: undefined;
+			const oldRowHash =
+				!isNil(oldValuesHashes) && row < oldValuesHashes.length ? oldValuesHashes[row] : undefined;
 
 			if (oldRowHash === undefined || oldRowHash != currentRowHash) {
 				const formattedValues: any = {};
 
 				for (let column = 0; column < headerCount; column++) {
-					formattedValues[columnToLabel(column)] = currentValues[row][column] ?? "";
+					formattedValues[columnToLabel(column)] = currentValues[row][column] ?? '';
 				}
 
 				changedValues.push({
@@ -235,17 +246,24 @@ export const newOrUpdatedRowTrigger = createTrigger({
 	},
 
 	async test(context) {
-		const spreadSheetId = context.propsValue.spreadsheet_id;
-		const sheetId = context.propsValue.sheet_id;
+		const inputSpreadsheetId = context.propsValue.spreadsheetId;
+		const inputSheetId = context.propsValue.sheetId;
 
-		const sheetName = await getWorkSheetName(context.auth, spreadSheetId, sheetId);
-		const currentSheetValues = await getWorkSheetValues(context.auth, spreadSheetId, sheetName);
+		if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
 
-		const headers =  currentSheetValues[0] ?? [];
+    	const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
+
+		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
+		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
+
+		const headers = currentSheetValues[0] ?? [];
 		const headerCount = headers.length;
 
 		// transform row values
-		const transformedRowValues = transformWorkSheetValues(currentSheetValues, 0,headerCount)
+		const transformedRowValues = transformWorkSheetValues(currentSheetValues, 0, headerCount)
 			.slice(-5)
 			.reverse();
 
@@ -260,9 +278,9 @@ export const newOrUpdatedRowTrigger = createTrigger({
 			await deleteFileNotification(context.auth, webhook.id, webhook.resourceId);
 			const fileNotificationRes = await createFileNotification(
 				context.auth,
-				context.propsValue.spreadsheet_id,
+				context.propsValue.spreadsheetId!,
 				context.webhookUrl,
-				context.propsValue.include_team_drives,
+				context.propsValue.includeTeamDrives,
 			);
 			// store channel response
 			await context.store.put<WebhookInformation>(

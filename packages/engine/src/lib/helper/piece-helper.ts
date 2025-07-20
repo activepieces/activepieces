@@ -1,7 +1,7 @@
 import {
     DropdownProperty,
-    DropdownState,
     DynamicProperties,
+    ExecutePropsResult,
     MultiSelectDropdownProperty,
     PieceMetadata,
     PiecePropertyMap,
@@ -25,12 +25,14 @@ import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {
-    async executeProps({ params, piecesSource, executionState, constants, searchValue }: { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, piecesSource: string, constants: EngineConstants }) {
+    async executeProps({ params, piecesSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
         const property = await pieceLoader.getPropOrThrow({
             params,
             piecesSource,
         })
-
+        if (property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTI_SELECT_DROPDOWN && property.type !== PropertyType.DYNAMIC) {
+            throw new Error(`Property type is not executable: ${property.type} for ${property.displayName}`)
+        }
         try {
             const { resolvedInput } = await createPropsResolver({
                 apiUrl: constants.internalApiUrl,
@@ -47,7 +49,7 @@ export const pieceHelper = {
                 server: {
                     token: params.engineToken,
                     apiUrl: constants.internalApiUrl,
-                    publicUrl: params.publicUrl,
+                    publicUrl: params.publicApiUrl,
                 },
                 project: {
                     id: params.projectId,
@@ -56,29 +58,46 @@ export const pieceHelper = {
                 flows: createFlowsContext(constants),
             }
 
-            if (property.type === PropertyType.DYNAMIC) {
-                const dynamicProperty = property as DynamicProperties<boolean>
-                return await dynamicProperty.props(resolvedInput, ctx)
-            }
-
-            if (property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
-                const multiSelectProperty = property as MultiSelectDropdownProperty<
-                unknown,
-                boolean
-                >
-                return await multiSelectProperty.options(resolvedInput, ctx)
-            }
-
-            const dropdownProperty = property as DropdownProperty<unknown, boolean>
-            return await dropdownProperty.options(resolvedInput, ctx)
+            switch (property.type) {
+                case PropertyType.DYNAMIC: {
+                    const dynamicProperty = property as DynamicProperties<boolean>
+                    const props = await dynamicProperty.props(resolvedInput, ctx)
+                    return {
+                        type: PropertyType.DYNAMIC,
+                        options: props,
+                    }
+                }
+                case PropertyType.MULTI_SELECT_DROPDOWN: {
+                    const multiSelectProperty = property as MultiSelectDropdownProperty<
+                    unknown,
+                    boolean
+                    >
+                    const options = await multiSelectProperty.options(resolvedInput, ctx)
+                    return {
+                        type: PropertyType.MULTI_SELECT_DROPDOWN,
+                        options,
+                    }
+                }
+                case PropertyType.DROPDOWN: {
+                    const dropdownProperty = property as DropdownProperty<unknown, boolean>
+                    const options = await dropdownProperty.options(resolvedInput, ctx)
+                    return {
+                        type: PropertyType.DROPDOWN,
+                        options,
+                    }
+                }
+            }                 
         }
         catch (e) {
             console.error(e)
             return {
-                disabled: true,
-                options: [],
-                placeholder: 'Throws an error, reconnect or refresh the page',
-            } as DropdownState<unknown>
+                type: property.type,
+                options: {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Throws an error, reconnect or refresh the page',
+                },
+            }
         }
     },
 
@@ -140,3 +159,7 @@ export const pieceHelper = {
         }
     },
 }
+
+
+type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, piecesSource: string, constants: EngineConstants }
+

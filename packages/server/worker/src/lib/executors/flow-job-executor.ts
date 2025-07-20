@@ -1,11 +1,11 @@
 import { exceptionHandler, OneTimeJobData, pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
+import { ActivepiecesError, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
 import { workerMachine } from '../utils/machine'
 
-type EngineConstants = 'internalApiUrl' | 'publicUrl' | 'engineToken'
+type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
 
 async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {
@@ -18,6 +18,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, e
                 serverHandlerId: jobData.synchronousHandlerId ?? null,
                 triggerPayload: jobData.payload,
                 executionType: ExecutionType.BEGIN,
+                formatPayload: !isNil(jobData.synchronousHandlerId),
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,
                 progressUpdateType: jobData.progressUpdateType,
@@ -113,7 +114,6 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
 
             const flow = await engineApiService(engineToken, log).getFlowWithExactPieces({
                 versionId: jobData.flowVersionId,
-                type: GetFlowVersionForWorkerRequestType.EXACT,
             })
             if (isNil(flow)) {
                 return

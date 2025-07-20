@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { HttpStatusCode, isAxiosError } from 'axios';
+import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import JSZip from 'jszip';
 import { TriangleAlert } from 'lucide-react';
@@ -29,6 +29,7 @@ import {
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowOperationType,
@@ -155,7 +156,7 @@ const ImportFlowDialog = (
     },
     onError: (err) => {
       if (
-        isAxiosError(err) &&
+        api.isError(err) &&
         err.response?.status === HttpStatusCode.BadRequest
       ) {
         setErrorMessage(t('Template file is invalid'));

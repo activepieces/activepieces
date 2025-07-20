@@ -4,7 +4,13 @@ import inquirer from 'inquirer';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { checkIfFileExists, makeFolderRecursive } from '../utils/files';
-import { displayNameToCamelCase, displayNameToKebabCase, findPieceSourceDirectory } from '../utils/piece-utils';
+import {
+    assertPieceExists,
+  customPiecePath,
+  displayNameToCamelCase,
+  displayNameToKebabCase, findPiece,
+  findPieces,
+} from '../utils/piece-utils';
 
 function createTriggerTemplate(displayName: string, description: string, technique: string) {
     const camelCase = displayNameToCamelCase(displayName)
@@ -37,8 +43,7 @@ props: {},
 sampleData: {},
 type: TriggerStrategy.POLLING,
 async test(context) {
-    const { store, auth, propsValue } = context;
-    return await pollingHelper.test(polling, { store, auth, propsValue });
+    return await pollingHelper.test(polling, context);
 },
 async onEnable(context) {
     const { store, auth, propsValue } = context;
@@ -51,8 +56,7 @@ async onDisable(context) {
 },
 
 async run(context) {
-    const { store, auth, propsValue } = context;
-    return await pollingHelper.poll(polling, { store, auth, propsValue });
+    return await pollingHelper.poll(polling, context);
 },
 });`;
     }
@@ -82,14 +86,6 @@ export const ${camelCase} = createTrigger({
 
     return triggerTemplate
 }
-const checkIfPieceExists = async (pieceName: string) => {
-    const path = await findPieceSourceDirectory(pieceName);
-    if (!path) {
-        console.log(chalk.red(`🚨 Piece ${pieceName} not found`));
-        process.exit(1);
-    }
-};
-
 const checkIfTriggerExists = async (triggerPath: string) => {
     if (await checkIfFileExists(triggerPath)) {
         console.log(chalk.red(`🚨 Trigger already exists at ${triggerPath}`));
@@ -99,11 +95,11 @@ const checkIfTriggerExists = async (triggerPath: string) => {
 const createTrigger = async (pieceName: string, displayTriggerName: string, triggerDescription: string, triggerTechnique: string) => {
     const triggerTemplate = createTriggerTemplate(displayTriggerName, triggerDescription, triggerTechnique)
     const triggerName = displayNameToKebabCase(displayTriggerName)
-    const path = await findPieceSourceDirectory(pieceName);
-    await checkIfPieceExists(pieceName);
-    console.log(chalk.blue(`Piece path: ${path}`))
+    const pieceFolder = await findPiece(pieceName);
+    assertPieceExists(pieceFolder)
+    console.log(chalk.blue(`Piece path: ${pieceFolder}`))
 
-    const triggersFolder = join(path, 'src', 'lib', 'triggers')
+    const triggersFolder = join(pieceFolder, 'src', 'lib', 'triggers')
     const triggerPath = join(triggersFolder, `${triggerName}.ts`)
     await checkIfTriggerExists(triggerPath)
 

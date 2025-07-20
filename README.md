@@ -48,7 +48,8 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
 
 # 🤯 Welcome to Activepieces
 
-Your friendliest open source all-in-one automation tool, designed to be **extensible** through a **type-safe** pieces framework written in **Typescript**.
+All-in-one AI automation designed to be **extensible** through a **type-safe** pieces framework written in **TypeScript**.
+When you contribute pieces to Activepieces they become automatically available as MCP servers that you can use with LLMs through Claude Desktop, Cursor or Windsurf!
 
 <br>
 <br>
@@ -56,17 +57,18 @@ Your friendliest open source all-in-one automation tool, designed to be **extens
 ## 🔥 Why Activepieces is Different:
 
 - **💖 Loved by Everyone**: Intuitive interface and great experience for both technical and non-technical users with a quick learning curve.
-  
-![](/resources/templates.gif)
+
+<img src="/docs/resources/templates.gif">
 
 - **🌐 Open Ecosystem:** All pieces are open source and available on npmjs.com, **60% of the pieces are contributed by the community**.
 
+- **🛠️ Largest open source MCP toolkit**: All our pieces (280+) are available as MCP that you can use with LLMs on Claude Desktop, Cursor or Windsurf.
+
 - **🛠️  Pieces are written in Typescript**: Pieces are npm packages in TypeScript, offering full customization with the best developer experience, including **hot reloading** for **local** piece development on your machine. 😎
 
-![](/resources/create-action.png)
+<img src="/docs/resources/create-action.png" alt="">
 
-
-- **🤖 AI-Ready**: Native AI pieces let you experiment with various providers, or create your own agents using our AI SDK, and there is Copilot to help you build flows inside the builder.
+- **🤖 AI-First**: Native AI pieces let you experiment with various providers, or create your own agents using our AI SDK, and there is Copilot to help you build flows inside the builder.
 
 - **🏢 Enterprise-Ready**: Developers set up the tools, and anyone in the organization can use the no-code builder. Full customization from branding to control.
 
@@ -166,7 +168,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://steercampaign.com"><img src="https://avatars.githubusercontent.com/u/12627658?v=4?s=100" width="100px;" alt="Mohammad Abu Musa"/><br /><sub><b>Mohammad Abu Musa</b></sub></a><br /><a href="#projectManagement-mabumusa1" title="Project Management">📆</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/kanarelo"><img src="https://avatars.githubusercontent.com/u/393261?v=4?s=100" width="100px;" alt="Mukewa Wekalao"/><br /><sub><b>Mukewa Wekalao</b></sub></a><br /><a href="#plugin-kanarelo" title="Plugin/utility libraries">🔌</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="http://osamahaikal.pythonanywhere.com/"><img src="https://avatars.githubusercontent.com/u/72370395?v=4?s=100" width="100px;" alt="Osama Abdallah Essa Haikal"/><br /><sub><b>Osama Abdallah Essa Haikal</b></sub></a><br /><a href="#plugin-OsamaHaikal" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://osamahaikal.me/"><img src="https://avatars.githubusercontent.com/u/72370395?v=4?s=100" width="100px;" alt="Osama Abdallah Essa Haikal"/><br /><sub><b>Osama Abdallah Essa Haikal</b></sub></a><br /><a href="#plugin-OsamaHaikal" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/M-Arman"><img src="https://avatars.githubusercontent.com/u/54455592?v=4?s=100" width="100px;" alt="Arman"/><br /><sub><b>Arman</b></sub></a><br /><a href="#security-M-Arman" title="Security">🛡️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/oskarkraemer"><img src="https://avatars.githubusercontent.com/u/42745862?v=4?s=100" width="100px;" alt="Oskar Krämer"/><br /><sub><b>Oskar Krämer</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=oskarkraemer" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://thibpat.com"><img src="https://avatars.githubusercontent.com/u/494686?v=4?s=100" width="100px;" alt="Thibaut Patel"/><br /><sub><b>Thibaut Patel</b></sub></a><br /><a href="#ideas-tpatel" title="Ideas, Planning, & Feedback">🤔</a> <a href="#plugin-tpatel" title="Plugin/utility libraries">🔌</a></td>
@@ -277,7 +279,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/leenmashni"><img src="https://avatars.githubusercontent.com/u/102361544?v=4?s=100" width="100px;" alt="leenmashni"/><br /><sub><b>leenmashni</b></sub></a><br /><a href="#plugin-leenmashni" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/AliasKingsWorth"><img src="https://avatars.githubusercontent.com/u/47811610?v=4?s=100" width="100px;" alt="M Abdul Rauf"/><br /><sub><b>M Abdul Rauf</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=AliasKingsWorth" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/vbarrier"><img src="https://avatars.githubusercontent.com/u/446808?v=4?s=100" width="100px;" alt="Vincent Barrier"/><br /><sub><b>Vincent Barrier</b></sub></a><br /><a href="#plugin-vbarrier" title="Plugin/utility libraries">🔌</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="http://johnmark.dev"><img src="https://avatars.githubusercontent.com/u/65794951?v=4?s=100" width="100px;" alt="John"/><br /><sub><b>John</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=jmgb27" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://johnmark.dev"><img src="https://avatars.githubusercontent.com/u/65794951?v=4?s=100" width="100px;" alt="John"/><br /><sub><b>John</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=jmgb27" title="Code">💻</a> <a href="#plugin-jmgb27" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://joost.blog/"><img src="https://avatars.githubusercontent.com/u/487629?v=4?s=100" width="100px;" alt="Joost de Valk"/><br /><sub><b>Joost de Valk</b></sub></a><br /><a href="#plugin-jdevalk" title="Plugin/utility libraries">🔌</a></td>
     </tr>
     <tr>
@@ -356,6 +358,49 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ChineseHamberger"><img src="https://avatars.githubusercontent.com/u/101547635?v=4?s=100" width="100px;" alt="张晟杰"/><br /><sub><b>张晟杰</b></sub></a><br /><a href="#plugin-ChineseHamberger" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://codesign.rf.gd"><img src="https://avatars.githubusercontent.com/u/72438085?v=4?s=100" width="100px;" alt="Ashot"/><br /><sub><b>Ashot</b></sub></a><br /><a href="#plugin-AshotZaqoyan" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/amrabuaza"><img src="https://avatars.githubusercontent.com/u/30035105?v=4?s=100" width="100px;" alt="Amr Abu Aza"/><br /><sub><b>Amr Abu Aza</b></sub></a><br /><a href="#plugin-amrabuaza" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://johng.io"><img src="https://avatars.githubusercontent.com/u/9030780?v=4?s=100" width="100px;" alt="John Goodliff"/><br /><sub><b>John Goodliff</b></sub></a><br /><a href="#plugin-jerboa88" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/DiwashDev"><img src="https://avatars.githubusercontent.com/u/182864159?v=4?s=100" width="100px;" alt="Diwash Dev"/><br /><sub><b>Diwash Dev</b></sub></a><br /><a href="#plugin-DiwashDev" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.seven.io"><img src="https://avatars.githubusercontent.com/u/12965261?v=4?s=100" width="100px;" alt="André"/><br /><sub><b>André</b></sub></a><br /><a href="#plugin-matthiez" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/loudotdigital"><img src="https://avatars.githubusercontent.com/u/7611772?v=4?s=100" width="100px;" alt="Lou &#124; Digital Marketing"/><br /><sub><b>Lou &#124; Digital Marketing</b></sub></a><br /><a href="#plugin-loudotdigital" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/maarteNNNN"><img src="https://avatars.githubusercontent.com/u/14275291?v=4?s=100" width="100px;" alt="Maarten Coppens"/><br /><sub><b>Maarten Coppens</b></sub></a><br /><a href="#plugin-maarteNNNN" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/mahmuthamet"><img src="https://avatars.githubusercontent.com/u/90776946?v=4?s=100" width="100px;" alt="Mahmoud Hamed"/><br /><sub><b>Mahmoud Hamed</b></sub></a><br /><a href="#plugin-mahmuthamet" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://dammaretz.com"><img src="https://avatars.githubusercontent.com/u/14098167?v=4?s=100" width="100px;" alt="Theo Dammaretz"/><br /><sub><b>Theo Dammaretz</b></sub></a><br /><a href="#plugin-Blightwidow" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/s31w4n"><img src="https://avatars.githubusercontent.com/u/63353528?v=4?s=100" width="100px;" alt="s31w4n"/><br /><sub><b>s31w4n</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=s31w4n" title="Documentation">📖</a> <a href="https://github.com/activepieces/activepieces/commits?author=s31w4n" title="Code">💻</a> <a href="#plugin-s31w4n" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://kallabot.com"><img src="https://avatars.githubusercontent.com/u/94991678?v=4?s=100" width="100px;" alt="Abdul Rahman"/><br /><sub><b>Abdul Rahman</b></sub></a><br /><a href="#plugin-abdulrahmanmajid" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/coat"><img src="https://avatars.githubusercontent.com/u/1661?v=4?s=100" width="100px;" alt="Kent Smith"/><br /><sub><b>Kent Smith</b></sub></a><br /><a href="#plugin-coat" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ArvindEnvoy"><img src="https://avatars.githubusercontent.com/u/25014185?v=4?s=100" width="100px;" alt="Arvind Ramesh"/><br /><sub><b>Arvind Ramesh</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=ArvindEnvoy" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/valentin-mourtialon"><img src="https://avatars.githubusercontent.com/u/88686764?v=4?s=100" width="100px;" alt="valentin-mourtialon"/><br /><sub><b>valentin-mourtialon</b></sub></a><br /><a href="#plugin-valentin-mourtialon" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/psgpsg16"><img src="https://avatars.githubusercontent.com/u/188385621?v=4?s=100" width="100px;" alt="psgpsg16"/><br /><sub><b>psgpsg16</b></sub></a><br /><a href="#plugin-psgpsg16" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/mariiawidrpay"><img src="https://avatars.githubusercontent.com/u/110456120?v=4?s=100" width="100px;" alt="Mariia Shyn"/><br /><sub><b>Mariia Shyn</b></sub></a><br /><a href="#plugin-mariiawidrpay" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/joshuaheslin"><img src="https://avatars.githubusercontent.com/u/48037470?v=4?s=100" width="100px;" alt="Joshua Heslin"/><br /><sub><b>Joshua Heslin</b></sub></a><br /><a href="#plugin-joshuaheslin" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ahmad-swanblocks"><img src="https://avatars.githubusercontent.com/u/165162455?v=4?s=100" width="100px;" alt="Ahmad"/><br /><sub><b>Ahmad</b></sub></a><br /><a href="#plugin-ahmad-swanblocks" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/danielpoonwj"><img src="https://avatars.githubusercontent.com/u/17039704?v=4?s=100" width="100px;" alt="Daniel Poon"/><br /><sub><b>Daniel Poon</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=danielpoonwj" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Kevinyu-alan"><img src="https://avatars.githubusercontent.com/u/198612963?v=4?s=100" width="100px;" alt="Kévin Yu"/><br /><sub><b>Kévin Yu</b></sub></a><br /><a href="#plugin-Kevinyu-alan" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/flex-yeongeun"><img src="https://avatars.githubusercontent.com/u/186537288?v=4?s=100" width="100px;" alt="노영은"/><br /><sub><b>노영은</b></sub></a><br /><a href="#plugin-flex-yeongeun" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/reemayoush"><img src="https://avatars.githubusercontent.com/u/168414383?v=4?s=100" width="100px;" alt="reemayoush"/><br /><sub><b>reemayoush</b></sub></a><br /><a href="#plugin-reemayoush" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/briceflaceliere"><img src="https://avatars.githubusercontent.com/u/5811531?v=4?s=100" width="100px;" alt="Brice"/><br /><sub><b>Brice</b></sub></a><br /><a href="#security-briceflaceliere" title="Security">🛡️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://mg-wunna.github.io/mg-wunna/"><img src="https://avatars.githubusercontent.com/u/63114419?v=4?s=100" width="100px;" alt="Mg Wunna"/><br /><sub><b>Mg Wunna</b></sub></a><br /><a href="#plugin-mg-wunna" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/harikrishnanum/"><img src="https://avatars.githubusercontent.com/u/61736905?v=4?s=100" width="100px;" alt="Harikrishnan U M"/><br /><sub><b>Harikrishnan U M</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Ahakrsh" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/perrine-pullicino-alan"><img src="https://avatars.githubusercontent.com/u/143406842?v=4?s=100" width="100px;" alt="perrine-pullicino-alan"/><br /><sub><b>perrine-pullicino-alan</b></sub></a><br /><a href="#plugin-perrine-pullicino-alan" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://kaovilai.pw"><img src="https://avatars.githubusercontent.com/u/11228024?v=4?s=100" width="100px;" alt="Tiger Kaovilai"/><br /><sub><b>Tiger Kaovilai</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=kaovilai" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/CarefulGuru"><img src="https://avatars.githubusercontent.com/u/141072854?v=4?s=100" width="100px;" alt="CarefulGuru"/><br /><sub><b>CarefulGuru</b></sub></a><br /><a href="#plugin-CarefulGuru" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/AnkitSharmaOnGithub"><img src="https://avatars.githubusercontent.com/u/53289186?v=4?s=100" width="100px;" alt="Ankit Kumar Sharma"/><br /><sub><b>Ankit Kumar Sharma</b></sub></a><br /><a href="#plugin-AnkitSharmaOnGithub" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/nhnansari"><img src="https://avatars.githubusercontent.com/u/116841234?v=4?s=100" width="100px;" alt="Naeem Hassan"/><br /><sub><b>Naeem Hassan</b></sub></a><br /><a href="#plugin-nhnansari" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://timpetricola.com"><img src="https://avatars.githubusercontent.com/u/674084?v=4?s=100" width="100px;" alt="Tim Petricola"/><br /><sub><b>Tim Petricola</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=TimPetricola" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/amaan-ai20"><img src="https://avatars.githubusercontent.com/u/188329978?v=4?s=100" width="100px;" alt="Amaan"/><br /><sub><b>Amaan</b></sub></a><br /><a href="#plugin-amaan-ai20" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.marcllopartriera.com"><img src="https://avatars.githubusercontent.com/u/1257083?v=4?s=100" width="100px;" alt="Marc Llopart"/><br /><sub><b>Marc Llopart</b></sub></a><br /><a href="#plugin-mllopart" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/onyedikachi-david"><img src="https://avatars.githubusercontent.com/u/51977119?v=4?s=100" width="100px;" alt="David Anyatonwu"/><br /><sub><b>David Anyatonwu</b></sub></a><br /><a href="#plugin-onyedikachi-david" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://huzef.com"><img src="https://avatars.githubusercontent.com/u/62795688?v=4?s=100" width="100px;" alt="neo773"/><br /><sub><b>neo773</b></sub></a><br /><a href="#plugin-neo773" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

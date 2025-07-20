@@ -1,44 +1,37 @@
-import {
-  useQuery,
-  QueryClient,
-  usePrefetchQuery,
-  useSuspenseQuery,
-} from '@tanstack/react-query';
+import { useQuery, QueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { HttpStatusCode } from 'axios';
+import { t } from 'i18next';
+import { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
-import { authenticationApi } from '@/lib/authentication-api';
+import { useToast } from '@/components/ui/use-toast';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
-import { ProjectWithLimits } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  isNil,
+  ProjectWithLimits,
+  ProjectWithLimitsWithPlatform,
+} from '@activepieces/shared';
 
 import { projectApi } from '../lib/project-api';
 
+import { flagsHooks } from './flags-hooks';
+
 export const projectHooks = {
-  prefetchProject: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    usePrefetchQuery<ProjectWithLimits, Error>({
-      queryKey: ['current-project'],
-      queryFn: projectApi.current,
-      staleTime: Infinity,
-    });
-  },
-  prefetchProjectRole: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    usePrefetchQuery({
-      queryKey: ['project-role', authenticationSession.getProjectId()],
-      queryFn: async () => authenticationApi.me(),
-      staleTime: Infinity,
-    });
-  },
   useCurrentProject: () => {
+    const currentProjectId = authenticationSession.getProjectId();
     const query = useSuspenseQuery<ProjectWithLimits, Error>({
-      queryKey: ['current-project'],
+      queryKey: ['current-project', currentProjectId],
       queryFn: projectApi.current,
       staleTime: Infinity,
     });
     return {
       ...query,
       project: query.data,
-      updateProject,
+      updateCurrentProject,
       setCurrentProject,
     };
   },
@@ -54,14 +47,92 @@ export const projectHooks = {
       },
     });
   },
+  useProjectsForPlatforms: () => {
+    return useQuery<ProjectWithLimitsWithPlatform[], Error>({
+      queryKey: ['projects-for-platforms'],
+      queryFn: async () => {
+        return projectApi.listForPlatforms();
+      },
+    });
+  },
+  useReloadPageIfProjectIdChanged: (projectId: string) => {
+    useEffect(() => {
+      const handleVisibilityChange = () => {
+        const currentProjectId = authenticationSession.getProjectId();
+        if (
+          currentProjectId !== projectId &&
+          document.visibilityState === 'visible'
+        ) {
+          console.log('Project changed', currentProjectId, projectId);
+          window.location.reload();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => {
+        document.removeEventListener(
+          'visibilitychange',
+          handleVisibilityChange,
+        );
+      };
+    }, [projectId]);
+  },
+  useSwitchToProjectInParams: () => {
+    const { projectId: projectIdFromParams } = useParams<{
+      projectId: string;
+    }>();
+    const projectIdFromToken = authenticationSession.getProjectId();
+    const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+    const { toast } = useToast();
+
+    const query = useSuspenseQuery<boolean, Error>({
+      //added currentProjectId in case user switches project and goes back to the same project
+      queryKey: ['switch-to-project', projectIdFromParams, projectIdFromToken],
+      queryFn: async () => {
+        if (edition === ApEdition.COMMUNITY) {
+          return true;
+        }
+        if (isNil(projectIdFromParams)) {
+          return false;
+        }
+        try {
+          await authenticationSession.switchToSession(projectIdFromParams);
+          return true;
+        } catch (error) {
+          if (
+            api.isError(error) &&
+            (error.response?.status === HttpStatusCode.BadRequest ||
+              error.response?.status === HttpStatusCode.Forbidden)
+          ) {
+            toast({
+              duration: 10000,
+              title: t('Invalid Access'),
+              description: t(
+                'Either the project does not exist or you do not have access to it.',
+              ),
+            });
+          }
+          return false;
+        }
+      },
+      retry: false,
+      staleTime: 0,
+    });
+
+    return {
+      projectIdFromParams,
+      projectIdFromToken,
+      ...query,
+    };
+  },
 };
 
-const updateProject = async (
+const updateCurrentProject = async (
   queryClient: QueryClient,
   request: UpdateProjectPlatformRequest,
 ) => {
-  queryClient.setQueryData(['current-project'], {
-    ...queryClient.getQueryData(['current-project'])!,
+  const currentProjectId = authenticationSession.getProjectId();
+  queryClient.setQueryData(['current-project', currentProjectId], {
+    ...queryClient.getQueryData(['current-project', currentProjectId])!,
     ...request,
   });
 };

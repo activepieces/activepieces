@@ -43,6 +43,7 @@ export const CopyButton = ({
       <Button
         variant="outline"
         size="icon"
+        type="button"
         className={className}
         onClick={() => copyToClipboard()}
         {...props}
@@ -61,6 +62,7 @@ export const CopyButton = ({
         <Button
           variant="outline"
           size="icon"
+          type="button"
           className={className}
           onClick={() => copyToClipboard()}
           {...props}

@@ -14,7 +14,7 @@ import { getContactAction } from './lib/actions/get-contact';
 import { getDealAction } from './lib/actions/get-deal';
 import { getTicketAction } from './lib/actions/get-ticket';
 import { getCompanyAction } from './lib/actions/get-company';
-import { getPipelineStageDeatilsAction } from './lib/actions/get-pipeline-stage-details';
+import { getPipelineStageDetailsAction } from './lib/actions/get-pipeline-stage-details';
 import { getProductAction } from './lib/actions/get-product';
 import { addContactToWorkflowAction } from './lib/actions/add-contact-to-workflow';
 import { createTicketAction } from './lib/actions/create-ticket';
@@ -53,7 +53,7 @@ import { newOrUpdatedProductTrigger } from './lib/triggers/new-or-updated-produc
 import { newOrUpdatedLineItemTrigger } from './lib/triggers/new-or-updated-line-item';
 import { newContactPropertyChangeTrigger } from './lib/triggers/new-contact-property-change';
 import { newTicketPropertyChangeTrigger } from './lib/triggers/new-ticket-property-change';
-import { newCompanyPropertyChangeTrigger } from './lib/triggers/new-company-propety-change';
+import { newCompanyPropertyChangeTrigger } from './lib/triggers/new-company-property-change';
 import { newDealPropertyChangeTrigger } from './lib/triggers/new-deal-property-change';
 import { newCustomObjectPropertyChangeTrigger } from './lib/triggers/new-custom-object-property-change';
 import { newLineItemTrigger } from './lib/triggers/new-line-item';
@@ -66,6 +66,9 @@ import { newContactInListTrigger } from './lib/triggers/new-contact-in-list';
 import { newEngagementTrigger } from './lib/triggers/new-engagement';
 import { newEmailSubscriptionsTimelineTrigger } from './lib/triggers/email-subscriptions-timeline';
 import { createBlogPostAction } from './lib/actions/create-blog-post';
+import {  createPageAction } from './lib/actions/create-page';
+import { getPageAction } from './lib/actions/get-page';
+import { deletePageAction } from './lib/actions/delete-page';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -120,6 +123,7 @@ export const hubspot = createPiece({
 		createCustomObjectAction,
 		createDealAction,
 		createLineItemAction,
+		createPageAction,
 		createOrUpdateContactAction,
 		createProductAction,
 		createTicketAction,
@@ -129,7 +133,9 @@ export const hubspot = createPiece({
 		getDealAction,
 		getLineItemAction,
 		getProductAction,
+		getPageAction,
 		getTicketAction,
+		deletePageAction,
 		removeAssociationsAction,
 		removeContactFromListAction,
 		removeEmailSubscriptionAction,
@@ -151,7 +157,7 @@ export const hubspot = createPiece({
 		findTicketAction,
 		getOwnerByEmailAction,
 		getOwnerByIdAction,
-		getPipelineStageDeatilsAction,
+		getPipelineStageDetailsAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.hubapi.com',
 			auth: hubspotAuth,

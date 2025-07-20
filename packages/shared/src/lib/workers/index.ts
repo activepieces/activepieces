@@ -15,6 +15,7 @@ export const MachineInformation = Type.Object({
         used: Type.Number(),
         percentage: Type.Number(),
     }),
+    workerId: Type.Optional(Type.String()),
     workerProps: Type.Record(Type.String(), Type.String()),
     ramUsagePercentage: Type.Number(),
     totalAvailableRamInBytes: Type.Number(),
@@ -40,6 +41,7 @@ export const WorkerMachineHealthcheckRequest = MachineInformation
 
 export type WorkerMachineHealthcheckRequest = Static<typeof WorkerMachineHealthcheckRequest>
 export const WorkerMachineHealthcheckResponse = Type.Object({
+    PUBLIC_URL: Type.String(),
     TRIGGER_TIMEOUT_SECONDS: Type.Number(),
     PAUSED_FLOW_TIMEOUT_DAYS: Type.Number(),
     EXECUTION_MODE: Type.String(),
@@ -53,7 +55,7 @@ export const WorkerMachineHealthcheckResponse = Type.Object({
     MAX_FILE_SIZE_MB: Type.Number(),
     SANDBOX_MEMORY_LIMIT: Type.String(),
     SANDBOX_PROPAGATED_ENV_VARS: Type.Array(Type.String()),
-    PIECES_SOURCE: Type.String(),   
+    PIECES_SOURCE: Type.String(),
     DEV_PIECES: Type.Array(Type.String()),
     SENTRY_DSN: Type.Optional(Type.String()),
     LOKI_PASSWORD: Type.Optional(Type.String()),

@@ -178,9 +178,27 @@ async function createReferencedPropertyDefinition(
 function createPropertyDefinition(property: HubspotProperty, propertyDisplayName: string) {
 	switch (property.fieldType) {
 		case HubspotFieldType.BooleanCheckBox:
-			return Property.Checkbox({
+			return Property.StaticDropdown({
 				displayName: propertyDisplayName,
-				required: false,
+				required: true,
+				defaultValue:'',
+				options:{
+					disabled:false,
+					options:[
+						{
+							label:'Yes',
+							value:'true'
+						},
+						{
+							label:'No',
+							value:'false'
+						},
+						{
+							label:"Unanswered",
+							value:''
+						}
+					]
+				}
 			});
 		case HubspotFieldType.Date:
 			return Property.DateTime({
@@ -242,7 +260,7 @@ function createPropertyDefinition(property: HubspotProperty, propertyDisplayName
 	}
 }
 
-async function retriveObjectProperties(
+async function retrieveObjectProperties(
 	auth: PiecePropValueSchema<typeof hubspotAuth>,
 	objectType: string,
 	excludedProperties: string[] = [],
@@ -349,7 +367,7 @@ export const standardObjectDynamicProperties = (objectType: string, excludedProp
 			// 	return {};
 			// }
 			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-			return await retriveObjectProperties(authValue, objectType, excludedProperties);
+			return await retrieveObjectProperties(authValue, objectType, excludedProperties);
 		},
 	});
 
@@ -362,7 +380,7 @@ export const customObjectDynamicProperties = Property.DynamicProperties({
 			return {};
 		}
 		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-		return await retriveObjectProperties(authValue, customObjectType as unknown as string);
+		return await retrieveObjectProperties(authValue, customObjectType as unknown as string);
 	},
 });
 
@@ -948,3 +966,22 @@ type DropdownParams = {
 	required: boolean;
 	description?: string;
 };
+
+export const 	pageType=Property.StaticDropdown({
+	displayName:'Page Type',
+	required:true,
+	defaultValue:'landing_page',
+	options:{
+		disabled:false,
+		options:[
+			{
+				label:'Landing Page',
+				value:'landing_page'
+			},
+			{
+				label:'Site Page',
+				value:'site_page'
+			}
+		]
+	}
+})

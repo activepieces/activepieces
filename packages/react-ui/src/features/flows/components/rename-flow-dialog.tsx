@@ -30,11 +30,13 @@ type RenameFlowDialogProps = {
   children: React.ReactNode;
   flowId: string;
   onRename: (newName: string) => void;
+  flowName: string;
 };
 const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
   children,
   flowId,
   onRename,
+  flowName,
 }) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const renameFlowForm = useForm<RenameFlowSchema>({
@@ -74,7 +76,9 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Rename Flow')}</DialogTitle>
+          <DialogTitle>
+            {t('Rename')} {flowName}
+          </DialogTitle>
         </DialogHeader>
         <Form {...renameFlowForm}>
           <form
@@ -97,6 +101,7 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
                     id="displayName"
                     placeholder={t('New Flow Name')}
                     className="rounded-sm"
+                    defaultValue={flowName}
                   />
                   <FormMessage />
                 </FormItem>

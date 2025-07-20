@@ -55,22 +55,20 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
   const { control, setValue, formState } =
     useFormContext<Omit<RouterAction, 'children' | 'nextAction'>>();
 
-  const { insert, remove } = useFieldArray({
+  //To validate array items we need to use form.trigger()
+  const { insert, remove, move } = useFieldArray({
     control,
     name: 'settings.branches',
   });
-
+  const form = useFormContext<Omit<RouterAction, 'children' | 'nextAction'>>();
   const deleteBranch = (index: number) => {
-    applyOperation(
-      {
-        type: FlowOperationType.DELETE_BRANCH,
-        request: {
-          stepName: step.name,
-          branchIndex: index,
-        },
+    applyOperation({
+      type: FlowOperationType.DELETE_BRANCH,
+      request: {
+        stepName: step.name,
+        branchIndex: index,
       },
-      () => {},
-    );
+    });
 
     setSelectedBranchIndex(null);
     fitView(flowCanvasUtils.createFocusStepInGraphParams(step.name));
@@ -118,6 +116,15 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
               ),
             );
           }
+          form.trigger();
+          break;
+        }
+        case FlowOperationType.MOVE_BRANCH: {
+          if (operation.request.stepName !== step.name) return;
+          move(
+            operation.request.sourceBranchIndex,
+            operation.request.targetBranchIndex,
+          );
           break;
         }
       }
@@ -126,6 +133,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
     addOperationListener(operationListener);
     return () => removeOperationListener(operationListener);
   }, []);
+
   return (
     <>
       {isNil(selectedBranchIndex) && (
@@ -174,20 +182,29 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             readonly={readonly}
             step={step}
             branchNameChanged={(index, name) => {
-              setValue(`settings.branches.${index}.branchName` as const, name);
+              setValue(`settings.branches.${index}.branchName` as const, name, {
+                shouldValidate: true,
+              });
             }}
             deleteBranch={deleteBranch}
-            duplicateBranch={(index) => {
-              applyOperation(
-                {
-                  type: FlowOperationType.DUPLICATE_BRANCH,
-                  request: {
-                    stepName: step.name,
-                    branchIndex: index,
-                  },
+            moveBranch={({ sourceIndex, targetIndex }) => {
+              applyOperation({
+                type: FlowOperationType.MOVE_BRANCH,
+                request: {
+                  stepName: step.name,
+                  sourceBranchIndex: sourceIndex,
+                  targetBranchIndex: targetIndex,
                 },
-                () => {},
-              );
+              });
+            }}
+            duplicateBranch={(index) => {
+              applyOperation({
+                type: FlowOperationType.DUPLICATE_BRANCH,
+                request: {
+                  stepName: step.name,
+                  branchIndex: index,
+                },
+              });
               setSelectedBranchIndex(index + 1);
             }}
             setSelectedBranchIndex={(index) => {
@@ -211,17 +228,14 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             <div className="mt-2">
               <BranchesToolbar
                 addButtonClicked={() => {
-                  applyOperation(
-                    {
-                      type: FlowOperationType.ADD_BRANCH,
-                      request: {
-                        stepName: step.name,
-                        branchIndex: step.settings.branches.length - 1,
-                        branchName: `Branch ${step.settings.branches.length}`,
-                      },
+                  applyOperation({
+                    type: FlowOperationType.ADD_BRANCH,
+                    request: {
+                      stepName: step.name,
+                      branchIndex: step.settings.branches.length - 1,
+                      branchName: `Branch ${step.settings.branches.length}`,
                     },
-                    () => {},
-                  );
+                  });
 
                   setSelectedBranchIndex(step.settings.branches.length - 1);
                 }}

@@ -52,7 +52,7 @@ export const createTicketAction = createAction({
 			pipelineId,
 			pipelineStageId,
 		} = context.propsValue;
-		const objectProperites = context.propsValue.objectProperties??{};
+		const objectProperties = context.propsValue.objectProperties??{};
 		const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve??[];
 
 
@@ -63,7 +63,7 @@ export const createTicketAction = createAction({
 		};
 
 		// Add additional properties to the ticketProperties object
-		Object.entries(objectProperites).forEach(([key, value]) => {
+		Object.entries(objectProperties).forEach(([key, value]) => {
 			// Format values if they are arrays
 			ticketProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});

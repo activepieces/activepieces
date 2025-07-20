@@ -53,19 +53,19 @@ export async function assertUserHasPermissionToFlow(
         case FlowOperationType.USE_AS_DRAFT:
         case FlowOperationType.ADD_BRANCH:
         case FlowOperationType.DELETE_BRANCH:
-        case FlowOperationType.DUPLICATE_BRANCH: {
+        case FlowOperationType.DUPLICATE_BRANCH:
+        case FlowOperationType.UPDATE_METADATA:
+        case FlowOperationType.SET_SKIP_ACTION:
+        case FlowOperationType.MOVE_BRANCH: {
             await assertRoleHasPermission(principal, Permission.WRITE_FLOW, log)
             break
         }
-        case FlowOperationType.SET_SKIP_ACTION: {
-            await assertRoleHasPermission(principal, Permission.WRITE_FLOW, log)
-            break
-        }
+      
     }
 }
 
 export const assertRoleHasPermission = async (principal: Principal, permission: Permission | undefined, log: FastifyBaseLogger): Promise<void> => {
-    if (principal.type === PrincipalType.SERVICE) { 
+    if (principal.type === PrincipalType.SERVICE || principal.type === PrincipalType.ENGINE) { 
         return
     }
     const principalRole = await getPrincipalRoleOrThrow(principal, log)
@@ -89,7 +89,7 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
         return true
     }
 
-    if (req.principal.type === PrincipalType.SERVICE) {
+    if (req.principal.type === PrincipalType.SERVICE || req.principal.type === PrincipalType.ENGINE) {
         return true
     }
 

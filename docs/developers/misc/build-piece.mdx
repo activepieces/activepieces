@@ -14,8 +14,20 @@ The CLI scans the `packages/pieces/` directory for the specified piece. It check
 To build a piece, follow these steps:
 
 1. Ensure you have the CLI installed by cloning the repository.
-2. Run the following command, replacing `PIECE_NAME` with the name of the piece you want to build:
+2. Run the following command:
 
 ```bash
-npm run pieces -- build --name=google-sheets
+npm run build-piece
+```
+
+You will be prompted to enter the name of the piece you want to build. For example:
+
+```bash
+? Enter the piece folder name : google-drive
+```
+
+The CLI will build the piece and you will be given the path to the archive. For example:
+
+```bash
+Piece 'google-drive' built and packed successfully at dist/packages/pieces/community/google-drive
 ```

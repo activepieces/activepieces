@@ -1,6 +1,6 @@
 import os from 'os'
 import path from 'path'
-import { ContainerType, PiecesSource, pinoLogging, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, environmentVariables, PiecesSource, pinoLogging, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -12,7 +12,6 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Level } from 'pino'
-import { AppSystemProp, SystemProp } from './system-prop'
 
 
 export enum CopilotInstanceTypes {
@@ -54,9 +53,9 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.TRIGGER_FAILURES_THRESHOLD]: '576',
     [AppSystemProp.ENVIRONMENT]: 'prod',
     [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
-    [AppSystemProp.FLOW_WORKER_CONCURRENCY]: '10',
+    [WorkerSystemProp.FLOW_WORKER_CONCURRENCY]: '10',
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
-    [AppSystemProp.SCHEDULED_WORKER_CONCURRENCY]: '10',
+    [WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY]: '10',
     [AppSystemProp.LOG_LEVEL]: 'info',
     [AppSystemProp.LOG_PRETTY]: 'false',
     [AppSystemProp.PIECES_SOURCE]: PiecesSource.DB,
@@ -67,6 +66,8 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
+    [AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS]: '30',
+    [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: '2000',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.REDIS_TYPE]: RedisType.DEFAULT,
     [AppSystemProp.TEMPLATES_SOURCE_URL]:
@@ -74,6 +75,10 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
+    [AppSystemProp.MAX_RECORDS_PER_TABLE]: '1500',
+    [AppSystemProp.MAX_TABLES_PER_PROJECT]: '20',
+    [AppSystemProp.MAX_FIELDS_PER_TABLE]: '15',
+    [AppSystemProp.SHOW_CHANGELOG]: 'true',
 }
 
 let globalLogger: FastifyBaseLogger
@@ -94,7 +99,7 @@ export const system = {
         return globalLogger
     },
     get<T extends string>(prop: SystemProp): T | undefined {
-        return getEnvVar(prop) as T | undefined
+        return getEnvVarOrReturnDefaultValue(prop) as T | undefined
     },
 
     getNumberOrThrow(prop: SystemProp): number {
@@ -115,7 +120,7 @@ export const system = {
 
     },
     getNumber(prop: SystemProp): number | null {
-        const stringNumber = getEnvVar(prop)
+        const stringNumber = getEnvVarOrReturnDefaultValue(prop)
 
         if (!stringNumber) {
             return null
@@ -131,7 +136,7 @@ export const system = {
     },
 
     getBoolean(prop: SystemProp): boolean | undefined {
-        const value = getEnvVar(prop)
+        const value = getEnvVarOrReturnDefaultValue(prop)
 
         if (isNil(value)) {
             return undefined
@@ -140,7 +145,7 @@ export const system = {
     },
 
     getList(prop: SystemProp): string[] {
-        const values = getEnvVar(prop)
+        const values = getEnvVarOrReturnDefaultValue(prop)
 
         if (isNil(values)) {
             return []
@@ -149,7 +154,7 @@ export const system = {
     },
 
     getOrThrow<T extends string>(prop: SystemProp): T {
-        const value = getEnvVar(prop) as T | undefined
+        const value = getEnvVarOrReturnDefaultValue(prop) as T | undefined
 
         if (value === undefined) {
             throw new ActivepiecesError(
@@ -180,6 +185,6 @@ export const system = {
     },
 }
 
-const getEnvVar = (prop: SystemProp): string | undefined => {
-    return process.env[`AP_${prop}`] ?? systemPropDefaultValues[prop]
+const getEnvVarOrReturnDefaultValue = (prop: SystemProp): string | undefined => {
+    return environmentVariables.getEnvironment(prop) ?? systemPropDefaultValues[prop]
 }

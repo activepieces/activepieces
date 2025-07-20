@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Plus, Trash } from 'lucide-react';
+import { Key, Plus, Trash } from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
@@ -90,6 +90,11 @@ const ApiKeysPage = () => {
           </div>
         </div>
         <DataTable
+          emptyStateTextTitle={t('No API keys found')}
+          emptyStateTextDescription={t(
+            'Start by creating an API key to communicate with Activepieces APIs',
+          )}
+          emptyStateIcon={<Key className="size-14" />}
           page={data}
           isLoading={isLoading}
           columns={columns}

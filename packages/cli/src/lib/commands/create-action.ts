@@ -2,7 +2,7 @@ import { writeFile } from 'node:fs/promises';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
-import { displayNameToCamelCase, findPieceSourceDirectory, displayNameToKebabCase } from '../utils/piece-utils';
+import { assertPieceExists, displayNameToCamelCase, displayNameToKebabCase, findPiece } from '../utils/piece-utils';
 import { checkIfFileExists, makeFolderRecursive } from '../utils/files';
 import { join } from 'node:path';
 
@@ -24,13 +24,6 @@ export const ${camelCase} = createAction({
 
   return actionTemplate
 }
-const checkIfPieceExists = async (pieceName: string) => {
-  const path = await findPieceSourceDirectory(pieceName);
-  if (!path) {
-    console.log(chalk.red(`🚨 Piece ${pieceName} not found`));
-    process.exit(1);
-  }
-};
 
 const checkIfActionExists = async (actionPath: string) => {
   if (await checkIfFileExists(actionPath)) {
@@ -41,11 +34,10 @@ const checkIfActionExists = async (actionPath: string) => {
 const createAction = async (pieceName: string, displayActionName: string, actionDescription: string) => {
   const actionTemplate = createActionTemplate(displayActionName, actionDescription)
   const actionName = displayNameToKebabCase(displayActionName)
-  const path = await findPieceSourceDirectory(pieceName);
-  await checkIfPieceExists(pieceName);
-  console.log(chalk.blue(`Piece path: ${path}`))
-
-  const actionsFolder = join(path, 'src', 'lib', 'actions')
+  const pieceFolder = await findPiece(pieceName);
+  assertPieceExists(pieceFolder)
+  console.log(chalk.blue(`Piece path: ${pieceFolder}`))
+  const actionsFolder = join(pieceFolder, 'src', 'lib', 'actions')
   const actionPath = join(actionsFolder, `${actionName}.ts`)
   await checkIfActionExists(actionPath)
 

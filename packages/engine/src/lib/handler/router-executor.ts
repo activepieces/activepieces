@@ -54,7 +54,11 @@ async function handleRouterExecution({ action, executionState, constants, censor
     const routerOutput = RouterStepOutput.init({
         input: censoredInput,
     }).setOutput({
-        branches: evaluatedConditions,
+        branches: resolvedInput.branches.map((branch, index) => ({
+            branchName: branch.branchName,
+            branchIndex: index + 1,
+            evaluation: evaluatedConditions[index],
+        })),
     })
     executionState = executionState.upsertStep(action.name, routerOutput)
 
@@ -63,7 +67,8 @@ async function handleRouterExecution({ action, executionState, constants, censor
             if (constants.testSingleStepMode) {
                 break
             }
-            if (evaluatedConditions[i]) {
+            const condition = routerOutput.output?.branches[i].evaluation
+            if (condition) {
                 executionState = (await flowExecutor.execute({
                     action: action.children[i],
                     executionState,

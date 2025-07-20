@@ -1,6 +1,5 @@
 import {
   createAction,
-  DynamicProp,
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';

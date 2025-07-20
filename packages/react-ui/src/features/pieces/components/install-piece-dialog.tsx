@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import {
   AddPieceRequestBody,
@@ -44,7 +45,6 @@ import {
 } from '@activepieces/shared';
 
 import { piecesApi } from '../lib/pieces-api';
-
 const FormSchema = Type.Object(
   {
     packageType: Type.Enum(PackageType),
@@ -68,6 +68,8 @@ const InstallPieceDialog = ({
   onInstallPiece,
   scope,
 }: InstallPieceDialogProps) => {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const isEnabled = platform.managePiecesEnabled;
   const [isOpen, setIsOpen] = useState(false);
 
   const { data: privatePiecesEnabled } = flagsHooks.useFlag<boolean>(
@@ -220,11 +222,12 @@ const InstallPieceDialog = ({
                         <SelectItem value={PackageType.REGISTRY}>
                           {t('NPM Registry')}
                         </SelectItem>
-                        {privatePiecesEnabled && (
-                          <SelectItem value={PackageType.ARCHIVE}>
-                            {t('Packed Archive (.tgz)')}
-                          </SelectItem>
-                        )}
+                        <SelectItem
+                          value={PackageType.ARCHIVE}
+                          disabled={!isEnabled || !privatePiecesEnabled}
+                        >
+                          {t('Packed Archive (.tgz)')}
+                        </SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>

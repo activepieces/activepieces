@@ -1,12 +1,6 @@
 import { Static, Type } from "@sinclair/typebox";
 import { BaseModelSchema } from "@activepieces/shared";
 
-export enum ProjectOperationType {
-    UPDATE_FLOW = 'UPDATE_FLOW',
-    CREATE_FLOW = 'CREATE_FLOW',
-    DELETE_FLOW = 'DELETE_FLOW',
-}
-
 export enum GitBranchType {
     PRODUCTION = 'PRODUCTION',
     DEVELOPMENT = 'DEVELOPMENT',
@@ -30,15 +24,31 @@ export type GitRepoWithoutSensitiveData = Static<typeof GitRepoWithoutSensitiveD
 export enum GitPushOperationType {
     PUSH_FLOW = 'PUSH_FLOW',
     DELETE_FLOW = 'DELETE_FLOW',
+    PUSH_TABLE = 'PUSH_TABLE',
+    DELETE_TABLE = 'DELETE_TABLE',
 }
 
-export const PushGitRepoRequest = Type.Object({
-    type: Type.Enum(GitPushOperationType),
+export const PushFlowsGitRepoRequest = Type.Object({
+    type: Type.Union([Type.Literal(GitPushOperationType.PUSH_FLOW), Type.Literal(GitPushOperationType.DELETE_FLOW)]),
     commitMessage: Type.String({
         minLength: 1,
     }),
     flowIds: Type.Array(Type.String())
 })
+
+export type PushFlowsGitRepoRequest = Static<typeof PushFlowsGitRepoRequest>
+
+export const PushTablesGitRepoRequest = Type.Object({
+    type: Type.Union([Type.Literal(GitPushOperationType.PUSH_TABLE), Type.Literal(GitPushOperationType.DELETE_TABLE)]),
+    commitMessage: Type.String({
+        minLength: 1,
+    }),
+    tableIds: Type.Array(Type.String())
+})
+
+export type PushTablesGitRepoRequest = Static<typeof PushTablesGitRepoRequest>
+
+export const PushGitRepoRequest = Type.Union([PushFlowsGitRepoRequest, PushTablesGitRepoRequest])
 
 export type PushGitRepoRequest = Static<typeof PushGitRepoRequest>
 
@@ -62,46 +72,3 @@ export const ConfigureRepoRequest = Type.Object({
 })
 
 export type ConfigureRepoRequest = Static<typeof ConfigureRepoRequest>
-
-export const ProjectSyncError = Type.Object({
-    flowId: Type.String(),
-    message: Type.String(),
-})
-export type ProjectSyncError = Static<typeof ProjectSyncError>
-
-export const ProjectSyncPlanOperation = Type.Union([
-    Type.Object({
-        type: Type.Literal(ProjectOperationType.CREATE_FLOW),
-        flow: Type.Object({
-            id: Type.String(),
-            displayName: Type.String(),
-        }),
-    }),
-    Type.Object({
-        type: Type.Literal(ProjectOperationType.UPDATE_FLOW),
-        flow: Type.Object({
-            id: Type.String(),
-            displayName: Type.String(),
-        }),
-        targetFlow: Type.Object({
-            id: Type.String(),
-            displayName: Type.String(),
-        }),
-    }),
-    Type.Object({
-        type: Type.Literal(ProjectOperationType.DELETE_FLOW),
-        flow: Type.Object({
-            id: Type.String(),
-            displayName: Type.String(),
-        }),
-    }),
-])
-
-export type ProjectSyncPlanOperation = Static<typeof ProjectSyncPlanOperation>
-
-export const ProjectSyncPlan = Type.Object({
-    operations: Type.Array(ProjectSyncPlanOperation),
-    errors: Type.Array(ProjectSyncError),
-})
-
-export type ProjectSyncPlan = Static<typeof ProjectSyncPlan>

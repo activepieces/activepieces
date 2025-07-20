@@ -3,13 +3,14 @@ import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
-import { PiecePackage } from '../pieces'
+import { PackageType, PiecePackage, PieceType } from '../pieces'
 import { PlatformId } from '../platform'
 import { ProjectId } from '../project/project'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
     EXECUTE_STEP = 'EXECUTE_STEP',
+    EXECUTE_TOOL = 'EXECUTE_TOOL',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
@@ -27,6 +28,7 @@ export enum TriggerHookType {
 
 export type EngineOperation =
     | ExecuteStepOperation
+    | ExecuteToolOperation
     | ExecuteFlowOperation
     | ExecutePropsOptions
     | ExecuteTriggerOperation<TriggerHookType>
@@ -37,7 +39,7 @@ export type BaseEngineOperation = {
     projectId: ProjectId
     engineToken: string
     internalApiUrl: string
-    publicUrl: string
+    publicApiUrl: string
 }
 
 export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {
@@ -52,6 +54,15 @@ export type ExecuteStepOperation = BaseEngineOperation &  {
     stepName: string
     flowVersion: FlowVersion
     sampleData: Record<string, unknown>
+}
+
+export type ExecuteToolOperation = BaseEngineOperation & {
+    actionName: string
+    pieceName: string
+    pieceVersion: string
+    pieceType: PieceType
+    packageType: PackageType
+    input: Record<string, unknown>
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {
@@ -82,6 +93,7 @@ export enum ProgressUpdateType {
 
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {
     triggerPayload: unknown
+    formatPayload: boolean
 }
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
@@ -99,12 +111,20 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
     webhookUrl: string
     triggerPayload?: TriggerPayload
     appWebhookUrl?: string
-    webhookSecret?: string
+    webhookSecret?: string | Record<string, string>
 }
 
 
+export const TriggerPayload = Type.Object({
+    body: Type.Unknown(),
+    rawBody: Type.Optional(Type.Unknown()),
+    headers: Type.Record(Type.String(), Type.String()),
+    queryParams: Type.Record(Type.String(), Type.String()),
+})
+
 export type TriggerPayload<T = unknown> = {
     body: T
+    rawBody?: unknown
     headers: Record<string, string>
     queryParams: Record<string, string>
 }
@@ -170,6 +190,7 @@ export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends Trigge
 
 export type ExecuteActionResponse = {
     success: boolean
+    input: unknown
     output: unknown
     message?: string
 }

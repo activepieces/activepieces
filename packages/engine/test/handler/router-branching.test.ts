@@ -138,7 +138,18 @@ describe('router with branching different conditions', () => {
 
         expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         const routerOutput = result.steps.router.output as { branches: boolean[] }
-        expect(routerOutput.branches).toEqual([false, false])
+        expect(routerOutput.branches).toEqual([
+            {
+                branchName: 'Test Branch',
+                branchIndex: 1,
+                evaluation: false,
+            },
+            {
+                branchName: 'Test Branch',
+                branchIndex: 2,
+                evaluation: false,
+            },
+        ])
         expect(result.steps.data_mapper).toBeUndefined()
         expect(result.steps.data_mapper_1).toBeUndefined()
     })
@@ -380,7 +391,9 @@ describe('router with branching different conditions', () => {
                     secondValue: 'test',
                     caseSensitive: false,
                 },
-            ], executionType: RouterExecutionType.EXECUTE_FIRST_MATCH, skip: true }),
+            ], 
+            executionType: RouterExecutionType.EXECUTE_FIRST_MATCH, 
+            skip: true }),
             nextAction: {
                 ...buildCodeAction({
                     name: 'echo_step',

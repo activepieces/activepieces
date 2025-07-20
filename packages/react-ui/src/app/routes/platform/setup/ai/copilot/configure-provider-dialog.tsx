@@ -79,10 +79,8 @@ export const ConfigureProviderDialog = ({
       const platformId = authenticationSession.getPlatformId();
       if (!platformId) return;
 
-      const currentSettings = platform?.copilotSettings || { providers: {} };
       const newSettings: CopilotSettings = {
         providers: {
-          ...currentSettings.providers,
           [selectedProvider]:
             selectedProvider === CopilotProviderType.OPENAI
               ? {

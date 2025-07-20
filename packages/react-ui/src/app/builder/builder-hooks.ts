@@ -1,5 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
-import { createContext, useContext, useCallback, useState } from 'react';
+import { useReactFlow } from '@xyflow/react';
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useState,
+  useEffect,
+  useRef,
+} from 'react';
+import { usePrevious } from 'react-use';
 import { create, useStore } from 'zustand';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -19,6 +28,7 @@ import {
   isNil,
   StepLocationRelativeToParent,
   Action,
+  isFlowStateTerminal,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -37,6 +47,8 @@ import {
   CanvasShortcutsProps,
 } from './flow-canvas/context-menu/canvas-context-menu';
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
+import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
+import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -70,6 +82,7 @@ export type BuilderState = {
   flowVersion: FlowVersion;
   readonly: boolean;
   sampleData: Record<string, unknown>;
+  sampleDataInput: Record<string, unknown>;
   loopsIndexes: Record<string, number>;
   run: FlowRun | null;
   leftSidebar: LeftSideBarType;
@@ -77,7 +90,6 @@ export type BuilderState = {
   selectedStep: string | null;
   canExitRun: boolean;
   activeDraggingStep: string | null;
-  allowCanvasPanning: boolean;
   saving: boolean;
   /** change this value to trigger the step form to set its values from the step */
   refreshStepFormSettingsToggle: boolean;
@@ -91,17 +103,13 @@ export type BuilderState = {
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
-  applyOperation: (
-    operation: FlowOperationRequest,
-    onError: () => void,
-  ) => void;
+  applyOperation: (operation: FlowOperationRequest) => void;
   removeStepSelection: () => void;
   selectStepByName: (stepName: string) => void;
-  startSaving: () => void;
-  setAllowCanvasPanning: (allowCanvasPanning: boolean) => void;
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: PopulatedFlow) => void;
   setSampleData: (stepName: string, payload: unknown) => void;
+  setSampleDataInput: (stepName: string, payload: unknown) => void;
   exitPieceSelector: () => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
@@ -131,11 +139,23 @@ export type BuilderState = {
   setPanningMode: (mode: 'grab' | 'pan') => void;
   pieceSelectorStep: string | null;
   setPieceSelectorStep: (step: string | null) => void;
+  isFocusInsideListMapperModeInput: boolean;
+  setIsFocusInsideListMapperModeInput: (
+    isFocusInsideListMapperModeInput: boolean,
+  ) => void;
+  isPublishing: boolean;
+  setIsPublishing: (isPublishing: boolean) => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
   BuilderState,
-  'flow' | 'flowVersion' | 'readonly' | 'run' | 'canExitRun' | 'sampleData'
+  | 'flow'
+  | 'flowVersion'
+  | 'readonly'
+  | 'run'
+  | 'canExitRun'
+  | 'sampleData'
+  | 'sampleDataInput'
 >;
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
@@ -156,15 +176,20 @@ function determineInitiallySelectedStep(
   );
 }
 
-export const createBuilderStore = (initialState: BuilderInitialState) =>
+export const createBuilderStore = (
+  initialState: BuilderInitialState,
+  newFlow: boolean,
+) =>
   create<BuilderState>((set) => {
     const failedStepInRun = initialState.run?.steps
       ? flowRunUtils.findFailedStepInOutput(initialState.run.steps)
       : null;
-    const initiallySelectedStep = determineInitiallySelectedStep(
-      failedStepInRun,
-      initialState.flowVersion,
-    );
+    const initiallySelectedStep = newFlow
+      ? null
+      : determineInitiallySelectedStep(
+          failedStepInRun,
+          initialState.flowVersion,
+        );
 
     return {
       loopsIndexes:
@@ -176,6 +201,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             )
           : {},
       sampleData: initialState.sampleData,
+      sampleDataInput: initialState.sampleDataInput,
       flow: initialState.flow,
       flowVersion: initialState.flowVersion,
       leftSidebar: initialState.run
@@ -187,7 +213,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       selectedStep: initiallySelectedStep,
       canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
-      allowCanvasPanning: true,
       rightSidebar:
         initiallySelectedStep &&
         (initiallySelectedStep !== 'trigger' ||
@@ -202,10 +227,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           rightSidebar: RightSideBarType.NONE,
           selectedBranchIndex: null,
         }),
-      setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
-        set({
-          allowCanvasPanning,
-        }),
+
       setActiveDraggingStep: (stepName: string | null) =>
         set({
           activeDraggingStep: stepName,
@@ -275,6 +297,15 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             },
           };
         }),
+      setSampleDataInput: (stepName: string, payload: unknown) =>
+        set((state) => {
+          return {
+            sampleDataInput: {
+              ...state.sampleDataInput,
+              [stepName]: payload,
+            },
+          };
+        }),
       exitRun: (userHasPermissionToEditFlow: boolean) =>
         set({
           run: null,
@@ -324,7 +355,19 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             readonly: true,
           };
         }),
-      startSaving: () => set({ saving: true }),
+      setIsPublishing: (isPublishing: boolean) =>
+        set((state) => {
+          if (isPublishing) {
+            state.removeStepSelection();
+            state.setReadOnly(true);
+          } else {
+            state.setReadOnly(false);
+          }
+          return {
+            isPublishing,
+          };
+        }),
+      isPublishing: false,
       setLoopIndex: (stepName: string, index: number) => {
         set((state) => {
           return {
@@ -335,7 +378,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           };
         });
       },
-      applyOperation: (operation: FlowOperationRequest, onError: () => void) =>
+      applyOperation: (operation: FlowOperationRequest) =>
         set((state) => {
           if (state.readonly) {
             console.warn('Cannot apply operation while readonly');
@@ -356,6 +399,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               const updatedFlowVersion = await flowsApi.update(
                 state.flow.id,
                 operation,
+                true,
               );
               set((state) => {
                 return {
@@ -370,7 +414,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             } catch (error) {
               console.error(error);
               flowUpdatesQueue.halt();
-              onError();
             }
           };
           flowUpdatesQueue.add(updateRequest);
@@ -479,6 +522,14 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           };
         });
       },
+      isFocusInsideListMapperModeInput: false,
+      setIsFocusInsideListMapperModeInput: (
+        isFocusInsideListMapperModeInput: boolean,
+      ) => {
+        return set(() => ({
+          isFocusInsideListMapperModeInput,
+        }));
+      },
     };
   });
 
@@ -503,9 +554,13 @@ const shortcutHandler = (
       !!shortcut.withShift === event.shiftKey,
   );
   if (shortcutActivated) {
-    event.preventDefault();
+    if (
+      isNil(shortcutActivated[1].shouldNotPreventDefault) ||
+      !shortcutActivated[1].shouldNotPreventDefault
+    ) {
+      event.preventDefault();
+    }
     event.stopPropagation();
-
     handlers[shortcutActivated[0] as keyof CanvasShortcutsProps]();
   }
 };
@@ -531,7 +586,7 @@ export const useHandleKeyPressOnCanvas = () => {
     state.readonly,
   ]);
 
-  return useCallback(
+  const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (
         e.target instanceof HTMLElement &&
@@ -545,7 +600,10 @@ export const useHandleKeyPressOnCanvas = () => {
         );
         shortcutHandler(e, {
           Copy: () => {
-            if (selectedNodesWithoutTrigger.length > 0) {
+            if (
+              selectedNodesWithoutTrigger.length > 0 &&
+              document.getSelection()?.toString() === ''
+            ) {
               copySelectedNodes({
                 selectedNodes: selectedNodesWithoutTrigger,
                 flowVersion,
@@ -607,14 +665,22 @@ export const useHandleKeyPressOnCanvas = () => {
       readonly,
     ],
   );
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 };
 
 export const useSwitchToDraft = () => {
-  const [flowVersion, setVersion, exitRun] = useBuilderStateContext((state) => [
-    state.flowVersion,
-    state.setVersion,
-    state.exitRun,
-  ]);
+  const [flowVersion, setVersion, exitRun, setFlow] = useBuilderStateContext(
+    (state) => [
+      state.flowVersion,
+      state.setVersion,
+      state.exitRun,
+      state.setFlow,
+    ],
+  );
   const { checkAccess } = useAuthorization();
   const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
   const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =
@@ -624,6 +690,7 @@ export const useSwitchToDraft = () => {
         return flow;
       },
       onSuccess: (flow) => {
+        setFlow(flow);
         setVersion(flow.version);
         exitRun(userHasPermissionToEditFlow);
       },
@@ -650,4 +717,94 @@ export const usePasteActionsInClipboard = () => {
     }
   };
   return { actionsToPaste, fetchClipboardOperations };
+};
+
+export const useIsFocusInsideListMapperModeInput = ({
+  containerRef,
+  setIsFocusInsideListMapperModeInput,
+  isFocusInsideListMapperModeInput,
+}: {
+  containerRef: React.RefObject<HTMLDivElement>;
+  setIsFocusInsideListMapperModeInput: (
+    isFocusInsideListMapperModeInput: boolean,
+  ) => void;
+  isFocusInsideListMapperModeInput: boolean;
+}) => {
+  useEffect(() => {
+    const focusInListener = () => {
+      const focusedElement = document.activeElement;
+      const isFocusedInside = !!containerRef.current?.contains(focusedElement);
+      const isFocusedInsideDataSelector =
+        !isNil(document.activeElement) &&
+        document.activeElement instanceof HTMLElement &&
+        textMentionUtils.isDataSelectorOrChildOfDataSelector(
+          document.activeElement,
+        );
+      setIsFocusInsideListMapperModeInput(
+        isFocusedInside ||
+          (isFocusedInsideDataSelector && isFocusInsideListMapperModeInput),
+      );
+    };
+    document.addEventListener('focusin', focusInListener);
+    return () => {
+      document.removeEventListener('focusin', focusInListener);
+    };
+  }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
+};
+export const useFocusedFailedStep = () => {
+  const currentRun = useBuilderStateContext((state) => state.run);
+  const previousRun = usePrevious(currentRun);
+  const { fitView } = useReactFlow();
+  if (
+    (currentRun &&
+      previousRun?.id !== currentRun.id &&
+      isFlowStateTerminal(currentRun.status)) ||
+    (currentRun &&
+      previousRun &&
+      !isFlowStateTerminal(previousRun.status) &&
+      isFlowStateTerminal(currentRun.status))
+  ) {
+    const failedStep = currentRun.steps
+      ? flowRunUtils.findFailedStepInOutput(currentRun.steps)
+      : null;
+    if (failedStep) {
+      setTimeout(() => {
+        fitView(flowCanvasUtils.createFocusStepInGraphParams(failedStep));
+      });
+    }
+  }
+};
+
+export const useResizeCanvas = (
+  containerRef: React.RefObject<HTMLDivElement>,
+  setHasCanvasBeenInitialised: (hasCanvasBeenInitialised: boolean) => void,
+) => {
+  const containerSizeRef = useRef({
+    width: 0,
+    height: 0,
+  });
+  const { getViewport, setViewport } = useReactFlow();
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const resizeObserver = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      setHasCanvasBeenInitialised(true);
+      const { x, y, zoom } = getViewport();
+      if (containerRef.current && width !== containerSizeRef.current.width) {
+        const newX = x + (width - containerSizeRef.current.width) / 2;
+        // Update the viewport to keep content centered without affecting zoom
+        setViewport({ x: newX, y, zoom });
+      }
+      // Adjust x/y values based on the new size and keep the same zoom level
+      containerSizeRef.current = {
+        width,
+        height,
+      };
+    });
+    resizeObserver.observe(containerRef.current);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [setViewport, getViewport]);
 };

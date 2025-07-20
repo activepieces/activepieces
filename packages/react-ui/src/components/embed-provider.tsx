@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { cn } from '@/lib/utils';
+
 type EmbeddingState = {
   isEmbedded: boolean;
   hideSideNav: boolean;
@@ -11,6 +13,9 @@ type EmbeddingState = {
   hideFlowNameInBuilder: boolean;
   sdkVersion?: string;
   predefinedConnectionName?: string;
+  fontUrl?: string;
+  fontFamily?: string;
+  useDarkBackground: boolean;
 };
 
 const defaultState: EmbeddingState = {
@@ -21,6 +26,7 @@ const defaultState: EmbeddingState = {
   disableNavigationInBuilder: false,
   hideFolders: false,
   hideFlowNameInBuilder: false,
+  useDarkBackground: window.opener !== null,
 };
 
 const EmbeddingContext = createContext<{
@@ -61,7 +67,13 @@ const EmbeddingProvider = ({ children }: EmbeddingProviderProps) => {
     <EmbeddingContext.Provider
       value={{ embedState: state, setEmbedState: setState }}
     >
-      {children}
+      <div
+        className={cn({
+          'bg-black/80 h-screen w-screen': state.useDarkBackground,
+        })}
+      >
+        {children}
+      </div>
     </EmbeddingContext.Provider>
   );
 };

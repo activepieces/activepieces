@@ -494,5 +494,12 @@
   "Select a project role": "Select a project role",
   "Steps in this flow": "Steps in this flow",
   "Reconnect {displayName} Connection": "Reconnect {displayName}",
-  "flowsImported": "{flowsCount, plural, =0 {No Flows Imported} =1 {Flow Imported Successfully} other {Flows Imported Successfully}}"
+  "flowsImported": "{flowsCount, plural, =0 {No Flows Imported} =1 {Flow Imported Successfully} other {Flows Imported Successfully}}",
+  "STATIC_DROPDOWN": "Single Select",
+  "DATE": "Date",
+  "NUMBER": "Number",
+  "TEXT": "Text",
+  "Maximum number of tables reached": "Maximum number of tables reached ({maxTables})",
+  "recordsCount": "{recordsCount, plural, =0 {0 records} =1 {1 record} other {# records}}",
+  "fieldsCount": "{fieldsCount, plural, =0 {0 fields} =1 {1 field} other {# fields}}"
 }

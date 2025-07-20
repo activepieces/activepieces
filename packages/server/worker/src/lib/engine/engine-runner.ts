@@ -3,11 +3,11 @@ import {
     DynamicPropsValue,
     PieceMetadata,
 } from '@activepieces/pieces-framework'
-import { ActivepiecesError, BeginExecuteFlowOperation, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse, FlowRunResponse, FlowVersionState, ResumeExecuteFlowOperation, SourceCode, TriggerHookType } from '@activepieces/shared'
+import { ActivepiecesError, BeginExecuteFlowOperation, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse, FlowRunResponse, FlowVersionState, ResumeExecuteFlowOperation, SourceCode, TriggerHookType } from '@activepieces/shared'
 import chalk from 'chalk'
 import { FastifyBaseLogger } from 'fastify'
 
-type EngineConstants = 'publicUrl' | 'internalApiUrl' | 'engineToken'
+type EngineConstants = 'publicApiUrl' | 'internalApiUrl' | 'engineToken'
 
 export type CodeArtifact = {
     name: string
@@ -23,9 +23,13 @@ export type EngineHelperTriggerResult<
     T extends TriggerHookType = TriggerHookType,
 > = ExecuteTriggerResponse<T>
 
-export type EngineHelperPropResult =
-    | DropdownState<unknown>
-    | Record<string, DynamicPropsValue>
+export type EngineHelperPropResult = {
+    type: 'dropdown'
+    options: DropdownState<unknown>
+} | {
+    type: 'dynamicproperties'
+    options: Record<string, DynamicPropsValue>
+}
 
 export type EngineHelperActionResult = ExecuteActionResponse
 
@@ -81,6 +85,10 @@ export type EngineRunner = {
     executeAction(
         engineToken: string,
         operation: Omit<ExecuteStepOperation, EngineConstants>,
+    ): Promise<EngineHelperResponse<EngineHelperActionResult>>
+    excuteTool(
+        engineToken: string,
+        operation: Omit<ExecuteToolOperation, EngineConstants>,
     ): Promise<EngineHelperResponse<EngineHelperActionResult>>
     executeProp(
         engineToken: string,

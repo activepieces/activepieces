@@ -15,7 +15,7 @@ import { common } from '../common';
 
 const polling: Polling<
   PiecePropValueSchema<typeof googleDriveAuth>,
-  { parentFolder?: any }
+  { parentFolder?: any,include_team_drives?:boolean }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
@@ -23,6 +23,7 @@ const polling: Polling<
       (await common.getFolders(auth, {
         parent: propsValue.parentFolder,
         createdTime: lastFetchEpochMS,
+        includeTeamDrive:propsValue.include_team_drives
       })) ?? [];
     const items = currentValues.map((item: any) => ({
       epochMilliSeconds: dayjs(item.createdTime).valueOf(),

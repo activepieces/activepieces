@@ -1,51 +1,28 @@
 import {
-  createTrigger,
-  TriggerStrategy,
-  Property,
-  OAuth2PropertyValue,
+	createTrigger,
+	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { intercomAuth } from '../..';
 import { intercomClient } from '../common';
+import { tagIdProp } from '../common/props';
 
 export const conversationPartTagged = createTrigger({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'conversationPartTagged',
   displayName: 'Tag added to a conversation part',
-  description: 'Triggers when a conversation part is tagged',
+  description: 'Triggers when a conversation part is tagged.',
   props: {
-    tag: Property.Dropdown({
-      displayName: 'Tag',
-      required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            options: [],
-            disabled: true,
-            placeholder: 'Please connect your account first',
-          };
-        }
-        const client = intercomClient(auth as OAuth2PropertyValue);
-        const tagsResponse = await client.tags.list();
-        return {
-          options: tagsResponse.data.map((tag) => {
-            return {
-              label: tag.name,
-              value: tag.id,
-            };
-          }),
-        };
-      },
-    }),
+    tagId: tagIdProp('Tag', false),
   },
-  sampleData: undefined,
   auth: intercomAuth,
   type: TriggerStrategy.APP_WEBHOOK,
   async onEnable(context) {
     const client = intercomClient(context.auth);
-    const response: { app: { id_code: string } } = await client.get({
-      url: '/me',
-    });
+    const response = await client.admins.identify();
+
+    if (!response.app?.id_code) {
+      throw new Error('Could not find admin id code');
+    }
+
     context.app.createListeners({
       events: ['conversation_part.tag.created'],
       identifierValue: response['app']['id_code'],
@@ -54,22 +31,24 @@ export const conversationPartTagged = createTrigger({
   async onDisable(context) {
     // implement webhook deletion logic
   },
+
   async run(context) {
-    const tag = context.propsValue.tag;
+    const tag = context.propsValue.tagId;
     const payloadBody = context.payload.body as IntercomPayloadBodyType;
     if (!tag || payloadBody?.data?.item?.tag.id === tag) {
-      return [payloadBody];
+      return [payloadBody.data.item];
     }
     return [];
   },
+  sampleData: undefined
 });
 
 type IntercomPayloadBodyType = {
-  data: {
-    item: {
-      tag: {
-        id: string;
-      };
-    };
-  };
+	data: {
+		item: {
+			tag: {
+				id: string;
+			};
+		};
+	};
 };

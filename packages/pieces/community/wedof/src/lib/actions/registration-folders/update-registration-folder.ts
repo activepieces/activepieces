@@ -37,6 +37,11 @@ export const updateRegistrationFolder = createAction({
       description: "Notes privées (non-visible par l'apprenant)",
       required: false,
     }),
+    description: Property.LongText({
+      displayName: 'Description',
+      description: "Note publique visible de l'apprenant",
+      required: false,
+    }),
     completionRate: Property.Number({
       displayName: "Taux d'avancement",
       description: "Taux d'avancement en % compris entre 0% et 100%. Uniquement sous format d'un entier. Uniquement possible à l'état En formation et Sortie de formation",
@@ -60,9 +65,10 @@ export const updateRegistrationFolder = createAction({
   },
   async run(context) {
     const message = {
-      notes: context.propsValue.notes,
+      notes: context.propsValue.notes ?? null,
+      description: context.propsValue.description ?? null,
       priceChange: {
-        price: context.propsValue.price,
+        price: context.propsValue.price ?? null,
       },
       trainingActionInfo: {
         sessionStartDate: context.propsValue.sessionStartDate
@@ -71,9 +77,9 @@ export const updateRegistrationFolder = createAction({
         sessionEndDate: context.propsValue.sessionEndDate
           ? dayjs(context.propsValue.sessionEndDate).format('YYYY-MM-DD')
           : null,
-        completionRate: context.propsValue.completionRate,
-        indicativeDuration: context.propsValue.indicativeDuration,
-        weeklyDuration: context.propsValue.weeklyDuration,
+        completionRate: context.propsValue.completionRate ?? null,
+        indicativeDuration: context.propsValue.indicativeDuration ?? null,
+        weeklyDuration: context.propsValue.weeklyDuration ?? null,
       },
       tags: context.propsValue.tags as string[],
     };

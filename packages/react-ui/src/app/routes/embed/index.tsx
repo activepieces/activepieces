@@ -4,34 +4,47 @@ import { useNavigate } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 
 import { useEmbedding } from '@/components/embed-provider';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
+import { parentWindow } from '@/lib/utils';
 import {
   _AP_JWT_TOKEN_QUERY_PARAM_NAME,
+  ActivepiecesClientAuthenticationFailed,
+  ActivepiecesClientAuthenticationSuccess,
+  ActivepiecesClientConfigurationFinished,
   ActivepiecesClientEventName,
   ActivepiecesClientInit,
-  ActivepiecesClientShowConnectionIframe,
   ActivepiecesVendorEventName,
   ActivepiecesVendorInit,
 } from 'ee-embed-sdk';
 
+const notifyVendorPostAuthentication = () => {
+  const authenticationSuccessEvent: ActivepiecesClientAuthenticationSuccess = {
+    type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS,
+    data: {},
+  };
+  parentWindow.postMessage(authenticationSuccessEvent, '*');
+  const configurationFinishedEvent: ActivepiecesClientConfigurationFinished = {
+    type: ActivepiecesClientEventName.CLIENT_CONFIGURATION_FINISHED,
+    data: {},
+  };
+  parentWindow.postMessage(configurationFinishedEvent, '*');
+};
+
 const EmbedPage = React.memo(() => {
   const navigate = useNavigate();
-  const { setEmbedState } = useEmbedding();
+  const { setEmbedState, embedState } = useEmbedding();
   const { mutateAsync } = useMutation({
     mutationFn: managedAuthApi.generateApToken,
-    onError: (error) => {
-      console.error(error);
-    },
   });
   const initState = (event: MessageEvent<ActivepiecesVendorInit>) => {
     if (
-      event.source === window.parent &&
+      event.source === parentWindow &&
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
       const token =
         event.data.data.jwtToken || getExternalTokenFromSearchQuery();
-
       if (token) {
         mutateAsync(
           {
@@ -40,6 +53,7 @@ const EmbedPage = React.memo(() => {
           {
             onSuccess: (data) => {
               authenticationSession.saveResponse(data);
+              const initialRoute = event.data.data.initialRoute ?? '/';
               setEmbedState({
                 hideSideNav: event.data.data.hideSidebar,
                 isEmbedded: true,
@@ -51,23 +65,27 @@ const EmbedPage = React.memo(() => {
                   event.data.data.disableNavigationInBuilder,
                 hideFolders: event.data.data.hideFolders || false,
                 sdkVersion: event.data.data.sdkVersion,
+                fontUrl: event.data.data.fontUrl,
+                fontFamily: event.data.data.fontFamily,
+                useDarkBackground:
+                  initialRoute.startsWith('/embed/connections'),
               });
 
               //previously initialRoute was optional
-              const initialRoute = event.data.data.initialRoute ?? '/';
-              if (initialRoute.startsWith('/embed/connections')) {
-                const showConnectionIframeEvent: ActivepiecesClientShowConnectionIframe =
-                  {
-                    type: ActivepiecesClientEventName.CLIENT_SHOW_CONNECTION_IFRAME,
-                    data: {},
-                  };
-                window.parent.postMessage(showConnectionIframeEvent, '*');
-                document.body.style.background = 'transparent';
-              }
               navigate(initialRoute);
+              notifyVendorPostAuthentication();
+            },
+            onError: (error) => {
+              const errorEvent: ActivepiecesClientAuthenticationFailed = {
+                type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_FAILED,
+                data: error,
+              };
+              parentWindow.postMessage(errorEvent, '*');
             },
           },
         );
+      } else {
+        console.error('Token sent via the sdk is empty');
       }
     }
   };
@@ -83,14 +101,14 @@ const EmbedPage = React.memo(() => {
       type: ActivepiecesClientEventName.CLIENT_INIT,
       data: {},
     };
-    window.parent.postMessage(event, '*');
+    parentWindow.postMessage(event, '*');
     window.addEventListener('message', initState);
     return () => {
       window.removeEventListener('message', initState);
     };
   });
 
-  return <></>;
+  return <LoadingScreen brightSpinner={embedState.useDarkBackground} />;
 });
 
 EmbedPage.displayName = 'EmbedPage';

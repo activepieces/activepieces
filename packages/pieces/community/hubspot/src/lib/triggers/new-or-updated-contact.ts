@@ -68,7 +68,7 @@ export const newOrUpdatedContactTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-or-updated-contact',
 	displayName: 'Contact Recently Created or Updated',
-	description: 'Triggers when a contact recenty created or updated.',
+	description: 'Triggers when a contact recently created or updated.',
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

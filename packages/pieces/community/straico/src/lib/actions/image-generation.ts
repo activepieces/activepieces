@@ -6,7 +6,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 
-import { baseUrl } from '../common/common';
+import { baseUrlv0 } from '../common/common';
 
 export const imageGeneration = createAction({
   auth: straicoAuth,
@@ -27,6 +27,25 @@ export const imageGeneration = createAction({
           { value: 2, label: '2' },
           { value: 3, label: '3' },
           { value: 4, label: '4' },
+        ],
+      },
+    }),
+    model: Property.StaticDropdown({
+      displayName: 'Model',
+      required: true,
+      description: 'Select the image generation model.',
+      defaultValue: 'openai/dall-e-3',
+      options: {
+        disabled: false,
+        options: [
+          { value: 'openai/dall-e-3', label: 'openai/dall-e-3' },
+          { value: 'flux/1.1', label: 'flux/1.1' },
+          { value: 'ideogram/V_2A', label: 'ideogram/V_2A' },
+          { value: 'ideogram/V_2A_TURBO', label: 'ideogram/V_2A_TURBO' },
+          { value: 'ideogram/V_2', label: 'ideogram/V_2' },
+          { value: 'ideogram/V_2_TURBO', label: 'ideogram/V_2_TURBO' },
+          { value: 'ideogram/V_1', label: 'ideogram/V_1' },
+          { value: 'ideogram/V_1_TURBO', label: 'ideogram/V_1_TURBO' }
         ],
       },
     }),
@@ -54,25 +73,34 @@ export const imageGeneration = createAction({
   },
   async run({ auth, propsValue }) {
     const response = await httpClient.sendRequest<{
-      data: { 
-        images: Array<string>[],
-        zip: string
-    };
+      data: {
+        zip: string;
+        images: string[];
+        price: {
+          price_per_image: number;
+          quantity_images: number;
+          total: number;
+        };
+      };
+      success: boolean;
     }>({
-      url: `${baseUrl}/image/generation`,
+      url: `${baseUrlv0}/image/generation`,
       method: HttpMethod.POST,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth as string,
       },
       body: {
-        model: 'openai/dall-e-3',
+        model: propsValue.model,
         description: propsValue.description,
         size: propsValue.size,
-        variations: propsValue.variations,
+        variations: propsValue.variations
       },
     });
 
-    return response.body.data;
+    return {
+    images: response.body.data.images,
+    zip: response.body.data.zip,
+  };
   },
 });

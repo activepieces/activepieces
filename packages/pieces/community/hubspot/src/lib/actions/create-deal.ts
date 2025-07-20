@@ -55,7 +55,7 @@ export const createDealAction = createAction({
 	},
 	async run(context) {
 		const { dealname, pipelineId, pipelineStageId } = context.propsValue;
-		const objectProperites = context.propsValue.objectProperties ?? {};
+		const objectProperties = context.propsValue.objectProperties ?? {};
 		const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? [];
 
 		const dealProperties: Record<string, string> = {
@@ -65,7 +65,7 @@ export const createDealAction = createAction({
 		};
 
 		// Add additional properties to the dealProperties object
-		Object.entries(objectProperites).forEach(([key, value]) => {
+		Object.entries(objectProperties).forEach(([key, value]) => {
 			// Format values if they are arrays
 			dealProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});

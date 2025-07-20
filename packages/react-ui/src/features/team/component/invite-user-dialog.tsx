@@ -3,12 +3,13 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -40,8 +41,8 @@ import { userInvitationApi } from '@/features/team/lib/user-invitation';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { HttpError } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
   InvitationType,
@@ -75,13 +76,13 @@ const FormSchema = Type.Object({
 
 type FormSchema = Static<typeof FormSchema>;
 
-export function InviteUserDialog() {
+export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [invitationLink, setInvitationLink] = useState('');
   const { platform } = platformHooks.useCurrentPlatform();
   const { refetch } = userInvitationsHooks.useInvitations();
   const { project } = projectHooks.useCurrentProject();
-  const currentUser = authenticationSession.getCurrentUser();
+  const { data: currentUser } = userHooks.useCurrentUser();
   const { checkAccess } = useAuthorization();
   const userHasPermissionToInviteUser = checkAccess(
     Permission.WRITE_INVITATION,
@@ -178,14 +179,18 @@ export function InviteUserDialog() {
         }}
       >
         <DialogTrigger asChild>
-          <Button
-            variant={'outline'}
-            size="sm"
-            className="flex items-center justify-center gap-2 w-full"
-          >
-            <Plus className="size-4" />
-            <span>{t('Invite User')}</span>
-          </Button>
+          {children ? (
+            children
+          ) : (
+            <Button
+              variant={'outline'}
+              size="sm"
+              className="flex items-center justify-center gap-2 w-full"
+            >
+              <Plus className="size-4" />
+              <span>{t('Invite User')}</span>
+            </Button>
+          )}
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -301,6 +306,11 @@ export function InviteUserDialog() {
                   </FormMessage>
                 )}
                 <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant={'outline'}>
+                      {t('Cancel')}
+                    </Button>
+                  </DialogClose>
                   <Button type="submit" loading={isPending}>
                     {t('Invite')}
                   </Button>
@@ -347,4 +357,4 @@ export function InviteUserDialog() {
       </Dialog>
     )
   );
-}
+};

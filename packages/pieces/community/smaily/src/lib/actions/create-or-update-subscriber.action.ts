@@ -35,22 +35,22 @@ export const createOrUpdateSubscriberAction = createAction({
       required: false,
     }),
   },
-  async run(contex) {
+  async run(context) {
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `https://${contex.auth.domain}.sendsmaily.net/api/contact.php`,
+      url: `https://${context.auth.domain}.sendsmaily.net/api/contact.php`,
       headers: {
         'Content-Type': 'application/json',
       },
       authentication: {
         type: AuthenticationType.BASIC,
-        username: contex.auth.username,
-        password: contex.auth.password,
+        username: context.auth.username,
+        password: context.auth.password,
       },
       body: {
-        email: contex.propsValue.email,
-        is_unsubscribed: contex.propsValue.is_unsubscribed,
-        ...contex.propsValue.custom_fields,
+        email: context.propsValue.email,
+        is_unsubscribed: context.propsValue.is_unsubscribed,
+        ...context.propsValue.custom_fields,
       },
     });
 

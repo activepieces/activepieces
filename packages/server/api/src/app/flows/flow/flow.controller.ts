@@ -1,5 +1,5 @@
 
-import { ApplicationEventName } from '@activepieces/ee-shared'
+import { ApplicationEventName, GitPushOperationType } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -7,6 +7,8 @@ import {
     CreateFlowRequest,
     ErrorCode,
     FlowOperationRequest,
+    FlowOperationType,
+    flowStructureUtil,
     FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
@@ -14,10 +16,10 @@ import {
     ListFlowsRequest,
     Permission,
     PopulatedFlow,
-    Principal,
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    Trigger,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -25,11 +27,11 @@ import {
 } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
+import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
 import { gitRepoService } from '../../ee/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
-import { projectService } from '../../project/project-service'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -54,7 +56,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id', UpdateFlowRequestOptions, async (request) => {
-        const userId = await extractUserIdFromPrincipal(request.principal)
+        const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
         await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
 
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
@@ -74,7 +76,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
-            operation: request.body,
+            operation: cleanOperation(request.body),
         })
         return updatedFlow
     })
@@ -87,6 +89,8 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             status: request.query.status,
             name: request.query.name,
+            versionState: request.query.versionState,
+            connectionExternalIds: request.query.connectionExternalIds,
         })
     })
 
@@ -125,8 +129,9 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
                 flowVersion: flow.version,
             },
         })
-        await gitRepoService(request.log).onFlowDeleted({
-            flowId: request.params.id,
+        await gitRepoService(request.log).onDeleted({
+            type: GitPushOperationType.DELETE_FLOW,
+            id: request.params.id,
             userId: request.principal.id,
             projectId: request.principal.projectId,
             log: request.log,
@@ -137,6 +142,46 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
+}
+
+function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
+    if (operation.type === FlowOperationType.IMPORT_FLOW) {
+        const clearInputUiInfo = {
+            currentSelectedData: undefined,
+            sampleDataFileId: undefined,
+            sampleDataInputFileId: undefined,
+            lastTestDate: undefined,
+        }
+        const trigger = flowStructureUtil.transferStep(operation.request.trigger, (step) => {
+            return {
+                ...step,
+                settings: {
+                    ...step.settings,
+                    inputUiInfo: {
+                        ...step.settings.inputUiInfo,
+                        ...clearInputUiInfo,
+                    },
+                },
+            }
+        }) as Trigger
+        return {
+            ...operation,
+            request: {
+                ...operation.request,
+                trigger: {
+                    ...trigger,
+                    settings: {
+                        ...trigger.settings,
+                        inputUiInfo: {
+                            ...trigger.settings.inputUiInfo,
+                            ...clearInputUiInfo,
+                        },
+                    },
+                },
+            },
+        }
+    }
+    return operation
 }
 
 async function assertThatFlowIsNotBeingUsed(
@@ -158,17 +203,6 @@ async function assertThatFlowIsNotBeingUsed(
             },
         })
     }
-}
-
-async function extractUserIdFromPrincipal(
-    principal: Principal,
-): Promise<string> {
-    if (principal.type === PrincipalType.USER) {
-        return principal.id
-    }
-    // TODO currently it's same as api service, but it's better to get it from api key service, in case we introduced more admin users
-    const project = await projectService.getOneOrThrow(principal.projectId)
-    return project.ownerId
 }
 
 const CreateFlowRequestOptions = {

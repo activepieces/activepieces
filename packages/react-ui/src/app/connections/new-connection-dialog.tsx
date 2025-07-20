@@ -15,12 +15,12 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { AppConnectionWithoutSensitiveData, isNil } from '@activepieces/shared';
 
 import { CreateOrEditConnectionDialog } from './create-edit-connection-dialog';
 
 type NewConnectionDialogProps = {
-  onConnectionCreated: (res: { externalId: string; id: string }) => void;
+  onConnectionCreated: (connection: AppConnectionWithoutSensitiveData) => void;
   children: React.ReactNode;
   isGlobalConnection: boolean;
 };
@@ -58,17 +58,15 @@ const NewConnectionDialog = React.memo(
           <CreateOrEditConnectionDialog
             reconnectConnection={null}
             piece={selectedPiece}
-            predefinedConnectionName={null}
             open={connectionDialogOpen}
             isGlobalConnection={isGlobalConnection}
-            onConnectionCreated={(res) =>
-              onConnectionCreated({
-                id: res.id,
-                externalId: res.externalId,
-              })
-            }
             key={`CreateOrEditConnectionDialog-open-${connectionDialogOpen}`}
-            setOpen={setConnectionDialogOpen}
+            setOpen={(open, connection) => {
+              setConnectionDialogOpen(open);
+              if (connection) {
+                onConnectionCreated(connection);
+              }
+            }}
           ></CreateOrEditConnectionDialog>
         )}
         <Dialog
@@ -117,7 +115,7 @@ const NewConnectionDialog = React.memo(
             </ScrollArea>
             <DialogFooter>
               <DialogClose asChild>
-                <Button type="button" variant="secondary">
+                <Button type="button" variant="ghost">
                   {t('Close')}
                 </Button>
               </DialogClose>

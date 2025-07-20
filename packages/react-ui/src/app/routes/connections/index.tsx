@@ -1,16 +1,28 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash, Pencil, Globe } from 'lucide-react';
+import {
+  CheckIcon,
+  Trash,
+  Globe,
+  AppWindow,
+  Tag,
+  User,
+  Replace,
+  InfoIcon,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { FlowsDialog } from '@/app/connections/flows-connection-dialog';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
+import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CopyButton } from '@/components/ui/copy-button';
+import { CopyTextTooltip } from '@/components/ui/copy-text-tooltip';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -29,11 +41,15 @@ import {
 } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
 import { UserFullName } from '@/components/ui/user-fullname';
+import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import { RenameConnectionDialog } from '@/features/connections/components/rename-connection-dialog';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import { appConnectionsHooks } from '@/features/connections/lib/app-connections-hooks';
 import { appConnectionUtils } from '@/features/connections/lib/app-connections-utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
@@ -44,21 +60,6 @@ import {
   PlatformRole,
 } from '@activepieces/shared';
 
-const filters = [
-  {
-    type: 'select',
-    title: t('Status'),
-    accessorKey: 'status',
-    options: Object.values(AppConnectionStatus).map((status) => {
-      return {
-        label: formatUtils.convertEnumToHumanReadable(status),
-        value: status,
-      };
-    }),
-    icon: CheckIcon,
-  } as const,
-];
-
 function AppConnectionsPage() {
   const [refresh, setRefresh] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -67,7 +68,113 @@ function AppConnectionsPage() {
   >([]);
   const { toast } = useToast();
   const { checkAccess } = useAuthorization();
-  const userPlatformRole = authenticationSession.getUserPlatformRole();
+  const userPlatformRole = userHooks.getCurrentUserPlatformRole();
+  const location = useLocation();
+  const { pieces } = piecesHooks.usePieces({});
+  const pieceOptions = (pieces ?? []).map((piece) => ({
+    label: piece.displayName,
+    value: piece.name,
+  }));
+  const projectId = authenticationSession.getProjectId()!;
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['appConnections', location.search, projectId],
+    queryFn: () => {
+      const searchParams = new URLSearchParams(location.search);
+      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
+      const limit = searchParams.get(LIMIT_QUERY_PARAM)
+        ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
+        : 10;
+      const status =
+        (searchParams.getAll('status') as AppConnectionStatus[]) ?? [];
+      const pieceName = searchParams.get('pieceName') ?? undefined;
+      const displayName = searchParams.get('displayName') ?? undefined;
+      return appConnectionsApi.list({
+        projectId,
+        cursor: cursor ?? undefined,
+        limit,
+        status,
+        pieceName,
+        displayName,
+      });
+    },
+  });
+
+  const filteredData = useMemo(() => {
+    if (!data?.data) return undefined;
+    const searchParams = new URLSearchParams(location.search);
+    const ownerEmails = searchParams.getAll('owner');
+
+    if (ownerEmails.length === 0) return data;
+
+    return {
+      data: data.data.filter(
+        (conn) => conn.owner && ownerEmails.includes(conn.owner.email),
+      ),
+      next: data.next,
+      previous: data.previous,
+    };
+  }, [data, location.search]);
+
+  const userHasPermissionToWriteAppConnection = checkAccess(
+    Permission.WRITE_APP_CONNECTION,
+  );
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => appConnectionsApi.delete(id)));
+    },
+    onSuccess: () => {
+      refetch();
+    },
+    onError: () => {
+      toast({
+        title: t('Error deleting connections'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const { data: owners } = appConnectionsHooks.useConnectionsOwners();
+  const ownersOptions = owners?.map((owner) => ({
+    label: `${owner.firstName} ${owner.lastName} (${owner.email})`,
+    value: owner.email,
+  }));
+  const filters = [
+    {
+      type: 'select',
+      title: t('Status'),
+      accessorKey: 'status',
+      options: Object.values(AppConnectionStatus).map((status) => {
+        return {
+          label: formatUtils.convertEnumToHumanReadable(status),
+          value: status,
+        };
+      }),
+      icon: CheckIcon,
+    } as const,
+    {
+      type: 'select',
+      title: t('Pieces'),
+      accessorKey: 'pieceName',
+      icon: AppWindow,
+      options: pieceOptions,
+    } as const,
+    {
+      type: 'input',
+      title: t('Display Name'),
+      accessorKey: 'displayName',
+      icon: Tag,
+      options: [],
+    } as const,
+    {
+      type: 'select',
+      title: t('Owner'),
+      accessorKey: 'owner',
+      icon: User,
+      options: ownersOptions ?? [],
+    } as const,
+  ];
+
   const columns: ColumnDef<
     RowDataWithActions<AppConnectionWithoutSensitiveData>,
     unknown
@@ -179,21 +286,13 @@ function AppConnectionsPage() {
                 </TooltipContent>
               </Tooltip>
             )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-left">{row.original.displayName}</div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="flex gap-2 items-center">
-                  {t('External ID')}: {row.original.externalId || '-'}{' '}
-                  <CopyButton
-                    withoutTooltip={true}
-                    variant="ghost"
-                    textToCopy={row.original.externalId || ''}
-                  ></CopyButton>
-                </div>
-              </TooltipContent>
-            </Tooltip>
+
+            <CopyTextTooltip
+              title={t('External ID')}
+              text={row.original.externalId || ''}
+            >
+              <div className="text-left">{row.original.displayName}</div>
+            </CopyTextTooltip>
           </div>
         );
       },
@@ -252,96 +351,57 @@ function AppConnectionsPage() {
       },
     },
     {
+      accessorKey: 'flowCount',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Flows')} />
+      ),
+      cell: ({ row }) => {
+        return <div className="text-left">{row.original.flowIds?.length}</div>;
+      },
+    },
+    {
       id: 'actions',
       cell: ({ row }) => {
-        const isPlatformConnection = row.original.scope === 'PLATFORM';
+        const isPlatformConnection =
+          row.original.scope === AppConnectionScope.PLATFORM;
+        const userHasPermissionToRename = isPlatformConnection
+          ? userPlatformRole === PlatformRole.ADMIN
+          : userHasPermissionToWriteAppConnection;
         return (
           <div className="flex items-center gap-2 justify-end">
-            <RenameConnectionDialog
-              connectionId={row.original.id}
-              currentName={row.original.displayName}
-              onRename={() => {
-                refetch();
-              }}
-            >
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={
-                      isPlatformConnection
-                        ? userPlatformRole !== PlatformRole.ADMIN
-                        : !userHasPermissionToWriteAppConnection
-                    }
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {userPlatformRole !== PlatformRole.ADMIN &&
-                  !userHasPermissionToWriteAppConnection
-                    ? t('Permission needed')
-                    : t('Rename')}
-                </TooltipContent>
-              </Tooltip>
-            </RenameConnectionDialog>
-
+            {row.original.scope === AppConnectionScope.PROJECT ? (
+              <RenameConnectionDialog
+                connectionId={row.original.id}
+                currentName={row.original.displayName}
+                onRename={() => {
+                  refetch();
+                }}
+                userHasPermissionToRename={userHasPermissionToRename}
+              />
+            ) : (
+              <EditGlobalConnectionDialog
+                connectionId={row.original.id}
+                currentName={row.original.displayName}
+                projectIds={row.original.projectIds}
+                userHasPermissionToEdit={userHasPermissionToRename}
+                onEdit={() => {
+                  refetch();
+                }}
+              />
+            )}
             <ReconnectButtonDialog
-              hasPermission={
-                !isPlatformConnection
-                  ? userHasPermissionToWriteAppConnection
-                  : userPlatformRole === PlatformRole.ADMIN
-              }
+              hasPermission={userHasPermissionToRename}
               connection={row.original}
               onConnectionCreated={() => {
                 refetch();
               }}
             />
+            <FlowsDialog connection={row.original} />
           </div>
         );
       },
     },
   ];
-  const location = useLocation();
-
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['appConnections', location.search],
-    staleTime: 0,
-    gcTime: 0,
-    queryFn: () => {
-      const searchParams = new URLSearchParams(location.search);
-      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-      const limit = searchParams.get(LIMIT_QUERY_PARAM)
-        ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
-        : 10;
-      return appConnectionsApi.list({
-        projectId: authenticationSession.getProjectId()!,
-        cursor: cursor ?? undefined,
-        limit,
-        status: [],
-      });
-    },
-  });
-
-  const userHasPermissionToWriteAppConnection = checkAccess(
-    Permission.WRITE_APP_CONNECTION,
-  );
-
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await Promise.all(ids.map((id) => appConnectionsApi.delete(id)));
-    },
-    onSuccess: () => {
-      refetch();
-    },
-    onError: () => {
-      toast({
-        title: t('Error deleting connections'),
-        variant: 'destructive',
-      });
-    },
-  });
 
   const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
     () => [
@@ -354,9 +414,34 @@ function AppConnectionsPage() {
               >
                 <ConfirmationDeleteDialog
                   title={t('Confirm Deletion')}
-                  message={t(
-                    'Are you sure you want to delete the selected connections? This action cannot be undone.',
-                  )}
+                  message={
+                    <span>
+                      {t(
+                        'Are you sure you want to delete the selected connections? This action cannot be undone.',
+                      )}
+                      <span className="text-black font-bold ml-1">
+                        {t(
+                          `${
+                            Array.from(
+                              new Set(
+                                selectedRows.flatMap(
+                                  (row) => row.flowIds || [],
+                                ),
+                              ),
+                            ).length
+                          } flows will be affected`,
+                        )}
+                      </span>
+                      <Alert className="mt-4 flex flex-col gap-2">
+                        <InfoIcon className="h-5 w-5" />
+                        <span className="font-bold">
+                          {t(
+                            'Deleting connections may cause your Flows or MCP tools to break.',
+                          )}
+                        </span>
+                      </Alert>
+                    </span>
+                  }
                   entityName="connections"
                   mutationFn={async () => {
                     try {
@@ -390,25 +475,47 @@ function AppConnectionsPage() {
       {
         render: () => {
           return (
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToWriteAppConnection}
-            >
-              <NewConnectionDialog
-                isGlobalConnection={false}
-                onConnectionCreated={() => {
-                  setRefresh(refresh + 1);
-                  refetch();
-                }}
+            <div className="flex items-center gap-2">
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToWriteAppConnection}
               >
-                <Button
-                  variant="default"
-                  size="sm"
-                  disabled={!userHasPermissionToWriteAppConnection}
+                <ReplaceConnectionsDialog
+                  projectId={projectId}
+                  onConnectionMerged={() => {
+                    setRefresh(refresh + 1);
+                    refetch();
+                  }}
                 >
-                  {t('New Connection')}
-                </Button>
-              </NewConnectionDialog>
-            </PermissionNeededTooltip>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!userHasPermissionToWriteAppConnection}
+                  >
+                    <Replace className="h-4 w-4" />
+                    <span className="ml-2">{t('Replace')}</span>
+                  </Button>
+                </ReplaceConnectionsDialog>
+              </PermissionNeededTooltip>
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToWriteAppConnection}
+              >
+                <NewConnectionDialog
+                  isGlobalConnection={false}
+                  onConnectionCreated={() => {
+                    setRefresh(refresh + 1);
+                    refetch();
+                  }}
+                >
+                  <Button
+                    variant="default"
+                    size="sm"
+                    disabled={!userHasPermissionToWriteAppConnection}
+                  >
+                    {t('New Connection')}
+                  </Button>
+                </NewConnectionDialog>
+              </PermissionNeededTooltip>
+            </div>
           );
         },
       },
@@ -428,8 +535,13 @@ function AppConnectionsPage() {
         {t('Connections')}
       </TableTitle>
       <DataTable
+        emptyStateTextTitle={t('No connections found')}
+        emptyStateTextDescription={t(
+          'Come back later when you create a automation to manage your connections',
+        )}
+        emptyStateIcon={<Globe className="size-14" />}
         columns={columns}
-        page={data}
+        page={filteredData}
         isLoading={isLoading}
         filters={filters}
         bulkActions={bulkActions}

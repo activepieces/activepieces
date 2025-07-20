@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { isNil, isString } from '@activepieces/shared';
+import { isString } from '@activepieces/shared';
+import {parse} from 'csv-parse/sync';
 
 export const csvToJsonAction = createAction({
   name: 'convert_csv_to_json',
@@ -45,22 +46,8 @@ export const csvToJsonAction = createAction({
         message: 'The input should be a string.',
       }))
     }
-    return csvToJson(csv_text, has_headers, delimiter_type);
+
+    const records = parse(csv_text,{delimiter: delimiter_type,columns: has_headers ? true : false});
+    return records;
   },
 });
-
-function csvToJson(csv_text: string, has_headers: boolean, delimiter_type: string) {
-  if (isNil(csv_text)) {
-    return [];
-  }
-  const rows: string[] = csv_text.split('\n')
-  const headers = has_headers ? rows[0].split(delimiter_type) : rows[0].split(',').map((_, index) => `${index + 1}`);
-  const data = rows.slice(has_headers ? 1 : 0).map((row) => {
-    const values = row.split(delimiter_type);
-    return headers.reduce((acc, header, index) => {
-      acc[header] = values[index];
-      return acc;
-    }, {} as Record<string, any>);
-  });
-  return data;
-}

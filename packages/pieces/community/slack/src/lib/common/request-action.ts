@@ -80,7 +80,7 @@ export const requestAction = async (conversationId: string, context: any) => {
       action: 'N/A',
     };
   } else {
-    const payload = context.resumePayload as { action: string };
+    const payload = context.resumePayload.queryParams as { action: string };
 
     return {
       action: decodeURI(payload.action),

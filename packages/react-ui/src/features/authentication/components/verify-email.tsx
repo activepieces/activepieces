@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { MailCheck, MailX } from 'lucide-react';
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Card } from '@/components/ui/card';
@@ -17,15 +17,14 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const otp = searchParams.get('otpcode');
-  const userId = searchParams.get('userId');
-  useLayoutEffect(() => {
-    mutate();
-  }, []);
+  const identityId = searchParams.get('identityId');
+  const hasMutated = useRef(false);
+
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       return await authenticationApi.verifyEmail({
         otp: otp!,
-        userId: userId!,
+        identityId: identityId!,
       });
     },
     onSuccess: () => {
@@ -46,11 +45,18 @@ const VerifyEmail = () => {
     },
   });
 
-  if (!otp || !userId) {
+  useEffect(() => {
+    if (otp && identityId && !hasMutated.current) {
+      mutate();
+      hasMutated.current = true;
+    }
+  }, [otp, identityId, mutate]);
+
+  if (!otp || !identityId) {
     return <Navigate to="/sign-in" replace />;
   }
   return (
-    <div className="h-screen w-screen flex flex-col  items-center justify-center gap-2">
+    <div className="mx-auto h-screen w-screen flex flex-col items-center justify-center gap-2">
       <FullLogo />
 
       <Card className="w-[28rem] rounded-sm drop-shadow-xl p-4">
@@ -61,14 +67,14 @@ const VerifyEmail = () => {
                 <MailCheck className="w-16 h-16" />
                 <span className="text-left w-fit">
                   {t(
-                    'email has been verified. You will be redirected to sign in...',
+                    'Email has been verified. You will be redirected to sign in...',
                   )}
                 </span>
               </>
             )}
             {isPending && !isExpired && (
               <>
-                <LoadingSpinner className="w-16 h-16" />
+                <LoadingSpinner className="w-6 h-6" />
                 <span className="text-left w-fit">
                   {t('Verifying email...')}
                 </span>
@@ -78,9 +84,14 @@ const VerifyEmail = () => {
             {isExpired && (
               <>
                 <MailX className="w-16 h-16" />
-                <span className="text-left w-fit">
-                  {t('invitation has expired, redirecting to sign in...')}
-                </span>
+                <div className="text-left w-fit">
+                  <div>
+                    {t(
+                      'invitation has expired, once you sign in again you will be able to resend the verification email.',
+                    )}
+                  </div>
+                  <div>{t('Redirecting to sign in...')}</div>
+                </div>
               </>
             )}
           </div>

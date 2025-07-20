@@ -10,10 +10,10 @@ import {
   Trash2,
   UploadCloud,
 } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { useEmbedding, useNewWindow } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/embed-provider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,31 +27,34 @@ import {
   ImportFlowDialog,
   ImportFlowDialogProps,
 } from '@/features/flows/components/import-flow-dialog';
+import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { GitBranchType } from '@activepieces/ee-shared';
 import {
-  Flow,
   FlowOperationType,
   FlowVersion,
+  FlowVersionState,
   Permission,
+  PopulatedFlow,
 } from '@activepieces/shared';
 
 import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
-import { RenameFlowDialog } from '../../features/flows/components/rename-flow-dialog';
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
 import { flowsApi } from '../../features/flows/lib/flows-api';
-import { flowsUtils } from '../../features/flows/lib/flows-utils';
 
 interface FlowActionMenuProps {
-  flow: Flow;
+  flow: PopulatedFlow;
   flowVersion: FlowVersion;
   children?: React.ReactNode;
   readonly: boolean;
-  onRename: (newName: string) => void;
+  onRename: () => void;
   onMoveTo: (folderId: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -76,8 +79,11 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     platform.environmentsEnabled,
   );
   const { checkAccess } = useAuthorization();
+  const userHasPermissionToWriteFolder = checkAccess(Permission.WRITE_FOLDER);
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
-  const userHasPermissionToPushToGit = checkAccess(Permission.WRITE_GIT_REPO);
+  const userHasPermissionToPushToGit = checkAccess(
+    Permission.WRITE_PROJECT_RELEASE,
+  );
   const importFlowProps: ImportFlowDialogProps = {
     insideBuilder: true,
     flowId: flow.id,
@@ -85,19 +91,28 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const { embedState } = useEmbedding();
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
+  const [open, setOpen] = useState(false);
+  const allowPush =
+    flow.publishedVersionId !== null &&
+    flow.version.state === FlowVersionState.LOCKED;
 
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
     mutationFn: async () => {
+      const modifiedFlowVersion = {
+        ...flowVersion,
+        displayName: `${flowVersion.displayName} - Copy`,
+      };
       const createdFlow = await flowsApi.create({
-        displayName: flowVersion.displayName,
+        displayName: modifiedFlowVersion.displayName,
         projectId: authenticationSession.getProjectId()!,
+        folderId: flow.folderId ?? undefined,
       });
       const updatedFlow = await flowsApi.update(createdFlow.id, {
         type: FlowOperationType.IMPORT_FLOW,
         request: {
-          displayName: flowVersion.displayName,
-          trigger: flowVersion.trigger,
-          schemaVersion: flowVersion.schemaVersion,
+          displayName: modifiedFlowVersion.displayName,
+          trigger: modifiedFlowVersion.trigger,
+          schemaVersion: modifiedFlowVersion.schemaVersion,
         },
       });
       return updatedFlow;
@@ -109,65 +124,90 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const { mutate: exportFlow, isPending: isExportPending } = useMutation({
-    mutationFn: () => flowsUtils.downloadFlow(flow.id),
-    onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Flow has been exported.'),
-        duration: 3000,
-      });
-    },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
-  });
-
+  const { mutate: exportFlow, isPending: isExportPending } =
+    flowsHooks.useExportFlows();
   return (
-    <DropdownMenu modal={true}>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
         className="rounded-full p-2 hover:bg-muted cursor-pointer"
         asChild
       >
         {children}
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent
+        noAnimationOnOut={true}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
         {!readonly && (
-          <PermissionNeededTooltip
-            hasPermission={userHasPermissionToUpdateFlow}
-          >
-            <RenameFlowDialog flowId={flow.id} onRename={onRename}>
-              <DropdownMenuItem
-                onSelect={(e) => e.preventDefault()}
-                disabled={!userHasPermissionToUpdateFlow}
+          <>
+            {insideBuilder && (
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToUpdateFlow}
               >
-                <div className="flex cursor-pointer flex-row gap-2 items-center">
-                  <Pencil className="h-4 w-4" />
-                  <span>{t('Rename')}</span>
-                </div>
-              </DropdownMenuItem>
-            </RenameFlowDialog>
-          </PermissionNeededTooltip>
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setOpen(false);
+                    onRename();
+                  }}
+                  disabled={!userHasPermissionToUpdateFlow}
+                >
+                  <div className="flex cursor-pointer flex-row gap-2 items-center">
+                    <Pencil className="h-4 w-4" />
+                    <span>{t('Rename')}</span>
+                  </div>
+                </DropdownMenuItem>
+              </PermissionNeededTooltip>
+            )}
+
+            {!insideBuilder && (
+              <RenameFlowDialog
+                flowId={flow.id}
+                onRename={onRename}
+                flowName={flowVersion.displayName}
+              >
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  disabled={!userHasPermissionToUpdateFlow}
+                >
+                  <div className="flex cursor-pointer flex-row gap-2 items-center">
+                    <Pencil className="h-4 w-4" />
+                    <span>{t('Rename')}</span>
+                  </div>
+                </DropdownMenuItem>
+              </RenameFlowDialog>
+            )}
+          </>
         )}
         <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
-          <PushToGitDialog flowIds={[flow.id]}>
-            <DropdownMenuItem
-              disabled={!userHasPermissionToPushToGit}
-              onSelect={(e) => e.preventDefault()}
-            >
-              <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                <UploadCloud className="h-4 w-4" />
-                <span>{t('Push to Git')}</span>
-              </div>
-            </DropdownMenuItem>
-          </PushToGitDialog>
+          <PublishedNeededTooltip allowPush={allowPush}>
+            <PushToGitDialog type="flow" flows={[flow]}>
+              <DropdownMenuItem
+                disabled={!userHasPermissionToPushToGit || !allowPush}
+                onSelect={(e) => e.preventDefault()}
+              >
+                <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                  <UploadCloud className="h-4 w-4" />
+                  <span>{t('Push to Git')}</span>
+                </div>
+              </DropdownMenuItem>
+            </PushToGitDialog>
+          </PublishedNeededTooltip>
         </PermissionNeededTooltip>
 
         {!embedState.hideFolders && (
           <PermissionNeededTooltip
-            hasPermission={userHasPermissionToUpdateFlow}
+            hasPermission={
+              userHasPermissionToUpdateFlow || userHasPermissionToWriteFolder
+            }
           >
             <MoveFlowDialog flows={[flow]} onMoveTo={onMoveTo}>
               <DropdownMenuItem
-                disabled={!userHasPermissionToUpdateFlow}
+                disabled={
+                  !userHasPermissionToUpdateFlow ||
+                  !userHasPermissionToWriteFolder
+                }
                 onSelect={(e) => e.preventDefault()}
               >
                 <div className="flex cursor-pointer  flex-row gap-2 items-center">
@@ -213,7 +253,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </ImportFlowDialog>
           </PermissionNeededTooltip>
         )}
-        <DropdownMenuItem onClick={() => exportFlow()}>
+        <DropdownMenuItem onClick={() => exportFlow([flow])}>
           <div className="flex cursor-pointer  flex-row gap-2 items-center">
             {isExportPending ? (
               <LoadingSpinner />

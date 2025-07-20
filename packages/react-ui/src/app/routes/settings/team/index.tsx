@@ -39,7 +39,7 @@ export default function TeamPage() {
         'You can invite users to your Platform for free in the community edition. For advanced roles and permissions request trial',
       )}
     >
-      <div className="flex flex-col items-center justify-center gap-4">
+      <div className="w-full flex flex-col items-center justify-center gap-4">
         <Card className="w-full">
           <CardHeader>
             <CardTitle>{t('Project Members')}</CardTitle>

@@ -6,8 +6,8 @@ import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
+import { domainHelper } from '../custom-domains/domain-helper'
 import { emailService } from '../helper/email/email-service'
-import { platformDomainHelper } from '../helper/platform-domain-helper'
 
 const HOUR_IN_SECONDS = 3600
 const DAY_IN_SECONDS = 86400
@@ -25,10 +25,6 @@ async function scheduleSendingReminder(params: IssueRemindersParams, log: Fastif
     if (params.issueCount === 1) {
         const project = await projectService.getOneOrThrow(projectId)
         const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.flowIssuesEnabled || platform.embeddingEnabled) {
-            return
-        }
-        
         const reminderKey = `reminder:${projectId}`
         const isEmailScheduled = await getRedisConnection().get(reminderKey)
         if (isEmailScheduled) {
@@ -64,7 +60,7 @@ async function sendAlertOnNewIssue(params: IssueParams, log: FastifyBaseLogger):
         return
     }
 
-    const issueUrl = await platformDomainHelper.constructUrlFrom({
+    const issueUrl = await domainHelper.getPublicUrl({
         platformId,
         path: 'runs?limit=10#Issues',
     })
@@ -91,7 +87,7 @@ async function sendAlertOnFlowRun(params: IssueParams, log: FastifyBaseLogger): 
         return
     }
 
-    const flowRunsUrl = await platformDomainHelper.constructUrlFrom({
+    const flowRunsUrl = await domainHelper.getPublicUrl({
         platformId,
         path: `runs/${flowRunId}`,
     })

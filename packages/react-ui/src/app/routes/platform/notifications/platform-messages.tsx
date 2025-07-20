@@ -1,4 +1,4 @@
-import { notificationHooks } from './hooks/notifictions-hooks';
+import { notificationHooks } from './hooks/notifications-hooks';
 import PlatformAlert from './platform-alert';
 
 export const PlatformMessages = () => {

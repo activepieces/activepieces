@@ -7,7 +7,7 @@ export const addContactToWorkflowAction = createAction({
     auth:hubspotAuth,
     name:'add-contact-to-workflow',
     displayName:'Add Contact to Workflow',
-    description:'Adds a contact to a specified workflow.',
+    description:'Adds a contact to a specified workflow in your HubSpot account.',
     props:{
         workflowId : workflowIdDropdown,
         email:Property.ShortText({

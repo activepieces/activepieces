@@ -3,6 +3,7 @@ import { AppConnectionValue } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
+import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
 
 export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
@@ -26,7 +27,9 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                     webhookUrl: await webhookUtils(log).getWebhookUrl({
                         flowId: jobData.flowVersion.flowId,
                         simulate: jobData.test,
+                        publicApiUrl: workerMachine.getPublicApiUrl(),
                     }),
+                    triggerPayload: jobData.triggerPayload,
                     test: jobData.test,
                     projectId: jobData.projectId,
                 })
@@ -36,6 +39,17 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                     stepName: jobData.stepName,
                     flowVersion: jobData.flowVersion,
                     sampleData: jobData.sampleData,
+                    projectId: jobData.projectId,
+                })
+                break
+            case UserInteractionJobType.EXECUTE_TOOL:
+                response =  await engineRunner(log).excuteTool(engineToken, {
+                    actionName: jobData.actionName,
+                    pieceName: jobData.pieceName,
+                    pieceVersion: jobData.pieceVersion,
+                    pieceType: jobData.pieceType,
+                    packageType: jobData.packageType,
+                    input: jobData.input,
                     projectId: jobData.projectId,
                 })
                 break

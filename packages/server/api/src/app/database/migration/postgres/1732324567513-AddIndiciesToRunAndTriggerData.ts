@@ -18,13 +18,13 @@ export class AddIndiciesToRunAndTriggerData1732324567513 implements MigrationInt
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX IF EXISTS CONCURRENTLY "public"."idx_run_flow_id"
+            DROP INDEX IF EXISTS CONCURRENTLY "idx_run_flow_id"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS CONCURRENTLY "public"."idx_trigger_event_file_id"
+            DROP INDEX IF EXISTS CONCURRENTLY "idx_trigger_event_file_id"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS CONCURRENTLY "public"."idx_trigger_event_project_id_flow_id"
+            DROP INDEX IF EXISTS CONCURRENTLY "idx_trigger_event_project_id_flow_id"
         `)
     }
 

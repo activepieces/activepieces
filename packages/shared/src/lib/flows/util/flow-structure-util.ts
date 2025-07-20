@@ -164,6 +164,17 @@ function isChildOf(parent: Step, childStepName: string): boolean {
     return false
 }
 
+const findUnusedNames = (source: Trigger | string[], count = 1) => {
+    const names = Array.isArray(source) ? source : flowStructureUtil.getAllSteps(source).map((f) => f.name)
+    const unusedNames = []
+    for (let i = 1; i <= count; i++) {
+        const name = findUnusedName(names)
+        unusedNames.push(name)
+        names.push(name)
+    }
+    return unusedNames
+}
+
 const findUnusedName = (source: Trigger | string[]) => {
     const names = Array.isArray(source) ? source : flowStructureUtil.getAllSteps(source).map((f) => f.name)
     let index = 1
@@ -188,6 +199,29 @@ function getAllNextActionsWithoutChildren(start: Step): Step[] {
     return actions
 }
 
+
+const extractConnectionIdsFromAuth = (auth: string): string[] =>
+    auth.match(/{{connections\['([^']*(?:'\s*,\s*'[^']*)*)'\]}}/)
+        ?.[1]
+        .split(/'\s*,\s*'/)
+        .map(id => id.trim()) ?? []
+
+const extractConnectionIds = (flowVersion: FlowVersion): string[] => {
+    const triggerAuthIds = flowVersion.trigger.settings?.input?.auth
+        ? extractConnectionIdsFromAuth(flowVersion.trigger.settings.input.auth)
+        : []
+
+    const stepAuthIds = flowStructureUtil
+        .getAllSteps(flowVersion.trigger)
+        .flatMap(step =>
+            step.settings?.input?.auth
+                ? extractConnectionIdsFromAuth(step.settings.input.auth)
+                : [],
+        )
+
+    return Array.from(new Set([...triggerAuthIds, ...stepAuthIds]))
+}
+
 export const flowStructureUtil = {
     isTrigger,
     isAction,
@@ -202,6 +236,8 @@ export const flowStructureUtil = {
     findPathToStep,
     isChildOf,
     findUnusedName,
+    findUnusedNames,
     getAllNextActionsWithoutChildren,
     getAllChildSteps,
+    extractConnectionIds,
 }

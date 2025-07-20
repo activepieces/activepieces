@@ -1,20 +1,74 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import {
+	createTrigger,
+	PiecePropValueSchema,
+	TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { todoistSyncClient } from '../common/client/sync-client';
-import { TodoistCompletedTask } from '../common/models';
+import { TodoistCompletedListResponse, TodoistCompletedTask } from '../common/models';
 import { todoistProjectIdDropdown } from '../common/props';
 import { todoistAuth } from '../..';
+import {
+	AuthenticationType,
+	DedupeStrategy,
+	httpClient,
+	HttpMethod,
+	Polling,
+	pollingHelper,
+	QueryParams,
+} from '@activepieces/pieces-common';
 
-type TriggerData = {
-	lastChecked: string;
-};
-
-const TRIGGER_DATA_STORE_KEY = 'todoist_task_completed_trigger_data';
 const ISO_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
-const fiveMinutesAgo = () => dayjs().subtract(5, 'minutes').format(ISO_FORMAT);
-const now = () => dayjs().format(ISO_FORMAT);
+const polling: Polling<PiecePropValueSchema<typeof todoistAuth>, { project_id?: string }> = {
+	strategy: DedupeStrategy.TIMEBASED,
+	async items({ auth, propsValue, lastFetchEpochMS }) {
+		const lastUpdatedTime =
+			lastFetchEpochMS === 0
+				? dayjs().subtract(5, 'minutes').format(ISO_FORMAT)
+				: dayjs(lastFetchEpochMS).format(ISO_FORMAT);
+
+		const tasks: TodoistCompletedTask[] = [];
+
+		let hasMore = true;
+		let offset = 0;
+		const limit = 200;
+
+		do {
+			const qs: QueryParams = {
+				limit: limit.toString(),
+				offset: offset.toString(),
+				since: lastUpdatedTime,
+			};
+
+			if (propsValue.project_id) {
+				qs.project_id = propsValue.project_id;
+			}
+
+			const response = await httpClient.sendRequest<TodoistCompletedListResponse>({
+				method: HttpMethod.GET,
+				url: 'https://api.todoist.com/sync/v9/completed/get_all',
+				queryParams: qs,
+				authentication: {
+					type: AuthenticationType.BEARER_TOKEN,
+					token: auth.access_token,
+				},
+			});
+			if (response.body.items.length > 0) {
+				tasks.push(...response.body.items);
+				offset += limit;
+			} else {
+				hasMore = false;
+			}
+		} while (hasMore);
+
+		return tasks.map((task) => {
+			return {
+				epochMilliSeconds: dayjs(task.completed_at).valueOf(),
+				data: task,
+			};
+		});
+	},
+};
 
 export const todoistTaskCompletedTrigger = createTrigger({
 	auth: todoistAuth,
@@ -23,6 +77,33 @@ export const todoistTaskCompletedTrigger = createTrigger({
 	description: 'Triggers when a new task is completed',
 	type: TriggerStrategy.POLLING,
 
+	props: {
+		project_id: todoistProjectIdDropdown(
+			'Leave it blank if you want to get completed tasks from all your projects.',
+		),
+	},
+
+	async onEnable(context) {
+		await pollingHelper.onEnable(polling, {
+			auth: context.auth,
+			store: context.store,
+			propsValue: context.propsValue,
+		});
+	},
+
+	async onDisable(context) {
+		await pollingHelper.onDisable(polling, {
+			auth: context.auth,
+			store: context.store,
+			propsValue: context.propsValue,
+		});
+	},
+	async test(context) {
+		return await pollingHelper.test(polling, context);
+	},
+	async run(context) {
+		return await pollingHelper.poll(polling, context);
+	},
 	sampleData: {
 		content: 'Buy Milk',
 		meta_data: null,
@@ -33,46 +114,5 @@ export const todoistTaskCompletedTrigger = createTrigger({
 		section_id: '7025',
 		completed_at: '2015-02-17T15:40:41.000000Z',
 		id: '1899066186',
-	},
-
-	props: {
-		project_id: todoistProjectIdDropdown(
-			'Leave it blank if you want to get completed tasks from all your projects.',
-		),
-	},
-
-	async onEnable({ store }): Promise<void> {
-		await store.put<TriggerData>(TRIGGER_DATA_STORE_KEY, {
-			lastChecked: now(),
-		});
-	},
-
-	async onDisable({ store }): Promise<void> {
-		await store.put(TRIGGER_DATA_STORE_KEY, null);
-	},
-
-	async run({ auth, propsValue, store }): Promise<TodoistCompletedTask[]> {
-		const token = auth.access_token;
-		const { project_id } = propsValue;
-
-		assertNotNullOrUndefined(token, 'token');
-
-		const triggerData = await store.get<TriggerData>(TRIGGER_DATA_STORE_KEY);
-		const since = triggerData?.lastChecked ?? fiveMinutesAgo();
-		const until = now();
-
-		const response = await todoistSyncClient.completed.list({
-			token,
-			since,
-			until,
-			project_id,
-		});
-
-		await store.put<TriggerData>(TRIGGER_DATA_STORE_KEY, {
-			// It returns data newer than the since parameter, and not equal.
-			lastChecked: until,
-		});
-
-		return response.items;
 	},
 });

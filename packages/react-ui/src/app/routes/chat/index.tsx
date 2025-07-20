@@ -6,10 +6,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 
-import { LoadingScreen } from '@/app/components/loading-screen';
 import { FileInputPreview } from '@/app/routes/chat/file-input-preview';
 import { Button } from '@/components/ui/button';
 import { ChatInput } from '@/components/ui/chat/chat-input';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { humanInputApi } from '@/features/human-input/lib/human-input-api';
 import { cn, useElementSize } from '@/lib/utils';
 import {

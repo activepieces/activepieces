@@ -24,6 +24,12 @@ module.exports = {
       },
     },
     extend: {
+      width: {
+        '4.5': '1.125rem'
+      },
+      height: {
+        '4.5': '1.125rem',
+      },
       transitionDuration: {
         1500: '1500ms',
       },
@@ -36,6 +42,16 @@ module.exports = {
         },
         border: {
           DEFAULT: 'hsl(var(--border))',
+        },
+        sidebar: {
+          DEFAULT: 'hsl(var(--sidebar-background))',
+          foreground: 'hsl(var(--sidebar-foreground))',
+          primary: 'hsl(var(--sidebar-primary))',
+          'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
+          accent: 'hsl(var(--sidebar-accent))',
+          'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+          border: 'hsl(var(--sidebar-border))',
+          ring: 'hsl(var(--sidebar-ring))',
         },
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

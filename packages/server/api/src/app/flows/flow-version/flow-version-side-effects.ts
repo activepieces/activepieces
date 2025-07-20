@@ -2,6 +2,7 @@ import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
+    FileType,
     FlowId,
     FlowOperationRequest,
     FlowOperationType,
@@ -82,7 +83,18 @@ async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowV
                     projectId,
                     flowVersionId: flowVersion.id,
                     flowId: flowVersion.flowId,
-                    sampleDataFileId: stepToDelete.settings.inputUiInfo.sampleDataFileId,
+                    fileId: stepToDelete.settings.inputUiInfo.sampleDataFileId,
+                    fileType: FileType.SAMPLE_DATA,
+                })
+            }
+            const sampleDataInputExists = !isNil(stepToDelete?.settings.inputUiInfo?.sampleDataInputFileId)
+            if (triggerChanged && sampleDataInputExists) {
+                await sampleDataService(log).deleteForStep({
+                    projectId,
+                    flowVersionId: flowVersion.id,
+                    flowId: flowVersion.flowId,
+                    fileId: stepToDelete.settings.inputUiInfo.sampleDataInputFileId,
+                    fileType: FileType.SAMPLE_DATA_INPUT,
                 })
             }
             break
@@ -96,7 +108,18 @@ async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowV
                         projectId,
                         flowVersionId: flowVersion.id,
                         flowId: flowVersion.flowId,
-                        sampleDataFileId: step.settings.inputUiInfo.sampleDataFileId,
+                        fileId: step.settings.inputUiInfo.sampleDataFileId,
+                        fileType: FileType.SAMPLE_DATA,
+                    })
+                }
+                const sampleDataInputExists = !isNil(step.settings.inputUiInfo?.sampleDataInputFileId)
+                if (sampleDataInputExists) {
+                    await sampleDataService(log).deleteForStep({
+                        projectId,
+                        flowVersionId: flowVersion.id,
+                        flowId: flowVersion.flowId,
+                        fileId: step.settings.inputUiInfo.sampleDataInputFileId,
+                        fileType: FileType.SAMPLE_DATA_INPUT,
                     })
                 }
             }

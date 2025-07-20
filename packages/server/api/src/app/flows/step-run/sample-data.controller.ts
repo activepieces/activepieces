@@ -1,4 +1,4 @@
-import { CreateStepRunRequestBody, GetSampleDataRequest, PrincipalType, SaveSampleDataRequest, SaveSampleDataResponse, StepRunResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { CreateStepRunRequestBody, FileType, GetSampleDataRequest, PrincipalType, SaveSampleDataRequest, SaveSampleDataResponse, SERVICE_KEY_SECURITY_OPENAPI, StepRunResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
@@ -21,6 +21,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
             const response: StepRunResponse = {
                 id: data.id,
                 success: stepRun.success,
+                input: stepRun.input,
                 output: stepRun.output,
                 standardError: stepRun.standardError,
                 standardOutput: stepRun.standardOutput,
@@ -36,6 +37,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
             flowVersionId: request.body.flowVersionId,
             stepName: request.body.stepName,
             payload: request.body.payload,
+            fileType: request.body.fileType ?? FileType.SAMPLE_DATA,
         })
     })
 
@@ -49,6 +51,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
             projectId: request.principal.projectId,
             flowVersion: flow.version,
             stepName: request.query.stepName,
+            fileType: request.query.fileType ?? FileType.SAMPLE_DATA,
         })
         return sampleData
     })
@@ -56,10 +59,12 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
 
 const SaveSampleRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
     schema: {
+        tags: ['sample-data'],
         body: SaveSampleDataRequest,
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
             [StatusCodes.OK]: SaveSampleDataResponse,
         },
@@ -68,9 +73,11 @@ const SaveSampleRequest = {
 
 const GetSampleDataRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
     schema: {
+        tags: ['sample-data'],
         querystring: GetSampleDataRequest,
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }

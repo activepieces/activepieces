@@ -23,6 +23,7 @@ type MarkdownProps = {
   markdown: string | undefined;
   variables?: Record<string, string>;
   variant?: MarkdownVariant;
+  className?: string;
 };
 
 const Container = ({
@@ -63,7 +64,7 @@ const Container = ({
 };
 
 const ApMarkdown = React.memo(
-  ({ markdown, variables, variant }: MarkdownProps) => {
+  ({ markdown, variables, variant, className }: MarkdownProps) => {
     const [copiedText, setCopiedText] = useState<string | null>(null);
     const { toast } = useToast();
 
@@ -92,7 +93,7 @@ const ApMarkdown = React.memo(
     return (
       <Container variant={variant}>
         <ReactMarkdown
-          className="flex-grow w-full"
+          className={cn('flex-grow w-full ', className)}
           remarkPlugins={[gfm]}
           components={{
             code(props) {
@@ -144,15 +145,15 @@ const ApMarkdown = React.memo(
             ),
             p: ({ node, ...props }) => (
               <p
-                className="leading-7 [&:not(:first-child)]:mt-4 w-full"
+                className="leading-7 [&:not(:first-child)]:mt-2 w-full"
                 {...props}
               />
             ),
             ul: ({ node, ...props }) => (
-              <ul className="mt-4 ml-6 list-disc [&>li]:mt-4" {...props} />
+              <ul className="mt-4 ml-6 list-disc [&>li]:mt-2" {...props} />
             ),
             ol: ({ node, ...props }) => (
-              <ol className="mt-4 ml-6 list-decimal [&>li]:mt-4" {...props} />
+              <ol className="mt-4 ml-6 list-decimal [&>li]:mt-2" {...props} />
             ),
             li: ({ node, ...props }) => <li {...props} />,
             a: ({ node, ...props }) => (

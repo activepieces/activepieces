@@ -35,19 +35,19 @@ const AvatarLetter = ({
       {!disablePopup && (
         <Tooltip>
           <TooltipTrigger>
-            <span className="text-xs text-background">
+            <span className="text-sm text-background">
               {email.charAt(0).toLocaleUpperCase()}
             </span>
           </TooltipTrigger>
           <TooltipContent>
-            <span className="text-xs">
+            <span className="text-sm">
               {name} <br />({email})
             </span>
           </TooltipContent>
         </Tooltip>
       )}
       {disablePopup && (
-        <span className="text-xs text-background">
+        <span className="text-sm text-background">
           {email.charAt(0).toLocaleUpperCase()}
         </span>
       )}

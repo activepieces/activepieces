@@ -1,4 +1,4 @@
-import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, TriggerHookType } from '@activepieces/shared'
+import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -40,7 +40,7 @@ export class EngineConstants {
         public readonly flowVersionId: string,
         public readonly flowVersionState: FlowVersionState,
         public readonly flowRunId: string,
-        public readonly publicUrl: string,
+        public readonly publicApiUrl: string,
         public readonly internalApiUrl: string,
         public readonly retryConstants: RetryConstants,
         public readonly engineToken: string,
@@ -51,7 +51,14 @@ export class EngineConstants {
         public readonly serverHandlerId: string | null,
         public readonly httpRequestId: string | null,
         public readonly resumePayload?: ResumePayload,
-    ) { }
+    ) {
+        if (!publicApiUrl.endsWith('/api/')) {
+            throw new Error('Public URL must end with a slash, got: ' + publicApiUrl)
+        }
+        if (!internalApiUrl.endsWith('/')) {
+            throw new Error('Internal API URL must end with a slash, got: ' + internalApiUrl)
+        }
+    }
 
     public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
         return new EngineConstants(
@@ -59,7 +66,7 @@ export class EngineConstants {
             input.flowVersion.id,
             input.flowVersion.state,
             input.flowRunId,
-            input.publicUrl,
+            input.publicApiUrl,
             input.internalApiUrl,
             DEFAULT_RETRY_CONSTANTS,
             input.engineToken,
@@ -77,13 +84,35 @@ export class EngineConstants {
         )
     }
 
+    public static fromExecuteActionInput(input: ExecuteToolOperation): EngineConstants {
+        return new EngineConstants(
+            'mcp-flow-id',
+            'mcp-flow-version-id',
+            FlowVersionState.LOCKED,
+            'mcp-flow-run-id',
+            input.publicApiUrl,
+            addTrailingSlashIfMissing(input.internalApiUrl),
+            DEFAULT_RETRY_CONSTANTS,
+            input.engineToken,
+            input.projectId,
+            createPropsResolver({
+                projectId: input.projectId,
+                engineToken: input.engineToken,
+                apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
+            }),
+            true,
+            ProgressUpdateType.NONE,
+            null,
+            null,
+        )
+    }
     public static fromExecuteStepInput(input: ExecuteStepOperation): EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,
             input.flowVersion.id,
             input.flowVersion.state,
             'test-run',
-            input.publicUrl,
+            input.publicApiUrl,
             addTrailingSlashIfMissing(input.internalApiUrl),
             DEFAULT_RETRY_CONSTANTS,
             input.engineToken,
@@ -106,7 +135,7 @@ export class EngineConstants {
             input.flowVersion.id,
             input.flowVersion.state,
             'execute-property',
-            input.publicUrl,
+            input.publicApiUrl,
             addTrailingSlashIfMissing(input.internalApiUrl),
             DEFAULT_RETRY_CONSTANTS,
             input.engineToken,
@@ -129,7 +158,7 @@ export class EngineConstants {
             input.flowVersion.id,
             input.flowVersion.state,
             'execute-trigger',
-            input.publicUrl,
+            input.publicApiUrl,
             addTrailingSlashIfMissing(input.internalApiUrl),
             DEFAULT_RETRY_CONSTANTS,
             input.engineToken,

@@ -1,15 +1,17 @@
-import { exceptionHandler, JobType, QueueName } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, JobType, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
+import { system } from '../../helper/system/system'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
 import { redisRateLimiter } from './redis-rate-limiter'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
-const ONE_MONTH = apDayjsDuration(1, 'month').asMilliseconds()
+const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
+const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT)
 
 const defaultJobOptions: DefaultJobOptions = {
     attempts: 5,
@@ -19,21 +21,11 @@ const defaultJobOptions: DefaultJobOptions = {
     },
     removeOnComplete: true,
     removeOnFail: {
-        age: ONE_MONTH,
+        age: REDIS_FAILED_JOB_RETENTION_DAYS,
+        count: REDIS_FAILED_JOB_RETRY_COUNT,
     },
 }
-const repeatingJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
-
 export const bullMqGroups: Record<string, Queue> = {}
-
-const jobTypeToQueueName: Record<JobType, QueueName> = {
-    [JobType.DELAYED]: QueueName.SCHEDULED,
-    [JobType.ONE_TIME]: QueueName.ONE_TIME,
-    [JobType.REPEATING]: QueueName.SCHEDULED,
-    [JobType.WEBHOOK]: QueueName.WEBHOOK,
-    [JobType.USERS_INTERACTION]: QueueName.USERS_INTERACTION,
-}
-
 const jobTypeToDefaultJobOptions: Record<QueueName, DefaultJobOptions> = {
     [QueueName.SCHEDULED]: defaultJobOptions,
     [QueueName.ONE_TIME]: defaultJobOptions,
@@ -54,16 +46,18 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
     },
     async add(params: AddParams<JobType>): Promise<void> {
         const { type, data } = params
-        const { shouldRateLimit } = await redisRateLimiter(log).shouldBeLimited(jobTypeToQueueName[type], data.projectId, params.id)
 
-        if (shouldRateLimit) {
-            await redisRateLimiter(log).rateLimitJob(params)
-            return
+        if (params.type === JobType.WEBHOOK || params.type === JobType.ONE_TIME) {
+            const { shouldRateLimit } = await redisRateLimiter(log).shouldBeLimited(data.projectId, params.id)
+            if (shouldRateLimit) {
+                await redisRateLimiter(log).rateLimitJob(params)
+                return
+            }
         }
 
         switch (type) {
             case JobType.REPEATING: {
-                await addRepeatingJob(params)
+                await upsertRepeatingJob(params)
                 break
             }
             case JobType.DELAYED: {
@@ -89,41 +83,21 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
     },
     async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
         const queue = await ensureQueueExists(QueueName.SCHEDULED)
-        const client = await queue.client
-        const repeatJob = await findRepeatableJobKey(flowVersionId, log)
-        if (isNil(repeatJob)) {
-            exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`), log)
-            return
-        }
         log.info({
             flowVersionId,
         }, '[redisQueue#removeRepeatingJob] removing the jobs')
-        const result = await queue.removeRepeatableByKey(repeatJob)
+        const result = await queue.removeJobScheduler(flowVersionId)
         if (!result) {
-            throw new ActivepiecesError({
+            exceptionHandler.handle(new ActivepiecesError({
                 code: ErrorCode.JOB_REMOVAL_FAILURE,
                 params: {
                     flowVersionId,
                 },
-            })
+            }), log)
         }
-        await client.del(repeatingJobKey(flowVersionId))
     },
-})
 
-async function findRepeatableJobKey(flowVersionId: ApId, log: FastifyBaseLogger): Promise<string | undefined> {
-    const queue = await ensureQueueExists(QueueName.SCHEDULED)
-    const client = await queue.client
-    const jobKey = await client.get(repeatingJobKey(flowVersionId))
-    // TODO: this temporary solution for jobs that doesn't have repeatJobKey in redis, it's also confusing because it search by flowVersionId
-    if (isNil(jobKey)) {
-        const jobs = await queue.getJobs()
-        const jobKeyInRedis = jobs.filter(f => !isNil(f) && !isNil(f.data)).find((f) => f.data.flowVersionId === flowVersionId)
-        log.warn({ flowVersionId, repeatJobKey: jobKeyInRedis?.repeatJobKey }, 'Job key not found in redis, trying to find it in the queue')
-        return jobKeyInRedis?.repeatJobKey
-    }
-    return jobKey
-}
+})
 
 async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
     if (!isNil(bullMqGroups[queueName])) {
@@ -162,19 +136,18 @@ async function addUserInteractionJob(queue: Queue, params: AddParams<JobType.USE
     await queue.add(id, data)
 }
 
-async function addRepeatingJob(params: AddParams<JobType.REPEATING>): Promise<void> {
-    const { id, data, scheduleOptions } = params
+async function upsertRepeatingJob(params: AddParams<JobType.REPEATING>): Promise<void> {
+    const { data, scheduleOptions } = params
     const queue = await ensureQueueExists(QueueName.SCHEDULED)
-    const job = await queue.add(id, data, {
-        jobId: id,
-        repeat: {
+    await queue.upsertJobScheduler(data.flowVersionId,
+        {
             pattern: scheduleOptions.cronExpression,
             tz: scheduleOptions.timezone,
         },
-    })
-    if (isNil(job.repeatJobKey)) {
-        return
-    }
-    const client = await queue.client
-    await client.set(repeatingJobKey(id), job.repeatJobKey)
+        {
+            name: data.flowVersionId,
+            data,
+        },
+    )
 }
+

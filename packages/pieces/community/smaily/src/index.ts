@@ -16,7 +16,7 @@ import { getSubscriberAction } from './lib/actions/get-subscriber.action';
 
 export const smailyAuth = PieceAuth.CustomAuth({
   description: `
-  1. Click on profile pic (top right corner), naviagte to **Preferences**.
+  1. Click on profile pic (top right corner), navigate to **Preferences**.
   2. Go to **Integrations** tab and click on **Create a New User**.
   3. Copy generated domain, user and password.`,
   required: true,
@@ -51,7 +51,7 @@ export const smailyAuth = PieceAuth.CustomAuth({
     } catch {
       return {
         valid: false,
-        error: 'Please provide correct credetials.',
+        error: 'Please provide correct credentials.',
       };
     }
   },

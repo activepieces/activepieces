@@ -1,14 +1,24 @@
 import {
     AppConnection,
+    Cell,
+    Field,
     Flow,
     Folder,
     Platform,
     Project,
+    Record,
+    Table,
+    TableWebhook,
     TriggerEvent,
     User,
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart, TIMESTAMP_COLUMN_TYPE } from '../database/database-common'
+import {
+    ApIdSchema,
+    BaseColumnSchemaPart,
+    JSONB_COLUMN_TYPE,
+    TIMESTAMP_COLUMN_TYPE,
+} from '../database/database-common'
 
 type ProjectSchema = Project & {
     owner: User
@@ -18,6 +28,11 @@ type ProjectSchema = Project & {
     events: TriggerEvent[]
     appConnections: AppConnection[]
     platform: Platform
+    tables: Table[]
+    fields: Field[]
+    records: Record[]
+    cells: Cell[]
+    tableWebhooks: TableWebhook[]
 }
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
@@ -47,6 +62,10 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: Boolean,
             nullable: false,
             default: false,
+        },
+        metadata: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
         },
     },
     indices: [
@@ -105,6 +124,31 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         flows: {
             type: 'one-to-many',
             target: 'flow',
+            inverseSide: 'project',
+        },
+        tables: {
+            type: 'one-to-many',
+            target: 'table',
+            inverseSide: 'project',
+        },
+        fields: {
+            type: 'one-to-many',
+            target: 'field',
+            inverseSide: 'project',
+        },
+        records: {
+            type: 'one-to-many',
+            target: 'record',
+            inverseSide: 'project',
+        },
+        cells: {
+            type: 'one-to-many',
+            target: 'cell',
+            inverseSide: 'project',
+        },
+        tableWebhooks: {
+            type: 'one-to-many',
+            target: 'table_webhook',
             inverseSide: 'project',
         },
     },

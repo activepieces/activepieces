@@ -1,11 +1,12 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CheckCircle2, Mailbox } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -69,16 +70,11 @@ const FromSchema = Type.Object({
 type FromSchema = Static<typeof FromSchema>;
 
 export const SmtpSection = () => {
-  const { platform } = platformHooks.useCurrentPlatform();
+  const { platform, setCurrentPlatform } = platformHooks.useCurrentPlatform();
   const [isOpen, setIsOpen] = useState(false);
   const form = useForm<FromSchema>({
     defaultValues: {
-      host: platform?.smtp?.host,
-      port: (platform?.smtp?.port ?? 587).toString(),
-      user: platform?.smtp?.user,
-      password: platform?.smtp?.password,
-      senderEmail: platform?.smtp?.senderEmail,
-      senderName: platform?.smtp?.senderName,
+      port: '587',
     },
     resolver: typeboxResolver(FromSchema),
   });
@@ -86,25 +82,36 @@ export const SmtpSection = () => {
   const { toast } = useToast();
 
   const smtpConfigured = !isNil(platform?.smtp);
-
+  const queryClient = useQueryClient();
   const { mutate: updatePlatform, isPending } = useMutation({
-    mutationFn: async (request: FromSchema) =>
-      platformApi.update(
-        {
-          smtp: {
-            ...request,
-            port: Number(request.port),
+    mutationFn: async (request: FromSchema | null) => {
+      if (request) {
+        return platformApi.update(
+          {
+            smtp: {
+              ...request,
+              port: Number(request.port),
+            },
           },
-        },
-        platform.id,
-      ),
-    onSuccess: () => {
+          platform.id,
+        );
+      } else {
+        return platformApi.update(
+          {
+            smtp: null,
+          },
+          platform.id,
+        );
+      }
+    },
+    onSuccess: (platform) => {
       setIsOpen(false);
       toast({
         title: t('Success'),
         description: t('Your changes have been saved.'),
         duration: 3000,
       });
+      setCurrentPlatform(queryClient, platform);
     },
     onError: (e) => {
       let message = INTERNAL_ERROR_MESSAGE;
@@ -138,14 +145,41 @@ export const SmtpSection = () => {
             <Mailbox className="w-8 h-8" />
           </div>
           <div className="flex flex-grow  flex-col">
-            <div className="text-md">Mail Server</div>
+            <div className="text-md">{t('Mail Server')}</div>
             <div className="text-sm text-muted-foreground">
               {t('Set up your SMTP settings to send emails from your domain.')}
             </div>
           </div>
-          <div className="flex flex-col justify-center items-center">
+          <div className="flex gap-2 justify-center items-center">
+            {smtpConfigured && (
+              <ConfirmationDeleteDialog
+                title={t('Disable Mail Server')}
+                message={
+                  <>
+                    <p>
+                      {t('Are you sure you want to disable your mail server?')}
+                    </p>
+                    <p>
+                      {t(
+                        'This will stop you from sending emails for issues, quota limits, invitations and forgot password.',
+                      )}
+                    </p>
+                  </>
+                }
+                entityName={t('mail server')}
+                mutationFn={async () => {
+                  updatePlatform(null);
+                }}
+                buttonText={t('Confirm')}
+              >
+                <Button variant={'destructive'} size={'sm'}>
+                  {t('Disable')}
+                </Button>
+              </ConfirmationDeleteDialog>
+            )}
             <Dialog
               open={isOpen}
+              key={isOpen ? 'open' : 'closed'}
               onOpenChange={(open) => {
                 if (!open) {
                   form.reset();
@@ -288,6 +322,13 @@ export const SmtpSection = () => {
                         </div>
                       )}
                       <div className="flex gap-2 justify-end mt-4">
+                        <Button
+                          variant={'outline'}
+                          onClick={() => setIsOpen(false)}
+                        >
+                          {t('Cancel')}
+                        </Button>
+
                         <Button loading={isPending} type="submit">
                           {t('Save')}
                         </Button>

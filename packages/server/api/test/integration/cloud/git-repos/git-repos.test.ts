@@ -10,8 +10,9 @@ import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockGitRepo,
     createMockProject,
-    createMockUser,
-    mockEnvironment,
+    mockAndSaveBasicSetup,
+    mockAndSaveBasicSetupWithApiKey,
+    mockBasicUser,
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -29,10 +30,17 @@ afterAll(async () => {
 describe('Git API', () => {
     describe('Create API', () => {
         it('should not allow create git repo for other projects', async () => {
-            const { mockPlatform, mockProject, mockOwner } = await mockEnvironment()
+            const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                platform: {
+                    environmentsEnabled: true,
+                },
+            })
 
-            const mockUser2 = createMockUser({ platformId: mockPlatform.id })
-            await databaseConnection().getRepository('user').save(mockUser2)
+            const { mockUser: mockUser2 } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                },
+            })
 
             const mockProject2 = createMockProject({ platformId: mockPlatform.id, ownerId: mockUser2.id })
             await databaseConnection().getRepository('project').save(mockProject2)
@@ -65,7 +73,11 @@ describe('Git API', () => {
         })
 
         it('should create a git repo', async () => {
-            const { mockProject, mockOwner } = await mockEnvironment()
+            const { mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                platform: {
+                    environmentsEnabled: true,
+                },
+            })
 
             const request = {
                 projectId: mockProject.id,
@@ -107,7 +119,11 @@ describe('Git API', () => {
 
     describe('Delete API', () => {
         it('should delete a git repo', async () => {
-            const { mockProject, mockOwner } = await mockEnvironment()
+            const { mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                platform: {
+                    environmentsEnabled: true,
+                },
+            })
 
             const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
             await databaseConnection().getRepository('git_repo').save(mockGitRepo)
@@ -131,7 +147,11 @@ describe('Git API', () => {
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
         })
         it('should not allow delete git repo for other projects', async () => {
-            const { mockPlatform, mockProject, mockOwner } = await mockEnvironment()
+            const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                platform: {
+                    environmentsEnabled: true,
+                },
+            })
 
             const mockProject2 = createMockProject({ platformId: mockPlatform.id, ownerId: mockOwner.id })
             await databaseConnection().getRepository('project').save(mockProject2)
@@ -162,8 +182,16 @@ describe('Git API', () => {
 
     describe('List API', () => {
         it('should list return forbidden when api request wrong project', async () => {
-            const { mockPlatform, mockProject, mockApiKey, mockOwner } = await mockEnvironment()
-            const { mockProject: mockProject3 } = await mockEnvironment()
+            const { mockPlatform, mockProject, mockApiKey, mockOwner } = await mockAndSaveBasicSetupWithApiKey({
+                platform: {
+                    environmentsEnabled: true,
+                },
+            })
+            const { mockProject: mockProject3 } = await mockAndSaveBasicSetup({
+                platform: {
+                    environmentsEnabled: true,
+                },
+            })
 
             const mockProject2 = createMockProject({ platformId: mockPlatform.id, ownerId: mockOwner.id })
             await databaseConnection()
@@ -187,8 +215,16 @@ describe('Git API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
         it('should list return forbidden when user request wrong project', async () => {
-            const { mockPlatform, mockProject, mockOwner } = await mockEnvironment()
-            const { mockProject: mockProject3 } = await mockEnvironment()
+            const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                platform: {
+                    environmentsEnabled: true,
+                },
+            })
+            const { mockProject: mockProject3 } = await mockAndSaveBasicSetup({
+                platform: {
+                    environmentsEnabled: true,
+                },
+            })
 
             const mockProject2 = createMockProject({ platformId: mockPlatform.id, ownerId: mockOwner.id })
             await databaseConnection()
@@ -218,7 +254,11 @@ describe('Git API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
         it('should list a git repo', async () => {
-            const { mockPlatform, mockProject, mockOwner } = await mockEnvironment()
+            const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                platform: {
+                    environmentsEnabled: true,
+                },
+            })
 
             const mockProject2 = createMockProject({ platformId: mockPlatform.id, ownerId: mockOwner.id })
             await databaseConnection()

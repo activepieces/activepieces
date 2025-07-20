@@ -8,6 +8,7 @@ import {
     ListGlobalConnectionsRequestQuery,
     PrincipalType,
     SeekPage,
+    SERVICE_KEY_SECURITY_OPENAPI,
     UpdateGlobalConnectionValueRequestBody,
     UpsertGlobalConnectionRequestBody,
 } from '@activepieces/shared'
@@ -108,11 +109,13 @@ const DEFAULT_PAGE_SIZE = 10
 
 const UpsertGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
     },
     schema: {
+        tags: ['global-connections'],
         body: UpsertGlobalConnectionRequestBody,
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
             [StatusCodes.CREATED]: AppConnectionWithoutSensitiveData,
         },
@@ -121,24 +124,28 @@ const UpsertGlobalConnectionRequest = {
 
 const UpdateGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
     },
     schema: {
+        tags: ['global-connections'],
         body: UpdateGlobalConnectionValueRequestBody,
         params: Type.Object({
             id: ApId,
         }),
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 
 const ListGlobalConnectionsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
     },
     schema: {
+        tags: ['global-connections'],
         querystring: ListGlobalConnectionsRequestQuery,
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
             [StatusCodes.OK]: SeekPage(AppConnectionWithoutSensitiveData),
         },
@@ -147,13 +154,15 @@ const ListGlobalConnectionsRequest = {
 
 const DeleteGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
     },
     schema: {
+        tags: ['global-connections'],
         params: Type.Object({
             id: ApId,
         }),
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
             [StatusCodes.NO_CONTENT]: Type.Never(),
         },

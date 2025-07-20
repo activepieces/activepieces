@@ -17,7 +17,7 @@ export const flagHooks = {
 }
 
 type CreateParams = {
-    flags: Record<string, unknown>
+    flags: Record<string, string | boolean | number | Record<string, unknown>>
     request: FastifyRequest
 }
 

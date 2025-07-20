@@ -1,11 +1,10 @@
-import { ContainerType, PiecesSource, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, PiecesSource, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
 import { DatabaseType, QueueMode, RedisType, system } from './system/system'
-import { AppSystemProp, SystemProp } from './system/system-prop'
 
 
 function enumValidator<T extends string>(enumValues: T[]) {
@@ -53,7 +52,6 @@ const systemPropValidators: {
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
-    [WorkerSystemProp.FRONTEND_URL]: urlValidator,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.PIECES_SOURCE]: enumValidator(Object.values(PiecesSource)),
@@ -61,9 +59,9 @@ const systemPropValidators: {
     [AppSystemProp.LOKI_PASSWORD]: stringValidator,
     [AppSystemProp.LOKI_URL]: urlValidator,
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
+    [WorkerSystemProp.FRONTEND_URL]: urlValidator,
     [WorkerSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [WorkerSystemProp.WORKER_TOKEN]: stringValidator,
-
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: booleanValidator,
@@ -79,8 +77,6 @@ const systemPropValidators: {
     [AppSystemProp.JWT_SECRET]: stringValidator,
     [AppSystemProp.LICENSE_KEY]: stringValidator,
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: numberValidator,
-    [AppSystemProp.OPENAI_API_BASE_URL]: urlValidator,
-    [AppSystemProp.OPENAI_API_KEY]: stringValidator,
     [AppSystemProp.PIECES_SYNC_MODE]: enumValidator(Object.values(PieceSyncMode)),
     [AppSystemProp.POSTGRES_DATABASE]: stringValidator,
     [AppSystemProp.POSTGRES_HOST]: stringValidator,
@@ -96,6 +92,8 @@ const systemPropValidators: {
     [AppSystemProp.QUEUE_UI_PASSWORD]: stringValidator,
     [AppSystemProp.QUEUE_UI_USERNAME]: stringValidator,
     [AppSystemProp.REDIS_TYPE]: enumValidator(Object.values(RedisType)),
+    [AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS]: numberValidator,
+    [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: numberValidator,
     [AppSystemProp.REDIS_SSL_CA_FILE]: stringValidator,
     [AppSystemProp.REDIS_DB]: numberValidator,
     [AppSystemProp.REDIS_HOST]: stringValidator,
@@ -113,6 +111,7 @@ const systemPropValidators: {
     [AppSystemProp.S3_REGION]: stringValidator,
     [AppSystemProp.S3_SECRET_ACCESS_KEY]: stringValidator,
     [AppSystemProp.S3_USE_SIGNED_URLS]: booleanValidator,
+    [AppSystemProp.S3_USE_IRSA]: booleanValidator,
     [AppSystemProp.SMTP_HOST]: stringValidator,
     [AppSystemProp.SMTP_PASSWORD]: stringValidator,
     [AppSystemProp.SMTP_PORT]: numberValidator,
@@ -131,20 +130,33 @@ const systemPropValidators: {
     [AppSystemProp.STRIPE_SECRET_KEY]: stringValidator,
     [AppSystemProp.STRIPE_WEBHOOK_SECRET]: stringValidator,
     [AppSystemProp.CLOUD_PLATFORM_ID]: stringValidator,
-    [AppSystemProp.CLOUDFLARE_AUTH_EMAIL]: (value: string) => value.includes('@') ? true : 'Value must be a valid email address',
-    [AppSystemProp.CLOUDFLARE_ZONE_ID]: stringValidator,
-    [AppSystemProp.CLOUDFLARE_API_KEY]: stringValidator,
+    [AppSystemProp.INTERNAL_URL]: stringValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
-
+    [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
     // Copilot
-    [AppSystemProp.PERPLEXITY_API_KEY]: stringValidator,
     [AppSystemProp.PERPLEXITY_BASE_URL]: urlValidator,
 
     // AppSystemProp
-    [AppSystemProp.FLOW_WORKER_CONCURRENCY]: numberValidator,
-    [AppSystemProp.SCHEDULED_WORKER_CONCURRENCY]: numberValidator,
+    [WorkerSystemProp.FLOW_WORKER_CONCURRENCY]: numberValidator,
+    [WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY]: numberValidator,
 
+    // Cloud
+    [AppSystemProp.GOOGLE_CLIENT_ID]: stringValidator,
+    [AppSystemProp.GOOGLE_CLIENT_SECRET]: stringValidator,
 
+    // Cloudflare
+    [AppSystemProp.CLOUDFLARE_API_TOKEN]: stringValidator,
+    [AppSystemProp.CLOUDFLARE_API_BASE]: stringValidator,
+    [AppSystemProp.CLOUDFLARE_ZONE_ID]: stringValidator,
+
+    // Secret Manager
+    [AppSystemProp.SECRET_MANAGER_API_KEY]: stringValidator,
+
+    // Tables
+    [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
+    [AppSystemProp.MAX_TABLES_PER_PROJECT]: numberValidator,
+    [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
+    [AppSystemProp.SHOW_CHANGELOG]: booleanValidator,
 }
 
 
@@ -203,7 +215,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
     const isValidHexKey = encryptionKey && /^[A-Za-z0-9]{32}$/.test(encryptionKey)
     if (!isValidHexKey) {
         throw new Error(JSON.stringify({
-            message: 'AP_ENCRYPTION_KEY is either undefined or not a valid 32 hex string.',
+            message: 'AP_ENCRYPTION_KEY is missing or invalid. It must be a 32-character hexadecimal string (representing 16 bytes). You can generate one using the command: `openssl rand -hex 16`',
             docUrl: 'https://www.activepieces.com/docs/install/configuration/environment-variables',
         }))
     }

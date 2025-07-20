@@ -3,7 +3,7 @@ import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
     HARD_DELETE_PROJECT = 'hard-delete-project',
-    PROJECT_USAGE_REPORT = 'project-usage-report',
+    PLATFORM_USAGE_REPORT = 'platform-usage-report',
     USAGE_REPORT = 'usage-report',
     PIECES_ANALYTICS = 'pieces-analytics',
     PIECES_SYNC = 'pieces-sync',
@@ -25,7 +25,7 @@ type IssuesReminderSystemJobData = {
 type SystemJobDataMap = {
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
     [SystemJobName.ISSUES_REMINDER]: IssuesReminderSystemJobData
-    [SystemJobName.PROJECT_USAGE_REPORT]: Record<string, never>
+    [SystemJobName.PLATFORM_USAGE_REPORT]: Record<string, never>
     [SystemJobName.USAGE_REPORT]: Record<string, never>
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>

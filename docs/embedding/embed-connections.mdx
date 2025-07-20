@@ -10,6 +10,15 @@ icon: "cards"
 * SDK version 0.3.2 or higher
 </Info>
 
+<Info>
+   "connectionName" is the externalId of the connection (you can get it by hovering the connection name in the connections table).  <br />
+   We kept the same parameter name for backward compatibility, anyone upgrading their instance from < 0.35.1, will not face issues in that regard.
+</Info>
+
+<Warning>
+**Breaking Change**: <br/> If your Activepieces instance version is < 0.45.0 and (you are using the connect method from the embed sdk, and need the connection externalId to be returned after the user creates it OR if you want to reconnect a specific connection with an externalId), you must upgrade your instance to >= 0.45.0
+</Warning>
+
 You can use the embedded SDK to create connections.
 
 <Steps>
@@ -30,7 +39,8 @@ You can use the embedded SDK to create connections.
         | Parameter Name | Required | Type   | Description                                 |
         | -------------- | -------- | ------ | ------------------------------------------- |
         | pieceName      | ✅      | string | The name of the piece you want to create a connection for.
-        | connectionName | ❌      | string | The name of the connection
+        | connectionName | ❌      | string | The external Id of the connection (you can get it by hovering the connection name in the connections table), when provided the connection created/upserted will use this as the external Id and display name.
+        | newWindow      | ❌      | \{ width?: number, height?: number, top?: number, left?: number \} | If set the connection dialog will be opened in a new window instead of an iframe taking the full page.
 
         **Connect Result**
 
@@ -45,21 +55,14 @@ You can use the embedded SDK to create connections.
         }
         ```
         <Info>
+        `name` is the externalId of the connection.
         `connection` is undefined if the user closes the dialog and doesn't create a connection.
         </Info>
 
-        Or if the `connectionName` parameter is defined, it could get rejected with an error message telling you why `connectionName` is invalid:
-        ```ts
-        {
-            error:string
-        }
-        ```
+       
         
 
-        <Info>
-          If `connectionName` is defined, the connection name input will be disabled and if the connection name is invalid the returned result from the connect method will be an error message describing why it is invalid.
-        
-         </Info>
+     
 
         <Tip>
         You can use the `connections` piece in the builder to retrieve the created connection using its name.

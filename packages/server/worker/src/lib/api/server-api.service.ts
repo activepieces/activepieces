@@ -1,9 +1,11 @@
+import path from 'path'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowRun, FlowVersionId, FlowVersionState, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, isNil, PopulatedFlow, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { appNetworkUtils } from '../utils/app-network-utils'
+import pLimit from 'p-limit'
+import { cacheHandler } from '../utils/cache-handler'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
 
@@ -11,10 +13,8 @@ const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
 }
 
-
-
 export const workerApiService = (workerToken: string) => {
-    const apiUrl = removeTrailingSlash(appNetworkUtils.getInternalApiUrl())
+    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
 
     const client = new ApAxiosClient(apiUrl, workerToken)
 
@@ -53,8 +53,27 @@ export const workerApiService = (workerToken: string) => {
             await client.post('/v1/workers/save-payloads', request)
         },
         async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
-            return client.post<FlowRun[]>('/v1/workers/submit-payloads', request)
+            const arrayOfPayloads = splitPayloadsIntoOneMegabyteBatches(request.payloads)
+            const limit = pLimit(1)
+            const promises = arrayOfPayloads.map(payloads =>
+                limit(() => client.post<FlowRun[]>('/v1/workers/submit-payloads', {
+                    ...request,
+                    payloads,
+                })),
+            )
 
+            const results = await Promise.allSettled(promises)
+            const errors = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+
+            if (errors.length > 0) {
+                const errorMessages = errors.map(e => e.reason.message).join(', ')
+                throw new Error(`Failed to start runs: ${errorMessages}`)
+            }
+
+            return results
+                .filter((r): r is PromiseFulfilledResult<FlowRun[]> => r.status === 'fulfilled')
+                .map(r => r.value)
+                .flat()
         },
         async sendUpdate(request: SendEngineUpdateRequest): Promise<void> {
             await client.post('/v1/workers/send-engine-update', request)
@@ -62,8 +81,43 @@ export const workerApiService = (workerToken: string) => {
     }
 }
 
+function splitPayloadsIntoOneMegabyteBatches(payloads: unknown[]): unknown[][] {
+    const batches: unknown[][] = [[]]
+    const ONE_MB = 1024 * 1024
+    let currentSize = 0
+    for (const payload of payloads) {
+        const payloadSize = Buffer.byteLength(JSON.stringify(payload))
+        currentSize += payloadSize
+
+        if (currentSize > ONE_MB) {
+            batches.push([])
+            currentSize = payloadSize
+        }
+
+        batches[batches.length - 1].push(payload)
+    }
+
+    return batches
+}
+
+const globalCacheFlowPath = path.resolve('cache', 'flows')
+const flowCache = cacheHandler(globalCacheFlowPath)
+
+async function readFlowFromCache(flowVersionIdToRun: FlowVersionId | null | undefined): Promise<PopulatedFlow | null> {
+    try {
+        if (flowVersionIdToRun) {
+            const cachedFlow = await flowCache.cacheCheckState(flowVersionIdToRun)
+            return cachedFlow ? JSON.parse(cachedFlow) as PopulatedFlow : null
+        }
+        return null
+    }
+    catch (error) {
+        return null
+    }
+}
+
 export const engineApiService = (engineToken: string, log: FastifyBaseLogger) => {
-    const apiUrl = removeTrailingSlash(appNetworkUtils.getInternalApiUrl())
+    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
     const client = new ApAxiosClient(apiUrl, engineToken)
 
     return {
@@ -83,9 +137,6 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
         },
         async updateRunStatus(request: UpdateRunProgressRequest): Promise<void> {
             await client.post('/v1/engine/update-run', request)
-        },
-        async removeStaleFlow(request: RemoveStableJobEngineRequest): Promise<void> {
-            await client.post('/v1/engine/remove-stale-job', request)
         },
         async getPiece(name: string, options: GetPieceRequestQuery): Promise<PieceMetadataModel> {
             return client.get<PieceMetadataModel>(`/v1/pieces/${encodeURIComponent(name)}`, {
@@ -111,13 +162,23 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
         async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
             const startTime = performance.now()
             log.debug({ request }, '[EngineApiService#getFlowWithExactPieces] start')
-            //TODO: Add caching logic
+
+            const cachedFlow = await readFlowFromCache(request.versionId)
+            if (cachedFlow) {
+                log.debug({ request, took: performance.now() - startTime }, '[EngineApiService#getFlowWithExactPieces] cache hit')
+                return cachedFlow
+            }
 
             try {
                 const flow = await client.get<PopulatedFlow | null>('/v1/engine/flows', {
                     params: request,
                 })
-              
+
+                const isCachableFlow = !isNil(flow) && flow.version.state === FlowVersionState.LOCKED
+                if (isCachableFlow) {
+                    await flowCache.setCache(flow.version.id, JSON.stringify(flow))
+                }
+
                 return flow
             }
             catch (e) {

@@ -167,6 +167,7 @@ const convertBranchToRouter = (step: any): void => {
             executionType: 'EXECUTE_FIRST_MATCH',
             inputUiInfo: {
                 sampleDataFileId: undefined,
+                sampleDataInputFileId: undefined,
                 lastTestDate: undefined,
                 customizedInputs: undefined,
                 currentSelectedData: undefined,
@@ -213,6 +214,7 @@ type RouterStep = BaseStep<'ROUTER'> & {
         executionType: 'EXECUTE_FIRST_MATCH'
         inputUiInfo: {
             sampleDataFileId?: string
+            sampleDataInputFileId?: string
             lastTestDate?: string
             customizedInputs?: Record<string, unknown>
             currentSelectedData?: unknown

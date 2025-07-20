@@ -2,11 +2,13 @@ import axios, {
   AxiosError,
   AxiosRequestConfig,
   AxiosResponse,
+  HttpStatusCode,
   isAxiosError,
 } from 'axios';
 import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
+import { ErrorCode } from '@activepieces/shared';
 
 export const API_BASE_URL =
   import.meta.env.MODE === 'cloud'
@@ -27,9 +29,26 @@ const disallowedRoutes = [
   '/v1/authn/local/reset-password',
   '/v1/user-invitations/accept',
 ];
-
+//This is important to avoid redirecting to sign-in page when the user is deleted for embedding scenarios
+const ignroedGlobalErrorHandlerRoutes = ['/v1/users/me'];
 function isUrlRelative(url: string) {
   return !url.startsWith('http') && !url.startsWith('https');
+}
+
+function globalErrorHandler(error: AxiosError) {
+  if (api.isError(error)) {
+    const errorCode: ErrorCode | undefined = (
+      error.response?.data as { code: ErrorCode }
+    )?.code;
+    if (
+      errorCode === ErrorCode.SESSION_EXPIRED ||
+      errorCode === ErrorCode.INVALID_BEARER_TOKEN
+    ) {
+      authenticationSession.logOut();
+      console.log(errorCode);
+      window.location.href = '/sign-in';
+    }
+  }
 }
 
 function request<TResponse>(
@@ -51,7 +70,21 @@ function request<TResponse>(
           ? undefined
           : `Bearer ${authenticationSession.getToken()}`,
     },
-  }).then((response) => response.data as TResponse);
+  })
+    .then((response) =>
+      config.responseType === 'blob'
+        ? response.data
+        : (response.data as TResponse),
+    )
+    .catch((error) => {
+      if (
+        isAxiosError(error) &&
+        !ignroedGlobalErrorHandlerRoutes.includes(url)
+      ) {
+        globalErrorHandler(error);
+      }
+      throw error;
+    });
 }
 
 export type HttpError = AxiosError<unknown, AxiosResponse<unknown>>;
@@ -60,7 +93,9 @@ export const api = {
   isError(error: unknown): error is HttpError {
     return isAxiosError(error);
   },
-  get: <TResponse>(url: string, query?: unknown) =>
+  any: <TResponse>(url: string, config?: AxiosRequestConfig) =>
+    request<TResponse>(url, config),
+  get: <TResponse>(url: string, query?: unknown, config?: AxiosRequestConfig) =>
     request<TResponse>(url, {
       params: query,
       paramsSerializer: (params) => {
@@ -68,11 +103,17 @@ export const api = {
           arrayFormat: 'repeat',
         });
       },
+      ...config,
     }),
-  delete: <TResponse>(url: string, query?: Record<string, string>) =>
+  delete: <TResponse>(
+    url: string,
+    query?: Record<string, string>,
+    body?: unknown,
+  ) =>
     request<TResponse>(url, {
       method: 'DELETE',
       params: query,
+      data: body,
       paramsSerializer: (params) => {
         return qs.stringify(params, {
           arrayFormat: 'repeat',
@@ -103,4 +144,5 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       params: params,
     }),
+  httpStatus: HttpStatusCode,
 };

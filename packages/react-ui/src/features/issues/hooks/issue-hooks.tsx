@@ -6,7 +6,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { issuesApi } from '../api/issues-api';
 
 export const issueHooks = {
-  useIssuesNotification: (enabled: boolean) => {
+  useIssuesNotification: () => {
     return useQuery<boolean, Error>({
       queryKey: [
         t('issues-notification'),
@@ -17,7 +17,6 @@ export const issueHooks = {
         return count > 0;
       },
       staleTime: Infinity,
-      enabled: enabled,
     });
   },
 };

@@ -68,6 +68,7 @@ export type ListVersionRequestQuery = Static<typeof ListVersionRequestQuery>
 
 export const GetPieceRequestQuery = Type.Object({
     version: Type.Optional(VersionType),
+    projectId: Type.Optional(Type.String()),
 })
 
 export const ListVersionsResponse = Type.Record(ExactVersionType, Type.Object({}))
@@ -91,14 +92,17 @@ export const PieceOptionRequest = Type.Object({
 export type PieceOptionRequest = Static<typeof PieceOptionRequest>
 
 export enum PieceScope {
-    PROJECT = 'PROJECT',
     PLATFORM = 'PLATFORM',
+    // TODO: all users have their own platform, so we can remove this
+    // @deprecated
+    PROJECT = 'PROJECT',
+
 }
 
 export const AddPieceRequestBody = Type.Union([
     Type.Object({
         packageType: Type.Literal(PackageType.ARCHIVE),
-        scope: Type.Enum(PieceScope),
+        scope: Type.Literal(PieceScope.PLATFORM),
         pieceName: Type.String({
             minLength: 1,
         }),
@@ -109,7 +113,7 @@ export const AddPieceRequestBody = Type.Union([
     }),
     Type.Object({
         packageType: Type.Literal(PackageType.REGISTRY),
-        scope: Type.Enum(PieceScope),
+        scope: Type.Literal(PieceScope.PLATFORM),
         pieceName: Type.String({
             minLength: 1,
         }),

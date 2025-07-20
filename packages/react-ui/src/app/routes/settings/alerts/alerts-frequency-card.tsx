@@ -25,10 +25,12 @@ import { AlertOption } from './alert-option';
 
 const AlertFrequencyCard = React.memo(() => {
   const queryClient = useQueryClient();
-  const { project, updateProject } = projectHooks.useCurrentProject();
+  const { project, updateCurrentProject } = projectHooks.useCurrentProject();
   const { toast } = useToast();
   const { checkAccess } = useAuthorization();
-  const writeAlertPermission = checkAccess(Permission.WRITE_ALERT);
+  const writeAlertPermission =
+    checkAccess(Permission.WRITE_ALERT) &&
+    checkAccess(Permission.WRITE_PROJECT);
   const mutation = useMutation<
     ProjectWithLimits,
     Error,
@@ -37,7 +39,7 @@ const AlertFrequencyCard = React.memo(() => {
     }
   >({
     mutationFn: (request) => {
-      updateProject(queryClient, request);
+      updateCurrentProject(queryClient, request);
       return projectApi.update(authenticationSession.getProjectId()!, request);
     },
     onSuccess: () => {
@@ -69,7 +71,9 @@ const AlertFrequencyCard = React.memo(() => {
         {writeAlertPermission === false && (
           <p>
             <span className="text-destructive">*</span>{' '}
-            {t('Only project admins can change this setting.')}
+            {t(
+              'Project and alert permissions are required to change this setting.',
+            )}
           </p>
         )}
       </CardHeader>

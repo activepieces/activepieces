@@ -46,7 +46,7 @@ const JsonEditor = React.memo(
   ({ field, readonly, onFocus, className }: JsonEditorProps) => {
     const [value, setValue] = useState(convertToString(field.value));
     const { theme } = useTheme();
-    const ediitorTheme = theme === 'dark' ? githubDark : githubLight;
+    const editorTheme = theme === 'dark' ? githubDark : githubLight;
     const extensions = [
       styleTheme,
       EditorState.readOnly.of(readonly),
@@ -75,7 +75,7 @@ const JsonEditor = React.memo(
             setValue(value);
             field.onChange(tryParseJson(value));
           }}
-          theme={ediitorTheme}
+          theme={editorTheme}
           readOnly={readonly}
           onFocus={() => onFocus?.(ref)}
           extensions={extensions}

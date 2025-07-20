@@ -5,48 +5,48 @@ import {
 } from '@activepieces/ee-shared'
 import { ActivepiecesError, ErrorCode, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { userService } from '../../../user/user-service'
-import { otpService } from '../../otp/otp-service'
+import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
+import { otpService } from '../otp/otp-service'
 
 export const enterpriseLocalAuthnService = (log: FastifyBaseLogger) => ({
-    async verifyEmail({ userId, otp }: VerifyEmailRequestBody): Promise<void> {
+    async verifyEmail({ identityId, otp }: VerifyEmailRequestBody): Promise<void> {
         await confirmOtp({
-            userId,
+            identityId,
             otp,
             otpType: OtpType.EMAIL_VERIFICATION,
             log,
         })
 
-        await userService.verify({ id: userId })
+        await userIdentityService(log).verify(identityId)
     },
 
     async resetPassword({
-        userId,
+        identityId,
         otp,
         newPassword,
     }: ResetPasswordRequestBody): Promise<void> {
         await confirmOtp({
-            userId,
+            identityId,
             otp,
             otpType: OtpType.PASSWORD_RESET,
             log,
         })
 
-        await userService.updatePassword({
-            id: userId,
+        await userIdentityService(log).updatePassword({
+            id: identityId,
             newPassword,
         })
     },
 })
 
 const confirmOtp = async ({
-    userId,
+    identityId,
     otp,
     otpType,
     log,
 }: ConfirmOtpParams): Promise<void> => {
     const isOtpValid = await otpService(log).confirm({
-        userId,
+        identityId,
         type: otpType,
         value: otp,
     })
@@ -60,7 +60,7 @@ const confirmOtp = async ({
 }
 
 type ConfirmOtpParams = {
-    userId: UserId
+    identityId: UserId
     otp: string
     otpType: OtpType
     log: FastifyBaseLogger

@@ -40,11 +40,11 @@ export const getTicketAction = createAction({
 
 		const client = new Client({ accessToken: context.auth.access_token });
 
-		const ticketDeatils = await client.crm.tickets.basicApi.getById(ticketId, [
+		const ticketDetails = await client.crm.tickets.basicApi.getById(ticketId, [
 			...defaultTicketProperties,
 			...additionalPropertiesToRetrieve,
 		]);
 
-		return ticketDeatils;
+		return ticketDetails;
 	},
 });

@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { FileLocation, isNil, logSerializer, NotifyFrontendRequest, StepOutput, UpdateRunProgressRequest, UpdateRunProgressResponse } from '@activepieces/shared'
+import { FileLocation, isNil, logSerializer, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, UpdateRunProgressRequest, UpdateRunProgressResponse } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -34,6 +34,16 @@ export const progressService = {
             lastScheduledUpdateId = setTimeout(async () => {
                 await sendUpdateRunRequest(params)
             }, DEBOUNCE_THRESHOLD)
+        })
+    },
+    sendFlowResponse: async (engineConstants: EngineConstants, request: SendFlowResponseRequest): Promise<void> => {
+        await fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/update-flow-response`).toString(), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${engineConstants.engineToken}`,
+            },
+            body: JSON.stringify(request),
         })
     },
 }

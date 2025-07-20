@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { flatten } from 'safe-flat';
+import { stringify } from "csv-stringify/sync";
 
 const markdown = `
 **Notes**:
@@ -63,19 +64,10 @@ export const jsonToCsvAction = createAction({
       }))
     }
     const flattened = json_array.map((item) => flatten(item) as Record<string, string>);
-    const headers: string[] = [];
-    flattened.map((item) => {
-      Object.keys(item).forEach((key) => {
-        if (!headers.includes(key)) {
-          headers.push(key);
-        }
-      })
-    })
-    const csv = [headers.join(delimiter_type)];
-    flattened.forEach((item) => {
-      const row = headers.map((header) => item[header] ?? '');
-      csv.push(row.join(delimiter_type));
+
+    return stringify(flattened, {
+      header: true,
+      delimiter: delimiter_type,
     });
-    return csv.join('\n');
   },
 });

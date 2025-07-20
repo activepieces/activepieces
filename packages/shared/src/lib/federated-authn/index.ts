@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { Nullable } from '../common'
 import { ThirdPartyAuthnProviderEnum } from './authn-provider-name'
 
 export * from './authn-provider-name'
@@ -35,16 +36,16 @@ export const SAMLAuthnProviderConfig = Type.Object({
 export type SAMLAuthnProviderConfig = Static<typeof SAMLAuthnProviderConfig>
 
 export const FederatedAuthnProviderConfig = Type.Object({
-    google: Type.Optional(GoogleAuthnProviderConfig),
-    github: Type.Optional(GithubAuthnProviderConfig),
-    saml: Type.Optional(SAMLAuthnProviderConfig),
+    google: Nullable(GoogleAuthnProviderConfig),
+    github: Nullable(GithubAuthnProviderConfig),
+    saml: Nullable(SAMLAuthnProviderConfig),
 })
 export type FederatedAuthnProviderConfig = Static<typeof FederatedAuthnProviderConfig>
 
 export const FederatedAuthnProviderConfigWithoutSensitiveData = Type.Object({
-    google: Type.Optional(Type.Pick(GoogleAuthnProviderConfig, ['clientId'])),
-    github: Type.Optional(Type.Pick(GithubAuthnProviderConfig, ['clientId'])),
-    saml: Type.Optional(Type.Object({})),
+    google: Nullable(Type.Pick(GoogleAuthnProviderConfig, ['clientId'])),
+    github: Nullable(Type.Pick(GithubAuthnProviderConfig, ['clientId'])),
+    saml: Nullable(Type.Object({})),
 })
 
 export type FederatedAuthnProviderConfigWithoutSensitiveData = Static<typeof FederatedAuthnProviderConfigWithoutSensitiveData>

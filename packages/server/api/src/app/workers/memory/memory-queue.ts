@@ -3,6 +3,7 @@ import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, OneTimeJobData, QueueName, Rep
 import { DelayPauseMetadata, Flow, FlowRun, FlowRunStatus, isNil, PauseType, ProgressUpdateType, RunEnvironment, TriggerType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { nanoid } from 'nanoid'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -27,19 +28,19 @@ export const memoryQueue = (log: FastifyBaseLogger): QueueManager => ({
         await addDelayedRun(log)
     },
     async add(params) {
-        const { type, data, id } = params
+        const { type, data } = params
         switch (type) {
             case JobType.ONE_TIME: {
                 memoryQueues[QueueName.ONE_TIME].add({
-                    id,
+                    id: params.id,
                     data,
                 })
                 break
             }
             case JobType.REPEATING: {
                 memoryQueues[QueueName.SCHEDULED].add({
+                    id: nanoid(),
                     data,
-                    id,
                     cronExpression: params.scheduleOptions.cronExpression,
                     cronTimezone: params.scheduleOptions.timezone,
                     failureCount: params.scheduleOptions.failureCount,
@@ -48,7 +49,7 @@ export const memoryQueue = (log: FastifyBaseLogger): QueueManager => ({
             }
             case JobType.DELAYED: {
                 memoryQueues[QueueName.SCHEDULED].add({
-                    id,
+                    id: params.id,
                     data,
                     nextFireAtEpochSeconds: dayjs().add(params.delay, 'ms').unix(),
                 })
@@ -56,14 +57,14 @@ export const memoryQueue = (log: FastifyBaseLogger): QueueManager => ({
             }
             case JobType.USERS_INTERACTION: {
                 memoryQueues[QueueName.USERS_INTERACTION].add({
-                    id,
+                    id: params.id,
                     data,
                 })
                 break
             }
             case JobType.WEBHOOK: {
                 memoryQueues[QueueName.WEBHOOK].add({
-                    id,
+                    id: params.id,
                     data,
                 })
                 break
@@ -156,7 +157,7 @@ async function renewWebhooks(log: FastifyBaseLogger): Promise<void> {
                 })
 
                 if (isNil(piece)) {
-                    log.warn( {
+                    log.warn({
                         trigger,
                         flowId: flow.id,
                     },

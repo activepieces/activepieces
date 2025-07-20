@@ -8,7 +8,7 @@ import {
     OAuth2ConnectionValueWithApp,
     OAuth2GrantType,
 } from '@activepieces/shared'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import {
     ClaimOAuth2Request,
@@ -80,7 +80,18 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
             }
         }
         catch (e: unknown) {
-            log.error(e)
+            if (e instanceof AxiosError) {
+                log.error('Axios Error:')
+                log.error(e.response?.data)
+                log.error({
+                    clientId: request.clientId,
+                    tokenUrl: request.tokenUrl,
+                })
+            }
+            else {
+                log.error('Unknown Error:')
+                log.error(e)
+            }
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_CLAIM,
                 params: {

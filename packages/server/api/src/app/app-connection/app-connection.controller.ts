@@ -1,11 +1,14 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
     ApId,
+    AppConnectionOwners,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
+    ListAppConnectionOwnersRequestQuery,
     ListAppConnectionsRequestQuery,
     Permission,
     PrincipalType,
+    ReplaceAppConnectionsRequestBody,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdateConnectionValueRequestBody,
@@ -32,6 +35,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             pieceName: request.body.pieceName,
             ownerId: await securityHelper.getUserIdFromRequest(request),
             scope: AppConnectionScope.PROJECT,
+            metadata: request.body.metadata,
         })
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
@@ -53,6 +57,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             request: {
                 displayName: request.body.displayName,
                 projectIds: null,
+                metadata: request.body.metadata,
             },
         })
         return appConnection
@@ -79,6 +84,31 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
         return appConnectionsWithoutSensitiveData
     },
     )
+    app.get('/owners', ListAppConnectionOwnersRequest, async (request): Promise<SeekPage<AppConnectionOwners>> => {
+        const owners = await appConnectionService(request.log).getOwners({
+            projectId: request.principal.projectId,
+            platformId: request.principal.platform.id,
+        })
+        return {
+            data: owners,
+            next: null,
+            previous: null,
+        }
+    },
+    )
+
+    app.post('/replace', ReplaceAppConnectionsRequest, async (request, reply) => {
+        const { sourceAppConnectionId, targetAppConnectionId } = request.body
+        await appConnectionService(request.log).replace({
+            sourceAppConnectionId,
+            targetAppConnectionId,
+            projectId: request.principal.projectId,
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+        })
+        await reply.status(StatusCodes.OK).send()
+    })
+
     app.delete('/:id', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
         const connection = await appConnectionService(request.log).getOneOrThrowWithoutValue({
             id: request.params.id,
@@ -138,6 +168,22 @@ const UpdateConnectionValueRequest = {
     },
 }
 
+const ReplaceAppConnectionsRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.WRITE_APP_CONNECTION,
+    },
+    schema: {
+        tags: ['app-connections'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Replace app connections',
+        body: ReplaceAppConnectionsRequestBody,
+        response: {
+            [StatusCodes.NO_CONTENT]: Type.Never(),
+        },
+    },
+}
+
 const ListAppConnectionsRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
@@ -153,7 +199,21 @@ const ListAppConnectionsRequest = {
         },
     },
 }
-
+const ListAppConnectionOwnersRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_APP_CONNECTION,
+    },
+    schema: {
+        querystring: ListAppConnectionOwnersRequestQuery,
+        tags: ['app-connections'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List app connection owners',
+        response: {
+            [StatusCodes.OK]: SeekPage(AppConnectionOwners),
+        },
+    },
+}
 
 const DeleteAppConnectionRequest = {
     config: {

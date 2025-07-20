@@ -10,6 +10,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/use-toast';
 import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
 import { Permission, ProjectRole, RoleType } from '@activepieces/shared';
@@ -26,12 +27,15 @@ const initialPermissions = [
     name: 'Flows',
     description: 'Read and write flows',
     read: [Permission.READ_FLOW],
-    write: [
-      Permission.READ_FLOW,
-      Permission.UPDATE_FLOW_STATUS,
-      Permission.WRITE_FLOW,
-    ],
+    write: [Permission.READ_FLOW, Permission.WRITE_FLOW],
     disableNone: true,
+  },
+  {
+    name: 'Flow Status',
+    description: 'Update flow status',
+    disableRead: true,
+    read: [],
+    write: [Permission.UPDATE_FLOW_STATUS],
   },
   {
     name: 'App Connections',
@@ -52,6 +56,18 @@ const initialPermissions = [
     write: [Permission.READ_ISSUES, Permission.WRITE_ISSUES],
   },
   {
+    name: 'Alerts',
+    description: 'Read and write alerts',
+    read: [Permission.READ_ALERT],
+    write: [Permission.READ_ALERT, Permission.WRITE_ALERT],
+  },
+  {
+    name: 'Folders',
+    description: 'Read and write folders',
+    read: [Permission.READ_FOLDER],
+    write: [Permission.READ_FOLDER, Permission.WRITE_FOLDER],
+  },
+  {
     name: 'Project Members',
     description: 'Read and write project members',
     read: [Permission.READ_PROJECT_MEMBER],
@@ -64,10 +80,30 @@ const initialPermissions = [
     write: [Permission.READ_INVITATION, Permission.WRITE_INVITATION],
   },
   {
-    name: 'Git Repos',
-    description: 'Read and write git repos',
-    read: [Permission.READ_GIT_REPO],
-    write: [Permission.READ_GIT_REPO, Permission.WRITE_GIT_REPO],
+    name: 'Project Releases',
+    description: 'Read and write project releases',
+    read: [Permission.READ_PROJECT_RELEASE],
+    write: [Permission.READ_PROJECT_RELEASE, Permission.WRITE_PROJECT_RELEASE],
+  },
+  {
+    name: 'Tables',
+    description: 'Read and write tables',
+    read: [Permission.READ_TABLE],
+    write: [Permission.READ_TABLE, Permission.WRITE_TABLE],
+    disableNone: true,
+  },
+  {
+    name: 'Todos',
+    description: 'Read and write todos',
+    read: [Permission.READ_TODOS],
+    write: [Permission.READ_TODOS, Permission.WRITE_TODOS],
+    disableNone: true,
+  },
+  {
+    name: 'MCP',
+    description: 'Read and write MCP',
+    read: [Permission.READ_MCP],
+    write: [Permission.READ_MCP, Permission.WRITE_MCP],
   },
 ];
 interface ProjectRoleDialogProps {
@@ -101,6 +137,7 @@ export const ProjectRoleDialog = ({
     }
     return projectRole.permissions;
   });
+  console.log();
 
   const { mutate } = useMutation({
     mutationFn: async () => {
@@ -155,7 +192,6 @@ export const ProjectRoleDialog = ({
         currentPermission?.write.forEach((p) => updatedPermissions.add(p));
       }
     }
-
     setPermissions(Array.from(updatedPermissions));
   };
 
@@ -167,10 +203,12 @@ export const ProjectRoleDialog = ({
     const readPermissions = new Set(currentPermission?.read || []);
     const currentPermissionsSet = new Set(permissions);
 
-    const hasWritePermissions = [...writePermissions].every((p) =>
-      currentPermissionsSet.has(p),
-    );
+    const hasWritePermissions =
+      writePermissions.size > 0 &&
+      [...writePermissions].every((p) => currentPermissionsSet.has(p));
+
     const hasReadPermissions =
+      readPermissions.size > 0 &&
       [...readPermissions].every((p) => currentPermissionsSet.has(p)) &&
       !hasWritePermissions;
 
@@ -187,7 +225,6 @@ export const ProjectRoleDialog = ({
     }
     return 'ghost';
   };
-
   const handleSubmit = () => {
     if (!disabled) {
       mutate();
@@ -197,7 +234,7 @@ export const ProjectRoleDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="w-full max-w-2xl">
+      <DialogContent className="w-full max-w-3xl">
         <DialogTitle>
           {mode === 'create'
             ? t('Create New Role')
@@ -226,57 +263,61 @@ export const ProjectRoleDialog = ({
               {t('Permissions')}
             </span>
             <div className="overflow-y-auto p-2 rounded-md">
-              {initialPermissions.map((permission, index) => (
-                <div
-                  key={permission.name}
-                  className={`w-full flex flex-col justify-between py-2 ${
-                    index !== initialPermissions.length - 1 ? 'border-b' : ''
-                  }`}
-                >
-                  <div className="w-full flex flex-row justify-between">
-                    <span className="font-bold text-gray-700">
-                      {permission.name}
-                    </span>
-                    <div className="flex bg-gray-100 rounded-sm space-x-2">
-                      {!permission.disableNone && (
+              <ScrollArea className="h-[70vh] pr-4">
+                {initialPermissions.map((permission, index) => (
+                  <div
+                    key={permission.name}
+                    className={`w-full flex flex-col justify-between py-2 ${
+                      index !== initialPermissions.length - 1 ? 'border-b' : ''
+                    }`}
+                  >
+                    <div className="w-full flex flex-row justify-between">
+                      <span className="font-bold text-gray-700">
+                        {permission.name}
+                      </span>
+                      <div className="flex bg-gray-100 rounded-sm space-x-2">
+                        {!permission.disableNone && (
+                          <Button
+                            className="h-9 px-4"
+                            variant={getButtonVariant(permission.name, 'None')}
+                            onClick={() =>
+                              handlePermissionChange(permission.name, 'None')
+                            }
+                            disabled={disabled}
+                          >
+                            {t('None')}
+                          </Button>
+                        )}
+                        {!permission.disableRead && (
+                          <Button
+                            className="h-9 px-4"
+                            variant={getButtonVariant(permission.name, 'Read')}
+                            onClick={() =>
+                              handlePermissionChange(permission.name, 'Read')
+                            }
+                            disabled={disabled}
+                          >
+                            {t('Read')}
+                          </Button>
+                        )}
                         <Button
                           className="h-9 px-4"
-                          variant={getButtonVariant(permission.name, 'None')}
+                          variant={getButtonVariant(permission.name, 'Write')}
                           onClick={() =>
-                            handlePermissionChange(permission.name, 'None')
+                            handlePermissionChange(permission.name, 'Write')
                           }
                           disabled={disabled}
                         >
-                          {t('None')}
+                          {t('Write')}
                         </Button>
-                      )}
-                      <Button
-                        className="h-9 px-4"
-                        variant={getButtonVariant(permission.name, 'Read')}
-                        onClick={() =>
-                          handlePermissionChange(permission.name, 'Read')
-                        }
-                        disabled={disabled}
-                      >
-                        {t('Read')}
-                      </Button>
-                      <Button
-                        className="h-9 px-4"
-                        variant={getButtonVariant(permission.name, 'Write')}
-                        onClick={() =>
-                          handlePermissionChange(permission.name, 'Write')
-                        }
-                        disabled={disabled}
-                      >
-                        {t('Write')}
-                      </Button>
+                      </div>
                     </div>
+                    <span className="text-sm text-gray-500">
+                      {permission.description}
+                    </span>
                   </div>
-                  <span className="text-sm text-gray-500">
-                    {permission.description}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </ScrollArea>
             </div>
           </div>
           {!disabled && (

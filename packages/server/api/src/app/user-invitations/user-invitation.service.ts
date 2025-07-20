@@ -1,10 +1,11 @@
-import { ActivepiecesError, ApId, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, SeekPage, spreadIfDefined, User, UserIdentity, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
+import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../ee/helper/email/email-service'
-import { platformDomainHelper } from '../ee/helper/platform-domain-helper'
 import { projectMemberService } from '../ee/project-members/project-member.service'
 import { projectRoleService } from '../ee/project-role/project-role.service'
 import { jwtUtils } from '../helper/jwt-utils'
@@ -41,35 +42,22 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         }
         return invitation
     },
-    async provisionUserInvitation({ email, platformId }: ProvisionUserInvitationParams): Promise<void> {
-        const user = await userService.getByPlatformAndEmail({
-            email,
-            platformId,
-        })
-        log.info({
-            email,
-            platformId,
-        }, '[provisionUserInvitation]')
-        if (isNil(user)) {
+    async provisionUserInvitation({ email }: ProvisionUserInvitationParams): Promise<void> {
+        const identity = await userIdentityService(log).getIdentityByEmail(email)
+        if (isNil(identity)) {
             return
         }
-        const platform = await platformService.getOneOrThrow(platformId)
         const invitations = await repo().createQueryBuilder('user_invitation')
             .where('LOWER("user_invitation"."email") = :email', { email: email.toLowerCase().trim() })
             .andWhere({
-                platformId,
                 status: InvitationStatus.ACCEPTED,
             })
             .getMany()
 
-        log.info({
-            platformId,
-            count: invitations.length,
-        }, '[provisionUserInvitation] list invitations')
+        log.info({ count: invitations.length }, '[provisionUserInvitation] list invitations')
         for (const invitation of invitations) {
-            log.info({
-                invitation,
-            }, '[provisionUserInvitation] provision')
+            log.info({ invitation }, '[provisionUserInvitation] provision')
+            const user = await getOrCreateUser(identity, invitation.platformId)
             switch (invitation.type) {
                 case InvitationType.PLATFORM: {
                     assertNotNullOrUndefined(invitation.platformRole, 'platformRole')
@@ -84,6 +72,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     const { projectId, projectRoleId } = invitation
                     assertNotNullOrUndefined(projectId, 'projectId')
                     assertNotNullOrUndefined(projectRoleId, 'projectRoleId')
+                    const platform = await platformService.getOneOrThrow(invitation.platformId)
                     assertEqual(platform.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
 
                     const projectRole = await projectRoleService.getOneOrThrowById({
@@ -198,22 +187,23 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         await repo().update(invitation.id, {
             status: InvitationStatus.ACCEPTED,
         })
+        const identity = await userIdentityService(log).getIdentityByEmail(invitation.email)
+        if (isNil(identity)) {
+            return {
+                registered: false,
+            }
+        }
         await this.provisionUserInvitation({
             email: invitation.email,
-            platformId: invitation.platformId,
-        })
-        const user = await userService.getByPlatformAndEmail({
-            email: invitation.email,
-            platformId: invitation.platformId,
         })
         return {
-            registered: !isNil(user),
+            registered: true,
         }
     },
     async hasAnyAcceptedInvitations({
         email,
         platformId,
-    }: ProvisionUserInvitationParams): Promise<boolean> {
+    }: HasAnyAcceptedInvitationsParams): Promise<boolean> {
         const invitations = await repo().createQueryBuilder().where({
             platformId,
             status: InvitationStatus.ACCEPTED,
@@ -235,6 +225,20 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
 })
 
 
+async function getOrCreateUser(identity: UserIdentity, platformId: string): Promise<User> {
+    const user = await userService.getOneByIdentityAndPlatform({
+        identityId: identity.id,
+        platformId,
+    })
+    if (isNil(user)) {
+        return userService.create({
+            identityId: identity.id,
+            platformId,
+            platformRole: PlatformRole.MEMBER,
+        })
+    }
+    return user
+}
 async function generateInvitationLink(userInvitation: UserInvitation, expireyInSeconds: number): Promise<string> {
     const token = await jwtUtils.sign({
         payload: {
@@ -244,7 +248,7 @@ async function generateInvitationLink(userInvitation: UserInvitation, expireyInS
         key: await jwtUtils.getJwtSecret(),
     })
 
-    return platformDomainHelper.constructUrlFrom({
+    return domainHelper.getPublicUrl({
         platformId: userInvitation.platformId,
         path: `invitation?token=${token}&email=${encodeURIComponent(userInvitation.email)}`,
     })
@@ -272,9 +276,12 @@ type ListUserParams = {
     cursor: string | null
 }
 
-type ProvisionUserInvitationParams = {
+type HasAnyAcceptedInvitationsParams = {
     email: string
     platformId: string
+}
+type ProvisionUserInvitationParams = {
+    email: string
 }
 
 type PlatformAndIdParams = {
@@ -297,7 +304,7 @@ type CreateParams = {
     projectId: string | null
     status: InvitationStatus
     type: InvitationType
-    projectRoleId: ApId | null
+    projectRoleId: string | null
     invitationExpirySeconds: number
 }
 

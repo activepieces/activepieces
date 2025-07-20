@@ -56,6 +56,10 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         value: {
             type: JSONB_COLUMN_TYPE,
         },
+        metadata: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
+        },
     },
     indices: [
         {
@@ -70,6 +74,7 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             name: 'idx_app_connection_owner_id',
             columns: ['ownerId'],
         },
+
     ],
     relations: {
         owner: {

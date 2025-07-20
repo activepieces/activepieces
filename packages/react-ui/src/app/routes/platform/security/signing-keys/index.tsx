@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Plus, Trash } from 'lucide-react';
+import { Key, Plus, Trash } from 'lucide-react';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
@@ -71,21 +71,24 @@ const SigningKeysPage = () => {
       <div className="flex-col w-full">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex flex-col gap-2">
-            <TableTitle>{t('Signing Keys')}</TableTitle>
-            <div className="text-sm text-muted-foreground">
-              <Trans>
-                Use our embedding{' '}
-                <Link
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  className="font-medium text-primary underline underline-offset-4"
-                  to="https://www.activepieces.com/docs/embedding/provision-users"
-                >
-                  JavaScript SDK
-                </Link>{' '}
-                to authenticate users with signing keys.
-              </Trans>
-            </div>
+            <TableTitle
+              description={
+                <Trans>
+                  Use our embedding{' '}
+                  <Link
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    className="font-medium text-primary underline underline-offset-4"
+                    to="https://www.activepieces.com/docs/embedding/provision-users"
+                  >
+                    JavaScript SDK
+                  </Link>{' '}
+                  to authenticate users with signing keys.
+                </Trans>
+              }
+            >
+              {t('Signing Keys')}
+            </TableTitle>
           </div>
           <NewSigningKeyDialog onCreate={() => refetch()}>
             <Button size="sm" className="flex items-center gap-2">
@@ -95,6 +98,11 @@ const SigningKeysPage = () => {
           </NewSigningKeyDialog>
         </div>
         <DataTable
+          emptyStateTextTitle={t('No signing keys found')}
+          emptyStateTextDescription={t(
+            'Create a signing key to authenticate users with embedding',
+          )}
+          emptyStateIcon={<Key className="size-14" />}
           columns={columns}
           page={data}
           isLoading={isLoading}

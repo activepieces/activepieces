@@ -86,10 +86,14 @@ export type StepOutput =
   unknown
   >
 
-
+type BranchResult = {
+    branchName: string
+    branchIndex: number
+    evaluation: boolean
+}
 
 type RouterStepResult = {
-    branches: boolean[]
+    branches: BranchResult[]
 }
 
 export class RouterStepOutput extends GenericStepOutput<

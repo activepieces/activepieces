@@ -14,20 +14,16 @@ let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
 
 export const flowWorker = (log: FastifyBaseLogger) => ({
-    async init(generatedToken: string): Promise<void> {
+    async init({ workerToken: token }: { workerToken: string }): Promise<void> {
         closed = false
-        workerToken = generatedToken
-        const heartbeatResponse = await workerApiService(workerToken).heartbeat()
-        if (isNil(heartbeatResponse)) {
-            throw new Error('The worker is enable to reach the server')
-        }
-        await workerMachine.init(heartbeatResponse)
+        workerToken = token
+        await initializeWorker(log)
         heartbeatInterval = setInterval(() => {
             rejectedPromiseHandler(workerApiService(workerToken).heartbeat(), log)
         }, 15000)
 
-        const FLOW_WORKER_CONCURRENCY = heartbeatResponse.FLOW_WORKER_CONCURRENCY
-        const SCHEDULED_WORKER_CONCURRENCY = heartbeatResponse.SCHEDULED_WORKER_CONCURRENCY
+        const FLOW_WORKER_CONCURRENCY = workerMachine.getSettings().FLOW_WORKER_CONCURRENCY
+        const SCHEDULED_WORKER_CONCURRENCY = workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY
         log.info({
             FLOW_WORKER_CONCURRENCY,
             SCHEDULED_WORKER_CONCURRENCY,
@@ -49,11 +45,37 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function initializeWorker(log: FastifyBaseLogger): Promise<void> {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        try {
+            const heartbeatResponse = await workerApiService(workerToken).heartbeat()
+            if (isNil(heartbeatResponse)) {
+                throw new Error('The worker is unable to reach the server')
+            }
+            await workerMachine.init(heartbeatResponse)
+            break
+        }
+        catch (error) {
+            log.error({
+                error,
+            }, 'The worker is unable to reach the server')
+            await new Promise(resolve => setTimeout(resolve, 5000))
+        }
+    }
+}
+
 async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): Promise<void> {
     while (!closed) {
         let engineToken: string | undefined
         try {
             const job = await jobPoller.poll(workerToken, queueName)
+            log.trace({
+                job: {
+                    queueName,
+                    jobId: job?.id,
+                },
+            }, 'Job polled')
             if (isNil(job)) {
                 continue
             }
@@ -61,6 +83,12 @@ async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): P
             engineToken = jobEngineToken
             await consumeJob(queueName, data, engineToken, log)
             await markJobAsCompleted(queueName, engineToken, log)
+            log.debug({
+                job: {
+                    queueName,
+                    jobId: job?.id,
+                },
+            }, 'Job completed')
         }
         catch (e) {
             exceptionHandler.handle(e, log)

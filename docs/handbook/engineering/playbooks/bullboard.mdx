@@ -1,0 +1,91 @@
+---
+title: "Queues Dashboard"
+icon: "gauge-high"
+---
+
+The Bull Board is a tool that allows you to check issues with scheduling and internal flow runs issues.
+
+![BullBoard Overview](https://raw.githubusercontent.com/felixmosh/bull-board/master/screenshots/overview.png)
+
+## Setup BullBoard
+
+To enable the Bull Board UI in your self-hosted installation:
+
+1. Define these environment variables:
+   - `AP_QUEUE_UI_ENABLED`: Set to `true`
+   - `AP_QUEUE_UI_USERNAME`: Set your desired username
+   - `AP_QUEUE_UI_PASSWORD`: Set your desired password
+
+2. Access the UI at `/api/ui`
+
+
+<Tip>
+For cloud installations, please ask your team for access to the internal documentation that explains how to access BullBoard.
+</Tip>
+
+## Common Issues
+
+### Scheduling Issues
+
+If a scheduled flow is not triggering as expected:
+
+1. Check the `repeatableJobs` queue in BullBoard to verify the job exists
+2. Verify the job status is not "failed" or "delayed"
+3. Check that the cron expression or interval is configured correctly
+4. Look for any error messages in the job details
+
+### Flow Stuck in "Running" State
+
+If a flow appears stuck in the running state:
+
+1. Check the `oneTimeJobs` queue for the corresponding job
+2. Look for:
+   - Jobs in "delayed" state (indicates retry attempts)
+   - Jobs in "failed" state (indicates execution errors)
+3. Review the job logs for error messages or timeouts
+4. If needed, you can manually remove stuck jobs through the BullBoard UI
+
+## Queue Overview
+
+We maintain four main queues in our system:
+
+#### Scheduled Queue (`repeatableJobs`)
+
+Contains both polling and delayed jobs.
+
+<Info>
+Failed jobs are not normal and need to be checked right away to find and fix what's causing them.
+</Info>
+
+<Tip>
+Delayed jobs represent either paused flows scheduled for future execution or upcoming polling job iterations.
+</Tip>
+
+#### One-Time Queue (`oneTimeJobs`)
+Handles immediate flow executions that run only once
+
+<Info>
+- Delayed jobs indicate an internal system error occurred and the job will be retried automatically according to the backoff policy
+- Failed jobs require immediate investigation as they represent executions that failed for unknown reasons that could indicate system issues
+</Info>
+
+#### Webhook Queue (`webhookJobs`)
+
+Handles incoming webhook triggers
+
+<Info>
+- Delayed jobs indicate an internal system error occurred and the job will be retried automatically according to the backoff policy
+- Failed jobs require immediate investigation as they represent executions that failed for unknown reasons that could indicate system issues
+</Info>
+
+#### Users Interaction Queue (`usersInteractionJobs`)
+
+Handles operations that are directly initiated by users, including:
+• Installing pieces
+• Testing flows
+• Loading dropdown options
+• Executing triggers
+• Executing actions
+<Info>
+Failed jobs in this queue are not retried since they represent real-time user actions that should either succeed or fail immediately
+</Info>

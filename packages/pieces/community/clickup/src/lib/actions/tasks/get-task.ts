@@ -1,8 +1,7 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
-import { HttpMethod, getAccessTokenOrThrow } from "@activepieces/pieces-common";
-import { callClickUpApi } from "../../common";
-import { clickupAuth } from "../../../";
-
+import { Property, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { callClickUpApi } from '../../common';
+import { clickupAuth } from '../../../';
 
 export const getClickupTask = createAction({
   auth: clickupAuth,
@@ -11,16 +10,26 @@ export const getClickupTask = createAction({
   displayName: 'Get Task',
   props: {
     task_id: Property.ShortText({
-      description: 'The id of the tas to get',
+      description: 'The ID of the task to get',
       displayName: 'Task ID',
       required: true,
-  }),
+    }),
+    include_subtasks: Property.Checkbox({
+      description: 'Include subtasks in the response',
+      displayName: 'Include Subtasks',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run(configValue) {
     const { task_id } = configValue.propsValue;
-    const response = await callClickUpApi(HttpMethod.GET,
-      `task/${task_id}`, getAccessTokenOrThrow(configValue.auth), {
-    });
+
+    const response = await callClickUpApi(
+      HttpMethod.GET,
+      `task/${task_id}`,
+      getAccessTokenOrThrow(configValue.auth),
+      undefined
+    );
 
     return response.body;
   },

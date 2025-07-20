@@ -1,30 +1,23 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { Permission } from '@activepieces/shared';
-
-export const determineDefaultRoute = (
-  checkAccess: (permission: Permission) => boolean,
-) => {
-  if (checkAccess(Permission.READ_FLOW)) {
-    return authenticationSession.appendProjectRoutePrefix('/flows');
-  }
-  if (checkAccess(Permission.READ_RUN)) {
-    return authenticationSession.appendProjectRoutePrefix('/runs');
-  }
-  if (checkAccess(Permission.READ_ISSUES)) {
-    return authenticationSession.appendProjectRoutePrefix('/issues');
-  }
-  return authenticationSession.appendProjectRoutePrefix('/settings');
-};
+import { determineDefaultRoute } from '@/lib/utils';
 
 export const DefaultRoute = () => {
   const token = authenticationSession.getToken();
   const { checkAccess } = useAuthorization();
-  if (!token) {
-    return <Navigate to="/sign-in" replace={true}></Navigate>;
-  }
+  const location = useLocation();
 
+  if (!token) {
+    const searchParams = new URLSearchParams();
+    searchParams.set('from', location.pathname + location.search);
+    return (
+      <Navigate
+        to={`/sign-in?${searchParams.toString()}`}
+        replace={true}
+      ></Navigate>
+    );
+  }
   return <Navigate to={determineDefaultRoute(checkAccess)} replace></Navigate>;
 };

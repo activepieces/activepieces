@@ -8,6 +8,7 @@ import { CheckboxProperty } from "./checkbox-property";
 import { NumberProperty } from "./number-property";
 import { FileProperty } from "./file-property";
 import { JsonProperty } from './json-property';
+import { ColorProperty } from "./color-property";
 
 export const ArraySubProps = Type.Record(Type.String(), Type.Union([
     ShortTextProperty,
@@ -39,6 +40,7 @@ export type ArraySubProps<R extends boolean> = Record<
     | NumberProperty<R>
     | FileProperty<R>
     | JsonProperty<R>
+    | ColorProperty<R>
 >;
 
 export type ArrayProperty<R extends boolean> = BasePropertySchema &

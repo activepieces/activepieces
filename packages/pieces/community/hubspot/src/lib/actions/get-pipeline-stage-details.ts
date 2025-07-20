@@ -2,11 +2,11 @@ import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 
-export const getPipelineStageDeatilsAction = createAction({
+export const getPipelineStageDetailsAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-pipeline-stage-details',
 	displayName: 'Get Pipeline Stage Details',
-	description: 'Finds and retrives CRM object pipeline stage details.',
+	description: 'Finds and retrieves CRM object pipeline stage details.',
 	props: {
 		objectType: Property.StaticDropdown({
 			displayName: 'Object Type',

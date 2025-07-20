@@ -8,5 +8,10 @@ export const textProcessor: ProcessorFn = (_property, value) => {
     if (typeof value === 'object') {
         return JSON.stringify(value)
     }
-    return value.toString()
+    
+    const result = value.toString()
+    if (result.length === 0) {
+        return undefined
+    }
+    return result
 }

@@ -32,37 +32,27 @@
     {
       "name": "GitHub",
       "url": "https://github.com/activepieces/activepieces"
-    }
-  ],
-  "anchors": [
-    {
-      "name": "Deploy",
-      "url": "install",
-      "icon": "rocket"
-    },
-    {
-      "name": "Develop Pieces",
-      "url": "developers",
-      "icon": "code"
     },
     {
       "name": "Pieces",
-      "icon": "plug",
       "url": "https://www.activepieces.com/pieces"
+    }
+  ],
+  "tabs": [
+    {
+      "name": "Develop Pieces",
+      "url": "developers"
     },
     {
-      "name": "API",
-      "url": "endpoints",
-      "icon": "link"
+      "name": "API Reference",
+      "url": "endpoints"
     },
     {
-      "name": "Discord",
-      "icon": "discord",
-      "url": "https://discord.gg/2jUXBKDdP8"
+      "name": "Deploy",
+      "url": "install"
     },
     {
       "name": "Handbook",
-      "icon": "book",
       "url": "handbook"
     }
   ],
@@ -87,6 +77,23 @@
       ]
     },
     {
+      "group": "Teams",
+      "icon": "users",
+      "pages": [
+        "handbook/teams/overview",
+        "handbook/teams/ai",
+        "handbook/teams/content",
+        "handbook/teams/developer-experience",
+        "handbook/teams/embed-sdk",
+        "handbook/teams/flow-builder",
+        "handbook/teams/management-features",
+        "handbook/teams/human-in-loop",
+        "handbook/teams/pieces",
+        "handbook/teams/sales",
+        "handbook/teams/tables"
+      ]
+    },
+    {
       "group": "Hiring",
       "icon": "user",
       "pages": [
@@ -97,13 +104,36 @@
       ]
     },
     {
-      "group": "Engineering",
+      "group": "Customer Support",
+      "icon": "hero",
+      "pages": [
+        "handbook/customer-support/overview",
+        "handbook/customer-support/tone",
+        "handbook/customer-support/pylon",
+        "handbook/customer-support/handle-requests",
+        "handbook/customer-support/trial"
+      ]
+    },
+    {
+      "group": "Engineering Onboarding",
       "icon": "code",
       "pages": [
-        "handbook/engineering/how-we-work",
-        "handbook/engineering/pre-releases",
-        "handbook/engineering/on-call",
-        "handbook/engineering/customer-support"
+        "handbook/engineering/overview",
+        "handbook/engineering/onboarding/how-we-work",
+        "handbook/engineering/onboarding/on-call",
+        "handbook/engineering/onboarding/downtime-incident"
+      ]
+    },
+    {
+      "group": "Engineering Playbooks", 
+      "icon": "code",
+      "pages": [
+        "handbook/engineering/playbooks/setup-incident-io",
+        "handbook/engineering/playbooks/releases",
+        "handbook/engineering/playbooks/infrastructure",
+        "handbook/engineering/playbooks/bullboard",
+        "handbook/engineering/playbooks/database-migration",
+        "handbook/engineering/playbooks/product-announcement"
       ]
     },
     {
@@ -170,6 +200,14 @@
           ]
         },
         {
+          "group": "Sample Data",
+          "icon": "database",
+          "pages": [
+            "endpoints/sample-data/get",
+            "endpoints/sample-data/save"
+          ]
+        },
+        {
           "group": "Pieces",
           "icon": "plug",
           "pages": [
@@ -183,6 +221,17 @@
           "pages": [
             "endpoints/project-releases/schema",
             "endpoints/project-releases/create"
+          ]
+        },
+        {
+          "group": "Global Connections",
+          "icon": "globe",
+          "pages": [
+            "endpoints/global-connections/schema",
+            "endpoints/global-connections/upsert",
+            "endpoints/global-connections/update",
+            "endpoints/global-connections/list",
+            "endpoints/global-connections/delete"
           ]
         },
         {
@@ -215,7 +264,37 @@
             "endpoints/flow-templates/get",
             "endpoints/flow-templates/list"
           ]
+        },
+        {
+          "group": "MCP Servers",
+          "icon": "server",
+          "pages": [
+            "endpoints/mcp-servers/schema",
+            "endpoints/mcp-servers/list",
+            "endpoints/mcp-servers/rotate",
+            "endpoints/mcp-servers/update"
+          ]
+        },
+        {
+          "group": "MCP pieces",
+          "icon": "plug",
+          "pages": [
+            "endpoints/mcp-pieces/schema",
+            "endpoints/mcp-pieces/add",
+            "endpoints/mcp-pieces/delete",
+            "endpoints/mcp-pieces/update",
+            "endpoints/mcp-pieces/list"
+          ]
         }
+
+        
+      
+      ]
+    },
+    {
+      "group": "AI",
+      "pages": [
+        "ai/mcp"
       ]
     },
     {
@@ -251,7 +330,7 @@
       "pages": [
         "install/configuration/overview",
         "install/configuration/environment-variables",
-        "install/configuration/seperate-workers",
+        "install/configuration/separate-workers",
         "install/configuration/setup-app-webhooks",
         "install/configuration/hardware",
         "install/configuration/setup-ssl",
@@ -348,9 +427,11 @@
         "embedding/overview",
         "embedding/provision-users",
         "embedding/embed-builder",
+        "embedding/mcps",
         "embedding/navigation",
         "embedding/customize-pieces",
         "embedding/embed-connections",
+        "embedding/sdk-server-requests",
         "embedding/sdk-changelog"
       ]
     },

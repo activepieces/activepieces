@@ -73,6 +73,9 @@ export type ApErrorParams =
     | CopilotFailedErrorParams
     | ProjectExternalIdAlreadyExistsParams
     | MemoryIssueParams
+    | InvalidCustomDomainErrorParams
+    | McpPieceRequiresConnectionParams
+    | McpPieceConnectionMismatchParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -295,6 +298,13 @@ ErrorCode.ENTITY_NOT_FOUND,
 }
 >
 
+export type InvalidCustomDomainErrorParams = BaseErrorParams<
+ErrorCode.INVALID_CUSTOM_DOMAIN,
+{
+    message: string
+}
+>
+
 export type ExecutionTimeoutErrorParams = BaseErrorParams<
 ErrorCode.EXECUTION_TIMEOUT,
 Record<string, never>
@@ -422,7 +432,20 @@ export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PRO
     externalId: string
 }>
 
+
+
+export type McpPieceRequiresConnectionParams = BaseErrorParams<ErrorCode.MCP_PIECE_REQUIRES_CONNECTION, {
+    pieceName: string
+}>
+
+export type McpPieceConnectionMismatchParams = BaseErrorParams<ErrorCode.MCP_PIECE_CONNECTION_MISMATCH, {
+    pieceName: string
+    connectionPieceName: string
+    connectionId: string
+}>
+
 export enum ErrorCode {
+    INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
@@ -481,4 +504,6 @@ export enum ErrorCode {
     INVALID_GIT_CREDENTIALS = 'INVALID_GIT_CREDENTIALS',
     INVALID_RELEASE_TYPE = 'INVALID_RELEASE_TYPE',
     COPILOT_FAILED = 'COPILOT_FAILED',
+    MCP_PIECE_REQUIRES_CONNECTION = 'MCP_PIECE_REQUIRES_CONNECTION',
+    MCP_PIECE_CONNECTION_MISMATCH = 'MCP_PIECE_CONNECTION_MISMATCH',
 }

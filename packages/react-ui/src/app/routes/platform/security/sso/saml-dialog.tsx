@@ -24,12 +24,12 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformApi } from '@/lib/platforms-api';
 import {
   ApFlagId,
-  Platform,
+  PlatformWithoutSensitiveData,
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
 
 type ConfigureSamlDialogProps = {
-  platform: Platform;
+  platform: PlatformWithoutSensitiveData;
   connected: boolean;
   refetch: () => Promise<void>;
 };
@@ -96,8 +96,7 @@ export const ConfigureSamlDialog = ({
             onClick={(e) => {
               mutate({
                 federatedAuthProviders: {
-                  ...platform.federatedAuthProviders,
-                  saml: undefined,
+                  saml: null,
                 },
               });
               e.preventDefault();
@@ -149,7 +148,6 @@ Activepieces
             onSubmit={form.handleSubmit((data) => {
               mutate({
                 federatedAuthProviders: {
-                  ...platform.federatedAuthProviders,
                   saml: data,
                 },
               });

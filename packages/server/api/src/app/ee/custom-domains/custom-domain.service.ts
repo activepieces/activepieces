@@ -43,8 +43,11 @@ export const customDomainService = {
         })
     },
     async getOneByPlatform(request: {
-        platformId: string
+        platformId: string | null
     }): Promise<CustomDomain | null> {
+        if (isNil(request.platformId)) {
+            return null
+        }
         return customDomainRepo().findOneBy({
             platformId: request.platformId,
         })
@@ -73,6 +76,18 @@ export const customDomainService = {
             status: isCloudEdition ? CustomDomainStatus.PENDING : CustomDomainStatus.ACTIVE,
         })
 
+    },
+    async getPlatformUrlFromEmail(userEmail: string): Promise<string | null> {
+        const rootDomain = userEmail.split('@')[1]
+        const allDomains: CustomDomain[] = await customDomainRepo().find({
+            where: {
+                status: CustomDomainStatus.ACTIVE,
+            },
+        })
+        return allDomains.find(cd => {
+            const domainOrSubdomain = cd.domain
+            return domainOrSubdomain.endsWith(`.${rootDomain}`)
+        })?.domain ?? null
     },
     async list({
         request,

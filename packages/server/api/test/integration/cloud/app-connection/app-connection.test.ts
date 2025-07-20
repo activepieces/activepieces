@@ -1,5 +1,4 @@
 import {
-    apId,
     DefaultProjectRole,
     PackageType,
     PlatformRole,
@@ -15,10 +14,9 @@ import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockPieceMetadata,
-    createMockPlatform,
-    createMockProject,
     createMockProjectMember,
-    createMockUser,
+    mockAndSaveBasicSetup,
+    mockBasicUser,
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -37,24 +35,98 @@ afterAll(async () => {
 
 describe('AppConnection API', () => {
     describe('Upsert AppConnection endpoint', () => {
+        it('Succeeds with metadata field', async () => {
+            // arrange
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.ADMIN,
+                },
+            })
+
+            const mockPieceMetadata = createMockPieceMetadata({
+                projectId: mockProject.id,
+                platformId: mockPlatform.id,
+                packageType: PackageType.REGISTRY,
+            })
+            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+
+            const mockToken = await generateMockToken({
+                id: mockUser.id,
+                type: PrincipalType.USER,
+                projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            const mockUpsertAppConnectionRequest = {
+                externalId: 'test-app-connection-with-metadata',
+                displayName: 'Test Connection with Metadata',
+                pieceName: mockPieceMetadata.name,
+                projectId: mockProject.id,
+                type: 'SECRET_TEXT',
+                value: {
+                    type: 'SECRET_TEXT',
+                    secret_text: 'test-secret-text',
+                },
+                metadata: {
+                    foo: 'bar',
+                },
+            }
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/app-connections',
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+                body: mockUpsertAppConnectionRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const responseBody = response?.json()
+            expect(responseBody.metadata).toEqual(mockUpsertAppConnectionRequest.metadata)
+
+            // Verify connection can be updated with new metadata
+            const updateResponse = await app?.inject({
+                method: 'POST',
+                url: `/v1/app-connections/${responseBody.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+                body: {
+                    displayName: 'Updated Connection Name',
+                    metadata: {
+                        foo: 'baz',
+                    },
+                },
+            })
+
+            expect(updateResponse?.statusCode).toBe(StatusCodes.OK)
+            const updatedResponseBody = updateResponse?.json()
+            expect(updatedResponseBody.metadata).toEqual({
+                foo: 'baz',
+            })
+        })
+
         it.each([
             DefaultProjectRole.ADMIN,
             DefaultProjectRole.EDITOR,
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange
-            const mockPlatformId = apId()
-            const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
-
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
             })
-            await databaseConnection().getRepository('project').save([mockProject])
 
             const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
 
@@ -112,19 +184,13 @@ describe('AppConnection API', () => {
 
         it('Fails if user role is VIEWER', async () => {
             // arrange
-            const mockPlatformId = apId()
-            const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
-
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
             })
-            await databaseConnection().getRepository('project').save([mockProject])
 
             const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.VIEWER }) as ProjectRole
 
@@ -143,7 +209,6 @@ describe('AppConnection API', () => {
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
             pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
-
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
@@ -193,19 +258,13 @@ describe('AppConnection API', () => {
             DefaultProjectRole.VIEWER,
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange
-            const mockPlatformId = apId()
-            const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
-
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
             })
-            await databaseConnection().getRepository('project').save([mockProject])
 
             const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
 

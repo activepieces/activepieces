@@ -1,11 +1,10 @@
 import {
   TriggerStrategy,
-  WebhookHandshakeStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { common, OnfleetWebhookTriggers } from '../common';
 import { onfleetAuth } from '../..';
-
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 export const smsRecipientResponseMissed = createTrigger({
   auth: onfleetAuth,
   name: 'sms_recipient_response_missed',

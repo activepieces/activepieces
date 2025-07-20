@@ -17,6 +17,7 @@ export async function queryMetabaseApi(
     queryParams?: QueryParams;
     headers?: HttpHeaders;
     body?: object;
+    responseType?: 'arraybuffer' | 'json' | 'blob' | 'text';
   },
   auth: StaticPropsValue<CustomAuthProps>
 ) {
@@ -30,6 +31,7 @@ export async function queryMetabaseApi(
       'X-API-KEY': auth.apiKey as string,
     },
     body: JSON.stringify(params.body),
+    responseType: params.responseType,
   };
   const response = await httpClient.sendRequest(request);
   return response.body;

@@ -45,6 +45,9 @@ type DeepPartial<T> = {
     [P in keyof T]?: T[P] extends Record<string, unknown> ? DeepPartial<T[P]> : T[P];
 }
 
+/**
+ * This function also merges arrays, x = [1, 2], y = [3, 4], z = deepMergeAndCast(x, y) -> [1, 2, 3, 4]
+**/
 export function deepMergeAndCast<T>(target: DeepPartial<T>, source: DeepPartial<T>): T {
     return deepmerge(target as Partial<T>, source as Partial<T>) as T
 }
@@ -113,4 +116,13 @@ export function pickBy<T extends Record<string, unknown>>(
         }
         return result
     }, {})
+}
+
+
+export function chunk<T>(records: T[], size: number) {
+    const chunks: T[][] = []
+    for (let i = 0; i < records.length; i += size) {
+        chunks.push(records.slice(i, i + size))
+    }
+    return chunks
 }

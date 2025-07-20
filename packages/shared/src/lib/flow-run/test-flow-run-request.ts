@@ -19,6 +19,7 @@ export type RetryFlowRequestBody = Static<typeof RetryFlowRequestBody>
 export const BulkRetryFlowRequestBody = Type.Object({
     projectId: ApId,
     flowRunIds: Type.Optional(Type.Array(ApId)),
+    excludeFlowRunIds: Type.Optional(Type.Array(ApId)),
     strategy: Type.Enum(FlowRetryStrategy),
     status: Type.Optional(Type.Array(Type.Enum(FlowRunStatus))),
     flowId: Type.Optional(Type.Array(ApId)),

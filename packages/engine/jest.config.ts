@@ -1,5 +1,7 @@
 
 process.env.AP_EXECUTION_MODE = 'UNSANDBOXED'
+process.env.AP_BASE_CODE_DIRECTORY = 'packages/engine/test/resources/codes'
+process.env.AP_TEST_MODE = 'true'
 
 /* eslint-disable */
 export default {

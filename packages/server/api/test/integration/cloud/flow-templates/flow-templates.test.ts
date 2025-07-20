@@ -13,8 +13,8 @@ import { generateMockToken } from '../../../helpers/auth'
 import {
     CLOUD_PLATFORM_ID,
     createMockTemplate,
-    createMockUser,
-    mockBasicSetup,
+    mockAndSaveBasicSetup,
+    mockBasicUser,
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -76,6 +76,55 @@ describe('Flow Templates', () => {
             const responseBody = response?.json()
             expect(responseBody.data).toHaveLength(1)
             expect(responseBody.data[0].id).toBe(mockPlatformTemplate.id)
+        })
+    })
+
+    describe('Create Flow Template', () => {
+        it('should create a flow template', async () => {
+            // arrange
+            const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup({
+                platform: {
+                    manageTemplatesEnabled: true,
+                },
+            })
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const mockTemplate = createMockTemplate({
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+                type: TemplateType.PLATFORM,
+            })
+
+            const createTemplateRequest = {
+                description: mockTemplate.description,
+                template: mockTemplate.template,
+                blogUrl: mockTemplate.blogUrl,
+                type: TemplateType.PLATFORM,
+                tags: mockTemplate.tags,
+                metadata: {
+                    foo: 'bar',
+                },
+            }
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/flow-templates',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: createTemplateRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const responseBody = response?.json()
+            expect(responseBody.metadata).toEqual({ foo: 'bar' })
         })
     })
 
@@ -143,7 +192,7 @@ describe('Flow Templates', () => {
 })
 
 async function createMockPlatformTemplate({ platformId }: { platformId: string }) {
-    const { mockOwner, mockPlatform, mockProject } = await mockBasicSetup({
+    const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
         platform: {
             id: platformId,
             manageTemplatesEnabled: true,
@@ -159,11 +208,11 @@ async function createMockPlatformTemplate({ platformId }: { platformId: string }
         .getRepository('flow_template')
         .save(mockPlatformTemplate)
 
-    const mockUser = createMockUser({
-        platformId: mockPlatform.id,
-        platformRole: PlatformRole.MEMBER,
+    const { mockUser } = await mockBasicUser({
+        user: {
+            platformId: mockPlatform.id,
+            platformRole: PlatformRole.MEMBER,
+        },
     })
-    await databaseConnection().getRepository('user').save(mockUser)
-
     return { mockOwner, mockUser, mockPlatform, mockProject, mockPlatformTemplate }
 }

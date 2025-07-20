@@ -14,7 +14,7 @@ export const UpdatePlatformRequestBody = Type.Object({
     favIconUrl: Type.Optional(Type.String()),
     filteredPieceNames: Type.Optional(Type.Array(Type.String())),
     filteredPieceBehavior: Type.Optional(Type.Enum(FilteredPieceBehavior)),
-    smtp: Type.Optional(SMTPInformation),
+    smtp: Type.Optional(Type.Union([SMTPInformation, Type.Null()])),
     federatedAuthProviders: Type.Optional(FederatedAuthnProviderConfig),
     cloudAuthEnabled: Type.Optional(Type.Boolean()),
     emailAuthEnabled: Type.Optional(Type.Boolean()),
@@ -35,3 +35,11 @@ export const AdminAddPlatformRequestBody = Type.Object({
 })
 
 export type AdminAddPlatformRequestBody = Static<typeof AdminAddPlatformRequestBody>
+
+export const AdminRetryRunsRequestBody = Type.Object({
+    createdAfter: Type.String(),
+    createdBefore: Type.String(),
+})
+
+export type AdminRetryRunsRequestBody = Static<typeof AdminRetryRunsRequestBody>
+

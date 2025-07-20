@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { Metadata } from '../../common/metadata'
 import { AppConnectionScope, AppConnectionType } from '../app-connection'
 import { OAuth2AuthorizationMethod } from '../oauth2-authorization-method'
 
@@ -7,6 +8,7 @@ const commonAuthProps = {
     displayName: Type.String({}),
     pieceName: Type.String({}),
     projectId: Type.String({}),
+    metadata: Type.Optional(Metadata),
 }
 
 export enum OAuth2GrantType {
@@ -26,6 +28,16 @@ export const UpsertCustomAuthRequest = Type.Object({
     description: 'Custom Auth',
 })
 
+export const UpsertNoAuthRequest = Type.Object({
+    ...commonAuthProps,
+    type: Type.Literal(AppConnectionType.NO_AUTH),
+    value: Type.Object({
+        type: Type.Literal(AppConnectionType.NO_AUTH),
+    }),
+}, {
+    title: 'No Auth',
+    description: 'No Auth',
+})
 
 const commonOAuth2ValueProps = {
     client_id: Type.String({
@@ -128,6 +140,7 @@ export const UpsertAppConnectionRequestBody = Type.Union([
     UpsertPlatformOAuth2Request,
     UpsertBasicAuthRequest,
     UpsertCustomAuthRequest,
+    UpsertNoAuthRequest,
 ])
 
 export type UpsertCloudOAuth2Request = Static<typeof UpsertCloudOAuth2Request>
@@ -136,6 +149,7 @@ export type UpsertOAuth2Request = Static<typeof UpsertOAuth2Request>
 export type UpsertSecretTextRequest = Static<typeof UpsertSecretTextRequest>
 export type UpsertBasicAuthRequest = Static<typeof UpsertBasicAuthRequest>
 export type UpsertCustomAuthRequest = Static<typeof UpsertCustomAuthRequest>
+export type UpsertNoAuthRequest = Static<typeof UpsertNoAuthRequest>
 export type UpsertAppConnectionRequestBody = Static<typeof UpsertAppConnectionRequestBody>
 
 
@@ -143,6 +157,7 @@ export const UpdateConnectionValueRequestBody = Type.Object({
     displayName: Type.String({
         minLength: 1,
     }),
+    metadata: Type.Optional(Metadata),
 })
 
 export const UpdateGlobalConnectionValueRequestBody = Type.Object({
@@ -150,6 +165,7 @@ export const UpdateGlobalConnectionValueRequestBody = Type.Object({
         minLength: 1,
     }),
     projectIds: Type.Optional(Type.Array(Type.String())),
+    metadata: Type.Optional(Metadata),
 })
 
 export type UpdateConnectionValueRequestBody = Static<typeof UpdateConnectionValueRequestBody>
@@ -158,6 +174,7 @@ const GlobalConnectionExtras =  Type.Object({
     scope: Type.Literal(AppConnectionScope.PLATFORM),
     projectIds: Type.Array(Type.String()),
     externalId: Type.Optional(Type.String()),
+    metadata: Type.Optional(Metadata),
 })
 export const UpsertGlobalConnectionRequestBody = 
     Type.Union([
@@ -167,5 +184,19 @@ export const UpsertGlobalConnectionRequestBody =
         Type.Composite([Type.Omit(UpsertPlatformOAuth2Request, ['projectId', 'externalId']), GlobalConnectionExtras]),
         Type.Composite([Type.Omit(UpsertBasicAuthRequest, ['projectId', 'externalId']), GlobalConnectionExtras]),
         Type.Composite([Type.Omit(UpsertCustomAuthRequest, ['projectId', 'externalId']), GlobalConnectionExtras]),
+        Type.Composite([Type.Omit(UpsertNoAuthRequest, ['projectId', 'externalId']), GlobalConnectionExtras]),
     ])
 export type UpsertGlobalConnectionRequestBody = Static<typeof UpsertGlobalConnectionRequestBody>
+
+export const ReplaceAppConnectionsRequestBody = Type.Object({
+    sourceAppConnectionId: Type.String(),
+    targetAppConnectionId: Type.String(),
+    projectId: Type.String(),
+})
+export type ReplaceAppConnectionsRequestBody = Static<typeof ReplaceAppConnectionsRequestBody>
+
+export const ListFlowsFromAppConnectionRequestQuery = Type.Object({
+    sourceAppConnectionIds: Type.Array(Type.String()),
+    projectId: Type.String(),
+})
+export type ListFlowsFromAppConnectionRequestQuery = Static<typeof ListFlowsFromAppConnectionRequestQuery>

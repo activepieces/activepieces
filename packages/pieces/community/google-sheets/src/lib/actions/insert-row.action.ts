@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
+  areSheetIdsValid,
   Dimension,
   googleSheetsCommon,
   objectToArray,
@@ -9,6 +10,7 @@ import {
 import { googleSheetsAuth } from '../..';
 import { isNil } from '@activepieces/shared';
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { commonProps, rowValuesProp } from '../common/props';
 
 export const insertRowAction = createAction({
   auth: googleSheetsAuth,
@@ -16,9 +18,7 @@ export const insertRowAction = createAction({
   description: 'Append a row of values to an existing sheet',
   displayName: 'Insert Row',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-    include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id,
+    ...commonProps,
     as_string: Property.Checkbox({
       displayName: 'As String',
       description: 'Inserted values that are dates and formulas will be entered strings and have no effect',
@@ -30,16 +30,23 @@ export const insertRowAction = createAction({
       required: true,
       defaultValue: false,
     }),
-    values: googleSheetsCommon.values,
+    values: rowValuesProp(),
   },
   async run({ propsValue, auth }) {
-    const { values, spreadsheet_id, sheet_id, as_string, first_row_headers } = propsValue;
+    const { values, spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId, as_string, first_row_headers } = propsValue;
     const accessToken = auth.access_token;
+
+    if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
+
+    const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
 
     const sheetName = await googleSheetsCommon.findSheetName(
       accessToken,
-      spreadsheet_id,
-      sheet_id
+      spreadsheetId,
+      sheetId
     );
 
     const formattedValues = first_row_headers
@@ -50,7 +57,7 @@ export const insertRowAction = createAction({
       accessToken,
       majorDimension: Dimension.COLUMNS,
       range: sheetName,
-      spreadSheetId: spreadsheet_id,
+      spreadSheetId: spreadsheetId,
       valueInputOption: as_string ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED,
       values: stringifyArray(formattedValues),
     });
@@ -70,7 +77,7 @@ async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
 
   const request: HttpRequest = {
     method: HttpMethod.POST,
-    url: `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}/values/${range}!A:A:append`,
+    url: `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}/values/${encodeURIComponent(`${range}!A:A`)}:append`,
     body: {
       majorDimension,
       range: `${range}!A:A`,

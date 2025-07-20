@@ -1,14 +1,12 @@
-import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 import {
     TriggerStrategy,
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
 import {
-    JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType,
-    UserInteractionJobType,
-} from '@activepieces/server-shared'
+    AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION,
+    RepeatableJobType,
+    UserInteractionJobType } from '@activepieces/server-shared'
 import {
-    ApEdition,
     EngineResponseStatus,
     FlowVersion,
     isNil,
@@ -17,6 +15,7 @@ import {
     RunEnvironment,
     TriggerHookType,
     TriggerType,
+    WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import {
@@ -24,35 +23,24 @@ import {
     EngineHelperTriggerResult,
 } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
-import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
 import { jobQueue } from '../../../workers/queue'
 import { userInteractionWatcher } from '../../../workers/user-interaction-watcher'
 import { triggerUtils } from './trigger-utils'
 
-const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
-    system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5,
-)
 
-function constructEveryXMinuteCron(minute: number): string {
-    const edition = system.getEdition()
-    switch (edition) {
-        case ApEdition.CLOUD:
-            return `*/${minute} * * * *`
-        case ApEdition.COMMUNITY:
-        case ApEdition.ENTERPRISE:
-            return `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5
-            } * * * *`
-    }
+const POLLING_FREQUENCY_CRON_EXPRESSION = `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5} * * * *`
+
+
+type EnableTriggerResponse = EngineHelperResponse<
+EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
+> & {
+    webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null
 }
-
 export const enablePieceTrigger = async (
     params: EnableParams,
     log: FastifyBaseLogger,
-): Promise<EngineHelperResponse<
-EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
-> | null> => {
+): Promise<EnableTriggerResponse | null> => {
     const { flowVersion, projectId, simulate } = params
     if (flowVersion.trigger.type !== TriggerType.PIECE) {
         return null
@@ -70,9 +58,13 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         projectId,
         test: simulate,
     })
+    let webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null = null
 
     if (engineHelperResponse.status !== EngineResponseStatus.OK) {
-        return engineHelperResponse
+        return {
+            ...engineHelperResponse,
+            webhookHandshakeConfiguration: null,
+        }
     }
 
     switch (pieceTrigger.type) {
@@ -91,6 +83,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         }
         case TriggerStrategy.WEBHOOK: {
             const renewConfiguration = pieceTrigger.renewConfiguration
+            webhookHandshakeConfiguration = pieceTrigger.handshakeConfiguration ?? null
             switch (renewConfiguration?.strategy) {
                 case WebhookRenewStrategy.CRON: {
                     await jobQueue(log).add({
@@ -119,17 +112,10 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         case TriggerStrategy.POLLING: {
             if (isNil(engineHelperResponse.result.scheduleOptions)) {
                 engineHelperResponse.result.scheduleOptions = {
-                    cronExpression: POLLING_FREQUENCY_CRON_EXPRESSON,
+                    cronExpression: POLLING_FREQUENCY_CRON_EXPRESSION,
                     timezone: 'UTC',
                     failureCount: 0,
                 }
-                // BEGIN EE
-                const edition = system.getEdition()
-                if (edition === ApEdition.CLOUD) {
-                    const plan = await projectLimitsService.getOrCreateDefaultPlan(projectId, DEFAULT_FREE_PLAN_LIMIT)
-                    engineHelperResponse.result.scheduleOptions.cronExpression = constructEveryXMinuteCron(plan.minimumPollingInterval)
-                }
-                // END EE
             }
             await jobQueue(log).add({
                 id: flowVersion.id,
@@ -149,7 +135,10 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         }
     }
 
-    return engineHelperResponse
+    return {
+        ...engineHelperResponse,
+        webhookHandshakeConfiguration,
+    }
 }
 
 type EnableParams = {

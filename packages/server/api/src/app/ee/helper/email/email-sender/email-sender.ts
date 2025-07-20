@@ -1,7 +1,7 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../../helper/system/system'
-import { AppSystemProp } from '../../../../helper/system/system-prop'
 import { logEmailSender } from './log-email-sender'
 import { smtpEmailSender } from './smtp-email-sender'
 

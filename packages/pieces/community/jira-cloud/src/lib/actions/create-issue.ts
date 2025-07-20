@@ -1,81 +1,115 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { JiraAuth, jiraCloudAuth } from '../../auth';
 import {
-  getIssueTypeIdDropdown,
-  getProjectIdDropdown,
-  getUsersDropdown,
+	getProjectIdDropdown,
+	formatIssueFields,
+	issueTypeIdProp,
+	createPropertyDefinition,
+	transformCustomFields,
 } from '../common/props';
-import { createJiraIssue, getPriorities } from '../common';
+import { jiraApiCall, jiraPaginatedApiCall } from '../common';
+import { IssueFieldMetaData, VALID_CUSTOM_FIELD_TYPES } from '../common/types';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { isNil } from '@activepieces/shared';
 
-export const createIssue = createAction({
-  name: 'create_issue',
-  displayName: 'Create Issue',
-  description: 'Create a new issue in a project',
-  auth: jiraCloudAuth,
-  props: {
-    projectId: getProjectIdDropdown(),
-    issueTypeId: getIssueTypeIdDropdown({ refreshers: ['projectId'] }),
-    summary: Property.ShortText({
-      displayName: 'Summary',
-      required: true,
-    }),
-    description: Property.LongText({
-      displayName: 'Description',
-      required: false,
-    }),
-    assignee: getUsersDropdown({
-      displayName: 'Assignee',
-      refreshers: ['projectId'],
-      required: false,
-    }),
-    priority: Property.Dropdown({
-      displayName: 'Priority',
-      required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            options: [],
-          };
-        }
+export const createIssueAction = createAction({
+	name: 'create_issue',
+	displayName: 'Create Issue',
+	description: 'Creates a new issue in a project.',
+	auth: jiraCloudAuth,
+	props: {
+		projectId: getProjectIdDropdown(),
+		issueTypeId: issueTypeIdProp('Issue Type'),
+		issueFields: Property.DynamicProperties({
+			displayName: 'Fields',
+			required: true,
+			refreshers: ['projectId', 'issueTypeId'],
+			props: async ({ auth, projectId, issueTypeId }) => {
+				if (!auth || !issueTypeId || !projectId) {
+					return {};
+				}
 
-        const priorities = await getPriorities({ auth: auth as JiraAuth });
-        return {
-          options: priorities.map((item) => {
-            return {
-              label: item.name,
-              value: item.id,
-            };
-          }),
-        };
-      },
-    }),
-    parentKey: Property.ShortText({
-      displayName: 'Parent Key',
-      description: 'If you would like to attach the issue to a parent, insert the parent issue key',
-      required: false,
-    }),
-  },
-  run: async ({ auth, propsValue }) => {
-    const {
-      projectId,
-      issueTypeId,
-      assignee,
-      summary,
-      description,
-      priority,
-      parentKey,
-    } = propsValue;
+				const props: DynamicPropsValue = {};
 
-    return await createJiraIssue({
-      auth,
-      projectId: projectId as string,
-      summary,
-      issueTypeId,
-      assignee,
-      description,
-      priority,
-      parentKey,
-    });
-  },
+				const authValue = auth as JiraAuth;
+				const fields = await jiraPaginatedApiCall<IssueFieldMetaData, 'fields'>({
+					auth: authValue,
+					method: HttpMethod.GET,
+					resourceUri: `/issue/createmeta/${projectId}/issuetypes/${issueTypeId}`,
+					propertyName: 'fields',
+				});
+
+				if (!fields || !Array.isArray(fields)) return {};
+
+				for (const field of fields) {
+					// skip invalid custom fields
+					if (field.schema.custom) {
+						const customFieldType = field.schema.custom.split(':')[1];
+						if (!VALID_CUSTOM_FIELD_TYPES.includes(customFieldType)) {
+							continue;
+						}
+					}
+					if (['project', 'issuetype'].includes(field.key)) {
+						continue;
+					}
+
+					props[field.key] = await createPropertyDefinition(authValue, field, field.required);
+				}
+				// Remove null props
+				return Object.fromEntries(Object.entries(props).filter(([_, prop]) => prop !== null));
+			},
+		}),
+	},
+	async run(context) {
+		const { projectId, issueTypeId } = context.propsValue;
+		const inputIssueFields = context.propsValue.issueFields ?? {};
+
+		if (isNil(projectId) || isNil(issueTypeId)) {
+			throw new Error('Project ID and Issue Type ID are required');
+		}
+
+		const issueTypeFields = await jiraPaginatedApiCall<IssueFieldMetaData, 'fields'>({
+			auth: context.auth,
+			method: HttpMethod.GET,
+			resourceUri: `/issue/createmeta/${projectId}/issuetypes/${issueTypeId}`,
+			propertyName: 'fields',
+		});
+
+		const formattedFields = formatIssueFields(issueTypeFields, inputIssueFields);
+
+		const response = await jiraApiCall<{ id: string; key: string }>({
+			auth: context.auth,
+			method: HttpMethod.POST,
+			resourceUri: `/issue`,
+			body: {
+				fields: {
+					issuetype: {
+						id: issueTypeId,
+					},
+					project: {
+						id: projectId,
+					},
+					...formattedFields,
+				},
+			},
+		});
+
+		const issue = await jiraApiCall<{
+			expand: string;
+			id: string;
+			key: string;
+			fields: Record<string, any>;
+		}>({
+			auth: context.auth,
+			method: HttpMethod.GET,
+			resourceUri: `/issue/${response.id}`,
+		});
+
+		const updatedIssueProperties = transformCustomFields(issueTypeFields, issue.fields);
+
+		return {
+			...issue,
+			fields: updatedIssueProperties,
+		};
+	},
 });

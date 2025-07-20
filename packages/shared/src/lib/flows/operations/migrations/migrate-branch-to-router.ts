@@ -33,6 +33,7 @@ export const migrateBranchToRouter: Migration = {
                         executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
                         inputUiInfo: {
                             sampleDataFileId: undefined,
+                            sampleDataInputFileId: undefined,
                             lastTestDate: undefined,
                             customizedInputs: undefined,
                             currentSelectedData: undefined,

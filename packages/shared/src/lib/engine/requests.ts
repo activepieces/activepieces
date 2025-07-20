@@ -26,30 +26,18 @@ export const NotifyFrontendRequest = Type.Object({
 })
 export type NotifyFrontendRequest = Static<typeof NotifyFrontendRequest>
 
-export const RemoveStableJobEngineRequest = Type.Object({
-    flowId: Type.Optional(Type.String()),
-    flowVersionId: Type.String(),
+export const SendFlowResponseRequest = Type.Object({
+    workerHandlerId: Type.String(),
+    httpRequestId: Type.String(),
+    runResponse: Type.Object({
+        status: Type.Number(),
+        body: Type.Any(),
+        headers: Type.Record(Type.String(), Type.String()),
+    }),
 })
-export type RemoveStableJobEngineRequest = Static<typeof RemoveStableJobEngineRequest>
-export enum GetFlowVersionForWorkerRequestType {
-    LATEST = 'LATEST',
-    LOCKED = 'LOCKED',
-    EXACT = 'EXACT',
-}
-
-export const GetFlowVersionForWorkerRequest = Type.Union([
-    Type.Object({
-        type: Type.Literal(GetFlowVersionForWorkerRequestType.LATEST),
-        flowId: Type.String(),
-    }),
-    Type.Object({
-        type: Type.Literal(GetFlowVersionForWorkerRequestType.LOCKED),
-        flowId: Type.String(),
-    }),
-    Type.Object({
-        type: Type.Literal(GetFlowVersionForWorkerRequestType.EXACT),
-        versionId: Type.String(),
-    }),
-])
+export type SendFlowResponseRequest = Static<typeof SendFlowResponseRequest>
+export const GetFlowVersionForWorkerRequest = Type.Object({
+    versionId: Type.String(),
+})
 
 export type GetFlowVersionForWorkerRequest = Static<typeof GetFlowVersionForWorkerRequest>
