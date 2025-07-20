@@ -1,6 +1,6 @@
 import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, apId, Cursor, ErrorCode, isNil, PlatformUsageMetric, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Equal, FindOperator } from 'typeorm'
+import { Equal, FindOperator, In, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { buildPaginator } from '../helper/pagination/build-paginator'
@@ -8,6 +8,7 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { mcpService } from '../mcp/mcp-service'
 import { projectService } from '../project/project-service'
 import { AgentEntity } from './agent-entity'
+import { tableService } from '../tables/table/table.service'
 
 export const agentRepo = repoFactory(AgentEntity)
 
@@ -104,6 +105,11 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         const queryBuilder = agentRepo()
             .createQueryBuilder('agent')
             .where(querySelector)
+
+        const agentsInTable = await tableService.getAllAgentIds({ projectId: params.projectId })
+        queryBuilder.andWhere({
+            id: Not(In(agentsInTable)),
+        })
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
         return paginationHelper.createPage<Agent>(

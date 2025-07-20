@@ -8,16 +8,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Bot, BotOff, Code, Lightbulb, LightbulbOff } from 'lucide-react';
-import { Settings2 } from 'lucide-react'; // gear icon from lucide-dev
+import { Bot, BotOff } from 'lucide-react';
 import { McpToolsSection } from '@/app/routes/mcp-servers/id/mcp-config/mcp-tools-section';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { useMutation } from '@tanstack/react-query';
-import { McpToolRequest, TableAutomationTrigger } from '@activepieces/shared';
+import { McpToolRequest, TableAutomationStatus, TableAutomationTrigger } from '@activepieces/shared';
 import { tablesApi } from '../lib/tables-api';
 import { useTableState } from './ap-table-state-provider';
 import { agentsApi } from '@/features/agents/lib/agents-api';
 import { Switch } from '@/components/ui/switch';
+import { AgentProfile } from './agent-profile';
 
 interface ConfigureTableAgentFormValues {
   trigger: TableAutomationTrigger;
@@ -28,7 +28,7 @@ interface ConfigureTableAgentFormValues {
 const ConfigureTableAgent = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const [table] = useTableState((state) => [state.table]);
+  const [table, toggleStatus] = useTableState((state) => [state.table, state.toggleStatus]);
 
   const { data: mcp, isLoading } = mcpHooks.useMcp(table?.agent?.mcpId);
 
@@ -77,32 +77,28 @@ const ConfigureTableAgent = () => {
     mutation.mutate(values);
   });
 
-  const [isAgentEnabled, setIsAgentEnabled] = useState(false);
+  const isAgentEnabled = table?.status === TableAutomationStatus.ENABLED;
+
+  const handleAgentStatusChange = (checked: boolean) => {
+    toggleStatus();
+  };
+
   return (
     <>
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setDialogOpen(true)}
-          aria-label="Configure Data Agent"
-     
-        >
-          <img
-            src="https://cdn.activepieces.com/quicknew/agents/robots/robot_186.png"
-            alt="Locked"
-            className="w-7 h-7 rounded-full object-cover"
-            style={{ display: isAgentEnabled ? 'inline-block' : 'none' }}
+        {isAgentEnabled && (
+          <AgentProfile
+            isEnabled={isAgentEnabled}
+            onClick={() => setDialogOpen(true)}
           />
-        </Button>
+        )}
         <Switch
           checkedIcon={<Bot className="h-4 w-4 " />}
-          uncheckedIcon={<BotOff className="h-4 w-4 " />} 
+          uncheckedIcon={<BotOff className="h-4 w-4 " />}
           checked={isAgentEnabled}
-          onCheckedChange={setIsAgentEnabled}
+          onCheckedChange={handleAgentStatusChange}
           size="lg"
           color="secondary"
-          variant="square"
           aria-label="Enable Data Agent"
         />
       </div>

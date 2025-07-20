@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { TableWebhookEventType } from '../table-webhook'
-import { TableAutomationTrigger } from '../table'
+import { TableAutomationStatus, TableAutomationTrigger } from '../table'
 import { McpToolRequest } from '../../mcp'
 
 export const CreateTableRequest = Type.Object({
@@ -36,6 +36,7 @@ export type CreateTableWebhookRequest = Static<typeof CreateTableWebhookRequest>
 export const UpdateTableRequest = Type.Object({
     name: Type.Optional(Type.String()),
     trigger: Type.Optional(Type.Enum(TableAutomationTrigger)),
+    status: Type.Optional(Type.Enum(TableAutomationStatus)),
 })
 
 export type UpdateTableRequest = Static<typeof UpdateTableRequest>

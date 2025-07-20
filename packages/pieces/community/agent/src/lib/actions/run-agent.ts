@@ -73,18 +73,24 @@ export const runAgent = createAction({
       publicUrl: context.server.publicUrl,
       token: serverToken,
       agentRunId: response.body.id,
-      update: async (data: Record<string, unknown>) => {
+      update: async (data: AgentRun) => {
         await context.output.update({
-          data,
+          data: mapAgentRunToOutput(data),
         })
       },
     });
 
-    return {
-      steps: agentRun.steps,
-      status: agentRun.status,
-      output: agentRun.output,
-      message: agentRun.message
-    }
+    return mapAgentRunToOutput(agentRun)
   },
 });
+
+
+function mapAgentRunToOutput(agentRun: AgentRun): Record<string, unknown> {
+  return {
+    steps: agentRun.steps,
+    status: agentRun.status,
+    output: agentRun.output,
+    agentRunId: agentRun.id,
+    message: agentRun.message
+  }
+}

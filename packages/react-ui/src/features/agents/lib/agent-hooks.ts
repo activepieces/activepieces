@@ -52,7 +52,7 @@ export const agentHooks = {
 };
 
 export const agentRunHooks = {
-  useGet: (id: string | null) => {
+  useGet: (id: string | null | undefined) => {
     return useQuery<AgentRun>({
       queryKey: ['agent-run', id],
       queryFn: () => agentRunsApi.get(id!),

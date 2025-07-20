@@ -1,63 +1,48 @@
-import React from 'react';
+import { t } from 'i18next';
+
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
-import { agentRunHooks } from './lib/agent-hooks';
-import { Loader2, AlertTriangle } from 'lucide-react';
-import { t } from 'i18next';
+import { AgentTimeline } from '@/features/agents/agent-timeline';
 
-interface AgentRunDialogProps {
-  agentRunId: string | null;
+type AgentRunDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
+  agentRunId: string | null | undefined;
+};
 
-export const AgentRunDialog: React.FC<AgentRunDialogProps> = ({
-  agentRunId,
+function AgentRunDialog({
   open,
   onOpenChange,
-}) => {
-  const { data: agentRun, isLoading, error } = agentRunHooks.useGet(agentRunId!);
-
+  agentRunId,
+}: AgentRunDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-full">
+      <DialogContent className="w-full max-w-[42rem] overflow-hidden ">
         <DialogHeader>
-          <DialogTitle>{t('Agent Run Details')}</DialogTitle>
+          <DialogTitle>{t('Agent Test Results')}</DialogTitle>
         </DialogHeader>
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center py-8">
-            <Loader2 className="animate-spin w-8 h-8 mb-2" />
-            <span>{t('Loading agent run...')}</span>
-          </div>
-        )}
-        {error && (
-          <div className="flex flex-col items-center justify-center py-8 text-destructive">
-            <AlertTriangle className="w-8 h-8 mb-2" />
-            <span>{t('Failed to load agent run')}</span>
-          </div>
-        )}
-        {agentRun && (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1">
-              <div className="text-sm text-muted-foreground">
-                {t('Status')}: <span className="font-medium">{agentRun.status}</span>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {t('Started')}: {agentRun.startTime ? new Date(agentRun.startTime).toLocaleString() : '-'}
-              </div>
-              {agentRun.finishTime && (
-                <div className="text-xs text-muted-foreground">
-                  {t('Finished')}: {new Date(agentRun.finishTime).toLocaleString()}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+
+        <div className="max-h-[60vh] min-h-[40vh] ">
+          <AgentTimeline
+            agentRunId={agentRunId}
+            className="h-full p-0 pr-3 max-w-[39.25rem]"
+          />
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-}; 
+}
+
+export { AgentRunDialog };

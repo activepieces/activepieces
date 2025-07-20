@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 
-import { Field, FieldType, PopulatedRecord, Table } from '@activepieces/shared';
+import { Field, FieldType, PopulatedRecord, Table, TableAutomationStatus, UpdateTableRequest } from '@activepieces/shared';
 
 import { createServerState } from './ap-tables-server-state';
 
@@ -20,16 +20,16 @@ export type ClientField = {
   uuid: string;
   name: string;
 } & (
-  | {
+    | {
       type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT;
     }
-  | {
+    | {
       type: FieldType.STATIC_DROPDOWN;
       data: {
         options: { value: string }[];
       };
     }
-);
+  );
 const mapRecorddToClientRecordsData = (
   records: PopulatedRecord[],
   fields: Field[],
@@ -72,6 +72,7 @@ export type TableState = {
   renameField: (fieldIndex: number, newName: string) => void;
   setRecords: (records: PopulatedRecord[]) => void;
   setAgentRunId: (recordId: string, agentRunId: string | null) => void;
+  toggleStatus: () => void;
   serverFields: Field[];
   serverRecords: PopulatedRecord[];
 };
@@ -213,6 +214,22 @@ export const createApTableStore = (
             index === recordIndex ? { ...record, agentRunId } : record
           ),
         }));
+      },
+      toggleStatus: () => {
+        return set((state) => {
+          const newStatus = state.table.status === TableAutomationStatus.ENABLED
+            ? TableAutomationStatus.DISABLED
+            : TableAutomationStatus.ENABLED;
+          serverState.update({
+            status: newStatus,
+          });
+          return {
+            table: {
+              ...state.table,
+              status: newStatus,
+            },
+          };
+        });
       },
       serverFields: serverState.fields,
       serverRecords: serverState.records,

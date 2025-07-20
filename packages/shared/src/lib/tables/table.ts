@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../common'
+import { BaseModelSchema, NullableEnum } from '../common'
 import { Agent } from '../agents'
 
 export enum TableAutomationTrigger {
@@ -8,6 +8,10 @@ export enum TableAutomationTrigger {
     ON_DEMAND = 'ON_DEMAND',
 }
 
+export enum TableAutomationStatus {
+    ENABLED = 'ENABLED',
+    DISABLED = 'DISABLED',
+}
 
 export const Table = Type.Object({
     ...BaseModelSchema,
@@ -15,6 +19,7 @@ export const Table = Type.Object({
     projectId: Type.String(),
     externalId: Type.String(),
     agent: Type.Optional(Agent),
+    status: NullableEnum(Type.Enum(TableAutomationStatus)),
     trigger: Type.Enum(TableAutomationTrigger),
     agentId: Type.String(),
 })

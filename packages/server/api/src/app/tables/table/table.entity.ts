@@ -27,6 +27,10 @@ export const TableEntity = new EntitySchema<TableSchema>({
         trigger: {
             type: String,
         },
+        status: {
+            type: String,
+            nullable: true,
+        },
         projectId: {
             ...ApIdSchema,
             nullable: false,

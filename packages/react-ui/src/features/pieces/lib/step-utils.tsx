@@ -15,6 +15,8 @@ import {
   Step,
   TriggerType,
   Trigger,
+  StepOutput,
+  StepRunResponse,
 } from '@activepieces/shared';
 
 import {
@@ -167,6 +169,14 @@ export const stepUtils = {
     }
     return 'input' in action.settings && 'agentId' in action.settings.input
       ? (action.settings.input.agentId as string)
+      : undefined;
+  },
+  getAgentRunId(output: StepOutput | StepRunResponse | undefined | null) {
+    if(!output) {
+      return undefined;
+    }
+    return 'output' in output && 'agentRunId' in (output.output as { agentRunId: string })
+      ? (output.output as { agentRunId: string }).agentRunId
       : undefined;
   },
 };

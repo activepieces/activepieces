@@ -56,6 +56,13 @@ export const tableService = {
         })
         return table
     },
+    async getAllAgentIds({ projectId }: GetAllAgentIdsParams): Promise<string[]> {
+        const tables = await tableRepo().find({
+            where: { projectId },
+            select: ['agentId'],
+        })
+        return tables.map((table) => table.agentId)
+    },
     async list({ projectId, cursor, limit, name, externalIds }: ListParams): Promise<SeekPage<Table>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
 
@@ -187,6 +194,7 @@ export const tableService = {
         await tableRepo().update({ id, projectId }, { 
             ...spreadIfDefined('name', request.name),
             ...spreadIfDefined('trigger', request.trigger),
+            ...spreadIfDefined('status', request.status),
         })
         return this.getOneOrThrow({ projectId, id })
     },
@@ -196,6 +204,10 @@ export const tableService = {
         })
     },
 
+}
+
+type GetAllAgentIdsParams = {
+    projectId: string
 }
 
 async function ensureAgentExists({ tableId, projectId }: EnsureAgentExistsParams): Promise<void> {

@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import EditableText from '@/components/ui/editable-text';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Permission } from '@activepieces/shared';
+import { Permission, TableAutomationStatus } from '@activepieces/shared';
 
 import { useTableState } from './ap-table-state-provider';
 import { ImportCsvDialog } from './import-csv-dialog';
@@ -54,6 +54,8 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
+
+  const isAgentEnabled = table?.status === TableAutomationStatus.ENABLED;
 
   const exportTable = async () => {
     const { tablesApi } = await import('../lib/tables-api');
@@ -114,7 +116,7 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
               <span className="text-sm">{t('Saving...')}</span>
             </div>
           )}
-          {selectedRecords.size > 0 && <AutomateDataButton />}
+          {selectedRecords.size > 0 && isAgentEnabled && <AutomateDataButton />}
           {selectedRecords.size > 0 && (
             <>
               <PermissionNeededTooltip
