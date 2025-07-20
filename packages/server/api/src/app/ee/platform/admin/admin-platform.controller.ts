@@ -60,6 +60,6 @@ const GiftTrialByEmailRequest = {
         body: GiftTrialByEmailRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.SUPER_USER],
     },
 }
