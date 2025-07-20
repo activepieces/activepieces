@@ -20,7 +20,7 @@ import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@active
 
 type PieceAuthUnion<T extends PieceAuthProperty | PieceAuthProperty[]> = 
   T extends PieceAuthProperty[] 
-    ? PieceAuthProperty 
+    ? T[number]  // Changed from PieceAuthProperty to T[number]
     : T extends PieceAuthProperty 
       ? T 
       : never;

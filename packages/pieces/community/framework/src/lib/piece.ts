@@ -9,7 +9,7 @@ import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
 
 
-export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
+export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[]>
   implements Omit<PieceBase, 'version' | 'name'>
 {
   private readonly _actions: Record<string, Action> = {};
@@ -65,10 +65,10 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
   }
 }
 
-export const createPiece = <PieceAuth extends PieceAuthProperty>(
+export const createPiece = <PieceAuth extends PieceAuthProperty | PieceAuthProperty[]>(
   params: CreatePieceParams<PieceAuth>
 ) => {
-  return new Piece(
+  return new Piece<PieceAuth>(
     params.displayName,
     params.logoUrl,
     params.authors ?? [],
@@ -76,7 +76,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(
     params.actions,
     params.triggers,
     params.categories ?? [],
-    params.auth ?? undefined,
+    params.auth,
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
@@ -84,13 +84,13 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(
 };
 
 type CreatePieceParams<
-  PieceAuth extends PieceAuthProperty = PieceAuthProperty
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[]
 > = {
   displayName: string;
   logoUrl: string;
   authors: string[];
   description?: string;
-  auth: PieceAuth | undefined;
+  auth?: PieceAuth;
   events?: PieceEventProcessors;
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;

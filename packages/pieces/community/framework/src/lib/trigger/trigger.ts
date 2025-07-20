@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox';
-import { OnStartContext, ActionContext, TestOrRunHookContext, TriggerHookContext } from '../context';
+import { OnStartContext, TestOrRunHookContext, TriggerHookContext } from '../context';
 import { TriggerBase } from '../piece-metadata';
-import { InputPropertyMap, OAuth2Property } from '../property';
+import { InputPropertyMap } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
 import { isNil, TriggerTestStrategy, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared';
 
@@ -19,7 +19,7 @@ export enum WebhookRenewStrategy {
   NONE = 'NONE',
 }
 
-type OnStartRunner<PieceAuth extends PieceAuthProperty, TriggerProps extends InputPropertyMap> = (ctx: OnStartContext<PieceAuth, TriggerProps>) => Promise<unknown | void>
+type OnStartRunner<PieceAuth extends PieceAuthProperty | PieceAuthProperty[], TriggerProps extends InputPropertyMap> = (ctx: OnStartContext<PieceAuth, TriggerProps>) => Promise<unknown | void>
 
 
 
@@ -40,9 +40,8 @@ export interface WebhookResponse {
   headers?: Record<string, string>
 }
 
-
 type BaseTriggerParams<
-  PieceAuth extends PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[],
   TriggerProps extends InputPropertyMap,
   TS extends TriggerStrategy,
 > = {
@@ -50,7 +49,7 @@ type BaseTriggerParams<
   displayName: string
   description: string
   requireAuth?: boolean
-  auth?: PieceAuth | PieceAuth[]
+  auth?: PieceAuth
   props: TriggerProps
   type: TS
   onEnable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
@@ -62,7 +61,7 @@ type BaseTriggerParams<
 }
 
 type WebhookTriggerParams<
-PieceAuth extends PieceAuthProperty,
+PieceAuth extends PieceAuthProperty | PieceAuthProperty[],
 TriggerProps extends InputPropertyMap,
 TS extends TriggerStrategy,
 > = BaseTriggerParams<PieceAuth, TriggerProps, TS> & {
@@ -82,7 +81,7 @@ type CreateTriggerParams<
 
 export class ITrigger<
   TS extends TriggerStrategy,
-  PieceAuth extends PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[],
   TriggerProps extends InputPropertyMap,
 > implements TriggerBase {
   constructor(
@@ -107,7 +106,7 @@ export class ITrigger<
 }
 
 export type Trigger<
-  PieceAuth extends PieceAuthProperty = any,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] = any,
   TriggerProps extends InputPropertyMap = any,
   S extends TriggerStrategy = TriggerStrategy,
 > = ITrigger<S, PieceAuth, TriggerProps>

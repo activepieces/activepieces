@@ -10,7 +10,7 @@ export const PieceAuthProperty = Type.Union([
   BasicAuthProperty,
   CustomAuthProperty,
   OAuth2Property,
-  SecretTextProperty,
+  SecretTextProperty
 ])
 
 export type PieceAuthProperty = BasicAuthProperty | CustomAuthProperty<any> | OAuth2Property<any> | SecretTextProperty<boolean>;
