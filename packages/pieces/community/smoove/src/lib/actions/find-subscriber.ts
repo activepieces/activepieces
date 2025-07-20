@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { smooveAuth } from '../common/auth';
 import { smooveApiCall } from '../common/client';
+import { contactIdDropdown } from '../common/props';
 
 export const findSubscriberAction = createAction({
   auth: smooveAuth,
@@ -11,7 +12,7 @@ export const findSubscriberAction = createAction({
   props: {
     identifierType: Property.StaticDropdown({
       displayName: 'Identifier Type',
-      description: 'Choose the method to identify the subscriber.',
+      description: 'Choose how to identify the subscriber.',
       required: true,
       defaultValue: 'ContactId',
       options: {
@@ -24,16 +25,30 @@ export const findSubscriberAction = createAction({
         ],
       },
     }),
+    contactId: contactIdDropdown,
     identifierValue: Property.ShortText({
       displayName: 'Identifier Value',
-      description: 'The actual value (e.g., the email or phone number) to search by.',
-      required: true,
+      description: 'Enter the email, phone number, or external ID.',
+      required: false,
     }),
   },
   async run(context) {
-    const { identifierType, identifierValue } = context.propsValue;
+    const { identifierType, contactId, identifierValue } = context.propsValue;
 
-    const endpoint = `/Contacts/status/${encodeURIComponent(identifierValue)}?by=${identifierType}`;
+    let valueToUse: string;
+    if (identifierType === 'ContactId') {
+      if (!contactId) {
+        throw new Error('Please select a Contact ID.');
+      }
+      valueToUse = contactId;
+    } else {
+      if (!identifierValue) {
+        throw new Error('Please provide a value for the selected identifier type.');
+      }
+      valueToUse = identifierValue;
+    }
+
+    const endpoint = `/Contacts/status/${encodeURIComponent(valueToUse)}?by=${identifierType}`;
 
     try {
       const response = await smooveApiCall<any>({
