@@ -1,4 +1,4 @@
-import { ActivepiecesError, DALLE2PricingPerImage, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, isNil } from '@activepieces/shared'
+import { ActivepiecesError, AIProvider, DALLE2PricingPerImage, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, isNil } from '@activepieces/shared'
 import { createParser } from 'eventsource-parser'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, StreamingParser, Usage } from './types'
@@ -114,5 +114,29 @@ export const openaiProvider: AIProviderStrategy = {
             },
             onEnd: () => response,
         }
+    },
+
+    getAuthHeaders: (config: AIProvider['config']): Record<string, string> => {
+        const headers: Record<string, string> = {
+            'Authorization': `Bearer ${config.apiKey}`,
+        }
+        if (config.azureOpenAI) {
+            headers['api-key'] = config.apiKey
+        }
+        return headers
+    },
+
+    getBaseUrl: (config: AIProvider['config']): string => {
+        if (config.azureOpenAI) {
+            return `https://${config.azureOpenAI.resourceName}.openai.azure.com`
+        }
+        return 'https://api.openai.com'
+    },
+
+    rewriteUrl: (config: AIProvider['config'], originalUrl: string): string => {
+        if (config.azureOpenAI) {
+            return originalUrl.replace('openai/v1/', 'openai/openai/v1/') + '?api-version=preview'
+        }
+        return originalUrl
     },
 } 
