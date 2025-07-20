@@ -23,7 +23,15 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const ref = github.event_name === 'pull_request' ? 'main' : context.ref;
+            console.log('Event name:', github.event_name);
+            console.log('Context ref:', context.ref);
+            console.log('Pull request head ref:', github.event.pull_request?.head?.ref);
+            
+            let ref = 'main';
+            if (github.event_name === 'workflow_dispatch') {
+              ref = context.ref;
+            }
+            
             console.log('Using ref:', ref);
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
@@ -40,7 +48,15 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const ref = github.event_name === 'pull_request' ? 'main' : context.ref;
+            console.log('Event name:', github.event_name);
+            console.log('Context ref:', context.ref);
+            console.log('Pull request head ref:', github.event.pull_request?.head?.ref);
+            
+            let ref = 'main';
+            if (github.event_name === 'workflow_dispatch') {
+              ref = context.ref;
+            }
+            
             console.log('Using ref:', ref);
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
