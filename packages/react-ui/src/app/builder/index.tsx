@@ -26,6 +26,8 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   ActionType,
+  ApEdition,
+  ApFlagId,
   FlowVersionState,
   PieceTrigger,
   TriggerType,
@@ -43,6 +45,7 @@ import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -106,6 +109,7 @@ const BuilderPage = () => {
     state.chatDrawerOpenSource,
     state.setChatDrawerOpenSource,
   ]);
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
@@ -295,7 +299,7 @@ const BuilderPage = () => {
           </ResizablePanel>
         </>
       </ResizablePanelGroup>
-      <UpgradeDialog />
+      {edition === ApEdition.CLOUD && <UpgradeDialog />}
       <ChatDrawer
         source={chatDrawerOpenSource}
         onOpenChange={() => setChatDrawerOpenSource(null)}
