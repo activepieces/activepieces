@@ -62,7 +62,7 @@ jobs:
 
   Release:
     if: contains(github.event.pull_request.labels.*.name, 'auto-deploy') || github.event_name == 'workflow_dispatch'
-    needs: ${{ (github.event.inputs.skip_dependent_e2e_tests == 'true' && fromJSON('[]')) || fromJSON('["Test-Enterprise", "Test-Pre-Prod"]') }}
+    needs: [Test-Enterprise, Test-Pre-Prod]
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
