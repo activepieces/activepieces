@@ -27,8 +27,7 @@ jobs:
             console.log('Payload:', payload);
             console.log('Pull request:', payload.pull_request);
             
-            await github.actions.createWorkflowDispatch({
-              ...context.repo,
+            await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'enterprise-automate-deploy.yml',
@@ -47,8 +46,7 @@ jobs:
             console.log('Payload:', payload);
             console.log('Pull request:', payload.pull_request);
             
-            await github.actions.createWorkflowDispatch({
-              ...context.repo,
+            await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'pre-prod-automate-deploy.yml',
