@@ -8,10 +8,6 @@ on:
         type: string
         description: 'Target environment for e2e tests'
         default: 'Pre-Prod'
-        options:
-          - Enterprise
-          - Pre-Prod
-          - Community
       instance_url_secret:
         required: true
         type: string
