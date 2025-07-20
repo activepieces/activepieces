@@ -93,7 +93,7 @@ export const PlatformPlanHelper = {
     },
 }
 
-async function handleProjects(projectIds: string[], currentUsage: number, newLimit?: number): Promise<void> {
+async function handleProjects(projectIds: string[], currentUsage: number, newLimit?: number | null): Promise<void> {
     if (isNil(newLimit)) return 
 
     if (currentUsage > newLimit) {
@@ -110,7 +110,7 @@ async function handleProjects(projectIds: string[], currentUsage: number, newLim
 async function handleActiveFlows(
     projectIds: string[], 
     currentUsage: number,
-    newLimit?: number, 
+    newLimit?: number | null, 
 ): Promise<void> {
     if (isNil(newLimit) || currentUsage <= newLimit) return
 
@@ -144,7 +144,7 @@ async function handleUserSeats(
     projectIds: string[], 
     currentUsage: number,
     platformId: string,
-    newLimit?: number,
+    newLimit?: number | null,
 ): Promise<void> {
     if (isNil(newLimit) || currentUsage <= newLimit) return
 
