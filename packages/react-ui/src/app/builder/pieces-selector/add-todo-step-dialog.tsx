@@ -32,6 +32,7 @@ import {
   createWaitForApprovalStep,
 } from './custom-piece-selector-items-utils';
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
+import { RadioGroupList } from '@/components/custom/radio-group-list';
 
 type AddTodoStepDialogProps = {
   pieceSelectorItem: PieceSelectorPieceItem;
@@ -109,18 +110,11 @@ const AddTodoStepDialog = ({
                   {t('Where would you like the todo to be reviewed?')}
                 </h3>
                 <div className="space-y-4">
-                  <TodoTypeOption
-                    todoType={TodoType.INTERNAL}
-                    setTodoType={setTodoType}
-                    setHoveredOption={setHoveredTodoType}
-                    selectedTodoType={todoType}
-                  />
-                  <TodoTypeOption
-                    todoType={TodoType.EXTERNAL}
-                    setTodoType={setTodoType}
-                    setHoveredOption={setHoveredTodoType}
-                    selectedTodoType={todoType}
-                  />
+                 <TodoRadioGroup
+                  setTodoType={setTodoType}
+                  setHoveredOption={setHoveredTodoType}
+                  selectedTodoType={todoType}
+                 />
                 </div>
               </div>
               <div className="md:w-1/2 flex flex-col items-center justify-center">
@@ -184,88 +178,66 @@ const PreviewImage = ({ todoType }: { todoType: TodoType }) => {
   );
 };
 
-const TodoTypeOption = ({
-  todoType,
+const TodoRadioGroup = ({
   setTodoType,
   setHoveredOption,
   selectedTodoType,
 }: {
-  todoType: TodoType;
   setTodoType: (todoType: TodoType) => void;
   setHoveredOption: (todoType: TodoType | null) => void;
   selectedTodoType: TodoType;
 }) => {
-  const selected = todoType === selectedTodoType;
-  const title =
-    todoType === TodoType.INTERNAL
-      ? t('Internal Todos')
-      : t('External Channel (Slack, Teams, Email, ...)');
-  const description =
-    todoType === TodoType.INTERNAL
-      ? t('Users will manage tasks directly in our interface')
-      : t(
-          'Send notifications with approval links via external channels like Slack, Teams or Email. Best for collaborating with external stakeholders.',
-        );
+ 
   const openNewWindow = useNewWindow();
-  return (
-    <CardListItem
-      className={cn(
-        `p-4 rounded-lg border  block hover:border-primary/50 hover:bg-muted/50`,
-        selected && 'border-primary bg-primary/5',
-      )}
-      onClick={() => setTodoType(todoType)}
-      interactive={true}
-      onMouseEnter={() => setHoveredOption(todoType)}
-      onMouseLeave={() => setHoveredOption(null)}
-    >
-      <div className="flex justify-between items-center mb-2">
-        <h4 className="text-md font-medium flex items-center gap-2">
-          {title}
-          {todoType === TodoType.INTERNAL && (
-            <Tooltip delayDuration={100}>
-              <TooltipTrigger asChild>
-                <InfoIcon className="w-4 h-4" />
-              </TooltipTrigger>
-              <TooltipContent side="right" className="w-[550px]">
-                <div className="space-y-2">
-                  <div>
-                    <span className="text-sm select-none">
-                      {t('Users will manage tasks directly in our interface')}
-                    </span>{' '}
-                    <span
-                      className="text-sm text-primary underline cursor-pointer"
-                      onClick={() => openNewWindow('/todos')}
-                    >
-                      {t('here')}
-                    </span>
-                  </div>
 
-                  <div className="bg-muted rounded p-1">
-                    <img
-                      src={ActivepiecesTodo}
-                      alt="Todo UI"
-                      className="w-full h-auto rounded"
-                    />
-                  </div>
+  return (
+    <RadioGroupList
+      value={selectedTodoType}
+      items={[
+        {
+          label: t('Internal Todos'),
+          value: TodoType.INTERNAL,
+          description: t('Users will manage tasks directly in our interface'),
+          labelExtra: (<Tooltip delayDuration={100}>
+            <TooltipTrigger asChild>
+              <InfoIcon className="w-4 h-4" />
+            </TooltipTrigger>
+            <TooltipContent side="right" className="w-[550px]">
+              <div className="space-y-2">
+                <div>
+                  <span className="text-sm select-none">
+                    {t('Users will manage tasks directly in our interface')}
+                  </span>{' '}
+                  <span
+                    className="text-sm text-primary underline cursor-pointer"
+                    onClick={() => openNewWindow('/todos')}
+                  >
+                    {t('here')}
+                  </span>
                 </div>
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </h4>
-        <div className="flex-shrink-0 w-5 h-5">
-          <div
-            className={cn(
-              `w-5 h-5 rounded-full grid place-items-center border border-muted-foreground`,
-              selected && 'border-primary',
-            )}
-          >
-            {selected && (
-              <div className="w-3 h-3 rounded-full bg-primary"></div>
-            )}
-          </div>
-        </div>
-      </div>
-      <p className="text-sm text-muted-foreground">{description}</p>
-    </CardListItem>
-  );
+
+                <div className="bg-muted rounded p-1">
+                  <img
+                    src={ActivepiecesTodo}
+                    alt="Todo UI"
+                    className="w-full h-auto rounded"
+                  />
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>)
+        },
+        {
+          label: t('External Channel (Slack, Teams, Email, ...)'),
+          value: TodoType.EXTERNAL,
+          description: t(
+            'Send notifications with approval links via external channels like Slack, Teams or Email. Best for collaborating with external stakeholders.',
+          ),
+          
+        },
+      ]}
+      onChange={setTodoType}
+      onHover={setHoveredOption}
+    />
+    );
 };

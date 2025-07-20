@@ -8,6 +8,7 @@ import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -29,14 +30,10 @@ import { Separator } from '@/components/ui/separator';
 import { AssignConnectionToProjectsControl } from '@/features/connections/components/assign-global-connection-to-projects';
 import { appConnectionsMutations } from '@/features/connections/lib/app-connections-hooks';
 import {
-  BasicAuthProperty,
-  CustomAuthProperty,
-  OAuth2Property,
-  OAuth2Props,
+  PieceAuthProperty,
   PieceMetadataModel,
   PieceMetadataModelSummary,
   PropertyType,
-  SecretTextProperty,
 } from '@activepieces/pieces-framework';
 import {
   AppConnectionWithoutSensitiveData,
@@ -51,6 +48,8 @@ import { BasicAuthConnectionSettings } from './basic-secret-connection-settings'
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
+import { RadioGroupList } from '@/components/custom/radio-group-list';
+import { ArrowLeftIcon } from 'lucide-react';
 
 type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
@@ -73,19 +72,28 @@ type CreateOrEditConnectionDialogContentProps = {
     open: boolean,
     connection?: AppConnectionWithoutSensitiveData,
   ) => void;
-};
+}
 
-const CreateOrEditConnectionDialogContent = React.memo(
-  ({
+type CreateOrEditConnectionSectionProps = CreateOrEditConnectionDialogContentProps & {
+  selectedAuth: PieceAuthProperty;
+  onBack: () => void;
+  showBackButton: boolean;
+}
+  
+const CreateOrEditConnectionSection = (
+  {
     piece,
     reconnectConnection,
     isGlobalConnection,
     externalIdComingFromSdk,
     setOpen,
-  }: CreateOrEditConnectionDialogContentProps) => {
-    const auth = piece.auth;
-    const selectedAuth = Array.isArray(auth) ? auth[0] : auth;
-    const formSchema = formUtils.buildConnectionSchema(selectedAuth);
+    selectedAuth,
+    onBack,
+    showBackButton,
+  }:
+  CreateOrEditConnectionSectionProps
+)=>{
+  const formSchema = formUtils.buildConnectionSchema(selectedAuth);
     const { externalId, displayName } = newConnectionUtils.getConnectionName(
       piece,
       reconnectConnection,
@@ -131,13 +139,16 @@ const CreateOrEditConnectionDialogContent = React.memo(
       <>
         <DialogHeader className="mb-0">
           <DialogTitle className="px-5">
-            {reconnectConnection
+            <div className="flex items-center gap-2">
+              {reconnectConnection
               ? t('Reconnect {displayName} Connection', {
                   displayName: reconnectConnection.displayName,
                 })
               : t('Connect to {displayName}', {
                   displayName: piece.displayName,
                 })}
+            </div>
+            
           </DialogTitle>
           <DialogDescription></DialogDescription>
         </DialogHeader>
@@ -232,12 +243,28 @@ const CreateOrEditConnectionDialogContent = React.memo(
               )}
             </ScrollArea>
             <DialogFooter className="mt-0">
-              <div className="mx-5 w-full">
+              <div className="mx-5 flex justify-end gap-2">
+               {
+                showBackButton && (
+                    <Button variant="outline" onClick={onBack}>
+                      {t('Back')}
+                    </Button>
+                )
+               }  
+               
+               
+              {
+                !showBackButton && (
+                <DialogClose asChild>
+                  <Button variant="outline">
+                    {t('Cancel')}
+                  </Button>
+                </DialogClose>
+              )}
                 <Button
                   onClick={(e) =>
                     form.handleSubmit(() => upsertConnection())(e)
                   }
-                  className="w-full"
                   loading={isPending}
                   type="submit"
                   disabled={!form.formState.isValid}
@@ -259,8 +286,34 @@ const CreateOrEditConnectionDialogContent = React.memo(
         )}
       </>
     );
-  },
-);
+  }
+
+const CreateOrEditConnectionDialogContent = React.memo(
+  (props: CreateOrEditConnectionDialogContentProps) => {
+    const piece=props.piece;
+    const isSingleAuth = Array.isArray(piece.auth) && piece.auth.length === 1 || (piece.auth && !Array.isArray(piece.auth)) ;
+    const [selectedAuth, setSelectedAuth] = useState<PieceAuthProperty | null>(getInitiallySelectedAuth(piece.auth));
+    const showSelectAuthTypeSection = !isSingleAuth && isNil(selectedAuth);
+    return (
+      <>
+       {!showSelectAuthTypeSection && selectedAuth && <CreateOrEditConnectionSection
+        {...props}
+        selectedAuth={selectedAuth}
+        onBack={() => setSelectedAuth(null)}
+        showBackButton={!isSingleAuth}
+      />}
+      {showSelectAuthTypeSection && piece.auth && Array.isArray(piece.auth) && (
+        <SelectAuthTypeSection
+          pieceAuth={piece.auth}
+          setSelectedAuth={setSelectedAuth}
+          selectedAuth={selectedAuth}
+        />
+      )}
+      </>
+    
+    )
+  }
+)
 
 CreateOrEditConnectionDialogContent.displayName =
   'CreateOrEditConnectionDialogContent';
@@ -274,6 +327,7 @@ const CreateOrEditConnectionDialog = React.memo(
     isGlobalConnection,
     externalIdComingFromSdk,
   }: ConnectionDialogProps) => {
+   
     return (
       <Dialog
         open={open}
@@ -299,3 +353,50 @@ const CreateOrEditConnectionDialog = React.memo(
 
 CreateOrEditConnectionDialog.displayName = 'CreateOrEditConnectionDialog';
 export { CreateOrEditConnectionDialog, CreateOrEditConnectionDialogContent };
+
+
+
+
+const getInitiallySelectedAuth = (auth: PieceAuthProperty[] | PieceAuthProperty | undefined) => {
+  if (!isNil(auth) && Array.isArray(auth) && auth.length === 1) {
+    return auth[0];
+  }
+  
+  return null;
+}
+
+const SelectAuthTypeSection = ({pieceAuth, setSelectedAuth, selectedAuth}: {pieceAuth:PieceAuthProperty[], setSelectedAuth: (auth: PieceAuthProperty) => void, selectedAuth: PieceAuthProperty | null}) => {
+
+  return (
+  <>
+    <DialogHeader className="mb-0">
+          <DialogTitle className="px-5">
+            <div className="flex items-center gap-2">
+            {t('Select Connection Type')}
+            </div>
+          </DialogTitle>
+        </DialogHeader>
+    <RadioGroupList
+      className="px-5 mt-5"
+      items={pieceAuth.map((auth) => ({
+        label: auth.displayName,
+        value: auth,
+        description: auth.description,
+      }))}
+      onChange={setSelectedAuth}
+      value={selectedAuth}
+    />
+     <DialogFooter className="mt-4">
+              <div className="mx-5 w-full flex justify-end">
+                <DialogClose asChild>
+                <Button
+                  variant="outline"
+                >
+                  {t('Cancel')}
+                </Button>
+                </DialogClose>
+              </div>
+            </DialogFooter>
+    </>
+  )
+}

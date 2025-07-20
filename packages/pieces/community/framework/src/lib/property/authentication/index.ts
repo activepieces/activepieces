@@ -10,12 +10,14 @@ export const PieceAuthProperty = Type.Union([
   BasicAuthProperty,
   CustomAuthProperty,
   OAuth2Property,
-  SecretTextProperty
+  SecretTextProperty,
 ])
 
 export type PieceAuthProperty = BasicAuthProperty | CustomAuthProperty<any> | OAuth2Property<any> | SecretTextProperty<boolean>;
 
-type AuthProperties<T> = Omit<Properties<T>, 'displayName'>;
+type AuthProperties<T> = Omit<Properties<T>, 'displayName'> & {
+  displayName?: string;
+};
 
 type Properties<T> = Omit<
   T,
@@ -41,7 +43,7 @@ export const PieceAuth = {
       ...request,
       valueSchema: undefined,
       type: PropertyType.OAUTH2,
-      displayName: 'Connection',
+      displayName: request.displayName || 'Connection',
     } as unknown as OAuth2Property<T>
   },
   BasicAuth(
@@ -51,7 +53,7 @@ export const PieceAuth = {
       ...request,
       valueSchema: undefined,
       type: PropertyType.BASIC_AUTH,
-      displayName: 'Connection',
+      displayName: request.displayName || 'Connection',
       required: true,
     } as unknown as BasicAuthProperty;
   },
@@ -62,7 +64,7 @@ export const PieceAuth = {
       ...request,
       valueSchema: undefined,
       type: PropertyType.CUSTOM_AUTH,
-      displayName: 'Connection',
+      displayName: request.displayName || 'Connection',
     } as unknown as CustomAuthProperty<T>
   },
   None() {
