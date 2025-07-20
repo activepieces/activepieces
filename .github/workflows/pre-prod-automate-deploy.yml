@@ -2,18 +2,11 @@ name: Pre-Prod Automate Deploy
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [merged]
-    branches:
-      - main
-    merged: true
+  workflow_call:
 
 jobs:
   Release:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
