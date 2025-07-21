@@ -4,11 +4,6 @@ Placid is a creative automation engine that generates dynamic images, PDFs, and 
 
 ## Features
 
-### Triggers
-- **New Image**: Fires when a new image is generated from a template
-- **New PDF**: Fires when a PDF is generated from a template  
-- **New Video**: Fires when a video is created from a template
-
 ### Actions
 - **Create Image**: Generate a dynamic image from a specified template using input data
 - **Create PDF**: Generate a PDF document from a specified template
