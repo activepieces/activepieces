@@ -71,9 +71,9 @@ jobs:
     uses: ./.github/workflows/e2e-tests.yml
     with:
       environment: Pre-Prod
-      instance_url_secret: E2E_PRE_PROD_INSTANCE_URL
     secrets:
       CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
       CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
       E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
       E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      E2E_INSTANCE_URL: ${{ secrets.E2E_PRE_PROD_INSTANCE_URL }}
