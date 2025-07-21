@@ -55,7 +55,7 @@ export const recordSideEffects = (log: FastifyBaseLogger) => ({
                     authorization,
                 })
                 if (automationTrigger && !agentUpdate) {
-                    const table = await tableService.getById({ projectId, id: tableId })
+                    const table = await tableService.getOneOrThrow({ projectId, id: tableId })
                     await tableAutomationService(log).run({
                         table,
                         record,

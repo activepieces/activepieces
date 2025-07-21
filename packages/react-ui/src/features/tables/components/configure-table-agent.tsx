@@ -1,5 +1,19 @@
+import {
+  McpToolRequest,
+  TableAutomationStatus,
+  TableAutomationTrigger,
+} from '@activepieces/shared';
+import { useMutation } from '@tanstack/react-query';
+import { Bot, BotOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+
+import { tablesApi } from '../lib/tables-api';
+
+import { AgentProfile } from './agent-profile';
+import { useTableState } from './ap-table-state-provider';
+
+import { McpToolsSection } from '@/app/routes/mcp-servers/id/mcp-config/mcp-tools-section';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -7,17 +21,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Bot, BotOff } from 'lucide-react';
-import { McpToolsSection } from '@/app/routes/mcp-servers/id/mcp-config/mcp-tools-section';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
-import { useMutation } from '@tanstack/react-query';
-import { McpToolRequest, TableAutomationStatus, TableAutomationTrigger } from '@activepieces/shared';
-import { tablesApi } from '../lib/tables-api';
-import { useTableState } from './ap-table-state-provider';
-import { agentsApi } from '@/features/agents/lib/agents-api';
 import { Switch } from '@/components/ui/switch';
-import { AgentProfile } from './agent-profile';
+import { Textarea } from '@/components/ui/textarea';
+import { agentsApi } from '@/features/agents/lib/agents-api';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 
 interface ConfigureTableAgentFormValues {
   trigger: TableAutomationTrigger;
@@ -28,7 +35,10 @@ interface ConfigureTableAgentFormValues {
 const ConfigureTableAgent = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const [table, toggleStatus] = useTableState((state) => [state.table, state.toggleStatus]);
+  const [table, toggleStatus] = useTableState((state) => [
+    state.table,
+    state.toggleStatus,
+  ]);
 
   const { data: mcp, isLoading } = mcpHooks.useMcp(table?.agent?.mcpId);
 
@@ -141,11 +151,7 @@ const ConfigureTableAgent = () => {
               >
                 Cancel
               </Button>
-              <Button
-                variant="default"
-                type="submit"
-                disabled={isSubmitting}
-              >
+              <Button variant="default" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Saving...' : 'Save'}
               </Button>
             </div>
@@ -156,4 +162,4 @@ const ConfigureTableAgent = () => {
   );
 };
 
-export { ConfigureTableAgent }; 
+export { ConfigureTableAgent };
