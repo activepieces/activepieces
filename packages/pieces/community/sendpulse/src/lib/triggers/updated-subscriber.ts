@@ -1,92 +1,150 @@
 import {
   createTrigger,
   TriggerStrategy,
-  WebhookResponse,
-  Property,
 } from '@activepieces/pieces-framework';
 import { sendpulseAuth } from '../common/auth';
+import { sendpulseApiCall } from '../common/client';
+import { mailingListDropdown } from '../common/props';
+import { HttpMethod } from '@activepieces/pieces-common';
+
+function detectChanges(previous: any, current: any): Record<string, { from: any; to: any }> {
+  const changes: Record<string, { from: any; to: any }> = {};
+  
+  const allKeys = new Set([...Object.keys(previous), ...Object.keys(current)]);
+  
+  for (const key of allKeys) {
+    if (JSON.stringify(previous[key]) !== JSON.stringify(current[key])) {
+      changes[key] = {
+        from: previous[key],
+        to: current[key],
+      };
+    }
+  }
+  
+  return changes;
+}
 
 export const updatedSubscriberTrigger = createTrigger({
   auth: sendpulseAuth,
   name: 'updated_subscriber',
   displayName: 'Updated Subscriber',
-  description: 'Triggers when a subscriber’s email, phone, or variables are updated.',
-  type: TriggerStrategy.WEBHOOK,
+  description: 'Fires when subscriber details change (polling)',
+  type: TriggerStrategy.POLLING,
   props: {
-    addressBookId: Property.Number({
-      displayName: 'Mailing List ID',
-      description: 'The ID of the mailing list to monitor for updates.',
-      required: true,
-    }),
+    mailingListId: mailingListDropdown,
   },
 
   async onEnable(context) {
-    const { addressBookId } = context.propsValue;
-    await context.store.put('sendpulse-subscriber-update-list-id', String(addressBookId));
-    console.log(`Webhook enabled for subscriber updates in list ID: ${addressBookId}`);
+    await context.store.put('mailing_list_id', String(context.propsValue.mailingListId));
+    await context.store.put('last_check', Date.now().toString());
   },
 
-  async onDisable() {
-    console.log(`Webhook disabled for Updated Subscriber`);
+  async onDisable(context) {
+    await context.store.delete('mailing_list_id');
+    await context.store.delete('last_check');
+    await context.store.delete('subscribers_cache');
   },
 
   async run(context) {
-    const storedListId = await context.store.get('sendpulse-subscriber-update-list-id');
-    interface IncomingPayload {
-      email?: string;
-      phone?: string;
-      addressbook_id?: number | string;
-      [key: string]: any;
-    }
-    const incoming = context.payload.body as IncomingPayload;
-
-    if (!incoming || String(incoming.addressbook_id) !== storedListId) {
+    const mailingListId = await context.store.get('mailing_list_id');
+    
+    if (!mailingListId) {
       return [];
     }
 
-    return [
-      {
-        id: incoming.email || incoming.phone || new Date().toISOString(),
-        email: incoming.email,
-        phone: incoming.phone,
-        addressBookId: incoming.addressbook_id,
-        updatedAt: new Date().toISOString(),
-        changes: incoming,
-      },
-    ];
+    try {
+      const currentSubscribers = await sendpulseApiCall<any[]>({
+        method: HttpMethod.GET,
+        auth: context.auth,
+        resourceUri: `/addressbooks/${mailingListId}/emails`,
+      });
+
+      const cachedSubscribers = await context.store.get('subscribers_cache');
+      
+      if (!cachedSubscribers) {
+        await context.store.put('subscribers_cache', JSON.stringify(currentSubscribers));
+        return [];
+      }
+
+      const previousSubscribers = JSON.parse(cachedSubscribers as string);
+      const changes = [];
+
+      for (const current of currentSubscribers) {
+        const previous = previousSubscribers.find((p: any) => p.email === current.email);
+        
+        if (previous) {
+          const hasChanges = JSON.stringify(current) !== JSON.stringify(previous);
+          
+          if (hasChanges) {
+            changes.push({
+              id: `${current.email}_${Date.now()}`,
+              email: current.email,
+              mailingListId,
+              previousData: previous,
+              currentData: current,
+              updatedAt: new Date().toISOString(),
+              changes: detectChanges(previous, current),
+            });
+          }
+        }
+      }
+
+      await context.store.put('subscribers_cache', JSON.stringify(currentSubscribers));
+      await context.store.put('last_check', Date.now().toString());
+
+      return changes;
+    } catch (error: any) {
+      console.error('Error checking for subscriber updates:', error);
+      return [];
+    }
   },
 
   async test() {
     return [
       {
-        id: 'test-updated@example.com',
+        id: 'test-updated@example.com_1234567890',
         email: 'test-updated@example.com',
-        phone: '+1234567890',
-        addressBookId: 123456,
+        mailingListId: '123456',
+        previousData: {
+          email: 'test-updated@example.com',
+          variables: { name: 'Old Name' },
+        },
+        currentData: {
+          email: 'test-updated@example.com',
+          variables: { name: 'New Name' },
+        },
         updatedAt: new Date().toISOString(),
         changes: {
-          email: 'test-updated@example.com',
-          phone: '+1234567890',
-          addressbook_id: 123456,
-          event: 'subscriber_updated',
+          'variables.name': {
+            from: 'Old Name',
+            to: 'New Name',
+          },
         },
       },
     ];
   },
 
   sampleData: {
-    id: 'updated-user@example.com',
+    id: 'updated-user@example.com_1234567890',
     email: 'updated-user@example.com',
-    phone: '+19876543210',
-    addressBookId: 123456,
-    updatedAt: '2025-07-13T12:00:00.000Z',
-    changes: {
+    mailingListId: '123456',
+    previousData: {
       email: 'updated-user@example.com',
-      phone: '+19876543210',
-      addressbook_id: 123456,
-      event: 'subscriber_updated',
-      variables: {
-        first_name: 'UpdatedName',
+      variables: { phone: '+1234567890', name: 'John' },
+    },
+    currentData: {
+      email: 'updated-user@example.com',
+      variables: { phone: '+0987654321', name: 'John Updated' },
+    },
+    updatedAt: '2023-06-01T12:30:00.000Z',
+    changes: {
+      'variables.phone': {
+        from: '+1234567890',
+        to: '+0987654321',
+      },
+      'variables.name': {
+        from: 'John',
+        to: 'John Updated',
       },
     },
   },

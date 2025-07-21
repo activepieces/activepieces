@@ -19,7 +19,7 @@ export const sendpulse = createPiece({
   auth: sendpulseAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/sendpulse.png',
-  authors: ['aryel780'],
+  authors: ['aryel780', 'onyedikachi-david'],
   actions: [
     addSubscriberAction,
     changeVariableForSubscriberAction,

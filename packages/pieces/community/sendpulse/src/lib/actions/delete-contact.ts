@@ -2,53 +2,46 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendpulseApiCall } from '../common/client';
 import { sendpulseAuth } from '../common/auth';
-import { mailingListDropdown } from '../common/props';
 
 export const deleteContactAction = createAction({
   auth: sendpulseAuth,
   name: 'delete-contact',
-  displayName: 'Delete Contact From Mailing List',
-  description:
-    'Permanently delete one or more contacts from a specific mailing list (removes variables, phone, and history in that list only).',
+  displayName: 'Delete Contact',
+  description: 'Permanently delete contact from all mailing lists',
   props: {
-    mailingListId: mailingListDropdown,
-    emails: Property.Array({
-      displayName: 'Emails',
-      description:
-        'List of email addresses to delete from the mailing list (up to 100). This will remove all associated variables for each contact.',
+    email: Property.ShortText({
+      displayName: 'Email Address',
+      description: 'Email address to delete from all mailing lists',
       required: true,
     }),
   },
 
   async run(context) {
-    const { mailingListId, emails } = context.propsValue;
+    const { email } = context.propsValue;
 
-    if (emails.length > 100) {
-      throw new Error('You can delete up to 100 emails in one request.');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new Error(`Invalid email format: ${email}`);
     }
-
-    const body = { emails };
 
     try {
       const result = await sendpulseApiCall<{ result: boolean }>({
         method: HttpMethod.DELETE,
         auth: context.auth,
-        resourceUri: `/addressbooks/${mailingListId}/emails`,
-        body,
+        resourceUri: `/emails/${encodeURIComponent(email)}`,
       });
 
       if (result.result) {
         return {
           success: true,
-          message: 'Contacts deleted from the mailing list successfully.',
-          mailingListId,
-          emailsDeleted: emails,
+          message: `Contact ${email} deleted from all mailing lists`,
+          email,
         };
       }
 
-      throw new Error('SendPulse API returned failure during deletion.');
+      throw new Error('SendPulse API returned failure');
     } catch (error: any) {
-      throw new Error(`SendPulse error: ${error.message || 'Unknown error'}`);
+      throw new Error(`Failed to delete contact: ${error.message || 'Unknown error'}`);
     }
   },
 });

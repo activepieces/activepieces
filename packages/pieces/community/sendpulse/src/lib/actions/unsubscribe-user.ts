@@ -8,12 +8,12 @@ export const unsubscribeUserAction = createAction({
   auth: sendpulseAuth,
   name: 'unsubscribe-user',
   displayName: 'Unsubscribe User',
-  description: 'Unsubscribes one or more users by email from a specific mailing list.',
+  description: 'Remove subscribers from mailing list',
   props: {
     mailingListId: mailingListDropdown,
     emails: Property.Array({
-      displayName: 'Emails',
-      description: 'One or more email addresses to unsubscribe (max 100)',
+      displayName: 'Email Addresses',
+      description: 'Email addresses to unsubscribe (max 100)',
       required: true,
     }),
   },
@@ -21,8 +21,19 @@ export const unsubscribeUserAction = createAction({
   async run(context) {
     const { mailingListId, emails } = context.propsValue;
 
+    if (emails.length === 0) {
+      throw new Error('At least one email address is required');
+    }
+
     if (emails.length > 100) {
-      throw new Error('You can unsubscribe up to 100 emails in one request.');
+      throw new Error('Maximum 100 email addresses allowed per request');
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalidEmails = emails.filter(email => !emailRegex.test(email as string));
+    
+    if (invalidEmails.length > 0) {
+      throw new Error(`Invalid email format(s): ${invalidEmails.join(', ')}`);
     }
 
     const body = { emails };
@@ -38,15 +49,16 @@ export const unsubscribeUserAction = createAction({
       if (result.result) {
         return {
           success: true,
-          message: 'Users unsubscribed successfully.',
+          message: `${emails.length} subscriber(s) unsubscribed successfully`,
           unsubscribed: emails,
           mailingListId,
+          count: emails.length,
         };
       } else {
-        throw new Error('Unsubscription failed.');
+        throw new Error('Unsubscription failed - API returned failure');
       }
     } catch (error: any) {
-      throw new Error(`SendPulse error: ${error.message}`);
+      throw new Error(`Failed to unsubscribe users: ${error.message || 'Unknown error'}`);
     }
   },
 });

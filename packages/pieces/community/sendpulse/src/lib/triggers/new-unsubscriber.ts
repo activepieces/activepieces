@@ -2,96 +2,136 @@ import {
   createTrigger,
   TriggerStrategy,
   WebhookResponse,
-  Property,
 } from '@activepieces/pieces-framework';
 import { sendpulseAuth } from '../common/auth';
+import { sendpulseApiCall } from '../common/client';
+import { mailingListDropdown } from '../common/props';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const newUnsubscriberTrigger = createTrigger({
   auth: sendpulseAuth,
   name: 'new_unsubscriber',
   displayName: 'New Unsubscriber',
-  description: 'Triggers when a subscriber is removed or unsubscribed from a mailing list.',
+  description: 'Fires when subscriber unsubscribes',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    addressBookId: Property.Number({
-      displayName: 'Mailing List ID',
-      description: 'The ID of the mailing list to monitor for unsubscribes.',
-      required: true,
-    }),
+    mailingListId: mailingListDropdown,
   },
 
   async onEnable(context) {
-    const { addressBookId } = context.propsValue;
-    await context.store.put('sendpulse-unsubscribe-list-id', String(addressBookId));
-    console.log(`Webhook enabled for unsubscribes in list ID: ${addressBookId}`);
+    const { mailingListId } = context.propsValue;
+    
+    try {
+      const webhookResponse = await sendpulseApiCall<{
+        success: boolean;
+        data: Array<{ id: number; action: string; url: string }>;
+      }>({
+        method: HttpMethod.POST,
+        auth: context.auth,
+        resourceUri: '/v2/email-service/webhook',
+        body: {
+          url: context.webhookUrl,
+          actions: ['unsubscribe'],
+        },
+      });
+
+      if (webhookResponse.success && webhookResponse.data?.length > 0) {
+        const webhook = webhookResponse.data.find(w => w.action === 'unsubscribe');
+        if (webhook) {
+          await context.store.put('webhook_id', webhook.id);
+          await context.store.put('mailing_list_id', mailingListId);
+        }
+      } else {
+        throw new Error('Failed to create webhook');
+      }
+    } catch (error: any) {
+      throw new Error(`Failed to enable unsubscriber trigger: ${error.message}`);
+    }
   },
 
   async onDisable(context) {
-    await context.store.delete('sendpulse-unsubscribe-list-id');
-    console.log(`Webhook disabled for unsubscribes`);
+    try {
+      const webhookId = await context.store.get('webhook_id');
+      
+      if (webhookId) {
+        await sendpulseApiCall({
+          method: HttpMethod.DELETE,
+          auth: context.auth,
+          resourceUri: `/v2/email-service/webhook/${webhookId}`,
+        });
+        
+        await context.store.delete('webhook_id');
+        await context.store.delete('mailing_list_id');
+      }
+    } catch (error) {
+      console.warn('Failed to delete webhook during disable:', error);
+    }
   },
 
   async run(context) {
-    const storedListId = await context.store.get('sendpulse-unsubscribe-list-id');
+    const storedListId = await context.store.get('mailing_list_id');
+    
     interface UnsubscribePayload {
-      email?: string;
-      phone?: string;
-      addressbook_id: number;
+      task_id: string;
+      timestamp: string;
+      from_all: string;
+      email: string;
+      reason: string | null;
+      book_id: string;
       event: string;
-      reason?: string;
-      [key: string]: any;
+      categories: string;
     }
 
-    const payload = context.payload.body as UnsubscribePayload;
-
-    if (!payload || String(payload.addressbook_id) !== storedListId || payload.event !== 'unsubscribe') {
-      return [];
+    const payload = context.payload.body as UnsubscribePayload | UnsubscribePayload[];
+    
+    const payloads = Array.isArray(payload) ? payload : [payload];
+    
+    const results = [];
+    
+    for (const item of payloads) {
+      if (item.event === 'unsubscribe' && item.book_id === storedListId) {
+        results.push({
+          id: `${item.email}_${item.timestamp}`,
+          email: item.email,
+          mailingListId: item.book_id,
+          taskId: item.task_id,
+          fromAll: item.from_all === '1',
+          reason: item.reason || 'No reason provided',
+          categories: item.categories || '',
+          unsubscribedAt: new Date(parseInt(item.timestamp) * 1000).toISOString(),
+          timestamp: item.timestamp,
+        });
+      }
     }
 
-    return [
-      {
-        id: payload.email || payload.phone || new Date().toISOString(),
-        email: payload.email,
-        phone: payload.phone,
-        addressBookId: payload.addressbook_id,
-        unsubscribedAt: new Date().toISOString(),
-        reason: payload.reason || 'Unknown',
-        rawEvent: payload,
-      },
-    ];
+    return results;
   },
 
   async test() {
     return [
       {
-        id: 'test-unsubscribe@example.com',
+        id: 'test-unsubscribe@example.com_1496827872',
         email: 'test-unsubscribe@example.com',
-        phone: null,
-        addressBookId: 123456,
+        mailingListId: '123456',
+        taskId: '3668141',
+        fromAll: true,
+        reason: 'User clicked unsubscribe link',
+        categories: '',
         unsubscribedAt: new Date().toISOString(),
-        reason: 'User clicked unsubscribe',
-        rawEvent: {
-          email: 'test-unsubscribe@example.com',
-          addressbook_id: 123456,
-          event: 'unsubscribe',
-          reason: 'User clicked unsubscribe',
-        },
+        timestamp: '1496827872',
       },
     ];
   },
 
   sampleData: {
-    id: 'unsub@example.com',
+    id: 'unsub@example.com_1496827872',
     email: 'unsub@example.com',
-    phone: null,
-    addressBookId: 123456,
-    unsubscribedAt: '2025-07-13T12:00:00.000Z',
-    reason: 'Manual removal',
-    rawEvent: {
-      email: 'unsub@example.com',
-      addressbook_id: 123456,
-      event: 'unsubscribe',
-      reason: 'Manual removal',
-    },
+    mailingListId: '123456',
+    taskId: '3668141',
+    fromAll: false,
+    reason: 'Manual unsubscribe',
+    categories: 'newsletter',
+    unsubscribedAt: '2023-06-01T12:30:00.000Z',
+    timestamp: '1496827872',
   },
 });
