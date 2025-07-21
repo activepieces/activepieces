@@ -1931,6 +1931,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "sparkybug",
+      "name": "Ukaegbu Osinachi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52334088?v=4",
+      "profile": "https://github.com/sparkybug",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "MAVRICK-1",
+      "name": "Rishi Mondal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/146999057?v=4",
+      "profile": "https://mavrick-portfolio.vercel.app/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

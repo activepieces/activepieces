@@ -145,6 +145,7 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         projectId: plan?.projectId ?? apId(),
         name: plan?.name ?? faker.lorem.word(),
         aiCredits: plan?.aiCredits ?? 0,
+        locked: plan?.locked ?? false,
         pieces: plan?.pieces ?? [],
         piecesFilterType: plan?.piecesFilterType ?? PiecesFilterType.NONE,
         tasks: plan?.tasks ?? 0,

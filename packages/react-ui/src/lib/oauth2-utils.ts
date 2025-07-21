@@ -41,7 +41,7 @@ async function openOAuth2Popup(
 ): Promise<OAuth2PopupResponse> {
   closeOAuth2Popup();
   const pckeChallenge = nanoid(43);
-  const url = constructUrl(params, pckeChallenge);
+  const url = await constructUrl(params, pckeChallenge);
   currentPopup = openWindow(url);
   return {
     code: await getCode(params.redirectUrl),
@@ -70,7 +70,16 @@ function closeOAuth2Popup() {
   currentPopup?.close();
 }
 
-function constructUrl(params: OAuth2PopupParams, pckeChallenge: string) {
+async function generateCodeChallenge(codeVerifier: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(codeVerifier);
+  const digest = await window.crypto.subtle.digest('SHA-256', data);
+
+  const base64String = btoa(String.fromCharCode(...new Uint8Array(digest)));
+  return base64String.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+async function constructUrl(params: OAuth2PopupParams, pckeChallenge: string) {
   const queryParams: Record<string, string> = {
     response_type: 'code',
     client_id: params.clientId,
@@ -82,12 +91,22 @@ function constructUrl(params: OAuth2PopupParams, pckeChallenge: string) {
     ...(params.extraParams || {}),
   };
   if (params.pkce) {
-    queryParams['code_challenge_method'] = 'plain';
-    queryParams['code_challenge'] = pckeChallenge;
+    const method = params.pkceMethod || 'plain';
+    queryParams['code_challenge_method'] = method;
+
+    if (method === 'S256') {
+      queryParams['code_challenge'] = await generateCodeChallenge(
+        pckeChallenge,
+      );
+    } else {
+      queryParams['code_challenge'] = pckeChallenge;
+    }
   }
   const url = new URL(params.authUrl);
   Object.entries(queryParams).forEach(([key, value]) => {
-    url.searchParams.append(key, value);
+    if (value !== '') {
+      url.searchParams.append(key, value);
+    }
   });
   return url.toString();
 }
@@ -114,6 +133,7 @@ type OAuth2PopupParams = {
   redirectUrl: string;
   scope: string;
   pkce: boolean;
+  pkceMethod?: 'plain' | 'S256';
   extraParams?: Record<string, string>;
 };
 

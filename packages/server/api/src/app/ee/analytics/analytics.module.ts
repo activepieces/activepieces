@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
-import { analyticsService } from './analytics.service'
+import { platformAnalyticsReportService } from './analytics.service'
 import { piecesAnalyticsService } from './pieces-analytics.service'
 
 export const analyticsModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -14,6 +14,10 @@ const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', async (request) => {
         const { platform } = request.principal
-        return analyticsService(request.log).generateReport(platform.id)
+        return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id)
+    })
+    app.post('/', async (request) => {
+        const { platform } = request.principal
+        return platformAnalyticsReportService(request.log).refreshReport(platform.id)
     })
 }

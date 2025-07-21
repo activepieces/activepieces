@@ -169,6 +169,9 @@
       "@activepieces/piece-chatbase": [
         "packages/pieces/community/chatbase/src/index.ts"
       ],
+      "@activepieces/piece-checkout": [
+        "packages/pieces/community/checkout/src/index.ts"
+      ],
       "@activepieces/piece-circle": [
         "packages/pieces/community/circle/src/index.ts"
       ],
@@ -180,6 +183,9 @@
       ],
       "@activepieces/piece-clearout": [
         "packages/pieces/community/clearout/src/index.ts"
+      ],
+      "@activepieces/piece-clicksend": [
+        "packages/pieces/community/clicksend/src/index.ts"
       ],
       "@activepieces/piece-clickup": [
         "packages/pieces/community/clickup/src/index.ts"
@@ -284,6 +290,9 @@
       "@activepieces/piece-dumpling-ai": [
         "packages/pieces/community/dumpling-ai/src/index.ts"
       ],
+      "@activepieces/piece-eden-ai": [
+        "packages/pieces/community/eden-ai/src/index.ts"
+      ],
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
       ],
@@ -305,6 +314,9 @@
       ],
       "@activepieces/piece-fillout-forms": [
         "packages/pieces/community/fillout-forms/src/index.ts"
+      ],
+      "@activepieces/piece-fireberry": [
+        "packages/pieces/community/fireberry/src/index.ts"
       ],
       "@activepieces/piece-firecrawl": [
         "packages/pieces/community/firecrawl/src/index.ts"
@@ -329,6 +341,9 @@
       ],
       "@activepieces/piece-forms": [
         "packages/pieces/community/forms/src/index.ts"
+      ],
+      "@activepieces/piece-formstack": [
+        "packages/pieces/community/formstack/src/index.ts"
       ],
       "@activepieces/piece-frame": [
         "packages/pieces/community/frame/src/index.ts"
@@ -554,11 +569,11 @@
       "@activepieces/piece-microsoft-outlook": [
         "packages/pieces/community/microsoft-outlook/src/index.ts"
       ],
-       "@activepieces/piece-microsoft-power-bi": [
-        "packages/pieces/community/microsoft-power-bi/src/index.ts"
-      ],
       "@activepieces/piece-microsoft-outlook-calendar": [
         "packages/pieces/community/microsoft-outlook-calendar/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-power-bi": [
+        "packages/pieces/community/microsoft-power-bi/src/index.ts"
       ],
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
@@ -568,6 +583,9 @@
       ],
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
+      ],
+      "@activepieces/piece-mistral-ai": [
+        "packages/pieces/community/mistral-ai/src/index.ts"
       ],
       "@activepieces/piece-mixpanel": [
         "packages/pieces/community/mixpanel/src/index.ts"
@@ -593,6 +611,9 @@
       "@activepieces/piece-nifty": [
         "packages/pieces/community/nifty/src/index.ts"
       ],
+      "@activepieces/piece-ninox": [
+        "packages/pieces/community/ninox/src/index.ts"
+      ],
       "@activepieces/piece-nocodb": [
         "packages/pieces/community/nocodb/src/index.ts"
       ],
@@ -613,6 +634,9 @@
       ],
       "@activepieces/piece-openai": [
         "packages/pieces/community/openai/src/index.ts"
+      ],
+      "@activepieces/piece-pandadoc": [
+        "packages/pieces/community/pandadoc/src/index.ts"
       ],
       "@activepieces/piece-pastebin": [
         "packages/pieces/community/pastebin/src/index.ts"
@@ -635,6 +659,9 @@
       ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
+      ],
+      "@activepieces/piece-placid": [
+        "packages/pieces/community/placid/src/index.ts"
       ],
       "@activepieces/piece-poper": [
         "packages/pieces/community/poper/src/index.ts"
@@ -662,6 +689,9 @@
       ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
+      ],
+       "@activepieces/piece-quickbooks": [
+        "packages/pieces/community/quickbooks/src/index.ts"
       ],
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
@@ -733,6 +763,9 @@
       "@activepieces/piece-sendinblue": [
         "packages/pieces/community/sendinblue/src/index.ts"
       ],
+      "@activepieces/piece-sendpulse": [
+        "packages/pieces/community/sendpulse/src/index.ts"
+      ],
       "@activepieces/piece-sendy": [
         "packages/pieces/community/sendy/src/index.ts"
       ],
@@ -750,6 +783,9 @@
       ],
       "@activepieces/piece-shopify": [
         "packages/pieces/community/shopify/src/index.ts"
+      ],
+      "@activepieces/piece-short-io": [
+        "packages/pieces/community/short-io/src/index.ts"
       ],
       "@activepieces/piece-simplepdf": [
         "packages/pieces/community/simplepdf/src/index.ts"

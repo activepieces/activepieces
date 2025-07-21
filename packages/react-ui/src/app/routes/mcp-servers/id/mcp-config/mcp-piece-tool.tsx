@@ -24,9 +24,9 @@ import { mcpConfigUtils } from './mcp-config-utils';
 
 type McpPieceToolProps = {
   mcp: McpWithTools;
-  tool: McpTool;
+  tools: McpTool[];
   pieces: PieceMetadataModelSummary[];
-  removeTool: (toolId: string) => Promise<void>;
+  removeTool: (toolIds: string[]) => Promise<void>;
 };
 
 type PieceInfo = {
@@ -36,7 +36,7 @@ type PieceInfo = {
 
 export const McpPieceTool = ({
   mcp,
-  tool,
+  tools,
   pieces,
   removeTool,
 }: McpPieceToolProps) => {
@@ -64,17 +64,29 @@ export const McpPieceTool = ({
     pieceInfoMap[mcpTool.id] = getPieceInfo(mcpTool);
   });
 
-  const actionNames = tool.pieceMetadata?.actionNames || [];
+  const actionDisplayNames = tools
+    .map((tool) => {
+      if (tool.type === McpToolType.PIECE) {
+        return tool.pieceMetadata?.actionDisplayName;
+      }
+      return undefined;
+    })
+    .filter((name) => name !== undefined);
+
+  const toolName =
+    tools[0].type === McpToolType.PIECE
+      ? pieceInfoMap[tools[0].id]?.displayName
+      : undefined;
 
   return (
-    <Card key={`piece-${tool.id}`}>
+    <Card key={`piece-${toolName}`}>
       <CardContent className="flex items-center justify-between p-3 h-[70px]">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
-            {pieceInfoMap[tool.id]?.logoUrl ? (
+            {pieceInfoMap[tools[0].id]?.logoUrl ? (
               <img
-                src={pieceInfoMap[tool.id].logoUrl}
-                alt={pieceInfoMap[tool.id].displayName}
+                src={pieceInfoMap[tools[0].id].logoUrl}
+                alt={pieceInfoMap[tools[0].id].displayName}
                 className="h-5 w-5 object-contain"
               />
             ) : (
@@ -83,10 +95,10 @@ export const McpPieceTool = ({
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-medium truncate">
-              {pieceInfoMap[tool.id]?.displayName || 'Unknown Piece'}
+              {`${pieceInfoMap[tools[0].id]?.displayName}`}
             </h3>
             <span className="text-xs text-muted-foreground">
-              {mcpConfigUtils.formatNames(actionNames)}
+              {mcpConfigUtils.formatNames(actionDisplayNames)}
             </span>
           </div>
         </div>
@@ -105,9 +117,11 @@ export const McpPieceTool = ({
             >
               <PermissionNeededTooltip hasPermission={hasPermissionToWriteMcp}>
                 <ConfirmationDeleteDialog
-                  title={`${t('Delete')} ${pieceInfoMap[tool.id]?.displayName}`}
+                  title={`${t('Delete')} ${toolName}`}
                   message={t('Are you sure you want to delete this tool?')}
-                  mutationFn={() => removeTool(tool.id)}
+                  mutationFn={async () =>
+                    await removeTool(tools.map((tool) => tool.id))
+                  }
                   entityName={t('Tool')}
                 >
                   <DropdownMenuItem
