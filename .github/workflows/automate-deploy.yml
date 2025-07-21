@@ -3,14 +3,14 @@ name: Automate Deploy
 on:
   workflow_dispatch:
   pull_request:
-    # types: [merged]
+    types: [merged]
     branches:
       - main
-    # merged: true
+    merged: true
 
 jobs:
   Release:
-    # if: contains(github.event.pull_request.labels.*.name, 'auto-deploy') || github.event_name == 'workflow_dispatch'
+    if: contains(github.event.pull_request.labels.*.name, 'auto-deploy') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -29,46 +29,46 @@ jobs:
       - name: Set up Depot CLI
         uses: depot/setup-action@v1
 
-      # - name: Build and push
-      #   uses: depot/build-push-action@v1
-      #   with:
-      #     project: du7O4b0e8P
-      #     token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
-      #     context: .
-      #     file: ./Dockerfile
-      #     platforms: |
-      #       linux/amd64
-      #     push: true
-      #     tags: |
-      #       ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}.beta
+      - name: Build and push
+        uses: depot/build-push-action@v1
+        with:
+          project: du7O4b0e8P
+          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          context: .
+          file: ./Dockerfile
+          platforms: |
+            linux/amd64
+          push: true
+          tags: |
+            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}.beta
 
-      # - name: Configure SSH
-      #   run: |
-      #     mkdir -p ~/.ssh/
-      #     echo "$SSH_KEY" > ~/.ssh/ops.key
-      #     chmod 600 ~/.ssh/ops.key
-      #     cat >>~/.ssh/config <<END
-      #     Host ops
-      #       HostName $SSH_HOST
-      #       User $SSH_USER
-      #       IdentityFile ~/.ssh/ops.key
-      #       StrictHostKeyChecking no
-      #     END
-      #   env:
-      #     SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
-      #     SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      #     SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
 
-      # - name: Deploy React
-      #   run: |
-      #     ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/react.yml --skip-push; exit"'
+      - name: Deploy React
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/react.yml --skip-push; exit"'
 
-      # - name: Deploy Workers
-      #   run: |
-      #     ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/workers.yml --skip-push; exit"'
+      - name: Deploy Workers
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/workers.yml --skip-push; exit"'
 
   Deploy-Checkly:
-    name: Deploy Checkly
+    name: Deploy E2E Tests Checkly
     needs: Release
     runs-on: ubuntu-latest
     steps:
@@ -79,7 +79,7 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
-      - name: Deploy Checkly config
+      - name: Run Checkly Deploy
         run: npx checkly deploy --config=packages/tests-e2e/checkly.config.ts
         env:
           CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
