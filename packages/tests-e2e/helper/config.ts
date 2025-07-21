@@ -18,6 +18,8 @@ const prodConfig: Config = {
 
 export const configUtils = {
     getConfig: (): Config => {
+        console.log('E2E_CONFIG_MODE', process.env.E2E_CONFIG_MODE);
+        console.log('PROD CONFIG', prodConfig);
         return process.env.E2E_CONFIG_MODE === 'remote' ? prodConfig : localConfig;
     },
 }
