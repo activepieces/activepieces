@@ -182,13 +182,20 @@ export function EditableCell({
           rowIdx={rowIdx}
           column={column}
           value={value}
-          onRowChange={onRowChange}
+          onRowChange={(newRow, commitChanges) => {
+            if (isEditing) {
+              onRowChange(newRow, commitChanges);
+            }
+          }}
           setValue={setValue}
-          setIsEditing={(isEditing) => {
-            setIsEditing(isEditing);
-            if (!isEditing) {
-              // need to refocus container so keyboard navigation between cells works
-              containerRef.current?.focus();
+          setIsEditing={(newIsEditing) => {
+            setIsEditing(newIsEditing);
+            if (!newIsEditing) {
+              requestAnimationFrame(() => {
+                // need to refocus container so keyboard navigation between cells works
+                // if it was done immediately, the cell would be blurred and call handleRowChange
+                containerRef.current?.focus();
+              });
             }
           }}
           setIsHovered={setIsHovered}
