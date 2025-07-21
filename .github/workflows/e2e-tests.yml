@@ -12,6 +12,15 @@ on:
         required: true
         type: string
         description: 'Target instance URL for e2e tests'
+    secrets:
+      CHECKLY_API_KEY:
+        required: true
+      CHECKLY_ACCOUNT_ID:
+        required: true
+      E2E_EMAIL:
+        required: true
+      E2E_PASSWORD:
+        required: true
   # push:
   #   branches: [main]
 

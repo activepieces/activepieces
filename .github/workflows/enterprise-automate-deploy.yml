@@ -71,4 +71,9 @@ jobs:
     uses: ./.github/workflows/e2e-tests.yml
     with:
       environment: Enterprise
-      instance_url_secret: E2E_ENTERPRISE_INSTANCE_URL         
+      instance_url_secret: E2E_ENTERPRISE_INSTANCE_URL
+    secrets:
+      CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
+      CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
+      E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
