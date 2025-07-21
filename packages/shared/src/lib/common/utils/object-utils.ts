@@ -11,6 +11,16 @@ export function deleteProperties(obj: Record<string, unknown>, props: string[]) 
 }
 
 
+
+export const spreadIfNotUndefined = <T>(key: string, value: T | undefined): Record<string, T> => {
+    if (value === undefined) {
+        return {}
+    }
+    return {
+        [key]: value,
+    }
+}
+
 export const spreadIfDefined = <T>(key: string, value: T | undefined | null): Record<string, T> => {
     if (isNil(value)) {
         return {}

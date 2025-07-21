@@ -59,7 +59,7 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
   ) => {
     if (messages && messages.length > 0) {
       return (
-        <div className="h-full w-full flex items-center justify-center overflow-y-auto">
+        <div className="h-full w-full max-w-3xl flex items-center justify-center overflow-y-auto">
           <div
             className={cn('flex flex-col w-full h-full p-4 gap-2', className)}
             ref={messagesRef || ref}

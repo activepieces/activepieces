@@ -25,6 +25,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
             .values({
                 projectId: flowRun.projectId,
                 flowId: flowRun.flowId,
+                flowVersionId: flowRun.flowVersionId,
                 id: issueId,
                 lastOccurrence: date,
                 stepName: flowRun.failedStepName,
@@ -193,9 +194,10 @@ async function resolveIssueWithZeroCount(projectId: string, log: FastifyBaseLogg
 }
 
 async function enrichIssue(issue: Issue, log: FastifyBaseLogger) {
-    const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issue.flowId)
+    const flowVersion = await flowVersionService(log).getOneOrThrow(issue.flowVersionId)
     const count = await flowRunRepo().countBy({
         flowId: issue.flowId,
+        flowVersionId: issue.flowVersionId,
         failedStepName: issue.stepName,
         status: In([FlowRunStatus.FAILED, FlowRunStatus.INTERNAL_ERROR, FlowRunStatus.TIMEOUT]),
     })

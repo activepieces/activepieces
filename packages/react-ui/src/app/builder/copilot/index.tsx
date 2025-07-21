@@ -8,7 +8,7 @@ import { Socket } from 'socket.io-client';
 import { CardList } from '@/components/custom/card-list';
 import { useSocket } from '@/components/socket-provider';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { CORE_STEP_METADATA } from '@/features/pieces/lib/step-utils';
 import {
   ActionType,
@@ -154,8 +154,6 @@ export const CopilotSidebar = () => {
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
   const applyCodeToCurrentStep = (message: CopilotMessage) => {
     if (!askAiButtonProps) {
-      console.log('no ask ai button props');
-      toast(INTERNAL_ERROR_TOAST);
       return;
     }
     if (message.messageType !== 'code') {

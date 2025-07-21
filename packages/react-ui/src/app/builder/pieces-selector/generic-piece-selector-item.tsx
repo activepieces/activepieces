@@ -36,7 +36,9 @@ const GenericActionOrTriggerItem = ({
         height: `${PIECE_SELECTOR_ELEMENTS_HEIGHTS.ACTION_OR_TRIGGER_ITEM_HEIGHT}px`,
         maxHeight: `${PIECE_SELECTOR_ELEMENTS_HEIGHTS.ACTION_OR_TRIGGER_ITEM_HEIGHT}px`,
       }
-    : {};
+    : {
+        minHeight: '54px',
+      };
   return (
     <CardListItem
       className={cn('p-2 w-full ', {

@@ -5,18 +5,27 @@ import * as React from 'react';
 
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
 
-const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_LIMIT = 3;
+const TOAST_REMOVE_DELAY = 5000;
 
 export const INTERNAL_ERROR_MESSAGE =
-  'Something went wrong, please try again later.';
+  'An unexpected error occurred. Please try again in a moment.';
+
 export const INTERNAL_ERROR_TOAST: ToasterToast = {
   id: 'internal-error',
-  title: 'Error',
+  title: 'Something went wrong',
   description: INTERNAL_ERROR_MESSAGE,
   variant: 'destructive',
   duration: 3000,
 };
+
+export const RESOURCE_LOCKED_MESSAGE = (message: string): ToasterToast => ({
+  id: 'resource-locked',
+  title: `Resource Locked`,
+  description: message,
+  variant: 'default',
+  duration: 5000,
+});
 
 export const UNSAVED_CHANGES_TOAST: ToasterToast = {
   id: 'unsaved-changes',

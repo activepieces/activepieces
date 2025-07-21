@@ -41,16 +41,16 @@ export const createRecords = createAction({
   async run(context) {
     const { table_id: tableExternalId, values } = context.propsValue;
     const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
+    const tableFields = await tablesCommon.getTableFields({ tableId, context });
 
     const records: CreateRecordsRequest['records'] = values['values'].map((record: Record<string, unknown>) =>
       Object.entries(record)
         .filter(([_, value]) => value !== null && value !== undefined && value !== '')
-        .map(([fieldId, value]) => ({
-          fieldId,
+        .map(([fieldExternalId, value]) => ({
+          fieldId: tableFields.find((field) => field.externalId === fieldExternalId)?.id,
           value,
-        }))
+        })).filter((record) => record.fieldId !== undefined)
     )
-    const tableFields = await tablesCommon.getTableFields({ tableId, context });
     const fieldValidations = tablesCommon.createFieldValidations(tableFields);
 
     for (const record of values['values']) {

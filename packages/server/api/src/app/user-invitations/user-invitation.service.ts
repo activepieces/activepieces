@@ -12,6 +12,7 @@ import { jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { platformService } from '../platform/platform.service'
+import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
 
@@ -74,11 +75,17 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                         id: projectRoleId,
                     })
 
-                    await projectMemberService(log).upsert({
+                    const project = await projectService.exists({
                         projectId,
-                        userId: user.id,
-                        projectRoleName: projectRole.name,
+                        isSoftDeleted: false,
                     })
+                    if (!isNil(project)) {
+                        await projectMemberService(log).upsert({
+                            projectId,
+                            userId: user.id,
+                            projectRoleName: projectRole.name,
+                        })
+                    }
                     break
                 }
             }

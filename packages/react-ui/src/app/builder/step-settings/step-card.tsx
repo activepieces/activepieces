@@ -50,8 +50,8 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
           />
         )}
       </div>
-      <div className="flex h-full grow flex-col justify-center gap-1 text-start">
-        <div className="text-base flex justify-center">
+      <div className="flex h-full grow justify-center gap-2 text-start">
+        <div className="text-base flex flex-col grow gap-1">
           <div className="flex-grow">
             {!isNil(modifiedTitle) ? (
               modifiedTitle
@@ -59,14 +59,7 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
               <Skeleton className="h-3 w-32 rounded" />
             )}
           </div>
-          {pieceVersion && (
-            <div className="text-xs text-muted-foreground flex justify-center items-center">
-              v{pieceVersion}
-            </div>
-          )}
-        </div>
-        <div className="flex  items-center justify-between">
-          <div className="overflow-hidden text-ellipsis text-xs text-muted-foreground grow">
+          <div className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
             {!isNil(stepMetadata?.description) ? (
               stepMetadata.description
             ) : (
@@ -75,7 +68,14 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
               </div>
             )}
           </div>
+        </div>
+        <div className="flex  items-center gap-2">
           {agentId && <EditAgentInFlowBuilderButton agentId={agentId} />}
+          {pieceVersion && (
+            <div className="text-xs text-muted-foreground flex justify-center items-center">
+              v{pieceVersion}
+            </div>
+          )}
         </div>
       </div>
     </div>

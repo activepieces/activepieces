@@ -1,22 +1,18 @@
-import { useMutation } from '@tanstack/react-query';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import {
-  DropdownState,
-  PropertyType,
-  ExecutePropsResult,
-} from '@activepieces/pieces-framework';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
 import { Action, isNil, Trigger } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
+import { DynamicPropertiesContext } from './dynamic-properties-context';
 
 type SelectPiecePropertyProps = {
   refreshers: string[];
@@ -43,36 +39,26 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       placeholder: t('Select an option'),
       options: [],
     });
-    const { mutate, isPending } = useMutation<
-      ExecutePropsResult<
-        PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN
-      >,
-      Error,
-      { input: Record<string, unknown> }
+    const { propertyLoadingFinished, propertyLoadingStarted } = useContext(
+      DynamicPropertiesContext,
+    );
+    const { mutate, isPending, error } = piecesHooks.usePieceOptions<
+      PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN
     >({
-      mutationFn: async ({ input }) => {
-        const { settings } = form.getValues();
-        const actionOrTriggerName = settings.actionName ?? settings.triggerName;
-        const { pieceName, pieceVersion, pieceType, packageType } = settings;
-        return piecesApi.options(
-          {
-            pieceName,
-            pieceVersion,
-            pieceType,
-            packageType,
-            propertyName: props.propertyName,
-            actionOrTriggerName: actionOrTriggerName,
-            input,
-            flowVersionId: flowVersion.id,
-            flowId: flowVersion.flowId,
-          },
-          PropertyType.DROPDOWN,
-        );
+      onMutate: () => {
+        propertyLoadingStarted(props.propertyName);
       },
       onError: (error) => {
         console.error(error);
+        propertyLoadingFinished(props.propertyName);
+      },
+      onSuccess: () => {
+        propertyLoadingFinished(props.propertyName);
       },
     });
+    if (error) {
+      throw error;
+    }
 
     /* eslint-disable react-hooks/rules-of-hooks */
     const refresherValues = newRefreshers.map((refresher) =>
@@ -87,8 +73,24 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       newRefreshers.forEach((refresher, index) => {
         input[refresher] = refresherValues[index];
       });
+      const { settings } = form.getValues();
+      const actionOrTriggerName = settings.actionName ?? settings.triggerName;
+      const { pieceName, pieceVersion, pieceType, packageType } = settings;
       mutate(
-        { input },
+        {
+          request: {
+            pieceName,
+            pieceVersion,
+            pieceType,
+            packageType,
+            propertyName: props.propertyName,
+            actionOrTriggerName: actionOrTriggerName,
+            input,
+            flowVersionId: flowVersion.id,
+            flowId: flowVersion.flowId,
+          },
+          propertyType: PropertyType.DROPDOWN,
+        },
         {
           onSuccess: (response) => {
             setDropdownState(response.options);

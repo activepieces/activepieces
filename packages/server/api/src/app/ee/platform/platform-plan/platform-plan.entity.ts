@@ -1,4 +1,4 @@
-import { AiOverageState, Platform, PlatformPlan } from '@activepieces/shared'
+import { Platform, PlatformPlan } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -22,7 +22,7 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Number,
             nullable: true,
         },
-        aiCreditsLimit: {
+        includedAiCredits: {
             type: Number,
         },
         aiCreditsOverageLimit: {
@@ -30,8 +30,7 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             nullable: true,
         },
         aiCreditsOverageState: {
-            type: 'enum',
-            enum: AiOverageState,
+            type: String,
             nullable: true,
         },
         eligibleForTrial: {
@@ -96,9 +95,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         apiKeysEnabled: {
             type: Boolean,
         },
-        alertsEnabled: {
-            type: Boolean,
-        },
         ssoEnabled: {
             type: Boolean,
         },
@@ -150,6 +146,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         activeFlowsLimit: {
             type: Number,
             nullable: true,
+        },
+        mcpsEnabled: {
+            type: Boolean,
         },
     },
     indices: [

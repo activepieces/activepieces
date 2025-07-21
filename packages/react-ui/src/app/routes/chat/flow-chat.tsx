@@ -22,6 +22,8 @@ import {
   HumanInputFormResultTypes,
 } from '@activepieces/shared';
 
+import NotFoundPage from '../404-page';
+
 interface FlowChatProps {
   flowId: string;
   className?: string;
@@ -128,13 +130,14 @@ export function FlowChat({
       }
 
       scrollToBottom();
-
+      const isDraft = mode === ChatDrawerSource.TEST_FLOW;
+      const isTestStep = mode === ChatDrawerSource.TEST_STEP;
       return humanInputApi.sendMessage({
         flowId,
         chatId: chatSessionId,
         message: savedInput,
         files: savedFiles,
-        mode: mode === ChatDrawerSource.TEST_STEP ? 'test' : 'draft',
+        mode: isDraft ? 'draft' : isTestStep ? 'test' : 'locked',
       });
     },
 
@@ -214,7 +217,7 @@ export function FlowChat({
   };
 
   if (isLoadingError) {
-    return null;
+    return <ChatNotFound />;
   }
 
   if (isLoading) return <LoadingScreen />;
@@ -279,3 +282,12 @@ export function FlowChat({
     </main>
   );
 }
+
+export const ChatNotFound = () => {
+  return (
+    <NotFoundPage
+      title="Hmm... this chat isn't here"
+      description="The chat you're looking for isn't here or maybe hasn't been published by the owner yet"
+    />
+  );
+};

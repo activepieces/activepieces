@@ -20,7 +20,6 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -121,10 +120,6 @@ const CreateReleaseDialogContent = ({
     onSuccess: () => {
       refetch();
       setOpen(false);
-    },
-    onError: (error) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
   const [selectedChanges, setSelectedChanges] = useState<Set<string>>(

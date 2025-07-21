@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { MousePointerClick } from 'lucide-react';
+import { Workflow } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import {
   PackageType,
   PieceType,
   TriggerType,
+  LATEST_SCHEMA_VERSION,
 } from '@activepieces/shared';
 
 const template = {
@@ -50,7 +51,7 @@ const template = {
           pieceType: PieceType.OFFICIAL,
           packageType: PackageType.REGISTRY,
           actionName: 'run_agent',
-          pieceVersion: '~0.1.7',
+          pieceVersion: '~0.2.0',
           input: {
             agentId: '{{AGENT_ID}}',
             prompt: "{{trigger['message']}}",
@@ -100,7 +101,7 @@ const template = {
     },
     valid: true,
     connectionIds: [],
-    schemaVersion: '2',
+    schemaVersion: LATEST_SCHEMA_VERSION,
   },
   blogUrl: '',
 };
@@ -156,8 +157,8 @@ export const UseAgentButton = ({ agentId }: UseAgentButton) => {
       onClick={() => mutate()}
       disabled={isPending}
     >
-      <MousePointerClick className="h-4 w-4" />
-      {isPending ? t('Importing...') : t('Use Agent')}
+      <Workflow />
+      {isPending ? t('Importing...') : t('Use in Flow')}
     </Button>
   );
 };

@@ -21,7 +21,7 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -105,10 +105,6 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
         duration: 3000,
       });
       setOpen(false);
-    },
-    onError: (error: any) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 

@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
+import { SeekPage } from '../common/seek-page'
 
 export const AIProvider = Type.Object({
     ...BaseModelSchema,
@@ -31,6 +32,25 @@ export const AIUsage = Type.Object({
 })
 
 export type AIUsage = Static<typeof AIUsage>
+
+export const ListAICreditsUsageRequest = Type.Object({
+    limit: Type.Optional(Type.Number({ minimum: 1, maximum: 100 })),
+    cursor: Type.Optional(Type.String()),
+})
+
+export type ListAICreditsUsageRequest = Static<typeof ListAICreditsUsageRequest>
+
+export const ListAICreditsUsageResponse = SeekPage(
+    Type.Intersect([
+        Type.Omit(AIUsage, ['cost']),
+        Type.Object({
+            credits: Type.Number(),
+            projectName: Type.String(),
+        }),
+    ]),
+)
+
+export type ListAICreditsUsageResponse = Static<typeof ListAICreditsUsageResponse>
 
 export const AIErrorResponse = Type.Object({
     error: Type.Object({

@@ -95,11 +95,21 @@ type CreateOutputContextParams = {
     stepOutput: GenericStepOutput<ActionType.PIECE, unknown>
 }
 
-const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<void> => {
-    if (params.engineConstants.isRunningApTests || params.engineConstants.testSingleStepMode) {
+const queueUpdates: UpdateStepProgressParams[] = []
+
+const sendUpdateRunRequest = async (_updateParams: UpdateStepProgressParams): Promise<void> => {
+    if (_updateParams.engineConstants.isRunningApTests || _updateParams.engineConstants.testSingleStepMode) {
         return
     }
+    queueUpdates.push(_updateParams)
     await lock.runExclusive(async () => {
+        const params = queueUpdates.pop()
+        while (queueUpdates.length > 0) {
+            queueUpdates.pop()
+        }
+        if (isNil(params)) {
+            return
+        }
         lastActionExecutionTime = Date.now()
         const { flowExecutorContext, engineConstants } = params
         const runDetails = await flowExecutorContext.toResponse()

@@ -23,7 +23,7 @@ export const UsageCards = ({
     <div
       className={cn(
         'grid grid-cols-3 gap-6',
-        isBusinessPlan ? 'xl:grid-cols-4' : '2xl:grid-cols-6',
+        isBusinessPlan ? 'xl:grid-cols-5' : '2xl:grid-cols-6',
       )}
     >
       <UsageCard
@@ -83,7 +83,7 @@ interface UsageCardProps {
   icon: React.ReactNode;
   title: string;
   used: number;
-  total?: number;
+  total?: number | null;
   showProgress?: boolean;
 }
 

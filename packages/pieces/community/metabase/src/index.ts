@@ -9,6 +9,7 @@ import { getDashboardQuestions } from './lib/actions/get-dashboard';
 import { queryMetabaseApi } from './lib/common';
 import { HttpMethod, is_chromium_installed } from '@activepieces/pieces-common';
 import { getGraphQuestion } from './lib/actions/get-graph-question';
+import { embedQuestion } from './lib/actions/embed-question';
 
 const baseProps = {
   baseUrl: Property.ShortText({
@@ -73,6 +74,7 @@ export const metabase = createPiece({
     getQuestion,
     getQuestionPngPreview,
     getDashboardQuestions,
+    embedQuestion,
     ...(is_chromium_installed() ? [getGraphQuestion] : []),
   ],
   triggers: [],

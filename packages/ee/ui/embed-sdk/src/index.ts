@@ -1,4 +1,3 @@
-
 //Client ==> Activepieces
 //Vendor ==> Customers using our embed sdk
 export enum ActivepiecesClientEventName {
@@ -107,6 +106,7 @@ export interface ActivepiecesVendorInit {
     emitHomeButtonClickedEvent?: boolean;
     locale?: string;
     mode?: 'light' | 'dark';
+    hideFlowsPageNavbar?: boolean;
   };
 }
 
@@ -136,6 +136,7 @@ type EmbeddingParam = {
   };
   dashboard?: {
     hideSidebar?: boolean;
+    hideFlowsPageNavbar?: boolean;
   };
   hideExportAndImportFlow?: boolean;
   hideDuplicateFlow?: boolean;
@@ -153,7 +154,7 @@ type ConfigureParams = {
 
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.5.0";
+  readonly _sdkVersion = "0.6.0";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -235,13 +236,14 @@ class ActivepiecesEmbedded {
 
   private _setupInitialMessageHandler(targetWindow: Window, initialRoute: string, callbackAfterConfigurationFinished?: () => void) {
     const initialMessageHandler = (event: MessageEvent<ActivepiecesClientEvent>) => {
-      if (event.source === targetWindow) {
+      if (event.source === targetWindow && event.origin === new URL(this._instanceUrl).origin) {
         switch (event.data.type) {
           case ActivepiecesClientEventName.CLIENT_INIT: {
             const apEvent: ActivepiecesVendorInit = {
               type: ActivepiecesVendorEventName.VENDOR_INIT,
               data: {
                 hideSidebar: this._embeddingState?.dashboard?.hideSidebar ?? false,
+                hideFlowsPageNavbar: this._embeddingState?.dashboard?.hideFlowsPageNavbar ?? false,
                 disableNavigationInBuilder: this._embeddingState?.builder?.disableNavigation ?? false,
                 hideFolders: this._embeddingState?.hideFolders ?? false,
                 hideFlowNameInBuilder: this._embeddingState?.builder?.hideFlowName ?? false,

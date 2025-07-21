@@ -5,8 +5,8 @@ import { findPiece } from '../utils/piece-utils';
 import { makeFolderRecursive } from '../utils/files';
 import { join } from 'node:path';
 import { exec } from '../utils/exec';
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import keys from '../../../../pieces/community/framework/translation-keys.json';
+import { pieceTranslation } from '@activepieces/pieces-framework';
+import { MAX_KEY_LENGTH_FOR_CORWDIN } from '@activepieces/shared';
 
 const findPieceInModule= async (pieceOutputFile: string) => {
     const module = await import(pieceOutputFile);
@@ -39,18 +39,17 @@ function getPropertyValue(object: Record<string, unknown>, path: string): unknow
   return nextObject;
 }
 
-
 const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { const translation: Record<string, string> = {}
   try {
-    keys.forEach(key => {
-      const value = getPropertyValue(piece, key)
+    pieceTranslation.pathsToValuesToTranslate.forEach(path => {
+      const value = getPropertyValue(piece, path)
       if (value) {
         if (typeof value === 'string') {
-          translation[value] = value
+          translation[value.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)] = value
         }
         else if (Array.isArray(value)) {
           value.forEach(item => {
-            translation[item] = item
+            translation[item.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)] = item
           })
         }
       }

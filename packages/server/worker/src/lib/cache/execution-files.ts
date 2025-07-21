@@ -1,6 +1,6 @@
 import path from 'path'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH, GLOBAL_CODE_CACHE_PATH, PiecesSource, threadSafeMkdir } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, ExecutionMode, PiecePackage, PieceType, RunEnvironment } from '@activepieces/shared'
+import { ExecutionMode, PiecePackage, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceManager } from '../piece-manager'
 import { CodeArtifact } from '../runner/engine-runner-types'
@@ -23,7 +23,6 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         pieces,
         codeSteps,
         customPiecesPath,
-        runEnvironment,
     }: ProvisionParams): Promise<void> {
         const startTime = performance.now()
 
@@ -32,16 +31,14 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
 
         const startTimeCode = performance.now()
         await threadSafeMkdir(GLOBAL_CODE_CACHE_PATH)
-        const buildJobs = codeSteps.map(async (artifact) => {
-            assertNotNullOrUndefined(runEnvironment, 'Run environment is required')
-            return codeBuilder(log).processCodeStep({
+        // This is sequential to ensure the worker machine is not overloaded
+        for (const artifact of codeSteps) {
+            await codeBuilder(log).processCodeStep({
                 artifact,
                 codesFolderPath: GLOBAL_CODE_CACHE_PATH,
-                runEnvironment,
                 log,
             })
-        })
-        await Promise.all(buildJobs)
+        }
         log.info({
             path: GLOBAL_CODE_CACHE_PATH,
             timeTaken: `${Math.floor(performance.now() - startTimeCode)}ms`,
@@ -98,5 +95,4 @@ type ProvisionParams = {
     pieces: PiecePackage[]
     codeSteps: CodeArtifact[]
     customPiecesPath: string
-    runEnvironment?: RunEnvironment
 }

@@ -123,6 +123,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                     data: {
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         runId: flowRun.id,
+                        flowId: flowRun.flowId,
                         synchronousHandlerId: flowRun.pauseMetadata?.handlerId ?? null,
                         progressUpdateType: flowRun.pauseMetadata?.progressUpdateType ?? ProgressUpdateType.NONE,
                         projectId: flowRun.projectId,

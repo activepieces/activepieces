@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { piecesTagsApi } from '@/features/platform-admin/lib/pieces-tags';
 import { Tag } from '@activepieces/shared';
 
@@ -41,9 +41,6 @@ export function CreateTagDialog({
       });
       onTagCreated(data);
       setIsOpen(false);
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 

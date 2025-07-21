@@ -1,15 +1,13 @@
 
-import { isNil } from '../../../common'
 import { Action, ActionType, BranchExecutionType, RouterAction, RouterExecutionType } from '../../actions/action'
 import { FlowVersion } from '../../flow-version'
 import { flowStructureUtil } from '../../util/flow-structure-util'
 import { Migration } from '.'
 
 export const migrateBranchToRouter: Migration = {
+    name: 'migrate-v0-branch-to-router',
+    targetSchemaVersion: undefined,
     migrate: (flowVersion: FlowVersion) => {
-        if (!isNil(flowVersion.schemaVersion)) {
-            return flowVersion
-        }
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
             const unschemedStep = step as unknown as { type: string, settings: { conditions: unknown[] }, onSuccessAction: Action | null, onFailureAction: Action | null }
             if (unschemedStep.type === 'BRANCH') {

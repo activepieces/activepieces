@@ -1,5 +1,5 @@
 import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
 import { PlanName } from '@ee/shared/src/lib/billing'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -85,7 +85,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         }
         return response.json()
     },
-    async verifyKeyOrReturnNull({ platformId, license }: { license: string | undefined, platformId: string }): Promise<LicenseKeyEntity | null  > {
+    async verifyKeyOrReturnNull({ platformId, license }: { license: string | undefined, platformId: string }): Promise<LicenseKeyEntity | null> {
         if (isNil(license)) {
             return null
         }
@@ -127,11 +127,13 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         await deactivatePlatformUsersOtherThanAdmin(platformId)
     },
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
+        const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD
         await platformService.update({
             id: platformId,
             plan: {
-                plan: PlanName.ENTERPRISE,
+                plan: isInternalPlan ? 'internal' : PlanName.ENTERPRISE,
                 licenseKey: key.key,
+                tasksLimit: undefined,
                 licenseExpiresAt: key.expiresAt,
                 ssoEnabled: key.ssoEnabled,
                 environmentsEnabled: key.environmentsEnabled,
@@ -143,17 +145,22 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 customRolesEnabled: key.customRolesEnabled,
                 manageProjectsEnabled: key.manageProjectsEnabled,
                 managePiecesEnabled: key.managePiecesEnabled,
-                activeFlowsLimit: undefined,
                 agentsLimit: undefined,
+                mcpsEnabled: key.mcpsEnabled,
+                todosEnabled: key.todosEnabled,
+                tablesEnabled: key.tablesEnabled,
                 mcpLimit: undefined,
                 projectsLimit: undefined,
-                tablesLimit: undefined,
                 userSeatsLimit: undefined,
+                stripeSubscriptionId: undefined,
+                stripeSubscriptionStatus: undefined,
+                eligibleForTrial: false,
+                tablesLimit: undefined,
+                agentsEnabled: key.agentsEnabled,
                 manageTemplatesEnabled: key.manageTemplatesEnabled,
                 apiKeysEnabled: key.apiKeysEnabled,
                 customDomainsEnabled: key.customDomainsEnabled,
                 projectRolesEnabled: key.projectRolesEnabled,
-                alertsEnabled: key.alertsEnabled,
                 analyticsEnabled: key.analyticsEnabled,
             },
         })
@@ -193,6 +200,8 @@ const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt'
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     projectRolesEnabled: false,
-    flowIssuesEnabled: false,
-    alertsEnabled: false,
+    agentsEnabled: false,
+    mcpsEnabled: false,
+    tablesEnabled: false,
+    todosEnabled: false,
 }

@@ -51,18 +51,17 @@ export const alertMutations = {
                 message: t('The email is already added.'),
               });
               break;
-
-            default:
+            default: {
               toast(INTERNAL_ERROR_TOAST);
+              break;
+            }
           }
         }
-        setOpen(true);
       },
     });
   },
   useDeleteAlert: () => {
     const queryClient = useQueryClient();
-
     return useMutation<void, Error, Alert>({
       mutationFn: (alert) => alertsApi.delete(alert.id),
       onSuccess: () => {
@@ -72,10 +71,6 @@ export const alertMutations = {
           description: t('Your changes have been saved.'),
           duration: 3000,
         });
-      },
-      onError: (error) => {
-        toast(INTERNAL_ERROR_TOAST);
-        console.log(error);
       },
     });
   },

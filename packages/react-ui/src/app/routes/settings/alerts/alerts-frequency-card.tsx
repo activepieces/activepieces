@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -48,10 +48,6 @@ const AlertFrequencyCard = React.memo(() => {
         description: t('Your changes have been saved.'),
         duration: 3000,
       });
-    },
-    onError: (error) => {
-      toast(INTERNAL_ERROR_TOAST);
-      console.log(error);
     },
   });
 

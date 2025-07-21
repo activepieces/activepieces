@@ -1,5 +1,5 @@
 import { ApSubscriptionStatus, CreateSubscriptionParamsSchema, DEFAULT_BUSINESS_SEATS, isUpgradeExperience, PlanName, SetAiCreditsOverageLimitParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
-import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, ListAICreditsUsageRequest, ListAICreditsUsageResponse, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -8,7 +8,6 @@ import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-author
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
-import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 
 async function getNextBillingAmount(subscriptionStatus: ApSubscriptionStatus, log: FastifyBaseLogger, subscriptionId?: string): Promise<number> {
     const stripe = stripeHelper(log).getStripe()
@@ -37,31 +36,6 @@ async function getNextBillingAmount(subscriptionStatus: ApSubscriptionStatus, lo
 
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
-
-
-    fastify.post('/increase-ai-credit-usage', {}, async (request) => {
-        const platformId = request.principal.platform.id
-        const projectId = request.principal.projectId
-
-        const exceededLimit = await projectLimitsService(request.log).checkAICreditsExceededLimit(projectId)
-
-        if (exceededLimit) {
-            return {
-                message: 'U passed ur limit bro',
-            }
-
-        }
-
-        const { platformAiCreditUsage, projectAiCreditUsage } = await platformUsageService(request.log).increaseAiCreditUsage({ projectId, model: 'gpt-4o', provider: 'openai', cost: 0.1, platformId })
-
-        return {
-            message: 'AI credit usage increased',
-            platformAiCreditUsage,
-            projectAiCreditUsage,
-        }
-    })
-
-
 
     fastify.get('/info', InfoRequest, async (request: FastifyRequest) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
@@ -109,7 +83,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         }
         
         const totalCreditsUsed = usage.aiCredits
-        const planIncludedCredits = platformPlan.aiCreditsLimit || 0
+        const planIncludedCredits = platformPlan.includedAiCredits || 0
         const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
         
         if (state === AiOverageState.ALLOWED_BUT_OFF && overageCreditsUsed > 0) {
@@ -160,7 +134,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         }
         
         const totalCreditsUsed = usage.aiCredits
-        const planIncludedCredits = platformPlan.aiCreditsLimit || 0
+        const planIncludedCredits = platformPlan.includedAiCredits || 0
         const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
         
         if (overageCreditsUsed > limit) {
@@ -262,6 +236,17 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
         return { success: true }
     })
+
+    fastify.get('/ai-credits-usage', ListAIUsageRequest, async (request) => {
+        const { limit, cursor } = request.query
+        const platformId = request.principal.platform.id
+        
+        return platformUsageService(request.log).listAICreditsUsage({
+            platformId,
+            cursor: cursor ?? null,
+            limit: limit ?? 10,
+        })
+    })
 }
 
 const InfoRequest = {
@@ -321,3 +306,16 @@ const StartTrialRequest = {
         }),
     },
 }
+
+
+const ListAIUsageRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+    schema: {
+        querystring: ListAICreditsUsageRequest,
+        response: {
+            [StatusCodes.OK]: ListAICreditsUsageResponse,
+        },
+    },
+} 

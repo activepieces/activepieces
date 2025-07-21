@@ -4,7 +4,7 @@
     "outDir": "../dist/out-tsc/tools",
     "rootDir": ".",
     "module": "commonjs",
-    "target": "es5",
+    "target": "es2015",
     "types": ["node"],
     "importHelpers": false
   },
