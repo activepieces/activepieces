@@ -11,7 +11,6 @@ import { usePrevious } from 'react-use';
 import { create, useStore } from 'zustand';
 
 import { Messages } from '@/components/ui/chat/chat-message-list';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
@@ -865,9 +864,6 @@ export const useSwitchToDraft = () => {
         setFlow(flow);
         setVersion(flow.version);
         clearRun(userHasPermissionToEditFlow);
-      },
-      onError: () => {
-        toast(INTERNAL_ERROR_TOAST);
       },
     });
   return {

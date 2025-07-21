@@ -21,7 +21,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
@@ -55,7 +54,6 @@ export function McpPieceDialog({
   children,
   onClose,
 }: McpPieceDialogProps) {
-  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedConnectionExternalId, setSelectedConnectionExternalId] =
     useState<string | null>(null);
@@ -176,15 +174,6 @@ export function McpPieceDialog({
     onSuccess: () => {
       onSuccess?.();
       handleClose();
-    },
-    onError: (error) => {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: t('Error'),
-        description: t('Failed to update tool'),
-        duration: 5000,
-      });
     },
   });
 

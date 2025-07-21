@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Check, X } from 'lucide-react';
+import { Check, Lock } from 'lucide-react';
 
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import {
@@ -28,6 +28,10 @@ const LICENSE_PROPS_MAP = {
   embeddingEnabled: {
     label: 'Embedding',
     description: 'Add workflows directly into your website or application',
+  },
+  globalConnectionsEnabled: {
+    label: 'Global Connections',
+    description: 'Create centralized connections for your projects',
   },
   managePiecesEnabled: {
     label: 'Manage Pieces',
@@ -101,7 +105,11 @@ export const FeatureStatus = ({
                   variant="success"
                 />
               ) : (
-                <StatusIconWithText icon={X} text="Disabled" variant="error" />
+                <StatusIconWithText
+                  icon={Lock}
+                  text="Upgrade"
+                  variant="default"
+                />
               )}
             </div>
           );

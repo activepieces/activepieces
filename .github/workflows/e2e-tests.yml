@@ -1,13 +1,12 @@
 name: E2E Tests
 on:
-  pull_request:
-    branches: [main]
   push:
     branches: [main]
 
 jobs:
   e2e-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
@@ -18,15 +17,34 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install playwright dependencies
-        run: sudo apt install -y libnss3 libnspr4 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 libatspi2.0-0t64 libxcomposite1 libxdamage1 libxext6 libxfixes3 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2t64
-      
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-      
-      - name: Run E2E tests
-        run: npx nx run tests-e2e:test-scenarios
+      - name: Run Checkly tests
+        id: checkly-tests
+        run: npx checkly test --config=packages/tests-e2e/checkly.config.ts --reporter=github --record
         env:
+          CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
+          CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
           E2E_INSTANCE_URL: ${{ secrets.E2E_INSTANCE_URL }}
+
+      - name: Deploy Checkly config
+        if: steps.checkly-tests.outcome == 'success'
+        run: npx checkly deploy --config=packages/tests-e2e/checkly.config.ts
+        env:
+          CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
+          CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
+
+      - name: Create summary
+        run: cat checkly-github-report.md > $GITHUB_STEP_SUMMARY
+        if: always()
+
+      - name: Notify Discord on failure
+        if: failure()
+        run: |
+          if [ -f checkly-github-report.md ]; then
+            SUMMARY=$(node tools/scripts/format-checkly-report.js checkly-github-report.md)
+            curl -H "Content-Type: application/json" \
+              -X POST \
+              -d "{\"content\": $SUMMARY}" \
+              https://discordapp.com/api/webhooks/1395411907413807184/yfzZsR0wDYvk3fgDXeyVz0yAheja9peyxqTlOl6uI8KfOjlzCGR-Thdso9L5fHrZiTmO
+          fi

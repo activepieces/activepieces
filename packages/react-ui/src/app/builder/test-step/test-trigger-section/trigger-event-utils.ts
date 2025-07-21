@@ -1,5 +1,6 @@
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework';
+import { TriggerTestStrategy } from '@activepieces/shared';
 
 export type TestType =
   | 'mcp-tool'
@@ -35,7 +36,12 @@ export const triggerEventUtils = {
       trigger.type === TriggerStrategy.APP_WEBHOOK ||
       trigger.type === TriggerStrategy.WEBHOOK
     ) {
-      return 'simulation';
+      switch (trigger.testStrategy) {
+        case TriggerTestStrategy.TEST_FUNCTION:
+          return 'polling';
+        case TriggerTestStrategy.SIMULATION:
+          return 'simulation';
+      }
     }
 
     return 'polling';

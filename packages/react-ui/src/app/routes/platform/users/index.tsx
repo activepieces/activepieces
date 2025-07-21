@@ -12,7 +12,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { platformUserApi } from '@/lib/platform-user-api';
 import { formatUtils } from '@/lib/utils';
@@ -40,9 +40,6 @@ export default function UsersPage() {
         duration: 3000,
       });
     },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
   });
 
   const { mutate: updateUserStatus, isPending: isUpdatingStatus } = useMutation(
@@ -66,9 +63,6 @@ export default function UsersPage() {
               : t('User deactivated successfully'),
           duration: 3000,
         });
-      },
-      onError: () => {
-        toast(INTERNAL_ERROR_TOAST);
       },
     },
   );
@@ -135,6 +129,8 @@ export default function UsersPage() {
                   <div className="text-left">
                     {row.original.platformRole === PlatformRole.ADMIN
                       ? t('Admin')
+                      : row.original.platformRole === PlatformRole.OPERATOR
+                      ? t('Operator')
                       : t('Member')}
                   </div>
                 );

@@ -83,7 +83,7 @@ interface UsageCardProps {
   icon: React.ReactNode;
   title: string;
   used: number;
-  total?: number;
+  total?: number | null;
   showProgress?: boolean;
 }
 

@@ -1,9 +1,21 @@
+import { t } from 'i18next';
 import { Plus } from 'lucide-react';
+import { ReactNode } from 'react';
 import { Column, RenderCellProps } from 'react-data-grid';
 
+import {
+  TooltipTrigger,
+  Tooltip,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, Permission } from '@activepieces/shared';
+import { platformHooks } from '@/hooks/platform-hooks';
+import {
+  ApFlagId,
+  Permission,
+  PlatformUsageMetric,
+} from '@activepieces/shared';
 
 import { ClientRecordData } from '../lib/store/ap-tables-client-state';
 import { Row } from '../lib/types';
@@ -36,13 +48,7 @@ export function useTableColumns(createEmptyRecord: () => void) {
     maxWidth: 67,
     width: 67,
     name: '',
-    renderHeaderCell: () => (
-      <NewFieldPopup>
-        <div className="w-full h-full flex items-center justify-center cursor-pointer new-field">
-          <Plus className="h-4 w-4" />
-        </div>
-      </NewFieldPopup>
-    ),
+    renderHeaderCell: () => <AddFieldButton />,
     renderCell: () => <div className="empty-cell"></div>,
   };
 
@@ -50,12 +56,10 @@ export function useTableColumns(createEmptyRecord: () => void) {
     {
       ...SelectColumn,
       renderSummaryCell: () => (
-        <div
-          className="w-full h-full border-t border-border  flex items-center justify-start cursor-pointer pl-4"
-          onClick={createEmptyRecord}
-        >
-          <Plus className="h-4 w-4" />
-        </div>
+        <AddRecordButton
+          handleClick={createEmptyRecord}
+          icon={<Plus className="size-4" />}
+        />
       ),
     },
     ...(fields.map((field, index) => ({
@@ -90,10 +94,7 @@ export function useTableColumns(createEmptyRecord: () => void) {
         />
       ),
       renderSummaryCell: () => (
-        <div
-          className="w-full h-full flex border-t border-border  items-center justify-start cursor-pointer pl-4"
-          onClick={createEmptyRecord}
-        ></div>
+        <AddRecordButton handleClick={createEmptyRecord} />
       ),
     })) ?? []),
   ];
@@ -120,4 +121,60 @@ export function mapRecordsToRows(
     });
     return row;
   });
+}
+
+type AddRecordButtonProps = {
+  handleClick: () => void;
+  icon?: ReactNode;
+};
+
+function AddRecordButton({ handleClick, icon }: AddRecordButtonProps) {
+  const exccedTableLimit = platformHooks.useCheckResourceIsLocked(
+    PlatformUsageMetric.TABLES,
+  );
+
+  return exccedTableLimit ? (
+    <Tooltip>
+      <TooltipTrigger className="w-full h-full border-t border-border bg-muted text-muted-foreground flex items-center justify-start pl-4">
+        {icon}
+      </TooltipTrigger>
+      <TooltipContent>
+        {t(
+          'Table limit exceeded. Delete unnecessary tables or upgrade to unlock access.',
+        )}
+      </TooltipContent>
+    </Tooltip>
+  ) : (
+    <div
+      className="w-full h-full border-t border-border  flex items-center justify-start cursor-pointer pl-4"
+      onClick={handleClick}
+    >
+      {icon}
+    </div>
+  );
+}
+
+function AddFieldButton() {
+  const exccedTableLimit = platformHooks.useCheckResourceIsLocked(
+    PlatformUsageMetric.TABLES,
+  );
+
+  return exccedTableLimit ? (
+    <Tooltip>
+      <TooltipTrigger className="w-full h-full bg-muted text-muted-foreground flex items-center justify-center new-field">
+        <Plus className="h-4 w-4" />
+      </TooltipTrigger>
+      <TooltipContent>
+        {t(
+          'You have exceeded tables limit please delete extra tables or upgrade to retain access',
+        )}
+      </TooltipContent>
+    </Tooltip>
+  ) : (
+    <NewFieldPopup>
+      <div className="w-full h-full flex items-center justify-center cursor-pointer new-field">
+        <Plus className="h-4 w-4" />
+      </div>
+    </NewFieldPopup>
+  );
 }

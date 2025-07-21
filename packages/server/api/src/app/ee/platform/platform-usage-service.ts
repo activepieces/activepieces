@@ -36,6 +36,7 @@ const getDailyUsageRedisKey = (
 
 export const platformUsageService = (_log?: FastifyBaseLogger) => ({
     async getAllPlatformUsage(platformId: string): Promise<PlatformUsage> {
+        
         const platformBilling = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
 
         const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
