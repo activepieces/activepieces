@@ -11,13 +11,13 @@ const localConfig: Config = {
 }
 
 const prodConfig: Config = {
-    instanceUrl: process.env.E2E_INSTANCE_URL,
-    email: process.env.E2E_EMAIL,
-    password: process.env.E2E_PASSWORD
+    instanceUrl: '{{E2E_INSTANCE_URL}}',
+    email: '{{E2E_EMAIL}}',
+    password: '{{E2E_PASSWORD}}'
 }
 
 export const configUtils = {
     getConfig: (): Config => {
-        return process.env.E2E_INSTANCE_URL ? prodConfig : localConfig;
+        return process.env.E2E_CONFIG_MODE === 'remote' ? prodConfig : localConfig;
     },
 }
