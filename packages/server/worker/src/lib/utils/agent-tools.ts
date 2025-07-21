@@ -32,12 +32,11 @@ async function buildInternalTools<T extends AgentJobSource>(params: AgentToolsPa
                 parameters: z.object({
                     cells: createCellsZodSchema(fields),
                 }),
-                execute: async (input) => {
-                    const record = await tablesApiService(params.token).updateRecord(params.metadata!.recordId, {
-                        cells: input.cells,
+                execute: async ({ cells }) => {
+                    return tablesApiService(params.token).updateRecord(params.metadata!.recordId, {
+                        cells,
                         tableId: params.metadata!.tableId,
                     })
-                    return record
                 },
             }),
             [agentbuiltInToolsNames.markAsComplete]: tool({
