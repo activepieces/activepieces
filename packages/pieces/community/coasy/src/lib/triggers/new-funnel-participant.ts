@@ -1,6 +1,6 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { coasyAuth } from '../..';
-import { createCoasyTrigger, destroyCoasyTrigger } from '../common/triggers';
+import { createCoasyTrigger, destroyCoasyTrigger, testCoasyTrigger } from '../common/triggers';
 
 const triggerName = "NEW_FUNNEL_PARTICIPANT";
 
@@ -29,6 +29,10 @@ export const newFunnelParticipant = createTrigger({
     triggerName,
     auth: context.auth,
     store: context.store
+  }),
+  test: (context) => testCoasyTrigger({
+    triggerName,
+    auth: context.auth
   }),
   async run(context) {
     return [context.payload.body];
