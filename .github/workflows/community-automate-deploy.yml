@@ -1,4 +1,4 @@
-name: Pre-Prod Automate Deploy
+name: Community Automate Deploy
 
 on:
   workflow_dispatch:
@@ -43,7 +43,7 @@ jobs:
             linux/amd64
           push: true
           tags: |
-            ghcr.io/activepieces/activepieces:${{ env.RELEASE }}.${{ github.sha }}.pre-prod
+            ghcr.io/activepieces/activepieces:${{ env.RELEASE }}.${{ github.sha }}.community
 
       - name: Configure SSH
         run: |
@@ -64,13 +64,13 @@ jobs:
           
       - name: Deploy with Docker Compose
         run: |
-          ssh pre-prod -t -t 'bash -ic "cd activepieces && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.pre-prod docker compose pull && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.pre-prod docker compose up -d --force-recreate activepieces; exit"' 
+          ssh pre-prod -t -t 'bash -ic "cd community-activepieces && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.community docker compose pull && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.community docker compose up -d --force-recreate community-activepieces; exit"' 
 
-  Pre-Prod-E2E-Tests:
+  Community-E2E-Tests:
     needs: Release
     uses: ./.github/workflows/e2e-tests.yml
     with:
-      environment: Pre-Prod
+      environment: Community
     secrets:
       CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
       CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
