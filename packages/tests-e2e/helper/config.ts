@@ -10,16 +10,41 @@ const localConfig: Config = {
     password: 'Test@1234578',
 }
 
-const prodConfig: Config = {
-    instanceUrl: '{{E2E_INSTANCE_URL}}',
-    email: '{{E2E_EMAIL}}',
-    password: '{{E2E_PASSWORD}}'
+const enterpriseConfig: Config = {
+    instanceUrl: process.env.E2E_ENTERPRISE_INSTANCE_URL,
+    email: process.env.E2E_EMAIL,
+    password: process.env.E2E_PASSWORD
+}
+
+const preProdConfig: Config = {
+    instanceUrl: process.env.E2E_PRE_PROD_INSTANCE_URL,
+    email: process.env.E2E_EMAIL,
+    password: process.env.E2E_PASSWORD
+}
+
+const communityConfig: Config = {
+    instanceUrl: process.env.E2E_COMMUNITY_INSTANCE_URL,
+    email: process.env.E2E_EMAIL,
+    password: process.env.E2E_PASSWORD
 }
 
 export const configUtils = {
     getConfig: (): Config => {
         console.log('E2E_CONFIG_MODE', process.env.E2E_CONFIG_MODE);
-        console.log('PROD CONFIG', prodConfig);
-        return process.env.E2E_CONFIG_MODE === 'remote' ? prodConfig : localConfig;
+        console.log('E2E_ENTERPRISE_INSTANCE_URL', process.env.E2E_ENTERPRISE_INSTANCE_URL);
+        console.log('E2E_PRE_PROD_INSTANCE_URL', process.env.E2E_PRE_PROD_INSTANCE_URL);
+        console.log('E2E_COMMUNITY_INSTANCE_URL', process.env.E2E_COMMUNITY_INSTANCE_URL);
+        console.log('E2E_EMAIL', process.env.E2E_EMAIL);
+        console.log('E2E_PASSWORD', process.env.E2E_PASSWORD);
+        switch (process.env.E2E_CONFIG_MODE) {
+            case 'Enterprise':
+                return enterpriseConfig;
+            case 'Pre-Prod':
+                return preProdConfig;
+            case 'Community':
+                return communityConfig;
+            default:
+                return localConfig;
+        }
     },
 }

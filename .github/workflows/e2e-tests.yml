@@ -13,12 +13,6 @@ on:
         required: true
       CHECKLY_ACCOUNT_ID:
         required: true
-      E2E_EMAIL:
-        required: true
-      E2E_PASSWORD:
-        required: true
-      E2E_INSTANCE_URL:
-        required: true
 
 jobs:
   run-e2e-checkly-tests:
@@ -41,13 +35,12 @@ jobs:
             --config=packages/tests-e2e/checkly.config.ts \
             --reporter=github \
             --record \
-            -e E2E_INSTANCE_URL="${{ secrets.E2E_INSTANCE_URL }}" \
-            -e E2E_CONFIG_MODE="remote"
         env:
           CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
           CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          E2E_CONFIG_MODE: ${{ inputs.environment }}
 
       - name: Create summary
         run: cat checkly-github-report.md > $GITHUB_STEP_SUMMARY
