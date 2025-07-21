@@ -6,7 +6,7 @@ import { AlertEscalationBuilder, RetryStrategyBuilder } from 'checkly/constructs
  */
 const config = defineConfig({
   /* A human friendly name for your project */
-  projectName: `Activepieces E2E Tests (${process.env.E2E_CONFIG_MODE})`,
+  projectName: `E2E (${process.env.E2E_CONFIG_MODE})`,
   /** A logical ID that needs to be unique across your Checkly account,
    * See https://www.checklyhq.com/docs/cli/constructs/ to learn more about logical IDs.
    */
