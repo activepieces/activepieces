@@ -38,8 +38,14 @@ jobs:
 
       - name: Debug E2E Instance URL
         run: |
-          echo "E2E_INSTANCE_URL: ${{ secrets.E2E_INSTANCE_URL }}"
+          if [ "$E2E_INSTANCE_URL" = "https://ee.activepieces.com" ]; then
+            echo "E2E_INSTANCE_URL matches expected value: $E2E_INSTANCE_URL"
+          else
+            echo "E2E_INSTANCE_URL does not match expected value"
+          fi
           echo "Environment: ${{ inputs.environment }}"
+        env:
+          E2E_INSTANCE_URL: ${{ secrets.E2E_INSTANCE_URL }}
 
       - name: Run Checkly tests (${{ inputs.environment }})
         id: checkly-tests
