@@ -1,62 +1,88 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsReportResponse, flowPieceUtil, FlowStatus, PieceCategory, PlatformId, PopulatedFlow, ProjectId } from '@activepieces/shared'
+import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, apId, flowPieceUtil, FlowStatus, isNil, PieceCategory, PlatformAnalyticsReport, PlatformId, PopulatedFlow, ProjectId    } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, MoreThan } from 'typeorm'
+import { repoFactory } from '../../core/db/repo-factory'
 import { auditLogRepo } from '../../ee/audit-logs/audit-event-service'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { distributedLock } from '../../helper/lock'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
 import { userRepo } from '../../user/user-service'
-
-export const analyticsService = (log: FastifyBaseLogger) => ({
-    generateReport: async (platformId: PlatformId): Promise<AnalyticsReportResponse> => {
-        const start = performance.now()
-        const flows = await listAllFlows(log, platformId, undefined)
-        log.info(`listAllFlows took ${performance.now() - start}ms`)
-        const start2 = performance.now()
-        const activeFlows = countFlows(flows, FlowStatus.ENABLED)
-        log.info(`countFlows took ${performance.now() - start2}ms`)
-        const start3 = performance.now()
-        const totalFlows = countFlows(flows, undefined)
-        log.info(`countFlows took ${performance.now() - start3}ms`)
-        const start4 = performance.now()
-        const totalProjects = await countProjects(platformId)
-        log.info(`countProjects took ${performance.now() - start4}ms`)
-        const start5 = performance.now()
-        const { totalUsers, activeUsers } = await analyzeUsers(platformId)
-        log.info(`analyzeUsers took ${performance.now() - start5}ms`)
-        const start6 = performance.now()
-        const tasksUsage = await tasksReport(platformId)
-        log.info(`tasksReport took ${performance.now() - start6}ms`)
-        const start7 = performance.now()
-        const { uniquePiecesUsed, topPieces } = await analyzePieces(log, flows, platformId)
-        log.info(`analyzePieces took ${performance.now() - start7}ms`)
-        const start8 = performance.now()
-        const activeFlowsWithAI = await numberOfFlowsWithAI(log, flows, platformId)
-        log.info(`numberOfFlowsWithAI took ${performance.now() - start8}ms`)
-        const start9 = performance.now()
-        const { topProjects, activeProjects } = await analyzeProjects(flows)
-        log.info(`analyzeProjects took ${performance.now() - start9}ms`)
-        log.info(`total time took ${performance.now() - start}ms`)
-        return {
-            totalUsers,
-            activeUsers,
-            activeFlows,
-            totalFlows,
-            totalProjects,
-            uniquePiecesUsed,
-            activeFlowsWithAI,
-            topProjects,
-            activeProjects,
-            tasksUsage,
-            topPieces,
+import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entity'
+export const platformAnalyticsReportRepo = repoFactory(PlatformAnalyticsReportEntity)
+const REPORT_TTL_MS = 1000 * 60 * 60 * 24 
+export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
+    refreshReport: async (platformId: PlatformId) => {
+        const lock = await distributedLock.acquireLock({
+            key: `platform-analytics-report-${platformId}`,
+            timeout: 30000,
+            log,
+        })
+        try {
+            await refreshReport(platformId, log)
         }
+        finally {
+            await lock.release()
+        }
+        return platformAnalyticsReportRepo().findOneBy({ platformId })
+    },
+    getOrGenerateReport: async (platformId: PlatformId): Promise<PlatformAnalyticsReport> => {
+        const report = await platformAnalyticsReportRepo().findOneBy({ platformId })
+        const isReportExpired = isNil(report) || dayjs().diff(dayjs(report.updated), 'ms') > REPORT_TTL_MS
+        if (report && !isReportExpired) {
+            return report
+        }
+        return refreshReport(platformId, log)
     },
 })
 
+
+
+const refreshReport = async (platformId: PlatformId, log: FastifyBaseLogger): Promise<PlatformAnalyticsReport> => {
+    const report = await platformAnalyticsReportRepo().findOneBy({ platformId })
+    const generatedReport = await generateReport({
+        platformId,
+        log,
+        id: report?.id ?? apId(),
+    })
+    return platformAnalyticsReportRepo().save(generatedReport)
+       
+}
+
+
+
+const generateReport = async ({ platformId, log, id }: { platformId: PlatformId, log: FastifyBaseLogger, id: string }): Promise<PlatformAnalyticsReport> => {
+    const flows = await listAllFlows(log, platformId, undefined)
+    const activeFlows = countFlows(flows, FlowStatus.ENABLED)
+    const totalFlows = countFlows(flows, undefined)
+    const totalProjects = await countProjects(platformId)
+    const { totalUsers, activeUsers } = await analyzeUsers(platformId)
+    const tasksUsage = await tasksReport(platformId)
+    const { uniquePiecesUsed, topPieces } = await analyzePieces(log, flows, platformId)
+    const activeFlowsWithAI = await numberOfFlowsWithAI(log, flows, platformId)
+    const { topProjects, activeProjects } = await analyzeProjects(flows)
+    return {
+        totalUsers,
+        activeUsers,
+        activeFlows,
+        totalFlows,
+        totalProjects,
+        uniquePiecesUsed,
+        activeFlowsWithAI,
+        topProjects,
+        activeProjects,
+        tasksUsage,
+        topPieces,
+        platformId,
+        created: dayjs().toISOString(),
+        updated: dayjs().toISOString(),
+        id,
+    }
+}
 
 async function analyzeProjects(flows: PopulatedFlow[]) {
     const projectUsage: Record<string, AnalyticsProjectReportItem> = {}
@@ -228,7 +254,7 @@ async function listAllFlows(log: FastifyBaseLogger, platformId: PlatformId, proj
         externalId: row.flow_externalId,
         publishedVersionId: row.flow_publishedVersionId,
         metadata: row.flow_metadata,
-        version: flowVersionService(log).removeSecretsFromFlow({
+        version: flowVersionService(log).removeConnectionsAndSampleDataFromFlowVersion({
             id: row.version_id,
             flowId: row.flow_id,
             displayName: row.version_displayName,

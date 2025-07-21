@@ -36,7 +36,6 @@ import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionRepoWrapper } from './flow-version-repo-wrapper'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { flowVersionValidationUtil } from './flow-version-validator-util'
-
 export const flowVersionService = (log: FastifyBaseLogger) => ({
     async lockPieceVersions({
         projectId,
@@ -284,7 +283,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        return this.removeSecretsFromFlow(
+        return this.removeConnectionsAndSampleDataFromFlowVersion(
             flowVersion,
             removeConnectionsName,
             removeSampleData,
@@ -314,7 +313,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         }
         return flowVersionRepoWrapper.save({ flowVersion })
     },
-    removeSecretsFromFlow(
+    removeConnectionsAndSampleDataFromFlowVersion(
         flowVersion: FlowVersion,
         removeConnectionNames: boolean,
         removeSampleData: boolean,
@@ -322,7 +321,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         return flowStructureUtil.transferFlow(flowVersion, (step) => {
             const clonedStep = JSON.parse(JSON.stringify(step))
             if (removeConnectionNames) {
-                clonedStep.settings.input = replaceConnections(clonedStep.settings.input)
+                clonedStep.settings.input = removeConnectionsFromInput(clonedStep.settings.input)
             }
             if (removeSampleData && !isNil(clonedStep?.settings?.inputUiInfo)) {
                 clonedStep.settings.inputUiInfo.sampleDataFileId = undefined
@@ -358,7 +357,7 @@ async function applySingleOperation(
     return updatedFlowVersion
 }
 
-function replaceConnections(
+function removeConnectionsFromInput(
     obj: Record<string, unknown>,
 ): Record<string, unknown> {
     if (isNil(obj)) {
@@ -371,7 +370,7 @@ function replaceConnections(
             replacedObj[key] = value
         }
         else if (typeof value === 'object' && value !== null) {
-            replacedObj[key] = replaceConnections(value as Record<string, unknown>)
+            replacedObj[key] = removeConnectionsFromInput(value as Record<string, unknown>)
         }
         else if (typeof value === 'string') {
             const replacedValue = value.replace(/\{{connections\.[^}]*}}/g, '')
