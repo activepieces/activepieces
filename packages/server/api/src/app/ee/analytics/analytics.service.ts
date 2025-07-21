@@ -146,7 +146,9 @@ async function analyzePieces(log: FastifyBaseLogger, flows: PopulatedFlow[], pla
                     }
                 }
             }
-            pieces[piece].usageCount += 1
+            if (!isNil(pieces[piece])) {
+                pieces[piece].usageCount += 1
+            }
         }
     }
     return {
