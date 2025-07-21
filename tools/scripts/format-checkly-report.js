@@ -7,7 +7,7 @@ function main() {
   }
 
   const mdPath = process.argv[2];
-  const environment = process.argv[3]; // New: get environment
+  const environment = process.argv[3];
   const content = fs.readFileSync(mdPath, 'utf8');
 
   const lines = content.split('\n');
