@@ -46,15 +46,20 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (response as any).stream.pipe(new Writable({
                     write(chunk, encoding, callback) {
-                        buffer = Buffer.concat([buffer, chunk]);
-                        (reply.raw as NodeJS.WritableStream).write(chunk, encoding)
+                        buffer = Buffer.concat([buffer, chunk])
                         if (isStreaming) {
+                            (reply.raw as NodeJS.WritableStream).write(chunk, encoding)
                             streamingParser.onChunk(chunk.toString())
                         }
                         callback()
                     },
                     async final(callback) {
-                        reply.raw.end()
+                        if (isStreaming) {
+                            reply.raw.end()
+                        }
+                        else {
+                            await reply.send(JSON.parse(buffer.toString()))
+                        }
 
                         try {
                             if (reply.statusCode >= 400) {

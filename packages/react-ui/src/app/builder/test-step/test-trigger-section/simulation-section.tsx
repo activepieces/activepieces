@@ -20,7 +20,7 @@ export const SimulationNote = ({
   return (
     <div className="flex flex-col gap-4 w-full">
       <div className="flex gap-2 items-center justify-center w-full">
-        <LoadingSpinner className="w-4 h-4"></LoadingSpinner>
+        <LoadingSpinner className="size-4"></LoadingSpinner>
         <div>{t('Testing Trigger')}</div>
         <div className="flex-grow"></div>
 
@@ -38,7 +38,7 @@ export const SimulationNote = ({
       </div>
 
       {note && (
-        <Alert className="bg-warning/5 border-warning/5 ">
+        <Alert>
           <AlertCircle className="h-4 w-4 text-warning" />
           <div className="flex flex-col gap-1">
             <AlertTitle>{t('Action Required')}:</AlertTitle>

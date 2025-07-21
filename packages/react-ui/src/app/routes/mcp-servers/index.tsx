@@ -4,6 +4,7 @@ import { Plus, Trash2, Table2 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -21,6 +22,7 @@ import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { formatUtils, NEW_MCP_QUERY_PARAM } from '@/lib/utils';
@@ -34,6 +36,7 @@ const McpServersPage = () => {
   const [selectedRows, setSelectedRows] = useState<McpWithTools[]>([]);
   const { data: project } = projectHooks.useCurrentProject();
   const [searchParams] = useSearchParams();
+  const { platform } = platformHooks.useCurrentPlatform();
   const userHasMcpWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_MCP,
   );
@@ -210,45 +213,52 @@ const McpServersPage = () => {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between">
-        <TableTitle
-          beta={true}
-          description={t('Create and manage your MCP servers')}
-        >
-          {t('MCP Servers')}
-        </TableTitle>
-        <PermissionNeededTooltip hasPermission={userHasMcpWritePermission}>
-          <Button
-            className="flex items-center gap-2"
-            onClick={() => createMcp('Untitled')}
-            disabled={!userHasMcpWritePermission}
+    <LockedFeatureGuard
+      featureKey="MCPS"
+      locked={!platform.plan.mcpsEnabled}
+      lockTitle={t('MCP Servers')}
+      lockDescription={t('Create and manage your MCP servers')}
+    >
+      <div className="flex flex-col h-full">
+        <div className="flex items-center justify-between">
+          <TableTitle
+            beta={true}
+            description={t('Create and manage your MCP servers')}
           >
-            <Plus className="h-4 w-4" />
-            {t('New MCP Server')}
-          </Button>
-        </PermissionNeededTooltip>
-      </div>
-      <UpgradeHookDialog
-        metric="mcp"
-        open={upgradeDialogOpen}
-        setOpen={setUpgradeDialogOpen}
-      />
+            {t('MCP Servers')}
+          </TableTitle>
+          <PermissionNeededTooltip hasPermission={userHasMcpWritePermission}>
+            <Button
+              className="flex items-center gap-2"
+              onClick={() => createMcp('Untitled')}
+              disabled={!userHasMcpWritePermission}
+            >
+              <Plus className="h-4 w-4" />
+              {t('New MCP Server')}
+            </Button>
+          </PermissionNeededTooltip>
+        </div>
+        <UpgradeHookDialog
+          metric="mcp"
+          open={upgradeDialogOpen}
+          setOpen={setUpgradeDialogOpen}
+        />
 
-      <DataTable
-        filters={[]}
-        emptyStateIcon={<Table2 className="size-14" />}
-        emptyStateTextTitle={t('No MCP servers have been created yet')}
-        emptyStateTextDescription={t('Create a MCP server to get started')}
-        columns={columns}
-        page={data}
-        isLoading={isLoading}
-        onRowClick={(row) => {
-          navigate(`/projects/${project.id}/mcps/${row.id}`);
-        }}
-        bulkActions={bulkActions}
-      />
-    </div>
+        <DataTable
+          filters={[]}
+          emptyStateIcon={<Table2 className="size-14" />}
+          emptyStateTextTitle={t('No MCP servers have been created yet')}
+          emptyStateTextDescription={t('Create a MCP server to get started')}
+          columns={columns}
+          page={data}
+          isLoading={isLoading}
+          onRowClick={(row) => {
+            navigate(`/projects/${project.id}/mcps/${row.id}`);
+          }}
+          bulkActions={bulkActions}
+        />
+      </div>
+    </LockedFeatureGuard>
   );
 };
 

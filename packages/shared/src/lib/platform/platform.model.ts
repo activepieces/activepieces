@@ -103,6 +103,9 @@ export const PlatformPlan = Type.Object({
     analyticsEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
     agentsEnabled: Type.Boolean(),
+    mcpsEnabled: Type.Boolean(),
+    tablesEnabled: Type.Boolean(),
+    todosEnabled: Type.Boolean(),
     auditLogEnabled: Type.Boolean(),
     embeddingEnabled: Type.Boolean(),
     managePiecesEnabled: Type.Boolean(),
@@ -116,10 +119,7 @@ export const PlatformPlan = Type.Object({
     apiKeysEnabled: Type.Boolean(),
     eligibleForTrial: Type.Boolean(),
 
-    tablesEnabled: Type.Boolean(),
-    todosEnabled: Type.Boolean(),
 
-    alertsEnabled: Type.Boolean(),
     ssoEnabled: Type.Boolean(),
     
     licenseKey: Type.Optional(Type.String()),

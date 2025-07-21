@@ -58,7 +58,6 @@ import ViewRelease from '../routes/project-release/view-release';
 import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
 import { EnvironmentPage } from '../routes/settings/environment';
-import GeneralPage from '../routes/settings/general';
 import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
@@ -83,7 +82,7 @@ const SettingsRerouter = () => {
   return fragmentWithoutHash ? (
     <Navigate to={`/settings/${fragmentWithoutHash}`} replace />
   ) : (
-    <Navigate to="/settings/general" replace />
+    <Navigate to="/settings/team" replace />
   );
 };
 
@@ -333,18 +332,6 @@ const routes = [
     ),
   }),
 
-  ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.general,
-    element: (
-      <DashboardContainer>
-        <PageTitle title="General">
-          <ProjectSettingsLayout>
-            <GeneralPage />
-          </ProjectSettingsLayout>
-        </PageTitle>
-      </DashboardContainer>
-    ),
-  }),
   ...ProjectRouterWrapper({
     path: projectSettingsRoutes.pieces,
     element: (

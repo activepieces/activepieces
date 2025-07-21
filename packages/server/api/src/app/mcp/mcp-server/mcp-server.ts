@@ -152,20 +152,22 @@ async function addPieceToServer(
 
                 if (success) {
                     return {
+                        success: true,
                         content: [{
                             type: 'text',
-                            text: `✅ Successfully executed ${actionName}\n\n` +
-                                `Output:\n\`\`\`json\n${JSON.stringify(result.result.output, null, 2)}\n\`\`\``,
+                            text: `${JSON.stringify(result.result.output, null, 2)}`,
                         }],
+                        resolvedFields: parsedInputs,
                     }
                 }
                 else {
                     return {
+                        success: false,
                         content: [{
                             type: 'text',
-                            text: `❌ Error executing ${actionName}\n\n` +
-                                `Error details:\n\`\`\`\n${result.standardError || 'Unknown engine error occurred'}\n\`\`\``,
+                            text: `${JSON.stringify(result.standardError || result.result.output || { error: 'Unknown engine error occurred' }, null, 2)}`,
                         }],
+                        resolvedFields: parsedInputs,
                     }
                 }
             },
@@ -282,7 +284,7 @@ async function initializeOpenAIModel({
     platformId,
     projectId,
 }: InitializeOpenAIModelParams): Promise<LanguageModelV1> {
-    const model = 'gpt-4o-mini'
+    const model = 'gpt-4o'
     const baseUrl = await domainHelper.getPublicApiUrl({
         path: '/v1/ai-providers/proxy/openai/v1/',
         platformId,
@@ -323,7 +325,10 @@ async function extractActionParametersFromUserInstructions({
 
     const extractedParameters = await Object.entries(depthToPropertyMap).reduce(
         async (accumulatedParametersPromise, [_, propertyNames]) => {
-            const accumulatedParameters = await accumulatedParametersPromise
+            const accumulatedParameters = {
+                ...(await accumulatedParametersPromise),
+                'auth': connectionReference,
+            }
 
             const parameterExtractionPrompt = mcpUtils.buildParameterExtractionPrompt({
                 propertyNames,
@@ -351,23 +356,32 @@ async function extractActionParametersFromUserInstructions({
 
             const propertySchemaValues = propertySchemas.map(({ value }) => value).filter(value => value !== null)
 
-            const { object: extractedValue } = await generateObject({
-                model: aiModel,
-                schema: z.object(schemaObject),
-                prompt: mcpUtils.buildFinalExtractionPrompt({
-                    parameterExtractionPrompt,
-                    propertySchemaValues,
-                }),
-            })
+            try {
+                const { object: extractedValue } = await generateObject({
+                    model: aiModel,
+                    schema: z.object(schemaObject),
+                    prompt: mcpUtils.buildFinalExtractionPrompt({
+                        parameterExtractionPrompt,
+                        propertySchemaValues,
+                    }),
+                })
 
-            const extractedParameters = Object.fromEntries(
-                Object.entries(extractedValue).map(([key, value]) => [key, value[key]]),
-            )
-
-            return {
-                ...accumulatedParameters,
-                ...extractedParameters,
-                'auth': connectionReference,
+                const extractedParameters = Object.fromEntries(
+                    Object.entries(extractedValue).map(([key, value]) => [key, value[key]]),
+                )
+    
+                return {
+                    ...accumulatedParameters,
+                    ...extractedParameters,
+                    'auth': connectionReference,
+                }
+            }
+            catch (error) {
+                logger.error({ error }, 'FailedToExtractParametersFromAI')
+                return {
+                    ...accumulatedParameters,
+                    'auth': connectionReference,
+                }
             }
         }, 
         Promise.resolve({ 'auth': connectionReference }),

@@ -9,6 +9,7 @@ import { NumberProperty } from "./number-property";
 import { FileProperty } from "./file-property";
 import { JsonProperty } from './json-property';
 import { ColorProperty } from "./color-property";
+import { DateTimeProperty } from './date-time-property';
 
 export const ArraySubProps = Type.Record(Type.String(), Type.Union([
     ShortTextProperty,
@@ -18,7 +19,8 @@ export const ArraySubProps = Type.Record(Type.String(), Type.Union([
     StaticMultiSelectDropdownProperty,
     CheckboxProperty,
     NumberProperty,
-    FileProperty
+    FileProperty,
+    DateTimeProperty,
 ]))
 
 export const ArrayProperty = Type.Composite([
@@ -41,6 +43,7 @@ export type ArraySubProps<R extends boolean> = Record<
     | FileProperty<R>
     | JsonProperty<R>
     | ColorProperty<R>
+    | DateTimeProperty<R>
 >;
 
 export type ArrayProperty<R extends boolean> = BasePropertySchema &

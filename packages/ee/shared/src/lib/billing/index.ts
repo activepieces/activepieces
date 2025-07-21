@@ -81,7 +81,7 @@ export function getPlanPriceId(stripeKey: string | undefined) {
 
 }
 
-export function getPlanFromPriceId(priceId: string): PlanName {
+export function getPlanFromPriceId(priceId: string): PlanName | undefined {
     switch (priceId) {
         case 'price_1RTRd4QN93Aoq4f8E22qF5JU':
         case 'price_1RflgUKZ0dZRqLEK5COq9Kn8':
@@ -90,7 +90,7 @@ export function getPlanFromPriceId(priceId: string): PlanName {
         case 'price_1RflgbKZ0dZRqLEKaW4Nlt0P':
             return PlanName.BUSINESS
         default:
-            throw new Error(`Unknown price ID: ${priceId}`)
+            return undefined
     }
 }
 
@@ -99,7 +99,7 @@ export function checkIsTrialSubscription(subscription: Stripe.Subscription): boo
     return isNil(subscription.metadata['trialSubscription']) ? false : subscription.metadata['trialSubscription'] === 'true'
 }
 
-export function getPlanFromSubscription(subscription: Stripe.Subscription): PlanName {
+export function getPlanFromSubscription(subscription: Stripe.Subscription): PlanName | undefined {
     if (subscription.status === ApSubscriptionStatus.TRIALING) {
         return PlanName.PLUS
     }

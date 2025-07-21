@@ -106,7 +106,7 @@ export const DictionaryProperty = ({
           <Input
             value={key}
             disabled={disabled}
-            className="basis-[50%] h-full max-w-[50%]"
+            className="basis-[50%] h-full max-w-[50%] h-[38px]"
             onChange={(e) => onChangeValue(index, undefined, e.target.value)}
           />
           <div className="basis-[50%] max-w-[50%]">

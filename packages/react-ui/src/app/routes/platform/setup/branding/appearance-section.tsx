@@ -24,7 +24,6 @@ const FromSchema = Type.Object({
   logoUrl: Type.String(),
   iconUrl: Type.String(),
   faviconUrl: Type.String(),
-  language: Type.String(),
   color: Type.String(),
 });
 
@@ -71,7 +70,7 @@ export const AppearanceSection = () => {
       toast(INTERNAL_ERROR_TOAST);
     },
   });
-
+  console.log(form.formState.isValid, form.getValues());
   return (
     <>
       <Separator className="my-2" />
