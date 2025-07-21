@@ -17,9 +17,8 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
-import { HttpError, api } from '@/lib/api';
+import { HttpError } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
 
@@ -48,11 +47,6 @@ const ResetPasswordForm = () => {
   >({
     mutationFn: authenticationApi.sendOtpEmail,
     onSuccess: () => setIsSent(true),
-    onError: (error) => {
-      if (api.isError(error)) {
-        toast(INTERNAL_ERROR_TOAST);
-      }
-    },
   });
 
   const onSubmit: SubmitHandler<CreateOtpRequestBody> = (data) => {

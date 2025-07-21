@@ -48,6 +48,7 @@ export const DelayedJobData = Type.Object({
     environment: Type.Enum(RunEnvironment),
     schemaVersion: Type.Number(),
     flowVersionId: Type.String(),
+    flowId: Type.String(),
     runId: Type.String(),
     httpRequestId: Type.Optional(Type.String()),
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),

@@ -1,5 +1,5 @@
 import { ApSubscriptionStatus, CreateSubscriptionParamsSchema, DEFAULT_BUSINESS_SEATS, isUpgradeExperience, PlanName, SetAiCreditsOverageLimitParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
-import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, ListAICreditsUsageRequest, ListAICreditsUsageResponse, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -236,6 +236,17 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
         return { success: true }
     })
+
+    fastify.get('/ai-credits-usage', ListAIUsageRequest, async (request) => {
+        const { limit, cursor } = request.query
+        const platformId = request.principal.platform.id
+        
+        return platformUsageService(request.log).listAICreditsUsage({
+            platformId,
+            cursor: cursor ?? null,
+            limit: limit ?? 10,
+        })
+    })
 }
 
 const InfoRequest = {
@@ -295,3 +306,16 @@ const StartTrialRequest = {
         }),
     },
 }
+
+
+const ListAIUsageRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+    schema: {
+        querystring: ListAICreditsUsageRequest,
+        response: {
+            [StatusCodes.OK]: ListAICreditsUsageResponse,
+        },
+    },
+} 

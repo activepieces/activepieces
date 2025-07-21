@@ -16,7 +16,7 @@ import {
 } from '@activepieces/shared'
 import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
+import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
@@ -28,7 +28,7 @@ export const projectRepo = repoFactory(ProjectEntity)
 export const projectService = {
     async create(params: CreateParams): Promise<Project> {
 
-        await checkQuotaOrThrow({
+        await PlatformPlanHelper.checkQuotaOrThrow({
             platformId: params.platformId,
             metric: PlatformUsageMetric.PROJECTS,
         })
@@ -60,6 +60,20 @@ export const projectService = {
             id: projectId,
             deleted: IsNull(),
         })
+    },
+
+    async getProjectIdsByPlatform(platformId: string): Promise<string[]> {
+        const projects = await projectRepo().find({
+            select: {
+                id: true,
+            },
+            where: {
+                platformId,
+                deleted: IsNull(),
+            },
+        })
+
+        return projects.map((project) => project.id)
     },
 
     async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
@@ -172,29 +186,32 @@ export const projectService = {
 
 
 async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptionsWhere<Project>[]> {
-    const [projectIds, user] = await Promise.all([
-        projectMemberService(system.globalLogger()).getIdsOfProjects({
-            platformId: params.platformId,
-            userId: params.userId,
-        }),
-        userService.getOneOrFail({ id: params.userId }),
-    ])
-
-    const adminFilter = user.platformRole === PlatformRole.ADMIN
-        ? [{
+    const user = await userService.getOneOrFail({ id: params.userId })
+    const isPrivilegedUser = user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
+    const displayNameFilter = params.displayName ? { displayName: ILike(`%${params.displayName}%`) } : {}
+    
+    if (isPrivilegedUser) {
+        // Platform admins and operators can see all projects in their platform
+        return [{
             deleted: IsNull(),
             platformId: params.platformId,
+            ...displayNameFilter,
         }]
-        : []
-    const displayNameFilter = params.displayName ? { displayName: ILike(`%${params.displayName}%`) } : {}
-    const memberFilter = {
+    }
+    
+    // Only fetch project memberships for non-privileged users
+    const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
+        platformId: params.platformId,
+        userId: params.userId,
+    })
+    
+    // Regular members can only see projects they're members of
+    return [{
         deleted: IsNull(),
         platformId: params.platformId,
         id: In(projectIds),
         ...displayNameFilter,
-    }
-
-    return [...adminFilter, memberFilter]
+    }]
 }
 async function assertExternalIdIsUnique(externalId: string | undefined | null, projectId: ProjectId): Promise<void> {
     if (!isNil(externalId)) {
