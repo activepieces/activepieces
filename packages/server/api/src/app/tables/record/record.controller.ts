@@ -15,8 +15,8 @@ import {
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { recordService } from './record.service'
 import { recordSideEffects } from './record-side-effects'
+import { recordService } from './record.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -59,6 +59,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             records: [record],
             logger: request.log,
             authorization: request.headers.authorization as string,
+            agentUpdate: request.body.agentUpdate ?? false,
         }, 'updated')
     })
 
@@ -102,7 +103,7 @@ const CreateRequest = {
 
 const GetRecordByIdRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER, PrincipalType.WORKER],
     },
     schema: {
         params: Type.Object({
@@ -117,7 +118,7 @@ const GetRecordByIdRequest = {
 
 const UpdateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER, PrincipalType.WORKER],
         permission: Permission.WRITE_TABLE,
     },
     schema: {

@@ -80,7 +80,7 @@ const DeleteFieldRequest = {
 
 const GetFieldsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER, PrincipalType.WORKER],
     },
     schema: {
         querystring: Type.Object({

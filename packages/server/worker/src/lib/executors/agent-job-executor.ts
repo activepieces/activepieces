@@ -1,9 +1,9 @@
-import { AgentJobData } from '@activepieces/server-shared'
-import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, assertNotNullOrUndefined, ContentBlockType, createAIProvider, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
+import { AgentJobData, AgentJobSource } from '@activepieces/server-shared'
+import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, assertNotNullOrUndefined, ContentBlockType, createAIProvider, Field, FieldType, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { APICallError, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { agentsApiService } from '../api/server-api.service'
+import { agentsApiService, tablesApiService } from '../api/server-api.service'
 import { agentTools } from '../utils/agent-tools'
 import { workerMachine } from '../utils/machine'
 
@@ -22,12 +22,25 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
             await agentsApiService(workerToken, log).updateAgentRun(jobData.agentRunId, agentResult)
 
             const agent = await agentsApiService(workerToken, log).getAgent(jobData.agentId)
+            let fields: Field[] | undefined
+            let record: Record<string, unknown> | undefined
+            if (jobData.source === AgentJobSource.TABLE) {
+                [fields, record] = await Promise.all([
+                    tablesApiService(workerToken).getFields(jobData.tableId),
+                    tablesApiService(workerToken).getRecord(jobData.recordId),
+                ])
+            }
             const mcp = await agentsApiService(workerToken, log).getMcp(agent.mcpId)
             agentToolInstance = await agentTools({
                 agent,
                 publicUrl: workerMachine.getPublicApiUrl(),
                 token: engineToken,
                 mcp,
+                source: jobData.source,
+                metadata: jobData.source === AgentJobSource.TABLE ? {
+                    tableId: jobData.tableId,
+                    recordId: jobData.recordId,
+                } : undefined,
             })
 
             const baseURL = `${workerMachine.getPublicApiUrl()}v1/ai-providers/proxy/openai`
@@ -37,9 +50,10 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                 apiKey: engineToken,
                 baseURL,
             })
+            const systemPrompt = await constructSystemPrompt(agent, fields, record)
             const { fullStream } = streamText({
                 model,
-                system: constructSystemPrompt(agent),
+                system: systemPrompt,
                 prompt: jobData.prompt,
                 maxSteps: agent.maxSteps,
                 tools: await agentToolInstance.tools(),
@@ -130,11 +144,11 @@ function isMarkAsComplete(block: AgentStepBlock): boolean {
 
 
 function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCallContentBlock, 'startTime' | 'endTime' | 'input' | 'output' | 'status' | 'toolName' | 'toolCallId' | 'type'>): ToolCallContentBlock {
-    if (toolName === agentbuiltInToolsNames.markAsComplete) {
+    if (toolName === agentbuiltInToolsNames.markAsComplete || toolName === agentbuiltInToolsNames.updateTableRecord) {
         return {
             ...baseTool,
             toolCallType: ToolCallType.INTERNAL,
-            displayName: 'Mark as Complete',
+            displayName: toolName === agentbuiltInToolsNames.markAsComplete ? 'Mark as Complete' : 'Update Table Record',
         }
     }
     const tool = mcp.tools.find((tool) => tool.toolName === toolName)
@@ -165,8 +179,8 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
     }
 }
 
-function constructSystemPrompt(agent: Agent) {
-    return `
+async function constructSystemPrompt(agent: Agent, fields: Field[] | undefined, record: Record<string, unknown> | undefined) {
+    let systemPrompt = `
     You are an autonomous assistant designed to efficiently achieve the user's goal.
 
     YOU MUST ALWAYS call the mark as complete tool with the output or message wether you have successfully completed the task or not.
@@ -177,6 +191,19 @@ function constructSystemPrompt(agent: Agent) {
     ---
     ${agent.systemPrompt}
     `
+
+    if (fields && record) {
+        systemPrompt += `
+        ---
+        **Fields**:
+        ${JSON.stringify(fields, null, 2)}
+
+        **Current Record**:
+        ${JSON.stringify(record, null, 2)}
+        `
+    }
+
+    return systemPrompt
 }
 
 function concatMarkdown(blocks: AgentStepBlock[]): string {

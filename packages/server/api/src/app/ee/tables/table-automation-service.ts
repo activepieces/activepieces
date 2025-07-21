@@ -1,20 +1,20 @@
-import { ApEdition, assertNotNullOrUndefined, isNil, McpToolRequest, PopulatedRecord, Table, TableAutomationTrigger } from "@activepieces/shared"
-import { agentRunsService } from "../../agents/agent-runs/agent-runs-service"
-import { AgentJobSource } from "@activepieces/server-shared"
-import { FastifyBaseLogger } from "fastify"
-import { system } from "../../helper/system/system"
+import { AgentJobSource } from '@activepieces/server-shared'
+import { ApEdition, assertNotNullOrUndefined, isNil, McpToolRequest, PopulatedRecord, Table, TableAutomationTrigger } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { agentRunsService } from '../../agents/agent-runs/agent-runs-service'
+import { system } from '../../helper/system/system'
 
 const edition = system.getEdition()
 
 export const tableAutomationService = (log: FastifyBaseLogger) => ({
     async run(params: RunParams): Promise<void> {
-     /*   if (edition === ApEdition.COMMUNITY) {
+        /*   if (edition === ApEdition.COMMUNITY) {
             return;
         }*/
         if (params.table.trigger !== params.trigger) {
-            return;
+            return
         }
-        console.log('RUN AUTOMATION');
+        console.log('RUN AUTOMATION')
 
         await agentRunsService(log).run({
             agentId: params.table.agentId,

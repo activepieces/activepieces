@@ -1,9 +1,13 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { nanoid } from 'nanoid';
 import { useRef, useEffect } from 'react';
 import DataGrid, { DataGridHandle } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useNavigate } from 'react-router-dom';
 
+import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
+
+import { useSocket } from '@/components/socket-provider';
 import { useTheme } from '@/components/theme-provider';
 import { Drawer, DrawerContent, DrawerHeader } from '@/components/ui/drawer';
 import { ApTableFooter } from '@/features/tables/components/ap-table-footer';
@@ -17,15 +21,23 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { AgentRun, AgentTaskStatus, ApFlagId, Permission, WebsocketClientEvent } from '@activepieces/shared';
+
+import {
+  AgentRun,
+  AgentTaskStatus,
+  ApFlagId,
+  Permission,
+  WebsocketClientEvent,
+} from '@activepieces/shared';
+
 import './react-data-grid.css';
-import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
 import { AutomateData } from '@/features/tables/components/automate-data';
-import { useSocket } from '@/components/socket-provider';
+import { recordsApi } from '@/features/tables/lib/records-api';
 
 const ApTableEditorPage = () => {
   const navigate = useNavigate();
   const projectId = authenticationSession.getProjectId();
+  const queryClient = useQueryClient();
   const [
     table,
     setLock,
@@ -36,6 +48,7 @@ const ApTableEditorPage = () => {
     createRecord,
     fields,
     records,
+    setRecords,
   ] = useTableState((state) => [
     state.table,
     state.setLock,
@@ -46,6 +59,7 @@ const ApTableEditorPage = () => {
     state.createRecord,
     state.fields,
     state.records,
+    state.setRecords,
   ]);
 
   const gridRef = useRef<DataGridHandle>(null);
@@ -91,11 +105,29 @@ const ApTableEditorPage = () => {
   }, [selectedCell]);
 
   useEffect(() => {
-    socket.on(WebsocketClientEvent.AGENT_RUN_PROGRESS, (agentRun: AgentRun) => {
-      if (agentRun.metadata?.tableId === table.id) {
-        setLock(agentRun.metadata?.recordId!, agentRun.status === AgentTaskStatus.IN_PROGRESS);
-      }
-    });
+    socket.on(
+      WebsocketClientEvent.AGENT_RUN_PROGRESS,
+      async (agentRun: AgentRun) => {
+        if (agentRun.metadata?.tableId === table.id) {
+          setLock(
+            agentRun.metadata?.recordId!,
+            agentRun.status === AgentTaskStatus.IN_PROGRESS,
+          );
+
+          if (
+            agentRun.status === AgentTaskStatus.COMPLETED ||
+            agentRun.status === AgentTaskStatus.FAILED
+          ) {
+            const records = await recordsApi.list({
+              tableId: table.id,
+              limit: 999999,
+              cursor: undefined,
+            });
+            setRecords(records.data);
+          }
+        }
+      },
+    );
     return () => {
       socket.off(WebsocketClientEvent.AGENT_RUN_PROGRESS);
     };

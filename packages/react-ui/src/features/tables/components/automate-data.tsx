@@ -1,5 +1,14 @@
+import { McpToolRequest, TableAutomationTrigger } from '@activepieces/shared';
+import { useMutation } from '@tanstack/react-query';
+import { Bot, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+
+import { tablesApi } from '../lib/tables-api';
+
+import { useTableState } from './ap-table-state-provider';
+
+import { McpToolsSection } from '@/app/routes/mcp-servers/id/mcp-config/mcp-tools-section';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,14 +24,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Bot, Zap } from 'lucide-react';
-import { McpToolsSection } from '@/app/routes/mcp-servers/id/mcp-config/mcp-tools-section';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
-import { useMutation } from '@tanstack/react-query';
-import { McpToolRequest, TableAutomationTrigger } from '@activepieces/shared';
-import { tablesApi } from '../lib/tables-api';
-import { useTableState } from './ap-table-state-provider';
 import { agentsApi } from '@/features/agents/lib/agents-api';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 
 interface AutomateDataFormValues {
   trigger: TableAutomationTrigger;
@@ -30,11 +33,10 @@ interface AutomateDataFormValues {
   tools: McpToolRequest[];
 }
 
-
 const AutomateData = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
 
-const [table] = useTableState((state) => [state.table])
+  const [table] = useTableState((state) => [state.table]);
 
   const { data: mcp, isLoading } = mcpHooks.useMcp(table?.agent?.mcpId);
 
@@ -57,7 +59,7 @@ const [table] = useTableState((state) => [state.table])
     reset({
       trigger: table?.trigger,
       systemPrompt: table?.agent?.systemPrompt,
-      tools: []
+      tools: [],
     });
   }, [reset]);
 
@@ -76,7 +78,7 @@ const [table] = useTableState((state) => [state.table])
     },
   });
 
-  const onToolsUpdate = (updatedTools: any[]) => {
+  const onToolsUpdate = (updatedTools: McpToolRequest[]) => {
     setValue('tools', updatedTools);
   };
 
@@ -110,15 +112,23 @@ const [table] = useTableState((state) => [state.table])
               </div>
               <Select
                 value={watch('trigger')}
-                onValueChange={(value) => setValue('trigger', value as TableAutomationTrigger)}
+                onValueChange={(value) =>
+                  setValue('trigger', value as TableAutomationTrigger)
+                }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select run type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={TableAutomationTrigger.ON_DEMAND}>On Demand</SelectItem>
-                  <SelectItem value={TableAutomationTrigger.ON_NEW_RECORD}>On New Record</SelectItem>
-                  <SelectItem value={TableAutomationTrigger.ON_UPDATE_RECORD}>On Record Updated</SelectItem>
+                  <SelectItem value={TableAutomationTrigger.ON_DEMAND}>
+                    On Demand
+                  </SelectItem>
+                  <SelectItem value={TableAutomationTrigger.ON_NEW_RECORD}>
+                    On New Record
+                  </SelectItem>
+                  <SelectItem value={TableAutomationTrigger.ON_UPDATE_RECORD}>
+                    On Record Updated
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -151,11 +161,7 @@ const [table] = useTableState((state) => [state.table])
               >
                 Cancel
               </Button>
-              <Button
-                variant="default"
-                type="submit"
-                disabled={isSubmitting}
-              >
+              <Button variant="default" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Saving...' : 'Save'}
               </Button>
             </div>

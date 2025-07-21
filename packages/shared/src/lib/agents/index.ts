@@ -10,6 +10,7 @@ export enum AgentOutputType {
 
 export const agentbuiltInToolsNames = {
     markAsComplete: 'markAsComplete',
+    updateTableRecord: 'updateTableRecord',
 }
 
 export enum AgentOutputFieldType {
@@ -46,8 +47,8 @@ export const AgentRun = Type.Object({
     finishTime: Type.Optional(Type.String()),
     metadata: Type.Optional(Type.Object({
         recordId: Type.Optional(Type.String()),
-        tableId: Type.Optional(Type.String())
-    }))
+        tableId: Type.Optional(Type.String()),
+    })),
 })
 
 export type AgentRun = Static<typeof AgentRun>
