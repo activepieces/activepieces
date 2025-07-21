@@ -1,5 +1,5 @@
 import { Edit2 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { CalculatedColumn } from 'react-data-grid';
 
 import { Button } from '@/components/ui/button';
@@ -131,30 +131,21 @@ export function EditableCell({
   const [value, setValue] = useState(initialValue);
   const isSelected =
     selectedCell?.rowIdx === rowIdx && selectedCell?.columnIdx === column.idx;
-  if (isEditing) {
-    return (
-      <EditorSelector
-        field={field}
-        row={row}
-        rowIdx={rowIdx}
-        column={column}
-        value={value}
-        onRowChange={onRowChange}
-        setValue={setValue}
-        setIsEditing={setIsEditing}
-        setIsHovered={setIsHovered}
-      />
-    );
-  }
   const displayedValue = value?.trim()?.replace(/\n/g, ' ');
+  const containerRef = useRef<HTMLDivElement>(null);
   return (
     <div
+      ref={containerRef}
       id={`editable-cell-${rowIdx}-${column.idx}`}
-      className={cn(
-        'h-full flex items-center justify-between gap-2 pl-2 py-2  focus:outline-none  ',
-        'group cursor-pointer border',
-        isSelected ? 'border-primary' : 'border-transparent',
-      )}
+      className={
+        isEditing
+          ? 'h-full'
+          : cn(
+              'h-full flex items-center justify-between gap-2 pl-2 py-2  focus:outline-none  ',
+              'group cursor-pointer border',
+              isSelected ? 'border-primary' : 'border-transparent',
+            )
+      }
       onMouseEnter={() => {
         if (!disabled) {
           setIsHovered(true);
@@ -177,17 +168,40 @@ export function EditableCell({
         }
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' && !disabled) {
+        const isTypingKey = e.key.length === 1;
+        if (isTypingKey && !disabled && !isEditing) {
           setIsEditing(true);
+          setSelectedCell({ rowIdx, columnIdx: column.idx });
         }
       }}
     >
-      <span className="flex-1 truncate">
-        {field.type === FieldType.DATE && displayedValue
-          ? formatUtils.formatDateOnly(new Date(displayedValue))
-          : displayedValue}
-      </span>
-      {isHovered && (
+      {isEditing && (
+        <EditorSelector
+          field={field}
+          row={row}
+          rowIdx={rowIdx}
+          column={column}
+          value={value}
+          onRowChange={onRowChange}
+          setValue={setValue}
+          setIsEditing={(isEditing) => {
+            setIsEditing(isEditing);
+            if (!isEditing) {
+              // need to refocus container so keyboard navigation between cells works
+              containerRef.current?.focus();
+            }
+          }}
+          setIsHovered={setIsHovered}
+        />
+      )}
+      {!isEditing && (
+        <span className="flex-1 truncate">
+          {field.type === FieldType.DATE && displayedValue
+            ? formatUtils.formatDateOnly(new Date(displayedValue))
+            : displayedValue}
+        </span>
+      )}
+      {isHovered && !isEditing && (
         <Button
           variant="transparent"
           size="sm"
