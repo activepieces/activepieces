@@ -294,36 +294,43 @@ expect(await page.locator('.success-message').isVisible()).toBe(true);
 
 ## Running Tests
 
-### Local Development
+### Local Development & Debugging with Checkly
+
+We use [Checkly](https://checklyhq.com/) to run and debug E2E tests. Checkly provides video recordings for each test run, making it easy to debug failures.
 
 ```bash
-# Run tests locally
-npx nx run tests-e2e:test-local
-
-# Run specific test file
-npx playwright test scenarios/integration.spec.ts
-
-# Run with UI
-npx playwright test --ui
+# Run tests with Checkly (includes video reporting)
+npx nx run tests-e2e:test-checkly
 ```
 
-### CI/CD Integration
+- Test results, including video recordings, are available in the Checkly dashboard.
+- You can debug failed tests by reviewing the video and logs provided by Checkly.
 
-Tests run automatically on:
-- Pull requests to main branch
-- Pushes to main branch
+### Deploying Tests
 
-The CI pipeline:
-1. Sets up Node.js environment
-2. Installs Playwright dependencies
-3. Installs browser binaries
-4. Runs tests with environment variables
+Manual deployment is rarely needed, but you can trigger it with:
+
+```bash
+npx nx run tests-e2e:deploy-checkly
+```
+
+<Info>
+Tests are deployed to Checkly automatically after successful test runs in the CI pipeline. 
+</Info>
 
 ## Debugging Tests
 
-### VSCode Extension
+### 1. Checkly Videos and Reports
 
-For the best debugging experience, install the **Playwright Test for VSCode** extension:
+When running tests with Checkly, each test execution is recorded and detailed reports are generated. This is the fastest way to debug failures:
+
+- **Video recordings**: Watch the exact browser session for any test run.
+- **Step-by-step logs**: Review detailed logs and screenshots for each test step.
+- **Access**: Open the Checkly dashboard and navigate to the relevant test run to view videos and reports.
+
+### 2. VSCode Extension
+
+For the best local debugging experience, install the **Playwright Test for VSCode** extension:
 
 1. Open VSCode Extensions (Ctrl+Shift+X)
 2. Search for "Playwright Test for VSCode"
@@ -336,61 +343,14 @@ For the best debugging experience, install the **Playwright Test for VSCode** ex
 - Auto-completion for Playwright APIs
 - Integrated test runner
 
-### Debug Mode
+### 3. Debugging Tips
 
-Run tests in debug mode for step-by-step execution:
-
-```bash
-# Using Nx command
-npx nx run tests-e2e:test-scenarios --debug
-
-# Or directly with Playwright
-npx playwright test --config=packages/tests-e2e/playwright.config.ts --debug
-```
-
-### Trace Viewer
-
-Your configuration includes trace collection on retry failures:
-
-```typescript
-// playwright.config.ts
-use: {
-  trace: 'on-first-retry',
-}
-```
-
-Analyze test execution with trace viewer:
-
-```bash
-# View traces (generated on retry failures)
-npx playwright show-trace test-results/trace.zip
-```
-
-### Screenshots and Videos
-
-**Current Configuration:**
-- **Videos**: Not enabled (no `video` setting in config)
-- **Screenshots**: Not explicitly enabled (Playwright takes screenshots on failure by default)
-- **Traces**: Enabled on first retry (`trace: 'on-first-retry'`)
-
-**To enable videos and screenshots, add to `playwright.config.ts`:**
-
-```typescript
-use: {
-  trace: 'on-first-retry',
-  video: 'retain-on-failure',    // Record video on failure
-  screenshot: 'only-on-failure', // Take screenshot on failure
-  headless: true,
-},
-```
-
-### Debugging Tips
-
-1. **Use VSCode Extension**: Set breakpoints directly in your test files
-2. **Step Through**: Use F10 (step over) and F11 (step into) in debug mode
-3. **Inspect Elements**: Use `await page.pause()` to pause execution and inspect the page
-4. **Console Logs**: Add `console.log()` statements to track execution flow
-5. **Manual Screenshots**: Take screenshots at critical points for visual debugging
+1. **Use Checkly dashboard**: Review videos and logs for failed tests.
+2. **Use VSCode Extension**: Set breakpoints directly in your test files.
+3. **Step Through**: Use F10 (step over) and F11 (step into) in debug mode.
+4. **Inspect Elements**: Use `await page.pause()` to pause execution and inspect the page.
+5. **Console Logs**: Add `console.log()` statements to track execution flow.
+6. **Manual Screenshots**: Take screenshots at critical points for visual debugging.
 
 ```typescript
 test('should debug workflow', async ({ page }) => {

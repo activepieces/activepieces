@@ -5,7 +5,7 @@ type Config = {
 }
 
 const localConfig: Config = {
-    instanceUrl: 'http://localhost:4200',
+    instanceUrl: 'https://pre-prod.activepieces.com',
     email: 'test@activepieces.com',
     password: 'Test@1234578',
 }

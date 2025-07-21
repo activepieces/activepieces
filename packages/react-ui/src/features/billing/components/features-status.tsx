@@ -29,6 +29,10 @@ const LICENSE_PROPS_MAP = {
     label: 'Embedding',
     description: 'Add workflows directly into your website or application',
   },
+  globalConnectionsEnabled: {
+    label: 'Global Connections',
+    description: 'Create centralized connections for your projects',
+  },
   managePiecesEnabled: {
     label: 'Manage Pieces',
     description: 'Create and organize custom building blocks for workflows',
