@@ -1,16 +1,17 @@
 import { defineConfig } from 'checkly'
 import { AlertEscalationBuilder, RetryStrategyBuilder } from 'checkly/constructs'
+import { configUtils } from './helper/config'
 
 /**
  * See https://www.checklyhq.com/docs/cli/project-structure/
  */
 const config = defineConfig({
   /* A human friendly name for your project */
-  projectName: 'Activepieces E2E Tests',
+  projectName: `Activepieces E2E Tests ${process.env.E2E_CONFIG_MODE}`,
   /** A logical ID that needs to be unique across your Checkly account,
    * See https://www.checklyhq.com/docs/cli/constructs/ to learn more about logical IDs.
    */
-  logicalId: 'activepieces-e2e-tests',
+  logicalId: `activepieces-e2e-tests-${process.env.E2E_CONFIG_MODE}`,
   /* An optional URL to your Git repo to be shown in your test sessions and resource activity log */
   /* repoUrl: 'https://github.com/checkly/checkly-cli', */
   /* Sets default values for Checks */
@@ -33,7 +34,7 @@ const config = defineConfig({
     /* Global configuration option for Playwright-powered checks. See https://www.checklyhq.com/docs/browser-checks/playwright-test/#global-configuration */
     playwrightConfig: {
       use: {
-        baseURL: 'https://pre-prod.activepieces.com',
+        baseURL: configUtils.getConfig().instanceUrl,
         viewport: { width: 1280, height: 720 },
       }
     },
