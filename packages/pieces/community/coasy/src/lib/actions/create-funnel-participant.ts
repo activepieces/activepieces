@@ -31,7 +31,7 @@ export const createFunnelParticipant = createAction({
   },
   async run(configValue) {
     const { propsValue, auth } = configValue;
-    const client = new CoasyClient(auth.baseUrl, auth.apiKey);
+    const client = new CoasyClient(auth.baseUrl ?? 'https://backend.api.prod.coasy.io', auth.apiKey);
     const request = {
       email: propsValue.email,
       firstName: propsValue.firstName,

@@ -11,7 +11,8 @@ export const coasyAuth = PieceAuth.CustomAuth({
     baseUrl: Property.ShortText({
       displayName: 'Base URL',
       description: 'Enter the base URL',
-      required: true,
+      required: false,
+      defaultValue: 'https://backend.api.prod.coasy.io',
     }),
     apiKey: PieceAuth.SecretText({
       displayName: 'API Key',
@@ -24,9 +25,9 @@ export const coasyAuth = PieceAuth.CustomAuth({
 export const coasy = createPiece({
   displayName: 'Coasy',
   auth: coasyAuth,
-  description: 'Communicate with Coasy!',
+  description: 'Communicate with Coasy',
   minimumSupportedRelease: '0.20.0',
-  logoUrl: 'https://console.achtsamkeitsakademie.de/favicon/apple-icon.png',
+  logoUrl: 'https://console.coasy.io/favicon/apple-icon.png',
   authors: ["christian-schab"],
   actions: [createFunnelParticipant],
   triggers: [newFunnelParticipant, newWebinarParticipant, newAuthEvent]

@@ -124,7 +124,7 @@ The piece uses custom authentication with:
 
 ## Publishing
 
-The piece is published as `@coasy/piece-coasy` to npm. Version is currently `0.0.11`.
+The piece is published as `@coasy/piece-coasy` to npm. Version is currently `0.0.12`.
 
 To publish a new version:
 1. Navigate to the coasy piece directory:
