@@ -6,11 +6,11 @@ import { AlertEscalationBuilder, RetryStrategyBuilder } from 'checkly/constructs
  */
 const config = defineConfig({
   /* A human friendly name for your project */
-  projectName: `Activepieces E2E Tests ${process.env.E2E_CONFIG_MODE}`,
+  projectName: 'Activepieces E2E Tests',
   /** A logical ID that needs to be unique across your Checkly account,
    * See https://www.checklyhq.com/docs/cli/constructs/ to learn more about logical IDs.
    */
-  logicalId: `activepieces-e2e-tests-${process.env.E2E_CONFIG_MODE}`,
+  logicalId: 'activepieces-e2e-tests',
   /* An optional URL to your Git repo to be shown in your test sessions and resource activity log */
   /* repoUrl: 'https://github.com/checkly/checkly-cli', */
   /* Sets default values for Checks */
