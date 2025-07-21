@@ -3,6 +3,16 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/placid/src",
   "projectType": "library",
+  "release": {
+    "version": {
+      "manifestRootsToUpdate": [
+        "dist/{projectRoot}"
+      ],
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk"
+    }
+  },
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -24,32 +34,11 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      },
-      "dependsOn": ["prebuild", "^build"]
-    },
-    "prebuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "packages/pieces/community/placid",
-        "command": "npm ci"
       }
     },
-    "build-with-deps": {
-      "executor": "nx:run-commands",
+    "nx-release-publish": {
       "options": {
-        "commands": [
-          "nx run pieces-placid:prebuild",
-          "nx run pieces-placid:build",
-          "nx run pieces-placid:postbuild"
-        ],
-        "parallel": false
-      }
-    },
-    "postbuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "dist/packages/pieces/community/placid",
-        "command": "npm install"
+        "packageRoot": "dist/{projectRoot}"
       }
     },
     "lint": {
@@ -58,6 +47,5 @@
         "{options.outputFile}"
       ]
     }
-  },
-  "tags": []
+  }
 }

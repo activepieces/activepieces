@@ -81,5 +81,5 @@ export const placid = createPiece({
     newPdf,
     newVideo,
   ],
-  authors: ['activepieces'],
+  authors: ['MAVRICK-1'],
 });
