@@ -66,7 +66,7 @@ jobs:
         run: |
           ssh pre-prod -t -t 'bash -ic "cd enterprise-activepieces && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.enterprise docker compose pull && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.enterprise docker compose up -d --force-recreate enterprise-activepieces; exit"' 
 
-  E2E-Tests:
+  Enterprise-E2E-Tests:
     needs: Release
     uses: ./.github/workflows/e2e-tests.yml
     with:
