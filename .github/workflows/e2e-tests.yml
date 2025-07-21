@@ -19,8 +19,6 @@ on:
         required: true
       E2E_INSTANCE_URL:
         required: true
-  # push:
-  #   branches: [main]
 
 jobs:
   e2e-tests:
@@ -36,17 +34,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Debug E2E Instance URL
-        run: |
-          if [ "$E2E_INSTANCE_URL" = "https://ee.activepieces.com" ]; then
-            echo "E2E_INSTANCE_URL matches expected value: $E2E_INSTANCE_URL"
-          else
-            echo "E2E_INSTANCE_URL does not match expected value"
-          fi
-          echo "Environment: ${{ inputs.environment }}"
-        env:
-          E2E_INSTANCE_URL: ${{ secrets.E2E_INSTANCE_URL }}
-
       - name: Run Checkly tests (${{ inputs.environment }})
         id: checkly-tests
         run: npx checkly test --config=packages/tests-e2e/checkly.config.ts --reporter=github --record
@@ -56,13 +43,6 @@ jobs:
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
           E2E_INSTANCE_URL: ${{ secrets.E2E_INSTANCE_URL }}
-
-      # - name: Deploy Checkly config
-      #   if: steps.checkly-tests.outcome == 'success'
-      #   run: npx checkly deploy --config=packages/tests-e2e/checkly.config.ts
-      #   env:
-      #     CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
-      #     CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
 
       - name: Create summary
         run: cat checkly-github-report.md > $GITHUB_STEP_SUMMARY
