@@ -52,7 +52,7 @@ import { PieceCategory } from "@activepieces/shared";
       logoUrl: "https://cdn.activepieces.com/pieces/eden-ai.png",
       authors: ["sparkybug"],
       description: "Eden AI is a platform that provides a range of AI services, including text generation, summarization, translation, and more.",
-      categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.UNIVERSAL_AI],
+      categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
       actions: [
         generateTextAction,
         summarizeTextAction,
