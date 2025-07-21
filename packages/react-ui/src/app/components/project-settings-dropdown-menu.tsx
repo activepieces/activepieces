@@ -138,6 +138,7 @@ const ProjectSettingsDropdownMenu = () => {
       <EditProjectDialog
         open={editDialogOpen}
         onClose={() => setEditDialogOpen(false)}
+        projectId={project?.id}
         initialValues={{
           projectName: project?.displayName,
           tasks: project?.plan?.tasks?.toString() ?? '',

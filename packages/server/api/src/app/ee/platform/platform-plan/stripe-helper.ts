@@ -1,10 +1,14 @@
 import {  ApSubscriptionStatus, CreateSubscriptionParams, getAiCreditsPriceId, getPlanPriceId, getUserPriceId, PlanName, StripePlanName } from '@activepieces/ee-shared'
 import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, isNil, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, isNil, PlatformRole, UserWithMetaInformation } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
+import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
+import { getRedisConnection } from '../../../database/redis-connection'
 import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
+import { userService } from '../../../user/user-service'
 import { platformPlanService } from './platform-plan.service'
 
 export const stripeWebhookSecret = system.get(
@@ -50,9 +54,13 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
+        const redisConnection = getRedisConnection()
+        const key = getTrialGiftingKey(platformId, customerId)
+        const trialPeriod = await redisConnection.get(key)
+
         const subscription = await stripe.subscriptions.create({
             customer: customerId,
-            trial_end: apDayjs().add(14, 'days').unix(),
+            trial_end: isNil(trialPeriod) ? apDayjs().add(14, 'days').unix() : Number(trialPeriod),
             items: [
                 { price: STRIPE_PLAN_PRICE_IDS[PlanName.PLUS], quantity: 1 },
             ],
@@ -67,11 +75,54 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             },
         })
 
-
-
         return subscription.id
+
     },
-    
+    async giftTrialForCustomer(email: string, trialPeriod: number) {
+        const trialPeriodInUnixTime = dayjs().add(trialPeriod, 'months').unix()
+        const stripe = stripeHelper(log).getStripe()
+        if (isNil(stripe)) {
+            return { email, message: 'Stripe not configured' }
+        }
+
+        try {
+            const identity = await userIdentityService(log).getIdentityByEmail(email)
+            if (isNil(identity)) {
+                return { email, message: `No user exists with email: ${email}` }
+            }
+                
+            const user = await userService.getOneByIdentityIdOnly({ identityId: identity.id })
+            if (isNil(user) || isNil(user.platformId) || user.platformRole !== PlatformRole.ADMIN) {
+                return { email, message: 'User doesn\'t own any platform' }
+            }
+                
+            const platformPlan = await platformPlanService(log).getOrCreateForPlatform(user.platformId)
+            assertNotNullOrUndefined(platformPlan.stripeCustomerId, 'customerId is not set')
+                
+            if (isNil(platformPlan.stripeSubscriptionId) || platformPlan.stripeSubscriptionStatus === ApSubscriptionStatus.CANCELED) {
+                const redisConnection = getRedisConnection()
+                const key = getTrialGiftingKey(platformPlan.platformId, platformPlan.stripeCustomerId)
+                await platformPlanService(log).update({ platformId: platformPlan.platformId, eligibleForTrial: true })
+                await redisConnection.set(key, trialPeriodInUnixTime)
+                await redisConnection.expire(key, 60 * 60 * 15)
+
+                return
+
+            }
+            else if (platformPlan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING) {
+                await stripe.subscriptions.update(platformPlan.stripeSubscriptionId, {
+                    trial_end: trialPeriodInUnixTime,
+                })
+                return
+            }
+            else {
+                return { email, message: 'User already has active subscription' }
+            }
+        }
+        catch (error) {
+            return { email, message: 'Unknown error, contact support for this.' }
+        }
+    },
     createSubscriptionCheckoutUrl: async (
         platformId: string,
         customerId: string,
@@ -344,4 +395,8 @@ async function createSubscriptionSchedule(
     await updateSubscriptionSchedule(stripe, schedule.id, subscription, newPlan, extraUsers, logger)
 
     return schedule
+}
+
+function getTrialGiftingKey(platformId: string, customerId: string) {
+    return `trial-gift-${platformId}-${customerId}`
 }

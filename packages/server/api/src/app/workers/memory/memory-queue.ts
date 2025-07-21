@@ -102,6 +102,7 @@ async function addDelayedRun(log: FastifyBaseLogger): Promise<void> {
                     environment: RunEnvironment.PRODUCTION,
                     schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                     flowVersionId: flowRun.flowVersionId,
+                    flowId: flowRun.flowId,
                     jobType: RepeatableJobType.DELAYED_FLOW,
                     synchronousHandlerId: delayPauseMetadata.handlerId ?? null,
                     progressUpdateType: delayPauseMetadata.progressUpdateType ?? ProgressUpdateType.NONE,

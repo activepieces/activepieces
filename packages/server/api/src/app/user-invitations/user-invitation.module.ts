@@ -24,7 +24,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
-import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
+import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { projectService } from '../project/project-service'
 import { userInvitationsService } from './user-invitation.service'
@@ -49,8 +49,9 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
         const projectRole = await getProjectRoleAndAssertIfFound(request.principal.platform.id, request.body)
         const platformId = request.principal.platform.id
 
-        await checkQuotaOrThrow({
+        await PlatformPlanHelper.checkQuotaOrThrow({
             platformId: request.principal.platform.id,
+            projectId: request.principal.projectId,
             metric: PlatformUsageMetric.USER_SEATS,
         })
 

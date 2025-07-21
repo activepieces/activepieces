@@ -32,21 +32,16 @@ const TestTriggerSection = React.memo(
     const isValid = form.formState.isValid;
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const lastTestDate = formValues.settings.inputUiInfo?.lastTestDate;
-
     const [isTestingDialogOpen, setIsTestingDialogOpen] = useState(false);
-
     const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
       name: formValues.settings.pieceName,
       version: formValues.settings.pieceVersion,
     });
 
+    const trigger = pieceModel?.triggers?.[formValues.settings.triggerName];
     const mockData =
       pieceModel?.triggers?.[formValues.settings.triggerName]?.sampleData;
 
-    const testType: TestType = triggerEventUtils.getTestType(
-      formValues.settings.triggerName,
-      formValues.settings.pieceName,
-    );
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
     );
@@ -99,16 +94,40 @@ const TestTriggerSection = React.memo(
     );
     const showFirstTimeTestingSection = !isTestedBefore && !isSimulating;
 
-    if (isPieceLoading) {
+    if (isPieceLoading || isNil(trigger)) {
       return null;
     }
+    const testType: TestType = triggerEventUtils.getTestType({
+      triggerName: formValues.settings.triggerName,
+      pieceName: formValues.settings.pieceName,
+      trigger: trigger,
+    });
+
     const showSampleDataViewer =
       sampleDataSelected && !isSimulating && !isSavingMockdata;
 
-    const getSimulationNode = (testType: TestType) => {
+    const onTest = () => {
+      switch (testType) {
+        case 'chat-trigger':
+          setChatDrawerOpenSource(ChatDrawerSource.TEST_STEP);
+          simulateTrigger(abortControllerRef.current.signal);
+          break;
+        case 'simulation':
+        case 'webhook':
+          simulateTrigger(abortControllerRef.current.signal);
+          break;
+        case 'polling':
+          pollTrigger();
+          break;
+        case 'mcp-tool':
+          setIsTestingDialogOpen(true);
+          break;
+      }
+    };
+    const getSimulationNote = () => {
       switch (testType) {
         case 'simulation':
-          return t('testPieceSimulationTriggerNote', {
+          return t('testPieceWebhookTriggerNote', {
             pieceName: pieceModel?.displayName,
             triggerName:
               pieceModel?.triggers[formValues.settings.triggerName].displayName,
@@ -134,13 +153,13 @@ const TestTriggerSection = React.memo(
 
     return (
       <div>
-        {showFirstTimeTestingSection && (
+        {showFirstTimeTestingSection && !errorMessage && (
           <FirstTimeTestingSection
             isValid={isValid}
             testType={testType}
             isTesting={isPollingTesting || isSimulating || isTestingDialogOpen}
             mockData={mockData}
-            isSavingMockdata={isSavingMockdata}
+            isSaving={isSaving || isSavingMockdata}
             onSimulateTrigger={() => {
               if (testType === 'chat-trigger') {
                 setChatDrawerOpenSource(ChatDrawerSource.TEST_STEP);
@@ -152,26 +171,11 @@ const TestTriggerSection = React.memo(
             onSaveMockAsSampleData={saveMockAsSampleData}
           />
         )}
-        {!showFirstTimeTestingSection && (
+        {(!showFirstTimeTestingSection || errorMessage) && (
           <>
             {showSampleDataViewer && (
               <TestSampleDataViewer
-                onRetest={() => {
-                  if (testType === 'chat-trigger') {
-                    setChatDrawerOpenSource(ChatDrawerSource.TEST_STEP);
-                  } else {
-                    setIsTestingDialogOpen(true);
-                  }
-                  if (
-                    testType === 'simulation' ||
-                    testType === 'webhook' ||
-                    testType === 'chat-trigger'
-                  ) {
-                    simulateTrigger(abortControllerRef.current.signal);
-                  } else if (testType === 'polling') {
-                    pollTrigger();
-                  }
-                }}
+                onRetest={onTest}
                 isValid={isValid}
                 isTesting={isPollingTesting}
                 sampleData={sampleData}
@@ -180,7 +184,7 @@ const TestTriggerSection = React.memo(
                 lastTestDate={lastTestDate}
                 isSaving={isSaving}
               >
-                {pollResults?.data && (
+                {pollResults?.data && !errorMessage && (
                   <TriggerEventSelect
                     pollResults={pollResults}
                     sampleData={sampleData}
@@ -189,25 +193,21 @@ const TestTriggerSection = React.memo(
               </TestSampleDataViewer>
             )}
 
-            {(testType === 'simulation' ||
-              testType === 'webhook' ||
-              testType === 'chat-trigger') &&
-              isSimulating && (
-                <SimulationNote
-                  note={getSimulationNode(testType)}
-                  resetSimulation={resetSimulation}
-                  abortControllerRef={abortControllerRef}
-                />
-              )}
-
-            {testType === 'mcp-tool' && (
-              <McpToolTestingDialog
-                open={isTestingDialogOpen}
-                onOpenChange={setIsTestingDialogOpen}
-                onTestingSuccess={onTestSuccess}
+            {isSimulating && (
+              <SimulationNote
+                note={getSimulationNote()}
+                resetSimulation={resetSimulation}
+                abortControllerRef={abortControllerRef}
               />
             )}
           </>
+        )}
+        {testType === 'mcp-tool' && (
+          <McpToolTestingDialog
+            open={isTestingDialogOpen}
+            onOpenChange={setIsTestingDialogOpen}
+            onTestingSuccess={onTestSuccess}
+          />
         )}
       </div>
     );
