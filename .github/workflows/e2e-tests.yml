@@ -35,12 +35,12 @@ jobs:
             --config=packages/tests-e2e/checkly.config.ts \
             --reporter=github \
             --record \
+            -e E2E_CONFIG_MODE="${{ inputs.environment }}"
         env:
           CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
           CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
-          E2E_CONFIG_MODE: ${{ inputs.environment }}
 
       - name: Create summary
         run: cat checkly-github-report.md > $GITHUB_STEP_SUMMARY
