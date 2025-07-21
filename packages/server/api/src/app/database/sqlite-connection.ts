@@ -6,6 +6,8 @@ import { DataSource, MigrationInterface } from 'typeorm'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
 
+import { AddTableAgentsSqlite1752851142438 } from './migration/1752851142438-AddTableAgentsSqlite'
+import { AddTableAutomationStatusSqlite1753013268133 } from './migration/1753013268133-AddTableAutomationStatusSqlite'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
@@ -130,8 +132,6 @@ import { RemoveTerminationReasonSqlite1751727630516 } from './migration/sqlite/1
 import { AddFlowVersionToIssueSqlite1751927149586 } from './migration/sqlite/1751927149586-AddFlowVersionToIssueSqlite'
 import { AddIndexForSchemaVersionInFlowVersionSqlite1752152069517 } from './migration/sqlite/1752152069517-AddIndexForSchemaVersionInFlowVersionSqlite'
 import { AddAgentRunsEntitySqlite1752583785385 } from './migration/sqlite/1752583785385-AddAgentRunsEntitySqlite'
-import { AddTableAgentsSqlite1752851142438 } from './migration/1752851142438-AddTableAgentsSqlite'
-import { AddTableAutomationStatusSqlite1753013268133 } from './migration/1753013268133-AddTableAutomationStatusSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -279,7 +279,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIndexForSchemaVersionInFlowVersionSqlite1752152069517,
         AddAgentRunsEntitySqlite1752583785385,
         AddTableAgentsSqlite1752851142438,
-        AddTableAutomationStatusSqlite1753013268133
+        AddTableAutomationStatusSqlite1753013268133,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

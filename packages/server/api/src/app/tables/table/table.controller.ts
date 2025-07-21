@@ -3,9 +3,9 @@ import { ApId, AutomateTableRequest, CreateTableRequest, CreateTableWebhookReque
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
-import { tableService } from './table.service'
 import { tableAutomationService } from '../../ee/tables/table-automation-service'
 import { recordService } from '../record/record.service'
+import { tableService } from './table.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -90,7 +90,7 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
         })))
         const runs = await Promise.all(records.map((record) => tableAutomationService(request.log).run({
             projectId: request.principal.projectId,
-            table: table,
+            table,
             record,
             trigger: TableAutomationTrigger.ON_DEMAND,
         })))

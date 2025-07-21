@@ -1,9 +1,13 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { nanoid } from 'nanoid';
 import { useRef, useEffect } from 'react';
 import DataGrid, { DataGridHandle } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useNavigate } from 'react-router-dom';
 
+import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
+
+import { useSocket } from '@/components/socket-provider';
 import { useTheme } from '@/components/theme-provider';
 import { Drawer, DrawerContent, DrawerHeader } from '@/components/ui/drawer';
 import { ApTableFooter } from '@/features/tables/components/ap-table-footer';
@@ -19,9 +23,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { AgentRun, AgentTaskStatus, ApFlagId, Permission, WebsocketClientEvent } from '@activepieces/shared';
 import './react-data-grid.css';
-import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
-import { ConfigureTableAgent } from '@/features/tables/components/configure-table-agent';
-import { useSocket } from '@/components/socket-provider';
+import { recordsApi } from '@/features/tables/lib/records-api';
 import { AgentRunDialog } from '@/features/agents/agent-run-dialog';
 
 const ApTableEditorPage = () => {
@@ -39,6 +41,7 @@ const ApTableEditorPage = () => {
     records,
     selectedAgentRunId,
     setSelectedAgentRunId,
+    setRecords,
   ] = useTableState((state) => [
     state.table,
     state.setAgentRunId,
@@ -51,6 +54,7 @@ const ApTableEditorPage = () => {
     state.records,
     state.selectedAgentRunId,
     state.setSelectedAgentRunId,
+    state.setRecords,
   ]);
 
   const gridRef = useRef<DataGridHandle>(null);
@@ -96,9 +100,20 @@ const ApTableEditorPage = () => {
   }, [selectedCell]);
 
   useEffect(() => {
-    socket.on(WebsocketClientEvent.AGENT_RUN_PROGRESS, (agentRun: AgentRun) => {
+    socket.on(WebsocketClientEvent.AGENT_RUN_PROGRESS, async (agentRun: AgentRun) => {
       if (agentRun.metadata?.tableId === table.id) {
         setAgentRunId(agentRun.metadata?.recordId!, agentRun.status === AgentTaskStatus.IN_PROGRESS ? agentRun.id : null);
+        if (
+          agentRun.status === AgentTaskStatus.COMPLETED ||
+          agentRun.status === AgentTaskStatus.FAILED
+        ) {
+          const records = await recordsApi.list({
+            tableId: table.id,
+            limit: 999999,
+            cursor: undefined,
+          });
+          setRecords(records.data);
+        }
       }
     });
     return () => {

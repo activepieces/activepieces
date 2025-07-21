@@ -17,18 +17,18 @@ import {
     UpdateTableRequest,
 } from '@activepieces/shared'
 import { ILike, In } from 'typeorm'
+import { agentsService } from '../../agents/agents-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
 import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
-import { system } from '../../helper/system/system'
-import { agentsService } from '../../agents/agents-service'
 
 export const tableRepo = repoFactory(TableEntity)
 const recordRepo = repoFactory(RecordEntity)

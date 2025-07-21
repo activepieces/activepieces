@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, NullableEnum } from '../common'
 import { Agent } from '../agents'
+import { BaseModelSchema, NullableEnum } from '../common'
 
 export enum TableAutomationTrigger {
     ON_NEW_RECORD = 'ON_NEW_RECORD',
