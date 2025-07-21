@@ -30,12 +30,6 @@ const communityConfig: Config = {
 
 export const configUtils = {
     getConfig: (): Config => {
-        console.log('E2E_CONFIG_MODE', process.env.E2E_CONFIG_MODE);
-        console.log('E2E_ENTERPRISE_INSTANCE_URL', process.env.E2E_ENTERPRISE_INSTANCE_URL);
-        console.log('E2E_PRE_PROD_INSTANCE_URL', process.env.E2E_PRE_PROD_INSTANCE_URL);
-        console.log('E2E_COMMUNITY_INSTANCE_URL', process.env.E2E_COMMUNITY_INSTANCE_URL);
-        console.log('E2E_EMAIL', process.env.E2E_EMAIL);
-        console.log('E2E_PASSWORD', process.env.E2E_PASSWORD);
         switch (process.env.E2E_CONFIG_MODE) {
             case 'Enterprise':
                 return enterpriseConfig;
