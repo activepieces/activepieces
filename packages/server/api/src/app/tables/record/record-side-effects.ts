@@ -1,4 +1,4 @@
-import { PopulatedRecord, TableAutomationTrigger, TableWebhookEventType } from '@activepieces/shared'
+import { PopulatedRecord, TableAutomationStatus, TableAutomationTrigger, TableWebhookEventType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { tableAutomationService } from '../../ee/tables/table-automation-service'
 import { tableService } from '../table/table.service'
@@ -56,12 +56,14 @@ export const recordSideEffects = (log: FastifyBaseLogger) => ({
                 })
                 if (automationTrigger && !agentUpdate) {
                     const table = await tableService.getOneOrThrow({ projectId, id: tableId })
-                    await tableAutomationService(log).run({
-                        table,
-                        record,
-                        projectId,
-                        trigger: automationTrigger,
-                    })
+                    if (table.agent && table.status === TableAutomationStatus.ENABLED && table.trigger === automationTrigger) {
+                        await tableAutomationService(log).run({
+                            table,
+                            record,
+                            projectId,
+                            trigger: automationTrigger,
+                        })
+                    }
                 }
             }),
         )
