@@ -6,14 +6,14 @@ on:
     branches:
       - main
   pull_request:
-    # types: [merged]
+    types: [merged]
     branches:
       - main
-    # merged: true
+    merged: true
 
 jobs:
   Release:
-    # if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
