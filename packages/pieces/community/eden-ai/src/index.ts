@@ -14,6 +14,7 @@
     import { imageGenerationAction } from './lib/actions/image-generation';
     import { textToSpeechAction } from './lib/actions/text-to-speech';
     import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { PieceCategory } from "@activepieces/shared";
 
     export const edenAiAuth = PieceAuth.SecretText({
       displayName: 'Eden AI API Key',
@@ -45,11 +46,13 @@
     });
 
     export const edenAi = createPiece({
-      displayName: "Eden-ai",
+      displayName: "Eden AI",
       auth: edenAiAuth,
       minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/eden-ai.png",
       authors: ["sparkybug"],
+      description: "Eden AI is a platform that provides a range of AI services, including text generation, summarization, translation, and more.",
+      categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.UNIVERSAL_AI],
       actions: [
         generateTextAction,
         summarizeTextAction,
