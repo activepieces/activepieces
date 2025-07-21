@@ -1,5 +1,6 @@
 import { defineConfig } from 'checkly'
 import { AlertEscalationBuilder, RetryStrategyBuilder } from 'checkly/constructs'
+import { configUtils } from './helper/config'
 
 /**
  * See https://www.checklyhq.com/docs/cli/project-structure/
@@ -33,7 +34,7 @@ const config = defineConfig({
     /* Global configuration option for Playwright-powered checks. See https://www.checklyhq.com/docs/browser-checks/playwright-test/#global-configuration */
     playwrightConfig: {
       use: {
-        baseURL: 'https://pre-prod.activepieces.com',
+        baseURL: configUtils.getConfig().instanceUrl,
         viewport: { width: 1280, height: 720 },
       }
     },
