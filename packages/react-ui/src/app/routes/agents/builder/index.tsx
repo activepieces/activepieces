@@ -40,7 +40,7 @@ export const AgentBuilder = ({
       direction="right"
     >
       {trigger}
-      <DrawerContent className="w-full overflow-auto">
+      <DrawerContent className="w-full overflow-auto overflow-x-hidden">
         <DrawerHeader>
           <div className="p-4">
             <div className="flex items-center gap-1 justify-between">

@@ -2,7 +2,7 @@ import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { toast, INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import {
   CreateSubscriptionParams,
@@ -32,7 +32,6 @@ export const billingMutations = {
         const portalLink = await platformBillingApi.getPortalLink();
         window.open(portalLink, '_blank');
       },
-      onError: () => toast(INTERNAL_ERROR_TOAST),
     });
   },
   useUpdateSubscription: (setIsOpen: (isOpen: boolean) => void) => {

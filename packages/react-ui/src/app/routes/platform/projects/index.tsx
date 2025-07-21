@@ -169,6 +169,7 @@ export default function ProjectsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editDialogInitialValues, setEditDialogInitialValues] =
     useState<any>(null);
+  const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -385,6 +386,7 @@ export default function ProjectsPage() {
                     tasks: row.plan?.tasks?.toString() ?? '',
                     aiCredits: row.plan?.aiCredits?.toString() ?? '',
                   });
+                  setEditDialogProjectId(row.id);
                   setEditDialogOpen(true);
                 }}
               >
@@ -441,8 +443,12 @@ export default function ProjectsPage() {
         />
         <EditProjectDialog
           open={editDialogOpen}
-          onClose={() => setEditDialogOpen(false)}
+          onClose={() => {
+            setEditDialogOpen(false);
+            refetch();
+          }}
           initialValues={editDialogInitialValues}
+          projectId={editDialogProjectId}
         />
       </div>
     </LockedFeatureGuard>
