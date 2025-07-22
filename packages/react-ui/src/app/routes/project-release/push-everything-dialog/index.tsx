@@ -27,7 +27,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { gitSyncApi } from '@/features/git-sync/lib/git-sync-api';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -75,10 +75,6 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
         duration: 3000,
       });
       setOpen(false);
-    },
-    onError: (error: any) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 

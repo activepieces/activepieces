@@ -11,6 +11,7 @@ const statusCodeVariants = cva(
         success: 'bg-success-100 text-success-300',
         error: 'bg-destructive-100 text-destructive-300',
         default: 'bg-accent text-accent-foreground',
+        secondary: 'bg-secondary text-secondary-foreground',
       },
     },
     defaultVariants: {

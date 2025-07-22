@@ -9,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { AnalyticsReportResponse } from '@activepieces/shared';
+import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 type MetricProps = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -71,7 +71,7 @@ const SkeletonMetric = () => {
 };
 
 type MetricsProps = {
-  report?: AnalyticsReportResponse;
+  report?: PlatformAnalyticsReport;
 };
 
 export function Metrics({ report }: MetricsProps) {

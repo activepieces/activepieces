@@ -14,10 +14,10 @@ import {
 } from '@/components/ui/chart';
 import { DateTimePickerWithRange } from '@/components/ui/date-time-picker-range';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AnalyticsReportResponse } from '@activepieces/shared';
+import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 type TaskUsageProps = {
-  report?: AnalyticsReportResponse;
+  report?: PlatformAnalyticsReport;
 };
 
 export function TaskUsage({ report }: TaskUsageProps) {

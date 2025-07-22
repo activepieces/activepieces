@@ -18,7 +18,6 @@ import {
   DropdownMenuContent,
 } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
@@ -76,10 +75,6 @@ const FlowRunCard = React.memo(
         setLeftSidebar(LeftSideBarType.RUN_DETAILS);
         refetchRuns();
       },
-      onError: (error) => {
-        toast(INTERNAL_ERROR_TOAST);
-        console.error(error);
-      },
     });
 
     const { mutate: retryRun, isPending: isRetryingRun } = useMutation<
@@ -113,10 +108,6 @@ const FlowRunCard = React.memo(
         refetchRuns();
         setRun(run, populatedFlow.version);
         setLeftSidebar(LeftSideBarType.RUN_DETAILS);
-      },
-      onError: (error) => {
-        toast(INTERNAL_ERROR_TOAST);
-        console.error(error);
       },
     });
 

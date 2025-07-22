@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { RefreshCcw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId, PieceSyncMode } from '@activepieces/shared';
@@ -21,9 +21,6 @@ const SyncPiecesButton = () => {
         title: t('Pieces synced'),
         description: t('Pieces have been synced from the activepieces cloud.'),
       });
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 

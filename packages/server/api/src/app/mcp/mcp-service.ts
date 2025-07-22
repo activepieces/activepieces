@@ -7,10 +7,11 @@ import {
     ErrorCode,
     isNil,
     McpTool,
+    mcpToolNaming,
+    McpToolRequest,
     McpToolType,
     McpWithTools,
-    SeekPage,
-    spreadIfDefined,
+    SeekPage, spreadIfDefined,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -148,13 +149,14 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
 
 })
 
-async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogger): Promise<McpTool | null> {
+async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogger): Promise<EnrichedToolResult | null> {
     switch (tool.type) {
         case McpToolType.PIECE: {
+            const toolName = mcpToolNaming.fixTool(tool.pieceMetadata?.actionName, tool.id, tool.type)
             return {
                 ...tool,
                 pieceMetadata: tool.pieceMetadata,
-                flowId: undefined,
+                toolName,
             }
         }
         case McpToolType.FLOW: {
@@ -174,30 +176,28 @@ async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogge
             })
             return {
                 ...tool,
-                pieceMetadata: undefined,
                 flow: {
                     ...flow,
                     version: publishedVersion,
                 },
+                toolName: mcpToolNaming.fixTool(publishedVersion.displayName, tool.id, tool.type),
             }
         }
     }
 }
 
-async function findToolId(mcpId: ApId, tool: Omit<McpTool, 'created' | 'updated' | 'id'>): Promise<ApId | undefined> {
+async function findToolId(mcpId: ApId, tool: McpToolRequest) {
     switch (tool.type) {
         case McpToolType.PIECE: {
-            assertNotNullOrUndefined(tool.pieceMetadata, 'pieceMetadata is required')
             const result = await mcpToolRepo()
                 .createQueryBuilder('mcp_tool')
                 .where('mcp_tool.mcpId = :mcpId', { mcpId })
                 .andWhere('mcp_tool.type = :type', { type: tool.type })
-                .andWhere('mcp_tool."pieceMetadata"->>\'pieceName\' = :pieceName', { pieceName: tool.pieceMetadata?.pieceName })
+                .andWhere('mcp_tool."pieceMetadata"->>\'actionName\' = :actionName', { actionName: tool.pieceMetadata?.actionName })
                 .getOne()
             return result?.id
         }
         case McpToolType.FLOW: {
-            assertNotNullOrUndefined(tool.flowId, 'flowId is required')
             return mcpToolRepo().findOne({ where: { mcpId, type: tool.type, flowId: tool.flowId } }).then(tool => tool?.id)
         }
     }
@@ -220,7 +220,11 @@ type UpdateParams = {
     agentId?: ApId
     token?: string
     name?: string
-    tools?: Omit<McpTool, 'created' | 'updated' | 'id'>[]
+    tools?: McpToolRequest[]
+}
+
+type EnrichedToolResult = McpTool & {
+    toolName: string
 }
 
 type CountParams = {
