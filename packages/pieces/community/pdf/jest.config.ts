@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-  displayName: 'pieces-framework',
+  displayName: 'pieces-pdf',
   preset: '../../../../jest.preset.js',
   globals: {},
   testEnvironment: 'node',
