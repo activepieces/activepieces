@@ -40,7 +40,15 @@ const ConfigureTableAgent = () => {
     state.toggleStatus,
   ]);
 
-  const { data: mcp, isLoading } = mcpHooks.useMcp(table?.agent?.mcpId);
+  const {
+    data: mcp,
+    isLoading,
+    refetch: refetchMcp,
+  } = mcpHooks.useMcp(table?.agent?.mcpId);
+  const { mutate: updateTools } = mcpHooks.updateTools(
+    table?.agent?.mcpId!,
+    refetchMcp,
+  );
 
   const {
     register,
@@ -79,8 +87,9 @@ const ConfigureTableAgent = () => {
     },
   });
 
-  const onToolsUpdate = (updatedTools: any[]) => {
+  const onToolsUpdate = (updatedTools: McpToolRequest[]) => {
     setValue('tools', updatedTools);
+    updateTools(updatedTools);
   };
 
   const onSubmit = handleSubmit((values) => {

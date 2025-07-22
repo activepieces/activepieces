@@ -110,8 +110,8 @@ export const AgentSettings = ({
     );
   };
 
-  const { data: mcp, isLoading } = mcpHooks.useMcp(agent?.mcpId);
-  const { mutate: updateTools } = mcpHooks.updateTools(agent?.mcpId!);
+  const { data: mcp, isLoading, refetch: refetchMcp } = mcpHooks.useMcp(agent?.mcpId);
+  const { mutate: updateTools } = mcpHooks.updateTools(agent?.mcpId!, refetchMcp);
 
   return (
     <Form {...form}>
