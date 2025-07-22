@@ -133,7 +133,7 @@ function getEntities(): EntitySchema<unknown>[] {
             //     GitRepoEntity,
             //     AuditEventEntity,
             //     ProjectReleaseEntity,
-
+            //     PlatformAnalyticsReportEntity,
             //     // CLOUD
             //     AppSumoEntity,
             //     ConnectionKeyEntity,

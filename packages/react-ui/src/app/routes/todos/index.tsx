@@ -70,7 +70,9 @@ function TodosPage() {
     };
   }, [data, location.search]);
 
-  const { projectMembers } = projectMembersHooks.useProjectMembers();
+  // const { projectMembers } = projectMembersHooks.useProjectMembers();
+  // todo(Rupal): add project member with user
+  const projectMembers = undefined;
   const assigneeOptions = [
     ...(currentUser
       ? [
