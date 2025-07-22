@@ -61,6 +61,7 @@ import { AddIndexForSchemaVersionInFlowVersion1752151941009 } from './migration/
 import { ProjectRole1752736911931 } from './migration/postgres/1752736911931-project-role'
 import { DefaultProjectRole1752744019509 } from './migration/postgres/1752744019509-default-project-role'
 import { AddProjectRoleInvitation1752746415961 } from './migration/postgres/1752746415961-add-project-role-invitation'
+import { ProjectMember1752814412946 } from './migration/postgres/1752814412946-project-member'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -75,6 +76,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        ProjectMember1752814412946,
         AddProjectRoleInvitation1752746415961,
         DefaultProjectRole1752744019509,
         ProjectRole1752736911931,

@@ -53,6 +53,7 @@ import { AddFlowVersionToIssueSqlite1751927149586 } from './migration/sqlite/175
 import { AddIndexForSchemaVersionInFlowVersionSqlite1752152069517 } from './migration/sqlite/1752152069517-AddIndexForSchemaVersionInFlowVersionSqlite'
 import { ProjectRole1752743014852 } from './migration/sqlite/1752743014852-project-role'
 import { AddProjectRoleInvitation1752746475364 } from './migration/sqlite/1752746475364-add-project-role-invitation'
+import { ProjectMember1752814553291 } from './migration/sqlite/1752814553291-project-member'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -75,6 +76,7 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        ProjectMember1752814553291,
         AddProjectRoleInvitation1752746475364,
         ProjectRole1752743014852,
         AddIndexForSchemaVersionInFlowVersionSqlite1752152069517,

@@ -19,6 +19,7 @@ import { repoFactory } from '../core/db/repo-factory'
 // import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 // import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { system } from '../helper/system/system'
+import { projectMemberService } from '../project-member/project-member.service'
 import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
@@ -204,12 +205,16 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
     //     platformId: params.platformId,
     //     userId: params.userId,
     // })
+    const projectIds = await projectMemberService.getAuthorizedProjectIds({
+        platformId: params.platformId,
+        userId: params.userId,
+    })
 
     // Regular members can only see projects they're members of
     return [{
         deleted: IsNull(),
         platformId: params.platformId,
-        // id: In(projectIds),
+        id: In(projectIds),
         ...displayNameFilter,
     }]
 }

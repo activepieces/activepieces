@@ -14,6 +14,7 @@ import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
+import { projectMemberService } from '../project-member/project-member.service'
 import { projectRoleService } from '../project-role/project-role.service'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
@@ -88,6 +89,22 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     //         projectRoleName: projectRole.name,
                     //     })
                     // }
+
+                    // Custom implementation
+                    const projectRole = await projectRoleService.getById({
+                        id: projectRoleId,
+                    })
+                    const project = await projectService.exists({
+                        projectId,
+                        isSoftDeleted: false,
+                    })
+                    if (!isNil(project)) {
+                        await projectMemberService.upsert({
+                            projectId,
+                            userId: user.id,
+                            projectRoleId: projectRole.id,
+                        })
+                    }
                     break
                 }
             }

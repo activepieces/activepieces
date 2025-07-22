@@ -84,6 +84,7 @@ import { pieceSyncService } from './pieces/piece-sync-service'
 import { platformModule } from './platform/platform.module'
 // import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
+import { projectMemberModule } from './project-member/project-member.module'
 import { projectRoleModule } from './project-role/project-role.module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
@@ -249,6 +250,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(agentModule)
     await app.register(todoActivityModule)
     await app.register(projectRoleModule)
+    await app.register(projectMemberModule)
 
     app.get(
         '/redirect',

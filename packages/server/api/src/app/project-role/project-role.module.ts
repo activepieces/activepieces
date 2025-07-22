@@ -1,7 +1,8 @@
-import { ApId, ProjectRole, SeekPage, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import { ApId, ListProjectMembersForProjectRoleRequestQuery, ProjectMember, ProjectRole, SeekPage, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { projectRoleService } from './project-role.service'
+import { projectMemberService } from '../project-member/project-member.service'
 
 const ListProjectRolesRequest = {
     config: {},
@@ -19,6 +20,19 @@ const GetProjectRoleRequest = {
         params: Type.Object({
             id: ApId,
         }),
+    },
+}
+
+const ProjectMembersForProjectRoleRequest = {
+    schema: {
+        tags: ['project-member'],
+        params: Type.Object({
+            id: ApId,
+        }),
+        querystring: ListProjectMembersForProjectRoleRequestQuery,
+        response: {
+            [StatusCodes.OK]: SeekPage(ProjectMember),
+        },
     },
 }
 
@@ -62,9 +76,13 @@ const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.get('/:id/project-members', async (req, reply) => {
-        // todo(Rupal): Implement this later
-        await reply.status(200).send([])
+    app.get('/:id/project-members', ProjectMembersForProjectRoleRequest, async (req) => {
+        return projectMemberService.list({
+            projectRoleId: req.params.id,
+            platformId: req.principal.platform.id,
+            cursorRequest: req.query.cursor || null,
+            limit: req.query.limit ?? 1000,
+        })
     })
 
     app.post('/:id', UpdateProjectRoleRequest, async (req) => {
