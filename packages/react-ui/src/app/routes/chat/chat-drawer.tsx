@@ -13,66 +13,45 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
-import {
-  FlowRun,
-  RunEnvironment,
-  WebsocketClientEvent,
-} from '@activepieces/shared';
-
 import { FlowChat } from './flow-chat';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 
-interface ChatDrawerProps {
-  source: ChatDrawerSource | null;
-  onOpenChange: (open: boolean) => void;
-}
 
-export const ChatDrawer = ({ source, onOpenChange }: ChatDrawerProps) => {
+export const ChatDrawer = () => {
   const [
-    setRun,
     chatSessionMessages,
     chatSessionId,
     addChatMessage,
     flowVersion,
     setChatSessionId,
+    setRun,
+    chatDrawerOpenSource,
+    setChatDrawerOpenSource,
   ] = useBuilderStateContext((state) => [
-    state.setRun,
     state.chatSessionMessages,
     state.chatSessionId,
     state.addChatMessage,
     state.flowVersion,
     state.setChatSessionId,
+    state.setRun,
+    state.chatDrawerOpenSource,
+    state.setChatDrawerOpenSource,
   ]);
-  const socket = useSocket();
 
-  const isListening = React.useRef(false);
-
-  useEffect(() => {
-    const onTestFlowRunStarted = (run: FlowRun) => {
-      if (
-        run.flowVersionId === flowVersion.id &&
-        run.environment === RunEnvironment.TESTING &&
-        isListening.current
-      ) {
-        setRun(run, flowVersion);
-        isListening.current = false;
-      }
-    };
-    socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onTestFlowRunStarted);
-
-    return () => {
-      socket.off(
-        WebsocketClientEvent.TEST_FLOW_RUN_STARTED,
-        onTestFlowRunStarted,
-      );
-    };
-  }, [socket]);
+  const { mutate: runFlow } = flowsHooks.useTestFlow({
+    flowVersionId: flowVersion.id,
+    onUpdateRun: (run) => {
+      setRun(run, flowVersion);
+    },
+  });
 
   return (
     <Drawer
-      open={source !== null}
-      onOpenChange={onOpenChange}
+      open={chatDrawerOpenSource !== null}
+      onOpenChange={() => setChatDrawerOpenSource(null)}
       direction="right"
       dismissible={false}
+      modal={false}
     >
       <DrawerContent className="w-[500px] overflow-x-hidden">
         <DrawerHeader>
@@ -82,7 +61,7 @@ export const ChatDrawer = ({ source, onOpenChange }: ChatDrawerProps) => {
                 variant="basic"
                 size={'icon'}
                 className="text-foreground"
-                onClick={() => onOpenChange(false)}
+                onClick={() => setChatDrawerOpenSource(null)}
               >
                 <ArrowRight className="h-5 w-5" />
               </Button>
@@ -94,15 +73,15 @@ export const ChatDrawer = ({ source, onOpenChange }: ChatDrawerProps) => {
           <FlowChat
             flowId={flowVersion.flowId}
             className="h-full"
-            mode={source}
+            mode={chatDrawerOpenSource}
             showWelcomeMessage={true}
             onError={() => {}}
             closeChat={() => {
-              onOpenChange(false);
+              setChatDrawerOpenSource(null);
             }}
             onSendingMessage={() => {
-              if (source === 'test-flow') {
-                isListening.current = true;
+              if (chatDrawerOpenSource === ChatDrawerSource.TEST_FLOW) {
+                runFlow();
               }
             }}
             messages={chatSessionMessages}

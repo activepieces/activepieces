@@ -12,6 +12,7 @@ import { downloadFile } from '@/lib/utils';
 import {
   ApFlagId,
   FlowOperationType,
+  FlowRun,
   FlowStatus,
   FlowVersion,
   FlowVersionMetadata,
@@ -23,6 +24,8 @@ import {
 
 import { flowsApi } from './flows-api';
 import { flowsUtils } from './flows-utils';
+import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
+import { useSocket } from '@/components/socket-provider';
 
 export const flowsHooks = {
   useFlows: (request: Omit<ListFlowsRequest, 'projectId'>) => {
@@ -194,4 +197,17 @@ export const flowsHooks = {
       staleTime: 0,
     });
   },
+  useTestFlow: ({flowVersionId, onUpdateRun}: {flowVersionId: string, onUpdateRun: (run: FlowRun) => void}) => {
+    const socket = useSocket();
+    return useMutation<void>({
+      mutationFn: () =>
+        flowRunsApi.testFlow(
+          socket,
+          {
+            flowVersionId,
+          },
+          onUpdateRun
+        ),
+    });
+  }
 };

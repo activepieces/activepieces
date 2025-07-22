@@ -1,21 +1,18 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import {
   ChatDrawerSource,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { useSocket } from '@/components/socket-provider';
-import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { isNil, TriggerType } from '@activepieces/shared';
 
 import ViewOnlyWidget from '../view-only-widget';
 
 import { TestButton } from './test-button';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 
 const TestFlowWidget = () => {
-  const socket = useSocket();
   const [setChatDrawerOpenSource, flowVersion, readonly, setRun] =
     useBuilderStateContext((state) => [
       state.setChatDrawerOpenSource,
@@ -33,18 +30,12 @@ const TestFlowWidget = () => {
     flowVersion.trigger.settings.triggerName,
   );
 
-  const { mutate: runFlow, isPending } = useMutation<void>({
-    mutationFn: () =>
-      flowRunsApi.testFlow(
-        socket,
-        {
-          flowVersionId: flowVersion.id,
-        },
-        (run) => {
-          setRun(run, flowVersion);
-        },
-      ),
-  });
+    const { mutate: runFlow, isPending } = flowsHooks.useTestFlow({
+      flowVersionId: flowVersion.id,
+      onUpdateRun: (run) => {
+        setRun(run, flowVersion);
+      },
+    });
 
   if (!flowVersion.valid) {
     return null;

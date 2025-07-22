@@ -300,10 +300,7 @@ const BuilderPage = () => {
         </>
       </ResizablePanelGroup>
       {edition === ApEdition.CLOUD && <UpgradeDialog />}
-      <ChatDrawer
-        source={chatDrawerOpenSource}
-        onOpenChange={() => setChatDrawerOpenSource(null)}
-      />
+      <ChatDrawer  />
     </div>
   );
 };
