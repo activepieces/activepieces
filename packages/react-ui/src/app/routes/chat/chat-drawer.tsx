@@ -1,9 +1,11 @@
 import { ArrowRight } from 'lucide-react';
+import { useRef } from 'react';
 
 import {
   ChatDrawerSource,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
+import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -11,7 +13,11 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import {
+  FlowRun,
+  RunEnvironment,
+  WebsocketClientEvent,
+} from '@activepieces/shared';
 
 import { FlowChat } from './flow-chat';
 
@@ -35,14 +41,27 @@ export const ChatDrawer = () => {
     state.chatDrawerOpenSource,
     state.setChatDrawerOpenSource,
   ]);
-
-  const { mutate: runFlow } = flowsHooks.useTestFlow({
-    flowVersionId: flowVersion.id,
-    onUpdateRun: (run) => {
-      setRun(run, flowVersion);
-    },
-  });
-
+  const socket = useSocket();
+  const isListening = useRef(false);
+  //shouldn't use testFlow hook here because it would run the flow with sample data not the real user message
+  const listenToTestRun = () => {
+    isListening.current = true;
+    const onTestFlowRunStarted = (run: FlowRun) => {
+      if (
+        run.flowVersionId === flowVersion.id &&
+        run.environment === RunEnvironment.TESTING &&
+        isListening.current
+      ) {
+        setRun(run, flowVersion);
+        isListening.current = false;
+        socket.off(
+          WebsocketClientEvent.TEST_FLOW_RUN_STARTED,
+          onTestFlowRunStarted,
+        );
+      }
+    };
+    socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onTestFlowRunStarted);
+  };
   return (
     <Drawer
       open={chatDrawerOpenSource !== null}
@@ -74,13 +93,13 @@ export const ChatDrawer = () => {
             mode={chatDrawerOpenSource}
             showWelcomeMessage={true}
             onError={() => {}}
-            closeChat={() => {
-              setChatDrawerOpenSource(null);
-            }}
             onSendingMessage={() => {
               if (chatDrawerOpenSource === ChatDrawerSource.TEST_FLOW) {
-                runFlow();
+                listenToTestRun();
               }
+            }}
+            closeChat={() => {
+              setChatDrawerOpenSource(null);
             }}
             messages={chatSessionMessages}
             chatSessionId={chatSessionId}
