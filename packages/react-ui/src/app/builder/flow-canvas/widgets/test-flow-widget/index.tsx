@@ -48,7 +48,6 @@ const TestFlowWidget = () => {
           setChatDrawerOpenSource(ChatDrawerSource.TEST_FLOW);
         }}
         text={t('Open Chat')}
-        disabled={!triggerHasSampleData}
         loading={isPending}
       />
     );
