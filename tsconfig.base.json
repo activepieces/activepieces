@@ -290,6 +290,9 @@
       "@activepieces/piece-dumpling-ai": [
         "packages/pieces/community/dumpling-ai/src/index.ts"
       ],
+      "@activepieces/piece-eden-ai": [
+        "packages/pieces/community/eden-ai/src/index.ts"
+      ],
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
       ],
@@ -684,6 +687,9 @@
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
       ],
+       "@activepieces/piece-quickbooks": [
+        "packages/pieces/community/quickbooks/src/index.ts"
+      ],
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
       ],
@@ -753,6 +759,9 @@
       ],
       "@activepieces/piece-sendinblue": [
         "packages/pieces/community/sendinblue/src/index.ts"
+      ],
+      "@activepieces/piece-sendpulse": [
+        "packages/pieces/community/sendpulse/src/index.ts"
       ],
       "@activepieces/piece-sendy": [
         "packages/pieces/community/sendy/src/index.ts"
