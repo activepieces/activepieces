@@ -132,7 +132,6 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
 
         const shouldReportUsage = platformPlan.aiCreditsOverageState === AiOverageState.ALLOWED_AND_ON
         const hasOverage = Math.round(platformAiCreditUsageIncremented - platformPlan.includedAiCredits) > 0
-        // const hasOverage = overage > 0
 
         if (!shouldReportUsage || !hasOverage) {
             return { projectAiCreditUsage: projectAiCreditUsageIncremented, platformAiCreditUsage: platformAiCreditUsageIncremented }
@@ -144,7 +143,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
                 data: {
                     platformId,
                     overage: incrementBy.toString(),
-                    idempotencyKey: apId()
+                    idempotencyKey: apId(),
                 },
                 jobId: `ai-credit-usage-report-${platformId}-${apDayjs().unix()}`,
             },
@@ -153,7 +152,6 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
                 date: apDayjs().add(1, 'seconds'),
             },
         })
-
         return { projectAiCreditUsage: projectAiCreditUsageIncremented, platformAiCreditUsage: platformAiCreditUsageIncremented }
     },
 

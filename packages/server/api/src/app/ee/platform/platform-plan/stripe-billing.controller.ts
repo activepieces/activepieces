@@ -61,7 +61,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         if (trialSubscrptionEnded) {
                             const haveActiveSubscription = await haveActiveSubs(subscription.customer as string, stripe)
                             if (haveActiveSubscription) {
-                                break;
+                                break
                             }
                         }
 
@@ -204,7 +204,7 @@ async function haveActiveSubs(customerId: string, stripe: Stripe) {
 
 async function cancelTrialSubscription(customerId: string, stripe: Stripe) {
     const trialSubs = await stripe.subscriptions.list({ customer: customerId, status: ApSubscriptionStatus.TRIALING })
-    trialSubs.data.forEach(async (trialSub) => await stripe.subscriptions.cancel(trialSub.id))
+    trialSubs.data.forEach(async (trialSub) => stripe.subscriptions.cancel(trialSub.id))
 }
 
 async function addThresholdOnAiCreditsItem(stripe: Stripe, subscription: Stripe.Subscription): Promise<void> {

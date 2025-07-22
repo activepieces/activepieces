@@ -41,7 +41,7 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
                 value: overage.toString(),
                 stripe_customer_id: subscription.customer as string,
             },
-        }, {idempotencyKey})
+        }, { idempotencyKey })
     })
 
     systemJobHandlers.registerJobHandler(SystemJobName.SEVEN_DAYS_IN_TRIAL, async (data) => {
