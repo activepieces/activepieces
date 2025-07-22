@@ -14,7 +14,6 @@ export const tableAutomationService = (log: FastifyBaseLogger) => ({
             projectId: params.projectId,
             prompt: `
             You are a automation agent based on table, the trigger is ${params.trigger}.
-            You are given a record from a table with the following data: ${JSON.stringify(params.record.cells)}.
             `,
             source: AgentJobSource.TABLE,
             recordId: params.record.id,
