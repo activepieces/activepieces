@@ -101,14 +101,14 @@ const AuthFormTemplate = React.memo(
       },
     }[form];
 
-    if (token) {
-      redirectAfterLogin();
-    }
-
     if (tokenFromUrl) {
       authenticationSession.saveToken(tokenFromUrl);
       const navigateTo = isNil(from) ? '/flows' : from;
       return <Navigate to={navigateTo} />;
+    }
+
+    if (token) {
+      redirectAfterLogin();
     }
 
     const [countdown, setCountdown] = useState(3);
