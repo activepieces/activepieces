@@ -4,7 +4,6 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, MoreThan } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { auditLogRepo } from '../../ee/audit-logs/audit-event-service'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -12,6 +11,7 @@ import { distributedLock } from '../../helper/lock'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
 import { userRepo } from '../../user/user-service'
+import { auditLogRepo } from '../audit-logs/audit-event-service'
 import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entity'
 export const platformAnalyticsReportRepo = repoFactory(PlatformAnalyticsReportEntity)
 const REPORT_TTL_MS = 1000 * 60 * 60 * 24
@@ -216,27 +216,27 @@ async function listAllFlows(log: FastifyBaseLogger, platformId: PlatformId, proj
         .leftJoin('latest_versions', 'latest_version', 'latest_version."flowId" = flow.id')
         .innerJoin('project', 'project', 'flow."projectId" = project.id')
         .select([
-            'flow.id as flow_id',
-            'flow.projectId as flow_projectId',
-            'flow.folderId as flow_folderId',
-            'flow.status as flow_status',
-            'flow.created as flow_created',
-            'flow.updated as flow_updated',
-            'flow.handshakeConfiguration as flow_handshakeConfiguration',
-            'flow.schedule as flow_schedule',
-            'flow.externalId as flow_externalId',
-            'flow.publishedVersionId as flow_publishedVersionId',
-            'flow.metadata as flow_metadata',
-            'latest_version.id as version_id',
-            'latest_version."displayName" as version_displayName',
-            'latest_version."schemaVersion" as version_schemaVersion',
-            'latest_version.trigger as version_trigger',
-            'latest_version."connectionIds" as version_connectionIds',
-            'latest_version."updatedBy" as version_updatedBy',
-            'latest_version.valid as version_valid',
-            'latest_version.state as version_state',
-            'latest_version.created as version_created',
-            'latest_version.updated as version_updated',
+            'flow.id as "flow_id"',
+            'flow.projectId as "flow_projectId"',
+            'flow.folderId as "flow_folderId"',
+            'flow.status as "flow_status"',
+            'flow.created as "flow_created"',
+            'flow.updated as "flow_updated"',
+            'flow.handshakeConfiguration as "flow_handshakeConfiguration"',
+            'flow.schedule as "flow_schedule"',
+            'flow.externalId as "flow_externalId"',
+            'flow.publishedVersionId as "flow_publishedVersionId"',
+            'flow.metadata as "flow_metadata"',
+            'latest_version.id as "version_id"',
+            'latest_version."displayName" as "version_displayName"',
+            'latest_version."schemaVersion" as "version_schemaVersion"',
+            'latest_version.trigger as "version_trigger"',
+            'latest_version."connectionIds" as "version_connectionIds"',
+            'latest_version."updatedBy" as "version_updatedBy"',
+            'latest_version.valid as "version_valid"',
+            'latest_version.state as "version_state"',
+            'latest_version.created as "version_created"',
+            'latest_version.updated as "version_updated"',
         ])
         .andWhere('project."platformId" = :platformId', { platformId })
 
@@ -245,7 +245,6 @@ async function listAllFlows(log: FastifyBaseLogger, platformId: PlatformId, proj
     }
 
     const results = await queryBuilder.getRawMany()
-
     return results.map(row => ({
         id: row.flow_id,
         projectId: row.flow_projectId,
