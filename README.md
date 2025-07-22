@@ -432,6 +432,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/sparkybug"><img src="https://avatars.githubusercontent.com/u/52334088?v=4?s=100" width="100px;" alt="Ukaegbu Osinachi"/><br /><sub><b>Ukaegbu Osinachi</b></sub></a><br /><a href="#plugin-sparkybug" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://mavrick-portfolio.vercel.app/"><img src="https://avatars.githubusercontent.com/u/146999057?v=4?s=100" width="100px;" alt="Rishi Mondal"/><br /><sub><b>Rishi Mondal</b></sub></a><br /><a href="#plugin-MAVRICK-1" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Cloudieunnie"><img src="https://avatars.githubusercontent.com/u/178718590?v=4?s=100" width="100px;" alt="Cloudieunnie"/><br /><sub><b>Cloudieunnie</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=Cloudieunnie" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/balwant1707"><img src="https://avatars.githubusercontent.com/u/17769387?v=4?s=100" width="100px;" alt="Balwant Singh"/><br /><sub><b>Balwant Singh</b></sub></a><br /><a href="#plugin-balwant1707" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
