@@ -182,8 +182,6 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
 async function constructSystemPrompt(agent: Agent, fields: Field[] | undefined, record: Record<string, unknown> | undefined) {
     let systemPrompt = `
     You are an autonomous assistant designed to efficiently achieve the user's goal.
-
-    YOU MUST ALWAYS call the mark as complete tool with the output or message wether you have successfully completed the task or not.
     
     **Today's Date**: ${new Date().toISOString()}  
     Use this to interpret time-based queries like "this week" or "due tomorrow."
@@ -200,6 +198,11 @@ async function constructSystemPrompt(agent: Agent, fields: Field[] | undefined, 
 
         **Current Record**:
         ${JSON.stringify(record, null, 2)}
+        `
+    }
+    else {
+        systemPrompt += `
+            YOU MUST ALWAYS call the mark as complete tool with the output or message wether you have successfully completed the task or not.
         `
     }
 

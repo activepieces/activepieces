@@ -21,7 +21,15 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { AgentRun, AgentTaskStatus, ApFlagId, Permission, WebsocketClientEvent } from '@activepieces/shared';
+
+import {
+  AgentRun,
+  AgentTaskStatus,
+  ApFlagId,
+  Permission,
+  WebsocketClientEvent,
+} from '@activepieces/shared';
+
 import './react-data-grid.css';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { AgentRunDialog } from '@/features/agents/agent-run-dialog';
@@ -100,22 +108,30 @@ const ApTableEditorPage = () => {
   }, [selectedCell]);
 
   useEffect(() => {
-    socket.on(WebsocketClientEvent.AGENT_RUN_PROGRESS, async (agentRun: AgentRun) => {
-      if (agentRun.metadata?.tableId === table.id) {
-        setAgentRunId(agentRun.metadata?.recordId!, agentRun.status === AgentTaskStatus.IN_PROGRESS ? agentRun.id : null);
-        if (
-          agentRun.status === AgentTaskStatus.COMPLETED ||
-          agentRun.status === AgentTaskStatus.FAILED
-        ) {
-          const records = await recordsApi.list({
-            tableId: table.id,
-            limit: 999999,
-            cursor: undefined,
-          });
-          setRecords(records.data);
+    socket.on(
+      WebsocketClientEvent.AGENT_RUN_PROGRESS,
+      async (agentRun: AgentRun) => {
+        if (agentRun.metadata?.tableId === table.id) {
+          setAgentRunId(
+            agentRun.metadata?.recordId!,
+            agentRun.status === AgentTaskStatus.IN_PROGRESS
+              ? agentRun.id
+              : null,
+          );
+          if (
+            agentRun.status === AgentTaskStatus.COMPLETED ||
+            agentRun.status === AgentTaskStatus.FAILED
+          ) {
+            const records = await recordsApi.list({
+              tableId: table.id,
+              limit: 999999,
+              cursor: undefined,
+            });
+            setRecords(records.data);
+          }
         }
-      }
-    });
+      },
+    );
     return () => {
       socket.off(WebsocketClientEvent.AGENT_RUN_PROGRESS);
     };
@@ -140,7 +156,6 @@ const ApTableEditorPage = () => {
         <DrawerHeader>
           <div className="flex items-center justify-between w-full pr-4">
             <ApTableHeader onBack={handleBack} />
-           
           </div>
         </DrawerHeader>
 
@@ -177,7 +192,7 @@ const ApTableEditorPage = () => {
           </div>
         </div>
       </DrawerContent>
-      
+
       <AgentRunDialog
         agentRunId={selectedAgentRunId}
         open={!!selectedAgentRunId}
