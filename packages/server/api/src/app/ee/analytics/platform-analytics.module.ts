@@ -1,16 +1,16 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
-import { platformAnalyticsReportService } from './analytics.service'
 import { piecesAnalyticsService } from './pieces-analytics.service'
+import { platformAnalyticsReportService } from './platform-analytics-report.service'
 
-export const analyticsModule: FastifyPluginAsyncTypebox = async (app) => {
+export const platformAnalyticsModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.analyticsEnabled))
     await piecesAnalyticsService(app.log).init()
-    await app.register(analyticsController, { prefix: '/v1/analytics' })
+    await app.register(platformAnalyticsController, { prefix: '/v1/analytics' })
 }
 
-const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
+const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', async (request) => {
         const { platform } = request.principal
