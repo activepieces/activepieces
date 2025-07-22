@@ -28,10 +28,11 @@ const ApDashboardSidebarHeader = ({
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
   const isInPlatformAdmin = window.location.pathname.includes('platform');
-  const showProjectSwitcher =
-    edition !== ApEdition.COMMUNITY &&
-    !embedState.isEmbedded &&
-    !isInPlatformAdmin;
+  // const showProjectSwitcher =
+  //   edition !== ApEdition.COMMUNITY &&
+  //   !embedState.isEmbedded &&
+  //   !isInPlatformAdmin;
+  const showProjectSwitcher = !embedState.isEmbedded && !isInPlatformAdmin;
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
 
   return (

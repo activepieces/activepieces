@@ -36,9 +36,6 @@ export const PlatformRoleSelect = ({ form }: PlatformRoleSelectProps) => {
                 <SelectItem value={PlatformRole.OPERATOR}>
                   {t('Operator')}
                 </SelectItem>
-                <SelectItem value={PlatformRole.MEMBER}>
-                  {t('Member')}
-                </SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>

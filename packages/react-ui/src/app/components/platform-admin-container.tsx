@@ -80,7 +80,8 @@ export function PlatformAdminContainer({
           to: '/platform/setup/ai',
           label: t('AI'),
           isSubItem: true,
-          show: true,
+          // todo(Rupal): enable this for all later when agents are enabled
+          show: isCloudPlatform,
         },
         // {
         //   type: 'link',

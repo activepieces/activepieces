@@ -141,7 +141,7 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
       type: platform.plan.projectRolesEnabled
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
-      platformRole: PlatformRole.MEMBER,
+      platformRole: PlatformRole.ADMIN,
       projectRole: roles?.[0]?.name,
     },
   });
