@@ -20,7 +20,7 @@ export enum ApSubscriptionStatus {
 
 export const DEFAULT_BUSINESS_SEATS = 5
 export const PRICE_PER_EXTRA_USER = 20
-export const AI_CREDITS_USAGE_THRESHOLD = 15000
+export const AI_CREDITS_USAGE_THRESHOLD = 150000
 
 export enum PlanName {
     FREE = 'free',
