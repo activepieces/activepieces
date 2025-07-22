@@ -4,8 +4,6 @@ import { HttpMethod } from "@activepieces/pieces-common";
 
 export const smooveAuth = PieceAuth.SecretText({
     displayName: 'smoove API Key',
-    description: `
-`,
     required: true,
     validate: async ({ auth }) => {
         if (auth) {

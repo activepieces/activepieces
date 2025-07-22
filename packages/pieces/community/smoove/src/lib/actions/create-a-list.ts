@@ -4,64 +4,58 @@ import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createAList = createAction({
-  auth: smooveAuth, name: 'createAList',
+  auth: smooveAuth, 
+  name: 'createAList',
   displayName: 'Create a List',
-  description: '',
+  description: 'Create a new mailing list with custom settings and descriptions',
   props: {
     name: Property.ShortText({
       displayName: 'List Name',
-      description: 'The name of the list to be created.',
+      description: 'The name of the list to be created',
       required: true,
     }),
     description: Property.LongText({
       displayName: 'Description',
-      description: 'This list is a list for new subscribers.',
+      description: 'Internal description of the list for your reference',
       required: false,
       defaultValue: 'This list is a list for new subscribers',
     }),
     publicName: Property.ShortText({
       displayName: 'Public Name',
-      description: 'The public name of the list.',
+      description: 'The public-facing name of the list visible to subscribers',
       required: false,
       defaultValue: 'My subscribers public name list',
     }),
     publicDescription: Property.LongText({
       displayName: 'Public Description',
-      description: 'The public description of the list.',
+      description: 'Public description of the list visible to subscribers',
       required: false,
       defaultValue: 'Public name - This list is a list for new subscribers',
     }),
     isPublic: Property.Checkbox({
-      displayName: 'isPublic',
+      displayName: 'Is Public',
+      description: 'Make this list publicly visible',
       required: true,
       defaultValue: true
     }),
     allowsUsersToSubscribe: Property.Checkbox({
-      displayName: 'allowsUsersToSubscribe',
+      displayName: 'Allow Users to Subscribe',
+      description: 'Allow users to subscribe to this list themselves',
       required: true,
       defaultValue: true
     }),
     allowsUsersToUnsubscribe: Property.Checkbox({
-      displayName: 'allowsUsersToUnsubscribe',
+      displayName: 'Allow Users to Unsubscribe',
+      description: 'Allow users to unsubscribe from this list themselves',
       required: true,
       defaultValue: true
     }),
     isPortal: Property.Checkbox({
-      displayName: 'isPortal',
+      displayName: 'Is Portal',
+      description: 'Enable portal access for this list',
       required: true,
-      defaultValue: true
+      defaultValue: false
     }),
-    // permissions: Property.Object({
-    //   displayName: 'Permissions',
-    //   description: 'Permissions for the list.',
-    //   required: true,
-    //   defaultValue: {
-    //     isPublic: true,
-    //     allowsUsersToSubscribe: true,
-    //     allowsUsersToUnsubscribe: true,
-    //     isPortal: false,
-    //   },
-    // }),
   },
   async run({ auth, propsValue }) {
     const { name, description, publicName, publicDescription, isPublic, allowsUsersToSubscribe, allowsUsersToUnsubscribe, isPortal } = propsValue
