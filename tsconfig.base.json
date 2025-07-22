@@ -199,6 +199,9 @@
       "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
+      "@activepieces/piece-cloudinary": [
+        "packages/pieces/community/cloudinary/src/index.ts"
+      ],
       "@activepieces/piece-cloutly": [
         "packages/pieces/community/cloutly/src/index.ts"
       ],
