@@ -4,6 +4,7 @@ import { convertToImage } from './lib/actions/convert-to-image';
 import { textToPdf } from './lib/actions/text-to-pdf';
 import { imageToPdf } from './lib/actions/image-to-pdf';
 import { pdfPageCount } from './lib/actions/pdf-page-count';
+import { extractPdfPages } from './lib/actions/extract-pdf-pages';
 
 export const PDF = createPiece({
   displayName: 'PDF',
@@ -17,6 +18,13 @@ export const PDF = createPiece({
     'jmgb27',
     'danielpoonwj',
   ],
-  actions: [extractText, convertToImage, textToPdf, imageToPdf, pdfPageCount],
+  actions: [
+    extractText,
+    convertToImage,
+    textToPdf,
+    imageToPdf,
+    pdfPageCount,
+    extractPdfPages,
+  ],
   triggers: [],
 });
