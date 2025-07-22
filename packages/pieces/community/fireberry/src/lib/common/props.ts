@@ -99,7 +99,7 @@ export const objectFields = Property.DynamicProperties({
             description: 'Date and time in UTC format',
           });
           break;
-        case 'picklist':
+        case 'picklist':{
           const largeLists = ['objecttypecode', 'resultcode'];
           if (largeLists.includes(field.fieldName.toLowerCase())) {
             props[field.fieldName] = Property.ShortText({
@@ -134,14 +134,16 @@ export const objectFields = Property.DynamicProperties({
             }
           }
           break;
-        case 'longtext':
+        }
+        case 'longtext':{
           props[field.fieldName] = Property.LongText({
             displayName: field.label || field.fieldName,
             required: isRequired,
             description: 'Long text content',
           });
           break;
-        case 'lookup':
+        }
+        case 'lookup':{
           let description = 'Record ID (GUID)';
           if (field.fieldName.includes('account')) description = 'Account record ID';
           else if (field.fieldName.includes('contact')) description = 'Contact record ID';
@@ -155,12 +157,15 @@ export const objectFields = Property.DynamicProperties({
             description,
           });
           break;
-        default:
+        }
+        default:{
           props[field.fieldName] = Property.ShortText({
             displayName: field.label || field.fieldName,
             required: isRequired,
             description: `${fieldType} field`,
           });
+          break;
+        }
       }
     }
     return props;

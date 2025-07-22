@@ -1,7 +1,7 @@
 import { writeFile } from 'node:fs/promises';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { findPiece } from '../utils/piece-utils';
+import { buildPiece, findPiece } from '../utils/piece-utils';
 import { makeFolderRecursive } from '../utils/files';
 import { join } from 'node:path';
 import { exec } from '../utils/exec';
@@ -66,6 +66,7 @@ const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { c
 
 const generateTranslationFile = async (pieceName: string) => {
   const pieceRoot = await findPiece(pieceName)
+  await buildPiece(pieceRoot)
   const outputFolder = pieceRoot.replace('packages/', 'dist/packages/')
   try{
     await installDependencies(outputFolder)

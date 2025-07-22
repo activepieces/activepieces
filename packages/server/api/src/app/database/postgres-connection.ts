@@ -24,7 +24,6 @@ import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres
 import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
-import { AddMcpsEnabled1751989232042 } from './migration/1751989232042-AddMcpsEnabled'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -244,7 +243,10 @@ import { AddAiOverageState1751466404493 } from './migration/postgres/17514664044
 import { RemoveTerminationReason1751728035816 } from './migration/postgres/1751728035816-RemoveTerminationReason'
 import { AddLockedColumnToProjectPlan1751878623268 } from './migration/postgres/1751878623268-AddLockedColumnToProjectPlan'
 import { AddFlowVersionToIssue1751927222122 } from './migration/postgres/1751927222122-AddFlowVersionToIssue'
+import { AddMcpsEnabled1751989232042 } from './migration/postgres/1751989232042-AddMcpsEnabled'
 import { AddIndexForSchemaVersionInFlowVersion1752151941009 } from './migration/postgres/1752151941009-AddIndexForSchemaVersionInFlowVersion'
+import { AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028 } from './migration/postgres/1752511716028-AddCreatedToFlowVersionFlowIdIdxPostgres'
+import { AddPlatformAnalyticsReportEntity1753091760355 } from './migration/postgres/1753091760355-AddPlatformAnalyticsReportEntity'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -415,6 +417,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowVersionToIssue1751927222122,
         SplitUpPieceMetadataIntoTools1752004202722,
         AddIndexForSchemaVersionInFlowVersion1752151941009,
+        AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028,
     ]
 
     const edition = system.getEdition()
@@ -511,6 +514,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddAiOverageState1751466404493,
                 AddLockedColumnToProjectPlan1751878623268,
                 AddMcpsEnabled1751989232042,
+                AddPlatformAnalyticsReportEntity1753091760355,
             )
             break
         case ApEdition.COMMUNITY:
