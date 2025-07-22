@@ -16,31 +16,58 @@ import { cloudinaryAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import dayjs from 'dayjs';
 
-
 const props = {
+    resource_type: Property.StaticDropdown({
+        displayName: 'Resource Type',
+        description: 'The type of resources to monitor for tag changes',
+        required: false,
+        options: {
+            options: [
+                { label: 'Image', value: 'image' },
+                { label: 'Video', value: 'video' },
+                { label: 'Raw', value: 'raw' },
+            ],
+        },
+        defaultValue: 'image',
+    }),
     asset_folder: Property.ShortText({
         displayName: 'Asset Folder',
-        description: 'The Cloudinary folder to watch for new resources.',
-        required: true,
+        description: 'Optional: Watch only assets in this specific folder. Leave empty to watch all assets.',
+        required: false,
     }),
 };
 
 const polling: Polling<PiecePropValueSchema<typeof cloudinaryAuth>, StaticPropsValue<typeof props>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-        const resourceType = (propsValue as any).resourceType || 'image';
-        const response = await makeRequest(auth, HttpMethod.GET, `/resources/${resourceType}`);
-        const items = response.data.resources as any[];
+        const resourceType = propsValue.resource_type || 'image';
+        let endpoint = `/resources/${resourceType}`;
+        
+        const queryParams: Record<string, string> = {};
+        if (propsValue.asset_folder && propsValue.asset_folder.trim()) {
+            queryParams['prefix'] = propsValue.asset_folder.trim();
+        }
+        
+        const response = await makeRequest(auth, HttpMethod.GET, endpoint, undefined, queryParams);
+        const items = response.resources || [];
+        
         return items
-            .filter(item => {
-                const updatedAt = item.last_updated?.tags_updated_at || item.last_updated?.updated_at || item.created_at;
-                return dayjs(updatedAt).valueOf() > (lastFetchEpochMS ?? 0);
+            .filter((item: any) => {
+                const tagUpdatedAt = item.last_updated?.tags_updated_at;
+                if (!tagUpdatedAt) return false;
+                
+                const updatedTime = dayjs(tagUpdatedAt).valueOf();
+                return updatedTime > (lastFetchEpochMS || 0);
             })
-            .map(item => {
-                const updatedAt = item.last_updated?.tags_updated_at || item.last_updated?.updated_at || item.created_at;
+            .map((item: any) => {
+                const tagUpdatedAt = item.last_updated?.tags_updated_at;
                 return {
-                    epochMilliSeconds: dayjs(updatedAt).valueOf(),
-                    data: item,
+                    epochMilliSeconds: dayjs(tagUpdatedAt).valueOf(),
+                    data: {
+                        ...item,
+                        trigger_type: 'tag_added',
+                        tags_updated_at: tagUpdatedAt,
+                    },
                 };
             });
     },
@@ -48,13 +75,13 @@ const polling: Polling<PiecePropValueSchema<typeof cloudinaryAuth>, StaticPropsV
 
 export const newTagAddedToAsset = createTrigger({
     auth: cloudinaryAuth,
-    name: 'new_resource_in_folder',
-    displayName: 'New Resource in Folder',
-    description: 'Triggers when a new image, video, or file is uploaded to a specific folder in Cloudinary.',
+    name: 'new_tag_added_to_asset',
+    displayName: 'New Tag Added to Asset',
+    description: 'Triggers when a tag is added to an asset in Cloudinary.',
     props,
     sampleData: {
         "asset_id": "d78ae88939e267ca6f3b5a352648259d",
-        "public_id": "111",
+        "public_id": "sample_image",
         "format": "png",
         "version": 1752588559,
         "resource_type": "image",
@@ -64,13 +91,16 @@ export const newTagAddedToAsset = createTrigger({
         "width": 667,
         "height": 276,
         "asset_folder": "",
-        "display_name": "111",
-        "url": "http://res.cloudinary.com/<cloud_name>/image/upload/v1752588559/111.png",
-        "secure_url": "https://res.cloudinary.com/<cloud_name>/image/upload/v1752588559/111.png",
+        "display_name": "sample_image",
+        "tags": ["nature", "landscape", "sunset"],
+        "url": "http://res.cloudinary.com/<cloud_name>/image/upload/v1752588559/sample_image.png",
+        "secure_url": "https://res.cloudinary.com/<cloud_name>/image/upload/v1752588559/sample_image.png",
         "last_updated": {
             "tags_updated_at": "2025-07-15T17:37:12+00:00",
             "updated_at": "2025-07-15T17:37:12+00:00"
-        }
+        },
+        "trigger_type": "tag_added",
+        "tags_updated_at": "2025-07-15T17:37:12+00:00"
     },
     type: TriggerStrategy.POLLING,
     async onEnable(context) {

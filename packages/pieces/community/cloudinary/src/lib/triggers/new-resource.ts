@@ -16,23 +16,25 @@ import { cloudinaryAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import dayjs from 'dayjs';
 
-
 const props = {
   asset_folder: Property.ShortText({
     displayName: 'Asset Folder',
-    description: 'The Cloudinary folder to watch for new resources.',
-    required: true,
+    description: 'The Cloudinary folder to watch for new resources. Leave empty to watch the entire account.',
+    required: false,
   }),
 };
 
 const polling: Polling<PiecePropValueSchema<typeof cloudinaryAuth>, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    const resources = await makeRequest(
-      auth,
-      HttpMethod.GET,
-      `/resources/by_asset_folder?asset_folder=${propsValue.asset_folder}`,
-    );
+    let endpoint = '/resources/image'; // Default to all resources
+    
+    if (propsValue.asset_folder && propsValue.asset_folder.trim()) {
+      endpoint = `/resources/by_asset_folder?asset_folder=${encodeURIComponent(propsValue.asset_folder.trim())}`;
+    }
+    
+    const resources = await makeRequest(auth, HttpMethod.GET, endpoint);
+    
     return (resources.resources || []).map((item: any) => ({
       epochMilliSeconds: dayjs(item.created_at).valueOf(),
       data: item,
@@ -42,9 +44,9 @@ const polling: Polling<PiecePropValueSchema<typeof cloudinaryAuth>, StaticPropsV
 
 export const newResourceInFolder = createTrigger({
   auth: cloudinaryAuth,
-  name: 'new_resource_in_folder',
-  displayName: 'New Resource in Folder',
-  description: 'Triggers when a new image, video, or file is uploaded to a specific folder in Cloudinary.',
+  name: 'new_resource',
+  displayName: 'New Resource',
+  description: 'Triggers when a new image, video, or file is uploaded to a specific folder or account in Cloudinary.',
   props,
   sampleData: {
     "asset_id": "bcace221f5b11685dd6effb9d69d5ec3",
