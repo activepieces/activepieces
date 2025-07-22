@@ -1949,6 +1949,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Cloudieunnie",
+      "name": "Cloudieunnie",
+      "avatar_url": "https://avatars.githubusercontent.com/u/178718590?v=4",
+      "profile": "https://github.com/Cloudieunnie",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
