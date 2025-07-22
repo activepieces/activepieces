@@ -19,12 +19,17 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
+import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   ActionType,
+  ApEdition,
+  ApFlagId,
+  FlowVersionState,
   PieceTrigger,
   TriggerType,
   WebsocketClientEvent,
@@ -104,6 +109,7 @@ const BuilderPage = () => {
     state.chatDrawerOpenSource,
     state.setChatDrawerOpenSource,
   ]);
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
@@ -143,12 +149,13 @@ const BuilderPage = () => {
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
 
   const { pieceModel, refetch: refetchPiece } =
-    piecesHooks.useMostRecentAndExactPieceVersion({
+    piecesHooks.usePieceModelForStepSettings({
       name: memorizedSelectedStep?.settings.pieceName,
       version: memorizedSelectedStep?.settings.pieceVersion,
       enabled:
         memorizedSelectedStep?.type === ActionType.PIECE ||
         memorizedSelectedStep?.type === TriggerType.PIECE,
+      getExactVersion: flowVersion.state === FlowVersionState.LOCKED,
     });
 
   const socket = useSocket();
@@ -292,7 +299,7 @@ const BuilderPage = () => {
           </ResizablePanel>
         </>
       </ResizablePanelGroup>
-
+      {edition === ApEdition.CLOUD && <UpgradeDialog />}
       <ChatDrawer
         source={chatDrawerOpenSource}
         onOpenChange={() => setChatDrawerOpenSource(null)}

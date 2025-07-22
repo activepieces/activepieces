@@ -74,7 +74,7 @@ const VerifyEmail = () => {
             )}
             {isPending && !isExpired && (
               <>
-                <LoadingSpinner className="w-6 h-6" />
+                <LoadingSpinner className="size-6" />
                 <span className="text-left w-fit">
                   {t('Verifying email...')}
                 </span>

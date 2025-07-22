@@ -25,8 +25,12 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         includedAiCredits: {
             type: Number,
         },
-        aiCreditsLimit: {
+        aiCreditsOverageLimit: {
             type: Number,
+            nullable: true,
+        },
+        aiCreditsOverageState: {
+            type: String,
             nullable: true,
         },
         eligibleForTrial: {
@@ -91,9 +95,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         apiKeysEnabled: {
             type: Boolean,
         },
-        alertsEnabled: {
-            type: Boolean,
-        },
         ssoEnabled: {
             type: Boolean,
         },
@@ -145,6 +146,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         activeFlowsLimit: {
             type: Number,
             nullable: true,
+        },
+        mcpsEnabled: {
+            type: Boolean,
         },
     },
     indices: [
