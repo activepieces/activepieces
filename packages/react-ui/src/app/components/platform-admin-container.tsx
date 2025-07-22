@@ -204,7 +204,7 @@ export function PlatformAdminContainer({
       ) : (
         <Navigate to="/" />
       )}
-      <UpgradeDialog />
+      {edition === ApEdition.CLOUD && <UpgradeDialog />}
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

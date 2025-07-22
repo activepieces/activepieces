@@ -36,7 +36,6 @@ import { AddMcpToolEntity1748352614033 } from './migration/postgres/174835261403
 import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
 import { AddAgentsModule1748456786940 } from './migration/postgres/1748456786940-AddAgentsModule'
 import { AddTodoActivity1748525529096 } from './migration/postgres/1748525529096-AddTodoActivity'
-import { AddPlanNameOnPlatformPlan1748549003744 } from './migration/postgres/1748549003744-AddPlanNameOnPlatformPlan'
 import { AddCreatedByUserIdInTodo1748565250553 } from './migration/postgres/1748565250553-AddCreatedByUserIdInTodo'
 import { AddTodoEnvironment1748573003639 } from './migration/postgres/1748573003639-AddTodoEnvironment'
 import { AIProviderRedactorPostgres1748871900624 } from './migration/postgres/1748871900624-AIProviderRedactorPostgres.ts'
@@ -58,6 +57,7 @@ import { RevertTodoActivties1751217652277 } from './migration/postgres/175121765
 import { RemoveTerminationReason1751728035816 } from './migration/postgres/1751728035816-RemoveTerminationReason'
 import { AddFlowVersionToIssue1751927222122 } from './migration/postgres/1751927222122-AddFlowVersionToIssue'
 import { AddIndexForSchemaVersionInFlowVersion1752151941009 } from './migration/postgres/1752151941009-AddIndexForSchemaVersionInFlowVersion'
+import { AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028 } from './migration/postgres/1752511716028-AddCreatedToFlowVersionFlowIdIdxPostgres'
 import { ProjectRole1752736911931 } from './migration/postgres/1752736911931-project-role'
 import { DefaultProjectRole1752744019509 } from './migration/postgres/1752744019509-default-project-role'
 import { AddProjectRoleInvitation1752746415961 } from './migration/postgres/1752746415961-add-project-role-invitation'
@@ -76,6 +76,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028,
         ProjectMember1752814412946,
         AddProjectRoleInvitation1752746415961,
         DefaultProjectRole1752744019509,

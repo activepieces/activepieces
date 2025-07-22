@@ -181,6 +181,9 @@
       "@activepieces/piece-clearout": [
         "packages/pieces/community/clearout/src/index.ts"
       ],
+      "@activepieces/piece-clicksend": [
+        "packages/pieces/community/clicksend/src/index.ts"
+      ],
       "@activepieces/piece-clickup": [
         "packages/pieces/community/clickup/src/index.ts"
       ],
@@ -283,6 +286,9 @@
       ],
       "@activepieces/piece-dumpling-ai": [
         "packages/pieces/community/dumpling-ai/src/index.ts"
+      ],
+      "@activepieces/piece-eden-ai": [
+        "packages/pieces/community/eden-ai/src/index.ts"
       ],
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
@@ -602,6 +608,9 @@
       "@activepieces/piece-nifty": [
         "packages/pieces/community/nifty/src/index.ts"
       ],
+      "@activepieces/piece-ninox": [
+        "packages/pieces/community/ninox/src/index.ts"
+      ],
       "@activepieces/piece-nocodb": [
         "packages/pieces/community/nocodb/src/index.ts"
       ],
@@ -648,6 +657,9 @@
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
+      "@activepieces/piece-placid": [
+        "packages/pieces/community/placid/src/index.ts"
+      ],
       "@activepieces/piece-poper": [
         "packages/pieces/community/poper/src/index.ts"
       ],
@@ -674,6 +686,9 @@
       ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
+      ],
+       "@activepieces/piece-quickbooks": [
+        "packages/pieces/community/quickbooks/src/index.ts"
       ],
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
@@ -745,6 +760,9 @@
       "@activepieces/piece-sendinblue": [
         "packages/pieces/community/sendinblue/src/index.ts"
       ],
+      "@activepieces/piece-sendpulse": [
+        "packages/pieces/community/sendpulse/src/index.ts"
+      ],
       "@activepieces/piece-sendy": [
         "packages/pieces/community/sendy/src/index.ts"
       ],
@@ -762,6 +780,9 @@
       ],
       "@activepieces/piece-shopify": [
         "packages/pieces/community/shopify/src/index.ts"
+      ],
+      "@activepieces/piece-short-io": [
+        "packages/pieces/community/short-io/src/index.ts"
       ],
       "@activepieces/piece-simplepdf": [
         "packages/pieces/community/simplepdf/src/index.ts"
