@@ -150,7 +150,7 @@ const updateFields = Property.DynamicProperties({
               description: 'Leave empty to keep current value',
             });
             break;
-          case 'picklist':
+          case 'picklist': {
             const largeLists = ['objecttypecode', 'resultcode'];
             if (largeLists.includes(field.fieldName.toLowerCase())) {
               props[field.fieldName] = Property.ShortText({
@@ -188,14 +188,16 @@ const updateFields = Property.DynamicProperties({
               }
             }
             break;
-          case 'longtext':
+          }
+          case 'longtext': {
             props[field.fieldName] = Property.LongText({
               displayName: field.label || field.fieldName,
               required: isRequired,
               description: 'Leave empty to keep current value',
             });
             break;
-          case 'lookup':
+          }
+          case 'lookup': {
             let description = 'Record ID (leave empty to keep current)';
             if (field.fieldName.includes('account')) description = 'Account record ID (leave empty to keep current)';
             else if (field.fieldName.includes('contact')) description = 'Contact record ID (leave empty to keep current)';
@@ -209,12 +211,15 @@ const updateFields = Property.DynamicProperties({
               description,
             });
             break;
-          default:
+          }
+          default: {
             props[field.fieldName] = Property.ShortText({
               displayName: field.label || field.fieldName,
               required: isRequired,
               description: 'Leave empty to keep current value',
             });
+            break;
+          }
         }
       }
       
