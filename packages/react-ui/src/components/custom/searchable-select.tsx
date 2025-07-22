@@ -140,7 +140,7 @@ export const SearchableSelect = <T extends React.Key>({
             role="combobox"
             loading={loading}
             aria-expanded={open}
-            className={cn('w-full justify-between w-full', triggerClassName)}
+            className={cn('w-full justify-between', triggerClassName)}
             onClick={(e) => {
               console.log('clicked');
               setOpen((prev) => !prev);

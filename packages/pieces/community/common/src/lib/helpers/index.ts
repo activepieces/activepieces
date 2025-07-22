@@ -193,6 +193,8 @@ i.e ${getBaseUrlForDescription(baseUrl,auth)}/resource or /resource`,
         'application/x-www-form-urlencoded',  // Form submissions
       ];
 
+      const objectContentTypeSuffixes = ['+json', '+xml'];
+
       let response;
       try {
         response = await httpClient.sendRequest(request);
@@ -209,7 +211,10 @@ i.e ${getBaseUrlForDescription(baseUrl,auth)}/resource or /resource`,
         : response.headers?.['content-type']
 
       // Return unaltered response if content type is associated with objects or strings
-      if (objectContentTypes.some(type => (contentTypeValue ?? '').includes(type))) {
+      const isObjectContentType = objectContentTypes.some(type => (contentTypeValue ?? '').includes(type)) ||
+                                   objectContentTypeSuffixes.some(suffix => (contentTypeValue ?? '').endsWith(suffix));
+      
+      if (isObjectContentType) {
         try {
           // Parse JSON responses if valid
           response.body = JSON.parse(response.body || '{}');

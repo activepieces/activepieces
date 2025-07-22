@@ -1,18 +1,15 @@
-import {
-  AI,
-  AIChatMessage,
-  AIChatRole,
-  aiProps,
-} from '@activepieces/pieces-common';
+import { aiProps } from '@activepieces/pieces-common';
+import { SUPPORTED_AI_PROVIDERS, createAIProvider } from '@activepieces/shared';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { CoreMessage, LanguageModel, generateText } from 'ai';
 
-export const askAi = createAction({
+export const askAI = createAction({
   name: 'askAi',
   displayName: 'Ask AI',
   description: '',
   props: {
-    provider: aiProps('text').provider,
-    model: aiProps('text').model,
+    provider: aiProps({ modelType: 'language' }).provider,
+    model: aiProps({ modelType: 'language' }).model,
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
@@ -35,54 +32,68 @@ export const askAi = createAction({
     }),
   },
   async run(context) {
-
-    const ai = AI({ provider: context.propsValue.provider, server: context.server });
-
+    const providerName = context.propsValue.provider as string;
+    const modelInstance = context.propsValue.model as LanguageModel;
     const storage = context.store;
+
+    const providerConfig = SUPPORTED_AI_PROVIDERS.find(p => p.provider === providerName);
+    if (!providerConfig) {
+      throw new Error(`Provider ${providerName} not found`);
+    }
+
+    const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
+    const engineToken = context.server.token;
+    const provider = createAIProvider({
+      providerName,
+      modelInstance,
+      apiKey: engineToken,
+      baseURL,
+    });
 
     const conversationKey = context.propsValue.conversationKey
       ? `ask-ai-conversation:${context.propsValue.conversationKey}`
       : null;
 
-    let conversation: { messages: AIChatMessage[] } | undefined = undefined;
+    let conversation = null;
     if (conversationKey) {
-      conversation = (await storage.get<{ messages: AIChatMessage[] }>(
+      conversation = (await storage.get<CoreMessage[]>(
         conversationKey
-      )) ?? { messages: [] };
+      )) ?? [];
       if (!conversation) {
         await storage.put(conversationKey, { messages: [] });
       }
     }
 
-    const response = await ai.chat.text({
-      model: context.propsValue.model,
-      messages: conversation?.messages
-        ? [
-            ...conversation.messages,
-            {
-              role: AIChatRole.USER,
-              content: context.propsValue.prompt,
-            },
-          ]
-        : [{ role: AIChatRole.USER, content: context.propsValue.prompt }],
-      creativity: context.propsValue.creativity,
+    const response = await generateText({
+      model: provider,
+      messages: [
+        ...(conversation ?? []),
+        {
+          role: 'user',
+          content: context.propsValue.prompt,
+        },
+      ],
       maxTokens: context.propsValue.maxTokens,
+      temperature: (context.propsValue.creativity ?? 100) / 100,
+      headers: {
+        'Authorization': `Bearer ${engineToken}`,
+      },
     });
 
-    conversation?.messages.push({
-      role: AIChatRole.USER,
+    conversation?.push({
+      role: 'user',
       content: context.propsValue.prompt,
     });
 
-    conversation?.messages.push({
-      role: AIChatRole.ASSISTANT,
-      content: response.choices[0].content,
+    conversation?.push({
+      role: 'assistant',
+      content: response.text ?? '',
     });
 
     if (conversationKey) {
       await storage.put(conversationKey, conversation);
     }
 
-    return response.choices[0].content;
+    return response.text ?? '';
   },
 });

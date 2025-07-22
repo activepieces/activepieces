@@ -64,7 +64,7 @@ export const sendMessage = createAction({
           method: HttpMethod.GET,
           url: `${getApiEndpoint(authToken)}/apis/v1/channels`,
           headers: {
-            Authorization: `Bearer ${authToken.split(':')[1]}`,
+            Authorization: `Bearer ${authToken.includes(':') ? authToken.split(':')[1] : authToken}`,
           },
         });
 
@@ -131,7 +131,7 @@ export const sendMessage = createAction({
       method: HttpMethod.POST,
       url: `${getApiEndpoint(authToken)}/apis/v1/messages/send`,
       headers: {
-        Authorization: `Bearer ${authToken.split(':')[1]}`,
+        Authorization: `Bearer ${authToken.includes(':') ? authToken.split(':')[1] : authToken}`,
       },
       body: {
         channelId: channelData.id,

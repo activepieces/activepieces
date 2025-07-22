@@ -6,29 +6,21 @@ import React, { useId, useState } from 'react';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import {
-  FlowOperationType,
-  isNil,
-  StepLocationRelativeToParent,
-} from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import {
-  AskAiIndicator,
-  shouldShowAskAiIndicator,
-} from '../edges/ask-ai-indicator';
 import { flowUtilConsts } from '../utils/consts';
+import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApBigAddButtonNode } from '../utils/types';
 
 const ApBigAddButtonCanvasNode = React.memo(
   ({ data, id }: Omit<ApBigAddButtonNode, 'position'>) => {
     const [isIsStepInsideDropzone, setIsStepInsideDropzone] = useState(false);
-    const [pieceSelectorOpen, setPieceSelectorOpen] = useState(false);
-    const [readonly, activeDraggingStep, showAiIndicator] =
+    const [readonly, activeDraggingStep, isPieceSelectorOpened] =
       useBuilderStateContext((state) => [
         state.readonly,
         state.activeDraggingStep,
-        shouldShowAskAiIndicator(state, data),
+        state.openedPieceSelectorStepNameOrAddButtonId === id,
       ]);
     const draggableId = useId();
     const { setNodeRef } = useDroppable({
@@ -38,8 +30,7 @@ const ApBigAddButtonCanvasNode = React.memo(
         ...data,
       },
     });
-    const showDropIndicator = !isNil(activeDraggingStep);
-
+    const isShowingDropIndicator = !isNil(activeDraggingStep);
     useDndMonitor({
       onDragMove(event: DragMoveEvent) {
         setIsStepInsideDropzone(event.over?.id === draggableId);
@@ -73,70 +64,40 @@ const ApBigAddButtonCanvasNode = React.memo(
                   }}
                   id={id}
                   className={cn('rounded bg-accent relative', {
-                    'bg-primary/80': showDropIndicator || pieceSelectorOpen,
+                    'bg-primary/80':
+                      isShowingDropIndicator || isPieceSelectorOpened,
                     'shadow-add-button':
-                      isIsStepInsideDropzone || pieceSelectorOpen,
+                      isIsStepInsideDropzone || isPieceSelectorOpened,
                     'transition-all':
                       isIsStepInsideDropzone ||
-                      pieceSelectorOpen ||
-                      showDropIndicator,
+                      isPieceSelectorOpened ||
+                      isShowingDropIndicator,
                   })}
                 >
-                  {!showDropIndicator && (
+                  {!isShowingDropIndicator && (
                     <PieceSelector
-                      operation={
-                        data.stepLocationRelativeToParent ===
-                        StepLocationRelativeToParent.INSIDE_BRANCH
-                          ? {
-                              type: FlowOperationType.ADD_ACTION,
-                              actionLocation: {
-                                parentStep: data.parentStepName,
-                                stepLocationRelativeToParent:
-                                  data.stepLocationRelativeToParent,
-                                branchIndex: data.branchIndex,
-                              },
-                            }
-                          : {
-                              type: FlowOperationType.ADD_ACTION,
-                              actionLocation: {
-                                parentStep: data.parentStepName,
-                                stepLocationRelativeToParent:
-                                  data.stepLocationRelativeToParent,
-                              },
-                            }
-                      }
-                      open={pieceSelectorOpen}
-                      onOpenChange={setPieceSelectorOpen}
+                      operation={flowCanvasUtils.createAddOperationFromAddButtonData(
+                        data,
+                      )}
+                      id={id}
                     >
                       <span>
-                        {showAiIndicator && (
-                          <AskAiIndicator
-                            height={
-                              flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height
-                            }
-                            width={
-                              flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width
-                            }
-                          ></AskAiIndicator>
-                        )}
-                        {!showAiIndicator && (
-                          <Button
-                            variant="transparent"
-                            className="w-full h-full flex items-center hover:bg-accent-foreground rounded"
-                          >
-                            <Plus
-                              className={cn('w-6 h-6 text-accent-foreground ', {
-                                'opacity-0':
-                                  showDropIndicator || pieceSelectorOpen,
-                              })}
-                            />
-                          </Button>
-                        )}
+                        <Button
+                          variant="transparent"
+                          className="w-full h-full flex items-center hover:bg-accent-foreground rounded"
+                        >
+                          <Plus
+                            className={cn('w-6 h-6 text-accent-foreground ', {
+                              'opacity-0':
+                                isShowingDropIndicator || isPieceSelectorOpened,
+                            })}
+                          />
+                        </Button>
                       </span>
                     </PieceSelector>
                   )}
                 </div>
-                {showDropIndicator && (
+                {isShowingDropIndicator && (
                   <div
                     style={{
                       height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,

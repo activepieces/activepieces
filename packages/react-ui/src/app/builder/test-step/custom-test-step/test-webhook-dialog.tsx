@@ -27,7 +27,7 @@ import { Action, ApFlagId, apId, Trigger } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
-import testStepHooks from '../test-step-hooks';
+import { testStepHooks } from '../test-step-hooks';
 
 enum BodyType {
   JSON = 'json',
@@ -167,16 +167,18 @@ const TestWaitForNextWebhookDialog = ({
           showMethodDropdown={false}
           onSubmit={(data) => {
             onSubmit({
-              id: apId(),
-              success: true,
-              output: {
-                body: data.body,
-                headers: data.headers,
-                queryParams: data.queryParams,
+              preExistingSampleData: {
+                id: apId(),
+                success: true,
+                output: {
+                  body: data.body,
+                  headers: data.headers,
+                  queryParams: data.queryParams,
+                },
+                standardError: '',
+                standardOutput: '',
+                input: {},
               },
-              standardError: '',
-              standardOutput: '',
-              input: {},
             });
           }}
           isLoading={isLoading}

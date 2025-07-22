@@ -16,12 +16,12 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { LockedAlert } from '@/components/ui/locked-alert';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { isNil, PieceType } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../components/ui/table-title';
+import { TableTitle } from '../../../../components/custom/table-title';
 
 import { ManagePiecesDialog } from './manage-pieces-dialog';
 

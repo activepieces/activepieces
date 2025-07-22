@@ -13,12 +13,13 @@ export const JOB_PRIORITY = {
     high: 2,
     medium: 3,
     low: 4,
+    ultraLow: 5,
 }
 
-export const ENTERPRISE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'high'
 export const TEST_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'low'
 export const SYNC_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'medium'
 export const DEFAULT_PRIORITY: keyof typeof JOB_PRIORITY = 'low'
+export const RATE_LIMIT_PRIORITY: keyof typeof JOB_PRIORITY = 'ultraLow'
 
 export async function getJobPriority(synchronousHandlerId: string | null | undefined): Promise<keyof typeof JOB_PRIORITY> {
     if (!isNil(synchronousHandlerId)) {

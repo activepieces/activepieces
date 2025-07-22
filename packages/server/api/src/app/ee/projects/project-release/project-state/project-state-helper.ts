@@ -71,42 +71,33 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
         return updatedFlow
     },
 
-    async republishFlow({ flowId, projectId, status }: RepublishFlowParams): Promise<ProjectSyncError | null> {
-        const project = await projectService.getOneOrThrow(projectId)
-        const flow = await flowService(log).getOnePopulated({ id: flowId, projectId })
-        if (!flow) {
-            return null
-        }
+    async republishFlow({ flow, projectId }: RepublishFlowParams): Promise<ProjectSyncError | null> {
         if (!flow.version.valid) {
             return {
-                flowId,
+                flowId: flow.id,
                 message: `Flow ${flow.version.displayName} #${flow.id} is not valid`,
             }
         }
         try {
+            const project = await projectService.getOneOrThrow(projectId)
             await flowService(log).update({
-                id: flowId,
+                id: flow.id,
                 projectId,
                 platformId: project.platformId,
                 lock: true,
                 userId: project.ownerId,
                 operation: {
                     type: FlowOperationType.LOCK_AND_PUBLISH,
-                    request: {},
+                    request: {
+                        status: FlowStatus.ENABLED,
+                    },
                 },
             })
-
-            await flowService(log).updateStatus({
-                id: flowId,
-                projectId,
-                newStatus: status,
-            })
-
             return null
         }
         catch (e) {
             return {
-                flowId,
+                flowId: flow.id,
                 message: `Failed to publish flow ${flow.version.displayName} #${flow.id}`,
             }
         }
@@ -122,7 +113,6 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
 })
 
 type RepublishFlowParams = {
-    flowId: string
+    flow: PopulatedFlow
     projectId: string
-    status: FlowStatus
 }

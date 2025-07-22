@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import {
   LeftSideBarType,
@@ -10,7 +10,7 @@ import {
   CardList,
   CardListEmpty,
   CardListItemSkeleton,
-} from '@/components/ui/card-list';
+} from '@/components/custom/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -46,15 +46,9 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
         limit: recentRuns,
         cursor: undefined,
       }),
+    refetchOnMount: true,
     staleTime: 15 * 1000,
   });
-
-  //so the user doesn't have to refresh the browser each time they want to refetch, they just have to close the left side bar and reopen
-  useEffect(() => {
-    return () => {
-      refetch();
-    };
-  }, []);
 
   return (
     <>

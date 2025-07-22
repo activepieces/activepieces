@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { Action, Trigger } from '@activepieces/shared';
 
 import { flowUtilConsts } from './utils/consts';
@@ -20,7 +20,7 @@ const StepDragOverlay = ({
     lefSideBarContainerWidth
   }px`;
   const top = `${cursorPosition.y - flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT}px`;
-  const { stepMetadata } = piecesHooks.useStepMetadata({
+  const { stepMetadata } = stepsHooks.useStepMetadata({
     step,
   });
 

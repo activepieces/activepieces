@@ -351,7 +351,12 @@ export function DataTable<
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      <div className="flex items-center justify-start">
+                      <div
+                        className={cn('flex items-center', {
+                          'justify-end': cell.column.id === 'actions',
+                          'justify-start': cell.column.id !== 'actions',
+                        })}
+                      >
                         <div
                           onClick={(e) => {
                             if (cell.column.id === 'select') {

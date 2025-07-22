@@ -18,8 +18,8 @@ import { system } from '../../helper/system/system'
 import {
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
-import { pieceMetadataServiceHooks } from './hooks'
 import { PieceMetadataService } from './piece-metadata-service'
+import { pieceListUtils } from './utils'
 import { toPieceMetadataModelSummary } from '.'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
@@ -46,7 +46,7 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
                 }
             })
 
-            const pieces = await pieceMetadataServiceHooks.get().filterPieces({
+            const pieces = await pieceListUtils.filterPieces({
                 ...params,
                 pieces: originalPiecesMetadata,
                 suggestionType: params.suggestionType,

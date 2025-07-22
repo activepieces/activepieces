@@ -1,5 +1,6 @@
 export * from './engine-operation'
 export * from './requests'
+export * from './engine-constants'
 
 export enum ExecutionMode {
     SANDBOXED = 'SANDBOXED',

@@ -47,3 +47,12 @@ export const HumanInputFormResult = Type.Union([
 ])
 
 export type HumanInputFormResult = Static<typeof HumanInputFormResult>
+
+
+export const ChatFormResponse = Type.Object({
+    sessionId: Type.String(),   
+    message: Type.String(),
+    files: Type.Optional(Type.Array(Type.String())),
+})
+
+export type ChatFormResponse = Static<typeof ChatFormResponse>

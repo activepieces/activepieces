@@ -3,6 +3,14 @@ import { googleDriveAuth } from '../../index';
 import { Property, createAction } from "@activepieces/pieces-framework";
 import querystring from 'querystring';
 import { common } from '../common';
+import { downloadFileFromDrive } from '../common/get-file-content';
+
+interface ListFilesResult {
+  type: string;
+  incompleteSearch: boolean;
+  files: unknown[];
+  downloadedFiles?: string[];
+}
 
 export const googleDriveListFiles = createAction({
   auth: googleDriveAuth,
@@ -15,7 +23,7 @@ export const googleDriveListFiles = createAction({
       description: 'Folder ID coming from | New Folder -> id | (or any other source)',
       required: true,
     }),
-        include_team_drives: common.properties.include_team_drives,
+    include_team_drives: common.properties.include_team_drives,
     
     includeTrashed: Property.Checkbox({
       displayName: 'Include Trashed',
@@ -23,12 +31,19 @@ export const googleDriveListFiles = createAction({
       required: false,
       defaultValue: false
     }),
+
+    downloadFiles: Property.Checkbox({
+      displayName: 'Download Files',
+      description: 'Download all file contents in a list',
+      required: false,
+      defaultValue: false
+    }),
   },
   async run(context) {
-    const result = {
-      'type': 'drive#fileList',
-      'incompleteSearch': false,
-      'files': [] as unknown[],
+    const result: ListFilesResult = {
+      type: 'drive#fileList',
+      incompleteSearch: false,
+      files: [],
     }
 
     let q = `'${context.propsValue.folderId}' in parents`;
@@ -68,6 +83,26 @@ export const googleDriveListFiles = createAction({
       result.files.push(...response.body.files);
       result.incompleteSearch = result.incompleteSearch || response.body.incompleteSearch;
     }
+
+    // If downloadFiles is enabled, download each file and add URLs to array
+    if (context.propsValue.downloadFiles) {
+      const downloadedFiles: string[] = [];
+      for (const file of result.files) {
+        try {
+          const fileUrl = await downloadFileFromDrive(
+            context.auth,
+            context.files,
+            (file as any).id,
+            (file as any).name
+          );
+          downloadedFiles.push(fileUrl);
+        } catch (error) {
+          console.warn(`Failed to download file ${(file as any).name}: ${error instanceof Error ? error.message : 'Download failed'}`);
+        }
+      }
+      result.downloadedFiles = downloadedFiles;
+    }
+
     return result;
   }
 });

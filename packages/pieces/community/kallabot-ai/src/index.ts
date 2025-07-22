@@ -5,6 +5,7 @@ import {
 import { PieceCategory } from '@activepieces/shared';
 import { makeCallAction } from './lib/actions/make-call';
 import { getCallDetailsAction } from './lib/actions/get-call-details';
+import { callEventsTrigger } from './lib/triggers/call-events';
 
 const authDescription = `
 Follow these steps to obtain your Kallbot API Key:
@@ -30,6 +31,6 @@ export const kallabotAi = createPiece({
   authors: ['abdulrahmanmajid'],
   auth: kallabotAuth,
   actions: [makeCallAction, getCallDetailsAction],
-  triggers: [],
+  triggers: [callEventsTrigger],
   description: 'AI-powered voice agents and conversational interfaces.',
 });

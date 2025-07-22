@@ -1,32 +1,57 @@
-import { Mcp, McpPieceWithConnection } from '@activepieces/shared'
+import { Agent, McpWithTools } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
-
-type McpSchema = Mcp & {
-    pieces: McpPieceWithConnection[]
+type McpWithToolsWithSchema = McpWithTools & {  
+    agent: Agent
 }
-
-export const McpEntity = new EntitySchema<McpSchema>({
+export const McpEntity = new EntitySchema<McpWithToolsWithSchema>({
     name: 'mcp',
     columns: {
         ...BaseColumnSchemaPart,
+        name: {
+            type: String,
+            nullable: false,
+        },  
+        agentId: {
+            type: String,
+            nullable: true,
+        },
         projectId: ApIdSchema,
-        token: ApIdSchema,
+        token: {
+            type: String,
+            nullable: false,
+        },
     },
     indices: [
         {
             name: 'mcp_project_id',
             columns: ['projectId'],
-            unique: true,
+            unique: false,
+        },
+        {
+            name: 'mcp_agent_id',
+            columns: ['agentId'],
+            unique: false,
         },
     ],
     relations: {
-        pieces: {
+        tools: {
             type: 'one-to-many',
-            target: 'mcp_piece',
+            target: 'mcp_tool',
+            inverseSide: 'mcp',
             cascade: true,
             onDelete: 'CASCADE',
+        },
+        agent: {
+            type: 'many-to-one',
+            target: 'agent',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'agentId',
+                foreignKeyConstraintName: 'fk_mcp_agent_id',
+            },
         },
     },
     

@@ -7,7 +7,9 @@ import {
     RepeatableJobType,
     UserInteractionJobType } from '@activepieces/server-shared'
 import {
+    ActivepiecesError,
     EngineResponseStatus,
+    ErrorCode,
     FlowVersion,
     isNil,
     PieceTrigger,
@@ -15,7 +17,6 @@ import {
     RunEnvironment,
     TriggerHookType,
     TriggerType,
-    WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import {
@@ -32,11 +33,6 @@ import { triggerUtils } from './trigger-utils'
 const POLLING_FREQUENCY_CRON_EXPRESSION = `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5} * * * *`
 
 
-type EnableTriggerResponse = EngineHelperResponse<
-EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
-> & {
-    webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null
-}
 export const enablePieceTrigger = async (
     params: EnableParams,
     log: FastifyBaseLogger,
@@ -58,13 +54,14 @@ export const enablePieceTrigger = async (
         projectId,
         test: simulate,
     })
-    let webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null = null
 
     if (engineHelperResponse.status !== EngineResponseStatus.OK) {
-        return {
-            ...engineHelperResponse,
-            webhookHandshakeConfiguration: null,
-        }
+        throw new ActivepiecesError({
+            code: ErrorCode.TRIGGER_ENABLE,
+            params: {
+                flowVersionId: flowVersion.id,
+            },
+        })
     }
 
     switch (pieceTrigger.type) {
@@ -83,7 +80,6 @@ export const enablePieceTrigger = async (
         }
         case TriggerStrategy.WEBHOOK: {
             const renewConfiguration = pieceTrigger.renewConfiguration
-            webhookHandshakeConfiguration = pieceTrigger.handshakeConfiguration ?? null
             switch (renewConfiguration?.strategy) {
                 case WebhookRenewStrategy.CRON: {
                     await jobQueue(log).add({
@@ -135,10 +131,7 @@ export const enablePieceTrigger = async (
         }
     }
 
-    return {
-        ...engineHelperResponse,
-        webhookHandshakeConfiguration,
-    }
+    return engineHelperResponse
 }
 
 type EnableParams = {
@@ -146,3 +139,6 @@ type EnableParams = {
     flowVersion: FlowVersion
     simulate: boolean
 }
+type EnableTriggerResponse = EngineHelperResponse<
+EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
+>

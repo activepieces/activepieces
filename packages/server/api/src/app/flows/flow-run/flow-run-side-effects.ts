@@ -52,7 +52,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         if (!isFlowUserTerminalState(flowRun.status)) {
             return
         }
-        await flowRunHooks.get(log).onFinish(flowRun)
+        await flowRunHooks(log).onFinish(flowRun)
         eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
             action: ApplicationEventName.FLOW_RUN_FINISHED,
             data: {
@@ -123,6 +123,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                     data: {
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         runId: flowRun.id,
+                        flowId: flowRun.flowId,
                         synchronousHandlerId: flowRun.pauseMetadata?.handlerId ?? null,
                         progressUpdateType: flowRun.pauseMetadata?.progressUpdateType ?? ProgressUpdateType.NONE,
                         projectId: flowRun.projectId,

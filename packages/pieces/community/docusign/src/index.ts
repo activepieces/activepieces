@@ -83,7 +83,9 @@ export const docusignAuth = PieceAuth.CustomAuth({
           '&client_id=' +
           auth.clientId +
           '&redirect_uri=' +
-          encodeURIComponent(`${server.publicUrl}/redirect`);
+          encodeURIComponent(
+            `${server.publicUrl.replace('/api', '')}/redirect`
+          );
         return {
           valid: false,
           error:

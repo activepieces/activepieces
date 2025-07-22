@@ -1,133 +1,154 @@
-import { ApFile, ServerContext } from '@activepieces/pieces-framework';
-import { AI_PROVIDERS, AiProvider } from './providers';
+import { isNil, SeekPage, AIProviderWithoutSensitiveData, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared';
+import { Property, InputPropertyMap } from "@activepieces/pieces-framework";
+import { httpClient, HttpMethod } from '../http';
 
-export type AI = {
-	provider: string;
-	chat: AIChat;
-	image?: AIImage;
-	moderation?: AIModeration;
-	function?: AIFunction;
-};
+export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
+    provider: Property.Dropdown<string, true>({
+        displayName: 'Provider',
+        required: true,
+        refreshers: [],
+        options: async (_, ctx) => {
+            const { body: { data: supportedProviders } } = await httpClient.sendRequest<
+                SeekPage<AIProviderWithoutSensitiveData>
+            >({
+                method: HttpMethod.GET,
+                url: `${ctx.server.apiUrl}v1/ai-providers`,
+                headers: {
+                    Authorization: `Bearer ${ctx.server.token}`,
+                },
+            });
+            if (supportedProviders.length === 0) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'No AI providers configured by the admin.',
+                };
+            }
 
-export type AIFunction = {
-	call?: (
-		params: AIChatCompletionsCreateParams & {
-			functions: AIFunctionDefinition[];
-		} & { files: ApFile[] },
-	) => Promise<AIChatCompletion & { call: AIFunctionCall | null }>;
-};
+            const providers = supportedProviders.map(supportedProvider => {
+                const provider = SUPPORTED_AI_PROVIDERS.find(p => p.provider === supportedProvider.provider);
+                if (!provider) return null;
 
-export type AIModeration = {
-	create: (params: AIModerationCreateParams) => Promise<any | null>;
-};
+                if (modelType === 'language') {
+                    if (provider.languageModels.length === 0) return null;
 
-export type AIModerationCreateParams = {
-	model: string;
-	text?: string;
-	images?: ApFile[];
-	maxTokens?: number;
-};
+                    if (functionCalling && !provider.languageModels.some(model => model.functionCalling)) {
+                        return null;
+                    }
+                } else if (modelType === 'image') {
+                    if (provider.imageModels.length === 0) return null;
+                }
 
-export type AIImage = {
-	generate: (params: AIImageGenerateParams) => Promise<AIImageCompletion | null>;
-};
+                return {
+                    value: provider.provider,
+                    label: provider.displayName
+                };
+            });
 
-export type AIImageGenerateParams = {
-	prompt: string;
-	model: string;
-	size?: string;
-	advancedOptions?: Record<string, unknown>;
-};
+            const filteredProviders = providers.filter(p => p !== null);
 
-export type AIImageCompletion = {
-	image: string;
-};
+            return {
+                placeholder: filteredProviders.length > 0 ? 'Select AI Provider' : `No providers available for ${modelType} models${functionCalling ? ' with function calling' : ''}`,
+                disabled: filteredProviders.length === 0,
+                options: filteredProviders,
+            };
+        },
+    }),
+    model: Property.Dropdown({
+        displayName: 'Model',
+        required: true,
+        defaultValue: 'gpt-4o',
+        refreshers: ['provider'],
+        options: async (propsValue) => {
+            const provider = propsValue['provider'] as string;
+            if (isNil(provider)) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Select AI Provider',
+                };
+            }
 
-export type AIChat = {
-	text: (params: AIChatCompletionsCreateParams) => Promise<AIChatCompletion>;
-};
+            const supportedProvider = SUPPORTED_AI_PROVIDERS.find(p => p.provider === provider);
+            if (isNil(supportedProvider)) {
+                return {
+                    disabled: true,
+                    options: [],
+                };
+            }
 
-export type AIChatCompletionsCreateParams = {
-	model: string;
-	messages: AIChatMessage[];
-	creativity?: number;
-	maxTokens?: number;
-	stop?: string[];
-};
+            const allModels = modelType === 'language' ? supportedProvider.languageModels : supportedProvider.imageModels;
+            const models = (modelType === 'language' && functionCalling)
+                ? allModels.filter(model => (model as SupportedAIProvider['languageModels'][number]).functionCalling)
+                : allModels;
 
-export type AIChatCompletion = {
-	choices: AIChatMessage[];
-	usage?: AIChatCompletionUsage;
-};
+            return {
+                placeholder: 'Select AI Model',
+                disabled: false,
+                options: models.map(model => ({
+                    label: model.displayName,
+                    value: model.instance,
+                })),
+            };
+        },
+    }),
+    advancedOptions: Property.DynamicProperties({
+        displayName: 'Advanced Options',
+        required: false,
+        refreshers: ['provider', 'model'],
+        props: async (propsValue): Promise<InputPropertyMap> => {
+            const provider = propsValue['provider'] as unknown as string;
 
-export type AIChatCompletionUsage = {
-	promptTokens: number;
-	completionTokens: number;
-	totalTokens: number;
-};
+            const providerMetadata = SUPPORTED_AI_PROVIDERS.find(p => p.provider === provider);
+            if (isNil(providerMetadata)) {
+                return {};
+            }
 
-export type AIChatMessage = {
-	role: AIChatRole;
-	content: string;
-};
+            if (modelType === 'image') {
+                if (provider === 'openai') {
+                    return {
+                        quality: Property.StaticDropdown({
+                            options: {
+                                options: [
+                                    { label: 'Standard', value: 'standard' },
+                                    { label: 'HD', value: 'hd' },
+                                ],
+                                disabled: false,
+                                placeholder: 'Select Image Quality',
+                            },
+                            defaultValue: 'standard',
+                            description:
+                                'Standard images are less detailed and faster to generate, while HD images are more detailed but slower to generate.',
+                            displayName: 'Image Quality',
+                            required: true,
+                        }),
+                    };
+                }
 
-export type AIFunctionCall = {
-	id: string;
-	function: {
-		name: string;
-		arguments: unknown;
-	};
-};
+                if (provider === 'replicate') {
+                    return {
+                        negativePrompt: Property.ShortText({
+                            displayName: 'Negative Prompt',
+                            required: true,
+                            description: 'A prompt to avoid in the generated image.',
+                          }),
+                    };
+                }
+            }
 
-export type AIFunctionDefinition = {
-	name: string;
-	description: string;
-	arguments: AIFunctionArgumentDefinition;
-};
+            return {};
+        },
+    })
+})
 
-export type AIFunctionArgumentDefinition = {
-	type: 'object';
-	properties?: unknown | null;
-	required?: string[];
-	[k: string]: unknown;
-};
 
-export enum AIChatRole {
-	SYSTEM = 'system',
-	USER = 'user',
-	ASSISTANT = 'assistant',
+type AIPropsParams<T extends 'language' | 'image'> = {
+    modelType: T,
+    functionCalling?: T extends 'image' ? never : boolean
 }
 
-export type AIFactory = (params: { proxyUrl: string; engineToken: string }) => AI;
-
-export const AI = ({ provider, server }: { provider: AiProvider; server: ServerContext }): AI => {
-	const proxyUrl = `${server.apiUrl}v1/ai-providers/proxy/${provider}`;
-	const factory = AI_PROVIDERS.find((p) => p.value === provider)?.factory;
-	const impl = factory?.({ proxyUrl, engineToken: server.token });
-
-	if (!impl) {
-		throw new Error(`AI provider ${provider} is not registered`);
-	}
-
-	return {
-		provider,
-		image: impl.image,
-		moderation: impl.moderation,
-		function: impl.function,
-		chat: {
-			text: async (params) => {
-				try {
-					const response = await impl.chat.text(params);
-					return response;
-				} catch (e: any) {
-					if (e?.error?.error) {
-						throw e.error.error;
-					}
-					throw e;
-				}
-			},
-		},
-	};
-};
-
-export * from './providers';
+type AIPropsReturn = {
+    provider: ReturnType<typeof Property.Dropdown<string, true>>;
+    model: ReturnType<typeof Property.Dropdown>;
+    advancedOptions: ReturnType<typeof Property.DynamicProperties>;
+}

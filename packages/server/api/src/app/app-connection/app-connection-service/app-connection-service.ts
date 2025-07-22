@@ -49,7 +49,6 @@ import {
     AppConnectionEntity,
     AppConnectionSchema,
 } from '../app-connection.entity'
-import { appConnectionSideEffects } from './app-connection-side-effects'
 import { appConnectionHandler } from './app-connection.handler'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
@@ -235,24 +234,10 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             platformId,
             scope: sourceAppConnection.scope,
             projectId,
-            userId,
         })
     },
 
     async delete(params: DeleteParams): Promise<void> {
-        const appConnection = await this.getOneOrThrowWithoutValue({
-            id: params.id,
-            platformId: params.platformId,
-            projectId: params.projectId,
-        })
-        if (!isNil(params.projectId)) {
-            await appConnectionSideEffects(log).onDeleted({
-                externalId: appConnection.externalId,
-                userId: params.userId,
-                projectId: params.projectId,
-                platformId: params.platformId,
-            })
-        }
         await appConnectionsRepo().delete({
             id: params.id,
             platformId: params.platformId,
@@ -597,7 +582,6 @@ type DeleteParams = {
     scope: AppConnectionScope
     id: AppConnectionId
     platformId: string
-    userId: UserId
 }
 
 type ValidateConnectionValueParams = {

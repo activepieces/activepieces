@@ -1,79 +1,13 @@
 import { pipedriveAuth } from '../../';
-import {
-	createTrigger,
-	PiecePropValueSchema,
-	TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
 	pipedriveApiCall,
 	pipedrivePaginatedApiCall,
 	pipedriveTransformCustomFields,
 } from '../common';
-import { GetField, LeadListResponse } from '../common/types';
+import { GetDealResponse, GetField, LeadListResponse } from '../common/types';
 import { isNil } from '@activepieces/shared';
-import dayjs from 'dayjs';
-
-const polling: Polling<PiecePropValueSchema<typeof pipedriveAuth>, Record<string, unknown>> = {
-	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, lastFetchEpochMS }) {
-		const leads = [];
-
-		if (lastFetchEpochMS === 0) {
-			const response = await pipedriveApiCall<LeadListResponse>({
-				accessToken: auth.access_token,
-				apiDomain: auth.data['api_domain'],
-				method: HttpMethod.GET,
-				resourceUri: '/leads',
-				query: { limit: 10, sort: 'update_time DESC' },
-			});
-
-			if (isNil(response.data)) {
-				return [];
-			}
-
-			for (const lead of response.data) {
-				leads.push(lead);
-			}
-		} else {
-			const response = await pipedrivePaginatedApiCall<Record<string, any>>({
-				accessToken: auth.access_token,
-				apiDomain: auth.data['api_domain'],
-				method: HttpMethod.GET,
-				resourceUri: '/leads',
-				query: { sort: 'add_time DESC' },
-			});
-			if (isNil(response)) {
-				return [];
-			}
-
-			for (const lead of response) {
-				leads.push(lead);
-			}
-		}
-
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
-			accessToken: auth.access_token,
-			apiDomain: auth.data['api_domain'],
-			method: HttpMethod.GET,
-			resourceUri: '/dealFields',
-		});
-
-		const items = [];
-
-		for (const lead of leads) {
-			const updatedLeadProperties = pipedriveTransformCustomFields(customFieldsResponse, lead);
-			items.push(updatedLeadProperties);
-		}
-
-		return items.map((lead) => {
-			return {
-				epochMilliSeconds: dayjs(lead.add_time).valueOf(),
-				data: lead,
-			};
-		});
-	},
-};
 
 export const newLeadTrigger = createTrigger({
 	auth: pipedriveAuth,
@@ -81,26 +15,98 @@ export const newLeadTrigger = createTrigger({
 	displayName: 'New Lead',
 	description: 'Triggers when a new lead is created.',
 	props: {},
-	type: TriggerStrategy.POLLING,
+	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
+		const response = await httpClient.sendRequest<{ data: { id: string } }>({
+			method: HttpMethod.POST,
+			url: `${context.auth.data['api_domain']}/api/v1/webhooks`,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: context.auth.access_token,
+			},
+			body: {
+				event_object: 'lead',
+				event_action: 'create',
+				subscription_url: context.webhookUrl,
+				version: '2.0',
+			},
+		});
+
+		await context.store?.put<{
+			webhookId: string;
+		}>('_new_lead_trigger', {
+			webhookId: response.body.data.id,
 		});
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		const response = await context.store?.get<{
+			webhookId: string;
+		}>('_new_lead_trigger');
+		if (response !== null && !isNil(response.webhookId)) {
+			await httpClient.sendRequest({
+				method: HttpMethod.DELETE,
+				url: `${context.auth.data['api_domain']}/api/v1/webhooks/${response.webhookId}`,
+				authentication: {
+					type: AuthenticationType.BEARER_TOKEN,
+					token: context.auth.access_token,
+				},
+			});
+		}
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		const response = await pipedriveApiCall<LeadListResponse>({
+			accessToken: context.auth.access_token,
+			apiDomain: context.auth.data['api_domain'],
+			method: HttpMethod.GET,
+			resourceUri: '/leads',
+			query: { limit: 10, sort: 'update_time DESC' },
+		});
+
+		if (isNil(response.data)) {
+			return [];
+		}
+		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+			accessToken: context.auth.access_token,
+			apiDomain: context.auth.data['api_domain'],
+			method: HttpMethod.GET,
+			resourceUri: '/dealFields',
+		});
+
+		const result = [];
+
+		for (const lead of response.data) {
+			const updatedLeadProperties = pipedriveTransformCustomFields(customFieldsResponse, lead);
+			result.push(updatedLeadProperties);
+		}
+
+		return result;
 	},
 	async run(context) {
-		return await pollingHelper.poll(polling, context);
+		const payloadBody = context.payload.body as {
+			data: Record<string, unknown>;
+			previous: Record<string, unknown>;
+		};
+
+		const leadResponse = await pipedriveApiCall<GetDealResponse>({
+			accessToken: context.auth.access_token,
+			apiDomain: context.auth.data['api_domain'],
+			method: HttpMethod.GET,
+			resourceUri: `/leads/${payloadBody.data.id}`,
+		});
+
+		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+			accessToken: context.auth.access_token,
+			apiDomain: context.auth.data['api_domain'],
+			method: HttpMethod.GET,
+			resourceUri: '/dealFields',
+		});
+
+		const updatedLeadProperties = pipedriveTransformCustomFields(
+			customFieldsResponse,
+			leadResponse.data,
+		);
+
+		return [updatedLeadProperties];
 	},
 	sampleData: {
 		id: 'f3c23480-c9b1-11ef-bc83-2b8218e028ef',

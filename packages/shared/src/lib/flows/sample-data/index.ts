@@ -1,12 +1,15 @@
 import { Pick, Static, Type } from '@sinclair/typebox'
-import { File, FileType } from '../../file'
+import { File } from '../../file'
+
+export enum SampleDataFileType {
+    INPUT = 'INPUT',
+    OUTPUT = 'OUTPUT',
+}
 
 export const SaveSampleDataRequest = Type.Object({
-    flowVersionId: Type.String(),
-    projectId: Type.String(),
     stepName: Type.String(),
     payload: Type.Unknown(),
-    fileType: Type.Optional(Type.Enum(FileType)),
+    type: Type.Enum(SampleDataFileType),
 })
 export type SaveSampleDataRequest = Static<typeof SaveSampleDataRequest>
 
@@ -15,7 +18,7 @@ export const GetSampleDataRequest = Type.Object({
     flowVersionId: Type.String(),
     stepName: Type.String(),
     projectId: Type.String(),
-    fileType: Type.Optional(Type.Enum(FileType)),
+    type: Type.Enum(SampleDataFileType),
 })
 export type GetSampleDataRequest = Static<typeof GetSampleDataRequest>
 

@@ -1,25 +1,30 @@
-import { AI, aiProps } from '@activepieces/pieces-common';
+import { aiProps } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAIProvider, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
+import { ImageModel } from 'ai';
+import { experimental_generateImage as generateImage } from 'ai';
 
-export const generateImage = createAction({
+export const generateImageAction = createAction({
   name: 'generateImage',
   displayName: 'Generate Image',
   description: '',
   props: {
-    provider: aiProps('image').provider,
-    model: aiProps('image').model,
+    provider: aiProps({ modelType: 'image' }).provider,
+    model: aiProps({ modelType: 'image' }).model,
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
     }),
-    advancedOptions: aiProps('image').advancedOptions,
+    advancedOptions: aiProps({ modelType: 'image' }).advancedOptions,
     resolution: Property.Dropdown({
       displayName: 'Resolution',
       description: 'The resolution to generate the image in.',
       required: true,
       refreshers: ['model'],
       defaultValue: '1024x1024',
-      options: async ({ model }) => {
+      options: async (propsValue) => {
+        const model = propsValue['model'] as ImageModel;
+
         let options = [
           {
             label: '1024x1024',
@@ -34,7 +39,7 @@ export const generateImage = createAction({
             value: '256x256',
           },
         ];
-        if (model == 'dall-e-3')
+        if (model.modelId == 'dall-e-3')
           options = [
             {
               label: '1024x1024',
@@ -57,37 +62,45 @@ export const generateImage = createAction({
     }),
   },
   async run(context) {
-    const ai = AI({
-      provider: context.propsValue.provider,
-      server: context.server,
-    });
+    const providerName = context.propsValue.provider as string;
+    const modelInstance = context.propsValue.model as ImageModel;
 
-    const image = ai.image
-
-    if (!image) {
-      throw new Error(
-        `Model ${context.propsValue.model} does not support image generation.`
-      );
+    const providerConfig = SUPPORTED_AI_PROVIDERS.find(p => p.provider === providerName);
+    if (!providerConfig) {
+      throw new Error(`Provider ${providerName} not found`);
     }
 
-    const advancedOptions = context.propsValue.advancedOptions ?? {};
-
-    const response = await image.generate({
-      model: context.propsValue.model,
-      prompt: context.propsValue.prompt,
-      size: context.propsValue.resolution,
-      advancedOptions: advancedOptions,
+    const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
+    const engineToken = context.server.token;
+    const provider = createAIProvider({
+      providerName,
+      modelInstance,
+      apiKey: engineToken,
+      baseURL,
     });
 
-    if (response) {
+    const response = await generateImage({
+      model: provider,
+      prompt: context.propsValue.prompt,
+      size: context.propsValue.resolution as `${number}x${number}`,
+      providerOptions: {
+        ...context.propsValue.advancedOptions,
+      },
+      headers: {
+        'Authorization': `Bearer ${engineToken}`,
+      },
+    });
+
+    if (response.image.base64) {
       return context.files.write({
-        data: Buffer.from(response.image, 'base64'),
+        data: Buffer.from(response.image.base64, 'base64'),
         fileName: 'image.png',
       });
     } else {
-      throw new Error(
-        'Unknown error occurred. Please check image configuration.'
-      );
+      return context.files.write({
+        data: Buffer.from(response.image.uint8Array),
+        fileName: 'image.png',
+      });
     }
   },
 });

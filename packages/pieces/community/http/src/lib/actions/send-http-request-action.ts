@@ -159,6 +159,12 @@ export const httpSendRequestAction = createAction({
         return fields;
       },
     }),
+    response_is_binary: Property.Checkbox({
+      displayName: 'Response is Binary',
+      description: 'Enable for files like PDFs, images, etc. A base64 body will be returned.',
+      required: false,
+      defaultValue: false,
+    }),
     use_proxy: Property.Checkbox({
       displayName: 'Use Proxy',
       defaultValue: false,
@@ -201,9 +207,17 @@ export const httpSendRequestAction = createAction({
       displayName: 'Timeout(in seconds)',
       required: false,
     }),
-    failsafe: Property.Checkbox({
-      displayName: 'No Error on Failure',
+    failureMode: Property.StaticDropdown({
+      displayName: 'On Failure',
       required: false,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Retry on all errors (4xx, 5xx)', value: 'all' },
+          { label: 'Continue flow', value: 'continue' },
+          { label: 'Retry on internal errors (5xx)', value: '5xx' },
+        ],
+      },
     }),
   },
   errorHandlingOptions: {
@@ -218,8 +232,9 @@ export const httpSendRequestAction = createAction({
       queryParams,
       body,
       body_type,
+      response_is_binary,
       timeout,
-      failsafe,
+      failureMode,
       use_proxy,
       authType,
       authFields,
@@ -256,6 +271,11 @@ export const httpSendRequestAction = createAction({
         break;
     }
 
+    // Set response type to arraybuffer if binary response is expected
+    if (response_is_binary) {
+      request.responseType = 'arraybuffer';
+    }
+
     if (body) {
       const bodyInput = body['data'];
       if (body_type === 'form_data') {
@@ -289,16 +309,56 @@ export const httpSendRequestAction = createAction({
           httpsAgent,
         });
 
-        const proxied_response = await axiosClient.request(request);
-        return proxied_response.data;
+        const proxied_response = await httpClient.sendRequest(request, axiosClient);
+        return handleBinaryResponse(
+          proxied_response.body,
+          proxied_response.status,
+          proxied_response.headers as HttpHeaders,
+          response_is_binary
+        );
       }
-      return await httpClient.sendRequest(request);
+      const response = await httpClient.sendRequest(request);
+      return handleBinaryResponse(
+        response.body,
+        response.status,
+        response.headers,
+        response_is_binary,
+      );
     } catch (error) {
-      if (failsafe) {
-        return (error as HttpError).errorMessage();
+      switch (failureMode) {
+        case 'all': {
+          throw error;
+        } case '5xx':
+          if ((error as HttpError).response.status >= 500 && (error as HttpError).response.status < 600) {
+            throw error;
+          }
+          return (error as HttpError).errorMessage();
+        case 'continue':
+          return (error as HttpError).errorMessage();
+        default:
+          throw error;
       }
-
-      throw error;
     }
   },
 });
+
+const handleBinaryResponse = (
+  bodyContent: string | ArrayBuffer | Buffer,
+  status: number,
+  headers?: HttpHeaders,
+  isBinary?: boolean
+) => {
+  let body;
+
+  if (isBinary && isBinaryBody(bodyContent)) {
+    body = Buffer.from(bodyContent).toString('base64');
+  } else {
+    body = bodyContent;
+  }
+
+  return { status, headers, body };
+};
+
+const isBinaryBody = (body: string | ArrayBuffer | Buffer) => {
+  return body instanceof ArrayBuffer || Buffer.isBuffer(body);
+};

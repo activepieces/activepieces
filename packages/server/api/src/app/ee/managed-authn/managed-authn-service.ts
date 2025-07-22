@@ -64,7 +64,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
                 id: externalPrincipal.platformId,
             },
             tokenVersion: identity.tokenVersion,
-        }, 7 * 24 * 60 * 60 * 1000)
+        }, 7 * 24 * 60 * 60)
         return {
             id: user.id,
             platformRole: user.platformRole,
@@ -105,12 +105,13 @@ const updateProjectLimits = async (
         piecesTags,
         piecesFilterType,
     })
-    const tasksLimit = isNewProject ? (tasks ?? 50000) : tasks
-    const aiCreditsLimit = isNewProject ? (aiCredits ?? 1000) : aiCredits
+    const includedTasks = isNewProject ? (tasks ?? 1000) : tasks
+    const aiCreditsLimit = isNewProject ? (aiCredits ?? 200) : aiCredits
     await projectLimitsService(log).upsert({
         nickname: 'default-embeddings-limit',
-        tasks: tasksLimit,
+        tasks: includedTasks,
         aiCredits: aiCreditsLimit,
+
         pieces,
         piecesFilterType,
     }, projectId)
