@@ -1,11 +1,9 @@
 import { ArrowRight } from 'lucide-react';
-import React, { useEffect } from 'react';
 
 import {
   ChatDrawerSource,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -13,9 +11,9 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
-import { FlowChat } from './flow-chat';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 
+import { FlowChat } from './flow-chat';
 
 export const ChatDrawer = () => {
   const [

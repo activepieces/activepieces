@@ -2,7 +2,9 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { useSocket } from '@/components/socket-provider';
 import { toast } from '@/components/ui/use-toast';
+import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
@@ -24,8 +26,6 @@ import {
 
 import { flowsApi } from './flows-api';
 import { flowsUtils } from './flows-utils';
-import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { useSocket } from '@/components/socket-provider';
 
 export const flowsHooks = {
   useFlows: (request: Omit<ListFlowsRequest, 'projectId'>) => {
@@ -197,7 +197,13 @@ export const flowsHooks = {
       staleTime: 0,
     });
   },
-  useTestFlow: ({flowVersionId, onUpdateRun}: {flowVersionId: string, onUpdateRun: (run: FlowRun) => void}) => {
+  useTestFlow: ({
+    flowVersionId,
+    onUpdateRun,
+  }: {
+    flowVersionId: string;
+    onUpdateRun: (run: FlowRun) => void;
+  }) => {
     const socket = useSocket();
     return useMutation<void>({
       mutationFn: () =>
@@ -206,8 +212,8 @@ export const flowsHooks = {
           {
             flowVersionId,
           },
-          onUpdateRun
+          onUpdateRun,
         ),
     });
-  }
+  },
 };

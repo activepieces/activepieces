@@ -4,13 +4,13 @@ import {
   ChatDrawerSource,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { isNil, TriggerType } from '@activepieces/shared';
 
 import ViewOnlyWidget from '../view-only-widget';
 
 import { TestButton } from './test-button';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 
 const TestFlowWidget = () => {
   const [setChatDrawerOpenSource, flowVersion, readonly, setRun] =
@@ -30,12 +30,12 @@ const TestFlowWidget = () => {
     flowVersion.trigger.settings.triggerName,
   );
 
-    const { mutate: runFlow, isPending } = flowsHooks.useTestFlow({
-      flowVersionId: flowVersion.id,
-      onUpdateRun: (run) => {
-        setRun(run, flowVersion);
-      },
-    });
+  const { mutate: runFlow, isPending } = flowsHooks.useTestFlow({
+    flowVersionId: flowVersion.id,
+    onUpdateRun: (run) => {
+      setRun(run, flowVersion);
+    },
+  });
 
   if (!flowVersion.valid) {
     return null;
