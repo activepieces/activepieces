@@ -199,6 +199,9 @@
       "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
+      "@activepieces/piece-cloudinary": [
+        "packages/pieces/community/cloudinary/src/index.ts"
+      ],
       "@activepieces/piece-cloutly": [
         "packages/pieces/community/cloutly/src/index.ts"
       ],
@@ -651,6 +654,9 @@
       "@activepieces/piece-pdfmonkey": [
         "packages/pieces/community/pdfmonkey/src/index.ts"
       ],
+      "@activepieces/piece-peekshot": [
+        "packages/pieces/community/peekshot/src/index.ts"
+      ],
       "@activepieces/piece-perplexity-ai": [
         "packages/pieces/community/perplexity-ai/src/index.ts"
       ],
@@ -807,6 +813,9 @@
       ],
       "@activepieces/piece-smartsuite": [
         "packages/pieces/community/smartsuite/src/index.ts"
+      ],
+      "@activepieces/piece-smoove": [
+        "packages/pieces/community/smoove/src/index.ts"
       ],
       "@activepieces/piece-smtp": [
         "packages/pieces/community/smtp/src/index.ts"
