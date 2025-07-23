@@ -8,11 +8,13 @@ export const systemeIoCommon = {
     url,
     body,
     auth,
+    headers,
   }: {
     method: HttpMethod;
     url: string;
     body?: any;
     auth: { apiKey: string };
+    headers?: Record<string, string>;
   }): Promise<T> {
     const response = await httpClient.sendRequest<T>({
       method,
@@ -20,6 +22,7 @@ export const systemeIoCommon = {
       headers: {
         'X-API-Key': auth.apiKey,
         'Content-Type': 'application/json',
+        ...headers,
       },
       body,
     });
