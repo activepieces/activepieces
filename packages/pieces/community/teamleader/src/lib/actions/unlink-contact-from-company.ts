@@ -15,12 +15,12 @@ export const unlinkContactFromCompany = createAction({
   description: 'Unlinks a contact from a company',
   props: {
     contact_id: contactIdDropdown,
-    company_id: companiesLinkedContactsDropdown,
+    company_linked_id: companiesLinkedContactsDropdown,
   },
   async run({ auth, propsValue }) {
     const requestBody = {
       id: propsValue.contact_id,
-      company_id: propsValue.company_id,
+      company_id: propsValue.company_linked_id,
     };
 
     const response = await makeRequest(
@@ -33,7 +33,7 @@ export const unlinkContactFromCompany = createAction({
     return {
       status: 'success',
       data: response.data,
-      message: `Contact ${propsValue.contact_id} unlinked from company ${propsValue.company_id} successfully`,
+      message: `Contact ${propsValue.contact_id} unlinked from company ${propsValue.company_linked_id} successfully`,
     };
   },
 });

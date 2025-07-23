@@ -1,10 +1,9 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { teamleaderAuth } from './lib/common/auth';
 import { createContact } from './lib/actions/create-contact';
 import { updateContact } from './lib/actions/update-contact';
 import { createCompany } from './lib/actions/create-company';
 import { createDeal } from './lib/actions/create-deal';
-import { link, unlink } from 'fs';
 import { linkContactToCompany } from './lib/actions/link-contact-to-company';
 import { searchCompanies } from './lib/actions/search-companies';
 import { unlinkContactFromCompany } from './lib/actions/unlink-contact-from-company';

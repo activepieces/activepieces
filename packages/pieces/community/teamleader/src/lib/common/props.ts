@@ -326,8 +326,8 @@ export const departmentIdDropdown = Property.Dropdown({
 });
 
 export const companiesLinkedContactsDropdown = Property.Dropdown({
-  displayName: 'Linked Contacts',
-  description: 'Select a linked contact',
+  displayName: 'Linked Companies',
+  description: 'Select a linked company for this contact',
   required: false,
   refreshers: ['auth', 'contact_id'],
   options: async ({

@@ -2,7 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { teamleaderAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { businessTypeIdDropdown, companiesIdDropdown, emailTypeDropdown } from '../common/props';
+import {
+  businessTypeIdDropdown,
+  companiesIdDropdown,
+  countryDropdown,
+  emailTypeDropdown,
+} from '../common/props';
 
 export const updateCompany = createAction({
   auth: teamleaderAuth,
@@ -16,6 +21,7 @@ export const updateCompany = createAction({
       description: 'The name of the company',
       required: false,
     }),
+    country: countryDropdown,
     businessType: businessTypeIdDropdown,
     vatNumber: Property.ShortText({
       displayName: 'VAT Number',
