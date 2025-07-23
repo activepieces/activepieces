@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
+import { systemeIoProps } from '../common/props';
 
 export const updateContact = createAction({
   auth: systemeIoAuth,
@@ -9,11 +10,7 @@ export const updateContact = createAction({
   displayName: 'Update Contact',
   description: 'Update an existing contact',
   props: {
-    contactId: Property.ShortText({
-      displayName: 'Contact ID',
-      description: 'The ID of the contact to update',
-      required: true,
-    }),
+    contactId: systemeIoProps.contactIdDropdown,
     email: Property.ShortText({
       displayName: 'Email',
       description: 'Contact email address',

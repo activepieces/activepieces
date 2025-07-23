@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
+import { systemeIoProps } from '../common/props';
 
 export const addTagToContact = createAction({
   auth: systemeIoAuth,
@@ -9,16 +10,8 @@ export const addTagToContact = createAction({
   displayName: 'Add Tag to Contact',
   description: 'Assign a tag to an existing contact',
   props: {
-    contactId: Property.ShortText({
-      displayName: 'Contact ID',
-      description: 'The ID of the contact to add the tag to',
-      required: true,
-    }),
-    tagName: Property.ShortText({
-      displayName: 'Tag Name',
-      description: 'The name of the tag to add',
-      required: true,
-    }),
+    contactId: systemeIoProps.contactIdDropdown,
+    tagName: systemeIoProps.tagNameDropdown,
   },
   async run(context) {
     const { contactId, tagName } = context.propsValue;
