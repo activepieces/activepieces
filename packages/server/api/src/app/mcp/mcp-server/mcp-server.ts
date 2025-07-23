@@ -373,7 +373,7 @@ async function extractActionParametersFromUserInstructions({
                 })
                 return { propertyName, ...result }
             }))).filter(({ schema }) => schema !== null)
-                        
+
             const schemaObject: ZodRawShape = Object.fromEntries(
                 propertySchemas
                     .map(({ propertyName, schema }) => [propertyName, schema!]),
@@ -409,7 +409,10 @@ async function extractActionParametersFromUserInstructions({
         Promise.resolve({ 'auth': connectionReference }),
     )
 
-    return extractedParameters
+    const nonNullExtractedParameters = Object.fromEntries(
+        Object.entries(extractedParameters).filter(([_, value]) => !isNil(value)),
+    )
+    return nonNullExtractedParameters
 }
 
 function isOkSuccess(status: number) {
