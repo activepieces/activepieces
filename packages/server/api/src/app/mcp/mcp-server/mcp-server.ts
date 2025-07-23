@@ -409,10 +409,10 @@ async function extractActionParametersFromUserInstructions({
         Promise.resolve({ 'auth': connectionReference }),
     )
 
-    const filteredExtractedParameters = Object.fromEntries(
+    const nonNullExtractedParameters = Object.fromEntries(
         Object.entries(extractedParameters).filter(([_, value]) => !isNil(value))
     )
-    return filteredExtractedParameters
+    return nonNullExtractedParameters
 }
 
 function isOkSuccess(status: number) {
