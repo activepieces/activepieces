@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import React, { useEffect, useState } from 'react';
-import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import {
   Card,
@@ -73,10 +73,17 @@ const AuthFormTemplate = React.memo(
   ({ form }: { form: 'signin' | 'signup' }) => {
     const isSignUp = form === 'signup';
     const [searchParams] = useSearchParams();
-    const from = searchParams.get('from');
     const tokenFromUrl = searchParams.get('token');
     const token = tokenFromUrl ?? authenticationSession.getToken();
     const redirectAfterLogin = useRedirectAfterLogin();
+
+    // Ensure token is saved before anything else
+    useEffect(() => {
+      if (token) {
+        authenticationSession.saveToken(token);
+        redirectAfterLogin();
+      }
+    }, [token, redirectAfterLogin]);
 
     // To redirect to PromptX login page
     const { data: loginUrl } = flagsHooks.useFlag<string>(ApFlagId.LOGIN_URL);
@@ -100,16 +107,6 @@ const AuthFormTemplate = React.memo(
         showNameFields: true,
       },
     }[form];
-
-    if (token && !tokenFromUrl) {
-      redirectAfterLogin();
-    }
-
-    if (tokenFromUrl) {
-      authenticationSession.saveToken(tokenFromUrl);
-      const navigateTo = isNil(from) ? '/flows' : from;
-      return <Navigate to={navigateTo} />;
-    }
 
     const [countdown, setCountdown] = useState(3);
 
