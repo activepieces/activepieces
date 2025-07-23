@@ -305,8 +305,7 @@ const CreateOrEditConnectionDialogContent = React.memo(
       {showSelectAuthTypeSection && piece.auth && Array.isArray(piece.auth) && (
         <SelectAuthTypeSection
           pieceAuth={piece.auth}
-          setSelectedAuth={setSelectedAuth}
-          selectedAuth={selectedAuth}
+          onChange={setSelectedAuth}
         />
       )}
       </>
@@ -365,7 +364,8 @@ const getInitiallySelectedAuth = (auth: PieceAuthProperty[] | PieceAuthProperty 
   return null;
 }
 
-const SelectAuthTypeSection = ({pieceAuth, setSelectedAuth, selectedAuth}: {pieceAuth:PieceAuthProperty[], setSelectedAuth: (auth: PieceAuthProperty) => void, selectedAuth: PieceAuthProperty | null}) => {
+const SelectAuthTypeSection = ({pieceAuth, onChange}: {pieceAuth:PieceAuthProperty[], onChange: (auth: PieceAuthProperty) => void}) => {
+  const [selectedAuth, setSelectedAuth] = useState<PieceAuthProperty | null>(getInitiallySelectedAuth(pieceAuth));
 
   return (
   <>
@@ -387,7 +387,7 @@ const SelectAuthTypeSection = ({pieceAuth, setSelectedAuth, selectedAuth}: {piec
       value={selectedAuth}
     />
      <DialogFooter className="mt-4">
-              <div className="mx-5 w-full flex justify-end">
+              <div className="mx-5 w-full flex justify-end gap-2">
                 <DialogClose asChild>
                 <Button
                   variant="outline"
@@ -395,6 +395,13 @@ const SelectAuthTypeSection = ({pieceAuth, setSelectedAuth, selectedAuth}: {piec
                   {t('Cancel')}
                 </Button>
                 </DialogClose>
+                <Button
+                  variant="outline"
+                  disabled={isNil(selectedAuth)}
+                  onClick={() => onChange(selectedAuth!)}
+                >
+                  {t('Continue')}
+                </Button>
               </div>
             </DialogFooter>
     </>
