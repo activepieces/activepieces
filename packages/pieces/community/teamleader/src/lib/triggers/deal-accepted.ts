@@ -1,43 +1,69 @@
-
-import { createTrigger, TriggerStrategy, PiecePropValueSchema  } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import {
+  createTrigger,
+  TriggerStrategy,
+  PiecePropValueSchema,
+  StaticPropsValue,
+} from '@activepieces/pieces-framework';
+import {
+  DedupeStrategy,
+  HttpMethod,
+  Polling,
+  pollingHelper,
+} from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-
+import { teamleaderAuth } from '../common/auth';
+import { makeRequest } from '../common/client';
+import { stat } from 'fs';
+const props = {};
 // replace auth with piece auth variable
-const polling: Polling< PiecePropValueSchema<typeof auth>, Record<string, never> > = {
-    strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ propsValue, lastFetchEpochMS }) => {
-        // implement the logic to fetch the items
-        const items = [ {id: 1, created_date: '2021-01-01T00:00:00Z'}, {id: 2, created_date: '2021-01-01T00:00:00Z'}];
-        return items.map((item) => ({
-            epochMilliSeconds: dayjs(item.created_date).valueOf(),
-            data: item,
-            }));
-        }
-}
+const polling: Polling<
+  { access_token: string },
+  StaticPropsValue<typeof props>
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+    // implement the logic to fetch the items
+    const items = await makeRequest(
+      auth.access_token,
+      HttpMethod.POST,
+      '/deals.list',
+      {
+        updated_since: lastFetchEpochMS
+          ? dayjs(lastFetchEpochMS).toISOString()
+          : dayjs().subtract(1, 'day').toISOString(),
+
+        status: 'won', //deal accepted status
+      }
+    );
+    return items.map((item: any) => ({
+      epochMilliSeconds: dayjs(item.created_date).valueOf(),
+      data: item,
+    }));
+  },
+};
 
 export const dealAccepted = createTrigger({
-// auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
-name: 'dealAccepted',
-displayName: 'Deal Accepted',
-description: '',
-props: {},
-sampleData: {},
-type: TriggerStrategy.POLLING,
-async test(context) {
+  auth: teamleaderAuth,
+  name: 'dealAccepted',
+  displayName: 'Deal Accepted',
+  description: '',
+  props,
+  sampleData: {},
+  type: TriggerStrategy.POLLING,
+  async test(context) {
     return await pollingHelper.test(polling, context);
-},
-async onEnable(context) {
+  },
+  async onEnable(context) {
     const { store, auth, propsValue } = context;
     await pollingHelper.onEnable(polling, { store, auth, propsValue });
-},
+  },
 
-async onDisable(context) {
+  async onDisable(context) {
     const { store, auth, propsValue } = context;
     await pollingHelper.onDisable(polling, { store, auth, propsValue });
-},
+  },
 
-async run(context) {
+  async run(context) {
     return await pollingHelper.poll(polling, context);
-},
+  },
 });

@@ -13,6 +13,11 @@ import { searchDeals } from './lib/actions/search-deals';
 import { searchInvoices } from './lib/actions/search-invoices';
 import { updateCompany } from './lib/actions/update-company';
 import { updateDeal } from './lib/actions/update-deal';
+import { dealAccepted } from './lib/triggers/deal-accepted';
+// import { newInvoice } from './lib/triggers/new-invoice';
+import { newContact } from './lib/triggers/new-contact';
+import { newCompany } from './lib/triggers/new-company';
+import { newDeal } from './lib/triggers/new-deal';
 
 export const teamleader = createPiece({
   displayName: 'Teamleader',
@@ -34,5 +39,11 @@ export const teamleader = createPiece({
     updateContact,
     updateDeal,
   ],
-  triggers: [],
+  triggers: [
+    dealAccepted,
+    newDeal,
+    newCompany,
+    newContact,
+    // newInvoice, 
+  ],
 });
