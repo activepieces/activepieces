@@ -1,7 +1,7 @@
-import { ListAgentRunsQueryParams, PrincipalType, RunAgentRequestBody, UpdateAgentRunRequestBody, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { AgentJobSource } from '@activepieces/server-shared'
+import { ListAgentRunsQueryParams, PrincipalType, RunAgentRequestBody, UpdateAgentRunRequestBody, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { agentRunsService } from './agent-runs-service'
-import { AgentJobSource } from '@activepieces/server-shared'
 
 const DEFAULT_LIMIT = 10
 

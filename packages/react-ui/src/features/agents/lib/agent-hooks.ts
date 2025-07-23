@@ -7,8 +7,7 @@ import {
   AgentRun,
 } from '@activepieces/shared';
 
-import { agentsApi } from './agents-api';
-import { agentRunsApi } from './agents-api';
+import { agentsApi, agentRunsApi } from './agents-api';
 
 export const agentHooks = {
   useList: (params?: ListAgentsQueryParams) => {

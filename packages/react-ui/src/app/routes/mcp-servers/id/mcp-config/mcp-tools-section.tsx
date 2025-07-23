@@ -4,7 +4,11 @@ import { Hammer } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import type { McpTool, McpToolRequest, McpWithTools } from '@activepieces/shared';
+import type {
+  McpTool,
+  McpToolRequest,
+  McpWithTools,
+} from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
 
 import { McpAddToolDropdown } from '../mcp-add-tool-actions';
@@ -30,7 +34,9 @@ export const McpToolsSection = ({
 
   const removeTool = async (toolIds: string[]): Promise<void> => {
     if (!mcp || !onToolsUpdate) return;
-    const newTools = mcp.tools.filter((tool: McpTool) => !toolIds.includes(tool.id));
+    const newTools = mcp.tools.filter(
+      (tool: McpTool) => !toolIds.includes(tool.id),
+    );
     onToolsUpdate(newTools);
   };
 
@@ -127,9 +133,9 @@ export const McpToolsSection = ({
                 })}
             </div>
           </ScrollArea>
-        ) : (
-          showEmptyState ? <EmptyTools /> : null
-        )}
+        ) : showEmptyState ? (
+          <EmptyTools />
+        ) : null}
       </div>
     </div>
   );

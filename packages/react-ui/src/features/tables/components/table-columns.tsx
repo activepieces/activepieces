@@ -28,11 +28,9 @@ import { NewFieldPopup } from './new-field-popup';
 import { SelectCell, SelectHeaderCell } from './select-column';
 
 export function useTableColumns(createEmptyRecord: () => void) {
-  const [fields, updateRecord, setSelectedAgentRunId] = useTableState((state) => [
-    state.fields,
-    state.updateRecord,
-    state.setSelectedAgentRunId,
-  ]);
+  const [fields, updateRecord, setSelectedAgentRunId] = useTableState(
+    (state) => [state.fields, state.updateRecord, state.setSelectedAgentRunId],
+  );
 
   const { data: maxFields } = flagsHooks.useFlag<number>(
     ApFlagId.MAX_FIELDS_PER_TABLE,
@@ -54,7 +52,6 @@ export function useTableColumns(createEmptyRecord: () => void) {
     renderCell: () => <div className="empty-cell"></div>,
   };
 
-
   const columns: Column<Row, { id: string }>[] = [
     {
       key: 'select-row',
@@ -67,11 +64,15 @@ export function useTableColumns(createEmptyRecord: () => void) {
       frozen: true,
       renderHeaderCell: () => <SelectHeaderCell />,
       renderCell: (props) => (
-        <SelectCell row={props.row} rowIndex={props.rowIdx + 1} onClick={() => {
-          if (props.row.locked && props.row.agentRunId) {
-            setSelectedAgentRunId(props.row.agentRunId);
-          }
-        }} />
+        <SelectCell
+          row={props.row}
+          rowIndex={props.rowIdx + 1}
+          onClick={() => {
+            if (props.row.locked && props.row.agentRunId) {
+              setSelectedAgentRunId(props.row.agentRunId);
+            }
+          }}
+        />
       ),
 
       renderSummaryCell: () => (
@@ -137,7 +138,11 @@ export function mapRecordsToRows(
 ): Row[] {
   if (!records || records.length === 0) return [];
   return records.map((record: ClientRecordData) => {
-    const row: Row = { id: record.uuid, agentRunId: record.agentRunId ?? null, locked: !isNil(record.agentRunId) };
+    const row: Row = {
+      id: record.uuid,
+      agentRunId: record.agentRunId ?? null,
+      locked: !isNil(record.agentRunId),
+    };
     record.values.forEach((cell) => {
       const field = fields[cell.fieldIndex];
       if (field) {

@@ -1,7 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
-import { TableWebhookEventType } from '../table-webhook'
 import { TableAutomationStatus, TableAutomationTrigger } from '../table'
-import { McpToolRequest } from '../../mcp'
+import { TableWebhookEventType } from '../table-webhook'
 
 export const CreateTableRequest = Type.Object({
     name: Type.String(),

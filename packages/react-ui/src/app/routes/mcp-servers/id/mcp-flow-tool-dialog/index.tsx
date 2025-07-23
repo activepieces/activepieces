@@ -1,5 +1,5 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Search } from 'lucide-react';
 import React, { useState } from 'react';
@@ -16,12 +16,16 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { McpToolType, McpWithTools, TriggerType } from '@activepieces/shared';
-import type { McpTool, McpToolRequest, PopulatedFlow } from '@activepieces/shared';
+import type {
+  McpTool,
+  McpToolRequest,
+  PopulatedFlow,
+} from '@activepieces/shared';
 
 import { McpFlowDialogContent } from './mcp-flow-dialog-content';
-import { authenticationSession } from '@/lib/authentication-session';
-import { flowsApi } from '@/features/flows/lib/flows-api';
 
 type McpFlowDialogProps = {
   children: React.ReactNode;
@@ -51,18 +55,20 @@ export function McpFlowDialog({
   const { data: flows } = useQuery({
     queryKey: ['flows', projectId, mcp.id],
     queryFn: async () => {
-      const flows = await flowsApi.list({
-        cursor: undefined,
-        limit: 1000,
-        projectId: projectId!,
-      }).then((response) => {
-        return response.data.filter(
-          (flow: PopulatedFlow) =>
-            flow.version.trigger.type === TriggerType.PIECE &&
-            flow.version.trigger.settings.pieceName ===
-            '@activepieces/piece-mcp',
-        );
-      });
+      const flows = await flowsApi
+        .list({
+          cursor: undefined,
+          limit: 1000,
+          projectId: projectId!,
+        })
+        .then((response) => {
+          return response.data.filter(
+            (flow: PopulatedFlow) =>
+              flow.version.trigger.type === TriggerType.PIECE &&
+              flow.version.trigger.settings.pieceName ===
+                '@activepieces/piece-mcp',
+          );
+        });
       return flows;
     },
   });

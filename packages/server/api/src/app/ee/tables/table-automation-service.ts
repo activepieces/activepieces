@@ -1,14 +1,11 @@
 import { AgentJobSource } from '@activepieces/server-shared'
-import { AgentRun, ApEdition, assertNotNullOrUndefined, isNil, McpToolRequest, PopulatedRecord, Table, TableAutomationTrigger } from '@activepieces/shared'
+import { AgentRun, PopulatedRecord, Table, TableAutomationTrigger } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { agentRunsService } from '../../agents/agent-runs/agent-runs-service'
 
 
 export const tableAutomationService = (log: FastifyBaseLogger) => ({
     async run(params: RunParams): Promise<AgentRun> {
-        /*   if (edition === ApEdition.COMMUNITY) {
-               return;
-           }*/
         return agentRunsService(log).run({
             agentId: params.table.agentId,
             projectId: params.projectId,

@@ -29,4 +29,4 @@ export const AgentPromptBlock = ({ prompt }: AgentPromptBlockProps) => {
       </Accordion>
     </div>
   );
-}; 
+};

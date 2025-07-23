@@ -1,5 +1,4 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronLeft, Search } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
@@ -21,13 +20,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { mcpApi } from '@/features/mcp/lib/mcp-api';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import type {
   McpPieceTool,
   McpWithTools,
-  McpTool,
   McpToolRequest,
 } from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
@@ -147,7 +143,7 @@ export function McpPieceDialog({
         connectionExternalId: selectedConnectionExternalId ?? undefined,
       },
     }));
-    const oldTools = mcp.tools
+    const oldTools = mcp.tools;
     onToolsUpdate([...oldTools, ...newTools]);
     handleClose();
   };

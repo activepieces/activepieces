@@ -1,6 +1,4 @@
-
 import { ApMarkdown } from '@/components/custom/markdown';
-
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   AgentTaskStatus,
@@ -8,26 +6,25 @@ import {
   isNil,
   MarkdownVariant,
 } from '@activepieces/shared';
-import { agentRunHooks } from '../lib/agent-hooks';
-import { AgentPromptBlock } from './agent-prompt-block';
-import { AgentToolBlock } from '../agent-tool-block';
-import { AgentStepSkeleton } from './agent-step-skeleton';
 
+import { AgentToolBlock } from '../agent-tool-block';
+import { agentRunHooks } from '../lib/agent-hooks';
+
+import { AgentPromptBlock } from './agent-prompt-block';
+import { AgentStepSkeleton } from './agent-step-skeleton';
 
 type AgentTimelineProps = {
   className?: string;
   agentRunId: string | null | undefined;
 };
 
-const AgentTimeline = ({
-  agentRunId,
-  className = '',
-}: AgentTimelineProps) => {
+const AgentTimeline = ({ agentRunId, className = '' }: AgentTimelineProps) => {
   const { data: agentRun } = agentRunHooks.useGet(agentRunId);
 
-  const showSkeleton = isNil(agentRun) || agentRun.status === AgentTaskStatus.IN_PROGRESS;
-  if(isNil(agentRun)) {
-    return <></>
+  const showSkeleton =
+    isNil(agentRun) || agentRun.status === AgentTaskStatus.IN_PROGRESS;
+  if (isNil(agentRun)) {
+    return <></>;
   }
   return (
     <ScrollArea className={`h-full p-4 ${className}`}>
@@ -48,11 +45,10 @@ const AgentTimeline = ({
             </div>
           );
         })}
-        {showSkeleton && <AgentStepSkeleton agentId={agentRun?.agentId!} />}
+        {showSkeleton && <AgentStepSkeleton agentId={agentRun.agentId!} />}
       </div>
     </ScrollArea>
   );
 };
-
 
 export { AgentTimeline };

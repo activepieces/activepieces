@@ -1,6 +1,6 @@
 import { AgentJobSource } from '@activepieces/server-shared'
 import { Agent, agentbuiltInToolsNames, AgentOutputFieldType, AgentOutputType, Field, FieldType, isNil, McpWithTools } from '@activepieces/shared'
-import { experimental_createMCPClient, tool, ToolSet } from 'ai'
+import { experimental_createMCPClient, tool } from 'ai'
 import { z, ZodRawShape, ZodSchema } from 'zod'
 import { tablesApiService } from '../api/server-api.service'
 

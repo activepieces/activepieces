@@ -1,7 +1,13 @@
 import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 
-import { Field, FieldType, PopulatedRecord, Table, TableAutomationStatus, UpdateTableRequest } from '@activepieces/shared';
+import {
+  Field,
+  FieldType,
+  PopulatedRecord,
+  Table,
+  TableAutomationStatus,
+} from '@activepieces/shared';
 
 import { createServerState } from './ap-tables-server-state';
 
@@ -20,16 +26,16 @@ export type ClientField = {
   uuid: string;
   name: string;
 } & (
-    | {
+  | {
       type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT;
     }
-    | {
+  | {
       type: FieldType.STATIC_DROPDOWN;
       data: {
         options: { value: string }[];
       };
     }
-  );
+);
 const mapRecorddToClientRecordsData = (
   records: PopulatedRecord[],
   fields: Field[],
@@ -98,7 +104,8 @@ export const createApTableStore = (
         set({ selectedRecords }),
       selectedCell: null,
       selectedAgentRunId: null,
-      setSelectedAgentRunId: (agentRunId: string | null) => set({ selectedAgentRunId: agentRunId }),
+      setSelectedAgentRunId: (agentRunId: string | null) =>
+        set({ selectedAgentRunId: agentRunId }),
       renameTable: (newName: string) =>
         set((state) => {
           return {
@@ -208,18 +215,21 @@ export const createApTableStore = (
         });
       },
       setAgentRunId: (recordId: string, agentRunId: string | null) => {
-        const recordIndex = serverState.records.findIndex((record) => record.id === recordId);
+        const recordIndex = serverState.records.findIndex(
+          (record) => record.id === recordId,
+        );
         set((state) => ({
           records: state.records.map((record, index) =>
-            index === recordIndex ? { ...record, agentRunId } : record
+            index === recordIndex ? { ...record, agentRunId } : record,
           ),
         }));
       },
       toggleStatus: () => {
         return set((state) => {
-          const newStatus = state.table.status === TableAutomationStatus.ENABLED
-            ? TableAutomationStatus.DISABLED
-            : TableAutomationStatus.ENABLED;
+          const newStatus =
+            state.table.status === TableAutomationStatus.ENABLED
+              ? TableAutomationStatus.DISABLED
+              : TableAutomationStatus.ENABLED;
           serverState.update({
             status: newStatus,
           });

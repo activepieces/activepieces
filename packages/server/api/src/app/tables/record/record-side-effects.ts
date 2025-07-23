@@ -1,7 +1,5 @@
-import { PopulatedRecord, TableAutomationStatus, TableAutomationTrigger, TableWebhookEventType } from '@activepieces/shared'
+import { PopulatedRecord, TableAutomationTrigger, TableWebhookEventType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { tableAutomationService } from '../../ee/tables/table-automation-service'
-import { tableService } from '../table/table.service'
 import { recordService } from './record.service'
 
 type BulkSideEffectParams = {
@@ -36,13 +34,13 @@ EventTypeWithAutomation
 }
 
 
-export const recordSideEffects = (log: FastifyBaseLogger) => ({
+export const recordSideEffects = (_log: FastifyBaseLogger) => ({
     async handleRecordsEvent(
         params: BulkSideEffectParams,
         eventKey: keyof typeof EVENT_TYPE_MAP,
     ) {
-        const { projectId, tableId, records, logger, authorization, agentUpdate } = params
-        const { eventType, automationTrigger } = EVENT_TYPE_MAP[eventKey]
+        const { projectId, tableId, records, logger, authorization } = params
+        const { eventType } = EVENT_TYPE_MAP[eventKey]
 
         await Promise.all(
             records.map(async (record) => {
@@ -54,17 +52,6 @@ export const recordSideEffects = (log: FastifyBaseLogger) => ({
                     logger,
                     authorization,
                 })
-                if (automationTrigger && !agentUpdate) {
-                    const table = await tableService.getOneOrThrow({ projectId, id: tableId })
-                    if (table.agent && table.status === TableAutomationStatus.ENABLED && table.trigger === automationTrigger) {
-                        await tableAutomationService(log).run({
-                            table,
-                            record,
-                            projectId,
-                            trigger: automationTrigger,
-                        })
-                    }
-                }
             }),
         )
     },

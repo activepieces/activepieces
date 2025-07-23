@@ -19,11 +19,11 @@ import {
   StepRunResponse,
 } from '@activepieces/shared';
 
+import { AgentRunDialog } from '../../../features/agents/agent-run-dialog';
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
-import { AgentRunDialog } from '../../../features/agents/agent-run-dialog';
 import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
@@ -164,7 +164,6 @@ const TestStepSectionImplementation = React.memo(
     const isTesting =
       activeDialog !== DialogType.NONE || isLoadingTodo || isWatingTestResult;
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
-    const agentId = stepUtils.getAgentId(currentStep);
     return (
       <>
         {!sampleDataExists && (

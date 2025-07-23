@@ -172,10 +172,11 @@ export const stepUtils = {
       : undefined;
   },
   getAgentRunId(output: StepOutput | StepRunResponse | undefined | null) {
-    if(!output) {
+    if (!output) {
       return undefined;
     }
-    return 'output' in output && 'agentRunId' in (output.output as { agentRunId: string })
+    return 'output' in output &&
+      'agentRunId' in (output.output as { agentRunId: string })
       ? (output.output as { agentRunId: string }).agentRunId
       : undefined;
   },

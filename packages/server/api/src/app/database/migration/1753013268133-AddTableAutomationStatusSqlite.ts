@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddTableAutomationStatusSqlite1753013268133 implements MigrationInterface {
     name = 'AddTableAutomationStatusSqlite1753013268133'
@@ -6,7 +6,7 @@ export class AddTableAutomationStatusSqlite1753013268133 implements MigrationInt
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_table_project_id_name"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_table" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -22,7 +22,7 @@ export class AddTableAutomationStatusSqlite1753013268133 implements MigrationInt
                 CONSTRAINT "fk_table_agent_id" FOREIGN KEY ("agentId") REFERENCES "agent" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_table_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_table"(
                     "id",
@@ -43,27 +43,27 @@ export class AddTableAutomationStatusSqlite1753013268133 implements MigrationInt
                 "agentId",
                 "trigger"
             FROM "table"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "table"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_table"
                 RENAME TO "table"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_table_project_id_name"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "table"
                 RENAME TO "temporary_table"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "table" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -78,7 +78,7 @@ export class AddTableAutomationStatusSqlite1753013268133 implements MigrationInt
                 CONSTRAINT "fk_table_agent_id" FOREIGN KEY ("agentId") REFERENCES "agent" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_table_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "table"(
                     "id",
@@ -99,13 +99,13 @@ export class AddTableAutomationStatusSqlite1753013268133 implements MigrationInt
                 "agentId",
                 "trigger"
             FROM "temporary_table"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_table"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
-        `);
+        `)
     }
 
 }

@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import EditableText from '@/components/ui/editable-text';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Permission, TableAutomationStatus } from '@activepieces/shared';
+import { Permission } from '@activepieces/shared';
 
 import { useTableState } from './ap-table-state-provider';
 import { ImportCsvDialog } from './import-csv-dialog';
@@ -52,8 +52,6 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
-
-  const isAgentEnabled = table?.status === TableAutomationStatus.ENABLED;
 
   const exportTable = async () => {
     const { tablesApi } = await import('../lib/tables-api');
@@ -115,38 +113,36 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
             </div>
           )}
           {selectedRecords.size > 0 && (
-            <>
-              <PermissionNeededTooltip
-                hasPermission={userHasTableWritePermission}
+            <PermissionNeededTooltip
+              hasPermission={userHasTableWritePermission}
+            >
+              <ConfirmationDeleteDialog
+                title={t('Delete Records')}
+                message={t(
+                  'Are you sure you want to delete the selected records? This action cannot be undone.',
+                )}
+                entityName={
+                  selectedRecords.size === 1 ? t('record') : t('records')
+                }
+                mutationFn={async () => {
+                  const indices = Array.from(selectedRecords).map((row) =>
+                    records.findIndex((r) => r.uuid === row),
+                  );
+                  deleteRecords(indices.map((index) => index.toString()));
+                  setSelectedRecords(new Set());
+                }}
               >
-                <ConfirmationDeleteDialog
-                  title={t('Delete Records')}
-                  message={t(
-                    'Are you sure you want to delete the selected records? This action cannot be undone.',
-                  )}
-                  entityName={
-                    selectedRecords.size === 1 ? t('record') : t('records')
-                  }
-                  mutationFn={async () => {
-                    const indices = Array.from(selectedRecords).map((row) =>
-                      records.findIndex((r) => r.uuid === row),
-                    );
-                    deleteRecords(indices.map((index) => index.toString()));
-                    setSelectedRecords(new Set());
-                  }}
+                <Button
+                  variant="destructive"
+                  className="flex gap-2 items-center"
+                  disabled={!userHasTableWritePermission}
                 >
-                  <Button
-                    variant="destructive"
-                    className="flex gap-2 items-center"
-                    disabled={!userHasTableWritePermission}
-                  >
-                    <Trash2 className="size-4" />
-                    {t('Delete Records')}{' '}
-                    {selectedRecords.size > 0 ? `(${selectedRecords.size})` : ''}
-                  </Button>
-                </ConfirmationDeleteDialog>
-              </PermissionNeededTooltip>
-            </>
+                  <Trash2 className="size-4" />
+                  {t('Delete Records')}{' '}
+                  {selectedRecords.size > 0 ? `(${selectedRecords.size})` : ''}
+                </Button>
+              </ConfirmationDeleteDialog>
+            </PermissionNeededTooltip>
           )}
         </div>
       </div>

@@ -3,10 +3,7 @@ import { Bot } from 'lucide-react';
 
 import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
-import {
-  PieceAction,
-  StepOutput,
-} from '@activepieces/shared';
+import { PieceAction, StepOutput } from '@activepieces/shared';
 
 type FlowStepAgentProps = {
   stepDetails: StepOutput;
@@ -14,7 +11,6 @@ type FlowStepAgentProps = {
 };
 
 const FlowStepAgent = (props: FlowStepAgentProps) => {
- 
   const agentRunId = stepUtils.getAgentRunId(props.stepDetails);
 
   return (
@@ -23,11 +19,7 @@ const FlowStepAgent = (props: FlowStepAgentProps) => {
         <Bot className="size-5" />
         {t('Agent Output')}
       </div>
-      {agentRunId && (
-        <AgentTimeline
-          agentRunId={agentRunId}
-        />
-      )}
+      {agentRunId && <AgentTimeline agentRunId={agentRunId} />}
     </>
   );
 };

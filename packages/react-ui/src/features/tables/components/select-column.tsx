@@ -1,7 +1,4 @@
-import {
-  useHeaderRowSelection,
-  useRowSelection,
-} from 'react-data-grid';
+import { useHeaderRowSelection, useRowSelection } from 'react-data-grid';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
@@ -31,14 +28,22 @@ export function SelectHeaderCell() {
   );
 }
 
-export function SelectCell({ row, rowIndex, onClick }: { row: Row; rowIndex: number, onClick?: () => void }) {
+export function SelectCell({
+  row,
+  rowIndex,
+  onClick,
+}: {
+  row: Row;
+  rowIndex: number;
+  onClick?: () => void;
+}) {
   const locked = row.locked;
   const { isRowSelected, onRowSelectionChange } = useRowSelection();
   return (
     <div
       className={cn(
         'flex items-center justify-start h-full pl-4 group',
-        locked && 'locked-row'
+        locked && 'locked-row',
       )}
       onClick={onClick}
     >
@@ -63,9 +68,7 @@ export function SelectCell({ row, rowIndex, onClick }: { row: Row; rowIndex: num
       )}
       <div
         className={cn(
-          locked
-            ? 'block select-none'
-            : 'group-hover:hidden block select-none',
+          locked ? 'block select-none' : 'group-hover:hidden block select-none',
           isRowSelected && !locked && '!hidden',
         )}
       >

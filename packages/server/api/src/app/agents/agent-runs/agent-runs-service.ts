@@ -1,4 +1,4 @@
-import { AgentJobData, AgentJobSource, JobType } from '@activepieces/server-shared'
+import { AgentJobSource, JobType } from '@activepieces/server-shared'
 import { ActivepiecesError, AgentRun, AgentTaskStatus, apId, Cursor, ErrorCode, isNil, SeekPage, spreadIfDefined, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, FindOperator } from 'typeorm'

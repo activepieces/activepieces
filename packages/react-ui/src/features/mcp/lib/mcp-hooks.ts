@@ -10,8 +10,6 @@ import {
   McpToolMetadata,
   ToolCallContentBlock,
   ToolCallType,
-  McpToolType,
-  McpTool,
   McpToolRequest,
 } from '@activepieces/shared';
 
@@ -71,14 +69,11 @@ export const mcpHooks = {
       },
     });
   },
-  updateTools: (mcpId: string, onSuccess?: () => void) => {
-    return useMutation({
-      mutationFn: async (tools: McpToolRequest[]) => {
-        return await mcpApi.update(mcpId, { tools });
-      },
+  useUpdateTools: (mcpId: string | undefined, onSuccess?: () => void) =>
+    useMutation({
+      mutationFn: (tools: McpToolRequest[]) => mcpApi.update(mcpId!, { tools }),
       onSuccess,
-    });
-  },
+    }),
   useCreateMcp: () => {
     const projectId = authenticationSession.getProjectId();
     assertNotNullOrUndefined(projectId, 'projectId is not set');

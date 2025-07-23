@@ -4,7 +4,6 @@ import {
   Field,
   PopulatedRecord,
   Table,
-  TableAutomationStatus,
   UpdateTableRequest,
 } from '@activepieces/shared';
 

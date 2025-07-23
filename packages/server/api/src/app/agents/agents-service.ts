@@ -7,8 +7,8 @@ import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { mcpService } from '../mcp/mcp-service'
 import { projectService } from '../project/project-service'
-import { AgentEntity } from './agent-entity'
 import { tableService } from '../tables/table/table.service'
+import { AgentEntity } from './agent-entity'
 
 export const agentRepo = repoFactory(AgentEntity)
 

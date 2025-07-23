@@ -11,26 +11,26 @@ interface AgentProfileProps {
 }
 
 const AgentProfile = ({
-  imageUrl = "https://cdn.activepieces.com/quicknew/agents/robots/robot_186.png",
+  imageUrl = 'https://cdn.activepieces.com/quicknew/agents/robots/robot_186.png',
   isEnabled = false,
   onClick,
   className,
-  size = 'md'
+  size = 'md',
 }: AgentProfileProps) => {
   const sizeClasses = {
     sm: 'w-6 h-6',
     md: 'w-7 h-7',
-    lg: 'w-8 h-8'
+    lg: 'w-8 h-8',
   };
 
   const glowClasses = {
     sm: 'shadow-[0_0_8px_rgba(59,130,246,0.5)]',
     md: 'shadow-[0_0_12px_rgba(59,130,246,0.6)]',
-    lg: 'shadow-[0_0_16px_rgba(59,130,246,0.7)]'
+    lg: 'shadow-[0_0_16px_rgba(59,130,246,0.7)]',
   };
 
   const handleClick = () => {
-     if (onClick) {
+    if (onClick) {
       onClick();
     }
   };
@@ -41,17 +41,19 @@ const AgentProfile = ({
       size="icon"
       onClick={handleClick}
       className={cn(
-        "p-0 border-0 bg-transparent hover:bg-transparent",
-        "transition-none", // Remove all transitions
-        className
+        'p-0 border-0 bg-transparent hover:bg-transparent',
+        'transition-none', // Remove all transitions
+        className,
       )}
       aria-label="Agent Profile"
     >
-      <div className={cn(
-        "relative rounded-full overflow-hidden",
-        sizeClasses[size],
-        isEnabled && glowClasses[size]
-      )}>
+      <div
+        className={cn(
+          'relative rounded-full overflow-hidden',
+          sizeClasses[size],
+          isEnabled && glowClasses[size],
+        )}
+      >
         <img
           src={imageUrl}
           alt="Agent"
@@ -68,4 +70,4 @@ const AgentProfile = ({
   );
 };
 
-export { AgentProfile }; 
+export { AgentProfile };
