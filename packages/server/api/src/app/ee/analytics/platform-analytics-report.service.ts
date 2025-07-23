@@ -14,7 +14,6 @@ import { userRepo } from '../../user/user-service'
 import { auditLogRepo } from '../audit-logs/audit-event-service'
 import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entity'
 export const platformAnalyticsReportRepo = repoFactory(PlatformAnalyticsReportEntity)
-const REPORT_TTL_MS = 1000 * 60 * 60 * 24
 export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
     refreshReport: async (platformId: PlatformId) => {
         const lock = await distributedLock.acquireLock({
@@ -32,8 +31,7 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
     },
     getOrGenerateReport: async (platformId: PlatformId): Promise<PlatformAnalyticsReport> => {
         const report = await platformAnalyticsReportRepo().findOneBy({ platformId })
-        const isReportExpired = isNil(report) || dayjs().diff(dayjs(report.updated), 'ms') > REPORT_TTL_MS
-        if (report && !isReportExpired) {
+        if (report) {
             return report
         }
         return refreshReport(platformId, log)

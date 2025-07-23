@@ -8,8 +8,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useEffect } from 'react';
 
 import { platformAnalyticsHooks } from './analytics-hooks';
+const REPORT_TTL_MS = 1000 * 60 * 60 * 24
 
 export const RefreshAnalyticsSection = ({
   lastRefreshMs,
@@ -18,6 +20,11 @@ export const RefreshAnalyticsSection = ({
 }) => {
   const { mutate: refreshAnalytics, isPending } =
     platformAnalyticsHooks.useRefreshAnalytics();
+  useEffect(() => {
+    if (dayjs().diff(dayjs(lastRefreshMs), 'ms') > REPORT_TTL_MS) {
+      refreshAnalytics();
+    }
+  }, []);
   return (
     <div className="flex items-center justify-between gap-2">
       <div className="text-md">
@@ -36,9 +43,20 @@ export const RefreshAnalyticsSection = ({
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          {t(
-            'Your reports are automatically updated daily, refresh to get the latest data',
-          )}
+          {
+            !isPending && (
+              t(
+                'Your analytics are automatically updated daily, refresh to get the latest data',
+              )
+            )
+          }
+          {
+            isPending && (
+              t(
+                'Your analytics are being updated, please wait a moment',
+              )
+            )
+          }
         </TooltipContent>
       </Tooltip>
     </div>
