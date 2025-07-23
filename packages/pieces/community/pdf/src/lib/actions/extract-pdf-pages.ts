@@ -50,19 +50,19 @@ export function pageRangeToIndexes(
 const markdownValue = `
 This action can extract or rearrange the pages in a PDF.
 
-- The order of array determines the sequence of pages
-- Each array element is one inclusive continuous range with a start page and end page
-- Pages start from 1, and 0 is not valid
-- Start page has to be less than end page
-- You can select one page by setting the same start and end page
-- To select pages from the start, specify negative pages eg. -1 is the last page, -5 is the 5th last page. start: -5, end: -1 are the last 5 pages
-- Range cannot span across 0 eg. start: -3, end: 5
+- The order of array determines the sequence of pages.
+- Each array element is one inclusive continuous range with a start page and end page.
+- Pages start from 1, and 0 is not valid.
+- Start page has to be less than end page.
+- You can select one page by setting the same start and end page.
+- To select pages from the start, specify negative pages eg. -1 is the last page, -5 is the 5th last page. start: -5, end: -1 are the last 5 pages.
+- Range cannot span across 0 eg. start: -3, end: 5.
 `;
 
 export const extractPdfPages = createAction({
   name: 'extractPdfPages',
   displayName: 'Extract PDF Pages',
-  description: 'Extract or rearrange page(s)from PDF File',
+  description: 'Extract or rearrange page(s)from PDF File.',
   props: {
     markdown: Property.MarkDown({
       variant: MarkdownVariant.INFO,

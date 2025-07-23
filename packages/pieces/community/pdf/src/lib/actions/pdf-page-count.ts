@@ -4,7 +4,7 @@ import { PDFDocument } from 'pdf-lib';
 export const pdfPageCount = createAction({
   name: 'pdfPageCount',
   displayName: 'PDF Page Count',
-  description: 'Get page count of PDF file',
+  description: 'Get page count of PDF file.',
   props: {
     file: Property.File({
       displayName: 'PDF File or URL',
