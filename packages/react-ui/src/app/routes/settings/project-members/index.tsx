@@ -18,7 +18,7 @@ import { userInvitationsHooks } from '@/features/team/lib/user-invitations-hooks
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
-export default function TeamPage() {
+export default function ProjectMembersPage() {
   const {
     projectMembers,
     isLoading: projectMembersIsPending,
@@ -42,7 +42,7 @@ export default function TeamPage() {
       <div className="w-full flex flex-col items-center justify-center gap-4">
         <Card className="w-full">
           <CardHeader>
-            <CardTitle>{t('Project Members')}</CardTitle>
+            <CardTitle className="text-xl">{t('Project Members')}</CardTitle>
             <CardDescription>
               {t('Invite your team members to collaborate.')}
             </CardDescription>
@@ -71,9 +71,9 @@ export default function TeamPage() {
                 ))}
             </div>
             <Separator />
-            <div className="text-2xl font-semibold tracking-tight">
+            <CardTitle className="text-xl">
               {t('Pending Invitations')}
-            </div>
+            </CardTitle>
             <div className="flex min-h-[35px] flex-col gap-4">
               {invitationsIsPending && (
                 <div className="flex justify-center animate-spin">

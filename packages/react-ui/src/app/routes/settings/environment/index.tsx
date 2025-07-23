@@ -51,7 +51,7 @@ const EnvironmentPage = () => {
     >
       <div className="flex w-full flex-col items-start justify-center gap-4">
         <div className="flex flex-col justify-start items-start w-full">
-          <h1 className="text-2xl font-bold flex-grow">{t('Environments')}</h1>
+          <h1 className="text-xl font-bold flex-grow">{t('Environments')}</h1>
           <span className="text-muted-foreground text-md">
             {t(
               'Connect to Git to enable version control, backup your flows, and manage multiple environments. ',
