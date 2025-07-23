@@ -24,8 +24,6 @@ import { Permission, TableAutomationStatus } from '@activepieces/shared';
 
 import { useTableState } from './ap-table-state-provider';
 import { ImportCsvDialog } from './import-csv-dialog';
-import { AutomateDataButton } from './automate-data-button';
-import { ConfigureTableAgent } from './configure-table-agent';
 
 interface ApTableHeaderProps {
   onBack: () => void;
@@ -151,7 +149,6 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
               </PermissionNeededTooltip>
             </>
           )}
-          {selectedRecords.size === 0 && <ConfigureTableAgent />}
         </div>
       </div>
       <div className="hidden">
