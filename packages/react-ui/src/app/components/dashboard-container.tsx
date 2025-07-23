@@ -7,6 +7,9 @@ import mcpDark from '@/assets/img/custom/mcp-dark.svg';
 import mcpLight from '@/assets/img/custom/mcp-light.svg';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTheme } from '@/components/theme-provider';
+import { AiCreditsLimitAlert } from '@/features/billing/components/ai-credits-limit-alert';
+import { ProjectLockedAlert } from '@/features/billing/components/project-locked-alert';
+import { TaskLimitAlert } from '@/features/billing/components/task-limit-alert';
 import { WelcomeTrialDialog } from '@/features/billing/components/trial-dialog';
 import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -168,7 +171,12 @@ export function DashboardContainer({
           hideSideNav={embedState.hideSideNav}
           removeBottomPadding={removeBottomPadding}
         >
-          {children}
+          <>
+            <ProjectLockedAlert />
+            <TaskLimitAlert />
+            <AiCreditsLimitAlert />
+            {children}
+          </>
         </SidebarComponent>
         {showBilling && <WelcomeTrialDialog />}
         {edition === ApEdition.CLOUD && <UpgradeDialog />}
