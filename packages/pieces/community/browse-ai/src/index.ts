@@ -5,7 +5,7 @@ import { getTaskDetailsAction } from './lib/actions/get-task-details';
 import { listRobotsAction } from './lib/actions/list-robots';
 import { runRobotAction } from './lib/actions/run-robot';
 import { taskFinishedWithErrorTrigger } from './lib/triggers/task-finished-with-error';
-import { taskFinishedSuccessfully } from './lib/triggers/task-finished-successfully';
+import { taskFinishedSuccessfullyTrigger } from './lib/triggers/task-finished-successfully';
 
 export const browseAi = createPiece({
   displayName: 'Browse AI',
@@ -27,6 +27,6 @@ export const browseAi = createPiece({
   ],
   triggers: [
     taskFinishedWithErrorTrigger,
-    taskFinishedSuccessfully,
+    taskFinishedSuccessfullyTrigger,
   ],
 });

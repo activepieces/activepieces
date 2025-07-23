@@ -7,7 +7,7 @@ import { robotIdDropdown } from '../common/props';
 
 const TRIGGER_KEY = 'browse-ai-webhook-success-id';
 
-export const taskFinishedSuccessfully = createTrigger({
+export const taskFinishedSuccessfullyTrigger = createTrigger({
   auth: browseAiAuth,
   name: 'task_finished_successfully',
   displayName: 'Task Finished Successfully',
