@@ -77,7 +77,6 @@ export const systemeIoProps = {
           auth: auth as { apiKey: string },
         });
 
-        // Handle response structure
         let tags: any[] = [];
         if (Array.isArray(response)) {
           tags = response;
