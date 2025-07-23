@@ -143,5 +143,15 @@ export const planData = {
         enterprise: true,
       },
     },
+    {
+      key: 'analytics',
+      label: t('Analytics'),
+      values: {
+        free: null,
+        plus: null,
+        business: true,
+        enterprise: true,
+      },
+    },
   ],
 };

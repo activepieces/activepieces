@@ -4,7 +4,7 @@ import { sendIdentityGraphQLRequest } from '../../common/helpers';
 
 const identityApiCustomQueryAction = createAction({
 	requireAuth: false,
-	name: 'identity-api-custom-query',
+	name: 'identity-custom-query',
 	displayName: 'Identity : Custom Query',
 	description: 'Custom Identity Query.',
 	props: {

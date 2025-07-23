@@ -1,13 +1,10 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import {
   ChatDrawerSource,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { useSocket } from '@/components/socket-provider';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { isNil, TriggerType } from '@activepieces/shared';
 
@@ -16,7 +13,6 @@ import ViewOnlyWidget from '../view-only-widget';
 import { TestButton } from './test-button';
 
 const TestFlowWidget = () => {
-  const socket = useSocket();
   const [setChatDrawerOpenSource, flowVersion, readonly, setRun] =
     useBuilderStateContext((state) => [
       state.setChatDrawerOpenSource,
@@ -34,20 +30,10 @@ const TestFlowWidget = () => {
     flowVersion.trigger.settings.triggerName,
   );
 
-  const { mutate: runFlow, isPending } = useMutation<void>({
-    mutationFn: () =>
-      flowRunsApi.testFlow(
-        socket,
-        {
-          flowVersionId: flowVersion.id,
-        },
-        (run) => {
-          setRun(run, flowVersion);
-        },
-      ),
-    onError: (error) => {
-      console.log(error);
-      toast(INTERNAL_ERROR_TOAST);
+  const { mutate: runFlow, isPending } = flowsHooks.useTestFlow({
+    flowVersionId: flowVersion.id,
+    onUpdateRun: (run) => {
+      setRun(run, flowVersion);
     },
   });
 
@@ -62,7 +48,6 @@ const TestFlowWidget = () => {
           setChatDrawerOpenSource(ChatDrawerSource.TEST_FLOW);
         }}
         text={t('Open Chat')}
-        disabled={!triggerHasSampleData}
         loading={isPending}
       />
     );

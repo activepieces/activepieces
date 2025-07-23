@@ -12,5 +12,5 @@ export const mcp = createPiece({
   description: 'Connect to your hosted MCP Server using any MCP client to communicate with tools',
   actions: [replyToMcpClient],
   triggers: [mcpTool],
-  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE]
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE,PieceCategory.UNIVERSAL_AI]
 });
