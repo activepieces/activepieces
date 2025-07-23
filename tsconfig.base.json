@@ -693,11 +693,11 @@
       "@activepieces/piece-queue": [
         "packages/pieces/community/queue/src/index.ts"
       ],
+      "@activepieces/piece-quickbooks": [
+        "packages/pieces/community/quickbooks/src/index.ts"
+      ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
-      ],
-       "@activepieces/piece-quickbooks": [
-        "packages/pieces/community/quickbooks/src/index.ts"
       ],
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
@@ -858,6 +858,9 @@
       ],
       "@activepieces/piece-surveymonkey": [
         "packages/pieces/community/surveymonkey/src/index.ts"
+      ],
+      "@activepieces/piece-system-io": [
+        "packages/pieces/community/system-io/src/index.ts"
       ],
       "@activepieces/piece-tables": [
         "packages/pieces/community/tables/src/index.ts"
