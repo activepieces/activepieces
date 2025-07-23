@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { BitlyAuth } from '../common/auth';
 
 export const archiveBitlink = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  auth: BitlyAuth,
   name: 'archiveBitlink',
   displayName: 'Archive Bitlink',
   description: '',
