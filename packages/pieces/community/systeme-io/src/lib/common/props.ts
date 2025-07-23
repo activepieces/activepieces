@@ -113,6 +113,61 @@ export const systemeIoProps = {
     },
   }),
 
+  tagsMultiSelectDropdown: Property.MultiSelectDropdown({
+    displayName: 'Tags',
+    description: 'Select tags to assign to the contact',
+    required: false,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          placeholder: 'Please connect your account first',
+          options: [],
+        };
+      }
+
+      try {
+        const response = await systemeIoCommon.getTags({
+          auth: auth as { apiKey: string },
+        });
+
+        let tags: any[] = [];
+        if (Array.isArray(response)) {
+          tags = response;
+        } else if (response && typeof response === 'object' && response !== null) {
+          const responseAny = response as any;
+          if (responseAny.items && Array.isArray(responseAny.items)) {
+            tags = responseAny.items;
+          }
+        }
+
+        if (tags.length > 0) {
+          return {
+            disabled: false,
+            options: tags.map((tag: any) => ({
+              label: tag.name || tag.id,
+              value: tag.id,
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          placeholder: 'No tags found',
+          options: [],
+        };
+      } catch (error) {
+        console.error('Error fetching tags:', error);
+        return {
+          disabled: true,
+          placeholder: 'Error loading tags',
+          options: [],
+        };
+      }
+    },
+  }),
+
   contactIdDropdown: Property.Dropdown({
     displayName: 'Contact ID',
     description: 'Select a contact by ID',

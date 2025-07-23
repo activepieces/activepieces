@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
+import { systemeIoProps } from '../common/props';
 
 export const createContact = createAction({
   auth: systemeIoAuth,
@@ -29,11 +30,7 @@ export const createContact = createAction({
       description: 'Contact phone number',
       required: false,
     }),
-    tags: Property.Array({
-      displayName: 'Tags',
-      description: 'Tags to assign to the contact',
-      required: false,
-    }),
+    tags: systemeIoProps.tagsMultiSelectDropdown,
   },
   async run(context) {
     const { email, firstName, lastName, phone, tags } = context.propsValue;
