@@ -20,6 +20,8 @@ import { RedirectPage } from '@/app/routes/redirect';
 import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
+import { Error } from '@/features/billing/components/error';
+import { Success } from '@/features/billing/components/success';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 import { Permission } from '@activepieces/shared';
 
@@ -48,7 +50,6 @@ import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
 import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
-import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
 import { ProjectReleasesPage } from '../routes/project-release';
@@ -56,7 +57,6 @@ import ViewRelease from '../routes/project-release/view-release';
 import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
 import { EnvironmentPage } from '../routes/settings/environment';
-import GeneralPage from '../routes/settings/general';
 import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
@@ -81,7 +81,7 @@ const SettingsRerouter = () => {
   return fragmentWithoutHash ? (
     <Navigate to={`/settings/${fragmentWithoutHash}`} replace />
   ) : (
-    <Navigate to="/settings/general" replace />
+    <Navigate to="/settings/team" replace />
   );
 };
 
@@ -332,18 +332,6 @@ const routes = [
   }),
 
   ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.general,
-    element: (
-      <DashboardContainer>
-        <PageTitle title="General">
-          <ProjectSettingsLayout>
-            <GeneralPage />
-          </ProjectSettingsLayout>
-        </PageTitle>
-      </DashboardContainer>
-    ),
-  }),
-  ...ProjectRouterWrapper({
     path: projectSettingsRoutes.pieces,
     element: (
       <DashboardContainer>
@@ -573,6 +561,26 @@ const routes = [
     ),
   },
   {
+    path: '/platform/setup/billing/success',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Billing">
+          <Success />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/setup/billing/error',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Billing">
+          <Error />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
     path: '/platform/security/signing-keys',
     element: (
       <PlatformAdminContainer>
@@ -588,16 +596,6 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="SSO">
           <SSOPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/setup/license-key',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="License Key">
-          <LicenseKeyPage />
         </PageTitle>
       </PlatformAdminContainer>
     ),

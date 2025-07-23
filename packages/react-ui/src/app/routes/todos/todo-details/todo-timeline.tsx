@@ -8,7 +8,6 @@ import {
   TodoActivityWithUser,
   TodoActivityChanged,
   PopulatedTodo,
-  ContentBlockType,
 } from '@activepieces/shared';
 
 import { TodoComment, ActivityItem } from './todo-comment';
@@ -31,19 +30,13 @@ export const TodoTimeline = ({
   const socket = useSocket();
 
   const formatComment = (activity: TodoActivityWithUser): ActivityItem => {
-    const avatarUrl = todoUtils.getAuthorPictureUrl(activity);
     const hash = encodeURIComponent(JSON.stringify(activity.content));
-    const profileUrl = activity.agentId
-      ? `/agents/${activity.agentId}`
-      : undefined;
     return {
       type: 'comment' as const,
+      authorType: todoUtils.getAuthorType(activity),
       content: activity.content,
       timestamp: new Date(activity.created),
-      authorType: todoUtils.getAuthorType(activity),
       authorName: todoUtils.getAuthorName(activity),
-      pictureUrl: avatarUrl,
-      profileUrl,
       key: hash,
       id: activity.id,
     };
@@ -52,17 +45,11 @@ export const TodoTimeline = ({
   const [activities, setActivities] = useState<ActivityItem[]>([
     {
       type: 'comment' as const,
-      content: [
-        {
-          type: ContentBlockType.MARKDOWN,
-          markdown: todo.description ?? '',
-        },
-      ],
+      content: todo.description ?? '',
       timestamp: new Date(todo.created),
       authorType: todoUtils.getAuthorType(todo),
       authorName: todoUtils.getAuthorName(todo),
       userEmail: todo.createdByUser?.email,
-      pictureUrl: todoUtils.getAuthorPictureUrl(todo),
       flowId: todo.flowId,
     },
     ...(comments ?? []).map(formatComment),
@@ -108,17 +95,11 @@ export const TodoTimeline = ({
           <TodoComment
             comment={{
               type: 'comment' as const,
-              content: [
-                {
-                  type: ContentBlockType.MARKDOWN,
-                  markdown: todo.description ?? '',
-                },
-              ],
+              content: todo.description ?? '',
               timestamp: new Date(todo.created),
               authorType: todoUtils.getAuthorType(todo),
               authorName: todoUtils.getAuthorName(todo),
               userEmail: todo.createdByUser?.email,
-              pictureUrl: todoUtils.getAuthorPictureUrl(todo),
               flowId: todo.flowId,
             }}
             showConnector={true}

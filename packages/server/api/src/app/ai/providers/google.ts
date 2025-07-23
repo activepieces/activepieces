@@ -43,10 +43,11 @@ export const googleProvider: AIProviderStrategy = {
                 })
             }
             else {
-                const { input, output } = pricing as TieredLanguageModelPricing
+                const { input, output, promptThreshold } = pricing as TieredLanguageModelPricing
 
-                const inputCost = promptTokenCount <= input.threshold ? input.underThresholdRate : input.overThresholdRate
-                const outputCost = candidatesTokenCount <= output.threshold ? output.underThresholdRate : output.overThresholdRate
+                const isUnderThreshold = promptTokenCount <= promptThreshold
+                const inputCost = isUnderThreshold ? input.underThresholdRate : input.overThresholdRate
+                const outputCost = isUnderThreshold ? output.underThresholdRate : output.overThresholdRate
                 cost += calculateTokensCost(promptTokenCount, inputCost) + calculateTokensCost(candidatesTokenCount + (thoughtsTokenCount ?? 0), outputCost)
             }
         }

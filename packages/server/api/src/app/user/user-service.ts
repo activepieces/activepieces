@@ -7,7 +7,6 @@ import {
     isNil,
     PlatformId,
     PlatformRole,
-    PlatformUsageMetric,
     ProjectId,
     SeekPage,
     spreadIfDefined,
@@ -19,7 +18,6 @@ import dayjs from 'dayjs'
 import { In } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
-import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
 import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -32,14 +30,6 @@ export const userRepo = repoFactory(UserEntity)
 
 export const userService = {
     async create(params: CreateParams): Promise<User> {
-
-        if (!isNil(params.platformId)) {
-            await checkQuotaOrThrow({
-                platformId: params.platformId,
-                metric: PlatformUsageMetric.USER_SEATS,
-            })
-        }
-
         const user: NewUser = {
             id: apId(),
             identityId: params.identityId,

@@ -8,13 +8,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
+import { StepMetadata } from '../../../lib/types';
 import { stepsHooks } from '../lib/steps-hooks';
-import { StepMetadata } from '../lib/types';
 
 import { PieceIcon } from './piece-icon';
 
 const extraIconVariants = cva(
-  'flex items-center justify-center bg-accent/35 text-accent-foreground  p-2 rounded-full border border-solid dark:bg-accent-foreground/25 dark:text-foreground select-none',
+  'flex items-center justify-center p-2 rounded-full border border-solid  select-none',
   {
     variants: {
       size: {

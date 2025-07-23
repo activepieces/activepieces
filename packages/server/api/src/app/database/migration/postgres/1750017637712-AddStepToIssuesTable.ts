@@ -8,10 +8,10 @@ export class AddStepToIssuesTable1750017637712 implements MigrationInterface {
             DELETE FROM "issue"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "public"."idx_issue_flow_id"
+            DROP INDEX IF EXISTS "idx_issue_flow_id"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "public"."idx_issue_project_id_flow_id"
+            DROP INDEX IF EXISTS "idx_issue_project_id_flow_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "issue"
@@ -38,10 +38,10 @@ export class AddStepToIssuesTable1750017637712 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "public"."idx_issue_flowId_stepName"
+            DROP INDEX IF EXISTS "idx_issue_flowId_stepName"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "public"."idx_flow_run_flow_failed_step"
+            DROP INDEX IF EXISTS "idx_flow_run_flow_failed_step"
         `)
         await queryRunner.query(`
             ALTER TABLE "issue" DROP COLUMN "stepName"

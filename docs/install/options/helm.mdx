@@ -1,0 +1,108 @@
+---
+title: 'Helm'
+description: 'Deploy Activepieces on Kubernetes using Helm'
+---
+
+This guide walks you through deploying Activepieces on Kubernetes using the official Helm chart.
+
+## Prerequisites
+
+- Kubernetes cluster (v1.19+)
+- Helm 3.x installed
+- kubectl configured to access your cluster
+
+## Quick Start
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/activepieces/activepieces.git
+cd activepieces
+```
+
+### 2. Install Dependencies
+
+```bash
+helm dependency update
+```
+
+### 3. Create a Values File
+
+Create a `my-values.yaml` file with your configuration. You can use the [example values file](https://github.com/activepieces/activepieces/blob/main/deploy/activepieces-helm/values.yaml) as a reference.
+
+### 4. Install Activepieces
+
+```bash
+helm install activepieces deploy/activepieces-helm -f my-values.yaml
+```
+
+### 5. Verify Installation
+
+```bash
+# Check deployment status
+kubectl get pods
+kubectl get services
+
+```
+
+## Production Checklist
+
+- [ ] Set strong passwords for PostgreSQL and Redis
+- [ ] Configure proper ingress with TLS
+- [ ] Set appropriate resource limits
+- [ ] Configure persistent storage
+- [ ] Review [environment variables](/docs/install/configuration/environment-variables) for proper configuration
+- [ ] Choose appropriate [execution mode](/docs/install/architecture/workers) for your security requirements
+- [ ] Consider using a [separate workers](/docs/install/configuration/separate-workers) setup for better availability and security
+
+## Upgrading
+
+```bash
+# Update dependencies
+helm dependency update
+
+# Upgrade release
+helm upgrade activepieces deploy/activepieces-helm -f my-values.yaml
+
+# Check upgrade status
+kubectl rollout status deployment/activepieces
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Pod won't start**: Check logs with `kubectl logs deployment/activepieces`
+2. **Database connection**: Verify PostgreSQL credentials and connectivity
+3. **Frontend URL**: Ensure `frontendUrl` is accessible from external sources
+4. **Webhooks not working**: Check ingress configuration and DNS resolution
+
+### Useful Commands
+
+```bash
+# View logs
+kubectl logs deployment/activepieces -f
+
+# Port forward for testing
+kubectl port-forward svc/activepieces 4200:80 --namespace default
+
+# Get all resources
+kubectl get all --namespace default
+```
+
+## Environment Variables
+
+For a complete list of configuration options, see the [Environment Variables](/docs/install/configuration/environment-variables) documentation. Most environment variables can be configured through the Helm values file under the `activepieces` section.
+
+## Execution Modes
+
+Understanding execution modes is crucial for security and performance. See the [Workers & Sandboxing](/docs/install/architecture/workers) guide to choose the right mode for your deployment.
+
+## Uninstalling
+
+```bash
+helm uninstall activepieces
+
+# Clean up persistent volumes (optional)
+kubectl delete pvc -l app.kubernetes.io/instance=activepieces
+```

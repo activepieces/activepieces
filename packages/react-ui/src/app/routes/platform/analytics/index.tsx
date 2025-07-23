@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -6,20 +5,16 @@ import { Metrics } from '@/app/routes/platform/analytics/metrics';
 import { Reports } from '@/app/routes/platform/analytics/reports';
 import { TaskUsage } from '@/app/routes/platform/analytics/task-usage';
 import { Separator } from '@/components/ui/separator';
-import { analyticsApi } from '@/features/platform-admin/lib/analytics-api';
 import { platformHooks } from '@/hooks/platform-hooks';
+
+import { platformAnalyticsHooks } from './analytics-hooks';
+import { RefreshAnalyticsSection } from './refresh-analytics-button';
 
 export default function AnalyticsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['analytics'],
-    queryFn: analyticsApi.get,
-    staleTime: 60 * 1000,
-    enabled: platform.plan.analyticsEnabled,
-  });
-
+  const { data, isLoading } = platformAnalyticsHooks.useAnalytics();
   const isEnabled = platform.plan.analyticsEnabled;
+  const showRefreshButton = isEnabled && !isLoading;
   return (
     <LockedFeatureGuard
       featureKey="ANALYTICS"
@@ -30,6 +25,9 @@ export default function AnalyticsPage() {
       )}
     >
       <div className="flex flex-col w-full">
+        {showRefreshButton && (
+          <RefreshAnalyticsSection lastRefreshMs={data?.updated ?? ''} />
+        )}
         <div className="mt-8 flex gap-8 flex-col">
           <Metrics report={isLoading ? undefined : data} />
           <Separator />

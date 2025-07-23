@@ -3,7 +3,6 @@ import { t } from 'i18next';
 
 import { TableTitle } from '@/components/custom/table-title';
 import { Skeleton } from '@/components/ui/skeleton';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
@@ -11,7 +10,6 @@ import {
   SUPPORTED_AI_PROVIDERS,
   PlatformRole,
   ApFlagId,
-  ApEdition,
 } from '@activepieces/shared';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
@@ -29,18 +27,15 @@ export default function AIProvidersPage() {
     queryFn: () => aiProviderApi.list(),
   });
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { data: flags } = flagsHooks.useFlags();
-  const isCloudEdition = flags?.[ApFlagId.EDITION] === ApEdition.CLOUD;
-  const isCloudPlatform = flags?.[ApFlagId.IS_CLOUD_PLATFORM];
-  const allowWrite = isCloudEdition ? isCloudPlatform === true : true;
+  const { data: canConfigureAIProvider } = flagsHooks.useFlag(
+    ApFlagId.CAN_CONFIGURE_AI_PROVIDER,
+  );
+  const allowWrite = canConfigureAIProvider === true;
 
   const { mutate: deleteProvider, isPending: isDeleting } = useMutation({
     mutationFn: (provider: string) => aiProviderApi.delete(provider),
     onSuccess: () => {
       refetch();
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 

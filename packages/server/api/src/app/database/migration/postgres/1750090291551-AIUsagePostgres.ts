@@ -30,7 +30,7 @@ export class AIUsagePostgres1750090291551 implements MigrationInterface {
             ALTER TABLE "ai_usage" DROP CONSTRAINT "fk_ai_usage_project_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_ai_usage_project_created"
+            DROP INDEX "idx_ai_usage_project_created"
         `)
         await queryRunner.query(`
             DROP TABLE "ai_usage"

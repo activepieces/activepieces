@@ -2,7 +2,12 @@ import React from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
-import { flowStructureUtil, StepOutput, Action } from '@activepieces/shared';
+import {
+  flowStructureUtil,
+  StepOutput,
+  Action,
+  ActionType,
+} from '@activepieces/shared';
 
 import { FlowStepAgent } from './flow-step-agent';
 import { FlowStepInputOutput } from './flow-step-input-output';
@@ -28,7 +33,9 @@ const FlowStepIO = React.memo(({ stepDetails }: FlowStepIOProps) => {
     return null;
   }
 
-  const isAgentStep = stepUtils.isAgentPiece(selectedStep);
+  const isAgentStep =
+    selectedStep.type === ActionType.PIECE &&
+    stepUtils.isAgentPiece(selectedStep);
   if (isAgentStep) {
     return (
       <FlowStepAgent stepDetails={stepDetails} selectedStep={selectedStep} />

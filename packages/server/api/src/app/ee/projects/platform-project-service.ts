@@ -1,13 +1,8 @@
 import {
-    ApSubscriptionStatus,
-    MAXIMUM_ALLOWED_TASKS,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ApEdition,
-    ApEnvironment,
     assertNotNullOrUndefined,
     Cursor,
     ErrorCode,
@@ -26,16 +21,16 @@ import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
-import { flagService } from '../../flags/flag.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
+import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
-import { BillingEntityType, platformUsageService } from '../platform/platform-usage-service'
+import { platformUsageService } from '../platform/platform-usage-service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
 import { ProjectMemberEntity } from './project-members/project-member.entity'
 import { projectLimitsService } from './project-plan/project-plan.service'
@@ -64,17 +59,15 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     }: UpdateParams): Promise<ProjectWithLimits> {
         await projectService.update(projectId, request)
         if (!isNil(request.plan)) {
-            const isSubscribed = await isSubscribedInStripe(projectId, log)
             const project = await projectService.getOneOrThrow(projectId)
-            const isCustomerProject = isCustomerPlatform(project.platformId)
-            if (isSubscribed || isCustomerProject) {
-                const newTasks = getTasksLimit(isCustomerProject, request.plan.tasks)
+            const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
+            if (platform.plan.manageProjectsEnabled) {
                 await projectLimitsService(log).upsert(
                     {
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
-                        ...spreadIfDefined('tasks', newTasks),
-                        ...spreadIfDefined('aiCredits', request.plan.aiCredits),
+                        tasks: request.plan.tasks ?? null,
+                        aiCredits: request.plan.aiCredits ?? null,
                     },
                     projectId,
                 )
@@ -173,30 +166,6 @@ type GetAllParams = {
     limit: number
 }
 
-function getTasksLimit(isCustomerPlatform: boolean, limit: number | undefined) {
-    return isCustomerPlatform ? limit : Math.min(limit ?? MAXIMUM_ALLOWED_TASKS, MAXIMUM_ALLOWED_TASKS)
-}
-
-async function isSubscribedInStripe(projectId: ProjectId, log: FastifyBaseLogger): Promise<boolean> {
-    const isCloud = system.getEdition() === ApEdition.CLOUD
-    if (!isCloud) {
-        return false
-    }
-    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
-    if (environment === ApEnvironment.TESTING) {
-        return false
-    }
-    const project = await projectService.getOneOrThrow(projectId)
-    const status = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-    return status.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE
-}
-function isCustomerPlatform(platformId: string | undefined): boolean {
-    if (isNil(platformId)) {
-        return true
-    }
-    return !flagService.isCloudPlatform(platformId)
-}
-
 async function enrichProject(
     project: Project,
     log: FastifyBaseLogger,
@@ -221,15 +190,21 @@ async function enrichProject(
     })
 
 
+    const platformBilling = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
+
+    const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
+    const projectTasksUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'tasks', startDate, endDate })
+    const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'ai_credits', startDate, endDate })
     return {
         ...project,
         plan: await projectLimitsService(log).getPlanWithPlatformLimits(
             project.id,
         ),
-        usage: await platformUsageService(log).getTaskAndCreditUsage(
-            project.id,
-            BillingEntityType.PROJECT,
-        ),
+        usage: {
+            aiCredits: projectAICreditUsage,
+            tasks: projectTasksUsage,
+            nextLimitResetDate: endDate,
+        },
         analytics: {
             activeFlows,
             totalFlows,

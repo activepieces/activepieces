@@ -6,7 +6,6 @@ import { TodoDetails } from './todo-details';
 
 type TodoDetailsProps = {
   open: boolean;
-  agentId?: string;
   currentTodo: PopulatedTodo | null;
   onStatusChange: (status: Todo['status']) => void;
   onOpenChange: (open: boolean) => void;
@@ -15,7 +14,6 @@ type TodoDetailsProps = {
 
 function TodoDetailsDrawer({
   open,
-  agentId,
   currentTodo,
   onStatusChange,
   onOpenChange,
@@ -26,16 +24,15 @@ function TodoDetailsDrawer({
       dismissible={false}
       open={open}
       onOpenChange={onOpenChange}
-      className="w-2/3 max-w-4xl"
       onClose={onClose}
+      direction="right"
     >
-      <DrawerContent>
+      <DrawerContent className="w-2/3 max-w-4xl">
         <ScrollArea>
           <div className="px-6">
             <TodoDetails
               todoId={currentTodo?.id ?? null}
               onClose={onClose}
-              agentId={agentId}
               onStatusChange={onStatusChange}
             />
           </div>

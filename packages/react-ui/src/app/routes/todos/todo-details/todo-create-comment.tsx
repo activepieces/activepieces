@@ -10,8 +10,9 @@ type TodoCreateCommentProps = {
 export const TodoCreateComment = ({ todo }: TodoCreateCommentProps) => {
   const handleSubmitComment = async (content: string) => {
     if (todo.locked) return;
-    await todoActivityApi.create(todo.id, {
-      content,
+    await todoActivityApi.create({
+      todoId: todo.id,
+      content: content,
     });
   };
 

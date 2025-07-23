@@ -7,7 +7,8 @@ export const todoActivitiesHook = {
     return useQuery({
       queryKey: ['todos', todoId, 'comments'],
       queryFn: () =>
-        todoActivityApi.list(todoId!, {
+        todoActivityApi.list({
+          todoId: todoId!,
           cursor: undefined,
           limit: 100,
           type: undefined,

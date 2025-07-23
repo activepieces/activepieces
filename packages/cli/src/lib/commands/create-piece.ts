@@ -156,24 +156,11 @@ const updateProjectJsonConfig = async (
     projectJson
   );
 };
-const updateEslintFile = async (pieceName: string, pieceType: string) => {
-  const eslintFile = await readPackageEslint(
-    `packages/pieces/${pieceType}/${pieceName}`
-  );
-  eslintFile.overrides.splice(
-    eslintFile.overrides.findIndex((rule: any) => rule.files[0] == '*.json'),
-    1
-  );
-  await writePackageEslint(
-    `packages/pieces/${pieceType}/${pieceName}`,
-    eslintFile
-  );
-};
+
 const setupGeneratedLibrary = async (pieceName: string, pieceType: string) => {
   await removeUnusedFiles(pieceName, pieceType);
   await generateIndexTsFile(pieceName, pieceType);
   await updateProjectJsonConfig(pieceName, pieceType);
-  await updateEslintFile(pieceName, pieceType);
 };
 
 export const createPiece = async (

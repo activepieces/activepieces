@@ -9,6 +9,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
+import { ProjectLockedAlert } from '@/components/custom/project-locked-alert';
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -86,7 +87,7 @@ export const CustomTooltipLink = ({
     >
       <div
         className={cn(
-          'relative flex items-center gap-1 justify-between hover:bg-accent rounded-lg transition-colors',
+          'relative flex items-center gap-1 justify-between hover:bg-sidebar-accent rounded-sm transition-colors',
           extraClasses,
           isLinkActive && '!bg-primary/10 !text-primary',
         )}
@@ -146,10 +147,10 @@ export type SidebarLink = {
   name?: string;
   icon?: React.ReactNode;
   type: 'link';
+  show: boolean;
   notification?: boolean;
   locked?: boolean;
   hasPermission?: boolean;
-  showInEmbed?: boolean;
   isSubItem: boolean;
   isActive?: (pathname: string) => boolean;
   separatorBefore?: boolean;
@@ -178,6 +179,7 @@ export function SidebarComponent({
 }: SidebarProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+
   const location = useLocation();
   const { checkAccess } = useAuthorization();
 
@@ -250,12 +252,13 @@ export function SidebarComponent({
           </Sidebar>
         )}
         <div
-          className={cn('flex-1 px-10 py-6', {
+          className={cn('px-10 py-6 w-full', {
             'py-3': hideHeader,
             'px-0': removeGutters,
             'pb-0': removeBottomPadding,
           })}
         >
+          <ProjectLockedAlert />
           {children}
         </div>
       </div>
@@ -308,7 +311,7 @@ function ApSidebarMenuGroup(item: SidebarGroup) {
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="py-0 gap-2  rounded-lg">
+                <SidebarMenuButton>
                   {item.icon && <item.icon className="size-4" />}
                   <span>{item.label}</span>
                   <SidebarMenuAction asChild>
@@ -318,22 +321,25 @@ function ApSidebarMenuGroup(item: SidebarGroup) {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub>
-                  {item.items.map((link, index) => (
-                    <SidebarMenuSubItem key={link.label}>
-                      <SidebarMenuButton asChild>
-                        <CustomTooltipLink
-                          to={link.to}
-                          label={link.label}
-                          Icon={link.icon}
-                          key={index}
-                          notification={link.notification}
-                          locked={link.locked}
-                          isActive={link.isActive}
-                          isSubItem={link.isSubItem}
-                        />
-                      </SidebarMenuButton>
-                    </SidebarMenuSubItem>
-                  ))}
+                  {item.items.map(
+                    (link, index) =>
+                      link.show && (
+                        <SidebarMenuSubItem key={link.label}>
+                          <SidebarMenuButton asChild>
+                            <CustomTooltipLink
+                              to={link.to}
+                              label={link.label}
+                              Icon={link.icon}
+                              key={index}
+                              notification={link.notification}
+                              locked={link.locked}
+                              isActive={link.isActive}
+                              isSubItem={link.isSubItem}
+                            />
+                          </SidebarMenuButton>
+                        </SidebarMenuSubItem>
+                      ),
+                  )}
                 </SidebarMenuSub>
               </CollapsibleContent>
             </SidebarMenuItem>

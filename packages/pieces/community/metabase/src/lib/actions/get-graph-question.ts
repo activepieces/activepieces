@@ -86,16 +86,25 @@ export const getGraphQuestion = createAction({
       // we wait so the graph can load
       await page.waitForTimeout(propsValue.waitTime * 1000);
 
-      const screenshotBuffer = await page.screenshot({
-        path: graphName,
-        type: 'png',
-        clip: {
-          x: 0,
-          y: 0,
-          width: 1600,
-          height: 1120, // so it screenshots only the graph
-        },
-      });
+      const mainElement = await page.$('main');
+      let screenshotBuffer;
+      if (mainElement) {
+        screenshotBuffer = await mainElement.screenshot({
+          path: graphName,
+          type: 'png',
+        });
+      } else {
+        screenshotBuffer = await page.screenshot({
+          path: graphName,
+          type: 'png',
+          clip: {
+            x: 0,
+            y: 0,
+            width: 1600,
+            height: 1120, // so it doesn't screenshot the metabase banner
+          },
+        });
+      }
 
       const fileUrl = await files.write({
         fileName: graphName,

@@ -116,7 +116,6 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
                     pieces: [],
                     codeSteps: codes,
                     customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
-                    runEnvironment: operation.runEnvironment,
                 })
                 break
             }
@@ -132,6 +131,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         })
 
         const input: ExecuteStepOperation = {
+            requestId: operation.requestId,
             flowVersion: lockedFlowVersion,
             stepName: operation.stepName,
             projectId: operation.projectId,
@@ -202,7 +202,6 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
         pieces,
         codeSteps,
         customPiecesPath: executionFiles(log).getCustomPiecesPath({ projectId }),
-        runEnvironment,
     })
 }
 

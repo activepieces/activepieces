@@ -1,5 +1,3 @@
-'use client';
-
 import {
   CaretSortIcon,
   ChevronDownIcon,
@@ -10,8 +8,6 @@ import { Check } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
-
-import { LoadingSpinner } from './spinner';
 
 const Select = SelectPrimitive.Root;
 
@@ -26,7 +22,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'flex h-10 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none  disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
+      'flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none  disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
       className,
     )}
     {...props}
@@ -139,25 +135,6 @@ const SelectItem = React.forwardRef<
   </SelectPrimitive.Item>
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;
-
-type SelectItemProps = {
-  className?: string;
-};
-const SelectLoader = React.forwardRef<HTMLDivElement, SelectItemProps>(
-  ({ className }, ref) => (
-    <SelectItem
-      key="none"
-      disabled={true}
-      ref={ref}
-      value="random-value"
-      className={cn('flex items-center justify-center w-full', className)}
-    >
-      <LoadingSpinner />
-    </SelectItem>
-  ),
-);
-SelectLoader.displayName = 'SelectLoader';
-export { SelectLoader };
 
 const SelectAction = React.forwardRef<
   HTMLDivElement,

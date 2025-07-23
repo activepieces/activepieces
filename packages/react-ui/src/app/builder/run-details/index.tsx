@@ -26,11 +26,19 @@ import {
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { SidebarHeader } from '../sidebar-header';
 
-import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
 import { FlowStepIO } from './flow-step-io';
+import { FlowStepDetailsCardItem } from './run-step-card-item';
 
 function getMessage(run: FlowRun | null, retentionDays: number | null) {
-  if (!run || run.status === FlowRunStatus.RUNNING) return null;
+  if (
+    !run ||
+    [
+      FlowRunStatus.RUNNING,
+      FlowRunStatus.QUEUED,
+      FlowRunStatus.SUCCEEDED,
+    ].includes(run.status)
+  )
+    return null;
   if ([FlowRunStatus.INTERNAL_ERROR].includes(run.status)) {
     return t('There are no logs captured for this run.');
   }

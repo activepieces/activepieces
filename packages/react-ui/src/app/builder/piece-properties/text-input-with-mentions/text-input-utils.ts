@@ -1,7 +1,7 @@
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
 
-import { StepMetadata } from '@/features/pieces/lib/types';
+import { StepMetadata } from '@/lib/types';
 import {
   Action,
   Trigger,

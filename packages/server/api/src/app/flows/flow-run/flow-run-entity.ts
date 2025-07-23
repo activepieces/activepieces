@@ -41,10 +41,6 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         status: {
             type: String,
         },
-        terminationReason: {
-            type: String,
-            nullable: true,
-        },
         tags: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),

@@ -1,4 +1,4 @@
-import { OPENSOURCE_PLAN } from '@activepieces/ee-shared'
+import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -9,6 +9,7 @@ import {
     Platform,
     PlatformId,
     PlatformPlanLimits,
+    PlatformUsage,
     PlatformWithoutSensitiveData,
     spreadIfDefined,
     UpdatePlatformRequestBody,
@@ -16,21 +17,18 @@ import {
 } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
+import { platformUsageService } from '../ee/platform/platform-usage-service'
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 
-const repo = repoFactory<Platform>(PlatformEntity)
+export const platformRepo = repoFactory<Platform>(PlatformEntity)
 
 
 
 export const platformService = {
-    async hasAnyPlatforms(): Promise<boolean> {
-        const count = await repo().count()
-        return count > 0
-    },
     async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
         const users = await userService.getByIdentityId({ identityId: params.identityId })
 
@@ -76,7 +74,7 @@ export const platformService = {
             pinnedPieces: [],
         }
 
-        const savedPlatform = await repo().save(newPlatform)
+        const savedPlatform = await platformRepo().save(newPlatform)
 
         await userService.addOwnerToPlatform({
             id: ownerId,
@@ -87,10 +85,10 @@ export const platformService = {
     },
 
     async getAll(): Promise<Platform[]> {
-        return repo().find()
+        return platformRepo().find()
     },
     async getOldestPlatform(): Promise<Platform | null> {
-        return repo().findOne({
+        return platformRepo().findOne({
             where: {},
             order: {
                 created: 'ASC',
@@ -134,11 +132,11 @@ export const platformService = {
                 ...params.plan,
             })
         }
-        return repo().save(updatedPlatform)
+        return platformRepo().save(updatedPlatform)
     },
 
     async getOneOrThrow(id: PlatformId): Promise<Platform> {
-        const platform = await repo().findOneBy({
+        const platform = await platformRepo().findOneBy({
             id,
         })
 
@@ -160,30 +158,44 @@ export const platformService = {
         if (isNil(platform)) {
             return null
         }
-        return enrichPlatformWithPlan(platform)
+        return {
+            ...platform,
+            usage: await platformUsageService(system.globalLogger()).getAllPlatformUsage(platform.id),
+            plan: await getPlan(platform),
+        }
     },
     async getOneWithPlanOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
-        return enrichPlatformWithPlan(platform)
+        return {
+            ...platform,
+            usage: await getUsage(platform),
+            plan: await getPlan(platform),
+        }
     },
     async getOne(id: PlatformId): Promise<Platform | null> {
-        return repo().findOneBy({
+        return platformRepo().findOneBy({
             id,
         })
     },
 }
 
-async function enrichPlatformWithPlan(platform: Platform): Promise<PlatformWithoutSensitiveData> {
-    const plan = await getPlan(platform)
-    return {
-        ...platform,
-        plan,
+
+async function getUsage(platform: Platform): Promise<PlatformUsage | undefined> {
+    const edition = system.getEdition()
+    if (edition === ApEdition.COMMUNITY) {
+        return undefined
     }
+    return platformUsageService(system.globalLogger()).getAllPlatformUsage(platform.id)
 }
+
 async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
-        return OPENSOURCE_PLAN
+        return {
+            ...OPEN_SOURCE_PLAN,
+            stripeSubscriptionStartDate: 0,
+            stripeSubscriptionEndDate: 0,
+        }
     }
     return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
 }

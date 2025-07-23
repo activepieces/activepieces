@@ -1,4 +1,4 @@
-import { piecesHooks } from '../lib/pieces-hook';
+import { piecesHooks } from '../lib/pieces-hooks';
 
 import { PieceIcon } from './piece-icon';
 

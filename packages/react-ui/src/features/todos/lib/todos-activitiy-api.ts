@@ -8,16 +8,13 @@ import {
 } from '@activepieces/shared';
 
 export const todoActivityApi = {
-  async list(todoId: string, request: ListTodoActivitiesQueryParams) {
+  async list(request: ListTodoActivitiesQueryParams) {
     return await api.get<SeekPage<TodoActivityWithUser>>(
-      `/v1/todos/${todoId}/activities`,
+      `/v1/todo-activities`,
       request,
     );
   },
-  async create(todoId: string, requestBody: CreateTodoActivityRequestBody) {
-    return await api.post<TodoActivity>(
-      `/v1/todos/${todoId}/activities`,
-      requestBody,
-    );
+  async create(requestBody: CreateTodoActivityRequestBody) {
+    return await api.post<TodoActivity>(`/v1/todo-activities`, requestBody);
   },
 };

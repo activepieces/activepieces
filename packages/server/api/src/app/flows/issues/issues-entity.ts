@@ -1,5 +1,6 @@
 import {
     Flow,
+    FlowVersion,
     Issue,
     Project,
 } from '@activepieces/shared'
@@ -13,6 +14,7 @@ import {
 
 type IssueSchema = Issue & {
     project: Project
+    flowVersion: FlowVersion
     flow: Flow
 }
 
@@ -31,6 +33,9 @@ export const IssueEntity = new EntitySchema<IssueSchema>({
         },
         lastOccurrence: {
             type: TIMESTAMP_COLUMN_TYPE,
+        },
+        flowVersionId: {
+            ...ApIdSchema,
         },
         stepName: {
             type: String,
@@ -54,6 +59,12 @@ export const IssueEntity = new EntitySchema<IssueSchema>({
                 referencedColumnName: 'id',
                 foreignKeyConstraintName: 'fk_issue_flow_id',
             },
+        },
+        flowVersion: {
+            type: 'many-to-one',
+            target: 'flow_version',
+            cascade: true,
+            onDelete: 'CASCADE',
         },
         project: {
             type: 'many-to-one',

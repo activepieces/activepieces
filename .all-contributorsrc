@@ -1886,6 +1886,96 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "marapper",
+      "name": "Sergey Bondar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1397054?v=4",
+      "profile": "https://github.com/marapper",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "yusuf-cirak",
+      "name": "Yusuf Çırak",
+      "avatar_url": "https://avatars.githubusercontent.com/u/81169996?v=4",
+      "profile": "https://yusufcirak.net",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "ezhil56x",
+      "name": "Ezhil Shanmugham",
+      "avatar_url": "https://avatars.githubusercontent.com/u/103899034?v=4",
+      "profile": "https://ezhil.dev",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "sunorains",
+      "name": "Anderson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/211304820?v=4",
+      "profile": "https://github.com/sunorains",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "calladodan",
+      "name": "Daniel Callado",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7246416?v=4",
+      "profile": "https://github.com/calladodan",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "sparkybug",
+      "name": "Ukaegbu Osinachi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52334088?v=4",
+      "profile": "https://github.com/sparkybug",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "MAVRICK-1",
+      "name": "Rishi Mondal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/146999057?v=4",
+      "profile": "https://mavrick-portfolio.vercel.app/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Cloudieunnie",
+      "name": "Cloudieunnie",
+      "avatar_url": "https://avatars.githubusercontent.com/u/178718590?v=4",
+      "profile": "https://github.com/Cloudieunnie",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "balwant1707",
+      "name": "Balwant Singh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17769387?v=4",
+      "profile": "https://github.com/balwant1707",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "ravikiranvm",
+      "name": "Ravi Kiran Vallamkonda",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36404296?v=4",
+      "profile": "https://github.com/ravikiranvm",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

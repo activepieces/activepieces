@@ -21,7 +21,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { RunsTable } from '@/features/flow-runs/components/runs-table';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
@@ -106,7 +105,7 @@ const FlowsPage = () => {
           onValueChange={(v) => handleTabChange(v as FlowsPageTabs)}
           className="w-full"
         >
-          {!embedState.hideSideNav ? (
+          {!embedState.hideFlowsPageNavbar ? (
             <TabsList variant="outline">
               <TabsTrigger value={FlowsPageTabs.FLOWS} variant="outline">
                 <Workflow className="h-4 w-4 mr-2" />
@@ -182,7 +181,6 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
     onSuccess: (flow) => {
       navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
     },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
   return (
@@ -195,7 +193,6 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
           <Button
             disabled={!doesUserHavePermissionToWriteFlow}
             variant="default"
-            size="sm"
             loading={isCreateFlowPending}
           >
             <span>{t('Create flow')}</span>

@@ -6,10 +6,8 @@ import { join } from 'node:path';
 import { checkIfFileExists, makeFolderRecursive } from '../utils/files';
 import {
     assertPieceExists,
-  customPiecePath,
   displayNameToCamelCase,
   displayNameToKebabCase, findPiece,
-  findPieces,
 } from '../utils/piece-utils';
 
 function createTriggerTemplate(displayName: string, description: string, technique: string) {

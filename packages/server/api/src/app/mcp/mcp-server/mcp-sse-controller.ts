@@ -15,7 +15,7 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
         const mcp = await mcpService(req.log).getByToken({
             token,
         })
-        await handleSSERequest(reply, mcp.id, req.log)
+        await handleSSERequest(reply, mcp.id, mcp.projectId, req.log)
     })
 
     app.post('/:id/sse', SSERequest, async (req, reply) => {
@@ -24,7 +24,7 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
             token,
         })
 
-        await handleStreamableHttpRequest(req, reply, mcp.id, req.log)
+        await handleStreamableHttpRequest(req, reply, mcp.id, mcp.projectId, req.log)
     })
 
     app.post('/messages', MessagesRequest, async (req, reply) => {
@@ -43,12 +43,14 @@ async function handleStreamableHttpRequest(
     req: FastifyRequest,
     reply: FastifyReply,
     mcpId: string,
+    projectId: string,
     logger: FastifyBaseLogger,
 ): Promise<void> {
     try {
         const { server } = await createMcpServer({
             mcpId,
             logger,
+            projectId,
         })
 
         const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
@@ -82,11 +84,13 @@ async function handleStreamableHttpRequest(
 async function handleSSERequest(
     reply: FastifyReply,
     mcpId: string,
+    projectId: string,
     logger: FastifyBaseLogger,
 ): Promise<void> {
     const transport = new SSEServerTransport('/api/v1/mcp/messages', reply.raw)
     const { server } = await createMcpServer({
         mcpId,
+        projectId,
         logger,
     })
 

@@ -7,8 +7,8 @@ export enum FlowRunStatus {
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     INTERNAL_ERROR = 'INTERNAL_ERROR',
     PAUSED = 'PAUSED',
+    QUEUED = 'QUEUED',
     RUNNING = 'RUNNING',
-    STOPPED = 'STOPPED',
     SUCCEEDED = 'SUCCEEDED',
     MEMORY_LIMIT_EXCEEDED = 'MEMORY_LIMIT_EXCEEDED',
     TIMEOUT = 'TIMEOUT',
@@ -88,7 +88,7 @@ export const FlowRunResponse = Type.Union([
             Type.Literal(FlowRunStatus.TIMEOUT),
             Type.Literal(FlowRunStatus.INTERNAL_ERROR),
             Type.Literal(FlowRunStatus.MEMORY_LIMIT_EXCEEDED),
-            Type.Literal(FlowRunStatus.STOPPED),
+            Type.Literal(FlowRunStatus.QUEUED),
         ]),
     }),
 ])
@@ -97,7 +97,6 @@ export type FlowRunResponse = Static<typeof FlowRunResponse>
 
 export const isFlowUserTerminalState = (status: FlowRunStatus): boolean => {
     return status === FlowRunStatus.SUCCEEDED
-        || status === FlowRunStatus.STOPPED
         || status === FlowRunStatus.TIMEOUT
         || status === FlowRunStatus.FAILED
         || status === FlowRunStatus.QUOTA_EXCEEDED

@@ -39,7 +39,7 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
           }}
           readonly={readonly}
           value={displayName}
-          tooltipContent={''}
+          tooltipContent={readonly ? '' : t('Edit Step Name')}
           isEditing={isEditingStepOrBranchName}
           setIsEditing={setIsEditingStepOrBranchName}
         />

@@ -22,7 +22,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { cn, localesMap } from '@/lib/utils';
 import { ApFlagId, LocalesEnum } from '@activepieces/shared';
 
@@ -48,10 +47,6 @@ export function LanguageSwitcher() {
     },
     onSuccess: () => {
       setIsOpen(false);
-    },
-    onError: (error) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
 
@@ -24,7 +24,6 @@ const FromSchema = Type.Object({
   logoUrl: Type.String(),
   iconUrl: Type.String(),
   faviconUrl: Type.String(),
-  language: Type.String(),
   color: Type.String(),
 });
 
@@ -67,11 +66,8 @@ export const AppearanceSection = () => {
       });
       form.reset(form.getValues());
     },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
   });
-
+  console.log(form.formState.isValid, form.getValues());
   return (
     <>
       <Separator className="my-2" />

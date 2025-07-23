@@ -26,6 +26,7 @@ import {
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 
+import { useBuilderStateContext } from '../../builder-hooks';
 import {
   copySelectedNodes,
   deleteSelectedNodes,
@@ -56,15 +57,25 @@ const ShortcutWrapper = ({
 };
 
 export const CanvasContextMenuContent = ({
-  selectedNodes,
-  applyOperation,
-  selectedStep,
-  flowVersion,
-  exitStepSettings,
-  readonly,
-  setPieceSelectorStep,
   contextMenuType,
 }: CanvasContextMenuProps) => {
+  const [
+    selectedNodes,
+    applyOperation,
+    selectedStep,
+    flowVersion,
+    exitStepSettings,
+    readonly,
+    setOpenedPieceSelectorStepNameOrAddButtonId,
+  ] = useBuilderStateContext((state) => [
+    state.selectedNodes,
+    state.applyOperation,
+    state.selectedStep,
+    state.flowVersion,
+    state.exitStepSettings,
+    state.readonly,
+    state.setOpenedPieceSelectorStepNameOrAddButtonId,
+  ]);
   const disabled = selectedNodes.length === 0;
   const areAllStepsSkipped = selectedNodes.every(
     (node) =>
@@ -130,7 +141,7 @@ export const CanvasContextMenuContent = ({
         <ContextMenuItem
           disabled={disabled}
           onClick={() => {
-            setPieceSelectorStep(selectedNodes[0]);
+            setOpenedPieceSelectorStepNameOrAddButtonId(selectedNodes[0]);
           }}
           className="flex items-center gap-2"
         >

@@ -10,12 +10,12 @@ import { xeroCreateInvoice } from './lib/actions/create-invoice';
 
 export const xeroAuth = PieceAuth.OAuth2({
   description: `
-  1. Log in to Xero
-  2. Go to (Developer portal)[https://developer.xero.com/app/manage/]
-  3. Click on the App you want to integrate
-  4. On the left, click on \`Configuration\`
-  5. Enter your \`redirect url\`
-  6. Copy the \`Client Id\` and \`Client Secret\`
+  1. Log in to Xero.
+  2. Go to [Developer portal](https://developer.xero.com/app/manage/).
+  3. Click on the App you want to integrate.
+  4. On the left, click on \`Configuration\`.
+  5. Enter your \`redirect url\`.
+  6. Copy the \`Client Id\` and \`Client Secret\`.
   `,
   authUrl: 'https://login.xero.com/identity/connect/authorize',
   tokenUrl: 'https://identity.xero.com/connect/token',
@@ -29,7 +29,9 @@ export const xeroAuth = PieceAuth.OAuth2({
     'accounting.transactions',
     'accounting.reports.read',
     'accounting.journals.read',
-    'accounting.budgets.read'
+    'accounting.budgets.read',
+    'accounting.attachments',
+    'accounting.settings',
   ],
 });
 

@@ -100,9 +100,11 @@ const EditableText = ({
           {value}
         </div>
       </TooltipTrigger>
-      <TooltipContent className="font-normal z-50" side="bottom">
-        {tooltipContent}
-      </TooltipContent>
+      {tooltipContent && (
+        <TooltipContent className="font-normal z-50" side="bottom">
+          {tooltipContent}
+        </TooltipContent>
+      )}
     </Tooltip>
   ) : (
     <div
