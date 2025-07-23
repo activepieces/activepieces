@@ -10,7 +10,7 @@ export const pdfmonkeyAuth = PieceAuth.SecretText({
     validate: async ({ auth }) => {
         if (auth) {
             try {
-                await makeRequest(auth as string, HttpMethod.GET, '/teams', {});
+                await makeRequest(auth as string, HttpMethod.GET, '/documents', {});
                 return {
                     valid: true,
                 }

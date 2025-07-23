@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { pdfmonkeyAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { documentIdDropdown } from '../common/props';
 
 export const findDocument = createAction({
   auth: pdfmonkeyAuth,
@@ -9,18 +10,14 @@ export const findDocument = createAction({
   displayName: 'Find Document',
   description: '',
   props: {
-    document_card_id: Property.ShortText({
-      displayName: 'Document Card ID',
-      description: 'The ID of the document card to retrieve',
-      required: true,
-    }),
+    document_id: documentIdDropdown,
   },
   async run({ auth, propsValue }) {
-    const { document_card_id } = propsValue;
+    const { document_id } = propsValue;
     return await makeRequest(
       auth as string,
       HttpMethod.GET,
-      `/document_cards/${document_card_id}`
+      `/documents/${document_id}`
     );
   },
 });

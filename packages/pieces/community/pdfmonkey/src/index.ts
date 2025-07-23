@@ -4,6 +4,7 @@ import { pdfmonkeyAuth } from "./lib/common/auth";
 import { generateDocument } from "./lib/actions/generate-document";
 import { deleteDocument } from "./lib/actions/delete-document";
 import { findDocument } from "./lib/actions/find-document";
+import { documentGenerated } from "./lib/triggers/document-generated";
 
 export const pdfmonkey = createPiece({
   displayName: "Pdfmonkey",
@@ -16,5 +17,5 @@ export const pdfmonkey = createPiece({
     deleteDocument,
     findDocument
   ],
-  triggers: [],
+  triggers: [documentGenerated],
 });

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { pdfmonkeyAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { documenttemplateidDropdown } from '../common/props';
 
 export const generateDocument = createAction({
   auth: pdfmonkeyAuth,
@@ -9,11 +10,7 @@ export const generateDocument = createAction({
   displayName: 'Generate Document',
   description: '',
   props: {
-    document_template_id: Property.ShortText({
-      displayName: 'Document Template ID',
-      description: 'ID of your PDFMonkey template',
-      required: true,
-    }),
+    document_template_id: documenttemplateidDropdown,
     payload: Property.Json({
       displayName: 'Payload',
       description: 'Data to fill the template',
@@ -24,11 +21,23 @@ export const generateDocument = createAction({
       description: 'Meta information (e.g., filename, clientRef)',
       required: false,
     }),
-    status: Property.ShortText({
+    status: Property.StaticDropdown({
       displayName: 'Status',
-      description: 'Document status (e.g., pending)',
+      description: 'Document status (e.g., draft, pending)',
       required: false,
-      defaultValue: 'pending',
+      defaultValue: 'draft',
+      options: {
+        options: [
+          {
+            label: 'Draft',
+            value: 'draft',
+          },
+          {
+            label: 'Pending',
+            value: 'pending',
+          },
+        ],
+      },
     }),
   },
   async run({ auth, propsValue }) {
@@ -37,17 +46,21 @@ export const generateDocument = createAction({
     const body = {
       document: {
         document_template_id,
-        status: status || 'pending',
+        status,
         payload,
         ...(meta ? { meta } : {}),
       },
     };
-
-    return await makeRequest(
+    const response = await makeRequest(
       auth as string,
       HttpMethod.POST,
       '/documents',
       body
     );
+    return {
+      status: 'success',
+      message: 'Document generated successfully',
+      data: response.document,
+    };
   },
 });

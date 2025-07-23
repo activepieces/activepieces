@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { pdfmonkeyAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { documentIdDropdown } from '../common/props';
 
 export const deleteDocument = createAction({
   auth: pdfmonkeyAuth,
@@ -9,18 +10,22 @@ export const deleteDocument = createAction({
   displayName: 'Delete Document',
   description: '',
   props: {
-    document_id: Property.ShortText({
-      displayName: 'Document ID',
-      description: 'The ID of the document to delete',
-      required: true,
-    }),
+    document_id: documentIdDropdown,
   },
   async run({ auth, propsValue }) {
     const { document_id } = propsValue;
-    return await makeRequest(
+    if (!document_id) {
+      throw new Error('Document ID is required');
+    }
+    const response = await makeRequest(
       auth as string,
       HttpMethod.DELETE,
       `/documents/${document_id}`
     );
+    return {
+      status: 'success',
+      message: 'Document deleted successfully',
+      data: response,
+    };
   },
 });
