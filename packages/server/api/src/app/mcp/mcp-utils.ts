@@ -19,7 +19,7 @@ IMPORTANT:
 - For dropdown, multi-select dropdown, and static dropdown properties, YOU MUST SELECT VALUES FROM THE PROVIDED OPTIONS ARRAY ONLY.
 - For array properties, YOU MUST SELECT VALUES FROM THE PROVIDED OPTIONS ARRAY ONLY.
 - For dynamic properties, YOU MUST SELECT VALUES FROM THE PROVIDED OPTIONS ARRAY ONLY.
-- THE OPTIONS ARRAY WILL BE [{ label: string, value: string | number | object }]. YOU MUST SELECT THE value FIELD FROM THE OPTION OBJECT.
+- THE OPTIONS ARRAY WILL BE [{ label: string, value: string | object }]. YOU MUST SELECT THE value FIELD FROM THE OPTION OBJECT.
 - For DATE_TIME properties, return date strings in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
 - Use actual values from the user instructions to determine the correct value for each property, either as a hint for selecting options from dropdowns or to fill in the property if possible.
 - Must include all required properties, even if the user does not provide a value. If a required field is missing, look up the correct value or provide a reasonable default—otherwise, the task may fail.
