@@ -1,41 +1,35 @@
-import { createAction, Property, HttpMethod } from '@activepieces/pieces-framework';
-import { systemeioAuth } from '../../';
-import { SystemeioApiClient } from '../auth';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { SystemeioApiClient } from '../api-client';
+import { systemeioAuth } from '../auth';
 
-export const systemeioCreateContact = createAction({
+export const createContact = createAction({
   auth: systemeioAuth,
   name: 'create_contact',
   displayName: 'Create Contact',
-  description: 'Create a new contact with email, name, and optional tags',
+  description: 'Create a new contact in systeme.io',
   props: {
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'The email address of the contact',
       required: true,
     }),
     name: Property.ShortText({
       displayName: 'Name',
-      description: 'The name of the contact',
       required: false,
     }),
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'List of tags to assign (e.g., ["VIP", "Webinar Attendee"])',
+      description: 'Optional tags to assign to the contact',
       required: false,
     }),
   },
-  async run(context) {
-    const { email, name, tags } = context.propsValue;
-    const client = new SystemeioApiClient(context.auth as string);
-    return await client.request({
-      method: HttpMethod.POST,
-      path: '/contacts',
-      contentType: 'application/json',
-      body: {
-        email,
-        name,
-        tags: tags || [],
-      },
-    });
+  async run({ auth, propsValue }) {
+    const client = new SystemeioApiClient(auth);
+    const data: any = {
+      email: propsValue.email,
+    };
+    if (propsValue.name) data.name = propsValue.name;
+    if (propsValue.tags) data.tags = propsValue.tags;
+    const response = await client.postContact(data);
+    return response;
   },
 }); 

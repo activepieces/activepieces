@@ -1,52 +1,39 @@
-import { createAction, Property, HttpMethod } from '@activepieces/pieces-framework';
-import { systemeioAuth } from '../../';
-import { SystemeioApiClient } from '../auth';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { SystemeioApiClient } from '../api-client';
+import { systemeioAuth } from '../auth';
 
-export const systemeioUpdateContact = createAction({
+export const updateContact = createAction({
   auth: systemeioAuth,
   name: 'update_contact',
   displayName: 'Update Contact',
-  description: 'Update fields of an existing contact',
+  description: 'Update fields (name, phone, custom fields) of an existing contact.',
   props: {
     contactId: Property.ShortText({
       displayName: 'Contact ID',
-      description: 'The ID of the contact to update',
       required: true,
+      description: 'The ID of the contact to update.'
     }),
     name: Property.ShortText({
       displayName: 'Name',
-      description: 'Update the contact’s name',
       required: false,
     }),
     phone: Property.ShortText({
-      displayName: 'Phone Number',
-      description: 'Update the contact’s phone number',
+      displayName: 'Phone',
       required: false,
     }),
-    customFields: Property.Array({
+    customFields: Property.Object({
       displayName: 'Custom Fields',
-      description: 'Custom fields as an array of {slug, value} objects',
       required: false,
-    }),
+      description: 'Key-value pairs for custom fields.'
+    })
   },
-  async run(context) {
-    const { contactId, name, phone, customFields } = context.propsValue;
-    const fields = customFields ? customFields.map((field: any) => ({
-      slug: field.slug,
-      value: field.value,
-    })) : [];
-    if (phone !== undefined) {
-      fields.push({ slug: 'phone_number', value: phone });
-    }
-    const client = new SystemeioApiClient(context.auth as string);
-    return await client.request({
-      method: HttpMethod.PATCH,
-      path: `/contacts/${contactId}`,
-      contentType: 'application/merge-patch+json',
-      body: {
-        name,
-        fields,
-      },
-    });
+  async run({ auth, propsValue }) {
+    const client = new SystemeioApiClient(auth);
+    const data: any = {};
+    if (propsValue.name) data.name = propsValue.name;
+    if (propsValue.phone) data.phone = propsValue.phone;
+    if (propsValue.customFields) data.customFields = propsValue.customFields;
+    const response = await client.updateContact(propsValue.contactId, data);
+    return response;
   },
 }); 

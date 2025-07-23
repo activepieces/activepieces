@@ -1,27 +1,22 @@
-import { createAction, Property, HttpMethod } from '@activepieces/pieces-framework';
-import { systemeioAuth } from '../../';
-import { SystemeioApiClient } from '../auth';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { SystemeioApiClient } from '../api-client';
+import { systemeioAuth } from '../auth';
 
-export const systemeioFindContactByEmail = createAction({
+export const findContactByEmail = createAction({
   auth: systemeioAuth,
   name: 'find_contact_by_email',
   displayName: 'Find Contact by Email',
-  description: 'Locate an existing contact by email address',
+  description: 'Locate an existing contact by email address.',
   props: {
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'The email address to search for',
       required: true,
-    }),
+      description: 'The email address to search for.'
+    })
   },
-  async run(context) {
-    const { email } = context.propsValue;
-    const client = new SystemeioApiClient(context.auth as string);
-    const result = await client.request({
-      method: HttpMethod.GET,
-      path: '/contacts',
-      queryParams: { email, limit: '100', order: 'desc' },
-    });
-    return result.items;
+  async run({ auth, propsValue }) {
+    const client = new SystemeioApiClient(auth);
+    const response = await client.findContactByEmail(propsValue.email);
+    return response;
   },
 }); 

@@ -1,34 +1,33 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { systemeioCreateContact } from './lib/actions/create-contact';
-import { systemeioUpdateContact } from './lib/actions/update-contact';
-import { systemeioAddTagToContact } from './lib/actions/add-tag-to-contact';
-import { systemeioRemoveTagFromContact } from './lib/actions/remove-tag-from-contact';
-import { systemeioFindContactByEmail } from './lib/actions/find-contact-by-email';
-import { systemeioNewContactTrigger } from './lib/triggers/new-contact';
-import { systemeioNewSaleTrigger } from './lib/triggers/new-sale';
-import { systemeioNewTagAddedTrigger } from './lib/triggers/new-tag-added';
-
-export const systemeioAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: 'Enter your Systeme.io API Key from the dashboard (Profile > Public API keys)',
-  required: true,
-});
+// Entry point for the Systeme.io piece
+import { createPiece } from '@activepieces/pieces-framework';
+import { createContact } from './lib/actions/create-contact';
+import { updateContact } from './lib/actions/update-contact';
+import { addTagToContact } from './lib/actions/add-tag-to-contact';
+import { removeTagFromContact } from './lib/actions/remove-tag-from-contact';
+import { findContactByEmail } from './lib/actions/find-contact-by-email';
+import { systemeioAuth } from './lib/auth';
+import { newContact } from './lib/triggers/new-contact';
+import { newSale } from './lib/triggers/new-sale';
+import { newTagAdded } from './lib/triggers/new-tag-added';
 
 export const systemeio = createPiece({
   displayName: 'Systeme.io',
-  logoUrl: 'https://cdn.activepieces.com/pieces/systemeio.png',
+  description: 'All-in-one marketing platform integration for Activepieces',
+  logoUrl: '', // Add logo if available
+  authors: ['your-github-username'],
   auth: systemeioAuth,
-  authors: ['YourName'],
   actions: [
-    systemeioCreateContact,
-    systemeioUpdateContact,
-    systemeioAddTagToContact,
-    systemeioRemoveTagFromContact,
-    systemeioFindContactByEmail,
+    createContact,
+    updateContact,
+    addTagToContact,
+    removeTagFromContact,
+    findContactByEmail,
   ],
   triggers: [
-    systemeioNewContactTrigger,
-    systemeioNewSaleTrigger,
-    systemeioNewTagAddedTrigger,
+    newContact,
+    newSale,
+    newTagAdded,
   ],
-}); 
+});
+
+export default systemeio; 

@@ -1,58 +1,53 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Polling, DedupeStrategy, pollingHelper, Property } from '@activepieces/pieces-common';
-import { systemeioAuth } from '../../';
-import { SystemeioApiClient } from '../auth';
-import dayjs from 'dayjs';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { DedupeStrategy, pollingHelper } from '@activepieces/pieces-common';
+import { systemeioAuth } from '../auth';
+import { SystemeioApiClient } from '../api-client';
 
-const polling: Polling<PiecePropValueSchema<typeof systemeioAuth>, { tag: string }> = {
+const polling = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const client = new SystemeioApiClient(auth as string);
-    const result = await client.request({
-      method: 'GET',
-      path: '/contacts',
-      queryParams: {
-        tag: propsValue.tag,
-        startingAfter: lastFetchEpochMS ? dayjs(lastFetchEpochMS).toISOString() : undefined,
-        limit: '100',
-        order: 'desc',
-      },
+  async items({ auth, lastFetchEpochMS }: any) {
+    const client = new SystemeioApiClient(auth.apiKey);
+    const contacts = await client.getContacts({ order: 'desc', limit: 20 });
+    // Flatten tags for each contact and emit each tag assignment as a separate event
+    const items: any[] = [];
+    // The API response is likely an AxiosResponse, so the data is in contacts.data
+    const contactList = Array.isArray(contacts?.data?.items)
+      ? contacts.data.items
+      : Array.isArray(contacts?.data)
+        ? contacts.data
+        : [];
+    contactList.forEach((c: any) => {
+      if (Array.isArray(c.tags)) {
+        c.tags.forEach((tag: any) => {
+          items.push({
+            epochMilliSeconds: new Date(c.createdAt).getTime(),
+            data: { contact: c, tag },
+          });
+        });
+      }
     });
-    return result.items.map((contact: any) => ({
-      epochMilliSeconds: dayjs(contact.updatedAt).valueOf(),
-      data: contact,
-    }));
+    return items;
   },
 };
 
-export const systemeioNewTagAddedTrigger = createTrigger({
+export const newTagAdded = createTrigger({
   auth: systemeioAuth,
   name: 'new_tag_added',
   displayName: 'New Tag Added to Contact',
-  description: 'Triggers when a specific tag is assigned to a contact',
-  props: {
-    tag: Property.ShortText({
-      displayName: 'Tag',
-      description: 'The tag to monitor (e.g., "VIP")',
-      required: true,
-    }),
-  },
-  sampleData: {
-    id: '123',
-    email: 'example@domain.com',
-    tags: ['VIP'],
-    updatedAt: '2025-07-23T10:00:00Z',
-  },
+  description: 'Fires when a specific tag is assigned to a contact.',
   type: TriggerStrategy.POLLING,
-  async test(context) {
-    return await pollingHelper.test(polling, context);
+  props: {},
+  sampleData: {},
+  onEnable(context) {
+    return pollingHelper.onEnable(polling, context);
   },
-  async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
-  },
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  onDisable(context) {
+    return pollingHelper.onDisable(polling, context);
   },
   async run(context) {
     return await pollingHelper.poll(polling, context);
+  },
+  async test(context) {
+    return await pollingHelper.test(polling, context);
   },
 }); 
