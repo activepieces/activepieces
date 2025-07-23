@@ -1,4 +1,3 @@
-
     import { createPiece } from '@activepieces/pieces-framework';
     import { TeamleaderAuth } from './lib/common';
     import { newContact } from './lib/triggers/new-contact';
@@ -23,7 +22,7 @@
       displayName: 'Teamleader',
       logoUrl: 'https://cdn.activepieces.com/pieces/teamleader.png',
       auth: TeamleaderAuth,
-      authors: ['Your Name <you@example.com>'],
+      authors: ['pranjal'],
       triggers: [
         newContact, newCompany, newDeal, dealAccepted, invoicePaid
       ],
