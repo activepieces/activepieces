@@ -13,7 +13,6 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import {
   ApFlagId,
-  isNil,
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
 
@@ -72,25 +71,8 @@ const AuthSeparator = ({
 const AuthFormTemplate = React.memo(
   ({ form }: { form: 'signin' | 'signup' }) => {
     const isSignUp = form === 'signup';
-    const [searchParams] = useSearchParams();
-    const tokenFromUrl = searchParams.get('token');
-    const token = tokenFromUrl ?? authenticationSession.getToken();
+    const token = authenticationSession.getToken();
     const redirectAfterLogin = useRedirectAfterLogin();
-
-    // Ensure token is saved before anything else
-    useEffect(() => {
-      if (token) {
-        authenticationSession.saveToken(token);
-        redirectAfterLogin();
-      }
-    }, [token, redirectAfterLogin]);
-
-    // To redirect to PromptX login page
-    const { data: loginUrl } = flagsHooks.useFlag<string>(ApFlagId.LOGIN_URL);
-    const { data: environment } = flagsHooks.useFlag<string>(
-      ApFlagId.ENVIRONMENT,
-    );
-
     const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
     const { data: isEmailAuthEnabled } = flagsHooks.useFlag<boolean>(
       ApFlagId.EMAIL_AUTH_ENABLED,
@@ -108,11 +90,21 @@ const AuthFormTemplate = React.memo(
       },
     }[form];
 
+    if (token) {
+      redirectAfterLogin();
+    }
+
+    // To redirect to PromptX login page
+    const { data: loginUrl } = flagsHooks.useFlag<string>(ApFlagId.LOGIN_URL);
+    const { data: environment } = flagsHooks.useFlag<string>(
+      ApFlagId.ENVIRONMENT,
+    );
+
     const [countdown, setCountdown] = useState(3);
 
     useEffect(() => {
       // For non-dev environments, we'd like to login via external screen
-      if (environment !== 'dev' && loginUrl) {
+      if (environment !== 'dev' && loginUrl && !token) {
         const timer = setInterval(() => {
           setCountdown((prev) => {
             if (prev <= 1) {
@@ -126,7 +118,7 @@ const AuthFormTemplate = React.memo(
         // Cleanup interval on component unmount
         return () => clearInterval(timer);
       }
-    }, [environment, loginUrl]);
+    }, [environment, loginUrl, token]);
 
     // will redirect to promptX login page
     if (environment !== 'dev' && loginUrl) {
