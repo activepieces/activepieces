@@ -1,4 +1,3 @@
-
 import { createPiece } from "@activepieces/pieces-framework";
 import { systemeIoAuth } from "./lib/common/auth"
 
@@ -17,7 +16,7 @@ export const systemeIo = createPiece({
   auth: systemeIoAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/systeme-io.png",
-  authors: [],
+  authors: ['ezhil56x'],
   actions: [
     createContact,
     addTagToContact,
@@ -31,4 +30,3 @@ export const systemeIo = createPiece({
     newTagAddedToContact,
   ],
 });
-    
