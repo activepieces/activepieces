@@ -39,6 +39,15 @@ async function buildInternalTools<T extends AgentJobSource>(params: AgentToolsPa
                     })
                 },
             }),
+            [agentbuiltInToolsNames.markAsComplete]: tool({
+                description: 'Mark the todo as complete',
+                parameters: params.agent.outputType === AgentOutputType.STRUCTURED_OUTPUT ? z.object({
+                    output: await getStructuredOutput(params.agent),
+                }) : z.object({}),
+                execute: async () => {
+                    return 'Marked as Complete'
+                },
+            }),
         }
     }
 

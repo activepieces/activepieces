@@ -7,9 +7,9 @@ import { agentsApiService, tablesApiService } from '../api/server-api.service'
 import { agentTools } from '../utils/agent-tools'
 import { workerMachine } from '../utils/machine'
 
-let agentToolInstance: Awaited<ReturnType<typeof agentTools>> | undefined
 export const agentJobExecutor = (log: FastifyBaseLogger) => ({
     async executeAgent(jobData: AgentJobData, engineToken: string, workerToken: string): Promise<void> {
+        let agentToolInstance: Awaited<ReturnType<typeof agentTools>> | undefined
         try {
             const agentResult: UpdateAgentRunRequestBody & { steps: AgentStepBlock[] } = {
                 projectId: jobData.projectId,
@@ -46,7 +46,7 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
             const baseURL = `${workerMachine.getPublicApiUrl()}v1/ai-providers/proxy/openai`
             const model = createAIProvider({
                 providerName: 'openai',
-                modelInstance: openai('gpt-4o-mini'),
+                modelInstance: openai('gpt-4.1'),
                 apiKey: engineToken,
                 baseURL,
             })
@@ -182,7 +182,9 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
 async function constructSystemPrompt(agent: Agent, fields: Field[] | undefined, record: Record<string, unknown> | undefined) {
     let systemPrompt = `
     You are an autonomous assistant designed to efficiently achieve the user's goal.
-    
+    YOU MUST ALWAYS call the mark as complete tool with the output or message wether you have successfully completed the task or not.
+    You MUST ALWAYS do the requested task before calling the mark as complete tool.
+
     **Today's Date**: ${new Date().toISOString()}  
     Use this to interpret time-based queries like "this week" or "due tomorrow."
 
@@ -198,11 +200,6 @@ async function constructSystemPrompt(agent: Agent, fields: Field[] | undefined, 
 
         **Current Record**:
         ${JSON.stringify(record, null, 2)}
-        `
-    }
-    else {
-        systemPrompt += `
-            YOU MUST ALWAYS call the mark as complete tool with the output or message wether you have successfully completed the task or not.
         `
     }
 

@@ -309,7 +309,7 @@ async function initializeOpenAIModel({
     platformId,
     projectId,
 }: InitializeOpenAIModelParams): Promise<LanguageModelV1> {
-    const model = 'gpt-4o'
+    const model = 'gpt-4.1-mini'
     const baseUrl = await domainHelper.getPublicApiUrl({
         path: '/v1/ai-providers/proxy/openai/v1/',
         platformId,
