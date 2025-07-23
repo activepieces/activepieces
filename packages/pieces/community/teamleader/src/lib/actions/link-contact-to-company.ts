@@ -39,6 +39,10 @@ export const linkContactToCompany = createAction({
       requestBody
     );
 
-    return response;
+    return {
+      status: 'success',
+      data: response.data,
+      message: `Contact linked to company ${context.propsValue.company_id} successfully`,
+    };
   },
 });

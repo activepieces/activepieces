@@ -86,8 +86,14 @@ export const businessTypeIdDropdown = Property.Dropdown({
   displayName: 'Business type',
   description: 'Select the business type for the company',
   required: true,
-  refreshers: ['country'],
-  options: async ({ auth, country }) => {
+  refreshers: ['country', 'auth'],
+  options: async ({
+    auth,
+    country,
+  }: {
+    auth?: { access_token: string };
+    country?: string;
+  }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -105,7 +111,7 @@ export const businessTypeIdDropdown = Property.Dropdown({
 
     try {
       const businessTypes = await makeRequest(
-        auth as string,
+        auth.access_token,
         HttpMethod.POST,
         '/businessTypes.list',
         { country: country }
@@ -132,7 +138,13 @@ export const contactIdDropdown = Property.Dropdown({
   description: 'Select the contact ID',
   required: true,
   refreshers: ['company_id'],
-  options: async ({ auth, company_id }) => {
+  options: async ({
+    auth,
+    company_id,
+  }: {
+    auth?: { access_token: string };
+    company_id?: string;
+  }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -143,7 +155,7 @@ export const contactIdDropdown = Property.Dropdown({
 
     try {
       const contacts = await makeRequest(
-        auth as string,
+        auth.access_token as string,
         HttpMethod.POST,
         '/contacts.list',
         { company_id: company_id }
@@ -151,7 +163,7 @@ export const contactIdDropdown = Property.Dropdown({
       return {
         disabled: false,
         options: contacts.data.map((contact: any) => ({
-          label: contact.name,
+          label: contact.first_name + ' ' + contact.last_name,
           value: contact.id,
         })),
       };
@@ -170,7 +182,7 @@ export const companiesIdDropdown = Property.Dropdown({
   description: 'Select the company ID',
   required: true,
   refreshers: ['auth'],
-  options: async ({ auth }) => {
+  options: async ({ auth }: { auth?: { access_token: string } }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -181,7 +193,7 @@ export const companiesIdDropdown = Property.Dropdown({
 
     try {
       const companies = await makeRequest(
-        auth as string,
+        auth.access_token as string,
         HttpMethod.POST,
         '/companies.list'
       );
@@ -207,7 +219,7 @@ export const dealIdDropdown = Property.Dropdown({
   description: 'Select the deal ID',
   required: true,
   refreshers: ['auth'],
-  options: async ({ auth }) => {
+  options: async ({ auth }: { auth?: { access_token: string } }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -218,7 +230,7 @@ export const dealIdDropdown = Property.Dropdown({
 
     try {
       const deals = await makeRequest(
-        auth as string,
+        auth.access_token as string,
         HttpMethod.POST,
         '/deals.list'
       );
@@ -244,7 +256,7 @@ export const sourceIdDropdown = Property.Dropdown({
   description: 'Select the source ID for the deal',
   required: false,
   refreshers: ['auth'],
-  options: async ({ auth }) => {
+  options: async ({ auth }: { auth?: { access_token: string } }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -255,7 +267,7 @@ export const sourceIdDropdown = Property.Dropdown({
 
     try {
       const sources = await makeRequest(
-        auth as string,
+        auth.access_token as string,
         HttpMethod.POST,
         '/sources.list'
       );
@@ -276,13 +288,12 @@ export const sourceIdDropdown = Property.Dropdown({
   },
 });
 
-
 export const departmentIdDropdown = Property.Dropdown({
   displayName: 'Department ID',
   description: 'Select the department ID for the deal',
   required: false,
   refreshers: ['auth'],
-  options: async ({ auth }) => {
+  options: async ({ auth }: { auth?: { access_token: string } }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -293,7 +304,7 @@ export const departmentIdDropdown = Property.Dropdown({
 
     try {
       const departments = await makeRequest(
-        auth as string,
+        auth.access_token as string,
         HttpMethod.POST,
         '/departments.list'
       );
@@ -309,6 +320,74 @@ export const departmentIdDropdown = Property.Dropdown({
         disabled: true,
         options: [],
         placeholder: 'Error loading departments',
+      };
+    }
+  },
+});
+
+export const companiesLinkedContactsDropdown = Property.Dropdown({
+  displayName: 'Linked Contacts',
+  description: 'Select a linked contact',
+  required: false,
+  refreshers: ['auth', 'contact_id'],
+  options: async ({
+    auth,
+    contact_id,
+  }: {
+    auth?: { access_token: string };
+    contact_id?: string;
+  }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+    if (!contact_id) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please select a contact first',
+      };
+    }
+    try {
+      const contactInfo = await makeRequest(
+        auth.access_token as string,
+        HttpMethod.POST,
+        '/contacts.info',
+        { id: contact_id }
+      );
+      if (!contactInfo.data || !contactInfo.data.companies) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'No linked companies found for this contact',
+        };
+      }
+      if (contactInfo.data.companies.length === 0) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'No linked companies found for this contact',
+        };
+      }
+      return {
+        disabled: false,
+        options: contactInfo.data.companies.map((companyInfo: any) => ({
+          label: `${companyInfo.company.name} (${companyInfo.position}${
+            companyInfo.secondary_position
+              ? ` / ${companyInfo.secondary_position}`
+              : ''
+          }${companyInfo.division ? ` - ${companyInfo.division}` : ''})`,
+          value: companyInfo.company.id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading contacts',
       };
     }
   },

@@ -2,7 +2,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { teamleaderAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { companiesIdDropdown, contactIdDropdown } from '../common/props';
+import {
+  companiesIdDropdown,
+  companiesLinkedContactsDropdown,
+  contactIdDropdown,
+} from '../common/props';
 
 export const unlinkContactFromCompany = createAction({
   auth: teamleaderAuth,
@@ -10,8 +14,8 @@ export const unlinkContactFromCompany = createAction({
   displayName: 'Unlink Contact from Company',
   description: 'Unlinks a contact from a company',
   props: {
-    company_id: companiesIdDropdown,
     contact_id: contactIdDropdown,
+    company_id: companiesLinkedContactsDropdown,
   },
   async run({ auth, propsValue }) {
     const requestBody = {
@@ -26,6 +30,10 @@ export const unlinkContactFromCompany = createAction({
       requestBody
     );
 
-    return response;
+    return {
+      status: 'success',
+      data: response.data,
+      message: `Contact ${propsValue.contact_id} unlinked from company ${propsValue.company_id} successfully`,
+    };
   },
 });

@@ -2,7 +2,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { teamleaderAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { currencyDropdown } from '../common/props';
+import {
+  currencyDropdown,
+  departmentIdDropdown,
+  sourceIdDropdown,
+} from '../common/props';
 
 export const createDeal = createAction({
   auth: teamleaderAuth,
@@ -42,17 +46,8 @@ export const createDeal = createAction({
       description: 'A brief summary of the deal',
       required: false,
     }),
-    source_id: Property.ShortText({
-      displayName: 'Source ID',
-      description: 'The ID of the source this deal is associated with',
-      required: true,
-    }),
-
-    department_id: Property.ShortText({
-      displayName: 'Department ID',
-      description: 'The ID of the department this deal is associated with',
-      required: false,
-    }),
+    source_id: sourceIdDropdown,
+    department_id: departmentIdDropdown,
     responsible_user_id: Property.ShortText({
       displayName: 'Responsible User ID',
       description: 'The ID of the user responsible for this deal',
