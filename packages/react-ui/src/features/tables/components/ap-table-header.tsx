@@ -114,7 +114,6 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
               <span className="text-sm">{t('Saving...')}</span>
             </div>
           )}
-          {selectedRecords.size > 0 && isAgentEnabled && <AutomateDataButton />}
           {selectedRecords.size > 0 && (
             <>
               <PermissionNeededTooltip
