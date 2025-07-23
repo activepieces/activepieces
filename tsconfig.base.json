@@ -693,11 +693,11 @@
       "@activepieces/piece-queue": [
         "packages/pieces/community/queue/src/index.ts"
       ],
+      "@activepieces/piece-quickbooks": [
+        "packages/pieces/community/quickbooks/src/index.ts"
+      ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
-      ],
-       "@activepieces/piece-quickbooks": [
-        "packages/pieces/community/quickbooks/src/index.ts"
       ],
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
@@ -834,6 +834,9 @@
       ],
       "@activepieces/piece-stable-diffusion-webui": [
         "packages/pieces/community/stable-diffusion-webui/src/index.ts"
+      ],
+      "@activepieces/piece-stopflow": [
+        "packages/pieces/community/stopflow/src/index.ts"
       ],
       "@activepieces/piece-store": [
         "packages/pieces/community/store/src/index.ts"
