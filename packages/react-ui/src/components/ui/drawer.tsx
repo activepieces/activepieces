@@ -13,21 +13,21 @@ interface DrawerContentProps
 function Drawer({
   onOpenChange,
   open,
-  closeOnEsc = true,
+  closeOnEscape = true,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root> & {
-  closeOnEsc?: boolean;
+  closeOnEscape?: boolean;
 }) {
   React.useEffect(() => {
-    if (!open || !onOpenChange || !closeOnEsc) return;
+    if (!open || !onOpenChange || !closeOnEscape) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && closeOnEscape) {
         onOpenChange(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, onOpenChange, closeOnEsc]);
+  }, [open, onOpenChange, closeOnEscape]);
   return (
     <DrawerPrimitive.Root
       data-slot="drawer"

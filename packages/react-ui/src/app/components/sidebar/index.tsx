@@ -9,7 +9,6 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
-import { ProjectLockedAlert } from '@/components/custom/project-locked-alert';
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -258,7 +257,6 @@ export function SidebarComponent({
             'pb-0': removeBottomPadding,
           })}
         >
-          <ProjectLockedAlert />
           {children}
         </div>
       </div>
