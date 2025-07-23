@@ -11,6 +11,7 @@ import { documentGenerated } from './lib/triggers/document-generated';
 
 export const pdfmonkey = createPiece({
   displayName: "PDFMonkey",
+  description: 'PDFMonkey is a document automation service that generates PDFs from templates and structured data',
   auth: pdfmonkeyAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/pdfmonkey.png",
