@@ -11,17 +11,32 @@ export const removeTagFromContact = createAction({
   description: 'Remove a tag from an existing contact',
   props: {
     contactId: systemeIoProps.contactIdDropdown,
-    tagName: systemeIoProps.tagNameDropdown,
+    tagNames: systemeIoProps.tagsMultiSelectDropdown,
   },
   async run(context) {
-    const { contactId, tagName } = context.propsValue;
+    const { contactId, tagNames } = context.propsValue;
     
-    const response = await systemeIoCommon.apiCall({
-      method: HttpMethod.DELETE,
-      url: `/contacts/${contactId}/tags/${tagName}`,
-      auth: context.auth,
-    });
+    const results = [];
+    
+    if (tagNames && tagNames.length > 0) {
+      for (const tagId of tagNames) {
+        const response = await systemeIoCommon.apiCall({
+          method: HttpMethod.DELETE,
+          url: `/contacts/${contactId}/tags/${tagId}`,
+          auth: context.auth,
+        });
+        
+        results.push({
+          tagId,
+          response,
+        });
+      }
+    }
 
-    return response;
+    return {
+      success: true,
+      results,
+      totalTagsRemoved: results.length,
+    };
   },
 });

@@ -11,20 +11,35 @@ export const addTagToContact = createAction({
   description: 'Assign a tag to an existing contact',
   props: {
     contactId: systemeIoProps.contactIdDropdown,
-    tagName: systemeIoProps.tagNameDropdown,
+    tagNames: systemeIoProps.tagsMultiSelectDropdown,
   },
   async run(context) {
-    const { contactId, tagName } = context.propsValue;
+    const { contactId, tagNames } = context.propsValue;
     
-    const response = await systemeIoCommon.apiCall({
-      method: HttpMethod.POST,
-      url: `/contacts/${contactId}/tags`,
-      body: {
-        name: tagName,
-      },
-      auth: context.auth,
-    });
+    const results = [];
+    
+    if (tagNames && tagNames.length > 0) {
+      for (const tagId of tagNames) {
+        const response = await systemeIoCommon.apiCall({
+          method: HttpMethod.POST,
+          url: `/contacts/${contactId}/tags`,
+          body: {
+            tagId: tagId,
+          },
+          auth: context.auth,
+        });
+        
+        results.push({
+          tagId,
+          response,
+        });
+      }
+    }
 
-    return response;
+    return {
+      success: true,
+      results,
+      totalTagsAdded: results.length,
+    };
   },
 });
