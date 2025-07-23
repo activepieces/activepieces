@@ -2,6 +2,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
+import { randomBytes } from 'crypto';
 
 export const newTagAddedToContact = createTrigger({
     auth: systemeIoAuth,
@@ -24,13 +25,16 @@ export const newTagAddedToContact = createTrigger({
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
+        const secret = randomBytes(32).toString('hex');
         const response = await systemeIoCommon.createWebhook({
-            eventType: 'contact.tag_added',
+            eventType: 'CONTACT_TAG_ADDED',
             webhookUrl: context.webhookUrl,
             auth: context.auth,
+            secret: secret,
         });
         
         await context.store.put('new_tag_added_webhook_id', response.id);
+        await context.store.put('new_tag_added_webhook_secret', secret);
     },
     async onDisable(context) {
         const webhookId = await context.store.get<string>('new_tag_added_webhook_id');
@@ -40,6 +44,7 @@ export const newTagAddedToContact = createTrigger({
                 auth: context.auth,
             });
             await context.store.put('new_tag_added_webhook_id', null);
+            await context.store.put('new_tag_added_webhook_secret', null);
         }
     },
     async run(context) {

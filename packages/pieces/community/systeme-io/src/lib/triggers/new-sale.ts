@@ -2,6 +2,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
+import { randomBytes } from 'crypto';
 
 export const newSale = createTrigger({
     auth: systemeIoAuth,
@@ -22,13 +23,16 @@ export const newSale = createTrigger({
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
+        const secret = randomBytes(32).toString('hex');
         const response = await systemeIoCommon.createWebhook({
-            eventType: 'sale.completed',
+            eventType: 'SALE_NEW',
             webhookUrl: context.webhookUrl,
             auth: context.auth,
+            secret: secret,
         });
         
         await context.store.put('new_sale_webhook_id', response.id);
+        await context.store.put('new_sale_webhook_secret', secret);
     },
     async onDisable(context) {
         const webhookId = await context.store.get<string>('new_sale_webhook_id');
@@ -38,6 +42,7 @@ export const newSale = createTrigger({
                 auth: context.auth,
             });
             await context.store.put('new_sale_webhook_id', null);
+            await context.store.put('new_sale_webhook_secret', null);
         }
     },
     async run(context) {

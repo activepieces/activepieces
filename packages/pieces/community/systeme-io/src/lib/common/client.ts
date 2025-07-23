@@ -35,17 +35,21 @@ export const systemeIoCommon = {
     eventType,
     webhookUrl,
     auth,
+    secret,
   }: {
     eventType: string;
     webhookUrl: string;
     auth: { apiKey: string };
+    secret: string;
   }) {
     return this.apiCall<{ id: string }>({
       method: HttpMethod.POST,
       url: '/webhooks',
       body: {
-        event_type: eventType,
-        target_url: webhookUrl,
+        name: `Activepieces Webhook - ${eventType}`,
+        url: webhookUrl,
+        subscriptions: [eventType],
+        secret: secret,
       },
       auth,
     });
