@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
@@ -12,7 +11,6 @@ as a query parameter in the sign in endpoint.
 export const AuthBootstrap = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const redirectAfterLogin = useRedirectAfterLogin();
-  const [tokenReady, setTokenReady] = useState(false);
 
   const searchParams = new URLSearchParams(location.search);
   const tokenFromUrl = searchParams.get('token');
@@ -21,16 +19,14 @@ export const AuthBootstrap = ({ children }: { children: React.ReactNode }) => {
     if (tokenFromUrl) {
       authenticationSession.saveToken(tokenFromUrl);
     }
-    setTokenReady(true);
   }, [tokenFromUrl]);
 
   useEffect(() => {
-    if (tokenReady && authenticationSession.getToken()) {
+    // Only redirect if token is present
+    if (authenticationSession.getToken()) {
       redirectAfterLogin();
     }
-  }, [redirectAfterLogin, tokenReady]);
-
-  if (tokenFromUrl && !tokenReady) return <LoadingSpinner />;
+  }, [redirectAfterLogin]);
 
   return children;
 };
