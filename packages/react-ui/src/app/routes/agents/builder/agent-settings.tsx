@@ -9,6 +9,7 @@ import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { Separator } from '@/components/ui/separator';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import {
   Agent,
   AgentOutputField,
@@ -98,6 +99,16 @@ export const AgentSettings = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
 
+  const {
+    data: mcp,
+    isLoading,
+    refetch: refetchMcp,
+  } = mcpHooks.useMcp(agent?.mcpId);
+  const { mutate: updateTools } = mcpHooks.useUpdateTools(
+    agent?.mcpId,
+    refetchMcp,
+  );
+
   return (
     <Form {...form}>
       <div className="flex flex-1 h-full">
@@ -105,7 +116,7 @@ export const AgentSettings = ({
           <div className="flex flex-col md:flex-row items-start gap-6">
             <div className="flex-shrink-0">
               <ImageWithFallback
-                src={agent?.profilePictureUrl}
+                src={agent!.profilePictureUrl}
                 alt="Agent avatar"
                 className="w-20 h-20 rounded-xl object-cover"
               />
@@ -199,7 +210,11 @@ export const AgentSettings = ({
 
           {!isNil(agent) && !isNil(agent.mcpId) && (
             <div className="mt-6">
-              <McpToolsSection mcpId={agent.mcpId} />
+              <McpToolsSection
+                mcp={mcp}
+                isLoading={isLoading}
+                onToolsUpdate={(tools) => updateTools(tools)}
+              />
               <AgentSettingsOutput
                 onChange={(outputType, outputFields) => {
                   setValue('outputType', outputType);

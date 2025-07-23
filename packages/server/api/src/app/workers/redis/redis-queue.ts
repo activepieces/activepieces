@@ -34,6 +34,7 @@ const jobTypeToDefaultJobOptions: Record<QueueName, DefaultJobOptions> = {
         attempts: 1,
     },
     [QueueName.WEBHOOK]: defaultJobOptions,
+    [QueueName.AGENTS]: defaultJobOptions,
 }
 
 export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
@@ -79,6 +80,11 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
                 await addJobWithPriority(queue, params)
                 break
             }
+            case JobType.AGENTS: {
+                const queue = await ensureQueueExists(QueueName.AGENTS)
+                await addJobWithPriority(queue, params)
+                break
+            }
         }
     },
     async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
@@ -118,7 +124,7 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
     return bullMqGroups[queueName]
 }
 
-async function addJobWithPriority(queue: Queue, params: AddParams<JobType.WEBHOOK | JobType.ONE_TIME>): Promise<void> {
+async function addJobWithPriority(queue: Queue, params: AddParams<JobType.WEBHOOK | JobType.ONE_TIME | JobType.AGENTS>): Promise<void> {
     const { id, data, priority } = params
     await queue.add(id, data, {
         jobId: id,
