@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-systemeio",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-framework": "^0.1.0",
+    "@activepieces/pieces-common": "^0.1.0",
+    "dayjs": "^1.11.9"
+  }
+} 
