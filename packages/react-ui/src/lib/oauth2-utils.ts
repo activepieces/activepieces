@@ -90,10 +90,10 @@ async function constructUrl(params: OAuth2PopupParams, pckeChallenge: string) {
     scope: params.scope,
     ...(params.extraParams || {}),
   };
-  if (params.consent === 'omit') {
+  if (params.prompt === 'omit') {
     delete queryParams['prompt']
   } else {
-    queryParams['prompt'] = params.consent;
+    queryParams['prompt'] = params.prompt;
   }
   if (params.pkce) {
     const method = params.pkceMethod || 'plain';
@@ -137,7 +137,7 @@ type OAuth2PopupParams = {
   clientId: string;
   redirectUrl: string;
   scope: string;
-  consent: 'none' | 'consent' | 'login' | 'omit';
+  prompt: 'none' | 'consent' | 'login' | 'omit';
   pkce: boolean;
   pkceMethod?: 'plain' | 'S256';
   extraParams?: Record<string, string>;
