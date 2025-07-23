@@ -16,7 +16,7 @@ export const AiCreditsLimitAlert = () => {
   return (
     <LimitAlert
       fullUsageWarningNote={t(
-        'When a project AI credits limit is reached, all flows using universal AI pieces or agents will fail.',
+        'When a project AI credits limit is reached, all flows using universal AI pieces or agents and MCP servers will fail.',
       )}
       usagePercentage={aiCreditsUsagePercentage}
       getPercentageNote={(limitWarningPercentage) => {
