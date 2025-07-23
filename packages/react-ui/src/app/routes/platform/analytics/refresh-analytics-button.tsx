@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { RefreshCcwIcon } from 'lucide-react';
+import { useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -8,10 +9,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useEffect } from 'react';
 
 import { platformAnalyticsHooks } from './analytics-hooks';
-const REPORT_TTL_MS = 1000 * 60 * 60 * 24
+const REPORT_TTL_MS = 1000 * 60 * 60 * 24;
 
 export const RefreshAnalyticsSection = ({
   lastRefreshMs,
@@ -43,20 +43,12 @@ export const RefreshAnalyticsSection = ({
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          {
-            !isPending && (
-              t(
-                'Your analytics are automatically updated daily, refresh to get the latest data',
-              )
-            )
-          }
-          {
-            isPending && (
-              t(
-                'Your analytics are being updated, please wait a moment',
-              )
-            )
-          }
+          {!isPending &&
+            t(
+              'Your analytics are automatically updated daily, refresh to get the latest data',
+            )}
+          {isPending &&
+            t('Your analytics are being updated, please wait a moment')}
         </TooltipContent>
       </Tooltip>
     </div>
