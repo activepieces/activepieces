@@ -1,4 +1,4 @@
-import { Null, Static, Type } from '@sinclair/typebox'
+import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../federated-authn'

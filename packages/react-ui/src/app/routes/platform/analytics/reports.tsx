@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { AnalyticsReportResponse } from '@activepieces/shared';
+import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 type ReportItem = {
   name: React.ReactNode;
@@ -79,7 +79,7 @@ const downloadCSV = (
 };
 
 type ReportsProps = {
-  report?: AnalyticsReportResponse;
+  report?: PlatformAnalyticsReport;
 };
 
 function Reports({ report }: ReportsProps) {

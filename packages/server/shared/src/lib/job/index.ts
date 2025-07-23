@@ -3,7 +3,7 @@ import {
     ProgressUpdateType,
     RunEnvironment,
 } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
+import { Omit, Static, Type } from '@sinclair/typebox'
 import { DelayedJobData, JobData } from './job-data'
 
 export enum JobType {
@@ -89,7 +89,7 @@ export const GetRunForWorkerRequest = Type.Object({
 })
 export type GetRunForWorkerRequest = Static<typeof GetRunForWorkerRequest>
 
-export const ResumeRunRequest = DelayedJobData
+export const ResumeRunRequest = Type.Omit(DelayedJobData, ['flowId'])
 export type ResumeRunRequest = Static<typeof ResumeRunRequest>
 
 

@@ -97,6 +97,7 @@ const ApTableEditorPage = () => {
       onOpenChange={handleBack}
       dismissible={false}
       direction="right"
+      closeOnEscape={false}
     >
       <DrawerContent fullscreen className="w-full overflow-auto">
         <DrawerHeader>

@@ -5,12 +5,11 @@ import { ActivepiecesError, ErrorCode, FlowRun, FlowVersionId, FlowVersionState,
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
-import { cacheState } from '../cache/cache-state'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
+import { cacheState } from '../cache/cache-state'
 
 const globalCacheFlowPath = path.resolve('cache', 'flows')
-const flowCache = cacheState(globalCacheFlowPath)
 
 const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
@@ -103,8 +102,14 @@ function splitPayloadsIntoOneMegabyteBatches(payloads: unknown[]): unknown[][] {
     return batches
 }
 
+// We have a file for each flow version to prevent the cache from growing too large, and then JS stringify error
+async function getDedicatedCacheFileForFlow(flowVersionIdToRun: FlowVersionId): Promise<ReturnType<typeof cacheState>> {
+    return cacheState(path.join(globalCacheFlowPath, flowVersionIdToRun))
+}
+
 async function readFlowFromCache(flowVersionIdToRun: FlowVersionId): Promise<PopulatedFlow | null> {
     try {
+        const flowCache = await getDedicatedCacheFileForFlow(flowVersionIdToRun)
         const cachedFlow = await flowCache.cacheCheckState(flowVersionIdToRun)
         return cachedFlow ? JSON.parse(cachedFlow) as PopulatedFlow : null
     }
@@ -171,6 +176,7 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
                     params: request,
                 })
 
+                const flowCache = await getDedicatedCacheFileForFlow(request.versionId)
                 const isCachableFlow = !isNil(flow) && flow.version.state === FlowVersionState.LOCKED
                 if (isCachableFlow) {
                     await flowCache.setCache(flow.version.id, JSON.stringify(flow))

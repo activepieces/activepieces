@@ -51,7 +51,6 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
             ),
         )
         // TODO disable until we have a way to build with shared version bumped
-        // const postBuildCommand = `npm run cli pieces generate-translation-file ${pieceProjectName.replace('pieces-', '')}`
         //  await runCommandWithLiveOutput(postBuildCommand)
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
         const endTime = Date.now()

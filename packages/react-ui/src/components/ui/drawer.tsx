@@ -13,12 +13,15 @@ interface DrawerContentProps
 function Drawer({
   onOpenChange,
   open,
+  closeOnEscape = true,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root>) {
+}: React.ComponentProps<typeof DrawerPrimitive.Root> & {
+  closeOnEscape?: boolean;
+}) {
   React.useEffect(() => {
     if (!open || !onOpenChange) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && closeOnEscape) {
         onOpenChange(false);
       }
     };
