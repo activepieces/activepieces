@@ -1,4 +1,4 @@
-import { googleSheetsAuth } from '../../index';
+import { googleSheetsOAuth2 } from '../../index';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 
 import { google } from 'googleapis';
@@ -7,7 +7,7 @@ import { isNil } from '@activepieces/shared';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
 
 export const newWorksheetTrigger = createTrigger({
-	auth: googleSheetsAuth,
+	auth: googleSheetsOAuth2,
 	name: 'new-worksheet',
 	displayName: 'New Worksheet',
 	description: 'Triggers when a worksheet is created in a spreadsheet.',

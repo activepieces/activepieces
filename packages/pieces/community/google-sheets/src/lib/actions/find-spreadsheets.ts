@@ -1,13 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from '@activepieces/pieces-common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsOAuth2 } from '../..';
 import { includeTeamDrivesProp } from '../common/props';
 
 export const findSpreadsheets = createAction({
   name: 'find_spreadsheets',
   displayName: 'Find Spreadsheet(s)',
   description: 'Find spreadsheet(s) by name.',
-  auth: googleSheetsAuth,
+  auth: googleSheetsOAuth2,
   props: {
     includeTeamDrives: includeTeamDrivesProp(),
     spreadsheet_name: Property.ShortText({

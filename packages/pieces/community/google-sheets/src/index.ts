@@ -2,6 +2,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
+  Property,
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
@@ -27,9 +28,9 @@ import { updateMultipleRowsAction } from './lib/actions/update-multiple-rows';
 import { createColumnAction } from './lib/actions/create-column';
 import { exportSheetAction } from './lib/actions/export-sheet';
 
-export const googleSheetsAuth = PieceAuth.OAuth2({
-  description: '',
-
+export const googleSheetsOAuth2 = PieceAuth.OAuth2({
+  displayName:'OAuth2',
+  description: 'Use this to authenticate to your own personal Google account',
   authUrl: 'https://accounts.google.com/o/oauth2/auth',
   tokenUrl: 'https://oauth2.googleapis.com/token',
   required: true,
@@ -39,6 +40,18 @@ export const googleSheetsAuth = PieceAuth.OAuth2({
     'https://www.googleapis.com/auth/drive',
   ],
 });
+
+export const googleSheetsServiceAccountAuth = PieceAuth.CustomAuth({
+  displayName: 'Service Account',
+  description: 'You can connect without signing in with your personal Google account. Use a Google Service Account to provide secure access to the necessary resources on your behalf.',
+  required: true,
+  props: {
+    ServiceKey: Property.ShortText({
+      displayName: 'Service Account JSON Key',
+      required: true,
+    })
+  }
+})
 
 export const googleSheets = createPiece({
   minimumSupportedRelease: '0.36.1',
@@ -56,37 +69,11 @@ export const googleSheets = createPiece({
     'abuaboud',
     'geekyme',
   ],
+  auth: [googleSheetsOAuth2, googleSheetsServiceAccountAuth],
   actions: [
-    insertRowAction,
-    insertMultipleRowsAction,
-    deleteRowAction,
-    updateRowAction,
-    findRowsAction,
-    createSpreadsheetAction,
     createWorksheetAction,
-    clearSheetAction,
-    findRowByNumAction,
-    getRowsAction,
-    findSpreadsheets,
-    findWorksheetAction,
-    copyWorksheetAction,
-    updateMultipleRowsAction,
-    createColumnAction,
-    exportSheetAction,
-    createCustomApiCallAction({
-      auth: googleSheetsAuth,
-      baseUrl: () => {
-        return googleSheetsCommon.baseUrl;
-      },
-      authMapping: async (auth) => {
-        return {
-          Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-        };
-      },
-    }),
   ],
   displayName: 'Google Sheets',
   description: 'Create, edit, and collaborate on spreadsheets online',
-  triggers: [newRowAddedTrigger, newOrUpdatedRowTrigger,newSpreadsheetTrigger,newWorksheetTrigger],
-  auth: googleSheetsAuth,
+  triggers: [],
 });

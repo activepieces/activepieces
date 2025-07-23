@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/shared';
-import { googleSheetsAuth } from '../../';
+import { googleSheetsOAuth2 } from '../../';
 import { areSheetIdsValid, columnToLabel, labelToColumn } from '../common/common';
 import {
 	createFileNotification,
@@ -29,7 +29,7 @@ import { commonProps } from '../common/props';
 const ALL_COLUMNS = 'all_columns';
 
 export const newOrUpdatedRowTrigger = createTrigger({
-	auth: googleSheetsAuth,
+	auth: googleSheetsOAuth2,
 	name: 'google-sheets-new-or-updated-row',
 	displayName: 'New or Updated Row',
 	description: 'Triggers when a new row is added or modified in a spreadsheet.',
@@ -53,7 +53,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 					};
 				}
 
-				const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
+				const authValue = auth as PiecePropValueSchema<typeof googleSheetsOAuth2>;
 				const spreadsheet_id = spreadsheetId as string;
 				const sheet_id = sheetId as number;
 

@@ -1,7 +1,7 @@
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 
-import { googleSheetsAuth } from '../..';
+import { googleSheetsOAuth2 } from '../..';
 import { PiecePropValueSchema } from '@activepieces/pieces-framework';
 
 import { nanoid } from 'nanoid';
@@ -10,7 +10,7 @@ import crypto from 'crypto';
 import { columnToLabel } from '../common/common';
 
 export async function getWorkSheetName(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: PiecePropValueSchema<typeof googleSheetsOAuth2>,
 	spreadSheetId: string,
 	sheetId: number,
 ) {
@@ -31,7 +31,7 @@ export async function getWorkSheetName(
 }
 
 export async function getWorkSheetGridSize(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: PiecePropValueSchema<typeof googleSheetsOAuth2>,
 	spreadSheetId: string,
 	sheetId: number,
 ) {
@@ -51,7 +51,7 @@ export async function getWorkSheetGridSize(
 }
 
 export async function getWorkSheetValues(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: PiecePropValueSchema<typeof googleSheetsOAuth2>,
 	spreadsheetId: string,
 	range?: string,
 ) {
@@ -69,7 +69,7 @@ export async function getWorkSheetValues(
 }
 
 export async function createFileNotification(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: PiecePropValueSchema<typeof googleSheetsOAuth2>,
 	fileId: string,
 	url: string,
 	includeTeamDrives?: boolean,
@@ -94,7 +94,7 @@ export async function createFileNotification(
 }
 
 export async function deleteFileNotification(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: PiecePropValueSchema<typeof googleSheetsOAuth2>,
 	channelId: string,
 	resourceId: string,
 ) {

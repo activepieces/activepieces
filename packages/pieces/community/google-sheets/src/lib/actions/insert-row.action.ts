@@ -7,13 +7,13 @@ import {
   stringifyArray,
   ValueInputOption,
 } from '../common/common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsOAuth2 } from '../..';
 import { isNil } from '@activepieces/shared';
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import { commonProps, rowValuesProp } from '../common/props';
 
 export const insertRowAction = createAction({
-  auth: googleSheetsAuth,
+  auth: googleSheetsOAuth2,
   name: 'insert_row',
   description: 'Append a row of values to an existing sheet',
   displayName: 'Insert Row',

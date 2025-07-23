@@ -5,7 +5,7 @@ import {
   StoreScope,
   createAction,
 } from '@activepieces/pieces-framework';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsOAuth2 } from '../..';
 import {
   areSheetIdsValid,
   googleSheetsCommon,
@@ -19,7 +19,7 @@ import { commonProps } from '../common/props';
 
 async function getRows(
   store: Store,
-  auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+  auth: PiecePropValueSchema<typeof googleSheetsOAuth2>,
   spreadsheetId: string,
   sheetId: number,
   memKey: string,
@@ -98,7 +98,7 @@ const notes = `
 - Republishing the flow **keeps** the memory key value, If you want to start over **change** the memory key.
 `
 export const getRowsAction = createAction({
-  auth: googleSheetsAuth,
+  auth: googleSheetsOAuth2,
   name: 'get_next_rows',
   description: 'Get next group of rows from a Google Sheet',
   displayName: 'Get next row(s)',

@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createGoogleSheetClient } from '../common/common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsOAuth2, googleSheetsServiceAccountAuth } from '../..';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
-
+const auth = [googleSheetsOAuth2, googleSheetsServiceAccountAuth];
 export const createWorksheetAction = createAction({
-  auth: googleSheetsAuth,
+  auth,
   name: 'create-worksheet',
   displayName: 'Create Worksheet',
   description:'Create a blank worksheet with a title.',
@@ -25,7 +25,7 @@ export const createWorksheetAction = createAction({
   async run(context){
     const {spreadsheetId,title} = context.propsValue;
     const headers = context.propsValue.headers as string[] ?? [];
-	const googleSheetClient = await createGoogleSheetClient(context.auth);
+	  const googleSheetClient = await createGoogleSheetClient(context.auth);
 
     const sheet = await googleSheetClient.spreadsheets.batchUpdate({
         spreadsheetId:spreadsheetId,
@@ -56,6 +56,6 @@ export const createWorksheetAction = createAction({
         id: sheet.data?.replies?.[0]?.addSheet?.properties?.sheetId,
         ...addHeadersResponse.data
     }
-    
-
   }})
+  
+  

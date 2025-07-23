@@ -1,4 +1,4 @@
-import { googleSheetsAuth } from '../../index';
+import { googleSheetsOAuth2 } from '../../index';
 import {
 	createAction,
 	DynamicPropsValue,
@@ -14,7 +14,7 @@ import { OAuth2Client } from 'googleapis-common';
 import { commonProps } from '../common/props';
 
 export const updateMultipleRowsAction = createAction({
-	auth: googleSheetsAuth,
+	auth: googleSheetsOAuth2,
 	name: 'update-multiple-rows',
 	displayName: 'Update Multiple Rows',
 	description: 'Updates multiple rows in a specific spreadsheet.',

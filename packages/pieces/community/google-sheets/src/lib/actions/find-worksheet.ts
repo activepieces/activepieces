@@ -1,11 +1,11 @@
-import { googleSheetsAuth } from '../../index';
+import { googleSheetsOAuth2 } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
 
 export const findWorksheetAction = createAction({
-  auth: googleSheetsAuth,
+  auth: googleSheetsOAuth2,
   name: 'find-worksheet',
   displayName: 'Find Worksheet(s)',
   description: 'Finds a worksheet(s) by title.',

@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, googleSheetsCommon } from '../common/common';
-import { googleSheetsAuth } from '../../';
+import { googleSheetsOAuth2 } from '../../';
 import { commonProps } from '../common/props';
 
 export const deleteRowAction = createAction({
-  auth: googleSheetsAuth,
+  auth: googleSheetsOAuth2,
   name: 'delete_row',
   description: 'Delete a row on an existing sheet you have access to',
   displayName: 'Delete Row',

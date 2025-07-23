@@ -7,13 +7,13 @@ import {
   googleSheetsCommon,
   labelToColumn,
 } from '../common/common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsOAuth2 } from '../..';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 import { columnNameProp, commonProps } from '../common/props';
 
 export const findRowsAction = createAction({
-  auth: googleSheetsAuth,
+  auth: googleSheetsOAuth2,
   name: 'find_rows',
   description:
     'Find or get rows in a Google Sheet by column name and search value',

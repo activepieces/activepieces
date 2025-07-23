@@ -1,4 +1,4 @@
-import { googleSheetsAuth } from '../../index';
+import { googleSheetsOAuth2 } from '../../index';
 import { DropdownOption, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { google, drive_v3 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
@@ -28,10 +28,9 @@ export const spreadsheetIdProp = (displayName: string, description: string, requ
 					placeholder: 'Please authenticate first',
 				};
 			}
-			const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
+			const authValue = auth as PiecePropValueSchema<typeof googleSheetsOAuth2>;
 
 			const authClient = new OAuth2Client();
-			authClient.setCredentials(authValue);
 
 			const drive = google.drive({ version: 'v3', auth: authClient });
 
@@ -87,7 +86,7 @@ export const sheetIdProp = (displayName: string, description: string, required =
 				};
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
+			const authValue = auth as PiecePropValueSchema<typeof googleSheetsOAuth2>;
 
 			const authClient = new OAuth2Client();
 			authClient.setCredentials(authValue);
@@ -142,7 +141,7 @@ export const rowValuesProp = () =>
 				return {};
 			}
 			const sheet_id = Number(sheetId);
-			const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
+			const authValue = auth as PiecePropValueSchema<typeof googleSheetsOAuth2>;
 
 			const headers = await googleSheetsCommon.getHeaderRow({
 				spreadsheetId: spreadsheetId as unknown as string,
@@ -183,7 +182,7 @@ export const columnNameProp = () =>
 		required: true,
 		refreshers: ['sheetId', 'spreadsheetId'],
 		options: async ({ auth, spreadsheetId, sheetId }) => {
-			const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
+			const authValue = auth as PiecePropValueSchema<typeof googleSheetsOAuth2>;
 			const spreadsheet_id = spreadsheetId as string;
 			const sheet_id = Number(sheetId) as number;
 			const accessToken = authValue.access_token;

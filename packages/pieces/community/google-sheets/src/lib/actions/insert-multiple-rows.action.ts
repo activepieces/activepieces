@@ -1,4 +1,4 @@
-import { googleSheetsAuth } from '../../';
+import { googleSheetsOAuth2 } from '../../';
 import {
 	createAction,
 	DropdownOption,
@@ -19,7 +19,7 @@ import { commonProps } from '../common/props';
 type RowValueType = Record<string, any>
 
 export const insertMultipleRowsAction = createAction({
-	auth: googleSheetsAuth,
+	auth: googleSheetsOAuth2,
 	name: 'google-sheets-insert-multiple-rows',
 	displayName: 'Insert Multiple Rows',
 	description: 'Add one or more new rows in a specific spreadsheet.',

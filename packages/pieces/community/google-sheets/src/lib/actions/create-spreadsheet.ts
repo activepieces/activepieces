@@ -4,7 +4,7 @@ import {
 	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsOAuth2 } from '../..';
 import {
 	AuthenticationType,
 	httpClient,
@@ -15,7 +15,7 @@ import { drive_v3, sheets_v4 } from 'googleapis';
 import { includeTeamDrivesProp } from '../common/props';
 
 export const createSpreadsheetAction = createAction({
-	auth: googleSheetsAuth,
+	auth: googleSheetsOAuth2,
 	name: 'create-spreadsheet',
 	displayName: 'Create Spreadsheet',
 	description: 'Creates a blank spreadsheet.',
@@ -102,7 +102,7 @@ export const createSpreadsheetAction = createAction({
 });
 
 async function createSpreadsheet(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: PiecePropValueSchema<typeof googleSheetsOAuth2>,
 	title: string,
 ) {
 	const response = await httpClient.sendRequest<sheets_v4.Schema$Spreadsheet>({
@@ -123,7 +123,7 @@ async function createSpreadsheet(
 }
 
 async function moveFile(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: PiecePropValueSchema<typeof googleSheetsOAuth2>,
 	fileId: string,
 	folderId: string,
 ) {
