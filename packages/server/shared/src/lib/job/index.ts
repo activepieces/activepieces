@@ -3,7 +3,7 @@ import {
     ProgressUpdateType,
     RunEnvironment,
 } from '@activepieces/shared'
-import { Omit, Static, Type } from '@sinclair/typebox'
+import { Static, Type } from '@sinclair/typebox'
 import { DelayedJobData, JobData } from './job-data'
 
 export enum JobType {
