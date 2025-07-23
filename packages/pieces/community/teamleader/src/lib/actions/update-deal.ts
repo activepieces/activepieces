@@ -2,6 +2,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { teamleaderAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import {
+  companiesIdDropdown,
+  contactIdDropdown,
+  currencyDropdown,
+  dealIdDropdown,
+  departmentIdDropdown,
+  sourceIdDropdown,
+} from '../common/props';
 
 export const updateDeal = createAction({
   auth: teamleaderAuth,
@@ -9,62 +17,46 @@ export const updateDeal = createAction({
   displayName: 'Update Deal',
   description: 'Update an existing deal in Teamleader',
   props: {
-    dealId: Property.ShortText({
-      displayName: 'Deal ID',
-      description: 'The ID of the deal to update',
-      required: true,
-    }),
+    deal_id: dealIdDropdown,
     title: Property.ShortText({
       displayName: 'Title',
       description: 'The title of the deal',
       required: false,
     }),
-    companyId: Property.ShortText({
-      displayName: 'Company ID',
-      description: 'The ID of the company this deal is associated with',
+    summary: Property.ShortText({
+      displayName: 'Summary',
+      description: 'A brief summary of the deal',
       required: false,
     }),
-    contactId: Property.ShortText({
-      displayName: 'Contact ID',
-      description: 'The ID of the contact person for this deal',
-      required: false,
-    }),
-    source: Property.StaticDropdown({
-      displayName: 'Source',
-      description: 'The source of the deal',
-      required: false,
-      options: {
-        options: [
-          { label: 'Email', value: 'email' },
-          { label: 'Meeting', value: 'meeting' },
-          { label: 'Phone', value: 'phone' },
-          { label: 'Website', value: 'website' },
-          { label: 'Word of mouth', value: 'word_of_mouth' },
-          { label: 'Other', value: 'other' },
-        ],
-      },
-    }),
-    department: Property.ShortText({
-      displayName: 'Department ID',
-      description: 'The ID of the department this deal is associated with',
-      required: false,
-    }),
-    responsibleUserId: Property.ShortText({
+    company_id: companiesIdDropdown,
+    contact_id: contactIdDropdown,
+    source_id: sourceIdDropdown,
+    department_id: departmentIdDropdown,
+    responsible_user_id: Property.ShortText({
       displayName: 'Responsible User ID',
       description: 'The ID of the user responsible for this deal',
       required: false,
     }),
-    estimatedValue: Property.Number({
+    estimated_value: Property.Array({
       displayName: 'Estimated Value',
       description: 'The estimated value of the deal',
       required: false,
+      properties: {
+        amount: Property.Number({
+          displayName: 'Amount',
+          description: 'The amount of the estimated value',
+          required: true,
+        }),
+        currency: currencyDropdown,
+      },
     }),
-    estimatedProbability: Property.Number({
+    estimated_probability: Property.Number({
       displayName: 'Estimated Probability',
-      description: 'The estimated probability (0-100) of closing this deal',
+      description:
+        'The estimated probability 0 and 1 (inclusive) e.g 0.75 of closing this deal',
       required: false,
     }),
-    estimatedClosingDate: Property.DateTime({
+    estimated_closing_date: Property.DateTime({
       displayName: 'Estimated Closing Date',
       description: 'The estimated closing date for this deal',
       required: false,
@@ -77,42 +69,28 @@ export const updateDeal = createAction({
   },
   async run({ auth, propsValue }) {
     const requestBody: Record<string, unknown> = {
-      id: propsValue.dealId,
+      id: propsValue.deal_id,
     };
 
-    if (propsValue.title) {
-      requestBody['title'] = propsValue.title;
-    }
-    if (propsValue.companyId) {
-      requestBody['company'] = { type: 'company', id: propsValue.companyId };
-    }
-    if (propsValue.contactId) {
-      requestBody['contact'] = { type: 'contact', id: propsValue.contactId };
-    }
-    if (propsValue.source) {
-      requestBody['source'] = propsValue.source;
-    }
-    if (propsValue.department) {
-      requestBody['department'] = { type: 'department', id: propsValue.department };
-    }
-    if (propsValue.responsibleUserId) {
-      requestBody['responsible_user'] = { type: 'user', id: propsValue.responsibleUserId };
-    }
-    if (propsValue.estimatedValue) {
-      requestBody['estimated_value'] = {
-        amount: propsValue.estimatedValue,
-        currency: 'EUR'
-      };
-    }
-    if (propsValue.estimatedProbability) {
-      requestBody['estimated_probability'] = propsValue.estimatedProbability;
-    }
-    if (propsValue.estimatedClosingDate) {
-      requestBody['estimated_closing_date'] = propsValue.estimatedClosingDate;
-    }
-    if (propsValue.phase) {
-      requestBody['phase'] = { type: 'dealPhase', id: propsValue.phase };
-    }
+    const optionalFields = {
+      title: propsValue.title,
+      summary: propsValue.summary,
+      company_id: propsValue.company_id,
+      contact_id: propsValue.contact_id,
+      source_id: propsValue.source_id,
+      department_id: propsValue.department_id,
+      responsible_user_id: propsValue.responsible_user_id,
+      estimated_value: propsValue.estimated_value,
+      estimated_probability: propsValue.estimated_probability,
+      estimated_closing_date: propsValue.estimated_closing_date,
+      phase: propsValue.phase,
+    };
+
+    Object.entries(optionalFields).forEach(([key, value]) => {
+      if (value !== undefined) {
+        requestBody[key] = value;
+      }
+    });
 
     const response = await makeRequest(
       auth.access_token,

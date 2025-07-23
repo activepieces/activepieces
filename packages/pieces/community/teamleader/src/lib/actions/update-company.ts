@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { teamleaderAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { businessTypeIdDropdown, companiesIdDropdown, emailTypeDropdown } from '../common/props';
 
 export const updateCompany = createAction({
   auth: teamleaderAuth,
@@ -9,29 +10,13 @@ export const updateCompany = createAction({
   displayName: 'Update Company',
   description: 'Update an existing company in Teamleader',
   props: {
-    companyId: Property.ShortText({
-      displayName: 'Company ID',
-      description: 'The ID of the company to update',
-      required: true,
-    }),
+    company_id: companiesIdDropdown,
     name: Property.ShortText({
       displayName: 'Company Name',
       description: 'The name of the company',
       required: false,
     }),
-    businessType: Property.StaticDropdown({
-      displayName: 'Business Type',
-      description: 'The type of business',
-      required: false,
-      options: {
-        options: [
-          { label: 'Prospect', value: 'prospect' },
-          { label: 'Customer', value: 'customer' },
-          { label: 'Supplier', value: 'supplier' },
-          { label: 'Other', value: 'other' },
-        ],
-      },
-    }),
+    businessType: businessTypeIdDropdown,
     vatNumber: Property.ShortText({
       displayName: 'VAT Number',
       description: 'The VAT number of the company',
@@ -42,18 +27,7 @@ export const updateCompany = createAction({
       description: 'Email addresses for the company',
       required: false,
       properties: {
-        type: Property.StaticDropdown({
-          displayName: 'Type',
-          description: 'Type of email address',
-          required: true,
-          options: {
-            options: [
-              { label: 'Primary', value: 'primary' },
-              { label: 'Invoicing', value: 'invoicing' },
-              { label: 'Secondary', value: 'secondary' },
-            ],
-          },
-        }),
+        type: emailTypeDropdown,
         email: Property.ShortText({
           displayName: 'Email Address',
           description: 'The email address',
@@ -66,18 +40,7 @@ export const updateCompany = createAction({
       description: 'Phone numbers for the company',
       required: false,
       properties: {
-        type: Property.StaticDropdown({
-          displayName: 'Type',
-          description: 'Type of phone number',
-          required: true,
-          options: {
-            options: [
-              { label: 'Primary', value: 'primary' },
-              { label: 'Mobile', value: 'mobile' },
-              { label: 'Direct', value: 'direct' },
-            ],
-          },
-        }),
+        type: emailTypeDropdown,
         number: Property.ShortText({
           displayName: 'Phone Number',
           description: 'The phone number',
@@ -98,7 +61,7 @@ export const updateCompany = createAction({
   },
   async run({ auth, propsValue }) {
     const requestBody: Record<string, unknown> = {
-      id: propsValue.companyId,
+      id: propsValue.company_id,
     };
 
     // Only include fields that are provided

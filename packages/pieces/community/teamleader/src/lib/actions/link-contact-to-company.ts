@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { teamleaderAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { companiesIdDropdown, contactIdDropdown } from '../common/props';
 
 export const linkContactToCompany = createAction({
   auth: teamleaderAuth,
@@ -9,31 +10,27 @@ export const linkContactToCompany = createAction({
   displayName: 'Link Contact to Company',
   description: 'Links a contact to a company with a specified position',
   props: {
-    contactId: Property.ShortText({
-      displayName: 'Contact ID',
-      description: 'The ID of the contact to link',
-      required: true,
-    }),
-    companyId: Property.ShortText({
-      displayName: 'Company ID',
-      description: 'The ID of the company to link to',
-      required: true,
-    }),
+    company_id: companiesIdDropdown,
+    contact_id: contactIdDropdown,
     position: Property.ShortText({
       displayName: 'Position',
       description: 'The position of the contact in the company',
       required: false,
     }),
+    decision_maker: Property.Checkbox({
+      displayName: 'Decision Maker',
+      description: 'Is the contact a decision maker?',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run(context) {
     const requestBody = {
-      id: context.propsValue.contactId,
-      company_id: context.propsValue.companyId,
+      id: context.propsValue.contact_id,
+      company_id: context.propsValue.company_id,
+      position: context.propsValue.position,
+      decision_maker: context.propsValue.decision_maker,
     };
-
-    // if (context.propsValue.position) {
-    //   requestBody['position'] = context.propsValue.position;
-    // }
 
     const response = await makeRequest(
       context.auth.access_token,
