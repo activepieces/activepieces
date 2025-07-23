@@ -4,7 +4,7 @@ import { browseAiApiCall } from '../common/client';
 import { browseAiAuth } from '../common/auth';
 import { robotIdDropdown, taskIdDropdown } from '../common/props';
 
-export const getTaskDetails = createAction({
+export const getTaskDetailsAction = createAction({
   name: 'get-task-details',
   auth: browseAiAuth,
   displayName: 'Get Task Details',

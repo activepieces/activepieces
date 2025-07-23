@@ -3,7 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { browseAiApiCall } from '../common/client';
 import { browseAiAuth } from '../common/auth';
 
-export const listRobots = createAction({
+export const listRobotsAction = createAction({
   name: 'list-robots',
   auth: browseAiAuth,
   displayName: 'List Robots',
