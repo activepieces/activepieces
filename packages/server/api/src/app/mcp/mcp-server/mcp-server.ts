@@ -410,7 +410,7 @@ async function extractActionParametersFromUserInstructions({
     )
 
     const nonNullExtractedParameters = Object.fromEntries(
-        Object.entries(extractedParameters).filter(([_, value]) => !isNil(value))
+        Object.entries(extractedParameters).filter(([_, value]) => !isNil(value)),
     )
     return nonNullExtractedParameters
 }
