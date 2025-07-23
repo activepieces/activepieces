@@ -44,12 +44,11 @@ export const updateBitlink = createAction({
       displayName: 'Brand GUID',
       required: false,
     }),
-    // tags: Property.Array({
-    //   displayName: 'Tags',
-    //   required: false,
-    //   description: 'Tags for the Bitlink. Optional.',
-    //   item: Property.ShortText({ displayName: 'Tag' }),
-    // }),
+    tags: Property.Array({
+      displayName: 'Tags',
+      description: 'A list of tags to apply to the Bitlink.',
+      required: false,
+    }),
   },
   async run({ auth, propsValue }) {
     const { bitlink_id, ...rest } = propsValue;
@@ -66,18 +65,21 @@ export const updateBitlink = createAction({
     if (rest.os) deeplinks.push({ os: rest.os });
     if (rest.install_type) deeplinks.push({ install_type: rest.install_type });
     if (rest.brand_guid) deeplinks.push({ brand_guid: rest.brand_guid });
-
+    if (rest.tags) body['tags'] = rest.tags;
     if (deeplinks.length > 0) {
       body['deeplinks'] = deeplinks;
     }
 
-    body['deeplinks'] = deeplinks;
-
-    return await makeRequest(
+    const response = await makeRequest(
       auth as string,
       HttpMethod.PATCH,
       `/bitlinks/${bitlink_id}`,
       body
     );
+    return {
+      success: true,
+      message: `Bitlink updated successfully.`,
+      data: response,
+    };
   },
 });

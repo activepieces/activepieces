@@ -16,10 +16,19 @@ export const getBitlinkDetails = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    return await makeRequest(
+    const { bitlink_id } = propsValue;
+    if (!bitlink_id) {
+      throw new Error('Bitlink ID is required');
+    }
+    const response = await makeRequest(
       auth as string,
       HttpMethod.GET,
-      `/bitlinks/${propsValue.bitlink_id}`
+      `/bitlinks/${bitlink_id}`
     );
+    return {
+      success: true,
+      message: `Bitlink details retrieved successfully.`,
+      data: response,
+    };
   },
 });

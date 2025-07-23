@@ -6,6 +6,7 @@ import { createBitlink } from './lib/actions/create-bitlink';
 import { archiveBitlink } from './lib/actions/archive-bitlink';
 import { createQrCode } from './lib/actions/create-qr-code';
 import { updateBitlink } from './lib/actions/update-bitlink';
+import { newBitlinkCreated } from './lib/triggers/new-bitlink-created';
 
 export const bitly = createPiece({
   displayName: 'Bitly',
@@ -20,5 +21,5 @@ export const bitly = createPiece({
     getBitlinkDetails,
     updateBitlink,  
   ],
-  triggers: [],
+  triggers: [newBitlinkCreated],
 });

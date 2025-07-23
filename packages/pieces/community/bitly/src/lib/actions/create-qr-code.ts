@@ -130,12 +130,16 @@ export const createQrCode = createAction({
       long_url: propsValue.long_url,
       site_id: propsValue.site_id,
     };
-
-    return await makeRequest(
+    const response = await makeRequest(
       auth as string,
       HttpMethod.POST,
       '/qr-codes',
       body
     );
+    return {
+      success: true,
+      message: `QR code created successfully.`,
+      data: response,
+    };
   },
 });
