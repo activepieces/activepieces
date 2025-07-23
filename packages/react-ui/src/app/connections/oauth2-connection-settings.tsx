@@ -285,6 +285,7 @@ const OAuth2ConnectionSettingsForm = ({
       clientId,
       redirectUrl,
       scope,
+      consent: authProperty.consent ?? 'consent',
       pkce: authProperty.pkce ?? false,
       pkceMethod: authProperty.pkceMethod ?? 'plain',
       extraParams: authProperty.extra ?? {},
