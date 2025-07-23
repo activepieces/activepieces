@@ -172,9 +172,13 @@ export function DashboardContainer({
           removeBottomPadding={removeBottomPadding}
         >
           <>
-            <ProjectLockedAlert />
-            <TaskLimitAlert />
-            <AiCreditsLimitAlert />
+            {!embedState.isEmbedded && (
+              <>
+                <ProjectLockedAlert />
+                <TaskLimitAlert />
+                <AiCreditsLimitAlert />
+              </>
+            )}
             {children}
           </>
         </SidebarComponent>
