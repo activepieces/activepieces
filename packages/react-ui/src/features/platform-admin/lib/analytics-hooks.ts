@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { t } from 'i18next';
+import { useContext } from 'react';
 
-import { toast } from '@/components/ui/use-toast';
 import { analyticsApi } from '@/features/platform-admin/lib/analytics-api';
+
+import { RefreshAnalyticsContext } from '../components/refresh-analytics-provider';
 
 const queryKey = ['analytics'];
 export const platformAnalyticsHooks = {
@@ -15,16 +16,18 @@ export const platformAnalyticsHooks = {
   },
   useRefreshAnalytics: () => {
     const queryClient = useQueryClient();
+    const { setIsRefreshing } = useContext(RefreshAnalyticsContext);
     return useMutation({
       mutationFn: async () => {
-        const result = await analyticsApi.refresh();
+        setIsRefreshing(true);
+        return analyticsApi.refresh();
+      },
+      onSuccess: (result) => {
+        setIsRefreshing(false);
         queryClient.setQueryData(queryKey, result);
       },
-      onSuccess: () => {
-        toast({
-          title: t('Analytics refreshed successfully'),
-        });
-      },
+      retry: true,
+      retryDelay: 1000,
     });
   },
 };

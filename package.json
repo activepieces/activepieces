@@ -443,6 +443,7 @@
     },
     "vite": {
       "rollup": "npm:@rollup/wasm-node"
-    }
+    },
+    "stylus": "0.0.1-security"
   }
 }
