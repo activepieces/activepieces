@@ -1967,6 +1967,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "ravikiranvm",
+      "name": "Ravi Kiran Vallamkonda",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36404296?v=4",
+      "profile": "https://github.com/ravikiranvm",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
