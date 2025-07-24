@@ -55,6 +55,12 @@ export const AgentRunEntity = new EntitySchema<AgentRunSchema>({
             type: TIMESTAMP_COLUMN_TYPE,
         },
     },
+    indices: [
+        {
+            name: 'idx_agent_run_project_agent_starttime',
+            columns: ['projectId', 'agentId', 'startTime'],
+        },
+    ],
     relations: {
         agent: {
             type: 'many-to-one',
