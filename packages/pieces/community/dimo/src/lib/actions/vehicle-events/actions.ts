@@ -26,7 +26,7 @@ async function sendVehicleEventsRequest({ ctx, opKey }: { ctx: ActionContext<Cus
       trigger: trigger,
       setup: triggerFrequency,
       description,
-      targetUri,
+      target_uri: targetUri,
       status,
       verification_token: verificationToken,
     };
@@ -70,19 +70,19 @@ async function sendVehicleEventsRequest({ ctx, opKey }: { ctx: ActionContext<Cus
       token: developerJwt,
     },
   });
-  if (
-    method === HttpMethod.DELETE ||
-    (method === HttpMethod.POST && op.bodyType === VehicleEventsBodyType.None)
-  ) {
-    return { success: true };
+
+  if(response.status > 299)
+  {
+    throw new Error(`Error calling Vehicle Events API: ${response.body?.message || response.status}`);
   }
+
   return response.body;
 }
 
 const listWebhooksAction = createAction({
   auth: dimoAuth,
-  name: "list-webhooks-action",
-  displayName: "List Webhooks",
+  name: "vehicle-events-list-webhooks-action",
+  displayName: "Vehicle Events: List Webhooks",
   description: "List all webhooks.",
   props: {},
   async run(ctx) {
@@ -92,8 +92,8 @@ const listWebhooksAction = createAction({
 
 const createWebhookAction = createAction({
   auth: dimoAuth,
-  name: "create-webhook-action",
-  displayName: "Create Webhook",
+  name: "vehicle-events-create-webhook-action",
+  displayName: "Vehicle Events: Create Webhook",
   description: "Create a new webhook.",
   props: {
     data: Property.StaticDropdown({
@@ -153,8 +153,8 @@ const createWebhookAction = createAction({
 
 const updateWebhookAction = createAction({
   auth: dimoAuth,
-  name: "update-webhook-action",
-  displayName: "Update Webhook",
+  name: "vehicle-events-update-webhook-action",
+  displayName: "Vehicle Events: Update Webhook",
   description: "Update an existing webhook.",
   props: {
     webhookId: Property.ShortText({
@@ -219,8 +219,8 @@ const updateWebhookAction = createAction({
 
 const deleteWebhookAction = createAction({
   auth: dimoAuth,
-  name: "delete-webhook-action",
-  displayName: "Delete Webhook",
+  name: "vehicle-events-delete-webhook-action",
+  displayName: "Vehicle Events: Delete Webhook",
   description: "Delete a webhook.",
   props: {
     webhookId: Property.ShortText({
@@ -236,8 +236,8 @@ const deleteWebhookAction = createAction({
 
 const listSignalsAction = createAction({
   auth: dimoAuth,
-  name: "list-signals-action",
-  displayName: "List Signals",
+  name: "vehicle-events-list-signals-action",
+  displayName: "Vehicle Events: List Signals",
   description: "List all signals.",
   props: {},
   async run(ctx) {
@@ -247,8 +247,8 @@ const listSignalsAction = createAction({
 
 const listSubscribedVehiclesAction = createAction({
   auth: dimoAuth,
-  name: "list-subscribed-vehicles-action",
-  displayName: "List Subscribed Vehicles",
+  name: "vehicle-events-list-subscribed-vehicles-action",
+  displayName: "Vehicle Events: List Subscribed Vehicles",
   description: "List vehicles subscribed to a webhook.",
   props: {
     webhookId: Property.ShortText({
@@ -264,8 +264,8 @@ const listSubscribedVehiclesAction = createAction({
 
 const listVehicleSubscriptionsAction = createAction({
   auth: dimoAuth,
-  name: "list-vehicle-subscriptions-action",
-  displayName: "List Vehicle Subscriptions",
+  name: "vehicle-events-list-vehicle-subscriptions-action",
+  displayName: "Vehicle Events: List Vehicle Subscriptions",
   description: "List all subscriptions for a vehicle.",
   props: {
     tokenId: Property.Number({
@@ -281,8 +281,8 @@ const listVehicleSubscriptionsAction = createAction({
 
 const subscribeVehicleAction = createAction({
   auth: dimoAuth,
-  name: "subscribe-vehicle-action",
-  displayName: "Subscribe Vehicle",
+  name: "vehicle-events-subscribe-vehicle-action",
+  displayName: "Vehicle Events: Subscribe Vehicle",
   description: "Subscribe a vehicle to a webhook.",
   props: {
     webhookId: Property.ShortText({
@@ -303,8 +303,8 @@ const subscribeVehicleAction = createAction({
 
 const subscribeAllVehiclesAction = createAction({
   auth: dimoAuth,
-  name: "subscribe-all-vehicles-action",
-  displayName: "Subscribe All Vehicles",
+  name: "vehicle-events-subscribe-all-vehicles-action",
+  displayName: "Vehicle Events: Subscribe All Vehicles",
   description: "Subscribe all vehicles to a webhook.",
   props: {
     webhookId: Property.ShortText({
@@ -320,8 +320,8 @@ const subscribeAllVehiclesAction = createAction({
 
 const unsubscribeVehicleAction = createAction({
   auth: dimoAuth,
-  name: "unsubscribe-vehicle-action",
-  displayName: "Unsubscribe Vehicle",
+  name: "vehicle-events-unsubscribe-vehicle-action",
+  displayName: "Vehicle Events: Unsubscribe Vehicle",
   description: "Unsubscribe a vehicle from a webhook.",
   props: {
     webhookId: Property.ShortText({
@@ -342,8 +342,8 @@ const unsubscribeVehicleAction = createAction({
 
 const unsubscribeAllVehiclesAction = createAction({
   auth: dimoAuth,
-  name: "unsubscribe-all-vehicles-action",
-  displayName: "Unsubscribe All Vehicles",
+  name: "vehicle-events-unsubscribe-all-vehicles-action",
+  displayName: "Vehicle Events: Unsubscribe All Vehicles",
   description: "Unsubscribe all vehicles from a webhook.",
   props: {
     webhookId: Property.ShortText({

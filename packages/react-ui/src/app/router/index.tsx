@@ -57,7 +57,7 @@ import UsersPage from '../routes/platform/users';
 import { FlowRunPage } from '../routes/runs/id';
 // import AlertsPage from '../routes/settings/alerts';
 // import { EnvironmentPage } from '../routes/settings/environment';
-// import TeamPage from '../routes/settings/team';
+// import ProjectMembersPage from '../routes/settings/project-members';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ApTablesPage } from '../routes/tables';
@@ -218,7 +218,7 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/tables/:tableId',
     element: (
-      <DashboardContainer removeGutters removeBottomPadding>
+      <DashboardContainer removeBottomPadding>
         <RoutePermissionGuard permission={Permission.READ_TABLE}>
           <PageTitle title="Table">
             <ApTableStateProvider>
@@ -351,7 +351,7 @@ const routes = [
   //       <RoutePermissionGuard permission={Permission.READ_PROJECT_MEMBER}>
   //         <PageTitle title="Team">
   //           <ProjectSettingsLayout>
-  //             <TeamPage />
+  //             <ProjectMembersPage />
   //           </ProjectSettingsLayout>
   //         </PageTitle>
   //       </RoutePermissionGuard>

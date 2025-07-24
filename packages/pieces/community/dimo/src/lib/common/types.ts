@@ -99,7 +99,7 @@ export interface CreateWebhookParams {
 	trigger: VehicleEventTrigger;
 	setup: 'Realtime' | 'Hourly';
 	description?: string;
-	targetUri: string;
+	target_uri: string;
 	status: 'Active' | 'Inactive';
 	verification_token: string;
 }

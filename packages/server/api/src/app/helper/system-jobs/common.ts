@@ -28,6 +28,7 @@ type IssuesReminderSystemJobData = {
 type AiUsageReportSystemJobData = {
     platformId: PlatformId
     overage: string
+    idempotencyKey: string
 }
 
 type SevenDaysInTrialEmailSystemJobData = {
