@@ -115,7 +115,14 @@ export const updateLeadAction = createAction({
         resourceUri: `/leads/${lead_id}`,
         body: fieldsToUpdate,
       });
-      return response;
+      
+      return {
+        success: true,
+        message: `Lead updated successfully!`,
+        lead_id,
+        updated_fields: Object.keys(fieldsToUpdate),
+        data: response,
+      };
     } catch (error: any) {
       if (error.message.includes('409')) {
         throw new Error(
