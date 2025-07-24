@@ -15,7 +15,7 @@ export const migrateAgentPieceV2: Migration = {
         })
         return {
             ...newVersion,
-            schemaVersion: '3',
+            schemaVersion: '4',
         }
     },
 } 
