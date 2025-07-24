@@ -50,7 +50,6 @@ export const tableService = {
             externalId: request.externalId ?? apId(),
             name: request.name,
             projectId,
-            trigger: TableAutomationTrigger.ON_DEMAND,
         })
         return table
     },
