@@ -489,6 +489,9 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-knack": [
+        "packages/pieces/community/knack/src/index.ts"
+      ],
       "@activepieces/piece-kommo": [
         "packages/pieces/community/kommo/src/index.ts"
       ],
@@ -693,11 +696,11 @@
       "@activepieces/piece-queue": [
         "packages/pieces/community/queue/src/index.ts"
       ],
+      "@activepieces/piece-quickbooks": [
+        "packages/pieces/community/quickbooks/src/index.ts"
+      ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
-      ],
-       "@activepieces/piece-quickbooks": [
-        "packages/pieces/community/quickbooks/src/index.ts"
       ],
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
