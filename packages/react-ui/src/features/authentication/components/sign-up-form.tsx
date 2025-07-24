@@ -112,7 +112,7 @@ const SignUpForm = ({
         setShowCheckYourEmailNote(true);
       }
     },
-    onError: (error) => {
+    onError: (error, vars) => {
       if (api.isError(error)) {
         const errorCode: ErrorCode | undefined = (
           error.response?.data as { code: ErrorCode }
@@ -125,6 +125,9 @@ const SignUpForm = ({
         }
         switch (errorCode) {
           case ErrorCode.EMAIL_IS_NOT_VERIFIED: {
+            growsumo.data.email = vars.email
+            growsumo.data.name = vars.firstName
+            growsumo.data.customer_key = 'Hello there'
             setShowCheckYourEmailNote(true);
             break;
           }
