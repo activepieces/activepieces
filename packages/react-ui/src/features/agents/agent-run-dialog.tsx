@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { AgentTimeline } from '@/features/agents/agent-timeline';
 
@@ -23,23 +22,19 @@ function AgentRunDialog({
 }: AgentRunDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[42rem] overflow-hidden ">
+      <DialogContent className="w-full max-w-[60rem] overflow-hidden ">
         <DialogHeader>
           <DialogTitle>{t('Agent Test Results')}</DialogTitle>
         </DialogHeader>
-
-        <div className="max-h-[60vh] min-h-[40vh] ">
-          <AgentTimeline
-            agentRunId={agentRunId}
-            className="h-full p-0 pr-3 max-w-[39.25rem]"
-          />
-        </div>
-
-        <DialogFooter>
+        <AgentTimeline
+          agentRunId={agentRunId}
+          className="h-full p-0 pr-3 w-full"
+        />
+        <div className="flex justify-end mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

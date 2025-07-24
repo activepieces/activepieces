@@ -17,10 +17,10 @@ export const agentHooks = {
     });
   },
 
-  useGet: (id: string) => {
+  useGet: (id: string | null | undefined) => {
     return useQuery({
       queryKey: ['agents', id],
-      queryFn: () => agentsApi.get(id),
+      queryFn: () => agentsApi.get(id!),
       enabled: !!id,
     });
   },
