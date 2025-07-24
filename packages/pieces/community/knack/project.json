@@ -1,0 +1,16 @@
+{
+  "name": "piece-knack",
+  "projectType": "library",
+  "sourceRoot": "packages/pieces/community/knack/src",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/node:package",
+      "options": {
+        "outputPath": "dist/packages/pieces/community/knack",
+        "main": "packages/pieces/community/knack/src/index.ts",
+        "tsConfig": "packages/pieces/community/knack/tsconfig.json"
+      }
+    }
+  },
+  "tags": []
+}

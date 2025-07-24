@@ -35,6 +35,7 @@ export default defineConfig(({ command, mode }) => {
       },
       port: 4200,
       host: '0.0.0.0',
+      allowedHosts: true,
     },
 
     preview: {

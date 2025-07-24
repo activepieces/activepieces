@@ -1,0 +1,8 @@
+{
+  "name": "@activepieces/piece-knack",
+  "version": "0.1.0",
+  "description": "Activepieces Piece for Knack integration (triggers and actions)",
+  "main": "src/index.ts",
+  "license": "MIT",
+  "dependencies": {}
+}
