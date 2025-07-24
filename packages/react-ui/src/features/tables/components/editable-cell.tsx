@@ -19,10 +19,12 @@ type EditableCellProps = {
   field: ClientField;
   value: string;
   row: Row;
+  onClick?: () => void;
   column: CalculatedColumn<Row, { id: string }>;
   onRowChange: (row: Row, commitChanges: boolean) => void;
   rowIdx: number;
   disabled?: boolean;
+  locked?: boolean;
 };
 
 const EditorSelector = ({
@@ -120,7 +122,9 @@ export function EditableCell({
   column,
   onRowChange,
   rowIdx,
+  onClick,
   disabled = false,
+  locked = false,
 }: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -143,7 +147,8 @@ export function EditableCell({
           : cn(
               'h-full flex items-center justify-between gap-2 pl-2 py-2  focus:outline-none  ',
               'group cursor-pointer border',
-              isSelected ? 'border-primary' : 'border-transparent',
+              isSelected && !locked ? 'border-primary' : 'border-transparent',
+              locked && 'locked-row',
             )
       }
       onMouseEnter={() => {
@@ -154,6 +159,7 @@ export function EditableCell({
       tabIndex={0}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => {
+        onClick?.();
         setSelectedCell({ rowIdx, columnIdx: column.idx });
         if (!disabled && field.type === FieldType.STATIC_DROPDOWN) {
           setIsEditing(true);

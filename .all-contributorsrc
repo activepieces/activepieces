@@ -1958,6 +1958,24 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "balwant1707",
+      "name": "Balwant Singh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17769387?v=4",
+      "profile": "https://github.com/balwant1707",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "ravikiranvm",
+      "name": "Ravi Kiran Vallamkonda",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36404296?v=4",
+      "profile": "https://github.com/ravikiranvm",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

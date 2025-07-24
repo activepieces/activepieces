@@ -312,6 +312,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             selectedBranchIndex: null,
             askAiButtonProps: null,
             selectedNodes,
+            chatDrawerOpenSource: null,
           };
         });
       },
