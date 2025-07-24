@@ -94,7 +94,7 @@ const GetAgentRequest = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.WORKER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.WORKER],
     },
 }
 
