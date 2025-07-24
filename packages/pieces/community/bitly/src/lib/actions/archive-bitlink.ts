@@ -8,7 +8,7 @@ export const archiveBitlinkAction = createAction({
   auth: bitlyAuth,
   name: 'archive_bitlink',
   displayName: 'Archive Bitlink',
-  description: 'Archives a Bitlink so it no longer redirects.',
+  description: 'Archive a Bitlink to stop redirects.',
   props: {
     group_guid: groupGuid,
     bitlink: bitlinkDropdown,
@@ -30,6 +30,12 @@ export const archiveBitlinkAction = createAction({
 
     } catch (error: any) {
       const errorMessage = error.response?.data?.description || error.response?.data?.message || error.message;
+
+      if (error.response?.status === 429) {
+        throw new Error(
+          'Rate limit exceeded. Please wait before trying again.'
+        );
+      }
 
       if (error.response?.status === 404) {
         throw new Error(

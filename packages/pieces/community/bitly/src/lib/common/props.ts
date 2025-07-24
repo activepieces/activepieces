@@ -53,7 +53,7 @@ export const groupGuid = Property.Dropdown({
 
 export const domain = Property.Dropdown({
     displayName: 'Domain',
-    description: 'The domain to use for the Bitlink. Select a group to see available custom domains.',
+    description: 'Domain to use for the Bitlink.',
     required: false,
     refreshers: ['group_guid'],
     options: async ({ auth, group_guid }) => {

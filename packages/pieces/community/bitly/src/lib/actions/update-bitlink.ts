@@ -8,37 +8,73 @@ export const updateBitlinkAction = createAction({
   auth: bitlyAuth,
   name: 'update_bitlink',
   displayName: 'Update Bitlink',
-  description:
-    'Updates fields in a specified Bitlink, such as the title or tags.',
+  description: 'Modify properties of an existing Bitlink.',
   props: {
     group_guid: groupGuid,
     bitlink: bitlinkDropdown,
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The new title for the Bitlink.',
+      description: 'New title for the Bitlink.',
       required: false,
     }),
     archived: Property.Checkbox({
       displayName: 'Archived',
-      description:
-        'Set to "true" to archive the Bitlink, or "false" to unarchive it.',
+      description: 'Archive or unarchive the Bitlink.',
       required: false,
     }),
     tags: Property.Array({
       displayName: 'Tags',
-      description:
-        'A new list of tags to apply to the Bitlink. This will overwrite existing tags.',
+      description: 'Tags to apply (overwrites existing tags).',
       required: false,
     }),
-    deeplinks: Property.Json({
-      displayName: 'Deeplinks',
-      description:
-        'Update the mobile deeplinking behavior. This will overwrite existing deeplinks.',
+    // Mobile App Deeplink Configuration
+    app_uri_path: Property.ShortText({
+      displayName: 'App URI Path',
+      description: 'Path within the mobile app (e.g., /product/123).',
       required: false,
+    }),
+    install_url: Property.LongText({
+      displayName: 'App Install URL',
+      description: 'URL where users can install the mobile app.',
+      required: false,
+    }),
+    os: Property.StaticDropdown({
+      displayName: 'Mobile OS',
+      description: 'Target mobile operating system.',
+      required: false,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'iOS', value: 'ios' },
+          { label: 'Android', value: 'android' },
+        ],
+      },
+    }),
+    install_type: Property.StaticDropdown({
+      displayName: 'Install Type',
+      description: 'How to handle app installation.',
+      required: false,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'No Install', value: 'no_install' },
+          { label: 'Auto Install', value: 'auto_install' },
+          { label: 'Promote Install', value: 'promote_install' },
+        ],
+      },
     }),
   },
   async run(context) {
-    const { bitlink, title, archived, tags, deeplinks } = context.propsValue;
+    const { 
+      bitlink, 
+      title, 
+      archived, 
+      tags, 
+      app_uri_path,
+      install_url,
+      os,
+      install_type 
+    } = context.propsValue;
 
     try {
       const body: Record<string, unknown> = {};
@@ -52,18 +88,18 @@ export const updateBitlinkAction = createAction({
       if (tags !== undefined && tags !== null && Array.isArray(tags)) {
         body['tags'] = tags;
       }
-      if (deeplinks !== undefined && deeplinks !== null) {
-        const parsedDeeplinks =
-          typeof deeplinks === 'string' ? JSON.parse(deeplinks) : deeplinks;
-        if (Array.isArray(parsedDeeplinks)) {
-          const validDeeplinks = parsedDeeplinks.filter(
-            (link) =>
-              link.app_id &&
-              link.app_uri_path &&
-              link.install_url &&
-              link.install_type
-          );
-          body['deeplinks'] = validDeeplinks;
+      
+      // Build deeplinks array if app configuration is provided
+      if (app_uri_path || install_url || os || install_type) {
+        const deeplink: Record<string, unknown> = {};
+        
+        if (app_uri_path) deeplink['app_uri_path'] = app_uri_path;
+        if (install_url) deeplink['install_url'] = install_url;
+        if (os) deeplink['os'] = os;
+        if (install_type) deeplink['install_type'] = install_type;
+        
+        if (Object.keys(deeplink).length > 0) {
+          body['deeplinks'] = [deeplink];
         }
       }
 

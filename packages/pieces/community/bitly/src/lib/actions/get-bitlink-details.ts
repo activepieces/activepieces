@@ -8,7 +8,7 @@ export const getBitlinkDetailsAction = createAction({
     auth: bitlyAuth,
     name: 'get_bitlink_details',
     displayName: 'Get Bitlink Details',
-    description: 'Retrieve full metadata for a Bitlink by its ID or URL.',
+    description: 'Retrieve metadata for a Bitlink.',
     props: {
         group_guid: groupGuid,
         bitlink: bitlinkDropdown,
@@ -25,6 +25,12 @@ export const getBitlinkDetailsAction = createAction({
 
         } catch (error: any) {
             const errorMessage = error.response?.data?.description || error.response?.data?.message || error.message;
+
+            if (error.response?.status === 429) {
+                throw new Error(
+                    'Rate limit exceeded. Please wait before trying again.'
+                );
+            }
 
             if (error.response?.status === 404) {
                 throw new Error(

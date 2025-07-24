@@ -10,12 +10,12 @@ export const newBitlinkCreatedTrigger = createTrigger({
   auth: bitlyAuth,
   name: 'new_bitlink_created',
   displayName: 'New Bitlink Created',
-  description: 'Triggers when a new Bitlink is created in your Bitly account.',
+  description: 'Fires when a new Bitlink is created.',
   type: TriggerStrategy.POLLING,
   props: {
     pollingInterval: Property.StaticDropdown({
       displayName: 'Polling Interval',
-      description: 'How frequently to check for new Bitlinks. More frequent checking provides faster detection but uses more API calls.',
+      description: 'How frequently to check for new Bitlinks.',
       required: false,
       defaultValue: '5',
       options: {
@@ -34,19 +34,19 @@ export const newBitlinkCreatedTrigger = createTrigger({
     
     titleFilter: Property.ShortText({
       displayName: 'Title Filter (Optional)',
-      description: 'Only trigger for Bitlinks containing this text in their title. Leave empty to monitor all Bitlinks.',
+      description: 'Only trigger for Bitlinks containing this text in their title.',
       required: false,
     }),
     
     tagFilter: Property.ShortText({
       displayName: 'Tag Filter (Optional)',
-      description: 'Only trigger for Bitlinks containing this tag. Leave empty to monitor all Bitlinks.',
+      description: 'Only trigger for Bitlinks containing this tag.',
       required: false,
     }),
     
     includeArchived: Property.Checkbox({
       displayName: 'Include Archived Bitlinks',
-      description: 'Include archived Bitlinks in monitoring. Useful for monitoring all Bitlink creation activity.',
+      description: 'Include archived Bitlinks in monitoring.',
       required: false,
       defaultValue: false,
     }),

@@ -8,8 +8,7 @@ export const createBitlinkAction = createAction({
   auth: bitlyAuth,
   name: 'create_bitlink',
   displayName: 'Create Bitlink',
-  description:
-    'Converts a long url to a Bitlink and sets additional parameters.',
+  description: 'Shorten a long URL with optional customization.',
   props: {
     long_url: Property.ShortText({
       displayName: 'Long URL',
@@ -17,28 +16,54 @@ export const createBitlinkAction = createAction({
       required: true,
     }),
     group_guid: groupGuid,
-    domain: domain,
+    domain: {
+      ...domain,
+      defaultValue: 'bit.ly',
+    },
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'A custom title for the Bitlink.',
+      description: 'Custom title for the Bitlink.',
       required: false,
     }),
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'A list of tags to apply to the Bitlink.',
+      description: 'Tags to apply to the Bitlink.',
       required: false,
     }),
     force_new_link: Property.Checkbox({
       displayName: 'Force New Link',
-      description:
-        'If true, a new short link will be created even if a Bitlink for this long URL already exists.',
+      description: 'Create new link even if one exists for this URL.',
       required: false,
       defaultValue: false,
     }),
-    deeplinks: Property.Json({
-      displayName: 'Deeplinks',
-      description: 'Add mobile deeplinking behavior to the Bitlink.',
+    // Mobile App Deeplink Configuration
+    app_id: Property.ShortText({
+      displayName: 'Mobile App ID',
+      description: 'Mobile app identifier (e.g., com.yourapp.name).',
       required: false,
+    }),
+    app_uri_path: Property.ShortText({
+      displayName: 'App URI Path',
+      description: 'Path within the mobile app (e.g., /product/123).',
+      required: false,
+    }),
+    install_url: Property.LongText({
+      displayName: 'App Install URL',
+      description: 'URL where users can install the mobile app.',
+      required: false,
+    }),
+    install_type: Property.StaticDropdown({
+      displayName: 'Install Type',
+      description: 'How to handle app installation.',
+      required: false,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'No Install', value: 'no_install' },
+          { label: 'Auto Install', value: 'auto_install' },
+          { label: 'Promote Install', value: 'promote_install' },
+        ],
+      },
     }),
   },
   async run(context) {
@@ -49,7 +74,10 @@ export const createBitlinkAction = createAction({
       title,
       tags,
       force_new_link,
-      deeplinks,
+      app_id,
+      app_uri_path,
+      install_url,
+      install_type,
     } = context.propsValue;
 
     try {
@@ -77,21 +105,17 @@ export const createBitlinkAction = createAction({
       if (force_new_link) {
         body['force_new_link'] = force_new_link;
       }
-      if (deeplinks) {
-        const parsedDeeplinks =
-          typeof deeplinks === 'string' ? JSON.parse(deeplinks) : deeplinks;
-        if (Array.isArray(parsedDeeplinks) && parsedDeeplinks.length > 0) {
-          const validDeeplinks = parsedDeeplinks.filter(
-            (link) =>
-              link.app_id &&
-              link.app_uri_path &&
-              link.install_url &&
-              link.install_type
-          );
-          if (validDeeplinks.length > 0) {
-            body['deeplinks'] = validDeeplinks;
-          }
-        }
+      
+      // Build deeplinks array if app configuration is provided
+      if (app_id && app_uri_path && install_url && install_type) {
+        body['deeplinks'] = [
+          {
+            app_id,
+            app_uri_path,
+            install_url,
+            install_type,
+          },
+        ];
       }
 
       return await bitlyApiCall({

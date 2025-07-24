@@ -12,8 +12,7 @@ export const createQrCodeAction = createAction({
   auth: bitlyAuth,
   name: 'create_qr_code',
   displayName: 'Create QR Code',
-  description:
-    'Creates a new QR Code with all available customization options.',
+  description: 'Generate a customized QR code for a Bitlink.',
   props: {
     group_guid: groupGuid,
     destination_type: Property.StaticDropdown({
@@ -55,12 +54,12 @@ export const createQrCodeAction = createAction({
     }),
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'An internal title for the QR Code.',
+      description: 'Internal title for the QR Code.',
       required: false,
     }),
     archived: Property.Checkbox({
       displayName: 'Archive on Create',
-      description: 'If true, the QR code will be archived upon creation.',
+      description: 'Archive the QR code upon creation.',
       required: false,
     }),
     background_color: Property.ShortText({
@@ -143,7 +142,7 @@ export const createQrCodeAction = createAction({
       required: false,
     }),
     corner_3_shape: Property.StaticDropdown({
-      displayName: 'Corner 3 (Bottom-Left): Shape',
+      displayName: 'Corner 3 (Bottom-Right): Shape',
       required: false,
       options: {
         options: [
@@ -160,16 +159,11 @@ export const createQrCodeAction = createAction({
       },
     }),
     corner_3_inner_color: Property.ShortText({
-      displayName: 'Corner 3 (Bottom-Left): Inner Color',
+      displayName: 'Corner 3 (Bottom-Right): Inner Color',
       required: false,
     }),
     corner_3_outer_color: Property.ShortText({
-      displayName: 'Corner 3 (Bottom-Left): Outer Color',
-      required: false,
-    }),
-    gradient_colors: Property.Json({
-      displayName: 'Gradient: Colors (JSON)',
-      description: 'An array of hex colors for the gradient.',
+      displayName: 'Corner 3 (Bottom-Right): Outer Color',
       required: false,
     }),
     gradient_style: Property.StaticDropdown({
@@ -182,6 +176,16 @@ export const createQrCodeAction = createAction({
           { label: 'Radial', value: 'radial' },
         ],
       },
+    }),
+    gradient_color_1: Property.ShortText({
+      displayName: 'Gradient: Color 1',
+      description: 'First gradient color (hex code)',
+      required: false,
+    }),
+    gradient_color_2: Property.ShortText({
+      displayName: 'Gradient: Color 2',
+      description: 'Second gradient color (hex code)',
+      required: false,
     }),
     gradient_angle: Property.Number({
       displayName: 'Gradient: Angle (for Linear)',
@@ -234,7 +238,7 @@ export const createQrCodeAction = createAction({
     }),
     bitly_brand: Property.Checkbox({
       displayName: 'Branding: Show Bitly Logo',
-      description: 'If true, shows the Bitly logo in the bottom right corner.',
+      description: 'Show the Bitly logo in the bottom right corner.',
       required: false,
       defaultValue: true,
     }),
@@ -243,10 +247,10 @@ export const createQrCodeAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Low', value: 'L' },
-          { label: 'Medium', value: 'M' },
-          { label: 'Quartile', value: 'Q' },
-          { label: 'High', value: 'H' },
+          { label: 'Low (1)', value: 1 },
+          { label: 'Medium (2)', value: 2 },
+          { label: 'Quartile (3)', value: 3 },
+          { label: 'High (4)', value: 4 },
         ],
       },
     }),
@@ -308,11 +312,18 @@ export const createQrCodeAction = createAction({
       if (props.gradient_angle) gradient.angle = props.gradient_angle;
       if (props.gradient_exclude_corners)
         gradient.exclude_corners = props.gradient_exclude_corners;
-      if (props.gradient_colors)
-        gradient.colors =
-          typeof props.gradient_colors === 'string'
-            ? JSON.parse(props.gradient_colors)
-            : props.gradient_colors;
+      
+      // Build gradient colors array from individual color inputs
+      if (props.gradient_color_1 || props.gradient_color_2) {
+        const colors = [];
+        if (props.gradient_color_1) {
+          colors.push({ color: props.gradient_color_1, offset: 0 });
+        }
+        if (props.gradient_color_2) {
+          colors.push({ color: props.gradient_color_2, offset: 100 });
+        }
+        gradient.colors = colors;
+      }
       if (Object.keys(gradient).length > 0) customizations.gradient = gradient;
 
       const frame: any = {};
