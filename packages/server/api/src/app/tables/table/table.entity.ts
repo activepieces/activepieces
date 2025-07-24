@@ -26,6 +26,7 @@ export const TableEntity = new EntitySchema<TableSchema>({
         },
         trigger: {
             type: String,
+            nullable: true,
         },
         status: {
             type: String,

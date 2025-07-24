@@ -28,14 +28,16 @@ export class AddTableAgentsSqlite1752851142438 implements MigrationInterface {
                     "updated",
                     "name",
                     "projectId",
-                    "externalId"
+                    "externalId",
+                    "trigger"
                 )
             SELECT "id",
                 "created",
                 "updated",
                 "name",
                 "projectId",
-                "externalId"
+                "externalId",
+                "trigger"
             FROM "table"
         `)
         await queryRunner.query(`
