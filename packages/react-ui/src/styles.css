@@ -157,3 +157,8 @@
   /* If necessary, add !important to the rule */
   pointer-events: none !important;
 }
+
+/* This is a hack to fix the issue with the pointer events being set to none when the vaul drawer is open */
+body {
+  pointer-events: auto !important;
+}

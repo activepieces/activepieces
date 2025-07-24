@@ -96,8 +96,6 @@ const BuilderPage = () => {
     run,
     canExitRun,
     selectedStep,
-    chatDrawerOpenSource,
-    setChatDrawerOpenSource,
   ] = useBuilderStateContext((state) => [
     state.setRun,
     state.flowVersion,
@@ -106,8 +104,6 @@ const BuilderPage = () => {
     state.run,
     state.canExitRun,
     state.selectedStep,
-    state.chatDrawerOpenSource,
-    state.setChatDrawerOpenSource,
   ]);
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
@@ -300,10 +296,7 @@ const BuilderPage = () => {
         </>
       </ResizablePanelGroup>
       {edition === ApEdition.CLOUD && <UpgradeDialog />}
-      <ChatDrawer
-        source={chatDrawerOpenSource}
-        onOpenChange={() => setChatDrawerOpenSource(null)}
-      />
+      <ChatDrawer />
     </div>
   );
 };
