@@ -42,7 +42,9 @@
       auth: systemeioAuth,
       minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/systemeio.png",
-      authors: ["Your Name <you@example.com>"],
+      authors: [
+          
+      ],
       actions: [createContact, updateContact, addTagToContact, removeTagFromContact, findContactByEmail],
       triggers: [newContact, newSale, tagAddedToContact],
     });
