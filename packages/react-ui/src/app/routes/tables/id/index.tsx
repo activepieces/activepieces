@@ -85,6 +85,10 @@ const ApTableEditorPage = () => {
         rowIdx: records.length,
         idx: 0,
       });
+      setSelectedCell({
+        rowIdx: records.length,
+        columnIdx: 1,
+      });
     });
   };
 
