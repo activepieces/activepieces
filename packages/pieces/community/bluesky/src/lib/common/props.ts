@@ -258,11 +258,11 @@ export const contentWarningDropdown = Property.StaticMultiSelectDropdown({
   required: false,
   options: {
     options: [
-      { label: '🔞 Adult Content', value: 'adult' },
-      { label: '⚠️ Graphic Content', value: 'graphic-media' },
-      { label: '💔 Sensitive Topic', value: 'sensitive' },
-      { label: '🩸 Violence', value: 'violence' },
-      { label: '🚫 Spam/Promotional', value: 'spam' },
+      { label: 'Adult Content', value: 'adult' },
+      { label: 'Graphic Content', value: 'graphic-media' },
+      { label: 'Sensitive Topic', value: 'sensitive' },
+      { label: 'Violence', value: 'violence' },
+      { label: 'Spam/Promotional', value: 'spam' },
     ],
   },
 });
@@ -275,9 +275,9 @@ export const audienceDropdown = Property.StaticDropdown({
   defaultValue: 'public',
   options: {
     options: [
-      { label: '🌍 Everyone (Public)', value: 'public' },
-      { label: '👥 Followers only', value: 'followers' },
-      { label: '🔒 Private/Unlisted', value: 'unlisted' },
+      { label: 'Everyone (Public)', value: 'public' },
+      { label: 'Followers only', value: 'followers' },
+      { label: 'Private/Unlisted', value: 'unlisted' },
     ],
   },
 });
