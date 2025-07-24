@@ -7,7 +7,27 @@ export const addTagToContact = createAction({
   description: 'Assign a tag to a contact in systeme.io.',
   props: {
     contactId: Property.ShortText({ displayName: 'Contact ID', required: true }),
-    tagId: Property.Number({ displayName: 'Tag ID', required: true }),
+    tagId: Property.Dropdown({
+      displayName: 'Tag',
+      required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        const response = await httpClient.sendRequest({
+          method: HttpMethod.GET,
+          url: 'https://api.systeme.io/api/tags',
+          headers: {
+            'X-API-Key': String(auth),
+          },
+        });
+        const items = response.body.items || [];
+        return {
+          options: items.map((tag: any) => ({
+            label: tag.name,
+            value: tag.id,
+          })),
+        };
+      },
+    }),
   },
   async run(context) {
     const contactId = context.propsValue['contactId'];

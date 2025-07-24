@@ -18,7 +18,27 @@ export const createContact = createAction({
     email: Property.ShortText({ displayName: 'Email', required: true }),
     firstName: Property.ShortText({ displayName: 'First Name', required: false }),
     lastName: Property.ShortText({ displayName: 'Last Name', required: false }),
-    tags: Property.Array({ displayName: 'Tags', required: false }),
+    tags: Property.MultiSelectDropdown({
+      displayName: 'Tags',
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        const response = await httpClient.sendRequest({
+          method: HttpMethod.GET,
+          url: 'https://api.systeme.io/api/tags',
+          headers: {
+            'X-API-Key': String(auth),
+          },
+        });
+        const items = response.body.items || [];
+        return {
+          options: items.map((tag: any) => ({
+            label: `${tag.name} (ID: ${tag.id})`,
+            value: tag.id,
+          })),
+        };
+      },
+    }),
   },
   async run(context) {
     const email = context.propsValue['email'];

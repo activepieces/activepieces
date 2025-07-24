@@ -45,7 +45,7 @@ export const updateContact = createAction({
       url: `https://api.systeme.io/api/contacts/${contactId}`,
       headers: {
         'X-API-Key': String(context.auth),
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/merge-patch+json', // <-- Fix here
       },
       body,
     });
