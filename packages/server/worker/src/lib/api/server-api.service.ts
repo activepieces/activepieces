@@ -1,7 +1,7 @@
 import path from 'path'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, FlowRun, FlowVersionId, FlowVersionState, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, isNil, PlatformUsageMetric, PopulatedFlow, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { ActivepiecesError, Agent, AgentRun, ErrorCode, Field, FlowRun, FlowVersionId, FlowVersionState, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, isNil, McpWithTools, PlatformUsageMetric, PopulatedFlow, Record, RunAgentRequestBody, UpdateAgentRunRequestBody, UpdateRecordRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
@@ -193,6 +193,48 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
             finally {
                 log.debug({ request, took: performance.now() - startTime }, '[EngineApiService#getFlowWithExactPieces] cache miss')
             }
+        },
+    }
+}
+
+export const agentsApiService = (workerToken: string, _log: FastifyBaseLogger) => {
+    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
+    const client = new ApAxiosClient(apiUrl, workerToken)
+
+    return {
+        async getAgent(agentId: string): Promise<Agent> {
+            return client.get<Agent>(`/v1/agents/${agentId}`, {})
+        },
+
+        async getMcp(mcpId: string): Promise<McpWithTools> {
+            return client.get<McpWithTools>(`/v1/mcp-servers/${mcpId}`, {})
+        },
+
+        async getAgentRun(agentRunId: string): Promise<AgentRun> {
+            return client.get<AgentRun>(`/v1/agent-runs/${agentRunId}`, {})
+        },
+        async createAgentRun(agentRun: RunAgentRequestBody): Promise<AgentRun> {
+            return client.post<AgentRun>('/v1/agent-runs', agentRun)
+        },
+        async updateAgentRun(agentRunId: string, agentRun: UpdateAgentRunRequestBody): Promise<AgentRun> {
+            return client.post<AgentRun>(`/v1/agent-runs/${agentRunId}/update`, agentRun)
+        },
+    }
+}
+
+export const tablesApiService = (workerToken: string) => {
+    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
+    const client = new ApAxiosClient(apiUrl, workerToken)
+
+    return {
+        async getFields(tableId: string): Promise<Field[]> {
+            return client.get<Field[]>(`/v1/fields?tableId=${tableId}`, {})
+        },
+        async getRecord(recordId: string): Promise<Record> {
+            return client.get<Record>(`/v1/records/${recordId}`, {})
+        },
+        async updateRecord(recordId: string, record: UpdateRecordRequest): Promise<Record> {
+            return client.post<Record>(`/v1/records/${recordId}`, { ...record, agentUpdate: true })
         },
     }
 }

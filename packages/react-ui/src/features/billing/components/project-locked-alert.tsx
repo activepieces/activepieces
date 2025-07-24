@@ -3,10 +3,14 @@ import { AlertCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { ApFlagId, Permission } from '@activepieces/shared';
+import { userHooks } from '@/hooks/user-hooks';
+import { ApFlagId, Permission, PlatformRole } from '@activepieces/shared';
+
+import { Button } from '../../../components/ui/button';
 
 export const ProjectLockedAlert = () => {
   const location = useLocation();
@@ -15,12 +19,15 @@ export const ProjectLockedAlert = () => {
     ApFlagId.SHOW_BILLING,
   );
   const { checkAccess } = useAuthorization();
-
+  const openDialog = useManagePlanDialogStore((state) => state.openDialog);
+  const currentUser = userHooks.useCurrentUser();
   // CE doesn't have a plan
   if (!project.plan?.locked || !location.pathname.startsWith('/project')) {
     return null;
   }
-
+  const showContactAdmin =
+    !showBilling && currentUser.data?.platformRole !== PlatformRole.ADMIN;
+  const showAdminNote = checkAccess(Permission.WRITE_PROJECT) && !showBilling;
   return (
     <Alert
       variant="default"
@@ -37,33 +44,36 @@ export const ProjectLockedAlert = () => {
               )}{' '}
               <strong>
                 {t(
-                  'You will not be able to access paied features untill limits are increased.',
+                  'You will not be able to access paid features untill limits are increased.',
                 )}
               </strong>
               <br />
-              {showBilling ? (
-                <div>
-                  <span>{t('Please visit')} </span>
-                  <Link to="/platform/setup/billing" className="underline">
-                    {t('Your Plan')}
-                  </Link>{' '}
-                  <span>{t('to upgrade and unlock project access.')}</span>
-                </div>
-              ) : !checkAccess(Permission.WRITE_PROJECT) ? (
+              {showContactAdmin &&
                 t(
                   'Please contact your platform admin to upgrade the plan and unlock this project.',
-                )
-              ) : (
+                )}
+              {showAdminNote && (
                 <div>
-                  <span>
-                    {t(
-                      'To resolve this, go to please contact ur platform admin',
-                    )}{' '}
-                  </span>
+                  <span>{t('Please visit') + ' '}</span>
+                  <Link to="/platform/projects" className="underline">
+                    {t('Platform Admin')}
+                  </Link>{' '}
+                  <span>{t('and increase the project limit.')}</span>
                 </div>
               )}
             </div>
           </AlertDescription>
+        </div>
+        <div className="flex flex-col gap-2 relative">
+          {showBilling && (
+            <Button
+              variant="outline"
+              className="!text-primary"
+              onClick={() => openDialog()}
+            >
+              {t('Upgrade Plan')}
+            </Button>
+          )}
         </div>
       </div>
     </Alert>

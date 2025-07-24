@@ -9,38 +9,18 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { AgentTimeline } from '@/features/agents/agent-timeline';
-import {
-  AgentTestResult,
-  AgentStepBlock,
-  StepRunResponse,
-  AgentTaskStatus,
-  isNil,
-} from '@activepieces/shared';
 
-type AgentTestingDialogProps = {
+type AgentRunDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  agentProgress: StepRunResponse | null;
-  isTesting: boolean;
-  agentId: string;
+  agentRunId: string | null | undefined;
 };
 
-function AgentTestingDialog({
+function AgentRunDialog({
   open,
   onOpenChange,
-  agentProgress,
-  agentId,
-}: AgentTestingDialogProps) {
-  const agentResult = agentProgress?.output as AgentTestResult | undefined;
-  const agentSteps: AgentStepBlock[] = agentResult?.steps || [];
-  const prompt =
-    !isNil(agentProgress?.input) &&
-    'prompt' in (agentProgress.input as { prompt: string })
-      ? (agentProgress.input as { prompt: string }).prompt
-      : '';
-  const isDone =
-    agentResult?.status === AgentTaskStatus.COMPLETED ||
-    agentResult?.status === AgentTaskStatus.FAILED;
+  agentRunId,
+}: AgentRunDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-[42rem] overflow-hidden ">
@@ -50,11 +30,8 @@ function AgentTestingDialog({
 
         <div className="max-h-[60vh] min-h-[40vh] ">
           <AgentTimeline
-            agentId={agentId}
-            steps={agentSteps}
+            agentRunId={agentRunId}
             className="h-full p-0 pr-3 max-w-[39.25rem]"
-            prompt={prompt}
-            isDone={isDone}
           />
         </div>
 
@@ -68,4 +45,4 @@ function AgentTestingDialog({
   );
 }
 
-export { AgentTestingDialog };
+export { AgentRunDialog };

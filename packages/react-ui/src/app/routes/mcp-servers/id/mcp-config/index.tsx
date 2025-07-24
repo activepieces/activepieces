@@ -1,11 +1,21 @@
 import { useParams } from 'react-router-dom';
 
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
+
 import { McpToolsSection } from './mcp-tools-section';
 
 export const McpConfigPage = () => {
   const { mcpId } = useParams<{ mcpId: string }>();
+  const { data: mcp, isLoading, refetch: refetchMcp } = mcpHooks.useMcp(mcpId!);
+  const { mutate: updateTools } = mcpHooks.useUpdateTools(mcpId!, refetchMcp);
 
-  return <McpToolsSection mcpId={mcpId!} />;
+  return (
+    <McpToolsSection
+      mcp={mcp}
+      isLoading={isLoading}
+      onToolsUpdate={(tools) => updateTools(tools)}
+    />
+  );
 };
 
 McpConfigPage.displayName = 'McpConfigPage';
