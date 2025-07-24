@@ -77,7 +77,7 @@ export function EditableCell({
     if (isTypingKey && !disabled && !isEditing) {
       setIsEditing(true);
       setSelectedCell({ rowIdx, columnIdx: column.idx });
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         e.stopPropagation();
       }
