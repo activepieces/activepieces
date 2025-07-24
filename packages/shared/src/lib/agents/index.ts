@@ -67,6 +67,7 @@ export const Agent = Type.Object({
     platformId: Type.String(),
     outputType: Type.Optional(Type.Enum(AgentOutputType)),
     outputFields: Type.Optional(Type.Array(AgentOutputField)),
+    runCompleted: Type.Number(),
 })
 
 export type Agent = Static<typeof Agent>

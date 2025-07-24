@@ -133,6 +133,7 @@ import { AddIndexForSchemaVersionInFlowVersionSqlite1752152069517 } from './migr
 import { AddAgentRunsEntitySqlite1752583785385 } from './migration/sqlite/1752583785385-AddAgentRunsEntitySqlite'
 import { AddTableAgentsSqlite1752851142438 } from './migration/sqlite/1752851142438-AddTableAgentsSqlite'
 import { AddTableAutomationStatusSqlite1753013268133 } from './migration/sqlite/1753013268133-AddTableAutomationStatusSqlite'
+import { AddIndexForAgentTableSqlite1753400496920 } from './migration/sqlite/1753400496920-AddIndexForAgentTableSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -282,6 +283,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTableAgentsSqlite1752851142438,
         AddTableAutomationStatusSqlite1753013268133,
         MakeTriggerNullable1753366163403,
+        AddIndexForAgentTableSqlite1753400496920,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
