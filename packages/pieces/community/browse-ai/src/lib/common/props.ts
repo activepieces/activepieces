@@ -43,9 +43,16 @@ export const taskIdDropdown = Property.Dropdown({
   displayName: 'Task ID',
   description: 'Select a task ID',
   required: true,
-  refreshers: ['robotId'],
+  refreshers: ['auth', 'robotId'],
   options: async ({ auth, robotId }) => {
-    if (!auth || !robotId) {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please select a robot first',
+      };
+    }
+    if (!robotId) {
       return {
         disabled: true,
         options: [],
@@ -57,7 +64,7 @@ export const taskIdDropdown = Property.Dropdown({
       const tasks = await makeRequest(
         auth as string,
         HttpMethod.GET,
-        `/robots/${robotId}/tasks`
+        `/robots/${robotId}/tasks?page=1`
       );
       return {
         disabled: false,
