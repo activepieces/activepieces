@@ -116,7 +116,7 @@ export const AgentSettings = ({
           <div className="flex flex-col md:flex-row items-start gap-6">
             <div className="flex-shrink-0">
               <ImageWithFallback
-                src={agent!.profilePictureUrl}
+                src={agent?.profilePictureUrl}
                 alt="Agent avatar"
                 className="w-20 h-20 rounded-xl object-cover"
               />
