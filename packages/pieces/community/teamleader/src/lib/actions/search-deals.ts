@@ -1,34 +1,56 @@
 import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { getTeamleaderApiBaseUrl } from '../common';
 
+interface Deal {
+  id: string;
+  title: string;
+  status: string;
+  value?: number;
+  created_at?: string;
+}
+
+// Action: Search for deals in Teamleader
 export const searchDeals = createAction({
   name: 'searchDeals',
   displayName: 'Search Deals',
-  description: 'List or filter Deals via Teamleader API.',
+  description: 'Search for deals in Teamleader.',
   props: {
-    title: Property.ShortText({ displayName: 'Title (filter)', required: false }),
-    status: Property.ShortText({ displayName: 'Status (filter)', required: false }),
-    pageSize: Property.Number({ displayName: 'Page Size', required: false, defaultValue: 50 }),
+    query: Property.ShortText({ displayName: 'Query', required: false, description: 'Search term for deal title or customer.' }),
+    status: Property.ShortText({ displayName: 'Status', required: false, description: 'Filter by deal status (e.g., open, won, lost).' }),
   },
   async run(context) {
-    const { title, status, pageSize } = context.propsValue;
+    const { query, status } = context.propsValue;
     const auth = context.auth as OAuth2PropertyValue;
     if (!auth?.access_token) throw new Error('Missing access token');
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://api.focus.teamleader.eu/deals.list',
-      headers: {
-        Authorization: `Bearer ${auth.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: {
-        filter: {
-          ...(title ? { title } : {}),
-          ...(status ? { status } : {}),
+    const apiBase = getTeamleaderApiBaseUrl(auth);
+    try {
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: `${apiBase}/deals.list`,
+        headers: {
+          Authorization: `Bearer ${auth.access_token}`,
+          'Content-Type': 'application/json',
         },
-        page: { size: pageSize || 50 },
-      },
-    });
-    return response.body.data;
+        body: {
+          ...(query ? { filter: { title: { contains: query } } } : {}),
+          ...(status ? { filter: { ...(query ? { title: { contains: query } } : {}), status } } : {}),
+          page: { size: 50 },
+        },
+      });
+      if (!response.body?.data || !Array.isArray(response.body.data)) {
+        throw new Error('Unexpected API response: missing data array');
+      }
+      // Map output to a clear schema
+      return response.body.data.map((deal: Deal) => ({
+        id: deal.id,
+        title: deal.title,
+        status: deal.status,
+        value: deal.value,
+        created_at: deal.created_at,
+      }));
+    } catch (e: unknown) {
+      throw new Error(`Failed to search deals: ${(e as Error).message}`);
+    }
   },
 }); 

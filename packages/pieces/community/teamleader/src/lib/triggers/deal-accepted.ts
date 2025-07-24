@@ -1,10 +1,12 @@
 import { createTrigger, TriggerStrategy, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { getTeamleaderApiBaseUrl } from '../common';
 
+// Trigger: Fires when a deal is accepted in Teamleader
 export const dealAccepted = createTrigger({
   name: 'dealAccepted',
   displayName: 'Deal Accepted',
-  description: 'Fires when a Deal is marked “won” in Teamleader.',
+  description: 'Fires when a deal is accepted in Teamleader.',
   type: TriggerStrategy.POLLING,
   props: {
     since: Property.DateTime({
@@ -13,29 +15,65 @@ export const dealAccepted = createTrigger({
       description: 'Only fetch deals accepted after this date/time',
     }),
   },
-  sampleData: {},
-  async onEnable() { /* Required by interface. No setup needed. */ },
-  async onDisable() { /* Required by interface. No teardown needed. */ },
+  sampleData: {
+    id: '78910',
+    title: 'Big Project',
+    status: 'won',
+    accepted_at: '2024-01-01T12:00:00Z',
+    value: 10000,
+  },
+  async onEnable() {
+    // No setup required on enable
+    return;
+  },
+  async onDisable() {
+    // No teardown required on disable
+    return;
+  },
   async run(context) {
     const since = context.propsValue.since;
     const auth = context.auth as OAuth2PropertyValue;
     if (!auth?.access_token) throw new Error('Missing access token');
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://api.focus.teamleader.eu/deals.list',
-      headers: {
-        Authorization: `Bearer ${auth.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: {
-        filter: {
-          ...(since ? { won_on: { gte: since } } : {}),
-          status: 'won',
+    const apiBase = getTeamleaderApiBaseUrl(auth);
+    try {
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: `${apiBase}/deals.list`,
+        headers: {
+          Authorization: `Bearer ${auth.access_token}`,
+          'Content-Type': 'application/json',
         },
-        page: { size: 50 },
-      },
-    });
-    return response.body.data;
+        body: {
+          filter: {
+            ...(since ? { accepted_at: { gte: since } } : {}),
+            status: 'won',
+          },
+          page: { size: 50 },
+        },
+      });
+      if (!response.body?.data || !Array.isArray(response.body.data)) {
+        throw new Error('Unexpected API response: missing data array');
+      }
+      // Map output to a clear schema
+      return response.body.data.map((deal: {
+        id: string;
+        title: string;
+        status: string;
+        accepted_at: string;
+        value: number;
+      }) => ({
+        id: deal.id,
+        title: deal.title,
+        status: deal.status,
+        accepted_at: deal.accepted_at,
+        value: deal.value,
+      }));
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        throw new Error(`Failed to fetch deals: ${e.message}`);
+      }
+      throw new Error('Failed to fetch deals: Unknown error');
+    }
   },
   async test(context) {
     return await this.run(context as never);

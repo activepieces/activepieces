@@ -1,6 +1,8 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
-// Custom Teamleader OAuth2 authentication using the correct endpoints and parameters
+// Enhanced Teamleader OAuth2 authentication with user guidance and custom domain field
+// NOTE: Dynamic domain support for authUrl/tokenUrl is not possible if the framework does not support function values for these fields.
+// The customDomain property is left for future support or for use in API calls.
 export const TeamleaderAuth = PieceAuth.OAuth2({
   required: true,
   authUrl: 'https://focus.teamleader.eu/oauth2/authorize',
@@ -19,8 +21,13 @@ export const TeamleaderAuth = PieceAuth.OAuth2({
     'timeTracking:read',
     'timeTracking:write',
   ],
-  // Optionally, you can add extra fields if Teamleader requires them
   props: {
-    // Example: Property.ShortText({ displayName: 'Custom Field', required: false })
+    // Optional: Allow user to specify a custom Teamleader domain (for multi-region or custom environments)
+    customDomain: Property.ShortText({
+      displayName: 'Custom Teamleader Domain',
+      required: false,
+      description: 'If your Teamleader account uses a custom region or environment, enter the full domain (e.g., https://myregion.teamleader.eu). Otherwise, leave blank.',
+    }),
   },
+  // No need for a custom validate function; validation is handled in the UI or in API calls.
 }); 
