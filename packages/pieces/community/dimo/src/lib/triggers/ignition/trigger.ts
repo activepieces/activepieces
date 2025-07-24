@@ -90,7 +90,7 @@ export const ignitionTrigger = createTrigger({
 			trigger: {
 				field: TriggerField.IsIgnitionOn,
 				operator: BooleanOperator.Is,
-				value: ignitionState.toLowerCase() === 'on' ? 'ON' : 'OFF',
+				value: ignitionState.toLowerCase() === 'on' ? true : false,
 			},
 			setup: triggerFrequency as 'Realtime' | 'Hourly',
 			description: `Ignition trigger: ${ignitionState.toUpperCase()}`,

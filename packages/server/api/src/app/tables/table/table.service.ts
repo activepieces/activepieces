@@ -10,7 +10,6 @@ import {
     SeekPage,
     spreadIfDefined,
     Table,
-    TableAutomationTrigger,
     TableWebhook,
     TableWebhookEventType,
     UpdateTableRequest,
