@@ -78,6 +78,9 @@
       "@activepieces/piece-apitable": [
         "packages/pieces/community/apitable/src/index.ts"
       ],
+      "@activepieces/piece-apitemplate-io": [
+        "packages/pieces/community/apitemplate-io/src/index.ts"
+      ],
       "@activepieces/piece-apollo": [
         "packages/pieces/community/apollo/src/index.ts"
       ],
@@ -693,11 +696,11 @@
       "@activepieces/piece-queue": [
         "packages/pieces/community/queue/src/index.ts"
       ],
+      "@activepieces/piece-quickbooks": [
+        "packages/pieces/community/quickbooks/src/index.ts"
+      ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
-      ],
-       "@activepieces/piece-quickbooks": [
-        "packages/pieces/community/quickbooks/src/index.ts"
       ],
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
