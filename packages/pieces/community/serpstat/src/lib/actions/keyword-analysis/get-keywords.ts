@@ -1,11 +1,12 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { randomUUID } from 'crypto';
+import { SEARCH_ENGINE_OPTIONS } from '../../common/search-engines';
 
 export const getKeywords = createAction({
   name: 'get_keywords',
-  displayName: 'Keyword Analysis > Get Keywords',
-  description: 'Get keywords data from Serpstat',
+  displayName: 'Get Keywords',
+  description: 'Get keywords data from Serpstat > Keyword Analysis',
   props: {
     query: Property.ShortText({
       displayName: 'Query',
@@ -18,14 +19,7 @@ export const getKeywords = createAction({
       required: true,
       defaultValue: 'g_us',
       options: {
-        options: [
-          { label: 'United States', value: 'g_us' },
-          { label: 'Singapore', value: 'g_sg' },
-          { label: 'Indonesia', value: 'g_id' },
-          { label: 'Malaysia', value: 'g_my' },
-          { label: 'Vietnam', value: 'g_vn' },
-          { label: 'Thailand', value: 'g_th' },
-        ],
+        options: SEARCH_ENGINE_OPTIONS,
       },
     }),
     minusKeywords: Property.Array({
