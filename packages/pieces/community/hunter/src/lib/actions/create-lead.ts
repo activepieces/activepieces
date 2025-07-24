@@ -80,11 +80,6 @@ export const createLeadAction = createAction({
       description: 'The source where the lead was found.',
       required: false,
     }),
-    leads_list_id: Property.Number({
-      displayName: 'Leads List ID',
-      description: 'The identifier of the list the lead belongs to.',
-      required: false,
-    }),
     leads_list_ids: Property.Array({
       displayName: 'Leads List IDs',
       description: 'The identifiers of the lists the lead belongs to.',
