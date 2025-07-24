@@ -129,6 +129,9 @@
       "@activepieces/piece-blockscout": [
         "packages/pieces/community/blockscout/src/index.ts"
       ],
+      "@activepieces/piece-bluesky": [
+        "packages/pieces/community/bluesky/src/index.ts"
+      ],
       "@activepieces/piece-bonjoro": [
         "packages/pieces/community/bonjoro/src/index.ts"
       ],
@@ -693,11 +696,11 @@
       "@activepieces/piece-queue": [
         "packages/pieces/community/queue/src/index.ts"
       ],
+      "@activepieces/piece-quickbooks": [
+        "packages/pieces/community/quickbooks/src/index.ts"
+      ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
-      ],
-       "@activepieces/piece-quickbooks": [
-        "packages/pieces/community/quickbooks/src/index.ts"
       ],
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
