@@ -1,4 +1,4 @@
-import { Property } from 'packages/pieces/community/framework/src/lib/property/input';
+import { Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
