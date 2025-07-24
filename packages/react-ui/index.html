@@ -35,18 +35,42 @@
       document.addEventListener('DOMContentLoaded', function (event) {
         window.onmessage = function (e) {
           try {
-            if (e.data && typeof e.data === 'string') {
-              console.log('=== onmessage data not empty ===');
-              var playload = JSON.parse(e.data);
-              localStorage.setItem(playload.key, playload.data);
-              if (playload.key == 'openID') {
-                let openID = JSON.parse(playload.data);
-                let access_token = openID?.access_token;
-                localStorage.setItem('access_token', access_token);
-              }
+            const payload = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+
+            if (!payload) {
+              throw new Error('Payload is empty');
+            }
+
+            console.log('Payload received', payload)
+
+            switch (payload.type) {
+              case 'SYNC_TOKEN':
+                console.log('[iframe] Token sync requested');
+                localStorage.setItem('token', payload.token);
+                localStorage.setItem('openID', payload.openID);
+                try {
+                  const openID = JSON.parse(payload.openID);
+                  const access_token = openID?.access_token;
+                  if (access_token) {
+                    localStorage.setItem('access_token', access_token);
+                  }
+                } catch (err) {
+                  console.warn('[iframe] Failed to parse openID', err);
+                }
+                break;
+
+              case 'REVOKE_TOKEN':
+                console.log('[iframe] Token revocation requested');
+                localStorage.removeItem('token');
+                localStorage.removeItem('openID');
+                localStorage.removeItem('access_token');
+                break;
+
+              default:
+                console.warn('[iframe] Unknown message type:', payload.type);
             }
           } catch (error) {
-            console.log(e, error);
+            console.warn('Error parsing message', error);
           }
         };
       });
