@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { adAccountIdDropdown } from '../common/props';
 
 export const createBoard = createAction({
   auth: pinterestAuth,
@@ -9,15 +10,16 @@ export const createBoard = createAction({
   displayName: 'Create Board',
   description: 'Create a new Pinterest board for organizing Pins.',
   props: {
+    ad_account_id: adAccountIdDropdown,
     name: Property.ShortText({
       displayName: 'Board Name',
       required: true,
-      description: 'The name of the board.'
+      description: 'The name of the board (max 180 characters).',
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: false,
-      description: 'The description of the board.'
+      description: 'Optional description for your board.',
     }),
     privacy: Property.StaticDropdown({
       displayName: 'Privacy',
@@ -25,26 +27,51 @@ export const createBoard = createAction({
       options: {
         options: [
           { label: 'Public', value: 'PUBLIC' },
-          { label: 'Secret', value: 'SECRET' }
-        ]
+          { label: 'Protected', value: 'PROTECTED' },
+          { label: 'Secret', value: 'SECRET' },
+        ],
       },
-      description: 'Set the board as public or secret.'
+      description:
+        'Board privacy setting. PUBLIC: visible to everyone, PROTECTED: visible to approved followers only, SECRET: only visible to you.',
     }),
     is_ads_only: Property.Checkbox({
-      displayName: 'is_ads_only',
-      description: 'If set to true, the board will be ad-only and can store ad-only Pins.',
+      displayName: 'Ads Only Board',
+      description:
+        'Create an ad-only board that can only store promotional Pins. Useful for advertising campaigns.',
       defaultValue: false,
-      required: false
-    })
+      required: false,
+    }),
   },
   async run({ auth, propsValue }) {
-    const { name, description, privacy, is_ads_only } = propsValue;
+    const { ad_account_id, name, description, privacy, is_ads_only } =
+      propsValue;
+    // Validation
+    if (name && name.length > 180) {
+      throw new Error('Board name must be 180 characters or less');
+    }
+
+    if (description && description.length > 500) {
+      throw new Error('Board description must be 500 characters or less');
+    }
     const body: any = {
       name,
       privacy,
-      is_ads_only
+      is_ads_only,
     };
     if (description) body.description = description;
-    return await makeRequest(auth.access_token as string, HttpMethod.POST, '/boards', body);
+    if (privacy) body.privacy = privacy;
+
+
+    let path = '/boards';
+    if (ad_account_id) {
+      path = `/boards?ad_account_id=${encodeURIComponent(ad_account_id)}`;
+    }
+
+    return await makeRequest(
+      auth.access_token as string,
+      HttpMethod.POST,
+      path,
+      body
+    );
   },
 });

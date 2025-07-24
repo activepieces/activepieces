@@ -12,10 +12,9 @@ export const findPin = createAction({
   props: {
     query: Property.ShortText({
       displayName: 'Query',
-      required: false,
+      required: true,
       description: 'Title, description, or tag to search for.',
     }),
-    board_id: boardIdDropdown,
     bookmark: Property.ShortText({
       displayName: 'Bookmark',
       required: false,

@@ -8,57 +8,51 @@ export const findBoardByName = createAction({
   auth: pinterestAuth,
   name: 'findBoardByName',
   displayName: 'Find Board by Name',
-  description: 'Locate a board by its name for pinning or updates.',
+  description: "Search for boards by name using Pinterest's search API.",
   props: {
-    name_search: Property.ShortText({
-      displayName: 'Board Name',
+    query: Property.ShortText({
+      displayName: 'Search Query',
       required: true,
-      description: 'The name of the board to find.',
+      description: 'The search term to find boards (required).',
     }),
     ad_account_id: adAccountIdDropdown,
     bookmark: Property.ShortText({
-      displayName: 'Board Name',
-      required: true,
-      description: 'The name of the board to find.',
-    }),
-    privacy: Property.StaticDropdown({
-      displayName: 'Privacy',
-      required: true,
-      options: {
-        options: [
-          { label: 'All', value: 'ALL' },
-          { label: 'Protected', value: 'PROTECTED' },
-          { label: 'Public', value: 'PUBLIC' },
-          { label: 'Secret', value: 'SECRET' },
-          { label: 'Public and Secret', value: 'PUBLIC_AND_SECRET' },
-        ],
-      },
-      description: 'Select Privacy.',
+      displayName: 'Bookmark',
+      required: false,
+      description: 'Pagination bookmark from previous response.',
     }),
   },
   async run({ auth, propsValue }) {
-    const name_search = propsValue.name_search;
+    const { query, ad_account_id, bookmark } = propsValue;
 
+    // Build query parameters
+    const searchParams = new URLSearchParams();
+    searchParams.append('query', query);
 
-    const path = '/boards';
-    const response = await makeRequest(
-      auth.access_token as string,
-      HttpMethod.GET,
-      `${path}`
-    );
+    if (ad_account_id) {
+      searchParams.append('ad_account_id', ad_account_id);
+    }
 
-    // Filter Boards based on the query
-    const filteredBoards = response.items.filter((board: any) => {
-      const searchText = name_search.toLowerCase();
-      const name = (board.name || '').toLowerCase();
-      return (
-        name.includes(searchText)
+    if (bookmark) {
+      searchParams.append('bookmark', bookmark);
+    }
+
+    const path = `/search/boards/?${searchParams.toString()}`;
+
+    try {
+      const response = await makeRequest(
+        auth.access_token as string,
+        HttpMethod.GET,
+        path
       );
-    });
 
-    return {
-      items: filteredBoards,
-      bookmark: response.bookmark,
-    };
+      return response;
+    } catch (error) {
+      throw new Error(
+        `Failed to search boards: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+    }
   },
 });

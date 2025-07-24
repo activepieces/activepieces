@@ -3,7 +3,7 @@ import { makeRequest } from '.';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const boardIdDropdown = Property.Dropdown({
-  displayName: 'board Id',
+  displayName: 'Board Id',
   required: true,
   refreshers: ['ad_account_id'],
   options: async ({ auth, ad_account_id }) => {
@@ -14,22 +14,38 @@ export const boardIdDropdown = Property.Dropdown({
         options: [],
       };
     }
-    let path = '/boards';
-    if (ad_account_id) {
-      path = `/boards?ad_account_id=${ad_account_id}`;
+
+    try {
+      const url = new URL('/boards', 'https://api.pinterest.com/v5');
+      if (ad_account_id) {
+        url.searchParams.append('ad_account_id', ad_account_id as string);
+      }
+
+      const apiKey = auth as string;
+      const boards = await makeRequest(
+        apiKey,
+        HttpMethod.GET,
+        url.pathname + url.search
+      );
+
+      const options: DropdownOption<string>[] = boards.items.map(
+        (board: any) => ({
+          label: board.name,
+          value: board.id,
+        })
+      );
+
+      return {
+        disabled: false,
+        options,
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        placeholder: 'Error loading boards. Please try again.',
+        options: [],
+      };
     }
-    const apiKey = auth as string;
-    const boards = await makeRequest(apiKey, HttpMethod.GET, path);
-
-    const options: DropdownOption<string>[] = boards.items.map((board: any) => ({
-      label: board.name,
-      value: board.id,
-    }));
-
-    return {
-      disabled: false,
-      options,
-    };
   },
 });
 
@@ -46,18 +62,26 @@ export const pinIdDropdown = Property.Dropdown({
       };
     }
 
-    const apiKey = auth as string;
-    const pins = await makeRequest(apiKey, HttpMethod.GET, '/pins');
+    try {
+      const apiKey = auth as string;
+      const pins = await makeRequest(apiKey, HttpMethod.GET, '/pins');
 
-    const options: DropdownOption<string>[] = pins.items.map((pin: any) => ({
-      label: pin.title,
-      value: pin.id,
-    }));
+      const options: DropdownOption<string>[] = pins.items.map((pin: any) => ({
+        label: pin.title,
+        value: pin.id,
+      }));
 
-    return {
-      disabled: false,
-      options,
-    };
+      return {
+        disabled: false,
+        options,
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        placeholder: 'Error loading pins. Please try again.',
+        options: [],
+      };
+    }
   },
 });
 
@@ -74,24 +98,32 @@ export const adAccountIdDropdown = Property.Dropdown({
       };
     }
 
-    const apiKey = auth as string;
-    const adAccounts = await makeRequest(
-      apiKey,
-      HttpMethod.GET,
-      '/ad_accounts'
-    );
+    try {
+      const apiKey = auth as string;
+      const adAccounts = await makeRequest(
+        apiKey,
+        HttpMethod.GET,
+        '/ad_accounts'
+      );
 
-    const options: DropdownOption<string>[] = adAccounts.items.map(
-      (account: any) => ({
-        label: account.name,
-        value: account.id,
-      })
-    );
+      const options: DropdownOption<string>[] = adAccounts.items.map(
+        (account: any) => ({
+          label: account.name,
+          value: account.id,
+        })
+      );
 
-    return {
-      disabled: false,
-      options,
-    };
+      return {
+        disabled: false,
+        options,
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        placeholder: 'Error loading ad accounts. Please try again.',
+        options: [],
+      };
+    }
   },
 });
 
@@ -108,30 +140,45 @@ export const boardSectionIdDropdown = Property.Dropdown({
       };
     }
 
-    const apiKey = auth as string;
-    const boardsections = await makeRequest(
-      apiKey,
-      HttpMethod.GET,
-      `/boards/${board_id}/sections`
-    );
+    if (!board_id) {
+      return {
+        disabled: true,
+        placeholder: 'Please select a board first',
+        options: [],
+      };
+    }
 
-    const options: DropdownOption<string>[] = boardsections.items.map(
-      (section: any) => ({
-        label: section.name,
-        value: section.id,
-      })
-    );
+    try {
+      const apiKey = auth as string;
+      const boardsections = await makeRequest(
+        apiKey,
+        HttpMethod.GET,
+        `/boards/${board_id}/sections`
+      );
 
-    return {
-      disabled: false,
-      options,
-    };
+      const options: DropdownOption<string>[] = boardsections.items.map(
+        (section: any) => ({
+          label: section.name,
+          value: section.id,
+        })
+      );
+
+      return {
+        disabled: false,
+        options,
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        placeholder: 'Error loading board sections. Please try again.',
+        options: [],
+      };
+    }
   },
 });
 
-
 export const pinIdMultiSelectDropdown = Property.MultiSelectDropdown({
-  displayName: 'Options',
+  displayName: 'Product Tags',
   description: 'Select one or more options',
   required: false,
   refreshers: ['auth'],
@@ -144,17 +191,25 @@ export const pinIdMultiSelectDropdown = Property.MultiSelectDropdown({
       };
     }
 
-    const apiKey = auth as string;
-    const pins = await makeRequest(apiKey, HttpMethod.GET, '/pins');
+    try {
+      const apiKey = auth as string;
+      const pins = await makeRequest(apiKey, HttpMethod.GET, '/pins');
 
-    const options: DropdownOption<string>[] = pins.items.map((pin: any) => ({
-      label: pin.title,
-      value: pin.id,
-    }));
+      const options: DropdownOption<string>[] = pins.items.map((pin: any) => ({
+        label: pin.title,
+        value: pin.id,
+      }));
 
-    return {
-      disabled: false,
-      options,
-    };
+      return {
+        disabled: false,
+        options,
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        placeholder: 'Error loading pins. Please try again.',
+        options: [],
+      };
+    }
   },
-})
+});
