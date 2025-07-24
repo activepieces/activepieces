@@ -38,6 +38,13 @@ export const agentRunsService = (_log: FastifyBaseLogger) => ({
             cursor,
         )
     },
+    async count(params: CountParams): Promise<number> {
+        return agentRunsRepo().count({
+            where: {
+                agentId: params.agentId,
+            },
+        })
+    },
     async getOne(params: GetOneParams): Promise<AgentRun | null> {
         const agentRun = await agentRunsRepo().findOneBy({ id: params.id, projectId: params.projectId })
         if (isNil(agentRun)) {
@@ -99,6 +106,11 @@ export const agentRunsService = (_log: FastifyBaseLogger) => ({
         return this.getOneOrThrow({ id: params.id, projectId: params.projectId })
     },
 })
+
+type CountParams = {
+    agentId: string
+    projectId: string
+}
 
 type ListParams = {
     projectId: string

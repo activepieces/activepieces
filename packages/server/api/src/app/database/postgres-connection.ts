@@ -250,6 +250,7 @@ import { AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028 } from './migrati
 import { AddAgentRunsEntityPostgres1752583341290 } from './migration/postgres/1752583341290-AddAgentRunsEntityPostgres'
 import { AddPlatformAnalyticsReportEntity1753091760355 } from './migration/postgres/1753091760355-AddPlatformAnalyticsReportEntity'
 import { AddAgentIdToTable1753315220453 } from './migration/postgres/1753315220453-AddAgentIdToTable'
+import { AddIndexForAgentTable1753400133786 } from './migration/postgres/1753400133786-AddIndexForAgentTable'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -424,6 +425,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028,
         AddAgentIdToTable1753315220453,
         MakeTriggerNullable1753366163403,
+        AddIndexForAgentTable1753400133786,
     ]
 
     const edition = system.getEdition()
