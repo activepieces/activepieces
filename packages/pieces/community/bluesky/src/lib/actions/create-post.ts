@@ -126,7 +126,7 @@ export const createPost = createAction({
 
       let postText = text;
       if (isNonEmptyString(hashtags)) {
-        const tags = hashtags.split(',').map((t: string) => t.trim()).filter(Boolean);
+        const tags = hashtags!.split(',').map((t: string) => t.trim()).filter(Boolean);
         if (tags.length > 0) {
           postText += '\n' + tags.map(t => (t.startsWith('#') ? t : `#${t}`)).join(' ');
         }
@@ -138,13 +138,13 @@ export const createPost = createAction({
         mimeType: getMimeTypeFromExtension(img.extension),
       }));
 
-      const langs = language ? language.split(',').map((l: string) => l.trim()) : undefined;
+      const langs = isNonEmptyString(language) ? language!.split(',').map((l: string) => l.trim()) : undefined;
 
       let replyTo = undefined;
       if ([replyRootUri, replyRootCid, replyParentUri, replyParentCid].every(isNonEmptyString)) {
         replyTo = {
-          root: { uri: replyRootUri, cid: replyRootCid },
-          parent: { uri: replyParentUri, cid: replyParentCid },
+          root: { uri: replyRootUri!, cid: replyRootCid! },
+          parent: { uri: replyParentUri!, cid: replyParentCid! },
         };
       } else if ([replyRootUri, replyRootCid, replyParentUri, replyParentCid].some(isNonEmptyString)) {
         return { error: 'All reply fields (root URI, root CID, parent URI, parent CID) must be provided for a reply.' };
@@ -152,7 +152,7 @@ export const createPost = createAction({
 
       let quote = undefined;
       if (isNonEmptyString(quoteUri) && isNonEmptyString(quoteCid)) {
-        quote = { uri: quoteUri, cid: quoteCid };
+        quote = { uri: quoteUri!, cid: quoteCid! };
       } else if (isNonEmptyString(quoteUri) || isNonEmptyString(quoteCid)) {
         return { error: 'Both quote URI and quote CID must be provided for a quote post.' };
       }
@@ -160,8 +160,8 @@ export const createPost = createAction({
       let websiteCard = undefined;
       if (isNonEmptyString(websiteUrl) && isNonEmptyString(websiteTitle)) {
         websiteCard = {
-          url: websiteUrl,
-          title: websiteTitle,
+          url: websiteUrl!,
+          title: websiteTitle!,
           description: websiteDescription,
           thumbnailBase64: websiteThumb?.base64,
           thumbnailMimeType: getMimeTypeFromExtension(websiteThumb?.extension),

@@ -1,0 +1,20 @@
+{
+  "name": "@activepieces/piece-bluesky",
+  "root": "packages/pieces/community/bluesky",
+  "sourceRoot": "packages/pieces/community/bluesky/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/bluesky",
+        "tsConfig": "packages/pieces/community/bluesky/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/bluesky/package.json",
+        "main": "packages/pieces/community/bluesky/src/index.ts",
+        "assets": []
+      }
+    }
+  },
+  "tags": []
+}

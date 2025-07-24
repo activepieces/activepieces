@@ -148,6 +148,9 @@
       "@activepieces/piece-calendly": [
         "packages/pieces/community/calendly/src/index.ts"
       ],
+      "@activepieces/piece-bluesky": [
+        "packages/pieces/community/bluesky/src/index.ts"
+      ],
       "@activepieces/piece-call-rounded": [
         "packages/pieces/community/call-rounded/src/index.ts"
       ],

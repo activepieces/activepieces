@@ -47,13 +47,13 @@ export const newPostWithSearch = createTrigger({
     await agent.login({ identifier, password });
     let query = '';
     if (isNonEmptyString(keywords)) {
-      query += keywords.split(',').map((k: string) => k.trim()).filter(Boolean).join(' ');
+      query += keywords!.split(',').map((k: string) => k.trim()).filter(Boolean).join(' ');
     }
     if (isNonEmptyString(tags)) {
-      query += ' ' + tags.split(',').map((t: string) => t.trim().replace(/^#/, '')).filter(Boolean).map(t => `#${t}`).join(' ');
+      query += ' ' + tags!.split(',').map((t: string) => t.trim().replace(/^#/, '')).filter(Boolean).map(t => `#${t}`).join(' ');
     }
     if (isNonEmptyString(mentions)) {
-      query += ' ' + mentions.split(',').map((m: string) => m.trim()).filter(Boolean).map(m => m.startsWith('@') ? m : `@${m}`).join(' ');
+      query += ' ' + mentions!.split(',').map((m: string) => m.trim()).filter(Boolean).map(m => m.startsWith('@') ? m : `@${m}`).join(' ');
     }
     query = query.trim();
     if (!query) return [];
@@ -65,8 +65,8 @@ export const newPostWithSearch = createTrigger({
       if (post.uri === lastSeenUri) break;
       newPosts.push({
         uri: post.uri,
-        text: post.record?.text,
-        createdAt: post.record?.createdAt,
+        text: post.record?.['text'],
+        createdAt: post.record?.['createdAt'],
       });
     }
     if (posts[0]?.uri) {

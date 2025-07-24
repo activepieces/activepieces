@@ -1,0 +1,9 @@
+{
+  "name": "@activepieces/piece-bluesky",
+  "version": "0.0.1",
+  "main": "dist/index.ts",
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-framework": "^<latest-version>"
+  }
+}

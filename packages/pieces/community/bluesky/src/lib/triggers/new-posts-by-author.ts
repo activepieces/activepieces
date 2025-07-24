@@ -39,8 +39,8 @@ export const newPostsByAuthor = createTrigger({
       if (post.post && post.post.uri === lastSeenUri) break;
       if (post.post) newPosts.push({
         uri: post.post.uri,
-        text: post.post.record?.text,
-        createdAt: post.post.record?.createdAt,
+        text: post.post.record?.['text'],
+        createdAt: post.post.record?.['createdAt'],
       });
     }
     if (posts[0]?.post?.uri) {
