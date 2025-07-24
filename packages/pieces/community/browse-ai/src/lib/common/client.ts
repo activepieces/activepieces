@@ -14,7 +14,7 @@ export type BrowseAiApiCallParams = {
   method: HttpMethod;
   resourceUri: string;
   query?: Record<string, string | number | string[] | undefined>;
-  body?: any;
+  body?: unknown;
   auth: BrowseAiAuthProps;
 };
 

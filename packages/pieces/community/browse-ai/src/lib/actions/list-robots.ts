@@ -7,17 +7,32 @@ export const listRobotsAction = createAction({
   name: 'list-robots',
   auth: browseAiAuth,
   displayName: 'List Robots',
-  description: 'Retrieve all robots available in your account, including their IDs and names.',
+  description: 'Retrieve all robots available in your account.',
   props: {},
-  async run({ auth }) {
-    const { apiKey } = auth as unknown as { apiKey: string };
+  async run(context) {
+    try {
+      const response = await browseAiApiCall({
+        auth: { apiKey: context.auth as string },
+        method: HttpMethod.GET,
+        resourceUri: '/robots',
+      });
 
-    const response = await browseAiApiCall({
-      auth: { apiKey },
-      method: HttpMethod.GET,
-      resourceUri: '/robots',
-    });
+      return {
+        success: true,
+        robots: response,
+      };
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        throw new Error('Authentication failed. Please check your API key.');
+      }
 
-    return response;
+      if (error.response?.status === 429) {
+        throw new Error('Rate limit exceeded. Please wait before retrying.');
+      }
+
+      throw new Error(
+        `Failed to fetch robots: ${error.message || 'Unknown error occurred'}`
+      );
+    }
   },
 });

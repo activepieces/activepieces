@@ -5,8 +5,8 @@ import { browseAiAuth } from '../common/auth';
 import { robotIdDropdown } from '../common/props';
 
 export const runRobotAction = createAction({
-  auth: browseAiAuth,
   name: 'run-robot',
+  auth: browseAiAuth,
   displayName: 'Run a Robot',
   description:
     'Run a robot on-demand with custom input parameters. The captured data will be sent via webhook or can be fetched using the task ID.',
@@ -14,28 +14,53 @@ export const runRobotAction = createAction({
     robotId: robotIdDropdown,
     recordVideo: Property.Checkbox({
       displayName: 'Record Video',
-      description: 'Try to record a video while running the task (not guaranteed).',
+      description:
+        'Try to record a video while running the task (not guaranteed).',
       required: false,
       defaultValue: false,
     }),
-    inputParameters: Property.Json({
-      displayName: 'Input Parameters',
-      description:
-        'A JSON object of input parameters to override the default robot values.',
+    inputStringParam: Property.ShortText({
+      displayName: 'String Parameter',
+      description: 'A string input parameter to override default robot value.',
+      required: false,
+    }),
+    inputNumberParam: Property.Number({
+      displayName: 'Number Parameter',
+      description: 'A number input parameter to override default robot value.',
+      required: false,
+    }),
+    inputArrayParam: Property.Array({
+      displayName: 'Array Parameter',
+      description: 'An array of strings to override a list-type robot input.',
       required: false,
     }),
   },
   async run(context) {
-    const { robotId, recordVideo, inputParameters } = context.propsValue;
+    const {
+      robotId,
+      recordVideo,
+      inputStringParam,
+      inputNumberParam,
+      inputArrayParam,
+    } = context.propsValue;
+
+    const inputParameters: Record<string, any> = {};
+
+    if (inputStringParam) inputParameters['stringParam'] = inputStringParam;
+    if (inputNumberParam !== undefined)
+      inputParameters['numberParam'] = inputNumberParam;
+    if (inputArrayParam && inputArrayParam.length > 0) {
+      inputParameters['arrayParam'] = inputArrayParam;
+    }
 
     try {
       const response = await browseAiApiCall({
         method: HttpMethod.POST,
         resourceUri: `/robots/${robotId}/tasks`,
-        auth: { apiKey: context.auth },
+        auth: { apiKey: context.auth as string },
         body: {
           recordVideo: recordVideo || false,
-          inputParameters: inputParameters || {},
+          inputParameters,
         },
       });
 

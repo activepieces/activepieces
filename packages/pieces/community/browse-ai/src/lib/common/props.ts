@@ -10,58 +10,70 @@ interface BrowseAiRobot {
 interface BrowseAiTask {
   id: string;
   status: string;
-  createdAt: string;
+  createdAt?: number;
+}
+
+interface BrowseAiTasksResponse {
+  statusCode: number;
+  messageCode: string;
+  result: {
+    robotTasks: {
+      totalCount: number;
+      pageNumber: number;
+      hasMore: boolean;
+      items: BrowseAiTask[];
+    };
+  };
 }
 
 export const robotIdDropdown = Property.Dropdown({
   displayName: 'Robot',
-  description: 'Select a Browse AI robot',
+  description: 'Select a robot from your Browse AI account',
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
-    const { apiKey } = auth as { apiKey: string };
-
-    if (!apiKey) {
+    if (!auth) {
       return {
         disabled: true,
         options: [],
-        placeholder: 'Please connect your Browse AI account.',
+        placeholder: 'Please connect your Browse AI account first.',
       };
     }
-
-    let response: { robots: BrowseAiRobot[] };
 
     try {
-      response = await browseAiApiCall({
-        auth: { apiKey },
+      const response = await browseAiApiCall<{
+        robots: { items: BrowseAiRobot[] };
+      }>({
         method: HttpMethod.GET,
         resourceUri: '/robots',
+        auth: { apiKey: auth as string },
       });
-    } catch (e) {
+
+      const robots = response?.robots?.items ?? [];
+
+      if (robots.length === 0) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'No robots found in your account.',
+        };
+      }
+
+      return {
+        disabled: false,
+        options: robots.map((robot) => ({
+          label: robot.name,
+          value: robot.id,
+        })),
+      };
+    } catch (error: any) {
       return {
         disabled: true,
         options: [],
-        placeholder: `Error fetching robots: ${(e as Error).message}`,
+        placeholder:
+          'Failed to load robots. Please check your API key and try again.',
       };
     }
-
-    const robots = Array.isArray(response.robots) ? response.robots : [];
-
-    if (robots.length === 0) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'No robots found in your Browse AI account.',
-      };
-    }
-
-    return {
-      disabled: false,
-      options: robots.map((robot) => ({
-        label: robot.name,
-        value: robot.id,
-      })),
-    };
   },
 });
 
@@ -70,11 +82,16 @@ export const taskIdDropdown = Property.Dropdown({
   description: 'Select a task associated with the selected robot',
   required: true,
   refreshers: ['robotId'],
-  options: async ({ auth, propsValue }) => {
-    const { apiKey } = auth as { apiKey: string };
-    const { robotId } = propsValue as { robotId: string };
+  options: async ({ auth, robotId }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your Browse AI account.',
+      };
+    }
 
-    if (!apiKey || !robotId) {
+    if (!robotId) {
       return {
         disabled: true,
         options: [],
@@ -82,38 +99,43 @@ export const taskIdDropdown = Property.Dropdown({
       };
     }
 
-    let response: { tasks: BrowseAiTask[] };
-
     try {
-      response = await browseAiApiCall({
-        auth: { apiKey },
+      const response = await browseAiApiCall<BrowseAiTasksResponse>({
         method: HttpMethod.GET,
         resourceUri: `/robots/${robotId}/tasks`,
+        auth: { apiKey: auth as string },
       });
+
+      const tasks = response.result?.robotTasks?.items ?? [];
+
+      if (tasks.length === 0) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'No tasks found for the selected robot.',
+        };
+      }
+
+      return {
+        disabled: false,
+        options: tasks.map((task) => {
+          const createdDate = task.createdAt
+            ? new Date(task.createdAt).toLocaleDateString()
+            : 'Unknown date';
+          return {
+            label: `${task.id} - ${task.status} (${createdDate})`,
+            value: task.id,
+          };
+        }),
+      };
     } catch (e) {
       return {
         disabled: true,
         options: [],
-        placeholder: `Error fetching tasks: ${(e as Error).message}`,
+        placeholder: `Error fetching tasks: ${
+          e instanceof Error ? e.message : 'Unknown error'
+        }`,
       };
     }
-
-    const tasks = Array.isArray(response.tasks) ? response.tasks : [];
-
-    if (tasks.length === 0) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'No tasks found for this robot.',
-      };
-    }
-
-    return {
-      disabled: false,
-      options: tasks.map((task) => ({
-        label: `${task.id} (Status: ${task.status})`,
-        value: task.id,
-      })),
-    };
   },
 });
