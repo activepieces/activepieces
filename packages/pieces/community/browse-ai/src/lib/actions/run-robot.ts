@@ -2,56 +2,29 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { browseAiApiCall } from '../common/client';
 import { browseAiAuth } from '../common/auth';
-import { robotIdDropdown } from '../common/props';
+import { robotIdDropdown, robotParameters } from '../common/props';
 
 export const runRobotAction = createAction({
   name: 'run-robot',
   auth: browseAiAuth,
   displayName: 'Run a Robot',
   description:
-    'Run a robot on-demand with custom input parameters. The captured data will be sent via webhook or can be fetched using the task ID.',
+    'Runs a robot on-demand with custom input parameters.',
   props: {
     robotId: robotIdDropdown,
     recordVideo: Property.Checkbox({
       displayName: 'Record Video',
       description:
-        'Try to record a video while running the task (not guaranteed).',
+        'Try to record a video while running the task.',
       required: false,
       defaultValue: false,
     }),
-    inputStringParam: Property.ShortText({
-      displayName: 'String Parameter',
-      description: 'A string input parameter to override default robot value.',
-      required: false,
-    }),
-    inputNumberParam: Property.Number({
-      displayName: 'Number Parameter',
-      description: 'A number input parameter to override default robot value.',
-      required: false,
-    }),
-    inputArrayParam: Property.Array({
-      displayName: 'Array Parameter',
-      description: 'An array of strings to override a list-type robot input.',
-      required: false,
-    }),
+    robotParams: robotParameters,
   },
   async run(context) {
-    const {
-      robotId,
-      recordVideo,
-      inputStringParam,
-      inputNumberParam,
-      inputArrayParam,
-    } = context.propsValue;
+    const { robotId, recordVideo } = context.propsValue;
 
-    const inputParameters: Record<string, any> = {};
-
-    if (inputStringParam) inputParameters['stringParam'] = inputStringParam;
-    if (inputNumberParam !== undefined)
-      inputParameters['numberParam'] = inputNumberParam;
-    if (inputArrayParam && inputArrayParam.length > 0) {
-      inputParameters['arrayParam'] = inputArrayParam;
-    }
+    const inputParameters = context.propsValue.robotParams ?? {};
 
     try {
       const response = await browseAiApiCall({
@@ -64,21 +37,7 @@ export const runRobotAction = createAction({
         },
       });
 
-      const typedResponse = response as {
-        taskId: string;
-        robotId: string;
-        status: string;
-        [key: string]: any;
-      };
-
-      return {
-        success: true,
-        message: 'Robot run successfully',
-        taskId: typedResponse.taskId,
-        robotId: typedResponse.robotId,
-        status: typedResponse.status,
-        response: typedResponse,
-      };
+      return response;
     } catch (error: any) {
       if (error.response?.status === 401) {
         throw new Error('Authentication failed. Please check your API key.');

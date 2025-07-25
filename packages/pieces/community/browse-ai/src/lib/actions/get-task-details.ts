@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { browseAiApiCall } from '../common/client';
 import { browseAiAuth } from '../common/auth';
@@ -9,7 +9,7 @@ export const getTaskDetailsAction = createAction({
   auth: browseAiAuth,
   displayName: 'Get Task Details',
   description:
-    'Fetch the details of a specific task executed by a Browse AI robot.',
+    'Retrieves the details of a specific task executed by a Browse AI robot.',
   props: {
     robotId: robotIdDropdown,
     taskId: taskIdDropdown,
@@ -24,12 +24,7 @@ export const getTaskDetailsAction = createAction({
         resourceUri: `/robots/${robotId}/tasks/${taskId}`,
       });
 
-      return {
-        success: true,
-        taskId,
-        robotId,
-        data: response,
-      };
+      return response;
     } catch (error: any) {
       if (error.response?.status === 404) {
         throw new Error(

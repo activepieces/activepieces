@@ -7,7 +7,7 @@ export const listRobotsAction = createAction({
   name: 'list-robots',
   auth: browseAiAuth,
   displayName: 'List Robots',
-  description: 'Retrieve all robots available in your account.',
+  description: 'Retrieves all robots available in your account.',
   props: {},
   async run(context) {
     try {
@@ -17,10 +17,7 @@ export const listRobotsAction = createAction({
         resourceUri: '/robots',
       });
 
-      return {
-        success: true,
-        robots: response,
-      };
+      return response;
     } catch (error: any) {
       if (error.response?.status === 401) {
         throw new Error('Authentication failed. Please check your API key.');

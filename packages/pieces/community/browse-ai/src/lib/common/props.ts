@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { browseAiApiCall } from './client';
 
@@ -23,6 +23,20 @@ interface BrowseAiTasksResponse {
       hasMore: boolean;
       items: BrowseAiTask[];
     };
+  };
+}
+
+interface BrowseAiRobotResponse {
+  robot: {
+    id: string;
+    name: string;
+    inputParameters: {
+      type: string;
+      name: string;
+      label: string;
+      required: boolean;
+      options?: { label: string; value: string }[];
+    }[];
   };
 }
 
@@ -136,6 +150,60 @@ export const taskIdDropdown = Property.Dropdown({
           e instanceof Error ? e.message : 'Unknown error'
         }`,
       };
+    }
+  },
+});
+
+export const robotParameters = Property.DynamicProperties({
+  displayName: 'Input Parameters',
+  refreshers: ['robotId'],
+  required: true,
+  props: async ({ auth, robotId }) => {
+    if (!auth || !robotId) return {};
+
+    try {
+      const response = await browseAiApiCall<BrowseAiRobotResponse>({
+        method: HttpMethod.GET,
+        resourceUri: `/robots/${robotId}`,
+        auth: { apiKey: auth as unknown as string },
+      });
+
+      const props: DynamicPropsValue = {};
+
+      const params = response.robot.inputParameters ?? [];
+
+      for (const param of params) {
+        switch (param.type) {
+          case 'number':
+            props[param.name] = Property.Number({
+              displayName: param.label,
+              required: param.required,
+            });
+            break;
+          case 'url':
+          case 'string':
+            props[param.name] = Property.ShortText({
+              displayName: param.label,
+              required: param.required,
+            });
+            break;
+          case 'select':
+            props[param.name] = Property.StaticDropdown({
+              displayName: param.label,
+              required: param.required,
+              options: {
+                disabled: false,
+                options: param.options ? param.options : [],
+              },
+            });
+            break;
+          default:
+            break;
+        }
+      }
+      return props;
+    } catch {
+      return {};
     }
   },
 });
