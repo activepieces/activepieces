@@ -75,8 +75,11 @@ export async function browseAiApiCall<T extends HttpMessageBody>({
       case 500:
         throw new Error('Internal Server Error: Something went wrong on Browse AI’s side.');
       default:
+        {
         const message = errorData?.message || error.message || 'Unknown error';
         throw new Error(`Browse AI API Error (${statusCode || 'Unknown'}): ${message}`);
+        }
+
     }
   }
 }
