@@ -81,6 +81,14 @@ export type ApErrorParams =
     | McpPieceRequiresConnectionParams
     | McpPieceConnectionMismatchParams
     | ErrorUpdatingSubscriptionParams
+    | TriggerExecutionFailedParams
+
+export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
+    flowId: FlowId
+    message?: string
+    pieceName: string
+    pieceVersion: string
+}>
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -481,6 +489,7 @@ export enum ErrorCode {
     ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',
     EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
     MEMORY_ISSUE = 'MEMORY_ISSUE',
+    TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
