@@ -23,14 +23,11 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 return headers
             },
             getUpstream(request, _base) {
-                const params = request.params as Record<string, string> | null
-                const provider = params?.['provider']
-                const providerConfig = getProviderConfigOrThrow(provider)
-                return providerConfig.baseUrl
+                return (request as ModifiedFastifyRequest).customUpstream
             },
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onResponse: async (request, reply, response) => {
-                request.body = (request as FastifyRequest & { originalBody: Record<string, unknown> }).originalBody
+                request.body = (request as ModifiedFastifyRequest).originalBody
                 const projectId = request.principal.projectId
                 const { provider } = request.params as { provider: string }
                 const isStreaming = aiProviderService.isStreaming(provider, request)
@@ -147,14 +144,15 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             const providerConfig = getProviderConfigOrThrow(provider)
 
             const platformId = await aiProviderService.getAIProviderPlatformId(userPlatformId)
-            const apiKey = await aiProviderService.getApiKey(provider, platformId)
+            const config = await aiProviderService.getConfig(provider, platformId);
 
-            if (providerConfig.auth.bearer) {
-                request.headers[providerConfig.auth.headerName] = `Bearer ${apiKey}`
-            }
-            else {
-                request.headers[providerConfig.auth.headerName] = apiKey
-            }
+            (request as ModifiedFastifyRequest).customUpstream = aiProviderService.getBaseUrl(provider, config)
+            request.raw.url = aiProviderService.rewriteUrl(provider, config, request.url)
+
+            const authHeaders = aiProviderService.getAuthHeaders(provider, config)
+            Object.entries(authHeaders).forEach(([key, value]) => {
+                request.headers[key] = value
+            })
 
             if (providerConfig.auth.headerName !== 'Authorization') {
                 delete request.headers['Authorization']
@@ -165,7 +163,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             }
         },
         preValidation: (request, _reply, done) => {
-            (request as FastifyRequest & { originalBody: Record<string, unknown> }).originalBody = request.body as Record<string, unknown>
+            (request as ModifiedFastifyRequest).originalBody = request.body as Record<string, unknown>
             done()
         },
     })
@@ -183,3 +181,5 @@ function getProviderConfigOrThrow(provider: string | undefined): SupportedAIProv
     }
     return providerConfig
 }
+
+type ModifiedFastifyRequest = FastifyRequest & { customUpstream: string, originalBody: Record<string, unknown> }
