@@ -21,19 +21,7 @@ export const createBoard = createAction({
       required: false,
       description: 'Optional description for your board.',
     }),
-    privacy: Property.StaticDropdown({
-      displayName: 'Privacy',
-      required: true,
-      options: {
-        options: [
-          { label: 'Public', value: 'PUBLIC' },
-          { label: 'Protected', value: 'PROTECTED' },
-          { label: 'Secret', value: 'SECRET' },
-        ],
-      },
-      description:
-        'Board privacy setting. PUBLIC: visible to everyone, PROTECTED: visible to approved followers only, SECRET: only visible to you.',
-    }),
+
     is_ads_only: Property.Checkbox({
       displayName: 'Ads Only Board',
       description:
@@ -43,8 +31,7 @@ export const createBoard = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { ad_account_id, name, description, privacy, is_ads_only } =
-      propsValue;
+    const { ad_account_id, name, description, is_ads_only } = propsValue;
     // Validation
     if (name && name.length > 180) {
       throw new Error('Board name must be 180 characters or less');
@@ -55,13 +42,10 @@ export const createBoard = createAction({
     }
     const body: any = {
       name,
-      privacy,
       is_ads_only,
     };
     if (description) body.description = description;
-    if (privacy) body.privacy = privacy;
-
-
+   
     let path = '/boards';
     if (ad_account_id) {
       path = `/boards?ad_account_id=${encodeURIComponent(ad_account_id)}`;
