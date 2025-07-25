@@ -36,7 +36,7 @@ export const generateImage = createAction({
       displayName: 'Number of Images',
       required: false,
       defaultValue: 1,
-      description: 'Number of images to generate (1-4).',
+      description: 'Number of images to generate (1-10).',
     }),
     responseFormat: Property.StaticDropdown({
       displayName: 'Response Format',
@@ -51,52 +51,15 @@ export const generateImage = createAction({
         ],
       },
     }),
-    size: Property.StaticDropdown({
-      displayName: 'Image Size',
+    user: Property.ShortText({
+      displayName: 'User ID',
       required: false,
-      defaultValue: '1024x1024',
-      description: 'The size/resolution of the generated image.',
-      options: {
-        disabled: false,
-        options: [
-          { label: '256x256', value: '256x256' },
-          { label: '512x512', value: '512x512' },
-          { label: '1024x1024', value: '1024x1024' },
-          { label: '1024x1792 (Portrait)', value: '1024x1792' },
-          { label: '1792x1024 (Landscape)', value: '1792x1024' },
-        ],
-      },
-    }),
-    quality: Property.StaticDropdown({
-      displayName: 'Image Quality',
-      required: false,
-      defaultValue: 'standard',
-      description: 'The quality level of the generated image.',
-      options: {
-        disabled: false,
-        options: [
-          { label: 'Standard', value: 'standard' },
-          { label: 'HD (High Definition)', value: 'hd' },
-        ],
-      },
-    }),
-    style: Property.StaticDropdown({
-      displayName: 'Image Style',
-      required: false,
-      defaultValue: 'natural',
-      description: 'The style or aesthetic of the generated image.',
-      options: {
-        disabled: false,
-        options: [
-          { label: 'Natural', value: 'natural' },
-          { label: 'Vivid', value: 'vivid' },
-        ],
-      },
+      description: 'A unique identifier representing your end-user, which can help xAI to monitor and detect abuse.',
     }),
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      numberOfImages: z.number().min(1).max(4).optional(),
+      numberOfImages: z.number().min(1).max(10).optional(),
       prompt: z.string().min(1).max(4000),
     });
 
@@ -105,9 +68,7 @@ export const generateImage = createAction({
       model,
       numberOfImages,
       responseFormat,
-      size,
-      quality,
-      style,
+      user,
     } = propsValue;
 
     if (!prompt.trim()) {
@@ -124,16 +85,8 @@ export const generateImage = createAction({
       requestBody.response_format = responseFormat;
     }
 
-    if (size) {
-      requestBody.size = size;
-    }
-
-    if (quality) {
-      requestBody.quality = quality;
-    }
-
-    if (style) {
-      requestBody.style = style;
+    if (user) {
+      requestBody.user = user;
     }
 
     try {
@@ -175,6 +128,7 @@ export const generateImage = createAction({
         model_used: model,
         total_images: images.length,
         response_format: responseFormat || 'url',
+        user_id: user || null,
       };
 
       return result;

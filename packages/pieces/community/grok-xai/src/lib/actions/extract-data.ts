@@ -277,7 +277,11 @@ Response Format: You must respond with valid JSON matching the specified schema.
       max_completion_tokens: maxCompletionTokens || 1000,
       response_format: {
         type: 'json_schema',
-        json_schema: jsonSchema,
+        json_schema: {
+          name: "extraction_result",
+          schema: jsonSchema,
+          strict: true
+        }
       },
     };
 

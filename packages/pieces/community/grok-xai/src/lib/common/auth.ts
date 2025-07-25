@@ -35,10 +35,22 @@ Your API key should start with \`xai-\`
       return {
         valid: true,
       };
-    } catch (e) {
+    } catch (e: any) {
+      if (e.response?.status === 429) {
+        return {
+          valid: false,
+          error: 'Your xAI account has run out of credits or reached its spending limit. Please add more credits at console.x.ai or raise your spending limit.',
+        };
+      }
+      if (e.response?.status === 401) {
+        return {
+          valid: false,
+          error: 'Invalid API key. Please check your xAI API key and try again.',
+        };
+      }
       return {
         valid: false,
-        error: 'Invalid API key. Please check your xAI API key and try again.',
+        error: 'Unable to validate API key. Please check your key and account status at console.x.ai.',
       };
     }
   },

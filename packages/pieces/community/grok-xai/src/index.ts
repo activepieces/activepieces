@@ -18,7 +18,7 @@ export const grokXai = createPiece({
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
     PieceCategory.UNIVERSAL_AI,
   ],
-  authors: ['Your-Name'],
+  authors: ['sparkybug'],
   actions: [
     askGrok,
     extractDataFromText,
