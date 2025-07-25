@@ -1,78 +1,100 @@
-import { Property } from '@activepieces/pieces-framework';
+import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-export const documenttemplateidDropdown = Property.Dropdown({
-  displayName: 'documenttemplate ID',
-  description:
-    'Select the document template ID to use for the document generation',
-  required: true,
-  refreshers: [],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Please connect your account first',
-      };
-    }
+export const templateIdDropdown = Property.Dropdown({
+	displayName: 'Template ID',
+	required: true,
+	refreshers: [],
+	options: async ({ auth }) => {
+		if (!auth) {
+			return {
+				disabled: true,
+				options: [],
+				placeholder: 'Please connect your account first.',
+			};
+		}
 
-    try {
-      const response = await makeRequest(
-        auth as string,
-        HttpMethod.GET,
-        '/document_template_cards'
-      );
-      return {
-        disabled: false,
-        options: response.document_template_cards.map((template: any) => ({
-          label: template.identifier,
-          value: template.id,
-        })),
-      };
-    } catch (error) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Error loading document templates',
-      };
-    }
-  },
+		try {
+			let page = 1;
+			let hasMore = true;
+
+			const options: DropdownOption<string>[] = [];
+
+			do {
+				const response = await makeRequest<{
+					document_template_cards: Array<{ id: string; identifier: string }>;
+					meta: { total_pages: number; current_page: number };
+				}>(auth as string, HttpMethod.GET, '/document_template_cards',{ page: page.toString() });
+
+				const items = response.document_template_cards ?? [];
+
+				for (const template of items) {
+					options.push({ label: template.identifier, value: template.id });
+				}
+
+				page++;
+				hasMore = response.meta.current_page < response.meta.total_pages;
+			} while (hasMore);
+
+			return {
+				disabled: false,
+				options,
+			};
+		} catch (error) {
+			return {
+				disabled: true,
+				options: [],
+				placeholder: 'Error loading document templates.',
+			};
+		}
+	},
 });
 
 export const documentIdDropdown = Property.Dropdown({
-  displayName: 'Document ID',
-  description: 'Select the document ID to use for the action',
-  required: true,
-  refreshers: [],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Please connect your account first',
-      };
-    }
+	displayName: 'Document ID',
+	required: true,
+	refreshers: [],
+	options: async ({ auth }) => {
+		if (!auth) {
+			return {
+				disabled: true,
+				options: [],
+				placeholder: 'Please connect your account first.',
+			};
+		}
 
-    try {
-      const response = await makeRequest(
-        auth as string,
-        HttpMethod.GET,
-        '/document_cards'
-      );
-      return {
-        disabled: false,
-        options: response.document_cards.map((document: any) => ({
-          label: document.filename,
-          value: document.id,
-        })),
-      };
-    } catch (error) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Error loading documents',
-      };
-    }
-  },
+		try {
+			let page = 1;
+			let hasMore = true;
+
+			const options: DropdownOption<string>[] = [];
+
+			do {
+				const response = await makeRequest<{
+					document_cards: Array<{ id: string; filename: string }>;
+					meta: { total_pages: number; current_page: number };
+				}>(auth as string, HttpMethod.GET, '/document_cards', { page: page.toString() });
+
+				const items = response.document_cards ?? [];
+
+				for (const doc of items) {
+					options.push({ label: doc.filename, value: doc.id });
+				}
+				page++;
+				hasMore = response.meta.current_page < response.meta.total_pages;
+			} while (hasMore);
+
+			return {
+				disabled: false,
+				options,
+			};
+		} catch (error) {
+			return {
+				disabled: true,
+				options: [],
+				placeholder: 'Error loading documents.',
+			};
+		}
+	},
 });
