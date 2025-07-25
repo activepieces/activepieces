@@ -1,4 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import crypto from 'crypto';
 
 export const systemeIoCommon = {
   baseUrl: 'https://api.systeme.io/api',
@@ -13,14 +14,16 @@ export const systemeIoCommon = {
     method: HttpMethod;
     url: string;
     body?: any;
-    auth: { apiKey: string };
+    auth: string | { apiKey: string };
     headers?: Record<string, string>;
   }): Promise<T> {
+    const apiKey = typeof auth === 'string' ? auth : auth.apiKey;
+    
     const response = await httpClient.sendRequest<T>({
       method,
       url: `${this.baseUrl}${url}`,
       headers: {
-        'X-API-Key': auth.apiKey,
+        'X-API-Key': apiKey,
         'Content-Type': 'application/json',
         ...headers,
       },
@@ -34,6 +37,29 @@ export const systemeIoCommon = {
     return response.body;
   },
 
+  verifyWebhookSignature: (
+    webhookSecret?: string,
+    webhookSignatureHeader?: string,
+    webhookRawBody?: any,
+  ): boolean => {
+    if (!webhookSecret || !webhookSignatureHeader || !webhookRawBody) {
+      return false;
+    }
+
+    try {
+      const hmac = crypto.createHmac('sha256', webhookSecret);
+      hmac.update(webhookRawBody);
+      const expectedSignature = hmac.digest('hex');
+
+      return crypto.timingSafeEqual(
+        Buffer.from(webhookSignatureHeader, 'hex'),
+        Buffer.from(expectedSignature, 'hex'),
+      );
+    } catch (error) {
+      return false;
+    }
+  },
+
   async createWebhook({
     eventType,
     webhookUrl,
@@ -42,7 +68,7 @@ export const systemeIoCommon = {
   }: {
     eventType: string;
     webhookUrl: string;
-    auth: { apiKey: string };
+    auth: string | { apiKey: string };
     secret: string;
   }) {
     return this.apiCall<{ id: string }>({
@@ -63,7 +89,7 @@ export const systemeIoCommon = {
     auth,
   }: {
     webhookId: string;
-    auth: { apiKey: string };
+    auth: string | { apiKey: string };
   }) {
     return this.apiCall({
       method: HttpMethod.DELETE,
@@ -77,7 +103,7 @@ export const systemeIoCommon = {
     limit = 50,
     startingAfter,
   }: {
-    auth: { apiKey: string };
+    auth: string | { apiKey: string };
     limit?: number;
     startingAfter?: string;
   }) {
@@ -97,7 +123,7 @@ export const systemeIoCommon = {
     auth,
   }: {
     contactId: string;
-    auth: { apiKey: string };
+    auth: string | { apiKey: string };
   }) {
     return this.apiCall({
       method: HttpMethod.GET,
@@ -109,11 +135,23 @@ export const systemeIoCommon = {
   async getTags({
     auth,
   }: {
-    auth: { apiKey: string };
+    auth: string | { apiKey: string };
   }) {
     return this.apiCall({
       method: HttpMethod.GET,
       url: '/tags',
+      auth,
+    });
+  },
+
+  async getContactFields({
+    auth,
+  }: {
+    auth: string | { apiKey: string };
+  }) {
+    return this.apiCall({
+      method: HttpMethod.GET,
+      url: '/contact_fields',
       auth,
     });
   },

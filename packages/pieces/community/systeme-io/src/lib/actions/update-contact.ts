@@ -4,83 +4,108 @@ import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
 import { systemeIoProps } from '../common/props';
 
-interface CustomField {
-  fieldSlug: string;
-  fieldValue: string;
+interface ContactFieldUpdate {
+  field: string;
+  value: string;
 }
 
 export const updateContact = createAction({
   auth: systemeIoAuth,
   name: 'updateContact',
   displayName: 'Update Contact',
-  description: 'Update an existing contact',
+  description: 'Update fields (name, phone, custom fields) of an existing contact using fields from your Systeme.io account',
   props: {
     contactId: systemeIoProps.contactIdDropdown,
-    firstName: Property.ShortText({
-      displayName: 'First Name',
-      description: 'Contact first name',
+    dynamicContactFields: Property.DynamicProperties({
+      displayName: 'Contact Fields',
+      description: 'Select which contact fields to update',
       required: false,
-    }),
-    lastName: Property.ShortText({
-      displayName: 'Last Name',
-      description: 'Contact last name',
-      required: false,
-    }),
-    phone: Property.ShortText({
-      displayName: 'Phone',
-      description: 'Contact phone number',
-      required: false,
+      refreshers: ['contactId'],
+      props: async ({ auth, contactId }) => {
+        if (!auth) {
+          return {};
+        }
+
+        try {
+          const response = await systemeIoCommon.getContactFields({
+            auth: auth as unknown as string,
+          });
+
+          let fields: any[] = [];
+          if (Array.isArray(response)) {
+            fields = response;
+          } else if (response && typeof response === 'object' && response !== null) {
+            const responseAny = response as any;
+            if (responseAny.items && Array.isArray(responseAny.items)) {
+              fields = responseAny.items;
+            }
+          }
+
+          const dynamicProps: any = {};
+
+          for (const field of fields) {
+            dynamicProps[field.slug] = Property.ShortText({
+              displayName: field.fieldName || field.slug,
+              description: `Update ${field.fieldName || field.slug} (leave empty to keep current value)`,
+              required: false,
+            });
+          }
+
+          return dynamicProps;
+        } catch (error) {
+          console.error('Error fetching contact fields:', error);
+          return {};
+        }
+      },
     }),
     customFields: Property.Array({
-      displayName: 'Custom Fields',
-      description: 'Add custom fields with slug and value',
+      displayName: 'Custom Fields (Manual Entry)',
+      description: 'Add or update custom fields with manual slug entry (use empty value to clear field)',
       required: false,
       properties: {
         fieldSlug: Property.ShortText({
           displayName: 'Field Slug',
-          description: 'The unique identifier for this field (e.g., custom1, custom2, company)',
+          description: 'The unique identifier for this field (e.g., custom_field_1, my_field)',
           required: true,
         }),
         fieldValue: Property.ShortText({
           displayName: 'Field Value',
-          description: 'The value for this field',
-          required: true,
+          description: 'The value for this field (leave empty to clear the field)',
+          required: false,
         }),
       },
     }),
   },
   async run(context) {
-    const { contactId, firstName, lastName, phone, customFields } = context.propsValue;
+    const { 
+      contactId, 
+      dynamicContactFields,
+      customFields
+    } = context.propsValue;
     
     const fields: any[] = [];
     
-    if (firstName) {
-      fields.push({
-        slug: 'first_name',
-        value: firstName
-      });
-    }
-    
-    if (lastName) {
-      fields.push({
-        slug: 'surname',
-        value: lastName
-      });
-    }
-    
-    if (phone) {
-      fields.push({
-        slug: 'phone_number',
-        value: phone
-      });
+    if (dynamicContactFields && typeof dynamicContactFields === 'object') {
+      const fieldsObj = dynamicContactFields as Record<string, any>;
+      for (const key in fieldsObj) {
+        if (fieldsObj.hasOwnProperty(key)) {
+          const value = fieldsObj[key];
+          if (value !== undefined && value !== null && value !== '') {
+            fields.push({
+              slug: key,
+              value: String(value)
+            });
+          }
+        }
+      }
     }
 
     if (customFields && Array.isArray(customFields)) {
-      for (const customField of customFields as CustomField[]) {
-        if (customField.fieldSlug && customField.fieldValue) {
+      for (const customField of customFields as any[]) {
+        if (customField.fieldSlug) {
           fields.push({
             slug: customField.fieldSlug,
-            value: String(customField.fieldValue)
+            value: customField.fieldValue || null
           });
         }
       }
@@ -88,6 +113,14 @@ export const updateContact = createAction({
 
     const updateData: any = {};
     if (fields.length > 0) updateData.fields = fields;
+
+    if (Object.keys(updateData).length === 0) {
+      return {
+        success: false,
+        message: 'No fields provided to update',
+        contactId,
+      };
+    }
 
     const response = await systemeIoCommon.apiCall({
       method: HttpMethod.PATCH,
@@ -104,6 +137,11 @@ export const updateContact = createAction({
       contactId,
       updatedFields: fields,
       customFieldsProcessed: customFields ? customFields.length : 0,
+      dynamicFieldsProcessed: dynamicContactFields ? Object.keys(dynamicContactFields).filter(key => 
+        dynamicContactFields[key] !== undefined && 
+        dynamicContactFields[key] !== null && 
+        dynamicContactFields[key] !== ''
+      ).length : 0,
       response,
     };
   },

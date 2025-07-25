@@ -10,19 +10,43 @@ export const newContact = createTrigger({
     description: 'Fires when a new contact is created',
     props: {},
     sampleData: {
-        id: '12345',
-        email: 'john@example.com',
-        first_name: 'John',
-        last_name: 'Doe',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
-        tags: [],
-        fields: [
-            {
-                slug: 'phone',
-                value: '+1234567890'
-            }
-        ]
+        contact: {
+            id: 12345,
+            email: "email@example.com",
+            registeredAt: "2024-01-01T00:00:00+00:00",
+            locale: "en",
+            sourceURL: null,
+            unsubscribed: false,
+            bounced: false,
+            needsConfirmation: false,
+            fields: [
+                {
+                    fieldName: "first_name",
+                    slug: "first_name",
+                    value: "John"
+                },
+                {
+                    fieldName: "last_name",
+                    slug: "last_name",
+                    value: "Doe"
+                },
+                {
+                    fieldName: "phone_number",
+                    slug: "phone_number",
+                    value: "+1234567890"
+                }
+            ],
+            tags: [
+                {
+                    id: 1,
+                    name: "new_customer"
+                },
+                {
+                    id: 2,
+                    name: "email_subscriber"
+                }
+            ]
+        }
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
@@ -49,6 +73,16 @@ export const newContact = createTrigger({
         }
     },
     async run(context) {
-        return [context.payload.body];
+        const webhookSecret = await context.store.get<string>('new_contact_webhook_secret');
+        const webhookSignatureHeader = context.payload.headers['x-webhook-signature'];
+        const rawBody = context.payload.rawBody;
+
+        if (!systemeIoCommon.verifyWebhookSignature(webhookSecret || undefined, webhookSignatureHeader, rawBody)) {
+            console.warn('Systeme.io webhook signature verification failed');
+            return [];
+        }
+
+        const payload = context.payload.body as any;
+        return [payload.contact || payload];
     }
 });

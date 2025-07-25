@@ -10,15 +10,39 @@ export const newSale = createTrigger({
     description: 'Fires when a new purchase is made within a funnel',
     props: {},
     sampleData: {
-        id: '67890',
-        contact_id: '12345',
-        contact_email: 'john@example.com',
-        amount: 99.99,
-        currency: 'USD',
-        product_name: 'Premium Course',
-        funnel_name: 'Sales Funnel',
-        created_at: '2024-01-01T00:00:00Z',
-        status: 'completed'
+        sale: {
+            id: 67890,
+            amount: 99.99,
+            currency: "USD",
+            status: "completed",
+            createdAt: "2024-01-01T00:00:00+00:00",
+            updatedAt: "2024-01-01T00:00:00+00:00",
+            product: {
+                id: 123,
+                name: "Premium Course",
+                type: "digital_product"
+            },
+            funnel: {
+                id: 456,
+                name: "Sales Funnel",
+                step: "checkout"
+            },
+            contact: {
+                id: 12345,
+                email: "customer@example.com",
+                firstName: "John",
+                lastName: "Doe"
+            },
+            payment: {
+                method: "stripe",
+                transactionId: "txn_1234567890",
+                gateway: "stripe"
+            },
+            affiliate: {
+                id: null,
+                commission: null
+            }
+        }
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
@@ -45,6 +69,16 @@ export const newSale = createTrigger({
         }
     },
     async run(context) {
-        return [context.payload.body];
+        const webhookSecret = await context.store.get<string>('new_sale_webhook_secret');
+        const webhookSignatureHeader = context.payload.headers['x-webhook-signature'];
+        const rawBody = context.payload.rawBody;
+
+        if (!systemeIoCommon.verifyWebhookSignature(webhookSecret || undefined, webhookSignatureHeader, rawBody)) {
+            console.warn('Systeme.io webhook signature verification failed');
+            return [];
+        }
+
+        const payload = context.payload.body as any;
+        return [payload.sale || payload];
     }
 });

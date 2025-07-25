@@ -10,13 +10,16 @@ import { addTagToContact } from "./lib/actions/add-tag-to-contact";
 import { removeTagFromContact } from "./lib/actions/remove-tag-from-contact";
 import { findContactByEmail } from "./lib/actions/find-contact-by-email";
 import { updateContact } from "./lib/actions/update-contact"
+import { PieceCategory } from "@activepieces/shared";
 
 export const systemeIo = createPiece({
   displayName: "Systeme.io",
   auth: systemeIoAuth,
   minimumSupportedRelease: '0.36.1',
+  categories: [PieceCategory.MARKETING],
+  description: "Systeme.io is a CRM platform that allows you to manage your contacts, sales, and marketing campaigns.",
   logoUrl: "https://cdn.activepieces.com/pieces/systeme-io.png",
-  authors: ['ezhil56x'],
+  authors: ['ezhil56x', 'onyedikachi-david'],
   actions: [
     createContact,
     addTagToContact,
