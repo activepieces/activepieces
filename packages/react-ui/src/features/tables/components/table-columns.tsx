@@ -13,6 +13,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   ApFlagId,
+  isNil,
   Permission,
   PlatformUsageMetric,
 } from '@activepieces/shared';
@@ -24,13 +25,12 @@ import { ApFieldHeader } from './ap-field-header';
 import { useTableState } from './ap-table-state-provider';
 import { EditableCell } from './editable-cell';
 import { NewFieldPopup } from './new-field-popup';
-import { SelectColumn } from './select-column';
+import { SelectCell, SelectHeaderCell } from './select-column';
 
 export function useTableColumns(createEmptyRecord: () => void) {
-  const [fields, updateRecord] = useTableState((state) => [
-    state.fields,
-    state.updateRecord,
-  ]);
+  const [fields, updateRecord, setSelectedAgentRunId] = useTableState(
+    (state) => [state.fields, state.updateRecord, state.setSelectedAgentRunId],
+  );
 
   const { data: maxFields } = flagsHooks.useFlag<number>(
     ApFlagId.MAX_FIELDS_PER_TABLE,
@@ -54,7 +54,27 @@ export function useTableColumns(createEmptyRecord: () => void) {
 
   const columns: Column<Row, { id: string }>[] = [
     {
-      ...SelectColumn,
+      key: 'select-row',
+      name: 'Select',
+      width: 66,
+      minWidth: 66,
+      maxWidth: 66,
+      resizable: false,
+      sortable: false,
+      frozen: true,
+      renderHeaderCell: () => <SelectHeaderCell />,
+      renderCell: (props) => (
+        <SelectCell
+          row={props.row}
+          rowIndex={props.rowIdx + 1}
+          onClick={() => {
+            if (props.row.locked && props.row.agentRunId) {
+              setSelectedAgentRunId(props.row.agentRunId);
+            }
+          }}
+        />
+      ),
+
       renderSummaryCell: () => (
         <AddRecordButton
           handleClick={createEmptyRecord}
@@ -83,6 +103,12 @@ export function useTableColumns(createEmptyRecord: () => void) {
           column={column}
           rowIdx={rowIdx}
           disabled={!userHasTableWritePermission}
+          locked={row.locked}
+          onClick={() => {
+            if (row.locked && row.agentRunId) {
+              setSelectedAgentRunId(row.agentRunId);
+            }
+          }}
           onRowChange={(newRow) => {
             updateRecord(rowIdx, {
               values: fields.map((field, fIndex) => ({
@@ -112,7 +138,11 @@ export function mapRecordsToRows(
 ): Row[] {
   if (!records || records.length === 0) return [];
   return records.map((record: ClientRecordData) => {
-    const row: Row = { id: record.uuid };
+    const row: Row = {
+      id: record.uuid,
+      agentRunId: record.agentRunId ?? null,
+      locked: !isNil(record.agentRunId),
+    };
     record.values.forEach((cell) => {
       const field = fields[cell.fieldIndex];
       if (field) {
