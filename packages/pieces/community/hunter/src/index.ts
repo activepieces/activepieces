@@ -19,11 +19,12 @@ export const hunterAuth = PieceAuth.SecretText({
 });
 export const hunter = createPiece({
   displayName: "Hunter",
-  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
+  description: 'Find, verify and manage professional email addresses at scale. Automate email discovery, validation, lead tracking, and campaign outreach with Hunter.io.',
   auth: hunterAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/hunter.png",
   authors: ['varshith257'],
+  categories: [PieceCategory.SALES_AND_CRM],
   actions: [addRecipientsAction, countEmailsAction, createLeadAction, deleteLeadAction, findEmailAction, getLeadAction, searchLeadsAction, updateLeadAction, verifyEmailAction],
   triggers: [newLeadTrigger],
 });
