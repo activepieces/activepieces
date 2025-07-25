@@ -1,0 +1,36 @@
+import { createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { grokAuth } from './lib/common/auth';
+import { askGrok } from './lib/actions/ask-grok';
+import { extractDataFromText } from './lib/actions/extract-data';
+import { categorizeText } from './lib/actions/categorize-text';
+import { generateImage } from './lib/actions/generate-image';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { XAI_BASE_URL } from './lib/common/constants';
+
+export const grokXai = createPiece({
+  displayName: 'Grok xAI',
+  description: 'Advanced AI chatbot by xAI that answers questions, generates text, extracts information from data, and provides real-time insights. Inspired by The Hitchhiker\'s Guide to the Galaxy, Grok delivers insightful, unfiltered truths about the universe.',
+  auth: grokAuth,
+  minimumSupportedRelease: '0.30.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/grok-xai.png',
+  categories: [
+    PieceCategory.ARTIFICIAL_INTELLIGENCE,
+    PieceCategory.UNIVERSAL_AI,
+  ],
+  authors: ['Your-Name'],
+  actions: [
+    askGrok,
+    extractDataFromText,
+    categorizeText,
+    generateImage,
+    createCustomApiCallAction({
+      auth: grokAuth,
+      baseUrl: () => XAI_BASE_URL,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
+  triggers: [],
+});
