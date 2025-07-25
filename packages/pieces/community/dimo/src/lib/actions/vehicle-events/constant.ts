@@ -33,7 +33,7 @@ export const VEHICLE_EVENTS_OPERATIONS: Record<VehicleEventKeys, VehicleEventsOp
     method: HttpMethod.POST,
     url: () => webhooksBaseUrl,
     bodyType: VehicleEventsBodyType.WebhookDefinition,
-    requiredFields: ["webhookDefinition"],
+    requiredFields: [],
   },
   updateWebhook: {
     label: "Update Webhook",
@@ -41,7 +41,7 @@ export const VEHICLE_EVENTS_OPERATIONS: Record<VehicleEventKeys, VehicleEventsOp
     method: HttpMethod.PUT,
     url: (params) => `${webhooksBaseUrl}/${params.webhookId}`,
     bodyType: VehicleEventsBodyType.WebhookDefinition,
-    requiredFields: ["webhookId", "webhookDefinition"],
+    requiredFields: ["webhookId"],
   },
   deleteWebhook: {
     label: "Delete Webhook",
