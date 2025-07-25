@@ -34,7 +34,7 @@ export const deleteObject = createAction({
 
       return response;
     } catch (error: any) {
-      // If we get a 502 error and using a specific region, suggest trying default region
+      
       if (error.message.includes('502') && authConfig.region !== 'default') {
         throw new Error(
           `${error.message}\n\nThe ${authConfig.region} region appears to be experiencing issues. ` +
