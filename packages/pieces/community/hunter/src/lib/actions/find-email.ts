@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { HttpError, HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { hunterApiCall } from '../common';
 import { hunterAuth } from '../../index';
 import {
@@ -21,12 +21,30 @@ export const findEmailAction = createAction({
     Optionally set max_duration (3-20s) to refine accuracy.
   `,
     props: {
-        domain: domainProp,
-        company: companyProp,
-        first_name: firstNameProp,
-        last_name: lastNameProp,
-        full_name: fullNameProp,
-        max_duration: maxDurationProp,
+        domain: {
+            ...domainProp,
+            required: false,
+        },
+        company: {
+            ...companyProp,
+            required: false,
+        },
+        first_name: {
+            ...firstNameProp,
+            required: false,
+        },
+        last_name: {
+            ...lastNameProp,
+            required: false,
+        },
+        full_name: {
+            ...fullNameProp,
+            required: false,
+        },
+        max_duration: {
+            ...maxDurationProp,
+            required: false,
+        },
     },
     async run(context) {
         const {
@@ -36,7 +54,14 @@ export const findEmailAction = createAction({
             last_name,
             full_name,
             max_duration,
-        } = context.propsValue;
+        } = context.propsValue as {
+            domain?: string;
+            company?: string;
+            first_name?: string;
+            last_name?: string;
+            full_name?: string;
+            max_duration?: number;
+        };
 
         if (!domain && !company) {
             throw new Error('You must provide at least a domain or a company name.');
@@ -48,10 +73,8 @@ export const findEmailAction = createAction({
                 'You must provide both first_name and last_name, or a full_name.'
             );
         }
-        if (max_duration !== undefined) {
-            if (max_duration < 3 || max_duration > 20) {
-                throw new Error('max_duration must be between 3 and 20 seconds.');
-            }
+        if (max_duration !== undefined && (max_duration < 3 || max_duration > 20)) {
+            throw new Error('max_duration must be between 3 and 20 seconds.');
         }
 
         const qparams: QueryParams = {};
@@ -62,52 +85,72 @@ export const findEmailAction = createAction({
         if (full_name) qparams['full_name'] = full_name;
         if (max_duration !== undefined) qparams['max_duration'] = String(max_duration);
 
-        const resp = (await hunterApiCall({
-            apiKey: context.auth,
-            endpoint: '/email-finder',
-            method: HttpMethod.GET,
-            qparams,
-        })) as {
-            data: {
-                first_name: string;
-                last_name: string;
-                email: string;
-                score: number;
-                domain: string;
-                accept_all: boolean;
-                position: string | null;
-                twitter: string | null;
-                linkedin_url: string | null;
-                phone_number: string | null;
-                company: string;
-                sources: Array<{
-                    domain: string;
-                    uri: string;
-                    extracted_on: string;
-                    last_seen_on: string;
-                    still_on_page: boolean;
-                }>;
-                verification: {
-                    date: string | null;
-                    status: 'valid' | 'accept_all' | 'unknown' | null;
-                };
-            };
-        };
+        let responseBody: any;
+        try {
+            responseBody = await hunterApiCall({
+                apiKey: context.auth,
+                endpoint: '/email-finder',
+                method: HttpMethod.GET,
+                qparams,
+            });
+        } catch (err) {
+            const httpErr = err as HttpError;
+            const status = httpErr.response?.status;
+            const errId = (httpErr.response?.body as any)?.errors?.[0]?.id;
+            const details = (httpErr.response?.body as any)?.errors?.[0]?.details ?? '';
 
+            if (status === 400) {
+                switch (errId) {
+                    case 'wrong_params':
+                        throw new Error(
+                            'Missing required parameter—please supply domain or company, and first_name+last_name or full_name.'
+                        );
+                    case 'invalid_first_name':
+                        throw new Error('The supplied first_name is invalid.');
+                    case 'invalid_last_name':
+                        throw new Error('The supplied last_name is invalid.');
+                    case 'invalid_full_name':
+                        throw new Error('The supplied full_name is invalid.');
+                    case 'invalid_domain':
+                        throw new Error(
+                            'The supplied domain is invalid or lacks MX records.'
+                        );
+                    case 'invalid_max_duration':
+                        throw new Error(
+                            'The supplied max_duration is invalid (must be 3–20 seconds).'
+                        );
+                }
+            }
+            if (status === 429) {
+                throw new Error(
+                    'Rate limit exceeded (15 requests/sec, 500 req/min). Please retry shortly.'
+                );
+            }
+            if (status === 451 && errId === 'claimed_email') {
+                throw new Error(
+                    'This email address cannot be processed because its owner requested to stop processing.'
+                );
+            }
+            throw new Error(
+                `Hunter Email Finder error: ${details} (status ${status}).`
+            );
+        }
+
+        const d = responseBody.data;
         return {
-            first_name: resp.data.first_name,
-            last_name: resp.data.last_name,
-            email: resp.data.email,
-            score: resp.data.score,
-            domain: resp.data.domain,
-            accept_all: resp.data.accept_all,
-            position: resp.data.position,
-            twitter: resp.data.twitter,
-            linkedin_url: resp.data.linkedin_url,
-            phone_number: resp.data.phone_number,
-            company: resp.data.company,
-            sources: resp.data.sources,
-            verification: resp.data.verification,
+            first_name: d.first_name,
+            last_name: d.last_name,
+            email: d.email,
+            score: d.score,
+            domain: d.domain,
+            accept_all: d.accept_all,
+            position: d.position,
+            twitter: d.twitter,
+            linkedin_url: d.linkedin_url,
+            phone_number: d.phone_number,
+            company: d.company,
+            sources: d.sources,
+            verification: d.verification,
         };
     },
 });

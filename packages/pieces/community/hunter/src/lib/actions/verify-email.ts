@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { HttpError, HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { hunterApiCall } from '../common';
 import { hunterAuth } from '../../index';
 import { emailProp } from '../common/props';
@@ -18,7 +18,8 @@ export const verifyEmailAction = createAction({
     • Throws documented errors:  
       - 400 wrong_params / invalid_email  
       - 222 SMTP failure (retry later)  
-      - 451 claimed_email (cannot process)  
+      - 451 claimed_email (cannot process) 
+      - 429 rate limit (10 req/s, 300 req/min)  
   `,
     props: {
         email: emailProp,
@@ -28,17 +29,47 @@ export const verifyEmailAction = createAction({
 
         const qparams: QueryParams = { email };
 
-        const resp = await hunterApiCall({
-            apiKey: context.auth,
-            endpoint: '/email-verifier',
-            method: HttpMethod.GET,
-            qparams,
-        });
+        let respBody: any;
+        try {
+            respBody = await hunterApiCall({
+                apiKey: context.auth,
+                endpoint: '/email-verifier',
+                method: HttpMethod.GET,
+                qparams,
+            });
+        } catch (err) {
+            const httpErr = err as HttpError;
+            const status = httpErr.response?.status;
+            const errId = (httpErr.response?.body as any)?.errors?.[0]?.id;
 
-        // If Hunter returned 202 (in-progress), httpClient may not throw.
-        // We assume resp as any and inspect for an 'data' field.
-        // On 202, resp.data may be empty — so users should re-run the action until they get full details.
-        const data = (resp as any).data;
+            if (status === 222) {
+                throw new Error(
+                    'Verification failed due to an unexpected SMTP server error. Please try again later.'
+                );
+            }
+            if (status === 400) {
+                switch (errId) {
+                    case 'wrong_params':
+                        throw new Error('Missing required parameter: email.');
+                    case 'invalid_email':
+                        throw new Error('The supplied email is invalid.');
+                }
+            }
+            if (status === 429) {
+                throw new Error(
+                    'Rate limit exceeded (10 requests/sec, 300 req/min). Please wait and retry shortly.'
+                );
+            }
+            if (status === 451 && errId === 'claimed_email') {
+                throw new Error(
+                    'Cannot verify: the email owner requested no processing of their data.'
+                );
+            }
+            const detail = (httpErr.response?.body as any)?.errors?.[0]?.details ?? '';
+            throw new Error(`Hunter Email Verifier error: ${detail} (status ${status}).`);
+        }
+
+        const data = respBody.data;
         if (!data) {
             return { status: 'in_progress' as const };
         }

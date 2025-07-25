@@ -37,14 +37,14 @@ export const campaignIdProp = Property.Dropdown({
 
 export const emailsProp = Property.Array({
     displayName: 'Emails',
-    required: false,
+    required: true,
     description: 'One or more email addresses to add as recipients.',
     defaultValue: [],
 });
 
 export const leadIdsProp = Property.Array({
     displayName: 'Lead IDs',
-    required: false,
+    required: true,
     description: 'One or more existing Hunter lead IDs to add as recipients.',
     defaultValue: [],
 });
@@ -198,7 +198,7 @@ export const maxDurationProp = Property.Number({
     displayName: 'Max Duration (seconds)',
     required: false,
     description:
-        'How long Hunter should spend refining results (3–20, default 10).',
+        'How long Hunter should spend refining results (3-20, default 10).',
 });
 
 export const filterProp = (name: string, description: string) =>
