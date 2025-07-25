@@ -104,6 +104,14 @@ export const tableService = {
                 },
             })
         }
+        
+        if (table.agent) {
+            table.agent = await agentsService(system.globalLogger()).getOneOrThrow({
+                id: table.agent.id,
+                projectId: table.agent.projectId,
+            })
+        }
+        
         return table
     },
 
