@@ -657,6 +657,9 @@
       "@activepieces/piece-pdf-co": [
         "packages/pieces/community/pdf-co/src/index.ts"
       ],
+      "@activepieces/piece-pdfmonkey": [
+        "packages/pieces/community/pdfmonkey/src/index.ts"
+      ],
       "@activepieces/piece-peekshot": [
         "packages/pieces/community/peekshot/src/index.ts"
       ],
