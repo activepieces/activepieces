@@ -862,6 +862,9 @@
       "@activepieces/piece-surveymonkey": [
         "packages/pieces/community/surveymonkey/src/index.ts"
       ],
+      "@activepieces/piece-systeme-io": [
+        "packages/pieces/community/systeme-io/src/index.ts"
+      ],
       "@activepieces/piece-tables": [
         "packages/pieces/community/tables/src/index.ts"
       ],
