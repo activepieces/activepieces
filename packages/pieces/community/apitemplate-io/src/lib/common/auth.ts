@@ -1,29 +1,55 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { makeRequest } from './client';
+import { makeRequest, APITEMPLATE_REGIONS, ApitemplateRegion } from './client';
+import { regionDropdown } from './props';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-export const ApitemplateAuth = PieceAuth.SecretText({
-  displayName: 'Apitemplate API Key',
+interface ApitemplateAuth {
+  apiKey: string;
+  region: ApitemplateRegion;
+}
+
+export const ApitemplateAuth = PieceAuth.CustomAuth({
   description: `
+To obtain your API key:
+1. Go to https://app.apitemplate.io/
+2. Navigate to API Integration section
+3. Copy your API key
 `,
+  props: {
+    region: regionDropdown,
+    apiKey: Property.SecretText({
+      displayName: 'API Key',
+      description: 'Your APITemplate.io API key',
+      required: true,
+    }),
+  },
   required: true,
   validate: async ({ auth }) => {
-    if (auth) {
-      try {
-        await makeRequest(auth as string, HttpMethod.GET, '/teams', {});
-        return {
-          valid: true,
-        };
-      } catch (error) {
-        return {
-          valid: false,
-          error: 'Invalid Api Key',
-        };
-      }
+    if (!auth?.apiKey) {
+      return {
+        valid: false,
+        error: 'API Key is required',
+      };
     }
-    return {
-      valid: false,
-      error: 'Invalid Api Key',
-    };
+
+    try {
+      await makeRequest(
+        auth.apiKey as string,
+        HttpMethod.GET,
+        '/list-templates',
+        undefined,
+        undefined,
+        auth.region as ApitemplateRegion
+      );
+      return {
+        valid: true,
+      };
+    } catch (error) {
+      return {
+        valid: false,
+        error:
+          'Invalid API Key or region configuration. Please check your credentials.',
+      };
+    }
   },
 });
