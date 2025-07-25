@@ -1,0 +1,33 @@
+{
+  "name": "pieces-help-scout",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/pieces/community/help-scout/src",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/help-scout",
+        "tsConfig": "packages/pieces/community/help-scout/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/help-scout/package.json",
+        "main": "packages/pieces/community/help-scout/src/index.ts",
+        "assets": [
+          "packages/pieces/community/help-scout/*.md",
+          {
+            "input": "packages/pieces/community/help-scout",
+            "glob": "**/*.json",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "publish": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/publish.js pieces-help-scout {args.ver} {args.tag}"
+      },
+      "dependsOn": ["build"]
+    }
+  }
+}
