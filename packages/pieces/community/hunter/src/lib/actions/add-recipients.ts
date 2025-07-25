@@ -1,5 +1,3 @@
-// packages/pieces/community/hunter/src/lib/actions/add-recipients.ts
-
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { hunterApiCall } from '../common';
