@@ -3,7 +3,6 @@ import { flowStructureUtil } from '../../util/flow-structure-util'
 import { Migration } from '.'
 
 export const migrateAgentPiece: Migration = {
-    name: 'migrate-v2-agent-piece-to-0.2.0',
     targetSchemaVersion: '2',
     migrate: (flowVersion: FlowVersion): FlowVersion => {
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {

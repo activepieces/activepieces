@@ -120,12 +120,21 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
             }
 
             const markAsComplete = agentResult.steps.find(isMarkAsComplete) as ToolCallContentBlock | undefined
-            agentResult.output = markAsComplete?.input
-            agentResult.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED,
-            agentResult.message = concatMarkdown(agentResult.steps)
-            agentResult.finishTime = new Date().toISOString()
+            await agentsApiService(workerToken, log).updateAgentRun(jobData.agentRunId, {
+                ...agentResult,
+                output: markAsComplete?.input,
+                status: !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED,
+                message: concatMarkdown(agentResult.steps),
+                finishTime: new Date().toISOString(),
+            })
 
-            await agentsApiService(workerToken, log).updateAgentRun(jobData.agentRunId, agentResult)
+            log.info({
+                agentRunId: jobData.agentRunId,
+                agentId: jobData.agentId,
+                projectId: jobData.projectId,
+                status: agentResult.status,
+                message: agentResult.message,
+            }, 'Agent job completed')
         }
         catch (error) {
             log.error(error, 'Error executing agent job')

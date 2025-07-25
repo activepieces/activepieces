@@ -95,6 +95,13 @@ export const createApTableStore = (
       records,
       (isSaving: boolean) => set({ isSaving }),
     );
+    const selectedCell =
+      records.length > 0
+        ? {
+            rowIdx: 0,
+            columnIdx: 1,
+          }
+        : null;
 
     return {
       isSaving: false,
@@ -102,7 +109,7 @@ export const createApTableStore = (
       table,
       setSelectedRecords: (selectedRecords: ReadonlySet<string>) =>
         set({ selectedRecords }),
-      selectedCell: null,
+      selectedCell: selectedCell,
       selectedAgentRunId: null,
       setSelectedAgentRunId: (agentRunId: string | null) =>
         set({ selectedAgentRunId: agentRunId }),
