@@ -26,6 +26,7 @@ export const microsoftSharePointAuth = PieceAuth.OAuth2({
     'Sites.Manage.All',
     'Files.ReadWrite',
   ],
+  prompt: 'omit'
 });
 
 export const microsoftSharePoint = createPiece({

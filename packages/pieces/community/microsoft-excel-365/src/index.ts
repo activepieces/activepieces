@@ -30,6 +30,7 @@ export const excelAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
   required: true,
   scope: ['Files.ReadWrite', 'offline_access'],
+  prompt: 'omit'
 });
 
 export const microsoftExcel = createPiece({
