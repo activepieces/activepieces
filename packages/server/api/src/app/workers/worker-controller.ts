@@ -1,4 +1,4 @@
-import { ApQueueJob, DelayedJobData, JobData, JobStatus, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
+import { ApQueueJob, DelayedJobData, JobData, JobStatus, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, RepeatableJobType, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
 import { apId, ExecutionType, FlowRunStatus, FlowStatus, isNil, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
@@ -35,7 +35,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         if (!job) {
             return null
         }
-        const runDeleted = await isRunDeleted(job, queueName, request.log)
+        const runDeleted = await isRunDeletedForOneTimeJob(job, queueName, request.log) || await isRunDeletedForDelayedJob(job, queueName, request.log)
         if (runDeleted) {
             await flowConsumer(request.log).update({
                 jobId: job.id,
@@ -164,7 +164,26 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 
-async function isRunDeleted(
+async function isRunDeletedForDelayedJob(
+    job: Omit<ApQueueJob, 'engineToken'>,
+    queueName: QueueName,
+    log: FastifyBaseLogger,
+): Promise<boolean> {
+    if (queueName !== QueueName.SCHEDULED) {
+        return false
+    }
+    const scheduledJob = job.data as ScheduledJobData | DelayedJobData
+    if (scheduledJob.jobType !== RepeatableJobType.DELAYED_FLOW) {
+        return false
+    }
+    const { runId } = scheduledJob
+
+    const runExists = await flowRunService(log).existsBy(runId)
+    return !runExists
+
+}
+
+async function isRunDeletedForOneTimeJob(
     job: Omit<ApQueueJob, 'engineToken'>,
     queueName: QueueName,
     log: FastifyBaseLogger,
@@ -242,6 +261,7 @@ async function getProjectIdAndPlatformId(queueName: QueueName, job: JobData): Pr
     platformId: string
 }> {
     switch (queueName) {
+        case QueueName.AGENTS:
         case QueueName.ONE_TIME:
         case QueueName.WEBHOOK:
         case QueueName.SCHEDULED: {

@@ -61,10 +61,10 @@ export const platformHooks = {
           description: t('License activated successfully!'),
         });
       },
-      onError: (error: any) => {
+      onError: () => {
         toast({
           title: t('Error'),
-          description: t('Activation failed, invalid lisence key'),
+          description: t('Activation failed, invalid license key'),
           variant: 'destructive',
         });
       },

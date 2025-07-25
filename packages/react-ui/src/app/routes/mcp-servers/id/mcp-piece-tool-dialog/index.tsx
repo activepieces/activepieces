@@ -1,5 +1,4 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronLeft, Search } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
@@ -21,13 +20,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import type {
   McpPieceTool,
-  McpToolRequest,
   McpWithTools,
+  McpToolRequest,
 } from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
 
@@ -38,7 +36,7 @@ type McpPieceDialogProps = {
   children: React.ReactNode;
   mcp: McpWithTools;
   open: boolean;
-  onSuccess: () => void;
+  onToolsUpdate: (tools: McpToolRequest[]) => void;
   onClose: () => void;
 };
 
@@ -50,7 +48,7 @@ export type ActionInfo = {
 export function McpPieceDialog({
   mcp,
   open,
-  onSuccess,
+  onToolsUpdate,
   children,
   onClose,
 }: McpPieceDialogProps) {
@@ -125,58 +123,6 @@ export function McpPieceDialog({
     }
   };
 
-  const { isPending, mutate: saveTool } = useMutation({
-    mutationFn: async () => {
-      const currentTools =
-        mcp?.tools
-          ?.map((tool) => {
-            switch (tool.type) {
-              case McpToolType.PIECE: {
-                return {
-                  type: tool.type,
-                  mcpId: tool.mcpId,
-                  pieceMetadata: tool.pieceMetadata,
-                };
-              }
-              case McpToolType.FLOW: {
-                return {
-                  type: tool.type,
-                  mcpId: tool.mcpId,
-                  flowId: tool.flowId,
-                };
-              }
-            }
-          })
-          .filter(
-            (tool) =>
-              tool.pieceMetadata?.pieceName !== selectedPiece?.pieceName,
-          ) || [];
-
-      if (!selectedPiece) return;
-
-      const newTools: McpToolRequest[] = selectedActions.map((action) => ({
-        type: McpToolType.PIECE,
-        mcpId: mcp.id,
-        pieceMetadata: {
-          pieceName: selectedPiece.pieceName,
-          actionName: action.actionName,
-          actionDisplayName: action.actionDisplayName,
-          pieceVersion: selectedPiece.pieceVersion,
-          logoUrl: selectedPiece.logoUrl,
-          connectionExternalId: selectedConnectionExternalId ?? undefined,
-        },
-      }));
-
-      const updatedTools = [...currentTools, ...newTools];
-
-      return await mcpApi.update(mcp.id, { tools: updatedTools });
-    },
-    onSuccess: () => {
-      onSuccess?.();
-      handleClose();
-    },
-  });
-
   const handleSave = () => {
     if (!isNil(selectedPiece?.auth) && isNil(selectedConnectionExternalId)) {
       setShowValidationErrors(true);
@@ -184,7 +130,23 @@ export function McpPieceDialog({
     }
 
     setShowValidationErrors(false);
-    saveTool();
+    if (!selectedPiece) return;
+
+    const newTools: McpToolRequest[] = selectedActions.map((action) => ({
+      type: McpToolType.PIECE,
+      mcpId: mcp.id,
+      pieceMetadata: {
+        pieceName: selectedPiece.pieceName,
+        actionName: action.actionName,
+        actionDisplayName: action.actionDisplayName,
+        pieceVersion: selectedPiece.pieceVersion,
+        logoUrl: selectedPiece.logoUrl,
+        connectionExternalId: selectedConnectionExternalId ?? undefined,
+      },
+    }));
+    const oldTools = mcp.tools;
+    onToolsUpdate([...oldTools, ...newTools]);
+    handleClose();
   };
 
   const handleClose = () => {
@@ -270,7 +232,7 @@ export function McpPieceDialog({
               {t('Close')}
             </Button>
           </DialogClose>
-          <Button loading={isPending} type="button" onClick={handleSave}>
+          <Button loading={false} type="button" onClick={handleSave}>
             {t('Save')}
           </Button>
         </DialogFooter>

@@ -126,6 +126,9 @@
       "@activepieces/piece-binance": [
         "packages/pieces/community/binance/src/index.ts"
       ],
+      "@activepieces/piece-bitly": [
+        "packages/pieces/community/bitly/src/index.ts"
+      ],
       "@activepieces/piece-blockscout": [
         "packages/pieces/community/blockscout/src/index.ts"
       ],
@@ -135,6 +138,9 @@
       "@activepieces/piece-box": ["packages/pieces/community/box/src/index.ts"],
       "@activepieces/piece-brilliant-directories": [
         "packages/pieces/community/brilliant-directories/src/index.ts"
+      ],
+      "@activepieces/piece-browse-ai": [
+        "packages/pieces/community/browse-ai/src/index.ts"
       ],
       "@activepieces/piece-bubble": [
         "packages/pieces/community/bubble/src/index.ts"
@@ -861,6 +867,9 @@
       ],
       "@activepieces/piece-surveymonkey": [
         "packages/pieces/community/surveymonkey/src/index.ts"
+      ],
+      "@activepieces/piece-systeme-io": [
+        "packages/pieces/community/systeme-io/src/index.ts"
       ],
       "@activepieces/piece-tables": [
         "packages/pieces/community/tables/src/index.ts"

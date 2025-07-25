@@ -1,5 +1,5 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Search } from 'lucide-react';
 import React, { useState } from 'react';
@@ -16,12 +16,14 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useToast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import type { McpToolRequest, PopulatedFlow } from '@activepieces/shared';
-import { McpToolType, TriggerType, McpWithTools } from '@activepieces/shared';
+import { McpToolType, McpWithTools, TriggerType } from '@activepieces/shared';
+import type {
+  McpTool,
+  McpToolRequest,
+  PopulatedFlow,
+} from '@activepieces/shared';
 
 import { McpFlowDialogContent } from './mcp-flow-dialog-content';
 
@@ -30,23 +32,25 @@ type McpFlowDialogProps = {
   mcp: McpWithTools;
   selectedFlows: string[];
   open: boolean;
-  onSuccess: () => void;
+  onToolsUpdate: (tools: McpToolRequest[]) => void;
   onClose: () => void;
+  tools: McpTool[];
 };
 
 export function McpFlowDialog({
   mcp,
   open,
   selectedFlows: initialSelectedFlows,
-  onSuccess,
+  onToolsUpdate,
   children,
   onClose,
+  tools,
 }: McpFlowDialogProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const projectId = authenticationSession.getProjectId();
-  const { toast } = useToast();
   const [selectedFlows, setSelectedFlows] =
     useState<string[]>(initialSelectedFlows);
+
+  const projectId = authenticationSession.getProjectId();
 
   const { data: flows } = useQuery({
     queryKey: ['flows', projectId, mcp.id],
@@ -69,38 +73,19 @@ export function McpFlowDialog({
     },
   });
 
-  const { isPending, mutate: saveTool } = useMutation({
-    mutationFn: async () => {
-      const newTools: McpToolRequest[] = selectedFlows.map((flowId) => ({
-        type: McpToolType.FLOW,
-        flowId: flowId,
-      }));
-
-      const nonFlowTools: McpToolRequest[] = mcp.tools.filter(
-        (tool) => tool.type !== McpToolType.FLOW,
-      );
-      const updatedTools = [...nonFlowTools, ...newTools];
-
-      return await mcpApi.update(mcp.id, { tools: updatedTools });
-    },
-    onSuccess: () => {
-      toast({
-        description: t('Flow tools added successfully'),
-        duration: 3000,
-      });
-      onSuccess();
-      handleClose();
-    },
-    onError: (error) => {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: t('Error'),
-        description: t('Failed to add flow tools'),
-        duration: 5000,
-      });
-    },
-  });
+  const handleSave = () => {
+    const newTools: McpToolRequest[] = selectedFlows.map((flowId) => ({
+      type: McpToolType.FLOW,
+      flowId: flowId,
+      mcpId: mcp.id,
+    }));
+    const nonFlowTools: McpToolRequest[] = tools.filter(
+      (tool) => tool.type !== McpToolType.FLOW,
+    );
+    const updatedTools = [...nonFlowTools, ...newTools];
+    onToolsUpdate(updatedTools);
+    handleClose();
+  };
 
   const handleClose = () => {
     setSearchQuery('');
@@ -152,7 +137,7 @@ export function McpFlowDialog({
               {t('Close')}
             </Button>
           </DialogClose>
-          <Button loading={isPending} type="button" onClick={() => saveTool()}>
+          <Button type="button" onClick={handleSave}>
             {t('Save')}
           </Button>
         </DialogFooter>

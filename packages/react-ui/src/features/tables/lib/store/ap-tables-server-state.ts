@@ -4,10 +4,12 @@ import {
   Field,
   PopulatedRecord,
   Table,
+  UpdateTableRequest,
 } from '@activepieces/shared';
 
 import { fieldsApi } from '../fields-api';
 import { recordsApi } from '../records-api';
+import { tablesApi } from '../tables-api';
 
 import { ClientRecordData } from './ap-tables-client-state';
 
@@ -115,6 +117,10 @@ export const createServerState = (
           name: newName,
         });
       });
+    },
+    update: async (request: UpdateTableRequest) => {
+      const updatedTable = await tablesApi.update(clonedTable.id, request);
+      clonedTable.status = updatedTable.status;
     },
     setRecords: (records: PopulatedRecord[]) => {
       clonedRecords = JSON.parse(JSON.stringify(records));
