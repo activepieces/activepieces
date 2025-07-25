@@ -223,7 +223,7 @@ export const updateRecord = createAction({
                 displayName: field.label,
                 description: `The fields to fill in the object type ${elementType}`,
                 required: field.mandatory,
-                defaultValue: defaultValue?.[field.name] as boolean,
+                defaultValue: defaultValue?.[field.name] ? true : false,
               });
             } else if (['date', 'datetime', 'time'].includes(field.type.name)) {
               fields[field.name] = Property.DateTime({

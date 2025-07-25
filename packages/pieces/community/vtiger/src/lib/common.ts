@@ -317,7 +317,7 @@ export const recordIdProperty = () =>
         required: true,
         options: {
           options: response.body.result.map((r) => ({
-            label: _module(r),
+            label: _module?.(r) || r['id'],
             value: r['id'],
           })),
         },
@@ -592,7 +592,7 @@ export const generateElementFields = async (
           displayName: field.label,
           description: `The fields to fill in the object type ${elementType}`,
           required: !skipMandatory ? field.mandatory : false,
-          defaultValue: defaultValue?.[field.name] as boolean,
+          defaultValue: defaultValue?.[field.name] ? true : false,
         });
       } else if (['date', 'datetime', 'time'].includes(field.type.name)) {
         fields[field.name] = Property.DateTime({
@@ -600,6 +600,12 @@ export const generateElementFields = async (
           description: `The fields to fill in the object type ${elementType}`,
           defaultValue: defaultValue?.[field.name] as string,
           required: !skipMandatory ? field.mandatory : false,
+        });
+      } else if(params.required) {
+        // Add the mandatory field for unknown input type, but with text input
+        fields[field.name] = Property.ShortText({
+          ...params,
+          defaultValue: defaultValue?.[field.name] as string,
         });
       }
     };
