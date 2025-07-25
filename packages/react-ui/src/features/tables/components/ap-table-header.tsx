@@ -62,7 +62,7 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
 
   return (
     <>
-      <div className="flex items-center gap-1 justify-between p-4">
+      <div className="flex items-center gap-1 justify-between p-4 w-full">
         <div className="flex items-center gap-1">
           <Button
             variant="basic"
@@ -133,7 +133,6 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
                 }}
               >
                 <Button
-                  size="sm"
                   variant="destructive"
                   className="flex gap-2 items-center"
                   disabled={!userHasTableWritePermission}
