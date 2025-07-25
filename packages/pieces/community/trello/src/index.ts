@@ -9,6 +9,7 @@ import { createCard } from './lib/actions/create-card';
 import { getCard } from './lib/actions/get-card';
 import { cardMovedTrigger } from './lib/triggers/cardMoved';
 import { newCardTrigger } from './lib/triggers/newCard';
+import { deadlineTrigger } from './lib/triggers/deadline';
 
 const markdownProperty = `
 To obtain your API key and token, follow these steps:
@@ -73,5 +74,5 @@ export const trello = createPiece({
   categories: [PieceCategory.PRODUCTIVITY],
   auth: trelloAuth,
   actions: [createCard, getCard],
-  triggers: [cardMovedTrigger, newCardTrigger],
+  triggers: [cardMovedTrigger, newCardTrigger, deadlineTrigger],
 });
