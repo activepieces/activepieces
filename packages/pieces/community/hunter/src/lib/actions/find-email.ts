@@ -57,6 +57,12 @@ export const findEmailAction = createAction({
       );
     }
 
+    if (max_duration && (max_duration < 3 || max_duration > 20)) {
+      throw new Error(
+        'Max Duration must be between 3 and 20 seconds.'
+      );
+    }
+
     const query: Record<string, string | number> = {};
     if (domain) query['domain'] = domain;
     if (company) query['company'] = company;
@@ -94,7 +100,6 @@ export const findEmailAction = createAction({
           'The owner of this email has requested their data not be processed.'
         );
       }
-
       if (error.message.includes('429')) {
         throw new Error(
           'Rate limit exceeded. Please wait a moment before trying again.'

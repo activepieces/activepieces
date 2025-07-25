@@ -23,6 +23,8 @@ export const deleteLeadAction = createAction({
       });
       return {
         success: true,
+        message: `Lead ${lead_id} deleted successfully`,
+        lead_id,
       };
     } catch (error: any) {
       if (error.message.includes('409')) {
@@ -43,7 +45,6 @@ export const deleteLeadAction = createAction({
           'Not Found. A lead with the specified ID does not exist.'
         );
       }
-
       if (error.message.includes('429')) {
         throw new Error(
           'Rate limit exceeded. Please wait a moment before trying again.'

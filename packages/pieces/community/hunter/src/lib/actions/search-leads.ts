@@ -8,9 +8,20 @@ import {
   lastNameDropdown,
   emailDropdown,
   companyDropdown,
+  companyIndustryDropdown,
+  companySizeDropdown,
+  countryCodeDropdown,
   sourceDropdown,
   twitterDropdown,
   linkedinUrlDropdown,
+  positionDropdown,
+  websiteDropdown,
+  phoneNumberDropdown,
+  syncStatusDropdown,
+  sendingStatusDropdown,
+  verificationStatusDropdown,
+  lastActivityAtDropdown,
+  lastContactedAtDropdown,
 } from '../common/props';
 
 export const searchLeadsAction = createAction({
@@ -20,31 +31,79 @@ export const searchLeadsAction = createAction({
   description: 'List and filter leads in your account.',
   props: {
     leads_list_id: leadsListDropdown,
+    email: emailDropdown,
     first_name: firstNameDropdown,
     last_name: lastNameDropdown,
-    email: emailDropdown,
+    position: positionDropdown,
     company: companyDropdown,
+    industry: companyIndustryDropdown,
+    website: websiteDropdown,
+    country_code: countryCodeDropdown,
+    company_size: companySizeDropdown,
     source: sourceDropdown,
     twitter: twitterDropdown,
     linkedin_url: linkedinUrlDropdown,
-    offset: Property.Number({
-      displayName: 'Offset',
-      description: 'The number of leads to skip.',
+    phone_number: phoneNumberDropdown,
+    sync_status: syncStatusDropdown,
+    sending_status: sendingStatusDropdown,
+    verification_status: verificationStatusDropdown,
+    last_activity_at: lastActivityAtDropdown,
+    last_contacted_at: lastContactedAtDropdown,
+    custom_attributes: Property.Object({
+      displayName: 'Custom Attributes',
+      description:
+        'Filter leads by custom attributes. Key must match the attribute slug, value can be *, ~ or any string.',
+      required: false,
+    }),
+    query: Property.ShortText({
+      displayName: 'Query',
+      description:
+        'Search leads by first_name, last_name, or email matching this query.',
       required: false,
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description:
-        'The maximum number of leads to return (default is 10, max is 100).',
+      description: 'Maximum number of leads to return (1-1000, default is 20).',
+      required: false,
+    }),
+    offset: Property.Number({
+      displayName: 'Offset',
+      description: 'Number of leads to skip (0-100,000).',
       required: false,
     }),
   },
   async run({ propsValue, auth }) {
-    const query: Record<string, string | number> = {};
+    const { limit, offset, ...otherProps } = propsValue;
 
-    for (const [key, value] of Object.entries(propsValue)) {
+    if (limit && (limit < 1 || limit > 1000)) {
+      throw new Error('Limit must be between 1 and 1000.');
+    }
+    if (offset && (offset < 0 || offset > 100000)) {
+      throw new Error('Offset must be between 0 and 100,000.');
+    }
+
+    const query: Record<string, string | number | string[]> = {};
+
+    for (const [key, value] of Object.entries({ ...otherProps, limit, offset })) {
       if (value !== undefined && value !== null && value !== '') {
-        query[key] = value as string | number;
+        if (key === 'sending_status' || key === 'verification_status') {
+          if (Array.isArray(value) && value.length > 0) {
+            query[`${key}[]`] = value;
+          }
+        } else if (key === 'custom_attributes' && typeof value === 'object') {
+          const customAttrs = value as Record<string, string>;
+          for (const [attrKey, attrValue] of Object.entries(customAttrs)) {
+            if (
+              attrValue !== undefined &&
+              attrValue !== null &&
+              attrValue !== ''
+            ) {
+              query[`custom_attributes[${attrKey}]`] = attrValue;
+            }
+          }
+        } else {
+          query[key] = value as string | number;
+        }
       }
     }
 

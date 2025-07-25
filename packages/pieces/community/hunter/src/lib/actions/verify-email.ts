@@ -19,6 +19,11 @@ export const verifyEmailAction = createAction({
   async run({ propsValue, auth }) {
     const { email } = propsValue;
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new Error('Please provide a valid email address.');
+    }
+
     try {
       const response = await hunterIoApiCall({
         method: HttpMethod.GET,
@@ -33,13 +38,11 @@ export const verifyEmailAction = createAction({
           'Verification is in progress. Please try the request again in a few moments.'
         );
       }
-
       if (error.message.includes('222')) {
         throw new Error(
           'Verification failed due to an issue with the remote server. Please try again later.'
         );
       }
-
       if (error.message.includes('400')) {
         throw new Error(
           'Invalid request. Please ensure you have provided a valid email address.'
@@ -55,7 +58,6 @@ export const verifyEmailAction = createAction({
           'The owner of this email has requested their data not be processed.'
         );
       }
-
       if (error.message.includes('429')) {
         throw new Error(
           'Rate limit exceeded. Please wait a moment before trying again.'

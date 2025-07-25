@@ -39,7 +39,6 @@ export const getLeadAction = createAction({
           'Not Found. A lead with the specified ID does not exist.'
         );
       }
-
       if (error.message.includes('429')) {
         throw new Error(
           'Rate limit exceeded. Please wait a moment before trying again.'

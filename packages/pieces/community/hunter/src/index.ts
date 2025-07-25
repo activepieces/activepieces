@@ -5,7 +5,7 @@ import { addRecipientsAction } from './lib/actions/add-recipients';
 import { countEmailsAction } from './lib/actions/count-emails';
 import { createLeadAction } from './lib/actions/create-lead';
 import { deleteLeadAction } from './lib/actions/delete-lead';
-import { findEmailAction } from './lib/actions/find-emai';
+import { findEmailAction } from './lib/actions/find-email';
 import { getLeadAction } from './lib/actions/get-lead';
 import { searchLeadsAction } from './lib/actions/search-leads';
 import { updateLeadAction } from './lib/actions/update-lead';
@@ -17,7 +17,7 @@ export const hunterIo = createPiece({
   auth: hunterIoAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/hunter.png',
-  authors: ['activepieces-community'],
+  authors: ['aryel780'],
   actions: [
     addRecipientsAction,
     countEmailsAction,

@@ -2,7 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { hunterIoApiCall } from '../common/client';
 import { hunterIoAuth } from '../common/auth';
-import { campaignIdDropdown, leadIdDropdown } from '../common/props';
+import { campaignIdDropdown } from '../common/props';
 
 export const addRecipientsAction = createAction({
   auth: hunterIoAuth,
@@ -35,6 +35,23 @@ export const addRecipientsAction = createAction({
       throw new Error(
         'You must provide at least one recipient email or one Lead ID.'
       );
+    }
+
+    if (emails && emails.length > 50) {
+      throw new Error('Maximum 50 emails can be added at once.');
+    }
+    if (lead_ids && lead_ids.length > 50) {
+      throw new Error('Maximum 50 Lead IDs can be added at once.');
+    }
+
+    if (emails && emails.length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const invalidEmails = emails.filter((email: unknown) => 
+        typeof email === 'string' ? !emailRegex.test(email) : true
+      );
+      if (invalidEmails.length > 0) {
+        throw new Error(`Invalid email format(s): ${invalidEmails.join(', ')}`);
+      }
     }
     const body: {
       emails?: string[];
