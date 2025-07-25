@@ -12,6 +12,18 @@ export const APITEMPLATE_REGIONS = {
 
 export type ApitemplateRegion = keyof typeof APITEMPLATE_REGIONS;
 
+// Interface for authentication object
+export interface ApitemplateAuthConfig {
+  apiKey: string;
+  region: ApitemplateRegion;
+}
+
+// Interface for API error response
+interface ApitemplateErrorResponse {
+  status: string;
+  message: string;
+}
+
 export const BASE_URL = APITEMPLATE_REGIONS.default;
 
 export function getRegionalBaseUrl(region?: ApitemplateRegion): string {
@@ -19,7 +31,7 @@ export function getRegionalBaseUrl(region?: ApitemplateRegion): string {
 }
 
 export async function makeRequest(
-  api_key: string,
+  apiKey: string,
   method: HttpMethod,
   path: string,
   body?: unknown,
@@ -28,10 +40,11 @@ export async function makeRequest(
 ) {
   try {
     let mergedHeaders: Record<string, string> = {
-      'X-API-KEY': api_key,
+      'X-API-KEY': apiKey,
       'Content-Type': 'application/json',
     };
 
+    // Handle custom headers parameter
     if (typeof headers === 'string') {
       mergedHeaders['Content-Type'] = headers;
     } else if (typeof headers === 'object' && headers !== null) {
@@ -48,8 +61,37 @@ export async function makeRequest(
       headers: mergedHeaders,
       body,
     });
+
     return response.body;
   } catch (error: any) {
-    throw new Error(`Unexpected error: ${error.message || String(error)}`);
+    // Handle APITemplate.io specific error format
+    if (error.response?.body) {
+      const errorBody = error.response.body as ApitemplateErrorResponse;
+      if (errorBody.status === 'error' && errorBody.message) {
+        throw new Error(`APITemplate.io Error: ${errorBody.message}`);
+      }
+    }
+
+    // Handle HTTP status errors
+    if (error.response?.status) {
+      const statusCode = error.response.status;
+      switch (statusCode) {
+        case 401:
+          throw new Error('APITemplate.io Error: Invalid API key or unauthorized access');
+        case 403:
+          throw new Error('APITemplate.io Error: Access forbidden - check your API permissions');
+        case 404:
+          throw new Error('APITemplate.io Error: Resource not found - check your template ID');
+        case 429:
+          throw new Error('APITemplate.io Error: Rate limit exceeded - please try again later');
+        case 500:
+          throw new Error('APITemplate.io Error: Internal server error - please try again later');
+        default:
+          throw new Error(`APITemplate.io Error: HTTP ${statusCode} - ${error.message || 'Unknown error'}`);
+      }
+    }
+
+    // Generic error fallback
+    throw new Error(`APITemplate.io API Error: ${error.message || String(error)}`);
   }
 }

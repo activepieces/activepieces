@@ -1,5 +1,9 @@
 import { Property } from '@activepieces/pieces-framework';
-import { ApitemplateRegion, makeRequest } from './client';
+import {
+  ApitemplateRegion,
+  ApitemplateAuthConfig,
+  makeRequest,
+} from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const regionDropdown = Property.StaticDropdown({
@@ -55,14 +59,25 @@ export const templateIdDropdown = Property.Dropdown({
       };
     }
 
+    // Type-safe auth casting
+    const authConfig = auth as ApitemplateAuthConfig;
+
+    if (!authConfig.apiKey || !authConfig.region) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please complete authentication setup',
+      };
+    }
+
     try {
       const response = await makeRequest(
-        auth.apiKey as string,
+        authConfig.apiKey,
         HttpMethod.GET,
         '/list-templates',
         undefined,
         undefined,
-        auth.region as ApitemplateRegion
+        authConfig.region
       );
 
       // Handle the specific APITemplate.io response structure
@@ -84,10 +99,75 @@ export const templateIdDropdown = Property.Dropdown({
         })),
       };
     } catch (error) {
+      console.error('Error loading templates:', error);
       return {
         disabled: true,
         options: [],
         placeholder: 'Error loading templates',
+      };
+    }
+  },
+});
+
+export const transactionRefDropdown = Property.Dropdown({
+  displayName: 'Transaction Reference',
+  description: 'Select a transaction reference to filter objects',
+  required: false,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+    // Type-safe auth casting
+    const authConfig = auth as ApitemplateAuthConfig;
+
+    if (!authConfig.apiKey || !authConfig.region) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please complete authentication setup',
+      };
+    }
+
+    try {
+      const response = await makeRequest(
+        authConfig.apiKey,
+        HttpMethod.GET,
+        '/list-objects',
+        undefined,
+        undefined,
+        authConfig.region
+      );
+
+      // Handle the specific APITemplate.io response structure
+      const objects = response?.objects || [];
+
+      if (!Array.isArray(objects) || objects.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: 'No objects found',
+        };
+      }
+
+      return {
+        disabled: false,
+        options: objects.map((obj: any) => ({
+          label: obj.transaction_ref || 'Unknown Transaction Ref',
+          value: obj.transaction_ref || '',
+        })),
+      };
+    } catch (error) {
+      console.error('Error loading transaction references:', error);
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading transaction references',
       };
     }
   },

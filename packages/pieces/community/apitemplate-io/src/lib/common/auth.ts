@@ -1,12 +1,11 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { makeRequest, APITEMPLATE_REGIONS, ApitemplateRegion } from './client';
+import {
+  makeRequest,
+  ApitemplateRegion,
+  ApitemplateAuthConfig,
+} from './client';
 import { regionDropdown } from './props';
 import { HttpMethod } from '@activepieces/pieces-common';
-
-interface ApitemplateAuth {
-  apiKey: string;
-  region: ApitemplateRegion;
-}
 
 export const ApitemplateAuth = PieceAuth.CustomAuth({
   description: `
@@ -14,10 +13,12 @@ To obtain your API key:
 1. Go to https://app.apitemplate.io/
 2. Navigate to API Integration section
 3. Copy your API key
+
+Select the region closest to your location for better performance.
 `,
   props: {
     region: regionDropdown,
-    apiKey: Property.SecretText({
+    apiKey: Property.ShortText({
       displayName: 'API Key',
       description: 'Your APITemplate.io API key',
       required: true,
@@ -32,23 +33,43 @@ To obtain your API key:
       };
     }
 
+    if (!auth?.region) {
+      return {
+        valid: false,
+        error: 'Region selection is required',
+      };
+    }
+
+    // Type-safe auth casting
+    const authConfig = auth as ApitemplateAuthConfig;
+
     try {
-      await makeRequest(
-        auth.apiKey as string,
+      const response = await makeRequest(
+        authConfig.apiKey,
         HttpMethod.GET,
         '/list-templates',
         undefined,
         undefined,
-        auth.region as ApitemplateRegion
+        authConfig.region
       );
-      return {
-        valid: true,
-      };
-    } catch (error) {
+
+      // Check if we got a valid response
+      if (response && (response.templates || response.status === 'success')) {
+        return {
+          valid: true,
+        };
+      }
+
       return {
         valid: false,
-        error:
-          'Invalid API Key or region configuration. Please check your credentials.',
+        error: 'Invalid API response. Please check your credentials.',
+      };
+    } catch (error: any) {
+      return {
+        valid: false,
+        error: `Authentication failed: ${
+          error.message || 'Invalid API Key or region configuration'
+        }`,
       };
     }
   },

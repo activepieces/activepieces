@@ -4,11 +4,11 @@ import { ApitemplateAuthConfig, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { templateIdDropdown } from '../common/props';
 
-export const createImage = createAction({
+export const createPdf = createAction({
   auth: ApitemplateAuth,
-  name: 'createImage',
-  displayName: 'Create Image',
-  description: 'Create an image from a template with provided data',
+  name: 'createPdf',
+  displayName: 'Create PDF',
+  description: 'Create a PDF from a template with provided data',
   props: {
     templateId: templateIdDropdown,
     data: Property.Object({
@@ -16,19 +16,7 @@ export const createImage = createAction({
       description: 'JSON data with overrides array to populate the template. Format: {"overrides": [{"name": "object_name", "property": "value"}]}',
       required: true,
     }),
-    outputImageType: Property.StaticDropdown({
-      displayName: 'Output Image Type',
-      description: 'Output image type (JPEG or PNG format), default to all',
-      required: false,
-      defaultValue: 'all',
-      options: {
-        options: [
-          { label: 'All formats', value: 'all' },
-          { label: 'JPEG only', value: 'jpegOnly' },
-          { label: 'PNG only', value: 'pngOnly' },
-        ],
-      },
-    }),
+    
     exportType: Property.StaticDropdown({
       displayName: 'Export Type',
       description: 'Format of the generated response',
@@ -37,30 +25,35 @@ export const createImage = createAction({
       options: {
         options: [
           { label: 'JSON Response', value: 'json' },
-          { label: 'Direct Image URL', value: 'file' },
+          { label: 'Direct PDF URL', value: 'file' },
         ],
       },
     }),
     expiration: Property.Number({
       displayName: 'Expiration (minutes)',
-      description: 'Expiration in minutes (default to 0, store permanently). Use 0 for permanent storage or 1-10080 minutes (7 days).',
+      description: 'Expiration of the generated PDF in minutes. Use 0 to store permanently, or 1-10080 minutes (7 days) to specify expiration.',
       required: false,
       defaultValue: 0,
     }),
     cloudStorage: Property.Checkbox({
       displayName: 'Upload to CDN Storage',
-      description: 'Upload generated images to storage CDN (default: true). Set to false if using Post Action to upload to your own S3.',
+      description: 'Upload generated PDF to storage CDN (default: true). Set to false if using Post Action to upload to your own S3.',
       required: false,
       defaultValue: true,
     }),
+    password: Property.ShortText({
+      displayName: 'PDF Password',
+      description: 'Set a password to protect the generated PDF',
+      required: false,
+    }),
     generationDelay: Property.Number({
       displayName: 'Generation Delay (ms)',
-      description: 'Delay in milliseconds before image generation',
+      description: 'Delay in milliseconds before PDF generation',
       required: false,
     }),
     resizeImages: Property.Checkbox({
       displayName: 'Resize Images',
-      description: 'Preprocess or resize images in the template',
+      description: 'Preprocess or resize images in the PDF',
       required: false,
       defaultValue: false,
     }),
@@ -88,6 +81,22 @@ export const createImage = createAction({
         ],
       },
     }),
+    postactionS3Filekey: Property.ShortText({
+      displayName: 'Post Action S3 File Key',
+      description: 'Specify the file name for Post Action (AWS S3/Cloudflare R2/Azure Storage). Do not include file extension.',
+      required: false,
+    }),
+    postactionS3Bucket: Property.ShortText({
+      displayName: 'Post Action S3 Bucket',
+      description: 'Overwrite the AWS Bucket for Post Action or container for Azure Storage',
+      required: false,
+    }),
+    postactionEnabled: Property.Checkbox({
+      displayName: 'Enable Post Actions',
+      description: 'Enable Post Actions for uploading to your own storage',
+      required: false,
+      defaultValue: true,
+    }),
     meta: Property.ShortText({
       displayName: 'External Reference ID',
       description: 'Specify an external reference ID for your own reference',
@@ -99,32 +108,39 @@ export const createImage = createAction({
     const {
       templateId,
       data,
-      outputImageType,
       exportType,
       expiration,
       cloudStorage,
+      password,
       generationDelay,
       resizeImages,
       resizeMaxWidth,
       resizeMaxHeight,
       resizeFormat,
+      postactionS3Filekey,
+      postactionS3Bucket,
+      postactionEnabled,
       meta,
     } = propsValue;
 
-    // Build query parameters
+    // Build query parameters according to API docs
     const queryParams = new URLSearchParams();
     queryParams.append('template_id', templateId);
 
-    if (outputImageType && outputImageType !== 'all') {
-      queryParams.append('output_image_type', outputImageType);
+    if (exportType && exportType !== 'json') {
+      queryParams.append('export_type', exportType);
     }
 
-    if (expiration !== undefined) {
+    if (expiration !== undefined && expiration !== 0) {
       queryParams.append('expiration', expiration.toString());
     }
 
     if (cloudStorage !== undefined) {
       queryParams.append('cloud_storage', cloudStorage ? '1' : '0');
+    }
+
+    if (password) {
+      queryParams.append('password', password);
     }
 
     if (generationDelay) {
@@ -144,25 +160,44 @@ export const createImage = createAction({
       }
     }
 
+    if (postactionS3Filekey) {
+      queryParams.append('postaction_s3_filekey', postactionS3Filekey);
+    }
+
+    if (postactionS3Bucket) {
+      queryParams.append('postaction_s3_bucket', postactionS3Bucket);
+    }
+
+    if (postactionEnabled !== undefined) {
+      queryParams.append('postaction_enabled', postactionEnabled ? '1' : '0');
+    }
+
     if (meta) {
       queryParams.append('meta', meta);
     }
 
-    if (exportType) {
-      queryParams.append('export_type', exportType);
+    const endpoint = `/create-pdf?${queryParams.toString()}`;
+
+    try {
+      const response = await makeRequest(
+        authConfig.apiKey,
+        HttpMethod.POST,
+        endpoint,
+        data,
+        undefined,
+        authConfig.region
+      );
+
+      return response;
+    } catch (error: any) {
+      // If we get a 502 error and using a specific region, suggest trying default region
+      if (error.message.includes('502') && authConfig.region !== 'default') {
+        throw new Error(
+          `${error.message}\n\nThe ${authConfig.region} region appears to be experiencing issues. ` +
+          `Consider switching to the 'default' region in your authentication settings or try again later.`
+        );
+      }
+      throw error;
     }
-
-    const endpoint = `/create-image?${queryParams.toString()}`;
-
-    const response = await makeRequest(
-      authConfig.apiKey,
-      HttpMethod.POST,
-      endpoint,
-      data,
-      undefined,
-      authConfig.region
-    );
-
-    return response;
   },
 });
