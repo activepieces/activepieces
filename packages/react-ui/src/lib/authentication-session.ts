@@ -83,7 +83,11 @@ export const authenticationSession = {
     window.dispatchEvent(new Event('storage'));
   },
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    if (isNil(token)) {
+      return false;
+    }
+    return !this.isJwtExpired(token);
   },
   clearSession() {
     ApStorage.getInstance().removeItem(tokenKey);
