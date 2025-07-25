@@ -177,7 +177,10 @@ async function enrichProject(
         .createQueryBuilder('project_member')
         .leftJoin('user', 'user', 'user.id = project_member."userId"')
         .groupBy('user.id')
-        .where(`user.status = '${UserStatus.ACTIVE}' and project_member."projectId" = '${project.id}'`)
+        .where('user.status = :activeStatus and project_member."projectId" = :projectId', {
+            activeStatus: UserStatus.ACTIVE,
+            projectId: project.id,
+        })
         .getCount()
 
     const totalFlows = await flowService(log).count({
