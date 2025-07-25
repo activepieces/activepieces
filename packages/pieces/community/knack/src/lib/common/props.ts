@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { knackApiCall, KnackAuthProps } from './client';
 
@@ -8,7 +8,7 @@ interface KnackObject {
 }
 
 interface KnackObjectDetails extends KnackObject {
-    display_field: string;
+  display_field: string;
 }
 
 interface KnackRecord {
@@ -29,83 +29,440 @@ export const objectDropdown = Property.Dropdown({
         options: [],
       };
     }
-    
+
     const typedAuth = auth as KnackAuthProps;
 
     try {
-        const response = await knackApiCall<{ objects: KnackObject[] }>({
-            method: HttpMethod.GET,
-            auth: typedAuth,
-            resourceUri: '/objects',
-        });
-        
-        return {
-            disabled: false,
-            options: response.objects.map((object) => ({
-                label: object.name,
-                value: object.key,
-            })),
-        };
+      const response = await knackApiCall<{ objects: KnackObject[] }>({
+        method: HttpMethod.GET,
+        auth: typedAuth,
+        resourceUri: '/objects',
+      });
+
+      return {
+        disabled: false,
+        options: response.objects.map((object) => ({
+          label: object.name,
+          value: object.key,
+        })),
+      };
     } catch (error: any) {
-        return {
-            disabled: true,
-            placeholder: `Error loading objects: ${error.message}`,
-            options: [],
-        }
+      return {
+        disabled: true,
+        placeholder: `Error loading objects: ${error.message}`,
+        options: [],
+      };
     }
   },
 });
 
 export const recordIdDropdown = Property.Dropdown({
-    displayName: 'Record',
-    description: 'Select the record to perform the action on.',
-    required: true,
-    refreshers: ['object'],
-    options: async ({ auth, object }) => {
-        if (!auth || !object) {
-            return {
-                disabled: true,
-                placeholder: 'Select an object first.',
-                options: [],
-            };
-        }
+  displayName: 'Record',
+  description: 'Select the record to perform the action on.',
+  required: true,
+  refreshers: ['object'],
+  options: async ({ auth, object }) => {
+    if (!auth || !object) {
+      return {
+        disabled: true,
+        placeholder: 'Select an object first.',
+        options: [],
+      };
+    }
 
-        const typedAuth = auth as KnackAuthProps;
-        const objectKey = object as string;
+    const typedAuth = auth as KnackAuthProps;
+    const objectKey = object as string;
 
-        try {
-            const objectDetails = await knackApiCall<KnackObjectDetails>({
-                method: HttpMethod.GET,
-                auth: typedAuth,
-                resourceUri: `/objects/${objectKey}`,
-            });
-            const displayField = objectDetails.display_field;
+    try {
+      const objectDetails = await knackApiCall<KnackObjectDetails>({
+        method: HttpMethod.GET,
+        auth: typedAuth,
+        resourceUri: `/objects/${objectKey}`,
+      });
+      const displayField = objectDetails.display_field;
 
-            const response = await knackApiCall<{ records: KnackRecord[] }>({
-                method: HttpMethod.GET,
-                auth: typedAuth,
-                resourceUri: `/objects/${objectKey}/records`,
-                query: {
-                    rows_per_page: '1000'
-                }
-            });
+      const response = await knackApiCall<{ records: KnackRecord[] }>({
+        method: HttpMethod.GET,
+        auth: typedAuth,
+        resourceUri: `/objects/${objectKey}/records`,
+        query: {
+          rows_per_page: '1000',
+        },
+      });
 
-            return {
-                disabled: false,
-                options: response.records.map((record) => {
-                    const label = record[displayField] || record.id;
-                    return {
-                        label: label,
-                        value: record.id,
-                    }
-                }),
-            };
-        } catch (error: any) {
-            return {
-                disabled: true,
-                placeholder: `Error loading records: ${error.message}`,
-                options: [],
+      return {
+        disabled: false,
+        options: response.records.map((record) => {
+          const displayValue = record[displayField];
+          const label = displayValue
+            ? `${displayValue} (ID: ${record.id})`
+            : `Record ${record.id}`;
+          return {
+            label: label,
+            value: record.id,
+          };
+        }),
+      };
+    } catch (error: any) {
+      return {
+        disabled: true,
+        placeholder: `Error loading records: ${error.message}`,
+        options: [],
+      };
+    }
+  },
+});
+
+export const dynamicObjectFields = Property.DynamicProperties({
+  displayName: 'Record Fields',
+  description:
+    'Fill out the record fields. Field types are automatically configured based on the object structure.',
+  required: true,
+  refreshers: ['object'],
+  props: async ({ auth, object }) => {
+    if (!auth || !object) {
+      return {};
+    }
+
+    const typedAuth = auth as KnackAuthProps;
+    const objectKey = object as unknown as string;
+
+    try {
+      const objectDetails = await knackApiCall<any>({
+        method: HttpMethod.GET,
+        auth: typedAuth,
+        resourceUri: `/objects/${objectKey}`,
+      });
+
+      const recordsResponse = await knackApiCall<{ records: any[] }>({
+        method: HttpMethod.GET,
+        auth: typedAuth,
+        resourceUri: `/objects/${objectKey}/records`,
+        query: {
+          rows_per_page: '1',
+        },
+      });
+
+      const props: DynamicPropsValue = {};
+
+      if (recordsResponse.records && recordsResponse.records.length > 0) {
+        const sampleRecord = recordsResponse.records[0];
+
+        for (const [fieldKey, fieldValue] of Object.entries(sampleRecord)) {
+          if (fieldKey === 'id') {
+            continue;
+          }
+
+          if (fieldKey.endsWith('_raw')) {
+            continue;
+          }
+
+          const rawFieldKey = `${fieldKey}_raw`;
+          const hasRawField = sampleRecord.hasOwnProperty(rawFieldKey);
+          const rawValue = hasRawField ? sampleRecord[rawFieldKey] : null;
+
+          const displayName = fieldKey
+            .replace(/^field_/, 'Field ')
+            .replace(/_/g, ' ');
+          const description = `Enter value for ${displayName}`;
+
+          if (hasRawField && rawValue && typeof rawValue === 'object') {
+            if (
+              rawValue.hasOwnProperty('street') &&
+              rawValue.hasOwnProperty('city')
+            ) {
+              props[`${fieldKey}_street`] = Property.ShortText({
+                displayName: `${displayName} - Street`,
+                description: 'Street address',
+                required: false,
+              });
+              props[`${fieldKey}_city`] = Property.ShortText({
+                displayName: `${displayName} - City`,
+                description: 'City',
+                required: false,
+              });
+              props[`${fieldKey}_state`] = Property.ShortText({
+                displayName: `${displayName} - State`,
+                description: 'State',
+                required: false,
+              });
+              props[`${fieldKey}_zip`] = Property.ShortText({
+                displayName: `${displayName} - ZIP`,
+                description: 'ZIP code',
+                required: false,
+              });
+            } else if (rawValue.hasOwnProperty('url')) {
+              props[fieldKey] = Property.ShortText({
+                displayName: displayName,
+                description: `${description} (URL)`,
+                required: false,
+              });
+            } else if (Array.isArray(rawValue)) {
+              props[fieldKey] = Property.LongText({
+                displayName: displayName,
+                description: `${description} (Enter comma-separated values)`,
+                required: false,
+              });
+            } else {
+              props[fieldKey] = Property.LongText({
+                displayName: displayName,
+                description: `${description} (JSON format)`,
+                required: false,
+              });
             }
+          } else {
+            const stringValue = String(fieldValue || '');
+            if (
+              fieldKey.includes('email') ||
+              (typeof fieldValue === 'string' && fieldValue.includes('@'))
+            ) {
+              props[fieldKey] = Property.ShortText({
+                displayName: displayName,
+                description: `${description} (Email)`,
+                required: false,
+              });
+            } else if (fieldKey.includes('phone') || fieldKey.includes('tel')) {
+              props[fieldKey] = Property.ShortText({
+                displayName: displayName,
+                description: `${description} (Phone)`,
+                required: false,
+              });
+            } else if (fieldKey.includes('date') || fieldKey.includes('time')) {
+              props[fieldKey] = Property.DateTime({
+                displayName: displayName,
+                description: `${description} (Date/Time)`,
+                required: false,
+              });
+            } else if (
+              typeof fieldValue === 'number' ||
+              (!isNaN(Number(stringValue)) && stringValue !== '')
+            ) {
+              props[fieldKey] = Property.Number({
+                displayName: displayName,
+                description: `${description} (Number)`,
+                required: false,
+              });
+            } else if (
+              typeof fieldValue === 'boolean' ||
+              stringValue.toLowerCase() === 'true' ||
+              stringValue.toLowerCase() === 'false'
+            ) {
+              props[fieldKey] = Property.Checkbox({
+                displayName: displayName,
+                description: `${description} (Yes/No)`,
+                required: false,
+              });
+            } else if (stringValue.length > 100 || stringValue.includes('\n')) {
+              props[fieldKey] = Property.LongText({
+                displayName: displayName,
+                description: description,
+                required: false,
+              });
+            } else {
+              props[fieldKey] = Property.ShortText({
+                displayName: displayName,
+                description: description,
+                required: false,
+              });
+            }
+          }
         }
-    },
+      } else {
+        const commonFields = [
+          'field_1',
+          'field_2',
+          'field_3',
+          'field_4',
+          'field_5',
+        ];
+        for (const fieldKey of commonFields) {
+          const displayName = fieldKey
+            .replace(/^field_/, 'Field ')
+            .replace(/_/g, ' ');
+          props[fieldKey] = Property.ShortText({
+            displayName: displayName,
+            description: `Enter value for ${displayName}`,
+            required: false,
+          });
+        }
+      }
+
+      return props;
+    } catch (error: any) {
+      console.error('Error fetching object fields:', error);
+      return {};
+    }
+  },
+});
+
+export const dynamicRecordFields = Property.DynamicProperties({
+  displayName: 'Record Fields',
+  description:
+    'Edit the record fields. Field types are automatically configured based on the record structure.',
+  required: true,
+  refreshers: ['object', 'recordId'],
+  props: async ({ auth, object, recordId }) => {
+    if (!auth || !object || !recordId) {
+      return {};
+    }
+
+    const typedAuth = auth as KnackAuthProps;
+    const objectKey = object as unknown as string;
+    const recordIdValue = recordId as unknown as string;
+
+    try {
+      const recordResponse = await knackApiCall<any>({
+        method: HttpMethod.GET,
+        auth: typedAuth,
+        resourceUri: `/objects/${objectKey}/records/${recordIdValue}`,
+      });
+
+      const props: DynamicPropsValue = {};
+
+      for (const [fieldKey, fieldValue] of Object.entries(recordResponse)) {
+        if (fieldKey === 'id') {
+          continue;
+        }
+
+        if (fieldKey.endsWith('_raw')) {
+          continue;
+        }
+
+        const rawFieldKey = `${fieldKey}_raw`;
+        const hasRawField = recordResponse.hasOwnProperty(rawFieldKey);
+        const rawValue = hasRawField ? recordResponse[rawFieldKey] : null;
+
+        const displayName = fieldKey
+          .replace(/^field_/, 'Field ')
+          .replace(/_/g, ' ');
+        const description = `Enter value for ${displayName}`;
+
+        if (hasRawField && rawValue && typeof rawValue === 'object') {
+          if (
+            rawValue.hasOwnProperty('street') &&
+            rawValue.hasOwnProperty('city')
+          ) {
+            props[`${fieldKey}_street`] = Property.ShortText({
+              displayName: `${displayName} - Street`,
+              description: 'Street address',
+              required: false,
+              defaultValue: rawValue.street || '',
+            });
+            props[`${fieldKey}_city`] = Property.ShortText({
+              displayName: `${displayName} - City`,
+              description: 'City',
+              required: false,
+              defaultValue: rawValue.city || '',
+            });
+            props[`${fieldKey}_state`] = Property.ShortText({
+              displayName: `${displayName} - State`,
+              description: 'State',
+              required: false,
+              defaultValue: rawValue.state || '',
+            });
+            props[`${fieldKey}_zip`] = Property.ShortText({
+              displayName: `${displayName} - ZIP`,
+              description: 'ZIP code',
+              required: false,
+              defaultValue: rawValue.zip || '',
+            });
+          } else if (rawValue.hasOwnProperty('url')) {
+            props[fieldKey] = Property.ShortText({
+              displayName: displayName,
+              description: `${description} (URL)`,
+              required: false,
+              defaultValue: rawValue.url || '',
+            });
+          } else if (rawValue.hasOwnProperty('email')) {
+            props[fieldKey] = Property.ShortText({
+              displayName: displayName,
+              description: `${description} (Email)`,
+              required: false,
+              defaultValue: rawValue.email || '',
+            });
+          } else if (rawValue.hasOwnProperty('number')) {
+            props[fieldKey] = Property.ShortText({
+              displayName: displayName,
+              description: `${description} (Phone)`,
+              required: false,
+              defaultValue: rawValue.number || rawValue.full || '',
+            });
+          } else if (Array.isArray(rawValue)) {
+          } else {
+          }
+        } else {
+          const stringValue = String(fieldValue || '');
+          if (
+            fieldKey.includes('email') ||
+            (typeof fieldValue === 'string' && fieldValue.includes('@'))
+          ) {
+            props[fieldKey] = Property.ShortText({
+              displayName: displayName,
+              description: `${description} (Email)`,
+              required: false,
+              defaultValue: stringValue,
+            });
+          } else if (fieldKey.includes('phone') || fieldKey.includes('tel')) {
+            props[fieldKey] = Property.ShortText({
+              displayName: displayName,
+              description: `${description} (Phone)`,
+              required: false,
+              defaultValue: stringValue,
+            });
+          } else if (fieldKey.includes('date') || fieldKey.includes('time')) {
+            props[fieldKey] = Property.DateTime({
+              displayName: displayName,
+              description: `${description} (Date/Time)`,
+              required: false,
+              defaultValue: stringValue || undefined,
+            });
+          } else if (
+            typeof fieldValue === 'number' ||
+            (!isNaN(Number(stringValue)) && stringValue !== '')
+          ) {
+            props[fieldKey] = Property.Number({
+              displayName: displayName,
+              description: `${description} (Number)`,
+              required: false,
+              defaultValue:
+                typeof fieldValue === 'number'
+                  ? fieldValue
+                  : stringValue
+                  ? Number(stringValue)
+                  : undefined,
+            });
+          } else if (
+            typeof fieldValue === 'boolean' ||
+            stringValue.toLowerCase() === 'true' ||
+            stringValue.toLowerCase() === 'false'
+          ) {
+            props[fieldKey] = Property.Checkbox({
+              displayName: displayName,
+              description: `${description} (Yes/No)`,
+              required: false,
+              defaultValue: Boolean(fieldValue),
+            });
+          } else if (stringValue.length > 100 || stringValue.includes('\n')) {
+            props[fieldKey] = Property.LongText({
+              displayName: displayName,
+              description: description,
+              required: false,
+              defaultValue: stringValue,
+            });
+          } else {
+            props[fieldKey] = Property.ShortText({
+              displayName: displayName,
+              description: description,
+              required: false,
+              defaultValue: stringValue,
+            });
+          }
+        }
+      }
+
+      return props;
+    } catch (error: any) {
+      return {};
+    }
+  },
 });
