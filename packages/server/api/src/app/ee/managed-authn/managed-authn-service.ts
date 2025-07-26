@@ -1,7 +1,4 @@
 import { createHash } from 'crypto'
-import {
-    DEFAULT_PLATFORM_LIMIT,
-} from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
@@ -131,11 +128,9 @@ async function updateProjectLimits({
         piecesFilterType,
     })
     
-    const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
-    await projectLimitsService.upsert({
-        nickname: projectPlan?.name ?? DEFAULT_PLATFORM_LIMIT.nickname,
-        tasks: tasks ?? projectPlan?.tasks ?? DEFAULT_PLATFORM_LIMIT.tasks,
-        aiCredits: aiCredits ?? projectPlan?.aiCredits ?? DEFAULT_PLATFORM_LIMIT.aiCredits,
+    const projectPlan = await projectLimitsService(log).getOrCreateDefaultPlan(projectId)
+    await projectLimitsService(log).upsert({
+        nickname: projectPlan?.name ?? 'default',
         pieces,
         piecesFilterType,
     }, projectId)
