@@ -1,7 +1,4 @@
 import { createHash } from 'crypto'
-import {
-    DEFAULT_PLATFORM_LIMIT,
-} from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
@@ -21,8 +18,8 @@ import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import { userService } from '../../user/user-service'
-import { projectMemberService } from '../project-members/project-member.service'
-import { projectLimitsService } from '../project-plan/project-plan.service'
+import { projectMemberService } from '../projects/project-members/project-member.service'
+import { projectLimitsService } from '../projects/project-plan/project-plan.service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
 
 export const managedAuthnService = (log: FastifyBaseLogger) => ({
@@ -95,9 +92,9 @@ const updateProjectLimits = async (
     })
     const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
     await projectLimitsService.upsert({
-        nickname: projectPlan?.name ?? DEFAULT_PLATFORM_LIMIT.nickname,
-        tasks: tasks ?? projectPlan?.tasks ?? DEFAULT_PLATFORM_LIMIT.tasks,
-        aiTokens: aiTokens ?? projectPlan?.aiTokens ?? DEFAULT_PLATFORM_LIMIT.aiTokens,
+        nickname: projectPlan?.name ?? 'default',
+        tasks: tasks ?? projectPlan?.tasks ?? 1000,
+        aiTokens: aiTokens ?? projectPlan?.aiTokens ?? 200,
         pieces,
         piecesFilterType,
     }, projectId)
