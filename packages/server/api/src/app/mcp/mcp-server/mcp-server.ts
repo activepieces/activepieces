@@ -1,6 +1,8 @@
 import { ActionBase } from '@activepieces/pieces-framework'
 import { rejectedPromiseHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
+    AI_USAGE_FEATURE_HEADER,
+    AIUsageFeature,
     assertNotNullOrUndefined,
     EngineResponseStatus,
     ExecuteActionResponse,
@@ -320,9 +322,12 @@ async function initializeOpenAIModel({
         projectId,
     })
 
-    return  createOpenAI({
+    return createOpenAI({
         baseURL: baseUrl,
         apiKey,
+        headers: {
+            [AI_USAGE_FEATURE_HEADER]: AIUsageFeature.MCP,
+        },
     }).chat(model)
 }
 

@@ -1,6 +1,6 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { AIProviderWithoutSensitiveData, isNil, SeekPage } from '@activepieces/shared';
+import { AI_USAGE_FEATURE_HEADER, AIProviderWithoutSensitiveData, AIUsageFeature, isNil, SeekPage } from '@activepieces/shared';
 import OpenAI from 'openai';
 import { ModerationMultiModalInput } from 'openai/resources/moderations';
 
@@ -98,6 +98,9 @@ export const checkModeration = createAction({
     const client = new OpenAI({
       apiKey: engineToken,
       baseURL,
+      defaultHeaders: {
+        [AI_USAGE_FEATURE_HEADER]: AIUsageFeature.UTILITY_AI,
+      },
     });
 
     const input: ModerationMultiModalInput[] = [];

@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { AiOverageState, AIUsage, ApEdition, ApEnvironment, apId, Cursor, FlowStatus, PlatformUsage, SeekPage, UserStatus } from '@activepieces/shared'
+import { AiOverageState, AIUsage, AIUsageFeature, ApEdition, ApEnvironment, apId, Cursor, FlowStatus, PlatformUsage, SeekPage, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull } from 'typeorm'
@@ -116,7 +116,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
 
     },
 
-    async increaseAiCreditUsage({ projectId, cost, platformId, provider, model }: IncreaseProjectAIUsageParams): Promise<{ projectAiCreditUsage: number, platformAiCreditUsage: number }> {
+    async increaseAiCreditUsage({ projectId, cost, platformId, provider, model, feature }: IncreaseProjectAIUsageParams): Promise<{ projectAiCreditUsage: number, platformAiCreditUsage: number }> {
         const edition = system.getEdition()
 
         if (edition === ApEdition.COMMUNITY) {
@@ -146,6 +146,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             provider,
             model,
             cost,
+            feature,
         })
 
         const shouldReportUsage = platformPlan.aiCreditsOverageState === AiOverageState.ALLOWED_AND_ON
@@ -337,6 +338,7 @@ type IncreaseProjectAIUsageParams = {
     provider: string
     model: string
     cost: number
+    feature: AIUsageFeature
 }
 
 type GetProjectUsageParams = {

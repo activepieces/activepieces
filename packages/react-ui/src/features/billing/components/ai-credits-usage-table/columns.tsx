@@ -53,6 +53,15 @@ export const aiCreditUsageTableColumns: ColumnDef<ListAICreditsUsageResponse>[] 
       },
     },
     {
+      accessorKey: 'feature',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Feature')} />
+      ),
+      cell: ({ row }) => {
+        return <div className="text-left">{row.getValue('feature')}</div>;
+      },
+    },
+    {
       accessorKey: 'credits',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Credits')} />

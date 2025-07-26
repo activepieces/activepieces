@@ -4,12 +4,14 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { createReplicate } from '@ai-sdk/replicate'
 import { ImageModel, LanguageModel } from 'ai'
 import { SUPPORTED_AI_PROVIDERS } from './supported-ai-providers'
+import { AI_USAGE_FEATURE_HEADER, AIUsageFeature } from './index'
 
 export function createAIProvider<T extends LanguageModel | ImageModel>({
     providerName,
     modelInstance,
     apiKey,
     baseURL,
+    feature,
 }: CreateAIProviderParams<T>): T {
     const isImageModel = SUPPORTED_AI_PROVIDERS
         .flatMap(provider => provider.imageModels)
@@ -21,6 +23,10 @@ export function createAIProvider<T extends LanguageModel | ImageModel>({
             const provider = createOpenAI({
                 apiKey,
                 baseURL: `${baseURL}/${openaiVersion}`,
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    [AI_USAGE_FEATURE_HEADER]: feature,
+                },
             })
             if (isImageModel) {
                 return provider.imageModel(modelInstance.modelId) as T
@@ -32,6 +38,10 @@ export function createAIProvider<T extends LanguageModel | ImageModel>({
             const provider = createAnthropic({
                 apiKey,
                 baseURL: `${baseURL}/${anthropicVersion}`,
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    [AI_USAGE_FEATURE_HEADER]: feature,
+                },
             })
             if (isImageModel) {
                 throw new Error(`Provider ${providerName} does not support image models`)
@@ -43,6 +53,10 @@ export function createAIProvider<T extends LanguageModel | ImageModel>({
             const provider = createReplicate({
                 apiToken: apiKey,
                 baseURL: `${baseURL}/${replicateVersion}`,
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    [AI_USAGE_FEATURE_HEADER]: feature,
+                },
             })
             if (!isImageModel) {
                 throw new Error(`Provider ${providerName} does not support language models`)
@@ -54,6 +68,10 @@ export function createAIProvider<T extends LanguageModel | ImageModel>({
             const provider = createGoogleGenerativeAI({
                 apiKey,
                 baseURL: `${baseURL}/${googleVersion}`,
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    [AI_USAGE_FEATURE_HEADER]: feature,
+                },
             })
             if (isImageModel) {
                 throw new Error(`Provider ${providerName} does not support image models`)
@@ -70,4 +88,5 @@ type CreateAIProviderParams<T extends LanguageModel | ImageModel> = {
     modelInstance: T
     apiKey: string
     baseURL: string
+    feature: AIUsageFeature
 }

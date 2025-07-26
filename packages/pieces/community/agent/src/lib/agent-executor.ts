@@ -1,4 +1,4 @@
-import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AgentTestResult, AIErrorResponse, assertNotNullOrUndefined, ContentBlockType, isNil, McpToolMetadata, mcpToolNaming, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType } from "@activepieces/shared"
+import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AgentTestResult, AI_USAGE_FEATURE_HEADER, AIErrorResponse, AIUsageFeature, assertNotNullOrUndefined, ContentBlockType, isNil, McpToolMetadata, mcpToolNaming, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType } from "@activepieces/shared"
 import { APICallError, streamText } from "ai"
 import { agentCommon } from "./common"
 import { agentTools } from "./agent-tools"

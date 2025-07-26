@@ -1,4 +1,4 @@
-import { AIUsage, Project } from '@activepieces/shared'
+import { AIUsage, AIUsageFeature, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
@@ -29,6 +29,12 @@ export const AIUsageEntity = new EntitySchema<AIUsageSchema>({
         projectId: {
             ...ApIdSchema,
             nullable: false,
+        },
+        feature: {
+            type: String,
+            enum: AIUsageFeature,
+            nullable: false,
+            default: AIUsageFeature.UNKNOWN,
         },
     },
     indices: [

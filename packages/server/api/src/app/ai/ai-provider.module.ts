@@ -1,6 +1,6 @@
 import { Writable } from 'stream'
 import { exceptionHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared'
+import { ActivepiecesError, AI_USAGE_FEATURE_HEADER, AIUsageFeature, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
@@ -79,7 +79,14 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                 const completeResponse = JSON.parse(buffer.toString())
                                 usage = aiProviderService.calculateUsage(provider, request, completeResponse)
                             }
-                            await platformUsageService(app.log).increaseAiCreditUsage({ projectId, platformId: request.principal.platform.id, provider, model: usage.model, cost: usage.cost })
+                            await platformUsageService(app.log).increaseAiCreditUsage({ 
+                                projectId,
+                                platformId: request.principal.platform.id,
+                                provider,
+                                model: usage.model,
+                                cost: usage.cost,
+                                feature: request.headers[AI_USAGE_FEATURE_HEADER] as AIUsageFeature,
+                            })
                         }
                         catch (error) {
                             exceptionHandler.handle({
@@ -104,6 +111,17 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                     code: ErrorCode.AUTHORIZATION,
                     params: {
                         message: 'invalid route for principal type',
+                    },
+                })
+            }
+
+            const featureHeader = request.headers[AI_USAGE_FEATURE_HEADER]
+            const supportedFeatures = Object.values(AIUsageFeature).filter(f => f !== AIUsageFeature.UNKNOWN) as AIUsageFeature[]
+            if (featureHeader && !supportedFeatures.includes(featureHeader as AIUsageFeature)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `${AI_USAGE_FEATURE_HEADER} header must be one of the following: ${supportedFeatures.join(', ')}`,
                     },
                 })
             }

@@ -245,6 +245,7 @@ import { RemoveTerminationReason1751728035816 } from './migration/postgres/17517
 import { AddLockedColumnToProjectPlan1751878623268 } from './migration/postgres/1751878623268-AddLockedColumnToProjectPlan'
 import { AddFlowVersionToIssue1751927222122 } from './migration/postgres/1751927222122-AddFlowVersionToIssue'
 import { AddIndexForSchemaVersionInFlowVersion1752151941009 } from './migration/postgres/1752151941009-AddIndexForSchemaVersionInFlowVersion'
+import { AddFeatureToAIUsagePostgres1753264516213 } from './migration/postgres/1753264516213-AddFeatureToAIUsagePostgres'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -415,6 +416,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowVersionToIssue1751927222122,
         SplitUpPieceMetadataIntoTools1752004202722,
         AddIndexForSchemaVersionInFlowVersion1752151941009,
+        AddFeatureToAIUsagePostgres1753264516213,
     ]
 
     const edition = system.getEdition()

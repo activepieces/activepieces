@@ -28,12 +28,25 @@ export const CreateAIProviderRequest = Type.Object({
 
 export type CreateAIProviderRequest = Static<typeof CreateAIProviderRequest>
 
+export const AI_USAGE_FEATURE_HEADER = 'ap-feature'
+
+export enum AIUsageFeature {
+    AGENTS = 'Agents',   
+    MCP = 'MCP',
+    TEXT_AI = 'Text AI',
+    IMAGE_AI = 'Image AI',
+    UTILITY_AI = 'Utility AI',
+    UNKNOWN = 'Unknown',
+}
+
 export const AIUsage = Type.Object({
     ...BaseModelSchema,
     provider: Type.String({ minLength: 1 }),
     model: Type.String({ minLength: 1 }),
     cost: Type.Number({ minimum: 0 }),
     projectId: Type.String(),
+    platformId: Type.String(),
+    feature: Type.Enum(AIUsageFeature, { default: AIUsageFeature.UNKNOWN }),
 })
 
 export type AIUsage = Static<typeof AIUsage>

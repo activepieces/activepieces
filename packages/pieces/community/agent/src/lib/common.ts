@@ -1,5 +1,5 @@
 import { httpClient, AuthenticationType, HttpMethod } from "@activepieces/pieces-common";
-import { Agent, createAIProvider, SeekPage } from "@activepieces/shared"
+import { Agent, AIUsageFeature, createAIProvider, SeekPage } from "@activepieces/shared"
 import { openai } from "@ai-sdk/openai";
 
 
@@ -12,6 +12,7 @@ export const agentCommon = {
       modelInstance: openai('gpt-4o-mini'),
       apiKey: engineToken,
       baseURL,
+      feature: AIUsageFeature.AGENTS,
     });
   },
   listAgents(params: ListAgents) {
