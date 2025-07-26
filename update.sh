@@ -1,10 +1,11 @@
 #!/bin/bash
 
-# List of SSO files to preserve (relative to repo root)
+# List of JWT SSO files to preserve (relative to repo root)
 SSO_FILES=(
-  "packages/server/api/src/app/ee/managed-authn/managed-authn-controller.ts"
-  "packages/server/api/src/app/ee/managed-authn/managed-authn-service.ts"
-  "packages/server/api/src/app/ee/managed-authn/lib/external-token-extractor.ts"
+  "packages/server/api/src/app/authentication/jwt-authn/jwt-authn-controller.ts"
+  "packages/server/api/src/app/authentication/jwt-authn/jwt-authn-service.ts"
+  "packages/server/api/src/app/authentication/jwt-authn/lib/jwt-token-extractor.ts"
+  "packages/server/api/src/app/authentication/jwt-authn/jwt-authn-module.ts"
 )
 
 # Directory to temporarily store your SSO files
@@ -36,4 +37,4 @@ done
 # Clean up backup
 rm -rf "$BACKUP_DIR"
 
-echo "Update complete. Your SSO files have been preserved." 
+echo "Update complete. Your JWT SSO files have been preserved." 
