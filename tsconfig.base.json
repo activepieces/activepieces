@@ -429,6 +429,9 @@
       "@activepieces/piece-grist": [
         "packages/pieces/community/grist/src/index.ts"
       ],
+      "@activepieces/piece-grok": [
+        "packages/pieces/community/grok/src/index.ts"
+      ],
       "@activepieces/piece-groq": [
         "packages/pieces/community/groq/src/index.ts"
       ],
