@@ -10,11 +10,10 @@ export const DefaultRoute = () => {
   const location = useLocation();
 
   if (!token) {
-    const searchParams = new URLSearchParams();
-    searchParams.set('from', location.pathname + location.search);
+    // Redirect to JWT auth instead of sign-in
     return (
       <Navigate
-        to={`/sign-in?${searchParams.toString()}`}
+        to="/jwt-auth"
         replace={true}
       ></Navigate>
     );
