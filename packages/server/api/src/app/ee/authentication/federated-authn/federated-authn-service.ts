@@ -1,9 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, AuthenticationResponse,
-    FederatedAuthnLoginResponse,
-    isNil,
-    UserIdentityProvider,
-} from '@activepieces/shared'
+import { assertNotNullOrUndefined, AuthenticationResponse, FederatedAuthnLoginResponse, isNil, UserIdentityProvider, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { authenticationService } from '../../../authentication/authentication.service'
 import { system } from '../../../helper/system/system'
@@ -14,39 +10,48 @@ import { googleAuthnProvider } from './google-authn-provider'
 export const federatedAuthnService = (log: FastifyBaseLogger) => ({
     async login({
         platformId,
+        providerName,
     }: LoginParams): Promise<FederatedAuthnLoginResponse> {
-        const { clientId } = await getClientIdAndSecret(platformId)
-        const loginUrl = await googleAuthnProvider(log).getLoginUrl({
-            clientId,
-            platformId,
-        })
-
-        return {
-            loginUrl,
+        switch (providerName) {
+            case ThirdPartyAuthnProviderEnum.GOOGLE:
+                const { clientId } = await getClientIdAndSecret(platformId)
+                const loginUrl = await googleAuthnProvider(log).getLoginUrl({
+                    clientId,
+                    platformId,
+                })
+                return { loginUrl }
+            default:
+                throw new Error(`Unsupported provider: ${providerName}`)
         }
     },
 
     async claim({
         platformId,
         code,
+        providerName,
     }: ClaimParams): Promise<AuthenticationResponse> {
-        const { clientId, clientSecret } = await getClientIdAndSecret(platformId)
-        const idToken = await googleAuthnProvider(log).authenticate({
-            clientId,
-            clientSecret,
-            authorizationCode: code,
-            platformId,
-        })
+        switch (providerName) {
+            case ThirdPartyAuthnProviderEnum.GOOGLE:
+                const { clientId, clientSecret } = await getClientIdAndSecret(platformId)
+                const idToken = await googleAuthnProvider(log).authenticate({
+                    clientId,
+                    clientSecret,
+                    authorizationCode: code,
+                    platformId,
+                })
 
-        return authenticationService(log).federatedAuthn({
-            email: idToken.email,
-            firstName: idToken.firstName ?? 'john',
-            lastName: idToken.lastName ?? 'doe',
-            trackEvents: true,
-            newsLetter: true,
-            provider: UserIdentityProvider.GOOGLE,
-            predefinedPlatformId: platformId ?? null,
-        })
+                return authenticationService(log).federatedAuthn({
+                    email: idToken.email,
+                    firstName: idToken.firstName ?? 'john',
+                    lastName: idToken.lastName ?? 'doe',
+                    trackEvents: true,
+                    newsLetter: true,
+                    provider: UserIdentityProvider.GOOGLE,
+                    predefinedPlatformId: platformId ?? null,
+                })
+            default:
+                throw new Error(`Unsupported provider: ${providerName}`)
+        }
     },
     async getThirdPartyRedirectUrl(
         platformId: string | undefined,
@@ -66,7 +71,7 @@ async function getClientIdAndSecret(platformId: string | undefined) {
         }
     }
     const platform = await platformService.getOneOrThrow(platformId)
-    const clientInformation = platform.federatedAuthProviders.google
+    const clientInformation = platform.federatedAuthProviders?.google
     assertNotNullOrUndefined(clientInformation, 'Google client information is not defined')
     return {
         clientId: clientInformation.clientId,
@@ -76,9 +81,11 @@ async function getClientIdAndSecret(platformId: string | undefined) {
 
 type LoginParams = {
     platformId: string | undefined
+    providerName: ThirdPartyAuthnProviderEnum
 }
 
 type ClaimParams = {
     platformId: string | undefined
     code: string
+    providerName: ThirdPartyAuthnProviderEnum
 }

@@ -1,22 +1,13 @@
-import {
-    ApplicationEventName,
-} from '@activepieces/ee-shared'
+import { ApplicationEventName } from '@activepieces/ee-shared'
 import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
-import {
-    ALL_PRINCIPAL_TYPES,
-    ClaimTokenRequest,
-    ThirdPartyAuthnProviderEnum,
-} from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { ALL_PRINCIPAL_TYPES, ClaimTokenRequest, FederatedAuthnLoginResponse, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { eventsHooks } from '../../../helper/application-events'
 import { system } from '../../../helper/system/system'
 import { platformUtils } from '../../../platform/platform.utils'
 import { federatedAuthnService } from './federated-authn-service'
 
-export const federatedAuthModule: FastifyPluginAsyncTypebox = async (app) => {
+export const federatedAuthnModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(federatedAuthnController, {
         prefix: '/v1/authn/federated',
     })
@@ -27,6 +18,7 @@ const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
         const platformId = await platformUtils.getPlatformIdForRequest(req)
         return federatedAuthnService(req.log).login({
             platformId: platformId ?? undefined,
+            providerName: req.query.providerName as ThirdPartyAuthnProviderEnum,
         })
     })
 
@@ -35,6 +27,7 @@ const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
         const response = await federatedAuthnService(req.log).claim({
             platformId: platformId ?? undefined,
             code: req.body.code,
+            providerName: req.body.providerName,
         })
         eventsHooks.get(req.log).sendUserEvent({
             platformId: response.platformId!,

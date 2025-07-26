@@ -3,7 +3,6 @@ import { cryptoUtils } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
     isNil,
-    PiecesFilterType,
     PlatformRole,
     PrincipalType,
     Project,
@@ -12,21 +11,18 @@ import {
     UserIdentityProvider,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
+import { accessTokenManager } from '../lib/access-token-manager'
+import { userIdentityService } from '../user-identity/user-identity-service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
-import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import { userService } from '../../user/user-service'
-import { projectMemberService } from '../projects/project-members/project-member.service'
-import { projectLimitsService } from '../projects/project-plan/project-plan.service'
-import { externalTokenExtractor } from './lib/external-token-extractor'
+import { jwtTokenExtractor } from './lib/jwt-token-extractor'
 
-export const managedAuthnService = (log: FastifyBaseLogger) => ({
+export const jwtAuthnService = (log: FastifyBaseLogger) => ({
     async externalToken({
         externalAccessToken,
     }: AuthenticateParams): Promise<AuthenticationResponse> {
-        const externalPrincipal = await externalTokenExtractor(log).extract(
+        const externalPrincipal = await jwtTokenExtractor(log).extract(
             externalAccessToken,
         )
 
@@ -34,22 +30,8 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             platformId: externalPrincipal.platformId,
             externalProjectId: externalPrincipal.externalProjectId,
         })
-        await updateProjectLimits({ platformId: project.platformId,
-            projectId: project.id, 
-            piecesTags: externalPrincipal.pieces.tags,
-            piecesFilterType: externalPrincipal.pieces.filterType,
-            tasks: externalPrincipal.tasks,
-            aiCredits: externalPrincipal.aiCredits, 
-            log, 
-            isNewProject })
 
         const user = await getOrCreateUser(externalPrincipal, log)
-
-        await projectMemberService(log).upsert({
-            projectId: project.id,
-            userId: user.id,
-            projectRoleName: externalPrincipal.projectRole,
-        })
 
         const identity = await userIdentityService(log).getOneOrFail({
             id: user.identityId,
@@ -107,35 +89,6 @@ async function getOrCreateProject({
     return { project, isNewProject: true }
 }
 
-async function updateProjectLimits({ 
-    platformId, 
-    projectId, 
-    piecesTags, 
-    piecesFilterType, 
-    tasks, 
-    aiCredits, 
-    log, 
-    isNewProject 
-}: UpdateProjectLimitsParams): Promise<void> {
-    if (!isNewProject) {
-        return
-    }
-    
-    const pieces = await getPiecesList({
-        platformId,
-        projectId,
-        piecesTags,
-        piecesFilterType,
-    })
-    
-    const projectPlan = await projectLimitsService(log).getOrCreateDefaultPlan(projectId)
-    await projectLimitsService(log).upsert({
-        nickname: projectPlan?.name ?? 'default',
-        pieces,
-        piecesFilterType,
-    }, projectId)
-}
-
 const getOrCreateUser = async (
     params: GetOrCreateUserParams,
     log: FastifyBaseLogger,
@@ -180,26 +133,8 @@ const getOrCreateUserIdentity = async (
     return identity
 }
 
-const getPiecesList = async ({
-    piecesFilterType,
-    piecesTags,
-    platformId,
-}: UpdateProjectLimits): Promise<string[]> => {
-    switch (piecesFilterType) {
-        case PiecesFilterType.ALLOWED: {
-            return pieceTagService.findByPlatformAndTags(
-                platformId,
-                piecesTags,
-            )
-        }
-        case PiecesFilterType.NONE: {
-            return []
-        }
-    }
-}
-
 function generateEmailHash(params: { platformId: string, externalUserId: string }): string {
-    const inputString = `managed_${params.platformId}_${params.externalUserId}`
+    const inputString = `jwt_${params.platformId}_${params.externalUserId}`
     return cleanEmailOtherwiseCompareFails(createHash('sha256').update(inputString).digest('hex'))
 }
 
@@ -222,22 +157,4 @@ type GetOrCreateUserParams = {
 type GetOrCreateProjectParams = {
     platformId: string
     externalProjectId: string
-}
-
-type UpdateProjectLimits = {
-    platformId: string
-    projectId: string
-    piecesTags: string[]
-    piecesFilterType: PiecesFilterType
-}
-
-type UpdateProjectLimitsParams = {
-    platformId: string
-    projectId: string
-    piecesTags: string[]
-    piecesFilterType: PiecesFilterType
-    tasks?: number
-    aiCredits?: number
-    log: FastifyBaseLogger
-    isNewProject: boolean
-}
+} 

@@ -41,14 +41,11 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
 
 async function getSamlConfigOrThrow(req: FastifyRequest): Promise<{ saml: SAMLAuthnProviderConfig, platformId: string }> {
     const platformId = await platformUtils.getPlatformIdForRequest(req)
-    assertNotNullOrUndefined(platformId, 'Platform ID is required for SAML authentication')
+    assertNotNullOrUndefined(platformId, 'Platform ID is required')
     const platform = await platformService.getOneOrThrow(platformId)
-    const saml = platform.federatedAuthProviders.saml
-    assertNotNullOrUndefined(saml, 'SAML IDP metadata is not configured for this platform')
-    return {
-        saml,
-        platformId,
-    }
+    const saml = platform.federatedAuthProviders?.saml
+    assertNotNullOrUndefined(saml, 'SAML configuration is not defined')
+    return { saml, platformId }
 }
 
 const AcsRequest = {
