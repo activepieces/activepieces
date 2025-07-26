@@ -93,7 +93,6 @@ export const tableService = {
         await ensureAgentExists({ tableId: id, projectId })
         const table = await tableRepo().findOne({
             where: { projectId, id },
-            relations: ['agent'],
         })
         if (isNil(table)) {
             throw new ActivepiecesError({
@@ -104,15 +103,13 @@ export const tableService = {
                 },
             })
         }
-        
-        if (table.agent) {
-            table.agent = await agentsService(system.globalLogger()).getOneOrThrow({
-                id: table.agent.id,
-                projectId: table.agent.projectId,
-            })
+        return {
+            ...table,
+            agent: await agentsService(system.globalLogger()).getOneOrThrow({
+                id: table.agentId,
+                projectId,
+            }),
         }
-        
-        return table
     },
 
     async delete({
