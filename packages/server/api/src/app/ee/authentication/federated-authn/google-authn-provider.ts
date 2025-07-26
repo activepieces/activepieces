@@ -1,6 +1,4 @@
-import {
-    assertNotEqual,
-} from '@activepieces/shared'
+import { assertNotEqual } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import jwksClient from 'jwks-rsa'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'

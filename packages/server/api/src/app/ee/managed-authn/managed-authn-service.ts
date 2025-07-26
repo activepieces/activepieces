@@ -1,9 +1,11 @@
 import { createHash } from 'crypto'
+import {
+    DEFAULT_PLATFORM_LIMIT,
+} from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
     isNil,
-    NotificationStatus,
     PiecesFilterType,
     PlatformRole,
     PrincipalType,
@@ -83,35 +85,57 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
     },
 })
 
-type UpdateProjectLimitsParams =
-    {
-        platformId: string
-        projectId: string
-        piecesTags: string[]
-        piecesFilterType: PiecesFilterType
-        tasks: number | undefined
-        aiCredits: number | undefined
-        log: FastifyBaseLogger
-        isNewProject: boolean
+async function getOrCreateProject({
+    platformId,
+    externalProjectId,
+}: GetOrCreateProjectParams): Promise<{ project: Project, isNewProject: boolean }> {
+    const existingProject = await projectService.getByPlatformIdAndExternalId({
+        platformId,
+        externalId: externalProjectId,
+    })
+
+    if (existingProject) {
+        return { project: existingProject, isNewProject: false }
     }
 
-const updateProjectLimits = async (
-    { platformId, projectId, piecesTags, piecesFilterType, tasks, aiCredits, log, isNewProject }:
-    UpdateProjectLimitsParams,
-): Promise<void> => {
+    const platform = await platformService.getOneOrThrow(platformId)
+
+    const project = await projectService.create({
+        displayName: externalProjectId,
+        ownerId: platform.ownerId,
+        platformId,
+        externalId: externalProjectId,
+    })
+
+    return { project, isNewProject: true }
+}
+
+async function updateProjectLimits({ 
+    platformId, 
+    projectId, 
+    piecesTags, 
+    piecesFilterType, 
+    tasks, 
+    aiCredits, 
+    log, 
+    isNewProject 
+}: UpdateProjectLimitsParams): Promise<void> {
+    if (!isNewProject) {
+        return
+    }
+    
     const pieces = await getPiecesList({
         platformId,
         projectId,
         piecesTags,
         piecesFilterType,
     })
-    const includedTasks = isNewProject ? (tasks ?? 1000) : tasks
-    const aiCreditsLimit = isNewProject ? (aiCredits ?? 200) : aiCredits
-    await projectLimitsService(log).upsert({
-        nickname: 'default-embeddings-limit',
-        tasks: includedTasks,
-        aiCredits: aiCreditsLimit,
-
+    
+    const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
+    await projectLimitsService.upsert({
+        nickname: projectPlan?.name ?? DEFAULT_PLATFORM_LIMIT.nickname,
+        tasks: tasks ?? projectPlan?.tasks ?? DEFAULT_PLATFORM_LIMIT.tasks,
+        aiCredits: aiCredits ?? projectPlan?.aiCredits ?? DEFAULT_PLATFORM_LIMIT.aiCredits,
         pieces,
         piecesFilterType,
     }, projectId)
@@ -159,31 +183,6 @@ const getOrCreateUserIdentity = async (
         verified: true,
     })
     return identity
-}
-const getOrCreateProject = async ({
-    platformId,
-    externalProjectId,
-}: GetOrCreateProjectParams): Promise<{ project: Project, isNewProject: boolean }> => {
-    const existingProject = await projectService.getByPlatformIdAndExternalId({
-        platformId,
-        externalId: externalProjectId,
-    })
-
-    if (!isNil(existingProject)) {
-        return { project: existingProject, isNewProject: false }
-    }
-
-    const platform = await platformService.getOneOrThrow(platformId)
-
-    const project = await projectService.create({
-        displayName: externalProjectId,
-        ownerId: platform.ownerId,
-        platformId,
-        notifyStatus: NotificationStatus.NEVER,
-        externalId: externalProjectId,
-    })
-
-    return { project, isNewProject: true }
 }
 
 const getPiecesList = async ({
@@ -235,4 +234,15 @@ type UpdateProjectLimits = {
     projectId: string
     piecesTags: string[]
     piecesFilterType: PiecesFilterType
+}
+
+type UpdateProjectLimitsParams = {
+    platformId: string
+    projectId: string
+    piecesTags: string[]
+    piecesFilterType: PiecesFilterType
+    tasks?: number
+    aiCredits?: number
+    log: FastifyBaseLogger
+    isNewProject: boolean
 }
