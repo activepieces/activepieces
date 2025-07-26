@@ -31,7 +31,7 @@ const JwtAuthPage = () => {
         });
 
         // Save the authentication response
-        authenticationSession.saveResponse(response.data, false);
+        authenticationSession.saveResponse(response.data as any, false);
         
         // Redirect to the main application
         navigate('/flows');
