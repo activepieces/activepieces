@@ -83,7 +83,7 @@ const updateProjectLimits = async (
     piecesTags: string[],
     piecesFilterType: PiecesFilterType,
     tasks: number | undefined,
-    aiTokens: number | undefined,
+    aiCredits: number | undefined,
 ): Promise<void> => {
     const pieces = await getPiecesList({
         platformId,
@@ -95,7 +95,7 @@ const updateProjectLimits = async (
     await projectLimitsService(log).upsert({
         nickname: projectPlan?.name ?? 'default',
         tasks: tasks ?? projectPlan?.tasks ?? 1000,
-        aiTokens: aiTokens ?? projectPlan?.aiTokens ?? 200,
+        aiCredits: aiCredits ?? projectPlan?.aiCredits ?? 200,
         pieces,
         piecesFilterType,
     }, projectId)
