@@ -60,6 +60,7 @@ import { EnvironmentPage } from '../routes/settings/environment';
 import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
+import JwtAuthPage from '../routes/jwt-auth';
 import { ApTablesPage } from '../routes/tables';
 import { ApTableEditorPage } from '../routes/tables/id';
 import { ShareTemplatePage } from '../routes/templates/share-template';
@@ -313,6 +314,14 @@ const routes = [
     element: (
       <PageTitle title="Sign Up">
         <SignUpPage />
+      </PageTitle>
+    ),
+  },
+  {
+    path: '/jwt-auth',
+    element: (
+      <PageTitle title="JWT Authentication">
+        <JwtAuthPage />
       </PageTitle>
     ),
   },

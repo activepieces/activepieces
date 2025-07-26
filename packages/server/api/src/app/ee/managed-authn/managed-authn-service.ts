@@ -1,4 +1,7 @@
 import { createHash } from 'crypto'
+import {
+    DEFAULT_PLATFORM_LIMIT,
+} from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
@@ -18,8 +21,8 @@ import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import { userService } from '../../user/user-service'
-import { projectMemberService } from '../projects/project-members/project-member.service'
-import { projectLimitsService } from '../projects/project-plan/project-plan.service'
+import { projectMemberService } from '../project-members/project-member.service'
+import { projectLimitsService } from '../project-plan/project-plan.service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
 
 export const managedAuthnService = (log: FastifyBaseLogger) => ({
@@ -30,18 +33,12 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             externalAccessToken,
         )
 
-        const { project, isNewProject } = await getOrCreateProject({
+        const project = await getOrCreateProject({
             platformId: externalPrincipal.platformId,
             externalProjectId: externalPrincipal.externalProjectId,
         })
-        await updateProjectLimits({ platformId: project.platformId,
-            projectId: project.id, 
-            piecesTags: externalPrincipal.pieces.tags,
-            piecesFilterType: externalPrincipal.pieces.filterType,
-            tasks: externalPrincipal.tasks,
-            aiCredits: externalPrincipal.aiCredits, 
-            log, 
-            isNewProject })
+
+        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks, externalPrincipal.aiTokens)
 
         const user = await getOrCreateUser(externalPrincipal, log)
 
@@ -63,7 +60,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
                 id: externalPrincipal.platformId,
             },
             tokenVersion: identity.tokenVersion,
-        }, 7 * 24 * 60 * 60)
+        }, 7 * 24 * 60 * 60 * 1000)
         return {
             id: user.id,
             platformRole: user.platformRole,
@@ -82,55 +79,25 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function getOrCreateProject({
-    platformId,
-    externalProjectId,
-}: GetOrCreateProjectParams): Promise<{ project: Project, isNewProject: boolean }> {
-    const existingProject = await projectService.getByPlatformIdAndExternalId({
-        platformId,
-        externalId: externalProjectId,
-    })
-
-    if (existingProject) {
-        return { project: existingProject, isNewProject: false }
-    }
-
-    const platform = await platformService.getOneOrThrow(platformId)
-
-    const project = await projectService.create({
-        displayName: externalProjectId,
-        ownerId: platform.ownerId,
-        platformId,
-        externalId: externalProjectId,
-    })
-
-    return { project, isNewProject: true }
-}
-
-async function updateProjectLimits({ 
-    platformId, 
-    projectId, 
-    piecesTags, 
-    piecesFilterType, 
-    tasks, 
-    aiCredits, 
-    log, 
-    isNewProject 
-}: UpdateProjectLimitsParams): Promise<void> {
-    if (!isNewProject) {
-        return
-    }
-    
+const updateProjectLimits = async (
+    platformId: string,
+    projectId: string,
+    piecesTags: string[],
+    piecesFilterType: PiecesFilterType,
+    tasks: number | undefined,
+    aiTokens: number | undefined,
+): Promise<void> => {
     const pieces = await getPiecesList({
         platformId,
         projectId,
         piecesTags,
         piecesFilterType,
     })
-    
-    const projectPlan = await projectLimitsService(log).getOrCreateDefaultPlan(projectId)
-    await projectLimitsService(log).upsert({
-        nickname: projectPlan?.name ?? 'default',
+    const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
+    await projectLimitsService.upsert({
+        nickname: projectPlan?.name ?? DEFAULT_PLATFORM_LIMIT.nickname,
+        tasks: tasks ?? projectPlan?.tasks ?? DEFAULT_PLATFORM_LIMIT.tasks,
+        aiTokens: aiTokens ?? projectPlan?.aiTokens ?? DEFAULT_PLATFORM_LIMIT.aiTokens,
         pieces,
         piecesFilterType,
     }, projectId)
@@ -178,6 +145,30 @@ const getOrCreateUserIdentity = async (
         verified: true,
     })
     return identity
+}
+const getOrCreateProject = async ({
+    platformId,
+    externalProjectId,
+}: GetOrCreateProjectParams): Promise<Project> => {
+    const existingProject = await projectService.getByPlatformIdAndExternalId({
+        platformId,
+        externalId: externalProjectId,
+    })
+
+    if (existingProject) {
+        return existingProject
+    }
+
+    const platform = await platformService.getOneOrThrow(platformId)
+
+    const project = await projectService.create({
+        displayName: externalProjectId,
+        ownerId: platform.ownerId,
+        platformId,
+        externalId: externalProjectId,
+    })
+
+    return project
 }
 
 const getPiecesList = async ({
@@ -229,15 +220,4 @@ type UpdateProjectLimits = {
     projectId: string
     piecesTags: string[]
     piecesFilterType: PiecesFilterType
-}
-
-type UpdateProjectLimitsParams = {
-    platformId: string
-    projectId: string
-    piecesTags: string[]
-    piecesFilterType: PiecesFilterType
-    tasks?: number
-    aiCredits?: number
-    log: FastifyBaseLogger
-    isNewProject: boolean
 }

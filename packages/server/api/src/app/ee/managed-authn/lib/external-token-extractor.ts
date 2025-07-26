@@ -3,7 +3,7 @@ import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterTy
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
-import { projectRoleService } from '../../projects/project-role/project-role.service'
+import { projectRoleService } from '../../project-role/project-role.service'
 import { signingKeyService } from '../../signing-key/signing-key-service'
 
 const ALGORITHM = JwtSignAlgorithm.RS256
@@ -47,7 +47,6 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
                     externalLastName: payload.lastName,
                     projectRole: projectRole.name,
                     tasks: payload?.tasks,
-                    aiCredits: extractAiCredits(payload),
                     pieces: {
                         filterType: piecesFilterType ?? PiecesFilterType.NONE,
                         tags: piecesTags ?? [],
@@ -107,13 +106,6 @@ function extractPieces(payload: ExternalTokenPayload) {
     }
 }
 
-function extractAiCredits(payload: ExternalTokenPayload): number | undefined {
-    if ('version' in payload && payload.version === 'v3') {
-        return payload.aiCredits
-    }
-    return undefined
-}
-
 async function getProjectRole(payload: ExternalTokenPayload, platformId: PlatformId) {
     if ('role' in payload && !isNil(payload.role)) {
         return projectRoleService.getOneOrThrow({
@@ -149,7 +141,6 @@ function externalTokenPayload() {
         version: Type.Literal('v3'),
         piecesFilterType: Type.Optional(Type.Enum(PiecesFilterType)),
         piecesTags: Type.Optional(Type.Array(Type.String())),
-        aiCredits: Type.Optional(Type.Number()),
     })])
 
     return Type.Union([v2, v3])
@@ -170,7 +161,7 @@ export type ExternalPrincipal = {
         filterType: PiecesFilterType
         tags: string[]
     }
-    aiCredits?: number
+    aiTokens?: number
     tasks?: number
 }
 
