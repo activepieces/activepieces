@@ -10,7 +10,31 @@ export const emailTypeDropdown = Property.StaticDropdown({
     options: [
       { label: 'Primary', value: 'primary' },
       { label: 'Invoicing', value: 'invoicing' },
-      { label: 'Secondary', value: 'secondary' },
+    ],
+  },
+});
+export const phoneTypeDropdown = Property.StaticDropdown({
+  displayName: 'Phone Type',
+  description: 'Select the type of phone number',
+  required: true,
+  options: {
+    options: [
+      { label: 'phone', value: 'phone' },
+      { label: 'fax', value: 'fax' },
+    ],
+  },
+});
+
+export const addressTypeDropdown = Property.StaticDropdown({
+  displayName: 'Address Type',
+  description: 'Select the type of address',
+  required: true,
+  options: {
+    options: [
+      { label: 'Primary', value: 'primary' },
+      { label: 'Invoicing', value: 'invoicing' },
+      { label: 'Delivery', value: 'delivery' },
+      { label: 'Visiting', value: 'visiting' },
     ],
   },
 });
@@ -31,6 +55,50 @@ export const genderDropdown = Property.StaticDropdown({
   },
 });
 
+export const addresses = Property.Array({
+  displayName: 'Addresses',
+  description: 'Add one or more addresses for the contact',
+  required: false,
+  properties: {
+    type: addressTypeDropdown,
+    addressee: Property.ShortText({
+      displayName: 'Addressee',
+      description: 'Enter the name for this address (optional)',
+      required: false,
+    }),
+    line_1: Property.ShortText({
+      displayName: 'Street Address',
+      description: 'Enter the street address',
+      required: true,
+    }),
+    line_2: Property.ShortText({
+      displayName: 'Address Line 2',
+      description:
+        'Enter additional address information (apartment, suite, etc.)',
+      required: false,
+    }),
+    postal_code: Property.ShortText({
+      displayName: 'Postal Code',
+      description: 'Enter the postal code',
+      required: true,
+    }),
+    city: Property.ShortText({
+      displayName: 'City',
+      description: 'Enter the city name',
+      required: true,
+    }),
+    country: Property.ShortText({
+      displayName: 'Country Code',
+      description: 'Enter the 2-letter country code (e.g., BE, US, FR)',
+      required: true,
+    }),
+    area_level_two_id: Property.ShortText({
+      displayName: 'Area Level Two ID',
+      description: 'Enter the area level two ID (optional)',
+      required: false,
+    }),
+  },
+});
 export const countryDropdown = Property.StaticDropdown({
   displayName: 'Country',
   description: 'Select the country for the company',
@@ -49,9 +117,24 @@ export const countryDropdown = Property.StaticDropdown({
   },
 });
 
+export const salutationDropdown = Property.StaticDropdown({
+  displayName: 'Salutation',
+  description: 'Select the appropriate salutation for the contact',
+  required: false,
+  options: {
+    options: [
+      { label: 'Mr.', value: 'Mr.' },
+      { label: 'Ms.', value: 'Ms.' },
+      { label: 'Mrs.', value: 'Mrs.' },
+      { label: 'Dr.', value: 'Dr.' },
+      { label: 'Prof.', value: 'Prof.' },
+    ],
+  },
+});
+
 export const currencyDropdown = Property.StaticDropdown({
   displayName: 'Currency',
-  description: 'Select the currency',
+  description: 'Select the currency for this deal value',
   required: true,
   options: {
     options: [
@@ -252,8 +335,10 @@ export const dealIdDropdown = Property.Dropdown({
 });
 
 export const sourceIdDropdown = Property.Dropdown({
-  displayName: 'Source ID',
-  description: 'Select the source ID for the deal',
+  displayName: 'Lead Source',
+  description:
+    'Select how this deal originated (e.g., website, referral, cold call)',
+
   required: false,
   refreshers: ['auth'],
   options: async ({ auth }: { auth?: { access_token: string } }) => {
@@ -289,8 +374,8 @@ export const sourceIdDropdown = Property.Dropdown({
 });
 
 export const departmentIdDropdown = Property.Dropdown({
-  displayName: 'Department ID',
-  description: 'Select the department ID for the deal',
+  displayName: 'Department',
+  description: 'Select the department responsible for this deal',
   required: false,
   refreshers: ['auth'],
   options: async ({ auth }: { auth?: { access_token: string } }) => {

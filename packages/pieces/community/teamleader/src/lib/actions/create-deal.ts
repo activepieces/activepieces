@@ -12,102 +12,117 @@ export const createDeal = createAction({
   auth: teamleaderAuth,
   name: 'createDeal',
   displayName: 'Create Deal',
-  description: 'Create a new deal in Teamleader',
+  description:
+    'Create a new sales deal in Teamleader with lead information and tracking details',
   props: {
     customer_type: Property.StaticDropdown({
       displayName: 'Customer Type',
-      description: 'Type of customer for the deal',
+      description:
+        'Select whether this deal is associated with a company or individual contact',
       required: true,
       options: {
         options: [
           { label: 'Company', value: 'company' },
-          { label: 'Contact', value: 'contact' },
+          { label: 'Individual Contact', value: 'contact' },
         ],
       },
     }),
     customer_id: Property.ShortText({
       displayName: 'Customer ID',
       description:
-        'The ID of the customer (company or contact) this deal is associated with',
+        'Enter the ID of the customer (company or contact) this deal is associated with',
       required: true,
     }),
     contact_person_id: Property.ShortText({
-      displayName: 'Contact Person ID',
-      description: 'The ID of the contact person for this deal',
+      displayName: 'Contact Person',
+      description:
+        'Enter the ID of the specific contact person for this deal (optional)',
       required: false,
     }),
     title: Property.ShortText({
-      displayName: 'Title',
-      description: 'The title of the deal',
+      displayName: 'Deal Title',
+      description:
+        'Enter a descriptive title for this deal (e.g., "Software License Renewal")',
       required: true,
     }),
     summary: Property.LongText({
-      displayName: 'Summary',
-      description: 'A brief summary of the deal',
+      displayName: 'Deal Summary',
+      description:
+        'Provide a detailed description of the deal, including key requirements and objectives',
       required: false,
     }),
     source_id: sourceIdDropdown,
     department_id: departmentIdDropdown,
     responsible_user_id: Property.ShortText({
-      displayName: 'Responsible User ID',
-      description: 'The ID of the user responsible for this deal',
+      displayName: 'Account Manager',
+      description:
+        'Enter the ID of the team member responsible for managing this deal',
       required: false,
     }),
     phase_id: Property.ShortText({
-      displayName: 'Phase ID',
-      description: 'The ID of the phase this deal is in',
-      required: false,
-    }),
-    estimated_value: Property.Array({
-      displayName: 'Estimated Value',
-      description: 'The estimated value of the deal',
-      required: false,
-      properties: {
-        amount: Property.Number({
-          displayName: 'Amount',
-          description: 'The amount of the estimated value',
-          required: true,
-        }),
-        currency: currencyDropdown,
-      },
-    }),
-    estimated_probability: Property.Number({
-      displayName: 'Estimated Probability',
+      displayName: 'Sales Phase',
       description:
-        'The estimated probability 0 and 1 (inclusive) e.g 0.75 of closing this deal',
+        'Enter the ID of the current sales phase (e.g., Prospect, Qualified, Proposal)',
       required: false,
     }),
-    estimatedClosingDate: Property.DateTime({
-      displayName: 'Estimated Closing Date',
-      description: 'The estimated closing date for this deal',
+    estimated_value_amount: Property.Number({
+      displayName: 'Amount',
+      description: 'Enter the estimated deal value (numeric amount)',
+      required: true,
+    }),
+    estimated_value_currency: currencyDropdown,
+
+    estimated_probability: Property.Number({
+      displayName: 'Win Probability (%)',
+      description:
+        'Enter the estimated probability of closing this deal as a decimal (0.0 to 1.0, e.g., 0.75 for 75%)',
       required: false,
     }),
-    phase: Property.ShortText({
-      displayName: 'Phase ID',
-      description: 'The ID of the phase this deal is in',
+    estimated_closing_date: Property.DateTime({
+      displayName: 'Expected Close Date',
+      description: 'Select when you expect this deal to close',
       required: false,
     }),
   },
   async run({ auth, propsValue }) {
-    const requestBody = {
+    const requestBody: Record<string, unknown> = {
       lead: {
         customer: {
-          tyepe: propsValue.customer_type,
+          type: propsValue.customer_type,
           id: propsValue.customer_id,
         },
-        contact_person_id: propsValue.contact_person_id,
       },
       title: propsValue.title,
-      summary: propsValue.summary,
-      source_id: propsValue.source_id,
-      department_id: propsValue.department_id,
-      responsible_user_id: propsValue.responsible_user_id,
-      phase_id: propsValue.phase_id,
-      estimated_value: propsValue.estimated_value,
-      estimated_probability: propsValue.estimated_probability,
-      estimated_closing_date: propsValue.estimatedClosingDate,
-      phase: propsValue.phase,
     };
+
+    // Add optional lead fields
+    if (propsValue.contact_person_id) {
+      (requestBody['lead'] as any).contact_person_id =
+        propsValue.contact_person_id;
+    }
+
+    // Add optional deal fields
+    if (propsValue.summary) requestBody['summary'] = propsValue.summary;
+    if (propsValue.source_id) requestBody['source_id'] = propsValue.source_id;
+    if (propsValue.department_id)
+      requestBody['department_id'] = propsValue.department_id;
+    if (propsValue.responsible_user_id)
+      requestBody['responsible_user_id'] = propsValue.responsible_user_id;
+    if (propsValue.phase_id) requestBody['phase_id'] = propsValue.phase_id;
+    if (propsValue.estimated_probability)
+      requestBody['estimated_probability'] = propsValue.estimated_probability;
+    if (propsValue.estimated_closing_date)
+      requestBody['estimated_closing_date'] = propsValue.estimated_closing_date;
+
+    if (
+      propsValue.estimated_value_amount &&
+      propsValue.estimated_value_currency
+    ) {
+      requestBody['estimated_value'] = {
+        amount: propsValue.estimated_value_amount,
+        currency: propsValue.estimated_value_currency,
+      };
+    }
 
     const response = await makeRequest(
       auth.access_token,
@@ -116,6 +131,10 @@ export const createDeal = createAction({
       requestBody
     );
 
-    return response;
+    return {
+      status: 'success',
+      message: 'Deal created successfully',
+      data: response.data,
+    };
   },
 });

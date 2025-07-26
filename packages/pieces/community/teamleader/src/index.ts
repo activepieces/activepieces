@@ -17,6 +17,7 @@ import { dealAccepted } from './lib/triggers/deal-accepted';
 import { newContact } from './lib/triggers/new-contact';
 import { newCompany } from './lib/triggers/new-company';
 import { newDeal } from './lib/triggers/new-deal';
+import { newInvoice } from './lib/triggers/new-invoice';
 
 export const teamleader = createPiece({
   displayName: 'Teamleader',
@@ -43,6 +44,6 @@ export const teamleader = createPiece({
     newDeal,
     newCompany,
     newContact,
-    // newInvoice, 
+    newInvoice, 
   ],
 });
