@@ -78,6 +78,9 @@
       "@activepieces/piece-apitable": [
         "packages/pieces/community/apitable/src/index.ts"
       ],
+      "@activepieces/piece-apitemplate-io": [
+        "packages/pieces/community/apitemplate-io/src/index.ts"
+      ],
       "@activepieces/piece-apollo": [
         "packages/pieces/community/apollo/src/index.ts"
       ],
