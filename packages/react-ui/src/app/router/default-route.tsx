@@ -10,7 +10,7 @@ export const DefaultRoute = () => {
   const location = useLocation();
 
   if (!token) {
-    // Redirect to JWT auth instead of sign-in
+    // Redirect to JWT auth instead of sign-in - NO LOGIN SCREEN
     return (
       <Navigate
         to="/jwt-auth"

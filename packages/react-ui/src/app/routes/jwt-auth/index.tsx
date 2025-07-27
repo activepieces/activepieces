@@ -19,8 +19,8 @@ const JwtAuthPage = () => {
         const jwtToken = searchParams.get('token');
         
         if (!jwtToken) {
-          // If no token provided, show a simple message and stay on this page
-          // This prevents any login form from showing
+          // No token provided - this is the main SSO entry point
+          // Show SSO portal message instead of login form
           setIsProcessing(false);
           return;
         }
@@ -65,7 +65,7 @@ const JwtAuthPage = () => {
     return <LoadingScreen />;
   }
 
-  // Show a simple message if no token or authentication failed
+  // Show SSO portal message - NO LOGIN FORM
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <div className="max-w-md w-full space-y-8">
@@ -78,6 +78,9 @@ const JwtAuthPage = () => {
           </p>
           <p className="mt-4 text-xs text-gray-500">
             Please access this application through your SSO portal.
+          </p>
+          <p className="mt-4 text-xs text-gray-500">
+            Expected URL: /jwt-auth?token=YOUR_JWT_TOKEN
           </p>
         </div>
       </div>
