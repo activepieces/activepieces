@@ -19,8 +19,24 @@ const JwtAuthPage = () => {
         const jwtToken = searchParams.get('token');
         
         if (!jwtToken) {
-          // No token provided - this is the main SSO entry point
-          // Show SSO portal message instead of login form
+          // No token in URL - try to get from localStorage or sessionStorage
+          // This allows the dashboard to set the token and Activepieces to use it
+          const storedToken = localStorage.getItem('dashboard_jwt_token') || 
+                            sessionStorage.getItem('dashboard_jwt_token') ||
+                            window.parent?.localStorage?.getItem('dashboard_jwt_token');
+          
+          if (storedToken) {
+            // Use the stored token from dashboard
+            const response = await api.post('/v1/managed-authn/external-token', {
+              externalAccessToken: storedToken,
+            });
+            
+            authenticationSession.saveResponse((response as any).data, false);
+            navigate('/flows');
+            return;
+          }
+          
+          // No token found - show SSO message
           setIsProcessing(false);
           return;
         }
