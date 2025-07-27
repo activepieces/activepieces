@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { stepUtils } from '@/features/pieces/lib/step-utils';
 import {
   flowStructureUtil,
   StepOutput,

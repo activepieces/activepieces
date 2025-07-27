@@ -2,7 +2,6 @@ import React from 'react';
 
 import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { Skeleton } from '@/components/ui/skeleton';
-import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadata } from '@/lib/types';
 import {

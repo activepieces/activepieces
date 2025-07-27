@@ -12,7 +12,6 @@ import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useTheme } from '@/components/theme-provider';
-import { stepUtils } from '@/features/pieces/lib/step-utils';
 import {
   ActionType,
   flowStructureUtil,

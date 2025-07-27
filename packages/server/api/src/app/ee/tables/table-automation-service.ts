@@ -2,14 +2,12 @@ import { AgentJobSource } from '@activepieces/server-shared'
 import { AgentRun, PopulatedRecord, Table, TableAutomationTrigger } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { agentRunsService } from '../../agents/agent-runs/agent-runs-service'
-import { agentsService } from '../../agents/agents-service'
 
 
 export const tableAutomationService = (log: FastifyBaseLogger) => ({
     async run(params: RunParams): Promise<AgentRun> {
-        const agent = await agentsService(log).getOneOrThrow({ id: params.table.agentId, projectId: params.projectId })
         return agentRunsService(log).run({
-            externalId: agent.externalId,
+            agentId: params.table.agentId,
             projectId: params.projectId,
             prompt: `
             You are a automation agent based on table, the trigger is ${params.trigger}.
