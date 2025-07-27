@@ -26,7 +26,7 @@ export const agentRunsController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/', RunAgentRequest, async (request) => {
         return agentRunsService(request.log).run({
-            agentId: request.body.agentId,
+            externalId: request.body.externalId,
             projectId: request.principal.projectId,
             prompt: request.body.prompt,
             source: AgentJobSource.DIRECT,

@@ -8,6 +8,7 @@ import { PieceStepMetadata } from '@/lib/types';
 import {
   Action,
   ActionType,
+  flowStructureUtil,
   isNil,
   Trigger,
   TriggerType,
@@ -37,7 +38,7 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
         actionOrTriggerDisplayName ? `(${actionOrTriggerDisplayName})` : ''
       }`
     : null;
-  const agentId = stepUtils.getAgentId(step);
+  const agentId = flowStructureUtil.getAgentId(step);
 
   return (
     <div className="flex items-center justify-center gap-4 min-h-[48px]">

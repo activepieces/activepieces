@@ -35,7 +35,7 @@ const FlowStepIO = React.memo(({ stepDetails }: FlowStepIOProps) => {
 
   const isAgentStep =
     selectedStep.type === ActionType.PIECE &&
-    stepUtils.isAgentPiece(selectedStep);
+    flowStructureUtil.isAgentPiece(selectedStep);
   if (isAgentStep) {
     return (
       <FlowStepAgent stepDetails={stepDetails} selectedStep={selectedStep} />

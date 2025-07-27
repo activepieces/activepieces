@@ -50,11 +50,22 @@ export const AgentEntity = new EntitySchema<AgentSchema>({
             type: String,
             nullable: false,
         },
+        externalId: {
+            type: String,
+            nullable: false,
+        },
         outputFields: {
             type: JSONB_COLUMN_TYPE,
             nullable: false,
         },  
     },
+    indices: [
+        {
+            name: 'idx_agent_projectId_externalId',
+            columns: ['projectId', 'externalId'],
+            unique: true,
+        },
+    ],
     relations: {
         project: {
             type: 'many-to-one',

@@ -1,18 +1,12 @@
 import { FlowVersion } from '../../flow-version'
-import { flowStructureUtil } from '../../util/flow-structure-util'
+import { AGENT_PIECE_NAME } from '../../util/flow-structure-util'
 import { Migration } from '.'
+import { flowMigrationUtil } from './flow-migration-util'
 
-export const migrateAgentPieceV2: Migration = {
+export const migrateAgentPieceV3: Migration = {
     targetSchemaVersion: '3',
     migrate: (flowVersion: FlowVersion): FlowVersion => {
-        const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
-            if ((step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') && step.settings.pieceName === '@activepieces/piece-agent') {
-                const pieceStep = step
-                pieceStep.settings.pieceVersion = '0.2.2'
-                return pieceStep
-            }
-            return step
-        })
+        const newVersion = flowMigrationUtil.pinPieceToVersion(flowVersion, AGENT_PIECE_NAME, '0.2.2')
         return {
             ...newVersion,
             schemaVersion: '4',

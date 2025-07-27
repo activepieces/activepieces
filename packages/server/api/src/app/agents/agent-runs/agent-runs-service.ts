@@ -6,11 +6,12 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { jobQueue } from '../../workers/queue'
+import { agentsService } from '../agents-service'
 import { AgentRunEntity } from './agent-run.entity'
 
 const agentRunsRepo = repoFactory(AgentRunEntity)
 
-export const agentRunsService = (_log: FastifyBaseLogger) => ({
+export const agentRunsService = (log: FastifyBaseLogger) => ({
     async list(params: ListParams): Promise<SeekPage<AgentRun>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursorRequest)
 
@@ -65,9 +66,11 @@ export const agentRunsService = (_log: FastifyBaseLogger) => ({
         return agentRun
     },
     async run(params: RunParams): Promise<AgentRun> {
+
+        const agent = await agentsService(log).getOneByExternalIdOrThrow({ externalId: params.externalId, projectId: params.projectId })
         const agentRun = await agentRunsRepo().save({
             id: apId(),
-            agentId: params.agentId,
+            agentId: agent.id,
             projectId: params.projectId,
             prompt: params.prompt,
             steps: [],
@@ -78,12 +81,13 @@ export const agentRunsService = (_log: FastifyBaseLogger) => ({
             } : undefined,
         })
 
-        await jobQueue(_log).add({
+        await jobQueue(log).add({
             id: agentRun.id,
             type: JobType.AGENTS,
             priority: 'high',
             data: {
                 ...params,
+                agentId: agent.id,
                 agentRunId: agentRun.id,
             },
         })
@@ -125,12 +129,12 @@ type GetOneParams = {
 }
 
 type RunParams = {
-    agentId: string
+    externalId: string
     projectId: string
     prompt: string
     source: AgentJobSource.DIRECT
 } | {
-    agentId: string
+    externalId: string
     projectId: string
     prompt: string
     source: AgentJobSource.TABLE
