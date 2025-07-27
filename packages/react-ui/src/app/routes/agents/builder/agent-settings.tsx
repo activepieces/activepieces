@@ -164,7 +164,7 @@ export const AgentSettings = ({
               </div>
               <div className="flex items-center justify-center flex-col gap-2">
                 {!isNil(agent) && !hideUseAgentButton && (
-                  <UseAgentButton agentId={agent.id} />
+                  <UseAgentButton externalId={agent.externalId} />
                 )}
                 <SavingIndicator
                   isSaving={isSaving}

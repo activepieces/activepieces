@@ -107,10 +107,10 @@ const template = {
 };
 
 interface UseAgentButton {
-  agentId: string;
+  externalId: string;
 }
 
-export const UseAgentButton = ({ agentId }: UseAgentButton) => {
+export const UseAgentButton = ({ externalId }: UseAgentButton) => {
   const navigate = useNavigate();
 
   const { mutate, isPending } = useMutation({
@@ -123,7 +123,7 @@ export const UseAgentButton = ({ agentId }: UseAgentButton) => {
       const templateStr = JSON.stringify(template.template);
       const updatedTemplateStr = templateStr.replace(
         '"{{AGENT_ID}}"',
-        `"${agentId}"`,
+        `"${externalId}"`,
       );
       const updatedTemplate = JSON.parse(updatedTemplateStr);
 
