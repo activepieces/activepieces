@@ -20,6 +20,7 @@ export enum ApSubscriptionStatus {
 
 export const DEFAULT_BUSINESS_SEATS = 5
 export const PRICE_PER_EXTRA_USER = 20
+export const AI_CREDITS_USAGE_THRESHOLD = 150000
 
 export enum PlanName {
     FREE = 'free',
@@ -79,8 +80,8 @@ export type UpdateSubscriptionParams = Static<typeof UpdateSubscriptionParamsSch
 export const getAiCreditsPriceId = (stripeKey: string | undefined) => {
     const testMode = stripeKey?.startsWith('sk_test')
     return testMode
-        ? 'price_1RcktVQN93Aoq4f8JjdYKXBp'
-        : 'price_1RflgeKZ0dZRqLEKGVORuNNl'
+        ? 'price_1RnbNPQN93Aoq4f8GLiZbJFj'
+        : 'price_1Rnj5bKZ0dZRqLEKQx2gwL7s'
 }
 
 export function getUserPriceId(stripeKey: string | undefined) {
@@ -96,10 +97,9 @@ export function getPlanPriceId(stripeKey: string | undefined) {
         [PlanName.PLUS]: testMode ? 'price_1RTRd4QN93Aoq4f8E22qF5JU' : 'price_1RflgUKZ0dZRqLEK5COq9Kn8',
         [PlanName.BUSINESS]: testMode ? 'price_1RTReBQN93Aoq4f8v9CnMTFT' : 'price_1RflgbKZ0dZRqLEKaW4Nlt0P',
     }
-
 }
 
-export function getPlanFromPriceId(priceId: string): PlanName | undefined {
+export function getPlanFromPriceId(priceId: string): PlanName {
     switch (priceId) {
         case 'price_1RTRd4QN93Aoq4f8E22qF5JU':
         case 'price_1RflgUKZ0dZRqLEK5COq9Kn8':
@@ -108,7 +108,7 @@ export function getPlanFromPriceId(priceId: string): PlanName | undefined {
         case 'price_1RflgbKZ0dZRqLEKaW4Nlt0P':
             return PlanName.BUSINESS
         default:
-            return undefined
+            return PlanName.FREE
     }
 }
 
@@ -116,7 +116,7 @@ export function checkIsTrialSubscription(subscription: Stripe.Subscription): boo
     return isNil(subscription.metadata['trialSubscription']) ? false : subscription.metadata['trialSubscription'] === 'true'
 }
 
-export function getPlanFromSubscription(subscription: Stripe.Subscription): PlanName | undefined {
+export function getPlanFromSubscription(subscription: Stripe.Subscription): PlanName {
     if (subscription.status === ApSubscriptionStatus.TRIALING) {
         return PlanName.PLUS
     }

@@ -311,7 +311,7 @@ async function initializeOpenAIModel({
     platformId,
     projectId,
 }: InitializeOpenAIModelParams): Promise<LanguageModelV1> {
-    const model = 'gpt-4o'
+    const model = 'gpt-4.1-mini'
     const baseUrl = await domainHelper.getPublicApiUrl({
         path: '/v1/ai-providers/proxy/openai/v1/',
         platformId,
@@ -378,7 +378,7 @@ async function extractActionParametersFromUserInstructions({
                 })
                 return { propertyName, ...result }
             }))).filter(({ schema }) => schema !== null)
-                        
+
             const schemaObject: ZodRawShape = Object.fromEntries(
                 propertySchemas
                     .map(({ propertyName, schema }) => [propertyName, schema!]),
@@ -414,7 +414,10 @@ async function extractActionParametersFromUserInstructions({
         Promise.resolve({ 'auth': connectionReference }),
     )
 
-    return extractedParameters
+    const nonNullExtractedParameters = Object.fromEntries(
+        Object.entries(extractedParameters).filter(([_, value]) => !isNil(value)),
+    )
+    return nonNullExtractedParameters
 }
 
 function isOkSuccess(status: number) {

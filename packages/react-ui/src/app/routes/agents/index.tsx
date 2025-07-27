@@ -110,6 +110,7 @@ export const AgentsPage = () => {
                   description={agent.description || ''}
                   picture={agent.profilePictureUrl}
                   onDelete={() => handleDeleteAgent(agent.id)}
+                  runCompleted={agent.runCompleted}
                 />
               </div>
             ))}

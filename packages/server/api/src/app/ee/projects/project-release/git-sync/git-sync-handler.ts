@@ -98,7 +98,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
             const { git, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
             
             const tables: TableState[] = await Promise.all(request.tableIds.map(async (tableId) => {
-                const table = await tableService.getById({
+                const table = await tableService.getOneOrThrow({
                     id: tableId,
                     projectId: gitRepo.projectId,
                 })
@@ -136,7 +136,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
             const gitRepo = await gitRepoService(log).getOrThrow({ id })
             const { git, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
             
-            const table = await tableService.getById({
+            const table = await tableService.getOneOrThrow({
                 id: request.tableIds[0],
                 projectId: gitRepo.projectId,
             })

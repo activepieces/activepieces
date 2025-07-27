@@ -1,0 +1,19 @@
+{
+  "PDF": "PDF-bestand",
+  "Extract Text": "Tekst uitpakken",
+  "Convert to Image": "Converteren naar afbeelding",
+  "Text to PDF": "Tekst naar PDF",
+  "Image to PDF": "Afbeelding naar PDF",
+  "Extract text from PDF file or url": "Tekst uit PDF-bestand of url halen",
+  "Convert a PDF file or URL to an image": "Converteer een PDF-bestand of URL naar een afbeelding",
+  "Convert text to PDF": "Tekst converteren naar PDF",
+  "Convert image to PDF": "Afbeelding converteren naar PDF",
+  "PDF File or URL": "PDF bestand of URL",
+  "Output Image Type": "Uitvoer afbeeldingstype",
+  "text": "tekstveld",
+  "image": "afbeelding",
+  "Enter text to convert": "Voer tekst in om te converteren",
+  "Image has to be png, jpeg or jpg and it will be scaled down to fit the page when image is larger than an A4 page": "Afbeelding moet png, Jpeg of jpg en het zal naar beneden geschaald worden om te passen op de pagina wanneer de afbeelding groter is dan een A4 pagina",
+  "Single Combined Image": "Enkele gecombineerde afbeelding",
+  "Separate Image for Each Page": "Aparte afbeelding voor elke pagina"
+}
