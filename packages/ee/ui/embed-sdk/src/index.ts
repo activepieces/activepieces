@@ -72,6 +72,8 @@ export const NEW_CONNECTION_QUERY_PARAMS = {
   randomId: 'randomId'
 };
 
+export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
+
 export type ActivepiecesClientEvent =
   | ActivepiecesClientInit
   | ActivepiecesClientRouteChanged;

@@ -12,6 +12,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
 import { combinePaths, parentWindow } from '@/lib/utils';
 import {
+  _AP_JWT_TOKEN_QUERY_PARAM_NAME,
   ActivepiecesClientAuthenticationFailed,
   ActivepiecesClientAuthenticationSuccess,
   ActivepiecesClientConfigurationFinished,
@@ -81,6 +82,12 @@ const handleClientNavigation = () => {
   });
 };
 
+const getExternalTokenFromSearchQuery = () => {
+  return new URLSearchParams(window.location.search).get(
+    _AP_JWT_TOKEN_QUERY_PARAM_NAME,
+  );
+};
+
 const EmbedPage = React.memo(() => {
   const { setEmbedState, embedState } = useEmbedding();
   const { mutateAsync } = useMutation({
@@ -105,13 +112,14 @@ const EmbedPage = React.memo(() => {
       event.source === parentWindow &&
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
-      if (event.data.data.jwtToken) {
+      const token = event.data.data.jwtToken || getExternalTokenFromSearchQuery();
+      if (token) {
         if (event.data.data.mode) {
           setTheme(event.data.data.mode);
         }
         mutateAsync(
           {
-            externalAccessToken: event.data.data.jwtToken,
+            externalAccessToken: token,
             locale: event.data.data.locale ?? 'en',
           },
           {
