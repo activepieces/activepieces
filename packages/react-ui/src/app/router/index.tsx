@@ -58,8 +58,6 @@ import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
 import { EnvironmentPage } from '../routes/settings/environment';
 import TeamPage from '../routes/settings/team';
-import { SignInPage } from '../routes/sign-in';
-import { SignUpPage } from '../routes/sign-up';
 import JwtAuthPage from '../routes/jwt-auth';
 import { ApTablesPage } from '../routes/tables';
 import { ApTableEditorPage } from '../routes/tables/id';
@@ -290,30 +288,6 @@ const routes = [
     element: (
       <PageTitle title="Reset Password">
         <ChangePasswordPage />
-      </PageTitle>
-    ),
-  },
-  {
-    path: '/sign-in',
-    element: (
-      <PageTitle title="Sign In">
-        <SignInPage />
-      </PageTitle>
-    ),
-  },
-  {
-    path: '/verify-email',
-    element: (
-      <PageTitle title="Verify Email">
-        <VerifyEmail />
-      </PageTitle>
-    ),
-  },
-  {
-    path: '/sign-up',
-    element: (
-      <PageTitle title="Sign Up">
-        <SignUpPage />
       </PageTitle>
     ),
   },

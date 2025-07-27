@@ -9,11 +9,12 @@ export const DefaultRoute = () => {
   const { checkAccess } = useAuthorization();
   const location = useLocation();
 
+  // NO LOGIN SCREEN - redirect directly to main app
   if (!token) {
-    // Redirect to JWT auth instead of sign-in - NO LOGIN SCREEN
+    // Redirect directly to flows instead of any login/auth page
     return (
       <Navigate
-        to="/jwt-auth"
+        to="/flows"
         replace={true}
       ></Navigate>
     );
