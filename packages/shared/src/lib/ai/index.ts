@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../common'
+import { BaseModelSchema, DiscriminatedUnion } from '../common'
 import { SeekPage } from '../common/seek-page'
 
 export const AIProvider = Type.Object({
@@ -29,6 +29,8 @@ export const CreateAIProviderRequest = Type.Object({
 export type CreateAIProviderRequest = Static<typeof CreateAIProviderRequest>
 
 export const AI_USAGE_FEATURE_HEADER = 'ap-feature'
+export const AI_USAGE_AGENT_ID_HEADER = 'ap-agent-id'
+export const AI_USAGE_MCP_ID_HEADER = 'ap-mcp-id'
 
 export enum AIUsageFeature {
     AGENTS = 'Agents',   
@@ -39,6 +41,31 @@ export enum AIUsageFeature {
     UNKNOWN = 'Unknown',
 }
 
+const agentMetadata = Type.Object({
+    feature: Type.Literal(AIUsageFeature.AGENTS),
+    agentid: Type.String(),
+})
+
+const mcpMetadata = Type.Object({
+    feature: Type.Literal(AIUsageFeature.MCP),
+    mcpid: Type.String(),
+})
+
+const simpleFeatures = [AIUsageFeature.TEXT_AI, AIUsageFeature.IMAGE_AI, AIUsageFeature.UTILITY_AI, AIUsageFeature.UNKNOWN] as const
+const simpleMetadataVariants = simpleFeatures.map(feature => 
+    Type.Object({
+        feature: Type.Literal(feature),
+    }),
+)
+
+export const AIUsageMetadata = DiscriminatedUnion('feature', [
+    agentMetadata,
+    mcpMetadata,
+    ...simpleMetadataVariants,
+])
+
+export type AIUsageMetadata = Static<typeof AIUsageMetadata>
+
 export const AIUsage = Type.Object({
     ...BaseModelSchema,
     provider: Type.String({ minLength: 1 }),
@@ -46,7 +73,7 @@ export const AIUsage = Type.Object({
     cost: Type.Number({ minimum: 0 }),
     projectId: Type.String(),
     platformId: Type.String(),
-    feature: Type.Enum(AIUsageFeature, { default: AIUsageFeature.UNKNOWN }),
+    metadata: AIUsageMetadata,
 })
 
 export type AIUsage = Static<typeof AIUsage>

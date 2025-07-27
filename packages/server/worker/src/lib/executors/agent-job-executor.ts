@@ -49,7 +49,10 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                 modelInstance: openai('gpt-4.1'),
                 apiKey: engineToken,
                 baseURL,
-                feature: AIUsageFeature.AGENTS,
+                metadata: {
+                    feature: AIUsageFeature.AGENTS,
+                    agentid: jobData.agentId,
+                },
             })
             const systemPrompt = await constructSystemPrompt(agent, fields, record)
             const { fullStream } = streamText({

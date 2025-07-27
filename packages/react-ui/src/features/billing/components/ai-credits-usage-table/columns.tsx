@@ -1,4 +1,7 @@
-import { ListAICreditsUsageResponse } from '@activepieces/shared';
+import {
+  AIUsageMetadata,
+  ListAICreditsUsageResponse,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 
@@ -49,12 +52,13 @@ export const aiCreditUsageTableColumns: ColumnDef<ListAICreditsUsageResponse>[] 
       },
     },
     {
-      accessorKey: 'feature',
+      accessorKey: 'metadata',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Feature')} />
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.getValue('feature')}</div>;
+        const metadata = row.getValue('metadata') as AIUsageMetadata;
+        return <div className="text-left">{t(metadata.feature)}</div>;
       },
     },
     {

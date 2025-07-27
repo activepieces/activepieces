@@ -48,7 +48,9 @@ export const askAI = createAction({
       modelInstance,
       apiKey: engineToken,
       baseURL,
-      feature: AIUsageFeature.TEXT_AI,
+      metadata: {
+        feature: AIUsageFeature.TEXT_AI,
+      },
     });
 
     const conversationKey = context.propsValue.conversationKey

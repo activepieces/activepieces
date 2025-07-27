@@ -1,6 +1,6 @@
 import { Writable } from 'stream'
 import { exceptionHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, AI_USAGE_FEATURE_HEADER, AIUsageFeature, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared'
+import { ActivepiecesError, AI_USAGE_AGENT_ID_HEADER, AI_USAGE_FEATURE_HEADER, AI_USAGE_MCP_ID_HEADER, AIUsageFeature, AIUsageMetadata, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
@@ -79,13 +79,14 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                 const completeResponse = JSON.parse(buffer.toString())
                                 usage = aiProviderService.calculateUsage(provider, request, completeResponse)
                             }
+                            const metadata = buildAIUsageMetadata(request.headers)
                             await platformUsageService(app.log).increaseAiCreditUsage({ 
                                 projectId,
                                 platformId: request.principal.platform.id,
                                 provider,
                                 model: usage.model,
                                 cost: usage.cost,
-                                feature: request.headers[AI_USAGE_FEATURE_HEADER] as AIUsageFeature,
+                                metadata,
                             })
                         }
                         catch (error) {
@@ -115,16 +116,8 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 })
             }
 
-            const featureHeader = request.headers[AI_USAGE_FEATURE_HEADER]
-            const supportedFeatures = Object.values(AIUsageFeature).filter(f => f !== AIUsageFeature.UNKNOWN) as AIUsageFeature[]
-            if (featureHeader && !supportedFeatures.includes(featureHeader as AIUsageFeature)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: {
-                        message: `${AI_USAGE_FEATURE_HEADER} header must be one of the following: ${supportedFeatures.join(', ')}`,
-                    },
-                })
-            }
+            // Validate AI usage metadata headers
+            validateAIUsageHeaders(request.headers)
 
             const provider = (request.params as { provider: string }).provider
             if (aiProviderService.isStreaming(provider, request) && !aiProviderService.providerSupportsStreaming(provider)) {
@@ -198,6 +191,60 @@ function getProviderConfigOrThrow(provider: string | undefined): SupportedAIProv
         })
     }
     return providerConfig
+}
+
+function validateAIUsageHeaders(headers: Record<string, string | string[] | undefined>): void {
+    const feature = headers[AI_USAGE_FEATURE_HEADER] as AIUsageFeature
+    const agentId = headers[AI_USAGE_AGENT_ID_HEADER] as string | undefined
+    const mcpId = headers[AI_USAGE_MCP_ID_HEADER] as string | undefined
+
+    // Validate feature header
+    const supportedFeatures = Object.values(AIUsageFeature).filter(f => f !== AIUsageFeature.UNKNOWN) as AIUsageFeature[]
+    if (feature && !supportedFeatures.includes(feature)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `${AI_USAGE_FEATURE_HEADER} header must be one of the following: ${supportedFeatures.join(', ')}`,
+            },
+        })
+    }
+
+    if (feature === AIUsageFeature.AGENTS && !agentId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `${AI_USAGE_AGENT_ID_HEADER} header is required when feature is ${AIUsageFeature.AGENTS}`,
+            },
+        })
+    }
+    
+    if (feature === AIUsageFeature.MCP && !mcpId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `${AI_USAGE_MCP_ID_HEADER} header is required when feature is ${AIUsageFeature.MCP}`,
+            },
+        })
+    }
+}
+
+function buildAIUsageMetadata(headers: Record<string, string | string[] | undefined>): AIUsageMetadata {
+    const feature = headers[AI_USAGE_FEATURE_HEADER] as AIUsageFeature
+    const agentId = headers[AI_USAGE_AGENT_ID_HEADER] as string | undefined
+    const mcpId = headers[AI_USAGE_MCP_ID_HEADER] as string | undefined
+
+    if (!feature) {
+        return { feature: AIUsageFeature.UNKNOWN }
+    }
+
+    switch (feature) {
+        case AIUsageFeature.AGENTS:
+            return { feature: AIUsageFeature.AGENTS, agentid: agentId! }
+        case AIUsageFeature.MCP:
+            return { feature: AIUsageFeature.MCP, mcpid: mcpId! }
+        default:
+            return { feature }
+    }
 }
 
 type ModifiedFastifyRequest = FastifyRequest & { customUpstream: string, originalBody: Record<string, unknown> }

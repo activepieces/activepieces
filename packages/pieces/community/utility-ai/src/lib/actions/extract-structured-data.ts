@@ -142,7 +142,9 @@ export const extractStructuredData = createAction({
 			modelInstance,
 			apiKey: engineToken,
 			baseURL,
-			feature: AIUsageFeature.UTILITY_AI,
+			metadata: {
+				feature: AIUsageFeature.UTILITY_AI,
+			},
 		});
 
 		let schemaDefinition: any;

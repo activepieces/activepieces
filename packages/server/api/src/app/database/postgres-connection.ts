@@ -249,10 +249,9 @@ import { AddIndexForSchemaVersionInFlowVersion1752151941009 } from './migration/
 import { AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028 } from './migration/postgres/1752511716028-AddCreatedToFlowVersionFlowIdIdxPostgres'
 import { AddAgentRunsEntityPostgres1752583341290 } from './migration/postgres/1752583341290-AddAgentRunsEntityPostgres'
 import { AddPlatformAnalyticsReportEntity1753091760355 } from './migration/postgres/1753091760355-AddPlatformAnalyticsReportEntity'
-import { AddFeatureToAIUsagePostgres1753264516213 } from './migration/postgres/1753264516213-AddFeatureToAIUsagePostgres'
 import { AddAgentIdToTable1753315220453 } from './migration/postgres/1753315220453-AddAgentIdToTable'
 import { AddIndexForAgentTable1753400133786 } from './migration/postgres/1753400133786-AddIndexForAgentTable'
-
+import { AddAIUsageMetadatapostgres1753624069238 } from './migration/postgres/1753624069238-AddAIUsageMetadatapostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -422,12 +421,12 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowVersionToIssue1751927222122,
         SplitUpPieceMetadataIntoTools1752004202722,
         AddIndexForSchemaVersionInFlowVersion1752151941009,
-        AddFeatureToAIUsagePostgres1753264516213,
         AddAgentRunsEntityPostgres1752583341290,
         AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028,
         AddAgentIdToTable1753315220453,
         MakeTriggerNullable1753366163403,
         AddIndexForAgentTable1753400133786,
+        AddAIUsageMetadatapostgres1753624069238,
     ]
 
     const edition = system.getEdition()

@@ -42,7 +42,9 @@ export const summarizeText: Action = createAction({
       modelInstance,
       apiKey: engineToken,
       baseURL,
-      feature: AIUsageFeature.TEXT_AI,
+      metadata: {
+        feature: AIUsageFeature.TEXT_AI,
+      },
     });
 
     const response = await generateText({

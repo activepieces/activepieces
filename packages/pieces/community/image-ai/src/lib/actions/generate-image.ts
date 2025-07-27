@@ -77,7 +77,9 @@ export const generateImageAction = createAction({
       modelInstance,
       apiKey: engineToken,
       baseURL,
-      feature: AIUsageFeature.IMAGE_AI,
+      metadata: {
+        feature: AIUsageFeature.IMAGE_AI,
+      },
     });
 
     const response = await generateImage({

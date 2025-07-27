@@ -38,7 +38,9 @@ export const classifyText = createAction({
       modelInstance,
       apiKey: engineToken,
       baseURL,
-      feature: AIUsageFeature.UTILITY_AI,
+      metadata: {
+        feature: AIUsageFeature.UTILITY_AI,
+      },
     });
 
     const response = await generateText({
