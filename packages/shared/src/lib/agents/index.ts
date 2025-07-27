@@ -84,7 +84,7 @@ export const UpdateAgentRequestBody = Type.Object({
     displayName: Type.Optional(Type.String()),  
     description: Type.Optional(Type.String()),
     testPrompt: Type.Optional(Type.String()),
-    outputType: Type.Optional(Type.String()),
+    outputType: Type.Optional(Type.Enum(AgentOutputType)),
     outputFields: Type.Optional(Type.Array(AgentOutputField)),
 })
 

@@ -9,29 +9,36 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
+import {
+  BuilderAgentProvider,
+  useBuilderAgentState,
+} from '@/features/agents/lib/store/builder-agent-state-provider';
+import { UseAgentButton } from '@/features/agents/use-agent-button';
 import { Agent } from '@activepieces/shared';
 
-import { AgentSettings } from './agent-settings';
+import { AgentLeftSection } from './agent-left-section';
+import { AgentSavingIndicator } from './agent-saving-indicator';
+import { AgentStructuredOutput } from './agent-structured-output';
+import { AgentToolSection } from './agent-tool-section';
 
 interface AgentBuilderProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   trigger: ReactNode;
-  agent?: Agent;
-  refetch: () => void;
+  agent: Agent;
   onChange?: (agent: Agent) => void;
-  hideUseAgentButton?: boolean;
+  showUseInFlow?: boolean;
 }
 
-export const AgentBuilder = ({
+const AgentBuilderContent = ({
   isOpen,
   onOpenChange,
-  refetch,
   trigger,
   agent,
-  onChange,
-  hideUseAgentButton,
+  showUseInFlow = false,
 }: AgentBuilderProps) => {
+  const [isSaving] = useBuilderAgentState((state) => [state.isSaving]);
+
   return (
     <Drawer
       open={isOpen}
@@ -42,41 +49,64 @@ export const AgentBuilder = ({
       {trigger}
       <DrawerContent className="w-full overflow-auto overflow-x-hidden">
         <DrawerHeader>
-          <div className="p-4">
-            <div className="flex items-center gap-1 justify-between">
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="basic"
-                  size={'icon'}
-                  className="text-foreground"
-                  onClick={() => onOpenChange(false)}
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
+          <div className="flex items-center gap-1 justify-between py-2 px-4 w-full">
+            <div className="flex items-center gap-1">
+              <Button
+                variant="basic"
+                size={'icon'}
+                className="text-foreground"
+                onClick={() => onOpenChange(false)}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div className="flex items-center gap-4">
                 <DrawerTitle>
                   {agent
                     ? `${t('Edit')} ${agent?.displayName}`
                     : `${t('Creating Agent')}...`}
                 </DrawerTitle>
+                <AgentSavingIndicator
+                  isSaving={isSaving}
+                  hasSaved={!isSaving}
+                />
               </div>
             </div>
+            {showUseInFlow && <UseAgentButton agentId={agent.id} />}
           </div>
         </DrawerHeader>
 
         <div className="flex flex-1 h-full justify-center">
-          <div
-            className="w-full max-w-3xl px-4"
-            style={{ maxHeight: 'calc(100vh - 80px)' }}
-          >
-            <AgentSettings
-              agent={agent}
-              refetch={refetch}
-              onChange={onChange}
-              hideUseAgentButton={hideUseAgentButton}
-            />
+          <div className="flex flex-1 h-full bg-accent">
+            <AgentLeftSection agent={agent} />
+            <div className="hidden md:block w-0 md:w-1/3 bg-background border-l">
+              <div className="flex flex-col h-full p-4 gap-4 w-full bg-background">
+                <AgentToolSection />
+                <AgentStructuredOutput />
+              </div>
+            </div>
           </div>
         </div>
       </DrawerContent>
     </Drawer>
   );
 };
+
+export const AgentBuilder = ({
+  isOpen,
+  onOpenChange,
+  trigger,
+  onChange,
+  agent,
+  showUseInFlow = false,
+}: AgentBuilderProps) => (
+  <BuilderAgentProvider agent={agent}>
+    <AgentBuilderContent
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      trigger={trigger}
+      agent={agent}
+      onChange={onChange}
+      showUseInFlow={showUseInFlow}
+    />
+  </BuilderAgentProvider>
+);

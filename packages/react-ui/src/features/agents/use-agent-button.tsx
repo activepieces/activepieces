@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Workflow } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -152,12 +152,12 @@ export const UseAgentButton = ({ agentId }: UseAgentButton) => {
 
   return (
     <Button
-      variant="default"
+      variant="secondary"
       size="sm"
       onClick={() => mutate()}
       disabled={isPending}
     >
-      <Workflow />
+      <Plus />
       {isPending ? t('Importing...') : t('Use in Flow')}
     </Button>
   );
