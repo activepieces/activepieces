@@ -1,7 +1,7 @@
-import { ActionType } from "../../actions/action"
-import { FlowVersion } from "../../flow-version"
-import { TriggerType } from "../../triggers/trigger"
-import { flowStructureUtil } from "../../util/flow-structure-util"
+import { ActionType } from '../../actions/action'
+import { FlowVersion } from '../../flow-version'
+import { TriggerType } from '../../triggers/trigger'
+import { flowStructureUtil } from '../../util/flow-structure-util'
 
 
 export const flowMigrationUtil = {
@@ -19,5 +19,5 @@ export const flowMigrationUtil = {
             return step
         })
         return newVersion
-    }
+    },
 }

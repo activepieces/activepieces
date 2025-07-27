@@ -1,7 +1,7 @@
 import { FlowVersion } from '../../flow-version'
 import { AGENT_PIECE_NAME } from '../../util/flow-structure-util'
-import { Migration } from '.'
 import { flowMigrationUtil } from './flow-migration-util'
+import { Migration } from '.'
 
 export const migrateAgentPieceV3: Migration = {
     targetSchemaVersion: '3',

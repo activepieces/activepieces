@@ -241,7 +241,7 @@ function getAgentId(action: Step) {
 function isAgentPiece(action: Step) {
     return (
         action.type === ActionType.PIECE && action.settings.pieceName === AGENT_PIECE_NAME
-    );
+    )
 }
 
 export const flowStructureUtil = {
