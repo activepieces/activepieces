@@ -44,6 +44,7 @@ import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/17
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
 import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1752004202722-SplitUpPieceMetadataIntoTools'
+import { MakeTriggerNullable1753366163403 } from './migration/common/1753366163403-MakeTriggerNullable'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -249,6 +250,7 @@ import { AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028 } from './migrati
 import { AddAgentRunsEntityPostgres1752583341290 } from './migration/postgres/1752583341290-AddAgentRunsEntityPostgres'
 import { AddPlatformAnalyticsReportEntity1753091760355 } from './migration/postgres/1753091760355-AddPlatformAnalyticsReportEntity'
 import { AddAgentIdToTable1753315220453 } from './migration/postgres/1753315220453-AddAgentIdToTable'
+import { AddIndexForAgentTable1753400133786 } from './migration/postgres/1753400133786-AddIndexForAgentTable'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -422,6 +424,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddAgentRunsEntityPostgres1752583341290,
         AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028,
         AddAgentIdToTable1753315220453,
+        MakeTriggerNullable1753366163403,
+        AddIndexForAgentTable1753400133786,
     ]
 
     const edition = system.getEdition()

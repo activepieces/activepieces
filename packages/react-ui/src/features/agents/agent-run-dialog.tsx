@@ -23,21 +23,19 @@ function AgentRunDialog({
 }: AgentRunDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[42rem] overflow-hidden ">
+      <DialogContent className="w-full max-w-[60rem] overflow-hidden min-h-[65vw] max-h-[65vw] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{t('Agent Test Results')}</DialogTitle>
+          <DialogTitle>{t('Agent Goal')}</DialogTitle>
         </DialogHeader>
-
-        <div className="max-h-[60vh] min-h-[40vh] ">
+        <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
           <AgentTimeline
             agentRunId={agentRunId}
-            className="h-full p-0 pr-3 max-w-[39.25rem]"
+            className="h-full p-0 pr-3 w-full flex-1 min-h-0"
           />
         </div>
-
-        <DialogFooter>
+        <DialogFooter className="flex justify-end mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+            {t('Close')}
           </Button>
         </DialogFooter>
       </DialogContent>

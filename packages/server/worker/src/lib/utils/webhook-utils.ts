@@ -55,6 +55,7 @@ export const webhookUtils = (log: FastifyBaseLogger) => ({
                 flowVersion,
                 payload,
                 simulate,
+                throwErrorOnFailure: true,
             },
         )
     },

@@ -20,7 +20,7 @@ export const Table = Type.Object({
     externalId: Type.String(),
     agent: Type.Optional(Agent),
     status: NullableEnum(Type.Enum(TableAutomationStatus)),
-    trigger: Type.Enum(TableAutomationTrigger),
+    trigger: NullableEnum(Type.Enum(TableAutomationTrigger)),
     agentId: Type.String(),
 })
 
