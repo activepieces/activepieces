@@ -11,6 +11,8 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
+import { usePartnerStack } from '@/hooks/use-partner-stack';
+
 
 const VerifyEmail = () => {
   const [isExpired, setIsExpired] = useState(false);
@@ -19,6 +21,7 @@ const VerifyEmail = () => {
   const otp = searchParams.get('otpcode');
   const identityId = searchParams.get('identityId');
   const hasMutated = useRef(false);
+  const { reportSignup } = usePartnerStack()
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
@@ -27,11 +30,8 @@ const VerifyEmail = () => {
         identityId: identityId!,
       });
     },
-    onSuccess: (data) => {
-      growsumo.data.email = data.email;
-      growsumo.data.name = data.firstName;
-      growsumo.data.customer_key = `ps_cus_key_${data.email}`;
-      growsumo.createSignup();
+    onSuccess: ({ email, firstName }) => {
+      reportSignup(email, firstName) 
       setTimeout(() => navigate('/sign-in'), 3000);
     },
     onError: (error) => {
