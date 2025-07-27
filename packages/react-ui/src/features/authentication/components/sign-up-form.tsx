@@ -112,7 +112,7 @@ const SignUpForm = ({
         setShowCheckYourEmailNote(true);
       }
     },
-    onError: (error, vars) => {
+    onError: (error) => {
       if (api.isError(error)) {
         const errorCode: ErrorCode | undefined = (
           error.response?.data as { code: ErrorCode }
