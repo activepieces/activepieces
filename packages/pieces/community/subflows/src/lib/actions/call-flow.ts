@@ -155,6 +155,7 @@ export const callFlow = createAction({
         callbackUrl: context.propsValue.waitForResponse ?  context.generateResumeUrl({
           queryParams: {}
         }) : undefined,
+        parentRunId: context.run.id,
       },
     });
     if (context.propsValue.waitForResponse) {

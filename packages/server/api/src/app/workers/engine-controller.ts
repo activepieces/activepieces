@@ -1,5 +1,5 @@
 import { AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, NotifyFrontendRequest, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, ExecutioOutputFile, FileType, FlowRun, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, NotifyFrontendRequest, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, StepOutputStatus, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -80,6 +80,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/update-run', UpdateRunProgress, async (request) => {
         const { runId, workerHandlerId, runDetails, httpRequestId, executionStateBuffer, executionStateContentLength, failedStepName: failedStepName } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
+        const parsedExecutionStateBuffer = JSON.parse(executionStateBuffer ?? '{}')
+        const parentRunId = parsedExecutionStateBuffer.executionState?.steps?.trigger?.output?.parentRunId
 
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
@@ -127,6 +129,16 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             })
         }
         await markJobAsCompleted(runWithoutSteps.status, runWithoutSteps.id, request.principal as unknown as EnginePrincipal, runDetails.error, request.log)
+        const shouldMarkParentAsFailed = !isNil(parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(runWithoutSteps.status)
+        if (shouldMarkParentAsFailed) {
+            const parentFlowRun = await flowRunService(request.log).getOneOrThrow({
+                id: parentRunId,
+                projectId: undefined,
+            })
+            assertNotNullOrUndefined(parentFlowRun.logsFileId, 'logsFileId should be defined')
+            await markParentRunAsFailed(parentFlowRun, runWithoutSteps, request.log)
+            app.io.to(parentFlowRun.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, parentFlowRun.id)
+        }
         const response: UpdateRunProgressResponse = {
             uploadUrl,
         }
@@ -257,9 +269,49 @@ async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePr
     }
 }
 
+async function markParentRunAsFailed(
+    parentFlowRun: FlowRun,
+    runWithoutSteps: { tags?: string[], duration?: number, tasks?: number },
+    log: FastifyBaseLogger,
+): Promise<void> {
+    assertNotNullOrUndefined(parentFlowRun.logsFileId, 'logsFileId should be defined')
+    const { data } = await fileService(log).getDataOrThrow({
+        fileId: parentFlowRun.logsFileId,
+        projectId: parentFlowRun.projectId,
+    })
+    const executionOutput: ExecutioOutputFile = JSON.parse(data.toString('utf-8'))
+    const pausedStepName = Object.keys(executionOutput.executionState.steps).find(
+        stepName => executionOutput.executionState.steps[stepName].status === StepOutputStatus.PAUSED,
+    )
 
+    await flowRunService(log).updateRun({
+        flowRunId: parentFlowRun.id,
+        status: FlowRunStatus.FAILED,
+        projectId: parentFlowRun.projectId,
+        tags: runWithoutSteps.tags ?? [],
+        failedStepName: pausedStepName ?? undefined,
+        duration: runWithoutSteps.duration,
+        tasks: runWithoutSteps.tasks,
+    })
 
+    Object.entries(executionOutput.executionState.steps).forEach(([stepName]) => {
+        if (stepName === pausedStepName) {
+            executionOutput.executionState.steps[stepName].status = StepOutputStatus.FAILED
+            executionOutput.executionState.steps[stepName].errorMessage = 'Subflow has been failed'
+        }
+    })
 
+    const executionOutputString = JSON.stringify(executionOutput)
+    const executionOutputContentLength = executionOutputString.length
+
+    await flowRunService(log).updateLogsAndReturnUploadUrl({
+        flowRunId: parentFlowRun.id,
+        logsFileId: parentFlowRun.logsFileId,
+        projectId: parentFlowRun.projectId,
+        executionStateString: executionOutputString,
+        executionStateContentLength: executionOutputContentLength,
+    })
+}
 
 const GetAllFlowsByProjectParams = {
     config: {
@@ -331,4 +383,3 @@ const UpdateFlowResponseParams = {
         body: SendFlowResponseRequest,
     },
 }
-
