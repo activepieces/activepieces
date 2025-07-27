@@ -17,7 +17,7 @@ export const enterpriseLocalAuthnService = (log: FastifyBaseLogger) => ({
             log,
         })
 
-        return await userIdentityService(log).verify(identityId)
+        return userIdentityService(log).verify(identityId)
     },
 
     async resetPassword({
