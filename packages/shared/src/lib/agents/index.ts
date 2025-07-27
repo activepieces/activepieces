@@ -68,6 +68,7 @@ export const Agent = Type.Object({
     outputType: Type.Optional(Type.Enum(AgentOutputType)),
     outputFields: Type.Optional(Type.Array(AgentOutputField)),
     runCompleted: Type.Number(),
+    externalId: Type.String(),
 })
 
 export type Agent = Static<typeof Agent>
@@ -106,7 +107,7 @@ export const ListAgentRunsQueryParams = Type.Object({
 export type ListAgentRunsQueryParams = Static<typeof ListAgentRunsQueryParams>
 
 export const RunAgentRequestBody = Type.Object({
-    agentId: Type.String(),
+    externalId: Type.String(),
     prompt: Type.String(),
 })
 

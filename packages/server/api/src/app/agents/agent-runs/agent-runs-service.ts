@@ -10,7 +10,7 @@ import { AgentRunEntity } from './agent-run.entity'
 
 const agentRunsRepo = repoFactory(AgentRunEntity)
 
-export const agentRunsService = (_log: FastifyBaseLogger) => ({
+export const agentRunsService = (log: FastifyBaseLogger) => ({
     async list(params: ListParams): Promise<SeekPage<AgentRun>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursorRequest)
 
@@ -65,6 +65,7 @@ export const agentRunsService = (_log: FastifyBaseLogger) => ({
         return agentRun
     },
     async run(params: RunParams): Promise<AgentRun> {
+
         const agentRun = await agentRunsRepo().save({
             id: apId(),
             agentId: params.agentId,
@@ -78,12 +79,13 @@ export const agentRunsService = (_log: FastifyBaseLogger) => ({
             } : undefined,
         })
 
-        await jobQueue(_log).add({
+        await jobQueue(log).add({
             id: agentRun.id,
             type: JobType.AGENTS,
             priority: 'high',
             data: {
                 ...params,
+                agentId: params.agentId,
                 agentRunId: agentRun.id,
             },
         })

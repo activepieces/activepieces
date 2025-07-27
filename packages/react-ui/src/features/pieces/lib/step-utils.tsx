@@ -87,7 +87,7 @@ export const stepUtils = {
         ? step.customLogoUrl
         : undefined
       : undefined;
-    const agentId = stepUtils.getAgentId(step);
+    const agentId = flowStructureUtil.getAgentId(step);
     return [pieceName, pieceVersion, customLogoUrl, agentId, locale, step.type];
   },
   async getMetadata(
@@ -157,20 +157,6 @@ export const stepUtils = {
       auth: piece.auth,
     };
   },
-  isAgentPiece(action: Step) {
-    return (
-      action.type === ActionType.PIECE &&
-      action.settings.pieceName === '@activepieces/piece-agent'
-    );
-  },
-  getAgentId(action: Step) {
-    if (!stepUtils.isAgentPiece(action)) {
-      return undefined;
-    }
-    return 'input' in action.settings && 'agentId' in action.settings.input
-      ? (action.settings.input.agentId as string)
-      : undefined;
-  },
   getAgentRunId(output: StepOutput | StepRunResponse | undefined | null) {
     if (!output) {
       return undefined;
@@ -187,8 +173,8 @@ async function getAgentMetadata(
 ): Promise<
   Partial<Pick<StepMetadata, 'displayName' | 'logoUrl' | 'description'>>
 > {
-  if (stepUtils.isAgentPiece(step)) {
-    const agentId = stepUtils.getAgentId(step);
+  if (flowStructureUtil.isAgentPiece(step)) {
+    const agentId = flowStructureUtil.getAgentId(step);
     if (!agentId) {
       return {};
     }
