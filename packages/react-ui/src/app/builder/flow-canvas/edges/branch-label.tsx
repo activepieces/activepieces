@@ -83,7 +83,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
       }}
     >
       <div
-        className="bg-background"
+        className="bg-[var(--flow-bg)]"
         style={{
           paddingTop: flowUtilConsts.LABEL_VERTICAL_PADDING / 2 + 'px',
           paddingBottom: flowUtilConsts.LABEL_VERTICAL_PADDING / 2 + 'px',

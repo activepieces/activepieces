@@ -21,10 +21,12 @@ export const ApLoopReturnLineCanvasEdge = ({
   const verticalLineLength =
     data.verticalSpaceBetweenReturnNodeStartAndEnd -
     flowUtilConsts.ARC_LENGTH / 2;
+
   const ARROW_RIGHT = ` m-5 -6 l6 6  m-6 0 m6 0 l-6 6 m3 -6`;
   const endLineLength =
     flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
     2 * flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
+
   const path = `
   M ${sourceX - 0.5} ${
     sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE * 2 - 1
@@ -54,7 +56,7 @@ export const ApLoopReturnLineCanvasEdge = ({
       flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2,
     y: sourceY + endLineLength / 2,
   };
-  const showDebugForLineEndPoint = false;
+  const showDebugForLineEndPoint = true;
   return (
     <>
       <BaseEdge
@@ -92,9 +94,9 @@ export const ApLoopReturnLineCanvasEdge = ({
         <foreignObject
           x={sourceX}
           y={sourceY}
-          className="w-[20px] h-[20px] rounded-full bg-[red] flex items-center justify-center absolute"
+          className="w-[20px] h-[20px] rounded-full bg-[blue] flex items-center justify-center absolute"
         >
-          <div className=" w-[20px] h-[20px] rounded-full bg-[red] flex items-center justify-center"></div>
+          <div className=" w-[20px] h-[20px] rounded-full bg-[blue] flex items-center justify-center"></div>
         </foreignObject>
       )}
     </>

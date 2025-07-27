@@ -48,7 +48,7 @@ const createBigAddButtonGraph: (
     id: `${parentStep.name}-subgraph-end-${nodeData.edgeId}`,
     type: ApNodeType.GRAPH_END_WIDGET as const,
     position: {
-      x: flowUtilConsts.AP_NODE_SIZE.STEP.width / 2,
+      x: flowUtilConsts.AP_NODE_SIZE.STEP.width / 2 - flowUtilConsts.HANDLES_LEFT_OFFSET,
       y:
         flowUtilConsts.AP_NODE_SIZE.STEP.height +
         flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS,
@@ -96,7 +96,7 @@ const createStepGraph: (
     id: `${step.name}-subgraph-end`,
     type: ApNodeType.GRAPH_END_WIDGET as const,
     position: {
-      x: flowUtilConsts.AP_NODE_SIZE.STEP.width / 2,
+      x:0,
       y: graphHeight,
     },
     data: {},
@@ -224,9 +224,8 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
   const deltaLeftX =
     -(
       childGraphBoundingBox.width +
-      flowUtilConsts.AP_NODE_SIZE.STEP.width +
+      flowUtilConsts.AP_NODE_SIZE.STEP.width/2  +
       flowUtilConsts.HORIZONTAL_SPACE_BETWEEN_NODES -
-      flowUtilConsts.AP_NODE_SIZE.STEP.width / 2 -
       childGraphBoundingBox.right
     ) /
       2 -
@@ -285,7 +284,7 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
     id: `${step.name}-loop-subgraph-end`,
     type: ApNodeType.GRAPH_END_WIDGET,
     position: {
-      x: flowUtilConsts.AP_NODE_SIZE.STEP.width / 2,
+      x: flowUtilConsts.AP_NODE_SIZE.STEP.width / 2 - flowUtilConsts.HANDLES_LEFT_OFFSET,
       y:
         flowUtilConsts.AP_NODE_SIZE.STEP.height +
         flowUtilConsts.VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD +
@@ -326,7 +325,7 @@ const buildRouterChildGraph = (step: RouterAction) => {
     id: `${step.name}-branch-subgraph-end`,
     type: ApNodeType.GRAPH_END_WIDGET,
     position: {
-      x: flowUtilConsts.AP_NODE_SIZE.STEP.width / 2,
+      x: flowUtilConsts.AP_NODE_SIZE.STEP.width / 2 - flowUtilConsts.HANDLES_LEFT_OFFSET,
       y:
         flowUtilConsts.AP_NODE_SIZE.STEP.height +
         flowUtilConsts.VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD +

@@ -65,6 +65,8 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --slate-50: 210 40% 98%;
+    --slate-400: 215 20% 65%;
   }
 
 .dark {
@@ -146,7 +148,9 @@
   --node-border-default: 0px solid #b1b1b7 !important;
   --xy-selection-border-default: 1px dotted hsl(var(--primary-300)) !important;
   --xy-selection-background-color-default: hsl(var(--primary-100)/0.25) !important;
+  --xy-background-pattern-color-props: hsl(var(--slate-50)/ 0.1) !important;
 }
+
 
 .react-flow__pane.selection,
 .react-flow__nodesselection-rect {

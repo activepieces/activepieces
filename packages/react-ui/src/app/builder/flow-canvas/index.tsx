@@ -9,7 +9,7 @@ import {
   BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTheme } from '@/components/theme-provider';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
@@ -111,7 +111,9 @@ export const FlowCanvas = React.memo(
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
-
+    useEffect(() => {
+      document.body.style.setProperty('--flow-bg', theme === 'dark' ? 'hsl(var(--slate-50))' : 'hsl(var(--slate-50))');
+    }, [theme]);
     useShowChevronNextToSelection();
     useFocusOnStep();
     useHandleKeyPressOnCanvas();
@@ -253,8 +255,8 @@ export const FlowCanvas = React.memo(
                 gap={30}
                 size={4}
                 variant={BackgroundVariant.Dots}
-                bgColor={theme === 'dark' ? ' #1a1e23' : '#ffffff'}
-                color={theme === 'dark' ? ' #372727' : '#F2F2F2'}
+                bgColor={'var(--flow-bg)'}
+                color={theme === 'dark' ? ' #372727' : '#c6c8ca'}
               />
             </ReactFlow>
           </CanvasContextMenu>
