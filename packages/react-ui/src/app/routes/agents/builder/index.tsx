@@ -17,9 +17,8 @@ import { UseAgentButton } from '@/features/agents/use-agent-button';
 import { Agent } from '@activepieces/shared';
 
 import { AgentLeftSection } from './agent-left-section';
+import { AgentRightSection } from './agent-right-section';
 import { AgentSavingIndicator } from './agent-saving-indicator';
-import { AgentStructuredOutput } from './agent-structured-output';
-import { AgentToolSection } from './agent-tool-section';
 
 interface AgentBuilderProps {
   isOpen: boolean;
@@ -79,10 +78,7 @@ const AgentBuilderContent = ({
           <div className="flex flex-1 h-full bg-accent">
             <AgentLeftSection agent={agent} />
             <div className="hidden md:block w-0 md:w-1/3 bg-background border-l">
-              <div className="flex flex-col h-full p-4 gap-4 w-full bg-background">
-                <AgentToolSection />
-                <AgentStructuredOutput />
-              </div>
+              <AgentRightSection />
             </div>
           </div>
         </div>

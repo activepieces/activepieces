@@ -6,6 +6,7 @@ import {
   ListAgentsQueryParams,
   SeekPage,
   AgentRun,
+  RunAgentRequestBody,
 } from '@activepieces/shared';
 
 export const agentsApi = {
@@ -38,5 +39,8 @@ export const agentsApi = {
 export const agentRunsApi = {
   async get(id: string): Promise<AgentRun> {
     return await api.get<AgentRun>(`/v1/agent-runs/${id}`);
+  },
+  async run(request: RunAgentRequestBody): Promise<AgentRun> {
+    return await api.post<AgentRun>(`/v1/agent-runs`, request);
   },
 };

@@ -4,6 +4,7 @@ import {
   ListAgentsQueryParams,
   CreateAgentRequest,
   AgentRun,
+  RunAgentRequestBody,
 } from '@activepieces/shared';
 
 import { agentsApi, agentRunsApi } from './agents-api';
@@ -44,6 +45,12 @@ export const agentRunHooks = {
       queryFn: () => agentRunsApi.get(id!),
       enabled: !!id,
       refetchInterval: 2000,
+    });
+  },
+
+  useRun: () => {
+    return useMutation({
+      mutationFn: (request: RunAgentRequestBody) => agentRunsApi.run(request),
     });
   },
 };

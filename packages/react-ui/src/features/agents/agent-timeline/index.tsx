@@ -30,7 +30,7 @@ const AgentTimeline = ({ agentRunId, className = '' }: AgentTimelineProps) => {
     return <></>;
   }
   return (
-    <div className={`h-full p-4 ${className}`}>
+    <div className={`h-full ${className}`}>
       {agentRun.prompt !== '' && <AgentPromptBlock prompt={agentRun.prompt} />}
       <div className="flex items-center gap-2 mt-6">
         <ImageWithFallback
