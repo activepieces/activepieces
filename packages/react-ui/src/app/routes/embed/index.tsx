@@ -10,7 +10,7 @@ import { useTheme } from '@/components/theme-provider';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
-import { combinePaths, parentWindow } from '@/lib/utils';
+import { combinePaths } from '@/lib/utils';
 import {
   _AP_JWT_TOKEN_QUERY_PARAM_NAME,
   ActivepiecesClientAuthenticationFailed,
@@ -28,12 +28,12 @@ const notifyVendorPostAuthentication = () => {
     type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS,
     data: {},
   };
-  parentWindow.postMessage(authenticationSuccessEvent, '*');
+  window.parent.postMessage(authenticationSuccessEvent, '*');
   const configurationFinishedEvent: ActivepiecesClientConfigurationFinished = {
     type: ActivepiecesClientEventName.CLIENT_CONFIGURATION_FINISHED,
     data: {},
   };
-  parentWindow.postMessage(configurationFinishedEvent, '*');
+  window.parent.postMessage(configurationFinishedEvent, '*');
 };
 
 const handleVendorNavigation = ({ projectId }: { projectId: string }) => {
@@ -41,7 +41,7 @@ const handleVendorNavigation = ({ projectId }: { projectId: string }) => {
     event: MessageEvent<ActivepiecesVendorRouteChanged>,
   ) => {
     if (
-      event.source === parentWindow &&
+      event.source === window.parent &&
       event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
     ) {
       const targetRoute = event.data.data.vendorRoute;
@@ -70,7 +70,7 @@ const handleClientNavigation = () => {
       /\/projects\/[^/]+/,
       '',
     );
-    parentWindow.postMessage(
+    window.parent.postMessage(
       {
         type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
         data: {
@@ -108,11 +108,19 @@ const EmbedPage = React.memo(() => {
   const { setTheme } = useTheme();
   const { i18n } = useTranslation();
   const initState = (event: MessageEvent<ActivepiecesVendorInit>) => {
+    console.log('=== POSTMESSAGE DEBUG ===');
+    console.log('Event received:', event);
+    console.log('Event source:', event.source);
+    console.log('Event data:', event.data);
+    console.log('Parent window:', window.parent);
+    
     if (
-      event.source === parentWindow &&
+      event.source === window.parent &&
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
+      console.log('VENDOR_INIT received, processing...');
       const token = event.data.data.jwtToken || getExternalTokenFromSearchQuery();
+      console.log('Token found:', !!token);
       if (token) {
         if (event.data.data.mode) {
           setTheme(event.data.data.mode);
@@ -124,6 +132,7 @@ const EmbedPage = React.memo(() => {
           },
           {
             onSuccess: (data) => {
+              console.log('PostMessage authentication successful:', data);
               authenticationSession.saveResponse(data, true);
               const initialRoute = event.data.data.initialRoute ?? '/';
               //must use it to ensure that the correct router in RouterProvider is used before navigation
@@ -162,26 +171,82 @@ const EmbedPage = React.memo(() => {
               notifyVendorPostAuthentication();
             },
             onError: (error) => {
+              console.error('PostMessage authentication failed:', error);
               const errorEvent: ActivepiecesClientAuthenticationFailed = {
                 type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_FAILED,
                 data: error,
               };
-              parentWindow.postMessage(errorEvent, '*');
+              window.parent.postMessage(errorEvent, '*');
             },
           },
         );
       } else {
         console.error('Token sent via the sdk is empty');
       }
+    } else {
+      console.log('Event ignored - not from parent or not VENDOR_INIT');
     }
   };
 
   useEffectOnce(() => {
+    // Debug mobile vs desktop
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log('=== EMBED DEBUG ===');
+    console.log('Is Mobile:', isMobile);
+    console.log('User Agent:', navigator.userAgent);
+    console.log('URL Token:', getExternalTokenFromSearchQuery());
+    console.log('Parent Window:', window.parent);
+
+    // Try to authenticate immediately if token is in URL (for mobile compatibility)
+    const urlToken = getExternalTokenFromSearchQuery();
+    if (urlToken) {
+      console.log('Found token in URL, authenticating immediately...');
+      mutateAsync(
+        {
+          externalAccessToken: urlToken,
+          locale: 'en',
+        },
+        {
+          onSuccess: (data) => {
+            console.log('URL authentication successful:', data);
+            authenticationSession.saveResponse(data, true);
+            const initialRoute = '/';
+            flushSync(() => {
+              setEmbedState({
+                hideSideNav: false,
+                isEmbedded: true,
+                hideFlowNameInBuilder: false,
+                disableNavigationInBuilder: false,
+                hideFolders: false,
+                useDarkBackground: false,
+                hideExportAndImportFlow: false,
+                hideHomeButtonInBuilder: false,
+                emitHomeButtonClickedEvent: false,
+                homeButtonIcon: 'logo',
+                hideDuplicateFlow: false,
+                hideFlowsPageNavbar: false,
+              });
+            });
+            memoryRouter.navigate(initialRoute);
+            handleVendorNavigation({ projectId: data.projectId });
+            handleClientNavigation();
+            notifyVendorPostAuthentication();
+          },
+          onError: (error) => {
+            console.error('URL token authentication failed:', error);
+          },
+        },
+      );
+    } else {
+      console.log('No token found in URL, waiting for postMessage...');
+    }
+
+    // Also listen for postMessage (for desktop SDK usage)
     const event: ActivepiecesClientInit = {
       type: ActivepiecesClientEventName.CLIENT_INIT,
       data: {},
     };
-    parentWindow.postMessage(event, '*');
+    window.parent.postMessage(event, '*');
     window.addEventListener('message', initState);
     return () => {
       window.removeEventListener('message', initState);
