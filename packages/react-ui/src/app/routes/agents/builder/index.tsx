@@ -1,6 +1,6 @@
 import { t } from 'i18next';
-import { ArrowLeft } from 'lucide-react';
-import { ReactNode } from 'react';
+import { ArrowLeft, Settings, Play } from 'lucide-react';
+import { ReactNode, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -9,6 +9,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BuilderAgentProvider,
   useBuilderAgentState,
@@ -19,6 +20,7 @@ import { Agent } from '@activepieces/shared';
 import { AgentLeftSection } from './agent-left-section';
 import { AgentRightSection } from './agent-right-section';
 import { AgentSavingIndicator } from './agent-saving-indicator';
+import { AgentRunsTable } from './agent-runs-table';
 
 interface AgentBuilderProps {
   isOpen: boolean;
@@ -29,6 +31,11 @@ interface AgentBuilderProps {
   showUseInFlow?: boolean;
 }
 
+enum AgentBuilderTabs {
+  CONFIGURE = 'configure',
+  RUNS = 'runs',
+}
+
 const AgentBuilderContent = ({
   isOpen,
   onOpenChange,
@@ -37,6 +44,7 @@ const AgentBuilderContent = ({
   showUseInFlow = false,
 }: AgentBuilderProps) => {
   const [isSaving] = useBuilderAgentState((state) => [state.isSaving]);
+  const [activeTab, setActiveTab] = useState<AgentBuilderTabs>(AgentBuilderTabs.CONFIGURE);
 
   return (
     <Drawer
@@ -44,12 +52,13 @@ const AgentBuilderContent = ({
       onOpenChange={onOpenChange}
       dismissible={false}
       direction="right"
+      closeOnEscape={false}
     >
       {trigger}
       <DrawerContent className="w-full overflow-auto overflow-x-hidden">
         <DrawerHeader>
-          <div className="flex items-center gap-1 justify-between py-2 px-4 w-full">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center justify-between py-2 px-4 w-full relative">
+            <div className="flex items-center gap-1 min-w-0">
               <Button
                 variant="basic"
                 size={'icon'}
@@ -58,8 +67,8 @@ const AgentBuilderContent = ({
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <div className="flex items-center gap-4">
-                <DrawerTitle>
+              <div className="flex items-center gap-4 min-w-0">
+                <DrawerTitle className="truncate">
                   {agent
                     ? `${t('Edit')} ${agent?.displayName}`
                     : `${t('Creating Agent')}...`}
@@ -70,18 +79,45 @@ const AgentBuilderContent = ({
                 />
               </div>
             </div>
-            {showUseInFlow && <UseAgentButton agentId={agent.id} />}
+
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center">
+              <Tabs
+                value={activeTab}
+                onValueChange={(value) => setActiveTab(value as AgentBuilderTabs)}
+                className="w-auto"
+              >
+                <TabsList variant="outline" className="h-9">
+                  <TabsTrigger value={AgentBuilderTabs.CONFIGURE} variant="outline" className="flex items-center gap-2 px-3">
+                    <Settings className="h-4 w-4" />
+                    {t('Configure')}
+                  </TabsTrigger>
+                  <TabsTrigger value={AgentBuilderTabs.RUNS} variant="outline" className="flex items-center gap-2 px-3">
+                    <Play className="h-4 w-4" />
+                    {t('Runs')}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            <div className="flex items-center gap-4 min-w-0">
+              {showUseInFlow && <UseAgentButton agentId={agent.id} />}
+            </div>
           </div>
         </DrawerHeader>
 
-        <div className="flex flex-1 h-full justify-center">
-          <div className="flex flex-1 h-full bg-accent">
+        {activeTab === AgentBuilderTabs.CONFIGURE && (
+          <div className="flex flex-1 h-full justify-center bg-accent">
             <AgentLeftSection agent={agent} />
             <div className="hidden md:block w-0 md:w-1/3 bg-background border-l">
               <AgentRightSection />
             </div>
           </div>
-        </div>
+        )}
+        {activeTab === AgentBuilderTabs.RUNS && (
+          <div className="flex flex-1 h-full justify-center">
+            <AgentRunsTable agentId={agent.id} />
+          </div>
+        )}
       </DrawerContent>
     </Drawer>
   );

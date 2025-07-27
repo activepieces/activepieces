@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { useBuilderAgentState } from '@/features/agents/lib/store/builder-agent-state-provider';
 import { agentRunHooks } from '@/features/agents/lib/agent-hooks';
+import { t } from 'i18next';
 
 export const AgentRightSection = () => {
   const [testInput, setTestInput] = useState('');
@@ -42,7 +43,7 @@ export const AgentRightSection = () => {
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
             <MessageSquare className="w-10 h-10 mb-2" />
             <div className="text-center font-medium text-sm">
-              Test your agent by giving it a task and see it in action
+              {t('Get started by giving your agent a task to try out.')}
             </div>
           </div>
         )}

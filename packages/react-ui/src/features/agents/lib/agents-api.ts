@@ -4,6 +4,7 @@ import {
   CreateAgentRequest,
   UpdateAgentRequestBody,
   ListAgentsQueryParams,
+  ListAgentRunsQueryParams,
   SeekPage,
   AgentRun,
   RunAgentRequestBody,
@@ -37,6 +38,9 @@ export const agentsApi = {
 };
 
 export const agentRunsApi = {
+  async list(params: ListAgentRunsQueryParams): Promise<SeekPage<AgentRun>> {
+    return await api.get<SeekPage<AgentRun>>(`/v1/agent-runs`, params);
+  },
   async get(id: string): Promise<AgentRun> {
     return await api.get<AgentRun>(`/v1/agent-runs/${id}`);
   },

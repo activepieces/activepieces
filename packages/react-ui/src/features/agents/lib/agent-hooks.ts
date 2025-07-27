@@ -2,6 +2,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 
 import {
   ListAgentsQueryParams,
+  ListAgentRunsQueryParams,
   CreateAgentRequest,
   AgentRun,
   RunAgentRequestBody,
@@ -39,6 +40,12 @@ export const agentHooks = {
 };
 
 export const agentRunHooks = {
+  useList: (params: ListAgentRunsQueryParams) => {
+    return useQuery({
+      queryKey: ['agent-runs', params],
+      queryFn: () => agentRunsApi.list(params),
+    });
+  },
   useGet: (id: string | null | undefined) => {
     return useQuery<AgentRun>({
       queryKey: ['agent-run', id],
