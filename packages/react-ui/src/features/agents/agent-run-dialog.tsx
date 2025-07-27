@@ -23,7 +23,7 @@ function AgentRunDialog({
 }: AgentRunDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[60rem] overflow-hidden min-h-[65vw] max-h-[65vw] flex flex-col">
+      <DialogContent className="w-full max-w-[60rem] min-h-[65vh] max-h-[65vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{t('Agent Goal')}</DialogTitle>
         </DialogHeader>
