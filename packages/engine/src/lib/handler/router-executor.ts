@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, BranchCondition, BranchExecutionType, BranchOperator, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertNotNullOrUndefined, BranchCondition, BranchExecutionType, BranchOperator, flowStructureUtil, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, Step, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
@@ -71,12 +71,17 @@ async function handleRouterExecution({ action, executionState, constants, censor
             }
             const condition = routerOutput.output?.branches[i].evaluation
             if (condition) {
-                executionState = (await flowExecutor.execute({
+                if (shouldSkipBranchExecution(action.children[i], executionState)) {
+                    continue
+                }
+                executionState = await flowExecutor.execute({
                     action: action.children[i],
                     executionState,
                     constants,
-                }))
-                if (routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH) {
+                })
+
+                const shouldBreakExecution = hasPausedStep(executionState) || routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH
+                if (shouldBreakExecution) {
                     break
                 }
             }
@@ -90,6 +95,17 @@ async function handleRouterExecution({ action, executionState, constants, censor
     }
 }
 
+function shouldSkipBranchExecution(childAction: Step | null | undefined, executionState: FlowExecutorContext): boolean {
+    if (isNil(childAction)) {
+        return false
+    }
+    const steps = flowStructureUtil.getAllSteps(childAction)
+    return steps.every((step) => executionState.steps[step.name]?.status === StepOutputStatus.SUCCEEDED)
+}
+
+function hasPausedStep(executionState: FlowExecutorContext): boolean {
+    return Object.values(executionState.steps).some((step) => step.status === StepOutputStatus.PAUSED)
+}
 
 export function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
     let orOperator = false
