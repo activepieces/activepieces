@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   CreateSubscriptionParams,
   ToggleAiCreditsOverageEnabledParams,
@@ -11,6 +10,8 @@ import {
   ListAICreditsUsageRequest,
   ListAICreditsUsageResponse,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const platformBillingApi = {
   getSubscriptionInfo() {
@@ -40,10 +41,9 @@ export const platformBillingApi = {
   startTrial() {
     return api.post<{ success: boolean }>('/v1/platform-billing/start-trial');
   },
-  listAiCreditsUsage(params: ListAICreditsUsageRequest) {
-    return api.get<ListAICreditsUsageResponse>(
-      '/v1/platform-billing/ai-credits-usage',
-      params,
-    );
+  listAiCreditsUsage(
+    params: ListAICreditsUsageRequest,
+  ): Promise<ListAICreditsUsageResponse> {
+    return api.get('/v1/platform-billing/ai-credits-usage', params);
   },
 };

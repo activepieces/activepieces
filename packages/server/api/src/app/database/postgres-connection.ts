@@ -251,7 +251,7 @@ import { AddAgentRunsEntityPostgres1752583341290 } from './migration/postgres/17
 import { AddPlatformAnalyticsReportEntity1753091760355 } from './migration/postgres/1753091760355-AddPlatformAnalyticsReportEntity'
 import { AddAgentIdToTable1753315220453 } from './migration/postgres/1753315220453-AddAgentIdToTable'
 import { AddIndexForAgentTable1753400133786 } from './migration/postgres/1753400133786-AddIndexForAgentTable'
-
+import { AddAIUsageMetadatapostgres1753624069238 } from './migration/postgres/1753624069238-AddAIUsageMetadatapostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -426,6 +426,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddAgentIdToTable1753315220453,
         MakeTriggerNullable1753366163403,
         AddIndexForAgentTable1753400133786,
+        AddAIUsageMetadatapostgres1753624069238,
     ]
 
     const edition = system.getEdition()

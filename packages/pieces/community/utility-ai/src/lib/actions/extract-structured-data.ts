@@ -1,5 +1,5 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { createAIProvider, MarkdownVariant } from '@activepieces/shared';
+import { AI_USAGE_FEATURE_HEADER, AIUsageFeature, createAIProvider, MarkdownVariant } from '@activepieces/shared';
 import { aiProps } from '@activepieces/pieces-common';
 import { generateText, tool, LanguageModel, jsonSchema, CoreMessage, CoreUserMessage } from 'ai';
 import mime from 'mime-types';
@@ -142,6 +142,9 @@ export const extractStructuredData = createAction({
 			modelInstance,
 			apiKey: engineToken,
 			baseURL,
+			metadata: {
+				feature: AIUsageFeature.UTILITY_AI,
+			},
 		});
 
 		let schemaDefinition: any;
