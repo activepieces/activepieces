@@ -18,9 +18,7 @@ type CellContextType = {
   disabled: boolean;
 } & Cell;
 
-const CellContext = createContext<
-CellContextType
->({
+const CellContext = createContext<CellContextType>({
   isEditing: false,
   setIsEditing: () => {},
   value: '',
