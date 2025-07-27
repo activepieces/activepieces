@@ -37,7 +37,6 @@ import { TableTitle } from '../../../components/custom/table-title';
 
 import { FlowsTable } from './flows-table';
 import { IssuesTable } from './issues-table';
-import TaskLimitAlert from './task-limit-alert';
 
 export enum FlowsPageTabs {
   HISTORY = 'history',
@@ -88,7 +87,6 @@ const FlowsPage = () => {
 
   return (
     <div className="flex flex-col gap-4 grow">
-      <TaskLimitAlert />
       <div className="flex flex-col gap-4 w-full grow">
         <div className="flex items-center justify-between">
           <TableTitle

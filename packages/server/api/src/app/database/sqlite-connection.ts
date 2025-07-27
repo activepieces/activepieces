@@ -25,6 +25,7 @@ import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/17
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
 import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1752004202722-SplitUpPieceMetadataIntoTools'
+import { MakeTriggerNullable1753366163403 } from './migration/common/1753366163403-MakeTriggerNullable'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -129,6 +130,10 @@ import { AddPlatformIdToAIUsageSqlite1751475726665 } from './migration/sqlite/17
 import { RemoveTerminationReasonSqlite1751727630516 } from './migration/sqlite/1751727630516-RemoveTerminationReasonSqlite'
 import { AddFlowVersionToIssueSqlite1751927149586 } from './migration/sqlite/1751927149586-AddFlowVersionToIssueSqlite'
 import { AddIndexForSchemaVersionInFlowVersionSqlite1752152069517 } from './migration/sqlite/1752152069517-AddIndexForSchemaVersionInFlowVersionSqlite'
+import { AddAgentRunsEntitySqlite1752583785385 } from './migration/sqlite/1752583785385-AddAgentRunsEntitySqlite'
+import { AddTableAgentsSqlite1752851142438 } from './migration/sqlite/1752851142438-AddTableAgentsSqlite'
+import { AddTableAutomationStatusSqlite1753013268133 } from './migration/sqlite/1753013268133-AddTableAutomationStatusSqlite'
+import { AddIndexForAgentTableSqlite1753400496920 } from './migration/sqlite/1753400496920-AddIndexForAgentTableSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -274,6 +279,11 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowVersionToIssueSqlite1751927149586,
         SplitUpPieceMetadataIntoTools1752004202722,
         AddIndexForSchemaVersionInFlowVersionSqlite1752152069517,
+        AddAgentRunsEntitySqlite1752583785385,
+        AddTableAgentsSqlite1752851142438,
+        AddTableAutomationStatusSqlite1753013268133,
+        MakeTriggerNullable1753366163403,
+        AddIndexForAgentTableSqlite1753400496920,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

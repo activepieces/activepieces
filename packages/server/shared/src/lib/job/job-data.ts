@@ -1,4 +1,5 @@
 import {
+    DiscriminatedUnion,
     ExecutionType,
     FlowVersion,
     PackageType,
@@ -77,6 +78,33 @@ export const OneTimeJobData = Type.Object({
     progressUpdateType: Type.Enum(ProgressUpdateType),
 })
 export type OneTimeJobData = Static<typeof OneTimeJobData>
+
+
+export enum AgentJobSource {
+    DIRECT = 'direct',
+    TABLE = 'table',
+}
+
+const BaseAgentJobData = Type.Object({
+    agentId: Type.String(),
+    projectId: Type.String(),
+    agentRunId: Type.String(),
+    prompt: Type.String(),
+})
+
+export const AgentJobData = DiscriminatedUnion('source', [
+    Type.Object({
+        source: Type.Literal(AgentJobSource.DIRECT),
+        ...BaseAgentJobData.properties,
+    }),
+    Type.Object({
+        source: Type.Literal(AgentJobSource.TABLE),
+        ...BaseAgentJobData.properties,
+        recordId: Type.String(),
+        tableId: Type.String(),
+    }),
+])
+export type AgentJobData = Static<typeof AgentJobData>
 
 export const WebhookJobData = Type.Object({
     projectId: Type.String(),
@@ -200,5 +228,6 @@ export const JobData = Type.Union([
     OneTimeJobData,
     WebhookJobData,
     UserInteractionJobData,
+    AgentJobData,
 ])
 export type JobData = Static<typeof JobData>

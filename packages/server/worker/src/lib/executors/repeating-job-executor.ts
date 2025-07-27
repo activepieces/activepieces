@@ -35,6 +35,7 @@ const consumePieceTrigger = async (data: RepeatingJobData, flowVersion: FlowVers
         flowVersion,
         payload: {} as TriggerPayload,
         simulate: false,
+        throwErrorOnFailure: false,
     })
     await workerApiService(workerToken).startRuns({
         flowVersionId: data.flowVersionId,

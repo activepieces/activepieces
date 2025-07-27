@@ -14,6 +14,7 @@ import {
     spreadIfDefined,
     UpdatePlatformRequestBody,
     UserId,
+    UserStatus,
 } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -33,7 +34,7 @@ export const platformService = {
         const users = await userService.getByIdentityId({ identityId: params.identityId })
 
         const platformsWithProjects = await Promise.all(users.map(async (user) => {
-            if (isNil(user.platformId)) {
+            if (isNil(user.platformId) || user.status === UserStatus.INACTIVE) {
                 return null
             }
             const hasProjects = await projectService.userHasProjects({

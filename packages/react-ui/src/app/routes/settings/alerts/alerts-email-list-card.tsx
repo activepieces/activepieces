@@ -36,7 +36,7 @@ export default function AlertsEmailsCard() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>{t('Emails')}</CardTitle>
+        <CardTitle className="text-xl">{t('Emails')}</CardTitle>
         <CardDescription>
           {t('Add email addresses to receive alerts.')}
         </CardDescription>

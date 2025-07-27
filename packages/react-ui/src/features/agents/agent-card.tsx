@@ -1,4 +1,4 @@
-import { Pencil } from 'lucide-react';
+import { Pencil, Activity } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ interface AgentCardProps {
   description: string;
   onDelete?: () => Promise<void>;
   onDescriptionChange?: (newDescription: string) => Promise<void>;
+  runCompleted: number;
 }
 
 export const AgentCard: React.FC<AgentCardProps> = ({
@@ -21,6 +22,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
   description,
   onDelete,
   onDescriptionChange,
+  runCompleted,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedDescription, setEditedDescription] = useState(description);
@@ -34,7 +36,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
 
   return (
     <div className="flex flex-col">
-      <Card className="w-full h-[100px] cursor-pointer hover:border-gray-400 transition-colors duration-200 flex flex-col justify-between">
+      <Card className="w-full h-[130px] cursor-pointer hover:border-gray-400 transition-colors duration-200 flex flex-col justify-between">
         <CardContent className="p-4 flex flex-col h-full">
           <div className="flex gap-4 items-center">
             <div className="flex-shrink-0">
@@ -93,6 +95,12 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                   {description}
                 </div>
               )}
+              <div className="flex items-center gap-2 mt-2">
+                <Activity className="h-4 w-4 text-success" />
+                <span className="text-sm font-medium">
+                  Task Completed: {runCompleted}
+                </span>
+              </div>
             </div>
           </div>
         </CardContent>
