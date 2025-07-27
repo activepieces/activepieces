@@ -28,10 +28,10 @@ const VerifyEmail = () => {
       });
     },
     onSuccess: (data) => {
-      growsumo.data.email = data.email
-      growsumo.data.name = data.firstName
-      growsumo.data.customer_key = `ps_cus_key_${data.email}`
-      growsumo.createSignup()
+      growsumo.data.email = data.email;
+      growsumo.data.name = data.firstName;
+      growsumo.data.customer_key = `ps_cus_key_${data.email}`;
+      growsumo.createSignup();
       setTimeout(() => navigate('/sign-in'), 3000);
     },
     onError: (error) => {
