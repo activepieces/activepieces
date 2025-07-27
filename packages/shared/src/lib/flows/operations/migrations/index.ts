@@ -13,7 +13,7 @@ const migrations: Migration[] = [
     migrateBranchToRouter,
     migrateConnectionIds,
     migrateAgentPiece,
-    migrateAgentPieceV2
+    migrateAgentPieceV2,
 ]
 
 const apply = (flowVersion: FlowVersion) => {

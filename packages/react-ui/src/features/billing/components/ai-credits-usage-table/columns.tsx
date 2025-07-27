@@ -1,12 +1,12 @@
-import {
-  AIUsageMetadata,
-  ListAICreditsUsageResponse,
-} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
+import {
+  AIUsageMetadata,
+  ListAICreditsUsageResponse,
+} from '@activepieces/shared';
 
 export const aiCreditUsageTableColumns: ColumnDef<ListAICreditsUsageResponse>[] =
   [

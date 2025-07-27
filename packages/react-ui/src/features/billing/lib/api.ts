@@ -1,3 +1,4 @@
+import { api } from '@/lib/api';
 import {
   CreateSubscriptionParams,
   ToggleAiCreditsOverageEnabledParams,
@@ -10,8 +11,6 @@ import {
   ListAICreditsUsageRequest,
   ListAICreditsUsageResponse,
 } from '@activepieces/shared';
-
-import { api } from '@/lib/api';
 
 export const platformBillingApi = {
   getSubscriptionInfo() {
