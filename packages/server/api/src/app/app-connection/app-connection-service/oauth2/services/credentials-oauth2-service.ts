@@ -1,4 +1,5 @@
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
+import { apAxios } from '@activepieces/server-shared'
 import { ActivepiecesError,
     AppConnectionType,
     BaseOAuth2ConnectionValue,
@@ -8,6 +9,7 @@ import { ActivepiecesError,
     OAuth2GrantType,
     resolveValueFromProps,
 } from '@activepieces/shared'
+import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import {
     ClaimOAuth2Request,
@@ -15,8 +17,6 @@ import {
     RefreshOAuth2Request,
 } from '../oauth2-service'
 import { oauth2Util } from '../oauth2-util'
-import { AxiosError } from 'axios'
-import { apAxios } from '@activepieces/server-shared'
 
 
 export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<OAuth2ConnectionValueWithApp> => ({

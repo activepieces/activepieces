@@ -11,13 +11,14 @@ type Cell = {
   value: string;
 };
 
-const CellContext = createContext<
-  {
-    isEditing: boolean;
-    setIsEditing: (isEditing: boolean) => void;
-    handleCellChange: (newCellValue: string) => void;
-  } & Cell
->({
+type CellContextType = {
+  isEditing: boolean;
+  setIsEditing: (isEditing: boolean) => void;
+  handleCellChange: (newCellValue: string) => void;
+  disabled: boolean;
+} & Cell;
+
+const CellContext = createContext<CellContextType>({
   isEditing: false,
   setIsEditing: () => {},
   value: '',
@@ -25,21 +26,25 @@ const CellContext = createContext<
   rowIdx: 0,
   columnIdx: 0,
   fieldType: FieldType.TEXT,
+  disabled: false,
 });
 
+type CellProviderProps = CellContextType & {
+  children: React.ReactNode;
+  containerRef: React.RefObject<HTMLDivElement>;
+};
+
 export const CellProvider = ({
-  cell,
+  rowIdx,
+  columnIdx,
+  fieldType,
+  value,
   children,
   containerRef,
   isEditing,
   setIsEditing,
-}: {
-  cell: Cell;
-  children: React.ReactNode;
-  containerRef: React.RefObject<HTMLDivElement>;
-  isEditing: boolean;
-  setIsEditing: (isEditing: boolean) => void;
-}) => {
+  disabled,
+}: CellProviderProps) => {
   const [updateRecord, fields, records] = useTableState((state) => [
     state.updateRecord,
     state.fields,
@@ -54,7 +59,7 @@ export const CellProvider = ({
   };
 
   const handleCellChange = (newCellValue: string) => {
-    const record = records[cell.rowIdx];
+    const record = records[rowIdx];
     const newRecrodValues = fields.map((_, fIndex) => {
       // values order isn't guaranteed to be the same as fields order
       const fieldValue = record.values.find(
@@ -65,8 +70,8 @@ export const CellProvider = ({
         value: fieldValue ?? '',
       };
     });
-    newRecrodValues[cell.columnIdx].value = newCellValue;
-    updateRecord(cell.rowIdx, {
+    newRecrodValues[columnIdx].value = newCellValue;
+    updateRecord(rowIdx, {
       values: newRecrodValues,
     });
     setIsEditing(false);
@@ -75,7 +80,10 @@ export const CellProvider = ({
   return (
     <CellContext.Provider
       value={{
-        ...cell,
+        rowIdx,
+        columnIdx,
+        fieldType,
+        value,
         isEditing,
         setIsEditing: (value) => {
           setIsEditing(value);
@@ -84,6 +92,7 @@ export const CellProvider = ({
           }
         },
         handleCellChange,
+        disabled,
       }}
     >
       {children}
