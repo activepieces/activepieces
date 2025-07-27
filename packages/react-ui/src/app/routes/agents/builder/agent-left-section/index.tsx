@@ -5,8 +5,10 @@ import EditableTextWithPen from '@/components/ui/editable-text-with-pen';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { useBuilderAgentState } from '@/features/agents/lib/store/builder-agent-state-provider';
 import { Agent, debounce, isNil } from '@activepieces/shared';
+import { Button } from '@/components/ui/button';
 
 import { AgentPromptEditior } from './agent-prompt-editor';
+import { FlaskConical } from 'lucide-react';
 
 interface AgentLeftSectionProps {
   agent?: Agent;
@@ -18,7 +20,7 @@ type AgentFormValues = {
 };
 
 export const AgentLeftSection = ({ agent }: AgentLeftSectionProps) => {
-  const [updateAgent] = useBuilderAgentState((state) => [state.updateAgent]);
+  const [updateAgent, setTestSectionIsOpen] = useBuilderAgentState((state) => [state.updateAgent, state.setTestSectionIsOpen]);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
 
@@ -56,7 +58,7 @@ export const AgentLeftSection = ({ agent }: AgentLeftSectionProps) => {
               className="w-16 h-16 rounded-xl object-cover"
             />
           </div>
-          <div className="flex justify-between w-full">
+          <div className="flex justify-between w-full items-start">
             <div className="flex flex-col flex-1">
               <EditableTextWithPen
                 value={getValues('displayName')}
@@ -74,6 +76,18 @@ export const AgentLeftSection = ({ agent }: AgentLeftSectionProps) => {
                 isEditing={isEditingDescription}
                 setIsEditing={setIsEditingDescription}
               />
+            </div>
+            <div className="ml-4 flex items-center">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setTestSectionIsOpen(true)}
+                className="ml-auto flex items-center gap-2"
+                type="button"
+              >
+                <FlaskConical className="w-4 h-4" />
+                Test Agent
+              </Button>
             </div>
           </div>
         </div>

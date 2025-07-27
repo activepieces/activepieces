@@ -18,9 +18,11 @@ import { UseAgentButton } from '@/features/agents/use-agent-button';
 import { Agent } from '@activepieces/shared';
 
 import { AgentLeftSection } from './agent-left-section';
-import { AgentRightSection } from './agent-right-section';
+import { AgentPreviewSection } from './agent-preview-section';
 import { AgentSavingIndicator } from './agent-saving-indicator';
 import { AgentRunsTable } from './agent-runs-table';
+import { AgentStructuredOutput } from './agent-structured-output';
+import { AgentToolSection } from './agent-tool-section';
 
 interface AgentBuilderProps {
   isOpen: boolean;
@@ -43,7 +45,7 @@ const AgentBuilderContent = ({
   agent,
   showUseInFlow = false,
 }: AgentBuilderProps) => {
-  const [isSaving] = useBuilderAgentState((state) => [state.isSaving]);
+  const [isSaving, testSectionIsOpen] = useBuilderAgentState((state) => [state.isSaving, state.testSectionIsOpen]);
   const [activeTab, setActiveTab] = useState<AgentBuilderTabs>(AgentBuilderTabs.CONFIGURE);
 
   return (
@@ -109,7 +111,13 @@ const AgentBuilderContent = ({
           <div className="flex flex-1 h-full justify-center bg-accent">
             <AgentLeftSection agent={agent} />
             <div className="hidden md:block w-0 md:w-1/3 bg-background border-l">
-              <AgentRightSection />
+              {testSectionIsOpen && <AgentPreviewSection />}
+              {!testSectionIsOpen && <>
+                <div className="flex flex-col h-full p-4 gap-4 w-full bg-background">
+                  <AgentToolSection />
+                  <AgentStructuredOutput />
+                </div>
+              </>}
             </div>
           </div>
         )}

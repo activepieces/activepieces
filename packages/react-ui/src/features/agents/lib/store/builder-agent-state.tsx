@@ -12,6 +12,8 @@ export type BuilderAgentState = {
   isSaving: boolean;
   setAgent: (agent: Agent) => void;
   updateAgent: (updates: UpdateAgentRequestBody) => void;
+  testSectionIsOpen: boolean;
+  setTestSectionIsOpen: (isOpen: boolean) => void;
 };
 
 export const createBuilderAgentStore = (initialAgent: Agent) => {
@@ -19,6 +21,8 @@ export const createBuilderAgentStore = (initialAgent: Agent) => {
     return {
       agent: initialAgent,
       isSaving: false,
+      testSectionIsOpen: false,
+      setTestSectionIsOpen: (isOpen: boolean) => set({ testSectionIsOpen: isOpen }),
       setAgent: (agent: Agent) => set({ agent }),
       updateAgent: (requestBody: UpdateAgentRequestBody) => {
         set((state) => ({
