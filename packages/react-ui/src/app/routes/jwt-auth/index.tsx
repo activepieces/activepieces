@@ -11,7 +11,6 @@ const JwtAuthPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(true);
-  const [noToken, setNoToken] = useState(false);
 
   useEffect(() => {
     const processJwtAuth = async () => {
@@ -20,7 +19,8 @@ const JwtAuthPage = () => {
         const jwtToken = searchParams.get('token');
         
         if (!jwtToken) {
-          setNoToken(true);
+          // If no token provided, show a simple message and stay on this page
+          // This prevents any login form from showing
           setIsProcessing(false);
           return;
         }
@@ -53,7 +53,7 @@ const JwtAuthPage = () => {
           });
         }
         
-        setNoToken(true);
+        // Stay on this page instead of redirecting to login
         setIsProcessing(false);
       }
     };
@@ -65,27 +65,24 @@ const JwtAuthPage = () => {
     return <LoadingScreen />;
   }
 
-  if (noToken) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-              JWT Authentication Required
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Please provide a valid JWT token to access this application.
-            </p>
-            <p className="mt-4 text-xs text-gray-500">
-              Expected URL format: /jwt-auth?token=YOUR_JWT_TOKEN
-            </p>
-          </div>
+  // Show a simple message if no token or authentication failed
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            SSO Authentication Required
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            This application requires SSO authentication.
+          </p>
+          <p className="mt-4 text-xs text-gray-500">
+            Please access this application through your SSO portal.
+          </p>
         </div>
       </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 };
 
 export default JwtAuthPage; 
