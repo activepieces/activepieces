@@ -204,10 +204,8 @@ export const extractStructuredData = createAction({
 
 		const messages: Array<CoreMessage> = [];
 
-		// Prepare content parts array
 		const contentParts: CoreUserMessage['content']= [];
 
-		// Add the main prompt message
 		let textContent = prompt || 'Extract the following data from the provided data.';
 		if (text) {
 			textContent += `\n\nText to analyze:\n${text}`;
@@ -218,7 +216,6 @@ export const extractStructuredData = createAction({
 			text: textContent,
 		});
 
-		// Handle file processing similar to previous implementation
 		if (files.length > 0) {
 			for (const fileWrapper of files) {
 				const file = fileWrapper.file;
@@ -227,23 +224,27 @@ export const extractStructuredData = createAction({
 				}
 				const fileType = file.extension ? mime.lookup(file.extension) : 'image/jpeg';
 
-				if (fileType && fileType.startsWith('image') && file.base64) {
+				if (fileType && fileType.startsWith('image')  && file.base64) {
 					contentParts.push({
 						type: 'image',
 						image: `data:${fileType};base64,${file.base64}`,
+					});
+				} else if (fileType && fileType.startsWith('application/pdf') && file.base64) {
+					contentParts.push({
+						type: 'file',
+						data: `data:${fileType};base64,${file.base64}`,
+						mimeType: fileType,
 					});
 				}
 			}
 		}
 
-		// Add the message with all content parts
 		messages.push({
 			role: 'user',
 			content: contentParts,
 		});
 
 		try {
-			// Use Vercel AI SDK to generate text with tool calling
 			const result = await generateText({
 				model: provider,
 				maxTokens,
@@ -257,7 +258,6 @@ export const extractStructuredData = createAction({
 				},
 			});
 
-			// Extract the tool call result
 			const toolCalls = result.toolCalls;
 			if (!toolCalls || toolCalls.length === 0) {
 				throw new Error('No structured data could be extracted from the input.');
