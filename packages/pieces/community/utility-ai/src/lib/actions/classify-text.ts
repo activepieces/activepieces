@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { aiProps } from '@activepieces/pieces-common';
 import { generateText, LanguageModel } from 'ai';
-import { createAIProvider, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
+import { AIUsageFeature, createAIProvider, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
 
 export const classifyText = createAction({
   name: 'classifyText',
@@ -38,6 +38,9 @@ export const classifyText = createAction({
       modelInstance,
       apiKey: engineToken,
       baseURL,
+      metadata: {
+        feature: AIUsageFeature.UTILITY_AI,
+      },
     });
 
     const response = await generateText({
@@ -46,9 +49,6 @@ export const classifyText = createAction({
         ', '
       )}. Please respond with only the selected category as a single word, and nothing else.
       Text to classify: "${context.propsValue.text}"`,
-      headers: {
-        'Authorization': `Bearer ${engineToken}`,
-      },
     });
     const result = response.text.trim();
 

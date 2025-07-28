@@ -25,7 +25,8 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager } from 'typeorm'
+import { EntityManager, FindOneOptions } from 'typeorm'
+import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
@@ -33,9 +34,12 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowVersionEntity } from './flow-version-entity'
-import { flowVersionRepoWrapper } from './flow-version-repo-wrapper'
+import { flowVersionMigrationService } from './flow-version-migration.service'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { flowVersionValidationUtil } from './flow-version-validator-util'
+
+export const flowVersionRepo = repoFactory(FlowVersionEntity)
+
 export const flowVersionService = (log: FastifyBaseLogger) => ({
     async lockPieceVersions({
         projectId,
@@ -158,17 +162,15 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             mutatedFlowVersion.updatedBy = userId
         }
         mutatedFlowVersion.connectionIds = flowStructureUtil.extractConnectionIds(mutatedFlowVersion)
-        return flowVersionRepoWrapper.save({
-            flowVersion: sanitizeObjectForPostgresql(mutatedFlowVersion),
-            entityManager,
-        })
+        mutatedFlowVersion.agentIds = flowStructureUtil.extractAgentIds(mutatedFlowVersion)
+        return flowVersionRepo(entityManager).save(sanitizeObjectForPostgresql(mutatedFlowVersion))
     },
 
     async getOne(id: FlowVersionId): Promise<FlowVersion | null> {
         if (isNil(id)) {
             return null
         }
-        return flowVersionRepoWrapper.findOne({
+        return findOne({
             where: {
                 id,
             },
@@ -176,14 +178,14 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
     },
 
     async exists(id: FlowVersionId): Promise<boolean> {
-        return flowVersionRepoWrapper.exists({
+        return flowVersionRepo().exists({
             where: {
                 id,
             },
         })
     },
     async getLatestVersion(flowId: FlowId, state: FlowVersionState): Promise<FlowVersion | null> {
-        return flowVersionRepoWrapper.findOne({
+        return findOne({
             where: {
                 flowId,
                 state,
@@ -195,15 +197,17 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
     },
 
     async getLatestLockedVersionOrThrow(flowId: FlowId): Promise<FlowVersion> {
-        return flowVersionRepoWrapper.findOneOrFail({
-            where: {
-                flowId,
-                state: FlowVersionState.LOCKED,
-            },
-            order: {
-                created: 'DESC',
-            },
-        })
+        const lockedVersion = await this.getLatestVersion(flowId, FlowVersionState.LOCKED)
+        if (isNil(lockedVersion)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: flowId,
+                    entityType: 'FlowVersion',
+                },
+            })
+        }
+        return lockedVersion
     },
     async getOneOrThrow(id: FlowVersionId): Promise<FlowVersion> {
         const flowVersion = await flowVersionService(log).getOne(id)
@@ -236,7 +240,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             },
         })
         const paginationResult = await paginator.paginate(
-            flowVersionRepoWrapper.createQueryBuilder()
+            flowVersionRepo().createQueryBuilder()
                 .where({
                     flowId,
                 }),
@@ -261,7 +265,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         removeSampleData = false,
         entityManager,
     }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
-        const flowVersion: FlowVersion | null = await flowVersionRepoWrapper.findOne({
+        const flowVersion: FlowVersion | null = await findOne({
             where: {
                 flowId,
                 id: versionId,
@@ -308,10 +312,11 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             },
             schemaVersion: LATEST_SCHEMA_VERSION,
             connectionIds: [],
+            agentIds: [],
             valid: false,
             state: FlowVersionState.DRAFT,
         }
-        return flowVersionRepoWrapper.save({ flowVersion })
+        return flowVersionRepo().save(flowVersion)
     },
     removeConnectionsAndSampleDataFromFlowVersion(
         flowVersion: FlowVersion,
@@ -334,6 +339,15 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
     },
 })
 
+
+
+async function findOne(options: FindOneOptions, entityManager?: EntityManager): Promise<FlowVersion | null> {
+    const flowVersion = await flowVersionRepo(entityManager).findOne(options)
+    if (isNil(flowVersion)) {
+        return null
+    }
+    return flowVersionMigrationService.migrate(flowVersion)
+}
 
 
 async function applySingleOperation(

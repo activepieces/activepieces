@@ -1,4 +1,4 @@
-import { ApQueueJob, DelayedJobData, JobData, JobStatus, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
+import { ApQueueJob, DelayedJobData, JobData, JobStatus, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, RepeatableJobType, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
 import { apId, ExecutionType, FlowRunStatus, FlowStatus, isNil, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
@@ -35,7 +35,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         if (!job) {
             return null
         }
-        const runDeleted = await isRunDeleted(job, queueName, request.log)
+        const runDeleted = await isRunDeletedForOneTimeJob(job, queueName, request.log) || await isRunDeletedForDelayedJob(job, queueName, request.log)
         if (runDeleted) {
             await flowConsumer(request.log).update({
                 jobId: job.id,
@@ -112,7 +112,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             body: SubmitPayloadsRequest,
         },
     }, async (request) => {
-        const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType, environment } = request.body
+        const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType, environment, parentRunId, failParentOnFailure } = request.body
 
         const flowVersionExists = await flowVersionService(request.log).exists(flowVersionId)
         if (!flowVersionExists) {
@@ -122,8 +122,8 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             flowVersionId,
             payloads,
         )
-        const createFlowRuns = filterPayloads.map((payload) =>
-            flowRunService(request.log).start({
+        const createFlowRuns = filterPayloads.map((payload) =>{
+            return  flowRunService(request.log).start({
                 environment,
                 flowVersionId,
                 payload,
@@ -133,8 +133,10 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
                 executionType: ExecutionType.BEGIN,
                 progressUpdateType,
                 executeTrigger: false,
-            }),
-        )
+                parentRunId,
+                failParentOnFailure,
+            })
+        })
         return Promise.all(createFlowRuns)
     })
 
@@ -147,6 +149,10 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (request) => {
         const data = request.body
+        const flowRun = await flowRunService(request.log).getOneOrThrow({
+            id: data.runId,
+            projectId: data.projectId,
+        })
         await flowRunService(request.log).start({
             payload: null,
             existingFlowRunId: data.runId,
@@ -158,13 +164,34 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             httpRequestId: data.httpRequestId,
             environment: RunEnvironment.PRODUCTION,
             progressUpdateType: data.progressUpdateType ?? ProgressUpdateType.NONE,
+            parentRunId: flowRun.parentRunId,
+            failParentOnFailure: flowRun.failParentOnFailure,
         })
     })
 
 }
 
 
-async function isRunDeleted(
+async function isRunDeletedForDelayedJob(
+    job: Omit<ApQueueJob, 'engineToken'>,
+    queueName: QueueName,
+    log: FastifyBaseLogger,
+): Promise<boolean> {
+    if (queueName !== QueueName.SCHEDULED) {
+        return false
+    }
+    const scheduledJob = job.data as ScheduledJobData | DelayedJobData
+    if (scheduledJob.jobType !== RepeatableJobType.DELAYED_FLOW) {
+        return false
+    }
+    const { runId } = scheduledJob
+
+    const runExists = await flowRunService(log).existsBy(runId)
+    return !runExists
+
+}
+
+async function isRunDeletedForOneTimeJob(
     job: Omit<ApQueueJob, 'engineToken'>,
     queueName: QueueName,
     log: FastifyBaseLogger,
@@ -242,6 +269,7 @@ async function getProjectIdAndPlatformId(queueName: QueueName, job: JobData): Pr
     platformId: string
 }> {
     switch (queueName) {
+        case QueueName.AGENTS:
         case QueueName.ONE_TIME:
         case QueueName.WEBHOOK:
         case QueueName.SCHEDULED: {

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Action,
   ActionType,
+  flowStructureUtil,
   LocalesEnum,
   SuggestionType,
   Trigger,
@@ -138,6 +139,6 @@ const getQueryKeyForStepMetadata = (
   const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
   const customLogoUrl =
     'customLogoUrl' in step ? step.customLogoUrl : undefined;
-  const agentId = stepUtils.getAgentId(step);
+  const agentId = flowStructureUtil.getExternalAgentId(step);
   return [pieceName, pieceVersion, customLogoUrl, agentId, locale, step.type];
 };

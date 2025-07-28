@@ -41,8 +41,25 @@ type SearchableSelectProps<T> = {
   onClose?: () => void;
   triggerClassName?: string;
   valuesRendering?: (value: T) => React.ReactNode;
+  openState?: {
+    open: boolean;
+    setOpen: (open: boolean) => void;
+  };
 };
 
+const useOpenState = (openStateInitializer?: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  if (openStateInitializer) {
+    return openStateInitializer;
+  }
+  return {
+    open: isOpen,
+    setOpen: setIsOpen,
+  };
+};
 export const SearchableSelect = <T extends React.Key>({
   options,
   onChange,
@@ -56,10 +73,11 @@ export const SearchableSelect = <T extends React.Key>({
   onClose,
   triggerClassName,
   valuesRendering,
+  openState: openStateInitializer,
 }: SearchableSelectProps<T>) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [open, setOpen] = useState(false);
+  const { open, setOpen } = useOpenState(openStateInitializer);
   const [filterOptionsIndices, setFilteredOptions] = useState<number[]>([]);
   const triggerWidth = `${triggerRef.current?.clientWidth ?? 0}px`;
   const [selectedIndex, setSelectedIndex] = useState(
@@ -142,8 +160,7 @@ export const SearchableSelect = <T extends React.Key>({
             aria-expanded={open}
             className={cn('w-full justify-between', triggerClassName)}
             onClick={(e) => {
-              console.log('clicked');
-              setOpen((prev) => !prev);
+              setOpen(!open);
               e.preventDefault();
             }}
           >
