@@ -54,9 +54,9 @@ export const flowRunUtils = {
     variant: 'default' | 'success' | 'error';
     Icon:
       | typeof Timer
-      | typeof CircleCheck
+      | typeof Check
       | typeof PauseCircleIcon
-      | typeof CircleX;
+      | typeof X;
   } {
     switch (stepOutput) {
       case StepOutputStatus.RUNNING:
@@ -73,12 +73,12 @@ export const flowRunUtils = {
       case StepOutputStatus.SUCCEEDED:
         return {
           variant: 'success',
-          Icon: CircleCheck,
+          Icon: Check,
         };
       case StepOutputStatus.FAILED:
         return {
           variant: 'error',
-          Icon: CircleX,
+          Icon: X,
         };
     }
   },

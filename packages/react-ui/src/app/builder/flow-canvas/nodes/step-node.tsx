@@ -173,7 +173,7 @@ const ApStepCanvasNode = React.memo(
                           },
                         )}
                       />
-                      <div className="absolute bottom-0 right-[5px]">
+                      <div className="absolute bottom-1 right-[5px]">
                         <ApStepNodeStatus stepName={step.name} />
                       </div>
                     </div>
