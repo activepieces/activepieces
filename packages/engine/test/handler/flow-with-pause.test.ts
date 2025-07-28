@@ -247,11 +247,11 @@ describe('flow with pause', () => {
             'reason': 'PAUSED',
         })
 
-        const routerOutput = result.steps.router
+        const routerOutput = result.steps.router as RouterStepOutput
         expect(routerOutput).toBeDefined()
         expect(routerOutput.output).toBeDefined()
         
-        const executedBranches = (routerOutput.output as any)?.branches?.filter((branch: any) => branch.evaluation === true)
+        const executedBranches = routerOutput.output?.branches?.filter((branch) => branch.evaluation === true)
         expect(executedBranches).toHaveLength(2)
         
         expect(result.steps.approval_1).toBeDefined()
