@@ -6,11 +6,11 @@ export class AddParentRunIdToFlowRun1753699877817 implements MigrationInterface 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "flow_run"
-            ADD "parentRunId" character varying(21),
-            ADD "failParentOnFailure" boolean NOT NULL DEFAULT false
+            ADD COLUMN IF NOT EXISTS "parentRunId" character varying(21),
+            ADD COLUMN IF NOT EXISTS "failParentOnFailure" boolean NOT NULL DEFAULT false
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_run_parent_run_id" ON "flow_run" ("parentRunId")
+            CREATE INDEX IF NOT EXISTS "idx_run_parent_run_id" ON "flow_run" ("parentRunId")
         `)
     }
 
