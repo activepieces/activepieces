@@ -65,6 +65,10 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --slate-50: 210 40% 98%;
+    --slate-400: 215 20% 65%;
+    --flow-bg: 210 40% 98%;
+    --flow-bg-pattern: 210 4% 78%;
   }
 
 .dark {
@@ -80,7 +84,7 @@
   --accent: 210 35% 25%;
   --accent-foreground: 210 90% 95%;
 
-  --primary-100: 210 80% 40%;
+  --primary-100: 210 90% 10%;
   --primary: 210 90% 50%;
   --primary-300: 210 100% 85%;
   --primary-foreground: 210 90% 98%;
@@ -119,6 +123,8 @@
   --sidebar-accent-foreground: 210 30% 90%;
   --sidebar-border: 210 15% 22%;
   --sidebar-ring: 210 90% 70%;
+  --flow-bg: 213 15% 12%;
+  --flow-bg-pattern: 0 17% 18%;
 }
 
 
@@ -146,7 +152,9 @@
   --node-border-default: 0px solid #b1b1b7 !important;
   --xy-selection-border-default: 1px dotted hsl(var(--primary-300)) !important;
   --xy-selection-background-color-default: hsl(var(--primary-100)/0.25) !important;
+  --xy-background-pattern-color-props: hsl(var(--slate-50)/ 0.1) !important;
 }
+
 
 .react-flow__pane.selection,
 .react-flow__nodesselection-rect {

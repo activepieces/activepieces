@@ -84,6 +84,14 @@ module.exports = {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
         },
+        slate:{
+          400: 'hsl(var(--slate-400))',
+          50: 'hsl(var(--slate-50))',
+        },
+        flow: {
+          bg: 'hsl(var(--flow-bg))',
+          'bg-pattern': 'hsl(var(--flow-bg-pattern))',
+        }
       },
       borderRadius: {
         lg: `var(--radius)`,
@@ -156,8 +164,10 @@ module.exports = {
         'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite'
       },
       boxShadow: {
-        'step-container': '0px 0px 22px hsl(var(--border) / 0.4)',
+        'selected-step-node': '0px 1px 1px 0px rgba(0, 0, 0, 0.01), 0px 1px 24px 0px rgba(0, 0, 0, 0.08), 0px 0px 0px 4px hsl(var(--primary-100))',
         'add-button': 'var(--add-button-shadow)',
+        'step-node': '0px 1px 1px 0px #0000001F, 0px 1px 24px 0px #00000014',
+        'trigger-node': ' 0px 1px 1px 0px #0000001F, 0px 1px 24px 0px #00000014, 0px 0px 0px 3px #94A3B833'
       },
     },
   },

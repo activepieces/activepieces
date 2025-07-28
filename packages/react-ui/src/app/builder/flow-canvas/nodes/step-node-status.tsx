@@ -35,7 +35,7 @@ const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
   const isSkipped = flowCanvasUtils.isSkipped(stepName, flowVersion.trigger);
 
   return (
-    <div className="w-4 flex mt-0.5 items-center justify-center h-[20px]">
+    <div className="size-4 flex mt-0.5 items-center justify-center h-[20px]">
       {stepStatusInRun && (
         <StepStatusIcon
           status={stepStatusInRun}
@@ -46,7 +46,7 @@ const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
       {isSkipped && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <RouteOff className="w-4 h-4"> </RouteOff>
+            <RouteOff className="size-4"> </RouteOff>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t('Skipped')}</TooltipContent>
         </Tooltip>
@@ -54,13 +54,11 @@ const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
       {!step?.valid && !isSkipped && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="mr-3">
               <InvalidStepIcon
-                size={16}
+                size={20}
                 viewBox="0 0 16 15"
                 className="stroke-0 animate-fade"
               ></InvalidStepIcon>
-            </div>
           </TooltipTrigger>
           <TooltipContent side="bottom">
             {t('Incomplete settings')}

@@ -103,7 +103,7 @@ export const ApRouterStartCanvasEdge = ({
       {!data.isBranchEmpty && (
         <foreignObject
           x={targetX - flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2}
-          y={targetY - verticalLineLength / 2 + 10}
+          y={targetY - verticalLineLength / 2 }
           width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
           height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
           className="overflow-visible"
@@ -130,13 +130,13 @@ export const ApRouterStartCanvasEdge = ({
       )}
 
       <foreignObject
-        width={flowUtilConsts.AP_NODE_SIZE.STEP.width - 10 + 'px'}
+        width={flowUtilConsts.LABEL_WIDTH + 'px'}
         height={
           flowUtilConsts.LABEL_HEIGHT +
           flowUtilConsts.LABEL_VERTICAL_PADDING +
           'px'
         }
-        x={targetX - (flowUtilConsts.AP_NODE_SIZE.STEP.width - 10) / 2}
+        x={targetX - flowUtilConsts.LABEL_WIDTH / 2}
         y={
           targetY -
           verticalLineLength / 2 -
