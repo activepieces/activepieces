@@ -34,6 +34,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             testPrompt: '',
             maxSteps: 10,
             projectId: params.projectId,
+            externalId: apId(),
             mcpId: mcp.id,
             outputType: AgentOutputType.NO_OUTPUT,
             outputFields: [],
@@ -44,6 +45,18 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             agentId: agent.id,
         })
         return enrichAgent(agent, log)
+    },
+    async getOneByExternalIdOrThrow(params: GetOneByExternalIdParams): Promise<Agent> {
+        const agent = await agentRepo().findOneBy({ externalId: params.externalId, projectId: params.projectId })
+        if (isNil(agent)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'agent',
+                },
+            })
+        }
+        return agent
     },
     async update(params: UpdateParams): Promise<Agent> {
         const platformId = await projectService.getPlatformId(params.projectId)
@@ -129,6 +142,11 @@ async function enrichAgent(agent: Omit<Agent, 'runCompleted'>, log: FastifyBaseL
 
 function getAgentProfilePictureUrl(): string {
     return `https://cdn.activepieces.com/quicknew/agents/robots/robot_${Math.floor(Math.random() * 10000)}.png`
+}
+
+type GetOneByExternalIdParams = {
+    externalId: string
+    projectId: string
 }
 
 type ListParams = {

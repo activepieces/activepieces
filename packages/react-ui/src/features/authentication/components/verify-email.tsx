@@ -9,10 +9,9 @@ import { Card } from '@/components/ui/card';
 import { FullLogo } from '@/components/ui/full-logo';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { usePartnerStack } from '@/hooks/use-partner-stack';
 import { api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
-import { usePartnerStack } from '@/hooks/use-partner-stack';
-
 
 const VerifyEmail = () => {
   const [isExpired, setIsExpired] = useState(false);
@@ -21,7 +20,7 @@ const VerifyEmail = () => {
   const otp = searchParams.get('otpcode');
   const identityId = searchParams.get('identityId');
   const hasMutated = useRef(false);
-  const { reportSignup } = usePartnerStack()
+  const { reportSignup } = usePartnerStack();
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
@@ -31,7 +30,7 @@ const VerifyEmail = () => {
       });
     },
     onSuccess: ({ email, firstName }) => {
-      reportSignup(email, firstName) 
+      reportSignup(email, firstName);
       setTimeout(() => navigate('/sign-in'), 3000);
     },
     onError: (error) => {
