@@ -11,13 +11,20 @@ export const openaiProvider: AIProviderStrategy = {
     },
 
     calculateUsage: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage => {
-        const body = request.body as { size: string, n?: string, quality?: string }
+        const body = request.body as { size: string, model: string, n?: string, quality?: string }
         const apiResponse = response as {
             usage: 
             | { input_tokens: number, output_tokens: number }
             | { prompt_tokens: number, completion_tokens: number }
         } 
         const { provider } = request.params as { provider: string }
+
+        if (openaiProvider.isModerationRequest?.(request)) {
+            return {
+                cost: 0,
+                model: body.model,
+            }
+        }
 
         const providerConfig = getProviderConfig(provider)!
         const model = openaiProvider.extractModelId(request)!
@@ -138,5 +145,9 @@ export const openaiProvider: AIProviderStrategy = {
             return originalUrl.replace('openai/v1/', 'openai/openai/v1/') + '?api-version=preview'
         }
         return originalUrl
+    },
+
+    isModerationRequest: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean => {
+        return request.url.includes('/moderations') && (request.body as { model: string }).model === 'omni-moderation-latest'
     },
 } 

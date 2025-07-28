@@ -3,7 +3,7 @@ import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, Flow
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
-import { flowVersionRepoWrapper } from '../flows/flow-version/flow-version-repo-wrapper'
+import { flowVersionRepo } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
@@ -22,7 +22,7 @@ export const webhookHandler = {
             return flow.publishedVersionId
         }
 
-        const flowVersionSchema = await flowVersionRepoWrapper.createQueryBuilder()
+        const flowVersionSchema = await flowVersionRepo().createQueryBuilder()
             .select('id')
             .where({
                 flowId: flow.id,
