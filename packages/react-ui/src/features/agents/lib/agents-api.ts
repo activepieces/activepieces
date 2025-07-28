@@ -4,22 +4,25 @@ import {
   CreateAgentRequest,
   UpdateAgentRequestBody,
   ListAgentsQueryParams,
+  ListAgentRunsQueryParams,
   SeekPage,
   AgentRun,
+  RunAgentRequestBody,
 } from '@activepieces/shared';
 
 export const agentsApi = {
   async list(params?: ListAgentsQueryParams): Promise<SeekPage<Agent>> {
-    const query = {
-      limit: params?.limit ?? 100,
-      cursor: params?.cursor ?? '',
-    };
-
-    return await api.get<SeekPage<Agent>>(`/v1/agents`, query);
+    return await api.get<SeekPage<Agent>>(`/v1/agents`, params);
   },
 
   async get(id: string): Promise<Agent> {
     return await api.get<Agent>(`/v1/agents/${id}`);
+  },
+  async findByExteranlId(externalId: string): Promise<Agent | null> {
+    const seekPage = await agentsApi.list({
+      externalIds: [externalId],
+    });
+    return seekPage.data?.[0] ?? null;
   },
 
   async create(request: CreateAgentRequest): Promise<Agent> {
@@ -36,7 +39,13 @@ export const agentsApi = {
 };
 
 export const agentRunsApi = {
+  async list(params: ListAgentRunsQueryParams): Promise<SeekPage<AgentRun>> {
+    return await api.get<SeekPage<AgentRun>>(`/v1/agent-runs`, params);
+  },
   async get(id: string): Promise<AgentRun> {
     return await api.get<AgentRun>(`/v1/agent-runs/${id}`);
+  },
+  async run(request: RunAgentRequestBody): Promise<AgentRun> {
+    return await api.post<AgentRun>(`/v1/agent-runs`, request);
   },
 };

@@ -228,10 +228,10 @@ function extractConnectionIds(flowVersion: FlowVersion): string[] {
 }
 
 function extractAgentIds(flowVersion: FlowVersion): string[] {
-    return flowStructureUtil.getAllSteps(flowVersion.trigger).map(step => getAgentId(step)).filter(step => step !== null && step !== '')
+    return flowStructureUtil.getAllSteps(flowVersion.trigger).map(step => getExternalAgentId(step)).filter(step => step !== null && step !== '')
 }
 
-function getAgentId(action: Step) {
+function getExternalAgentId(action: Step) {
     if (isAgentPiece(action)) {
         return action.settings.input.agentId
     }
@@ -264,5 +264,5 @@ export const flowStructureUtil = {
     extractConnectionIds,
     extractAgentIds,
     isAgentPiece,
-    getAgentId,
+    getExternalAgentId,
 }
