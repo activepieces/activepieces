@@ -1,5 +1,5 @@
 import { ApQueueJob, DelayedJobData, JobData, JobStatus, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, RepeatableJobType, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
-import { apId, ExecutionType, extractHeaderFromRequest, FAIL_PARENT_ON_FAILURE_HEADER, FlowRunStatus, FlowStatus, isNil, PARENT_RUN_ID_HEADER, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
+import { apId, ExecutionType, FlowRunStatus, FlowStatus, isNil, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
@@ -112,7 +112,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             body: SubmitPayloadsRequest,
         },
     }, async (request) => {
-        const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType, environment } = request.body
+        const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType, environment, parentRunId, failParentOnFailure } = request.body
 
         const flowVersionExists = await flowVersionService(request.log).exists(flowVersionId)
         if (!flowVersionExists) {
@@ -133,8 +133,8 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
                 executionType: ExecutionType.BEGIN,
                 progressUpdateType,
                 executeTrigger: false,
-                parentRunId: extractHeaderFromRequest(request, PARENT_RUN_ID_HEADER),
-                failParentOnFailure: extractHeaderFromRequest(request, FAIL_PARENT_ON_FAILURE_HEADER) === 'true',
+                parentRunId,
+                failParentOnFailure,
             })
         })
         return Promise.all(createFlowRuns)

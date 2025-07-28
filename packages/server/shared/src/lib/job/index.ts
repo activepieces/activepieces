@@ -82,7 +82,8 @@ export const SubmitPayloadsRequest = Type.Object({
     httpRequestId: Type.Optional(Type.String()),
     payloads: Type.Array(Type.Unknown()),
     environment: Type.Enum(RunEnvironment),
-    headers: Type.Optional(Type.Record(Type.String(), Type.Union([Type.String(), Type.Boolean()]))),
+    parentRunId: Type.Optional(Type.String()),
+    failParentOnFailure: Type.Optional(Type.Boolean()),
 })
 
 export type SubmitPayloadsRequest = Static<typeof SubmitPayloadsRequest>

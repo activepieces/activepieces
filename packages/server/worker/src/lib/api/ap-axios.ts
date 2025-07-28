@@ -1,5 +1,5 @@
 import { spreadIfDefined } from '@activepieces/shared'
-import axios, { AxiosError, AxiosInstance, isAxiosError, RawAxiosRequestHeaders } from 'axios'
+import axios, { AxiosError, AxiosInstance, isAxiosError } from 'axios'
 import axiosRetry from 'axios-retry'
 import { StatusCodes } from 'http-status-codes'
 
@@ -36,9 +36,9 @@ export class ApAxiosClient {
         return error instanceof ApAxiosError
     }
 
-    async post<T>(url: string, data: unknown, headers: RawAxiosRequestHeaders = {}): Promise<T> {
+    async post<T>(url: string, data: unknown): Promise<T> {
         try {
-            const response = await this._axios.post<T>(url, data, { headers })
+            const response = await this._axios.post<T>(url, data)
             return response.data
         }
         catch (error) {

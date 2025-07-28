@@ -518,7 +518,7 @@ const getFlowRunOrCreate = async (
         flowDisplayName,
         startTime: new Date().toISOString(),
         parentRunId,
-        failParentOnFailure,
+        failParentOnFailure: failParentOnFailure ?? true,
     }
 }
 
@@ -569,7 +569,7 @@ type GetOrCreateParams = {
     flowDisplayName: string
     environment: RunEnvironment
     parentRunId?: FlowRunId
-    failParentOnFailure: boolean
+    failParentOnFailure?: boolean
 }
 
 type ListParams = {
@@ -593,7 +593,7 @@ type StartParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
     parentRunId?: FlowRunId
-    failParentOnFailure: boolean
+    failParentOnFailure?: boolean
     existingFlowRunId?: FlowRunId
     environment: RunEnvironment
     payload: unknown

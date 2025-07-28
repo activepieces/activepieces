@@ -61,7 +61,9 @@ export const workerApiService = (workerToken: string) => {
                 limit(() => client.post<FlowRun[]>('/v1/workers/submit-payloads', {
                     ...request,
                     payloads,
-                }, request.headers)),
+                    parentRunId: request.parentRunId,
+                    failParentOnFailure: request.failParentOnFailure,
+                })),
             )
 
             const results = await Promise.allSettled(promises)
