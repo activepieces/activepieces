@@ -47,7 +47,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
             width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
             height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
           }}
-          className={cn('transition-all bg-primary/90  rounded-xs', {
+          className={cn('transition-all bg-primary/90  rounded-full', {
             'shadow-add-button': isStepInsideDropZone,
           })}
         >
@@ -58,7 +58,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
               left: `${-flowUtilConsts.AP_NODE_SIZE.STEP.width / 2}px`,
               top: `${-flowUtilConsts.AP_NODE_SIZE.STEP.height / 2}px`,
             }}
-            className={cn(' absolute    rounded-xs box-content ')}
+            className={cn(' absolute    rounded-full box-content ')}
             ref={setNodeRef}
           ></div>
         </div>
@@ -79,7 +79,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                 width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
                 height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
               }}
-              className={cn('rounded-xs cursor-pointer transition-all z-50', {
+              className={cn('rounded-full cursor-pointer transition-all z-50', {
                 'shadow-add-button': isPieceSelectorOpen,
               })}
             >
@@ -89,14 +89,14 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                   height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
                 }}
                 className={cn(
-                  'bg-light-blue  relative group overflow-visible rounded-xs cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
+                  'bg-slate-200  relative group overflow-visible rounded-full cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
                   {
                     'bg-primary ': isPieceSelectorOpen,
                   },
                 )}
               >
                 {!isPieceSelectorOpen && (
-                  <Plus className="w-3 h-3 stroke-[3px] text-white" />
+                  <Plus className="w-3 h-3 stroke-[3px] text-slate-500" />
                 )}
               </div>
             </div>

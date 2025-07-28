@@ -90,6 +90,7 @@ module.exports = {
         slate:{
           400: 'hsl(var(--slate-400))',
           50: 'hsl(var(--slate-50))',
+          500: 'hsl(var(--slate-500))',
         },
         flow: {
           bg: 'hsl(var(--flow-bg))',

@@ -67,6 +67,7 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
     --slate-50: 210 40% 98%;
     --slate-400: 215 20% 65%;
+    --slate-500: 215 16% 47%;
     --flow-bg: 210 40% 98%;
     --flow-bg-pattern: 210 4% 78%;
   }
@@ -153,6 +154,7 @@
   --xy-selection-border-default: 1px dotted hsl(var(--primary-300)) !important;
   --xy-selection-background-color-default: hsl(var(--primary-100)/0.25) !important;
   --xy-background-pattern-color-props: hsl(var(--slate-50)/ 0.1) !important;
+  --xy-edge-stroke-default: hsl(var(--slate-500)) !important;
 }
 
 
