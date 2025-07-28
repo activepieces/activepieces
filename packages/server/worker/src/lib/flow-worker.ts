@@ -148,11 +148,11 @@ async function consumeJob(queueName: QueueName, jobData: JobData, attempsStarted
 
 async function markJobAsCompleted(queueName: QueueName, engineToken: string, log: FastifyBaseLogger): Promise<void> {
     switch (queueName) {
-        case QueueName.ONE_TIME:
-        case QueueName.AGENTS: {
+        case QueueName.ONE_TIME: {
             // This is will be marked as completed in update-run endpoint
             break
         }
+        case QueueName.AGENTS:
         case QueueName.USERS_INTERACTION:
         case QueueName.SCHEDULED:
         case QueueName.WEBHOOK: {

@@ -28,9 +28,10 @@ import { NewFieldPopup } from './new-field-popup';
 import { SelectCell, SelectHeaderCell } from './select-column';
 
 export function useTableColumns(createEmptyRecord: () => void) {
-  const [fields, updateRecord, setSelectedAgentRunId] = useTableState(
-    (state) => [state.fields, state.updateRecord, state.setSelectedAgentRunId],
-  );
+  const [fields, setSelectedAgentRunId] = useTableState((state) => [
+    state.fields,
+    state.setSelectedAgentRunId,
+  ]);
 
   const { data: maxFields } = flagsHooks.useFlag<number>(
     ApFlagId.MAX_FIELDS_PER_TABLE,
@@ -42,7 +43,7 @@ export function useTableColumns(createEmptyRecord: () => void) {
   const isAllowedToCreateField =
     userHasTableWritePermission && maxFields && fields.length < maxFields;
 
-  const newFieldColumn = {
+  const newFieldColumn: Column<Row, { id: string }> = {
     key: 'new-field',
     minWidth: 67,
     maxWidth: 67,
@@ -74,7 +75,6 @@ export function useTableColumns(createEmptyRecord: () => void) {
           }}
         />
       ),
-
       renderSummaryCell: () => (
         <AddRecordButton
           handleClick={createEmptyRecord}
@@ -109,14 +109,6 @@ export function useTableColumns(createEmptyRecord: () => void) {
               setSelectedAgentRunId(row.agentRunId);
             }
           }}
-          onRowChange={(newRow) => {
-            updateRecord(rowIdx, {
-              values: fields.map((field, fIndex) => ({
-                fieldIndex: fIndex,
-                value: newRow[field.uuid] ?? '',
-              })),
-            });
-          }}
         />
       ),
       renderSummaryCell: () => (
@@ -128,7 +120,6 @@ export function useTableColumns(createEmptyRecord: () => void) {
   if (isAllowedToCreateField) {
     columns.push(newFieldColumn);
   }
-
   return columns;
 }
 

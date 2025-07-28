@@ -1,6 +1,9 @@
 import { ActionBase } from '@activepieces/pieces-framework'
 import { rejectedPromiseHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
+    AI_USAGE_FEATURE_HEADER,
+    AI_USAGE_MCP_ID_HEADER,
+    AIUsageFeature,
     assertNotNullOrUndefined,
     EngineResponseStatus,
     ExecuteActionResponse,
@@ -119,6 +122,7 @@ async function addPieceToServer(
                     platformId,
                     projectId,
                     logger,
+                    mcpId: mcpTool.mcpId,
                 })
 
                 const result = await userInteractionWatcher(logger)
@@ -308,6 +312,7 @@ async function addFlowToServer(
 async function initializeOpenAIModel({
     platformId,
     projectId,
+    mcpId,
 }: InitializeOpenAIModelParams): Promise<LanguageModelV1> {
     const model = 'gpt-4.1-mini'
     const baseUrl = await domainHelper.getPublicApiUrl({
@@ -320,9 +325,13 @@ async function initializeOpenAIModel({
         projectId,
     })
 
-    return  createOpenAI({
+    return createOpenAI({
         baseURL: baseUrl,
         apiKey,
+        headers: {
+            [AI_USAGE_FEATURE_HEADER]: AIUsageFeature.MCP,
+            [AI_USAGE_MCP_ID_HEADER]: mcpId,
+        },
     }).chat(model)
 }
 
@@ -336,6 +345,7 @@ async function extractActionParametersFromUserInstructions({
     platformId,
     projectId,
     logger,
+    mcpId,
 }: ExtractActionParametersParams): Promise<Record<string, unknown>> {
     const connectionReference = `{{connections['${toolPieceMetadata.connectionExternalId}']}}`
     assertNotNullOrUndefined(connectionReference, 'Tool has no connection with the piece, please try to add a connection to the tool')
@@ -343,6 +353,7 @@ async function extractActionParametersFromUserInstructions({
     const aiModel = await initializeOpenAIModel({
         platformId,
         projectId,
+        mcpId,
     })
 
     const actionProperties = actionMetadata.props
@@ -437,12 +448,14 @@ type ExtractActionParametersParams = {
     platformId: string
     projectId: string
     logger: FastifyBaseLogger
+    mcpId: string
 }
 
 
 type InitializeOpenAIModelParams = {
     platformId: string
     projectId: string
+    mcpId: string
 }
 
 type TrackToolCallParams = {
