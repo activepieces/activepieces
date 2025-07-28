@@ -2,8 +2,8 @@
 import {
     ALL_PRINCIPAL_TYPES,
     EventPayload,
-    extractHeaderFromRequest,
     FAIL_PARENT_ON_FAILURE_HEADER,
+    FlowRun,
     isMultipartFile,
     PARENT_RUN_ID_HEADER,
     WebhookUrlParams,
@@ -23,8 +23,6 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         '/:flowId/sync',
         WEBHOOK_PARAMS,
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-            const parentRunId = extractHeaderFromRequest(request, PARENT_RUN_ID_HEADER)
-            const failParentOnFailure = extractHeaderFromRequest(request, FAIL_PARENT_ON_FAILURE_HEADER) === 'true'
             const response = await webhookService.handleWebhook({
                 data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
                 logger: request.log,
@@ -35,8 +33,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                     request.params.flowId,
                 ),
                 execute: true,
-                parentRunId,
-                failParentOnFailure,
+                ...extractHeaderFromRequest(request),
             })
             await reply
                 .status(response.status)
@@ -49,8 +46,6 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         '/:flowId',
         WEBHOOK_PARAMS,
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-            const parentRunId = extractHeaderFromRequest(request, PARENT_RUN_ID_HEADER)
-            const failParentOnFailure = extractHeaderFromRequest(request, FAIL_PARENT_ON_FAILURE_HEADER) === 'true'
             const response = await webhookService.handleWebhook({
                 data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
                 logger: request.log,
@@ -61,8 +56,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 ),
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                 execute: true,
-                parentRunId,
-                failParentOnFailure,
+                ...extractHeaderFromRequest(request),
             })
             await reply
                 .status(response.status)
@@ -72,8 +66,6 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     )
 
     app.all('/:flowId/draft/sync', WEBHOOK_PARAMS, async (request, reply) => {
-        const parentRunId = extractHeaderFromRequest(request, PARENT_RUN_ID_HEADER)
-        const failParentOnFailure = extractHeaderFromRequest(request, FAIL_PARENT_ON_FAILURE_HEADER) === 'true'
         const response = await webhookService.handleWebhook({
             data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
             logger: request.log,
@@ -85,8 +77,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             onRunCreated: (run) => {
                 app.io.to(run.projectId).emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, run)
             },
-            parentRunId,
-            failParentOnFailure,
+            ...extractHeaderFromRequest(request),
         })
         await reply
             .status(response.status)
@@ -95,8 +86,6 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.all('/:flowId/draft', WEBHOOK_PARAMS, async (request, reply) => {
-        const parentRunId = extractHeaderFromRequest(request, PARENT_RUN_ID_HEADER)
-        const failParentOnFailure = extractHeaderFromRequest(request, FAIL_PARENT_ON_FAILURE_HEADER) === 'true'
         const response = await webhookService.handleWebhook({
             data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
             logger: request.log,
@@ -105,8 +94,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             saveSampleData: true,
             flowVersionToRun: WebhookFlowVersionToRun.LATEST,
             execute: true,
-            parentRunId,
-            failParentOnFailure,
+            ...extractHeaderFromRequest(request),
         })
         await reply
             .status(response.status)
@@ -115,8 +103,6 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.all('/:flowId/test', WEBHOOK_PARAMS, async (request, reply) => {
-        const parentRunId = extractHeaderFromRequest(request, PARENT_RUN_ID_HEADER)
-        const failParentOnFailure = extractHeaderFromRequest(request, FAIL_PARENT_ON_FAILURE_HEADER) === 'true'
         const response = await webhookService.handleWebhook({
             data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
             logger: request.log,
@@ -125,8 +111,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             saveSampleData: true,
             flowVersionToRun: WebhookFlowVersionToRun.LATEST,
             execute: false,
-            parentRunId,
-            failParentOnFailure,
+            ...extractHeaderFromRequest(request),
         })
         await reply
             .status(response.status)
@@ -200,3 +185,10 @@ async function convertBody(
     return request.body
 }
 
+
+function extractHeaderFromRequest(request: FastifyRequest): Pick<FlowRun, 'parentRunId' | 'failParentOnFailure'> {
+    return {
+        parentRunId: request.headers[PARENT_RUN_ID_HEADER] as string,
+        failParentOnFailure: request.headers[FAIL_PARENT_ON_FAILURE_HEADER] === 'true',
+    }
+}

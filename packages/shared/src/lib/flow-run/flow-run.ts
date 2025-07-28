@@ -48,8 +48,3 @@ export const FlowRun = Type.Object({
 })
 
 export type FlowRun = Static<typeof FlowRun> & ExecutionState
-
-export function extractHeaderFromRequest(request: FastifyRequest, headerName: string): string | undefined {
-    const header = request.headers[headerName]
-    return Array.isArray(header) ? header[0] : header ?? undefined
-}
