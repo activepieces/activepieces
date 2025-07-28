@@ -88,7 +88,7 @@ export const updateContact = createAction({
     if (dynamicContactFields && typeof dynamicContactFields === 'object') {
       const fieldsObj = dynamicContactFields as Record<string, any>;
       for (const key in fieldsObj) {
-        if (fieldsObj.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(fieldsObj, key)) {
           const value = fieldsObj[key];
           if (value !== undefined && value !== null && value !== '') {
             fields.push({
