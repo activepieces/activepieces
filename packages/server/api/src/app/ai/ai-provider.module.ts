@@ -79,6 +79,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                 const completeResponse = JSON.parse(buffer.toString())
                                 usage = aiProviderService.calculateUsage(provider, request, completeResponse)
                             }
+
                             const metadata = buildAIUsageMetadata(request.headers)
                             await platformUsageService(app.log).increaseAiCreditUsage({ 
                                 projectId,
@@ -116,7 +117,6 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 })
             }
 
-            // Validate AI usage metadata headers
             validateAIUsageHeaders(request.headers)
 
             const provider = (request.params as { provider: string }).provider
@@ -130,7 +130,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             }
 
             const model = aiProviderService.extractModelId(provider, request)
-            if (!model || !aiProviderService.isModelSupported(provider, model)) {
+            if (!model || !aiProviderService.isModelSupported(provider, model, request)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
                     params: {

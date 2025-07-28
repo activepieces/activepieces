@@ -124,6 +124,14 @@ export const aiProviderService = {
         return providerConfig.baseUrl
     },
 
+    isModerationRequest(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
+        const providerStrategy = aiProvidersStrategies[provider]
+        if (providerStrategy?.isModerationRequest) {
+            return providerStrategy.isModerationRequest(request)
+        }
+        return false
+    },
+
     calculateUsage(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage {
         const providerStrategy = aiProvidersStrategies[provider]
         return providerStrategy.calculateUsage(request, response)
@@ -135,9 +143,13 @@ export const aiProviderService = {
         return providerStrategy.extractModelId(request)
     },
 
-    isModelSupported(provider: string, model: string): boolean {
+    isModelSupported(provider: string, model: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
         const providerConfig = getProviderConfig(provider)!
-        return !isNil(providerConfig.languageModels.find((m) => m.instance.modelId === model)) || !isNil(providerConfig.imageModels.find((m) => m.instance.modelId === model))
+        return (
+            !isNil(providerConfig.languageModels.find((m) => m.instance.modelId === model)) ||
+            !isNil(providerConfig.imageModels.find((m) => m.instance.modelId === model)) ||
+            this.isModerationRequest(provider, request)
+        )
     },
 
     isStreaming(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {

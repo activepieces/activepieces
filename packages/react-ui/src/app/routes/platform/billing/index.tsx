@@ -1,3 +1,5 @@
+import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
+import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Wand, Zap } from 'lucide-react';
 import { useState } from 'react';
@@ -8,6 +10,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { ActivateLicenseDialog } from '@/features/billing/components/activate-license-dialog';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
+import { AiCreditsUsageTable } from '@/features/billing/components/ai-credits-usage-table';
 import { BusinessUserSeats } from '@/features/billing/components/business-user-seats';
 import { FeatureStatus } from '@/features/billing/components/features-status';
 import { LicenseKey } from '@/features/billing/components/lisence-key';
@@ -21,8 +24,6 @@ import {
 } from '@/features/billing/lib/billing-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
-import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 export default function Billing() {
   const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
@@ -120,7 +121,11 @@ export default function Billing() {
       )}
 
       {isEnterprise ? (
-        <LicenseKey platform={platform} />
+        <>
+          <h3 className="text-lg font-semibold">{t('AI Credits')}</h3>
+          <AiCreditsUsageTable />
+          <LicenseKey platform={platform} />
+        </>
       ) : (
         <Card>
           <CardHeader className="border-b">
