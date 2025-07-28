@@ -156,7 +156,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 httpRequestId: constants.httpRequestId,
                 runResponse: {
                     status: webhookResponse.status ?? 200,
-                    body: webhookResponse.body,
+                    body: webhookResponse.body ?? {},
                     headers: webhookResponse.headers ?? {},
                 },
             })

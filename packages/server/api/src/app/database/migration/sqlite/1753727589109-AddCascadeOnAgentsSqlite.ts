@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddCascadeOnAgentsSqlite1753727589109 implements MigrationInterface {
     name = 'AddCascadeOnAgentsSqlite1753727589109'
@@ -6,7 +6,7 @@ export class AddCascadeOnAgentsSqlite1753727589109 implements MigrationInterface
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_agent_projectId_externalId"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_agent" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -25,7 +25,7 @@ export class AddCascadeOnAgentsSqlite1753727589109 implements MigrationInterface
                 "outputFields" text NOT NULL,
                 "externalId" varchar NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_agent"(
                     "id",
@@ -60,20 +60,20 @@ export class AddCascadeOnAgentsSqlite1753727589109 implements MigrationInterface
                 "outputFields",
                 "externalId"
             FROM "agent"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "agent"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_agent"
                 RENAME TO "agent"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_agent_projectId_externalId" ON "agent" ("projectId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_agent_projectId_externalId"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_agent" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -94,7 +94,7 @@ export class AddCascadeOnAgentsSqlite1753727589109 implements MigrationInterface
                 CONSTRAINT "fk_agent_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_agent_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_agent"(
                     "id",
@@ -129,27 +129,27 @@ export class AddCascadeOnAgentsSqlite1753727589109 implements MigrationInterface
                 "outputFields",
                 "externalId"
             FROM "agent"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "agent"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_agent"
                 RENAME TO "agent"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_agent_projectId_externalId" ON "agent" ("projectId", "externalId")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_agent_projectId_externalId"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "agent"
                 RENAME TO "temporary_agent"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "agent" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -168,7 +168,7 @@ export class AddCascadeOnAgentsSqlite1753727589109 implements MigrationInterface
                 "outputFields" text NOT NULL,
                 "externalId" varchar NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "agent"(
                     "id",
@@ -203,20 +203,20 @@ export class AddCascadeOnAgentsSqlite1753727589109 implements MigrationInterface
                 "outputFields",
                 "externalId"
             FROM "temporary_agent"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_agent"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_agent_projectId_externalId" ON "agent" ("projectId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_agent_projectId_externalId"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "agent"
                 RENAME TO "temporary_agent"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "agent" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -237,7 +237,7 @@ export class AddCascadeOnAgentsSqlite1753727589109 implements MigrationInterface
                 CONSTRAINT "FK_bb2611fd1fdb5469f50c00eaf31" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION,
                 CONSTRAINT "FK_7103e2d16e62e3e3dc335307175" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "agent"(
                     "id",
@@ -272,13 +272,13 @@ export class AddCascadeOnAgentsSqlite1753727589109 implements MigrationInterface
                 "outputFields",
                 "externalId"
             FROM "temporary_agent"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_agent"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_agent_projectId_externalId" ON "agent" ("projectId", "externalId")
-        `);
+        `)
     }
 
 }
