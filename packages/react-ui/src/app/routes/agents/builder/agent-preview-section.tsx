@@ -1,11 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { t } from 'i18next';
-import {
-  Loader2,
-  MessageSquare,
-  ChevronsRight,
-  Play,
-} from 'lucide-react';
+import { Loader2, MessageSquare, ChevronsRight, Play } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';

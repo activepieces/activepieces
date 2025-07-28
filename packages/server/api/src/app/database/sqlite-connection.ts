@@ -25,7 +25,6 @@ import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/17
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
 import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1752004202722-SplitUpPieceMetadataIntoTools'
-import { MakeTriggerNullable1753366163403 } from './migration/postgres/1753366163403-MakeTriggerNullable'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -135,6 +134,7 @@ import { AddTableAgentsSqlite1752851142438 } from './migration/sqlite/1752851142
 import { AddTableAutomationStatusSqlite1753013268133 } from './migration/sqlite/1753013268133-AddTableAutomationStatusSqlite'
 import { AddIndexForAgentTableSqlite1753400496920 } from './migration/sqlite/1753400496920-AddIndexForAgentTableSqlite'
 import { AddExternalAgentIdSqlite1753643287673 } from './migration/sqlite/1753643287673-AddExternalAgentIdSqlite'
+import { AddCascadeOnAgentsSqlite1753727589109 } from './migration/sqlite/1753727589109-AddCascadeOnAgentsSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -285,6 +285,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTableAutomationStatusSqlite1753013268133,
         AddIndexForAgentTableSqlite1753400496920,
         AddExternalAgentIdSqlite1753643287673,
+        AddCascadeOnAgentsSqlite1753727589109
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
