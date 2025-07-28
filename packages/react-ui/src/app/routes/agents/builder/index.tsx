@@ -46,11 +46,9 @@ const AgentBuilderContent = ({
   showUseInFlow = false,
   onChange,
 }: AgentBuilderProps) => {
-  const [isSaving, testSectionIsOpen, currentAgent] = useBuilderAgentState((state) => [
-    state.isSaving,
-    state.testSectionIsOpen,
-    state.agent,
-  ]);
+  const [isSaving, testSectionIsOpen, currentAgent] = useBuilderAgentState(
+    (state) => [state.isSaving, state.testSectionIsOpen, state.agent],
+  );
   const [activeTab, setActiveTab] = useState<AgentBuilderTabs>(
     AgentBuilderTabs.CONFIGURE,
   );

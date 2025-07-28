@@ -285,7 +285,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTableAutomationStatusSqlite1753013268133,
         AddIndexForAgentTableSqlite1753400496920,
         AddExternalAgentIdSqlite1753643287673,
-        AddCascadeOnAgentsSqlite1753727589109
+        AddCascadeOnAgentsSqlite1753727589109,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

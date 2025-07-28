@@ -34,12 +34,12 @@ export const AgentPromptEditior = () => {
   }, [agent]);
 
   const systemPromptValue = watch('systemPrompt');
-  
+
   return (
     <form
       className="flex-1 min-h-0 w-full cursor-text"
       onClick={handleContainerClick}
-      onSubmit={e => e.preventDefault()}
+      onSubmit={(e) => e.preventDefault()}
     >
       <Textarea
         id="system-prompt"

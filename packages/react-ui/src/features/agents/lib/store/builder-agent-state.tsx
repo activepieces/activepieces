@@ -1,24 +1,29 @@
 import { create } from 'zustand';
 
 import { PromiseQueue } from '@/lib/promise-queue';
-import { Agent, UpdateAgentRequestBody, debounce, spreadIfDefined } from '@activepieces/shared';
+import {
+  Agent,
+  UpdateAgentRequestBody,
+  debounce,
+  spreadIfDefined,
+} from '@activepieces/shared';
 
 import { agentsApi } from '../agents-api';
 
 const agentUpdatesQueue = new PromiseQueue();
 
-const debouncedAddToQueue = debounce(
-  (updateRequest: () => Promise<void>) => {
-    agentUpdatesQueue.add(updateRequest);
-  },
-  500
-);
+const debouncedAddToQueue = debounce((updateRequest: () => Promise<void>) => {
+  agentUpdatesQueue.add(updateRequest);
+}, 500);
 
 export type BuilderAgentState = {
   agent: Agent;
   isSaving: boolean;
   setAgent: (agent: Agent) => void;
-  updateAgent: (updates: UpdateAgentRequestBody, debounceUpdate?: boolean) => void;
+  updateAgent: (
+    updates: UpdateAgentRequestBody,
+    debounceUpdate?: boolean,
+  ) => void;
   testSectionIsOpen: boolean;
   setTestSectionIsOpen: (isOpen: boolean) => void;
 };
@@ -32,8 +37,10 @@ export const createBuilderAgentStore = (initialAgent: Agent) => {
       setTestSectionIsOpen: (isOpen: boolean) =>
         set({ testSectionIsOpen: isOpen }),
       setAgent: (agent: Agent) => set({ agent }),
-      updateAgent: (requestBody: UpdateAgentRequestBody, debounceUpdate?: boolean) => {
-
+      updateAgent: (
+        requestBody: UpdateAgentRequestBody,
+        debounceUpdate?: boolean,
+      ) => {
         set((state) => ({
           agent: {
             ...state.agent,
