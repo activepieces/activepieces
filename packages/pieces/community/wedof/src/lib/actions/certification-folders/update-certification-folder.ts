@@ -388,17 +388,17 @@ export const updateCertificationFolder = createAction({
       switch (fieldName) {
         case 'enrollmentDate':
           message['enrollmentDate'] = enrollmentDate
-            ? dayjs(enrollmentDate).format('YYYY-MM-DDTHH:mm:ssZ')
+            ? dayjs(enrollmentDate).format('YYYY-MM-DD')
             : null;
           break;
         case 'examinationDate':
           message['examinationDate'] = examinationDate
-            ? dayjs(examinationDate).format('YYYY-MM-DDTHH:mm:ssZ')
+            ? dayjs(examinationDate).format('YYYY-MM-DD')
             : null;
           break;
         case 'examinationEndDate':
           message['examinationEndDate'] = examinationEndDate
-            ? dayjs(examinationEndDate).format('YYYY-MM-DDTHH:mm:ssZ')
+            ? dayjs(examinationEndDate).format('YYYY-MM-DD')
             : null;
           break;
         case 'examinationPlace':
