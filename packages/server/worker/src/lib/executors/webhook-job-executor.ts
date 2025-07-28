@@ -1,7 +1,9 @@
 import { pinoLogging, WebhookJobData } from '@activepieces/server-shared'
 import {
     EventPayload,
+    FAIL_PARENT_ON_FAILURE_HEADER,
     isNil,
+    PARENT_RUN_ID_HEADER,
     PopulatedFlow,
     ProgressUpdateType,
 } from '@activepieces/shared'
@@ -47,6 +49,10 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             simulate: saveSampleData,
         })
 
+        const headers = {
+            ...(data.parentRunId ? { [PARENT_RUN_ID_HEADER]: data.parentRunId } : {}),
+            ...(data.failParentOnFailure ? { [FAIL_PARENT_ON_FAILURE_HEADER]: data.failParentOnFailure } : {}),
+        }
         await workerApiService(workerToken).startRuns({
             flowVersionId: populatedFlowToRun.version.id,
             projectId: populatedFlowToRun.projectId,
@@ -54,7 +60,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             progressUpdateType: ProgressUpdateType.NONE,
             httpRequestId: data.requestId,
             payloads: filteredPayloads,
-            headers: data.headers,
+            headers,
         })
     },
 })

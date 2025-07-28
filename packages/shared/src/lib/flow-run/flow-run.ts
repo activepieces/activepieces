@@ -5,7 +5,8 @@ import { ExecutionState } from './execution/execution-output'
 import { FlowRunStatus, PauseMetadata } from './execution/flow-execution'
 import { FastifyRequest } from 'fastify'
 
-export const SUBFLOW_PARENT_RUN_ID_HEADER = 'ap-subflow-parent-run-id'
+export const PARENT_RUN_ID_HEADER = 'ap-parent-run-id'
+export const FAIL_PARENT_ON_FAILURE_HEADER = 'ap-fail-parent-on-failure'
 
 export type FlowRunId = ApId
 
@@ -48,7 +49,7 @@ export const FlowRun = Type.Object({
 
 export type FlowRun = Static<typeof FlowRun> & ExecutionState
 
-export function extractParentRunIdFromHeader(request: FastifyRequest): string | undefined {
-    const parentRunIdHeader = request.headers[SUBFLOW_PARENT_RUN_ID_HEADER]
-    return Array.isArray(parentRunIdHeader) ? parentRunIdHeader[0] : parentRunIdHeader ?? undefined
+export function extractHeaderFromRequest(request: FastifyRequest, headerName: string): string | undefined {
+    const header = request.headers[headerName]
+    return Array.isArray(header) ? header[0] : header ?? undefined
 }

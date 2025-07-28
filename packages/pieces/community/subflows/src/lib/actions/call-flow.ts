@@ -4,7 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ActivepiecesError, ErrorCode, ExecutionType, FlowStatus, isNil, PauseType, SUBFLOW_PARENT_RUN_ID_HEADER, TriggerType } from '@activepieces/shared';
+import { ActivepiecesError, ErrorCode, ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, isNil, PauseType, PARENT_RUN_ID_HEADER, TriggerType } from '@activepieces/shared';
 import { CallableFlowRequest, CallableFlowResponse } from '../common';
 
 type FlowValue = {
@@ -160,7 +160,8 @@ export const callFlow = createAction({
       url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}`,
       headers: {
         'Content-Type': 'application/json',
-        [SUBFLOW_PARENT_RUN_ID_HEADER]: context.run.id,
+        [PARENT_RUN_ID_HEADER]: context.run.id,
+        [FAIL_PARENT_ON_FAILURE_HEADER]: context.propsValue.waitForResponse ? 'true' : 'false',
       },
       body: {
         data: payload,

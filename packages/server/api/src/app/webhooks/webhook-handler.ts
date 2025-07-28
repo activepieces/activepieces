@@ -34,7 +34,7 @@ export const webhookHandler = {
     },
 
     async handleAsync(params: AsyncWebhookParams): Promise<EngineHttpResponse> {
-        const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment, headers } = params
+        const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment, parentRunId, failParentOnFailure } = params
 
         await jobQueue(logger).add({
             id: webhookRequestId,
@@ -49,7 +49,8 @@ export const webhookHandler = {
                 flowVersionIdToRun,
                 runEnvironment,
                 execute,
-                headers,
+                parentRunId,
+                failParentOnFailure,
             },
             priority: DEFAULT_PRIORITY,
         })
@@ -64,7 +65,7 @@ export const webhookHandler = {
     },
 
     async handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse> {
-        const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, headers } = params
+        const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, parentRunId, failParentOnFailure } = params
 
         if (saveSampleData) {
             rejectedPromiseHandler(savePayload({
@@ -74,7 +75,8 @@ export const webhookHandler = {
                 payload,
                 flowVersionIdToRun,
                 runEnvironment,
-                headers,
+                parentRunId,
+                failParentOnFailure,
             }), logger)
         }
 
@@ -98,8 +100,8 @@ export const webhookHandler = {
             httpRequestId: webhookRequestId,
             executionType: ExecutionType.BEGIN,
             progressUpdateType: ProgressUpdateType.WEBHOOK_RESPONSE,
-            parentRunId: undefined,
-            failParentOnFailure: false,
+            parentRunId,
+            failParentOnFailure,
         })
 
         params.onRunCreated?.(createdRun)
@@ -113,7 +115,7 @@ export const webhookHandler = {
 }
 
 async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | 'webhookHeader' | 'execute'>): Promise<void> {
-    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, runEnvironment, headers } = params
+    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, runEnvironment, parentRunId, failParentOnFailure } = params
     await webhookHandler.handleAsync({
         flow,
         logger,
@@ -124,7 +126,8 @@ async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | '
         runEnvironment,
         execute: false,
         webhookHeader: '',
-        headers,
+        parentRunId,
+        failParentOnFailure,
     })
     await webhookSimulationService(logger).delete({ flowId: flow.id, projectId: flow.projectId })
 }
@@ -140,7 +143,8 @@ type AsyncWebhookParams = {
     saveSampleData: boolean
     runEnvironment: RunEnvironment
     execute: boolean
-    headers?: Record<string, string>
+    parentRunId?: string
+    failParentOnFailure: boolean
 }
 
 
@@ -156,6 +160,7 @@ type SyncWebhookParams = {
     synchronousHandlerId: string
     flowVersionIdToRun: FlowVersionId   
     onRunCreated?: (run: FlowRun) => void
-    headers?: Record<string, string>
+    parentRunId?: string
+    failParentOnFailure: boolean
 }
 

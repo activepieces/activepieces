@@ -267,6 +267,7 @@ async function addFlowToServer(
                 saveSampleData: await webhookSimulationService(logger).exists(flowId),
                 payload: originalParams,
                 execute: true,
+                failParentOnFailure: true,
             })
 
             trackToolCall({ mcpId, toolName, projectId, logger })
