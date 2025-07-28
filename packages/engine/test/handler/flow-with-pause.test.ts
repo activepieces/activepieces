@@ -194,7 +194,7 @@ describe('flow with pause', () => {
         })
     })
 
-    it('should pause at most one flow when router has multiple branches with pause actions', async () => {
+    it('should pause at most one action when router has multiple branches with pause actions', async () => {
         const routerWithTwoPauseActions = buildRouterWithOneCondition({
             conditions: [
                 {
