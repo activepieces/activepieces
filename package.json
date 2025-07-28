@@ -7,6 +7,7 @@
     "serve:frontend": "nx serve react-ui",
     "serve:backend": "nx serve server-api",
     "serve:engine": "nx serve engine",
+    "push": "npx nx run-many --target=lint --fix && git push",
     "dev": "concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "dev:backend": "concurrently -n \"API,ENG\" -c \"bgGreen.bold,bgRed.bold\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "dev:frontend": "concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\"",
