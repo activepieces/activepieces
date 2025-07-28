@@ -428,7 +428,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         MakeTriggerNullable1753366163403,
         AddIndexForAgentTable1753400133786,
         AddAIUsageMetadatapostgres1753624069238,
-        AddParentRunIdToFlowRun1753699877817
+        AddParentRunIdToFlowRun1753699877817,
     ]
 
     const edition = system.getEdition()

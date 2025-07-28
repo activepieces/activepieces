@@ -1,5 +1,5 @@
 import { ApQueueJob, DelayedJobData, JobData, JobStatus, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, RepeatableJobType, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
-import { apId, ExecutionType, FlowRunStatus, FlowStatus, isNil, PrincipalType, ProgressUpdateType, RunEnvironment, TriggerPayload } from '@activepieces/shared'
+import { apId, ExecutionType, FlowRunStatus, FlowStatus, isNil, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'

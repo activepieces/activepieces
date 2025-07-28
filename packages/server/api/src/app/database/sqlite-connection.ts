@@ -285,7 +285,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTableAutomationStatusSqlite1753013268133,
         MakeTriggerNullable1753366163403,
         AddIndexForAgentTableSqlite1753400496920,
-        AddParentRunIdToFlowRunSqlite1753719777841
+        AddParentRunIdToFlowRunSqlite1753719777841,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
