@@ -85,7 +85,7 @@ export const ApRouterEndCanvasEdge = ({
           y={
             targetY -
             verticalLineLength +
-            flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height
+            flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height/2
           }
           width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
           height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}

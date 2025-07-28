@@ -11,12 +11,18 @@ import { ApStepCanvasNode } from '../nodes/step-node';
 import { ApEdgeType, ApNodeType } from './types';
 
 const ARC_LENGTH = 15 as const;
-const ARC_LEFT = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,0 -${ARC_LENGTH},${ARC_LENGTH}` as const;
-const ARC_RIGHT = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 ${ARC_LENGTH},${ARC_LENGTH}` as const;
-const ARC_LEFT_DOWN = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 -${ARC_LENGTH},${ARC_LENGTH}` as const;
-const ARC_RIGHT_DOWN = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,0 ${ARC_LENGTH},${ARC_LENGTH}` as const;
-const ARC_RIGHT_UP = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 -${ARC_LENGTH},-${ARC_LENGTH}` as const;
-const ARC_LEFT_UP = `a-${ARC_LENGTH},-${ARC_LENGTH} 0 0,0 ${ARC_LENGTH},-${ARC_LENGTH}` as const;
+const ARC_LEFT =
+  `a${ARC_LENGTH},${ARC_LENGTH} 0 0,0 -${ARC_LENGTH},${ARC_LENGTH}` as const;
+const ARC_RIGHT =
+  `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 ${ARC_LENGTH},${ARC_LENGTH}` as const;
+const ARC_LEFT_DOWN =
+  `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 -${ARC_LENGTH},${ARC_LENGTH}` as const;
+const ARC_RIGHT_DOWN =
+  `a${ARC_LENGTH},${ARC_LENGTH} 0 0,0 ${ARC_LENGTH},${ARC_LENGTH}` as const;
+const ARC_RIGHT_UP =
+  `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 -${ARC_LENGTH},-${ARC_LENGTH}` as const;
+const ARC_LEFT_UP =
+  `a-${ARC_LENGTH},-${ARC_LENGTH} 0 0,0 ${ARC_LENGTH},-${ARC_LENGTH}` as const;
 const ARROW_DOWN = 'm6 -6 l-6 6 m-6 -6 l6 6' as const;
 const VERTICAL_SPACE_BETWEEN_STEP_AND_LINE = 7 as const;
 const VERTICAL_SPACE_BETWEEN_STEPS = 70 as const;
@@ -29,7 +35,7 @@ const STEP_DRAG_OVERLAY_WIDTH = 100 as const;
 const STEP_DRAG_OVERLAY_HEIGHT = 100 as const;
 const VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD =
   VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD + LABEL_HEIGHT;
-const LINE_WIDTH = 1.5 as const ;
+const LINE_WIDTH = 1.5 as const;
 const DRAGGED_STEP_TAG = 'dragged-step' as const;
 const HORIZONTAL_SPACE_BETWEEN_NODES = 150 as const;
 const STEP_DISPLAY_META_WIDTH = 120 as const;
@@ -37,23 +43,23 @@ const AP_NODE_SIZE = {
   [ApNodeType.BIG_ADD_BUTTON]: {
     height: 50,
     width: 50,
-    } ,
+  },
   [ApNodeType.ADD_BUTTON]: {
     height: 18,
     width: 18,
   },
   [ApNodeType.STEP]: {
-    height: 70,
+    height: 66,
     width: 66,
   },
   [ApNodeType.LOOP_RETURN_NODE]: {
-    height: 70,
+    height: 66,
     width: 66,
   },
   [ApNodeType.GRAPH_END_WIDGET]: {
     height: 0,
     width: 0,
-  } ,
+  },
 } as const;
 
 const doesNodeAffectBoundingBoxWidth: (
@@ -102,7 +108,7 @@ export const flowUtilConsts = {
   LABEL_VERTICAL_PADDING,
   STEP_DRAG_OVERLAY_WIDTH,
   STEP_DRAG_OVERLAY_HEIGHT,
-  STEP_DISPLAY_META_WIDTH
+  STEP_DISPLAY_META_WIDTH,
 };
 
 export const STEP_CONTEXT_MENU_ATTRIBUTE = 'step-context-menu';

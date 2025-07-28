@@ -54,11 +54,11 @@ const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
       {!step?.valid && !isSkipped && (
         <Tooltip>
           <TooltipTrigger asChild>
-              <InvalidStepIcon
-                size={20}
-                viewBox="0 0 16 15"
-                className="stroke-0 animate-fade"
-              ></InvalidStepIcon>
+            <InvalidStepIcon
+              size={20}
+              viewBox="0 0 16 15"
+              className="stroke-0 animate-fade"
+            ></InvalidStepIcon>
           </TooltipTrigger>
           <TooltipContent side="bottom">
             {t('Incomplete settings')}

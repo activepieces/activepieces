@@ -9,6 +9,7 @@ import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn } from '@/lib/utils';
 import {
   FlowOperationType,
+  PieceCategory,
   Step,
   TriggerType,
   flowStructureUtil,
@@ -64,6 +65,13 @@ const ApStepCanvasNode = React.memo(
         type: flowUtilConsts.DRAGGED_STEP_TAG,
       },
     });
+    const isFlowControlStep = stepMetadata?.categories.includes(
+      PieceCategory.FLOW_CONTROL,
+    );
+    const isAiStep =
+      stepMetadata?.categories.includes(
+        PieceCategory.ARTIFICIAL_INTELLIGENCE,
+      ) || stepMetadata?.categories.includes(PieceCategory.UNIVERSAL_AI);
 
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -86,7 +94,6 @@ const ApStepCanvasNode = React.memo(
           width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
           maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
         }}
-       
         key={step.name}
         ref={isPieceSelectorOpened ? null : setNodeRef}
         {...stepNodeDivAttributes}
@@ -103,58 +110,74 @@ const ApStepCanvasNode = React.memo(
               openSelectorOnClick={false}
               stepToReplacePieceDisplayName={stepMetadata?.displayName}
             >
-
-
               <>
-              <div className='absolute left-[75px] flex flex-col gap-1 text-sm bg-flow-bg !cursor-pointer z-10'
-              onClick={handleStepClick}
-                 style={{
-                  maxWidth: `${flowUtilConsts.STEP_DISPLAY_META_WIDTH}px`,
-                  top: `calc(50% - 20px)`,
-                 }}
-                                  
-                                  >
-                                   <div className='truncate grow shrink  '  >
-                                   {stepIndex}. {step.displayName}
-                                   </div>
-                                   <div className='text-muted-foreground break-keep text-nowrap truncate grow shrink'>
-                                    {stepMetadata?.displayName}
-                                   </div>
-                                  </div>
-                            <div
-                              className="flex items-center absolute cursor-pointer left-0  top-0 justify-center h-full w-full gap-3"
-                              onClick={(e) => {
-                                if (!isPieceSelectorOpened) {
-                                  handleStepClick(e);
-                                }
-                              }}
-               
-                            >
-                              <div className={cn('bg-background rounded-lg shadow-step-node border hover:border-primary/70 transition-all ', {
-                                    'border-primary/70 shadow-selected-step-node': isSelected,
-                                    'bg-background': !isDragging,
-                                    'border-none': isDragging,
-                                    'bg-accent ': isSkipped,
-                                    'shadow-trigger-node border-[#94A3B8]': isTrigger && !isSelected,
-                                  })}>
-                              <div
-                                className={cn(
-                                  'transition-all p-1.5 size-[60px] m-0.5  border-box rounded-md border border-solid border-border/75 relative  group',
-                                )}
-                              >
-                                <ImageWithFallback
-                                  src={stepMetadata?.logoUrl}
-                                  alt={stepMetadata?.displayName}
-                                  className="size-[48px]"
-                                />
-                                <div className="absolute bottom-0 right-[5px]">
-                                  <ApStepNodeStatus stepName={step.name} />
-                                  </div>
-                                </div>
-                              </div>
-                              </div>
+                <div
+                  className="absolute left-[80px] flex flex-col gap-1 text-sm bg-flow-bg !cursor-pointer z-10"
+                  onClick={handleStepClick}
+                  style={{
+                    maxWidth: `${flowUtilConsts.STEP_DISPLAY_META_WIDTH}px`,
+                    top: `calc(50% - 20px)`,
+                  }}
+                >
+                  <div className="truncate grow shrink  ">
+                    {stepIndex}. {step.displayName}
+                  </div>
+                  <div className="text-muted-foreground break-keep text-nowrap truncate grow shrink">
+                    {stepMetadata?.displayName}
+                  </div>
+                </div>
+                <div
+                  className=" items-center relative  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3"
+                  onClick={(e) => {
+                    if (!isPieceSelectorOpened) {
+                      handleStepClick(e);
+                    }
+                  }}
+                >
+                  <div
+                    className={cn(
+                      'bg-background relative rounded-lg shadow-step-node border hover:border-primary/70 transition-all ',
+                      {
+                        'border-primary/70 shadow-selected-step-node':
+                          isSelected,
+                        'shadow-trigger-node border-[#94A3B8]':
+                          isTrigger && !isSelected,
+                        'rounded-full': isFlowControlStep,
+                        'bg-accent': isSkipped,
+                      },
+                    )}
+                  >
+                    {isAiStep && (
+                      <div className="absolute size-[62px] top-[1px] left-[1px]  rounded-lg   backdrop-blur-2xl  bg-ai-gradient animate-rotate-gradient"></div>
+                    )}
+
+                    <div
+                      className={cn(
+                        'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-background  border-box rounded-md border border-solid border-border/75 relative  group',
+                        {
+                          'rounded-full': isFlowControlStep,
+                          'bg-accent': isSkipped,
+                          'size-[56px] m-1 border-transparent': isAiStep,
+                        },
+                      )}
+                    >
+                      <ImageWithFallback
+                        src={stepMetadata?.logoUrl}
+                        alt={stepMetadata?.displayName}
+                        className={cn(
+                          'size-[48px] min-w-[48px] min-h-[48px]  bg-background rounded-md object-contain',
+                          {
+                            'rounded-full': isFlowControlStep,
+                          },
+                        )}
+                      />
+                      <div className="absolute bottom-0 right-[5px]">
+                        <ApStepNodeStatus stepName={step.name} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </>
-           
             </PieceSelector>
           )}
 
@@ -169,7 +192,6 @@ const ApStepCanvasNode = React.memo(
             position={Position.Top}
           />
         </div>
-     
       </div>
     );
   },

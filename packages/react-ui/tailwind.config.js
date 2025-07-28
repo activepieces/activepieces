@@ -23,6 +23,9 @@ module.exports = {
       },
     },
     extend: {
+      backgroundImage: {
+        'ai-gradient': 'conic-gradient(from var(--gradient-angle, 180deg) at 50% 50%, #8142E3 0deg, #4278E3 131.57deg, #00DDF1 230.19deg, #8142E3 360deg)',
+      },
       width: {
         '4.5': '1.125rem'
       },
@@ -152,6 +155,14 @@ module.exports = {
           '100%': {
             backgroundPosition: '0%'
           }
+        },
+        'rotate-gradient': {
+          '0%': {
+            '--gradient-angle': '0deg',
+          },
+          '100%': {
+            '--gradient-angle': '360deg',
+          }
         }
       },
       animation: {
@@ -161,13 +172,14 @@ module.exports = {
         highlight: 'highlight 1s ease-out',
         typing: 'typing 0.7s steps(7) alternate',
         'typing-sm': 'typing 0.5s steps(5) alternate',
-        'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite'
+        'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite',
+        'rotate-gradient': 'rotate-gradient 5s ease-in-out infinite'
       },
       boxShadow: {
         'selected-step-node': '0px 1px 1px 0px rgba(0, 0, 0, 0.01), 0px 1px 24px 0px rgba(0, 0, 0, 0.08), 0px 0px 0px 4px hsl(var(--primary-100))',
         'add-button': 'var(--add-button-shadow)',
         'step-node': '0px 1px 1px 0px #0000001F, 0px 1px 24px 0px #00000014',
-        'trigger-node': ' 0px 1px 1px 0px #0000001F, 0px 1px 24px 0px #00000014, 0px 0px 0px 3px #94A3B833'
+        'trigger-node': ' 0px 1px 1px 0px #0000001F, 0px 1px 24px 0px #00000014, 0px 0px 0px 3px #94A3B833',
       },
     },
   },

@@ -9,9 +9,8 @@ import {
   BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { useTheme } from '@/components/theme-provider';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
 import {
   ActionType,
@@ -92,7 +91,6 @@ export const FlowCanvas = React.memo(
     setHasCanvasBeenInitialised: (value: boolean) => void;
     lefSideBarContainerWidth: number;
   }) => {
-    const { theme } = useTheme();
     const [
       flowVersion,
       setSelectedNodes,
@@ -250,10 +248,10 @@ export const FlowCanvas = React.memo(
               <AboveFlowWidgets></AboveFlowWidgets>
               <Background
                 gap={30}
-                size={4}
+                size={2}
                 variant={BackgroundVariant.Dots}
-                className='!bg-flow-bg'
-               patternClassName='!fill-flow-bg-pattern'
+                className="!bg-flow-bg"
+                patternClassName="!fill-flow-bg-pattern"
               />
             </ReactFlow>
           </CanvasContextMenu>
