@@ -34,7 +34,7 @@ export const webhookHandler = {
     },
 
     async handleAsync(params: AsyncWebhookParams): Promise<EngineHttpResponse> {
-        const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment } = params
+        const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment, headers } = params
 
         await jobQueue(logger).add({
             id: webhookRequestId,
@@ -49,6 +49,7 @@ export const webhookHandler = {
                 flowVersionIdToRun,
                 runEnvironment,
                 execute,
+                headers,
             },
             priority: DEFAULT_PRIORITY,
         })
@@ -63,7 +64,7 @@ export const webhookHandler = {
     },
 
     async handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse> {
-        const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun } = params
+        const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, headers } = params
 
         if (saveSampleData) {
             rejectedPromiseHandler(savePayload({
@@ -73,6 +74,7 @@ export const webhookHandler = {
                 payload,
                 flowVersionIdToRun,
                 runEnvironment,
+                headers,
             }), logger)
         }
 
@@ -111,7 +113,7 @@ export const webhookHandler = {
 }
 
 async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | 'webhookHeader' | 'execute'>): Promise<void> {
-    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, runEnvironment } = params
+    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, runEnvironment, headers } = params
     await webhookHandler.handleAsync({
         flow,
         logger,
@@ -122,6 +124,7 @@ async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | '
         runEnvironment,
         execute: false,
         webhookHeader: '',
+        headers,
     })
     await webhookSimulationService(logger).delete({ flowId: flow.id, projectId: flow.projectId })
 }
@@ -137,6 +140,7 @@ type AsyncWebhookParams = {
     saveSampleData: boolean
     runEnvironment: RunEnvironment
     execute: boolean
+    headers?: Record<string, string>
 }
 
 
@@ -152,5 +156,6 @@ type SyncWebhookParams = {
     synchronousHandlerId: string
     flowVersionIdToRun: FlowVersionId   
     onRunCreated?: (run: FlowRun) => void
+    headers?: Record<string, string>
 }
 

@@ -3,6 +3,9 @@ import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { ExecutionState } from './execution/execution-output'
 import { FlowRunStatus, PauseMetadata } from './execution/flow-execution'
+import { FastifyRequest } from 'fastify'
+
+export const SUBFLOW_PARENT_RUN_ID_HEADER = 'ap-subflow-parent-run-id'
 
 export type FlowRunId = ApId
 
@@ -44,3 +47,8 @@ export const FlowRun = Type.Object({
 })
 
 export type FlowRun = Static<typeof FlowRun> & ExecutionState
+
+export function extractParentRunIdFromHeader(request: FastifyRequest): string | undefined {
+    const parentRunIdHeader = request.headers[SUBFLOW_PARENT_RUN_ID_HEADER]
+    return Array.isArray(parentRunIdHeader) ? parentRunIdHeader[0] : parentRunIdHeader ?? undefined
+}

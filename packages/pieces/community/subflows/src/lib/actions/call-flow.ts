@@ -4,7 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ActivepiecesError, ErrorCode, ExecutionType, FlowStatus, isNil, PauseType, TriggerType } from '@activepieces/shared';
+import { ActivepiecesError, ErrorCode, ExecutionType, FlowStatus, isNil, PauseType, SUBFLOW_PARENT_RUN_ID_HEADER, TriggerType } from '@activepieces/shared';
 import { CallableFlowRequest, CallableFlowResponse } from '../common';
 
 type FlowValue = {
@@ -140,7 +140,8 @@ export const callFlow = createAction({
     if (context.executionType === ExecutionType.RESUME) {
       const response = context.resumePayload.body as CallableFlowResponse;
       const errorMessage = response.errorMessage ?? 'Subflow has been failed';
-      if (response.status === 'error') {
+      const shouldFailParentRun = response.status === 'error' && context.propsValue.waitForResponse
+      if (shouldFailParentRun) {
         throw new ActivepiecesError({
           code: ErrorCode.SUBFLOW_FAILED,
           params: {
@@ -159,13 +160,13 @@ export const callFlow = createAction({
       url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}`,
       headers: {
         'Content-Type': 'application/json',
+        [SUBFLOW_PARENT_RUN_ID_HEADER]: context.run.id,
       },
       body: {
         data: payload,
         callbackUrl: context.propsValue.waitForResponse ?  context.generateResumeUrl({
           queryParams: {}
         }) : undefined,
-        parentRunId: context.run.id,
       },
     });
     if (context.propsValue.waitForResponse) {

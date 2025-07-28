@@ -116,6 +116,7 @@ export const WebhookJobData = Type.Object({
     saveSampleData: Type.Boolean(),
     flowVersionIdToRun: Type.String(),
     execute: Type.Boolean(),
+    headers: Type.Optional(Type.Record(Type.String(), Type.String())),
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
 

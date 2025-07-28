@@ -2,7 +2,9 @@
 import {
     ALL_PRINCIPAL_TYPES,
     EventPayload,
+    extractParentRunIdFromHeader,
     isMultipartFile,
+    SUBFLOW_PARENT_RUN_ID_HEADER,
     WebhookUrlParams,
     WebsocketClientEvent,
 } from '@activepieces/shared'
@@ -20,6 +22,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         '/:flowId/sync',
         WEBHOOK_PARAMS,
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
+            const headers = createWebhookHeaders(request)
             const response = await webhookService.handleWebhook({
                 data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
                 logger: request.log,
@@ -30,6 +33,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                     request.params.flowId,
                 ),
                 execute: true,
+                headers,
             })
             await reply
                 .status(response.status)
@@ -42,6 +46,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         '/:flowId',
         WEBHOOK_PARAMS,
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
+            const headers = createWebhookHeaders(request)
             const response = await webhookService.handleWebhook({
                 data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
                 logger: request.log,
@@ -52,6 +57,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 ),
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                 execute: true,
+                headers,
             })
             await reply
                 .status(response.status)
@@ -61,6 +67,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     )
 
     app.all('/:flowId/draft/sync', WEBHOOK_PARAMS, async (request, reply) => {
+        const headers = createWebhookHeaders(request)
         const response = await webhookService.handleWebhook({
             data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
             logger: request.log,
@@ -72,6 +79,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             onRunCreated: (run) => {
                 app.io.to(run.projectId).emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, run)
             },
+            headers,
         })
         await reply
             .status(response.status)
@@ -80,6 +88,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.all('/:flowId/draft', WEBHOOK_PARAMS, async (request, reply) => {
+        const headers = createWebhookHeaders(request)
         const response = await webhookService.handleWebhook({
             data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
             logger: request.log,
@@ -88,6 +97,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             saveSampleData: true,
             flowVersionToRun: WebhookFlowVersionToRun.LATEST,
             execute: true,
+            headers,
         })
         await reply
             .status(response.status)
@@ -96,6 +106,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.all('/:flowId/test', WEBHOOK_PARAMS, async (request, reply) => {
+        const headers = createWebhookHeaders(request)
         const response = await webhookService.handleWebhook({
             data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
             logger: request.log,
@@ -104,6 +115,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             saveSampleData: true,
             flowVersionToRun: WebhookFlowVersionToRun.LATEST,
             execute: false,
+            headers,
         })
         await reply
             .status(response.status)
@@ -125,6 +137,14 @@ const WEBHOOK_PARAMS = {
     },
 }
 
+function createWebhookHeaders(request: FastifyRequest): Record<string, string> {
+    const headers: Record<string, string> = {}
+    const parentRunId = extractParentRunIdFromHeader(request)
+    if (parentRunId) {
+        headers[SUBFLOW_PARENT_RUN_ID_HEADER] = parentRunId
+    }
+    return headers
+}
 
 async function convertRequest(
     request: FastifyRequest,
