@@ -1,17 +1,26 @@
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { FlaskConical, Loader2, MessageSquare, ChevronsLeft, ChevronsRight } from 'lucide-react';
-import { useState } from 'react';
-import { AgentTimeline } from '@/features/agents/agent-timeline';
-import { useBuilderAgentState } from '@/features/agents/lib/store/builder-agent-state-provider';
-import { agentRunHooks } from '@/features/agents/lib/agent-hooks';
-import { t } from 'i18next';
 import { motion, AnimatePresence } from 'framer-motion';
+import { t } from 'i18next';
+import {
+  FlaskConical,
+  Loader2,
+  MessageSquare,
+  ChevronsRight,
+} from 'lucide-react';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { AgentTimeline } from '@/features/agents/agent-timeline';
+import { agentRunHooks } from '@/features/agents/lib/agent-hooks';
+import { useBuilderAgentState } from '@/features/agents/lib/store/builder-agent-state-provider';
 
 export const AgentPreviewSection = () => {
   const [testInput, setTestInput] = useState('');
   const [currentRunId, setCurrentRunId] = useState<string | null>(null);
-  const [agent, setTestSectionIsOpen] = useBuilderAgentState((state) => [state.agent, state.setTestSectionIsOpen]);
+  const [agent, setTestSectionIsOpen] = useBuilderAgentState((state) => [
+    state.agent,
+    state.setTestSectionIsOpen,
+  ]);
   const { mutate: runAgent, isPending: isRunning } = agentRunHooks.useRun();
 
   const handleTestAgent = () => {
@@ -19,7 +28,7 @@ export const AgentPreviewSection = () => {
 
     runAgent(
       {
-        agentId: agent.id,
+        externalId: agent.id,
         prompt: testInput,
       },
       {
@@ -30,7 +39,7 @@ export const AgentPreviewSection = () => {
         onError: (error) => {
           console.error('Failed to run agent:', error);
         },
-      }
+      },
     );
   };
 
@@ -45,7 +54,12 @@ export const AgentPreviewSection = () => {
         initial={{ x: '100%', opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         exit={{ x: '100%', opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 40, duration: 0.3 }}
+        transition={{
+          type: 'spring',
+          stiffness: 400,
+          damping: 40,
+          duration: 0.3,
+        }}
         className="flex flex-col h-full px-6 py-4 gap-4 w-full bg-background"
       >
         <div
@@ -54,7 +68,7 @@ export const AgentPreviewSection = () => {
           role="button"
           tabIndex={0}
           aria-label="Close Agent Preview"
-          onKeyDown={e => {
+          onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               handleClosePreview();
             }
@@ -65,7 +79,7 @@ export const AgentPreviewSection = () => {
         </div>
         <div className="flex-1">
           {currentRunId ? (
-            <AgentTimeline agentRunId={currentRunId} className='p-0'/>
+            <AgentTimeline agentRunId={currentRunId} className="p-0" />
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
               <MessageSquare className="w-10 h-10 mb-2" />
@@ -80,7 +94,7 @@ export const AgentPreviewSection = () => {
             className="flex-1 resize-none border-none focus:ring-0 focus:border-none shadow-none"
             placeholder="Describe what would you like to agent"
             value={testInput}
-            onChange={e => setTestInput(e.target.value)}
+            onChange={(e) => setTestInput(e.target.value)}
             rows={2}
             disabled={isRunning}
           />

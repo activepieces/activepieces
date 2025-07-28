@@ -12,16 +12,17 @@ import {
 
 export const agentsApi = {
   async list(params?: ListAgentsQueryParams): Promise<SeekPage<Agent>> {
-    const query = {
-      limit: params?.limit ?? 100,
-      cursor: params?.cursor ?? '',
-    };
-
-    return await api.get<SeekPage<Agent>>(`/v1/agents`, query);
+    return await api.get<SeekPage<Agent>>(`/v1/agents`, params);
   },
 
   async get(id: string): Promise<Agent> {
     return await api.get<Agent>(`/v1/agents/${id}`);
+  },
+  async findByExteranlId(externalId: string): Promise<Agent | null> {
+    const seekPage = await agentsApi.list({
+      externalIds: [externalId],
+    });
+    return seekPage.data?.[0] ?? null;
   },
 
   async create(request: CreateAgentRequest): Promise<Agent> {

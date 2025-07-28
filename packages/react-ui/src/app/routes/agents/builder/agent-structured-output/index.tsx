@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Database, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -55,7 +56,7 @@ export const AgentStructuredOutput = () => {
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-base font-medium flex items-center gap-2">
           <Database className="w-4 h-4" />
-          Structured Output
+          {t('Structured Output')}
         </h2>
         <div className="flex items-center gap-2">
           <Switch

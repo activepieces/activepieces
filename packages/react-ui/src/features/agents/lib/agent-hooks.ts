@@ -26,6 +26,14 @@ export const agentHooks = {
     });
   },
 
+  useGetByExternalId: (externalId: string | null | undefined) => {
+    return useQuery({
+      queryKey: ['agents', externalId],
+      queryFn: () => agentsApi.findByExteranlId(externalId!),
+      enabled: !!externalId,
+    });
+  },
+
   useCreate: () => {
     return useMutation({
       mutationFn: (request: CreateAgentRequest) => agentsApi.create(request),

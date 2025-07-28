@@ -3,25 +3,25 @@ import { t } from 'i18next';
 import { Play } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { TableTitle } from '@/components/custom/table-title';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { formatUtils } from '@/lib/utils';
 import { agentRunHooks } from '@/features/agents/lib/agent-hooks';
 import { agentRunUtils } from '@/features/agents/lib/agent-run-utils';
+import { formatUtils } from '@/lib/utils';
 import { AgentRun } from '@activepieces/shared';
-import { AgentRunDrawer } from './agent-run-drawer';
 
+import { AgentRunDrawer } from './agent-run-drawer';
 
 interface AgentRunsTableProps {
   agentId: string;
 }
 
-
 export function AgentRunsTable({ agentId }: AgentRunsTableProps) {
   const { data, isLoading } = agentRunHooks.useList({ agentId });
-  const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(null);
+  const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(
+    null,
+  );
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const columns: ColumnDef<RowDataWithActions<AgentRun>, unknown>[] = useMemo(
@@ -79,16 +79,13 @@ export function AgentRunsTable({ agentId }: AgentRunsTableProps) {
           const { startTime, finishTime } = row.original;
           let durationStr = '-';
           if (startTime && finishTime) {
-            const diff = new Date(finishTime).getTime() - new Date(startTime).getTime();
+            const diff =
+              new Date(finishTime).getTime() - new Date(startTime).getTime();
             if (diff > 0) {
               durationStr = formatUtils.formatDuration(diff);
             }
           }
-          return (
-            <div className="text-left">
-              {durationStr}
-            </div>
-          );
+          return <div className="text-left">{durationStr}</div>;
         },
       },
     ],

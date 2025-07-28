@@ -14,9 +14,15 @@ import { isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
-const EditAgentInFlowBuilderButton = ({ agentId }: { agentId: string }) => {
+type EditAgentInFlowBuilderButtonProps = {
+  externalAgentId: string;
+};
+
+const EditAgentInFlowBuilderButton = ({
+  externalAgentId,
+}: EditAgentInFlowBuilderButtonProps) => {
   const [isAgentBuilderOpen, setIsAgentBuilderOpen] = useState(false);
-  const { data: agent } = agentHooks.useGet(agentId);
+  const { data: agent } = agentHooks.useGet(externalAgentId);
   const [setLastRerenderPieceSettingsTimeStamp] = useBuilderStateContext(
     (state) => [state.setLastRerenderPieceSettingsTimeStamp],
   );

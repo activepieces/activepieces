@@ -19,7 +19,7 @@ const FlowStepAgent = (props: FlowStepAgentProps) => {
         <Bot className="size-5" />
         {t('Agent Output')}
       </div>
-      {agentRunId && <AgentTimeline agentRunId={agentRunId} className='p-4' />}
+      {agentRunId && <AgentTimeline agentRunId={agentRunId} className="p-4" />}
     </>
   );
 };

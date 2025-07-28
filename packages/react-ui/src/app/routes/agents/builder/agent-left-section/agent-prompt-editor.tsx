@@ -57,7 +57,7 @@ export const AgentPromptEditior = () => {
   }, [agent?.systemPrompt, setValue]);
 
   return (
-    <div 
+    <div
       className="flex-1 min-h-0 w-full cursor-text"
       onClick={handleContainerClick}
     >

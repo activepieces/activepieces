@@ -14,15 +14,15 @@ import {
   BuilderAgentProvider,
   useBuilderAgentState,
 } from '@/features/agents/lib/store/builder-agent-state-provider';
-import { UseAgentButton } from '@/features/agents/use-agent-button';
 import { Agent } from '@activepieces/shared';
 
 import { AgentLeftSection } from './agent-left-section';
 import { AgentPreviewSection } from './agent-preview-section';
-import { AgentSavingIndicator } from './agent-saving-indicator';
 import { AgentRunsTable } from './agent-runs-table';
+import { AgentSavingIndicator } from './agent-saving-indicator';
 import { AgentStructuredOutput } from './agent-structured-output';
 import { AgentToolSection } from './agent-tool-section';
+import { LinkedFlowsSection } from './linked-flows-section';
 
 interface AgentBuilderProps {
   isOpen: boolean;
@@ -45,8 +45,13 @@ const AgentBuilderContent = ({
   agent,
   showUseInFlow = false,
 }: AgentBuilderProps) => {
-  const [isSaving, testSectionIsOpen] = useBuilderAgentState((state) => [state.isSaving, state.testSectionIsOpen]);
-  const [activeTab, setActiveTab] = useState<AgentBuilderTabs>(AgentBuilderTabs.CONFIGURE);
+  const [isSaving, testSectionIsOpen] = useBuilderAgentState((state) => [
+    state.isSaving,
+    state.testSectionIsOpen,
+  ]);
+  const [activeTab, setActiveTab] = useState<AgentBuilderTabs>(
+    AgentBuilderTabs.CONFIGURE,
+  );
 
   return (
     <Drawer
@@ -85,24 +90,30 @@ const AgentBuilderContent = ({
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center">
               <Tabs
                 value={activeTab}
-                onValueChange={(value) => setActiveTab(value as AgentBuilderTabs)}
+                onValueChange={(value) =>
+                  setActiveTab(value as AgentBuilderTabs)
+                }
                 className="w-auto"
               >
                 <TabsList variant="outline" className="h-9">
-                  <TabsTrigger value={AgentBuilderTabs.CONFIGURE} variant="outline" className="flex items-center gap-2 px-3">
+                  <TabsTrigger
+                    value={AgentBuilderTabs.CONFIGURE}
+                    variant="outline"
+                    className="flex items-center gap-2 px-3"
+                  >
                     <Settings className="h-4 w-4" />
                     {t('Configure')}
                   </TabsTrigger>
-                  <TabsTrigger value={AgentBuilderTabs.RUNS} variant="outline" className="flex items-center gap-2 px-3">
+                  <TabsTrigger
+                    value={AgentBuilderTabs.RUNS}
+                    variant="outline"
+                    className="flex items-center gap-2 px-3"
+                  >
                     <Play className="h-4 w-4" />
                     {t('Runs')}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
-            </div>
-
-            <div className="flex items-center gap-4 min-w-0">
-              {showUseInFlow && <UseAgentButton agentId={agent.id} />}
             </div>
           </div>
         </DrawerHeader>
@@ -112,12 +123,13 @@ const AgentBuilderContent = ({
             <AgentLeftSection agent={agent} />
             <div className="hidden md:block w-0 md:w-1/3 bg-background border-l">
               {testSectionIsOpen && <AgentPreviewSection />}
-              {!testSectionIsOpen && <>
-                <div className="flex flex-col h-full p-4 gap-4 w-full bg-background">
+              {!testSectionIsOpen && (
+                <div className="flex flex-col h-full p-4 gap-8 w-full bg-background">
                   <AgentToolSection />
+                  {showUseInFlow && <LinkedFlowsSection agent={agent} />}
                   <AgentStructuredOutput />
                 </div>
-              </>}
+              )}
             </div>
           </div>
         )}

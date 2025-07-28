@@ -1,14 +1,14 @@
+import { FlaskConical } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { Button } from '@/components/ui/button';
 import EditableTextWithPen from '@/components/ui/editable-text-with-pen';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { useBuilderAgentState } from '@/features/agents/lib/store/builder-agent-state-provider';
 import { Agent, debounce, isNil } from '@activepieces/shared';
-import { Button } from '@/components/ui/button';
 
 import { AgentPromptEditior } from './agent-prompt-editor';
-import { FlaskConical } from 'lucide-react';
 
 interface AgentLeftSectionProps {
   agent?: Agent;
@@ -20,7 +20,10 @@ type AgentFormValues = {
 };
 
 export const AgentLeftSection = ({ agent }: AgentLeftSectionProps) => {
-  const [updateAgent, setTestSectionIsOpen] = useBuilderAgentState((state) => [state.updateAgent, state.setTestSectionIsOpen]);
+  const [updateAgent, setTestSectionIsOpen] = useBuilderAgentState((state) => [
+    state.updateAgent,
+    state.setTestSectionIsOpen,
+  ]);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
 

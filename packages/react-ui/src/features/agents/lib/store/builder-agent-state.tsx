@@ -22,7 +22,8 @@ export const createBuilderAgentStore = (initialAgent: Agent) => {
       agent: initialAgent,
       isSaving: false,
       testSectionIsOpen: false,
-      setTestSectionIsOpen: (isOpen: boolean) => set({ testSectionIsOpen: isOpen }),
+      setTestSectionIsOpen: (isOpen: boolean) =>
+        set({ testSectionIsOpen: isOpen }),
       setAgent: (agent: Agent) => set({ agent }),
       updateAgent: (requestBody: UpdateAgentRequestBody) => {
         set((state) => ({

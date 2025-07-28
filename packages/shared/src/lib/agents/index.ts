@@ -92,6 +92,7 @@ export const UpdateAgentRequestBody = Type.Object({
 export type UpdateAgentRequestBody = Static<typeof UpdateAgentRequestBody>
 
 export const ListAgentsQueryParams = Type.Object({
+    externalIds: Type.Optional(Type.Array(Type.String())),
     limit: Type.Optional(Type.Number()),
     cursor: Type.Optional(Type.String()),
 })
