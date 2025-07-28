@@ -19,7 +19,7 @@ export const createPdfFromHtml = createAction({
       description: 'Optional CSS styles to apply to the HTML content. Can include inline styles or external stylesheets.',
       required: false,
     }),
-    data: Property.Object({
+    data: Property.Json({
       displayName: 'Data for Templating',
       description: 'Optional JSON data to use for templating the HTML content. Can include variables and dynamic content.',
       required: false,

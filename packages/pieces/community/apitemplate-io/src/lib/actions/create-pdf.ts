@@ -11,12 +11,13 @@ export const createPdf = createAction({
   description: 'Create a PDF from a template with provided data',
   props: {
     templateId: templateIdDropdown,
-    data: Property.Object({
+    data: Property.Json({
       displayName: 'Template Data',
-      description: 'JSON data with overrides array to populate the template. Format: {"overrides": [{"name": "object_name", "property": "value"}]}',
+      description:
+        'JSON data with overrides array to populate the template. Format: {"overrides": [{"name": "object_name", "property": "value"}]}',
       required: true,
     }),
-    
+
     exportType: Property.StaticDropdown({
       displayName: 'Export Type',
       description: 'Format of the generated response',
@@ -31,13 +32,15 @@ export const createPdf = createAction({
     }),
     expiration: Property.Number({
       displayName: 'Expiration (minutes)',
-      description: 'Expiration of the generated PDF in minutes. Use 0 to store permanently, or 1-10080 minutes (7 days) to specify expiration.',
+      description:
+        'Expiration of the generated PDF in minutes. Use 0 to store permanently, or 1-10080 minutes (7 days) to specify expiration.',
       required: false,
       defaultValue: 0,
     }),
     cloudStorage: Property.Checkbox({
       displayName: 'Upload to CDN Storage',
-      description: 'Upload generated PDF to storage CDN (default: true). Set to false if using Post Action to upload to your own S3.',
+      description:
+        'Upload generated PDF to storage CDN (default: true). Set to false if using Post Action to upload to your own S3.',
       required: false,
       defaultValue: true,
     }),
@@ -59,13 +62,15 @@ export const createPdf = createAction({
     }),
     resizeMaxWidth: Property.Number({
       displayName: 'Resize Max Width',
-      description: 'Maximum width in pixels when resizing images (default: 1000)',
+      description:
+        'Maximum width in pixels when resizing images (default: 1000)',
       required: false,
       defaultValue: 1000,
     }),
     resizeMaxHeight: Property.Number({
       displayName: 'Resize Max Height',
-      description: 'Maximum height in pixels when resizing images (default: 1000)',
+      description:
+        'Maximum height in pixels when resizing images (default: 1000)',
       required: false,
       defaultValue: 1000,
     }),
@@ -83,12 +88,14 @@ export const createPdf = createAction({
     }),
     postactionS3Filekey: Property.ShortText({
       displayName: 'Post Action S3 File Key',
-      description: 'Specify the file name for Post Action (AWS S3/Cloudflare R2/Azure Storage). Do not include file extension.',
+      description:
+        'Specify the file name for Post Action (AWS S3/Cloudflare R2/Azure Storage). Do not include file extension.',
       required: false,
     }),
     postactionS3Bucket: Property.ShortText({
       displayName: 'Post Action S3 Bucket',
-      description: 'Overwrite the AWS Bucket for Post Action or container for Azure Storage',
+      description:
+        'Overwrite the AWS Bucket for Post Action or container for Azure Storage',
       required: false,
     }),
     postactionEnabled: Property.Checkbox({
@@ -190,11 +197,10 @@ export const createPdf = createAction({
 
       return response;
     } catch (error: any) {
-      
       if (error.message.includes('502') && authConfig.region !== 'default') {
         throw new Error(
           `${error.message}\n\nThe ${authConfig.region} region appears to be experiencing issues. ` +
-          `Consider switching to the 'default' region in your authentication settings or try again later.`
+            `Consider switching to the 'default' region in your authentication settings or try again later.`
         );
       }
       throw error;
