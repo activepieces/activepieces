@@ -1,5 +1,5 @@
 import { AgentJobData, AgentJobSource } from '@activepieces/server-shared'
-import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, assertNotNullOrUndefined, ContentBlockType, createAIProvider, Field, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
+import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, AIUsageFeature, assertNotNullOrUndefined, ContentBlockType, createAIProvider, Field, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { APICallError, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -49,6 +49,10 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                 modelInstance: openai('gpt-4.1'),
                 apiKey: engineToken,
                 baseURL,
+                metadata: {
+                    feature: AIUsageFeature.AGENTS,
+                    agentid: jobData.agentId,
+                },
             })
             const systemPrompt = await constructSystemPrompt(agent, fields, record)
             const { fullStream } = streamText({

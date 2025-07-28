@@ -3,7 +3,10 @@ import { t } from 'i18next';
 
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
-import { ListAICreditsUsageResponse } from '@activepieces/shared';
+import {
+  AIUsageMetadata,
+  ListAICreditsUsageResponse,
+} from '@activepieces/shared';
 
 export const aiCreditUsageTableColumns: ColumnDef<ListAICreditsUsageResponse>[] =
   [
@@ -36,11 +39,7 @@ export const aiCreditUsageTableColumns: ColumnDef<ListAICreditsUsageResponse>[] 
         <DataTableColumnHeader column={column} title={t('Provider')} />
       ),
       cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            <span>{row.getValue('provider')}</span>
-          </div>
-        );
+        return <div className="text-left">{row.getValue('provider')}</div>;
       },
     },
     {
@@ -50,6 +49,16 @@ export const aiCreditUsageTableColumns: ColumnDef<ListAICreditsUsageResponse>[] 
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.getValue('model')}</div>;
+      },
+    },
+    {
+      accessorKey: 'metadata',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Feature')} />
+      ),
+      cell: ({ row }) => {
+        const metadata = row.getValue('metadata') as AIUsageMetadata;
+        return <div className="text-left">{t(metadata.feature)}</div>;
       },
     },
     {

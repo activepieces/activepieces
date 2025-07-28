@@ -37,7 +37,8 @@ export async function extractPayloads(
         if (!isNil(result) && result.success && Array.isArray(result.output)) {
             handleFailureFlow(flowVersion, projectId, engineToken, true, log)
             return result.output as unknown[]
-        } else {
+        }
+        else {
             if (params.throwErrorOnFailure) {
                 throw new ActivepiecesError({
                     code: ErrorCode.TRIGGER_EXECUTION_FAILED,
