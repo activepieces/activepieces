@@ -134,6 +134,7 @@ import { AddTableAgentsSqlite1752851142438 } from './migration/sqlite/1752851142
 import { AddTableAutomationStatusSqlite1753013268133 } from './migration/sqlite/1753013268133-AddTableAutomationStatusSqlite'
 import { AddIndexForAgentTableSqlite1753400496920 } from './migration/sqlite/1753400496920-AddIndexForAgentTableSqlite'
 import { AddExternalAgentIdSqlite1753643287673 } from './migration/sqlite/1753643287673-AddExternalAgentIdSqlite'
+import { AddCascadeOnAgentsSqlite1753727589109 } from './migration/sqlite/1753727589109-AddCascadeOnAgentsSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -284,6 +285,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTableAutomationStatusSqlite1753013268133,
         AddIndexForAgentTableSqlite1753400496920,
         AddExternalAgentIdSqlite1753643287673,
+        AddCascadeOnAgentsSqlite1753727589109
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
