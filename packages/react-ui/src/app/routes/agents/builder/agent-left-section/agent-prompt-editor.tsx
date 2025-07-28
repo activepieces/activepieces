@@ -1,42 +1,46 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, useRef, useCallback, useEffect } from 'react';
 
 import { Textarea } from '@/components/ui/textarea';
 import { useBuilderAgentState } from '@/features/agents/lib/store/builder-agent-state-provider';
 import { debounce, isNil } from '@activepieces/shared';
-
-type PromptFormValues = {
-  systemPrompt: string;
-};
 
 export const AgentPromptEditior = () => {
   const [updateAgent, agent] = useBuilderAgentState((state) => [
     state.updateAgent,
     state.agent,
   ]);
-  const [localValue, setLocalValue] = useState(agent?.systemPrompt ?? '');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const { setValue } = useForm<PromptFormValues>({
-    defaultValues: {
-      systemPrompt: agent?.systemPrompt ?? '',
-    },
-  });
+  const [localValue, setLocalValue] = useState(() => agent?.systemPrompt ?? '');
 
-  const debouncedUpdate = useMemo(() => {
-    return debounce((value: string) => {
-      if (isNil(agent)) return;
+  const agentRef = useRef(agent);
+  useEffect(() => {
+    agentRef.current = agent;
+  }, [agent]);
+
+  const debouncedUpdate = useRef(
+    debounce((value: string) => {
+      if (isNil(agentRef.current)) return;
       updateAgent({ systemPrompt: value });
-    }, 500);
-  }, [agent, updateAgent]);
+    }, 500),
+  ).current;
+
+  useEffect(() => {
+    if (
+      agent?.systemPrompt !== undefined &&
+      agent?.systemPrompt !== localValue
+    ) {
+      setLocalValue(agent.systemPrompt);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agent?.systemPrompt]);
 
   const handlePromptChange = useCallback(
     (value: string) => {
       setLocalValue(value);
-      setValue('systemPrompt', value, { shouldDirty: true });
       debouncedUpdate(value);
     },
-    [setValue, debouncedUpdate],
+    [debouncedUpdate],
   );
 
   const handleContainerClick = useCallback(() => {
@@ -44,17 +48,6 @@ export const AgentPromptEditior = () => {
       textareaRef.current.focus();
     }
   }, [agent]);
-
-  // Only update local value when agent changes externally (not from our own updates)
-  useEffect(() => {
-    if (
-      agent?.systemPrompt !== localValue &&
-      agent?.systemPrompt !== undefined
-    ) {
-      setLocalValue(agent.systemPrompt);
-      setValue('systemPrompt', agent.systemPrompt, { shouldDirty: false });
-    }
-  }, [agent?.systemPrompt, setValue]);
 
   return (
     <div
