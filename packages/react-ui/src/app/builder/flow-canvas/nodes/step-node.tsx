@@ -96,6 +96,7 @@ const ApStepCanvasNode = React.memo(
         }}
         key={step.name}
         ref={isPieceSelectorOpened ? null : setNodeRef}
+        
         {...stepNodeDivAttributes}
         {...stepNodeDivListeners}
       >
@@ -110,16 +111,17 @@ const ApStepCanvasNode = React.memo(
               openSelectorOnClick={false}
               stepToReplacePieceDisplayName={stepMetadata?.displayName}
             >
-              <>
+              <div>
                 <div
                   className="absolute left-[80px] flex flex-col gap-1 text-sm bg-flow-bg !cursor-pointer z-10"
                   onClick={handleStepClick}
                   style={{
                     maxWidth: `${flowUtilConsts.STEP_DISPLAY_META_WIDTH}px`,
-                    top: `calc(50% - 20px)`,
+                    // 18px is the height of the text
+                    top: `calc(50% - 18px)`,
                   }}
                 >
-                  <div className="truncate grow shrink  ">
+                  <div className="truncate grow shrink">
                     {stepIndex}. {step.displayName}
                   </div>
                   <div className="text-muted-foreground break-keep text-nowrap truncate grow shrink">
@@ -177,7 +179,7 @@ const ApStepCanvasNode = React.memo(
                     </div>
                   </div>
                 </div>
-              </>
+              </div>
             </PieceSelector>
           )}
 
