@@ -3,7 +3,6 @@ import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { ExecutionState } from './execution/execution-output'
 import { FlowRunStatus, PauseMetadata } from './execution/flow-execution'
-import { FastifyRequest } from 'fastify'
 
 export const PARENT_RUN_ID_HEADER = 'ap-parent-run-id'
 export const FAIL_PARENT_ON_FAILURE_HEADER = 'ap-fail-parent-on-failure'

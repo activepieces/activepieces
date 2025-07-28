@@ -432,7 +432,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddAIUsageMetadatapostgres1753624069238,
         AddExternalIdToAgentId1753641361099,
         AddParentRunIdToFlowRun1753699877817,
-        AddCascadeOnAgents1753727379513
+        AddCascadeOnAgents1753727379513,
     ]
 
     const edition = system.getEdition()
