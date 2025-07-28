@@ -6,46 +6,92 @@ import { teamleaderCommon } from '../common/client';
 export const searchInvoices = createAction({
     name: 'search_invoices',
     displayName: 'Search Invoices',
-    description: 'List or filter invoices in Teamleader',
+    description: 'List or filter invoices',
     auth: teamleaderAuth,
     props: {
-        filter_by: Property.StaticDropdown({
-            displayName: 'Filter By',
-            description: 'Choose how to filter invoices',
+        term: Property.ShortText({
+            displayName: 'Search Term',
+            description: 'Search by invoice number, purchase order number, payment reference or customer name',
+            required: false,
+        }),
+        invoice_number: Property.ShortText({
+            displayName: 'Invoice Number',
+            description: 'Filter by full invoice number (e.g., "2017 / 5")',
+            required: false,
+        }),
+        customer_type: Property.StaticDropdown({
+            displayName: 'Customer Type',
+            description: 'Type of customer to filter by',
             required: false,
             options: {
                 options: [
-                    { label: 'No Filter (List All)', value: 'none' },
-                    { label: 'Invoice Number', value: 'number' },
-                    { label: 'Reference', value: 'reference' },
-                    { label: 'Status', value: 'status' }
+                    { label: 'Company', value: 'company' },
+                    { label: 'Contact', value: 'contact' }
                 ]
-            },
-            defaultValue: 'none'
+            }
         }),
-        filter_value: Property.ShortText({
-            displayName: 'Filter Value',
-            description: 'Value to filter by (required if filter is selected)',
+        customer_id: Property.Dropdown({
+            displayName: 'Customer',
+            description: 'Filter invoices by specific customer',
             required: false,
+            refreshers: ['customer_type'],
+            options: async ({ auth, customer_type }) => {
+                if (!auth) return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please authenticate first'
+                };
+
+                if (!customer_type) return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please select customer type first'
+                };
+
+                try {
+                    if (customer_type === 'company') {
+                        const response = await teamleaderCommon.apiCall({
+                            auth: auth as any,
+                            method: HttpMethod.POST,
+                            resourceUri: '/companies.list',
+                            body: {}
+                        });
+
+                        return {
+                            disabled: false,
+                            options: response.body.data.map((company: any) => ({
+                                label: company.name,
+                                value: company.id
+                            }))
+                        };
+                    } else {
+                        const response = await teamleaderCommon.apiCall({
+                            auth: auth as any,
+                            method: HttpMethod.POST,
+                            resourceUri: '/contacts.list',
+                            body: {}
+                        });
+
+                        return {
+                            disabled: false,
+                            options: response.body.data.map((contact: any) => ({
+                                label: `${contact.first_name} ${contact.last_name || ''}`.trim(),
+                                value: contact.id
+                            }))
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Error loading customers'
+                    };
+                }
+            }
         }),
-        status_filter: Property.StaticDropdown({
-            displayName: 'Status Filter',
-            description: 'Filter invoices by their status',
-            required: false,
-            options: {
-                options: [
-                    { label: 'All Statuses', value: 'all' },
-                    { label: 'Draft', value: 'draft' },
-                    { label: 'Sent', value: 'sent' },
-                    { label: 'Paid', value: 'paid' },
-                    { label: 'Overdue', value: 'overdue' }
-                ]
-            },
-            defaultValue: 'all'
-        }),
-        company_id: Property.Dropdown({
-            displayName: 'Filter By Company',
-            description: 'Filter invoices by their associated company',
+        department_id: Property.Dropdown({
+            displayName: 'Department',
+            description: 'Filter by department (company entity)',
             required: false,
             refreshers: [],
             options: async ({ auth }) => {
@@ -58,32 +104,37 @@ export const searchInvoices = createAction({
                 try {
                     const response = await teamleaderCommon.apiCall({
                         auth: auth as any,
-                        method: HttpMethod.GET,
-                        resourceUri: '/companies.list'
+                        method: HttpMethod.POST,
+                        resourceUri: '/departments.list',
+                        body: {
+                            filter: {
+                                status: ['active']
+                            }
+                        }
                     });
 
                     return {
                         disabled: false,
-                        options: response.body.data.map((company: any) => ({
-                            label: company.name,
-                            value: company.id
+                        options: response.body.data.map((department: any) => ({
+                            label: department.name,
+                            value: department.id
                         }))
                     };
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading companies'
+                        placeholder: 'Error loading departments'
                     };
                 }
             }
         }),
-        contact_id: Property.Dropdown({
-            displayName: 'Filter By Contact',
-            description: 'Filter invoices by their associated contact',
+        deal_id: Property.Dropdown({
+            displayName: 'Deal',
+            description: 'Filter by associated deal',
             required: false,
-            refreshers: ['company_id'],
-            options: async ({ auth, company_id }) => {
+            refreshers: [],
+            options: async ({ auth }) => {
                 if (!auth) return {
                     disabled: true,
                     options: [],
@@ -91,245 +142,275 @@ export const searchInvoices = createAction({
                 };
 
                 try {
-                    // If company_id is provided, try to get associated contacts
-                    if (company_id) {
-                        const companyInfo = await teamleaderCommon.apiCall({
-                            auth: auth as any,
-                            method: HttpMethod.GET,
-                            resourceUri: '/companies.info',
-                            queryParams: {
-                                id: company_id as string
-                            }
-                        });
-
-                        if (companyInfo?.body?.data?.linked_contacts) {
-                            const linkedContacts = companyInfo.body.data.linked_contacts;
-                            
-                            // Return contacts linked to this company
-                            return {
-                                disabled: false,
-                                options: linkedContacts.map((contact: any) => ({
-                                    label: `${contact.first_name} ${contact.last_name || ''}`.trim(),
-                                    value: contact.id
-                                }))
-                            };
-                        }
-                    }
-                    
-                    // If no company_id or no linked contacts, return all contacts
                     const response = await teamleaderCommon.apiCall({
                         auth: auth as any,
-                        method: HttpMethod.GET,
-                        resourceUri: '/contacts.list'
+                        method: HttpMethod.POST,
+                        resourceUri: '/deals.list',
+                        body: {}
                     });
 
                     return {
                         disabled: false,
-                        options: response.body.data.map((contact: any) => ({
-                            label: `${contact.first_name} ${contact.last_name || ''}`.trim(),
-                            value: contact.id
+                        options: response.body.data.map((deal: any) => ({
+                            label: deal.title,
+                            value: deal.id
                         }))
                     };
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading contacts'
+                        placeholder: 'Error loading deals'
                     };
                 }
             }
         }),
-        min_total: Property.Number({
-            displayName: 'Minimum Invoice Total',
-            description: 'Filter invoices by minimum total amount',
+        project_id: Property.Dropdown({
+            displayName: 'Project',
+            description: 'Filter by associated project',
             required: false,
+            refreshers: [],
+            options: async ({ auth }) => {
+                if (!auth) return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please authenticate first'
+                };
+
+                try {
+                    const response = await teamleaderCommon.apiCall({
+                        auth: auth as any,
+                        method: HttpMethod.POST,
+                        resourceUri: '/projects.list',
+                        body: {}
+                    });
+
+                    return {
+                        disabled: false,
+                        options: response.body.data.map((project: any) => ({
+                            label: project.title,
+                            value: project.id
+                        }))
+                    };
+                } catch (error) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Error loading projects'
+                    };
+                }
+            }
         }),
-        max_total: Property.Number({
-            displayName: 'Maximum Invoice Total',
-            description: 'Filter invoices by maximum total amount',
+        subscription_id: Property.Dropdown({
+            displayName: 'Subscription',
+            description: 'Filter by associated subscription',
             required: false,
+            refreshers: [],
+            options: async ({ auth }) => {
+                if (!auth) return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please authenticate first'
+                };
+
+                try {
+                    const response = await teamleaderCommon.apiCall({
+                        auth: auth as any,
+                        method: HttpMethod.POST,
+                        resourceUri: '/subscriptions.list',
+                        body: {}
+                    });
+
+                    return {
+                        disabled: false,
+                        options: response.body.data.map((subscription: any) => ({
+                            label: subscription.title || subscription.reference,
+                            value: subscription.id
+                        }))
+                    };
+                } catch (error) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Error loading subscriptions'
+                    };
+                }
+            }
         }),
-        date_from: Property.DateTime({
-            displayName: 'Invoice Date From',
-            description: 'Filter invoices with date after this date',
-            required: false,
-        }),
-        date_to: Property.DateTime({
-            displayName: 'Invoice Date To',
-            description: 'Filter invoices with date before this date',
-            required: false,
-        }),
-        due_date_from: Property.DateTime({
-            displayName: 'Due Date From',
-            description: 'Filter invoices with due date after this date',
-            required: false,
-        }),
-        due_date_to: Property.DateTime({
-            displayName: 'Due Date To',
-            description: 'Filter invoices with due date before this date',
-            required: false,
-        }),
-        sort_by: Property.StaticDropdown({
-            displayName: 'Sort By',
-            description: 'Choose field to sort results by',
+        status: Property.StaticMultiSelectDropdown({
+            displayName: 'Status',
+            description: 'Filter by invoice status (multiple selection)',
             required: false,
             options: {
                 options: [
-                    { label: 'Invoice Number (Ascending)', value: 'number' },
-                    { label: 'Invoice Number (Descending)', value: '-number' },
-                    { label: 'Invoice Date (Newest First)', value: '-date' },
-                    { label: 'Invoice Date (Oldest First)', value: 'date' },
-                    { label: 'Due Date (Earliest First)', value: 'due_on' },
-                    { label: 'Due Date (Latest First)', value: '-due_on' },
-                    { label: 'Total (Low to High)', value: 'total' },
-                    { label: 'Total (High to Low)', value: '-total' },
-                    { label: 'Created (Newest First)', value: '-created_at' },
-                    { label: 'Created (Oldest First)', value: 'created_at' },
-                    { label: 'Updated (Most Recent First)', value: '-updated_at' },
-                    { label: 'Updated (Oldest First)', value: 'updated_at' }
+                    { label: 'Draft', value: 'draft' },
+                    { label: 'Outstanding', value: 'outstanding' },
+                    { label: 'Matched', value: 'matched' }
+                ]
+            }
+        }),
+        purchase_order_number: Property.ShortText({
+            displayName: 'Purchase Order Number',
+            description: 'Filter by purchase order number',
+            required: false,
+        }),
+        payment_reference: Property.ShortText({
+            displayName: 'Payment Reference',
+            description: 'Filter by payment reference',
+            required: false,
+        }),
+        invoice_date_after: Property.DateTime({
+            displayName: 'Invoice Date After',
+            description: 'Filter invoices with date after this date (inclusive)',
+            required: false,
+        }),
+        invoice_date_before: Property.DateTime({
+            displayName: 'Invoice Date Before',
+            description: 'Filter invoices with date before this date (inclusive)',
+            required: false,
+        }),
+        updated_since: Property.DateTime({
+            displayName: 'Updated Since',
+            description: 'Only invoices updated after this date',
+            required: false,
+        }),
+        sort_field: Property.StaticDropdown({
+            displayName: 'Sort Field',
+            description: 'Field to sort by',
+            required: false,
+            options: {
+                options: [
+                    { label: 'Invoice Number', value: 'invoice_number' },
+                    { label: 'Invoice Date', value: 'invoice_date' }
+                ]
+            }
+        }),
+        sort_order: Property.StaticDropdown({
+            displayName: 'Sort Order',
+            description: 'Sort direction',
+            required: false,
+            options: {
+                options: [
+                    { label: 'Ascending', value: 'asc' },
+                    { label: 'Descending', value: 'desc' }
                 ]
             }
         }),
         page_size: Property.Number({
             displayName: 'Results Per Page',
-            description: 'Number of results to return per page (max 100)',
+            description: 'Number of results per page (default: 20)',
             required: false,
-            defaultValue: 20
         }),
-        page: Property.Number({
-            displayName: 'Page',
-            description: 'Page number to return',
+        page_number: Property.Number({
+            displayName: 'Page Number',
+            description: 'Page number to retrieve (default: 1)',
             required: false,
-            defaultValue: 1
         }),
-        include_details: Property.Checkbox({
-            displayName: 'Include Detailed Information',
-            description: 'Fetch detailed information for each invoice',
+        include_late_fees: Property.Checkbox({
+            displayName: 'Include Late Fee Information',
+            description: 'Include late fee and interest calculations in response',
             required: false,
-            defaultValue: false
-        })
+        }),
     },
     async run(context) {
-        const { 
-            filter_by, filter_value, status_filter, company_id, contact_id,
-            min_total, max_total, date_from, date_to, due_date_from, due_date_to,
-            sort_by, page_size, page, include_details 
-        } = context.propsValue;
-        
-        // Prepare query parameters
-        const queryParams: Record<string, string> = {};
-        
-        // Add pagination parameters
-        if (page) {
-            queryParams['page[number]'] = page.toString();
-        }
-        
-        if (page_size) {
-            const size = Math.min(page_size, 100); // Cap at 100 which is typically API max
-            queryParams['page[size]'] = size.toString();
-        }
-        
-        // Add sorting parameter
-        if (sort_by) {
-            queryParams['sort'] = sort_by;
-        }
-        
-        // Add basic filter parameters
-        if (filter_by && filter_by !== 'none' && filter_value) {
-            if (filter_by === 'number') {
-                queryParams['filter[number]'] = filter_value;
-            } else if (filter_by === 'reference') {
-                queryParams['filter[reference]'] = filter_value;
-            }
+        const requestBody: Record<string, any> = {};
+
+        const filter: Record<string, any> = {};
+
+        if (context.propsValue.term) {
+            filter['term'] = context.propsValue.term;
         }
 
-        // Add status filter
-        if ((filter_by === 'status' && filter_value) || (status_filter && status_filter !== 'all')) {
-            // If both status filters are provided, prefer the filter_value from the filter_by dropdown
-            const statusValue = (filter_by === 'status' && filter_value) ? filter_value : status_filter;
-            if (statusValue) {
-                queryParams['filter[status]'] = statusValue;
-            }
+        if (context.propsValue.invoice_number) {
+            filter['invoice_number'] = context.propsValue.invoice_number;
         }
 
-        // Add total amount range filters
-        if (min_total !== undefined && min_total !== null) {
-            queryParams['filter[min_total]'] = min_total.toString();
-        }
-        
-        if (max_total !== undefined && max_total !== null) {
-            queryParams['filter[max_total]'] = max_total.toString();
+        if (context.propsValue.customer_type && context.propsValue.customer_id) {
+            filter['customer'] = {
+                type: context.propsValue.customer_type,
+                id: context.propsValue.customer_id
+            };
         }
 
-        // Add invoice date range filters
-        if (date_from) {
-            const fromDate = new Date(date_from);
-            const formattedFromDate = fromDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-            queryParams['filter[date_from]'] = formattedFromDate;
-        }
-        
-        if (date_to) {
-            const toDate = new Date(date_to);
-            const formattedToDate = toDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-            queryParams['filter[date_to]'] = formattedToDate;
+        if (context.propsValue.department_id) {
+            filter['department_id'] = context.propsValue.department_id;
         }
 
-        // Add due date range filters
-        if (due_date_from) {
-            const fromDueDate = new Date(due_date_from);
-            const formattedFromDueDate = fromDueDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-            queryParams['filter[due_date_from]'] = formattedFromDueDate;
-        }
-        
-        if (due_date_to) {
-            const toDueDate = new Date(due_date_to);
-            const formattedToDueDate = toDueDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-            queryParams['filter[due_date_to]'] = formattedToDueDate;
+        if (context.propsValue.deal_id) {
+            filter['deal_id'] = context.propsValue.deal_id;
         }
 
-        // Add customer (company or contact) filters to the API query directly
-        if (company_id) {
-            queryParams['filter[contact_type]'] = 'company';
-            queryParams['filter[contact_id]'] = company_id;
-        } else if (contact_id) {
-            queryParams['filter[contact_type]'] = 'contact';
-            queryParams['filter[contact_id]'] = contact_id;
+        if (context.propsValue.project_id) {
+            filter['project_id'] = context.propsValue.project_id;
         }
-        
-        // Get all invoices using the filters
+
+        if (context.propsValue.subscription_id) {
+            filter['subscription_id'] = context.propsValue.subscription_id;
+        }
+
+        if (context.propsValue.status && context.propsValue.status.length > 0) {
+            filter['status'] = context.propsValue.status;
+        }
+
+        if (context.propsValue.purchase_order_number) {
+            filter['purchase_order_number'] = context.propsValue.purchase_order_number;
+        }
+
+        if (context.propsValue.payment_reference) {
+            filter['payment_reference'] = context.propsValue.payment_reference;
+        }
+
+        if (context.propsValue.invoice_date_after) {
+            const afterDate = new Date(context.propsValue.invoice_date_after);
+            filter['invoice_date_after'] = afterDate.toISOString().split('T')[0];
+        }
+
+        if (context.propsValue.invoice_date_before) {
+            const beforeDate = new Date(context.propsValue.invoice_date_before);
+            filter['invoice_date_before'] = beforeDate.toISOString().split('T')[0];
+        }
+
+        if (context.propsValue.updated_since) {
+            const updatedSince = new Date(context.propsValue.updated_since);
+            filter['updated_since'] = updatedSince.toISOString();
+        }
+
+        if (Object.keys(filter).length > 0) {
+            requestBody['filter'] = filter;
+        }
+
+        const page: Record<string, number> = {};
+
+        if (context.propsValue.page_size) {
+            page['size'] = context.propsValue.page_size;
+        }
+
+        if (context.propsValue.page_number) {
+            page['number'] = context.propsValue.page_number;
+        }
+
+        if (Object.keys(page).length > 0) {
+            requestBody['page'] = page;
+        }
+
+        if (context.propsValue.sort_field && context.propsValue.sort_order) {
+            requestBody['sort'] = [{
+                field: context.propsValue.sort_field,
+                order: context.propsValue.sort_order
+            }];
+        }
+
+        if (context.propsValue.include_late_fees) {
+            requestBody['includes'] = 'late_fees';
+        }
+
         const response = await teamleaderCommon.apiCall({
             auth: context.auth,
-            method: HttpMethod.GET,
+            method: HttpMethod.POST,
             resourceUri: '/invoices.list',
-            queryParams
+            body: requestBody
         });
 
-        // If we don't need detailed information, return the response as is
-        if (!include_details) {
-            return response.body;
-        }
-        
-        // If detailed info is requested, fetch full details for each invoice
-        const invoices = response.body.data;
-        const detailedInvoices = [];
-        
-        for (const invoice of invoices) {
-            const detailedInfo = await teamleaderCommon.apiCall({
-                auth: context.auth,
-                method: HttpMethod.GET,
-                resourceUri: '/invoices.info',
-                queryParams: {
-                    id: invoice.id
-                }
-            });
-            
-            detailedInvoices.push(detailedInfo.body.data);
-        }
-        
-        // Return results with detailed information
-        return {
-            ...response.body,
-            data: detailedInvoices
-        };
+        return response.body;
     },
 });

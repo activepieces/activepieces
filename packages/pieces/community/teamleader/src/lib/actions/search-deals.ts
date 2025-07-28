@@ -6,46 +6,87 @@ import { teamleaderCommon } from '../common/client';
 export const searchDeals = createAction({
     name: 'search_deals',
     displayName: 'Search Deals',
-    description: 'List or filter deals in Teamleader',
+    description: 'List or filter deals',
     auth: teamleaderAuth,
     props: {
-        filter_by: Property.StaticDropdown({
-            displayName: 'Filter By',
-            description: 'Choose how to filter deals',
+        term: Property.ShortText({
+            displayName: 'Search Term',
+            description: 'Search by title, reference or customer name',
+            required: false,
+        }),
+        customer_type: Property.StaticDropdown({
+            displayName: 'Customer Type',
+            description: 'Type of customer to filter by',
             required: false,
             options: {
                 options: [
-                    { label: 'No Filter (List All)', value: 'none' },
-                    { label: 'Title', value: 'title' },
-                    { label: 'Status', value: 'status' },
-                    { label: 'Source', value: 'source' },
-                    { label: 'Tag', value: 'tag' }
+                    { label: 'Company', value: 'company' },
+                    { label: 'Contact', value: 'contact' }
                 ]
-            },
-            defaultValue: 'none'
+            }
         }),
-        filter_value: Property.ShortText({
-            displayName: 'Filter Value',
-            description: 'Value to filter by (required if filter is selected)',
+        customer_id: Property.Dropdown({
+            displayName: 'Customer',
+            description: 'Filter deals by specific customer',
             required: false,
+            refreshers: ['customer_type'],
+            options: async ({ auth, customer_type }) => {
+                if (!auth) return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please authenticate first'
+                };
+
+                if (!customer_type) return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please select customer type first'
+                };
+
+                try {
+                    if (customer_type === 'company') {
+                        const response = await teamleaderCommon.apiCall({
+                            auth: auth as any,
+                            method: HttpMethod.POST,
+                            resourceUri: '/companies.list',
+                            body: {}
+                        });
+
+                        return {
+                            disabled: false,
+                            options: response.body.data.map((company: any) => ({
+                                label: company.name,
+                                value: company.id
+                            }))
+                        };
+                    } else {
+                        const response = await teamleaderCommon.apiCall({
+                            auth: auth as any,
+                            method: HttpMethod.POST,
+                            resourceUri: '/contacts.list',
+                            body: {}
+                        });
+
+                        return {
+                            disabled: false,
+                            options: response.body.data.map((contact: any) => ({
+                                label: `${contact.first_name} ${contact.last_name || ''}`.trim(),
+                                value: contact.id
+                            }))
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Error loading customers'
+                    };
+                }
+            }
         }),
-        status_filter: Property.StaticDropdown({
-            displayName: 'Status Filter',
-            description: 'Filter deals by their status',
-            required: false,
-            options: {
-                options: [
-                    { label: 'All Statuses', value: 'all' },
-                    { label: 'Open', value: 'open' },
-                    { label: 'Won', value: 'won' },
-                    { label: 'Lost', value: 'lost' }
-                ]
-            },
-            defaultValue: 'all'
-        }),
-        company_id: Property.Dropdown({
-            displayName: 'Filter By Company',
-            description: 'Filter deals by their associated company',
+        phase_id: Property.Dropdown({
+            displayName: 'Deal Phase',
+            description: 'Filter by deal phase or stage',
             required: false,
             refreshers: [],
             options: async ({ auth }) => {
@@ -58,32 +99,45 @@ export const searchDeals = createAction({
                 try {
                     const response = await teamleaderCommon.apiCall({
                         auth: auth as any,
-                        method: HttpMethod.GET,
-                        resourceUri: '/companies.list'
+                        method: HttpMethod.POST,
+                        resourceUri: '/dealPhases.list',
+                        body: {}
                     });
 
                     return {
                         disabled: false,
-                        options: response.body.data.map((company: any) => ({
-                            label: company.name,
-                            value: company.id
+                        options: response.body.data.map((phase: any) => ({
+                            label: phase.name,
+                            value: phase.id
                         }))
                     };
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading companies'
+                        placeholder: 'Error loading phases'
                     };
                 }
             }
         }),
-        contact_id: Property.Dropdown({
-            displayName: 'Filter By Contact',
-            description: 'Filter deals by their associated contact',
+        status: Property.StaticMultiSelectDropdown({
+            displayName: 'Status',
+            description: 'Filter by deal status (multiple selection)',
             required: false,
-            refreshers: ['company_id'],
-            options: async ({ auth, company_id }) => {
+            options: {
+                options: [
+                    { label: 'Open', value: 'open' },
+                    { label: 'Won', value: 'won' },
+                    { label: 'Lost', value: 'lost' }
+                ]
+            }
+        }),
+        responsible_user_id: Property.Dropdown({
+            displayName: 'Responsible User',
+            description: 'Filter by user responsible for deals',
+            required: false,
+            refreshers: [],
+            options: async ({ auth }) => {
                 if (!auth) return {
                     disabled: true,
                     options: [],
@@ -91,282 +145,185 @@ export const searchDeals = createAction({
                 };
 
                 try {
-                    // If company_id is provided, try to get associated contacts
-                    if (company_id) {
-                        const companyInfo = await teamleaderCommon.apiCall({
-                            auth: auth as any,
-                            method: HttpMethod.GET,
-                            resourceUri: '/companies.info',
-                            queryParams: {
-                                id: company_id as string
-                            }
-                        });
-
-                        if (companyInfo?.body?.data?.linked_contacts) {
-                            const linkedContacts = companyInfo.body.data.linked_contacts;
-                            
-                            // Return contacts linked to this company
-                            return {
-                                disabled: false,
-                                options: linkedContacts.map((contact: any) => ({
-                                    label: `${contact.first_name} ${contact.last_name || ''}`.trim(),
-                                    value: contact.id
-                                }))
-                            };
-                        }
-                    }
-                    
-                    // If no company_id or no linked contacts, return all contacts
                     const response = await teamleaderCommon.apiCall({
                         auth: auth as any,
-                        method: HttpMethod.GET,
-                        resourceUri: '/contacts.list'
+                        method: HttpMethod.POST,
+                        resourceUri: '/users.list',
+                        body: {
+                            filter: {
+                                status: ['active']
+                            }
+                        }
                     });
 
                     return {
                         disabled: false,
-                        options: response.body.data.map((contact: any) => ({
-                            label: `${contact.first_name} ${contact.last_name || ''}`.trim(),
-                            value: contact.id
+                        options: response.body.data.map((user: any) => ({
+                            label: `${user.first_name} ${user.last_name}`,
+                            value: user.id
                         }))
                     };
                 } catch (error) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Error loading contacts'
+                        placeholder: 'Error loading users'
                     };
                 }
             }
         }),
-        phase: Property.StaticDropdown({
-            displayName: 'Deal Phase',
-            description: 'Filter deals by their phase/stage',
-            required: false,
-            options: {
-                options: [
-                    { label: 'Any Phase', value: 'any' },
-                    { label: 'Lead', value: 'lead' },
-                    { label: 'Prospect', value: 'prospect' },
-                    { label: 'Qualified Lead', value: 'qualified_lead' },
-                    { label: 'Negotiation', value: 'negotiation' },
-                    { label: 'Contract Sent', value: 'contract_sent' }
-                ]
-            },
-            defaultValue: 'any'
-        }),
-        min_value: Property.Number({
-            displayName: 'Minimum Deal Value',
-            description: 'Filter deals by minimum estimated value',
+        estimated_closing_date: Property.DateTime({
+            displayName: 'Exact Closing Date',
+            description: 'Filter by specific estimated closing date',
             required: false,
         }),
-        max_value: Property.Number({
-            displayName: 'Maximum Deal Value',
-            description: 'Filter deals by maximum estimated value',
-            required: false,
-        }),
-        min_probability: Property.StaticDropdown({
-            displayName: 'Minimum Probability',
-            description: 'Filter deals by minimum probability',
-            required: false,
-            options: {
-                options: [
-                    { label: 'Any', value: 'any' },
-                    { label: '25%', value: '25' },
-                    { label: '50%', value: '50' },
-                    { label: '75%', value: '75' },
-                    { label: '100%', value: '100' }
-                ]
-            },
-            defaultValue: 'any'
-        }),
-        closing_date_from: Property.DateTime({
+        estimated_closing_date_from: Property.DateTime({
             displayName: 'Closing Date From',
-            description: 'Filter deals with closing date after this date',
+            description: 'Filter deals closing after this date (inclusive)',
             required: false,
         }),
-        closing_date_to: Property.DateTime({
-            displayName: 'Closing Date To',
-            description: 'Filter deals with closing date before this date',
+        estimated_closing_date_until: Property.DateTime({
+            displayName: 'Closing Date Until',
+            description: 'Filter deals closing before this date (inclusive)',
             required: false,
         }),
-        sort_by: Property.StaticDropdown({
-            displayName: 'Sort By',
-            description: 'Choose field to sort results by',
+        updated_since: Property.DateTime({
+            displayName: 'Updated Since',
+            description: 'Only deals updated after this date (inclusive)',
+            required: false,
+        }),
+        created_before: Property.DateTime({
+            displayName: 'Created Before',
+            description: 'Only deals created before this date (inclusive)',
+            required: false,
+        }),
+        sort_field: Property.StaticDropdown({
+            displayName: 'Sort Field',
+            description: 'Field to sort by',
             required: false,
             options: {
                 options: [
-                    { label: 'Title (A-Z)', value: 'title' },
-                    { label: 'Title (Z-A)', value: '-title' },
-                    { label: 'Value (Low to High)', value: 'value' },
-                    { label: 'Value (High to Low)', value: '-value' },
-                    { label: 'Probability (Low to High)', value: 'probability' },
-                    { label: 'Probability (High to Low)', value: '-probability' },
-                    { label: 'Closing Date (Earliest First)', value: 'closing_date' },
-                    { label: 'Closing Date (Latest First)', value: '-closing_date' },
-                    { label: 'Added (Newest First)', value: '-created_at' },
-                    { label: 'Added (Oldest First)', value: 'created_at' },
-                    { label: 'Updated (Most Recent First)', value: '-updated_at' },
-                    { label: 'Updated (Oldest First)', value: 'updated_at' }
+                    { label: 'Created Date', value: 'created_at' },
+                    { label: 'Weighted Value', value: 'weighted_value' }
+                ]
+            }
+        }),
+        sort_order: Property.StaticDropdown({
+            displayName: 'Sort Order',
+            description: 'Sort direction',
+            required: false,
+            options: {
+                options: [
+                    { label: 'Ascending (Oldest First, Lowest Value)', value: 'asc' },
+                    { label: 'Descending (Newest First, Highest Value)', value: 'desc' }
                 ]
             }
         }),
         page_size: Property.Number({
             displayName: 'Results Per Page',
-            description: 'Number of results to return per page (max 100)',
+            description: 'Number of results per page (default: 20)',
             required: false,
-            defaultValue: 20
         }),
-        page: Property.Number({
-            displayName: 'Page',
-            description: 'Page number to return',
+        page_number: Property.Number({
+            displayName: 'Page Number',
+            description: 'Page number to retrieve (default: 1)',
             required: false,
-            defaultValue: 1
         }),
-        include_details: Property.Checkbox({
-            displayName: 'Include Detailed Information',
-            description: 'Fetch detailed information for each deal',
+        include_custom_fields: Property.Checkbox({
+            displayName: 'Include Custom Fields',
+            description: 'Include custom field data in results',
             required: false,
-            defaultValue: false
-        })
+        }),
     },
     async run(context) {
-        const { 
-            filter_by, filter_value, status_filter, company_id, contact_id, phase,
-            min_value, max_value, min_probability, closing_date_from, closing_date_to,
-            sort_by, page_size, page, include_details 
-        } = context.propsValue;
-        
-        // Prepare query parameters
-        const queryParams: Record<string, string> = {};
-        
-        // Add pagination parameters
-        if (page) {
-            queryParams['page[number]'] = page.toString();
-        }
-        
-        if (page_size) {
-            const size = Math.min(page_size, 100); // Cap at 100 which is typically API max
-            queryParams['page[size]'] = size.toString();
-        }
-        
-        // Add sorting parameter
-        if (sort_by) {
-            queryParams['sort'] = sort_by;
-        }
-        
-        // Add basic filter parameters
-        if (filter_by && filter_by !== 'none' && filter_value) {
-            if (filter_by === 'title') {
-                queryParams['filter[title]'] = filter_value;
-            } else if (filter_by === 'source') {
-                queryParams['filter[source]'] = filter_value;
-            } else if (filter_by === 'tag') {
-                queryParams['filter[tags]'] = filter_value;
-            }
+        const requestBody: Record<string, any> = {};
+
+        const filter: Record<string, any> = {};
+
+        if (context.propsValue.term) {
+            filter['term'] = context.propsValue.term;
         }
 
-        // Add status filter
-        if (status_filter && status_filter !== 'all') {
-            queryParams['filter[status]'] = status_filter;
+        if (context.propsValue.customer_type && context.propsValue.customer_id) {
+            filter['customer'] = {
+                type: context.propsValue.customer_type,
+                id: context.propsValue.customer_id
+            };
         }
 
-        // Add phase filter
-        if (phase && phase !== 'any') {
-            queryParams['filter[phase]'] = phase;
-        }
-        
-        // Add min probability filter
-        if (min_probability && min_probability !== 'any') {
-            queryParams['filter[min_probability]'] = min_probability;
+        if (context.propsValue.phase_id) {
+            filter['phase_id'] = context.propsValue.phase_id;
         }
 
-        // Add value range filters
-        if (min_value !== undefined && min_value !== null) {
-            queryParams['filter[min_value]'] = min_value.toString();
-        }
-        
-        if (max_value !== undefined && max_value !== null) {
-            queryParams['filter[max_value]'] = max_value.toString();
+        if (context.propsValue.status && context.propsValue.status.length > 0) {
+            filter['status'] = context.propsValue.status;
         }
 
-        // Add closing date range filters
-        if (closing_date_from) {
-            const fromDate = new Date(closing_date_from);
-            const formattedFromDate = fromDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-            queryParams['filter[closing_date_from]'] = formattedFromDate;
-        }
-        
-        if (closing_date_to) {
-            const toDate = new Date(closing_date_to);
-            const formattedToDate = toDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-            queryParams['filter[closing_date_to]'] = formattedToDate;
+        if (context.propsValue.responsible_user_id) {
+            filter['responsible_user_id'] = context.propsValue.responsible_user_id;
         }
 
-        // Get all deals using the filters
+        if (context.propsValue.estimated_closing_date) {
+            const closingDate = new Date(context.propsValue.estimated_closing_date);
+            filter['estimated_closing_date'] = closingDate.toISOString().split('T')[0];
+        }
+
+        if (context.propsValue.estimated_closing_date_from) {
+            const fromDate = new Date(context.propsValue.estimated_closing_date_from);
+            filter['estimated_closing_date_from'] = fromDate.toISOString().split('T')[0];
+        }
+
+        if (context.propsValue.estimated_closing_date_until) {
+            const untilDate = new Date(context.propsValue.estimated_closing_date_until);
+            filter['estimated_closing_date_until'] = untilDate.toISOString().split('T')[0];
+        }
+
+        if (context.propsValue.updated_since) {
+            const updatedSince = new Date(context.propsValue.updated_since);
+            filter['updated_since'] = updatedSince.toISOString();
+        }
+
+        if (context.propsValue.created_before) {
+            const createdBefore = new Date(context.propsValue.created_before);
+            filter['created_before'] = createdBefore.toISOString();
+        }
+
+        if (Object.keys(filter).length > 0) {
+            requestBody['filter'] = filter;
+        }
+
+        const page: Record<string, number> = {};
+
+        if (context.propsValue.page_size) {
+            page['size'] = context.propsValue.page_size;
+        }
+
+        if (context.propsValue.page_number) {
+            page['number'] = context.propsValue.page_number;
+        }
+
+        if (Object.keys(page).length > 0) {
+            requestBody['page'] = page;
+        }
+
+        if (context.propsValue.sort_field && context.propsValue.sort_order) {
+            requestBody['sort'] = [{
+                field: context.propsValue.sort_field,
+                order: context.propsValue.sort_order
+            }];
+        }
+
+        if (context.propsValue.include_custom_fields) {
+            requestBody['includes'] = 'custom_fields';
+        }
+
         const response = await teamleaderCommon.apiCall({
             auth: context.auth,
-            method: HttpMethod.GET,
+            method: HttpMethod.POST,
             resourceUri: '/deals.list',
-            queryParams
+            body: requestBody
         });
 
-        // Filter by company or contact if specified
-        let filteredDeals = response.body.data;
-
-        // Further filtering based on company association
-        if (company_id) {
-            filteredDeals = filteredDeals.filter((deal: any) => 
-                deal.company && deal.company.id === company_id
-            );
-        }
-
-        // Further filtering based on contact association
-        if (contact_id) {
-            filteredDeals = filteredDeals.filter((deal: any) => 
-                deal.contact && deal.contact.id === contact_id
-            );
-        }
-
-        // Update the filtered response
-        const filteredResponse = {
-            ...response.body,
-            data: filteredDeals,
-            meta: {
-                ...response.body.meta,
-                pagination: {
-                    ...response.body.meta.pagination,
-                    total: filteredDeals.length,
-                    count: filteredDeals.length
-                }
-            }
-        };
-
-        // If we don't need detailed information, return the filtered list
-        if (!include_details) {
-            return filteredResponse;
-        }
-        
-        // If detailed info is requested, fetch full details for each deal
-        const detailedDeals = [];
-        
-        for (const deal of filteredDeals) {
-            const detailedInfo = await teamleaderCommon.apiCall({
-                auth: context.auth,
-                method: HttpMethod.GET,
-                resourceUri: '/deals.info',
-                queryParams: {
-                    id: deal.id
-                }
-            });
-            
-            detailedDeals.push(detailedInfo.body.data);
-        }
-        
-        // Return results with detailed information
-        return {
-            ...filteredResponse,
-            data: detailedDeals
-        };
+        return response.body;
     },
 });

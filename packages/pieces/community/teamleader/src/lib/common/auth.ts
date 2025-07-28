@@ -17,12 +17,5 @@ export const teamleaderAuth = PieceAuth.OAuth2({
     tokenUrl: 'https://focus.teamleader.eu/oauth2/access_token',
     required: true,
     scope: [
-        'contacts.read',
-        'contacts.write',
-        'companies.read',
-        'companies.write',
-        'deals.read',
-        'deals.write',
-        'invoices.read'
     ]
 });

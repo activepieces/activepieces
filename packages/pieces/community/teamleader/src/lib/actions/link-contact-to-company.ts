@@ -6,12 +6,12 @@ import { teamleaderCommon } from '../common/client';
 export const linkContactToCompany = createAction({
     name: 'link_contact_to_company',
     displayName: 'Link Contact to Company',
-    description: 'Associate a contact with a company in Teamleader',
+    description: 'Associate a contact with a company',
     auth: teamleaderAuth,
     props: {
         contact_id: Property.Dropdown({
             displayName: 'Contact',
-            description: 'The contact to link',
+            description: 'Select the contact to link',
             required: true,
             refreshers: [],
             options: async ({ auth }) => {
@@ -24,8 +24,9 @@ export const linkContactToCompany = createAction({
                 try {
                     const response = await teamleaderCommon.apiCall({
                         auth: auth as any,
-                        method: HttpMethod.GET,
-                        resourceUri: '/contacts.list'
+                        method: HttpMethod.POST,
+                        resourceUri: '/contacts.list',
+                        body: {}
                     });
 
                     return {
@@ -46,7 +47,7 @@ export const linkContactToCompany = createAction({
         }),
         company_id: Property.Dropdown({
             displayName: 'Company',
-            description: 'The company to link the contact to',
+            description: 'Select the company to link to',
             required: true,
             refreshers: [],
             options: async ({ auth }) => {
@@ -59,8 +60,9 @@ export const linkContactToCompany = createAction({
                 try {
                     const response = await teamleaderCommon.apiCall({
                         auth: auth as any,
-                        method: HttpMethod.GET,
-                        resourceUri: '/companies.list'
+                        method: HttpMethod.POST,
+                        resourceUri: '/companies.list',
+                        body: {}
                     });
 
                     return {
@@ -79,52 +81,43 @@ export const linkContactToCompany = createAction({
                 }
             }
         }),
-        job_title: Property.ShortText({
-            displayName: 'Job Title',
-            description: "Contact's position or title in the company",
+        position: Property.ShortText({
+            displayName: 'Position',
+            description: 'Job title or role (e.g., CEO, Manager)',
             required: false
         }),
         decision_maker: Property.Checkbox({
             displayName: 'Decision Maker',
-            description: 'Whether this contact is a decision maker in the company',
-            required: false,
-            defaultValue: false
+            description: 'Is this contact a decision maker?',
+            required: false
         })
     },
     async run(context) {
-        // Prepare the link data
         const linkData: Record<string, any> = {
             id: context.propsValue.contact_id,
             company_id: context.propsValue.company_id,
         };
 
-        // Add optional fields if provided
-        if (context.propsValue.job_title) {
-            linkData['position'] = context.propsValue.job_title;
+        if (context.propsValue.position) {
+            linkData['position'] = context.propsValue.position;
         }
 
-        if (context.propsValue.decision_maker) {
+        if (context.propsValue.decision_maker !== undefined) {
             linkData['decision_maker'] = context.propsValue.decision_maker;
         }
 
-        // Link contact to company using Teamleader API
         await teamleaderCommon.apiCall({
             auth: context.auth,
             method: HttpMethod.POST,
-            resourceUri: '/contacts.link',
+            resourceUri: '/contacts.linkToCompany',
             body: linkData
         });
 
-        // Get and return the updated contact data with company information
-        const updatedContact = await teamleaderCommon.apiCall({
-            auth: context.auth,
-            method: HttpMethod.GET,
-            resourceUri: '/contacts.info',
-            queryParams: {
-                id: context.propsValue.contact_id
-            }
-        });
-
-        return updatedContact.body;
+        return {
+            success: true,
+            message: 'Contact linked to company successfully',
+            contact_id: context.propsValue.contact_id,
+            company_id: context.propsValue.company_id
+        };
     },
 });

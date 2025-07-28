@@ -1,129 +1,22 @@
 import { teamleaderAuth } from '../common/auth';
 import {
-  DedupeStrategy,
   HttpMethod,
-  Polling,
-  pollingHelper,
+  HttpRequest,
+  httpClient,
 } from '@activepieces/pieces-common';
 import {
-  PiecePropValueSchema,
-  Property,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { teamleaderCommon } from '../common/client';
 
-const polling: Polling<
-  PiecePropValueSchema<typeof teamleaderAuth>,
-  { includeCompanyContacts: boolean }
-> = {
-  strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, propsValue, lastItemId }) => {
-    // Prepare query parameters with sorting to get newest first
-    const queryParams: Record<string, any> = {
-      'sort': '-created_at',
-      'page[size]': '100' // Maximum allowed by API
-    };
-
-    // If lastItemId exists, add it to the query parameters to only get contacts after that ID
-    if (lastItemId) {
-      queryParams['filter[id][gt]'] = lastItemId;
-    }
-
-    // Call the Teamleader API to get contacts
-    const response = await teamleaderCommon.apiCall({
-      auth: auth,
-      method: HttpMethod.GET,
-      resourceUri: '/contacts.list',
-      queryParams
-    });
-
-    // Map the response data to the expected format
-    const contacts = response.body.data;
-    
-    // If includeCompanyContacts is true and we have contacts,
-    // fetch company information for contacts associated with companies
-    if (propsValue.includeCompanyContacts && contacts.length > 0) {
-      const detailedContacts = [];
-      
-      for (const contact of contacts) {
-        try {
-          // Fetch detailed contact info
-          const detailedInfo = await teamleaderCommon.apiCall({
-            auth: auth,
-            method: HttpMethod.GET,
-            resourceUri: '/contacts.info',
-            queryParams: {
-              id: contact.id
-            }
-          });
-          
-          const contactWithDetails = detailedInfo.body.data;
-          
-          // If the contact has companies associated, fetch company info
-          if (contactWithDetails.companies && contactWithDetails.companies.length > 0) {
-            const companiesInfo = [];
-            
-            for (const companyLink of contactWithDetails.companies) {
-              try {
-                const companyInfo = await teamleaderCommon.apiCall({
-                  auth: auth,
-                  method: HttpMethod.GET,
-                  resourceUri: '/companies.info',
-                  queryParams: {
-                    id: companyLink.company.id
-                  }
-                });
-                
-                companiesInfo.push(companyInfo.body.data);
-              } catch (error) {
-                // If fetching company details fails, use the basic company link info
-                companiesInfo.push(companyLink.company);
-              }
-            }
-            
-            // Add the detailed company information
-            contactWithDetails.detailed_companies = companiesInfo;
-          }
-          
-          detailedContacts.push({
-            id: contact.id,
-            data: contactWithDetails
-          });
-        } catch (error) {
-          // If fetching details fails, use the basic contact info
-          detailedContacts.push({
-            id: contact.id,
-            data: contact
-          });
-        }
-      }
-      
-      return detailedContacts;
-    }
-    
-    // Return basic contact information
-    return contacts.map((contact: any) => ({
-      id: contact.id,
-      data: contact
-    }));
-  },
-};
-
 export const newContact = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
-  description: 'Triggers when a new contact is created in Teamleader',
+  description: 'Triggers when a new contact is created',
   auth: teamleaderAuth,
-  type: TriggerStrategy.POLLING,
-  props: {
-    includeCompanyContacts: Property.Checkbox({
-      displayName: 'Include Company Details',
-      description: 'Include detailed company information for contacts associated with companies',
-      required: false,
-      defaultValue: true
-    })
-  },
+  type: TriggerStrategy.WEBHOOK,
+  props: {},
   sampleData: {
     id: '12345678-abcd-1234-5678-1234567890ab',
     first_name: 'John',
@@ -159,16 +52,66 @@ export const newContact = createTrigger({
     created_at: '2023-07-27T10:00:00+00:00',
     updated_at: '2023-07-27T10:00:00+00:00'
   },
+
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, { ...context, propsValue: { includeCompanyContacts: context.propsValue.includeCompanyContacts ?? false } });
+    const webhookUrl = context.webhookUrl;
+    const request: HttpRequest = {
+      method: HttpMethod.POST,
+      url: `${teamleaderCommon.baseUrl}/webhooks.register`,
+      body: {
+        url: webhookUrl,
+        types: ['contact.added']
+      },
+      headers: {
+        Authorization: `Bearer ${context.auth.access_token}`,
+        'Content-Type': 'application/json',
+      },
+    };
+
+    const { status } = await httpClient.sendRequest(request);
+    if (status !== 204) {
+      throw new Error(`Failed to register webhook. Status: ${status}`);
+    }
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, { ...context, propsValue: { includeCompanyContacts: context.propsValue.includeCompanyContacts ?? false } });
+    const webhookUrl = context.webhookUrl;
+    const request: HttpRequest = {
+      method: HttpMethod.POST,
+      url: `${teamleaderCommon.baseUrl}/webhooks.unregister`,
+      body: {
+        url: webhookUrl,
+        types: ['contact.added']
+      },
+      headers: {
+        Authorization: `Bearer ${context.auth.access_token}`,
+        'Content-Type': 'application/json',
+      },
+    };
+
+    try {
+      await httpClient.sendRequest(request);
+    } catch (error) {
+      console.warn('Failed to unregister webhook:', error);
+    }
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, { ...context, propsValue: { includeCompanyContacts: context.propsValue.includeCompanyContacts ?? false } });
-  },
-  test: async (context) => {
-    return await pollingHelper.test(polling, { ...context, propsValue: { includeCompanyContacts: context.propsValue.includeCompanyContacts ?? false } });
+    const payload = context.payload.body as any;
+    
+    if (payload?.id) {
+      try {
+        const contactDetails = await teamleaderCommon.apiCall({
+          auth: context.auth,
+          method: HttpMethod.POST,
+          resourceUri: '/contacts.info',
+          body: { id: payload.id }
+        });
+        
+        return [contactDetails.body.data];
+      } catch (error) {
+        return [payload];
+      }
+    }
+    
+    return [payload];
   },
 });

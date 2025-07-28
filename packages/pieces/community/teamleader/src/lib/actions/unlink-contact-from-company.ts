@@ -6,47 +6,98 @@ import { teamleaderCommon } from '../common/client';
 export const unlinkContactFromCompany = createAction({
     name: 'unlink_contact_from_company',
     displayName: 'Unlink Contact from Company',
-    description: 'Remove the association between a contact and a company in Teamleader',
+    description: 'Remove the association between contact and company',
     auth: teamleaderAuth,
     props: {
-        contact_id: Property.ShortText({
-            displayName: 'Contact ID',
-            description: 'ID of the contact to unlink',
+        contact_id: Property.Dropdown({
+            displayName: 'Contact',
+            description: 'Select the contact to unlink',
             required: true,
+            refreshers: [],
+            options: async ({ auth }) => {
+                if (!auth) return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please authenticate first'
+                };
+
+                try {
+                    const response = await teamleaderCommon.apiCall({
+                        auth: auth as any,
+                        method: HttpMethod.POST,
+                        resourceUri: '/contacts.list',
+                        body: {}
+                    });
+
+                    return {
+                        disabled: false,
+                        options: response.body.data.map((contact: any) => ({
+                            label: `${contact.first_name} ${contact.last_name || ''}`.trim(),
+                            value: contact.id
+                        }))
+                    };
+                } catch (error) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Error loading contacts'
+                    };
+                }
+            }
         }),
-        company_id: Property.ShortText({
-            displayName: 'Company ID',
-            description: 'ID of the company to unlink from the contact',
+        company_id: Property.Dropdown({
+            displayName: 'Company',
+            description: 'Select the company to unlink from',
             required: true,
+            refreshers: [],
+            options: async ({ auth }) => {
+                if (!auth) return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please authenticate first'
+                };
+
+                try {
+                    const response = await teamleaderCommon.apiCall({
+                        auth: auth as any,
+                        method: HttpMethod.POST,
+                        resourceUri: '/companies.list',
+                        body: {}
+                    });
+
+                    return {
+                        disabled: false,
+                        options: response.body.data.map((company: any) => ({
+                            label: company.name,
+                            value: company.id
+                        }))
+                    };
+                } catch (error) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Error loading companies'
+                    };
+                }
+            }
         }),
     },
     async run(context) {
-        const { contact_id, company_id } = context.propsValue;
-        
-        // Call Teamleader API to unlink contact from company
-        const response = await teamleaderCommon.apiCall({
+        await teamleaderCommon.apiCall({
             auth: context.auth,
             method: HttpMethod.POST,
-            resourceUri: '/relationshipCompanyContact.delete',
+            resourceUri: '/contacts.unlinkFromCompany',
             body: {
-                id: {
-                    contact: {
-                        type: 'contact',
-                        id: contact_id
-                    },
-                    company: {
-                        type: 'company',
-                        id: company_id
-                    }
-                }
+                id: context.propsValue.contact_id,
+                company_id: context.propsValue.company_id
             }
         });
 
-        // Return the successful response
         return {
             success: true,
-            message: 'Contact successfully unlinked from company',
-            response: response.body
+            message: 'Contact unlinked from company successfully',
+            contact_id: context.propsValue.contact_id,
+            company_id: context.propsValue.company_id
         };
     },
 });
