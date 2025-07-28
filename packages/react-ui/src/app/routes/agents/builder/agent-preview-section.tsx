@@ -1,11 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { t } from 'i18next';
-import {
-  FlaskConical,
-  Loader2,
-  MessageSquare,
-  ChevronsRight,
-} from 'lucide-react';
+import { Loader2, MessageSquare, ChevronsRight, Play } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -108,7 +103,7 @@ export const AgentPreviewSection = () => {
               {isRunning ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                <FlaskConical className="w-5 h-5" />
+                <Play className="w-5 h-5" />
               )}
               {isRunning ? 'Running...' : 'Run'}
             </Button>
