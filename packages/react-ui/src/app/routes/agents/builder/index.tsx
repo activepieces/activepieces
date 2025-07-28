@@ -62,7 +62,7 @@ const AgentBuilderContent = ({
       closeOnEscape={false}
     >
       {trigger}
-      <DrawerContent className="w-full overflow-auto overflow-x-hidden">
+      <DrawerContent className="w-full overflow-hidden">
         <DrawerHeader>
           <div className="flex items-center justify-between py-2 px-4 w-full relative">
             <div className="flex items-center gap-1 min-w-0">
@@ -119,12 +119,12 @@ const AgentBuilderContent = ({
         </DrawerHeader>
 
         {activeTab === AgentBuilderTabs.CONFIGURE && (
-          <div className="flex flex-1 h-full justify-center bg-accent">
+          <div className="flex flex-1 h-full justify-center bg-accent overflow-hidden">
             <AgentLeftSection agent={agent} />
-            <div className="hidden md:block w-0 md:w-1/3 bg-background border-l">
+            <div className="hidden md:block w-0 md:w-1/3 bg-background border-l h-full overflow-hidden">
               {testSectionIsOpen && <AgentPreviewSection />}
               {!testSectionIsOpen && (
-                <div className="flex flex-col h-full p-4 gap-8 w-full bg-background">
+                <div className="flex flex-col h-full p-4 gap-8 w-full bg-background overflow-hidden">
                   <AgentToolSection />
                   {showUseInFlow && <LinkedFlowsSection agent={agent} />}
                   <AgentStructuredOutput />
