@@ -21,7 +21,7 @@ export const deleteFile = createAction({
 
     const s3 = createS3(context.auth);
 
-    const response =  await s3.deleteObject({
+    const response = await s3.deleteObject({
       Bucket: bucket,
       Key: key,
     });
