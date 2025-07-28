@@ -29,8 +29,8 @@ interface AgentBuilderProps {
   onOpenChange: (open: boolean) => void;
   trigger: ReactNode;
   agent: Agent;
-  onChange?: (agent: Agent) => void;
   showUseInFlow?: boolean;
+  onChange?: (agent: Agent) => void;
 }
 
 enum AgentBuilderTabs {
@@ -44,19 +44,28 @@ const AgentBuilderContent = ({
   trigger,
   agent,
   showUseInFlow = false,
+  onChange,
 }: AgentBuilderProps) => {
-  const [isSaving, testSectionIsOpen] = useBuilderAgentState((state) => [
+  const [isSaving, testSectionIsOpen, currentAgent] = useBuilderAgentState((state) => [
     state.isSaving,
     state.testSectionIsOpen,
+    state.agent,
   ]);
   const [activeTab, setActiveTab] = useState<AgentBuilderTabs>(
     AgentBuilderTabs.CONFIGURE,
   );
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open && onChange) {
+      onChange(currentAgent);
+    }
+    onOpenChange(open);
+  };
+
   return (
     <Drawer
       open={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       dismissible={false}
       direction="right"
       closeOnEscape={false}
@@ -70,7 +79,7 @@ const AgentBuilderContent = ({
                 variant="basic"
                 size={'icon'}
                 className="text-foreground"
-                onClick={() => onOpenChange(false)}
+                onClick={() => handleOpenChange(false)}
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
@@ -147,9 +156,9 @@ export const AgentBuilder = ({
   isOpen,
   onOpenChange,
   trigger,
-  onChange,
   agent,
   showUseInFlow = false,
+  onChange,
 }: AgentBuilderProps) => (
   <BuilderAgentProvider agent={agent}>
     <AgentBuilderContent
@@ -157,8 +166,8 @@ export const AgentBuilder = ({
       onOpenChange={onOpenChange}
       trigger={trigger}
       agent={agent}
-      onChange={onChange}
       showUseInFlow={showUseInFlow}
+      onChange={onChange}
     />
   </BuilderAgentProvider>
 );

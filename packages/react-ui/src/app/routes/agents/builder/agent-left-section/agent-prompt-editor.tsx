@@ -1,47 +1,31 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 
 import { Textarea } from '@/components/ui/textarea';
 import { useBuilderAgentState } from '@/features/agents/lib/store/builder-agent-state-provider';
-import { debounce, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
+
+type FormValues = {
+  systemPrompt: string;
+};
 
 export const AgentPromptEditior = () => {
   const [updateAgent, agent] = useBuilderAgentState((state) => [
     state.updateAgent,
     state.agent,
   ]);
+
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const [localValue, setLocalValue] = useState(() => agent?.systemPrompt ?? '');
-
-  const agentRef = useRef(agent);
-  useEffect(() => {
-    agentRef.current = agent;
-  }, [agent]);
-
-  const debouncedUpdate = useRef(
-    debounce((value: string) => {
-      if (isNil(agentRef.current)) return;
-      updateAgent({ systemPrompt: value });
-    }, 500),
-  ).current;
-
-  useEffect(() => {
-    if (
-      agent?.systemPrompt !== undefined &&
-      agent?.systemPrompt !== localValue
-    ) {
-      setLocalValue(agent.systemPrompt);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agent?.systemPrompt]);
-
-  const handlePromptChange = useCallback(
-    (value: string) => {
-      setLocalValue(value);
-      debouncedUpdate(value);
+  const { register, setValue, watch } = useForm<FormValues>({
+    defaultValues: {
+      systemPrompt: agent?.systemPrompt ?? '',
     },
-    [debouncedUpdate],
-  );
+  });
+
+  useEffect(() => {
+    setValue('systemPrompt', agent?.systemPrompt ?? '');
+  }, [agent?.systemPrompt, setValue]);
 
   const handleContainerClick = useCallback(() => {
     if (textareaRef.current && !isNil(agent)) {
@@ -49,20 +33,27 @@ export const AgentPromptEditior = () => {
     }
   }, [agent]);
 
+  const systemPromptValue = watch('systemPrompt');
+  
   return (
-    <div
+    <form
       className="flex-1 min-h-0 w-full cursor-text"
       onClick={handleContainerClick}
+      onSubmit={e => e.preventDefault()}
     >
       <Textarea
         id="system-prompt"
-        value={localValue}
-        onChange={(e) => handlePromptChange(e.target.value)}
+        {...register('systemPrompt')}
+        value={systemPromptValue}
+        onChange={(e) => {
+          setValue('systemPrompt', e.target.value, { shouldDirty: true });
+          updateAgent({ systemPrompt: e.target.value }, true);
+        }}
         placeholder="Describe this agent's purpose, responsibilities, and any special instructions."
         className="flex-1 min-h-0 resize-none w-full border-none focus:ring-0 focus:border-none shadow-none p-0 h-full"
         disabled={isNil(agent)}
         ref={textareaRef}
       />
-    </div>
+    </form>
   );
 };
