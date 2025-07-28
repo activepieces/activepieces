@@ -10,13 +10,9 @@ import {
   createModelProperty, 
   createTemperatureProperty,
   createTokenProperty,
-  createSearchProperties,
-  createAdvancedProperties,
   makeXaiRequest,
   validateResponse,
   parseJsonResponse,
-  buildSearchParameters,
-  shouldUseReasoningEffort,
   XaiResponse,
   ExtractionResult
 } from '../common/utils';
@@ -33,33 +29,33 @@ export const extractDataFromText = createAction({
   auth: grokAuth,
   name: 'extract_data_from_text',
   displayName: 'Extract Data From Text',
-  description: 'Extract structured data fields from unstructured text (e.g., names, addresses, dates) using advanced AI data extraction.',
+  description: 'Extract structured data fields from unstructured text (e.g., names, addresses, dates).',
   props: {
     model: createModelProperty({
       displayName: 'Model',
-      description: 'The Grok model to use for data extraction.',
+      description: 'Grok model to use for data extraction.',
       defaultValue: 'grok-3-beta'
     }),
     text: Property.LongText({
       displayName: 'Text to Extract From',
       required: true,
-      description: 'The unstructured text to extract data from.',
+      description: 'Text to extract data from.',
     }),
     extractionPrompt: Property.LongText({
       displayName: 'Extraction Instructions',
       required: false,
-      description: 'Additional instructions for how to extract the data.',
+      description: 'How to extract the data.',
       defaultValue: 'Extract the following structured data from the provided text. Be accurate and only extract information that is explicitly present. If a field is not found, use null.',
     }),
     fields: Property.Array({
       displayName: 'Fields to Extract',
       required: true,
-      description: 'Define the structured fields you want to extract from the text.',
+      description: 'Define the structured fields to extract from the text.',
       properties: {
         fieldName: Property.ShortText({
           displayName: 'Field Name',
           required: true,
-          description: 'Name of the field to extract (e.g., "firstName", "email", "phoneNumber")',
+          description: 'Name of the field (e.g., "firstName", "email", "phoneNumber")',
         }),
         fieldType: Property.StaticDropdown({
           displayName: 'Field Type',
@@ -79,13 +75,13 @@ export const extractDataFromText = createAction({
         fieldDescription: Property.ShortText({
           displayName: 'Field Description',
           required: true,
-          description: 'Description of what this field represents (e.g., "The person\'s first name")',
+          description: 'What this field represents (e.g., "The person\'s first name")',
         }),
         required: Property.Checkbox({
           displayName: 'Required Field',
           required: false,
           defaultValue: true,
-          description: 'Whether this field must be present in the extracted data.',
+          description: 'Must be present in extracted data.',
         }),
       },
     }),
@@ -93,30 +89,20 @@ export const extractDataFromText = createAction({
       displayName: 'Enable Context Search',
       required: false,
       defaultValue: false,
-      description: 'Allow the model to search for additional context to improve extraction accuracy.',
+      description: 'Search for additional context to improve extraction.',
     }),
     strictExtraction: Property.Checkbox({
       displayName: 'Strict Extraction',
       required: false,
       defaultValue: true,
-      description: 'Only extract explicitly present information, avoid inference or guessing.',
+      description: 'Only extract explicitly present information.',
     }),
-    temperature: Property.Number({
-      displayName: 'Temperature',
-      required: false,
-      description: 'Controls randomness (0-2): 0 = deterministic, 1 = balanced, 2 = creative.',
-      defaultValue: 0.1,
-    }),
-    maxCompletionTokens: Property.Number({
-      displayName: 'Max Completion Tokens',
-      required: false,
-      description: 'Maximum tokens for the extraction response.',
-      defaultValue: 1000,
-    }),
+    temperature: createTemperatureProperty(0.1),
+    maxCompletionTokens: createTokenProperty(1000),
     reasoningEffort: Property.StaticDropdown({
       displayName: 'Reasoning Effort',
       required: false,
-      description: 'How thoroughly the model should analyze the text.',
+      description: 'How thoroughly to analyze the text.',
       options: {
         disabled: false,
         options: [
@@ -131,17 +117,6 @@ export const extractDataFromText = createAction({
       required: false,
       defaultValue: true,
       description: 'Include confidence scores for extracted fields.',
-    }),
-    includeCitations: Property.Checkbox({
-      displayName: 'Include Citations',
-      required: false,
-      defaultValue: false,
-      description: 'Include sources if context search is enabled.',
-    }),
-    user: Property.ShortText({
-      displayName: 'User ID',
-      required: false,
-      description: 'Unique identifier for tracking (helps monitor usage patterns).',
     }),
   },
   async run({ auth, propsValue }) {
@@ -162,8 +137,6 @@ export const extractDataFromText = createAction({
       maxCompletionTokens,
       reasoningEffort,
       includeConfidence,
-      includeCitations,
-      user,
     } = propsValue;
 
     if (!text.trim()) {
@@ -285,10 +258,6 @@ Response Format: You must respond with valid JSON matching the specified schema.
       },
     };
 
-    if (user) {
-      requestBody.user = user;
-    }
-
     if (reasoningEffort && !model.includes('grok-3')) {
       requestBody.reasoning_effort = reasoningEffort;
     }
@@ -297,7 +266,7 @@ Response Format: You must respond with valid JSON matching the specified schema.
       requestBody.search_parameters = {
         mode: 'auto',
         max_search_results: 3,
-        return_citations: includeCitations,
+        return_citations: true, // Auto-enable citations when using context search
       };
     }
 
@@ -340,7 +309,7 @@ Response Format: You must respond with valid JSON matching the specified schema.
         (result as any).usage = response.body.usage;
       }
 
-      if (includeCitations && response.body.citations) {
+      if (enableContextSearch && response.body.citations) {
         (result as any).citations = response.body.citations;
       }
 

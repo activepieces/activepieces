@@ -11,13 +11,8 @@ import {
   createModelProperty, 
   createTemperatureProperty,
   createTokenProperty,
-  createSearchProperties,
-  createAdvancedProperties,
   makeXaiRequest,
   validateResponse,
-  parseJsonResponse,
-  buildSearchParameters,
-  shouldUseReasoningEffort,
   XaiResponse,
   AskGrokResult
 } from '../common/utils';
@@ -27,17 +22,17 @@ export const askGrok = createAction({
   auth: grokAuth,
   name: 'ask_grok',
   displayName: 'Ask Grok (Send Prompt)',
-  description: 'Send a text prompt or image URL to Grok with advanced features like real-time search, tools, and structured outputs.',
+  description: 'Send prompts to Grok with real-time search, tools, and structured outputs.',
   props: {
     model: createModelProperty({
       displayName: 'Model',
-      description: 'The Grok model to use for generating the response.',
+      description: 'Grok model to use for generating the response.',
       defaultValue: 'grok-3-beta'
     }),
     messages: Property.Array({
       displayName: 'Messages',
       required: true,
-      description: 'The conversation messages. Use this for complex multi-turn conversations.',
+      description: 'Conversation messages for multi-turn conversations.',
       properties: {
         role: Property.StaticDropdown({
           displayName: 'Role',
@@ -55,12 +50,12 @@ export const askGrok = createAction({
         content: Property.LongText({
           displayName: 'Content',
           required: true,
-          description: 'The message content (text, image URL, or JSON for multimodal).',
+          description: 'Message content (text, image URL, or JSON for multimodal).',
         }),
         name: Property.ShortText({
           displayName: 'Name (Optional)',
           required: false,
-          description: 'Unique identifier for the user/assistant.',
+          description: 'Unique identifier for the user.',
         }),
         tool_call_id: Property.ShortText({
           displayName: 'Tool Call ID (for tool role)',
@@ -77,7 +72,7 @@ export const askGrok = createAction({
     systemMessage: Property.LongText({
       displayName: 'System Instructions',
       required: false,
-      description: 'System message to set behavior and context for Grok.',
+      description: 'System message to set behavior and context.',
       defaultValue: 'You are Grok, a helpful and witty AI assistant that provides accurate, truthful answers.',
     }),
     imageUrl: Property.ShortText({
@@ -85,35 +80,8 @@ export const askGrok = createAction({
       required: false,
       description: 'Image URL for vision models. Works with quick prompt mode.',
     }),
-    temperature: Property.Number({
-      displayName: 'Temperature',
-      required: false,
-      description: 'Controls randomness (0-2): 0 = deterministic, 2 = very creative.',
-      defaultValue: 1.0,
-    }),
-    maxCompletionTokens: Property.Number({
-      displayName: 'Max Completion Tokens',
-      required: false,
-      description: 'Maximum tokens to generate (includes reasoning tokens).',
-    }),
-    topP: Property.Number({
-      displayName: 'Top P',
-      required: false,
-      description: 'Nucleus sampling (0-1): 0.1 = top 10% probability mass.',
-      defaultValue: 1.0,
-    }),
-    frequencyPenalty: Property.Number({
-      displayName: 'Frequency Penalty',
-      required: false,
-      description: 'Reduces repetition (-2.0 to 2.0).',
-      defaultValue: 0,
-    }),
-    presencePenalty: Property.Number({
-      displayName: 'Presence Penalty',
-      required: false,
-      description: 'Encourages new topics (-2.0 to 2.0).',
-      defaultValue: 0,
-    }),
+    temperature: createTemperatureProperty(1.0),
+    maxCompletionTokens: createTokenProperty(),
     responseFormat: Property.StaticDropdown({
       displayName: 'Response Format',
       required: false,
@@ -159,20 +127,20 @@ export const askGrok = createAction({
       defaultValue: 15,
       description: 'Maximum number of search results to use (1-30).',
     }),
-         searchSources: Property.MultiSelectDropdown({
-       displayName: 'Search Sources',
-       required: false,
-       description: 'Sources to search in.',
-       refreshers: [],
-       options: async () => ({
-         disabled: false,
-         options: [
-           { label: 'Web', value: 'web' },
-           { label: 'News', value: 'news' },
-           { label: 'X (Twitter)', value: 'x' },
-         ],
-       }),
-     }),
+    searchSources: Property.MultiSelectDropdown({
+      displayName: 'Search Sources',
+      required: false,
+      description: 'Sources to search in.',
+      refreshers: [],
+      options: async () => ({
+        disabled: false,
+        options: [
+          { label: 'Web', value: 'web' },
+          { label: 'News', value: 'news' },
+          { label: 'X (Twitter)', value: 'x' },
+        ],
+      }),
+    }),
     tools: Property.Array({
       displayName: 'Tools/Functions',
       required: false,
@@ -209,6 +177,12 @@ export const askGrok = createAction({
         ],
       },
     }),
+    parallelToolCalls: Property.Checkbox({
+      displayName: 'Parallel Tool Calls',
+      required: false,
+      defaultValue: true,
+      description: 'Allow model to call multiple tools simultaneously.',
+    }),
     reasoningEffort: Property.StaticDropdown({
       displayName: 'Reasoning Effort',
       required: false,
@@ -222,78 +196,17 @@ export const askGrok = createAction({
         ],
       },
     }),
-    stopSequences: Property.ShortText({
-      displayName: 'Stop Sequences',
-      required: false,
-      description: 'Comma-separated sequences to stop generation.',
-    }),
-    numberOfChoices: Property.Number({
-      displayName: 'Number of Choices',
-      required: false,
-      defaultValue: 1,
-      description: 'How many response choices to generate (increases cost).',
-    }),
-    logprobs: Property.Checkbox({
-      displayName: 'Include Log Probabilities',
-      required: false,
-      defaultValue: false,
-      description: 'Include token probability information.',
-    }),
-    topLogprobs: Property.Number({
-      displayName: 'Top Log Probs',
-      required: false,
-      description: 'Number of top token probabilities to return (0-8).',
-    }),
-    seed: Property.Number({
-      displayName: 'Seed',
-      required: false,
-      description: 'Random seed for deterministic outputs.',
-    }),
-    stream: Property.Checkbox({
-      displayName: 'Enable Streaming',
-      required: false,
-      defaultValue: false,
-      description: 'Stream response as it generates (not recommended for automation).',
-    }),
-    user: Property.ShortText({
-      displayName: 'User ID',
-      required: false,
-      description: 'Unique identifier for end-user (helps monitor abuse).',
-    }),
     memoryKey: Property.ShortText({
       displayName: 'Memory Key',
       description: 'Keep conversation history across runs.',
       required: false,
     }),
-    includeUsageStats: Property.Checkbox({
-      displayName: 'Include Usage Statistics',
-      required: false,
-      defaultValue: true,
-      description: 'Include detailed token usage information.',
-    }),
-    includeCitations: Property.Checkbox({
-      displayName: 'Include Citations',
-      required: false,
-      defaultValue: true,
-      description: 'Include sources used by the model.',
-    }),
-    includeDebugOutput: Property.Checkbox({
-      displayName: 'Include Debug Output',
-      required: false,
-      defaultValue: false,
-      description: 'Include debug information (for trusted testers).',
-    }),
   },
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
       temperature: z.number().min(0).max(2).optional(),
-      topP: z.number().min(0).max(1).optional(),
       maxCompletionTokens: z.number().min(1).optional(),
-      frequencyPenalty: z.number().min(-2).max(2).optional(),
-      presencePenalty: z.number().min(-2).max(2).optional(),
       maxSearchResults: z.number().min(1).max(30).optional(),
-      numberOfChoices: z.number().min(1).optional(),
-      topLogprobs: z.number().min(0).max(8).optional(),
       memoryKey: z.string().max(128).optional(),
     });
 
@@ -305,9 +218,6 @@ export const askGrok = createAction({
       imageUrl,
       temperature,
       maxCompletionTokens,
-      topP,
-      frequencyPenalty,
-      presencePenalty,
       responseFormat,
       jsonSchema,
       enableRealTimeSearch,
@@ -316,18 +226,9 @@ export const askGrok = createAction({
       searchSources,
       tools,
       toolChoice,
+      parallelToolCalls,
       reasoningEffort,
-      stopSequences,
-      numberOfChoices,
-      logprobs,
-      topLogprobs,
-      seed,
-      stream,
-      user,
       memoryKey,
-      includeUsageStats,
-      includeCitations,
-      includeDebugOutput,
     } = propsValue;
 
     let conversationMessages: any[] = [];
@@ -383,15 +284,6 @@ export const askGrok = createAction({
 
     if (temperature !== undefined) requestBody.temperature = temperature;
     if (maxCompletionTokens !== undefined) requestBody.max_completion_tokens = maxCompletionTokens;
-    if (topP !== undefined) requestBody.top_p = topP;
-    if (frequencyPenalty !== undefined) requestBody.frequency_penalty = frequencyPenalty;
-    if (presencePenalty !== undefined) requestBody.presence_penalty = presencePenalty;
-    if (numberOfChoices !== undefined) requestBody.n = numberOfChoices;
-    if (logprobs !== undefined) requestBody.logprobs = logprobs;
-    if (topLogprobs !== undefined) requestBody.top_logprobs = topLogprobs;
-    if (seed !== undefined) requestBody.seed = seed;
-    if (stream !== undefined) requestBody.stream = stream;
-    if (user) requestBody.user = user;
 
     if (responseFormat && responseFormat !== 'text') {
       if (responseFormat === 'json_object') {
@@ -413,7 +305,7 @@ export const askGrok = createAction({
       const searchParams: any = {
         mode: searchMode || 'auto',
         max_search_results: maxSearchResults || 15,
-        return_citations: includeCitations,
+        return_citations: true,
       };
 
       if (searchSources && Array.isArray(searchSources) && searchSources.length > 0) {
@@ -436,17 +328,14 @@ export const askGrok = createAction({
       if (toolChoice && toolChoice !== 'auto') {
         requestBody.tool_choice = toolChoice;
       }
-    }
 
-    if (reasoningEffort && !model.includes('grok-3')) {
-      requestBody.reasoning_effort = reasoningEffort;
-    }
-
-    if (stopSequences) {
-      const stops = stopSequences.split(',').map(s => s.trim()).filter(s => s.length > 0);
-      if (stops.length > 0) {
-        requestBody.stop = stops.slice(0, 4);
+      if (parallelToolCalls !== undefined) {
+        requestBody.parallel_tool_calls = parallelToolCalls;
       }
+    }
+
+    if (reasoningEffort && !model.includes('grok-4')) {
+      requestBody.reasoning_effort = reasoningEffort;
     }
 
     try {
@@ -482,23 +371,17 @@ export const askGrok = createAction({
         (result as any).tool_calls = assistantMessage.tool_calls;
       }
 
-      if (choice.logprobs) {
-        (result as any).logprobs = choice.logprobs;
-      }
 
-      if (numberOfChoices && numberOfChoices > 1) {
-        (result as any).all_choices = response.body.choices;
-      }
 
-      if (includeUsageStats && response.body.usage) {
+      if (response.body.usage) {
         (result as any).usage = response.body.usage;
       }
 
-      if (includeCitations && response.body.citations) {
+      if (response.body.citations) {
         (result as any).citations = response.body.citations;
       }
 
-      if (includeDebugOutput && response.body.debug_output) {
+      if (response.body.debug_output) {
         (result as any).debug_output = response.body.debug_output;
       }
 

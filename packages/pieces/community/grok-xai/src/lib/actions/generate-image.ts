@@ -19,7 +19,7 @@ export const generateImage = createAction({
   auth: grokAuth,
   name: 'generate_image',
   displayName: 'Generate Image',
-  description: 'Create brand-new images from text prompts using Grok\'s image generation capabilities.',
+  description: 'Create images from text prompts using Grok\'s image generation.',
   props: {
     prompt: Property.LongText({
       displayName: 'Image Prompt',
@@ -28,7 +28,7 @@ export const generateImage = createAction({
     }),
     model: createModelProperty({
       displayName: 'Image Model',
-      description: 'The image generation model to use.',
+      description: 'Image generation model to use.',
       defaultValue: 'grok-2-image-1212',
       filterForImages: true
     }),
@@ -42,7 +42,7 @@ export const generateImage = createAction({
       displayName: 'Response Format',
       required: false,
       defaultValue: 'url',
-      description: 'The format of the generated images.',
+      description: 'Format of the generated images.',
       options: {
         disabled: false,
         options: [
@@ -50,11 +50,6 @@ export const generateImage = createAction({
           { label: 'Base64 JSON', value: 'b64_json' },
         ],
       },
-    }),
-    user: Property.ShortText({
-      displayName: 'User ID',
-      required: false,
-      description: 'A unique identifier representing your end-user, which can help xAI to monitor and detect abuse.',
     }),
   },
   async run({ auth, propsValue }) {
@@ -68,7 +63,6 @@ export const generateImage = createAction({
       model,
       numberOfImages,
       responseFormat,
-      user,
     } = propsValue;
 
     if (!prompt.trim()) {
@@ -83,10 +77,6 @@ export const generateImage = createAction({
 
     if (responseFormat) {
       requestBody.response_format = responseFormat;
-    }
-
-    if (user) {
-      requestBody.user = user;
     }
 
     try {
@@ -128,7 +118,6 @@ export const generateImage = createAction({
         model_used: model,
         total_images: images.length,
         response_format: responseFormat || 'url',
-        user_id: user || null,
       };
 
       return result;

@@ -10,13 +10,9 @@ import {
   createModelProperty, 
   createTemperatureProperty,
   createTokenProperty,
-  createSearchProperties,
-  createAdvancedProperties,
   makeXaiRequest,
   validateResponse,
   parseJsonResponse,
-  buildSearchParameters,
-  shouldUseReasoningEffort,
   XaiResponse,
   CategorizationResult
 } from '../common/utils';
@@ -31,17 +27,17 @@ export const categorizeText = createAction({
   auth: grokAuth,
   name: 'categorize_text',
   displayName: 'Categorize Text',
-  description: 'Assign one or more categories to input text based on custom or predefined labels using advanced AI categorization.',
+  description: 'Assign categories to input text based on custom or predefined labels.',
   props: {
     model: createModelProperty({
       displayName: 'Model',
-      description: 'The Grok model to use for text categorization.',
+      description: 'Grok model to use for text categorization.',
       defaultValue: 'grok-3-beta'
     }),
     text: Property.LongText({
       displayName: 'Text to Categorize',
       required: true,
-      description: 'The text content you want to categorize.',
+      description: 'Text content to categorize.',
     }),
     categories: Property.Array({
       displayName: 'Categories',
@@ -51,12 +47,12 @@ export const categorizeText = createAction({
         name: Property.ShortText({
           displayName: 'Category Name',
           required: true,
-          description: 'Name of the category (e.g., "Positive", "Urgent", "Customer Support")',
+          description: 'Category name (e.g., "Positive", "Urgent", "Customer Support")',
         }),
         description: Property.ShortText({
           displayName: 'Category Description',
           required: true,
-          description: 'Brief description of what this category represents',
+          description: 'What this category represents',
         }),
       },
     }),
@@ -64,42 +60,32 @@ export const categorizeText = createAction({
       displayName: 'Allow Multiple Categories',
       required: false,
       defaultValue: false,
-      description: 'Whether the text can be assigned to multiple categories.',
+      description: 'Text can be assigned to multiple categories.',
     }),
     includeConfidence: Property.Checkbox({
       displayName: 'Include Confidence Scores',
       required: false,
       defaultValue: true,
-      description: 'Include confidence scores for each category assignment.',
+      description: 'Include confidence scores for each category.',
     }),
     customInstructions: Property.LongText({
       displayName: 'Custom Instructions',
       required: false,
-      description: 'Additional instructions for categorization (e.g., specific criteria, context).',
+      description: 'Additional instructions for categorization.',
       defaultValue: 'Analyze the text and assign it to the most appropriate category based on its content, tone, and context.',
     }),
     enableContextSearch: Property.Checkbox({
       displayName: 'Enable Context Search',
       required: false,
       defaultValue: false,
-      description: 'Allow the model to search for additional context to improve categorization.',
+      description: 'Search for additional context to improve categorization.',
     }),
-    temperature: Property.Number({
-      displayName: 'Temperature',
-      required: false,
-      description: 'Controls randomness (0-2): 0 = deterministic, 1 = balanced, 2 = creative.',
-      defaultValue: 0.2,
-    }),
-    maxCompletionTokens: Property.Number({
-      displayName: 'Max Completion Tokens',
-      required: false,
-      description: 'Maximum tokens for the categorization response.',
-      defaultValue: 500,
-    }),
+    temperature: createTemperatureProperty(0.2),
+    maxCompletionTokens: createTokenProperty(500),
     reasoningEffort: Property.StaticDropdown({
       displayName: 'Reasoning Effort',
       required: false,
-      description: 'How thoroughly the model should analyze the text.',
+      description: 'How thoroughly to analyze the text.',
       options: {
         disabled: false,
         options: [
@@ -108,17 +94,6 @@ export const categorizeText = createAction({
           { label: 'High (Deep analysis)', value: 'high' },
         ],
       },
-    }),
-    includeCitations: Property.Checkbox({
-      displayName: 'Include Citations',
-      required: false,
-      defaultValue: false,
-      description: 'Include sources if context search is enabled.',
-    }),
-    user: Property.ShortText({
-      displayName: 'User ID',
-      required: false,
-      description: 'Unique identifier for tracking (helps monitor usage patterns).',
     }),
   },
   async run({ auth, propsValue }) {
@@ -139,8 +114,6 @@ export const categorizeText = createAction({
       temperature,
       maxCompletionTokens,
       reasoningEffort,
-      includeCitations,
-      user,
     } = propsValue;
 
     if (!text.trim()) {
@@ -242,10 +215,6 @@ Response Format: You must respond with valid JSON matching the specified schema.
       },
     };
 
-    if (user) {
-      requestBody.user = user;
-    }
-
     if (reasoningEffort && !model.includes('grok-3')) {
       requestBody.reasoning_effort = reasoningEffort;
     }
@@ -254,7 +223,7 @@ Response Format: You must respond with valid JSON matching the specified schema.
       requestBody.search_parameters = {
         mode: 'auto',
         max_search_results: 5,
-        return_citations: includeCitations,
+        return_citations: true,
       };
     }
 
@@ -292,7 +261,7 @@ Response Format: You must respond with valid JSON matching the specified schema.
         (result as any).usage = response.body.usage;
       }
 
-      if (includeCitations && response.body.citations) {
+      if (enableContextSearch && response.body.citations) {
         (result as any).citations = response.body.citations;
       }
 

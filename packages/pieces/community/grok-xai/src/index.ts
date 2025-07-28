@@ -10,7 +10,7 @@ import { XAI_BASE_URL } from './lib/common/constants';
 
 export const grokXai = createPiece({
   displayName: 'Grok xAI',
-  description: 'Advanced AI chatbot by xAI that answers questions, generates text, extracts information from data, and provides real-time insights. Inspired by The Hitchhiker\'s Guide to the Galaxy, Grok delivers insightful, unfiltered truths about the universe.',
+  description: 'AI chatbot by xAI that answers questions, generates text, extracts data, and provides real-time insights.',
   auth: grokAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/grok-xai.png',

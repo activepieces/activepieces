@@ -132,8 +132,12 @@ export const createModelProperty = (config?: {
       }
 
       try {
+        const endpoint = filterForImages 
+          ? `${XAI_BASE_URL}/image-generation-models`
+          : `${XAI_BASE_URL}/language-models`;
+
         const response = await httpClient.sendRequest({
-          url: `${XAI_BASE_URL}/models`,
+          url: endpoint,
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
@@ -141,11 +145,14 @@ export const createModelProperty = (config?: {
           },
         });
         
-        let models = response.body.data || [];
-        
+        let models = [];
         if (filterForImages) {
+          models = response.body.models || [];
+        } else {
+          models = response.body.models || [];
           models = models.filter((model: any) => 
-            model.id.includes('image') || model.id.includes('vision')
+            model.output_modalities?.includes('text') && 
+            !model.output_modalities?.includes('image')
           );
         }
         
@@ -157,11 +164,38 @@ export const createModelProperty = (config?: {
           })),
         };
       } catch (error) {
-        return {
-          disabled: false,
-          options: fallbackModels,
-          placeholder: "Using fallback models",
-        };
+        try {
+          const response = await httpClient.sendRequest({
+            url: `${XAI_BASE_URL}/models`,
+            method: HttpMethod.GET,
+            authentication: {
+              type: AuthenticationType.BEARER_TOKEN,
+              token: auth as string,
+            },
+          });
+          
+          let models = response.body.data || [];
+          
+          if (filterForImages) {
+            models = models.filter((model: any) => 
+              model.id.includes('image') || model.id.includes('vision')
+            );
+          }
+          
+          return {
+            disabled: false,
+            options: models.map((model: any) => ({
+              label: model.id,
+              value: model.id,
+            })),
+          };
+        } catch (fallbackError) {
+          return {
+            disabled: false,
+            options: fallbackModels,
+            placeholder: "Using fallback models",
+          };
+        }
       }
     },
   });
@@ -299,22 +333,4 @@ export const parseJsonResponse = (content: string, operation: string) => {
   } catch (parseError) {
     throw new Error(`Failed to parse ${operation.toLowerCase()} result: ${parseError}`);
   }
-};
-
-export const buildSearchParameters = (
-  enableSearch: boolean,
-  maxResults: number,
-  includeCitations: boolean
-) => {
-  if (!enableSearch) return undefined;
-  
-  return {
-    mode: 'auto',
-    max_search_results: maxResults,
-    return_citations: includeCitations,
-  };
-};
-
-export const shouldUseReasoningEffort = (reasoningEffort: string, model: string): boolean => {
-  return Boolean(reasoningEffort) && !model.includes('grok-3');
 }; 
