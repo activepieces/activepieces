@@ -1,5 +1,5 @@
 import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, ProgressUpdateType, ProjectId, RunEnvironment } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, ProgressUpdateType, ProjectId, RunEnvironment, TriggerPayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
@@ -96,6 +96,8 @@ export const webhookHandler = {
             httpRequestId: webhookRequestId,
             executionType: ExecutionType.BEGIN,
             progressUpdateType: ProgressUpdateType.WEBHOOK_RESPONSE,
+            parentRunId: undefined,
+            failParentOnFailure: false,
         })
 
         params.onRunCreated?.(createdRun)

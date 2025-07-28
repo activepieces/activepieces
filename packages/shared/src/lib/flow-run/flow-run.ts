@@ -24,6 +24,8 @@ export const FlowRun = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
     flowId: Type.String(),
+    parentRunId: Type.Optional(Type.String()),
+    failParentOnFailure: Type.Boolean(),
     tags: Type.Optional(Type.Array(Type.String())),
     flowVersionId: Type.String(),
     flowDisplayName: Type.String(),

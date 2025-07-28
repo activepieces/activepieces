@@ -1,5 +1,5 @@
 import { ApQueueJob, DelayedJobData, JobData, JobStatus, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, RepeatableJobType, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
-import { apId, ExecutionType, FlowRunStatus, FlowStatus, isNil, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
+import { apId, ExecutionType, FlowRunStatus, FlowStatus, isNil, PrincipalType, ProgressUpdateType, RunEnvironment, TriggerPayload } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
@@ -122,8 +122,9 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             flowVersionId,
             payloads,
         )
-        const createFlowRuns = filterPayloads.map((payload) =>
-            flowRunService(request.log).start({
+        const createFlowRuns = filterPayloads.map((payload) =>{
+            const parentRunId = (payload as { parentRunId: string }).parentRunId ?? null
+            return  flowRunService(request.log).start({
                 environment,
                 flowVersionId,
                 payload,
@@ -133,8 +134,10 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
                 executionType: ExecutionType.BEGIN,
                 progressUpdateType,
                 executeTrigger: false,
-            }),
-        )
+                parentRunId,
+                failParentOnFailure: true,
+            })
+        })
         return Promise.all(createFlowRuns)
     })
 
@@ -147,6 +150,10 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (request) => {
         const data = request.body
+        const flowRun = await flowRunService(request.log).getOneOrThrow({
+            id: data.runId,
+            projectId: data.projectId,
+        })
         await flowRunService(request.log).start({
             payload: null,
             existingFlowRunId: data.runId,
@@ -158,6 +165,8 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             httpRequestId: data.httpRequestId,
             environment: RunEnvironment.PRODUCTION,
             progressUpdateType: data.progressUpdateType ?? ProgressUpdateType.NONE,
+            parentRunId: flowRun.parentRunId,
+            failParentOnFailure: flowRun.failParentOnFailure,
         })
     })
 

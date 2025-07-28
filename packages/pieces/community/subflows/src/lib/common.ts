@@ -8,6 +8,8 @@ export type CallableFlowRequest = {
     parentRunId?: string;
 }
 export type CallableFlowResponse = {
+    status: 'success' | 'error';
+    errorMessage?: string;
     data: unknown;
 }
 

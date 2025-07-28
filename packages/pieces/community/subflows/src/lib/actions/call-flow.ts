@@ -4,7 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ExecutionType, FlowStatus, isNil, PauseType, TriggerType } from '@activepieces/shared';
+import { ActivepiecesError, ErrorCode, ExecutionType, FlowStatus, isNil, PauseType, TriggerType } from '@activepieces/shared';
 import { CallableFlowRequest, CallableFlowResponse } from '../common';
 
 type FlowValue = {
@@ -139,7 +139,17 @@ export const callFlow = createAction({
   async run(context) {
     if (context.executionType === ExecutionType.RESUME) {
       const response = context.resumePayload.body as CallableFlowResponse;
+      const errorMessage = response.errorMessage ?? 'Subflow has been failed';
+      if (response.status === 'error') {
+        throw new ActivepiecesError({
+          code: ErrorCode.SUBFLOW_FAILED,
+          params: {
+            message: errorMessage,
+          },
+        }, errorMessage)
+      }
       return {
+        status: response.status,
         data: response.data
       }
     }
