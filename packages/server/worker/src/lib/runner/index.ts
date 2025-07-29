@@ -1,5 +1,5 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, PieceActionSettings, PieceTriggerSettings, TriggerHookType, TriggerType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { executionFiles } from '../cache/execution-files'
 import { pieceEngineUtil } from '../utils/flow-engine-util'
@@ -7,6 +7,7 @@ import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
 import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from './engine-runner-types'
 import { EngineProcessManager } from './process/engine-process-manager'
+import { pieceWorkerCache } from '../api/piece-worker-cache'
 
 
 let processManager: EngineProcessManager
@@ -17,7 +18,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             flowVersion: operation.flowVersion.id,
             projectId: operation.projectId,
         }, '[threadEngineRunner#executeFlow]')
-        await prepareFlowSandbox(log, engineToken, operation.flowVersion, operation.runEnvironment, operation.projectId)
+        await prepareFlowSandbox(log, engineToken, operation.flowVersion, operation.projectId)
 
         const input: ExecuteFlowOperation = {
             ...operation,
@@ -75,7 +76,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         return execute(log, operation, EngineOperationType.EXTRACT_PIECE_METADATA)
     },
     async executeValidateAuth(engineToken, operation) {
-        
+
         log.debug({ ...operation.piece, platformId: operation.platformId }, '[threadEngineRunner#executeValidateAuth]')
 
         const { piece } = operation
@@ -192,14 +193,21 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     },
 })
 
-async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion, runEnvironment: RunEnvironment, projectId: string): Promise<void> {
-    const pieces = await pieceEngineUtil(log).extractFlowPieces({
-        flowVersion,
-        engineToken,
+async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion, projectId: string): Promise<void> {
+    const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+    const pieces = steps.filter((step) => step.type === TriggerType.PIECE || step.type === ActionType.PIECE).map(async (step) => {
+        const { pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
+        const pieceMetadata = await pieceWorkerCache(log).getPiece({
+            engineToken,
+            pieceName,
+            pieceVersion,
+            projectId,
+        })
+        return pieceEngineUtil(log).enrichPieceWithArchive(engineToken, pieceMetadata)
     })
     const codeSteps = pieceEngineUtil(log).getCodeSteps(flowVersion)
     await executionFiles(log).provision({
-        pieces,
+        pieces: await Promise.all(pieces),
         codeSteps,
         customPiecesPath: executionFiles(log).getCustomPiecesPath({ projectId }),
     })

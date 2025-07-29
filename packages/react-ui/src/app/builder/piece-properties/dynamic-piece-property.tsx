@@ -101,8 +101,6 @@ const DynamicPropertiesImplementation = React.memo(
           request: {
             pieceName,
             pieceVersion,
-            pieceType,
-            packageType,
             propertyName: props.propertyName,
             actionOrTriggerName: actionOrTriggerName,
             input,

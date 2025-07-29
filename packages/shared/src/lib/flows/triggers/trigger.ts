@@ -27,8 +27,6 @@ export type EmptyTrigger = Static<typeof EmptyTrigger>
 export const PieceTriggerSettings = Type.Object({
     pieceName: Type.String({}),
     pieceVersion: VersionType,
-    pieceType: Type.Enum(PieceType),
-    packageType: Type.Enum(PackageType),
     triggerName: Type.Optional(Type.String({})),
     input: Type.Record(Type.String({}), Type.Any()),
     inputUiInfo: SampleDataSetting,

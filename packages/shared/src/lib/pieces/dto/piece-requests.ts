@@ -79,8 +79,6 @@ export type ListVersionsResponse = Static<typeof ListVersionsResponse>
 export type GetPieceRequestQuery = Static<typeof GetPieceRequestQuery>
 
 export const PieceOptionRequest = Type.Object({
-    packageType: Type.Enum(PackageType),
-    pieceType: Type.Enum(PieceType),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
     actionOrTriggerName: Type.String({}),

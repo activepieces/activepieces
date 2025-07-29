@@ -68,8 +68,6 @@ export const CodeActionSchema = Type.Object({
     settings: CodeActionSettings,
 })
 export const PieceActionSettings = Type.Object({
-    packageType: Type.Enum(PackageType),
-    pieceType: Type.Enum(PieceType),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
     actionName: Type.Optional(Type.String({})),

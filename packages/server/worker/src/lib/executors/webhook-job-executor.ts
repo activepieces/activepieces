@@ -8,6 +8,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService, workerApiService } from '../api/server-api.service'
 import { webhookUtils } from '../utils/webhook-utils'
+import { flowWorkerCache } from '../api/flow-worker-cache'
 
 export const webhookExecutor = (log: FastifyBaseLogger) => ({
     async consumeWebhook(
@@ -23,8 +24,9 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         webhookLogger.info('Webhook job executor started')
         const { payload, saveSampleData, flowVersionIdToRun, execute } = data
 
-        const populatedFlowToRun = await engineApiService(engineToken, log).getFlowWithExactPieces({
-            versionId: flowVersionIdToRun,
+        const populatedFlowToRun = await flowWorkerCache(log).getFlow({
+            engineToken,
+            flowVersionId: flowVersionIdToRun,
         })
 
         if (isNil(populatedFlowToRun)) {

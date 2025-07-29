@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../runner'
 import { workerMachine } from '../utils/machine'
+import { flowWorkerCache } from '../api/flow-worker-cache'
 
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
@@ -75,8 +76,9 @@ async function handleMemoryIssueError(jobData: OneTimeJobData, engineToken: stri
 
 
 async function handleQuotaExceededError(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
-    const flow = await engineApiService(engineToken, log).getFlowWithExactPieces({
-        versionId: jobData.flowVersionId,
+    const flow = await flowWorkerCache(log).getFlow({
+        engineToken,
+        flowVersionId: jobData.flowVersionId,
     })
     assertNotNullOrUndefined(flow, 'Flow version not found')
     const payloadBuffer = JSON.stringify({
@@ -141,8 +143,9 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
     async executeFlow(jobData: OneTimeJobData, attempsStarted: number, engineToken: string): Promise<void> {
         try {
 
-            const flow = await engineApiService(engineToken, log).getFlowWithExactPieces({
-                versionId: jobData.flowVersionId,
+            const flow = await flowWorkerCache(log).getFlow({
+                engineToken,
+                flowVersionId: jobData.flowVersionId,
             })
             if (isNil(flow)) {
                 return
