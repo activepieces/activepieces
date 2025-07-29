@@ -1,3 +1,5 @@
+import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
+import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Wand, Zap } from 'lucide-react';
 import { useState } from 'react';
@@ -22,8 +24,6 @@ import {
 } from '@/features/billing/lib/billing-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
-import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 export default function Billing() {
   const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
@@ -120,12 +120,15 @@ export default function Billing() {
         </>
       )}
 
-      {isEnterprise ? (
+      {isEnterpriseEdition && (
         <>
           <h3 className="text-lg font-semibold">{t('AI Credits')}</h3>
           <AiCreditsUsageTable />
-          <LicenseKey platform={platform} />
         </>
+      )}
+
+      {isEnterprise ? (
+        <LicenseKey platform={platform} />
       ) : (
         <Card>
           <CardHeader className="border-b">
