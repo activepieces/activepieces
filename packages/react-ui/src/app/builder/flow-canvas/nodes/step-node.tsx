@@ -141,7 +141,7 @@ const ApStepCanvasNode = React.memo(
 
                       <div
                         className={cn(
-                          'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-background  border-box rounded-md border border-solid border-border/75 relative  group',
+                          'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-white  border-box rounded-md border border-solid border-border/75 relative  group',
                           {
                             'rounded-full': isRoundedStep,
                             'bg-accent': isSkipped,
@@ -154,7 +154,7 @@ const ApStepCanvasNode = React.memo(
                           src={stepMetadata?.logoUrl}
                           alt={stepMetadata?.displayName}
                           className={cn(
-                            'size-[52px] min-w-[52px] min-h-[52px]  bg-background rounded-sm object-contain',
+                            'size-[52px] min-w-[52px] min-h-[52px] bg-background dark:bg-white rounded-sm object-contain',
                             {
                               'rounded-full': isRoundedStep,
                             },

@@ -67,9 +67,12 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
     --slate-50: 210 40% 98%;
     --slate-400: 215 20% 65%;
+    --slate-300: 213 27% 84%;
     --slate-500: 215 16% 47%;
-    --flow-bg: 210 40% 98%;
-    --flow-bg-pattern: 210 4% 78%;
+    --slate-600: 215 19% 35%;
+    --flow-bg: var(--slate-50);
+    --flow-bg-pattern: var(--slate-300);
+    --slate-950: 229 84% 5%;
   }
 
 .dark {
@@ -124,8 +127,8 @@
   --sidebar-accent-foreground: 210 30% 90%;
   --sidebar-border: 210 15% 22%;
   --sidebar-ring: 210 90% 70%;
-  --flow-bg: 213 15% 12%;
-  --flow-bg-pattern: 0 17% 18%;
+  --flow-bg: var(--slate-950);
+  --flow-bg-pattern: var(--slate-600);
 }
 
 

@@ -207,7 +207,7 @@ const BuilderPage = () => {
           maxSize={39}
           order={1}
           ref={leftHandleRef}
-          className={cn('min-w-0 bg-slate-50 z-20', {
+          className={cn('min-w-0 bg-slate-50 dark:bg-slate-950 z-20', {
             [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
             [animateResizeClassName]: !isDraggingHandle,
           })}
@@ -271,7 +271,7 @@ const BuilderPage = () => {
             minSize={0}
             maxSize={60}
             order={3}
-            className={cn('min-w-0 bg-slate-50 z-30', {
+            className={cn('min-w-0 bg-slate-50 dark:bg-slate-950 z-30', {
               [minWidthOfSidebar]: rightSidebar !== RightSideBarType.NONE,
               [animateResizeClassName]: !isDraggingHandle,
             })}
