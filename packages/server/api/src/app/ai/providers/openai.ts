@@ -1,4 +1,4 @@
-import { ActivepiecesError, DALLE2PricingPerImage, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, isNil } from '@activepieces/shared'
+import { ActivepiecesError, AIProvider, DALLE2PricingPerImage, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, isNil } from '@activepieces/shared'
 import { createParser } from 'eventsource-parser'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, StreamingParser, Usage } from './types'
@@ -11,13 +11,20 @@ export const openaiProvider: AIProviderStrategy = {
     },
 
     calculateUsage: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage => {
-        const body = request.body as { size: string, n?: string, quality?: string }
+        const body = request.body as { size: string, model: string, n?: string, quality?: string }
         const apiResponse = response as {
             usage: 
             | { input_tokens: number, output_tokens: number }
             | { prompt_tokens: number, completion_tokens: number }
         } 
         const { provider } = request.params as { provider: string }
+
+        if (openaiProvider.isModerationRequest?.(request)) {
+            return {
+                cost: 0,
+                model: body.model,
+            }
+        }
 
         const providerConfig = getProviderConfig(provider)!
         const model = openaiProvider.extractModelId(request)!
@@ -114,5 +121,33 @@ export const openaiProvider: AIProviderStrategy = {
             },
             onEnd: () => response,
         }
+    },
+
+    getAuthHeaders: (config: AIProvider['config']): Record<string, string> => {
+        const headers: Record<string, string> = {
+            'Authorization': `Bearer ${config.apiKey}`,
+        }
+        if (config.azureOpenAI) {
+            headers['api-key'] = config.apiKey
+        }
+        return headers
+    },
+
+    getBaseUrl: (config: AIProvider['config']): string => {
+        if (config.azureOpenAI) {
+            return `https://${config.azureOpenAI.resourceName}.openai.azure.com`
+        }
+        return 'https://api.openai.com'
+    },
+
+    rewriteUrl: (config: AIProvider['config'], originalUrl: string): string => {
+        if (config.azureOpenAI) {
+            return originalUrl.replace('openai/v1/', 'openai/openai/v1/') + '?api-version=preview'
+        }
+        return originalUrl
+    },
+
+    isModerationRequest: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean => {
+        return request.url.includes('/moderations') && (request.body as { model: string }).model === 'omni-moderation-latest'
     },
 } 

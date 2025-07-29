@@ -1,4 +1,5 @@
 import {
+    AgentJobData,
     DelayedJobData, JobData,
     JobType,
     OneTimeJobData,
@@ -66,6 +67,10 @@ type OneTimeJobAddParams<JT extends JobType.ONE_TIME> = BaseAddParams<JT, OneTim
 
 type UserInteractionJobAddParams<JT extends JobType.USERS_INTERACTION> = BaseAddParams<JT, UserInteractionJobData>
 
+type AgentJobAddParams<JT extends JobType.AGENTS> = BaseAddParams<JT, AgentJobData> & {
+    priority: keyof typeof JOB_PRIORITY
+}
+
 export type AddParams<JT extends JobType> = JT extends JobType.ONE_TIME
     ? OneTimeJobAddParams<JT>
     : JT extends JobType.REPEATING
@@ -76,4 +81,6 @@ export type AddParams<JT extends JobType> = JT extends JobType.ONE_TIME
                 ? WebhookJobAddParams<JT>
                 : JT extends JobType.USERS_INTERACTION
                     ? UserInteractionJobAddParams<JT>
-                    : never
+                    : JT extends JobType.AGENTS
+                        ? AgentJobAddParams<JT>
+                        : never

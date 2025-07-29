@@ -1,14 +1,16 @@
-import { AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, NotifyFrontendRequest, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { apAxios, AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
+// import { domainHelper } from '../ee/custom-domains/domain-helper'
 // import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
+import { domainHelper } from '../helper/domain-helper'
 import { system } from '../helper/system/system'
 import { platformPlanService } from '../platform-plan/platform-plan.service'
 import { flowConsumer } from './consumer'
@@ -82,7 +84,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         const { runId, workerHandlerId, runDetails, httpRequestId, executionStateBuffer, executionStateContentLength, failedStepName: failedStepName } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
 
-
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
         if (!nonSupportedStatuses.includes(runDetails.status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
             await engineResponseWatcher(request.log).publish(
@@ -128,6 +129,10 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             })
         }
         await markJobAsCompleted(runWithoutSteps.status, runWithoutSteps.id, request.principal as unknown as EnginePrincipal, runDetails.error, request.log)
+        const shouldMarkParentAsFailed = runWithoutSteps.failParentOnFailure && !isNil(runWithoutSteps.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(runWithoutSteps.status)
+        if (shouldMarkParentAsFailed) {
+            await markParentRunAsFailed(runWithoutSteps.parentRunId!, request.principal.platform.id, request.log)
+        }
         const response: UpdateRunProgressResponse = {
             uploadUrl,
         }
@@ -259,9 +264,25 @@ async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePr
     }
 }
 
+async function markParentRunAsFailed(
+    parentRunId: string,
+    platformId: string,
+    log: FastifyBaseLogger,
+): Promise<void> {
+    const flowRun = await flowRunService(log).getOneOrThrow({
+        id: parentRunId,
+        projectId: undefined,
+    })
 
+    const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
+    assertNotNullOrUndefined(requestId, 'Parent run has no request id')
 
-
+    const callbackUrl = await domainHelper.getPublicApiUrl({ path: `/v1/flow-runs/${parentRunId}/requests/${requestId}`, platformId })
+    await apAxios.post(callbackUrl, {
+        status: 'error',
+        errorMessage: 'Subflow has been failed',
+    })
+}
 
 const GetAllFlowsByProjectParams = {
     config: {
