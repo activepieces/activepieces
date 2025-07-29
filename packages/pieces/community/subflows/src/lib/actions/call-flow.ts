@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PauseType, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
-import { CallableFlowRequest, CallableFlowResponse, listEnabledWithSubflowsTrigger } from '../common';
+import { CallableFlowRequest, CallableFlowResponse, listEnabledFlowsWithSubflowTrigger } from '../common';
 
 type FlowValue = {
   id: string;
@@ -22,7 +22,7 @@ export const callFlow = createAction({
       description: 'The flow to execute',
       required: true,
       options: async (_, context) => {
-        const flows = await listEnabledWithSubflowsTrigger(context);
+        const flows = await listEnabledFlowsWithSubflowTrigger(context);
         return {
           options: flows.map((flow) => ({
             value: {
@@ -142,7 +142,7 @@ export const callFlow = createAction({
       }
     }
     const payload = context.propsValue.flowProps['payload'];
-    const allFlows = await listEnabledWithSubflowsTrigger(context);
+    const allFlows = await listEnabledFlowsWithSubflowTrigger(context);
     const flow = allFlows.find((flow) => flow.externalId === context.propsValue.flow?.id || flow.id === context.propsValue.flow?.id);
 
     const response = await httpClient.sendRequest<CallableFlowRequest>({

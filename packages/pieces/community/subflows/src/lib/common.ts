@@ -14,7 +14,7 @@ export type CallableFlowResponse = {
 
 export const MOCK_CALLBACK_IN_TEST_FLOW_URL = 'MOCK';
 
-export async function listEnabledWithSubflowsTrigger(context: { flows: { list: () => Promise<SeekPage<PopulatedFlow>> } }) {
+export async function listEnabledFlowsWithSubflowTrigger(context: { flows: { list: () => Promise<SeekPage<PopulatedFlow>> } }) {
     const allFlows = (await context.flows.list()).data;
     const flows = allFlows.filter(
       (flow) =>
