@@ -4,8 +4,8 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, isNil, PauseType, PARENT_RUN_ID_HEADER, TriggerType } from '@activepieces/shared';
-import { CallableFlowRequest, CallableFlowResponse } from '../common';
+import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PauseType, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
+import { CallableFlowRequest, CallableFlowResponse, listEnabledWithSubflowsTrigger } from '../common';
 
 type FlowValue = {
   id: string;
@@ -22,18 +22,11 @@ export const callFlow = createAction({
       description: 'The flow to execute',
       required: true,
       options: async (_, context) => {
-        const allFlows = (await context.flows.list()).data;
-        const flows = allFlows.filter(
-          (flow) =>
-            flow.status === FlowStatus.ENABLED &&
-            flow.version.trigger.type === TriggerType.PIECE &&
-            flow.version.trigger.settings.pieceName ==
-            '@activepieces/piece-subflows'
-        );
+        const flows = await listEnabledWithSubflowsTrigger(context);
         return {
           options: flows.map((flow) => ({
             value: {
-              id: flow.id,
+              id: flow.externalId ?? flow.id,
               exampleData: flow.version.trigger.settings.input.exampleData,
             },
             label: flow.version.displayName,
@@ -149,9 +142,12 @@ export const callFlow = createAction({
       }
     }
     const payload = context.propsValue.flowProps['payload'];
+    const allFlows = await listEnabledWithSubflowsTrigger(context);
+    const flow = allFlows.find((flow) => flow.externalId === context.propsValue.flow?.id || flow.id === context.propsValue.flow?.id);
+
     const response = await httpClient.sendRequest<CallableFlowRequest>({
       method: HttpMethod.POST,
-      url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}`,
+      url: `${context.serverUrl}v1/webhooks/${flow?.id}`,
       headers: {
         'Content-Type': 'application/json',
         [PARENT_RUN_ID_HEADER]: context.run.id,
