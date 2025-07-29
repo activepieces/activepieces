@@ -5,22 +5,14 @@ import { ContextMenuItem } from '@/components/ui/context-menu';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
-import { ContextMenuType } from './canvas-context-menu';
-
-export const CopyIdContextMenuItem = ({
-  contextMenuType,
-}: {
-  contextMenuType: ContextMenuType;
-}) => {
+export const CopyIdContextMenuItem = () => {
   const [selectedNodes] = useBuilderStateContext((state) => [
     state.selectedNodes,
   ]);
   const isTriggerTheOnlySelectedNode =
     selectedNodes.length === 1 && selectedNodes[0] === 'trigger';
   const showCopyId =
-    contextMenuType === ContextMenuType.STEP &&
-    !isTriggerTheOnlySelectedNode &&
-    selectedNodes.length === 1;
+    !isTriggerTheOnlySelectedNode && selectedNodes.length === 1;
   if (!showCopyId) return null;
   return (
     <ContextMenuItem

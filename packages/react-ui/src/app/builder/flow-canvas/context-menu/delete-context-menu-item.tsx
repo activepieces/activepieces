@@ -9,14 +9,10 @@ import {
 import { useBuilderStateContext } from '../../builder-hooks';
 import { deleteSelectedNodes } from '../bulk-actions';
 
-import { CanvasShortcuts, ContextMenuType } from './canvas-context-menu';
+import { CanvasShortcuts } from './canvas-context-menu';
 import { ShortcutWrapper } from './shortcut-wrapper';
 
-export const DeleteContextMenuItem = ({
-  contextMenuType,
-}: {
-  contextMenuType: ContextMenuType;
-}) => {
+export const DeleteContextMenuItem = () => {
   const [
     readonly,
     selectedNodes,
@@ -33,10 +29,7 @@ export const DeleteContextMenuItem = ({
 
   const isTriggerTheOnlySelectedNode =
     selectedNodes.length === 1 && selectedNodes[0] === 'trigger';
-  const showDelete =
-    !readonly &&
-    contextMenuType === ContextMenuType.STEP &&
-    !isTriggerTheOnlySelectedNode;
+  const showDelete = !readonly && !isTriggerTheOnlySelectedNode;
 
   if (!showDelete) return null;
 

@@ -42,32 +42,37 @@ export const CanvasContextMenuContent = ({
     selectedNodes.length === 1 &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
-
+  const isStepContextMenu = contextMenuType === ContextMenuType.STEP;
   return (
     <>
-      <ReplaceContextMenuItem contextMenuType={contextMenuType} />
-      <CopyContextMenuItem contextMenuType={contextMenuType} />
-      <DuplicateContextMenuItem contextMenuType={contextMenuType} />
-      <SkipContextMenuItem contextMenuType={contextMenuType} />
-      <>
-        {(showPasteAsFirstLoopAction ||
-          showPasteAsBranchChild ||
-          showPasteAfterCurrentStep) && (
-          <ContextMenuSeparator></ContextMenuSeparator>
-        )}
+      {isStepContextMenu && (
+        <>
+          <ReplaceContextMenuItem />
+          <CopyContextMenuItem />
+          <DuplicateContextMenuItem />
+          <SkipContextMenuItem />
+        </>
+      )}
 
-        {showPasteAfterLastStep && <PasteAfterLastStepContextMenuItem />}
+      {(showPasteAsFirstLoopAction ||
+        showPasteAsBranchChild ||
+        showPasteAfterCurrentStep) && (
+        <ContextMenuSeparator></ContextMenuSeparator>
+      )}
 
-        {showPasteAsFirstLoopAction && (
-          <PasteAsFirstLoopActionContextMenuItem />
-        )}
+      {showPasteAfterLastStep && <PasteAfterLastStepContextMenuItem />}
 
-        {showPasteAfterCurrentStep && <PasteAfterCurrentStepContextMenuItem />}
+      {showPasteAsFirstLoopAction && <PasteAsFirstLoopActionContextMenuItem />}
 
-        {showPasteAsBranchChild && <PasteInBranchSubMenu />}
-        <CopyIdContextMenuItem contextMenuType={contextMenuType} />
-        <DeleteContextMenuItem contextMenuType={contextMenuType} />
-      </>
+      {showPasteAfterCurrentStep && <PasteAfterCurrentStepContextMenuItem />}
+
+      {showPasteAsBranchChild && <PasteInBranchSubMenu />}
+      {isStepContextMenu && (
+        <>
+          <CopyIdContextMenuItem />
+          <DeleteContextMenuItem />
+        </>
+      )}
     </>
   );
 };

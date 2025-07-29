@@ -6,14 +6,10 @@ import { ContextMenuItem } from '@/components/ui/context-menu';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { copySelectedNodes } from '../bulk-actions';
 
-import { CanvasShortcuts, ContextMenuType } from './canvas-context-menu';
+import { CanvasShortcuts } from './canvas-context-menu';
 import { ShortcutWrapper } from './shortcut-wrapper';
 
-export const CopyContextMenuItem = ({
-  contextMenuType,
-}: {
-  contextMenuType: ContextMenuType;
-}) => {
+export const CopyContextMenuItem = () => {
   const [selectedNodes, flowVersion] = useBuilderStateContext((state) => [
     state.selectedNodes,
     state.flowVersion,
@@ -21,8 +17,7 @@ export const CopyContextMenuItem = ({
   const doSelectedNodesIncludeTrigger = selectedNodes.some(
     (node) => node === flowVersion.trigger.name,
   );
-  const showCopy =
-    !doSelectedNodesIncludeTrigger && contextMenuType === ContextMenuType.STEP;
+  const showCopy = !doSelectedNodesIncludeTrigger;
   if (!showCopy) return null;
   return (
     <ContextMenuItem

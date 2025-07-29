@@ -6,13 +6,7 @@ import { FlowOperationType } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
-import { ContextMenuType } from './canvas-context-menu';
-
-export const DuplicateContextMenuItem = ({
-  contextMenuType,
-}: {
-  contextMenuType: ContextMenuType;
-}) => {
+export const DuplicateContextMenuItem = () => {
   const [selectedNodes, flowVersion, readonly, applyOperation] =
     useBuilderStateContext((state) => [
       state.selectedNodes,
@@ -25,10 +19,7 @@ export const DuplicateContextMenuItem = ({
   );
 
   const showDuplicate =
-    selectedNodes.length === 1 &&
-    !doSelectedNodesIncludeTrigger &&
-    contextMenuType === ContextMenuType.STEP &&
-    !readonly;
+    selectedNodes.length === 1 && !doSelectedNodesIncludeTrigger && !readonly;
 
   if (!showDuplicate) return null;
   return (

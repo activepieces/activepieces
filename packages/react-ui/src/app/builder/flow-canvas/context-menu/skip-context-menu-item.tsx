@@ -7,14 +7,10 @@ import { Action, flowStructureUtil } from '@activepieces/shared';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { toggleSkipSelectedNodes } from '../bulk-actions';
 
-import { CanvasShortcuts, ContextMenuType } from './canvas-context-menu';
+import { CanvasShortcuts } from './canvas-context-menu';
 import { ShortcutWrapper } from './shortcut-wrapper';
 
-export const SkipContextMenuItem = ({
-  contextMenuType,
-}: {
-  contextMenuType: ContextMenuType;
-}) => {
+export const SkipContextMenuItem = () => {
   const [selectedNodes, flowVersion, applyOperation, readonly] =
     useBuilderStateContext((state) => [
       state.selectedNodes,
@@ -30,10 +26,7 @@ export const SkipContextMenuItem = ({
     (node) => node === flowVersion.trigger.name,
   );
 
-  const showSkip =
-    !doSelectedNodesIncludeTrigger &&
-    contextMenuType === ContextMenuType.STEP &&
-    !readonly;
+  const showSkip = !doSelectedNodesIncludeTrigger && !readonly;
 
   if (!showSkip) return null;
   return (

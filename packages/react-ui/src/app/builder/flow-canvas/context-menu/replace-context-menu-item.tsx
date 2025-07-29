@@ -5,23 +5,14 @@ import { ContextMenuItem } from '@/components/ui/context-menu';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
-import { ContextMenuType } from './canvas-context-menu';
-
-export const ReplaceContextMenuItem = ({
-  contextMenuType,
-}: {
-  contextMenuType: ContextMenuType;
-}) => {
+export const ReplaceContextMenuItem = () => {
   const [selectedNodes, readonly, setOpenedPieceSelectorStepNameOrAddButtonId] =
     useBuilderStateContext((state) => [
       state.selectedNodes,
       state.readonly,
       state.setOpenedPieceSelectorStepNameOrAddButtonId,
     ]);
-  const showReplace =
-    selectedNodes.length === 1 &&
-    !readonly &&
-    contextMenuType === ContextMenuType.STEP;
+  const showReplace = selectedNodes.length === 1 && !readonly;
   if (!showReplace) return null;
 
   return (
