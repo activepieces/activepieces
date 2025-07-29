@@ -18,10 +18,10 @@ export const serpstat = createPiece({
     createCustomApiCallAction({
       auth: serpstatAuth,
       baseUrl: () => BASE_URL,
+      authLocation: 'queryParams',
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
-          'Content-Type': 'application/json',
+          token: auth as string,
         };
       },
     }),
