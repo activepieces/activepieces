@@ -1,16 +1,7 @@
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
-import ImageWithFallback from '@/components/ui/image-with-fallback';
-
-import { agentHooks } from '../lib/agent-hooks';
-
-type AgentStepSkeletonProps = {
-  agentId: string;
-};
-
-export const AgentStepSkeleton = ({ agentId }: AgentStepSkeletonProps) => {
-  const { data: agent } = agentHooks.useGet(agentId);
+export const AgentStepSkeleton = () => {
   const [dots, setDots] = useState('...');
 
   useEffect(() => {
@@ -21,12 +12,7 @@ export const AgentStepSkeleton = ({ agentId }: AgentStepSkeletonProps) => {
   }, []);
 
   return (
-    <div className="flex items-center px-4 py-3 text-sm font-medium gap-3">
-      <ImageWithFallback
-        src={agent?.profilePictureUrl}
-        alt={agent?.displayName}
-        className="size-8"
-      ></ImageWithFallback>
+    <div className="flex items-center text-sm font-medium gap-3">
       {`${t('Working my magic')} ${dots}`}
     </div>
   );

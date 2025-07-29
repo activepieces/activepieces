@@ -14,7 +14,7 @@ import { emailService } from '../../helper/email/email-service'
 import { platformUsageService } from '../platform-usage-service'
 import { PlatformPlanHelper } from './platform-plan-helper'
 import { platformPlanRepo, platformPlanService } from './platform-plan.service'
-import { AI_CREDITS_PRICE_ID, stripeHelper, USER_PRICE_ID } from './stripe-helper'
+import { AI_CREDITS_PRICE_ID, STRIPE_PLAN_PRICE_IDS, stripeHelper, USER_PRICE_ID } from './stripe-helper'
 
 export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
@@ -45,6 +45,11 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer
                         const platformId = subscription.metadata.platformId as string
                         const isTrialSubscription = checkIsTrialSubscription(subscription)
+
+                        const isUnknowSubscription = subscription.items.data.every(item => ![STRIPE_PLAN_PRICE_IDS.plus, STRIPE_PLAN_PRICE_IDS.business].includes(item.price.id))
+                        if (isUnknowSubscription) {
+                            break
+                        }
 
                         const trialSubscriptionStarted = webhook.type === 'customer.subscription.created' && isTrialSubscription
                         if (trialSubscriptionStarted) {

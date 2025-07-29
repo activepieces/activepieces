@@ -107,6 +107,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             name: request.query.name,
             versionState: request.query.versionState,
             connectionExternalIds: request.query.connectionExternalIds,
+            agentExternalIds: request.query.agentExternalIds,
         })
     })
 

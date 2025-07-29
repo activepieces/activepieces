@@ -67,6 +67,8 @@ export const Agent = Type.Object({
     platformId: Type.String(),
     outputType: Type.Optional(Type.Enum(AgentOutputType)),
     outputFields: Type.Optional(Type.Array(AgentOutputField)),
+    runCompleted: Type.Number(),
+    externalId: Type.String(),
 })
 
 export type Agent = Static<typeof Agent>
@@ -83,13 +85,14 @@ export const UpdateAgentRequestBody = Type.Object({
     displayName: Type.Optional(Type.String()),  
     description: Type.Optional(Type.String()),
     testPrompt: Type.Optional(Type.String()),
-    outputType: Type.Optional(Type.String()),
+    outputType: Type.Optional(Type.Enum(AgentOutputType)),
     outputFields: Type.Optional(Type.Array(AgentOutputField)),
 })
 
 export type UpdateAgentRequestBody = Static<typeof UpdateAgentRequestBody>
 
 export const ListAgentsQueryParams = Type.Object({
+    externalIds: Type.Optional(Type.Array(Type.String())),
     limit: Type.Optional(Type.Number()),
     cursor: Type.Optional(Type.String()),
 })
@@ -105,7 +108,7 @@ export const ListAgentRunsQueryParams = Type.Object({
 export type ListAgentRunsQueryParams = Static<typeof ListAgentRunsQueryParams>
 
 export const RunAgentRequestBody = Type.Object({
-    agentId: Type.String(),
+    externalId: Type.String(),
     prompt: Type.String(),
 })
 
