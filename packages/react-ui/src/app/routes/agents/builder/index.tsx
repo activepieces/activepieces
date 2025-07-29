@@ -46,8 +46,11 @@ const AgentBuilderContent = ({
   showUseInFlow = false,
 }: AgentBuilderProps) => {
   const [isSaving, testSectionIsOpen] = useBuilderAgentState((state) => [
+    
     state.isSaving,
+   
     state.testSectionIsOpen,
+  ,
   ]);
   const [activeTab, setActiveTab] = useState<AgentBuilderTabs>(
     AgentBuilderTabs.CONFIGURE,
@@ -124,7 +127,7 @@ const AgentBuilderContent = ({
             <div className="hidden md:block w-0 md:w-1/3 bg-background border-l">
               {testSectionIsOpen && <AgentPreviewSection />}
               {!testSectionIsOpen && (
-                <div className="flex flex-col h-full p-4 gap-8 w-full bg-background">
+                <div className="flex flex-col h-full p-4 gap-4 w-full bg-background">
                   <AgentToolSection />
                   {showUseInFlow && <LinkedFlowsSection agent={agent} />}
                   <AgentStructuredOutput />

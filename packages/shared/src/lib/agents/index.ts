@@ -1,6 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
 import { AgentStepBlock } from './content'
+import { z } from 'zod';
 
 export enum AgentOutputType {
     NO_OUTPUT = 'no_output',
@@ -70,12 +71,24 @@ export const Agent = Type.Object({
     runCompleted: Type.Number(),
     externalId: Type.String(),
 })
-
 export type Agent = Static<typeof Agent>
+
+export const EnhancedAgentPrompt = Type.Object({
+    displayName: Type.String(),
+    description: Type.String(),
+    systemPrompt: Type.String(),
+})
+export type EnhancedAgentPrompt = Static<typeof EnhancedAgentPrompt>
+
+export const EnhanceAgentPrompt = Type.Object({
+    systemPrompt: Type.String()
+})
+export type EnhaceAgentPrompt = Static<typeof EnhanceAgentPrompt>
 
 export const CreateAgentRequest = Type.Object({
     displayName: Type.String(),
     description: Type.String(),
+    systemPrompt: Type.String(),
 })
 
 export type CreateAgentRequest = Static<typeof CreateAgentRequest>
