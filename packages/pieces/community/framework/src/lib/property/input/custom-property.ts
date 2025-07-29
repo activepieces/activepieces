@@ -12,15 +12,17 @@ export const CustomProperty = Type.Composite([
   TPropertyValue(Type.Unknown(), PropertyType.CUSTOM),
   Type.Object({
     code: Type.String(),
+    deps: Type.Optional(Type.String()),
   })
 ])
 
 export type CustomProperty<R extends boolean> = BasePropertySchema &
   TPropertyValue<unknown, PropertyType.CUSTOM, R> & {
     code:string;
+    deps: string | undefined;
   }
 
-export type CustomPropertyCodeFunctionParams = 
+export type CustomPropertyCodeFunctionParams<D extends Record<string, unknown> | undefined> = 
   { 
     containerId:string,
     value: unknown,
@@ -28,5 +30,6 @@ export type CustomPropertyCodeFunctionParams =
     isEmbeded: boolean,
     projectId:string,
     property: Pick<CustomProperty<boolean>, 'displayName' | 'description' | 'required'>,
-    disabled: boolean
+    disabled: boolean;
+    deps: D;
   }
