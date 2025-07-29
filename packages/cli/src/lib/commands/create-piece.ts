@@ -157,39 +157,25 @@ const updateProjectJsonConfig = async (
   );
 };
 const addEslintFile = async (pieceName: string, pieceType: string) => {
-  const eslintFile = {
-    "extends": [
-      "../../../../.eslintrc.json"
-    ],
-    "ignorePatterns": [
-      "!**/*"
-    ],
+  const eslintFile ={
+    "extends": ["../../../../.eslintrc.base.json"],
+    "ignorePatterns": ["!**/*"],
     "overrides": [
       {
-        "files": [
-          "*.ts",
-          "*.tsx",
-          "*.js",
-          "*.jsx"
-        ],
+        "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
         "rules": {}
       },
       {
-        "files": [
-          "*.ts",
-          "*.tsx"
-        ],
+        "files": ["*.ts", "*.tsx"],
         "rules": {}
       },
       {
-        "files": [
-          "*.js",
-          "*.jsx"
-        ],
+        "files": ["*.js", "*.jsx"],
         "rules": {}
       }
     ]
   }
+  
  
   await writePackageEslint(
     `packages/pieces/${pieceType}/${pieceName}`,
