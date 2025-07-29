@@ -10,6 +10,7 @@ import { createS3 } from './lib/common';
 import { newFile } from './lib/triggers/new-file';
 import { generateSignedUrl } from './lib/actions/generate-signed-url';
 import { moveFile } from './lib/actions/move-file';
+import { deleteFile } from './lib/actions/delete-file';
 
 const description = `
 This piece allows you to upload files to Amazon S3 or other S3 compatible services.
@@ -196,6 +197,6 @@ export const amazonS3 = createPiece({
   authors: ["Willianwg","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud", "Kevinyu-alan"],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: amazonS3Auth,
-  actions: [amazons3UploadFile, readFile, generateSignedUrl, moveFile],
+  actions: [amazons3UploadFile, readFile, generateSignedUrl, moveFile, deleteFile],
   triggers: [newFile],
 });

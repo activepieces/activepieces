@@ -19,6 +19,8 @@ export const webhookService = {
         payload,
         execute,
         onRunCreated,
+        parentRunId,
+        failParentOnFailure,
     }: HandleWebhookParams): Promise<EngineHttpResponse> {
         const webhookHeader = 'x-webhook-id'
         const webhookRequestId = apId()
@@ -92,6 +94,8 @@ export const webhookService = {
                 runEnvironment: flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
                 webhookHeader,
                 execute: flow.status === FlowStatus.ENABLED && execute,
+                parentRunId,
+                failParentOnFailure,
             })
         }
 
@@ -108,6 +112,8 @@ export const webhookService = {
             saveSampleData,
             flowVersionToRun,
             onRunCreated,
+            parentRunId,
+            failParentOnFailure,
         })
         return {
             status: flowHttpResponse.status,
@@ -130,4 +136,6 @@ type HandleWebhookParams = {
     payload?: Record<string, unknown>
     execute: boolean
     onRunCreated?: (run: FlowRun) => void
+    parentRunId?: string
+    failParentOnFailure: boolean
 }
