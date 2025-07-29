@@ -678,6 +678,9 @@
       "@activepieces/piece-placid": [
         "packages/pieces/community/placid/src/index.ts"
       ],
+      "@activepieces/piece-podio": [
+        "packages/pieces/community/podio/src/index.ts"
+      ],
       "@activepieces/piece-poper": [
         "packages/pieces/community/poper/src/index.ts"
       ],
