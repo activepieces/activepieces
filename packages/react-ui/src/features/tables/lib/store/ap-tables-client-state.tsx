@@ -115,6 +115,9 @@ export const createApTableStore = (
         set({ selectedAgentRunId: agentRunId }),
       renameTable: (newName: string) =>
         set((state) => {
+          serverState.update({
+            name: newName,
+          });
           return {
             table: {
               ...state.table,

@@ -56,9 +56,9 @@ export function EditableCell({
   column,
   rowIdx,
   onClick,
-  disabled = false,
   locked = false,
   value,
+  disabled = false,
 }: EditableCellProps) {
   const [selectedCell, setSelectedCell, records, fields] = useTableState(
     (state) => [
@@ -147,15 +147,15 @@ export function EditableCell({
     >
       <ErrorBoundary fallback={<div>Error</div>}>
         <CellProvider
-          cell={{
-            rowIdx,
-            columnIdx: column.idx - 1,
-            fieldType: field.type,
-            value: value ?? '',
-          }}
+          rowIdx={rowIdx}
+          columnIdx={column.idx - 1}
+          fieldType={field.type}
+          value={value ?? ''}
+          handleCellChange={() => {}}
           containerRef={containerRef}
           isEditing={isEditing}
           setIsEditing={setIsEditing}
+          disabled={disabled}
         >
           <EditorSelector fieldType={field.type} />
         </CellProvider>

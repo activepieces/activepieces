@@ -2,12 +2,12 @@ import React from 'react';
 
 import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { Skeleton } from '@/components/ui/skeleton';
-import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadata } from '@/lib/types';
 import {
   Action,
   ActionType,
+  flowStructureUtil,
   isNil,
   Trigger,
   TriggerType,
@@ -37,7 +37,7 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
         actionOrTriggerDisplayName ? `(${actionOrTriggerDisplayName})` : ''
       }`
     : null;
-  const agentId = stepUtils.getAgentId(step);
+  const externalAgentId = flowStructureUtil.getExternalAgentId(step);
 
   return (
     <div className="flex items-center justify-center gap-4 min-h-[48px]">
@@ -70,7 +70,9 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
           </div>
         </div>
         <div className="flex  items-center gap-2">
-          {agentId && <EditAgentInFlowBuilderButton agentId={agentId} />}
+          {externalAgentId && (
+            <EditAgentInFlowBuilderButton externalAgentId={externalAgentId} />
+          )}
           {pieceVersion && (
             <div className="text-xs text-muted-foreground flex justify-center items-center">
               v{pieceVersion}

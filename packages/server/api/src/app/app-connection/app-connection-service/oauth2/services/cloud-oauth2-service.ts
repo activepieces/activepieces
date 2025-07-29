@@ -1,5 +1,6 @@
 
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
+import { apAxios } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AppConnectionType,
@@ -13,7 +14,6 @@ import {
     OAuth2Service,
     RefreshOAuth2Request,
 } from '../oauth2-service'
-import { apAxios } from '@activepieces/server-shared'
 
 export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudOAuth2ConnectionValue> => ({
     refresh: async ({

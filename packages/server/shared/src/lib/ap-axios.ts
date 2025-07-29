@@ -1,6 +1,6 @@
-import axios, { AxiosError } from "axios"
-import axiosRetry from 'axios-retry';
-import { isNil } from "@activepieces/shared";
+import { isNil } from '@activepieces/shared'
+import axios, { AxiosError } from 'axios'
+import axiosRetry from 'axios-retry'
 
 
 export const apAxios = axios.create({

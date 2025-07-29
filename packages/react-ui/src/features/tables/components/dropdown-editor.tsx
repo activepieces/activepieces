@@ -8,8 +8,14 @@ import { useTableState } from './ap-table-state-provider';
 import { useCellContext } from './cell-context';
 
 const DropdownEditor = () => {
-  const { value, handleCellChange, setIsEditing, isEditing, columnIdx } =
-    useCellContext();
+  const {
+    value,
+    handleCellChange,
+    setIsEditing,
+    isEditing,
+    columnIdx,
+    disabled,
+  } = useCellContext();
   const field = useTableState((state) => state.fields[columnIdx]);
   const containerRef = useRef<HTMLDivElement>(null);
   const handleChange = (newValue: string | null) => {
@@ -41,7 +47,7 @@ const DropdownEditor = () => {
         ]}
         onChange={handleChange}
         value={value}
-        disabled={false}
+        disabled={disabled}
         placeholder={''}
         showDeselect={false}
         openState={{
