@@ -65,13 +65,8 @@ const ApStepCanvasNode = React.memo(
         type: flowUtilConsts.DRAGGED_STEP_TAG,
       },
     });
-    const isFlowControlStep = stepMetadata?.categories.includes(
-      PieceCategory.FLOW_CONTROL,
-    );
-    const isAiStep =
-      stepMetadata?.categories.includes(
-        PieceCategory.ARTIFICIAL_INTELLIGENCE,
-      ) || stepMetadata?.categories.includes(PieceCategory.UNIVERSAL_AI);
+    const isRoundedStep = flowCanvasUtils.isRoundedNode(step.type);
+    const hasGradientBorder = flowCanvasUtils.isAiNode(stepMetadata?.categories || []);
 
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -138,28 +133,34 @@ const ApStepCanvasNode = React.memo(
                 >
                   <div
                     className={cn(
-                      'bg-background relative rounded-lg shadow-step-node border hover:border-primary/70 transition-all ',
+                      'bg-background flex items-center justify-center rounded-lg shadow-step-node border hover:border-primary/70 transition-all  ',
                       {
                         'border-primary/70 shadow-selected-step-node':
                           isSelected,
                         'shadow-trigger-node border-[#94A3B8]':
                           isTrigger && !isSelected,
-                        'rounded-full': isFlowControlStep,
+                        'rounded-full': isRoundedStep,
                         'bg-accent': isSkipped,
                       },
                     )}
+                    style={{
+                      height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
+                      width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+                      maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+                    }}
                   >
-                    {isAiStep && (
-                      <div className="absolute size-[62px] top-[1px] left-[1px]  rounded-lg   backdrop-blur-2xl  bg-ai-gradient animate-rotate-gradient"></div>
+                    <div className='relative'>
+                    {hasGradientBorder && (
+                      <div className="absolute size-[60px] top-[3px] left-[3px]  backdrop-blur-2xl   rounded-md bg-ai-gradient animate-rotate-gradient"></div>
                     )}
 
                     <div
                       className={cn(
                         'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-background  border-box rounded-md border border-solid border-border/75 relative  group',
                         {
-                          'rounded-full': isFlowControlStep,
+                          'rounded-full': isRoundedStep,
                           'bg-accent': isSkipped,
-                          'size-[56px] m-1 border-transparent': isAiStep,
+                          'm-1 border-transparent rounded-sm size-[58px] bg-transparent': hasGradientBorder,
                         },
                       )}
                     >
@@ -167,16 +168,18 @@ const ApStepCanvasNode = React.memo(
                         src={stepMetadata?.logoUrl}
                         alt={stepMetadata?.displayName}
                         className={cn(
-                          'size-[48px] min-w-[48px] min-h-[48px]  bg-background rounded-md object-contain',
+                          'size-[52px] min-w-[52px] min-h-[52px]  bg-background rounded-sm object-contain',
                           {
-                            'rounded-full': isFlowControlStep,
+                            'rounded-full': isRoundedStep,
                           },
                         )}
                       />
-                      <div className="absolute bottom-1 right-[5px]">
+                      <div className="absolute bottom-[2px] right-[2px]">
                         <ApStepNodeStatus stepName={step.name} />
                       </div>
                     </div>
+                    </div>
+                
                   </div>
                 </div>
               </div>

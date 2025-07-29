@@ -10,6 +10,7 @@ import {
   FlowVersion,
   isNil,
   LoopOnItemsAction,
+  PieceCategory,
   RouterAction,
   StepLocationRelativeToParent,
   Trigger,
@@ -391,6 +392,14 @@ const buildRouterChildGraph = (step: RouterAction) => {
   };
 };
 
+const isRoundedNode = (type: ActionType | TriggerType) => {
+  return type === ActionType.LOOP_ON_ITEMS || type === ActionType.ROUTER;
+};
+
+const isNodeWithGradientBorder = (categories: PieceCategory[]) => {
+  return categories.includes(PieceCategory.ARTIFICIAL_INTELLIGENCE) || categories.includes(PieceCategory.UNIVERSAL_AI);
+};
+
 const offsetRouterChildSteps = (childGraphs: ApGraph[]) => {
   const childGraphsBoundingBoxes = childGraphs.map((childGraph) =>
     calculateGraphBoundingBox(childGraph),
@@ -504,4 +513,6 @@ export const flowCanvasUtils = {
   createAddOperationFromAddButtonData,
   isSkipped,
   getStepStatus,
+  isRoundedNode,
+  isAiNode: isNodeWithGradientBorder,
 };

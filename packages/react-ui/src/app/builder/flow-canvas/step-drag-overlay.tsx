@@ -5,6 +5,7 @@ import { Action, PieceCategory, Trigger } from '@activepieces/shared';
 
 import { flowUtilConsts } from './utils/consts';
 import { cn } from '@/lib/utils';
+import { flowCanvasUtils } from './utils/flow-canvas-utils';
 
 const StepDragOverlay = ({
   step,
@@ -24,7 +25,7 @@ const StepDragOverlay = ({
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step,
   });
-  const isRouneded = stepMetadata?.categories.includes(PieceCategory.FLOW_CONTROL);
+  const isRouneded = flowCanvasUtils.isRoundedNode(step.type);
 
   return (
     <div
