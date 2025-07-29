@@ -136,6 +136,7 @@ import { AddIndexForAgentTableSqlite1753400496920 } from './migration/sqlite/175
 import { AddExternalAgentIdSqlite1753643287673 } from './migration/sqlite/1753643287673-AddExternalAgentIdSqlite'
 import { AddParentRunIdToFlowRunSqlite1753719777841 } from './migration/sqlite/1753719777841-AddParentRunIdToFlowRunSqlite'
 import { AddCascadeOnAgentsSqlite1753727589109 } from './migration/sqlite/1753727589109-AddCascadeOnAgentsSqlite'
+import { AddExternalIdToMCPSqlite1753786833156 } from './migration/sqlite/1753786833156-AddExternalIdToMCPSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -288,6 +289,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddExternalAgentIdSqlite1753643287673,
         AddParentRunIdToFlowRunSqlite1753719777841,
         AddCascadeOnAgentsSqlite1753727589109,
+        AddExternalIdToMCPSqlite1753786833156,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
