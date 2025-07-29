@@ -2,9 +2,10 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 
 import {
   ListAgentsQueryParams,
+  ListAgentRunsQueryParams,
   CreateAgentRequest,
-  UpdateAgentRequestBody,
   AgentRun,
+  RunAgentRequestBody,
 } from '@activepieces/shared';
 
 import { agentsApi, agentRunsApi } from './agents-api';
@@ -25,21 +26,17 @@ export const agentHooks = {
     });
   },
 
-  useCreate: () => {
-    return useMutation({
-      mutationFn: (request: CreateAgentRequest) => agentsApi.create(request),
+  useGetByExternalId: (externalId: string | null | undefined) => {
+    return useQuery({
+      queryKey: ['agents', externalId],
+      queryFn: () => agentsApi.findByExteranlId(externalId!),
+      enabled: !!externalId,
     });
   },
 
-  useUpdate: () => {
+  useCreate: () => {
     return useMutation({
-      mutationFn: ({
-        id,
-        request,
-      }: {
-        id: string;
-        request: UpdateAgentRequestBody;
-      }) => agentsApi.update(id, request),
+      mutationFn: (request: CreateAgentRequest) => agentsApi.create(request),
     });
   },
 
@@ -51,12 +48,24 @@ export const agentHooks = {
 };
 
 export const agentRunHooks = {
+  useList: (params: ListAgentRunsQueryParams) => {
+    return useQuery({
+      queryKey: ['agent-runs', params],
+      queryFn: () => agentRunsApi.list(params),
+    });
+  },
   useGet: (id: string | null | undefined) => {
     return useQuery<AgentRun>({
       queryKey: ['agent-run', id],
       queryFn: () => agentRunsApi.get(id!),
       enabled: !!id,
       refetchInterval: 2000,
+    });
+  },
+
+  useRun: () => {
+    return useMutation({
+      mutationFn: (request: RunAgentRequestBody) => agentRunsApi.run(request),
     });
   },
 };

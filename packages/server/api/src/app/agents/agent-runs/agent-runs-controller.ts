@@ -72,7 +72,7 @@ const RunAgentRequest = {
         body: RunAgentRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
 }
 
