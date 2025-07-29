@@ -1,5 +1,4 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { S3 } from '@aws-sdk/client-s3';
 import { amazonS3Auth } from '../..';
 import { createS3 } from '../common';
 
@@ -7,11 +6,11 @@ export const deleteFile = createAction({
   auth: amazonS3Auth,
   name: 'deleteFile',
   displayName: 'Delete File',
-  description: 'Delete a file',
+  description: 'Deletes an existing file.',
   props: {
     key: Property.ShortText({
       displayName: 'Key',
-      description: 'The key of the file to read',
+      description: 'The key of the file to delete.',
       required: true,
     }),
   },
