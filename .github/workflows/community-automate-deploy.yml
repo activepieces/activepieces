@@ -43,7 +43,7 @@ jobs:
             linux/amd64
           push: true
           tags: |
-            ghcr.io/activepieces/activepieces:${{ env.RELEASE }}.community
+            ghcr.io/activepieces/activepieces:testing-ce
 
       - name: Configure SSH
         run: |
@@ -64,7 +64,7 @@ jobs:
           
       - name: Deploy with Docker Compose
         run: |
-          ssh pre-prod -t -t 'bash -ic "cd community-activepieces && IMAGE_TAG=${{ env.RELEASE }}.community docker compose pull && IMAGE_TAG=${{ env.RELEASE }}.community docker compose up -d --force-recreate community-activepieces; exit"' 
+          ssh pre-prod -t -t 'bash -ic "cd community-activepieces && IMAGE_TAG=testing-ce docker compose pull && IMAGE_TAG=testing-ce docker compose up -d --force-recreate community-activepieces; exit"' 
 
   Community-E2E-Tests:
     needs: Release
