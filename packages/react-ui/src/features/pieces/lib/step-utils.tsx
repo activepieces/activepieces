@@ -87,7 +87,7 @@ export const stepUtils = {
         ? step.customLogoUrl
         : undefined
       : undefined;
-    const agentId = flowStructureUtil.getAgentId(step);
+    const agentId = flowStructureUtil.getExternalAgentId(step);
     return [pieceName, pieceVersion, customLogoUrl, agentId, locale, step.type];
   },
   async getMetadata(
@@ -174,11 +174,11 @@ async function getAgentMetadata(
   Partial<Pick<StepMetadata, 'displayName' | 'logoUrl' | 'description'>>
 > {
   if (flowStructureUtil.isAgentPiece(step)) {
-    const agentId = flowStructureUtil.getAgentId(step);
-    if (!agentId) {
+    const externalAgentId = flowStructureUtil.getExternalAgentId(step);
+    if (!externalAgentId) {
       return {};
     }
-    const agent = await agentsApi.get(agentId);
+    const agent = await agentsApi.findByExteranlId(externalAgentId);
     if (!agent) {
       return {};
     }

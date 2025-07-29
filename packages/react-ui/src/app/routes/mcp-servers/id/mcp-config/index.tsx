@@ -1,7 +1,9 @@
+import { t } from 'i18next';
 import { useParams } from 'react-router-dom';
 
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 
+import { McpEmptyTools } from './empty-tools';
 import { McpToolsSection } from './mcp-tools-section';
 
 export const McpConfigPage = () => {
@@ -13,7 +15,9 @@ export const McpConfigPage = () => {
     <McpToolsSection
       mcp={mcp}
       isLoading={isLoading}
+      description={t('Give capabilities to your server by adding tools')}
       onToolsUpdate={(tools) => updateTools(tools)}
+      emptyState={<McpEmptyTools />}
     />
   );
 };
