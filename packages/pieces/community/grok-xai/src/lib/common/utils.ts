@@ -201,7 +201,7 @@ export const createModelProperty = (config?: {
   });
 };
 
-export const createTemperatureProperty = (defaultValue: number = 0.7) => 
+export const createTemperatureProperty = (defaultValue = 0.7) => 
   Property.Number({
     displayName: 'Temperature',
     required: false,
