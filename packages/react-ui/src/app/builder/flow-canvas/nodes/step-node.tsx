@@ -9,7 +9,6 @@ import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn } from '@/lib/utils';
 import {
   FlowOperationType,
-  PieceCategory,
   Step,
   TriggerType,
   flowStructureUtil,
@@ -66,7 +65,9 @@ const ApStepCanvasNode = React.memo(
       },
     });
     const isRoundedStep = flowCanvasUtils.isRoundedNode(step.type);
-    const hasGradientBorder = flowCanvasUtils.isAiNode(stepMetadata?.categories || []);
+    const hasGradientBorder = flowCanvasUtils.isAiNode(
+      stepMetadata?.categories || [],
+    );
 
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -91,7 +92,6 @@ const ApStepCanvasNode = React.memo(
         }}
         key={step.name}
         ref={isPieceSelectorOpened ? null : setNodeRef}
-        
         {...stepNodeDivAttributes}
         {...stepNodeDivListeners}
       >
@@ -149,40 +149,42 @@ const ApStepCanvasNode = React.memo(
                       maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
                     }}
                   >
-                    <div className='relative'>
-                    {hasGradientBorder && (
-                      <div className="absolute size-[60px] top-[3px] left-[3px]  backdrop-blur-2xl   rounded-md bg-ai-gradient animate-rotate-gradient"></div>
-                    )}
-
-                    <div
-                      className={cn(
-                        'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-background  border-box rounded-md border border-solid border-border/75 relative  group',
-                        {
-                          'rounded-full': isRoundedStep,
-                          'bg-accent': isSkipped,
-                          'm-1 border-transparent rounded-sm size-[58px] bg-transparent': hasGradientBorder,
-                        },
+                    <div className="relative">
+                      {hasGradientBorder && (
+                        <div className="absolute size-[60px] top-[3px] left-[3px]  backdrop-blur-2xl   rounded-md bg-ai-gradient animate-rotate-gradient"></div>
                       )}
-                    >
-                      <ImageWithFallback
-                        src={stepMetadata?.logoUrl}
-                        alt={stepMetadata?.displayName}
+
+                      <div
                         className={cn(
-                          'size-[52px] min-w-[52px] min-h-[52px]  bg-background rounded-sm object-contain',
+                          'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-background  border-box rounded-md border border-solid border-border/75 relative  group',
                           {
                             'rounded-full': isRoundedStep,
+                            'bg-accent': isSkipped,
+                            'm-1 border-transparent rounded-sm size-[58px] bg-transparent':
+                              hasGradientBorder,
                           },
                         )}
-                      />
-                      <div className={cn("absolute bottom-[2px] right-[2px]", {
-                        "right-[3px] bottom-[3px]": isRoundedStep,
-                        "right-[1px] bottom-0": hasGradientBorder,
-                      })}>
-                        <ApStepNodeStatus stepName={step.name} />
+                      >
+                        <ImageWithFallback
+                          src={stepMetadata?.logoUrl}
+                          alt={stepMetadata?.displayName}
+                          className={cn(
+                            'size-[52px] min-w-[52px] min-h-[52px]  bg-background rounded-sm object-contain',
+                            {
+                              'rounded-full': isRoundedStep,
+                            },
+                          )}
+                        />
+                        <div
+                          className={cn('absolute bottom-[2px] right-[2px]', {
+                            'right-[3px] bottom-[3px]': isRoundedStep,
+                            'right-[1px] bottom-0': hasGradientBorder,
+                          })}
+                        >
+                          <ApStepNodeStatus stepName={step.name} />
+                        </div>
                       </div>
                     </div>
-                    </div>
-                
                   </div>
                 </div>
               </div>

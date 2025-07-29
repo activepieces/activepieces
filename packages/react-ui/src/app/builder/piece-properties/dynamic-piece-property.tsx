@@ -156,7 +156,10 @@ const DynamicPropertiesImplementation = React.memo(
     return (
       <>
         {isPending && (
-          <SkeletonList numberOfItems={3} className="h-7 bg-background"></SkeletonList>
+          <SkeletonList
+            numberOfItems={3}
+            className="h-7 bg-background"
+          ></SkeletonList>
         )}
         {!isPending && propertyMap && (
           <AutoPropertiesFormComponent

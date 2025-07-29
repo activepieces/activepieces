@@ -1,10 +1,10 @@
 import { t } from 'i18next';
 
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { Action, PieceCategory, Trigger } from '@activepieces/shared';
+import { cn } from '@/lib/utils';
+import { Action, Trigger } from '@activepieces/shared';
 
 import { flowUtilConsts } from './utils/consts';
-import { cn } from '@/lib/utils';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 
 const StepDragOverlay = ({
@@ -21,7 +21,9 @@ const StepDragOverlay = ({
     flowUtilConsts.STEP_DRAG_OVERLAY_WIDTH / 2 -
     lefSideBarContainerWidth
   }px`;
-  const top = `${cursorPosition.y - flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT - 15}px`;
+  const top = `${
+    cursorPosition.y - flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT - 15
+  }px`;
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step,
   });
@@ -29,11 +31,12 @@ const StepDragOverlay = ({
 
   return (
     <div
-      className={
-        cn('p-1 absolute left-0 top-0  opacity-75  flex items-center justify-center rounded-lg border border-solid border bg-white', {
+      className={cn(
+        'p-1 absolute left-0 top-0  opacity-75  flex items-center justify-center rounded-lg border border-solid border bg-white',
+        {
           'rounded-full': isRouneded,
-        })
-      }
+        },
+      )}
       style={{
         left,
         top,

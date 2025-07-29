@@ -1,42 +1,26 @@
-import {
-  ContextMenuSeparator,
-} from '@/components/ui/context-menu';
-import {
-  ActionType,
-  flowStructureUtil,
-} from '@activepieces/shared';
+import { ContextMenuSeparator } from '@/components/ui/context-menu';
+import { ActionType, flowStructureUtil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
-import {
-  CanvasContextMenuProps,
-  ContextMenuType,
-} from './canvas-context-menu';
-import { ReplaceContextMenuItem } from './replace-context-menu-item';
+import { CanvasContextMenuProps, ContextMenuType } from './canvas-context-menu';
 import { CopyContextMenuItem } from './copy-context-menu-item';
-import { DuplicateContextMenuItem } from './duplicate-context-menu-item';
-import { SkipContextMenuItem } from './skip-context-menu-item';
-import { PasteAfterLastStepContextMenuItem } from './paste-after-last-step-context-menu-item';
-import { PasteAsFirstLoopActionContextMenuItem } from './paste-as-first-loop-action-context-menu-item';
-import { PasteAfterCurrentStepContextMenuItem } from './paste-after-current-step-context-menu-item';
-import { PasteInBranchSubMenu } from './paste-in-branch-sub-menu';
 import { CopyIdContextMenuItem } from './copy-id-context-menu-item';
 import { DeleteContextMenuItem } from './delete-context-menu-item';
-
+import { DuplicateContextMenuItem } from './duplicate-context-menu-item';
+import { PasteAfterCurrentStepContextMenuItem } from './paste-after-current-step-context-menu-item';
+import { PasteAfterLastStepContextMenuItem } from './paste-after-last-step-context-menu-item';
+import { PasteAsFirstLoopActionContextMenuItem } from './paste-as-first-loop-action-context-menu-item';
+import { PasteInBranchSubMenu } from './paste-in-branch-sub-menu';
+import { ReplaceContextMenuItem } from './replace-context-menu-item';
+import { SkipContextMenuItem } from './skip-context-menu-item';
 
 export const CanvasContextMenuContent = ({
   contextMenuType,
 }: CanvasContextMenuProps) => {
-  const [
-    selectedNodes,
-
-    flowVersion,
-    readonly,
-  ] = useBuilderStateContext((state) => [
-    state.selectedNodes,
-    state.flowVersion,
-    state.readonly,
-  ]);
+  const [selectedNodes, flowVersion, readonly] = useBuilderStateContext(
+    (state) => [state.selectedNodes, state.flowVersion, state.readonly],
+  );
 
   const firstSelectedStep = flowStructureUtil.getStep(
     selectedNodes[0],
@@ -59,8 +43,6 @@ export const CanvasContextMenuContent = ({
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
 
-
-
   return (
     <>
       <ReplaceContextMenuItem contextMenuType={contextMenuType} />
@@ -74,21 +56,15 @@ export const CanvasContextMenuContent = ({
           <ContextMenuSeparator></ContextMenuSeparator>
         )}
 
-        {showPasteAfterLastStep && (
-          <PasteAfterLastStepContextMenuItem />
-        )}
+        {showPasteAfterLastStep && <PasteAfterLastStepContextMenuItem />}
 
         {showPasteAsFirstLoopAction && (
           <PasteAsFirstLoopActionContextMenuItem />
-          )}
-
-        {showPasteAfterCurrentStep && (
-          <PasteAfterCurrentStepContextMenuItem />
         )}
 
-        {showPasteAsBranchChild && (
-          <PasteInBranchSubMenu />
-        )}
+        {showPasteAfterCurrentStep && <PasteAfterCurrentStepContextMenuItem />}
+
+        {showPasteAsBranchChild && <PasteInBranchSubMenu />}
         <CopyIdContextMenuItem contextMenuType={contextMenuType} />
         <DeleteContextMenuItem contextMenuType={contextMenuType} />
       </>

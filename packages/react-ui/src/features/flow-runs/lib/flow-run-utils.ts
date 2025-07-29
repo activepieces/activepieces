@@ -1,7 +1,5 @@
 import {
   Check,
-  CircleCheck,
-  CircleX,
   PauseCircleIcon,
   PauseIcon,
   Play,
@@ -52,11 +50,7 @@ export const flowRunUtils = {
   },
   getStatusIconForStep(stepOutput: StepOutputStatus): {
     variant: 'default' | 'success' | 'error';
-    Icon:
-      | typeof Timer
-      | typeof Check
-      | typeof PauseCircleIcon
-      | typeof X;
+    Icon: typeof Timer | typeof Check | typeof PauseCircleIcon | typeof X;
   } {
     switch (stepOutput) {
       case StepOutputStatus.RUNNING:

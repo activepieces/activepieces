@@ -397,7 +397,10 @@ const isRoundedNode = (type: ActionType | TriggerType) => {
 };
 
 const isNodeWithGradientBorder = (categories: PieceCategory[]) => {
-  return categories.includes(PieceCategory.ARTIFICIAL_INTELLIGENCE) || categories.includes(PieceCategory.UNIVERSAL_AI);
+  return (
+    categories.includes(PieceCategory.ARTIFICIAL_INTELLIGENCE) ||
+    categories.includes(PieceCategory.UNIVERSAL_AI)
+  );
 };
 
 const offsetRouterChildSteps = (childGraphs: ApGraph[]) => {

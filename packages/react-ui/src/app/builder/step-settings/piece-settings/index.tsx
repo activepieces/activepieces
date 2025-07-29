@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   ApFlagId,
@@ -76,7 +76,10 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
   return (
     <div className="flex flex-col gap-4 w-full">
       {!pieceModel && (
-       <SkeletonList numberOfItems={5} className="h-7 bg-background"></SkeletonList>
+        <SkeletonList
+          numberOfItems={5}
+          className="h-7 bg-background"
+        ></SkeletonList>
       )}
 
       {pieceModel && (

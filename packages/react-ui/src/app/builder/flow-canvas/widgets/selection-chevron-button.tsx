@@ -5,12 +5,17 @@ import { createRoot } from 'react-dom/client';
 import { Button } from '@/components/ui/button';
 
 import { NODE_SELECTION_RECT_CLASS_NAME } from '../../builder-hooks';
-import { flowUtilConsts, SELECTION_RECT_CHEVRON_ATTRIBUTE } from '../utils/consts';
+import {
+  flowUtilConsts,
+  SELECTION_RECT_CHEVRON_ATTRIBUTE,
+} from '../utils/consts';
 
 const showChevronNextToSelection = (targetDiv: HTMLElement) => {
   const container = document.createElement('div');
   targetDiv.appendChild(container);
-  targetDiv.style.width = `calc(${targetDiv.style.width} + ${flowUtilConsts.STEP_DISPLAY_META_WIDTH+10}px)`
+  targetDiv.style.width = `calc(${targetDiv.style.width} + ${
+    flowUtilConsts.STEP_DISPLAY_META_WIDTH + 10
+  }px)`;
   const root = createRoot(container);
   root.render(
     <Button
