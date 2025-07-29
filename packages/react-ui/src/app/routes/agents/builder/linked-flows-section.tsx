@@ -1,10 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Workflow } from 'lucide-react';
+import { ExternalLink, Plus, Workflow } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   ActionType,
@@ -13,6 +15,8 @@ import {
   PieceType,
   TriggerType,
   LATEST_SCHEMA_VERSION,
+  PopulatedFlow,
+  Agent,
 } from '@activepieces/shared';
 
 const template = {
@@ -51,7 +55,7 @@ const template = {
           pieceType: PieceType.OFFICIAL,
           packageType: PackageType.REGISTRY,
           actionName: 'run_agent',
-          pieceVersion: '~0.2.0',
+          pieceVersion: '~0.2.4',
           input: {
             agentId: '{{AGENT_ID}}',
             prompt: "{{trigger['message']}}",
@@ -106,14 +110,21 @@ const template = {
   blogUrl: '',
 };
 
-interface UseAgentButton {
-  agentId: string;
+interface LinkedFlowsSectionProps {
+  agent: Agent;
 }
 
-export const UseAgentButton = ({ agentId }: UseAgentButton) => {
+export const LinkedFlowsSection = ({ agent }: LinkedFlowsSectionProps) => {
   const navigate = useNavigate();
 
-  const { mutate, isPending } = useMutation({
+  const { data: linkedFlows, isLoading: isAgentFlowsLoading } =
+    flowsHooks.useFlows({
+      agentExternalIds: [agent.externalId],
+      limit: 1000,
+      cursor: undefined,
+    });
+
+  const { mutate: createFlow, isPending } = useMutation({
     mutationFn: async () => {
       const flow = await flowsApi.create({
         projectId: authenticationSession.getProjectId()!,
@@ -123,7 +134,7 @@ export const UseAgentButton = ({ agentId }: UseAgentButton) => {
       const templateStr = JSON.stringify(template.template);
       const updatedTemplateStr = templateStr.replace(
         '"{{AGENT_ID}}"',
-        `"${agentId}"`,
+        `"${agent.externalId}"`,
       );
       const updatedTemplate = JSON.parse(updatedTemplateStr);
 
@@ -151,14 +162,69 @@ export const UseAgentButton = ({ agentId }: UseAgentButton) => {
   }
 
   return (
-    <Button
-      variant="default"
-      size="sm"
-      onClick={() => mutate()}
-      disabled={isPending}
-    >
-      <Workflow />
-      {isPending ? t('Importing...') : t('Use in Flow')}
-    </Button>
+    <div>
+      <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <h2 className="text-base font-medium flex items-center gap-2">
+          <Workflow className="h-4 w-4" />
+          {t('Linked Flows')}
+        </h2>
+        <Button
+          variant="basic"
+          size="sm"
+          className="text-secondary"
+          onClick={() => createFlow()}
+          disabled={isPending}
+        >
+          <Plus className="h-4 w-4 mr-1" />
+          {isPending ? t('Importing...') : t('Use In Flow')}
+        </Button>
+      </div>
+      <div>
+        {isAgentFlowsLoading ? (
+          <div className="text-sm text-muted-foreground">{t('Loading...')}</div>
+        ) : linkedFlows?.data && linkedFlows.data.length > 0 ? (
+          <div className="space-y-2">
+            {linkedFlows.data.map((flow: PopulatedFlow) => (
+              <Card
+                key={flow.id}
+                variant="interactive"
+                onClick={() => navigate(`/flows/${flow.id}`)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        {flow.version.displayName}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="link"
+                        size="xs"
+                        className="text-xs flex items-center gap-1 p-0 h-auto text-secondary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(
+                            `/flows/${flow.id}`,
+                            '_blank',
+                            'noopener,noreferrer',
+                          );
+                        }}
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground">
+            {t('No linked flows found')}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };

@@ -42,7 +42,7 @@ export const checkModeration = createAction({
   model: Property.Dropdown({
       displayName: 'Model',
       required: true,
-      defaultValue: 'gpt-4o',
+      defaultValue: 'omni-moderation-latest',
       refreshers: ['provider'],
       options: async (propsValue) => {
           const provider = propsValue['provider'] as string;

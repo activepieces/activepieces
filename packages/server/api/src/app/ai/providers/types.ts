@@ -14,6 +14,7 @@ export type AIProviderStrategy = {
     getBaseUrl?: (config: AIProvider['config']) => string
     rewriteUrl?: (config: AIProvider['config'], originalUrl: string) => string
     streamingParser?: () => StreamingParser
+    isModerationRequest?: (request: FastifyRequest<RequestGenericInterface, RawServerBase>) => boolean
 }
 
 export type StreamingParser = {
