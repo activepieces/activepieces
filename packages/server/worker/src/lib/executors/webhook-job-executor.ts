@@ -54,6 +54,8 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             progressUpdateType: ProgressUpdateType.NONE,
             httpRequestId: data.requestId,
             payloads: filteredPayloads,
+            parentRunId: data.parentRunId,
+            failParentOnFailure: data.failParentOnFailure,
         })
     },
 })

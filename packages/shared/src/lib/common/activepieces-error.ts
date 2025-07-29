@@ -81,6 +81,15 @@ export type ApErrorParams =
     | McpPieceRequiresConnectionParams
     | McpPieceConnectionMismatchParams
     | ErrorUpdatingSubscriptionParams
+    | TriggerExecutionFailedParams
+    | SubflowFailedParams
+    
+export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
+    flowId: FlowId
+    message?: string
+    pieceName: string
+    pieceVersion: string
+}>
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -465,6 +474,10 @@ export type McpPieceConnectionMismatchParams = BaseErrorParams<ErrorCode.MCP_PIE
     connectionId: string
 }>
 
+export type SubflowFailedParams = BaseErrorParams<ErrorCode.SUBFLOW_FAILED, {
+    message: string
+}>
+
 export enum ErrorCode {
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
@@ -481,6 +494,7 @@ export enum ErrorCode {
     ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',
     EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
     MEMORY_ISSUE = 'MEMORY_ISSUE',
+    TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
@@ -531,4 +545,5 @@ export enum ErrorCode {
     COPILOT_FAILED = 'COPILOT_FAILED',
     MCP_PIECE_REQUIRES_CONNECTION = 'MCP_PIECE_REQUIRES_CONNECTION',
     MCP_PIECE_CONNECTION_MISMATCH = 'MCP_PIECE_CONNECTION_MISMATCH',
+    SUBFLOW_FAILED = 'SUBFLOW_FAILED',
 }

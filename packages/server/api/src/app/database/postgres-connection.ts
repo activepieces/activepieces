@@ -58,11 +58,20 @@ import { RemoveTerminationReason1751728035816 } from './migration/postgres/17517
 import { AddFlowVersionToIssue1751927222122 } from './migration/postgres/1751927222122-AddFlowVersionToIssue'
 import { AddIndexForSchemaVersionInFlowVersion1752151941009 } from './migration/postgres/1752151941009-AddIndexForSchemaVersionInFlowVersion'
 import { AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028 } from './migration/postgres/1752511716028-AddCreatedToFlowVersionFlowIdIdxPostgres'
+import { AddAgentRunsEntityPostgres1752583341290 } from './migration/postgres/1752583341290-AddAgentRunsEntityPostgres'
+
 import { ProjectRole1752736911931 } from './migration/postgres/1752736911931-project-role'
 import { DefaultProjectRole1752744019509 } from './migration/postgres/1752744019509-default-project-role'
 import { AddProjectRoleInvitation1752746415961 } from './migration/postgres/1752746415961-add-project-role-invitation'
 import { ProjectMember1752814412946 } from './migration/postgres/1752814412946-project-member'
 
+import { AddAgentIdToTable1753315220453 } from './migration/postgres/1753315220453-AddAgentIdToTable'
+import { MakeTriggerNullable1753366163403 } from './migration/postgres/1753366163403-MakeTriggerNullable'
+import { AddIndexForAgentTable1753400133786 } from './migration/postgres/1753400133786-AddIndexForAgentTable'
+import { AddAIUsageMetadatapostgres1753624069238 } from './migration/postgres/1753624069238-AddAIUsageMetadatapostgres'
+import { AddExternalIdToAgentId1753641361099 } from './migration/postgres/1753641361099-AddExternalIdToAgentId'
+import { AddParentRunIdToFlowRun1753699877817 } from './migration/postgres/1753699877817-AddParentRunIdToFlowRun'
+import { AddCascadeOnAgents1753727379513 } from './migration/postgres/1753727379513-AddCascadeOnAgents'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -76,6 +85,14 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AddCascadeOnAgents1753727379513,
+        AddParentRunIdToFlowRun1753699877817,
+        AddExternalIdToAgentId1753641361099,
+        AddAIUsageMetadatapostgres1753624069238,
+        AddIndexForAgentTable1753400133786,
+        MakeTriggerNullable1753366163403,
+        AddAgentIdToTable1753315220453,
+        AddAgentRunsEntityPostgres1752583341290,
         AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028,
         ProjectMember1752814412946,
         AddProjectRoleInvitation1752746415961,

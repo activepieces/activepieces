@@ -4,7 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ExecutionType, FlowStatus, isNil, PauseType, TriggerType } from '@activepieces/shared';
+import { ActivepiecesError, ErrorCode, ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, isNil, PauseType, PARENT_RUN_ID_HEADER, TriggerType } from '@activepieces/shared';
 import { CallableFlowRequest, CallableFlowResponse } from '../common';
 
 type FlowValue = {
@@ -139,7 +139,18 @@ export const callFlow = createAction({
   async run(context) {
     if (context.executionType === ExecutionType.RESUME) {
       const response = context.resumePayload.body as CallableFlowResponse;
+      const errorMessage = response.errorMessage ?? 'Subflow has been failed';
+      const shouldFailParentRun = response.status === 'error' && context.propsValue.waitForResponse
+      if (shouldFailParentRun) {
+        throw new ActivepiecesError({
+          code: ErrorCode.SUBFLOW_FAILED,
+          params: {
+            message: errorMessage,
+          },
+        }, errorMessage)
+      }
       return {
+        status: response.status,
         data: response.data
       }
     }
@@ -149,6 +160,8 @@ export const callFlow = createAction({
       url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}`,
       headers: {
         'Content-Type': 'application/json',
+        [PARENT_RUN_ID_HEADER]: context.run.id,
+        [FAIL_PARENT_ON_FAILURE_HEADER]: context.propsValue.waitForResponse ? 'true' : 'false',
       },
       body: {
         data: payload,

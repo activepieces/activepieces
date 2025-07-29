@@ -51,9 +51,16 @@ import { AddPlatformIdToAIUsageSqlite1751475726665 } from './migration/sqlite/17
 import { RemoveTerminationReasonSqlite1751727630516 } from './migration/sqlite/1751727630516-RemoveTerminationReasonSqlite'
 import { AddFlowVersionToIssueSqlite1751927149586 } from './migration/sqlite/1751927149586-AddFlowVersionToIssueSqlite'
 import { AddIndexForSchemaVersionInFlowVersionSqlite1752152069517 } from './migration/sqlite/1752152069517-AddIndexForSchemaVersionInFlowVersionSqlite'
+import { AddAgentRunsEntitySqlite1752583785385 } from './migration/sqlite/1752583785385-AddAgentRunsEntitySqlite'
 import { ProjectRole1752743014852 } from './migration/sqlite/1752743014852-project-role'
 import { AddProjectRoleInvitation1752746475364 } from './migration/sqlite/1752746475364-add-project-role-invitation'
 import { ProjectMember1752814553291 } from './migration/sqlite/1752814553291-project-member'
+import { AddTableAgentsSqlite1752851142438 } from './migration/sqlite/1752851142438-AddTableAgentsSqlite'
+import { AddTableAutomationStatusSqlite1753013268133 } from './migration/sqlite/1753013268133-AddTableAutomationStatusSqlite'
+import { AddIndexForAgentTableSqlite1753400496920 } from './migration/sqlite/1753400496920-AddIndexForAgentTableSqlite'
+import { AddExternalAgentIdSqlite1753643287673 } from './migration/sqlite/1753643287673-AddExternalAgentIdSqlite'
+import { AddParentRunIdToFlowRunSqlite1753719777841 } from './migration/sqlite/1753719777841-AddParentRunIdToFlowRunSqlite'
+import { AddCascadeOnAgentsSqlite1753727589109 } from './migration/sqlite/1753727589109-AddCascadeOnAgentsSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -76,6 +83,13 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        AddCascadeOnAgentsSqlite1753727589109,
+        AddParentRunIdToFlowRunSqlite1753719777841,
+        AddExternalAgentIdSqlite1753643287673,
+        AddIndexForAgentTableSqlite1753400496920,
+        AddTableAutomationStatusSqlite1753013268133,
+        AddTableAgentsSqlite1752851142438,
+        AddAgentRunsEntitySqlite1752583785385,
         ProjectMember1752814553291,
         AddProjectRoleInvitation1752746475364,
         ProjectRole1752743014852,
