@@ -9,15 +9,13 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { XAI_BASE_URL } from './lib/common/constants';
 
 export const grokXai = createPiece({
-  displayName: 'Grok xAI',
+  displayName: 'Grok by xAI',
   description: 'AI chatbot by xAI that answers questions, generates text, extracts data, and provides real-time insights.',
   auth: grokAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/grok-xai.png',
   categories: [
-    PieceCategory.ARTIFICIAL_INTELLIGENCE,
-    PieceCategory.UNIVERSAL_AI,
-  ],
+    PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['sparkybug'],
   actions: [
     askGrok,

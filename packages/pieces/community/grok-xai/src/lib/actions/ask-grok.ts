@@ -21,7 +21,7 @@ import { z } from 'zod';
 export const askGrok = createAction({
   auth: grokAuth,
   name: 'ask_grok',
-  displayName: 'Ask Grok (Send Prompt)',
+  displayName: 'Ask Grok',
   description: 'Send prompts to Grok with real-time search, tools, and structured outputs.',
   props: {
     model: createModelProperty({
