@@ -64,7 +64,7 @@ jobs:
           
       - name: Deploy with Docker Compose
         run: |
-          ssh pre-prod -t -t 'bash -ic "cd community-activepieces && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.community docker compose pull && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.community docker compose up -d --force-recreate community-activepieces; exit"' 
+          ssh pre-prod -t -t 'bash -ic "cd community-activepieces && IMAGE_TAG=${{ env.RELEASE }}.community docker compose pull && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.community docker compose up -d --force-recreate community-activepieces; exit"' 
 
   Community-E2E-Tests:
     needs: Release
