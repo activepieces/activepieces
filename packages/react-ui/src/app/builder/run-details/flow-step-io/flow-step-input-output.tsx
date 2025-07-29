@@ -15,7 +15,7 @@ type FlowStepInputOutputProps = {
 
 const tryParseJson = (value: unknown): unknown => {
   if (typeof value !== 'string') return value;
-  
+
   try {
     return JSON.parse(value);
   } catch {
@@ -24,7 +24,7 @@ const tryParseJson = (value: unknown): unknown => {
 };
 
 const getStepOutput = (stepDetails: StepOutput): unknown => {
-  return stepDetails.errorMessage 
+  return stepDetails.errorMessage
     ? tryParseJson(stepDetails.errorMessage)
     : stepDetails.output;
 };
@@ -32,8 +32,9 @@ const getStepOutput = (stepDetails: StepOutput): unknown => {
 const FlowStepInputOutput = React.memo(
   ({ stepDetails, selectedStep }: FlowStepInputOutputProps) => {
     const stepOutput = getStepOutput(stepDetails);
-    const outputExists = 'output' in stepDetails || 'errorMessage' in stepDetails;
-    
+    const outputExists =
+      'output' in stepDetails || 'errorMessage' in stepDetails;
+
     return (
       <ScrollArea className="h-full p-4">
         <div className="flex flex-col gap-4">
