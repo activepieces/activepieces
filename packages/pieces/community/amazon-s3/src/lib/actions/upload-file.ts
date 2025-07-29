@@ -69,16 +69,17 @@ export const amazons3UploadFile = createAction({
 
     let contentType, extension = null
 
-    // No or incorrect mime type entered
-    if(!type || !mime.extension(type)) {
+    if(!type) {
       if (!file.extension || file.extension === undefined || !mime.contentType(file.extension)) {
-        throw new Error("Content type could not be interpreted, please check file input and Content Type property.")
+        throw new Error("Content type could not be interpreted, please check the input file.")
       }
 
       extension = '.' + file.extension
       contentType = mime.contentType(extension) as string
     } 
-    else {
+    else if (!mime.extension(type as string)) {
+      throw new Error("The content type entered does not exist or is misspelled, please check your input.")
+    } else {
       contentType = type
       extension = '.' + mime.extension(type)
     }
