@@ -75,7 +75,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       });
       const { settings } = form.getValues();
       const actionOrTriggerName = settings.actionName ?? settings.triggerName;
-      const { pieceName, pieceVersion, pieceType, packageType } = settings;
+      const { pieceName, pieceVersion } = settings;
       mutate(
         {
           request: {

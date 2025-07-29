@@ -1,11 +1,11 @@
-import path from "path"
-import { cacheState } from "../cache/cache-state"
-import { isNil, ProjectId } from "@activepieces/shared"
-import { workerMachine } from "../utils/machine"
-import { PieceMetadataModel } from "@activepieces/pieces-framework"
-import { PiecesSource } from "@activepieces/server-shared"
-import { engineApiService } from "./server-api.service"
-import { FastifyBaseLogger } from "fastify"
+import path from 'path'
+import { PieceMetadataModel } from '@activepieces/pieces-framework'
+import { PiecesSource } from '@activepieces/server-shared'
+import { isNil, ProjectId } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { cacheState } from '../cache/cache-state'
+import { workerMachine } from '../utils/machine'
+import { engineApiService } from './server-api.service'
 
 const globalCachePiecePath = path.resolve('cache', 'pieces')
 
@@ -24,10 +24,10 @@ export const pieceWorkerCache = (log: FastifyBaseLogger) => ({
     async writePieceToCacheIfCachable({ pieceName, pieceVersion, projectId }: PieceCacheKey, piece: PieceMetadataModel): Promise<void> {
         const pieceCache = getCacheForPiece({ pieceName, pieceVersion, projectId })
         await pieceCache.setCache(getCacheKeyForPiece({ pieceName, pieceVersion, projectId }), JSON.stringify(piece))
-    }
+    },
 })
 
-async function getPieceFromCache({ engineToken, pieceName, pieceVersion, projectId }: GetPieceRequestQueryWorker): Promise<PieceMetadataModel | null> {
+async function getPieceFromCache({ pieceName, pieceVersion, projectId }: GetPieceRequestQueryWorker): Promise<PieceMetadataModel | null> {
     const piecesSource = workerMachine.getSettings().PIECES_SOURCE
     if (piecesSource === PiecesSource.FILE) {
         return null
@@ -36,7 +36,8 @@ async function getPieceFromCache({ engineToken, pieceName, pieceVersion, project
         const pieceCache = getCacheForPiece({ pieceName, pieceVersion, projectId })
         const cachedPiece = await pieceCache.cacheCheckState(getCacheKeyForPiece({ pieceName, pieceVersion, projectId }))
         return cachedPiece ? JSON.parse(cachedPiece) as PieceMetadataModel : null
-    } catch (error) {
+    }
+    catch (error) {
         return null
     }
 }

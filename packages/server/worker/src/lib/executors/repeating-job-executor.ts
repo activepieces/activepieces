@@ -2,9 +2,9 @@
 import { DelayedJobData, RenewWebhookJobData, RepeatableJobType, RepeatingJobData, ScheduledJobData } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, FlowVersion, ProgressUpdateType, RunEnvironment, TriggerPayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { flowWorkerCache } from '../api/flow-worker-cache'
 import { workerApiService } from '../api/server-api.service'
 import { triggerHooks } from './trigger/hooks/trigger-consumer'
-import { flowWorkerCache } from '../api/flow-worker-cache'
 
 export const repeatingJobExecutor = (log: FastifyBaseLogger) => ({
     async executeRepeatingJob({ data, engineToken, workerToken }: Params): Promise<void> {
@@ -12,7 +12,7 @@ export const repeatingJobExecutor = (log: FastifyBaseLogger) => ({
 
         const populatedFlow = await flowWorkerCache(log).getFlow({
             engineToken,
-            flowVersionId: flowVersionId,
+            flowVersionId,
         })
         const flowVersion = populatedFlow?.version ?? null
         assertNotNullOrUndefined(flowVersion, 'flowVersion')
