@@ -895,6 +895,9 @@
       "@activepieces/piece-tavily": [
         "packages/pieces/community/tavily/src/index.ts"
       ],
+      "@activepieces/piece-teamleader": [
+        "packages/pieces/community/teamleader/src/index.ts"
+      ],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/community/telegram-bot/src/index.ts"
       ],
