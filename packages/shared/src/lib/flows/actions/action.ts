@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { PackageType, PieceType, VersionType } from '../../pieces'
+import { VersionType } from '../../pieces'
 import { SampleDataSetting } from '../sample-data'
 import { PieceTriggerSettings } from '../triggers/trigger'
 
