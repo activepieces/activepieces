@@ -71,11 +71,23 @@ export const AgentEntity = new EntitySchema<AgentSchema>({
             type: 'many-to-one',
             target: 'project',
             inverseSide: 'agents',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'projectId',
+                foreignKeyConstraintName: 'fk_agent_project_id',
+            },
         },
         platform: {
             type: 'many-to-one',
             target: 'platform',
             inverseSide: 'agents',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'platformId',
+                foreignKeyConstraintName: 'fk_agent_platform_id',
+            },
         },
     },
 })
