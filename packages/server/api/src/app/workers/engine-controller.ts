@@ -129,7 +129,13 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         await markJobAsCompleted(runWithoutSteps.status, runWithoutSteps.id, request.principal as unknown as EnginePrincipal, runDetails.error, request.log)
         const shouldMarkParentAsFailed = runWithoutSteps.failParentOnFailure && !isNil(runWithoutSteps.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(runWithoutSteps.status)
         if (shouldMarkParentAsFailed) {
-            await markParentRunAsFailed(runWithoutSteps.parentRunId!, request.principal.platform.id, request.log)
+            await markParentRunAsFailed({
+                parentRunId: runWithoutSteps.parentRunId!,
+                childRunId: runWithoutSteps.id,
+                projectId: request.principal.projectId,
+                platformId: request.principal.platform.id,
+                log: request.log,
+            })
         }
         const response: UpdateRunProgressResponse = {
             uploadUrl,
@@ -261,24 +267,38 @@ async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePr
     }
 }
 
-async function markParentRunAsFailed(
-    parentRunId: string,
-    platformId: string,
-    log: FastifyBaseLogger,
-): Promise<void> {
+async function markParentRunAsFailed({  
+    parentRunId,
+    childRunId,
+    projectId,
+    platformId,
+    log,
+}: MarkParentRunAsFailedParams): Promise<void> {
     const flowRun = await flowRunService(log).getOneOrThrow({
         id: parentRunId,
-        projectId: undefined,
+        projectId,
     })
 
     const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
     assertNotNullOrUndefined(requestId, 'Parent run has no request id')
     
     const callbackUrl = await domainHelper.getPublicApiUrl({ path: `/v1/flow-runs/${parentRunId}/requests/${requestId}`, platformId })
+    const childRunUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/runs/${childRunId}`, platformId })
     await apAxios.post(callbackUrl, {
         status: 'error',
-        errorMessage: 'Subflow has been failed',
+        data: {
+            message: 'Subflow execution failed',
+            link: childRunUrl,
+        },
     })
+}
+
+type MarkParentRunAsFailedParams = {
+    parentRunId: string
+    childRunId: string
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
 }
 
 const GetAllFlowsByProjectParams = {

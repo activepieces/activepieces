@@ -139,15 +139,9 @@ export const callFlow = createAction({
   async run(context) {
     if (context.executionType === ExecutionType.RESUME) {
       const response = context.resumePayload.body as CallableFlowResponse;
-      const errorMessage = response.errorMessage ?? 'Subflow has been failed';
       const shouldFailParentRun = response.status === 'error' && context.propsValue.waitForResponse
       if (shouldFailParentRun) {
-        throw new ActivepiecesError({
-          code: ErrorCode.SUBFLOW_FAILED,
-          params: {
-            message: errorMessage,
-          },
-        }, errorMessage)
+        throw new Error(JSON.stringify(response.data))
       }
       return {
         status: response.status,
