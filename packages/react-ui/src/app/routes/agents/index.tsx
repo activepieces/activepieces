@@ -83,6 +83,9 @@ export const AgentsPage = () => {
                 setSelectedAgent(undefined);
               }
             }}
+            onChange={() => {
+              refetch();
+            }}
             agent={selectedAgent}
             showUseInFlow={true}
             trigger={
