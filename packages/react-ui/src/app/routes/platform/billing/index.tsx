@@ -46,7 +46,6 @@ export default function Billing() {
   );
   const isBusinessPlan = platformPlanInfo?.plan.plan === PlanName.BUSINESS;
   const isEnterpriseEdition = edition === ApEdition.ENTERPRISE;
-  const isCloudEdition = edition === ApEdition.CLOUD;
   const isEnterprise =
     !isNil(platformPlanInfo?.plan.licenseKey) ||
     edition === ApEdition.ENTERPRISE;
@@ -121,7 +120,7 @@ export default function Billing() {
         </>
       )}
 
-      {isEnterprise && !isCloudEdition && (
+      {isEnterpriseEdition && (
         <>
           <h3 className="text-lg font-semibold">{t('AI Credits')}</h3>
           <AiCreditsUsageTable />
