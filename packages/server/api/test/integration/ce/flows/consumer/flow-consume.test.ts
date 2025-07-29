@@ -71,8 +71,6 @@ describe('flow execution', () => {
                         run_on_weekends: false,
                     },
                     triggerName: 'every_hour',
-                    'pieceType': PieceType.OFFICIAL,
-                    'packageType': PackageType.REGISTRY,
                     inputUiInfo: {},
                 },
                 valid: true,
@@ -104,8 +102,6 @@ describe('flow execution', () => {
                             inputUiInfo: {},
                             pieceName: '@activepieces/piece-data-mapper',
                             pieceVersion: '0.3.0',
-                            packageType: 'REGISTRY',
-                            pieceType: 'OFFICIAL',
                             actionName: 'advanced_mapping',
                             input: {
                                 mapping: {
