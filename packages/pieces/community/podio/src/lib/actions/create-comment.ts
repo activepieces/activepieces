@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioAuth } from '../../index';
-import { podioApiCall, getAccessToken, silentProperty, hookProperty, dynamicAppProperty, dynamicSpaceProperty } from '../common';
+import { podioApiCall, getAccessToken, silentProperty, hookProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
 
 export const createCommentAction = createAction({
   auth: podioAuth,
@@ -9,8 +9,9 @@ export const createCommentAction = createAction({
   displayName: 'Create Comment',
   description: 'Adds a new comment to the object of the given type and id',
   props: {
-    appId: dynamicAppProperty,
+    orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,
+    appId: dynamicAppProperty,
     type: Property.Dropdown({
       displayName: 'Object Type',
       description: 'The type of object to comment on',

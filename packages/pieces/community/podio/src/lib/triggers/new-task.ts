@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioAuth } from '../../index';
-import { podioApiCall, getAccessToken, dynamicSpaceProperty } from '../common';
+import { podioApiCall, getAccessToken, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
 
 export const newTaskTrigger = createTrigger({
   auth: podioAuth,
@@ -9,6 +9,7 @@ export const newTaskTrigger = createTrigger({
   displayName: 'New Task',
   description: 'Fires when a new task is added to any workspace',
   props: {
+    orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,
   },
   sampleData: {

@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioAuth } from '../../index';
-import { podioApiCall, getAccessToken, taskIdProperty, hookProperty, silentProperty, dynamicRefTypeProperty, dynamicRefIdProperty, dynamicAppProperty, dynamicSpaceProperty } from '../common';
+import { podioApiCall, getAccessToken, taskIdProperty, hookProperty, silentProperty, dynamicRefTypeProperty, dynamicRefIdProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
 
 export const updateTaskAction = createAction({
   auth: podioAuth,
@@ -40,8 +40,9 @@ export const updateTaskAction = createAction({
       description: 'True if the task is private, False otherwise',
       required: false,
     }),
-    appId: dynamicAppProperty,
+    orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,
+    appId: dynamicAppProperty,
     refType: dynamicRefTypeProperty,
     refId: dynamicRefIdProperty,
     completed: Property.Checkbox({
@@ -176,8 +177,10 @@ export const updateTaskAction = createAction({
       body.file_ids = fileIds;
     }
 
-    if (reminder) {
-      body.reminder = reminder;
+    if (reminder && typeof reminder === 'object' && Object.keys(reminder).length > 0) {
+      if (reminder['remind_delta'] && typeof reminder['remind_delta'] === 'number') {
+        body.reminder = reminder;
+      }
     }
 
     const queryParams: any = {};

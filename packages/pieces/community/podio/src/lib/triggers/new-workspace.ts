@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioAuth } from '../../index';
-import { podioApiCall, getAccessToken, dynamicSpaceProperty } from '../common';
+import { podioApiCall, getAccessToken, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
 
 export const newWorkspaceTrigger = createTrigger({
   auth: podioAuth,
@@ -9,6 +9,7 @@ export const newWorkspaceTrigger = createTrigger({
   displayName: 'Member Added',
   description: 'Fires when a new member is added to a workspace',
   props: {
+    orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,
   },
   sampleData: {

@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioAuth } from '../../index';
-import { podioApiCall, getAccessToken, dynamicRefTypeProperty, dynamicRefIdProperty, dynamicAppProperty, dynamicSpaceProperty } from '../common';
+import { podioApiCall, getAccessToken, dynamicRefTypeProperty, dynamicRefIdProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
 
 export const createTaskAction = createAction({
   auth: podioAuth,
@@ -35,8 +35,9 @@ export const createTaskAction = createAction({
       required: false,
       defaultValue: false,
     }),
-    appId: dynamicAppProperty,
+    orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,
+    appId: dynamicAppProperty,
     refType: dynamicRefTypeProperty,
     refId: dynamicRefIdProperty,
   },

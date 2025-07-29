@@ -130,20 +130,26 @@ export const updateItemAction = createAction({
       body.tags = tags;
     }
 
-    if (reminder) {
-      body.reminder = reminder;
+    if (reminder && typeof reminder === 'object' && Object.keys(reminder).length > 0) {
+      if (reminder['remind_delta'] && typeof reminder['remind_delta'] === 'number') {
+        body.reminder = reminder;
+      }
     }
 
-    if (recurrence) {
-      body.recurrence = recurrence;
+    if (recurrence && typeof recurrence === 'object' && Object.keys(recurrence).length > 0) {
+      if (recurrence['name'] && recurrence['config']) {
+        body.recurrence = recurrence;
+      }
     }
 
     if (linkedAccountId) {
       body.linked_account_id = linkedAccountId;
     }
 
-    if (ref) {
-      body.ref = ref;
+    if (ref && typeof ref === 'object' && Object.keys(ref).length > 0) {
+      if (ref['type'] && ref['id']) {
+        body.ref = ref;
+      }
     }
 
     const queryParams: any = {};

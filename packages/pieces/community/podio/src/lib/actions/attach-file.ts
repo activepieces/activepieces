@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioAuth } from '../../index';
-import { podioApiCall, getAccessToken, silentProperty, dynamicRefTypeProperty, dynamicRefIdProperty, dynamicAppProperty, dynamicSpaceProperty } from '../common';
+import { podioApiCall, getAccessToken, silentProperty, dynamicRefTypeProperty, dynamicRefIdProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
 
 export const attachFileAction = createAction({
   auth: podioAuth,
@@ -14,8 +14,9 @@ export const attachFileAction = createAction({
       description: 'The ID of the uploaded file to attach',
       required: true,
     }),
-    appId: dynamicAppProperty,
+    orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,
+    appId: dynamicAppProperty,
     refType: Property.Dropdown({
       displayName: 'Reference Type',
       description: 'The type of object the file should be attached to',

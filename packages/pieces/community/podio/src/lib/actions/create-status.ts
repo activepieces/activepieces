@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioAuth } from '../../index';
-import { podioApiCall, getAccessToken, dynamicSpaceProperty } from '../common';
+import { podioApiCall, getAccessToken, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
 
 export const createStatusAction = createAction({
   auth: podioAuth,
@@ -9,6 +9,7 @@ export const createStatusAction = createAction({
   displayName: 'Create Status Update',
   description: 'Creates a new status message for a user on a specific space. This is a rate-limited operation.',
   props: {
+    orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,
     value: Property.LongText({
       displayName: 'Status Message',
@@ -91,8 +92,10 @@ export const createStatusAction = createAction({
       body.embed_url = embedUrl;
     }
 
-    if (question) {
-      body.question = question;
+    if (question && typeof question === 'object' && Object.keys(question).length > 0) {
+      if (question['text'] && question['options']) {
+        body.question = question;
+      }
     }
 
     const queryParams: any = {};

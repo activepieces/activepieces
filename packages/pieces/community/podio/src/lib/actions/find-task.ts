@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioAuth } from '../../index';
-import { podioApiCall, getAccessToken, statusProperty, limitProperty, offsetProperty, dynamicAppProperty, dynamicSpaceProperty } from '../common';
+import { podioApiCall, getAccessToken, statusProperty, limitProperty, offsetProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
 
 export const findTaskAction = createAction({
   auth: podioAuth,
@@ -29,8 +29,9 @@ export const findTaskAction = createAction({
       description: 'The ID of the task to retrieve (required when using "Get by Task ID")',
       required: false,
     }),
-    appId: dynamicAppProperty,
+    orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,
+    appId: dynamicAppProperty,
     refType: Property.Dropdown({
       displayName: 'Reference Type',
       description: 'Type of object to get tasks for (required when using "Get Tasks for Reference")',
@@ -50,8 +51,8 @@ export const findTaskAction = createAction({
       displayName: 'Reference Object',
       description: 'Select the specific object to get tasks for (required when using "Get Tasks for Reference")',
       required: false,
-      refreshers: ['refType', 'appId', 'spaceId'],
-      options: async ({ auth, refType, appId, spaceId }) => {
+      refreshers: ['refType', 'appId', 'spaceId', 'orgId'],
+      options: async ({ auth, refType, appId, spaceId, orgId }) => {
         if (!auth || !refType) {
           return {
             disabled: true,
@@ -105,10 +106,18 @@ export const findTaskAction = createAction({
               };
 
             case 'space':
+              if (!orgId) {
+                return {
+                  disabled: true,
+                  placeholder: 'Select an organization first to load spaces',
+                  options: [],
+                };
+              }
+              
               const spaceResponse = await podioApiCall<any[]>({
                 method: HttpMethod.GET,
                 accessToken,
-                resourceUri: '/space/',
+                resourceUri: `/org/${orgId}/space/`,
               });
               
               return {

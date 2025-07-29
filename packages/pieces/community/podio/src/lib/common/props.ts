@@ -74,13 +74,18 @@ export const dynamicSpaceProperty = Property.Dropdown({
       };
     }
 
+    if (!orgId) {
+      return {
+        disabled: true,
+        placeholder: 'Select an organization first',
+        options: [],
+      };
+    }
+
     try {
       const accessToken = getAccessToken(auth as any);
       
-      let resourceUri = '/space/';
-      if (orgId) {
-        resourceUri = `/space/org/${orgId}/`;
-      }
+      const resourceUri = `/org/${orgId}/space/`;
 
       const spaces = await podioApiCall<any[]>({
         method: HttpMethod.GET,
@@ -91,7 +96,7 @@ export const dynamicSpaceProperty = Property.Dropdown({
       if (!spaces || spaces.length === 0) {
         return {
           options: [],
-          placeholder: 'No spaces found',
+          placeholder: 'No spaces found in this organization',
         };
       }
 
@@ -226,8 +231,8 @@ export const dynamicRefIdProperty = Property.Dropdown({
   displayName: 'Reference Object',
   description: 'Select the specific object to reference',
   required: false,
-  refreshers: ['refType', 'appId', 'spaceId'],
-  options: async ({ auth, refType, appId, spaceId }) => {
+  refreshers: ['refType', 'appId', 'spaceId', 'orgId'],
+  options: async ({ auth, refType, appId, spaceId, orgId }) => {
     if (!auth || !refType) {
       return {
         disabled: true,
@@ -328,10 +333,18 @@ export const dynamicRefIdProperty = Property.Dropdown({
           };
 
         case 'space':
+          if (!orgId) {
+            return {
+              disabled: true,
+              placeholder: 'Select an organization first to load spaces',
+              options: [],
+            };
+          }
+          
           const spaceResponse = await podioApiCall<any[]>({
             method: HttpMethod.GET,
             accessToken,
-            resourceUri: '/space/',
+            resourceUri: `/org/${orgId}/space/`,
           });
           
           return {
