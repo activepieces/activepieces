@@ -21,10 +21,12 @@ export const serpstatApiCall = async ({
     method,
     url: `${BASE_URL}${resourceUri}`,
     headers: {
-      'Authorization': `Bearer ${apiToken}`,
       'Content-Type': 'application/json',
     },
-    queryParams,
+    queryParams: {
+      token: apiToken,
+      ...queryParams,
+    },
     body,
   };
 

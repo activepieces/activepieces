@@ -10,9 +10,8 @@ export const serpstatAuth = PieceAuth.SecretText({
       await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: 'https://api.serpstat.com/v4/',
-        headers: {
-          'Authorization': `Bearer ${auth}`,
-          'Content-Type': 'application/json',
+        queryParams: {
+          token: auth,
         },
       });
       return { valid: true };

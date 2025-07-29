@@ -1,7 +1,8 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { randomUUID } from 'crypto';
 import { SEARCH_ENGINE_OPTIONS } from '../../common/search-engines';
+import { serpstatApiCall } from '../../common/client';
 
 export const getSuggestions = createAction({
   name: 'get_suggestions',
@@ -42,7 +43,6 @@ export const getSuggestions = createAction({
   },
   async run({ auth, propsValue }) {
     const token = auth as string;
-    const url = `https://api.serpstat.com/v4/?token=${token}`;
     const id = randomUUID();
 
     // Build params object
@@ -60,16 +60,11 @@ export const getSuggestions = createAction({
       params,
     };
 
-    const response = await httpClient.sendRequest({
+    return await serpstatApiCall({
+      apiToken: token,
       method: HttpMethod.POST,
-      url,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
+      resourceUri: '/',
       body,
     });
-
-    return response.body;
   },
 }); 
