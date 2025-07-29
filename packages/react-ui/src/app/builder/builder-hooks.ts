@@ -30,6 +30,7 @@ import {
   FlowRunStatus,
   apId,
   StepSettings,
+  Step,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -53,9 +54,10 @@ import {
   CanvasShortcuts,
   CanvasShortcutsProps,
 } from './flow-canvas/context-menu/canvas-context-menu';
-import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
+import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
+import { useDraggable } from '@dnd-kit/core';
 const flowUpdatesQueue = new PromiseQueue();
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
@@ -993,4 +995,30 @@ function determineInitiallySelectedStep(
     return null;
   }
   return firstInvalidStep?.name ?? 'trigger';
+}
+
+
+export const useStepNodeAttributes = (step: Step) => {
+  const [readonly, isPieceSelectorOpened] = useBuilderStateContext((state) => [state.readonly, state.openedPieceSelectorStepNameOrAddButtonId === step.name]);
+  const { attributes, listeners, setNodeRef } = useDraggable({
+    id: step.name,
+    disabled: step.name === 'trigger' || readonly,
+    data: {
+      type: flowUtilConsts.DRAGGED_STEP_TAG,
+    },
+  });
+  const stepNodeDivAttributes = isPieceSelectorOpened ? {} : attributes;
+  const stepNodeDivListeners = isPieceSelectorOpened ? {} : listeners;
+  
+  return {
+    [`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name,
+    ...stepNodeDivAttributes,
+    ...stepNodeDivListeners,
+    ref: isPieceSelectorOpened ? undefined : setNodeRef,
+    style: {
+      height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
+      width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+      maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+    }
+  }
 }

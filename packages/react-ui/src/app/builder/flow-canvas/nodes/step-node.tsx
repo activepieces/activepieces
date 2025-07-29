@@ -1,8 +1,6 @@
-import { useDraggable } from '@dnd-kit/core';
 import { Handle, NodeProps, Position } from '@xyflow/react';
 import React, { useMemo } from 'react';
-
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { useBuilderStateContext, useStepNodeAttributes } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
@@ -14,7 +12,7 @@ import {
   flowStructureUtil,
 } from '@activepieces/shared';
 
-import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../utils/consts';
+import { flowUtilConsts } from '../utils/consts';
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApStepNode } from '../utils/types';
 
@@ -27,13 +25,13 @@ const getPieceSelectorOperationType = (step: Step) => {
   return FlowOperationType.UPDATE_ACTION;
 };
 
+
 const ApStepCanvasNode = React.memo(
   ({ data: { step } }: NodeProps & Omit<ApStepNode, 'position'>) => {
     const [
       selectStepByName,
       isSelected,
       isDragging,
-      readonly,
       flowVersion,
       setSelectedBranchIndex,
       isPieceSelectorOpened,
@@ -42,7 +40,6 @@ const ApStepCanvasNode = React.memo(
       state.selectStepByName,
       state.selectedStep === step.name,
       state.activeDraggingStep === step.name,
-      state.readonly,
       state.flowVersion,
       state.setSelectedBranchIndex,
       state.openedPieceSelectorStepNameOrAddButtonId === step.name,
@@ -57,18 +54,11 @@ const ApStepCanvasNode = React.memo(
     }, [step, flowVersion]);
     const isTrigger = flowStructureUtil.isTrigger(step.type);
     const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
-    const { attributes, listeners, setNodeRef } = useDraggable({
-      id: step.name,
-      disabled: isTrigger || readonly,
-      data: {
-        type: flowUtilConsts.DRAGGED_STEP_TAG,
-      },
-    });
     const isRoundedStep = flowCanvasUtils.isRoundedNode(step.type);
     const hasGradientBorder = flowCanvasUtils.isAiNode(
       stepMetadata?.categories || [],
     );
-
+    const stepNodeAttributes = useStepNodeAttributes(step);
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
@@ -80,20 +70,11 @@ const ApStepCanvasNode = React.memo(
       e.preventDefault();
       e.stopPropagation();
     };
-    const stepNodeDivAttributes = isPieceSelectorOpened ? {} : attributes;
-    const stepNodeDivListeners = isPieceSelectorOpened ? {} : listeners;
+
     return (
       <div
-        {...{ [`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name }}
-        style={{
-          height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
-          width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-          maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-        }}
         key={step.name}
-        ref={isPieceSelectorOpened ? null : setNodeRef}
-        {...stepNodeDivAttributes}
-        {...stepNodeDivListeners}
+        {...stepNodeAttributes}
       >
         <div className="relative h-full w-full cursor-default">
           {!isDragging && (
@@ -123,8 +104,12 @@ const ApStepCanvasNode = React.memo(
                     {stepMetadata?.displayName}
                   </div>
                 </div>
+
+
                 <div
-                  className=" items-center relative  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3"
+                  className={cn(" items-center relative  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3",{
+                    'drop-shadow-lg': isSelected,
+                  })}
                   onClick={(e) => {
                     if (!isPieceSelectorOpened) {
                       handleStepClick(e);
