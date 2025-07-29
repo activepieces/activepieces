@@ -31,8 +31,8 @@ const VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD =
 const LABEL_HEIGHT = 30 as const;
 const LABEL_WIDTH = 116 as const;
 const LABEL_VERTICAL_PADDING = 12 as const;
-const STEP_DRAG_OVERLAY_WIDTH = 100 as const;
-const STEP_DRAG_OVERLAY_HEIGHT = 100 as const;
+const STEP_DRAG_OVERLAY_WIDTH = 66 as const;
+const STEP_DRAG_OVERLAY_HEIGHT = 66 as const;
 const VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD =
   VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD + LABEL_HEIGHT;
 const LINE_WIDTH = 1.5 as const;
@@ -41,12 +41,12 @@ const HORIZONTAL_SPACE_BETWEEN_NODES = 150 as const;
 const STEP_DISPLAY_META_WIDTH = 120 as const;
 const AP_NODE_SIZE = {
   [ApNodeType.BIG_ADD_BUTTON]: {
-    height: 50,
-    width: 50,
+    height: 60,
+    width: 60,
   },
   [ApNodeType.ADD_BUTTON]: {
-    height: 18,
-    width: 18,
+    height: 23,
+    width: 23,
   },
   [ApNodeType.STEP]: {
     height: 66,
