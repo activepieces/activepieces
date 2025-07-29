@@ -31,6 +31,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
     async create({ projectId, name }: CreateParams): Promise<McpWithTools> {
         const mcp = await mcpRepo().save({
             id: apId(),
+            externalId: apId(),
             projectId,
             name,
             token: apId(),
@@ -233,6 +234,11 @@ type CountParams = {
 
 type GetOrThrowParams = {
     mcpId: ApId
+    projectId: ApId
+}
+
+type GetOneByExternalIdOrThrowParams = {
+    externalId: string
     projectId: ApId
 }
 
