@@ -44,7 +44,7 @@ export const createTweet = createAction({
       media.forEach((m) => {
         uploadedMedia.push(
           userClient.v1.uploadMedia(Buffer.from(m.base64, 'base64'), {
-            mimeType: 'image/png',
+           mimeType: m.mimeType ?? 'image/png',
             target: 'tweet',
           })
         );
