@@ -237,11 +237,6 @@ type GetOrThrowParams = {
     projectId: ApId
 }
 
-type GetOneByExternalIdOrThrowParams = {
-    externalId: string
-    projectId: ApId
-}
-
 type DeleteFlowToolsParams = {
     flowId: ApId
 }
