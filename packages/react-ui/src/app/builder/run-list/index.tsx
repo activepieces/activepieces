@@ -57,7 +57,7 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
       </SidebarHeader>
       <CardList>
         {isLoading ||
-          (isRefetching && <CardListItemSkeleton numberOfCards={10} />)}
+          (isRefetching && <CardListItemSkeleton numberOfCards={10} skeletonClassName='bg-background' />)}
         {isError && <div>{t('Error, please try again.')}</div>}
         {flowPage && flowPage.data.length === 0 && (
           <CardListEmpty message={t('No runs found')} />

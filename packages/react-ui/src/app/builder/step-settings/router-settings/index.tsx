@@ -148,7 +148,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                 onValueChange={field.onChange}
                 value={field.value}
               >
-                <SelectTrigger>
+                <SelectTrigger className='bg-background'>
                   <SelectValue placeholder={t('Execute')} />
                 </SelectTrigger>
 

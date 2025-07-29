@@ -46,7 +46,9 @@ const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
       {isSkipped && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <RouteOff className="size-4"> </RouteOff>
+            <div className='flex items-center justify-center drop-shadow-lg size-4 bg-slate-50 text-slate-500 rounded-full'>
+              <RouteOff className="size-3"> </RouteOff>
+            </div>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t('Skipped')}</TooltipContent>
         </Tooltip>

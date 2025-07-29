@@ -174,7 +174,10 @@ const ApStepCanvasNode = React.memo(
                           },
                         )}
                       />
-                      <div className="absolute bottom-[2px] right-[2px]">
+                      <div className={cn("absolute bottom-[2px] right-[2px]", {
+                        "right-[3px] bottom-[3px]": isRoundedStep,
+                        "right-[1px] bottom-0": hasGradientBorder,
+                      })}>
                         <ApStepNodeStatus stepName={step.name} />
                       </div>
                     </div>

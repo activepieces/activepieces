@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   ApFlagId,
@@ -76,11 +76,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
   return (
     <div className="flex flex-col gap-4 w-full">
       {!pieceModel && (
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <Skeleton key={index} className="w-full h-8" />
-          ))}
-        </div>
+       <SkeletonList numberOfItems={5} className="h-7 bg-background"></SkeletonList>
       )}
 
       {pieceModel && (
