@@ -1976,6 +1976,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "owuzo",
+      "name": "Owuzo Joy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/173556464?v=4",
+      "profile": "https://github.com/owuzo",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

@@ -44,7 +44,6 @@ import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/17
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
 import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1752004202722-SplitUpPieceMetadataIntoTools'
-import { MakeTriggerNullable1753366163403 } from './migration/common/1753366163403-MakeTriggerNullable'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -250,9 +249,13 @@ import { AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028 } from './migrati
 import { AddAgentRunsEntityPostgres1752583341290 } from './migration/postgres/1752583341290-AddAgentRunsEntityPostgres'
 import { AddPlatformAnalyticsReportEntity1753091760355 } from './migration/postgres/1753091760355-AddPlatformAnalyticsReportEntity'
 import { AddAgentIdToTable1753315220453 } from './migration/postgres/1753315220453-AddAgentIdToTable'
+import { MakeTriggerNullable1753366163403 } from './migration/postgres/1753366163403-MakeTriggerNullable'
 import { AddIndexForAgentTable1753400133786 } from './migration/postgres/1753400133786-AddIndexForAgentTable'
 import { AddAIUsageMetadatapostgres1753624069238 } from './migration/postgres/1753624069238-AddAIUsageMetadatapostgres'
 import { AddExternalIdToAgentId1753641361099 } from './migration/postgres/1753641361099-AddExternalIdToAgentId'
+import { AddParentRunIdToFlowRun1753699877817 } from './migration/postgres/1753699877817-AddParentRunIdToFlowRun'
+import { AddCascadeOnAgents1753727379513 } from './migration/postgres/1753727379513-AddCascadeOnAgents'
+import { AddExternalIdToMCPPostgres1753787093467 } from './migration/postgres/1753787093467-AddExternalIdToMCPPostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -429,6 +432,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIndexForAgentTable1753400133786,
         AddAIUsageMetadatapostgres1753624069238,
         AddExternalIdToAgentId1753641361099,
+        AddParentRunIdToFlowRun1753699877817,
+        AddCascadeOnAgents1753727379513,
+        AddExternalIdToMCPPostgres1753787093467,
     ]
 
     const edition = system.getEdition()

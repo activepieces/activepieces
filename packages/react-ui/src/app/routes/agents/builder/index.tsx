@@ -29,8 +29,8 @@ interface AgentBuilderProps {
   onOpenChange: (open: boolean) => void;
   trigger: ReactNode;
   agent: Agent;
-  onChange?: (agent: Agent) => void;
   showUseInFlow?: boolean;
+  onChange?: (agent: Agent) => void;
 }
 
 enum AgentBuilderTabs {
@@ -44,28 +44,32 @@ const AgentBuilderContent = ({
   trigger,
   agent,
   showUseInFlow = false,
+  onChange,
 }: AgentBuilderProps) => {
-  const [isSaving, testSectionIsOpen] = useBuilderAgentState((state) => [
-    
-    state.isSaving,
-   
-    state.testSectionIsOpen,
-  ,
-  ]);
+  const [isSaving, testSectionIsOpen, currentAgent] = useBuilderAgentState(
+    (state) => [state.isSaving, state.testSectionIsOpen, state.agent],
+  );
   const [activeTab, setActiveTab] = useState<AgentBuilderTabs>(
     AgentBuilderTabs.CONFIGURE,
   );
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open && onChange) {
+      onChange(currentAgent);
+    }
+    onOpenChange(open);
+  };
+
   return (
     <Drawer
       open={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       dismissible={false}
       direction="right"
       closeOnEscape={false}
     >
       {trigger}
-      <DrawerContent className="w-full overflow-auto overflow-x-hidden">
+      <DrawerContent className="w-full overflow-hidden">
         <DrawerHeader>
           <div className="flex items-center justify-between py-2 px-4 w-full relative">
             <div className="flex items-center gap-1 min-w-0">
@@ -73,7 +77,7 @@ const AgentBuilderContent = ({
                 variant="basic"
                 size={'icon'}
                 className="text-foreground"
-                onClick={() => onOpenChange(false)}
+                onClick={() => handleOpenChange(false)}
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
@@ -122,12 +126,12 @@ const AgentBuilderContent = ({
         </DrawerHeader>
 
         {activeTab === AgentBuilderTabs.CONFIGURE && (
-          <div className="flex flex-1 h-full justify-center bg-accent">
+          <div className="flex flex-1 h-full justify-center bg-accent overflow-hidden">
             <AgentLeftSection agent={agent} />
-            <div className="hidden md:block w-0 md:w-1/3 bg-background border-l">
+            <div className="hidden md:block w-0 md:w-1/3 bg-background border-l h-full overflow-hidden">
               {testSectionIsOpen && <AgentPreviewSection />}
               {!testSectionIsOpen && (
-                <div className="flex flex-col h-full p-4 gap-4 w-full bg-background">
+                <div className="flex flex-col h-full p-4 gap-8 w-full bg-background overflow-hidden">
                   <AgentToolSection />
                   {showUseInFlow && <LinkedFlowsSection agent={agent} />}
                   <AgentStructuredOutput />
@@ -150,9 +154,9 @@ export const AgentBuilder = ({
   isOpen,
   onOpenChange,
   trigger,
-  onChange,
   agent,
   showUseInFlow = false,
+  onChange,
 }: AgentBuilderProps) => (
   <BuilderAgentProvider agent={agent}>
     <AgentBuilderContent
@@ -160,8 +164,8 @@ export const AgentBuilder = ({
       onOpenChange={onOpenChange}
       trigger={trigger}
       agent={agent}
-      onChange={onChange}
       showUseInFlow={showUseInFlow}
+      onChange={onChange}
     />
   </BuilderAgentProvider>
 );

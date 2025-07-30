@@ -1,15 +1,15 @@
 import { Sparkles } from 'lucide-react';
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import { useBuilderAgentState } from '@/features/agents/lib/store/builder-agent-state-provider';
-import { debounce, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { t } from 'i18next';
 
-type PromptFormValues = {
+type FormValues = {
   systemPrompt: string;
 };
 
@@ -18,35 +18,25 @@ export const AgentPromptEditior = () => {
     state.updateAgent,
     state.agent,
   ]);
-  const [localValue, setLocalValue] = useState(agent?.systemPrompt ?? '');
+
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const { mutate: enhacePrompt, isPending } =
-    agentHooks.useEnhanceAgentPrompt();
-  const { setValue } = useForm<PromptFormValues>({
+  const { mutate: enhancePrompt, isPending } = agentHooks.useEnhanceAgentPrompt();
+
+  const { register, setValue, watch } = useForm<FormValues>({
     defaultValues: {
       systemPrompt: agent?.systemPrompt ?? '',
     },
   });
 
-  const debouncedUpdate = useMemo(() => {
-    return debounce((value: string) => {
-      if (isNil(agent)) return;
-      updateAgent({ systemPrompt: value });
-    }, 500);
-  }, [agent, updateAgent]);
+  useEffect(() => {
+    setValue('systemPrompt', agent?.systemPrompt ?? '');
+  }, [agent?.systemPrompt, setValue]);
 
-  const handlePromptChange = useCallback(
-    (value: string) => {
-      setLocalValue(value);
-      setValue('systemPrompt', value, { shouldDirty: true });
-      debouncedUpdate(value);
-    },
-    [setValue, debouncedUpdate],
-  );
+  const systemPromptValue = watch('systemPrompt');
 
   const handleEnhancePrompt = () => {
-    enhacePrompt(
-      { systemPrompt: localValue },
+    enhancePrompt(
+      { systemPrompt: systemPromptValue },
       {
         onSuccess: (data) => {
           updateAgent({ ...data });
@@ -55,27 +45,18 @@ export const AgentPromptEditior = () => {
     );
   };
 
-  // Only update local value when agent changes externally (not from our own updates)
-  useEffect(() => {
-    if (
-      agent?.systemPrompt !== localValue &&
-      agent?.systemPrompt !== undefined
-    ) {
-      setLocalValue(agent.systemPrompt);
-      setValue('systemPrompt', agent.systemPrompt, { shouldDirty: false });
-    }
-  }, [agent?.systemPrompt, setValue]);
-
   return (
     <div className="flex-1 rounded-md min-h-0 w-full cursor-text relative">
       <Tooltip>
-        <TooltipTrigger className='absolute top-2 right-2'>
+        <TooltipTrigger asChild>
           <Button
             size="icon"
             variant="ghost"
-            className='text-primary-300'
+            className="text-primary-300 absolute top-2 right-2"
             onClick={handleEnhancePrompt}
             disabled={isPending || isNil(agent)}
+            tabIndex={-1}
+            type="button"
           >
             {isPending ? (
               <Sparkles className="w-4 h-4 animate-pulse" />
@@ -103,16 +84,25 @@ export const AgentPromptEditior = () => {
         </div>
       )}
 
-      <Textarea
-        id="system-prompt"
-        value={localValue}
-        onChange={(e) => handlePromptChange(e.target.value)}
-        placeholder="Describe this agent's purpose, responsibilities, and any special instructions."
-        className="flex-1 min-h-full max-h-full resize-none w-full focus-visible:ring-0 shadow-none h-full"
-        maxRows={100}
-        disabled={isNil(agent) || isPending}
-        ref={textareaRef}
-      />
+      <form
+        className="flex-1 min-h-0 w-full cursor-text"
+        onSubmit={(e) => e.preventDefault()}
+      >
+        <Textarea
+          id="system-prompt"
+          {...register('systemPrompt')}
+          value={systemPromptValue}
+          onChange={(e) => {
+            setValue('systemPrompt', e.target.value, { shouldDirty: true });
+            updateAgent({ systemPrompt: e.target.value }, true);
+          }}
+          placeholder="Describe this agent's purpose, responsibilities, and any special instructions."
+          className="flex-1 min-h-full max-h-full resize-none w-full focus-visible:ring-0 shadow-none h-full"
+          maxRows={100}
+          disabled={isNil(agent) || isPending}
+          ref={textareaRef}
+        />
+      </form>
     </div>
   );
 };

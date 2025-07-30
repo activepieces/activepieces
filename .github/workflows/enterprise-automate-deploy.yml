@@ -43,7 +43,7 @@ jobs:
             linux/amd64
           push: true
           tags: |
-            ghcr.io/activepieces/activepieces:${{ env.RELEASE }}.${{ github.sha }}.enterprise
+            ghcr.io/activepieces/activepieces:testing-ee
 
       - name: Configure SSH
         run: |
@@ -64,7 +64,7 @@ jobs:
           
       - name: Deploy with Docker Compose
         run: |
-          ssh pre-prod -t -t 'bash -ic "cd enterprise-activepieces && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.enterprise docker compose pull && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.enterprise docker compose up -d --force-recreate enterprise-activepieces; exit"' 
+          ssh pre-prod -t -t 'bash -ic "cd enterprise-activepieces && IMAGE_TAG=testing-ee docker compose pull && IMAGE_TAG=testing-ee docker compose up -d --force-recreate enterprise-activepieces; exit"' 
 
   Enterprise-E2E-Tests:
     needs: Release

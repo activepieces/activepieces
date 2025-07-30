@@ -122,7 +122,7 @@ export const CreateAgentButton = ({
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  {t('Cook Your Agent!')}
+                  {t('Invent')}
                 </>
               )}
             </Button>

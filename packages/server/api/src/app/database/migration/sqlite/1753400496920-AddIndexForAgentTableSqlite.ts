@@ -117,6 +117,10 @@ export class AddIndexForAgentTableSqlite1753400496920 implements MigrationInterf
         await queryRunner.query(`
             CREATE INDEX "idx_agent_run_project_agent_starttime" ON "agent_run" ("projectId", "agentId", "startTime")
         `)
+        await queryRunner.query(`
+            UPDATE "table"
+            SET "trigger" = NULL
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

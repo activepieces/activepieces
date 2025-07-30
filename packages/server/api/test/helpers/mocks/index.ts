@@ -463,6 +463,8 @@ export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
         flowId: flowRun?.flowId ?? apId(),
         tags: flowRun?.tags ?? [],
         steps: {},
+        failParentOnFailure: flowRun?.failParentOnFailure ?? false,
+        parentRunId: flowRun?.parentRunId ?? undefined,
         flowVersionId: flowRun?.flowVersionId ?? apId(),
         flowDisplayName: flowRun?.flowDisplayName ?? faker.lorem.word(),
         logsFileId: flowRun?.logsFileId ?? null,

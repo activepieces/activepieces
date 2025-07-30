@@ -107,10 +107,8 @@ async function addPieceToServer(
                 projectId, 
                 platformId, 
                 {
-                    packageType: pieceMetadata.packageType,
                     pieceName: pieceMetadata.name,
                     pieceVersion: pieceMetadata.version,
-                    pieceType: pieceMetadata.pieceType,
                 },
             )
             try {
@@ -267,6 +265,7 @@ async function addFlowToServer(
                 saveSampleData: await webhookSimulationService(logger).exists(flowId),
                 payload: originalParams,
                 execute: true,
+                failParentOnFailure: false,
             })
 
             trackToolCall({ mcpId, toolName, projectId, logger })
