@@ -18,11 +18,6 @@ export interface ApitemplateAuthConfig {
   region: ApitemplateRegion;
 }
 
-// Interface for API error response
-interface ApitemplateErrorResponse {
-  status: string;
-  message: string;
-}
 
 export const BASE_URL = APITEMPLATE_REGIONS.default;
 
@@ -78,7 +73,7 @@ export async function makeRequest(
   try {
     const response = await httpClient.sendRequest({
       method,
-      url: `${baseUrl}${path}`,
+      url: `${baseUrl}/v2${path}`,
       headers: {
         'X-API-KEY': apiKey,
         'Content-Type': 'application/json',
@@ -125,6 +120,8 @@ export async function makeRequest(
         case 502:
         case 503:
         case 504:
+          {
+
           const alternatives = getAlternativeRegions(region);
           const suggestionText =
             alternatives.length > 0
@@ -138,7 +135,7 @@ export async function makeRequest(
               `The ${
                 region || 'default'
               } region server is temporarily down.${suggestionText}`
-          );
+          );}
         default:
           throw new Error(
             `APITemplate.io Error: HTTP ${statusCode}${regionInfo} - ${

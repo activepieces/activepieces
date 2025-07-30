@@ -7,7 +7,7 @@ export const createPdfFromHtml = createAction({
   auth: ApitemplateAuth,
   name: 'createPdfFromHtml',
   displayName: 'Create PDF From HTML',
-  description: 'Create a PDF from HTML content with customizable page settings',
+  description: 'Creates a PDF from HTML.',
   props: {
     html: Property.LongText({
       displayName: 'HTML Content',
@@ -24,33 +24,9 @@ export const createPdfFromHtml = createAction({
       description: 'Optional JSON data to use for templating the HTML content. Can include variables and dynamic content.',
       required: false,
     }),
-    exportType: Property.StaticDropdown({
-      displayName: 'Export Type',
-      description: 'Format of the generated response',
-      required: false,
-      defaultValue: 'json',
-      options: {
-        options: [
-          { label: 'JSON Response', value: 'json' },
-          { label: 'Direct PDF URL', value: 'file' },
-        ],
-      },
-    }),
     expiration: Property.Number({
       displayName: 'Expiration (minutes)',
       description: 'Expiration of the generated PDF in minutes. Use 0 to store permanently, or 1-10080 minutes (7 days) to specify expiration.',
-      required: false,
-      defaultValue: 0,
-    }),
-    cloudStorage: Property.Checkbox({
-      displayName: 'Upload to CDN Storage',
-      description: 'Upload generated PDF to storage CDN (default: true). Set to false if using Post Action to upload to your own S3.',
-      required: false,
-      defaultValue: true,
-    }),
-    password: Property.ShortText({
-      displayName: 'PDF Password',
-      description: 'Set a password to protect the generated PDF',
       required: false,
     }),
     pageSize: Property.StaticDropdown({
@@ -150,10 +126,7 @@ export const createPdfFromHtml = createAction({
       html,
       css,
       data,
-      exportType,
       expiration,
-      cloudStorage,
-      password,
       pageSize,
       orientation,
       marginTop,
@@ -173,20 +146,8 @@ export const createPdfFromHtml = createAction({
     // Build query parameters according to API docs
     const queryParams = new URLSearchParams();
 
-    if (exportType && exportType !== 'json') {
-      queryParams.append('export_type', exportType);
-    }
-
     if (expiration !== undefined && expiration !== 0) {
       queryParams.append('expiration', expiration.toString());
-    }
-
-    if (cloudStorage !== undefined) {
-      queryParams.append('cloud_storage', cloudStorage ? '1' : '0');
-    }
-
-    if (password) {
-      queryParams.append('password', password);
     }
 
     if (meta) {

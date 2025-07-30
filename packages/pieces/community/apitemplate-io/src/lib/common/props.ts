@@ -1,6 +1,5 @@
 import { Property } from '@activepieces/pieces-framework';
 import {
-  ApitemplateRegion,
   ApitemplateAuthConfig,
   makeRequest,
 } from './client';
@@ -14,31 +13,31 @@ export const regionDropdown = Property.StaticDropdown({
   options: {
     options: [
       {
-        label: 'Default (Singapore) - 100s timeout, 1MB max',
+        label: 'Default (Singapore)',
         value: 'default',
       },
       {
-        label: 'Europe (Frankfurt) - 100s timeout, 1MB max',
+        label: 'Europe (Frankfurt)',
         value: 'europe',
       },
       {
-        label: 'US East (N. Virginia) - 100s timeout, 1MB max',
+        label: 'US East (N. Virginia)',
         value: 'us',
       },
       {
-        label: 'Australia (Sydney) - 30s timeout, 6MB max',
+        label: 'Australia (Sydney)',
         value: 'australia',
       },
       {
-        label: 'Alternative - Default (Singapore) - 30s timeout, 6MB max',
+        label: 'Alternative - Default (Singapore)',
         value: 'alt-default',
       },
       {
-        label: 'Alternative - Europe (Frankfurt) - 30s timeout, 6MB max',
+        label: 'Alternative - Europe (Frankfurt)',
         value: 'alt-europe',
       },
       {
-        label: 'Alternative - US East (N. Virginia) - 30s timeout, 6MB max',
+        label: 'Alternative - US East (N. Virginia)',
         value: 'alt-us',
       },
     ],
@@ -47,7 +46,6 @@ export const regionDropdown = Property.StaticDropdown({
 
 export const templateIdDropdown = Property.Dropdown({
   displayName: 'Template ID',
-  description: 'Select a template ID to use for image generation',
   required: true,
   refreshers: ['auth'],
   options: async ({ auth }) => {
@@ -66,7 +64,7 @@ export const templateIdDropdown = Property.Dropdown({
       return {
         disabled: true,
         options: [],
-        placeholder: 'Please complete authentication setup',
+        placeholder: 'Please complete authentication setup.',
       };
     }
 
@@ -111,7 +109,7 @@ export const templateIdDropdown = Property.Dropdown({
 
 export const transactionRefDropdown = Property.Dropdown({
   displayName: 'Transaction Reference',
-  description: 'Select a transaction reference to filter objects',
+  description: 'Select a transaction reference to filter objects.',
   required: false,
   refreshers: ['auth'],
   options: async ({ auth }) => {

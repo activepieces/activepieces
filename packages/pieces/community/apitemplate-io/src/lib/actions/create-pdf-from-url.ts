@@ -7,40 +7,16 @@ export const createPdfFromUrl = createAction({
   auth: ApitemplateAuth,
   name: 'createPdfFromUrl',
   displayName: 'Create PDF From URL',
-  description: 'Create a PDF from a webpage URL with customizable page settings',
+  description: 'Creates a PDF from a webpage URL.',
   props: {
     url: Property.ShortText({
       displayName: 'URL',
       description: 'The URL of the webpage to convert to PDF',
       required: true,
     }),
-    exportType: Property.StaticDropdown({
-      displayName: 'Export Type',
-      description: 'Format of the generated response',
-      required: false,
-      defaultValue: 'json',
-      options: {
-        options: [
-          { label: 'JSON Response', value: 'json' },
-          { label: 'Direct PDF URL', value: 'file' },
-        ],
-      },
-    }),
     expiration: Property.Number({
       displayName: 'Expiration (minutes)',
       description: 'Expiration of the generated PDF in minutes. Use 0 to store permanently, or 1-10080 minutes (7 days) to specify expiration.',
-      required: false,
-      defaultValue: 0,
-    }),
-    cloudStorage: Property.Checkbox({
-      displayName: 'Upload to CDN Storage',
-      description: 'Upload generated PDF to storage CDN (default: true). Set to false if using Post Action to upload to your own S3.',
-      required: false,
-      defaultValue: true,
-    }),
-    password: Property.ShortText({
-      displayName: 'PDF Password',
-      description: 'Set a password to protect the generated PDF',
       required: false,
     }),
     pageSize: Property.StaticDropdown({
@@ -161,10 +137,7 @@ export const createPdfFromUrl = createAction({
     const authConfig = auth as ApitemplateAuthConfig;
     const {
       url,
-      exportType,
       expiration,
-      cloudStorage,
-      password,
       pageSize,
       orientation,
       marginTop,
@@ -188,20 +161,9 @@ export const createPdfFromUrl = createAction({
     // Build query parameters for basic options
     const queryParams = new URLSearchParams();
 
-    if (exportType && exportType !== 'json') {
-      queryParams.append('export_type', exportType);
-    }
 
     if (expiration !== undefined && expiration !== 0) {
       queryParams.append('expiration', expiration.toString());
-    }
-
-    if (cloudStorage !== undefined) {
-      queryParams.append('cloud_storage', cloudStorage ? '1' : '0');
-    }
-
-    if (password) {
-      queryParams.append('password', password);
     }
 
     if (meta) {

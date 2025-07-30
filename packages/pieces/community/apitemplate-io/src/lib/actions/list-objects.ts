@@ -8,7 +8,7 @@ export const listObjects = createAction({
   name: 'listObjects',
   displayName: 'List Objects',
   description:
-    'Retrieve a list of generated PDFs and images with optional filtering',
+    'Retrieves a list of generated PDFs and images with optional filtering',
   props: {
     limit: Property.Number({
       displayName: 'Limit',

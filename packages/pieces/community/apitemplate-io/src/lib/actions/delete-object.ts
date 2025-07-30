@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { ApitemplateAuth } from '../common/auth';
 import { ApitemplateAuthConfig, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -8,7 +8,7 @@ export const deleteObject = createAction({
   auth: ApitemplateAuth,
   name: 'deleteObject',
   displayName: 'Delete Object',
-  description: 'Delete a generated PDF or image by its transaction reference or object ID',
+  description: 'Deletes a generated PDF or image by its transaction reference or object ID.',
   props: {
     transactionRef: transactionRefDropdown,
   },

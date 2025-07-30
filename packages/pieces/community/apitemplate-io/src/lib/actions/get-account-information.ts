@@ -7,7 +7,7 @@ export const getAccountInformation = createAction({
   auth: ApitemplateAuth,
   name: 'getAccountInformation',
   displayName: 'Get Account Information',
-  description: 'Retrieve account information including usage statistics and account details',
+  description: 'Retrieves account information including usage statistics and account details.',
   props: {},
   async run({ auth }) {
     const authConfig = auth as ApitemplateAuthConfig;
