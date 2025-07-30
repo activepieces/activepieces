@@ -67,8 +67,6 @@ async function executeActionForTool(input: ExecuteToolOperation): Promise<Execut
             actionName: input.actionName,
             pieceName: input.pieceName,
             pieceVersion: input.pieceVersion,
-            pieceType: input.pieceType,
-            packageType: input.packageType,
             inputUiInfo: {},
             errorHandlingOptions: {
                 continueOnFailure: {

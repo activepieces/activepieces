@@ -95,14 +95,12 @@ const DynamicPropertiesImplementation = React.memo(
       isFirstRender.current = false;
       const { settings } = form.getValues();
       const actionOrTriggerName = settings.actionName ?? settings.triggerName;
-      const { pieceName, pieceVersion, pieceType, packageType } = settings;
+      const { pieceName, pieceVersion } = settings;
       mutate(
         {
           request: {
             pieceName,
             pieceVersion,
-            pieceType,
-            packageType,
             propertyName: props.propertyName,
             actionOrTriggerName: actionOrTriggerName,
             input,
