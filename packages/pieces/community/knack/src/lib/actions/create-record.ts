@@ -1,52 +1,62 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { knackApiCall, KnackAuthProps } from '../common/client';
+import { createAction } from '@activepieces/pieces-framework';
+import { knackApiCall } from '../common/client';
 import { knackAuth } from '../common/auth';
-import { objectDropdown } from '../common/props';
+import {
+  KnackGetObjectResponse,
+  knackTransformFields,
+  objectDropdown,
+  recordFields,
+} from '../common/props';
 
 export const createRecordAction = createAction({
   auth: knackAuth,
   name: 'create_record',
   displayName: 'Create Record',
-  description: 'Insert a new record into a specified object/table.',
+  description: 'Creates a new record into a specified object/table.',
   props: {
     object: objectDropdown,
-    recordData: Property.Json({
-      displayName: 'Record Data',
-      description: 'The data for the new record in JSON format. Use field IDs as keys (e.g., {"field_1": "Value A", "field_2": 123}).',
-      required: true,
-    }),
+    recordFields: recordFields,
   },
   async run({ propsValue, auth }) {
-    const { object: objectKey, recordData } = propsValue;
+    const { object: objectKey, recordFields: recordData } = propsValue;
 
     try {
-      const response = await knackApiCall({
+      const response = await knackApiCall<Record<string, any>>({
         method: HttpMethod.POST,
         auth: auth,
         resourceUri: `/objects/${objectKey}/records`,
         body: recordData,
       });
-      return response;
+
+      const objectDetails = await knackApiCall<KnackGetObjectResponse>({
+        method: HttpMethod.GET,
+        auth,
+        resourceUri: `/objects/${objectKey}`,
+      });
+
+      const transformedRecord = knackTransformFields(objectDetails, response);
+
+      return transformedRecord;
     } catch (error: any) {
       if (error.message.includes('409')) {
         throw new Error(
           'Conflict: The record could not be created due to a conflict, such as a duplicate unique value.'
         );
       }
-      
+
       if (error.message.includes('400')) {
         throw new Error(
           'Bad Request: Invalid request parameters. Please check your Record Data JSON and field values.'
         );
       }
-      
+
       if (error.message.includes('401') || error.message.includes('403')) {
         throw new Error(
           'Authentication Failed: Please check your API Key, Application ID, and user permissions.'
         );
       }
-      
+
       if (error.message.includes('429')) {
         throw new Error(
           'Rate Limit Exceeded: Too many requests. Please wait a moment before trying again.'

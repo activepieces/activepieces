@@ -2,16 +2,20 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { knackApiCall, KnackAuthProps } from '../common/client';
 import { knackAuth } from '../common/auth';
-import { objectDropdown, recordIdDropdown } from '../common/props';
+import { objectDropdown } from '../common/props';
 
 export const deleteRecordAction = createAction({
   auth: knackAuth,
   name: 'delete_record',
   displayName: 'Delete Record',
-  description: 'Permanently delete a record from a table.',
+  description: 'Deletes an existing record from a table.',
   props: {
     object: objectDropdown,
-    recordId: recordIdDropdown,
+    recordId:  Property.ShortText({
+      displayName: 'Record ID',
+      required: true,
+      description: 'The ID of the record to delete.',
+    }),
   },
   async run({ propsValue, auth }) {
     const { object: objectKey, recordId } = propsValue;

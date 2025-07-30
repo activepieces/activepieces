@@ -1,51 +1,62 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { knackApiCall, KnackAuthProps } from '../common/client';
+import { knackApiCall } from '../common/client';
 import { knackAuth } from '../common/auth';
-import { objectDropdown } from '../common/props';
+import {
+  fieldIdDropdown,
+  KnackGetObjectResponse,
+  knackTransformFields,
+  objectDropdown,
+} from '../common/props';
 
 export const findRecordAction = createAction({
   auth: knackAuth,
   name: 'find_record',
   displayName: 'Find Record',
-  description:
-    'Search for a single record using field filters (e.g., email, ID).',
+  description: 'Finds a single record using field value.',
   props: {
     object: objectDropdown,
-    filters: Property.Json({
-      displayName: 'Filter Rules',
-      description: 'The Knack filter rules to find the record.',
+    fieldId: fieldIdDropdown,
+    fieldValue: Property.ShortText({
+      displayName: 'Field Value',
       required: true,
-      defaultValue: {
-        match: 'and',
-        rules: [
-          {
-            field: 'field_1',
-            operator: 'is',
-            value: 'example@email.com',
-          },
-        ],
-      },
+      description: 'The value to search for in the specified field.',
     }),
   },
   async run({ propsValue, auth }) {
-    const { object: objectKey, filters } = propsValue;
+    const { object: objectKey, fieldId, fieldValue } = propsValue;
 
     try {
-      const response = await knackApiCall<{ records: unknown[] }>({
+      const response = await knackApiCall<{ records: Record<string, any>[] }>({
         method: HttpMethod.GET,
         auth: auth,
         resourceUri: `/objects/${objectKey}/records`,
         query: {
-          filters: JSON.stringify(filters),
+          filters: JSON.stringify([
+            {
+              field: fieldId,
+              operator: 'is',
+              value: fieldValue,
+            },
+          ]),
           rows_per_page: '1',
         },
       });
 
       if (response.records && response.records.length > 0) {
+        const objectDetails = await knackApiCall<KnackGetObjectResponse>({
+          method: HttpMethod.GET,
+          auth,
+          resourceUri: `/objects/${objectKey}`,
+        });
+
+        const transformedRecord = knackTransformFields(
+          objectDetails,
+          response.records[0]
+        );
         return {
           found: true,
-          record: response.records[0],
+          record: transformedRecord,
         };
       }
 

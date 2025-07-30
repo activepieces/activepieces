@@ -3,7 +3,6 @@ import { knackApiCall } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const knackAuth = PieceAuth.CustomAuth({
-  description: 'Enter your Knack API Key and Application ID',
   props: {
     apiKey: PieceAuth.SecretText({
       displayName: 'API Key',

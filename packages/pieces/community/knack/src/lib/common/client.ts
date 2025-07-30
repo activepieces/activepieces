@@ -102,13 +102,17 @@ export async function knackApiCall<T extends HttpMessageBody>({
         );
 
       default:
-        const errorMessage = errorData?.message ||
+        {
+                  const errorMessage = errorData?.message ||
                              error.message ||
                              'Unknown error occurred';
 
         throw new Error(
           `Knack API Error (${statusCode || 'Unknown'}): ${errorMessage}`
         );
+        }
+
+
     }
   }
 }

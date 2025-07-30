@@ -5,12 +5,14 @@ import { createRecordAction } from './lib/actions/create-record';
 import { deleteRecordAction } from './lib/actions/delete-record';
 import { findRecordAction } from './lib/actions/find-record';
 import { updateRecordAction } from './lib/actions/update-record';
+import { PieceCategory } from '@activepieces/shared';
 
 export const knack = createPiece({
   displayName: 'Knack',
   auth: knackAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/knack.png',
+  categories:[PieceCategory.CONTENT_AND_FILES],
   authors: ['aryel780'],
   actions: [
     createRecordAction,
