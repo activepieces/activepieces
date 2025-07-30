@@ -14,11 +14,8 @@ export const AgentPreviewSection = () => {
   const [testInput, setTestInput] = useState('');
   const [currentRunId, setCurrentRunId] = useState<string | null>(null);
   const [agent, setTestSectionIsOpen] = useBuilderAgentState((state) => [
-    
     state.agent,
-   
     state.setTestSectionIsOpen,
-  ,
   ]);
   const { mutate: runAgent, isPending: isRunning } = agentRunHooks.useRun();
 

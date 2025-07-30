@@ -26,7 +26,7 @@ export function AgentImageLoading({ loading }: AgentImageLoadingProps) {
   }, [loading]);
 
   return (
-    <div className='flex items-center justify-center'>
+    <div className="flex items-center justify-center">
       <img
         src={imageUrl}
         alt="Loading Agent"

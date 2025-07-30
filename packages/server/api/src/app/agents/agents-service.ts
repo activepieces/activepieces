@@ -186,7 +186,7 @@ function getEnhancementPrompt(originalPrompt: string) {
         system: 'You are an AI assistant tasked with enhancing user prompts and generating names and short descriptions for AI agents. Your response must strictly follow the required JSON schema.',
         prompt: `Enhance the following prompt for an AI agent: "${originalPrompt}".
                 Your task:
-                1. **Enhanced Prompt**: Rewrite the prompt in a professional and structured manner formated as simple text with new lines. Break it into clear sections like:
+                1. **Enhanced Prompt**: Rewrite the prompt in a professional and structured manner formated as markdown text. Break it into clear sections like:
                 - Goal
                 - Instructions
                 - Constraints or Style Guidelines (if applicable)
