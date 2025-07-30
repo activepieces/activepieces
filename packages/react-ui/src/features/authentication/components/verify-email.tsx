@@ -31,7 +31,7 @@ const VerifyEmail = () => {
     },
     onSuccess: ({ email, firstName }) => {
       reportSignup(email, firstName);
-      setTimeout(() => navigate('/sign-in'), 3000);
+      setTimeout(() => navigate('/sign-in'), 5000);
     },
     onError: (error) => {
       if (
@@ -39,11 +39,11 @@ const VerifyEmail = () => {
         error.response?.status === HttpStatusCode.Gone
       ) {
         setIsExpired(true);
-        setTimeout(() => navigate('/sign-in'), 3000);
+        setTimeout(() => navigate('/sign-in'), 5000);
       } else {
         console.error(error);
         toast(INTERNAL_ERROR_TOAST);
-        setTimeout(() => navigate('/sign-in'), 3000);
+        setTimeout(() => navigate('/sign-in'), 5000);
       }
     },
   });
@@ -104,4 +104,5 @@ const VerifyEmail = () => {
   );
 };
 VerifyEmail.displayName = 'VerifyEmail';
+
 export { VerifyEmail };
