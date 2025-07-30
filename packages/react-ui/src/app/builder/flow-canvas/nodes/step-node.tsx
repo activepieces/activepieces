@@ -135,7 +135,7 @@ const ApStepCanvasNode = React.memo(
                     className={cn(
                       'bg-background flex items-center justify-center rounded-lg shadow-step-node border hover:border-primary transition-all  ',
                       {
-                        'border-primary shadow-selected-step-node':
+                        'border-primary shadow-selected-step-node dark:shadow-selected-step-node-dark':
                           isSelected,
                         'shadow-trigger-node border-slate-400':
                           isTrigger && !isSelected,
@@ -151,15 +151,15 @@ const ApStepCanvasNode = React.memo(
                   >
                     <div className="relative">
                       {hasGradientBorder && (
-                        <div className="absolute size-[60px] top-[3px] left-[3px]  backdrop-blur-2xl   rounded-md bg-ai-gradient animate-rotate-gradient"></div>
+                        <div className="absolute size-[60px] top-[2px] left-[2px]  backdrop-blur-2xl   rounded-md bg-ai-gradient animate-rotate-gradient"></div>
                       )}
 
                       <div
                         className={cn(
-                          'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-white  border-box rounded-md border border-solid border-border/75 relative  group',
+                          'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-white  border-box rounded-md border border-solid border-border/75',
                           {
                             'rounded-full': isRoundedStep,
-                            'm-1 border-transparent rounded-sm size-[58px]  p-[2px] bg-white': hasGradientBorder,
+                            'm-1 border-transparent rounded-sm size-[56px]  p-[4px] bg-white': hasGradientBorder,
                             'bg-accent': isSkipped,
                           },
                         )}

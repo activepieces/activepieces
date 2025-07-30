@@ -179,6 +179,7 @@ module.exports = {
       },
       boxShadow: {
         'selected-step-node': '0px 1px 1px 0px rgba(0, 0, 0, 0.01), 0px 1px 24px 0px rgba(0, 0, 0, 0.08), 0px 0px 0px 4px hsl(var(--primary)/0.1)',
+        'selected-step-node-dark': '0px 1px 1px 0px rgba(0, 0, 0, 0.01), 0px 1px 24px 0px rgba(0, 0, 0, 0.08), 0px 0px 0px 4px hsl(var(--primary)/0.5)',
         'add-button': 'var(--add-button-shadow)',
         'step-node': '0px 1px 1px 0px #0000001F, 0px 1px 24px 0px #00000014',
         'trigger-node': ' 0px 1px 1px 0px #0000001F, 0px 1px 24px 0px #00000014, 0px 0px 0px 3px #94A3B833',
