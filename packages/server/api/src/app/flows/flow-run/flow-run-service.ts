@@ -68,7 +68,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        return await flowRunRepo().save({
+        return flowRunRepo().save({
             id: apId(),
             projectId,
             flowId,

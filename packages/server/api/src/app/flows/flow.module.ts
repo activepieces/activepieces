@@ -6,8 +6,8 @@ import { flowVersionController } from './flow/flow-version.controller'
 import { flowController } from './flow/flow.controller'
 import { flowRunService } from './flow-run/flow-run-service'
 import { sampleDataController } from './step-run/sample-data.controller'
-import { testTriggerController } from './test-trigger/test-trigger-controller'
 import { testFlowVersionController } from './test-flow-version/test-flow-version.controller'
+import { testTriggerController } from './test-trigger/test-trigger-controller'
 
 export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowWorkerController, { prefix: '/v1/worker/flows' })

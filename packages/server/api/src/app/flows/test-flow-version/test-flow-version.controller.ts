@@ -1,9 +1,9 @@
-import { PrincipalType, RunEnvironment, EngineHttpResponse, apId, PauseType, ExecutionType, ProgressUpdateType, ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, apId, EngineHttpResponse, ExecutionType, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { flowRunService } from '../flow-run/flow-run-service'
+import { StatusCodes } from 'http-status-codes'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
-import { StatusCodes } from 'http-status-codes'
+import { flowRunService } from '../flow-run/flow-run-service'
 
 export const testFlowVersionController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', TestFlowVersionRequest, async (req) => {
@@ -13,7 +13,7 @@ export const testFlowVersionController: FastifyPluginAsyncTypebox = async (app) 
         const synchronousHandlerId = engineResponseWatcher(req.log).getServerId()
         const directCallbackUrl = await domainHelper.getPublicApiUrl({ 
             path: `/v1/test-flow-version/${id}/requests/${testCallbackRequestId}`, 
-            platformId: req.principal.platform.id 
+            platformId: req.principal.platform.id, 
         })
         
         const parentFlowRun = await flowRunService(req.log).getOrCreate({
