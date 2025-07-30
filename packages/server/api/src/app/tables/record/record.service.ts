@@ -299,6 +299,7 @@ export const recordService = {
                 }),
                 execute: true,
                 logger,
+                failParentOnFailure: true,
             })
         }))
     },

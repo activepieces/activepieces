@@ -92,7 +92,7 @@ export const stepUtils = {
         ? step.customLogoUrl
         : undefined
       : undefined;
-    const agentId = stepUtils.getAgentId(step);
+    const agentId = flowStructureUtil.getExternalAgentId(step);
     return [pieceName, pieceVersion, customLogoUrl, agentId, locale, step.type];
   },
   async getMetadata(
@@ -163,20 +163,6 @@ export const stepUtils = {
       auth: piece.auth,
     };
   },
-  isAgentPiece(action: Step) {
-    return (
-      action.type === ActionType.PIECE &&
-      action.settings.pieceName === '@activepieces/piece-agent'
-    );
-  },
-  getAgentId(action: Step) {
-    if (!stepUtils.isAgentPiece(action)) {
-      return undefined;
-    }
-    return 'input' in action.settings && 'agentId' in action.settings.input
-      ? (action.settings.input.agentId as string)
-      : undefined;
-  },
   getAgentRunId(output: StepOutput | StepRunResponse | undefined | null) {
     if (!output) {
       return undefined;
@@ -193,12 +179,12 @@ async function getAgentMetadata(
 ): Promise<
   Partial<Pick<StepMetadata, 'displayName' | 'logoUrl' | 'description'>>
 > {
-  if (stepUtils.isAgentPiece(step)) {
-    const agentId = stepUtils.getAgentId(step);
-    if (!agentId) {
+  if (flowStructureUtil.isAgentPiece(step)) {
+    const externalAgentId = flowStructureUtil.getExternalAgentId(step);
+    if (!externalAgentId) {
       return {};
     }
-    const agent = await agentsApi.get(agentId);
+    const agent = await agentsApi.findByExteranlId(externalAgentId);
     if (!agent) {
       return {};
     }
