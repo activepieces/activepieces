@@ -10,10 +10,10 @@ type CreateFlowsServiceParams = {
 }
 export const createFlowsContext = ({ engineToken, internalApiUrl, flowId, flowVersionId }: CreateFlowsServiceParams): FlowsContext => {
     return {
-        async list({ externalIds }: ListFlowsContextParams): Promise<SeekPage<PopulatedFlow>> {
+        async list(params: ListFlowsContextParams): Promise<SeekPage<PopulatedFlow>> {
             const queryParams = new URLSearchParams()
-            if (externalIds) {
-                queryParams.set('externalIds', externalIds.join(','))
+            if (params?.externalIds) {
+                queryParams.set('externalIds', params.externalIds.join(','))
             }
             const response = await fetch(`${internalApiUrl}v1/engine/populated-flows?${queryParams.toString()}`, {
                 method: 'GET',

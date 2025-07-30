@@ -8,7 +8,7 @@ import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PauseType, PARENT_
 import { CallableFlowRequest, CallableFlowResponse, listEnabledFlowsWithSubflowTrigger } from '../common';
 
 type FlowValue = {
-  id: string;
+  externalId: string;
   exampleData: unknown;
 };
 
@@ -28,7 +28,7 @@ export const callFlow = createAction({
         return {
           options: flows.map((flow) => ({
             value: {
-              id: flow.externalId ?? flow.id,
+              externalId: flow.externalId ?? flow.id,
               exampleData: flow.version.trigger.settings.input.exampleData,
             },
             label: flow.version.displayName,
@@ -144,7 +144,7 @@ export const callFlow = createAction({
       }
     }
     const payload = context.propsValue.flowProps['payload'];
-    const externalIds = [context.propsValue.flow?.id].filter((id) => !isNil(id))
+    const externalIds = [context.propsValue.flow?.externalId].filter((id) => !isNil(id))
     const allFlows = await listEnabledFlowsWithSubflowTrigger({
       flowsContext: context.flows,
       params: {
@@ -154,7 +154,7 @@ export const callFlow = createAction({
     if (allFlows.length === 0) {
       throw new Error(JSON.stringify({
         message: 'Flow not found',
-        flowId: context.propsValue.flow?.id,
+        externalId: context.propsValue.flow?.externalId,
       }));
     }
     const flow = allFlows[0];
