@@ -123,7 +123,7 @@ const ApStepCanvasNode = React.memo(
 
 
                 <div
-                  className={cn(" items-center relative  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3",{
+                  className={cn("items-center relative  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3",{
                   })}
                   onClick={(e) => {
                     if (!isPieceSelectorOpened) {
