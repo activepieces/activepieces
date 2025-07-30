@@ -76,6 +76,7 @@ export const OneTimeJobData = Type.Object({
     executeTrigger: Type.Optional(Type.Boolean()),
     executionType: Type.Enum(ExecutionType),
     progressUpdateType: Type.Enum(ProgressUpdateType),
+    returnResponseAction: Type.Optional(Type.String()),
 })
 export type OneTimeJobData = Static<typeof OneTimeJobData>
 
@@ -151,6 +152,7 @@ export const ExecuteActionJobData = Type.Object({
     webserverId: Type.String(),
     sampleData: Type.Record(Type.String(), Type.Unknown()),
     runEnvironment: Type.Enum(RunEnvironment),
+    returnResponseAction: Type.Optional(Type.String()),
 })
 export type ExecuteActionJobData = Static<typeof ExecuteActionJobData>
 

@@ -55,6 +55,7 @@ export class EngineConstants {
         public readonly httpRequestId: string | null,
         public readonly resumePayload?: ResumePayload,
         public readonly runEnvironment?: RunEnvironment,
+        public readonly returnResponseAction?: string,
     ) {
         if (!publicApiUrl.endsWith('/api/')) {
             throw new Error('Public URL must end with a slash, got: ' + publicApiUrl)
@@ -86,6 +87,7 @@ export class EngineConstants {
             input.httpRequestId ?? null,
             input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             input.runEnvironment,
+            input.returnResponseAction ?? undefined,
         )
     }
 
@@ -109,6 +111,9 @@ export class EngineConstants {
             ProgressUpdateType.NONE,
             null,
             null,
+            undefined,
+            undefined,
+            undefined,
         )
     }
     public static fromExecuteStepInput(input: ExecuteStepOperation): EngineConstants {
@@ -133,6 +138,7 @@ export class EngineConstants {
             input.requestId ?? null,
             undefined,
             input.runEnvironment,
+            input.returnResponseAction ?? undefined,
         )
     }
 
@@ -156,6 +162,9 @@ export class EngineConstants {
             ProgressUpdateType.NONE,
             null,
             null,
+            undefined,
+            undefined,
+            undefined,
         )
     }
 
@@ -179,6 +188,9 @@ export class EngineConstants {
             ProgressUpdateType.NONE,
             null,
             null,
+            undefined,
+            undefined,
+            undefined,
         )
     }
 

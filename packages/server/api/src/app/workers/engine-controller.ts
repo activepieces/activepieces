@@ -282,11 +282,11 @@ async function markParentRunAsFailed({
         id: parentRunId,
         projectId,
     })
+    if (flowRun.pauseMetadata?.type !== PauseType.WEBHOOK || isNil(flowRun.pauseMetadata?.requestId)) {
+        return
+    }
 
-    const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
-    assertNotNullOrUndefined(requestId, 'Parent run has no request id')
-    
-    const callbackUrl = await domainHelper.getPublicApiUrl({ path: `/v1/flow-runs/${parentRunId}/requests/${requestId}`, platformId })
+    const callbackUrl = await domainHelper.getPublicApiUrl({ path: `/v1/flow-runs/${parentRunId}/requests/${flowRun.pauseMetadata?.requestId}`, platformId }) 
     const childRunUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/runs/${childRunId}`, platformId })
     await apAxios.post(callbackUrl, {
         status: 'error',

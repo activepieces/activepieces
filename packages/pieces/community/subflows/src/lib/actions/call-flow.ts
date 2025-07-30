@@ -3,9 +3,9 @@ import {
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PauseType, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
-import { CallableFlowRequest, CallableFlowResponse, listEnabledFlowsWithSubflowTrigger } from '../common';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PauseType, PARENT_RUN_ID_HEADER, FlowRun, pieceActionNaming } from '@activepieces/shared';
+import { CallableFlowRequest, CallableFlowResponse, findFlowByExternalIdOrThrow, listEnabledFlowsWithSubflowTrigger } from '../common';
 
 type FlowValue = {
   externalId: string;
@@ -127,9 +127,35 @@ export const callFlow = createAction({
     })
   },
   async test(context) {
-    return {
-      data: context.propsValue?.testingProps?.['data'] ?? {}
-    };
+    const flow = await findFlowByExternalIdOrThrow({
+      flowsContext: context.flows,
+      externalId: context.propsValue.flow?.externalId,
+    });
+
+    if (!context.propsValue.waitForResponse) {
+      return {
+        status: 'success',
+        data: context.propsValue.flowProps['payload'],
+      }
+    }
+
+    const response = await httpClient.sendRequest<FlowRun>({
+      method: HttpMethod.POST,
+      url: `${context.serverUrl}v1/test-flow-version/${flow.version.id}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.server.token,
+      },
+      body: {
+        parentFlowId: flow.id,
+        parentFlowVersionId: flow.version.id,
+        parentFlowDisplayName: flow.version.displayName,
+        returnResponseAction: pieceActionNaming.constructActionName('@activepieces/piece-subflows', 'returnResponse'),
+        payload: context.propsValue.flowProps['payload'],
+      },
+    });
+
+    return response.body;
   },
   async run(context) {
     if (context.executionType === ExecutionType.RESUME) {
@@ -144,20 +170,10 @@ export const callFlow = createAction({
       }
     }
     const payload = context.propsValue.flowProps['payload'];
-    const externalIds = [context.propsValue.flow?.externalId].filter((id) => !isNil(id))
-    const allFlows = await listEnabledFlowsWithSubflowTrigger({
+    const flow = await findFlowByExternalIdOrThrow({
       flowsContext: context.flows,
-      params: {
-        externalIds
-      }
+      externalId: context.propsValue.flow?.externalId,
     });
-    if (allFlows.length === 0) {
-      throw new Error(JSON.stringify({
-        message: 'Flow not found',
-        externalId: context.propsValue.flow?.externalId,
-      }));
-    }
-    const flow = allFlows[0];
 
     const response = await httpClient.sendRequest<CallableFlowRequest>({
       method: HttpMethod.POST,

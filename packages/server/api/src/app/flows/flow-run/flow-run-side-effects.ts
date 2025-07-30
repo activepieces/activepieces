@@ -26,6 +26,7 @@ type StartParams = {
     synchronousHandlerId: string | undefined
     progressUpdateType: ProgressUpdateType
     httpRequestId: string | undefined
+    returnResponseAction: string | undefined
 }
 
 type PauseParams = {
@@ -69,6 +70,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         priority,
         progressUpdateType,
         executeTrigger,
+        returnResponseAction,
     }: StartParams): Promise<void> {
         log.info(
             `[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`,
@@ -89,6 +91,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                 httpRequestId,
                 executionType,
                 progressUpdateType,
+                returnResponseAction,
             },
         })
         eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {

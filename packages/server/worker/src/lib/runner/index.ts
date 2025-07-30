@@ -141,6 +141,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             internalApiUrl: workerMachine.getInternalApiUrl(),
             engineToken,
             runEnvironment: operation.runEnvironment,
+            returnResponseAction: operation.returnResponseAction,
         }
 
         return execute(log, input, EngineOperationType.EXECUTE_STEP)

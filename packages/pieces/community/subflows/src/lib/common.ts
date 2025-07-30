@@ -1,4 +1,4 @@
-import { FlowStatus, PopulatedFlow, SeekPage, TriggerType } from "@activepieces/shared";
+import { FlowStatus, PopulatedFlow, TriggerType, isNil } from "@activepieces/shared";
 import { FlowsContext, ListFlowsContextParams } from "@activepieces/pieces-framework";
 
 
@@ -28,6 +28,34 @@ export async function listEnabledFlowsWithSubflowTrigger({
         '@activepieces/piece-subflows'
     );
     return flows;
+}
+
+export async function findFlowByExternalIdOrThrow({
+    flowsContext,
+    externalId,
+}: {
+    flowsContext: FlowsContext;
+    externalId: string | undefined;
+}): Promise<PopulatedFlow> {
+    if (isNil(externalId)) {
+        throw new Error(JSON.stringify({
+            message: 'Please select a flow',
+        }));
+    }
+    const externalIds = [externalId];
+    const allFlows = await listEnabledFlowsWithSubflowTrigger({
+        flowsContext,
+        params: {
+            externalIds
+        }
+    });
+    if (allFlows.length === 0) {
+        throw new Error(JSON.stringify({
+            message: 'Flow not found',
+            externalId,
+        }));
+    }
+    return allFlows[0];
 }
 
 type ListParams = {

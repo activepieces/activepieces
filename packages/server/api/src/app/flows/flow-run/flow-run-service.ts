@@ -51,6 +51,36 @@ export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
 
 export const flowRunService = (log: FastifyBaseLogger) => ({
+    async getOrCreate({
+        existingFlowRunId,
+        projectId,
+        flowId,
+        flowVersionId,
+        flowDisplayName,
+        environment,
+        parentRunId,
+        failParentOnFailure,
+    }: CreateParams): Promise<FlowRun> {
+        if (existingFlowRunId) {
+            return flowRunService(log).getOneOrThrow({
+                id: existingFlowRunId,
+                projectId,
+            })
+        }
+
+        return await flowRunRepo().save({
+            id: apId(),
+            projectId,
+            flowId,
+            flowVersionId,
+            environment,
+            flowDisplayName,
+            startTime: new Date().toISOString(),
+            parentRunId,
+            failParentOnFailure: failParentOnFailure ?? true,
+            status: FlowRunStatus.QUEUED,
+        })
+    },
     async list({
         projectId,
         flowId,
@@ -241,6 +271,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         httpRequestId,
         parentRunId,
         failParentOnFailure,
+        returnResponseAction,
     }: StartParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
@@ -249,8 +280,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
         })
 
-        const flowRun = await getFlowRunOrCreate({
-            id: existingFlowRunId,
+        const flowRun = await this.getOrCreate({
+            existingFlowRunId,
             projectId: flow.projectId,
             flowId: flowVersion.flowId,
             flowVersionId: flowVersion.id,
@@ -258,14 +289,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             flowDisplayName: flowVersion.displayName,
             parentRunId,
             failParentOnFailure,
-        }, log)
+        })
 
-        flowRun.status = FlowRunStatus.QUEUED
-
-        const savedFlowRun = await flowRunRepo().save(flowRun)
         const priority = await getJobPriority(synchronousHandlerId)
         await flowRunSideEffects(log).start({
-            flowRun: savedFlowRun,
+            flowRun,
             httpRequestId,
             payload,
             priority,
@@ -273,9 +301,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executeTrigger,
             executionType,
             progressUpdateType,
+            returnResponseAction,
         })
 
-        return savedFlowRun
+        return flowRun
     },
 
     async test({ projectId, flowVersionId, parentRunId }: TestParams): Promise<FlowRun> {
@@ -495,34 +524,6 @@ const getUploadUrl = async (s3Key: string | undefined, executionDate: unknown, c
     return s3Helper(log).putS3SignedUrl(s3Key, contentLength)
 }
 
-const getFlowRunOrCreate = async (
-    params: GetOrCreateParams,
-    log: FastifyBaseLogger,
-): Promise<Partial<FlowRun>> => {
-    const { id, projectId, flowId, flowVersionId, flowDisplayName, environment, parentRunId, failParentOnFailure } =
-        params
-
-    if (id) {
-        return flowRunService(log).getOneOrThrow({
-            id,
-            projectId,
-        })
-    }
-
-    return {
-        id: apId(),
-        projectId,
-        flowId,
-        flowVersionId,
-        environment,
-        flowDisplayName,
-        startTime: new Date().toISOString(),
-        parentRunId,
-        failParentOnFailure: failParentOnFailure ?? true,
-    }
-}
-
-
 
 function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined, log: FastifyBaseLogger): string {
     const handlerId = engineResponseWatcher(log).getServerId()
@@ -561,15 +562,15 @@ type FinishParams = {
     failedStepName?: string | undefined
 }
 
-type GetOrCreateParams = {
-    id?: FlowRunId
+type CreateParams = {
     projectId: ProjectId
-    flowId: FlowId
     flowVersionId: FlowVersionId
-    flowDisplayName: string
-    environment: RunEnvironment
     parentRunId?: FlowRunId
     failParentOnFailure?: boolean
+    existingFlowRunId?: FlowRunId
+    flowId: FlowId
+    flowDisplayName: string
+    environment: RunEnvironment
 }
 
 type ListParams = {
@@ -602,6 +603,7 @@ type StartParams = {
     httpRequestId: string | undefined
     progressUpdateType: ProgressUpdateType
     executionType: ExecutionType
+    returnResponseAction?: string
 }
 
 type TestParams = {
