@@ -2,7 +2,10 @@
 import {
     ALL_PRINCIPAL_TYPES,
     EventPayload,
+    FAIL_PARENT_ON_FAILURE_HEADER,
+    FlowRun,
     isMultipartFile,
+    PARENT_RUN_ID_HEADER,
     WebhookUrlParams,
     WebsocketClientEvent,
 } from '@activepieces/shared'
@@ -30,6 +33,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                     request.params.flowId,
                 ),
                 execute: true,
+                ...extractHeaderFromRequest(request),
             })
             await reply
                 .status(response.status)
@@ -52,6 +56,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 ),
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                 execute: true,
+                ...extractHeaderFromRequest(request),
             })
             await reply
                 .status(response.status)
@@ -72,6 +77,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             onRunCreated: (run) => {
                 app.io.to(run.projectId).emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, run)
             },
+            ...extractHeaderFromRequest(request),
         })
         await reply
             .status(response.status)
@@ -88,6 +94,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             saveSampleData: true,
             flowVersionToRun: WebhookFlowVersionToRun.LATEST,
             execute: true,
+            ...extractHeaderFromRequest(request),
         })
         await reply
             .status(response.status)
@@ -104,6 +111,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             saveSampleData: true,
             flowVersionToRun: WebhookFlowVersionToRun.LATEST,
             execute: false,
+            ...extractHeaderFromRequest(request),
         })
         await reply
             .status(response.status)
@@ -177,3 +185,10 @@ async function convertBody(
     return request.body
 }
 
+
+function extractHeaderFromRequest(request: FastifyRequest): Pick<FlowRun, 'parentRunId' | 'failParentOnFailure'> {
+    return {
+        parentRunId: request.headers[PARENT_RUN_ID_HEADER] as string,
+        failParentOnFailure: request.headers[FAIL_PARENT_ON_FAILURE_HEADER] === 'true',
+    }
+}

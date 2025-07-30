@@ -9,6 +9,7 @@ import { mcpService } from '../mcp/mcp-service'
 import { projectService } from '../project/project-service'
 import { tableService } from '../tables/table/table.service'
 import { AgentEntity } from './agent-entity'
+import { agentRunsService } from './agent-runs/agent-runs-service'
 
 export const agentRepo = repoFactory(AgentEntity)
 
@@ -23,7 +24,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             name: params.displayName,
             projectId: params.projectId,
         })
-        const agentPayload: Omit<Agent, 'created' | 'updated' | 'taskCompleted'> = {
+        const agentPayload: Omit<Agent, 'created' | 'updated' | 'taskCompleted' | 'runCompleted'> = {
             displayName: params.displayName,
             id: apId(),
             description: params.description,
@@ -33,6 +34,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             testPrompt: '',
             maxSteps: 10,
             projectId: params.projectId,
+            externalId: apId(),
             mcpId: mcp.id,
             outputType: AgentOutputType.NO_OUTPUT,
             outputFields: [],
@@ -42,6 +44,18 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             mcpId: mcp.id,
             agentId: agent.id,
         })
+        return enrichAgent(agent, log)
+    },
+    async getOneByExternalIdOrThrow(params: GetOneByExternalIdParams): Promise<Agent> {
+        const agent = await agentRepo().findOneBy({ externalId: params.externalId, projectId: params.projectId })
+        if (isNil(agent)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'agent',
+                },
+            })
+        }
         return agent
     },
     async update(params: UpdateParams): Promise<Agent> {
@@ -66,7 +80,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         if (isNil(agent)) {
             return null
         }
-        return agent
+        return enrichAgent(agent, log)
     },
     async getOneOrThrow(params: GetOneParams): Promise<Agent> {
         const agent = await this.getOne({ id: params.id, projectId: params.projectId })
@@ -113,14 +127,26 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
         return paginationHelper.createPage<Agent>(
-            data,
+            await Promise.all(data.map(agent => enrichAgent(agent, log))),
             cursor,
         )
     },
 })
 
+async function enrichAgent(agent: Omit<Agent, 'runCompleted'>, log: FastifyBaseLogger): Promise<Agent> {
+    return {
+        ...agent,
+        runCompleted: await agentRunsService(log).count({ agentId: agent.id, projectId: agent.projectId }),
+    }
+}
+
 function getAgentProfilePictureUrl(): string {
     return `https://cdn.activepieces.com/quicknew/agents/robots/robot_${Math.floor(Math.random() * 10000)}.png`
+}
+
+type GetOneByExternalIdParams = {
+    externalId: string
+    projectId: string
 }
 
 type ListParams = {

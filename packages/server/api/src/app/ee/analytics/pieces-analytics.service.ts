@@ -2,7 +2,7 @@ import { ActionType, FlowStatus, flowStructureUtil, isNil, PieceAction, PieceTri
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { FlowEntity } from '../../flows/flow/flow.entity'
-import { flowVersionRepoWrapper } from '../../flows/flow-version/flow-version-repo-wrapper'
+import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
@@ -27,11 +27,7 @@ export const piecesAnalyticsService = (log: FastifyBaseLogger) => ({
                 if (isNil(flow) || isNil(publishedVersionId)) {
                     continue
                 }
-                const flowVersion = await flowVersionRepoWrapper.findOne({
-                    where: {
-                        id: publishedVersionId,
-                    },
-                })
+                const flowVersion = await flowVersionService(log).getOne(publishedVersionId)
                 if (isNil(flowVersion)) {
                     continue
                 }

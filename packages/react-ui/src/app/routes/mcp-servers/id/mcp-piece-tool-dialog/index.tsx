@@ -20,6 +20,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import type {
   McpPieceTool,
@@ -30,7 +31,6 @@ import { isNil, McpToolType } from '@activepieces/shared';
 
 import { McpPieceActionsDialog } from './mcp-piece-actions';
 import { McpPiecesContent } from './mcp-pieces-content';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 
 type McpPieceDialogProps = {
   children: React.ReactNode;
