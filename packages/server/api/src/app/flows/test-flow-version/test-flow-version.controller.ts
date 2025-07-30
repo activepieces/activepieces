@@ -1,9 +1,13 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import { ALL_PRINCIPAL_TYPES, apId, EngineHttpResponse, ExecutionType, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { system } from '../../helper/system/system'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { flowRunService } from '../flow-run/flow-run-service'
+
+export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
 export const testFlowVersionController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', TestFlowVersionRequest, async (req) => {
@@ -44,7 +48,7 @@ export const testFlowVersionController: FastifyPluginAsyncTypebox = async (app) 
             returnResponseAction,
         })
 
-        return engineResponseWatcher(req.log).oneTimeListener<EngineHttpResponse>(testCallbackRequestId, true, 30000, {
+        return engineResponseWatcher(req.log).oneTimeListener<EngineHttpResponse>(testCallbackRequestId, true, WEBHOOK_TIMEOUT_MS, {
             status: StatusCodes.NO_CONTENT,
             body: {},
             headers: {},
