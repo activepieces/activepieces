@@ -89,14 +89,14 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                   height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
                 }}
                 className={cn(
-                  'bg-slate-200  relative group overflow-visible rounded-full cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
+                  'bg-slate-200  dark:bg-slate-400 relative group overflow-visible rounded-full cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
                   {
-                    'bg-primary ': isPieceSelectorOpen,
+                    'bg-primary dark:bg-primary': isPieceSelectorOpen,
                   },
                 )}
               >
                 {!isPieceSelectorOpen && (
-                  <Plus className="w-3 h-3 stroke-[3px] text-slate-500" />
+                  <Plus className="w-3 h-3 stroke-[3px] text-slate-500 dark:text-slate-200  " />
                 )}
               </div>
             </div>
