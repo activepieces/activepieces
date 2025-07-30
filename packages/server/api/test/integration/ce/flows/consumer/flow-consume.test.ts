@@ -5,8 +5,6 @@ import {
     FlowRunStatus,
     FlowStatus,
     FlowVersionState,
-    PackageType,
-    PieceType,
     ProgressUpdateType,
     RunEnvironment,
     TriggerType,
