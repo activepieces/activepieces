@@ -73,7 +73,7 @@ const ExploreTabContent = ({
                     displayName={pieceMetadata.displayName}
                     showTooltip={false}
                     size={'sm'}
-                    className="rounded-xs p-[1px]"
+                    className="rounded-xs dark:p-[1px]"
                   />
                   <div className="flex-grow h-full flex items-center justify-left text-sm">
                     {pieceMetadata.displayName}

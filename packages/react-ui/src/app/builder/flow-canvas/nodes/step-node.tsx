@@ -160,7 +160,7 @@ const ApStepCanvasNode = React.memo(
                           {
                             'rounded-full': isRoundedStep,
                             'm-1 border-transparent rounded-sm size-[56px]  p-[4px] bg-white': hasGradientBorder,
-                            'bg-accent': isSkipped,
+                            'bg-accent dark:bg-gray-300': isSkipped,
                           },
                         )}
                       >
@@ -171,7 +171,7 @@ const ApStepCanvasNode = React.memo(
                             'size-[52px] min-w-[52px] min-h-[52px] bg-white rounded-sm object-contain',
                             {
                               'rounded-full': isRoundedStep,
-                              'bg-accent': isSkipped,
+                              'bg-accent dark:bg-gray-300': isSkipped,
                             },
                           )}
                         />
