@@ -119,8 +119,10 @@ export const createServerState = (
       });
     },
     update: async (request: UpdateTableRequest) => {
-      const updatedTable = await tablesApi.update(clonedTable.id, request);
-      clonedTable.status = updatedTable.status;
+      addPromiseToQueue(async () => {
+        const updatedTable = await tablesApi.update(clonedTable.id, request);
+        clonedTable.status = updatedTable.status;
+      });
     },
     setRecords: (records: PopulatedRecord[]) => {
       clonedRecords = JSON.parse(JSON.stringify(records));

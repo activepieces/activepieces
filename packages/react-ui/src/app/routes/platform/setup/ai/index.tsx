@@ -10,6 +10,7 @@ import {
   SUPPORTED_AI_PROVIDERS,
   PlatformRole,
   ApFlagId,
+  ApEdition,
 } from '@activepieces/shared';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
@@ -27,10 +28,9 @@ export default function AIProvidersPage() {
     queryFn: () => aiProviderApi.list(),
   });
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { data: canConfigureAIProvider } = flagsHooks.useFlag(
-    ApFlagId.CAN_CONFIGURE_AI_PROVIDER,
-  );
-  const allowWrite = canConfigureAIProvider === true;
+  const { data: flags } = flagsHooks.useFlags();
+  const allowWrite = flags?.[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] === true;
+  const edition = flags?.[ApFlagId.EDITION];
 
   const { mutate: deleteProvider, isPending: isDeleting } = useMutation({
     mutationFn: (provider: string) => aiProviderApi.delete(provider),
@@ -71,6 +71,9 @@ export default function AIProvidersPage() {
             const isConfigured =
               providers?.data.some((p) => p.provider === metadata.provider) ??
               false;
+            const showAzureOpenAI =
+              metadata.provider === 'openai' &&
+              edition === ApEdition.ENTERPRISE;
 
             return isLoading ? (
               <Skeleton key={metadata.provider} className="h-24 w-full" />
@@ -83,6 +86,7 @@ export default function AIProvidersPage() {
                 onDelete={() => deleteProvider(metadata.provider)}
                 onSave={() => refetch()}
                 allowWrite={allowWrite}
+                showAzureOpenAI={showAzureOpenAI}
               />
             );
           })}

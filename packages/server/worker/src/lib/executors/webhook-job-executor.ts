@@ -6,7 +6,8 @@ import {
     ProgressUpdateType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { engineApiService, workerApiService } from '../api/server-api.service'
+import { flowWorkerCache } from '../api/flow-worker-cache'
+import { workerApiService } from '../api/server-api.service'
 import { webhookUtils } from '../utils/webhook-utils'
 
 export const webhookExecutor = (log: FastifyBaseLogger) => ({
@@ -23,8 +24,9 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         webhookLogger.info('Webhook job executor started')
         const { payload, saveSampleData, flowVersionIdToRun, execute } = data
 
-        const populatedFlowToRun = await engineApiService(engineToken, log).getFlowWithExactPieces({
-            versionId: flowVersionIdToRun,
+        const populatedFlowToRun = await flowWorkerCache(log).getFlow({
+            engineToken,
+            flowVersionId: flowVersionIdToRun,
         })
 
         if (isNil(populatedFlowToRun)) {
@@ -54,6 +56,8 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             progressUpdateType: ProgressUpdateType.NONE,
             httpRequestId: data.requestId,
             payloads: filteredPayloads,
+            parentRunId: data.parentRunId,
+            failParentOnFailure: data.failParentOnFailure,
         })
     },
 })

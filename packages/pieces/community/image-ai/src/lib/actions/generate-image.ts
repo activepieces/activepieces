@@ -1,6 +1,6 @@
 import { aiProps } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createAIProvider, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
+import { AIUsageFeature, createAIProvider, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
 import { ImageModel } from 'ai';
 import { experimental_generateImage as generateImage } from 'ai';
 
@@ -77,6 +77,9 @@ export const generateImageAction = createAction({
       modelInstance,
       apiKey: engineToken,
       baseURL,
+      metadata: {
+        feature: AIUsageFeature.IMAGE_AI,
+      },
     });
 
     const response = await generateImage({
@@ -85,9 +88,6 @@ export const generateImageAction = createAction({
       size: context.propsValue.resolution as `${number}x${number}`,
       providerOptions: {
         ...context.propsValue.advancedOptions,
-      },
-      headers: {
-        'Authorization': `Bearer ${engineToken}`,
       },
     });
 

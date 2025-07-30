@@ -1,12 +1,11 @@
 import { ActionContext, createAction, CustomAuthProperty, Property } from "@activepieces/pieces-framework";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { AuthenticationType, httpClient } from "@activepieces/pieces-common";
 import { VEHICLE_EVENTS_OPERATIONS } from "./constant";
 import { VehicleEventsParams, VehicleEventsBodyType } from "./type";
 import { dimoAuth } from '../../../index';
 import { DimoClient, vehicleEventTriggerToText } from "../../common/helpers";
 import { operatorStaticDropdown, verificationTokenInput } from '../../common/props';
 import { TriggerField } from '../../common/constants';
-import type { CreateWebhookParams, VehicleEventTrigger } from '../../common/types';
 
 async function sendVehicleEventsRequest({ ctx, opKey }: { ctx: ActionContext<CustomAuthProperty<any>>, opKey: keyof typeof VEHICLE_EVENTS_OPERATIONS }) {
   const op = VEHICLE_EVENTS_OPERATIONS[opKey];
