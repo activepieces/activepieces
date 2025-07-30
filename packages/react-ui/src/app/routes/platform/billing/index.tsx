@@ -120,12 +120,15 @@ export default function Billing() {
         </>
       )}
 
-      {isEnterprise ? (
+      {isEnterpriseEdition && (
         <>
           <h3 className="text-lg font-semibold">{t('AI Credits')}</h3>
           <AiCreditsUsageTable />
-          <LicenseKey platform={platform} />
         </>
+      )}
+
+      {isEnterprise ? (
+        <LicenseKey platform={platform} />
       ) : (
         <Card>
           <CardHeader className="border-b">

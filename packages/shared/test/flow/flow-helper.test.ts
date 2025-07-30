@@ -30,8 +30,6 @@ const flowVersionWithBranching: FlowVersion = {
             input: {
                 cronExpression: '25 10 * * 0,1,2,3,4',
             },
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
             pieceName: 'schedule',
             pieceVersion: '0.0.2',
             inputUiInfo: {},
@@ -145,8 +143,6 @@ const emptyScheduleFlowVersion: FlowVersion = {
             input: {
                 cronExpression: '25 10 * * 0,1,2,3,4',
             },
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
             pieceName: 'schedule',
             pieceVersion: '0.0.2',
             inputUiInfo: {},
@@ -195,8 +191,6 @@ describe('Flow Helper', () => {
                     input: {
                         cronExpression: '25 10 * * 0,1,2,3,4',
                     },
-                    packageType: PackageType.REGISTRY,
-                    pieceType: PieceType.OFFICIAL,
                     pieceName: 'schedule',
                     pieceVersion: '~0.0.2',
                     inputUiInfo: {},
@@ -277,8 +271,6 @@ describe('Flow Helper', () => {
                 input: {
                     cronExpression: '25 10 * * 0,1,2,3,4',
                 },
-                packageType: PackageType.REGISTRY,
-                pieceType: PieceType.OFFICIAL,
                 pieceName: 'schedule',
                 pieceVersion: '~0.0.2',
                 inputUiInfo: {},
@@ -347,8 +339,6 @@ test('Duplicate Flow With Loops using Import', () => {
                     },
                     authentication: '{{connections.github}}',
                 },
-                packageType: PackageType.REGISTRY,
-                pieceType: PieceType.OFFICIAL,
                 pieceName: 'github',
                 pieceVersion: '0.1.3',
                 inputUiInfo: {},
