@@ -1,17 +1,19 @@
-import { AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, isNil, ProjectId, ProjectOperationType, ProjectState, ProjectSyncError, TableOperationType } from '@activepieces/shared'
+import { AgentOperationType, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowProjectOperationType, FlowSyncError, isNil, McpOperationType, ProjectId, ProjectState, TableOperationType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { agentsService } from '../../../../agents/agents-service'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../../file/file.service'
 import { flowRepo } from '../../../../flows/flow/flow.repo'
 import { flowService } from '../../../../flows/flow/flow.service'
+import { mcpService } from '../../../../mcp/mcp-service'
 import { fieldService } from '../../../../tables/field/field.service'
 import { tableService } from '../../../../tables/table/table.service'
 import { projectStateHelper } from './project-state-helper'
 
 export const projectStateService = (log: FastifyBaseLogger) => ({
     async apply({ projectId, diffs, selectedFlowsIds, platformId }: ApplyProjectStateRequest): Promise<void> {
-        const { operations, connections, tables } = diffs
-        const publishJobs: Promise<ProjectSyncError | null>[] = []
+        const { flows, connections, tables, agents, mcps } = diffs
+        const publishJobs: Promise<FlowSyncError | null>[] = []
         for (const state of connections) {
             switch (state.type) {
                 case ConnectionOperationType.CREATE_CONNECTION: {
@@ -111,9 +113,9 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        for (const operation of operations) {
+        for (const operation of flows) {
             switch (operation.type) {
-                case ProjectOperationType.UPDATE_FLOW: {
+                case FlowProjectOperationType.UPDATE_FLOW: {
                     if (!isNil(selectedFlowsIds) && !selectedFlowsIds.includes(operation.newFlowState.id)) {
                         continue
                     }
@@ -121,7 +123,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                     publishJobs.push(projectStateHelper(log).republishFlow({ flow: flowUpdated, projectId }))
                     break
                 }
-                case ProjectOperationType.CREATE_FLOW: {
+                case FlowProjectOperationType.CREATE_FLOW: {
                     if (!isNil(selectedFlowsIds) && !selectedFlowsIds.includes(operation.flowState.id)) {
                         continue
                     }
@@ -129,7 +131,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                     publishJobs.push(projectStateHelper(log).republishFlow({ flow: flowCreated, projectId }))
                     break
                 }
-                case ProjectOperationType.DELETE_FLOW: {
+                case FlowProjectOperationType.DELETE_FLOW: {
                     if (!isNil(selectedFlowsIds) && !selectedFlowsIds.includes(operation.flowState.id)) {
                         continue
                     }
@@ -138,6 +140,98 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 }
             }
         }
+
+        for (const operation of mcps) {
+            switch (operation.type) {
+                case McpOperationType.CREATE_MCP: {
+                    const createdMcp = await mcpService(log).create({
+                        name: operation.mcpState.name,
+                        projectId,
+                        externalId: operation.mcpState.externalId,
+                    })
+
+                    // Update the MCP with the exact tools from the state
+                    await mcpService(log).update({
+                        mcpId: createdMcp.id,
+                        name: operation.mcpState.name,
+                        tools: operation.mcpState.tools,
+                    })
+                    break
+                }
+                case McpOperationType.UPDATE_MCP: {
+                    const existingMcp = await mcpService(log).getOneByExternalIdOrThrow({
+                        externalId: operation.newMcpState.externalId,
+                        projectId,
+                    })
+                    
+                    await mcpService(log).update({
+                        mcpId: existingMcp.id,
+                        name: operation.newMcpState.name,
+                        tools: operation.newMcpState.tools,
+                    })
+                    break
+                }
+            }
+        }
+
+        for (const operation of agents) {
+            switch (operation.type) {
+                case AgentOperationType.CREATE_AGENT: {
+                    // Create the agent with all properties (agentsService.create already creates and associates an MCP)
+                    const createdAgent = await agentsService(log).create({
+                        displayName: operation.agentState.displayName,
+                        description: operation.agentState.description,
+                        profilePictureUrl: operation.agentState.profilePictureUrl,
+                        systemPrompt: operation.agentState.systemPrompt,
+                        testPrompt: operation.agentState.testPrompt,
+                        outputType: operation.agentState.outputType,
+                        outputFields: operation.agentState.outputFields,
+                        platformId,
+                        projectId,
+                        externalId: operation.agentState.externalId,
+                        mcpExternalId: operation.agentState.mcp.externalId,
+                    })
+                    
+                    // Update the MCP with the exact tools from the state
+                    const mcpState = operation.agentState.mcp
+                    await mcpService(log).update({
+                        mcpId: createdAgent.mcpId,
+                        name: mcpState.name,
+                        tools: mcpState.tools,
+                    })
+                    break
+                }
+                case AgentOperationType.UPDATE_AGENT: {
+                    const existingAgent = await agentsService(log).getOneByExternalIdOrThrow({
+                        externalId: operation.newAgentState.externalId,
+                        projectId,
+                    })
+                    
+                    // Update the agent
+                    await agentsService(log).update({
+                        id: existingAgent.id,
+                        displayName: operation.newAgentState.displayName,
+                        systemPrompt: operation.newAgentState.systemPrompt,
+                        description: operation.newAgentState.description,
+                        testPrompt: operation.newAgentState.testPrompt,
+                        outputType: operation.newAgentState.outputType,
+                        outputFields: operation.newAgentState.outputFields,
+                        projectId,
+                    })
+                    
+                    // Update the associated MCP with new tools
+                    const mcpState = operation.newAgentState.mcp
+                    await mcpService(log).update({
+                        mcpId: existingAgent.mcpId,
+                        name: mcpState.name,
+                        tools: mcpState.tools,
+                    })
+                    break
+                }
+            }
+        }
+
+        
     },
     async save(projectId: ProjectId, name: string, log: FastifyBaseLogger): Promise<FileId> {
         const fileToSave: ProjectState = await this.getCurrentState(projectId, log)
@@ -196,10 +290,20 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             }
         }))
 
+        const agents = await agentsService(log).getAllPopulated(projectId)
+        const mcps = await mcpService(log).list({
+            projectId,
+            limit: 1000,
+            cursorRequest: null,
+            name: undefined,
+        })
+
         return {
             flows: allPopulatedFlows,
             connections,
             tables: allPopulatedTables,
+            agents,
+            mcps: mcps.data,
         }
     },
 })

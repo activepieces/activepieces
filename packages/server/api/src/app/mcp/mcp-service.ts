@@ -28,10 +28,10 @@ export const mcpRepo = repoFactory(McpEntity)
 const mcpToolRepo = repoFactory(McpToolEntity)
 
 export const mcpService = (_log: FastifyBaseLogger) => ({
-    async create({ projectId, name }: CreateParams): Promise<McpWithTools> {
+    async create({ projectId, name, externalId }: CreateParams): Promise<McpWithTools> {
         const mcp = await mcpRepo().save({
             id: apId(),
-            externalId: apId(),
+            externalId: externalId ?? apId(),
             projectId,
             name,
             token: apId(),
@@ -101,6 +101,17 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             })
         }
         return this.getOrThrow({ mcpId: mcp.id, projectId: mcp.projectId })
+    },
+
+    async getOneByExternalIdOrThrow({ externalId, projectId }: { externalId: string, projectId: ApId }): Promise<McpWithTools> {
+        const mcp = await mcpRepo().findOne({ where: { externalId, projectId } })
+        if (isNil(mcp)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'MCP' },
+            })
+        }
+        return this.getOrThrow({ mcpId: mcp.id, projectId })
     },
 
     async update({ mcpId, token, name, tools, agentId }: UpdateParams): Promise<McpWithTools> {
@@ -207,6 +218,7 @@ async function findToolId(mcpId: ApId, tool: McpToolRequest) {
 type CreateParams = {
     projectId: ApId
     name: string
+    externalId?: string
 }
 
 type ListParams = {

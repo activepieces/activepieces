@@ -1,7 +1,9 @@
 import { Static, Type } from '@sinclair/typebox'
+import { AgentOutputField, AgentOutputType } from '../agents'
 import { PopulatedFlow } from '../flows/flow'
+import { McpTool } from '../mcp'
 
-export enum ProjectOperationType {
+export enum FlowProjectOperationType {
     UPDATE_FLOW = 'UPDATE_FLOW',
     CREATE_FLOW = 'CREATE_FLOW',
     DELETE_FLOW = 'DELETE_FLOW',
@@ -11,12 +13,22 @@ export enum ConnectionOperationType {
     CREATE_CONNECTION = 'CREATE_CONNECTION',
 }
 
-export const FlowState = PopulatedFlow
 export enum TableOperationType {
     UPDATE_TABLE = 'UPDATE_TABLE',
     CREATE_TABLE = 'CREATE_TABLE',
 }
 
+export enum McpOperationType {
+    UPDATE_MCP = 'UPDATE_MCP',
+    CREATE_MCP = 'CREATE_MCP',
+}
+
+export enum AgentOperationType {
+    UPDATE_AGENT = 'UPDATE_AGENT',
+    CREATE_AGENT = 'CREATE_AGENT',
+}
+
+export const FlowState = PopulatedFlow
 export type FlowState = Static<typeof FlowState>
 
 export const ConnectionState = Type.Object({
@@ -46,26 +58,54 @@ export const TableState = Type.Object({
 })
 export type TableState = Static<typeof TableState>
 
+export const McpState = Type.Object({
+    id: Type.String(),
+    name: Type.String(),
+    externalId: Type.String(),
+    token: Type.String(),
+    tools: Type.Array(McpTool),
+})
+export type McpState = Static<typeof McpState>
+
+export const AgentState = Type.Object({
+    id: Type.String(),
+    externalId: Type.String(),
+    displayName: Type.String(),
+    description: Type.String(),
+    systemPrompt: Type.String(),
+    profilePictureUrl: Type.String(),
+    testPrompt: Type.Optional(Type.String()),
+    maxSteps: Type.Number(),
+    tableAutomationId: Type.Optional(Type.String()),
+    outputType: Type.Optional(Type.Enum(AgentOutputType)),
+    outputFields: Type.Optional(Type.Array(AgentOutputField)),
+    runCompleted: Type.Number(),
+    mcp: McpState,
+})
+export type AgentState = Static<typeof AgentState>
+
 export const ProjectState = Type.Object({
     flows: Type.Array(PopulatedFlow),
-    // NOTE: This is optional because in old releases, the connections and tables state is not present
+    // NOTE: This is optional because in old releases, the connections, tables, agents and mcp state is not present
     connections: Type.Optional(Type.Array(ConnectionState)),
     tables: Type.Optional(Type.Array(TableState)),
+    agents: Type.Optional(Type.Array(AgentState)),
+    mcps: Type.Optional(Type.Array(McpState)),
 })
 export type ProjectState = Static<typeof ProjectState>
 
 export const ProjectOperation = Type.Union([
     Type.Object({
-        type: Type.Literal(ProjectOperationType.UPDATE_FLOW),
+        type: Type.Literal(FlowProjectOperationType.UPDATE_FLOW),
         newFlowState: FlowState,
         flowState: FlowState,
     }),
     Type.Object({
-        type: Type.Literal(ProjectOperationType.CREATE_FLOW),
+        type: Type.Literal(FlowProjectOperationType.CREATE_FLOW),
         flowState: FlowState,
     }),
     Type.Object({
-        type: Type.Literal(ProjectOperationType.DELETE_FLOW),
+        type: Type.Literal(FlowProjectOperationType.DELETE_FLOW),
         flowState: FlowState,
     }),
 ])
@@ -97,30 +137,58 @@ export const TableOperation = Type.Union([
 ])
 export type TableOperation = Static<typeof TableOperation>
 
+export const McpOperation = Type.Union([
+    Type.Object({
+        type: Type.Literal(McpOperationType.UPDATE_MCP),
+        newMcpState: McpState,
+        mcpState: McpState,
+    }),
+    Type.Object({
+        type: Type.Literal(McpOperationType.CREATE_MCP),
+        mcpState: McpState,
+    }),
+])
+export type McpOperation = Static<typeof McpOperation>
+
+export const AgentOperation = Type.Union([
+    Type.Object({
+        type: Type.Literal(AgentOperationType.UPDATE_AGENT),
+        newAgentState: AgentState,
+        agentState: AgentState,
+    }),
+    Type.Object({
+        type: Type.Literal(AgentOperationType.CREATE_AGENT),
+        agentState: AgentState,
+    }),
+])
+export type AgentOperation = Static<typeof AgentOperation>
+
 export const DiffState = Type.Object({
-    operations: Type.Array(ProjectOperation),
+    flows: Type.Array(ProjectOperation),
     connections: Type.Array(ConnectionOperation),
     tables: Type.Array(TableOperation),
+    agents: Type.Array(AgentOperation),
+    mcps: Type.Array(McpOperation),
 })
 export type DiffState = Static<typeof DiffState>
 
 
-export const ProjectSyncError = Type.Object({
+export const FlowSyncError = Type.Object({
     flowId: Type.String(),
     message: Type.String(),
 })
-export type ProjectSyncError = Static<typeof ProjectSyncError>
+export type FlowSyncError = Static<typeof FlowSyncError>
 
-export const ProjectSyncPlanOperation = Type.Union([
+export const FlowProjectOperation = Type.Union([
     Type.Object({
-        type: Type.Literal(ProjectOperationType.CREATE_FLOW),
+        type: Type.Literal(FlowProjectOperationType.CREATE_FLOW),
         flow: Type.Object({
             id: Type.String(),
             displayName: Type.String(),
         }),
     }),
     Type.Object({
-        type: Type.Literal(ProjectOperationType.UPDATE_FLOW),
+        type: Type.Literal(FlowProjectOperationType.UPDATE_FLOW),
         flow: Type.Object({
             id: Type.String(),
             displayName: Type.String(),
@@ -131,20 +199,22 @@ export const ProjectSyncPlanOperation = Type.Union([
         }),
     }),
     Type.Object({
-        type: Type.Literal(ProjectOperationType.DELETE_FLOW),
+        type: Type.Literal(FlowProjectOperationType.DELETE_FLOW),
         flow: Type.Object({
             id: Type.String(),
             displayName: Type.String(),
         }),
     }),
 ])
-export type ProjectSyncPlanOperation = Static<typeof ProjectSyncPlanOperation>
+export type FlowProjectOperation = Static<typeof FlowProjectOperation>
 
 export const ProjectSyncPlan = Type.Object({
-    operations: Type.Array(ProjectSyncPlanOperation),
+    flows: Type.Array(FlowProjectOperation),
     connections: Type.Array(ConnectionOperation),
     tables: Type.Array(TableOperation),
-    errors: Type.Array(ProjectSyncError),
+    agents: Type.Array(AgentOperation),
+    mcps: Type.Array(McpOperation),
+    errors: Type.Array(FlowSyncError),
 })
 export type ProjectSyncPlan = Static<typeof ProjectSyncPlan>
 

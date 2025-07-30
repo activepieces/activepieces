@@ -1,4 +1,4 @@
-import { ActionType, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, FieldType, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectOperationType, ProjectState, Step, TableOperation, TableOperationType, TableState, TriggerType } from '@activepieces/shared'
+import { ActionType, AgentOperation, AgentOperationType, AgentState, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, FieldType, flowPieceUtil, FlowProjectOperationType, flowStructureUtil, FlowVersion, isNil, McpOperation, McpOperationType, McpState, PopulatedFlow, ProjectOperation, ProjectState, Step, TableOperation, TableOperationType, TableState, TriggerType } from '@activepieces/shared'
 import semver from 'semver'
 
 export const projectDiffService = {
@@ -6,13 +6,17 @@ export const projectDiffService = {
         const createFlowOperation = await findFlowsToCreate({ newState, currentState })
         const deleteFlowOperation = await findFlowsToDelete({ newState, currentState })
         const updateFlowOperations = await findFlowsToUpdate({ newState, currentState })
-        const operations = [...deleteFlowOperation, ...createFlowOperation, ...updateFlowOperations]
+        const flowOperations = [...deleteFlowOperation, ...createFlowOperation, ...updateFlowOperations]
         const connections = getFlowConnections(currentState, newState)
         const tables = getTables(currentState, newState)
+        const agents = getAgents(currentState, newState)
+        const mcps = getMcps(currentState, newState)
         return {
-            operations,
+            flows: flowOperations,
             connections,
             tables,
+            agents,
+            mcps,
         }
     },
 }
@@ -22,7 +26,7 @@ async function findFlowsToCreate({ newState, currentState }: DiffParams): Promis
         const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, newFlow.externalId)
         return isNil(flow)
     }).map((flowState) => ({
-        type: ProjectOperationType.CREATE_FLOW,
+        type: FlowProjectOperationType.CREATE_FLOW,
         flowState,
     }))
 }
@@ -31,7 +35,7 @@ async function findFlowsToDelete({ newState, currentState }: DiffParams): Promis
         const flow = newState.flows.find((flowFromNewState) => currentFlowFromState.externalId === flowFromNewState.externalId)
         return isNil(flow)
     }).map((flowState) => ({
-        type: ProjectOperationType.DELETE_FLOW,
+        type: FlowProjectOperationType.DELETE_FLOW,
         flowState,
     }))
 }
@@ -47,7 +51,7 @@ async function findFlowsToUpdate({ newState, currentState }: DiffParams): Promis
         const flowChanged = await isFlowChanged(os, flowFromNewState)
         if (flowChanged) {
             return {
-                type: ProjectOperationType.UPDATE_FLOW,
+                type: FlowProjectOperationType.UPDATE_FLOW,
                 flowState: os,
                 newFlowState: flowFromNewState,
             } as ProjectOperation
@@ -74,6 +78,26 @@ function isTableChanged(stateOne: TableState, stateTwo: TableState): boolean {
         data: field.type === FieldType.STATIC_DROPDOWN ? field.data : undefined,
     }))
     return stateOne.name !== stateTwo.name || JSON.stringify(fieldsMetadataOne) !== JSON.stringify(fieldsMetadataTwo)
+}
+
+function isAgentChanged(stateOne: AgentState, stateTwo: AgentState): boolean {
+    const fieldsToCompare: (keyof AgentState)[] = [
+        'displayName',
+        'description', 
+        'profilePictureUrl',
+        'systemPrompt',
+        'testPrompt',
+        'maxSteps',
+        'outputType',
+        'outputFields',
+    ]
+
+    return fieldsToCompare.some(field => JSON.stringify(stateOne[field]) !== JSON.stringify(stateTwo[field])) || isMcpChanged(stateOne.mcp, stateTwo.mcp)
+}
+
+// TODO: compare tools
+function isMcpChanged(stateOne: McpState, stateTwo: McpState): boolean {
+    return stateOne.name !== stateTwo.name
 }
 
 function getFlowConnections(currentState: ProjectState, newState: ProjectState): ConnectionOperation[] {
@@ -129,6 +153,60 @@ function getTables(currentState: ProjectState, newState: ProjectState): TableOpe
     })
 
     return tableOperations
+}
+
+function getAgents(currentState: ProjectState, newState: ProjectState): AgentOperation[] {
+    const agentOperations: AgentOperation[] = []
+
+    currentState.agents?.forEach(agent => {
+        const agentState = newState.agents?.find((a) => a.externalId === agent.externalId)
+        if (!isNil(agentState) && isAgentChanged(agentState, agent)) {
+            agentOperations.push({
+                type: AgentOperationType.UPDATE_AGENT,
+                agentState: agent,
+                newAgentState: agentState,
+            })
+        }
+    })
+
+    newState.agents?.forEach(agent => {
+        const isExistingAgent = currentState.agents?.find((a) => a.externalId === agent.externalId)
+        if (isNil(isExistingAgent)) {
+            agentOperations.push({
+                type: AgentOperationType.CREATE_AGENT,
+                agentState: agent,
+            })
+        }
+    })
+
+    return agentOperations
+}
+
+function getMcps(currentState: ProjectState, newState: ProjectState): McpOperation[] {
+    const mcpOperations: McpOperation[] = []
+
+    currentState.mcps?.forEach(mcp => {
+        const mcpState = newState.mcps?.find((m) => m.externalId === mcp.externalId)
+        if (!isNil(mcpState) && isMcpChanged(mcpState, mcp)) {
+            mcpOperations.push({
+                type: McpOperationType.UPDATE_MCP,
+                mcpState: mcp,
+                newMcpState: mcpState,
+            })
+        }
+    })
+    
+    newState.mcps?.forEach(mcp => {
+        const isExistingMcp = currentState.mcps?.find((m) => m.externalId === mcp.externalId)
+        if (isNil(isExistingMcp)) {
+            mcpOperations.push({
+                type: McpOperationType.CREATE_MCP,
+                mcpState: mcp,
+            })
+        }
+    })
+
+    return mcpOperations
 }
 
 function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], externalId: string): PopulatedFlow | undefined {
