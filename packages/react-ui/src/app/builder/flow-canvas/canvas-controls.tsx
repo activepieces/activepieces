@@ -73,7 +73,7 @@ const PanningModeIndicator = ({ toggled }: { toggled: boolean }) => {
   return (
     <div
       className={cn(
-        'absolute transition-all bg-primary/15 w-full h-full top-0 left-0',
+        'absolute transition-all opacity-100 bg-primary/15 dark:bg-primary/80 w-full h-full top-0 left-0',
         {
           'opacity-0': !toggled,
         },
@@ -213,7 +213,7 @@ const CanvasControls = ({
               className="relative focus:outline-0"
             >
               <PanningModeIndicator toggled={!isInGrabMode} />
-              <MousePointer className="size-5"></MousePointer>
+              <MousePointer className="size-5 z-10"></MousePointer>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">{t('Select Mode')}</TooltipContent>
@@ -233,7 +233,7 @@ const CanvasControls = ({
             >
               <PanningModeIndicator toggled={isInGrabMode} />
 
-              <Hand className="size-5"></Hand>
+              <Hand className="size-5 z-10"></Hand>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">{t('Move Mode')}</TooltipContent>

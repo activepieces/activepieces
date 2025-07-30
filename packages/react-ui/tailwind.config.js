@@ -24,7 +24,8 @@ module.exports = {
     },
     extend: {
       backgroundImage: {
-        'ai-gradient': 'conic-gradient(from var(--gradient-angle, 180deg) at 50% 50%, #8142E3 0deg, #4278E3 131.57deg, #00DDF1 230.19deg, #8142E3 360deg)',
+        'ai-gradient': 'conic-gradient(from var(--gradient-angle, 180deg) at 50% 50%, #8142E3 0deg, hsla(220, 74%, 57%, 1) 131.57deg, hsla(185, 100%, 47%, 1) 230.19deg, hsla(263, 74%, 57%, 1) 360deg)',
+        'ai-transparent-gradient': 'conic-gradient(from 180deg at 50% 50%, #8142E3 0deg, hsla(220, 74%, 57%, 0.25) 131.57deg, hsla(185, 100%, 47%, 0.25) 230.19deg, hsla(263, 74%, 57%, 0.25) 360deg)',
       },
       width: {
         '4.5': '1.125rem'
@@ -177,7 +178,7 @@ module.exports = {
         'rotate-gradient': 'rotate-gradient 5s ease-in-out infinite'
       },
       boxShadow: {
-        'selected-step-node': '0px 1px 1px 0px rgba(0, 0, 0, 0.01), 0px 1px 24px 0px rgba(0, 0, 0, 0.08), 0px 0px 0px 4px hsl(var(--primary-100))',
+        'selected-step-node': '0px 1px 1px 0px rgba(0, 0, 0, 0.01), 0px 1px 24px 0px rgba(0, 0, 0, 0.08), 0px 0px 0px 4px hsl(var(--primary)/0.1)',
         'add-button': 'var(--add-button-shadow)',
         'step-node': '0px 1px 1px 0px #0000001F, 0px 1px 24px 0px #00000014',
         'trigger-node': ' 0px 1px 1px 0px #0000001F, 0px 1px 24px 0px #00000014, 0px 0px 0px 3px #94A3B833',

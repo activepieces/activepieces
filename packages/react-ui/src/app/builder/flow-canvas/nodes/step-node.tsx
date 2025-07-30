@@ -75,6 +75,7 @@ const ApStepCanvasNode = React.memo(
       <div
         key={step.name}
         {...stepNodeAttributes}
+        className=''
       >
         <div className="relative h-full w-full cursor-default">
           {!isDragging && (
@@ -88,8 +89,23 @@ const ApStepCanvasNode = React.memo(
               stepToReplacePieceDisplayName={stepMetadata?.displayName}
             >
               <div>
+               
+              <div 
+                  style={{
+                   height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
+                   width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+                   maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+                 }}
+                 className={cn('opacity-0 transition-all absolute left-0 top-0 rounded-md' ,{
+                  'blur-2xl bg-ai-transparent-gradient opacity-75': hasGradientBorder,
+                  'opacity-100': isSelected,
+                 })}
+                 >
+                   
+                 </div>
+               
                 <div
-                  className="absolute left-[80px] flex flex-col gap-1 text-sm bg-flow-bg !cursor-pointer z-10"
+                  className="absolute left-[80px] flex flex-col gap-1 text-sm  !cursor-pointer z-10"
                   onClick={handleStepClick}
                   style={{
                     maxWidth: `${flowUtilConsts.STEP_DISPLAY_META_WIDTH}px`,
@@ -97,10 +113,10 @@ const ApStepCanvasNode = React.memo(
                     top: `calc(50% - 18px)`,
                   }}
                 >
-                  <div className="truncate grow shrink">
+                  <div className="truncate grow shrink bg-flow-bg/50">
                     {stepIndex}. {step.displayName}
                   </div>
-                  <div className="text-muted-foreground break-keep text-nowrap truncate grow shrink">
+                  <div className="text-muted-foreground break-keep text-nowrap truncate grow shrink bg-flow-bg/50">
                     {stepMetadata?.displayName}
                   </div>
                 </div>
@@ -108,7 +124,6 @@ const ApStepCanvasNode = React.memo(
 
                 <div
                   className={cn(" items-center relative  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3",{
-                    'drop-shadow-lg': isSelected,
                   })}
                   onClick={(e) => {
                     if (!isPieceSelectorOpened) {
@@ -118,11 +133,11 @@ const ApStepCanvasNode = React.memo(
                 >
                   <div
                     className={cn(
-                      'bg-background flex items-center justify-center rounded-lg shadow-step-node border hover:border-primary/70 transition-all  ',
+                      'bg-background flex items-center justify-center rounded-lg shadow-step-node border hover:border-primary transition-all  ',
                       {
-                        'border-primary/70 shadow-selected-step-node':
+                        'border-primary shadow-selected-step-node':
                           isSelected,
-                        'shadow-trigger-node border-[#94A3B8]':
+                        'shadow-trigger-node border-slate-400':
                           isTrigger && !isSelected,
                         'rounded-full': isRoundedStep,
                         'bg-accent': isSkipped,
@@ -144,9 +159,8 @@ const ApStepCanvasNode = React.memo(
                           'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-white  border-box rounded-md border border-solid border-border/75 relative  group',
                           {
                             'rounded-full': isRoundedStep,
+                            'm-1 border-transparent rounded-sm size-[58px]  p-[2px] bg-white': hasGradientBorder,
                             'bg-accent': isSkipped,
-                            'm-1 border-transparent rounded-sm size-[58px] bg-transparent':
-                              hasGradientBorder,
                           },
                         )}
                       >
@@ -154,9 +168,10 @@ const ApStepCanvasNode = React.memo(
                           src={stepMetadata?.logoUrl}
                           alt={stepMetadata?.displayName}
                           className={cn(
-                            'size-[52px] min-w-[52px] min-h-[52px] bg-background dark:bg-white rounded-sm object-contain',
+                            'size-[52px] min-w-[52px] min-h-[52px] bg-white rounded-sm object-contain',
                             {
                               'rounded-full': isRoundedStep,
+                              'bg-accent': isSkipped,
                             },
                           )}
                         />

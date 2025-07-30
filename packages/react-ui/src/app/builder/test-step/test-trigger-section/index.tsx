@@ -30,6 +30,7 @@ const TestTriggerSection = React.memo(
     const form = useFormContext<Trigger>();
     const formValues = form.getValues();
     const isValid = form.formState.isValid;
+    console.log(form.formState.errors)
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const lastTestDate = formValues.settings.inputUiInfo?.lastTestDate;
     const [isTestingDialogOpen, setIsTestingDialogOpen] = useState(false);
