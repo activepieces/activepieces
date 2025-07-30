@@ -127,17 +127,17 @@ export const callFlow = createAction({
     })
   },
   async test(context) {
-    const flow = await findFlowByExternalIdOrThrow({
-      flowsContext: context.flows,
-      externalId: context.propsValue.flow?.externalId,
-    });
-
     if (!context.propsValue.waitForResponse) {
       return {
         status: 'success',
         data: context.propsValue.flowProps['payload'],
       }
     }
+
+    const flow = await findFlowByExternalIdOrThrow({
+      flowsContext: context.flows,
+      externalId: context.propsValue.flow?.externalId,
+    });
 
     const response = await httpClient.sendRequest<FlowRun>({
       method: HttpMethod.POST,
