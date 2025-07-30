@@ -66,7 +66,7 @@ export function PieceIconList({
               border={true}
               displayName={metadata.displayName}
               key={metadata.logoUrl}
-              className='rounded-xs dark:p-[1px]'
+              className="rounded-xs dark:p-[1px]"
             />
           ))}
           {extraPieces > 0 && (

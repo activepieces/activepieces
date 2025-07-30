@@ -1,3 +1,4 @@
+import { useDraggable } from '@dnd-kit/core';
 import { useMutation } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
 import {
@@ -54,10 +55,12 @@ import {
   CanvasShortcuts,
   CanvasShortcutsProps,
 } from './flow-canvas/context-menu/canvas-context-menu';
-import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
+import {
+  flowUtilConsts,
+  STEP_CONTEXT_MENU_ATTRIBUTE,
+} from './flow-canvas/utils/consts';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
-import { useDraggable } from '@dnd-kit/core';
 const flowUpdatesQueue = new PromiseQueue();
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
@@ -997,9 +1000,11 @@ function determineInitiallySelectedStep(
   return firstInvalidStep?.name ?? 'trigger';
 }
 
-
 export const useStepNodeAttributes = (step: Step) => {
-  const [readonly, isPieceSelectorOpened] = useBuilderStateContext((state) => [state.readonly, state.openedPieceSelectorStepNameOrAddButtonId === step.name]);
+  const [readonly, isPieceSelectorOpened] = useBuilderStateContext((state) => [
+    state.readonly,
+    state.openedPieceSelectorStepNameOrAddButtonId === step.name,
+  ]);
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: step.name,
     disabled: step.name === 'trigger' || readonly,
@@ -1009,7 +1014,7 @@ export const useStepNodeAttributes = (step: Step) => {
   });
   const stepNodeDivAttributes = isPieceSelectorOpened ? {} : attributes;
   const stepNodeDivListeners = isPieceSelectorOpened ? {} : listeners;
-  
+
   return {
     [`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name,
     ...stepNodeDivAttributes,
@@ -1019,6 +1024,6 @@ export const useStepNodeAttributes = (step: Step) => {
       height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
       width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
       maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-    }
-  }
-}
+    },
+  };
+};

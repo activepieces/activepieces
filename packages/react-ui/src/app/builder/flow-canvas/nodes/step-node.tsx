@@ -1,9 +1,16 @@
 import { Handle, NodeProps, Position } from '@xyflow/react';
+import { EllipsisVertical } from 'lucide-react';
 import React, { useMemo } from 'react';
-import { useBuilderStateContext, useStepNodeAttributes } from '@/app/builder/builder-hooks';
+
+import {
+  useBuilderStateContext,
+  useStepNodeAttributes,
+} from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
+import { Button } from '@/components/ui/button';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
+import { StepMetadataWithActionOrTriggerOrAgentDisplayName } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   FlowOperationType,
@@ -24,7 +31,6 @@ const getPieceSelectorOperationType = (step: Step) => {
   }
   return FlowOperationType.UPDATE_ACTION;
 };
-
 
 const ApStepCanvasNode = React.memo(
   ({ data: { step } }: NodeProps & Omit<ApStepNode, 'position'>) => {
@@ -72,11 +78,7 @@ const ApStepCanvasNode = React.memo(
     };
 
     return (
-      <div
-        key={step.name}
-        {...stepNodeAttributes}
-        className=''
-      >
+      <div key={step.name} {...stepNodeAttributes} className="">
         <div className="relative h-full w-full cursor-default">
           {!isDragging && (
             <PieceSelector
@@ -89,42 +91,22 @@ const ApStepCanvasNode = React.memo(
               stepToReplacePieceDisplayName={stepMetadata?.displayName}
             >
               <div>
-               
-              <div 
-                  style={{
-                   height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
-                   width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-                   maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-                 }}
-                 className={cn('opacity-0 transition-all absolute left-0 top-0 rounded-md' ,{
-                  'blur-2xl bg-ai-transparent-gradient opacity-75': hasGradientBorder,
-                  'opacity-100': isSelected,
-                 })}
-                 >
-                   
-                 </div>
-               
-                <div
-                  className="absolute left-[80px] flex flex-col gap-1 text-sm  !cursor-pointer z-10"
-                  onClick={handleStepClick}
-                  style={{
-                    maxWidth: `${flowUtilConsts.STEP_DISPLAY_META_WIDTH}px`,
-                    // 18px is the height of the text
-                    top: `calc(50% - 18px)`,
-                  }}
-                >
-                  <div className="truncate grow shrink bg-flow-bg/50">
-                    {stepIndex}. {step.displayName}
-                  </div>
-                  <div className="text-muted-foreground break-keep text-nowrap truncate grow shrink bg-flow-bg/50">
-                    {stepMetadata?.displayName}
-                  </div>
-                </div>
-
+                <StepNodeBackgroundBlur
+                  hasGradientBorder={hasGradientBorder}
+                  isSelected={isSelected}
+                />
+                <DisplayedText
+                  stepIndex={stepIndex}
+                  step={step}
+                  stepMetadata={stepMetadata}
+                  handleStepClick={handleStepClick}
+                />
 
                 <div
-                  className={cn("items-center relative  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3",{
-                  })}
+                  className={cn(
+                    'items-center relative  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3 group',
+                    {},
+                  )}
                   onClick={(e) => {
                     if (!isPieceSelectorOpened) {
                       handleStepClick(e);
@@ -150,40 +132,16 @@ const ApStepCanvasNode = React.memo(
                     }}
                   >
                     <div className="relative">
-                      {hasGradientBorder && (
-                        <div className="absolute size-[60px] top-[2px] left-[2px]  backdrop-blur-2xl   rounded-md bg-ai-gradient animate-rotate-gradient"></div>
-                      )}
+                      {hasGradientBorder && <AiNodeGradient />}
+                      <ElipsisButton />
 
-                      <div
-                        className={cn(
-                          'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-white  border-box rounded-md border border-solid border-border/75',
-                          {
-                            'rounded-full': isRoundedStep,
-                            'm-1 border-transparent rounded-sm size-[56px]  p-[4px] bg-white': hasGradientBorder,
-                            'bg-accent dark:bg-gray-300': isSkipped,
-                          },
-                        )}
-                      >
-                        <ImageWithFallback
-                          src={stepMetadata?.logoUrl}
-                          alt={stepMetadata?.displayName}
-                          className={cn(
-                            'size-[52px] min-w-[52px] min-h-[52px] bg-white rounded-sm object-contain',
-                            {
-                              'rounded-full': isRoundedStep,
-                              'bg-accent dark:bg-gray-300': isSkipped,
-                            },
-                          )}
-                        />
-                        <div
-                          className={cn('absolute bottom-[2px] right-[2px]', {
-                            'right-[3px] bottom-[3px]': isRoundedStep,
-                            'right-[1px] bottom-0': hasGradientBorder,
-                          })}
-                        >
-                          <ApStepNodeStatus stepName={step.name} />
-                        </div>
-                      </div>
+                      <StepNodeImage
+                        isRoundedStep={isRoundedStep}
+                        hasGradientBorder={hasGradientBorder}
+                        isSkipped={isSkipped}
+                        stepMetadata={stepMetadata}
+                        step={step}
+                      />
                     </div>
                   </div>
                 </div>
@@ -207,5 +165,137 @@ const ApStepCanvasNode = React.memo(
   },
 );
 
+const ElipsisButton = () => {
+  return (
+    <Button
+      onClick={(e) => {
+        e.preventDefault();
+        const rightClickEvent = new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          button: 2, // Right mouse button
+          clientX: e.clientX,
+          clientY: e.clientY,
+        });
+        e.target.dispatchEvent(rightClickEvent);
+      }}
+      variant="accent"
+      className="!size-[28px] !rounded-xs z-20 opacity-0  drop-shadow-lg text-slate-500 dark:text-slate-200  group-hover:opacity-100 transition-all duration-300 flex items-center justify-center absolute -top-1 -right-1"
+    >
+      <EllipsisVertical className="size-4" />
+    </Button>
+  );
+};
+
+const AiNodeGradient = () => {
+  return (
+    <div className="absolute size-[60px] top-[2px] left-[2px]  backdrop-blur-2xl   rounded-md bg-ai-gradient animate-rotate-gradient"></div>
+  );
+};
+
+const DisplayedText = ({
+  stepIndex,
+  step,
+  stepMetadata,
+  handleStepClick,
+}: {
+  stepIndex: number;
+  step: Step;
+  stepMetadata?: StepMetadataWithActionOrTriggerOrAgentDisplayName;
+  handleStepClick: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+}) => {
+  return (
+    <div
+      className="absolute left-[80px] flex flex-col gap-1 text-sm  !cursor-pointer z-10"
+      onClick={handleStepClick}
+      style={{
+        maxWidth: `${flowUtilConsts.STEP_DISPLAY_META_WIDTH}px`,
+        // 18px is the height of the text
+        top: `calc(50% - 18px)`,
+      }}
+    >
+      <div className="truncate grow shrink bg-flow-bg/50">
+        {stepIndex}. {step.displayName}
+      </div>
+      <div className="text-muted-foreground break-keep text-nowrap truncate grow shrink bg-flow-bg/50">
+        {stepMetadata?.displayName}
+      </div>
+    </div>
+  );
+};
+
+const StepNodeBackgroundBlur = ({
+  hasGradientBorder,
+  isSelected,
+}: {
+  hasGradientBorder: boolean;
+  isSelected: boolean;
+}) => {
+  return (
+    <div
+      style={{
+        height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
+        width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+        maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+      }}
+      className={cn(
+        'opacity-0 transition-all absolute left-0 top-0 rounded-md',
+        {
+          'blur-2xl bg-ai-transparent-gradient opacity-75': hasGradientBorder,
+          'opacity-100': isSelected,
+        },
+      )}
+    ></div>
+  );
+};
+
+const StepNodeImage = ({
+  isRoundedStep,
+  hasGradientBorder,
+  isSkipped,
+  stepMetadata,
+  step,
+}: {
+  isRoundedStep: boolean;
+  hasGradientBorder: boolean;
+  isSkipped: boolean;
+  stepMetadata?: StepMetadataWithActionOrTriggerOrAgentDisplayName;
+  step: Step;
+}) => {
+  return (
+    <div
+      className={cn(
+        'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-white  border-box rounded-md border border-solid border-border/75',
+        {
+          'rounded-full': isRoundedStep,
+          'm-1 border-transparent rounded-sm size-[56px]  p-[4px] bg-white':
+            hasGradientBorder,
+          'bg-accent dark:bg-gray-300': isSkipped,
+        },
+      )}
+    >
+      <ImageWithFallback
+        src={stepMetadata?.logoUrl}
+        alt={stepMetadata?.displayName}
+        className={cn(
+          'size-[52px] min-w-[52px] min-h-[52px] bg-white rounded-sm object-contain',
+          {
+            'rounded-full': isRoundedStep,
+            'bg-accent dark:bg-gray-300': isSkipped,
+          },
+        )}
+      />
+      <div
+        className={cn('absolute bottom-[2px] right-[2px]', {
+          'right-[3px] bottom-[3px]': isRoundedStep,
+          'right-[1px] bottom-0': hasGradientBorder,
+        })}
+      >
+        <ApStepNodeStatus stepName={step.name} />
+      </div>
+    </div>
+  );
+};
 ApStepCanvasNode.displayName = 'ApStepCanvasNode';
 export { ApStepCanvasNode };

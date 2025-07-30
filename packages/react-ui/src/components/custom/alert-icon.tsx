@@ -22,4 +22,4 @@ export const InvalidStepIcon = createLucideIcon('InvalidStepIcon', [
       key: 'path',
     },
   ],
-])
+]);
