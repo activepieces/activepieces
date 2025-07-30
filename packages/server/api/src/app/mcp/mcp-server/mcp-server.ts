@@ -107,10 +107,8 @@ async function addPieceToServer(
                 projectId,
                 platformId,
                 {
-                    packageType: pieceMetadata.packageType,
                     pieceName: pieceMetadata.name,
                     pieceVersion: pieceMetadata.version,
-                    pieceType: pieceMetadata.pieceType,
                 },
             )
             try {
