@@ -1,5 +1,4 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { getAccessToken, getAuthorizationHeader, validateAuthData } from './auth';
 
 export const PODIO_API_URL = 'https://api.podio.com';
 

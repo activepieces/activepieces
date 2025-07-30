@@ -26,9 +26,9 @@ export const dynamicAppProperty = Property.Dropdown({
     try {
       const accessToken = getAccessToken(auth as any);
       
-      let resourceUri = '/app/v2/';
+      let resourceUri = '/app/';
       if (spaceId) {
-        resourceUri = `/app/space/${spaceId}/v2/`;
+        resourceUri = `/app/space/${spaceId}/`;
       }
 
       const apps = await podioApiCall<any[]>({
@@ -46,7 +46,7 @@ export const dynamicAppProperty = Property.Dropdown({
 
       return {
         options: apps.map((app: any) => ({
-          label: `${app.name}${app.space ? ` (${app.space.name})` : ''}`,
+          label: `${app.config?.name || app.name}${app.space ? ` (${app.space.name})` : ''}`,
           value: app.app_id,
         })),
       };
@@ -298,39 +298,66 @@ export const dynamicRefIdProperty = Property.Dropdown({
             };
           }
           
-          const statusResponse = await podioApiCall<any[]>({
-            method: HttpMethod.GET,
-            accessToken,
-            resourceUri: `/status/space/${spaceId}/`,
-            queryParams: { limit: 30 },
-          });
-          
-          return {
-            options: statusResponse?.map((status: any) => ({
-              label: status.value?.substring(0, 50) + '...' || `Status ${status.status_id}`,
-              value: status.status_id,
-            })) || [],
-          };
+          try {
+            const statusResponse = await podioApiCall<any>({
+              method: HttpMethod.GET,
+              accessToken,
+              resourceUri: `/stream/space/${spaceId}/`,
+              queryParams: { 
+                limit: 50,
+                type: 'status'
+              },
+            });
+            
+            if (statusResponse?.items) {
+              return {
+                options: statusResponse.items
+                  .filter((item: any) => item.type === 'status' && item.data)
+                  .map((item: any) => ({
+                    label: (item.data.value || item.data.text || '').substring(0, 60) + (item.data.value?.length > 60 ? '...' : '') || `Status ${item.data.status_id}`,
+                    value: item.data.status_id,
+                  }))
+                  .slice(0, 30),
+              };
+            }
+            
+            return {
+              options: [],
+              placeholder: 'No status updates found in this space',
+            };
+          } catch (error) {
+            return {
+              options: [],
+              placeholder: 'Enter status ID manually (could not load status updates)',
+            };
+          }
 
         case 'app':
           if (spaceId) {
-            endpoint = `/app/space/${spaceId}/v2/`;
+            endpoint = `/app/space/${spaceId}/`;
           } else {
-            endpoint = '/app/v2/';
+            endpoint = '/app/';
           }
           
-          const appResponse = await podioApiCall<any[]>({
-            method: HttpMethod.GET,
-            accessToken,
-            resourceUri: endpoint,
-          });
-          
-          return {
-            options: appResponse?.map((app: any) => ({
-              label: app.name,
-              value: app.app_id,
-            })) || [],
-          };
+          try {
+            const appResponse = await podioApiCall<any[]>({
+              method: HttpMethod.GET,
+              accessToken,
+              resourceUri: endpoint,
+            });
+            
+            return {
+              options: appResponse?.map((app: any) => ({
+                label: `${app.config?.name || app.name}${app.space ? ` (${app.space.name})` : ''}`,
+                value: app.app_id,
+              })) || [],
+            };
+          } catch (error) {
+            return {
+              options: [],
+              placeholder: spaceId ? 'No apps found in this space' : 'Failed to load apps',
+            };
+          }
 
         case 'space':
           if (!orgId) {
@@ -386,6 +413,182 @@ export const taskIdProperty = Property.Number({
   displayName: 'Task ID',
   description: 'The ID of the Podio task',
   required: true,
+});
+
+export const dynamicFileProperty = Property.Dropdown({
+  displayName: 'File',
+  description: 'Select a file from the space',
+  required: true,
+  refreshers: ['spaceId'],
+  options: async ({ auth, spaceId }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'Connect your Podio account first',
+        options: [],
+      };
+    }
+
+    if (!spaceId) {
+      return {
+        disabled: true,
+        placeholder: 'Select a space first to load files',
+        options: [],
+      };
+    }
+
+    try {
+      const accessToken = getAccessToken(auth as any);
+      const files = await podioApiCall<any[]>({
+        method: HttpMethod.GET,
+        accessToken,
+        resourceUri: `/file/space/${spaceId}/`,
+        queryParams: {
+          limit: 50,
+          sort_by: 'created_on',
+          sort_desc: 'true'
+        }
+      });
+
+      if (!files || files.length === 0) {
+        return {
+          options: [],
+          placeholder: 'No files found in this space',
+        };
+      }
+
+      return {
+        options: files.map((file: any) => {
+          let label = file.name || `File ${file.file_id}`;
+          
+          if (file.size) {
+            const sizeInKB = Math.round(file.size / 1024);
+            const sizeText = sizeInKB > 1024 
+              ? `${Math.round(sizeInKB / 1024)}MB` 
+              : `${sizeInKB}KB`;
+            label += ` (${sizeText})`;
+          }
+
+          if (file.mimetype) {
+            const fileType = file.mimetype.split('/')[0];
+            const iconMap: Record<string, string> = {
+              'image': '🖼️',
+              'video': '🎥',
+              'audio': '🎵',
+              'text': '📄',
+              'application': '📁'
+            };
+            const icon = iconMap[fileType] || '📄';
+            label = `${icon} ${label}`;
+          }
+
+          if (file.context?.title) {
+            label += ` → ${file.context.title}`;
+          }
+
+          return {
+            label,
+            value: file.file_id,
+          };
+        }),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Failed to load files. Check your connection.',
+      };
+    }
+  },
+});
+
+export const dynamicTaskProperty = Property.Dropdown({
+  displayName: 'Task',
+  description: 'Select a Podio task',
+  required: true,
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'Connect your Podio account first',
+        options: [],
+      };
+    }
+
+    try {
+      const accessToken = getAccessToken(auth as any);
+      
+      const userInfo = await podioApiCall<any>({
+        method: HttpMethod.GET,
+        accessToken,
+        resourceUri: '/user/status',
+      });
+
+      const userId = userInfo?.user?.user_id;
+      
+      if (!userId) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Could not determine user ID for task filtering',
+        };
+      }
+
+      const tasks = await podioApiCall<any[]>({
+        method: HttpMethod.GET,
+        accessToken,
+        resourceUri: '/task/',
+        queryParams: {
+          responsible: userId,
+          limit: 100,
+          view: 'full',
+          sort_by: 'created_on',
+          sort_desc: 'true'
+        }
+      });
+
+      if (!tasks || tasks.length === 0) {
+        return {
+          options: [],
+          placeholder: 'No tasks found assigned to you',
+        };
+      }
+
+      return {
+        options: tasks.map((task: any) => {
+          let label = task.text || `Task ${task.task_id}`;
+          
+          if (task.status === 'completed') {
+            label = `✓ ${label}`;
+          } else if (task.due_date) {
+            const dueDate = new Date(task.due_date);
+            const today = new Date();
+            if (dueDate < today) {
+              label = `⚠️ ${label} (Overdue)`;
+            } else {
+              label = `📅 ${label}`;
+            }
+          }
+
+          if (task.ref?.title) {
+            label += ` → ${task.ref.title}`;
+          }
+
+          return {
+            label,
+            value: task.task_id,
+          };
+        }),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Failed to load tasks. Check your connection.',
+      };
+    }
+  },
 });
 
 export const orgIdProperty = Property.Number({
@@ -454,4 +657,113 @@ export const offsetProperty = Property.Number({
   description: 'Number of results to skip for pagination (default: 0)',
   required: false,
   defaultValue: 0,
-}); 
+});
+
+export function formatFieldValues(appFields: any[], formData: Record<string, any>): Record<string, any> {
+  
+  const fields: Record<string, any> = {};
+
+  for (const field of appFields) {
+    const fieldKey = `field_${field.field_id}`;
+    const fieldValue = formData[fieldKey];
+
+    
+
+    if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
+      const fieldType = field.type;
+      
+      switch (fieldType) {
+        case 'text':
+          fields[field.field_id] = {
+            value: fieldValue.toString(),
+          };
+          break;
+
+        case 'number':
+          fields[field.field_id] = {
+            value: fieldValue.toString(),
+          };
+          break;
+
+        case 'money':
+          if (typeof fieldValue === 'object' && fieldValue.value) {
+            fields[field.field_id] = {
+              value: fieldValue.value.toString(),
+              currency: fieldValue.currency || 'USD',
+            };
+          }
+          break;
+
+        case 'date':
+          if (typeof fieldValue === 'object') {
+            const dateObj: any = {};
+            if (fieldValue.start_date) dateObj.start_date = fieldValue.start_date;
+            if (fieldValue.start_time) dateObj.start_time = fieldValue.start_time;
+            if (fieldValue.end_date) dateObj.end_date = fieldValue.end_date;
+            if (fieldValue.end_time) dateObj.end_time = fieldValue.end_time;
+            
+            if (Object.keys(dateObj).length > 0) {
+              fields[field.field_id] = dateObj;
+            }
+          }
+          break;
+
+        case 'contact':
+        case 'member':
+        case 'app':
+        case 'category':
+        case 'status':
+        case 'image':
+        case 'file':
+        case 'duration':
+        case 'video':
+          fields[field.field_id] = {
+            value: Number(fieldValue),
+          };
+          break;
+
+        case 'progress':
+          const progressValue = Number(fieldValue);
+          if (progressValue >= 0 && progressValue <= 100) {
+            fields[field.field_id] = {
+              value: progressValue,
+            };
+          }
+          break;
+
+        case 'email':
+        case 'phone':
+          if (typeof fieldValue === 'object' && fieldValue.value) {
+            fields[field.field_id] = {
+              value: fieldValue.value,
+              type: fieldValue.type || (fieldType === 'email' ? 'work' : 'mobile'),
+            };
+          }
+          break;
+
+        case 'location':
+          fields[field.field_id] = {
+            value: fieldValue.toString(),
+          };
+          break;
+
+        case 'embed':
+          if (typeof fieldValue === 'object' && fieldValue.embed) {
+            fields[field.field_id] = {
+              embed: fieldValue.embed,
+              file: fieldValue.file || null,
+            };
+          }
+          break;
+
+        default:
+          fields[field.field_id] = {
+            value: fieldValue.toString(),
+          };
+      }
+    }
+  }
+
+  
+  return fields;
+} 

@@ -18,18 +18,11 @@
     import { podioApiCall, validateAuthData } from './lib/common';
 
     export const podioAuth = PieceAuth.OAuth2({
-      description: `
-        To connect to Podio:
-        1. Sign in to your Podio account
-        2. Go to https://developers.podio.com/api/getting-started
-        3. Create a new app and get your client credentials
-        4. Copy the Client ID and Client Secret to authenticate
-        5. Complete the OAuth flow to obtain access tokens
-      `,
+      description: "Connect your Podio account to automate workspace management and item operations.",
       authUrl: 'https://podio.com/oauth/authorize',
       tokenUrl: 'https://podio.com/oauth/token',
       required: true,
-      scope: [],
+      scope: ['global:read', 'global:write'],
       validate: async ({ auth }) => {
         try {
           const validation = validateAuthData(auth);
@@ -70,7 +63,7 @@
       auth: podioAuth,
       minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/podio.png",
-      authors: ["sparkybug"],
+      authors: ["sparkybug", "onyedikachi-david"],
       actions: [
         createItemAction,
         updateItemAction,

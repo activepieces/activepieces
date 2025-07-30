@@ -1,52 +1,55 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioAuth } from '../../index';
-import { podioApiCall, getAccessToken, silentProperty, dynamicRefTypeProperty, dynamicRefIdProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
+import { podioApiCall, getAccessToken, silentProperty, dynamicRefTypeProperty, dynamicRefIdProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty, dynamicFileProperty } from '../common';
 
 export const attachFileAction = createAction({
   auth: podioAuth,
   name: 'attach_file',
   displayName: 'Attach File',
-  description: 'Attaches the uploaded file to the given object. Valid objects are "status", "item", "comment", "space", or "task".',
+  description: 'Upload and attach a file to an item/task/comment.',
   props: {
-    fileId: Property.Number({
-      displayName: 'File ID',
-      description: 'The ID of the uploaded file to attach',
-      required: true,
-    }),
     orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,
     appId: dynamicAppProperty,
+
+    fileId: dynamicFileProperty,
+    
     refType: Property.Dropdown({
-      displayName: 'Reference Type',
-      description: 'The type of object the file should be attached to',
+      displayName: 'Attach To',
+      description: 'What type of object to attach the file to',
       required: true,
       refreshers: [],
       options: async () => {
         return {
           options: [
-            { label: 'Status', value: 'status' },
             { label: 'Item', value: 'item' },
+            { label: 'Task', value: 'task' },
+            { label: 'Status Update', value: 'status' },
             { label: 'Comment', value: 'comment' },
             { label: 'Space', value: 'space' },
-            { label: 'Task', value: 'task' },
           ],
         };
       },
     }),
     refId: dynamicRefIdProperty,
+
     silent: silentProperty,
   },
   async run(context) {
     const accessToken = getAccessToken(context.auth);
-    const { fileId, appId, spaceId, refType, refId, silent } = context.propsValue;
+    const { fileId, orgId, spaceId, appId, refType, refId, silent } = context.propsValue;
 
-    if (!fileId || typeof fileId !== 'number') {
-      throw new Error('File ID is required and must be a number.');
+    if (!spaceId) {
+      throw new Error('Space selection is required to load and attach files. Please select a space first.');
+    }
+
+    if (!fileId) {
+      throw new Error('File selection is required. Please select a file from the dropdown.');
     }
 
     if (!refType) {
-      throw new Error('Reference Type is required. Please select the type of object to attach the file to.');
+      throw new Error('Attach To selection is required. Please choose what type of object to attach the file to.');
     }
 
     if (!refId) {

@@ -7,38 +7,42 @@ export const createStatusAction = createAction({
   auth: podioAuth,
   name: 'create_status',
   displayName: 'Create Status Update',
-  description: 'Creates a new status message for a user on a specific space. This is a rate-limited operation.',
+  description: 'Add a status to an item or workspace stream.',
   props: {
     orgId: dynamicOrgProperty,
     spaceId: dynamicSpaceProperty,
+
     value: Property.LongText({
       displayName: 'Status Message',
-      description: 'The actual status message',
+      description: 'What would you like to share?',
       required: true,
     }),
+
     fileIds: Property.Array({
-      displayName: 'File IDs',
-      description: 'Temporary files that have been uploaded and should be attached to this status',
+      displayName: 'Attach Files',
+      description: 'File IDs to attach to this status update (enter file IDs from the space)',
       required: false,
     }),
     embedId: Property.Number({
       displayName: 'Embed ID',
-      description: 'The id of an embedded link that has been created with the Add an embed operation',
+      description: 'ID of a previously created embedded link',
       required: false,
     }),
     embedUrl: Property.ShortText({
       displayName: 'Embed URL',
-      description: 'The url to be attached',
+      description: 'URL to embed in the status update',
       required: false,
     }),
+
     question: Property.Object({
-      displayName: 'Question',
-      description: 'Any question to be attached. Format: {"text": "Question text", "options": ["Option 1", "Option 2"]}',
+      displayName: 'Add Poll',
+      description: 'Create a poll with your status. Format: {"text": "Question?", "options": ["Option 1", "Option 2"]}',
       required: false,
     }),
+
     alertInvite: Property.Checkbox({
-      displayName: 'Alert Invite',
-      description: 'True if any mentioned user should be automatically invited to the workspace if the user does not have access to the object',
+      displayName: 'Auto-Invite Mentioned Users',
+      description: 'Automatically invite mentioned users to the workspace if they lack access',
       required: false,
       defaultValue: false,
     }),
@@ -56,23 +60,27 @@ export const createStatusAction = createAction({
     } = context.propsValue;
 
     if (!spaceId) {
-      throw new Error('Space selection is required. Please select a Podio workspace from the dropdown.');
+      throw new Error('Space selection is required. Please select a workspace to post your status to.');
     }
 
-    if (!value || value.trim().length === 0) {
-      throw new Error('Status message is required. Please provide a message to post.');
+    if (!value || typeof value !== 'string' || value.trim().length === 0) {
+      throw new Error('Status message is required and cannot be empty.');
     }
 
     if (fileIds && !Array.isArray(fileIds)) {
-      throw new Error('File IDs must be provided as an array of numbers.');
+      throw new Error('File IDs must be provided as an array.');
     }
 
-    if (question) {
+    if (embedId && typeof embedId !== 'number') {
+      throw new Error('Embed ID must be a number.');
+    }
+
+    if (question && typeof question === 'object') {
       if (!question['text'] || typeof question['text'] !== 'string') {
-        throw new Error('Question must have a "text" property with the question text.');
+        throw new Error('Poll question must have a "text" property with the question text.');
       }
       if (!question['options'] || !Array.isArray(question['options']) || question['options'].length === 0) {
-        throw new Error('Question must have an "options" property with an array of answer choices.');
+        throw new Error('Poll question must have an "options" array with at least one choice.');
       }
     }
 
@@ -88,14 +96,12 @@ export const createStatusAction = createAction({
       body.embed_id = embedId;
     }
 
-    if (embedUrl) {
-      body.embed_url = embedUrl;
+    if (embedUrl && embedUrl.trim()) {
+      body.embed_url = embedUrl.trim();
     }
 
-    if (question && typeof question === 'object' && Object.keys(question).length > 0) {
-      if (question['text'] && question['options']) {
-        body.question = question;
-      }
+    if (question && typeof question === 'object' && question['text'] && question['options']) {
+      body.question = question;
     }
 
     const queryParams: any = {};

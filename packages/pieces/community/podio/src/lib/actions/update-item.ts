@@ -1,16 +1,198 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioAuth } from '../../index';
-import { podioApiCall, getAccessToken, silentProperty, hookProperty, dynamicAppProperty, dynamicItemProperty } from '../common';
+import { podioApiCall, getAccessToken, silentProperty, hookProperty, dynamicAppProperty, dynamicItemProperty, formatFieldValues } from '../common';
 
 export const updateItemAction = createAction({
   auth: podioAuth,
   name: 'update_item',
   displayName: 'Update Item',
-  description: 'Update an already existing item. This is a rate-limited operation (250 calls/hour). Values will only be updated for fields included. To delete all values for a field supply an empty array.',
+  description: 'Update an existing record in a Podio app with specified field values. Only provided fields will be updated.',
   props: {
     appId: dynamicAppProperty,
     itemId: dynamicItemProperty,
+    appFields: Property.DynamicProperties({
+      displayName: 'App Fields',
+      description: 'Configure values for the fields you want to update in the selected app',
+      required: false,
+      refreshers: ['appId'],
+      props: async ({ auth, appId }) => {
+        if (!auth || !appId) {
+          return {};
+        }
+
+        try {
+          const accessToken = getAccessToken(auth as any);
+          const app = await podioApiCall<any>({
+            method: HttpMethod.GET,
+            accessToken,
+            resourceUri: `/app/${appId}`,
+            queryParams: { view: 'full' }
+          });
+
+          
+          
+          const fields = app.fields || [];
+          
+
+          if (!fields || fields.length === 0) {
+            return {};
+          }
+
+          const fieldProperties: Record<string, any> = {};
+
+          for (const field of fields) {
+            try {
+              const fieldKey = `field_${field.field_id}`;
+              const fieldConfig = field.config;
+              const fieldType = field.type;
+              const isRequired = false;
+              
+              
+              
+              const baseProps = {
+                displayName: fieldConfig.label,
+                description: fieldConfig.description || `Update value for ${fieldConfig.label}`,
+                required: isRequired,
+              };
+
+              switch (fieldType) {
+                case 'text':
+                  fieldProperties[fieldKey] = Property.LongText({
+                    ...baseProps,
+                    description: `${baseProps.description}. Supports plain text, markdown, or HTML.`,
+                  });
+                  break;
+
+                case 'number':
+                  fieldProperties[fieldKey] = Property.Number({
+                    ...baseProps,
+                    description: `${baseProps.description}. Enter a numeric value.`,
+                  });
+                  break;
+
+                case 'money':
+                  fieldProperties[fieldKey] = Property.Object({
+                    ...baseProps,
+                    description: `${baseProps.description}. Format: {"value": "amount", "currency": "USD"}`,
+                  });
+                  break;
+
+                case 'date':
+                  fieldProperties[fieldKey] = Property.Object({
+                    ...baseProps,
+                    description: `${baseProps.description}. Format: {"start_date": "YYYY-MM-DD", "start_time": "HH:MM:SS", "end_date": "YYYY-MM-DD", "end_time": "HH:MM:SS"}`,
+                  });
+                  break;
+
+                case 'contact':
+                  fieldProperties[fieldKey] = Property.Number({
+                    ...baseProps,
+                    description: `${baseProps.description}. Enter the Podio profile ID of the contact.`,
+                  });
+                  break;
+
+                case 'member':
+                  fieldProperties[fieldKey] = Property.Number({
+                    ...baseProps,
+                    description: `${baseProps.description}. Enter the Podio user ID of the member.`,
+                  });
+                  break;
+
+                case 'app':
+                  fieldProperties[fieldKey] = Property.Number({
+                    ...baseProps,
+                    description: `${baseProps.description}. Enter the ID of the item from the linked app.`,
+                  });
+                  break;
+
+                case 'category':
+                case 'status':
+                  
+                  let staticOptions: Array<{label: string, value: any}> = [];
+                  
+                  if (fieldConfig.settings?.options && Array.isArray(fieldConfig.settings.options)) {
+                    staticOptions = fieldConfig.settings.options.map((option: any) => ({
+                      label: option.text || option.name || option.value || `Option ${option.id}`,
+                      value: option.id || option.value,
+                    }));
+                  }
+                  
+                  if (staticOptions.length > 0) {
+                    fieldProperties[fieldKey] = Property.StaticDropdown({
+                      ...baseProps,
+                      options: {
+                        options: staticOptions,
+                      },
+                    });
+                  } else {
+                    fieldProperties[fieldKey] = Property.Number({
+                      ...baseProps,
+                      description: `${baseProps.description}. Enter the ${fieldType} option ID manually.`,
+                    });
+                  }
+                  break;
+
+                case 'email':
+                  fieldProperties[fieldKey] = Property.Object({
+                    ...baseProps,
+                    description: `${baseProps.description}. Format: {"value": "email@example.com", "type": "work|home|other"}`,
+                  });
+                  break;
+
+                case 'phone':
+                  fieldProperties[fieldKey] = Property.Object({
+                    ...baseProps,
+                    description: `${baseProps.description}. Format: {"value": "phone_number", "type": "mobile|work|home|main|work_fax|private_fax|other"}`,
+                  });
+                  break;
+
+                case 'location':
+                  fieldProperties[fieldKey] = Property.ShortText({
+                    ...baseProps,
+                    description: `${baseProps.description}. Enter a location (address, coordinates, etc.)`,
+                  });
+                  break;
+
+                case 'image':
+                case 'file':
+                  fieldProperties[fieldKey] = Property.Number({
+                    ...baseProps,
+                    description: `${baseProps.description}. Enter the file ID of the uploaded ${fieldType}.`,
+                  });
+                  break;
+
+                case 'progress':
+                  fieldProperties[fieldKey] = Property.Number({
+                    ...baseProps,
+                    description: `${baseProps.description}. Enter a value between 0 and 100.`,
+                  });
+                  break;
+
+                default:
+                  fieldProperties[fieldKey] = Property.ShortText({
+                    ...baseProps,
+                    description: `${baseProps.description}. Field type: ${fieldType}`,
+                  });
+              }
+            } catch (fieldError) {
+              
+              const fieldKey = `field_${field.field_id}`;
+              fieldProperties[fieldKey] = Property.ShortText({
+                displayName: `${field.config?.label || 'Unknown Field'} (Fallback)`,
+                description: `Field type "${field.type}" - Manual entry required. Original error: ${fieldError instanceof Error ? fieldError.message : 'Unknown error'}`,
+                required: false,
+              });
+            }
+          }
+
+          
+          return fieldProperties;
+        } catch (error) {
+          return {};
+        }
+      },
+    }),
     revision: Property.Number({
       displayName: 'Revision',
       description: 'The revision of the item that is being updated. Optional for conflict detection.',
@@ -21,9 +203,9 @@ export const updateItemAction = createAction({
       description: 'The new external_id of the item',
       required: false,
     }),
-    fields: Property.Object({
-      displayName: 'Fields',
-      description: 'The values for each field. Use field_id or external_id as keys. To delete all values for a field supply an empty array.',
+    legacyFields: Property.Object({
+      displayName: 'Legacy Fields (Advanced)',
+      description: 'Manual field configuration using field_id or external_id as keys. Use this for advanced scenarios or when dynamic fields are not sufficient.',
       required: false,
     }),
     fileIds: Property.Array({
@@ -59,14 +241,15 @@ export const updateItemAction = createAction({
     hook: hookProperty,
     silent: silentProperty,
   },
-  async run(context) {
+  async run(context) {    
     const accessToken = getAccessToken(context.auth);
     const { 
       appId,
       itemId, 
+      appFields,
       revision, 
       externalId, 
-      fields, 
+      legacyFields, 
       fileIds, 
       tags, 
       reminder, 
@@ -83,6 +266,30 @@ export const updateItemAction = createAction({
 
     if (!itemId) {
       throw new Error('Item selection is required to update an item. Please select an item from the dropdown.');
+    }
+
+    let formattedFields: Record<string, any> = {};
+    
+    if (appFields && Object.keys(appFields).length > 0) {
+      try {
+        
+        const app = await podioApiCall<any>({
+          method: HttpMethod.GET,
+          accessToken,
+          resourceUri: `/app/${appId}`,
+          queryParams: { view: 'full' }
+        });
+        
+        const fieldDefinitions = app.fields || [];
+        
+        formattedFields = formatFieldValues(fieldDefinitions, appFields);
+      } catch (error) {
+        throw new Error(`Failed to process app fields: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+
+    if (legacyFields && typeof legacyFields === 'object' && Object.keys(legacyFields).length > 0) {
+      formattedFields = { ...formattedFields, ...legacyFields };
     }
 
     if (fileIds && !Array.isArray(fileIds)) {
@@ -118,8 +325,8 @@ export const updateItemAction = createAction({
       body.external_id = externalId.trim();
     }
 
-    if (fields !== undefined) {
-      body.fields = fields;
+    if (Object.keys(formattedFields).length > 0) {
+      body.fields = formattedFields;
     }
 
     if (fileIds && Array.isArray(fileIds) && fileIds.length > 0) {

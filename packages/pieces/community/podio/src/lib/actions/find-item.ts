@@ -1,17 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioAuth } from '../../index';
-import { podioApiCall, getAccessToken, dynamicAppProperty, dynamicItemProperty, limitProperty, offsetProperty } from '../common';
+import { podioApiCall, getAccessToken, dynamicAppProperty, dynamicItemProperty, limitProperty, offsetProperty, dynamicOrgProperty, dynamicSpaceProperty } from '../common';
 
 export const findItemAction = createAction({
   auth: podioAuth,
   name: 'find_item',
   displayName: 'Find Item',
-  description: 'Retrieve a single item by ID or search for items in an app by field values',
+  description: 'Retrieve a single item by ID or field value.',
   props: {
     searchType: Property.Dropdown({
-      displayName: 'Search Type',
-      description: 'How to search for the item',
+      displayName: 'Search Method',
+      description: 'How to find the item',
       required: true,
       refreshers: [],
       options: async () => {
@@ -23,34 +23,40 @@ export const findItemAction = createAction({
         };
       },
     }),
+
     itemId: Property.Number({
       displayName: 'Item ID',
-      description: 'The ID of the item to retrieve (required when using "Get by Item ID")',
+      description: 'The specific item ID to retrieve',
       required: false,
     }),
     selectedItem: dynamicItemProperty,
     markAsViewed: Property.Checkbox({
       displayName: 'Mark as Viewed',
-      description: 'If true marks any new notifications on the given item as viewed, otherwise leaves any notifications untouched',
+      description: 'Mark any new notifications on this item as viewed',
       required: false,
       defaultValue: true,
     }),
+
+    orgId: dynamicOrgProperty,
+    spaceId: dynamicSpaceProperty,
     appId: dynamicAppProperty,
+
     filters: Property.Object({
-      displayName: 'Filters',
-      description: 'Object containing filter criteria. Use field external_id as keys.',
+      displayName: 'Search Filters',
+      description: 'Filter criteria as JSON object. Use field external_id as keys.',
       required: false,
     }),
+
     limit: limitProperty,
     offset: offsetProperty,
     sortBy: Property.ShortText({
       displayName: 'Sort By',
-      description: 'Field to sort by (e.g., "created_on", "last_edit_on")',
+      description: 'Field to sort results by (e.g., "created_on", "last_edit_on")',
       required: false,
     }),
     sortDesc: Property.Checkbox({
       displayName: 'Sort Descending',
-      description: 'Whether to sort in descending order',
+      description: 'Sort results in descending order',
       required: false,
       defaultValue: false,
     }),
@@ -62,6 +68,8 @@ export const findItemAction = createAction({
       itemId, 
       selectedItem,
       markAsViewed,
+      orgId,
+      spaceId,
       appId, 
       filters, 
       limit, 
@@ -74,7 +82,7 @@ export const findItemAction = createAction({
       const finalItemId = selectedItem || itemId;
       
       if (!finalItemId) {
-        throw new Error('Item ID is required when searching by ID. Please provide an item ID or select an item from the dropdown.');
+        throw new Error('Item ID is required. Please provide an item ID or select an item from the dropdown.');
       }
 
       const queryParams: any = {};
@@ -92,32 +100,33 @@ export const findItemAction = createAction({
       return response;
     } else if (searchType === 'filter') {
       if (!appId) {
-        throw new Error('App selection is required when filtering items. Please select a Podio app from the dropdown.');
+        throw new Error('App selection is required for filtering. Please select an app first.');
       }
 
-      const body: any = {};
-      
-      if (filters && Object.keys(filters).length > 0) {
-        body.filters = filters;
-      }
-
-      if (limit) {
-        if (limit < 1 || limit > 500) {
-          throw new Error('Limit must be between 1 and 500.');
-        }
-        body.limit = limit;
+      if (limit && (limit < 1 || limit > 500)) {
+        throw new Error('Limit must be between 1 and 500.');
       }
 
       if (offset && offset < 0) {
         throw new Error('Offset must be 0 or greater.');
       }
 
+      const body: any = {};
+      
+      if (filters && typeof filters === 'object' && Object.keys(filters).length > 0) {
+        body.filters = filters;
+      }
+
+      if (limit) {
+        body.limit = limit;
+      }
+
       if (offset) {
         body.offset = offset;
       }
 
-      if (sortBy) {
-        body.sort_by = sortBy;
+      if (sortBy && sortBy.trim()) {
+        body.sort_by = sortBy.trim();
         body.sort_desc = Boolean(sortDesc);
       }
 
@@ -130,7 +139,7 @@ export const findItemAction = createAction({
 
       return response;
     } else {
-      throw new Error('Invalid search type. Please select either "Get by Item ID" or "Filter Items in App".');
+      throw new Error('Invalid search method. Please select either "Get by Item ID" or "Filter Items in App".');
     }
   },
 }); 
