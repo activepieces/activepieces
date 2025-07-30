@@ -22,7 +22,9 @@ export const callFlow = createAction({
       description: 'The flow to execute',
       required: true,
       options: async (_, context) => {
-        const flows = await listEnabledFlowsWithSubflowTrigger(context);
+        const flows = await listEnabledFlowsWithSubflowTrigger({
+          flowsContext: context.flows,
+        });
         return {
           options: flows.map((flow) => ({
             value: {
@@ -142,8 +144,20 @@ export const callFlow = createAction({
       }
     }
     const payload = context.propsValue.flowProps['payload'];
-    const allFlows = await listEnabledFlowsWithSubflowTrigger(context);
-    const flow = allFlows.find((flow) => flow.externalId === context.propsValue.flow?.id || flow.id === context.propsValue.flow?.id);
+    const externalIds = [context.propsValue.flow?.id].filter((id) => !isNil(id))
+    const allFlows = await listEnabledFlowsWithSubflowTrigger({
+      flowsContext: context.flows,
+      params: {
+        externalIds
+      }
+    });
+    if (allFlows.length === 0) {
+      throw new Error(JSON.stringify({
+        message: 'Flow not found',
+        flowId: context.propsValue.flow?.id,
+      }));
+    }
+    const flow = allFlows[0];
 
     const response = await httpClient.sendRequest<CallableFlowRequest>({
       method: HttpMethod.POST,

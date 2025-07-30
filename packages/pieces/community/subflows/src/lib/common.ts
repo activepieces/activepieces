@@ -1,4 +1,5 @@
 import { FlowStatus, PopulatedFlow, SeekPage, TriggerType } from "@activepieces/shared";
+import { FlowsContext, ListFlowsContextParams } from "@activepieces/pieces-framework";
 
 
 export const callableFlowKey = (runId: string) => `callableFlow_${runId}`;
@@ -14,8 +15,11 @@ export type CallableFlowResponse = {
 
 export const MOCK_CALLBACK_IN_TEST_FLOW_URL = 'MOCK';
 
-export async function listEnabledFlowsWithSubflowTrigger(context: { flows: { list: () => Promise<SeekPage<PopulatedFlow>> } }) {
-    const allFlows = (await context.flows.list()).data;
+export async function listEnabledFlowsWithSubflowTrigger({
+    flowsContext,
+    params,
+}: ListParams) {
+    const allFlows = (await flowsContext.list(params)).data;
     const flows = allFlows.filter(
       (flow) =>
         flow.status === FlowStatus.ENABLED &&
@@ -24,4 +28,9 @@ export async function listEnabledFlowsWithSubflowTrigger(context: { flows: { lis
         '@activepieces/piece-subflows'
     );
     return flows;
+}
+
+type ListParams = {
+    flowsContext: FlowsContext,
+    params?: ListFlowsContextParams
 }
