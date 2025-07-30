@@ -1,12 +1,10 @@
 import { Navigate, useLocation } from 'react-router-dom';
 
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { determineDefaultRoute } from '@/lib/utils';
 
 export const DefaultRoute = () => {
   const token = authenticationSession.getToken();
-  const { checkAccess } = useAuthorization();
   const location = useLocation();
 
   if (!token) {
@@ -19,5 +17,5 @@ export const DefaultRoute = () => {
       ></Navigate>
     );
   }
-  return <Navigate to={determineDefaultRoute(checkAccess)} replace></Navigate>;
+  return <Navigate to={determineDefaultRoute()} replace></Navigate>;
 };
