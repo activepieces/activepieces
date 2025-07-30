@@ -498,6 +498,9 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-klaviyo": [
+        "packages/pieces/community/klaviyo/src/index.ts"
+      ],
       "@activepieces/piece-kommo": [
         "packages/pieces/community/kommo/src/index.ts"
       ],
