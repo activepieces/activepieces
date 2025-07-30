@@ -150,7 +150,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         externalId: operation.mcpState.externalId,
                     })
 
-                    // Update the MCP with the exact tools from the state
                     await mcpService(log).update({
                         mcpId: createdMcp.id,
                         name: operation.mcpState.name,
@@ -192,7 +191,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         mcpExternalId: operation.agentState.mcp.externalId,
                     })
                     
-                    // Update the MCP with the exact tools from the state
                     const mcpState = operation.agentState.mcp
                     await mcpService(log).update({
                         mcpId: createdAgent.mcpId,
@@ -207,7 +205,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         projectId,
                     })
                     
-                    // Update the agent
                     await agentsService(log).update({
                         id: existingAgent.id,
                         displayName: operation.newAgentState.displayName,
@@ -219,7 +216,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         projectId,
                     })
                     
-                    // Update the associated MCP with new tools
                     const mcpState = operation.newAgentState.mcp
                     await mcpService(log).update({
                         mcpId: existingAgent.mcpId,
