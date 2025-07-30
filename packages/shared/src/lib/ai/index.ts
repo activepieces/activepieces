@@ -1,11 +1,14 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../common'
+import { BaseModelSchema, DiscriminatedUnion } from '../common'
 import { SeekPage } from '../common/seek-page'
 
 export const AIProvider = Type.Object({
     ...BaseModelSchema,
     config: Type.Object({
         apiKey: Type.String(),
+        azureOpenAI: Type.Optional(Type.Object({
+            resourceName: Type.String(),
+        })),
     }),
     provider: Type.String({ minLength: 1 }),
     platformId: Type.String(),
@@ -19,9 +22,49 @@ export type AIProviderWithoutSensitiveData = Static<typeof AIProviderWithoutSens
 export const CreateAIProviderRequest = Type.Object({
     provider: Type.String({ minLength: 1 }),
     apiKey: Type.String(),
+    useAzureOpenAI: Type.Optional(Type.Boolean()),
+    resourceName: Type.Optional(Type.String()),
 })
 
 export type CreateAIProviderRequest = Static<typeof CreateAIProviderRequest>
+
+export const AI_USAGE_FEATURE_HEADER = 'ap-feature'
+export const AI_USAGE_AGENT_ID_HEADER = 'ap-agent-id'
+export const AI_USAGE_MCP_ID_HEADER = 'ap-mcp-id'
+
+export enum AIUsageFeature {
+    AGENTS = 'Agents',   
+    MCP = 'MCP',
+    TEXT_AI = 'Text AI',
+    IMAGE_AI = 'Image AI',
+    UTILITY_AI = 'Utility AI',
+    UNKNOWN = 'Unknown',
+}
+
+const agentMetadata = Type.Object({
+    feature: Type.Literal(AIUsageFeature.AGENTS),
+    agentid: Type.String(),
+})
+
+const mcpMetadata = Type.Object({
+    feature: Type.Literal(AIUsageFeature.MCP),
+    mcpid: Type.String(),
+})
+
+const simpleFeatures = [AIUsageFeature.TEXT_AI, AIUsageFeature.IMAGE_AI, AIUsageFeature.UTILITY_AI, AIUsageFeature.UNKNOWN] as const
+const simpleMetadataVariants = simpleFeatures.map(feature => 
+    Type.Object({
+        feature: Type.Literal(feature),
+    }),
+)
+
+export const AIUsageMetadata = DiscriminatedUnion('feature', [
+    agentMetadata,
+    mcpMetadata,
+    ...simpleMetadataVariants,
+])
+
+export type AIUsageMetadata = Static<typeof AIUsageMetadata>
 
 export const AIUsage = Type.Object({
     ...BaseModelSchema,
@@ -29,6 +72,8 @@ export const AIUsage = Type.Object({
     model: Type.String({ minLength: 1 }),
     cost: Type.Number({ minimum: 0 }),
     projectId: Type.String(),
+    platformId: Type.String(),
+    metadata: AIUsageMetadata,
 })
 
 export type AIUsage = Static<typeof AIUsage>

@@ -7,6 +7,7 @@ export type CallableFlowRequest = {
     callbackUrl: string;
 }
 export type CallableFlowResponse = {
+    status: 'success' | 'error';
     data: unknown;
 }
 

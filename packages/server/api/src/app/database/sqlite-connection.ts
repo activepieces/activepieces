@@ -129,6 +129,14 @@ import { AddPlatformIdToAIUsageSqlite1751475726665 } from './migration/sqlite/17
 import { RemoveTerminationReasonSqlite1751727630516 } from './migration/sqlite/1751727630516-RemoveTerminationReasonSqlite'
 import { AddFlowVersionToIssueSqlite1751927149586 } from './migration/sqlite/1751927149586-AddFlowVersionToIssueSqlite'
 import { AddIndexForSchemaVersionInFlowVersionSqlite1752152069517 } from './migration/sqlite/1752152069517-AddIndexForSchemaVersionInFlowVersionSqlite'
+import { AddAgentRunsEntitySqlite1752583785385 } from './migration/sqlite/1752583785385-AddAgentRunsEntitySqlite'
+import { AddTableAgentsSqlite1752851142438 } from './migration/sqlite/1752851142438-AddTableAgentsSqlite'
+import { AddTableAutomationStatusSqlite1753013268133 } from './migration/sqlite/1753013268133-AddTableAutomationStatusSqlite'
+import { AddIndexForAgentTableSqlite1753400496920 } from './migration/sqlite/1753400496920-AddIndexForAgentTableSqlite'
+import { AddExternalAgentIdSqlite1753643287673 } from './migration/sqlite/1753643287673-AddExternalAgentIdSqlite'
+import { AddParentRunIdToFlowRunSqlite1753719777841 } from './migration/sqlite/1753719777841-AddParentRunIdToFlowRunSqlite'
+import { AddCascadeOnAgentsSqlite1753727589109 } from './migration/sqlite/1753727589109-AddCascadeOnAgentsSqlite'
+import { AddExternalIdToMCPSqlite1753786833156 } from './migration/sqlite/1753786833156-AddExternalIdToMCPSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -274,6 +282,14 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowVersionToIssueSqlite1751927149586,
         SplitUpPieceMetadataIntoTools1752004202722,
         AddIndexForSchemaVersionInFlowVersionSqlite1752152069517,
+        AddAgentRunsEntitySqlite1752583785385,
+        AddTableAgentsSqlite1752851142438,
+        AddTableAutomationStatusSqlite1753013268133,
+        AddIndexForAgentTableSqlite1753400496920,
+        AddExternalAgentIdSqlite1753643287673,
+        AddParentRunIdToFlowRunSqlite1753719777841,
+        AddCascadeOnAgentsSqlite1753727589109,
+        AddExternalIdToMCPSqlite1753786833156,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

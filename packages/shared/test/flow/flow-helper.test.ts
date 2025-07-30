@@ -21,6 +21,7 @@ const flowVersionWithBranching: FlowVersion = {
     flowId: 'lod6JEdKyPlvrnErdnrGa',
     updatedBy: '',
     displayName: 'Standup Reminder',
+    agentIds: [],
     trigger: {
         name: 'trigger',
         type: TriggerType.PIECE,
@@ -29,8 +30,6 @@ const flowVersionWithBranching: FlowVersion = {
             input: {
                 cronExpression: '25 10 * * 0,1,2,3,4',
             },
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
             pieceName: 'schedule',
             pieceVersion: '0.0.2',
             inputUiInfo: {},
@@ -135,6 +134,7 @@ const emptyScheduleFlowVersion: FlowVersion = {
     flowId: 'lod6JEdKyPlvrnErdnrGa',
     displayName: 'Standup Reminder',
     updatedBy: '',
+    agentIds: [],
     trigger: {
         name: 'trigger',
         type: TriggerType.PIECE,
@@ -143,8 +143,6 @@ const emptyScheduleFlowVersion: FlowVersion = {
             input: {
                 cronExpression: '25 10 * * 0,1,2,3,4',
             },
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
             pieceName: 'schedule',
             pieceVersion: '0.0.2',
             inputUiInfo: {},
@@ -184,6 +182,7 @@ describe('Flow Helper', () => {
             updated: '2023-05-24T00:16:41.353Z',
             flowId: 'lod6JEdKyPlvrnErdnrGa',
             displayName: 'Standup Reminder',
+            agentIds: [],
             trigger: {
                 name: 'trigger',
                 type: TriggerType.PIECE,
@@ -192,8 +191,6 @@ describe('Flow Helper', () => {
                     input: {
                         cronExpression: '25 10 * * 0,1,2,3,4',
                     },
-                    packageType: PackageType.REGISTRY,
-                    pieceType: PieceType.OFFICIAL,
                     pieceName: 'schedule',
                     pieceVersion: '~0.0.2',
                     inputUiInfo: {},
@@ -274,8 +271,6 @@ describe('Flow Helper', () => {
                 input: {
                     cronExpression: '25 10 * * 0,1,2,3,4',
                 },
-                packageType: PackageType.REGISTRY,
-                pieceType: PieceType.OFFICIAL,
                 pieceName: 'schedule',
                 pieceVersion: '~0.0.2',
                 inputUiInfo: {},
@@ -331,6 +326,7 @@ test('Duplicate Flow With Loops using Import', () => {
         flowId: 'YGPIPQDfLcPdJ0aJ9AKGb',
         updatedBy: '',
         displayName: 'Flow 1',
+        agentIds: [],
         trigger: {
             name: 'trigger',
             type: TriggerType.PIECE,
@@ -343,8 +339,6 @@ test('Duplicate Flow With Loops using Import', () => {
                     },
                     authentication: '{{connections.github}}',
                 },
-                packageType: PackageType.REGISTRY,
-                pieceType: PieceType.OFFICIAL,
                 pieceName: 'github',
                 pieceVersion: '0.1.3',
                 inputUiInfo: {},

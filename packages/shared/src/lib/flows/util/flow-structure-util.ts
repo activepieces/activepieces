@@ -4,6 +4,9 @@ import { Action, ActionType, BranchCondition, BranchExecutionType, emptyConditio
 import { FlowVersion } from '../flow-version'
 import { Trigger, TriggerType } from '../triggers/trigger'
 
+
+export const AGENT_PIECE_NAME = '@activepieces/piece-agent'
+
 export type Step = Action | Trigger
 type StepWithIndex = Step & {
     dfsIndex: number
@@ -200,13 +203,15 @@ function getAllNextActionsWithoutChildren(start: Step): Step[] {
 }
 
 
-const extractConnectionIdsFromAuth = (auth: string): string[] =>
-    auth.match(/{{connections\['([^']*(?:'\s*,\s*'[^']*)*)'\]}}/)
-        ?.[1]
-        .split(/'\s*,\s*'/)
-        .map(id => id.trim()) ?? []
+function extractConnectionIdsFromAuth(auth: string): string[] {
+    const match = auth.match(/{{connections\['([^']*(?:'\s*,\s*'[^']*)*)'\]}}/)
+    if (!match || !match[1]) {
+        return []
+    }
+    return match[1].split(/'\s*,\s*'/).map(id => id.trim())
+}
 
-const extractConnectionIds = (flowVersion: FlowVersion): string[] => {
+function extractConnectionIds(flowVersion: FlowVersion): string[] {
     const triggerAuthIds = flowVersion.trigger.settings?.input?.auth
         ? extractConnectionIdsFromAuth(flowVersion.trigger.settings.input.auth)
         : []
@@ -220,6 +225,23 @@ const extractConnectionIds = (flowVersion: FlowVersion): string[] => {
         )
 
     return Array.from(new Set([...triggerAuthIds, ...stepAuthIds]))
+}
+
+function extractAgentIds(flowVersion: FlowVersion): string[] {
+    return flowStructureUtil.getAllSteps(flowVersion.trigger).map(step => getExternalAgentId(step)).filter(step => step !== null && step !== '')
+}
+
+function getExternalAgentId(action: Step) {
+    if (isAgentPiece(action)) {
+        return action.settings.input.agentId
+    }
+    return null
+}
+
+function isAgentPiece(action: Step) {
+    return (
+        action.type === ActionType.PIECE && action.settings.pieceName === AGENT_PIECE_NAME
+    )
 }
 
 export const flowStructureUtil = {
@@ -240,4 +262,7 @@ export const flowStructureUtil = {
     getAllNextActionsWithoutChildren,
     getAllChildSteps,
     extractConnectionIds,
+    extractAgentIds,
+    isAgentPiece,
+    getExternalAgentId,
 }

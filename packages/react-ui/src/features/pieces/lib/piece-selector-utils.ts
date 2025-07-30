@@ -244,8 +244,6 @@ const getDefaultStepValues = ({
           type: ActionType.PIECE,
           settings: overrideDefaultSettings ?? {
             pieceName: pieceSelectorItem.pieceMetadata.pieceName,
-            pieceType: pieceSelectorItem.pieceMetadata.pieceType,
-            packageType: pieceSelectorItem.pieceMetadata.packageType,
             actionName: pieceSelectorItem.actionOrTrigger.name,
             pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
             input,
@@ -266,8 +264,6 @@ const getDefaultStepValues = ({
           type: TriggerType.PIECE,
           settings: overrideDefaultSettings ?? {
             pieceName: pieceSelectorItem.pieceMetadata.pieceName,
-            pieceType: pieceSelectorItem.pieceMetadata.pieceType,
-            packageType: pieceSelectorItem.pieceMetadata.packageType,
             triggerName: pieceSelectorItem.actionOrTrigger.name,
             pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
             input,

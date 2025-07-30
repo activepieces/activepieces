@@ -60,7 +60,7 @@ const AlertFrequencyCard = React.memo(() => {
   return (
     <Card className="w-full">
       <CardHeader className="pb-3">
-        <CardTitle>{t('Alerts')}</CardTitle>
+        <CardTitle className="text-xl">{t('Alerts')}</CardTitle>
         <CardDescription>
           {t('Choose what you want to be notified about.')}
         </CardDescription>

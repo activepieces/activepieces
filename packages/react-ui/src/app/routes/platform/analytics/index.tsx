@@ -24,9 +24,10 @@ export default function AnalyticsPage() {
       )}
     >
       <div className="flex flex-col w-full">
-        {showRefreshButton && (
-          <RefreshAnalyticsSection lastRefreshMs={data?.updated ?? ''} />
-        )}
+        <RefreshAnalyticsSection
+          show={showRefreshButton}
+          lastRefreshMs={data?.updated ?? ''}
+        />
         <div className="mt-8 flex gap-8 flex-col">
           <Metrics report={isLoading ? undefined : data} />
           <Separator />
