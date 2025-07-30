@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { projectHooks } from '@/hooks/project-hooks';
 import {
   FROM_QUERY_PARAM,
@@ -25,13 +26,15 @@ export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
     isFetching,
   } = projectHooks.useSwitchToProjectInParams();
 
+  const { embedState } = useEmbedding();
+
   if (isNil(projectIdFromParams) || isNil(projectIdFromParams)) {
     return <Navigate to="/sign-in" replace />;
   }
   const failedToSwitchToProject =
     !isProjectValid && !isNil(projectIdFromParams);
   if (failedToSwitchToProject) {
-    const defaultRoute = determineDefaultRoute();
+    const defaultRoute = determineDefaultRoute(embedState.isEmbedded);
     return <Navigate to={defaultRoute} replace />;
   }
   if (isError || !isProjectValid) {

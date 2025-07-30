@@ -29,7 +29,7 @@ const ApDashboardSidebarHeader = ({
     edition !== ApEdition.COMMUNITY &&
     !embedState.isEmbedded &&
     !isInPlatformAdmin;
-  const defaultRoute = determineDefaultRoute();
+  const defaultRoute = determineDefaultRoute(embedState.isEmbedded);
 
   return (
     <SidebarHeader className="pb-0">

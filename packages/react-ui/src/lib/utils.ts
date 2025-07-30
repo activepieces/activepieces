@@ -231,7 +231,10 @@ export const useTimeAgo = (date: Date) => {
   return timeAgo;
 };
 
-export const determineDefaultRoute = () => {
+export const determineDefaultRoute = (isEmbedded: boolean) => {
+  if (isEmbedded) {
+    return authenticationSession.appendProjectRoutePrefix('/flows');
+  }
   return authenticationSession.appendProjectRoutePrefix('/agents');
 };
 
