@@ -1,6 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
 import { AgentStepBlock } from './content'
+import { McpWithTools } from '../mcp'
 
 export enum AgentOutputType {
     NO_OUTPUT = 'no_output',
@@ -72,6 +73,15 @@ export const Agent = Type.Object({
 })
 
 export type Agent = Static<typeof Agent>
+
+export const PopulatedAgent = Type.Composite([
+    Agent,
+    Type.Object({
+        mcp: McpWithTools,
+    }),
+])
+
+export type PopulatedAgent = Static<typeof PopulatedAgent>
 
 export const CreateAgentRequest = Type.Object({
     displayName: Type.String(),
