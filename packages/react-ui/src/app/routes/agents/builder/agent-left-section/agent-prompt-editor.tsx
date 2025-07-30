@@ -97,7 +97,7 @@ export const AgentPromptEditior = () => {
             updateAgent({ systemPrompt: e.target.value }, true);
           }}
           placeholder="Describe this agent's purpose, responsibilities, and any special instructions."
-          className="flex-1 min-h-full max-h-full resize-none w-full focus-visible:ring-0 shadow-none h-full"
+          className="flex-1 min-h-full max-h-full resize-none w-full focus-visible:ring-0 shadow-none h-full px-0 py-0 border-0"
           maxRows={100}
           disabled={isNil(agent) || isPending}
           ref={textareaRef}
