@@ -284,10 +284,7 @@ async function normalize(flowVersion: FlowVersion): Promise<FlowVersion> {
 
 
 type DiffParams = {
-    currentState: {
-        flows: PopulatedFlow[]
-        connections?: ConnectionState[]
-    }
+    currentState: ProjectState
     newState: ProjectState
 }
 

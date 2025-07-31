@@ -177,7 +177,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         for (const operation of agents) {
             switch (operation.type) {
                 case AgentOperationType.CREATE_AGENT: {
-                    // Create the agent with all properties (agentsService.create already creates and associates an MCP)
                     const createdAgent = await agentsService(log).create({
                         displayName: operation.agentState.displayName,
                         description: operation.agentState.description,
@@ -192,7 +191,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         mcpExternalId: operation.agentState.mcp.externalId,
                     })
                     
-                    // Update the MCP with the exact tools from the state
                     const mcpState = operation.agentState.mcp
                     await mcpService(log).update({
                         mcpId: createdAgent.mcpId,
@@ -207,7 +205,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         projectId,
                     })
                     
-                    // Update the agent
                     await agentsService(log).update({
                         id: existingAgent.id,
                         displayName: operation.newAgentState.displayName,
@@ -219,7 +216,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         projectId,
                     })
                     
-                    // Update the associated MCP with new tools
                     const mcpState = operation.newAgentState.mcp
                     await mcpService(log).update({
                         mcpId: existingAgent.mcpId,
@@ -230,8 +226,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 }
             }
         }
-
-        
     },
     async save(projectId: ProjectId, name: string, log: FastifyBaseLogger): Promise<FileId> {
         const fileToSave: ProjectState = await this.getCurrentState(projectId, log)

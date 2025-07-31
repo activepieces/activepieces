@@ -85,6 +85,7 @@ export * from './lib/changelog'
 export * from './lib/mcp'
 export * from './lib/agents'
 export * from './lib/agents/content'
+export * from './lib/solutions'
 
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 import { TypeSystemPolicy } from '@sinclair/typebox/system'
