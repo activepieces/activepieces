@@ -29,11 +29,12 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             name: params.displayName,
             projectId: params.projectId,
         })
+        const { description, displayName, systemPrompt } = await this.enhanceAgentPrompt({ platformId: params.platformId, projectId: params.projectId, systemPrompt: params.systemPrompt })
         const agentPayload: Omit<Agent, 'created' | 'updated' | 'taskCompleted' | 'runCompleted'> = {
             id: apId(),
-            displayName: params.displayName,
-            description: params.description,
-            systemPrompt: params.systemPrompt,
+            displayName: displayName,
+            description: description,
+            systemPrompt: systemPrompt,
             platformId: params.platformId,
             profilePictureUrl: getAgentProfilePictureUrl(),
             testPrompt: '',
@@ -68,11 +69,10 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             baseURL,
             apiKey,
             headers: {
-                [AI_USAGE_FEATURE_HEADER]: AIUsageFeature.TEXT_AI,
+                [AI_USAGE_FEATURE_HEADER]: AIUsageFeature.AGENTS,
             },
-        }).chat('gpt-4o')
+        }).chat('gpt-4o-mini')
         const { system, prompt } = getEnhancementPrompt(systemPrompt)
-
         const { object } = await generateObject({
             model,
             system, 
@@ -80,7 +80,6 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             mode: 'json',
             schema: enhancePromptSchema, 
         })
-
         return object
     },
     async getOneByExternalIdOrThrow(params: GetOneByExternalIdParams): Promise<Agent> {
@@ -198,7 +197,6 @@ function getEnhancementPrompt(originalPrompt: string) {
                 3. **Agent Description**: Write a concise description (maximum 10 words) that clearly communicates the agent’s purpose.`,
     }
 }
-
 
 type GetOneByExternalIdParams = {
     externalId: string
