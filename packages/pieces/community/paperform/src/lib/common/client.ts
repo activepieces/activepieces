@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PaperformFormsResponse, PaperformWebhookResponse } from './types';
+import { PaperformFormsResponse, PaperformWebhookResponse, PaperformSubmissionsResponse, PaperformPartialSubmissionsResponse, PaperformCouponsResponse, PaperformFieldsResponse, PaperformProductsResponse, PaperformSpacesResponse } from './types';
 
 export const paperformCommon = {
   baseUrl: 'https://api.paperform.co/v1',
@@ -37,18 +37,74 @@ export const paperformCommon = {
     return response.body;
   },
 
-  async getForms({
+  async getSpaces({
     auth,
-    limit = 50,
+    search,
+    limit = 20,
     skip = 0,
+    afterId,
+    beforeId,
+    beforeDate,
+    afterDate,
+    sort = 'DESC',
   }: {
     auth: string | { apiKey: string };
+    search?: string;
     limit?: number;
     skip?: number;
+    afterId?: string;
+    beforeId?: string;
+    beforeDate?: string;
+    afterDate?: string;
+    sort?: string;
   }) {
     const params = new URLSearchParams();
+    if (search) params.append('search', search);
     if (limit) params.append('limit', limit.toString());
     if (skip) params.append('skip', skip.toString());
+    if (afterId) params.append('after_id', afterId);
+    if (beforeId) params.append('before_id', beforeId);
+    if (beforeDate) params.append('before_date', beforeDate);
+    if (afterDate) params.append('after_date', afterDate);
+    if (sort) params.append('sort', sort);
+
+    return this.apiCall<PaperformSpacesResponse>({
+      method: HttpMethod.GET,
+      url: `/spaces?${params.toString()}`,
+      auth,
+    });
+  },
+
+  async getForms({
+    auth,
+    search,
+    limit = 20,
+    skip = 0,
+    afterId,
+    beforeId,
+    beforeDate,
+    afterDate,
+    sort = 'DESC',
+  }: {
+    auth: string | { apiKey: string };
+    search?: string;
+    limit?: number;
+    skip?: number;
+    afterId?: string;
+    beforeId?: string;
+    beforeDate?: string;
+    afterDate?: string;
+    sort?: string;
+  }) {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (limit) params.append('limit', limit.toString());
+    if (skip) params.append('skip', skip.toString());
+    if (afterId) params.append('after_id', afterId);
+    if (beforeId) params.append('before_id', beforeId);
+    if (beforeDate) params.append('before_date', beforeDate);
+    if (afterDate) params.append('after_date', afterDate);
+    if (sort) params.append('sort', sort);
 
     return this.apiCall<PaperformFormsResponse>({
       method: HttpMethod.GET,
@@ -71,6 +127,25 @@ export const paperformCommon = {
     });
   },
 
+  async getFormFields({
+    formSlugOrId,
+    auth,
+    search,
+  }: {
+    formSlugOrId: string;
+    auth: string | { apiKey: string };
+    search?: string;
+  }) {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+
+    return this.apiCall<PaperformFieldsResponse>({
+      method: HttpMethod.GET,
+      url: `/forms/${formSlugOrId}/fields?${params.toString()}`,
+      auth,
+    });
+  },
+
   async getSubmissions({
     formId,
     auth,
@@ -86,9 +161,78 @@ export const paperformCommon = {
     if (limit) params.append('limit', limit.toString());
     if (skip) params.append('skip', skip.toString());
 
-    return this.apiCall({
+    return this.apiCall<PaperformSubmissionsResponse>({
       method: HttpMethod.GET,
       url: `/forms/${formId}/submissions?${params.toString()}`,
+      auth,
+    });
+  },
+
+  async getPartialSubmissions({
+    formSlugOrId,
+    auth,
+    limit = 50,
+    skip = 0,
+  }: {
+    formSlugOrId: string;
+    auth: string | { apiKey: string };
+    limit?: number;
+    skip?: number;
+  }) {
+    const params = new URLSearchParams();
+    if (limit) params.append('limit', limit.toString());
+    if (skip) params.append('skip', skip.toString());
+
+    return this.apiCall<PaperformPartialSubmissionsResponse>({
+      method: HttpMethod.GET,
+      url: `/forms/${formSlugOrId}/partial-submissions?${params.toString()}`,
+      auth,
+    });
+  },
+
+  async getCoupons({
+    formSlugOrId,
+    auth,
+    limit = 50,
+    skip = 0,
+  }: {
+    formSlugOrId: string;
+    auth: string | { apiKey: string };
+    limit?: number;
+    skip?: number;
+  }) {
+    const params = new URLSearchParams();
+    if (limit) params.append('limit', limit.toString());
+    if (skip) params.append('skip', skip.toString());
+
+    return this.apiCall<PaperformCouponsResponse>({
+      method: HttpMethod.GET,
+      url: `/forms/${formSlugOrId}/coupons?${params.toString()}`,
+      auth,
+    });
+  },
+
+  async getProducts({
+    formSlugOrId,
+    auth,
+    search,
+    limit = 50,
+    skip = 0,
+  }: {
+    formSlugOrId: string;
+    auth: string | { apiKey: string };
+    search?: string;
+    limit?: number;
+    skip?: number;
+  }) {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (limit) params.append('limit', limit.toString());
+    if (skip) params.append('skip', skip.toString());
+
+    return this.apiCall<PaperformProductsResponse>({
+      method: HttpMethod.GET,
+      url: `/forms/${formSlugOrId}/products?${params.toString()}`,
       auth,
     });
   },
