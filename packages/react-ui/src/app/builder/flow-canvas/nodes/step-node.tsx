@@ -266,7 +266,7 @@ const StepNodeImage = ({
           'right-[1px] bottom-0': hasGradientBorder,
         })}
       >
-        <ApStepNodeStatus stepName={step.name} />
+        <ApStepNodeStatus stepName={step.name} isStepRounded={isRoundedStep} />
       </div>
     </div>
   );
