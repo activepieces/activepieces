@@ -127,6 +127,7 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
                 />
               </Button>
             )}
+            <div className="p-0.5 rounded-sm bg-white">
             <img
               alt={stepMetadata?.displayName}
               className="w-6 h-6 object-contain"
@@ -135,6 +136,8 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
                 stepMetadata?.logoUrl
               }
             />
+            </div>
+            
             <div className="break-all truncate min-w-0 grow-1 shrink-1">{`${
               stepIndex + 1
             }. ${step?.displayName}`}</div>
