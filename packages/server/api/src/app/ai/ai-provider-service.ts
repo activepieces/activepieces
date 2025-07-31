@@ -20,12 +20,10 @@ import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
-import { AIUsageEntity, AIUsageSchema } from './ai-usage-entity'
 import { aiProvidersStrategies, Usage } from './providers'
 import { StreamingParser } from './providers/types'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
-export const aiUsageRepo = repoFactory<AIUsageSchema>(AIUsageEntity)
 const isCloudEdition = system.getEdition() === ApEdition.CLOUD
 
 export const aiProviderService = {
@@ -58,10 +56,22 @@ export const aiProviderService = {
     async upsert(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
         assertOnlyCloudPlatformCanEditOnCloud(platformId)
 
+        if (request.useAzureOpenAI && system.getEdition() !== ApEdition.ENTERPRISE) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FEATURE_DISABLED,
+                params: {
+                    message: 'Azure OpenAI is only available for enterprise customers',
+                },
+            })
+        }
+
         await aiProviderRepo().upsert({
             id: apId(),
             config: encryptUtils.encryptObject({
                 apiKey: request.apiKey,
+                azureOpenAI: request.useAzureOpenAI ? {
+                    resourceName: request.resourceName,
+                } : undefined,
             }),
             provider: request.provider,
             platformId,
@@ -77,7 +87,7 @@ export const aiProviderService = {
         })
     },
 
-    async getApiKey(provider: string, platformId: PlatformId): Promise<string> {
+    async getConfig(provider: string, platformId: PlatformId): Promise<AIProvider['config']> {
         const aiProvider = await aiProviderRepo().findOneOrFail({
             where: {
                 provider,
@@ -91,7 +101,7 @@ export const aiProviderService = {
             },
         })
 
-        return encryptUtils.decryptObject<AIProvider['config']>(aiProvider.config).apiKey
+        return encryptUtils.decryptObject(aiProvider.config)
     },
 
     async getAIProviderPlatformId(userPlatformId: string): Promise<string> {
@@ -101,10 +111,26 @@ export const aiProviderService = {
         if (cloudPlatformId === userPlatformId) return cloudPlatformId
 
         const platform = await platformService.getOneWithPlanOrThrow(userPlatformId)
-        const isEnterpriseCustomer = platformUtils.isEnterpriseCustomerOnCloud(platform)
+        const isEnterpriseCustomer = platformUtils.isCustomerOnDedicatedDomain(platform)
         return isEnterpriseCustomer ? userPlatformId : cloudPlatformId
     },
 
+    getBaseUrl(provider: string, config: AIProvider['config']): string {
+        const providerStrategy = aiProvidersStrategies[provider]
+        if (providerStrategy?.getBaseUrl) {
+            return providerStrategy.getBaseUrl(config)
+        }
+        const providerConfig = getProviderConfig(provider)!
+        return providerConfig.baseUrl
+    },
+
+    isModerationRequest(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
+        const providerStrategy = aiProvidersStrategies[provider]
+        if (providerStrategy?.isModerationRequest) {
+            return providerStrategy.isModerationRequest(request)
+        }
+        return false
+    },
 
     calculateUsage(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage {
         const providerStrategy = aiProvidersStrategies[provider]
@@ -117,9 +143,13 @@ export const aiProviderService = {
         return providerStrategy.extractModelId(request)
     },
 
-    isModelSupported(provider: string, model: string): boolean {
+    isModelSupported(provider: string, model: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
         const providerConfig = getProviderConfig(provider)!
-        return !isNil(providerConfig.languageModels.find((m) => m.instance.modelId === model)) || !isNil(providerConfig.imageModels.find((m) => m.instance.modelId === model))
+        return (
+            !isNil(providerConfig.languageModels.find((m) => m.instance.modelId === model)) ||
+            !isNil(providerConfig.imageModels.find((m) => m.instance.modelId === model)) ||
+            this.isModerationRequest(provider, request)
+        )
     },
 
     isStreaming(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
@@ -135,6 +165,26 @@ export const aiProviderService = {
     streamingParser(provider: string): StreamingParser {
         const providerStrategy = aiProvidersStrategies[provider]
         return providerStrategy.streamingParser!()
+    },
+
+    rewriteUrl(provider: string, config: AIProvider['config'], originalUrl: string): string {
+        const providerStrategy = aiProvidersStrategies[provider]
+        if (providerStrategy?.rewriteUrl) {
+            return providerStrategy.rewriteUrl(config, originalUrl)
+        }
+        return originalUrl
+    },
+
+    getAuthHeaders(provider: string, config: AIProvider['config']): Record<string, string> {
+        const providerStrategy = aiProvidersStrategies[provider]
+        if (providerStrategy.getAuthHeaders) {
+            return providerStrategy.getAuthHeaders(config)
+        }
+
+        const providerConfig = getProviderConfig(provider)!
+        return {
+            [providerConfig.auth.headerName]: providerConfig.auth.bearer ? `Bearer ${config.apiKey}` : config.apiKey,
+        }
     },
 }
 

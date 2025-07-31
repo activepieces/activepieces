@@ -244,8 +244,6 @@ const getDefaultStepValues = ({
           type: ActionType.PIECE,
           settings: overrideDefaultSettings ?? {
             pieceName: pieceSelectorItem.pieceMetadata.pieceName,
-            pieceType: pieceSelectorItem.pieceMetadata.pieceType,
-            packageType: pieceSelectorItem.pieceMetadata.packageType,
             actionName: pieceSelectorItem.actionOrTrigger.name,
             pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
             input,
@@ -266,8 +264,6 @@ const getDefaultStepValues = ({
           type: TriggerType.PIECE,
           settings: overrideDefaultSettings ?? {
             pieceName: pieceSelectorItem.pieceMetadata.pieceName,
-            pieceType: pieceSelectorItem.pieceMetadata.pieceType,
-            packageType: pieceSelectorItem.pieceMetadata.packageType,
             triggerName: pieceSelectorItem.actionOrTrigger.name,
             pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
             input,
@@ -339,7 +335,7 @@ const useAdjustPieceListHeightToAvailableSpace = () => {
 };
 const MAX_PIECE_SELECTOR_LIST_HEIGHT = 300 as const;
 const MIN_PIECE_SELECTOR_LIST_HEIGHT = 100 as const;
-const SEARCH_INPUT_DIV_HEIGHT = 48 as const;
+const SEARCH_INPUT_DIV_HEIGHT = 113 as const;
 const PIECE_ITEM_HEIGHT = 48 as const;
 const ACTION_OR_TRIGGER_ITEM_HEIGHT = 41 as const;
 const CATEGORY_ITEM_HEIGHT = 28 as const;

@@ -50,7 +50,6 @@ import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
 import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
-import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
 import { ProjectReleasesPage } from '../routes/project-release';
@@ -58,8 +57,7 @@ import ViewRelease from '../routes/project-release/view-release';
 import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
 import { EnvironmentPage } from '../routes/settings/environment';
-import GeneralPage from '../routes/settings/general';
-import TeamPage from '../routes/settings/team';
+import ProjectMembersPage from '../routes/settings/project-members';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ApTablesPage } from '../routes/tables';
@@ -83,7 +81,7 @@ const SettingsRerouter = () => {
   return fragmentWithoutHash ? (
     <Navigate to={`/settings/${fragmentWithoutHash}`} replace />
   ) : (
-    <Navigate to="/settings/general" replace />
+    <Navigate to="/settings/team" replace />
   );
 };
 
@@ -219,7 +217,7 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/tables/:tableId',
     element: (
-      <DashboardContainer removeGutters removeBottomPadding>
+      <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_TABLE}>
           <PageTitle title="Table">
             <ApTableStateProvider>
@@ -334,18 +332,6 @@ const routes = [
   }),
 
   ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.general,
-    element: (
-      <DashboardContainer>
-        <PageTitle title="General">
-          <ProjectSettingsLayout>
-            <GeneralPage />
-          </ProjectSettingsLayout>
-        </PageTitle>
-      </DashboardContainer>
-    ),
-  }),
-  ...ProjectRouterWrapper({
     path: projectSettingsRoutes.pieces,
     element: (
       <DashboardContainer>
@@ -364,7 +350,7 @@ const routes = [
         <RoutePermissionGuard permission={Permission.READ_PROJECT_MEMBER}>
           <PageTitle title="Team">
             <ProjectSettingsLayout>
-              <TeamPage />
+              <ProjectMembersPage />
             </ProjectSettingsLayout>
           </PageTitle>
         </RoutePermissionGuard>
@@ -610,16 +596,6 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="SSO">
           <SSOPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/setup/license-key',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="License Key">
-          <LicenseKeyPage />
         </PageTitle>
       </PlatformAdminContainer>
     ),

@@ -1,10 +1,12 @@
 import { t } from 'i18next';
 import { useState } from 'react';
 
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { TableTitle } from '@/components/custom/table-title';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { Agent, ApFlagId } from '@activepieces/shared';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { Agent, ApFlagId, isNil } from '@activepieces/shared';
 
 import agentsGroupImage from '../../../assets/img/custom/agents-group.png';
 import { AgentCard } from '../../../features/agents/agent-card';
@@ -16,8 +18,9 @@ import { AgentBuilder } from './builder';
 export const AgentsPage = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | undefined>();
+  const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data: isAgentsEnabled } = flagsHooks.useFlag<boolean>(
+  const { data: isisAgentsConfigured } = flagsHooks.useFlag<boolean>(
     ApFlagId.AGENTS_CONFIGURED,
   );
 
@@ -50,7 +53,14 @@ export const AgentsPage = () => {
   }
 
   return (
-    <>
+    <LockedFeatureGuard
+      featureKey="AGENTS"
+      locked={!platform.plan.agentsEnabled}
+      lockTitle={t('AI Agents')}
+      lockDescription={t(
+        'Create AI agents that can interact with all pieces and be used inside your flows',
+      )}
+    >
       <div className="flex items-center justify-between">
         <TableTitle
           beta={true}
@@ -58,23 +68,34 @@ export const AgentsPage = () => {
         >
           {t('Agents')}
         </TableTitle>
-        <AgentBuilder
-          isOpen={isOpen}
-          refetch={refetch}
-          onOpenChange={(open) => {
-            setIsOpen(open);
-            if (!open) {
-              setSelectedAgent(undefined);
+        {isNil(selectedAgent) && (
+          <CreateAgentButton
+            onAgentCreated={handleAgentCreated}
+            isAgentsConfigured={isisAgentsConfigured ?? false}
+          />
+        )}
+        {selectedAgent && (
+          <AgentBuilder
+            isOpen={isOpen}
+            onOpenChange={(open) => {
+              setIsOpen(open);
+              if (!open) {
+                setSelectedAgent(undefined);
+              }
+            }}
+            onChange={() => {
+              refetch();
+            }}
+            agent={selectedAgent}
+            showUseInFlow={true}
+            trigger={
+              <CreateAgentButton
+                onAgentCreated={handleAgentCreated}
+                isAgentsConfigured={isisAgentsConfigured ?? false}
+              />
             }
-          }}
-          agent={selectedAgent}
-          trigger={
-            <CreateAgentButton
-              onAgentCreated={handleAgentCreated}
-              isAgentsEnabled={isAgentsEnabled ?? false}
-            />
-          }
-        />
+          />
+        )}
       </div>
 
       <div className="mt-4">
@@ -100,12 +121,13 @@ export const AgentsPage = () => {
                   description={agent.description || ''}
                   picture={agent.profilePictureUrl}
                   onDelete={() => handleDeleteAgent(agent.id)}
+                  runCompleted={agent.runCompleted}
                 />
               </div>
             ))}
           </div>
         )}
       </div>
-    </>
+    </LockedFeatureGuard>
   );
 };

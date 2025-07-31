@@ -19,10 +19,10 @@ export class RevertTodoActivties1751217652277 implements MigrationInterface {
             ALTER TABLE "todo_activity" DROP CONSTRAINT "FK_a70ac10a601ca72584dff95e0d0"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_todo_agent_id"
+            DROP INDEX "idx_todo_agent_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_todo_activity_agent_id"
+            DROP INDEX "idx_todo_activity_agent_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "todo" DROP COLUMN "agentId"

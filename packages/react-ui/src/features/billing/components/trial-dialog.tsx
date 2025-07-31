@@ -1,60 +1,49 @@
 import { t } from 'i18next';
 import { PartyPopper } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ApSubscriptionStatus } from '@activepieces/ee-shared';
+import { userHooks } from '@/hooks/user-hooks';
+import { PlatformRole } from '@activepieces/shared';
 
-import { billingQueries } from '../lib/billing-hooks';
+import { billingMutations } from '../lib/billing-hooks';
 
-type FreeTrialDialogPropsType = {
-  setIsPlansDialogOpen: (open: boolean) => void;
-  isPlansDialogOpen: boolean;
-};
+import { useManagePlanDialogStore } from './upgrade-dialog/store';
 
-export const FreeTrialDialog = ({
-  isPlansDialogOpen,
-  setIsPlansDialogOpen,
-}: FreeTrialDialogPropsType) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { data: billingInfo } = billingQueries.usePlatformSubscription(
-    platform.id,
-  );
+export const WelcomeTrialDialog = () => {
+  const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const { data: user } = userHooks.useCurrentUser();
+  const openDialog = useManagePlanDialogStore((state) => state.openDialog);
 
-  useEffect(() => {
-    if (
-      billingInfo?.plan.stripeSubscriptionStatus ===
-      ApSubscriptionStatus.TRIALING
-    ) {
-      const hasSeenTrialDialog = localStorage.getItem('trial-dialog-seen');
-      if (!hasSeenTrialDialog) {
-        setIsOpen(true);
-      }
-    }
-  }, [billingInfo]);
+  const isEligibleForTrial =
+    platform.plan.eligibleForTrial && user?.platformRole === PlatformRole.ADMIN;
+
+  const [isOpen, setIsOpen] = useState(isEligibleForTrial);
+
+  const { mutate: startTrial } = billingMutations.useStartTrial();
 
   const handleClose = () => {
-    localStorage.setItem('trial-dialog-seen', 'true');
     setIsOpen(false);
+    refetch();
   };
+
+  useEffectOnce(() => {
+    if (isEligibleForTrial) {
+      startTrial();
+    }
+  });
 
   const handleContinue = () => {
     handleClose();
   };
 
   const handleSeePlans = () => {
+    openDialog();
     handleClose();
-    setIsPlansDialogOpen(!isPlansDialogOpen);
   };
-
-  if (
-    billingInfo?.plan.stripeSubscriptionStatus !== ApSubscriptionStatus.TRIALING
-  ) {
-    return null;
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

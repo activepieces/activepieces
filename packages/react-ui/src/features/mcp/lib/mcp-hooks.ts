@@ -10,6 +10,7 @@ import {
   McpToolMetadata,
   ToolCallContentBlock,
   ToolCallType,
+  McpToolRequest,
 } from '@activepieces/shared';
 
 import { mcpApi } from './mcp-api';
@@ -28,10 +29,10 @@ export const mcpHooks = {
       staleTime: 0,
     });
   },
-  useMcp: (id: string) => {
+  useMcp: (id: string | undefined) => {
     return useQuery<McpWithTools, Error>({
       queryKey: ['mcp', id],
-      queryFn: () => mcpApi.get(id),
+      queryFn: () => mcpApi.get(id!),
       enabled: !!id,
     });
   },
@@ -68,25 +69,11 @@ export const mcpHooks = {
       },
     });
   },
-  useRemoveTool: (mcpId: string, onSuccess?: () => void) => {
-    return useMutation({
-      mutationFn: async (toolId: string) => {
-        const mcp = await mcpApi.get(mcpId);
-        const updatedTools =
-          mcp?.tools
-            ?.filter((tool) => tool.id !== toolId)
-            .map((tool) => ({
-              type: tool.type,
-              mcpId: tool.mcpId,
-              pieceMetadata: tool.pieceMetadata,
-              flowId: tool.flowId,
-            })) || [];
-
-        return await mcpApi.update(mcpId, { tools: updatedTools });
-      },
+  useUpdateTools: (mcpId: string | undefined, onSuccess?: () => void) =>
+    useMutation({
+      mutationFn: (tools: McpToolRequest[]) => mcpApi.update(mcpId!, { tools }),
       onSuccess,
-    });
-  },
+    }),
   useCreateMcp: () => {
     const projectId = authenticationSession.getProjectId();
     assertNotNullOrUndefined(projectId, 'projectId is not set');

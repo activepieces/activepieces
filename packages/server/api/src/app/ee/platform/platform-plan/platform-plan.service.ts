@@ -111,7 +111,6 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
     const platform = await platformService.getOneOrThrow(platformId)
     const user = await userService.getMetaInformation({ id: platform.ownerId })
     const stripeCustomerId = await createInitialCustomer(user, platformId, log)
-    const trialSubscriptionId = await startTrial(platformId, log, stripeCustomerId)
 
     const plan = getInitialPlanByEdition()
 
@@ -124,7 +123,6 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         stripeCustomerId,
         stripeSubscriptionStartDate: defaultStartDate,
         stripeSubscriptionEndDate: defaultEndDate,
-        stripeSubscriptionId: trialSubscriptionId,
         ...plan,
     }
 
@@ -141,18 +139,7 @@ function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {
     }
 }
 
-async function startTrial(platformId: string, log: FastifyBaseLogger, customerId?: string): Promise<string | undefined> {
-    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
-    if (edition !== ApEdition.CLOUD || environment === ApEnvironment.TESTING || isNil(customerId)) {
-        return undefined
-    }
-    const trailSubscriptionId = await stripeHelper(log).startTrial(
-        customerId, 
-        platformId,
-    )
 
-    return trailSubscriptionId
-}
 
 async function createInitialCustomer(user: UserWithMetaInformation, platformId: string, log: FastifyBaseLogger): Promise<string | undefined> {
     const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)

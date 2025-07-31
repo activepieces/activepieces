@@ -16,31 +16,49 @@ const appSumoPlans: Record<string, PlatformPlanWithOnlyLimits> = {
         planName: 'appsumo_activepieces_tier1',
         tasksLimit: 10000,
         userSeatsLimit: 1,
+        agentsLimit: 5,
+        tablesLimit: 5,
+        mcpLimit: 5,
     }),
     activepieces_tier2: APPSUMO_PLAN({
         planName: 'appsumo_activepieces_tier2',
         tasksLimit: 50000,
         userSeatsLimit: 1,
+        agentsLimit: 5,
+        tablesLimit: 5,
+        mcpLimit: 5,
     }),
     activepieces_tier3: APPSUMO_PLAN({
         planName: 'appsumo_activepieces_tier3',
         tasksLimit: 200000,
         userSeatsLimit: 5,
+        agentsLimit: 5,
+        tablesLimit: 5,
+        mcpLimit: 5,
     }),
     activepieces_tier4: APPSUMO_PLAN({
         planName: 'appsumo_activepieces_tier4',
         tasksLimit: 500000,
         userSeatsLimit: 5,
+        agentsLimit: 10,
+        tablesLimit: 10,
+        mcpLimit: 10,
     }),
     activepieces_tier5: APPSUMO_PLAN({
         planName: 'appsumo_activepieces_tier5',
         tasksLimit: 1000000,
         userSeatsLimit: 5,
+        agentsLimit: 20,
+        tablesLimit: 20,
+        mcpLimit: 20,
     }),
     activepieces_tier6: APPSUMO_PLAN({
         planName: 'appsumo_activepieces_tier6',
         tasksLimit: 10000000,
         userSeatsLimit: 5,
+        agentsLimit: 50,
+        tablesLimit: 50,
+        mcpLimit: 50,
     }),
 }
 
@@ -78,9 +96,14 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
         const appSumoPlan = appsumoService(log).getPlanInformation(plan_id)
         const identity = await userIdentityService(log).getIdentityByEmail(activation_email)
         if (!isNil(identity)) {
-            const user = await userRepo().findOneBy({
-                identityId: identity.id,
-                platformRole: PlatformRole.ADMIN,
+            const user = await userRepo().findOne({
+                where: {
+                    identityId: identity.id,
+                    platformRole: PlatformRole.ADMIN,
+                },
+                order: {
+                    created: 'ASC',
+                },
             })
             if (!isNil(user)) {
                 const project = await projectService.getUserProjectOrThrow(user.id)
@@ -96,6 +119,7 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
                     await platformPlanService(log).update({
                         platformId: project.platformId,
                         ...appSumoPlan,
+                        eligibleForTrial: false,
                     })
 
                 }

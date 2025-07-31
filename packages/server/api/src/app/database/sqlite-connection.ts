@@ -5,6 +5,7 @@ import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
+
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
@@ -23,6 +24,7 @@ import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
+import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1752004202722-SplitUpPieceMetadataIntoTools'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -123,6 +125,18 @@ import { ChangeTodoActivityContentFormatSqlite1750364494659 } from './migration/
 import { RevertDescriptionTodoNamingSqlite1750391313307 } from './migration/sqlite/1750391313307-RevertDescriptionTodoNamingSqlite'
 import { RegenerateIssuesTable1750391974657 } from './migration/sqlite/1750391974657-RegenerateIssuesTable'
 import { RevertTodoActivtiesSqlite1751217307674 } from './migration/sqlite/1751217307674-RevertTodoActivtiesSqlite'
+import { AddPlatformIdToAIUsageSqlite1751475726665 } from './migration/sqlite/1751475726665-AddPlatformIdToAIUsageSqlite'
+import { RemoveTerminationReasonSqlite1751727630516 } from './migration/sqlite/1751727630516-RemoveTerminationReasonSqlite'
+import { AddFlowVersionToIssueSqlite1751927149586 } from './migration/sqlite/1751927149586-AddFlowVersionToIssueSqlite'
+import { AddIndexForSchemaVersionInFlowVersionSqlite1752152069517 } from './migration/sqlite/1752152069517-AddIndexForSchemaVersionInFlowVersionSqlite'
+import { AddAgentRunsEntitySqlite1752583785385 } from './migration/sqlite/1752583785385-AddAgentRunsEntitySqlite'
+import { AddTableAgentsSqlite1752851142438 } from './migration/sqlite/1752851142438-AddTableAgentsSqlite'
+import { AddTableAutomationStatusSqlite1753013268133 } from './migration/sqlite/1753013268133-AddTableAutomationStatusSqlite'
+import { AddIndexForAgentTableSqlite1753400496920 } from './migration/sqlite/1753400496920-AddIndexForAgentTableSqlite'
+import { AddExternalAgentIdSqlite1753643287673 } from './migration/sqlite/1753643287673-AddExternalAgentIdSqlite'
+import { AddParentRunIdToFlowRunSqlite1753719777841 } from './migration/sqlite/1753719777841-AddParentRunIdToFlowRunSqlite'
+import { AddCascadeOnAgentsSqlite1753727589109 } from './migration/sqlite/1753727589109-AddCascadeOnAgentsSqlite'
+import { AddExternalIdToMCPSqlite1753786833156 } from './migration/sqlite/1753786833156-AddExternalIdToMCPSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -263,6 +277,19 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RegenerateIssuesTable1750391974657,
         RemoveProjectIdFromIndex1750712746125,
         RevertTodoActivtiesSqlite1751217307674,
+        AddPlatformIdToAIUsageSqlite1751475726665,
+        RemoveTerminationReasonSqlite1751727630516,
+        AddFlowVersionToIssueSqlite1751927149586,
+        SplitUpPieceMetadataIntoTools1752004202722,
+        AddIndexForSchemaVersionInFlowVersionSqlite1752152069517,
+        AddAgentRunsEntitySqlite1752583785385,
+        AddTableAgentsSqlite1752851142438,
+        AddTableAutomationStatusSqlite1753013268133,
+        AddIndexForAgentTableSqlite1753400496920,
+        AddExternalAgentIdSqlite1753643287673,
+        AddParentRunIdToFlowRunSqlite1753719777841,
+        AddCascadeOnAgentsSqlite1753727589109,
+        AddExternalIdToMCPSqlite1753786833156,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

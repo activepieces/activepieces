@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 type EmbeddingState = {
   isEmbedded: boolean;
   hideSideNav: boolean;
+  hideFlowsPageNavbar: boolean;
   disableNavigationInBuilder: boolean;
   hideFolders: boolean;
   hideFlowNameInBuilder: boolean;
@@ -18,11 +19,13 @@ type EmbeddingState = {
   emitHomeButtonClickedEvent: boolean;
   homeButtonIcon: 'back' | 'logo';
   hideDuplicateFlow: boolean;
+  hideProjectSettings: boolean;
 };
 
 const defaultState: EmbeddingState = {
   isEmbedded: false,
   hideSideNav: false,
+  hideFlowsPageNavbar: false,
   disableNavigationInBuilder: false,
   hideFolders: false,
   hideFlowNameInBuilder: false,
@@ -32,6 +35,7 @@ const defaultState: EmbeddingState = {
   emitHomeButtonClickedEvent: false,
   homeButtonIcon: 'logo',
   hideDuplicateFlow: false,
+  hideProjectSettings: false,
 };
 
 const EmbeddingContext = createContext<{

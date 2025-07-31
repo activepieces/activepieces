@@ -15,7 +15,7 @@ export const flowPieceUtil = {
                 case ActionType.PIECE:
                 case TriggerType.PIECE: {
                     const { pieceVersion } = step.settings
-                    clonedStep.settings.pieceVersion = flowPieceUtil.getNextVersion(pieceVersion)
+                    clonedStep.settings.pieceVersion = flowPieceUtil.getMostRecentPatchVersion(pieceVersion)
                     break
                 }
                 default:
@@ -35,7 +35,7 @@ export const flowPieceUtil = {
             .filter((step) => step.type === ActionType.PIECE || step.type === TriggerType.PIECE)
             .map((step) => step.settings.pieceName)
     },
-    getNextVersion(pieceVersion: string): string {
+    getMostRecentPatchVersion(pieceVersion: string): string {
         if (pieceVersion.startsWith('^') || pieceVersion.startsWith('~')) {
             return pieceVersion
         }

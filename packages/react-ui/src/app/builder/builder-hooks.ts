@@ -11,7 +11,6 @@ import { usePrevious } from 'react-use';
 import { create, useStore } from 'zustand';
 
 import { Messages } from '@/components/ui/chat/chat-message-list';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
@@ -313,6 +312,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             selectedBranchIndex: null,
             askAiButtonProps: null,
             selectedNodes,
+            chatDrawerOpenSource: null,
           };
         });
       },
@@ -866,9 +866,6 @@ export const useSwitchToDraft = () => {
         setVersion(flow.version);
         clearRun(userHasPermissionToEditFlow);
       },
-      onError: () => {
-        toast(INTERNAL_ERROR_TOAST);
-      },
     });
   return {
     switchToDraft,
@@ -909,10 +906,11 @@ export const useIsFocusInsideListMapperModeInput = ({
   }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
 };
 export const useFocusOnStep = () => {
-  const currentRun = useBuilderStateContext((state) => state.run);
-  const setSelectedStep = useBuilderStateContext(
-    (state) => state.selectStepByName,
-  );
+  const [currentRun, selectStep] = useBuilderStateContext((state) => [
+    state.run,
+    state.selectStepByName,
+  ]);
+
   const previousStatus = usePrevious(currentRun?.status);
   const currentStep = flowRunUtils.findLastStepWithStatus(
     previousStatus ?? FlowRunStatus.RUNNING,
@@ -921,12 +919,15 @@ export const useFocusOnStep = () => {
   const lastStep = usePrevious(currentStep);
 
   const { fitView } = useReactFlow();
-  if (!isNil(lastStep) && lastStep !== currentStep && !isNil(currentStep)) {
-    setTimeout(() => {
-      fitView(flowCanvasUtils.createFocusStepInGraphParams(currentStep));
-      setSelectedStep(currentStep);
-    });
-  }
+  useEffect(() => {
+    if (!isNil(lastStep) && lastStep !== currentStep && !isNil(currentStep)) {
+      setTimeout(() => {
+        console.log('focusing on step', currentStep);
+        fitView(flowCanvasUtils.createFocusStepInGraphParams(currentStep));
+        selectStep(currentStep);
+      });
+    }
+  }, [lastStep, currentStep, selectStep, fitView]);
 };
 
 export const useResizeCanvas = (

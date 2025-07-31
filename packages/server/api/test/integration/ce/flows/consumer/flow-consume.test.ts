@@ -21,6 +21,7 @@ import {
     createMockFlow,
     createMockFlowRun,
     createMockFlowVersion,
+    createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../../helpers/mocks'
 
@@ -58,6 +59,22 @@ describe('flow execution', () => {
         })
         await databaseConnection().getRepository('flow').save([mockFlow])
 
+        const mockPieceMetadata1 = createMockPieceMetadata({
+            name: '@activepieces/piece-schedule',
+            version: '0.1.5',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+        })
+        const mockPieceMetadata2 = createMockPieceMetadata({
+            name: '@activepieces/piece-data-mapper',
+            version: '0.3.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+        })
+        await databaseConnection()
+            .getRepository('piece_metadata')
+            .save([mockPieceMetadata1, mockPieceMetadata2])
+
         const mockFlowVersion = createMockFlowVersion({
             flowId: mockFlow.id,
             updatedBy: mockOwner.id,
@@ -71,8 +88,6 @@ describe('flow execution', () => {
                         run_on_weekends: false,
                     },
                     triggerName: 'every_hour',
-                    'pieceType': PieceType.OFFICIAL,
-                    'packageType': PackageType.REGISTRY,
                     inputUiInfo: {},
                 },
                 valid: true,
@@ -104,8 +119,6 @@ describe('flow execution', () => {
                             inputUiInfo: {},
                             pieceName: '@activepieces/piece-data-mapper',
                             pieceVersion: '0.3.0',
-                            packageType: 'REGISTRY',
-                            pieceType: 'OFFICIAL',
                             actionName: 'advanced_mapping',
                             input: {
                                 mapping: {

@@ -2,12 +2,12 @@ import React from 'react';
 
 import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { Skeleton } from '@/components/ui/skeleton';
-import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadata } from '@/lib/types';
 import {
   Action,
   ActionType,
+  flowStructureUtil,
   isNil,
   Trigger,
   TriggerType,
@@ -37,7 +37,7 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
         actionOrTriggerDisplayName ? `(${actionOrTriggerDisplayName})` : ''
       }`
     : null;
-  const agentId = stepUtils.getAgentId(step);
+  const externalAgentId = flowStructureUtil.getExternalAgentId(step);
 
   return (
     <div className="flex items-center justify-center gap-4 min-h-[48px]">
@@ -50,8 +50,8 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
           />
         )}
       </div>
-      <div className="flex h-full grow flex-col justify-center gap-1 text-start">
-        <div className="text-base flex justify-center">
+      <div className="flex h-full grow justify-center gap-2 text-start">
+        <div className="text-base flex flex-col grow gap-1">
           <div className="flex-grow">
             {!isNil(modifiedTitle) ? (
               modifiedTitle
@@ -59,14 +59,7 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
               <Skeleton className="h-3 w-32 rounded" />
             )}
           </div>
-          {pieceVersion && (
-            <div className="text-xs text-muted-foreground flex justify-center items-center">
-              v{pieceVersion}
-            </div>
-          )}
-        </div>
-        <div className="flex  items-center justify-between">
-          <div className="overflow-hidden text-ellipsis text-xs text-muted-foreground grow">
+          <div className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
             {!isNil(stepMetadata?.description) ? (
               stepMetadata.description
             ) : (
@@ -75,7 +68,16 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
               </div>
             )}
           </div>
-          {agentId && <EditAgentInFlowBuilderButton agentId={agentId} />}
+        </div>
+        <div className="flex  items-center gap-2">
+          {externalAgentId && (
+            <EditAgentInFlowBuilderButton externalAgentId={externalAgentId} />
+          )}
+          {pieceVersion && (
+            <div className="text-xs text-muted-foreground flex justify-center items-center">
+              v{pieceVersion}
+            </div>
+          )}
         </div>
       </div>
     </div>

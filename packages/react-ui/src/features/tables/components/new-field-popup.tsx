@@ -38,6 +38,13 @@ type NewFieldFormData =
       data: null;
     };
 
+const FIELD_TYPE_FRIENDLY_NAME: Record<FieldType, string> = {
+  [FieldType.TEXT]: 'Text',
+  [FieldType.NUMBER]: 'Number',
+  [FieldType.DATE]: 'Date',
+  [FieldType.STATIC_DROPDOWN]: 'Dropdown',
+};
+
 export function NewFieldPopup({ children }: NewFieldDialogProps) {
   const [open, setOpen] = useState(false);
   const fields = useTableState((state) => state.fields);
@@ -173,7 +180,9 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                               )}
                             >
                               {tablesUtils.getColumnIcon(type)}
-                              {t(type)}
+                              {FIELD_TYPE_FRIENDLY_NAME[type]
+                                ? t(FIELD_TYPE_FRIENDLY_NAME[type])
+                                : t(type)}
                             </Label>
                           </div>
                         ))}

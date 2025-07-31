@@ -21,11 +21,11 @@ export const replicateProvider: AIProviderStrategy = {
 
     calculateUsage: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage => {
         const apiResponse = response as { model: string }
-        const body = request.body as { num_outputs?: string }
+        const body = request.body as { input: { num_outputs?: string } }
         const { provider } = request.params as { provider: string }
 
         const providerConfig = getProviderConfig(provider)!
-        const imageCount = parseInt(body.num_outputs as string ?? '1')
+        const imageCount = parseInt(body.input.num_outputs as string ?? '1')
         const model = apiResponse.model
 
         const imageModelConfig = providerConfig.imageModels.find((m) => m.instance.modelId.split(':')[0] === model)

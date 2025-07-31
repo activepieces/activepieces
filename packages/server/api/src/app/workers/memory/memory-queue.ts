@@ -1,5 +1,5 @@
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
-import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
+import { AgentJobData, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
 import { DelayPauseMetadata, Flow, FlowRun, FlowRunStatus, isNil, PauseType, ProgressUpdateType, RunEnvironment, TriggerType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -16,6 +16,7 @@ export const memoryQueues = {
     [QueueName.SCHEDULED]: new ApMemoryQueue<ScheduledJobData>(),
     [QueueName.WEBHOOK]: new ApMemoryQueue<WebhookJobData>(),
     [QueueName.USERS_INTERACTION]: new ApMemoryQueue<UserInteractionJobData>(),
+    [QueueName.AGENTS]: new ApMemoryQueue<AgentJobData>(),
 }
 
 export const memoryQueue = (log: FastifyBaseLogger): QueueManager => ({
@@ -69,6 +70,13 @@ export const memoryQueue = (log: FastifyBaseLogger): QueueManager => ({
                 })
                 break
             }
+            case JobType.AGENTS: {
+                memoryQueues[QueueName.AGENTS].add({
+                    id: params.id,
+                    data,
+                })
+                break
+            }
         }
     },
 })
@@ -102,6 +110,7 @@ async function addDelayedRun(log: FastifyBaseLogger): Promise<void> {
                     environment: RunEnvironment.PRODUCTION,
                     schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                     flowVersionId: flowRun.flowVersionId,
+                    flowId: flowRun.flowId,
                     jobType: RepeatableJobType.DELAYED_FLOW,
                     synchronousHandlerId: delayPauseMetadata.handlerId ?? null,
                     progressUpdateType: delayPauseMetadata.progressUpdateType ?? ProgressUpdateType.NONE,

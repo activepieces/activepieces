@@ -1,23 +1,35 @@
-import { PropertyType } from '@activepieces/pieces-framework'
+import { ActionBase } from '@activepieces/pieces-framework'
 import { rejectedPromiseHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
+    AI_USAGE_FEATURE_HEADER,
+    AI_USAGE_MCP_ID_HEADER,
+    AIUsageFeature,
+    assertNotNullOrUndefined,
     EngineResponseStatus,
     ExecuteActionResponse,
     isNil,
+    McpFlowTool,
+    McpPieceTool,
+    McpPieceToolData,
     McpRunStatus,
-    McpTool,
     mcpToolNaming,
     McpToolType,
     McpTrigger,
+    PiecePackage,
     TelemetryEventName,
 } from '@activepieces/shared'
+import { createOpenAI } from '@ai-sdk/openai'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { generateObject, LanguageModelV1 } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { EngineHelperResponse } from 'server-worker'
+import { z, ZodRawShape } from 'zod'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
 import { telemetry } from '../../helper/telemetry.utils'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
@@ -25,7 +37,9 @@ import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
 import { mcpService } from '../mcp-service'
-import { mcpPropertyToZod, piecePropertyToZod } from '../mcp-utils'
+import { mcpUtils } from '../mcp-utils'
+
+
 
 export async function createMcpServer({
     mcpId,
@@ -55,7 +69,7 @@ export async function createMcpServer({
 
 async function addPieceToServer(
     server: McpServer,
-    mcpTool: McpTool,
+    mcpTool: McpPieceTool,
     projectId: string,
     platformId: string,
     logger: FastifyBaseLogger,
@@ -72,36 +86,47 @@ async function addPieceToServer(
         platformId,
     })
 
-    const filteredAction = Object.keys(pieceMetadata.actions).filter(action => toolPieceMetadata.actionNames.includes(action))
-    for (const action of filteredAction) {
-        const actionMetadata = pieceMetadata.actions[action]
-        const actionName = mcpToolNaming.fixTool(actionMetadata.name, mcpTool.id, McpToolType.PIECE)
+    const actionMetadata = pieceMetadata.actions[toolPieceMetadata.actionName]
+    const toolActionName = mcpToolNaming.fixTool(actionMetadata.name, mcpTool.id, McpToolType.PIECE)
+    const toolSchema = {
+        instructions: z.string().describe(
+            'Provide clear instructions for what you want this tool to do. Include any specific parameters, values, or requirements needed.',
+        ),
+    }
+    const toolDescription = `
+    This tool is used to execute the ${actionMetadata.name} (${actionMetadata.displayName}) action for the piece: ${pieceMetadata.name} (${pieceMetadata.displayName}).
+    ${actionMetadata.description}
+    `
+    server.tool(
+        toolActionName,
+        toolDescription,
+        toolSchema,
+        async (params) => {
+            const piecePackage = await getPiecePackageWithoutArchive(
+                logger, 
+                projectId, 
+                platformId, 
+                {
+                    pieceName: pieceMetadata.name,
+                    pieceVersion: pieceMetadata.version,
+                },
+            )
+            try {
+                const parsedInputs = await extractActionParametersFromUserInstructions({
+                    actionMetadata,
+                    toolPieceMetadata,
+                    userInstructions: params.instructions,
+                    piecePackage,
+                    platformId,
+                    projectId,
+                    logger,
+                    mcpId: mcpTool.mcpId,
+                })
 
-        const actionSchema = Object.fromEntries(
-            Object.entries(actionMetadata.props)
-                .filter(([_key, prop]) => prop.type !== PropertyType.MARKDOWN)
-                .map(([key, prop]) => [key, piecePropertyToZod(prop)]),
-        )
-        server.tool(
-            actionName,
-            actionMetadata.description,
-            actionSchema,
-            async (params) => {
-                const defaultValues = Object.fromEntries(
-                    Object.entries(actionMetadata.props)
-                        .filter(([_key, prop]) => !isNil(prop.defaultValue))
-                        .map(([key, prop]) => [key, prop.defaultValue]),
-                )
-                const pieceConnectionExternalId = !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
-                const parsedInputs = {
-                    ...defaultValues,
-                    ...params,
-                    auth: pieceConnectionExternalId,
-                }
                 const result = await userInteractionWatcher(logger)
                     .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
                     jobType: UserInteractionJobType.EXECUTE_TOOL,
-                    actionName: action,
+                    actionName: toolPieceMetadata.actionName,
                     pieceName: toolPieceMetadata.pieceName,
                     pieceVersion: toolPieceMetadata.pieceVersion,
                     packageType: pieceMetadata.packageType,
@@ -110,7 +135,7 @@ async function addPieceToServer(
                     projectId,
                 })
 
-                trackToolCall({ mcpId: mcpTool.mcpId, toolName: actionName, projectId, logger })
+                trackToolCall({ mcpId: mcpTool.mcpId, toolName: toolActionName, projectId, logger })
                 const success = result.status === EngineResponseStatus.OK && result.result.success
 
                 await mcpRunService(logger).create({
@@ -120,7 +145,7 @@ async function addPieceToServer(
                     metadata: {
                         pieceName: toolPieceMetadata.pieceName,
                         pieceVersion: toolPieceMetadata.pieceVersion,
-                        actionName: action,
+                        actionName: toolPieceMetadata.actionName,
                     },
                     input: params,
                     output: result.result.output as Record<string, unknown>,
@@ -129,30 +154,57 @@ async function addPieceToServer(
 
                 if (success) {
                     return {
+                        success: true,
                         content: [{
                             type: 'text',
-                            text: `✅ Successfully executed ${actionName}\n\n` +
-                                `Output:\n\`\`\`json\n${JSON.stringify(result.result.output, null, 2)}\n\`\`\``,
+                            text: `${JSON.stringify(result.result.output, null, 2)}`,
                         }],
+                        resolvedFields: parsedInputs,
                     }
                 }
                 else {
                     return {
+                        success: false,
                         content: [{
                             type: 'text',
-                            text: `❌ Error executing ${actionName}\n\n` +
-                                `Error details:\n\`\`\`\n${result.standardError || 'Unknown engine error occurred'}\n\`\`\``,
+                            text: `${JSON.stringify(result.standardError || result.result.output || { error: 'Unknown engine error occurred' }, null, 2)}`,
                         }],
+                        resolvedFields: parsedInputs,
                     }
                 }
-            },
-        )
-    }
+            }
+            catch (error) {
+                const isOpenAIProviderNotConnected = error instanceof Error && (error.name === 'AI_RetryError' || error.name === 'AI_APICallError')
+                const errorMessage = isOpenAIProviderNotConnected ? 'Please check if you have connected your OpenAI provider to Activepieces.' : JSON.stringify(error, null, 2)
+                await mcpRunService(logger).create({
+                    mcpId: mcpTool.mcpId,
+                    toolId: mcpTool.id,
+                    projectId,
+                    metadata: {
+                        pieceName: toolPieceMetadata.pieceName,
+                        pieceVersion: toolPieceMetadata.pieceVersion,
+                        actionName: toolPieceMetadata.actionName,
+                    },
+                    input: params,
+                    output: { error: errorMessage },
+                    status: McpRunStatus.FAILED,
+                })
+
+                return {
+                    success: false,
+                    content: [{
+                        type: 'text',
+                        text: errorMessage,
+                    }],
+                }
+            }
+        },
+    )
 }
 
 async function addFlowToServer(
     server: McpServer,
-    mcpTool: McpTool,
+    mcpTool: McpFlowTool,
     mcpId: string,
     projectId: string,
     logger: FastifyBaseLogger,
@@ -167,7 +219,7 @@ async function addFlowToServer(
     }
 
     const triggerSettings = populatedFlow.version.trigger.settings as McpTrigger
-    const toolName = mcpToolNaming.fixTool(mcpTool.flowId!, mcpTool.id, McpToolType.FLOW)
+    const toolName = mcpToolNaming.fixTool(populatedFlow.version.displayName, mcpTool.id, McpToolType.FLOW)
     const toolDescription = triggerSettings.input?.toolDescription
     const inputSchema = triggerSettings.input?.inputSchema
     const returnsResponse = triggerSettings.input?.returnsResponse
@@ -182,7 +234,7 @@ async function addFlowToServer(
     const zodFromInputSchema = Object.fromEntries(
         inputSchema.map(prop => [
             mcpToolNaming.fixProperty(prop.name),
-            mcpPropertyToZod(prop),
+            mcpUtils.mcpPropertyToZod(prop),
         ]),
     )
     server.tool(
@@ -213,6 +265,7 @@ async function addFlowToServer(
                 saveSampleData: await webhookSimulationService(logger).exists(flowId),
                 payload: originalParams,
                 execute: true,
+                failParentOnFailure: false,
             })
 
             trackToolCall({ mcpId, toolName, projectId, logger })
@@ -254,6 +307,124 @@ async function addFlowToServer(
 
 }
 
+
+async function initializeOpenAIModel({
+    platformId,
+    projectId,
+    mcpId,
+}: InitializeOpenAIModelParams): Promise<LanguageModelV1> {
+    const model = 'gpt-4.1-mini'
+    const baseUrl = await domainHelper.getPublicApiUrl({
+        path: '/v1/ai-providers/proxy/openai/v1/',
+        platformId,
+    })
+
+    const apiKey = await accessTokenManager.generateEngineToken({
+        platformId,
+        projectId,
+    })
+
+    return createOpenAI({
+        baseURL: baseUrl,
+        apiKey,
+        headers: {
+            [AI_USAGE_FEATURE_HEADER]: AIUsageFeature.MCP,
+            [AI_USAGE_MCP_ID_HEADER]: mcpId,
+        },
+    }).chat(model)
+}
+
+
+
+async function extractActionParametersFromUserInstructions({
+    actionMetadata,
+    toolPieceMetadata,
+    userInstructions,    
+    piecePackage,
+    platformId,
+    projectId,
+    logger,
+    mcpId,
+}: ExtractActionParametersParams): Promise<Record<string, unknown>> {
+    const connectionReference = `{{connections['${toolPieceMetadata.connectionExternalId}']}}`
+    assertNotNullOrUndefined(connectionReference, 'Tool has no connection with the piece, please try to add a connection to the tool')
+
+    const aiModel = await initializeOpenAIModel({
+        platformId,
+        projectId,
+        mcpId,
+    })
+
+    const actionProperties = actionMetadata.props
+    const depthToPropertyMap = mcpUtils.sortPropertiesByDependencies(actionProperties)
+
+    const extractedParameters = await Object.entries(depthToPropertyMap).reduce(
+        async (accumulatedParametersPromise, [_, propertyNames]) => {
+            const accumulatedParameters = {
+                ...(await accumulatedParametersPromise),
+                'auth': connectionReference,
+            }
+
+            const parameterExtractionPrompt = mcpUtils.buildParameterExtractionPrompt({
+                propertyNames,
+                userInstructions,
+            })
+
+            const propertySchemas = (await Promise.all(propertyNames.map(async propertyName => {
+                const result = await mcpUtils.buildZodSchemaForPieceProperty({
+                    property: actionProperties[propertyName],
+                    logger,
+                    input: accumulatedParameters,
+                    projectId,
+                    propertyName,
+                    actionMetadata,
+                    piecePackage,
+                    depth: 0,
+                })
+                return { propertyName, ...result }
+            }))).filter(({ schema }) => schema !== null)
+
+            const schemaObject: ZodRawShape = Object.fromEntries(
+                propertySchemas
+                    .map(({ propertyName, schema }) => [propertyName, schema!]),
+            )
+
+            const propertySchemaValues = propertySchemas.map(({ value }) => value).filter(value => value !== null)
+
+            try {
+                const { object: extractedValue } = await generateObject({
+                    model: aiModel,
+                    schema: z.object(schemaObject),
+                    prompt: mcpUtils.buildFinalExtractionPrompt({
+                        parameterExtractionPrompt,
+                        propertySchemaValues,
+                    }),
+                })
+
+                const extractedParameters = Object.fromEntries(
+                    Object.entries(extractedValue).map(([key, value]) => [key, value[key]]),
+                )
+    
+                return {
+                    ...accumulatedParameters,
+                    ...extractedParameters,
+                    'auth': connectionReference,
+                }
+            }
+            catch (error) {
+                logger.error({ error }, 'FailedToExtractParametersFromAI')
+                throw error
+            }
+        }, 
+        Promise.resolve({ 'auth': connectionReference }),
+    )
+
+    const nonNullExtractedParameters = Object.fromEntries(
+        Object.entries(extractedParameters).filter(([_, value]) => !isNil(value)),
+    )
+    return nonNullExtractedParameters
+}
+
 function isOkSuccess(status: number) {
     return Math.floor(status / 100) === 2
 }
@@ -268,6 +439,23 @@ function trackToolCall({ mcpId, toolName, projectId, logger }: TrackToolCallPara
     }), logger)
 }
 
+type ExtractActionParametersParams = {
+    actionMetadata: ActionBase
+    toolPieceMetadata: McpPieceToolData
+    userInstructions: string
+    piecePackage: PiecePackage
+    platformId: string
+    projectId: string
+    logger: FastifyBaseLogger
+    mcpId: string
+}
+
+
+type InitializeOpenAIModelParams = {
+    platformId: string
+    projectId: string
+    mcpId: string
+}
 
 type TrackToolCallParams = {
     mcpId: string

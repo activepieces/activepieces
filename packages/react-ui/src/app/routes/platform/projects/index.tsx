@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
+import { CheckIcon, Lock, Package, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -23,11 +23,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
+import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
-import { ProjectWithLimits } from '@activepieces/shared';
+import { isNil, ProjectWithLimits } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../components/custom/table-title';
 
@@ -40,7 +41,14 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       <DataTableColumnHeader column={column} title={t('Name')} />
     ),
     cell: ({ row }) => {
-      return <div className="text-left">{row.original.displayName}</div>;
+      const locked = row.original.plan.locked;
+
+      return (
+        <div className="text-left flex items-center justify-start ">
+          {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
+          {row.original.displayName}
+        </div>
+      );
     },
   },
   {
@@ -116,14 +124,17 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       );
     },
   },
-
   {
     accessorKey: 'externalId',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('External ID')} />
     ),
     cell: ({ row }) => {
-      return <div className="text-left">{row.original.externalId}</div>;
+      const displayValue =
+        isNil(row.original.externalId) || row.original.externalId?.length === 0
+          ? '-'
+          : row.original.externalId;
+      return <div className="text-left">{displayValue}</div>;
     },
   },
 ];
@@ -155,6 +166,10 @@ export default function ProjectsPage() {
   });
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editDialogInitialValues, setEditDialogInitialValues] =
+    useState<any>(null);
+  const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -354,6 +369,37 @@ export default function ProjectsPage() {
     }
   };
 
+  const actions = [
+    (row: ProjectWithLimits) => {
+      return (
+        <div className="flex items-end justify-end">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                className="size-8 p-0"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setEditDialogInitialValues({
+                    projectName: row.displayName,
+                    tasks: row.plan?.tasks?.toString() ?? '',
+                    aiCredits: row.plan?.aiCredits?.toString() ?? '',
+                  });
+                  setEditDialogProjectId(row.id);
+                  setEditDialogOpen(true);
+                }}
+              >
+                <Pencil className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t('Edit project')}</TooltipContent>
+          </Tooltip>
+        </div>
+      );
+    },
+  ];
+
   return (
     <LockedFeatureGuard
       featureKey="PROJECTS"
@@ -393,33 +439,16 @@ export default function ProjectsPage() {
           page={data}
           isLoading={isLoading}
           bulkActions={bulkActions}
-          actions={[
-            (row) => {
-              return (
-                <div className="flex items-end justify-end">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="size-8 p-0"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          await setCurrentProject(queryClient, row);
-                          navigate('/settings/general');
-                        }}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {t('Edit project')}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              );
-            },
-          ]}
+          actions={actions}
+        />
+        <EditProjectDialog
+          open={editDialogOpen}
+          onClose={() => {
+            setEditDialogOpen(false);
+            refetch();
+          }}
+          initialValues={editDialogInitialValues}
+          projectId={editDialogProjectId}
         />
       </div>
     </LockedFeatureGuard>

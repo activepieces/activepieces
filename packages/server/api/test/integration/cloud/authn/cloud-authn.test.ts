@@ -54,6 +54,7 @@ beforeEach(async () => {
         sendIssueCreatedNotification: jest.fn(),
         sendQuotaAlert: jest.fn(),
         sendReminderJobHandler: jest.fn(),
+        sendTrialReminder: jest.fn(),
         sendExceedFailureThresholdAlert: jest.fn(),
     }))
 

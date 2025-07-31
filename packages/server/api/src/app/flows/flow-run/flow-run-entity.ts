@@ -38,12 +38,17 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             ...ApIdSchema, 
             nullable: true,
         },
+        parentRunId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        failParentOnFailure: {
+            type: Boolean,
+            nullable: false,
+            default: true,
+        },
         status: {
             type: String,
-        },
-        terminationReason: {
-            type: String,
-            nullable: true,
         },
         tags: {
             type: ARRAY_COLUMN_TYPE,
@@ -102,6 +107,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         {
             name: 'idx_flow_run_flow_failed_step',
             columns: ['flowId', 'failedStepName'],
+        },
+        {
+            name: 'idx_run_parent_run_id',
+            columns: ['parentRunId'],
         },
     ],
     relations: {

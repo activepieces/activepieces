@@ -28,16 +28,19 @@ type IssuesReminderSystemJobData = {
 type AiUsageReportSystemJobData = {
     platformId: PlatformId
     overage: string
+    idempotencyKey: string
 }
 
 type SevenDaysInTrialEmailSystemJobData = {
     platformId: PlatformId
-    customerEmail: string
+    email: string
+    firstName?: string
 }
 
 type OneDayLeftOnTrialEmailSystemJobData = {
     platformId: PlatformId
-    customerEmail: string
+    email: string
+    firstName?: string
 }
 
 type SystemJobDataMap = {

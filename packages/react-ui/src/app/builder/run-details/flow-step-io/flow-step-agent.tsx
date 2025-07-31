@@ -1,37 +1,26 @@
-import React from 'react';
+import { t } from 'i18next';
+import { Bot } from 'lucide-react';
 
 import { AgentTimeline } from '@/features/agents/agent-timeline';
-import {
-  Action,
-  AgentTestResult,
-  isNil,
-  parseToJsonIfPossible,
-  StepOutput,
-} from '@activepieces/shared';
+import { stepUtils } from '@/features/pieces/lib/step-utils';
+import { PieceAction, StepOutput } from '@activepieces/shared';
 
 type FlowStepAgentProps = {
   stepDetails: StepOutput;
-  selectedStep: Action;
+  selectedStep: PieceAction;
 };
 
 const FlowStepAgent = (props: FlowStepAgentProps) => {
-  const { stepDetails } = props;
-
-  const output: AgentTestResult | null = parseToJsonIfPossible(
-    stepDetails.output,
-  ) as AgentTestResult;
-  const prompt =
-    !isNil(stepDetails.input) &&
-    'prompt' in (stepDetails.input as { prompt: string })
-      ? (stepDetails.input as { prompt: string }).prompt
-      : '';
+  const agentRunId = stepUtils.getAgentRunId(props.stepDetails);
 
   return (
-    <AgentTimeline
-      steps={output?.steps || []}
-      prompt={prompt}
-      isLoading={isNil(output) || isNil(output.steps)}
-    />
+    <>
+      <div className="flex gap-2 items-center px-4 mt-4">
+        <Bot className="size-5" />
+        {t('Agent Output')}
+      </div>
+      {agentRunId && <AgentTimeline agentRunId={agentRunId} className="p-4" />}
+    </>
   );
 };
 

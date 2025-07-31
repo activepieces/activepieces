@@ -280,7 +280,7 @@ const ImportFlowDialog = (
               </span>
               {isLoading ? (
                 <div className="flex justify-center items-center w-full">
-                  <LoadingSpinner className="h-5 w-5" />
+                  <LoadingSpinner />
                 </div>
               ) : (
                 <Select

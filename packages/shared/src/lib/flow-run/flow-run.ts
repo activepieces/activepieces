@@ -4,6 +4,9 @@ import { ApId } from '../common/id-generator'
 import { ExecutionState } from './execution/execution-output'
 import { FlowRunStatus, PauseMetadata } from './execution/flow-execution'
 
+export const PARENT_RUN_ID_HEADER = 'ap-parent-run-id'
+export const FAIL_PARENT_ON_FAILURE_HEADER = 'ap-fail-parent-on-failure'
+
 export type FlowRunId = ApId
 
 export enum RunEnvironment {
@@ -24,11 +27,11 @@ export const FlowRun = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
     flowId: Type.String(),
+    parentRunId: Type.Optional(Type.String()),
+    failParentOnFailure: Type.Boolean(),
     tags: Type.Optional(Type.Array(Type.String())),
     flowVersionId: Type.String(),
     flowDisplayName: Type.String(),
-    // TODO remove this, and create migration to remove it
-    terminationReason: Type.Optional(Type.String()),
     logsFileId: Nullable(Type.String()),
     tasks: Type.Optional(Type.Number()),
     status: Type.Enum(FlowRunStatus),

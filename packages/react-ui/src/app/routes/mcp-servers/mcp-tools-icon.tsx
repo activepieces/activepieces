@@ -26,10 +26,23 @@ export const McpToolsIcon = ({
   }
 
   const MAX_ICONS_TO_SHOW = 3;
-  const visibleTools = mcpTools.slice(0, MAX_ICONS_TO_SHOW);
-  const extraToolsCount = mcpTools.length - visibleTools.length;
+  const uniqueMcpTools = mcpTools.filter((tool, index, self) => {
+    if (tool.type === McpToolType.PIECE && tool.pieceMetadata) {
+      return (
+        self.findIndex(
+          (t) =>
+            t.type === McpToolType.PIECE &&
+            t.pieceMetadata?.pieceName === tool.pieceMetadata.pieceName,
+        ) === index
+      );
+    }
+    return true;
+  });
 
-  const allDisplayNames = mcpTools.map((tool) => {
+  const visibleTools = uniqueMcpTools.slice(0, MAX_ICONS_TO_SHOW);
+  const extraToolsCount = uniqueMcpTools.length - visibleTools.length;
+
+  const allDisplayNames = uniqueMcpTools.map((tool) => {
     if (tool.type === McpToolType.PIECE && tool.pieceMetadata) {
       return (
         pieceMetadataMap.get(tool.pieceMetadata.pieceName)?.displayName ||

@@ -1,4 +1,4 @@
-import { Action, ActionErrorHandlingOptions, ActionType, BranchCondition, BranchExecutionType, CodeAction, FlowVersionState, LoopOnItemsAction, PackageType, PieceAction, PieceType, ProgressUpdateType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
+import { Action, ActionErrorHandlingOptions, ActionType, BranchCondition, BranchExecutionType, CodeAction, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 import { createPropsResolver } from '../../src/lib/variables/props-resolver'
 
@@ -112,9 +112,7 @@ export function buildPieceAction({ name, input, skip, pieceName, actionName, nex
         settings: {
             input,
             pieceName,
-            packageType: PackageType.REGISTRY,
             pieceVersion: '1.0.0', // Not required since it's running in development mode
-            pieceType: PieceType.OFFICIAL,
             actionName,
             inputUiInfo: {},
             errorHandlingOptions,

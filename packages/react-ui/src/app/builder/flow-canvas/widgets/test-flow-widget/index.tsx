@@ -1,35 +1,25 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import {
   ChatDrawerSource,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { useSocket } from '@/components/socket-provider';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import { FlowRun, FlowVersion, isNil, TriggerType } from '@activepieces/shared';
+import { isNil, TriggerType } from '@activepieces/shared';
 
 import ViewOnlyWidget from '../view-only-widget';
 
 import { TestButton } from './test-button';
 
-type TestFlowWidgetProps = {
-  flowVersion: FlowVersion;
-  setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
-  readonly: boolean;
-};
-
-const TestFlowWidget = ({
-  flowVersion,
-  setRun,
-  readonly,
-}: TestFlowWidgetProps) => {
-  const socket = useSocket();
-  const [setChatDrawerOpenSource] = useBuilderStateContext((state) => [
-    state.setChatDrawerOpenSource,
-  ]);
+const TestFlowWidget = () => {
+  const [setChatDrawerOpenSource, flowVersion, readonly, setRun] =
+    useBuilderStateContext((state) => [
+      state.setChatDrawerOpenSource,
+      state.flowVersion,
+      state.readonly,
+      state.setRun,
+    ]);
 
   const triggerHasSampleData =
     flowVersion.trigger.type === TriggerType.PIECE &&
@@ -40,20 +30,10 @@ const TestFlowWidget = ({
     flowVersion.trigger.settings.triggerName,
   );
 
-  const { mutate: runFlow, isPending } = useMutation<void>({
-    mutationFn: () =>
-      flowRunsApi.testFlow(
-        socket,
-        {
-          flowVersionId: flowVersion.id,
-        },
-        (run) => {
-          setRun(run, flowVersion);
-        },
-      ),
-    onError: (error) => {
-      console.log(error);
-      toast(INTERNAL_ERROR_TOAST);
+  const { mutate: runFlow, isPending } = flowsHooks.useTestFlow({
+    flowVersionId: flowVersion.id,
+    onUpdateRun: (run) => {
+      setRun(run, flowVersion);
     },
   });
 
@@ -68,7 +48,6 @@ const TestFlowWidget = ({
           setChatDrawerOpenSource(ChatDrawerSource.TEST_FLOW);
         }}
         text={t('Open Chat')}
-        disabled={!triggerHasSampleData}
         loading={isPending}
       />
     );

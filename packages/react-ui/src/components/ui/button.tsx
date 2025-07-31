@@ -35,7 +35,7 @@ const buttonVariants = cva(
         sm: 'h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5',
         lg: 'h-10 rounded-md px-6 has-[>svg]:px-4',
         icon: 'size-9',
-        xs: 'h-6 p-2',
+        xs: 'h-6 px-2 text-xs py-2',
       },
     },
     defaultVariants: {
@@ -111,11 +111,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading ? (
           <LoadingSpinner
-            className={
-              variant === 'default' || variant === 'secondary'
-                ? 'stroke-background'
-                : 'stroke-foreground'
-            }
+            className={cn('size-5', {
+              'stroke-background':
+                variant === 'default' || variant === 'secondary',
+              'stroke-foreground':
+                variant !== 'default' && variant !== 'secondary',
+            })}
           />
         ) : (
           <>
