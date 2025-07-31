@@ -1,5 +1,5 @@
-import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AI_USAGE_FEATURE_HEADER, AIUsageFeature, apId, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, SeekPage, spreadIfDefined } from '@activepieces/shared'
-import { createOpenAI } from '@ai-sdk/openai'
+import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AIUsageFeature, apId, createAIProvider, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { openai } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, FindOperator, In, Not } from 'typeorm'
@@ -29,9 +29,10 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             name: params.displayName,
             projectId: params.projectId,
         })
-        const { description, displayName, systemPrompt } = await this.enhanceAgentPrompt({ platformId: params.platformId, projectId: params.projectId, systemPrompt: params.systemPrompt })
+        const id = apId()
+        const { description, displayName, systemPrompt } = await this.enhanceAgentPrompt({ platformId: params.platformId, projectId: params.projectId, systemPrompt: params.systemPrompt, agentId: id })
         const agentPayload: Omit<Agent, 'created' | 'updated' | 'taskCompleted' | 'runCompleted'> = {
-            id: apId(),
+            id,
             displayName,
             description,
             systemPrompt,
@@ -53,7 +54,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         return enrichAgent(agent, log)
     },
     async enhanceAgentPrompt(params: EnhaceAgentParams): Promise<EnhancedAgentPrompt> {
-        const { systemPrompt, projectId, platformId } = params
+        const { systemPrompt, projectId, platformId, agentId } = params
         const baseURL = await domainHelper.getPublicApiUrl({ path: '/v1/ai-providers/proxy/openai/v1', platformId })
         const enhancePromptSchema = z.object({
             systemPrompt: z.string().describe('The enhanced version of the original prompt.'),
@@ -65,14 +66,18 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             platformId,
             projectId,
         })
-        const model =  createOpenAI({
-            baseURL,
-            apiKey,
-            headers: {
-                [AI_USAGE_FEATURE_HEADER]: AIUsageFeature.AGENTS,
-            },
-        }).chat('gpt-4o-mini')
         const { system, prompt } = getEnhancementPrompt(systemPrompt)
+        const model = createAIProvider({
+            providerName: 'openai',
+            modelInstance: openai('gpt-4o-mini'),
+            apiKey,
+            baseURL,
+            metadata: {
+                feature: AIUsageFeature.AGENTS,
+                agentid: agentId,
+            },
+        })
+
         const { object } = await generateObject({
             model,
             system, 
@@ -239,6 +244,7 @@ type DeleteParams = {
 }
 
 type EnhaceAgentParams = {
+    agentId: string
     platformId: string
     projectId: string
     systemPrompt: string

@@ -81,7 +81,8 @@ export const CreateAgentButton = ({
                 handleCreateAgent({
                   systemPrompt,
                   displayName: 'Fresh Agent',
-                  description: 'Fresh agent! jack of all trades, master of none',
+                  description:
+                    'Fresh agent! jack of all trades, master of none',
                 })
               }
               disabled={!systemPrompt.trim() || isPending}
