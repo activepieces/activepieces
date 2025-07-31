@@ -42,4 +42,3 @@ export const paperform = createPiece({
   ],
   triggers: [newFormSubmission, newPartialFormSubmission],
 });
-    
