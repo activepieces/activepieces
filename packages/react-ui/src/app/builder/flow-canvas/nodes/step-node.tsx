@@ -1,13 +1,10 @@
 import { Handle, NodeProps, Position } from '@xyflow/react';
-import { EllipsisVertical } from 'lucide-react';
 import React, { useMemo } from 'react';
-
 import {
   useBuilderStateContext,
   useStepNodeAttributes,
 } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
-import { Button } from '@/components/ui/button';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { StepMetadataWithActionOrTriggerOrAgentDisplayName } from '@/lib/types';
@@ -18,12 +15,11 @@ import {
   TriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
-
 import { flowUtilConsts } from '../utils/consts';
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApStepNode } from '../utils/types';
-
 import { ApStepNodeStatus } from './step-node-status';
+import { StepEllipsesButton } from './step-ellipses-button';
 
 const getPieceSelectorOperationType = (step: Step) => {
   if (flowStructureUtil.isTrigger(step.type)) {
@@ -76,9 +72,8 @@ const ApStepCanvasNode = React.memo(
       e.preventDefault();
       e.stopPropagation();
     };
-
     return (
-      <div key={step.name} {...stepNodeAttributes} className="">
+      <div key={step.name} {...stepNodeAttributes} className=" group transition-all duration-150 ease-in">
         <div className="relative h-full w-full cursor-default">
           {!isDragging && (
             <PieceSelector
@@ -104,7 +99,7 @@ const ApStepCanvasNode = React.memo(
 
                 <div
                   className={cn(
-                    'items-center relative  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3 group',
+                    'items-center relative grou-hover:-mt-[2px]  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3',
                     {},
                   )}
                   onClick={(e) => {
@@ -115,7 +110,7 @@ const ApStepCanvasNode = React.memo(
                 >
                   <div
                     className={cn(
-                      'bg-background flex items-center justify-center rounded-lg shadow-step-node border hover:border-primary transition-all  ',
+                      'bg-background flex items-center justify-center rounded-lg shadow-step-node group-hover:shadow-hovered-step-node  border  transition-all duration-150 ease-in group-hover:-translate-y-[2px]',
                       {
                         'border-primary shadow-selected-step-node dark:shadow-selected-step-node-dark':
                           isSelected,
@@ -130,11 +125,11 @@ const ApStepCanvasNode = React.memo(
                       width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
                       maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
                     }}
+                    
                   >
                     <div className="relative">
                       {hasGradientBorder && <AiNodeGradient />}
-                      <ElipsisButton />
-
+                      <StepEllipsesButton stepName={step.name} />
                       <StepNodeImage
                         isRoundedStep={isRoundedStep}
                         hasGradientBorder={hasGradientBorder}
@@ -165,28 +160,7 @@ const ApStepCanvasNode = React.memo(
   },
 );
 
-const ElipsisButton = () => {
-  return (
-    <Button
-      onClick={(e) => {
-        e.preventDefault();
-        const rightClickEvent = new MouseEvent('contextmenu', {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          button: 2, // Right mouse button
-          clientX: e.clientX,
-          clientY: e.clientY,
-        });
-        e.target.dispatchEvent(rightClickEvent);
-      }}
-      variant="accent"
-      className="!size-[28px] !rounded-xs z-20 opacity-0  drop-shadow-lg text-slate-500 dark:text-slate-200  group-hover:opacity-100 transition-all duration-300 flex items-center justify-center absolute -top-1 -right-1"
-    >
-      <EllipsisVertical className="size-4" />
-    </Button>
-  );
-};
+
 
 const AiNodeGradient = () => {
   return (
