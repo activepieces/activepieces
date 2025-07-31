@@ -55,7 +55,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
     },
     async enhanceAgentPrompt(params: EnhaceAgentParams): Promise<EnhancedAgentPrompt> {
         const { systemPrompt, projectId, platformId, agentId } = params
-        const baseURL = await domainHelper.getPublicApiUrl({ path: '/v1/ai-providers/proxy/openai/v1', platformId })
+        const baseURL = await domainHelper.getPublicApiUrl({ path: '/v1/ai-providers/proxy/openai', platformId })
         const enhancePromptSchema = z.object({
             systemPrompt: z.string().describe('The enhanced version of the original prompt.'),
             displayName: z.string().describe('A concise and descriptive name for the agent based on the system prompt.'),
