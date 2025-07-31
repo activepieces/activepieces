@@ -16,10 +16,7 @@ const replaceIpWithLocalhost = (url: string): string => {
   }
 };
 
-const constructConfig = (
-  clientType: McpClientType,
-  url: string,
-) => {
+const constructConfig = (clientType: McpClientType, url: string) => {
   const serverName = 'Activepieces';
 
   switch (clientType) {

@@ -146,24 +146,28 @@ export const McpConnectPage = () => {
                     title={t('Configure Claude Integration')}
                   >
                     <div className="mt-3">
-                        {t('Open Claude')} →{' '}
-                        <Badge variant="outline">{t('Settings')}</Badge> →{' '}
-                        <Badge variant="outline">{t('Developer')}</Badge> →{' '}
-                        <Badge variant="outline">{t('Edit Config')}</Badge> →{' '}
-                        <Badge variant="outline">{t('Open claude_desktop_config.json')}</Badge>
-                        <br />
-                        <br />
-                        {t('Paste the configuration below and save, then quit and restart Claude.')}
-                        <br />
-                        <br />
-                        <ConfigDisplay
-                          mcpServerUrl={mcpServerUrl}
-                          type="claude"
-                          onRotateToken={handleRotateToken}
-                          isRotating={rotateMutation.isPending}
-                          hasValidMcp={hasValidMcp}
-                          hasPermissionToWriteMcp={hasPermissionToWriteMcp}
-                        />
+                      {t('Open Claude')} →{' '}
+                      <Badge variant="outline">{t('Settings')}</Badge> →{' '}
+                      <Badge variant="outline">{t('Developer')}</Badge> →{' '}
+                      <Badge variant="outline">{t('Edit Config')}</Badge> →{' '}
+                      <Badge variant="outline">
+                        {t('Open claude_desktop_config.json')}
+                      </Badge>
+                      <br />
+                      <br />
+                      {t(
+                        'Paste the configuration below and save, then quit and restart Claude.',
+                      )}
+                      <br />
+                      <br />
+                      <ConfigDisplay
+                        mcpServerUrl={mcpServerUrl}
+                        type="claude"
+                        onRotateToken={handleRotateToken}
+                        isRotating={rotateMutation.isPending}
+                        hasValidMcp={hasValidMcp}
+                        hasPermissionToWriteMcp={hasPermissionToWriteMcp}
+                      />
                     </div>
                   </StepCard>
                 </div>
