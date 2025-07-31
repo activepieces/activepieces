@@ -1,5 +1,5 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { Action, ActionType, assertEqual, CodeAction, EXACT_VERSION_REGEX, flowStructureUtil, FlowVersion, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, Step, Trigger, TriggerType } from '@activepieces/shared'
+import { Action, ActionType, assertEqual, assertNotNullOrUndefined, CodeAction, EXACT_VERSION_REGEX, flowStructureUtil, FlowVersion, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, PieceType, Step, Trigger, TriggerType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { CodeArtifact } from '../runner/engine-runner-types'
@@ -59,6 +59,32 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
             }
         }
     },
+    async enrichPieceToInstall(engineToken: string, pieceData: EnrichPieceWithArchiveParams): Promise<PiecePackage> {
+        switch (pieceData.packageType) {
+            case PackageType.ARCHIVE: {
+                const { archiveId } = pieceData
+                assertNotNullOrUndefined(archiveId, 'archiveId')
+
+                const archive = await engineApiService(engineToken, log).getFile(archiveId)
+                return {
+                    packageType: pieceData.packageType,
+                    pieceType: pieceData.pieceType,
+                    pieceName: pieceData.pieceName,
+                    pieceVersion: pieceData.pieceVersion,
+                    archiveId,
+                    archive,
+                }
+            }
+            case PackageType.REGISTRY: {
+                return {
+                    packageType: pieceData.packageType,
+                    pieceType: pieceData.pieceType,
+                    pieceName: pieceData.pieceName,
+                    pieceVersion: pieceData.pieceVersion,
+                }
+            }
+        }
+    },
     async getExactPieceForStep(engineToken: string, step: Action | Trigger): Promise<PiecePackage> {
         const pieceSettings = step.settings as PieceTriggerSettings | PieceActionSettings
         const { pieceName, pieceVersion } = pieceSettings
@@ -115,4 +141,12 @@ type LockFlowVersionParams = {
 export type BasicPieceInformation = {
     pieceName: string
     pieceVersion: string
+}
+
+export type EnrichPieceWithArchiveParams = {
+    pieceName: string
+    pieceVersion: string
+    packageType: PackageType
+    pieceType: PieceType
+    archiveId?: string
 }

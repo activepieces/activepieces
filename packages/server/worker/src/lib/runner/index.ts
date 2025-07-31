@@ -1,5 +1,5 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, TriggerHookType, TriggerType } from '@activepieces/shared'
+import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, PieceActionSettings, PiecePackage, PieceTriggerSettings, TriggerHookType, TriggerType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceWorkerCache } from '../api/piece-worker-cache'
 import { executionFiles } from '../cache/execution-files'
@@ -67,14 +67,12 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async extractPieceMetadata(engineToken, operation) {
         log.debug({ operation }, '[threadEngineRunner#extractPieceMetadata]')
 
-        let lockedPiece: PiecePackage = operation
+        let lockedPiece: PiecePackage
         try {
             lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, operation)
         }
-        catch (error) {
-            if (operation.packageType !== PackageType.REGISTRY) {
-                throw error
-            }
+        catch {
+            lockedPiece = await pieceEngineUtil(log).enrichPieceToInstall(engineToken, operation)
         }
         
         await executionFiles(log).provision({
