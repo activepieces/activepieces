@@ -78,7 +78,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
       {!pieceModel && (
         <SkeletonList
           numberOfItems={5}
-          className="h-7 bg-background"
+          className="h-7"
         ></SkeletonList>
       )}
 
