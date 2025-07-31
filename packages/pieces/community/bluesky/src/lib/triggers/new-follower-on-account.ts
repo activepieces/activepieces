@@ -1,45 +1,30 @@
-
 import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { blueskyAuth } from '../common/auth';
-import { makeBlueskyRequest } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createBlueskyAgent } from '../common/client';
 import dayjs from 'dayjs';
 
 const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     try {
-      // Get the authenticated user's DID from their session
-      const sessionResponse = await makeBlueskyRequest(
-        auth,
-        HttpMethod.GET,
-        'com.atproto.server.getSession',
-        undefined,
-        {},
-        true // This requires authentication
-      );
-
-      if (!sessionResponse.did) {
+      const agent = await createBlueskyAgent(auth);
+      
+      // Get the authenticated user's session to get their DID
+      const session = agent.session;
+      if (!session?.did) {
         throw new Error('Could not get user DID from session');
       }
 
-      const userDid = sessionResponse.did;
+      const userDid = session.did;
 
       // Get followers using app.bsky.graph.getFollowers
-      const response = await makeBlueskyRequest(
-        auth,
-        HttpMethod.GET,
-        'app.bsky.graph.getFollowers',
-        undefined,
-        {
-          actor: userDid,
-          limit: 100 // Get recent followers
-        },
-        false // This is a public endpoint but we can use auth for better rate limits
-      );
+      const response = await agent.getFollowers({
+        actor: userDid,
+        limit: 100 // Get recent followers
+      });
 
-      if (!response.followers || !Array.isArray(response.followers)) {
+      if (!response.data?.followers || !Array.isArray(response.data.followers)) {
         return [];
       }
 
@@ -50,7 +35,7 @@ const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, Record<string, 
 
       // For new followers, we'll use the indexedAt from their profiles as a proxy
       // This isn't perfect but it's the best we can do with the available data
-      return response.followers
+      return response.data.followers
         .filter((follower: any) => {
           // Use profile creation time as a rough indicator of when they might have followed
           // In a real implementation, you'd want to store the previous list of followers

@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { blueskyAuth } from '../common/auth';
-import { makeBlueskyRequest } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createBlueskyAgent } from '../common/client';
 import { postUrlProperty, threadDepthDropdown, parentHeightDropdown, extractPostInfoFromUrl } from '../common/props';
 
 export const findThread = createAction({
@@ -18,38 +17,31 @@ export const findThread = createAction({
     const { postUrl, depth = 6, parentHeight = 80 } = propsValue;
 
     try {
+      const agent = await createBlueskyAgent(auth);
+      
       // Extract post information from user-friendly URL
       const postInfo = extractPostInfoFromUrl(postUrl);
-      let postUri = postInfo.uri;
+      let atUri = postInfo.uri;
 
       // If we don't have an AT-URI but have handle and postId, we need to resolve the handle to DID
-      if (!postUri && postInfo.handle && postInfo.postId) {
+      if (!atUri && postInfo.handle && postInfo.postId) {
         // First, resolve the handle to get the DID
-        const resolveResponse = await makeBlueskyRequest(
-          auth,
-          HttpMethod.GET,
-          'com.atproto.identity.resolveHandle',
-          undefined,
-          {
-            handle: postInfo.handle,
-          },
-          false // This is a public endpoint
-        );
-
-        if (resolveResponse.did) {
+        const didDoc = await agent.resolveHandle({ handle: postInfo.handle });
+        
+        if (didDoc.data?.did) {
           // Construct the proper AT-URI
-          postUri = `at://${resolveResponse.did}/app.bsky.feed.post/${postInfo.postId}`;
+          atUri = `at://${didDoc.data.did}/app.bsky.feed.post/${postInfo.postId}`;
         } else {
           throw new Error(`Could not resolve handle: ${postInfo.handle}`);
         }
       }
 
-      if (!postUri) {
+      if (!atUri) {
         throw new Error('Could not parse the post URL. Please make sure you are using a valid Bluesky post URL like: https://bsky.app/profile/username.bsky.social/post/xxx');
       }
 
       // Validate AT-URI format
-      if (!postUri.startsWith('at://')) {
+      if (!atUri.startsWith('at://')) {
         throw new Error('Invalid URI format. Must be an AT-URI starting with "at://" or a valid Bluesky URL');
       }
 
@@ -65,20 +57,12 @@ export const findThread = createAction({
         throw new Error('Parent height must be a number between 0 and 1000');
       }
 
-      // Fetch the thread using app.bsky.feed.getPostThread
-      // This is a public endpoint that doesn't require authentication
-      const response = await makeBlueskyRequest(
-        auth,
-        HttpMethod.GET,
-        'app.bsky.feed.getPostThread',
-        undefined,
-        {
-          uri: postUri,
-          depth: depthNum.toString(),
-          parentHeight: parentHeightNum.toString(),
-        },
-        false // This is a public endpoint
-      );
+      // Fetch the thread using the agent's getPostThread method
+      const response = await agent.getPostThread({
+        uri: atUri,
+        depth: depthNum,
+        parentHeight: parentHeightNum,
+      });
 
       // Count posts in the thread
       const stats = {
@@ -114,21 +98,25 @@ export const findThread = createAction({
         }
       };
 
-      if (response.thread) {
-        countPosts(response.thread);
+      if (response.data.thread) {
+        countPosts(response.data.thread);
         // Don't double count the root post
-        if (response.thread.post) {
+        if (
+          response.data.thread.$type === 'app.bsky.feed.defs#threadViewPost' &&
+          'post' in response.data.thread &&
+          response.data.thread.post
+        ) {
           stats.totalPosts = 1;
         }
       }
 
       return {
         success: true,
-        thread: response.thread,
-        requestedUri: postUri,
+        thread: response.data.thread,
+        requestedUri: atUri,
         parameters: {
-          depth,
-          parentHeight,
+          depth: depthNum,
+          parentHeight: parentHeightNum,
         },
         statistics: stats,
         retrievedAt: new Date().toISOString(),

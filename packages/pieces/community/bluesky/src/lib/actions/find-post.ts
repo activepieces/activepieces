@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { blueskyAuth } from '../common/auth';
-import { makeBlueskyRequest } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createBlueskyAgent } from '../common/client';
 import { postUrlProperty, extractPostInfoFromUrl } from '../common/props';
 
 export const findPost = createAction({
@@ -16,6 +15,8 @@ export const findPost = createAction({
     const { postUrl } = propsValue;
 
     try {
+      const agent = await createBlueskyAgent(auth);
+      
       // Extract post information from user-friendly URL
       const postInfo = extractPostInfoFromUrl(postUrl);
       let atUri = postInfo.uri;
@@ -23,20 +24,11 @@ export const findPost = createAction({
       // If we don't have an AT-URI but have handle and postId, we need to resolve the handle to DID
       if (!atUri && postInfo.handle && postInfo.postId) {
         // First, resolve the handle to get the DID
-        const resolveResponse = await makeBlueskyRequest(
-          auth,
-          HttpMethod.GET,
-          'com.atproto.identity.resolveHandle',
-          undefined,
-          {
-            handle: postInfo.handle,
-          },
-          false // This is a public endpoint
-        );
-
-        if (resolveResponse.did) {
+        const didDoc = await agent.resolveHandle({ handle: postInfo.handle });
+        
+        if (didDoc.data?.did) {
           // Construct the proper AT-URI
-          atUri = `at://${resolveResponse.did}/app.bsky.feed.post/${postInfo.postId}`;
+          atUri = `at://${didDoc.data.did}/app.bsky.feed.post/${postInfo.postId}`;
         } else {
           throw new Error(`Could not resolve handle: ${postInfo.handle}`);
         }
@@ -51,24 +43,14 @@ export const findPost = createAction({
         throw new Error('Invalid URI format. Must be an AT-URI starting with "at://" or a valid Bluesky URL');
       }
 
-      // Retrieve the post using app.bsky.feed.getPosts
-      // This is a public endpoint that doesn't require authentication
-      const response = await makeBlueskyRequest(
-        auth,
-        HttpMethod.GET,
-        'app.bsky.feed.getPosts',
-        undefined,
-        {
-          uris: [atUri], // getPosts expects an array of URIs
-        },
-        false // This is a public endpoint
-      );
+      // Retrieve the post using the agent's getPosts method
+      const response = await agent.getPosts({ uris: [atUri] });
 
-      if (!response.posts || response.posts.length === 0) {
+      if (!response.data?.posts || response.data.posts.length === 0) {
         throw new Error('Post not found or not accessible');
       }
 
-      const post = response.posts[0];
+      const post = response.data.posts[0];
       
       return {
         success: true,
@@ -81,6 +63,10 @@ export const findPost = createAction({
         repostCount: post.repostCount || 0,
         likeCount: post.likeCount || 0,
         quoteCount: post.quoteCount || 0,
+        embed: post.embed, 
+        labels: post.labels,
+        threadgate: post.threadgate,
+        viewer: post.viewer,
         retrievedAt: new Date().toISOString(),
       };
     } catch (error) {

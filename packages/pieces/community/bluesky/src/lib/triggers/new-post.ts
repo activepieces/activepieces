@@ -1,9 +1,7 @@
-
 import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { blueskyAuth } from '../common/auth';
-import { makeBlueskyRequest } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createBlueskyAgent } from '../common/client';
 import { simpleLanguageDropdown } from '../common/props';
 import dayjs from 'dayjs';
 
@@ -23,6 +21,8 @@ const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, {
         return [];
       }
 
+      const agent = await createBlueskyAgent(auth);
+
       // Prepare search parameters
       const searchParams: any = {
         q: searchQuery.trim(),
@@ -36,23 +36,16 @@ const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, {
       }
 
       // Search for posts using app.bsky.feed.searchPosts
-      const response = await makeBlueskyRequest(
-        auth,
-        HttpMethod.GET,
-        'app.bsky.feed.searchPosts',
-        undefined,
-        searchParams,
-        false // This is a public endpoint
-      );
+      const response = await agent.api.app.bsky.feed.searchPosts(searchParams);
 
-      if (!response.posts || !Array.isArray(response.posts)) {
+      if (!response.data?.posts || !Array.isArray(response.data.posts)) {
         return [];
       }
 
       // Filter posts since last fetch
       const cutoffTime = lastFetchEpochMS || 0;
 
-      return response.posts
+      return response.data.posts
         .filter((post: any) => {
           if (!post.indexedAt) return false;
           
@@ -112,12 +105,22 @@ const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, {
 function extractMatchedTerms(text: string, query: string): string[] {
   if (!text || !query) return [];
   
-  const terms = query.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+  // Handle complex queries with OR/AND operators
+  const cleanQuery = query.toLowerCase()
+    .replace(/["']/g, '') // Remove quotes
+    .replace(/\s+(or|and)\s+/gi, ' '); // Remove OR/AND operators for simple term matching
+  
+  const terms = cleanQuery.split(/\s+/).filter(term => term.length > 0 && !['or', 'and'].includes(term.toLowerCase()));
   const matchedTerms: string[] = [];
   const lowerText = text.toLowerCase();
   
   terms.forEach(term => {
-    if (lowerText.includes(term)) {
+    // Handle hashtags and mentions
+    if (term.startsWith('#') || term.startsWith('@')) {
+      if (lowerText.includes(term)) {
+        matchedTerms.push(term);
+      }
+    } else if (lowerText.includes(term)) {
       matchedTerms.push(term);
     }
   });

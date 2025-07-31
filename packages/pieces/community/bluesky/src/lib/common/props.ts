@@ -346,3 +346,30 @@ export const replyToProperty = Property.Object({
   description: 'Manual reply object - use "Reply to Post" field instead',
   required: false,
 });
+
+
+
+export async function parseBlueskyUrl(url: string, agent: any): Promise<string> {
+  if (url.startsWith('at://')) {
+    if (!url.match(/^at:\/\/did:plc:[a-z0-9]+\/app\.bsky\.feed\.post\/[a-z0-9]+$/)) {
+      throw new Error('Invalid AT-URI format');
+    }
+    return url;
+  }
+  
+  // Parse bsky.app URLs: https://bsky.app/profile/username.bsky.social/post/postid
+  const urlMatch = url.match(/https?:\/\/bsky\.app\/profile\/([^\/]+)\/post\/([^\/\?]+)/);
+  if (urlMatch) {
+    const handle = urlMatch[1];
+    const postId = urlMatch[2];
+    
+    if (!handle.includes('.') && !handle.includes('@')) {
+      throw new Error('Invalid handle format in URL');
+    }
+    
+    const didDoc = await agent.resolveHandle({ handle: handle.replace('@', '') });
+    return `at://${didDoc.data.did}/app.bsky.feed.post/${postId}`;
+  }
+  
+  throw new Error('Invalid post URL format. Please use a valid Bluesky post URL or AT-URI.');
+}

@@ -1,36 +1,29 @@
-
 import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { blueskyAuth } from '../common/auth';
-import { makeBlueskyRequest } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createBlueskyAgent } from '../common/client';
 import dayjs from 'dayjs';
 
 const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     try {
+      const agent = await createBlueskyAgent(auth);
+      
       // Get the user's timeline using app.bsky.feed.getTimeline
-      const response = await makeBlueskyRequest(
-        auth,
-        HttpMethod.GET,
-        'app.bsky.feed.getTimeline',
-        undefined,
-        {
-          algorithm: 'reverse-chronological', // Get chronological feed
-          limit: 50 // Get recent posts
-        },
-        true // This requires authentication
-      );
+      const response = await agent.getTimeline({
+        algorithm: 'reverse-chronological', // Get chronological feed
+        limit: 50 // Get recent posts
+      });
 
-      if (!response.feed || !Array.isArray(response.feed)) {
+      if (!response.data?.feed || !Array.isArray(response.data.feed)) {
         return [];
       }
 
       // Filter posts since last fetch
       const cutoffTime = lastFetchEpochMS || 0;
 
-      return response.feed
+      return response.data.feed
         .filter((item: any) => {
           if (!item.post || !item.post.indexedAt) return false;
           
