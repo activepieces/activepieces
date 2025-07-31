@@ -7,6 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 
 type TestButtonProps = {
   onClick: () => void;
@@ -24,7 +25,7 @@ const TestButton = ({
   showKeyboardShortcut = true,
 }: TestButtonProps) => {
   const isMac = /(Mac)/i.test(navigator.userAgent);
-
+  const isSaving = useBuilderStateContext(state=>state.saving);
   useEffect(() => {
     const keydownHandler = (event: KeyboardEvent) => {
       if (
@@ -53,7 +54,7 @@ const TestButton = ({
         <Button
           variant="ghost"
           className="h-8 !bg-primary-100 text-primary-300 disabled:pointer-events-auto hover:!border-primary hover:!text-primary-300 border-primary/50 border border-solid rounded-full animate-fade"
-          disabled={disabled}
+          disabled={disabled || isSaving}
           loading={loading}
           onClick={onClick}
         >
@@ -70,6 +71,11 @@ const TestButton = ({
       {disabled && (
         <TooltipContent side="bottom">
           {t('Please test the trigger first')}
+        </TooltipContent>
+      )}
+      {isSaving && (
+        <TooltipContent side="bottom">
+          {t('Saving...')}
         </TooltipContent>
       )}
     </Tooltip>
