@@ -31,9 +31,13 @@ const jobTypeToDefaultJobOptions: Record<QueueName, DefaultJobOptions> = {
     [QueueName.ONE_TIME]: defaultJobOptions,
     [QueueName.USERS_INTERACTION]: {
         ...defaultJobOptions,
+        removeOnFail: true,
         attempts: 1,
     },
-    [QueueName.WEBHOOK]: defaultJobOptions,
+    [QueueName.WEBHOOK]: {
+        ...defaultJobOptions,
+        attempts: 3,
+    },
     [QueueName.AGENTS]: defaultJobOptions,
 }
 
