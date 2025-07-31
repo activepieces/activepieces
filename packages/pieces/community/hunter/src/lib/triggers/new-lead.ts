@@ -42,7 +42,7 @@ export const newLeadTrigger = createTrigger({
     }
 });
 
-const polling: Polling<PiecePropValueSchema<typeof hunterAuth>, {}> = {
+const polling: Polling<PiecePropValueSchema<typeof hunterAuth>, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
     async items({ auth }) {
         const response = await hunterApiCall({
@@ -51,7 +51,7 @@ const polling: Polling<PiecePropValueSchema<typeof hunterAuth>, {}> = {
             method: HttpMethod.GET,
             qparams: { limit: '100' }
         });
-        const leads = (response as any).data?.leads as Lead[];
+        const leads = (response as { data: { leads: Lead[] } }).data?.leads as Lead[];
         return leads.map((lead) => ({
             epochMilliSeconds: new Date(lead.created_at).valueOf(),
             data: lead
