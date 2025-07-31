@@ -80,9 +80,8 @@ export const CreateAgentButton = ({
               onClick={() =>
                 handleCreateAgent({
                   systemPrompt,
-                  displayName: 'Freshly Backed Agent',
-                  description:
-                    'Baked and ready for battle! sweet now, fierce soon',
+                  displayName: 'Fresh Agent',
+                  description: 'Fresh agent! jack of all trades, master of none',
                 })
               }
               disabled={!systemPrompt.trim() || isPending}
@@ -90,7 +89,7 @@ export const CreateAgentButton = ({
               {isPending ? (
                 <>
                   <LoadingSpinner className="size-4" />
-                  {t('Agent cooking...')}
+                  {t('Preparing Agent...')}
                 </>
               ) : (
                 <>
