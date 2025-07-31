@@ -32,9 +32,9 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         const { description, displayName, systemPrompt } = await this.enhanceAgentPrompt({ platformId: params.platformId, projectId: params.projectId, systemPrompt: params.systemPrompt })
         const agentPayload: Omit<Agent, 'created' | 'updated' | 'taskCompleted' | 'runCompleted'> = {
             id: apId(),
-            displayName: displayName,
-            description: description,
-            systemPrompt: systemPrompt,
+            displayName,
+            description,
+            systemPrompt,
             platformId: params.platformId,
             profilePictureUrl: getAgentProfilePictureUrl(),
             testPrompt: '',
