@@ -4,6 +4,7 @@ import { Metadata } from '../../common/metadata'
 import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
+import { SaveSampleDataRequest } from '../sample-data'
 import { EmptyTrigger, PieceTrigger, Trigger } from '../triggers/trigger'
 import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
@@ -43,6 +44,7 @@ export enum FlowOperationType {
     SET_SKIP_ACTION = 'SET_SKIP_ACTION',
     UPDATE_METADATA = 'UPDATE_METADATA',
     MOVE_BRANCH = 'MOVE_BRANCH',
+    SAVE_SAMPLE_DATA = 'SAVE_SAMPLE_DATA',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -162,7 +164,9 @@ export const UpdateFlowStatusRequest = Type.Object({
 })
 export type UpdateFlowStatusRequest = Static<typeof UpdateFlowStatusRequest>
 
-export const ChangePublishedVersionIdRequest = Type.Object({})
+export const ChangePublishedVersionIdRequest = Type.Object({
+    status: Type.Optional(Type.Enum(FlowStatus)),
+})
 export type ChangePublishedVersionIdRequest = Static<
     typeof ChangePublishedVersionIdRequest
 >
@@ -339,6 +343,12 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.MOVE_BRANCH),
             request: MoveBranchRequest,
+        },
+    ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.SAVE_SAMPLE_DATA),
+            request: SaveSampleDataRequest,
         },
     ),
 ])

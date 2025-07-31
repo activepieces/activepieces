@@ -5,7 +5,7 @@ import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-import { LocalesEnum, Permission } from '@activepieces/shared';
+import { LocalesEnum } from '@activepieces/shared';
 
 import { authenticationSession } from './authentication-session';
 
@@ -29,7 +29,6 @@ export const formatUtils = {
   formatNumber(number: number) {
     return new Intl.NumberFormat('en-US').format(number);
   },
-
   formatDateOnlyOrFail(date: Date, fallback: string) {
     try {
       return this.formatDateOnly(date);
@@ -50,7 +49,6 @@ export const formatUtils = {
 
     const isToday = inputDate.isSame(now, 'day');
     const isYesterday = inputDate.isSame(now.subtract(1, 'day'), 'day');
-    const isSameYear = inputDate.isSame(now, 'year');
 
     const timeFormat = new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
@@ -62,24 +60,15 @@ export const formatUtils = {
       return `Today at ${timeFormat.format(date)}`;
     } else if (isYesterday) {
       return `Yesterday at ${timeFormat.format(date)}`;
-    } else if (isSameYear) {
-      return Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true,
-      }).format(date);
-    } else {
-      return Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true,
-      }).format(date);
     }
+    return Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    }).format(date);
   },
   formatDateToAgo(date: Date) {
     const now = dayjs();
@@ -242,23 +231,16 @@ export const useTimeAgo = (date: Date) => {
   return timeAgo;
 };
 
-export const determineDefaultRoute = (
-  checkAccess: (permission: Permission) => boolean,
-) => {
-  if (checkAccess(Permission.READ_FLOW)) {
+export const determineDefaultRoute = (isEmbedded: boolean) => {
+  if (isEmbedded) {
     return authenticationSession.appendProjectRoutePrefix('/flows');
   }
-  if (checkAccess(Permission.READ_RUN)) {
-    return authenticationSession.appendProjectRoutePrefix('/runs');
-  }
-  if (checkAccess(Permission.READ_ISSUES)) {
-    return authenticationSession.appendProjectRoutePrefix('/issues');
-  }
-  return authenticationSession.appendProjectRoutePrefix('/settings');
+  return authenticationSession.appendProjectRoutePrefix('/agents');
 };
 
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
 export const NEW_TABLE_QUERY_PARAM = 'newTable';
+export const NEW_MCP_QUERY_PARAM = 'newMcp';
 export const parentWindow: Window = window.opener ?? window.parent;
 export const cleanLeadingSlash = (url: string) => {
   return url.startsWith('/') ? url.slice(1) : url;
@@ -327,4 +309,13 @@ export const downloadFile = async ({
 
 export const wait = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+export const scrollToElementAndClickIt = (elementId: string) => {
+  const element = document.getElementById(elementId);
+  element?.scrollIntoView({
+    behavior: 'instant',
+    block: 'start',
+  });
+  element?.click();
 };

@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+import { CheckIcon, UnplugIcon, XIcon } from 'lucide-react';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -15,10 +16,11 @@ import {
   assertNotNullOrUndefined,
   isNil,
   apId,
+  AppConnectionStatus,
 } from '@activepieces/shared';
 
-import { appConnectionsApi } from './app-connections-api';
-import { globalConnectionsApi } from './global-connections-api';
+import { appConnectionsApi } from './api/app-connections';
+import { globalConnectionsApi } from './api/global-connections';
 
 export class ConnectionNameAlreadyExists extends Error {
   constructor() {
@@ -33,6 +35,31 @@ export class NoProjectSelected extends Error {
     this.name = 'NoProjectSelected';
   }
 }
+
+export const appConnectionUtils = {
+  getStatusIcon(status: AppConnectionStatus): {
+    variant: 'default' | 'success' | 'error';
+    icon: React.ComponentType;
+  } {
+    switch (status) {
+      case AppConnectionStatus.ACTIVE:
+        return {
+          variant: 'success',
+          icon: CheckIcon,
+        };
+      case AppConnectionStatus.MISSING:
+        return {
+          variant: 'default',
+          icon: UnplugIcon,
+        };
+      case AppConnectionStatus.ERROR:
+        return {
+          variant: 'error',
+          icon: XIcon,
+        };
+    }
+  },
+};
 
 export const newConnectionUtils = {
   getConnectionName(

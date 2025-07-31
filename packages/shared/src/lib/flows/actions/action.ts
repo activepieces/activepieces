@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { PackageType, PieceType, VersionType } from '../../pieces'
+import { VersionType } from '../../pieces'
 import { SampleDataSetting } from '../sample-data'
 import { PieceTriggerSettings } from '../triggers/trigger'
 
@@ -68,8 +68,6 @@ export const CodeActionSchema = Type.Object({
     settings: CodeActionSettings,
 })
 export const PieceActionSettings = Type.Object({
-    packageType: Type.Enum(PackageType),
-    pieceType: Type.Enum(PieceType),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
     actionName: Type.Optional(Type.String({})),
@@ -239,11 +237,6 @@ export type BranchSingleValueCondition = Static<
   typeof BranchSingleValueCondition
 >
 
-export const BranchActionSettings = Type.Object({
-    conditions: Type.Array(Type.Array(BranchConditionValid(false))),
-    inputUiInfo: SampleDataSetting,
-})
-export type BranchActionSettings = Static<typeof BranchActionSettings>
 
 export const RouterBranchesSchema = (addMinLength: boolean) =>
     Type.Array(
@@ -349,7 +342,7 @@ export type StepSettings =
   | CodeActionSettings
   | PieceActionSettings
   | PieceTriggerSettings
-  | BranchActionSettings
+  | RouterActionSettings
   | LoopOnItemsActionSettings
 
 export const emptyCondition: ValidBranchCondition = {

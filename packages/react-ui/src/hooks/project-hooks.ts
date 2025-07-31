@@ -27,7 +27,6 @@ export const projectHooks = {
     const query = useSuspenseQuery<ProjectWithLimits, Error>({
       queryKey: ['current-project', currentProjectId],
       queryFn: projectApi.current,
-      staleTime: Infinity,
     });
     return {
       ...query,
@@ -66,7 +65,6 @@ export const projectHooks = {
           document.visibilityState === 'visible' &&
           !embedState.isEmbedded
         ) {
-          console.log('Project changed', currentProjectId, projectId);
           window.location.reload();
         }
       };

@@ -49,6 +49,7 @@ const systemPropValidators: {
     [AppSystemProp.ENVIRONMENT]: enumValidator(Object.values(ApEnvironment)),
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: numberValidator,
+    [AppSystemProp.AGENT_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
@@ -138,6 +139,7 @@ const systemPropValidators: {
     // AppSystemProp
     [WorkerSystemProp.FLOW_WORKER_CONCURRENCY]: numberValidator,
     [WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY]: numberValidator,
+    [WorkerSystemProp.AGENTS_WORKER_CONCURRENCY]: numberValidator,
 
     // Cloud
     [AppSystemProp.GOOGLE_CLIENT_ID]: stringValidator,
@@ -153,10 +155,18 @@ const systemPropValidators: {
 
     // Tables
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
-    [AppSystemProp.MAX_TABLES_PER_PROJECT]: numberValidator,
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
     [AppSystemProp.SHOW_CHANGELOG]: booleanValidator,
+
+    // MCP
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
+    [AppSystemProp.ISSUE_ARCHIVE_DAYS]: (value: string) => {
+        const days = parseInt(value)
+        if (isNaN(days) || days < 0) {
+            return 'Value must be a non-negative number'
+        }
+        return true
+    },
 }
 
 

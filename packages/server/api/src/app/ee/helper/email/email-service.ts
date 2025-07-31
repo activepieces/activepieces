@@ -13,9 +13,7 @@ import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
-
 const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
-
 const MAX_ISSUES_EMAIL_LIMT = 50
 
 export const emailService = (log: FastifyBaseLogger) => ({
@@ -64,7 +62,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
             createdAt,
         })
 
-        // TODO remove the hardcoded limit
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
         
@@ -91,7 +88,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         assertNotNullOrUndefined(project, 'project')
 
         const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
-        if (!platform.plan.alertsEnabled || platform.plan.embeddingEnabled) {
+        if (platform.plan.embeddingEnabled) {
             return
         }
 
@@ -198,6 +195,21 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async sendTrialReminder({ platformId, firstName, customerEmail, templateName }: SendTrialReminderArgs): Promise<void> {
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: templateName,
+                vars: {
+                    year: new Date().getFullYear().toString(),
+                    firstName: firstName ?? 'Automator',
+                },
+            },
+        })
+
+    },
+
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
         const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
@@ -263,6 +275,13 @@ type SendOtpArgs = {
     platformId: string | null
     otp: string
     userIdentity: UserIdentity
+}
+
+type SendTrialReminderArgs = {
+    platformId: string
+    firstName: string | undefined
+    customerEmail: string
+    templateName: '3-days-left-on-trial' | '7-days-in-trial' | '1-day-left-on-trial' | 'welcome-to-trial'
 }
 
 type IssueCreatedArgs = {

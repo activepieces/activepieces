@@ -46,7 +46,7 @@ const DataTableSelectPopover = ({
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
               <Badge
-                variant="secondary"
+                variant="accent"
                 className="rounded-sm px-1 font-normal lg:hidden"
               >
                 {selectedValues.size}
@@ -54,7 +54,7 @@ const DataTableSelectPopover = ({
               <div className="hidden space-x-1 lg:flex">
                 {selectedValues.size > 2 ? (
                   <Badge
-                    variant="secondary"
+                    variant="accent"
                     className="rounded-sm px-1 font-normal"
                   >
                     {selectedValues.size} selected
@@ -64,7 +64,7 @@ const DataTableSelectPopover = ({
                     .filter((option) => selectedValues.has(option.value))
                     .map((option) => (
                       <Badge
-                        variant="secondary"
+                        variant="accent"
                         key={option.value}
                         className="rounded-sm px-1 font-normal"
                       >

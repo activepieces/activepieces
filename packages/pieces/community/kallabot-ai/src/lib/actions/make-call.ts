@@ -96,15 +96,15 @@ export const makeCallAction = createAction({
         }
       }
     }),
-    record: Property.Checkbox({
-      displayName: 'Record Call',
-      description: 'Whether to record the call for quality and training purposes.',
-      required: true,
-      defaultValue: false,
-    }),
+
     template_variables: Property.Object({
       displayName: 'Template Variables',
       description: 'Variables to replace placeholders in agent prompts. Only required if your agent prompts contain variables in {{variable.name}} format. Example: if prompt has {{customer.name}}, provide {"customer": {"name": "John"}}',
+      required: false,
+    }),
+    webhook_url: Property.ShortText({
+      displayName: 'Webhook URL',
+      description: 'Optional webhook URL to receive call completion events. Use this for "Respond and Wait for Next Webhook" flows.',
       required: false,
     }),
   },
@@ -120,11 +120,25 @@ export const makeCallAction = createAction({
         agent_id: context.propsValue.agent_id,
         recipient_phone_number: context.propsValue.recipient_phone_number,
         sender_phone_number: context.propsValue.sender_phone_number,
-        record: context.propsValue.record,
         template_variables: context.propsValue.template_variables,
+        webhook_url: context.propsValue.webhook_url,
       },
     });
 
-    return response.body;
+    // Mock response data for development/testing
+    const mockResponse = {
+      status: "success",
+      message: "Call initiated successfully",
+      call_details: {
+        call_sid: "CA1234567890abcdef1234567890abcdef",
+        from_number: context.propsValue.sender_phone_number,
+        to_number: context.propsValue.recipient_phone_number,
+        created_at: new Date().toISOString(),
+        webhook_url: context.propsValue.webhook_url || context.propsValue.template_variables?.['webhook_url'] || null
+      }
+    };
+
+    // Return actual response in production, mock data for development
+    return process.env['NODE_ENV'] === 'development' ? mockResponse : response.body;
   },
 });

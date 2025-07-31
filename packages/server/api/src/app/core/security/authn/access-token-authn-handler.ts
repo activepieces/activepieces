@@ -11,7 +11,7 @@ export class AccessTokenAuthnHandler extends BaseSecurityHandler {
         const header = request.headers[AccessTokenAuthnHandler.HEADER_NAME]
         const prefix = AccessTokenAuthnHandler.HEADER_PREFIX
         const routeMatches = header?.startsWith(prefix) ?? false
-        const skipAuth = request.routeConfig.skipAuth
+        const skipAuth = request.routeOptions.config?.skipAuth ?? false
         return Promise.resolve(routeMatches && !skipAuth)
     }
 

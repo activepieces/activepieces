@@ -12,6 +12,7 @@ export enum JobType {
     REPEATING = 'REPEATING',
     DELAYED = 'DELAYED',
     USERS_INTERACTION = 'USERS_INTERACTION',
+    AGENTS = 'AGENTS',
 }
 
 export enum JobStatus {
@@ -24,6 +25,7 @@ export enum QueueName {
     ONE_TIME = 'oneTimeJobs',
     SCHEDULED = 'repeatableJobs',
     USERS_INTERACTION = 'usersInteractionJobs',
+    AGENTS = 'agentsJobs',
 }
 
 export const PollJobRequest = Type.Object({
@@ -80,6 +82,8 @@ export const SubmitPayloadsRequest = Type.Object({
     httpRequestId: Type.Optional(Type.String()),
     payloads: Type.Array(Type.Unknown()),
     environment: Type.Enum(RunEnvironment),
+    parentRunId: Type.Optional(Type.String()),
+    failParentOnFailure: Type.Optional(Type.Boolean()),
 })
 
 export type SubmitPayloadsRequest = Static<typeof SubmitPayloadsRequest>
@@ -89,7 +93,7 @@ export const GetRunForWorkerRequest = Type.Object({
 })
 export type GetRunForWorkerRequest = Static<typeof GetRunForWorkerRequest>
 
-export const ResumeRunRequest = DelayedJobData
+export const ResumeRunRequest = Type.Omit(DelayedJobData, ['flowId'])
 export type ResumeRunRequest = Static<typeof ResumeRunRequest>
 
 

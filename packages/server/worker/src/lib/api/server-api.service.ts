@@ -1,16 +1,11 @@
-import path from 'path'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, FlowRun, FlowVersionId, FlowVersionState, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, isNil, PlatformUsageMetric, PopulatedFlow, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { ActivepiecesError, Agent, AgentRun, ErrorCode, Field, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PlatformUsageMetric, PopulatedFlow, Record, RunAgentRequestBody, UpdateAgentRunRequestBody, UpdateRecordRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
-import { cacheState } from '../cache/cache-state'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
-
-const globalCacheFlowPath = path.resolve('cache', 'flows')
-const flowCache = cacheState(globalCacheFlowPath)
 
 const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
@@ -62,6 +57,8 @@ export const workerApiService = (workerToken: string) => {
                 limit(() => client.post<FlowRun[]>('/v1/workers/submit-payloads', {
                     ...request,
                     payloads,
+                    parentRunId: request.parentRunId,
+                    failParentOnFailure: request.failParentOnFailure,
                 })),
             )
 
@@ -103,15 +100,7 @@ function splitPayloadsIntoOneMegabyteBatches(payloads: unknown[]): unknown[][] {
     return batches
 }
 
-async function readFlowFromCache(flowVersionIdToRun: FlowVersionId): Promise<PopulatedFlow | null> {
-    try {
-        const cachedFlow = await flowCache.cacheCheckState(flowVersionIdToRun)
-        return cachedFlow ? JSON.parse(cachedFlow) as PopulatedFlow : null
-    }
-    catch (error) {
-        return null
-    }
-}
+
 
 export const engineApiService = (engineToken: string, log: FastifyBaseLogger) => {
     const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
@@ -138,7 +127,7 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
         async getPiece(name: string, options: GetPieceRequestQuery): Promise<PieceMetadataModel> {
             return client.get<PieceMetadataModel>(`/v1/pieces/${encodeURIComponent(name)}`, {
                 params: options,
-            })
+            })  
         },
         async checkTaskLimit(): Promise<void> {
             try {
@@ -156,37 +145,52 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
                 exceptionHandler.handle(e, log)
             }
         },
-        async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
-            const startTime = performance.now()
-            log.debug({ request }, '[EngineApiService#getFlowWithExactPieces] start')
+        async getFlow(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
+            return client.get<PopulatedFlow | null>('/v1/engine/flows', {
+                params: request,
+            })
+        },
+    }
+}
 
-            const cachedFlow = await readFlowFromCache(request.versionId)
-            if (!isNil(cachedFlow)) {
-                log.debug({ request, took: performance.now() - startTime }, '[EngineApiService#getFlowWithExactPieces] cache hit')
-                return cachedFlow
-            }
+export const agentsApiService = (workerToken: string, _log: FastifyBaseLogger) => {
+    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
+    const client = new ApAxiosClient(apiUrl, workerToken)
 
-            try {
-                const flow = await client.get<PopulatedFlow | null>('/v1/engine/flows', {
-                    params: request,
-                })
+    return {
+        async getAgent(agentId: string): Promise<Agent> {
+            return client.get<Agent>(`/v1/agents/${agentId}`, {})
+        },
 
-                const isCachableFlow = !isNil(flow) && flow.version.state === FlowVersionState.LOCKED
-                if (isCachableFlow) {
-                    await flowCache.setCache(flow.version.id, JSON.stringify(flow))
-                }
+        async getMcp(mcpId: string): Promise<McpWithTools> {
+            return client.get<McpWithTools>(`/v1/mcp-servers/${mcpId}`, {})
+        },
 
-                return flow
-            }
-            catch (e) {
-                if (ApAxiosClient.isApAxiosError(e) && e.error.response && e.error.response.status === 404) {
-                    return null
-                }
-                throw e
-            }
-            finally {
-                log.debug({ request, took: performance.now() - startTime }, '[EngineApiService#getFlowWithExactPieces] cache miss')
-            }
+        async getAgentRun(agentRunId: string): Promise<AgentRun> {
+            return client.get<AgentRun>(`/v1/agent-runs/${agentRunId}`, {})
+        },
+        async createAgentRun(agentRun: RunAgentRequestBody): Promise<AgentRun> {
+            return client.post<AgentRun>('/v1/agent-runs', agentRun)
+        },
+        async updateAgentRun(agentRunId: string, agentRun: UpdateAgentRunRequestBody): Promise<AgentRun> {
+            return client.post<AgentRun>(`/v1/agent-runs/${agentRunId}/update`, agentRun)
+        },
+    }
+}
+
+export const tablesApiService = (workerToken: string) => {
+    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
+    const client = new ApAxiosClient(apiUrl, workerToken)
+
+    return {
+        async getFields(tableId: string): Promise<Field[]> {
+            return client.get<Field[]>(`/v1/fields?tableId=${tableId}`, {})
+        },
+        async getRecord(recordId: string): Promise<Record> {
+            return client.get<Record>(`/v1/records/${recordId}`, {})
+        },
+        async updateRecord(recordId: string, record: UpdateRecordRequest): Promise<Record> {
+            return client.post<Record>(`/v1/records/${recordId}`, { ...record, agentUpdate: true })
         },
     }
 }

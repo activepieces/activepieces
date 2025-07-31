@@ -6,6 +6,7 @@ import {
 import {
   MarkdownVariant,
   USE_DRAFT_QUERY_PARAM_NAME,
+  ChatFormResponse,
 } from '@activepieces/shared';
 
 const responseMarkdown = `
@@ -19,11 +20,6 @@ const markdown = `
 Use this for production, views the published version of the chat flow.
 <br>
 <br>
-**Draft Chat URL:**
-\`\`\`text
-{{chatUrl}}?${USE_DRAFT_QUERY_PARAM_NAME}=true
-\`\`\`
-Use this to generate sample data, views the draft version of the chat flow (the one you are editing now).
 `;
 
 export const onChatSubmission = createTrigger({
@@ -46,10 +42,7 @@ export const onChatSubmission = createTrigger({
       defaultValue: 'AI Bot',
     }),
   },
-  sampleData: {
-    chatId: 'MOCK_CHAT_ID',
-    message: 'Hello, how are you?',
-  },
+  sampleData: undefined,
   type: TriggerStrategy.WEBHOOK,
   async onEnable() {
     return;
@@ -74,12 +67,11 @@ export const onChatSubmission = createTrigger({
       .sort(([indexA], [indexB]) => indexA - indexB)
       .map(([_, value]) => value);
 
-    return [
-      {
-        chatId: item.chatId,
-        message: item.message,
-        files,
-      },
-    ];
+    const response: ChatFormResponse = {
+      sessionId: item.chatId,
+      message: item.message,
+      files,
+    }
+    return [response];
   },
 });

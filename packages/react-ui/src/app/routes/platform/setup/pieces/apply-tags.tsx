@@ -18,8 +18,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { piecesTagsApi } from '@/features/platform-admin-panel/lib/pieces-tags';
+import { toast } from '@/components/ui/use-toast';
+import { piecesTagsApi } from '@/features/platform-admin/lib/pieces-tags';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 
 type ApplyTagsProps = {
@@ -69,9 +69,6 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
         variant: 'default',
       });
       onApplyTags();
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 

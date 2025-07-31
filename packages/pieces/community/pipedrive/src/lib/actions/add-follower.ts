@@ -1,12 +1,6 @@
 import { pipedriveAuth } from '../../index';
-import { createAction, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import {
-	fetchDealsOptions,
-	fetchOrganizationsOptions,
-	fetchPersonsOptions,
-	fetchProductsOptions,
-	ownerIdProp,
-} from '../common/props';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ownerIdProp } from '../common/props';
 import { pipedriveApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 

@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import semver from 'semver';
 
 import { useSocket } from '@/components/socket-provider';
-import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
+import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 export interface Message {
   title: string;
@@ -24,6 +24,7 @@ export const notificationHooks = {
     const { data: latestVersion } = flagsHooks.useFlag<string>(
       ApFlagId.LATEST_VERSION,
     );
+    const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
     const socket = useSocket();
     const { data: providers, isLoading } = useQuery({
       queryKey: ['ai-providers'],
@@ -69,7 +70,11 @@ export const notificationHooks = {
         });
       }
 
-      if (!(providers && providers.data.length > 0) && !isLoading) {
+      if (
+        !(providers && providers.data.length > 0) &&
+        !isLoading &&
+        edition !== ApEdition.CLOUD
+      ) {
         allMessages.push({
           title: t('Your Universal AI needs a quick setup'),
           description: t(

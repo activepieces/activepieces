@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, isNil } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { createBullBoard } from '@bull-board/api'
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { FastifyAdapter } from '@bull-board/fastify'
@@ -50,7 +50,9 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
 
     serverAdapter.setBasePath(`/api${QUEUE_BASE_PATH}`)
     app.addHook('onRequest', (req, reply, next) => {
-        if (!req.routerPath.startsWith(QUEUE_BASE_PATH)) {
+        const routerPath = req.routeOptions.url
+        assertNotNullOrUndefined(routerPath, 'routerPath is undefined'  )    
+        if (!routerPath.startsWith(QUEUE_BASE_PATH)) {
             next()
         }
         else {
@@ -68,8 +70,6 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
         }
     })
 
-    await app.register(serverAdapter.registerPlugin(), {
-        prefix: QUEUE_BASE_PATH,
-        basePath: QUEUE_BASE_PATH,
-    })
+    await app.register(serverAdapter.registerPlugin(), { prefix: QUEUE_BASE_PATH })
+
 }

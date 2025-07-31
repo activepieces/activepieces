@@ -7,6 +7,10 @@
     "scripts": {
         "start": "ts-node src/index.ts",
         "build": "tsc"
-      }
-  }
+    },
+    "dependencies": {
+        "@activepieces/pieces-framework": "*",
+        "@activepieces/shared": "*"
+    }
+}
   

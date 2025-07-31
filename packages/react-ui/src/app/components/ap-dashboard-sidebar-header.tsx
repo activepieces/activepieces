@@ -10,12 +10,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
-import SettingsDropdownMenu from './settings-dropdown-menu';
+import ProjectSettingsDropdownMenu from './project-settings-dropdown-menu';
 
 const ApDashboardSidebarHeader = ({
   isHomeDashboard,
@@ -30,13 +29,14 @@ const ApDashboardSidebarHeader = ({
     edition !== ApEdition.COMMUNITY &&
     !embedState.isEmbedded &&
     !isInPlatformAdmin;
-  const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
+  const defaultRoute = determineDefaultRoute(embedState.isEmbedded);
 
   return (
     <SidebarHeader className="pb-0">
       <div
         className={cn('flex items-center justify-between grow gap-1', {
           'justify-start': !isHomeDashboard,
+          'justify-center': embedState.hideProjectSettings,
         })}
       >
         <Button
@@ -51,9 +51,7 @@ const ApDashboardSidebarHeader = ({
                     <img
                       src={branding.logos.logoIconUrl}
                       alt={t('home')}
-                      width={28}
-                      height={28}
-                      className="max-h-[22px] max-w-[22px] object-contain"
+                      className="h-5 w-5 object-contain"
                     />
                   )}
 
@@ -79,7 +77,9 @@ const ApDashboardSidebarHeader = ({
           </div>
         )}
 
-        {isHomeDashboard && <SettingsDropdownMenu />}
+        {isHomeDashboard && !embedState.hideProjectSettings && (
+          <ProjectSettingsDropdownMenu />
+        )}
       </div>
     </SidebarHeader>
   );

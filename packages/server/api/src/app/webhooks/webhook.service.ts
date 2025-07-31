@@ -1,5 +1,5 @@
 import { pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, FlowStatus, isNil, PlatformUsageMetric, RunEnvironment, TriggerPayload } from '@activepieces/shared'
+import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, FlowRun, FlowStatus, isNil, PlatformUsageMetric, RunEnvironment, TriggerPayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
@@ -18,6 +18,9 @@ export const webhookService = {
         flowVersionToRun,
         payload,
         execute,
+        onRunCreated,
+        parentRunId,
+        failParentOnFailure,
     }: HandleWebhookParams): Promise<EngineHttpResponse> {
         const webhookHeader = 'x-webhook-id'
         const webhookRequestId = apId()
@@ -35,7 +38,7 @@ export const webhookService = {
 
         const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(flowVersionToRun, flow)
 
-        const exceededLimit = await projectLimitsService(pinoLogger).tasksExceededLimit(flow.projectId)
+        const exceededLimit = await projectLimitsService(pinoLogger).checkTasksExceededLimit(flow.projectId)
         if (exceededLimit) {
             throw new ActivepiecesError({
                 code: ErrorCode.QUOTA_EXCEEDED,
@@ -91,6 +94,8 @@ export const webhookService = {
                 runEnvironment: flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
                 webhookHeader,
                 execute: flow.status === FlowStatus.ENABLED && execute,
+                parentRunId,
+                failParentOnFailure,
             })
         }
 
@@ -105,6 +110,10 @@ export const webhookService = {
             synchronousHandlerId: engineResponseWatcher(pinoLogger).getServerId(),
             flowVersionIdToRun,
             saveSampleData,
+            flowVersionToRun,
+            onRunCreated,
+            parentRunId,
+            failParentOnFailure,
         })
         return {
             status: flowHttpResponse.status,
@@ -126,4 +135,7 @@ type HandleWebhookParams = {
     logger: FastifyBaseLogger
     payload?: Record<string, unknown>
     execute: boolean
+    onRunCreated?: (run: FlowRun) => void
+    parentRunId?: string
+    failParentOnFailure: boolean
 }

@@ -25,6 +25,7 @@ export const BulkRetryFlowRequestBody = Type.Object({
     flowId: Type.Optional(Type.Array(ApId)),
     createdAfter: Type.Optional(Type.String()),
     createdBefore: Type.Optional(Type.String()),
+    failedStepName: Type.Optional(Type.String()),
 })
 
 export type BulkRetryFlowRequestBody = Static<typeof BulkRetryFlowRequestBody>
