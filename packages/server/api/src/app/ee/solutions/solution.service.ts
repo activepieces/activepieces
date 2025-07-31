@@ -1,17 +1,46 @@
 import { apId, ProjectState, Solution } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { repoFactory } from '../../core/db/repo-factory'
+import { RecordEntity } from '../../tables/record/record.entity'
+import { tableService } from '../../tables/table/table.service'
 import { projectDiffService } from '../projects/project-release/project-state/project-diff.service'
 import { projectStateService } from '../projects/project-release/project-state/project-state.service'
+
+const recordRepo = repoFactory(RecordEntity)
 
 export const solutionService = (log: FastifyBaseLogger) => ({
     export: async (params: ExportParams): Promise<Solution> => {
         const state = await projectStateService(log).getCurrentState(params.projectId, log)
         const result = stripState(state)
-        
+        const tables = await tableService.list({
+            projectId: params.projectId,
+            limit: 99999,
+            cursor: undefined,
+            name: undefined,
+            externalIds: undefined,
+        })
+        const tablesRecords: Solution['tablesRecords'] = []
+        for (const table of tables.data) {
+            const recordsForTable = await recordRepo().find({
+                where: {
+                    projectId: params.projectId,
+                    tableId: table.id,
+                },
+                order: {
+                    created: 'ASC',
+                },
+                relations: {
+                    cells: true,
+                },
+            })
+            tablesRecords.push(...recordsForTable)
+        }
+
         return {
             ...result,
             name: params.name,
             description: params.description ?? '',
+            tablesRecords: stripState(tablesRecords),
         }
     },
     import: async (params: ImportParams): Promise<void> => {
@@ -28,6 +57,9 @@ export const solutionService = (log: FastifyBaseLogger) => ({
             platformId: params.platformId,
             log,
         })
+        if (newState.tablesRecords?.length) {
+            await recordRepo().save(newState.tablesRecords)
+        }
     },
 })
 
@@ -64,7 +96,7 @@ function stripState<T>(obj: T): T {
 }
 
 function replaceIdsWithMapping<T>(obj: T): T {
-    const ID_KEYS_TO_REPLACE = new Set(['id', 'tableId', 'recordId', 'cellId', 'mcpId', 'toolId', 'flowId'])
+    const ID_KEYS_TO_REPLACE = new Set(['id', 'externalId', 'tableId', 'recordId', 'cellId', 'mcpId', 'toolId', 'flowId'])
     const idMap = new Map<string, string>()
     function recursiveReplace(val: unknown): unknown {
         if (Array.isArray(val)) {

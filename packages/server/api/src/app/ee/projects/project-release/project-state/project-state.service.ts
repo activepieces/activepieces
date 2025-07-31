@@ -62,6 +62,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                     const table = await tableService.create({
                         projectId,
                         request: {
+                            id: operation.tableState.id ?? undefined,
                             name: operation.tableState.name,
                             externalId: operation.tableState.externalId,
                         },
@@ -150,7 +151,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         externalId: operation.mcpState.externalId,
                     })
 
-                    // Update the MCP with the exact tools from the state
                     await mcpService(log).update({
                         mcpId: createdMcp.id,
                         name: operation.mcpState.name,

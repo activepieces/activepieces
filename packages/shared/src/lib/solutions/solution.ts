@@ -1,5 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { AgentState, ConnectionState, FlowState, McpState, TableState } from '../project-release/project-state'
+import { Cell } from '../tables'
+import { Record } from '../tables/record'
 
 export const Solution = Type.Object({
     name: Type.String(),
@@ -9,6 +11,12 @@ export const Solution = Type.Object({
     tables: Type.Optional(Type.Array(TableState)),
     mcp: Type.Optional(Type.Array(McpState)),
     agents: Type.Optional(Type.Array(AgentState)),
+    tablesRecords: Type.Optional(Type.Array(Type.Composite([
+        Record,
+        Type.Object({
+            cells: Type.Array(Cell),
+        }),
+    ]))),
 })
 
 export type Solution = Static<typeof Solution>

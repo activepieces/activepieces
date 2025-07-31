@@ -37,7 +37,6 @@ export const tableService = {
         projectId,
         request,
     }: CreateParams): Promise<Table> {
-
         const platformId = await projectService.getPlatformId(projectId)
         await PlatformPlanHelper.checkQuotaOrThrow({
             platformId,
@@ -46,7 +45,7 @@ export const tableService = {
         })
 
         const table = await tableRepo().save({
-            id: apId(),
+            id: request.id ?? apId(),
             externalId: request.externalId ?? apId(),
             name: request.name,
             projectId,
@@ -237,7 +236,7 @@ type EnsureAgentExistsParams = {
 
 type CreateParams = {
     projectId: string
-    request: CreateTableRequest
+    request: CreateTableRequest & { id?: string }
 }
 
 type ListParams = {
