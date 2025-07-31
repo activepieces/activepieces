@@ -146,28 +146,24 @@ export const McpConnectPage = () => {
                     title={t('Configure Claude Integration')}
                   >
                     <div className="mt-3">
-                      {t('Open Claude')} →{' '}
-                      <Badge variant="outline">{t('Settings')}</Badge> →{' '}
-                      <Badge variant="outline">{t('Developer')}</Badge> →{' '}
-                      <Badge variant="outline">{t('Edit Config')}</Badge> →{' '}
-                      <Badge variant="outline">
-                        {t('Open claude_desktop_config.json')}
-                      </Badge>
-                      <br />
-                      <br />
-                      {t(
-                        'Paste the configuration below and save, then quit and restart Claude.',
-                      )}
-                      <br />
-                      <br />
-                      <ConfigDisplay
-                        mcpServerUrl={mcpServerUrl}
-                        type="claude"
-                        onRotateToken={handleRotateToken}
-                        isRotating={rotateMutation.isPending}
-                        hasValidMcp={hasValidMcp}
-                        hasPermissionToWriteMcp={hasPermissionToWriteMcp}
-                      />
+                        {t('Open Claude')} →{' '}
+                        <Badge variant="outline">{t('Settings')}</Badge> →{' '}
+                        <Badge variant="outline">{t('Developer')}</Badge> →{' '}
+                        <Badge variant="outline">{t('Edit Config')}</Badge> →{' '}
+                        <Badge variant="outline">{t('Open claude_desktop_config.json')}</Badge>
+                        <br />
+                        <br />
+                        {t('Paste the configuration below and save, then quit and restart Claude.')}
+                        <br />
+                        <br />
+                        <ConfigDisplay
+                          mcpServerUrl={mcpServerUrl}
+                          type="claude"
+                          onRotateToken={handleRotateToken}
+                          isRotating={rotateMutation.isPending}
+                          hasValidMcp={hasValidMcp}
+                          hasPermissionToWriteMcp={hasPermissionToWriteMcp}
+                        />
                     </div>
                   </StepCard>
                 </div>
@@ -188,7 +184,9 @@ export const McpConnectPage = () => {
                     <Badge variant="outline">
                       {t('Add new global MCP server')}
                     </Badge>
-                    . {t('Paste the configuration below and save.')}
+                    <br />
+                    <br />
+                    {t('Paste the configuration below and save.')}
                     <div className="mt-3">
                       <ConfigDisplay
                         mcpServerUrl={mcpServerUrl}
@@ -216,12 +214,14 @@ export const McpConnectPage = () => {
                     <Badge variant="outline">{t('Advanced')}</Badge> →{' '}
                     <Badge variant="outline">{t('Cascade')}</Badge> →{' '}
                     <Badge variant="outline">{t('Add Server')}</Badge> →{' '}
-                    <Badge variant="outline">{t('Add custom server +')}</Badge>.{' '}
+                    <Badge variant="outline">{t('Add custom server +')}</Badge>
+                    <br />
+                    <br />
                     {t('Paste the configuration below and save.')}
                     <div className="mt-3">
                       <ConfigDisplay
                         mcpServerUrl={mcpServerUrl}
-                        type="url"
+                        type="windsurf"
                         onRotateToken={handleRotateToken}
                         isRotating={rotateMutation.isPending}
                         hasValidMcp={hasValidMcp}

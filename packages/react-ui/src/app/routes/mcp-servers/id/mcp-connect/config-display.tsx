@@ -7,7 +7,7 @@ import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
 import { SimpleJsonViewer } from '@/components/simple-json-viewer';
 import { useToast } from '@/components/ui/use-toast';
 
-import { mcpConnectUtils } from './mcp-connect-utils';
+import { McpClientType, mcpConnectUtils } from './mcp-connect-utils';
 import { SecurityNote } from './security-note';
 
 export const ConfigDisplay = ({
@@ -19,7 +19,7 @@ export const ConfigDisplay = ({
   hasPermissionToWriteMcp = true,
 }: {
   mcpServerUrl: string;
-  type: 'claude' | 'cursor' | 'url';
+  type: McpClientType;
   onRotateToken: () => void;
   isRotating?: boolean;
   hasValidMcp?: boolean;
