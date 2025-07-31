@@ -1,0 +1,36 @@
+{
+  "name": "aircall",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/aircall/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/aircall",
+        "tsConfig": "packages/pieces/community/aircall/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/aircall/package.json",
+        "main": "packages/pieces/community/aircall/src/index.ts",
+        "assets": ["packages/pieces/community/aircall/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/community/aircall/**/*.ts"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/pieces/community/aircall/jest.config.ts"
+      }
+    }
+  },
+  "tags": []
+} 
