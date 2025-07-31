@@ -126,6 +126,9 @@
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
+      "@activepieces/piece-bigin": [
+        "packages/pieces/community/bigin/src/index.ts"
+      ],
       "@activepieces/piece-binance": [
         "packages/pieces/community/binance/src/index.ts"
       ],
