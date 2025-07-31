@@ -34,7 +34,7 @@ export const newContactTrigger = createTrigger({
     }
   },
   run: async (context) => {
-    const payload = context.payload.body as any;
+    const payload = context.payload.body as { event: string; data: unknown };
     
     // Filter for contact.updated events (new contacts trigger this event)
     if (payload.event === 'contact.updated') {

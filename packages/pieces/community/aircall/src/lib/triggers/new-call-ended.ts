@@ -34,7 +34,7 @@ export const newCallEndedTrigger = createTrigger({
     }
   },
   run: async (context) => {
-    const payload = context.payload.body as any;
+    const payload = context.payload.body as { event: string; data: unknown };
     
     // Filter for call.ended events
     if (payload.event === 'call.ended') {

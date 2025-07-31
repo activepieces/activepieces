@@ -1,4 +1,4 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { aircallAuth } from './lib/common/auth';
 import { newSmsTrigger } from './lib/triggers/new-sms';
 import { newNumberCreatedTrigger } from './lib/triggers/new-number-created';
@@ -18,6 +18,7 @@ export const aircall = createPiece({
   displayName: 'Aircall',
   logoUrl: 'https://cdn.activepieces.com/pieces/aircall.png',
   auth: aircallAuth,
+  authors: ['activepieces'],
   actions: [
     commentCallAction,
     tagCallAction,

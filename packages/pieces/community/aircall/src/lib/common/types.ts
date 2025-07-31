@@ -13,7 +13,7 @@ export type CreateWebhookResponse = {
 
 export type WebhookPayload = {
   event: string;
-  data: any;
+  data: unknown;
   timestamp: string;
 };
 

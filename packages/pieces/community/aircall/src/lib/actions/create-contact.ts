@@ -105,25 +105,25 @@ export const createContactAction = createAction({
       baseUrl: context.auth.baseUrl || 'https://api.aircall.io/v1',
     });
 
-    const body: any = {
+    const body: Record<string, unknown> = {
       first_name: context.propsValue.firstName.trim(),
       last_name: context.propsValue.lastName.trim(),
     };
 
     if (context.propsValue.companyName) {
-      body.company_name = context.propsValue.companyName.trim();
+      body['company_name'] = context.propsValue.companyName.trim();
     }
 
     if (context.propsValue.information) {
-      body.information = context.propsValue.information.trim();
+      body['information'] = context.propsValue.information.trim();
     }
 
     if (context.propsValue.emails && context.propsValue.emails.length > 0) {
-      body.emails = context.propsValue.emails.map((item: any) => item.email.trim());
+      body['emails'] = context.propsValue.emails.map((item) => (item as { email: string }).email.trim());
     }
 
     if (context.propsValue.phoneNumbers && context.propsValue.phoneNumbers.length > 0) {
-      body.phone_numbers = context.propsValue.phoneNumbers.map((item: any) => item.phoneNumber.trim());
+      body['phone_numbers'] = context.propsValue.phoneNumbers.map((item) => (item as { phoneNumber: string }).phoneNumber.trim());
     }
 
     try {
@@ -134,14 +134,18 @@ export const createContactAction = createAction({
       });
 
       return response;
-    } catch (error: any) {
-      if (error.response?.status === 400) {
-        throw new Error('Invalid request. Please check your input parameters.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const response = (error as { response: { status: number } }).response;
+        if (response.status === 400) {
+          throw new Error('Invalid request. Please check your input parameters.');
+        }
+        if (response.status === 409) {
+          throw new Error('Contact already exists with the provided information.');
+        }
       }
-      if (error.response?.status === 409) {
-        throw new Error('Contact already exists with the provided information.');
-      }
-      throw new Error(`Failed to create contact: ${error.message}`);
+      throw new Error(`Failed to create contact: ${errorMessage}`);
     }
   },
 }); 

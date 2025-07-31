@@ -45,17 +45,21 @@ export const tagCallAction = createAction({
       });
 
       return response;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        throw new Error(`Call with ID ${context.propsValue.callId} or tag with ID ${context.propsValue.tagId} not found`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const response = (error as { response: { status: number } }).response;
+        if (response.status === 404) {
+          throw new Error(`Call with ID ${context.propsValue.callId} or tag with ID ${context.propsValue.tagId} not found`);
+        }
+        if (response.status === 400) {
+          throw new Error('Invalid request. Please check your input parameters.');
+        }
+        if (response.status === 409) {
+          throw new Error('Call is already tagged with this tag.');
+        }
       }
-      if (error.response?.status === 400) {
-        throw new Error('Invalid request. Please check your input parameters.');
-      }
-      if (error.response?.status === 409) {
-        throw new Error('Call is already tagged with this tag.');
-      }
-      throw new Error(`Failed to tag call: ${error.message}`);
+      throw new Error(`Failed to tag call: ${errorMessage}`);
     }
   },
 }); 

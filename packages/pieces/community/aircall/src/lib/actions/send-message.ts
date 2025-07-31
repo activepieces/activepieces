@@ -71,14 +71,18 @@ export const sendMessageAction = createAction({
       });
 
       return response;
-    } catch (error: any) {
-      if (error.response?.status === 400) {
-        throw new Error('Invalid request. Please check your phone numbers and message content.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const response = (error as { response: { status: number } }).response;
+        if (response.status === 400) {
+          throw new Error('Invalid request. Please check your phone numbers and message content.');
+        }
+        if (response.status === 403) {
+          throw new Error('Access denied. Please check your API permissions.');
+        }
       }
-      if (error.response?.status === 403) {
-        throw new Error('Access denied. Please check your API permissions.');
-      }
-      throw new Error(`Failed to send message: ${error.message}`);
+      throw new Error(`Failed to send message: ${errorMessage}`);
     }
   },
 }); 

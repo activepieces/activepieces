@@ -34,7 +34,7 @@ export const newSmsTrigger = createTrigger({
     }
   },
   run: async (context) => {
-    const payload = context.payload.body as any;
+    const payload = context.payload.body as { event: string; data: unknown };
     
     // Filter for message.received events
     if (payload.event === 'message.received') {

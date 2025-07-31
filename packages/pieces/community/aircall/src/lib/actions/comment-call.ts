@@ -49,14 +49,18 @@ export const commentCallAction = createAction({
       });
 
       return response;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        throw new Error(`Call with ID ${context.propsValue.callId} not found`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const response = (error as { response: { status: number } }).response;
+        if (response.status === 404) {
+          throw new Error(`Call with ID ${context.propsValue.callId} not found`);
+        }
+        if (response.status === 400) {
+          throw new Error('Invalid request. Please check your input parameters.');
+        }
       }
-      if (error.response?.status === 400) {
-        throw new Error('Invalid request. Please check your input parameters.');
-      }
-      throw new Error(`Failed to comment on call: ${error.message}`);
+      throw new Error(`Failed to comment on call: ${errorMessage}`);
     }
   },
 }); 

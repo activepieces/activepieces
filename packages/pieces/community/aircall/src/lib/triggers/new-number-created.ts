@@ -34,7 +34,7 @@ export const newNumberCreatedTrigger = createTrigger({
     }
   },
   run: async (context) => {
-    const payload = context.payload.body as any;
+    const payload = context.payload.body as { event: string; data: unknown };
     
     // Filter for number.created events
     if (payload.event === 'number.created') {

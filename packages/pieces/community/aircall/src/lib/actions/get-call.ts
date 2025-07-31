@@ -33,11 +33,15 @@ export const getCallAction = createAction({
       });
 
       return response;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        throw new Error(`Call with ID ${context.propsValue.callId} not found`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const response = (error as { response: { status: number } }).response;
+        if (response.status === 404) {
+          throw new Error(`Call with ID ${context.propsValue.callId} not found`);
+        }
       }
-      throw new Error(`Failed to get call: ${error.message}`);
+      throw new Error(`Failed to get call: ${errorMessage}`);
     }
   },
 }); 

@@ -40,14 +40,18 @@ export const findContactAction = createAction({
       });
 
       return response;
-    } catch (error: any) {
-      if (error.response?.status === 400) {
-        throw new Error('Invalid search term. Please check your input.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const response = (error as { response: { status: number } }).response;
+        if (response.status === 400) {
+          throw new Error('Invalid search term. Please check your input.');
+        }
+        if (response.status === 404) {
+          throw new Error('No contacts found matching the search criteria.');
+        }
       }
-      if (error.response?.status === 404) {
-        throw new Error('No contacts found matching the search criteria.');
-      }
-      throw new Error(`Failed to search contacts: ${error.message}`);
+      throw new Error(`Failed to search contacts: ${errorMessage}`);
     }
   },
 }); 

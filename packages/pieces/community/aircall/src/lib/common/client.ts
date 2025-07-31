@@ -21,7 +21,7 @@ export class AircallClient {
   }: {
     method: HttpMethod;
     url: string;
-    body?: any;
+    body?: unknown;
     queryParams?: Record<string, string>;
   }): Promise<T> {
     const response = await httpClient.sendRequest<T>({

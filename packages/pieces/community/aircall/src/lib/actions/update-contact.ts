@@ -69,22 +69,22 @@ export const updateContactAction = createAction({
       baseUrl: context.auth.baseUrl || 'https://api.aircall.io/v1',
     });
 
-    const body: any = {};
+    const body: Record<string, unknown> = {};
 
     if (context.propsValue.firstName) {
-      body.first_name = context.propsValue.firstName.trim();
+      body['first_name'] = context.propsValue.firstName.trim();
     }
 
     if (context.propsValue.lastName) {
-      body.last_name = context.propsValue.lastName.trim();
+      body['last_name'] = context.propsValue.lastName.trim();
     }
 
     if (context.propsValue.companyName) {
-      body.company_name = context.propsValue.companyName.trim();
+      body['company_name'] = context.propsValue.companyName.trim();
     }
 
     if (context.propsValue.information) {
-      body.information = context.propsValue.information.trim();
+      body['information'] = context.propsValue.information.trim();
     }
 
     try {
@@ -95,14 +95,18 @@ export const updateContactAction = createAction({
       });
 
       return response;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        throw new Error(`Contact with ID ${context.propsValue.contactId} not found`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const response = (error as { response: { status: number } }).response;
+        if (response.status === 404) {
+          throw new Error(`Contact with ID ${context.propsValue.contactId} not found`);
+        }
+        if (response.status === 400) {
+          throw new Error('Invalid request. Please check your input parameters.');
+        }
       }
-      if (error.response?.status === 400) {
-        throw new Error('Invalid request. Please check your input parameters.');
-      }
-      throw new Error(`Failed to update contact: ${error.message}`);
+      throw new Error(`Failed to update contact: ${errorMessage}`);
     }
   },
 }); 
