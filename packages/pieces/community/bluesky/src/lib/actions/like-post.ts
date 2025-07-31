@@ -1,63 +1,144 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { blueskyAuth } from '../common/auth';
-import { makeBlueskyRequest, getCurrentSession } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { postUriProperty } from '../common/props';
+import { blueskyAuth, BlueSkyAuthType } from '../common/auth';
+import { createBlueskyAgent } from '../common/client';
+
+async function parseBlueskyUrl(url: string, agent: any): Promise<string> {
+  if (url.startsWith('at://')) {
+    if (!url.match(/^at:\/\/did:plc:[a-z0-9]+\/app\.bsky\.feed\.post\/[a-z0-9]+$/)) {
+      throw new Error('Invalid AT-URI format');
+    }
+    return url;
+  }
+  
+  // Parse bsky.app URLs: https://bsky.app/profile/username.bsky.social/post/postid
+  const urlMatch = url.match(/https?:\/\/bsky\.app\/profile\/([^\/]+)\/post\/([^\/\?]+)/);
+  if (urlMatch) {
+    const handle = urlMatch[1];
+    const postId = urlMatch[2];
+    
+    if (!handle.includes('.') && !handle.includes('@')) {
+      throw new Error('Invalid handle format in URL');
+    }
+    
+    const didDoc = await agent.resolveHandle({ handle: handle.replace('@', '') });
+    return `at://${didDoc.data.did}/app.bsky.feed.post/${postId}`;
+  }
+  
+  throw new Error('Invalid post URL format. Please use a valid Bluesky post URL or AT-URI.');
+}
 
 export const likePost = createAction({
   auth: blueskyAuth,
   name: 'likePost',
   displayName: 'Like Post',
-  description: 'Like a post on Bluesky using its URI and CID',
+  description: 'Like a specific post by its URI',
   props: {
-    postUri: postUriProperty,
-    postCid: Property.ShortText({
-      displayName: 'Post CID',
-      description: 'The CID (Content Identifier) of the post to like',
+    selectionMethod: Property.StaticDropdown({
+      displayName: 'How to select post?',
+      description: 'Choose how you want to select the post to like',
       required: true,
+      defaultValue: 'timeline',
+      options: {
+        options: [
+          { label: 'From my timeline', value: 'timeline' },
+          { label: 'Enter URL manually', value: 'manual' },
+        ],
+      },
+    }),
+    
+    postSelection: Property.Dropdown({
+      displayName: 'Select Post',
+      description: 'Choose from your recent timeline posts (only when "From my timeline" is selected above)',
+      required: false,
+      refreshers: ['auth'],
+      options: async ({ auth }) => {
+        try {
+          const agent = await createBlueskyAgent(auth as BlueSkyAuthType);
+          const timeline = await agent.getTimeline({ limit: 50 });
+          
+          return {
+            options: timeline.data.feed.map(item => ({
+              label: `@${item.post.author.handle}: ${item.post.record['text'] ? String(item.post.record['text']).substring(0, 80) : 'Media post'}${String(item.post.record['text'] || '').length > 80 ? '...' : ''} (${new Date(item.post.indexedAt).toLocaleDateString()})`,
+              value: item.post.uri
+            }))
+          };
+        } catch (error) {
+          return { 
+            options: [{ label: 'Error loading posts', value: '' }] 
+          };
+        }
+      }
+    }),
+
+    postUrl: Property.ShortText({
+      displayName: 'Post URL',
+      description: 'Bluesky post URL or AT-URI (only when "Enter URL manually" is selected above). Example: https://bsky.app/profile/username.bsky.social/post/xxx',
+      required: false,
     }),
   },
   async run({ auth, propsValue }) {
-    const { postUri, postCid } = propsValue;
+    const { selectionMethod, postSelection, postUrl } = propsValue;
+
+    let postUri: string;
+    
+    if (selectionMethod === 'timeline') {
+      if (!postSelection) {
+        throw new Error('Please select a post from your timeline dropdown');
+      }
+      postUri = postSelection as string;
+    } else if (selectionMethod === 'manual') {
+      if (!postUrl || !postUrl.trim()) {
+        throw new Error('Post URL is required when using manual entry method');
+      }
+      
+      try {
+        const agent = await createBlueskyAgent(auth);
+        postUri = await parseBlueskyUrl(postUrl.trim(), agent);
+      } catch (error) {
+        throw new Error(`Invalid post URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    } else {
+      throw new Error('Please select a post selection method');
+    }
 
     try {
-      // Get current session to obtain the user's DID
-      const session = await getCurrentSession(auth);
-
-      // Create the like record
-      const likeRecord = {
-        subject: {
-          uri: postUri,
-          cid: postCid,
-        },
-        createdAt: new Date().toISOString(),
-      };
-
-      // Create the like using com.atproto.repo.createRecord
-      const response = await makeBlueskyRequest(
-        auth,
-        HttpMethod.POST,
-        'com.atproto.repo.createRecord',
-        {
-          repo: session.did,
-          collection: 'app.bsky.feed.like',
-          record: likeRecord,
-        },
-        undefined,
-        true
-      );
+      const agent = await createBlueskyAgent(auth);
+      
+      const postsResponse = await agent.getPosts({ uris: [postUri] });
+      
+      if (!postsResponse.data.posts || postsResponse.data.posts.length === 0) {
+        throw new Error('Post not found');
+      }
+      
+      const post = postsResponse.data.posts[0];
+      
+      const response = await agent.like(postUri, post.cid);
 
       return {
         success: true,
         likeUri: response.uri,
         likeCid: response.cid,
         postUri: postUri,
-        postCid: postCid,
-        createdAt: likeRecord.createdAt,
+        postCid: post.cid,
+        postAuthor: post.author.handle,
+        postText: post.record['text'] ? String(post.record['text']).substring(0, 100) + (String(post.record['text']).length > 100 ? '...' : '') : 'No text available',
+        selectionMethod: selectionMethod,
+        likedAt: new Date().toISOString(),
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to like post: ${errorMessage}`);
+      if (error instanceof Error) {
+        if (error.message.includes('Post not found')) {
+          throw new Error('Post not found. Please check the URL and try again.');
+        }
+        if (error.message.includes('Invalid post URL format')) {
+          throw new Error('Invalid post URL format. Please use a valid Bluesky post URL or AT-URI.');
+        }
+        if (error.message.includes('Authentication')) {
+          throw new Error('Authentication failed. Please check your credentials.');
+        }
+        throw new Error(`Failed to like post: ${error.message}`);
+      }
+      throw new Error('Failed to like post: Unknown error occurred');
     }
   },
 });

@@ -328,15 +328,7 @@ export function createSimpleExternalLink(url: string): { uri: string; title: str
   };
 }
 
-export function parseReplyInfo(postUrl: string): { uri?: string; cid?: string } {
-  const info = extractPostInfoFromUrl(postUrl);
-  return {
-    uri: info.uri,
-    cid: 'placeholder' // Would need to be resolved from the actual post
-  };
-}
 
-// Backward compatibility exports (keep existing technical properties for advanced users)
 export const postUriProperty = Property.ShortText({
   displayName: 'Post URI (Advanced)',
   description: 'Technical AT-URI format (at://did:plc:xxx/app.bsky.feed.post/xxx) - use Post URL field instead',

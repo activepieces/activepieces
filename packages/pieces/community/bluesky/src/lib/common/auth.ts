@@ -1,5 +1,5 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AtpAgent } from '@atproto/api';
 
 export interface BlueSkyAuthType {
   pdsHost?: string;
@@ -40,35 +40,25 @@ export const blueskyAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: `${auth.pdsHost}/xrpc/com.atproto.server.createSession`,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: {
-          identifier: auth.identifier,
-          password: auth.password,
-        },
+      const agent = new AtpAgent({
+        service: auth.pdsHost || 'https://bsky.social',
       });
 
-      if (response.status === 200 && response.body.accessJwt) {
-        return {
-          valid: true,
-        };
-      } else {
-        return {
-          valid: false,
-          error: 'Failed to create session with provided credentials',
-        };
-      }
+      await agent.login({
+        identifier: auth.identifier,
+        password: auth.password,
+      });
+
+      return {
+        valid: true,
+      };
     } catch (error: any) {
-      if (error.response?.status === 401) {
+      if (error.message?.includes('Invalid identifier or password')) {
         return {
           valid: false,
           error: 'Invalid credentials. Please check your identifier and password.',
         };
-      } else if (error.response?.status === 400) {
+      } else if (error.message?.includes('Invalid request')) {
         return {
           valid: false,
           error: 'Invalid request. Please check your identifier format.',

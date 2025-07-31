@@ -12,7 +12,7 @@ import { newTimelinePosts } from './lib/triggers/new-timeline-posts';
 import { newPost } from './lib/triggers/new-post';
 
 export { blueskyAuth } from './lib/common/auth';
-export * from './lib/common/client';
+export { createBlueskyAgent } from './lib/common/client';
 
 export const bluesky = createPiece({
   displayName: 'Bluesky',
