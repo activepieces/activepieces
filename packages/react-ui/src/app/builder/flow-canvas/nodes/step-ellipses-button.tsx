@@ -22,7 +22,7 @@ export const StepEllipsesButton = ({ stepName }: { stepName: string }) => {
         e.target.dispatchEvent(rightClickEvent);
       }}
       variant="accent"
-      className="!size-[28px] !rounded-xs z-20 opacity-0  border  !border-slate-500/50 text-slate-500 dark:text-slate-200  group-hover:opacity-100 transition-all duration-300 flex items-center justify-center absolute -top-1 -right-1"
+      className="!size-[28px] !rounded-xs z-20 opacity-0  border  !border-slate-500/50 text-slate-500 dark:text-slate-200  group-hover:opacity-100 transition-all duration-300 flex items-center justify-center absolute -top-2 -right-2"
     >
       <EllipsisVertical className="size-4" />
     </Button>
