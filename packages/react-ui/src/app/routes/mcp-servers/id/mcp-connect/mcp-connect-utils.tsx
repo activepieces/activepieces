@@ -14,7 +14,34 @@ const replaceIpWithLocalhost = (url: string): string => {
   }
 };
 
+const constructConfig = (
+  clientType: 'claude' | 'cursor' | 'url',
+  url: string,
+) => {
+  const serverName = 'Activepieces';
+
+  if (clientType === 'claude') {
+    return {
+      mcpServers: {
+        [serverName]: {
+          command: 'npx',
+          args: ['-y', 'mcp-remote', url],
+        },
+      },
+    };
+  }
+
+  return {
+    mcpServers: {
+      [serverName]: {
+        url,
+      },
+    },
+  };
+};
+
 export const mcpConnectUtils = {
   maskToken,
   replaceIpWithLocalhost,
+  constructConfig,
 };

@@ -145,10 +145,24 @@ export const McpConnectPage = () => {
                     stepNumber={2}
                     title={t('Configure Claude Integration')}
                   >
-                    {t('Provide a name and paste the configuration below.')}
                     <div className="mt-3">
-                      <McpServerUrlBox
+                      {t('Open Claude')} →{' '}
+                      <Badge variant="outline">{t('Settings')}</Badge> →{' '}
+                      <Badge variant="outline">{t('Developer')}</Badge> →{' '}
+                      <Badge variant="outline">{t('Edit Config')}</Badge> →{' '}
+                      <Badge variant="outline">
+                        {t('Open claude_desktop_config.json')}
+                      </Badge>
+                      <br />
+                      <br />
+                      {t(
+                        'Paste the configuration below and save, then quit and restart Claude.',
+                      )}
+                      <br />
+                      <br />
+                      <ConfigDisplay
                         mcpServerUrl={mcpServerUrl}
+                        type="claude"
                         onRotateToken={handleRotateToken}
                         isRotating={rotateMutation.isPending}
                         hasValidMcp={hasValidMcp}
@@ -178,7 +192,7 @@ export const McpConnectPage = () => {
                     <div className="mt-3">
                       <ConfigDisplay
                         mcpServerUrl={mcpServerUrl}
-                        type="url"
+                        type="cursor"
                         onRotateToken={handleRotateToken}
                         isRotating={rotateMutation.isPending}
                         hasValidMcp={hasValidMcp}
