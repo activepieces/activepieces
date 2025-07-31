@@ -13,6 +13,8 @@ import { findSpace } from './lib/actions/find-space';
 import { updateFormCoupon } from './lib/actions/update-form-coupon';
 import { updateFormProduct } from './lib/actions/update-form-product';
 import { updateSpace } from './lib/actions/update-space';
+import { newFormSubmission } from './lib/triggers/new-form-submission';
+import { newPartialFormSubmission } from './lib/triggers/new-partial-form-submission';
 
 export const paperform = createPiece({
   displayName: 'Paperform',
@@ -33,7 +35,7 @@ export const paperform = createPiece({
     findSpace,
     updateFormCoupon,
     updateFormProduct,
-    updateSpace
+    updateSpace,
   ],
-  triggers: [],
+  triggers: [newFormSubmission, newPartialFormSubmission],
 });
