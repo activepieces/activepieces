@@ -2,57 +2,74 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { boardIdDropdown } from '../common/props';
+import { adAccountIdDropdown } from '../common/props';
 
 export const findPin = createAction({
   auth: pinterestAuth,
   name: 'findPin',
-  displayName: 'Find Pin',
-  description: 'Search for Pins using a title, description, or tag.',
+  displayName: 'Find Pin by Title/Keyword',
+  description: 'Search for Pins using title, description, or keywords.',
   props: {
+    ad_account_id: adAccountIdDropdown,
     query: Property.ShortText({
-      displayName: 'Query',
+      displayName: 'Search Query',
       required: true,
-      description: 'Title, description, or tag to search for.',
+      description: 'Search terms for pin titles, descriptions, or tags. You can also search using comma-separated pin IDs.',
     }),
     bookmark: Property.ShortText({
-      displayName: 'Bookmark',
+      displayName: 'Pagination Bookmark',
       required: false,
-      description: 'Pagination bookmark from previous response.',
+      description: 'Bookmark token from previous search results for pagination.',
     }),
+    max_results: Property.Number({
+      displayName: 'Maximum Results',
+      required: false,
+      description: 'Maximum number of pins to return (useful for large result sets).',
+      defaultValue: 25
+    })
   },
   async run({ auth, propsValue }) {
-    const query = propsValue.query;
-
-    const path = '/pins';
-    const response = await makeRequest(
-      auth.access_token as string,
-      HttpMethod.GET,
-      `${path}`
-    );
-
-    // If no query is provided, return all pins
-    if (!query) {
-      return response;
+    const { query, bookmark, ad_account_id, max_results } = propsValue;
+    
+    // Build query parameters
+    const params = new URLSearchParams();
+    params.append('query', query);
+    
+    if (bookmark) {
+      params.append('bookmark', bookmark);
     }
-
-    // Filter pins based on the query
-    const filteredPins = response.items.filter((pin: any) => {
-      const searchText = query.toLowerCase();
-      const title = (pin.title || '').toLowerCase();
-      const description = (pin.description || '').toLowerCase();
-      const note = (pin.note || '').toLowerCase();
-
-      return (
-        title.includes(searchText) ||
-        description.includes(searchText) ||
-        note.includes(searchText)
+    
+    if (ad_account_id) {
+      params.append('ad_account_id', ad_account_id);
+    }
+    
+    const path = `/search/pins?${params.toString()}`;
+    
+    try {
+      const response = await makeRequest(
+        auth.access_token as string,
+        HttpMethod.GET,
+        path
       );
-    });
-
-    return {
-      items: filteredPins,
-      bookmark: response.bookmark,
-    };
+      
+      // Apply max_results limit if specified
+      let items = response.items || [];
+      if (max_results && items.length > max_results) {
+        items = items.slice(0, max_results);
+      }
+      
+      return {
+        items,
+        bookmark: response.bookmark,
+        total_results: items.length,
+        query_used: query,
+        has_more: !!response.bookmark
+      };
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        throw new Error('No pins found matching your search criteria.');
+      }
+      throw new Error(`Failed to search pins: ${error.message || 'Unknown error'}`);
+    }
   },
 });
