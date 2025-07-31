@@ -193,7 +193,7 @@ export const stripeSearchSubscriptions = createAction({
                 },
               });
 
-              resultSubscription.customer = customerResponse.body.data as Stripe.Customer
+              resultSubscription.customer = customerResponse.body as Stripe.Customer
             } catch (error) {
               console.warn(`Failed to fetch customer details for ${subscription.customer}:`, error);
             }
