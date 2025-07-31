@@ -8,19 +8,7 @@ export const verifyEmailAction = createAction({
     auth: hunterAuth,
     name: 'verify-email',
     displayName: 'Verify Email',
-    description: `
-    Checks deliverability and validation status of an email address.
-    
-    • Returns HTTP 200 with a detailed verification object when complete.  
-    • If Hunter needs more time (up to 20s), it returns HTTP 202 "in progress"; you can call again later.  
-    • Possible detailed \`status\`: "valid", "invalid", "accept_all", "webmail", "disposable", "unknown".  
-    • Deprecated \`result\`: "deliverable", "undeliverable", "risky" (prefer using \`status\`).  
-    • Throws documented errors:  
-      - 400 wrong_params / invalid_email  
-      - 222 SMTP failure (retry later)  
-      - 451 claimed_email (cannot process) 
-      - 429 rate limit (10 req/s, 300 req/min)  
-  `,
+    description: 'Check email deliverability and validation status.',
     props: {
         email: emailProp,
     },
@@ -42,6 +30,9 @@ export const verifyEmailAction = createAction({
             const status = httpErr.response?.status;
             const errId = (httpErr.response?.body as any)?.errors?.[0]?.id;
 
+            if (status === 202) {
+                return { status: 'in_progress' as const };
+            }
             if (status === 222) {
                 throw new Error(
                     'Verification failed due to an unexpected SMTP server error. Please try again later.'
@@ -89,7 +80,6 @@ export const verifyEmailAction = createAction({
             accept_all: data.accept_all,
             block: data.block,
             sources: data.sources,
-            verification: data.verification,
         };
     },
 });

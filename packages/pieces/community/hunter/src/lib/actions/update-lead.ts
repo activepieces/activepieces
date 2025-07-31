@@ -3,12 +3,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { hunterApiCall } from '../common';
 import { hunterAuth } from '../../index';
 import {
-    leadIdProp,
+    leadSelectDropdownProp,
     emailProp,
     firstNameProp,
     lastNameProp,
     positionProp,
-    companyProp,
+    companyLeadProp,
     companyIndustryProp,
     companySizeProp,
     confidenceScoreProp,
@@ -19,7 +19,7 @@ import {
     twitterProp,
     notesProp,
     sourceProp,
-    leadsListIdProp,
+    leadsListDropdownProp,
     leadsListIdsProp,
     customAttributesProp,
 } from '../common/props';
@@ -28,18 +28,14 @@ export const updateLeadAction = createAction({
     auth: hunterAuth,
     name: 'update-lead',
     displayName: 'Update Lead',
-    description: `
-    Updates an existing lead.  
-    Pass any subset of lead fields (email, name, company, etc.) as a JSON hash.
-    Returns HTTP 204 No Content on success.
-  `,
+    description: 'Modify existing lead data.',
     props: {
-        lead_id: leadIdProp,
+        lead_id: leadSelectDropdownProp,
         email: emailProp,
         first_name: firstNameProp,
         last_name: lastNameProp,
         position: positionProp,
-        company: companyProp,
+        company: companyLeadProp,
         company_industry: companyIndustryProp,
         company_size: companySizeProp,
         confidence_score: confidenceScoreProp,
@@ -50,7 +46,7 @@ export const updateLeadAction = createAction({
         twitter: twitterProp,
         notes: notesProp,
         source: sourceProp,
-        leads_list_id: leadsListIdProp,
+        leads_list_id: leadsListDropdownProp,
         leads_list_ids: leadsListIdsProp,
         custom_attributes: customAttributesProp,
     },

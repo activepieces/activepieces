@@ -5,7 +5,7 @@ import { hunterAuth } from '../../index';
 import {
     campaignIdProp,
     emailsProp,
-    leadIdsProp,
+    leadIdsDropdownProp,
 } from '../common/props';
 
 const MAX_EMAILS = 50;
@@ -15,15 +15,11 @@ export const addRecipientsAction = createAction({
     auth: hunterAuth,
     name: 'add-recipients',
     displayName: 'Add Recipients',
-    description: `
-    Add one or multiple recipients to a campaign.
-    Emails will be matched to existing leads or created as new ones.
-    Returns the count added plus any skipped (with reasons).
-  `,
+    description: 'Add one or multiple recipients to a campaign.',
     props: {
         campaign_id: campaignIdProp,
         emails: emailsProp,
-        lead_ids: leadIdsProp,
+        lead_ids: leadIdsDropdownProp,
     },
     async run(context) {
         const {

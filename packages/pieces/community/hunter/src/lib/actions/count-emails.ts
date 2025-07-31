@@ -8,20 +8,10 @@ export const countEmailsAction = createAction({
     auth: hunterAuth,
     name: 'count-emails',
     displayName: 'Count Emails',
-    description: `
-    Returns how many email addresses Hunter has for a given domain or company.
-    You must supply at least one of domain or company.
-    Optionally filter to only "personal" or "generic" addresses.
-  `,
+    description: 'Returns the number of email addresses found for a domain or company.',
     props: {
-        domain: {
-            ...domainProp,
-            required: false,
-        },
-        company: {
-            ...companyProp,
-            required: false,
-        },
+        domain: domainProp,
+        company: companyProp,
         type: emailTypeProp,
     },
     async run(context) {

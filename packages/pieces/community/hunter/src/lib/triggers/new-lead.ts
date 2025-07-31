@@ -8,7 +8,7 @@ export const newLeadTrigger = createTrigger({
     auth: hunterAuth,
     name: 'new-lead',
     displayName: 'New Lead',
-    description: 'Triggers when a new lead is created.',
+    description: 'Fires when a new lead is created.',
     type: TriggerStrategy.POLLING,
     props: {},
     async onEnable(context) {

@@ -2,18 +2,15 @@ import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { hunterApiCall } from '../common';
 import { hunterAuth } from '../../index';
-import { leadIdProp } from '../common/props';
+import { leadSelectDropdownProp } from '../common/props';
 
 export const getLeadAction = createAction({
     auth: hunterAuth,
     name: 'get-lead',
     displayName: 'Get Lead',
-    description: `
-    Retrieves all fields of a specific lead by its ID.
-    Returns HTTP 200 with the full lead object under \`data\`.
-  `,
+    description: 'Retrieve details of a specific lead.',
     props: {
-        lead_id: leadIdProp,
+        lead_id: leadSelectDropdownProp,
     },
     async run(context) {
         const { lead_id } = context.propsValue;

@@ -2,18 +2,15 @@ import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { hunterApiCall } from '../common';
 import { hunterAuth } from '../../index';
-import { leadIdProp } from '../common/props';
+import { leadDeleteDropdownProp } from '../common/props';
 
 export const deleteLeadAction = createAction({
     auth: hunterAuth,
     name: 'delete-lead',
     displayName: 'Delete Lead',
-    description: `
-    Deletes an existing lead by its ID.
-    This call returns no content (HTTP 204) on success.
-  `,
+    description: 'Delete a specific lead record by ID.',
     props: {
-        lead_id: leadIdProp,
+        lead_id: leadDeleteDropdownProp,
     },
     async run(context) {
         const { lead_id } = context.propsValue;

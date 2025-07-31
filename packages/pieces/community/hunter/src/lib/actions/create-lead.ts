@@ -7,7 +7,7 @@ import {
     firstNameProp,
     lastNameProp,
     positionProp,
-    companyProp,
+    companyLeadProp,
     companyIndustryProp,
     companySizeProp,
     confidenceScoreProp,
@@ -18,7 +18,7 @@ import {
     twitterProp,
     notesProp,
     sourceProp,
-    leadsListIdProp,
+    leadsListDropdownProp,
     leadsListIdsProp,
     customAttributesProp,
 } from '../common/props';
@@ -27,16 +27,13 @@ export const createLeadAction = createAction({
     auth: hunterAuth,
     name: 'create-lead',
     displayName: 'Create Lead',
-    description: `
-    Creates a new lead record. 
-    All parameters are optional except email, and will be stored with your lead.
-  `,
+    description: 'Create and store a lead record.',
     props: {
         email: emailProp,
         first_name: firstNameProp,
         last_name: lastNameProp,
         position: positionProp,
-        company: companyProp,
+        company: companyLeadProp,
         company_industry: companyIndustryProp,
         company_size: companySizeProp,
         confidence_score: confidenceScoreProp,
@@ -47,7 +44,7 @@ export const createLeadAction = createAction({
         twitter: twitterProp,
         notes: notesProp,
         source: sourceProp,
-        leads_list_id: leadsListIdProp,
+        leads_list_id: leadsListDropdownProp,
         leads_list_ids: leadsListIdsProp,
         custom_attributes: customAttributesProp,
     },

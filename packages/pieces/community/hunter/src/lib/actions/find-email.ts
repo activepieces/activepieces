@@ -15,36 +15,14 @@ export const findEmailAction = createAction({
     auth: hunterAuth,
     name: 'find-email',
     displayName: 'Find Email',
-    description: `
-    Retrieves the most likely email address for a person at a domain or company.
-    You must supply domain or company, plus either first+last name or full name.
-    Optionally set max_duration (3-20s) to refine accuracy.
-  `,
+    description: 'Retrieve/propose the most likely email for a person at a domain.',
     props: {
-        domain: {
-            ...domainProp,
-            required: false,
-        },
-        company: {
-            ...companyProp,
-            required: false,
-        },
-        first_name: {
-            ...firstNameProp,
-            required: false,
-        },
-        last_name: {
-            ...lastNameProp,
-            required: false,
-        },
-        full_name: {
-            ...fullNameProp,
-            required: false,
-        },
-        max_duration: {
-            ...maxDurationProp,
-            required: false,
-        },
+        domain: domainProp,
+        company: companyProp,
+        first_name: firstNameProp,
+        last_name: lastNameProp,
+        full_name: fullNameProp,
+        max_duration: maxDurationProp,
     },
     async run(context) {
         const {

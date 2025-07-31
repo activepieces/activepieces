@@ -37,30 +37,68 @@ export const campaignIdProp = Property.Dropdown({
 
 export const emailsProp = Property.Array({
     displayName: 'Emails',
-    required: true,
-    description: 'One or more email addresses to add as recipients.',
+    required: false,
+    description: 'Email addresses to add as recipients. At least one email or lead ID is required.',
     defaultValue: [],
 });
 
 export const leadIdsProp = Property.Array({
     displayName: 'Lead IDs',
-    required: true,
-    description: 'One or more existing Hunter lead IDs to add as recipients.',
+    required: false,
+    description: 'Existing lead IDs from your Hunter account to add as recipients.',
     defaultValue: [],
+});
+
+export const leadIdsDropdownProp = Property.MultiSelectDropdown({
+    displayName: 'Leads',
+    required: false,
+    description: 'Select leads from your Hunter account to add as recipients.',
+    refreshers: [],
+    options: async ({ auth }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                placeholder: 'Connect your Hunter account first.',
+                options: [],
+            };
+        }
+        
+        const resp = await hunterApiCall({
+            apiKey: auth as string,
+            endpoint: '/leads',
+            method: HttpMethod.GET,
+            qparams: { limit: '100' }
+        });
+        
+        const leads = (resp as any).data?.leads || [];
+        return {
+            disabled: false,
+            options: leads.map((lead: any) => ({
+                label: `${lead.first_name || ''} ${lead.last_name || ''} (${lead.email})`.trim(),
+                value: lead.id
+            }))
+        };
+    }
 });
 
 export const domainProp = Property.ShortText({
     displayName: 'Domain',
-    required: true,
+    required: false,
     description:
-        'The domain name to count addresses for (e.g., "stripe.com").',
+        'Domain name to count addresses for (e.g., "stripe.com"). At least one of domain or company is required.',
 });
 
 export const companyProp = Property.ShortText({
     displayName: 'Company',
     required: false,
     description:
-        'The company name to count addresses for (e.g., "Stripe"). Ignored if domain is provided.',
+        'Company name to count addresses for (e.g., "Stripe"). At least one of domain or company is required.',
+});
+
+export const companyLeadProp = Property.ShortText({
+    displayName: 'Company',
+    required: false,
+    description: 'Name of the company the lead is working in.',
 });
 
 export const emailTypeProp = Property.Dropdown({
@@ -174,6 +212,46 @@ export const leadsListIdsProp = Property.Array({
     defaultValue: [],
 });
 
+export const leadsListDropdownProp = Property.Dropdown({
+    displayName: 'Leads List',
+    required: false,
+    description: 'Select which list to add the lead to; defaults to your most recent list.',
+    refreshers: [],
+    options: async ({ auth }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                placeholder: 'Connect your Hunter account first.',
+                options: [],
+            };
+        }
+        
+        const resp = await hunterApiCall({
+            apiKey: auth as string,
+            endpoint: '/leads',
+            method: HttpMethod.GET,
+            qparams: { limit: '100' }
+        });
+        
+        const leads = (resp as any).data?.leads || [];
+        const uniqueLists = new Map();
+        
+        leads.forEach((lead: any) => {
+            if (lead.leads_list) {
+                uniqueLists.set(lead.leads_list.id, lead.leads_list);
+            }
+        });
+        
+        return {
+            disabled: false,
+            options: Array.from(uniqueLists.values()).map((list: any) => ({
+                label: `${list.name} (${list.leads_count} leads)`,
+                value: list.id
+            }))
+        };
+    }
+});
+
 export const customAttributesProp = Property.Json({
     displayName: 'Custom Attributes',
     required: false,
@@ -185,6 +263,70 @@ export const leadIdProp = Property.Number({
     displayName: 'Lead ID',
     required: true,
     description: 'Identifier of the lead to delete.',
+});
+
+export const leadSelectDropdownProp = Property.Dropdown({
+    displayName: 'Lead',
+    required: true,
+    description: 'Select a lead from your Hunter account.',
+    refreshers: [],
+    options: async ({ auth }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                placeholder: 'Connect your Hunter account first.',
+                options: [],
+            };
+        }
+        
+        const resp = await hunterApiCall({
+            apiKey: auth as string,
+            endpoint: '/leads',
+            method: HttpMethod.GET,
+            qparams: { limit: '100' }
+        });
+        
+        const leads = (resp as any).data?.leads || [];
+        return {
+            disabled: false,
+            options: leads.map((lead: any) => ({
+                label: `${lead.first_name || ''} ${lead.last_name || ''} (${lead.email})`.trim(),
+                value: lead.id
+            }))
+        };
+    }
+});
+
+export const leadDeleteDropdownProp = Property.Dropdown({
+    displayName: 'Lead to Delete',
+    required: true,
+    description: 'Select the lead to delete from your Hunter account.',
+    refreshers: [],
+    options: async ({ auth }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                placeholder: 'Connect your Hunter account first.',
+                options: [],
+            };
+        }
+        
+        const resp = await hunterApiCall({
+            apiKey: auth as string,
+            endpoint: '/leads',
+            method: HttpMethod.GET,
+            qparams: { limit: '100' }
+        });
+        
+        const leads = (resp as any).data?.leads || [];
+        return {
+            disabled: false,
+            options: leads.map((lead: any) => ({
+                label: `${lead.first_name || ''} ${lead.last_name || ''} (${lead.email})`.trim(),
+                value: lead.id
+            }))
+        };
+    }
 });
 
 export const fullNameProp = Property.ShortText({

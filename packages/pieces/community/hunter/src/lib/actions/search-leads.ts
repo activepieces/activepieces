@@ -3,7 +3,7 @@ import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { hunterApiCall } from '../common';
 import { hunterAuth } from '../../index';
 import {
-    leadsListIdProp,
+    leadsListDropdownProp,
     emailFilterProp,
     firstNameFilterProp,
     lastNameFilterProp,
@@ -32,12 +32,9 @@ export const searchLeadsAction = createAction({
     auth: hunterAuth,
     name: 'search-leads',
     displayName: 'Search Leads',
-    description: `
-    List and filter leads in your account.  
-    Supports filtering on any lead attribute, plus pagination.
-  `,
+    description: 'List and filter leads in the account.',
     props: {
-        leads_list_id: leadsListIdProp,
+        leads_list_id: leadsListDropdownProp,
         email: emailFilterProp,
         first_name: firstNameFilterProp,
         last_name: lastNameFilterProp,
