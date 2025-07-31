@@ -1,4 +1,4 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioApiCall } from './client';
 import { getAccessToken } from './auth';
@@ -244,10 +244,9 @@ export const dynamicRefIdProperty = Property.Dropdown({
     try {
       const accessToken = getAccessToken(auth as any);
       let endpoint = '';
-      let responseKey = '';
 
       switch (refType) {
-        case 'item':
+        case 'item': {
           if (!appId) {
             return {
               disabled: true,
@@ -267,8 +266,9 @@ export const dynamicRefIdProperty = Property.Dropdown({
               value: item.item_id,
             })) || [],
           };
+        }
 
-        case 'task':
+        case 'task': {
           if (spaceId) {
             endpoint = `/task/space/${spaceId}/`;
           } else {
@@ -288,6 +288,7 @@ export const dynamicRefIdProperty = Property.Dropdown({
               value: task.task_id,
             })) || [],
           };
+        }
 
         case 'status':
           if (!spaceId) {
@@ -359,7 +360,7 @@ export const dynamicRefIdProperty = Property.Dropdown({
             };
           }
 
-        case 'space':
+        case 'space': {
           if (!orgId) {
             return {
               disabled: true,
@@ -380,6 +381,7 @@ export const dynamicRefIdProperty = Property.Dropdown({
               value: space.space_id,
             })) || [],
           };
+        }
 
         default:
           return {
@@ -722,7 +724,7 @@ export function formatFieldValues(appFields: any[], formData: Record<string, any
           };
           break;
 
-        case 'progress':
+        case 'progress': {
           const progressValue = Number(fieldValue);
           if (progressValue >= 0 && progressValue <= 100) {
             fields[field.field_id] = {
@@ -730,6 +732,7 @@ export function formatFieldValues(appFields: any[], formData: Record<string, any
             };
           }
           break;
+        }
 
         case 'email':
         case 'phone':

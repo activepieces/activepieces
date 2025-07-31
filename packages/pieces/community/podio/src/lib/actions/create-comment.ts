@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioAuth } from '../../index';
-import { podioApiCall, getAccessToken, silentProperty, hookProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty, dynamicFileProperty } from '../common';
+import { podioApiCall, getAccessToken, silentProperty, hookProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
 
 export const createCommentAction = createAction({
   auth: podioAuth,
@@ -45,7 +45,7 @@ export const createCommentAction = createAction({
           const accessToken = getAccessToken(auth as any);
 
           switch (type) {
-            case 'item':
+            case 'item': {
               if (!appId) {
                 return {
                   disabled: true,
@@ -65,8 +65,9 @@ export const createCommentAction = createAction({
                   value: item.item_id,
                 })) || [],
               };
+            }
 
-            case 'task':
+            case 'task': {
               const userInfo = await podioApiCall<any>({
                 method: HttpMethod.GET,
                 accessToken,
@@ -113,6 +114,7 @@ export const createCommentAction = createAction({
                   };
                 }) || [],
               };
+            }
 
             default:
               return {

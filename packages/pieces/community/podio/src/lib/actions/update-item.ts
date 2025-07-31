@@ -107,7 +107,7 @@ export const updateItemAction = createAction({
                   break;
 
                 case 'category':
-                case 'status':
+                case 'status': {
                   
                   let staticOptions: Array<{label: string, value: any}> = [];
                   
@@ -132,6 +132,7 @@ export const updateItemAction = createAction({
                     });
                   }
                   break;
+                }
 
                 case 'email':
                   fieldProperties[fieldKey] = Property.Object({
