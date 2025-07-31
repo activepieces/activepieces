@@ -1,5 +1,5 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, PieceActionSettings, PieceTriggerSettings, TriggerHookType, TriggerType } from '@activepieces/shared'
+import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, TriggerHookType, TriggerType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceWorkerCache } from '../api/piece-worker-cache'
 import { executionFiles } from '../cache/execution-files'
@@ -67,7 +67,16 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async extractPieceMetadata(engineToken, operation) {
         log.debug({ operation }, '[threadEngineRunner#extractPieceMetadata]')
 
-        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, operation)
+        let lockedPiece: PiecePackage = operation
+        try {
+            lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, operation)
+        }
+        catch (error) {
+            if (operation.packageType !== PackageType.REGISTRY) {
+                throw error
+            }
+        }
+        
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
