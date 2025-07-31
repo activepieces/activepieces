@@ -53,9 +53,10 @@ export async function podioApiCall<T = any>(options: PodioApiCallOptions): Promi
       case 409:
         throw new Error(`Conflict: ${getErrorMessage(errorBody) || 'The item has been modified by someone else. Please refresh and try again.'}`);
 
-      case 420:
+      case 420: {
         const rateLimitMsg = getRateLimitMessage(error.response?.headers);
         throw new Error(`Rate limit exceeded: ${rateLimitMsg}`);
+      }
 
       case 422:
         throw new Error(`Validation error: ${getErrorMessage(errorBody) || 'The provided data is invalid. Please check required fields and formats.'}`);

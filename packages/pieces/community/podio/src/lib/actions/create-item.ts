@@ -220,7 +220,7 @@ export const createItemAction = createAction({
                   break;
 
                 case 'category':
-                case 'status':
+                case 'status': {
                   
                   
                   let staticOptions: Array<{label: string, value: any}> = [];
@@ -247,6 +247,7 @@ export const createItemAction = createAction({
                     });
                   }
                   break;
+                }
 
                 case 'email':
                   fieldProperties[fieldKey] = Property.Object({
