@@ -30,7 +30,7 @@ const ImageWithFallback = ({
 
   return (
     <span className={cn('relative inline-block h-full w-full', className)}>
-      {((isLoading && !hasError)) && (
+      {isLoading && !hasError && (
         <span className="absolute inset-0 flex items-center justify-center">
           {fallback ?? <Skeleton className="w-full h-full" />}
         </span>

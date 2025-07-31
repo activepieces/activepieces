@@ -1,5 +1,6 @@
 import { Handle, NodeProps, Position } from '@xyflow/react';
 import React, { useMemo } from 'react';
+
 import {
   useBuilderStateContext,
   useStepNodeAttributes,
@@ -15,11 +16,13 @@ import {
   TriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
+
 import { flowUtilConsts } from '../utils/consts';
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApStepNode } from '../utils/types';
-import { ApStepNodeStatus } from './step-node-status';
+
 import { StepEllipsesButton } from './step-ellipses-button';
+import { ApStepNodeStatus } from './step-node-status';
 
 const getPieceSelectorOperationType = (step: Step) => {
   if (flowStructureUtil.isTrigger(step.type)) {
@@ -73,7 +76,11 @@ const ApStepCanvasNode = React.memo(
       e.stopPropagation();
     };
     return (
-      <div key={step.name} {...stepNodeAttributes} className=" group transition-all duration-150 ease-in">
+      <div
+        key={step.name}
+        {...stepNodeAttributes}
+        className=" group transition-all duration-150 ease-in"
+      >
         <div className="relative h-full w-full cursor-default">
           {!isDragging && (
             <PieceSelector
@@ -125,7 +132,6 @@ const ApStepCanvasNode = React.memo(
                       width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
                       maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
                     }}
-                    
                   >
                     <div className="relative">
                       {hasGradientBorder && <AiNodeGradient />}
@@ -159,8 +165,6 @@ const ApStepCanvasNode = React.memo(
     );
   },
 );
-
-
 
 const AiNodeGradient = () => {
   return (

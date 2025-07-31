@@ -1,4 +1,7 @@
-import { ContextMenuContent, ContextMenuSeparator } from '@/components/ui/context-menu';
+import {
+  ContextMenuContent,
+  ContextMenuSeparator,
+} from '@/components/ui/context-menu';
 import { ActionType, flowStructureUtil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -43,9 +46,10 @@ export const CanvasContextMenuContent = ({
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
   const isStepContextMenu = contextMenuType === ContextMenuType.STEP;
-  const isTriggerOnlySelected = selectedNodes.length === 1 && firstSelectedStep?.name === 'trigger';
-  if(isTriggerOnlySelected && readonly) {
-  return null;
+  const isTriggerOnlySelected =
+    selectedNodes.length === 1 && firstSelectedStep?.name === 'trigger';
+  if (isTriggerOnlySelected && readonly) {
+    return null;
   }
   return (
     <ContextMenuContent>

@@ -76,10 +76,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
   return (
     <div className="flex flex-col gap-4 w-full">
       {!pieceModel && (
-        <SkeletonList
-          numberOfItems={5}
-          className="h-7"
-        ></SkeletonList>
+        <SkeletonList numberOfItems={5} className="h-7"></SkeletonList>
       )}
 
       {pieceModel && (
