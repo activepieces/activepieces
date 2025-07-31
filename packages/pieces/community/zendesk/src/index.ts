@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { newTicketInView } from './lib/trigger/new-ticket-in-view';
+import { createATicket } from './lib/actions/create-a-ticket';
 
 const markdownProperty = `
 **Organization**: The organization name can be found in the URL (e.g https://ORGANIZATION_NAME.zendesk.com).
@@ -61,6 +62,7 @@ export const zendesk = createPiece({
         ).toString('base64')}`,
       }),
     }),
+    createATicket,
   ],
   triggers: [newTicketInView],
 });
