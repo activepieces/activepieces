@@ -49,11 +49,9 @@ export const CanvasContextMenu = ({
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      <ContextMenuContent>
         <CanvasContextMenuContent
           contextMenuType={contextMenuType}
         ></CanvasContextMenuContent>
-      </ContextMenuContent>
     </ContextMenu>
   );
 };
