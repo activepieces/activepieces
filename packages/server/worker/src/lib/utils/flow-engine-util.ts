@@ -1,5 +1,5 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { Action, ActionType, assertEqual, assertNotNullOrUndefined, CodeAction, EXACT_VERSION_REGEX, flowStructureUtil, FlowVersion, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, PieceType, Step, Trigger, TriggerType } from '@activepieces/shared'
+import { Action, ActionType, assertEqual, CodeAction, EXACT_VERSION_REGEX, flowStructureUtil, FlowVersion, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, Step, Trigger, TriggerType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { CodeArtifact } from '../runner/engine-runner-types'
@@ -28,11 +28,11 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
         })
         return this.enrichPieceWithArchive(engineToken, pieceMetadata)
     },
-    async enrichPieceWithArchive(engineToken: string, pieceMetadata: PieceMetadataModel): Promise<PiecePackage> {
+    async enrichPieceWithArchive(engineToken: string, pieceMetadata: Pick<PieceMetadataModel, 'name' | 'version' | 'packageType' | 'pieceType' | 'archiveId'>): Promise<PiecePackage> {
         const { name, version } = pieceMetadata
         switch (pieceMetadata.packageType) {
             case PackageType.ARCHIVE: {
-                const { pieceVersion, archiveId } = await getPieceVersionAndArchiveId(engineToken, {
+                const { archiveId, pieceVersion } = await getPieceVersionAndArchiveId(engineToken, pieceMetadata.archiveId, {
                     pieceName: name,
                     pieceVersion: version,
                 }, log)
@@ -56,32 +56,6 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
                     pieceVersion: pieceMetadata.version,
                 }
 
-            }
-        }
-    },
-    async enrichPieceToInstall(engineToken: string, pieceData: EnrichPieceWithArchiveParams): Promise<PiecePackage> {
-        switch (pieceData.packageType) {
-            case PackageType.ARCHIVE: {
-                const { archiveId } = pieceData
-                assertNotNullOrUndefined(archiveId, 'archiveId')
-
-                const archive = await engineApiService(engineToken, log).getFile(archiveId)
-                return {
-                    packageType: pieceData.packageType,
-                    pieceType: pieceData.pieceType,
-                    pieceName: pieceData.pieceName,
-                    pieceVersion: pieceData.pieceVersion,
-                    archiveId,
-                    archive,
-                }
-            }
-            case PackageType.REGISTRY: {
-                return {
-                    packageType: pieceData.packageType,
-                    pieceType: pieceData.pieceType,
-                    pieceName: pieceData.pieceName,
-                    pieceVersion: pieceData.pieceVersion,
-                }
             }
         }
     },
@@ -111,19 +85,20 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function getPieceVersionAndArchiveId(engineToken: string, piece: BasicPieceInformation, log: FastifyBaseLogger): Promise<{ pieceVersion: string, archiveId?: string }> {
+async function getPieceVersionAndArchiveId(engineToken: string, archiveId: string | undefined, piece: BasicPieceInformation, log: FastifyBaseLogger): Promise<{ pieceVersion: string, archiveId?: string }> {
     const isExactVersion = EXACT_VERSION_REGEX.test(piece.pieceVersion)
+
+    if (!isNil(archiveId) && isExactVersion) {
+        return {
+            pieceVersion: piece.pieceVersion,
+            archiveId,
+        }
+    }
     const pieceMetadata = await engineApiService(engineToken, log).getPiece(piece.pieceName, {
         version: piece.pieceVersion,
     })
-    if (isNil(pieceMetadata.archiveId) || !isExactVersion) {
-        return {
-            pieceVersion: pieceMetadata.version,
-            archiveId: pieceMetadata.archiveId!,
-        }
-    }
     return {
-        pieceVersion: piece.pieceVersion,
+        pieceVersion: pieceMetadata.version,
         archiveId: pieceMetadata.archiveId!,
     }
 }
@@ -141,12 +116,4 @@ type LockFlowVersionParams = {
 export type BasicPieceInformation = {
     pieceName: string
     pieceVersion: string
-}
-
-export type EnrichPieceWithArchiveParams = {
-    pieceName: string
-    pieceVersion: string
-    packageType: PackageType
-    pieceType: PieceType
-    archiveId?: string
 }
