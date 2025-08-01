@@ -156,11 +156,37 @@ const updateProjectJsonConfig = async (
     projectJson
   );
 };
-
+const addEslintFile = async (pieceName: string, pieceType: string) => {
+  const eslintFile ={
+    "extends": ["../../../../.eslintrc.base.json"],
+    "ignorePatterns": ["!**/*"],
+    "overrides": [
+      {
+        "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+        "rules": {}
+      },
+      {
+        "files": ["*.ts", "*.tsx"],
+        "rules": {}
+      },
+      {
+        "files": ["*.js", "*.jsx"],
+        "rules": {}
+      }
+    ]
+  }
+  
+ 
+  await writePackageEslint(
+    `packages/pieces/${pieceType}/${pieceName}`,
+    eslintFile
+  );
+};
 const setupGeneratedLibrary = async (pieceName: string, pieceType: string) => {
   await removeUnusedFiles(pieceName, pieceType);
   await generateIndexTsFile(pieceName, pieceType);
   await updateProjectJsonConfig(pieceName, pieceType);
+  await addEslintFile(pieceName, pieceType);
 };
 
 export const createPiece = async (

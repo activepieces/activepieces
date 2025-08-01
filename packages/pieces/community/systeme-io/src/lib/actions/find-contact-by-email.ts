@@ -18,7 +18,7 @@ export const findContactByEmail = createAction({
     const { email } = context.propsValue;
     const searchEmail = email.toLowerCase().trim();
     
-    let allContacts: any[] = [];
+    const allContacts: any[] = [];
     let hasMore = true;
     let startingAfter: string | undefined;
     
