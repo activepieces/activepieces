@@ -8,13 +8,7 @@ export const newContactBookTrigger = createTrigger({
   description: 'Fires when a new contact book is created in Missive',
   props: {},
   type: TriggerStrategy.APP_WEBHOOK,
-  sampleData: {
-    id: 'book_123',
-    name: 'My Contact Book',
-    description: 'A new contact book',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-  },
+  sampleData: {},
   onEnable: async (context) => {
     // Set up webhook for new contact books
     context.app.createListeners({

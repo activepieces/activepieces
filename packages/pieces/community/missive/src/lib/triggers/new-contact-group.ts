@@ -14,13 +14,7 @@ export const newContactGroupTrigger = createTrigger({
     }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
-  sampleData: {
-    id: 'group_123',
-    name: 'My Contact Group',
-    contact_book_id: 'book_123',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-  },
+  sampleData: {},
   onEnable: async (context) => {
     // Set up webhook for new contact groups
     context.app.createListeners({

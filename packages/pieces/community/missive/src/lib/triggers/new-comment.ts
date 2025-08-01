@@ -14,13 +14,7 @@ export const newCommentTrigger = createTrigger({
     }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
-  sampleData: {
-    id: 'comment_123',
-    body: 'This is a comment',
-    conversation_id: 'conv_123',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-  },
+  sampleData: {},
   onEnable: async (context) => {
     // Set up webhook for new comments
     context.app.createListeners({

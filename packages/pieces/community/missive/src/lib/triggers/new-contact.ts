@@ -14,16 +14,7 @@ export const newContactTrigger = createTrigger({
     }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
-  sampleData: {
-    id: 'contact_123',
-    email: 'contact@example.com',
-    first_name: 'John',
-    last_name: 'Doe',
-    company: 'Example Corp',
-    contact_book_id: 'book_123',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-  },
+  sampleData: {},
   onEnable: async (context) => {
     // Set up webhook for new contacts
     context.app.createListeners({

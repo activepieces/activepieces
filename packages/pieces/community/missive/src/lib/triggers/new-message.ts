@@ -14,16 +14,7 @@ export const newMessageTrigger = createTrigger({
     }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
-  sampleData: {
-    id: 'msg_123',
-    subject: 'Test Message',
-    body: 'This is a test message',
-    from: 'sender@example.com',
-    to: ['recipient@example.com'],
-    conversation_id: 'conv_123',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-  },
+  sampleData: {},
   onEnable: async (context) => {
     // Set up webhook for new messages
     context.app.createListeners({
