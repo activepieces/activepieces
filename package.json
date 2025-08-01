@@ -130,6 +130,7 @@
     "axios-retry": "4.4.1",
     "basic-ftp": "5.0.5",
     "bcrypt": "6.0.0",
+    "better-sqlite3": "12.2.0",
     "boring-avatars": "1.11.2",
     "buffer": "6.0.3",
     "bullmq": "5.28.1",
