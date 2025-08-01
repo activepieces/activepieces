@@ -31,6 +31,7 @@ export const deleteDatabaseRecord = createAction({
     return {
       success: true,
       message: 'Record deleted successfully',
+      recordId: recordId,
     };
   },
 });
