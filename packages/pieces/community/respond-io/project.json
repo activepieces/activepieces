@@ -1,0 +1,19 @@
+{
+  "name": "respond-io",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/respond-io/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/respond-io",
+        "main": "packages/pieces/community/respond-io/src/index.ts",
+        "tsConfig": "packages/pieces/community/respond-io/tsconfig.lib.json",
+        "assets": ["packages/pieces/community/respond-io/*.md"]
+      }
+    }
+  },
+  "tags": []
+}
