@@ -20,7 +20,7 @@ const polling: Polling<PiecePropValueSchema<typeof trelloAuth>, Props> = {
 
         if(lastFetchEpochMS ===0)
         {
-            // If lastFetchEpochMS is 0, we assume this is the first run and return all cards with due dates
+            // If lastFetchEpochMS is 0, we assume this is the test run and return all cards with due dates
             return cards
                 .filter(card => card.due && !card.dueComplete)
                 .map(card => ({
