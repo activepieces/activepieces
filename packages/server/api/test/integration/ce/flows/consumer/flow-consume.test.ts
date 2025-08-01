@@ -5,6 +5,8 @@ import {
     FlowRunStatus,
     FlowStatus,
     FlowVersionState,
+    PackageType,
+    PieceType,
     ProgressUpdateType,
     RunEnvironment,
     TriggerType,
@@ -19,6 +21,7 @@ import {
     createMockFlow,
     createMockFlowRun,
     createMockFlowVersion,
+    createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../../helpers/mocks'
 
@@ -55,6 +58,22 @@ describe('flow execution', () => {
             status: FlowStatus.ENABLED,
         })
         await databaseConnection().getRepository('flow').save([mockFlow])
+
+        const mockPieceMetadata1 = createMockPieceMetadata({
+            name: '@activepieces/piece-schedule',
+            version: '0.1.5',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+        })
+        const mockPieceMetadata2 = createMockPieceMetadata({
+            name: '@activepieces/piece-data-mapper',
+            version: '0.3.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+        })
+        await databaseConnection()
+            .getRepository('piece_metadata')
+            .save([mockPieceMetadata1, mockPieceMetadata2])
 
         const mockFlowVersion = createMockFlowVersion({
             flowId: mockFlow.id,

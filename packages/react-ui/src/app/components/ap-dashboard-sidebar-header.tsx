@@ -11,7 +11,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
@@ -33,13 +32,14 @@ const ApDashboardSidebarHeader = ({
   //   !embedState.isEmbedded &&
   //   !isInPlatformAdmin;
   const showProjectSwitcher = !embedState.isEmbedded && !isInPlatformAdmin;
-  const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
+  const defaultRoute = determineDefaultRoute(embedState.isEmbedded);
 
   return (
     <SidebarHeader className="pb-0">
       <div
         className={cn('flex items-center justify-between grow gap-1', {
           'justify-start': !isHomeDashboard,
+          'justify-center': embedState.hideProjectSettings,
         })}
       >
         <Button
@@ -87,7 +87,9 @@ const ApDashboardSidebarHeader = ({
           </div>
         )}
 
-        {isHomeDashboard && <ProjectSettingsDropdownMenu />}
+        {isHomeDashboard && !embedState.hideProjectSettings && (
+          <ProjectSettingsDropdownMenu />
+        )}
       </div>
     </SidebarHeader>
   );

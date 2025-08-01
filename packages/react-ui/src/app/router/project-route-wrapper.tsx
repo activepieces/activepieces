@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { useAuthorization } from '@/hooks/authorization-hooks';
+import { useEmbedding } from '@/components/embed-provider';
 import { projectHooks } from '@/hooks/project-hooks';
 import {
   FROM_QUERY_PARAM,
@@ -30,7 +30,8 @@ export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
     isLoading,
     isFetching,
   } = projectHooks.useSwitchToProjectInParams();
-  const { checkAccess } = useAuthorization();
+
+  const { embedState } = useEmbedding();
   const { data: user } = userHooks.useCurrentUser();
   const { data: ZERO_API_URL } = flagsHooks.useFlag<string>(
     ApFlagId.ZERO_SERVICE_URL,
@@ -62,7 +63,7 @@ export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
   const failedToSwitchToProject =
     !isProjectValid && !isNil(projectIdFromParams);
   if (failedToSwitchToProject) {
-    const defaultRoute = determineDefaultRoute(checkAccess);
+    const defaultRoute = determineDefaultRoute(embedState.isEmbedded);
     return <Navigate to={defaultRoute} replace />;
   }
   if (isError || !isProjectValid) {
