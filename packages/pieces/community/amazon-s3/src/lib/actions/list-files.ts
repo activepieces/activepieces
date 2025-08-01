@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { amazonS3Auth } from '../../index';
 import { createS3 } from '../common';
+import { ListObjectsV2CommandInput } from '@aws-sdk/client-s3';
 
 interface S3File {
   key: string;
@@ -20,7 +21,7 @@ export const listFiles = createAction({
   auth: amazonS3Auth,
   name: 'list-files',
   displayName: 'List Files',
-  description: 'List all files from an S3 bucket folder/prefix (including files in subfolders)',
+  description: 'List all files from an S3 bucket folder/prefix.',
   props: {
     prefix: Property.ShortText({
       displayName: 'Folder path',
@@ -38,7 +39,7 @@ export const listFiles = createAction({
   async run(context) {
     const s3 = createS3(context.auth);
 
-    const params: any = {
+    const params: ListObjectsV2CommandInput = {
       Bucket: context.auth.bucket,
       MaxKeys: Math.min(Math.max(context.propsValue.maxKeys || 1000, 1), 1000),
     };
@@ -78,7 +79,6 @@ export const listFiles = createAction({
       const result: ListFilesResult = {
         files,
         isTruncated: response.IsTruncated || false,
-        nextContinuationToken: response.NextContinuationToken,
       };
 
       return result;
