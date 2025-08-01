@@ -28,7 +28,6 @@ export const deleteFormSubmission = createAction({
       message: `Successfully deleted submission ${submission_id} from form ${slug_or_id}`,
       submissionId: submission_id,
       formSlugOrId: slug_or_id,
-      result: response,
     };
   },
 });

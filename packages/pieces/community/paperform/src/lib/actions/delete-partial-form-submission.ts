@@ -29,7 +29,7 @@ export const deletePartialFormSubmission = createAction({
     return {
       success: true,
       message: `Successfully deleted partial submission ${partial_submission_id}`,
-      partial_submission_id,
+      partialSubmissionId: partial_submission_id,
     };
   },
 });

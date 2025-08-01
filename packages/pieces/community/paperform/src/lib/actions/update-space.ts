@@ -23,7 +23,6 @@ export const updateSpace = createAction({
 
     const spaceData: any = {};
 
-    // Only include fields that have values (partial update)
     if (name !== undefined) {
       spaceData.name = name;
     }

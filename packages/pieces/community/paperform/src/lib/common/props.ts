@@ -2,6 +2,18 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from './client';
 import { Property } from '@activepieces/pieces-framework';
 
+export const targetDropdown = Property.StaticDropdown({
+  displayName: 'Target',
+  description: 'What the coupon applies to',
+  required: false,
+  options: {
+    options: [
+      { label: 'Price', value: 'price' },
+      { label: 'Subscription', value: 'subscription' },
+    ],
+  },
+});
+
 export const formSlugOrIdDropdown = Property.Dropdown({
   displayName: 'Form Slug or ID',
   description: 'Select the form to delete submissions from',
@@ -101,7 +113,9 @@ export const partialsubmissionIdDropdown = Property.Dropdown({
         disabled: false,
         options: response.results['partial-submissions'].map(
           (submission: any) => ({
-            label: submission.last_answered + ' ' + submission.id,
+            label: `${submission.last_answered || 'No response'} (${
+              submission.id
+            })`,
             value: submission.id,
           })
         ),
@@ -190,7 +204,7 @@ export const productSKUDropdown = Property.Dropdown({
   },
 });
 
-export const spaceIdDropdown = Property.Dropdown({
+export const  spaceIdDropdown = Property.Dropdown({
   displayName: 'Space ID',
   description: 'Select the space to delete submissions from',
   required: true,

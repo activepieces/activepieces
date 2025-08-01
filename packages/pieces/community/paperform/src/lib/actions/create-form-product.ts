@@ -24,7 +24,7 @@ export const createFormProduct = createAction({
     quantity: Property.Number({
       displayName: 'Quantity',
       description: 'The quantity of the product',
-      required: true,
+      required: false,
     }),
     SKU: Property.ShortText({
       displayName: 'SKU',
@@ -34,7 +34,7 @@ export const createFormProduct = createAction({
     product_field_key: Property.ShortText({
       displayName: 'Product Field Key',
       description: 'The product field key identifier',
-      required: false,
+      required: true,
     }),
     minimum: Property.Number({
       displayName: 'Minimum Quantity',
@@ -58,7 +58,6 @@ export const createFormProduct = createAction({
       displayName: 'Images',
       description: 'List of product images',
       required: false,
-
       properties: {
         url: Property.ShortText({
           displayName: 'Image URL',
@@ -132,6 +131,7 @@ export const createFormProduct = createAction({
         return imageObj;
       });
     }
+    
     const response = await makeRequest(
       apiKey,
       HttpMethod.POST,

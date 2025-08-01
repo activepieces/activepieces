@@ -27,16 +27,7 @@ export const updateFormProduct = createAction({
       description: 'The quantity of the product',
       required: false,
     }),
-    SKU: Property.ShortText({
-      displayName: 'SKU',
-      description: 'The SKU of the product (must be unique)',
-      required: false,
-    }),
-    product_field_key: Property.ShortText({
-      displayName: 'Product Field Key',
-      description: 'The product field key identifier',
-      required: false,
-    }),
+
     minimum: Property.Number({
       displayName: 'Minimum Quantity',
       description: 'Minimum number of products to be selected.',
@@ -83,8 +74,7 @@ export const updateFormProduct = createAction({
       name,
       price,
       quantity,
-      SKU,
-      product_field_key,
+
       minimum,
       maximum,
       discountable,
@@ -105,14 +95,6 @@ export const updateFormProduct = createAction({
 
     if (quantity !== undefined) {
       productData.quantity = quantity;
-    }
-
-    if (SKU !== undefined) {
-      productData.SKU = SKU;
-    }
-
-    if (product_field_key !== undefined) {
-      productData.product_field_key = product_field_key;
     }
 
     if (minimum !== undefined) {

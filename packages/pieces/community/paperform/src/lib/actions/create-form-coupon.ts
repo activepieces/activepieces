@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { PaperformAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { formSlugOrIdDropdown } from '../common/props';
+import { formSlugOrIdDropdown, targetDropdown } from '../common/props';
 
 export const createFormCoupon = createAction({
   auth: PaperformAuth,
@@ -16,18 +16,7 @@ export const createFormCoupon = createAction({
       description: 'The coupon code (must be unique)',
       required: true,
     }),
-    target: Property.StaticDropdown({
-      displayName: 'Target',
-      description: 'What the coupon applies to',
-      required: true,
-      defaultValue: 'price',
-      options: {
-        options: [
-          { label: 'Price', value: 'price' },
-          { label: 'Subscription', value: 'subscription' },
-        ],
-      },
-    }),
+    target: targetDropdown,
     discount_amount: Property.Number({
       displayName: 'Discount Amount',
       description: 'The discount amount (must be positive)',
@@ -71,7 +60,6 @@ export const createFormCoupon = createAction({
       discountPercentage: discount_percentage,
       expires_at: expires_at ? new Date(expires_at).toISOString() : undefined,
     };
-   
 
     const response = await makeRequest(
       apiKey,
