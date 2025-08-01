@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { CreateWebhookRequest, CreateWebhookResponse } from './types';
+import { CreateWebhookRequest, CreateWebhookResponse, HttpError } from './types';
 
 export interface AircallAuth {
   username: string;
@@ -12,17 +12,17 @@ export class AircallClient {
   private timeout: number;
   private credentials: string;
 
-  constructor(auth: AircallAuth, timeout = 10000) { // Reduced default timeout
+  constructor(auth: AircallAuth, timeout = 12000) { // Increased default timeout
     this.auth = {
       username: auth.username.trim(),
       password: auth.password.trim(),
-      baseUrl: auth.baseUrl || 'https://api.aircall.io/v1',
+      baseUrl: (auth.baseUrl || 'https://api.aircall.io/v1').replace(/\/$/, ''), // Remove trailing slash
     };
     this.timeout = timeout;
     this.credentials = Buffer.from(`${this.auth.username}:${this.auth.password}`).toString('base64');
   }
 
-  // Simplified request method with better error handling
+  // Enhanced request method with better error handling
   async makeRequest<T>({
     method,
     url,
@@ -35,9 +35,11 @@ export class AircallClient {
     queryParams?: Record<string, string>;
   }): Promise<T> {
     try {
+      const fullUrl = `${this.auth.baseUrl}${url}`;
+      
       const response = await httpClient.sendRequest<T>({
         method,
-        url: `${this.auth.baseUrl}${url}`,
+        url: fullUrl,
         headers: {
           'Authorization': `Basic ${this.credentials}`,
           'Content-Type': 'application/json',
@@ -49,33 +51,51 @@ export class AircallClient {
         timeout: this.timeout,
       });
 
+      // Validate response
+      if (!response || typeof response !== 'object') {
+        throw new Error('Invalid response format from Aircall API');
+      }
+
       return response.body;
     } catch (error) {
-      // Simplified error handling
+      // Enhanced error handling
       if (error && typeof error === 'object') {
-        const errorObj = error as any;
+        const errorObj = error as HttpError;
         
         if (errorObj.response?.status) {
           const status = errorObj.response.status;
           const responseBody = errorObj.response.body;
           
           switch (status) {
-            case 400:
-              throw new Error(`Invalid request: ${responseBody?.message || 'Please check your parameters'}`);
-            case 401:
+            case 400: {
+              const badRequestMsg = responseBody?.message || responseBody?.error || 'Invalid request parameters';
+              throw new Error(`Bad request: ${badRequestMsg}`);
+            }
+            case 401: {
               throw new Error('Authentication failed. Please verify your API credentials.');
-            case 403:
+            }
+            case 403: {
               throw new Error('Access denied. Check your API permissions.');
-            case 404:
+            }
+            case 404: {
               throw new Error('Resource not found.');
-            case 429:
+            }
+            case 422: {
+              const validationMsg = responseBody?.message || responseBody?.error || 'Validation failed';
+              throw new Error(`Validation error: ${validationMsg}`);
+            }
+            case 429: {
               throw new Error('Rate limit exceeded. Please wait before retrying.');
+            }
             case 500:
             case 502:
-            case 503:
+            case 503: {
               throw new Error('Aircall API is temporarily unavailable.');
-            default:
-              throw new Error(`API error (${status}): ${responseBody?.message || 'Unknown error'}`);
+            }
+            default: {
+              const errorMsg = responseBody?.message || responseBody?.error || 'Unknown error';
+              throw new Error(`API error (${status}): ${errorMsg}`);
+            }
           }
         }
         
@@ -87,6 +107,11 @@ export class AircallClient {
         if (errorObj.code === 'ETIMEDOUT' || errorObj.message?.includes('timeout')) {
           throw new Error('Request timeout. Please try again.');
         }
+
+        // SSL/TLS errors
+        if (errorObj.code?.includes('CERT') || errorObj.message?.includes('certificate')) {
+          throw new Error('SSL certificate error. Please contact support.');
+        }
       }
       
       throw new Error(`Request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -94,10 +119,14 @@ export class AircallClient {
   }
 
   async authenticate(): Promise<void> {
-    await this.makeRequest({
-      method: HttpMethod.GET,
-      url: '/users',
-    });
+    try {
+      await this.makeRequest({
+        method: HttpMethod.GET,
+        url: '/users',
+      });
+    } catch (error) {
+      throw new Error(`Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   async createWebhook(request: CreateWebhookRequest): Promise<CreateWebhookResponse> {
@@ -132,8 +161,20 @@ export class AircallClient {
 }
 
 export const makeClient = (auth: AircallAuth, timeout?: number): AircallClient => {
+  if (!auth) {
+    throw new Error('Authentication configuration is required');
+  }
+  
   if (!auth.username || !auth.password) {
     throw new Error('API username and password are required');
+  }
+  
+  if (typeof auth.username !== 'string' || typeof auth.password !== 'string') {
+    throw new Error('API username and password must be strings');
+  }
+  
+  if (auth.username.trim().length === 0 || auth.password.trim().length === 0) {
+    throw new Error('API username and password cannot be empty');
   }
   
   return new AircallClient(auth, timeout);

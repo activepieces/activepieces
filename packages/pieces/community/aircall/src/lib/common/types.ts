@@ -77,4 +77,19 @@ export type Number = {
   country: string;
   time_zone: string;
   created_at: string;
-}; 
+};
+
+export interface ApiErrorResponse {
+  message?: string;
+  error?: string;
+  code?: string;
+  status?: number;
+}
+
+export interface HttpError extends Error {
+  response?: {
+    status: number;
+    body?: ApiErrorResponse;
+  };
+  code?: string;
+}
