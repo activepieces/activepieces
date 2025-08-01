@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -111,6 +111,123 @@ export const recordIdDropdown = Property.Dropdown({
         options: [],
         placeholder: 'Error loading records',
       };
+    }
+  },
+});
+
+export const getdynamicfields = Property.DynamicProperties({
+  displayName: 'Fields',
+  description: 'The fields to create in the record',
+  required: true,
+  refreshers: ['auth', 'databaseId', 'tableId'],
+  props: async ({ auth, databaseId, tableId }) => {
+    if (!databaseId || !tableId) {
+      return {};
+    }
+
+    try {
+      const response = await makeRequest(
+        auth as unknown as string,
+        HttpMethod.GET,
+        `/databases/${databaseId}/tables/${tableId}`
+      );
+
+      const tableData = response.data || response;
+      const fields = tableData.fields || [];
+      const dynamicProps: DynamicPropsValue = {};
+
+      fields.forEach((field: any) => {
+        // Skip readonly fields
+        if (field.readonly) {
+          return;
+        }
+
+        const fieldId = field.id;
+        const fieldName = field.name || fieldId;
+        const fieldType = field.type;
+        const isRequired = field.required || false;
+
+        // Create appropriate property based on field type
+        switch (fieldType?.toLowerCase()) {
+          case 'text':
+          case 'email':
+          case 'url':
+          case 'phone':
+            dynamicProps[fieldId] = Property.ShortText({
+              displayName: fieldName,
+              description: `${fieldType} field`,
+              required: isRequired,
+              defaultValue: field.defaultValue || undefined,
+            });
+            break;
+
+          case 'long_text':
+          case 'rich_text':
+            dynamicProps[fieldId] = Property.LongText({
+              displayName: fieldName,
+              description: `${fieldType} field`,
+              required: isRequired,
+              defaultValue: field.defaultValue || undefined,
+            });
+            break;
+
+          case 'number':
+          case 'currency':
+          case 'percent':
+            dynamicProps[fieldId] = Property.Number({
+              displayName: fieldName,
+              description: `${fieldType} field`,
+              required: isRequired,
+              defaultValue: field.defaultValue
+                ? Number(field.defaultValue)
+                : undefined,
+            });
+            break;
+          case 'checkbox':
+          case 'boolean':
+            dynamicProps[fieldId] = Property.Checkbox({
+              displayName: fieldName,
+              description: `${fieldType} field`,
+              required: isRequired,
+              defaultValue:
+                field.defaultValue === 'true' || field.defaultValue === true,
+            });
+            break;
+
+          case 'date':
+          case 'datetime':
+            dynamicProps[fieldId] = Property.DateTime({
+              displayName: fieldName,
+              description: `${fieldType} field`,
+              required: isRequired,
+              defaultValue: field.defaultValue || undefined,
+            });
+            break;
+
+          case 'file':
+          case 'attachment':
+            dynamicProps[fieldId] = Property.File({
+              displayName: fieldName,
+              description: `${fieldType} field`,
+              required: isRequired,
+            });
+            break;
+          default:
+            // Fallback to short text for unknown field types
+            dynamicProps[fieldId] = Property.ShortText({
+              displayName: fieldName,
+              description: `${fieldType || 'Unknown'} field`,
+              required: isRequired,
+              defaultValue: field.defaultValue || undefined,
+            });
+            break;
+        }
+      });
+
+      return dynamicProps;
+    } catch (error) {
+      console.error('Error fetching table fields:', error);
+      return {};
     }
   },
 });
