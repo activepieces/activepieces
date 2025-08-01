@@ -67,12 +67,11 @@ export const createFormCoupon = createAction({
       code,
       target,
       enabled: enabled ?? true,
+      discountAmount: discount_amount,
+      discountPercentage: discount_percentage,
+      expires_at: expires_at ? new Date(expires_at).toISOString() : undefined,
     };
-
-    // Add expiry date if provided
-    if (expires_at) {
-      couponData.expiresAt = new Date(expires_at).toISOString();
-    }
+   
 
     const response = await makeRequest(
       apiKey,
@@ -84,7 +83,7 @@ export const createFormCoupon = createAction({
     return {
       success: true,
       message: `Successfully created coupon "${code}" for form ${slug_or_id}`,
-      coupon: response.result.coupon,
+      coupon: response.results.coupon,
     };
   },
 });

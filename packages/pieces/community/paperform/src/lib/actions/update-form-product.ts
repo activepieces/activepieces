@@ -160,7 +160,7 @@ export const updateFormProduct = createAction({
     return {
       success: true,
       message: `Successfully updated product ${product_sku} for form ${slug_or_id}`,
-      product: response.result.product,
+      product: response.results.product,
     };
   },
 });

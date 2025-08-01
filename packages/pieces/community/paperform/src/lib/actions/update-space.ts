@@ -27,46 +27,17 @@ export const updateSpace = createAction({
     if (name !== undefined) {
       spaceData.name = name;
     }
+    const response = await makeRequest(
+      apiKey,
+      HttpMethod.PUT,
+      `/spaces/${space_id}`,
+      spaceData
+    );
 
-    try {
-      const response = await makeRequest(
-        apiKey,
-        HttpMethod.PUT,
-        `/spaces/${space_id}`,
-        spaceData
-      );
-
-      return {
-        success: true,
-        message: `Successfully updated space ${space_id}`,
-        space: response,
-      };
-    } catch (error: any) {
-      if (error.message.includes('400')) {
-        return {
-          success: false,
-          error: 'invalid_data',
-          message: 'Invalid space data provided. Please check all fields.',
-        };
-      }
-
-      if (error.message.includes('404')) {
-        return {
-          success: false,
-          error: 'space_not_found',
-          message: `Space with ID "${space_id}" was not found`,
-        };
-      }
-
-      if (error.message.includes('409')) {
-        return {
-          success: false,
-          error: 'space_exists',
-          message: `Space with name "${name}" already exists`,
-        };
-      }
-
-      throw new Error(`Failed to update space: ${error.message}`);
-    }
+    return {
+      success: true,
+      message: `Successfully updated space ${space_id}`,
+      space: response,
+    };
   },
 });

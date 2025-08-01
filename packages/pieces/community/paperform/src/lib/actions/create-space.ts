@@ -52,7 +52,7 @@ export const createSpace = createAction({
     return {
       success: true,
       message: `Successfully created space "${name}"`,
-      space: response.result.space,
+      space: response.results.space,
     };
   },
 });

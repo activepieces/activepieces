@@ -20,7 +20,7 @@ export const deleteFormSubmission = createAction({
     const response = await makeRequest(
       apiKey,
       HttpMethod.DELETE,
-      `forms/${slug_or_id}/submissions/${submission_id}`
+      `/forms/${slug_or_id}/submissions/${submission_id}`
     );
 
     return {

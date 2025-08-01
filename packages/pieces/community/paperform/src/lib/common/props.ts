@@ -24,8 +24,8 @@ export const formSlugOrIdDropdown = Property.Dropdown({
       );
       return {
         disabled: false,
-        options: response.result.forms.map((form: any) => ({
-          label: form.slug,
+        options: response.results.forms.map((form: any) => ({
+          label: form.title || form.slug,
           value: form.slug,
         })),
       };
@@ -61,7 +61,7 @@ export const submissionIdDropdown = Property.Dropdown({
       );
       return {
         disabled: false,
-        options: response.result.submissions.map((submission: any) => ({
+        options: response.results.submissions.map((submission: any) => ({
           label: submission.id,
           value: submission.id,
         })),
@@ -99,12 +99,12 @@ export const partialsubmissionIdDropdown = Property.Dropdown({
       );
       return {
         disabled: false,
-        options: response.result.submissions
-          .filter((submission: any) => submission.id.includes('partial'))
-          .map((submission: any) => ({
-            label: submission.id,
+        options: response.results['partial-submissions'].map(
+          (submission: any) => ({
+            label: submission.last_answered + ' ' + submission.id,
             value: submission.id,
-          })),
+          })
+        ),
       };
     } catch (error) {
       return {
@@ -138,7 +138,7 @@ export const couponCodeDropdown = Property.Dropdown({
       );
       return {
         disabled: false,
-        options: response.result.coupons.map((coupon: any) => ({
+        options: response.results.coupons.map((coupon: any) => ({
           label: coupon.code,
           value: coupon.code,
         })),
@@ -175,7 +175,7 @@ export const productSKUDropdown = Property.Dropdown({
       );
       return {
         disabled: false,
-        options: response.result.products.map((product: any) => ({
+        options: response.results.products.map((product: any) => ({
           label: product.name,
           value: product.SKU,
         })),
@@ -212,7 +212,7 @@ export const spaceIdDropdown = Property.Dropdown({
       );
       return {
         disabled: false,
-        options: response.result.spaces.map((space: any) => ({
+        options: response.results.spaces.map((space: any) => ({
           label: space.name,
           value: space.id,
         })),

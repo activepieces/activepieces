@@ -41,7 +41,8 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
       `/forms/${slug_or_id}/partial-submissions?${queryParams.toString()}`
     );
 
-    const partialSubmissions = response.data || response;
+    // Extract partial submissions
+    const partialSubmissions = response.results?.['partial-submissions'] || [];
 
     if (!Array.isArray(partialSubmissions)) {
       return [];
@@ -49,7 +50,10 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
 
     return partialSubmissions.map((submission: any) => ({
       epochMilliSeconds: dayjs(
-        submission.created_at || submission.updated_at
+        submission.created_at ||
+          submission.created_at_utc ||
+          submission.updated_at ||
+          submission.updated_at_utc
       ).valueOf(),
       data: submission,
     }));
@@ -63,21 +67,21 @@ export const newPartialFormSubmission = createTrigger({
   description: 'Fires when a partial/in-progress submission is received.',
   props,
   sampleData: {
-    id: "67890",
-    form_id: "abc123",
-    created_at: "2025-01-01T12:00:00Z",
-    updated_at: "2025-01-01T12:30:00Z",
-    status: "partial",
+    id: '5d40fdaf174b4c0007043072',
+    form_id: '5d40fdaf174b4c0007043072',
     data: {
-      "field_1": "Partial response",
-      "email": "user@example.com"
+      name: 'John Doe',
+      email: 'user@example.com',
+      phone: '555-0123',
     },
-    meta: {
-      ip_address: "192.168.1.1",
-      user_agent: "Mozilla/5.0...",
-      referer: "https://example.com",
-      completion_percentage: 45
-    }
+    last_answered: 'email',
+    submitted_at: '2019-04-14T09:00:00.000Z',
+    updated_at: '2019-04-14T09:00:00.000Z',
+    created_at: '2019-04-14T09:00:00.000Z',
+    account_timezone: 'America/New_York',
+    submitted_at_utc: '2019-04-14T09:00:00.000Z',
+    created_at_utc: '2019-04-14T09:00:00.000Z',
+    updated_at_utc: '2019-04-14T09:00:00.000Z',
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

@@ -10,7 +10,7 @@ export const PaperformAuth = PieceAuth.SecretText({
   validate: async ({ auth }) => {
     if (auth) {
       try {
-        await makeRequest(auth as string, HttpMethod.GET, '/forms', {});
+        await makeRequest(auth as string, HttpMethod.GET, '/forms');
         return {
           valid: true,
         };

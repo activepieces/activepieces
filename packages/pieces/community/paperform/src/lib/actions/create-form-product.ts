@@ -142,7 +142,7 @@ export const createFormProduct = createAction({
     return {
       success: true,
       message: `Successfully created product "${name}" for form ${slug_or_id}`,
-      product: response.result.product,
+      product: response.results.product,
     };
   },
 });

@@ -88,7 +88,7 @@ export const updateFormCoupon = createAction({
     return {
       success: true,
       message: `Successfully updated coupon ${coupon_code} for form ${slug_or_id}`,
-      coupon: response.result.coupon,
+      coupon: response.results.coupon,
     };
   },
 });
