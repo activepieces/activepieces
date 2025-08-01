@@ -32,6 +32,7 @@ export const commentACall = createAction({
     return {
       status: 'success',
       message: `Comment added successfully to call ${callId}`,
+      comment: content,
       data: response,
     };
   },

@@ -113,3 +113,41 @@ export const contactIdDropdown = Property.Dropdown({
     }
   },
 });
+
+export const tagIdDropdown = Property.MultiSelectDropdown({
+  displayName: 'Tag IDs',
+  description: 'Select tags to apply to the call',
+  required: false,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+    try {
+      const response = await makeRequest(
+        auth as string,
+        HttpMethod.GET,
+        '/tags'
+      );
+
+      return {
+        disabled: false,
+        options: response.tags.map((tag: any) => ({
+          label: tag.name,
+          value: tag.id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading tags',
+      };
+    }
+  },
+});

@@ -7,7 +7,8 @@ export const createAContact = createAction({
   auth: aircallAuth,
   name: 'createAContact',
   displayName: 'Create a Contact',
-  description: 'Create a new contact in Aircall that will be shared across the company',
+  description:
+    'Create a new contact in Aircall that will be shared across the company',
   props: {
     first_name: Property.ShortText({
       displayName: 'First Name',
@@ -65,28 +66,28 @@ export const createAContact = createAction({
     }),
   },
   async run(context) {
-    const { first_name, last_name, company_name, information, phone_numbers, emails } = context.propsValue;
+    const {
+      first_name,
+      last_name,
+      company_name,
+      information,
+      phone_numbers,
+      emails,
+    } = context.propsValue;
     const accessToken = context.auth.access_token;
 
     // Prepare request body
     const requestBody: any = {
-      phone_numbers: phone_numbers.map((phone: any) => ({
-        label: phone.label,
-        value: phone.value,
-      })),
+      phone_numbers,
     };
 
-    // Add optional fields if provided
     if (first_name) requestBody.first_name = first_name;
     if (last_name) requestBody.last_name = last_name;
     if (company_name) requestBody.company_name = company_name;
     if (information) requestBody.information = information;
-    
+
     if (emails && emails.length > 0) {
-      requestBody.emails = emails.map((email: any) => ({
-        label: email.label,
-        value: email.value,
-      }));
+      requestBody.emails = emails;
     }
 
     const response = await makeRequest(

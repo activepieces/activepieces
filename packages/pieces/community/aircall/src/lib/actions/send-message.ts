@@ -48,7 +48,7 @@ export const sendMessage = createAction({
 
     // Add media URLs if provided
     if (mediaUrl && mediaUrl.length > 0) {
-      requestBody.mediaUrl = mediaUrl.map((media: any) => media.url);
+      requestBody.mediaUrl = mediaUrl;
     }
 
     const response = await makeRequest(
