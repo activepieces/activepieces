@@ -44,6 +44,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             description: `Platform ID: ${platformId}, user ${user.id}`,
             metadata: {
                 platformId,
+                customer_key: `ps_cus_key_${user.email}`,
             },
         })
 

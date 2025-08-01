@@ -10,6 +10,7 @@ import {
     SelectQueryBuilder,
 } from 'typeorm'
 import { AgentEntity } from '../agents/agent-entity'
+import { AgentRunEntity } from '../agents/agent-runs/agent-run.entity'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AIUsageEntity } from '../ai/ai-usage-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
@@ -107,6 +108,7 @@ function getEntities(): EntitySchema<unknown>[] {
         McpToolEntity,
         McpRunEntity,
         AIUsageEntity,
+        AgentRunEntity,
     ]
 
     switch (edition) {

@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { PackageType, PieceType, VersionType } from '../../pieces'
+import { VersionType } from '../../pieces'
 import { SampleDataSetting } from '../sample-data'
 
 export const AUTHENTICATION_PROPERTY_NAME = 'auth'
@@ -27,8 +27,6 @@ export type EmptyTrigger = Static<typeof EmptyTrigger>
 export const PieceTriggerSettings = Type.Object({
     pieceName: Type.String({}),
     pieceVersion: VersionType,
-    pieceType: Type.Enum(PieceType),
-    packageType: Type.Enum(PackageType),
     triggerName: Type.Optional(Type.String({})),
     input: Type.Record(Type.String({}), Type.Any()),
     inputUiInfo: SampleDataSetting,

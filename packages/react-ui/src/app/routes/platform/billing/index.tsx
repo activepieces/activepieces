@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { ActivateLicenseDialog } from '@/features/billing/components/activate-license-dialog';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
+import { AiCreditsUsageTable } from '@/features/billing/components/ai-credits-usage-table';
 import { BusinessUserSeats } from '@/features/billing/components/business-user-seats';
 import { FeatureStatus } from '@/features/billing/components/features-status';
 import { LicenseKey } from '@/features/billing/components/lisence-key';
@@ -116,6 +117,13 @@ export default function Billing() {
         <>
           <AICreditUsage platformSubscription={platformPlanInfo} />
           <TasksUsage platformSubscription={platformPlanInfo} />
+        </>
+      )}
+
+      {isEnterpriseEdition && (
+        <>
+          <h3 className="text-lg font-semibold">{t('AI Credits')}</h3>
+          <AiCreditsUsageTable />
         </>
       )}
 

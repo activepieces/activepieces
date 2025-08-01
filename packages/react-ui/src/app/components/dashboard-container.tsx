@@ -7,6 +7,9 @@ import mcpDark from '@/assets/img/custom/mcp-dark.svg';
 import mcpLight from '@/assets/img/custom/mcp-light.svg';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTheme } from '@/components/theme-provider';
+import { AiCreditsLimitAlert } from '@/features/billing/components/ai-credits-limit-alert';
+import { ProjectLockedAlert } from '@/features/billing/components/project-locked-alert';
+import { TaskLimitAlert } from '@/features/billing/components/task-limit-alert';
 import { WelcomeTrialDialog } from '@/features/billing/components/trial-dialog';
 import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -21,9 +24,6 @@ import { SidebarComponent, SidebarItem, SidebarLink } from './sidebar';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
-  hideHeader?: boolean;
-  removeGutters?: boolean;
-  removeBottomPadding?: boolean;
 };
 
 const ProjectChangedRedirector = ({
@@ -41,12 +41,7 @@ export const CloseTaskLimitAlertContext = createContext({
   setIsAlertClosed: (_isAlertClosed: boolean) => {},
 });
 
-export function DashboardContainer({
-  children,
-  removeGutters,
-  hideHeader,
-  removeBottomPadding,
-}: DashboardContainerProps) {
+export function DashboardContainer({ children }: DashboardContainerProps) {
   const { theme } = useTheme();
   const { platform } = platformHooks.useCurrentPlatform();
   const { project } = projectHooks.useCurrentProject();
@@ -161,14 +156,18 @@ export function DashboardContainer({
         }}
       >
         <SidebarComponent
-          removeGutters={removeGutters}
           isHomeDashboard={true}
-          hideHeader={hideHeader}
           items={items}
           hideSideNav={embedState.hideSideNav}
-          removeBottomPadding={removeBottomPadding}
         >
-          {children}
+          <>
+            <>
+              <ProjectLockedAlert />
+              <TaskLimitAlert />
+              <AiCreditsLimitAlert />
+            </>
+            {children}
+          </>
         </SidebarComponent>
         {showBilling && <WelcomeTrialDialog />}
         {edition === ApEdition.CLOUD && <UpgradeDialog />}

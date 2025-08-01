@@ -6,7 +6,7 @@ import { TableTitle } from '@/components/custom/table-title';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { Agent, ApFlagId } from '@activepieces/shared';
+import { Agent, ApFlagId, isNil } from '@activepieces/shared';
 
 import agentsGroupImage from '../../../assets/img/custom/agents-group.png';
 import { AgentCard } from '../../../features/agents/agent-card';
@@ -68,23 +68,34 @@ export const AgentsPage = () => {
         >
           {t('Agents')}
         </TableTitle>
-        <AgentBuilder
-          isOpen={isOpen}
-          refetch={refetch}
-          onOpenChange={(open) => {
-            setIsOpen(open);
-            if (!open) {
-              setSelectedAgent(undefined);
+        {isNil(selectedAgent) && (
+          <CreateAgentButton
+            onAgentCreated={handleAgentCreated}
+            isAgentsConfigured={isisAgentsConfigured ?? false}
+          />
+        )}
+        {selectedAgent && (
+          <AgentBuilder
+            isOpen={isOpen}
+            onOpenChange={(open) => {
+              setIsOpen(open);
+              if (!open) {
+                setSelectedAgent(undefined);
+              }
+            }}
+            onChange={() => {
+              refetch();
+            }}
+            agent={selectedAgent}
+            showUseInFlow={true}
+            trigger={
+              <CreateAgentButton
+                onAgentCreated={handleAgentCreated}
+                isAgentsConfigured={isisAgentsConfigured ?? false}
+              />
             }
-          }}
-          agent={selectedAgent}
-          trigger={
-            <CreateAgentButton
-              onAgentCreated={handleAgentCreated}
-              isAgentsConfigured={isisAgentsConfigured ?? false}
-            />
-          }
-        />
+          />
+        )}
       </div>
 
       <div className="mt-4">
@@ -110,6 +121,7 @@ export const AgentsPage = () => {
                   description={agent.description || ''}
                   picture={agent.profilePictureUrl}
                   onDelete={() => handleDeleteAgent(agent.id)}
+                  runCompleted={agent.runCompleted}
                 />
               </div>
             ))}

@@ -8,17 +8,20 @@ import {
     isNil,
     PlatformUsageMetric,
     SeekPage,
+    spreadIfDefined,
     Table,
     TableWebhook,
     TableWebhookEventType,
     UpdateTableRequest,
 } from '@activepieces/shared'
 import { ILike, In } from 'typeorm'
+import { agentsService } from '../../agents/agents-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
 import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
@@ -50,6 +53,13 @@ export const tableService = {
         })
         return table
     },
+    async getAllAgentIds({ projectId }: GetAllAgentIdsParams): Promise<string[]> {
+        const tables = await tableRepo().find({
+            where: { projectId },
+            select: ['agentId'],
+        })
+        return tables.map((table) => table.agentId)
+    },
     async list({ projectId, cursor, limit, name, externalIds }: ListParams): Promise<SeekPage<Table>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
 
@@ -76,14 +86,14 @@ export const tableService = {
         return paginationHelper.createPage(paginationResult.data, paginationResult.cursor)
     },
 
-    async getById({
+    async getOneOrThrow({
         projectId,
         id,
     }: GetByIdParams): Promise<Table> {
+        await ensureAgentExists({ tableId: id, projectId })
         const table = await tableRepo().findOne({
             where: { projectId, id },
         })
-
         if (isNil(table)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -93,8 +103,13 @@ export const tableService = {
                 },
             })
         }
-
-        return table
+        return {
+            ...table,
+            agent: await agentsService(system.globalLogger()).getOneOrThrow({
+                id: table.agentId,
+                projectId,
+            }),
+        }
     },
 
     async delete({
@@ -111,7 +126,7 @@ export const tableService = {
         projectId,
         id,
     }: ExportTableParams): Promise<ExportTableResponse> {
-        const table = await this.getById({ projectId, id })
+        const table = await this.getOneOrThrow({ projectId, id })
 
         // TODO: Change field sorting to use position when it's added
         const fields = await fieldService.getAll({ projectId, tableId: id })
@@ -178,20 +193,47 @@ export const tableService = {
         id,
         request,
     }: UpdateParams): Promise<Table> {
-        await tableRepo().update({
-            id,
-            projectId,
-        }, {
-            name: request.name,
+        await tableRepo().update({ id, projectId }, { 
+            ...spreadIfDefined('name', request.name),
+            ...spreadIfDefined('trigger', request.trigger),
+            ...spreadIfDefined('status', request.status),
         })
-        return this.getById({ projectId, id })
+        return this.getOneOrThrow({ projectId, id })
     },
     async count({ projectId }: CountParams): Promise<number> {
         return tableRepo().count({
             where: { projectId },
         })
     },
-  
+
+}
+
+type GetAllAgentIdsParams = {
+    projectId: string
+}
+
+async function ensureAgentExists({ tableId, projectId }: EnsureAgentExistsParams): Promise<void> {
+    const table = await tableRepo().findOneBy({
+        id: tableId,
+        projectId,
+    })
+    if (isNil(table) || !isNil(table.agentId)) {
+        return
+    }
+    const platformId = await projectService.getPlatformId(projectId)
+    const agent = await agentsService(system.globalLogger()).create({
+        projectId,
+        displayName: `${table.name} Agent`,
+        systemPrompt: '',
+        description: '',
+        platformId,
+    })
+    await tableRepo().update({ id: tableId, projectId }, { agentId: agent.id })
+}
+
+type EnsureAgentExistsParams = {
+    tableId: string
+    projectId: string
 }
 
 type CreateParams = {

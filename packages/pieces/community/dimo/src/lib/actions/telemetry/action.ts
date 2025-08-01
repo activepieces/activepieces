@@ -27,7 +27,7 @@ const { interval, ...telemetryApiDateInputPropsWithoutInterval } = telemetryApiD
 
 const telemetryApiCustomQueryAction = createAction({
 	auth: dimoAuth,
-	name: 'telemetry-api-custom-query',
+	name: 'telemetry-custom-query',
 	displayName: 'Telemetry : Custom Query',
 	description: 'Query DIMO Telemetry API using a custom GraphQL query.',
 	props: {

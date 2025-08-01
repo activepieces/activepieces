@@ -19,7 +19,7 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
         const stripe = stripeHelper(log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-        const { platformId, overage } = data
+        const { platformId, overage, idempotencyKey } = data
         const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
         assertNotNullOrUndefined(platformBilling, 'Plan is not set')
 
@@ -36,21 +36,19 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
         }
 
         await stripe.billing.meterEvents.create({
-            event_name: 'ai_credits',
+            event_name: 'ai_credits_sumed',
             payload: {
                 value: overage.toString(),
                 stripe_customer_id: subscription.customer as string,
             },
-        })
+        }, { idempotencyKey })
     })
-
 
     systemJobHandlers.registerJobHandler(SystemJobName.SEVEN_DAYS_IN_TRIAL, async (data) => {
         const log = app.log
         const { platformId,  email } = data
         await handleEmailReminder(log, platformId, email, '7-days-in-trial')
     })
-
 
     systemJobHandlers.registerJobHandler(SystemJobName.ONE_DAY_LEFT_ON_TRIAL, async (data) => {
         const log = app.log

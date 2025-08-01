@@ -39,6 +39,17 @@ export async function extractPayloads(
             return result.output as unknown[]
         }
         else {
+            if (params.throwErrorOnFailure) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.TRIGGER_EXECUTION_FAILED,
+                    params: {
+                        message: result?.message,
+                        pieceName,
+                        pieceVersion,
+                        flowId: flowVersion.flowId,
+                    },
+                })
+            }
             log.error({
                 result,
                 pieceName,
@@ -46,7 +57,7 @@ export async function extractPayloads(
                 flowId: flowVersion.flowId,
             }, 'Failed to execute trigger')
             handleFailureFlow(flowVersion, projectId, engineToken, false, log)
-            
+
             return []
         }
     }
@@ -83,4 +94,5 @@ type ExecuteTrigger = {
     projectId: ProjectId
     simulate: boolean
     payload: TriggerPayload
+    throwErrorOnFailure: boolean
 }

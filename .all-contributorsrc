@@ -1949,6 +1949,51 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Cloudieunnie",
+      "name": "Cloudieunnie",
+      "avatar_url": "https://avatars.githubusercontent.com/u/178718590?v=4",
+      "profile": "https://github.com/Cloudieunnie",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "balwant1707",
+      "name": "Balwant Singh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17769387?v=4",
+      "profile": "https://github.com/balwant1707",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "ravikiranvm",
+      "name": "Ravi Kiran Vallamkonda",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36404296?v=4",
+      "profile": "https://github.com/ravikiranvm",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "owuzo",
+      "name": "Owuzo Joy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/173556464?v=4",
+      "profile": "https://github.com/owuzo",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "helenedurand-smet",
+      "name": "helenedurand-smet",
+      "avatar_url": "https://avatars.githubusercontent.com/u/206527847?v=4",
+      "profile": "https://github.com/helenedurand-smet",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

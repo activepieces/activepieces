@@ -194,4 +194,71 @@ describe('flow with pause', () => {
         })
     })
 
+    it('should pause at most one action when router has multiple branches with pause actions', async () => {
+        const routerWithTwoPauseActions = buildRouterWithOneCondition({
+            conditions: [
+                {
+                    operator: BranchOperator.BOOLEAN_IS_TRUE,
+                    firstValue: 'true',
+                },
+                {
+                    operator: BranchOperator.BOOLEAN_IS_TRUE,
+                    firstValue: 'true',
+                },
+            ],
+            executionType: RouterExecutionType.EXECUTE_ALL_MATCH,
+            children: [
+                buildPieceAction({
+                    name: 'approval_1',
+                    pieceName: '@activepieces/piece-approval',
+                    actionName: 'wait_for_approval',
+                    input: {},
+                    nextAction: buildCodeAction({
+                        name: 'echo_step',
+                        input: {},
+                    }),
+                }),
+                buildPieceAction({
+                    name: 'approval_2',
+                    pieceName: '@activepieces/piece-approval',
+                    actionName: 'wait_for_approval',
+                    input: {},
+                    nextAction: buildCodeAction({
+                        name: 'echo_step_1',
+                        input: {},
+                    }),
+                }),
+            ],
+        })
+
+        const result = await flowExecutor.execute({
+            action: routerWithTwoPauseActions,
+            executionState: FlowExecutorContext.empty().setPauseRequestId('requestId'),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.verdict).toBe(ExecutionVerdict.PAUSED)
+        expect(result.verdictResponse).toEqual({
+            'pauseMetadata': {
+                response: {},
+                requestId: 'requestId',
+                'type': 'WEBHOOK',
+            },
+            'reason': 'PAUSED',
+        })
+
+        const routerOutput = result.steps.router as RouterStepOutput
+        expect(routerOutput).toBeDefined()
+        expect(routerOutput.output).toBeDefined()
+        
+        const executedBranches = routerOutput.output?.branches?.filter((branch) => branch.evaluation === true)
+        expect(executedBranches).toHaveLength(2)
+        
+        expect(result.steps.approval_1).toBeDefined()
+        expect(result.steps.approval_1.status).toBe('PAUSED')
+        expect(result.steps.approval_2).toBeUndefined()
+        
+        expect(Object.keys(result.steps)).toEqual(['router', 'approval_1'])
+    })
+
 })
