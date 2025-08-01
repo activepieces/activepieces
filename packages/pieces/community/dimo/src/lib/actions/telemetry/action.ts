@@ -219,7 +219,7 @@ const getEvents = createAction({
 		displayName: 'Vehicle Token ID',
 		required: true,
 	}),
-	...telemetryApiDateInputProps,
+	...telemetryApiDateInputPropsWithoutInterval,
     },
 	async run(context) {
 		const { clientId, apiKey, redirectUri } = context.auth;
