@@ -40,7 +40,7 @@ export const missive = createPiece({
   categories: [PieceCategory.COMMUNICATION],
   auth: missiveAuth,
   authors: [
-    'activepieces',
+    'pranjal',
   ],
   actions: [
     createContactAction,
