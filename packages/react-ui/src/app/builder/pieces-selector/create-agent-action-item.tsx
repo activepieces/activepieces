@@ -102,6 +102,7 @@ const CreateAgentActionItem = ({
                 displayName: 'Fresh Agent',
                 description:
                   'I am a fresh agent, Jack of all trades, master of none (yet)',
+                systemPrompt: '',
               },
               {
                 onSuccess: (agent) => {

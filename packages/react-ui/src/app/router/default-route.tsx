@@ -1,13 +1,13 @@
 import { Navigate, useLocation } from 'react-router-dom';
 
-import { useAuthorization } from '@/hooks/authorization-hooks';
+import { useEmbedding } from '@/components/embed-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 import { determineDefaultRoute } from '@/lib/utils';
 
 export const DefaultRoute = () => {
   const token = authenticationSession.getToken();
-  const { checkAccess } = useAuthorization();
   const location = useLocation();
+  const { embedState } = useEmbedding();
 
   if (!token) {
     const searchParams = new URLSearchParams();
@@ -19,5 +19,10 @@ export const DefaultRoute = () => {
       ></Navigate>
     );
   }
-  return <Navigate to={determineDefaultRoute(checkAccess)} replace></Navigate>;
+  return (
+    <Navigate
+      to={determineDefaultRoute(embedState.isEmbedded)}
+      replace
+    ></Navigate>
+  );
 };

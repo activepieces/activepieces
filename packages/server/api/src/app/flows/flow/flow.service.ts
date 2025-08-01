@@ -108,6 +108,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         name,
         connectionExternalIds,
         agentExternalIds,
+        externalIds,
         versionState = FlowVersionState.DRAFT,
     }: ListParams): Promise<SeekPage<PopulatedFlow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -142,6 +143,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         if (name !== undefined) {
             queryBuilder.andWhere('LOWER(latest_version."displayName") LIKE LOWER(:name)', { name: `%${name}%` })
+        }
+
+        if (externalIds !== undefined) {
+            queryBuilder.andWhere('ff.externalId IN (:...externalIds)', { externalIds })
         }
 
         if (connectionExternalIds !== undefined) {
@@ -661,6 +666,7 @@ type ListParams = {
     status: FlowStatus[] | undefined
     name: string | undefined
     versionState?: FlowVersionState
+    externalIds?: string[]
     connectionExternalIds?: string[]
     agentExternalIds?: string[]
 }

@@ -8,7 +8,7 @@ import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { useBuilderAgentState } from '@/features/agents/lib/store/builder-agent-state-provider';
 import { Agent, debounce, isNil } from '@activepieces/shared';
 
-import { AgentPromptEditior } from './agent-prompt-editor';
+import { AgentPromptEditor } from './agent-prompt-editor';
 
 interface AgentLeftSectionProps {
   agent?: Agent;
@@ -96,7 +96,7 @@ export const AgentLeftSection = ({ agent }: AgentLeftSectionProps) => {
         </div>
 
         <div className="mt-4 flex-1 flex flex-col min-h-0">
-          <AgentPromptEditior />
+          <AgentPromptEditor />
         </div>
       </div>
     </div>

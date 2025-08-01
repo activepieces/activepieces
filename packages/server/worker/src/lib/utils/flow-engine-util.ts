@@ -28,11 +28,11 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
         })
         return this.enrichPieceWithArchive(engineToken, pieceMetadata)
     },
-    async enrichPieceWithArchive(engineToken: string, pieceMetadata: PieceMetadataModel): Promise<PiecePackage> {
+    async enrichPieceWithArchive(engineToken: string, pieceMetadata: Pick<PieceMetadataModel, 'name' | 'version' | 'packageType' | 'pieceType' | 'archiveId'>): Promise<PiecePackage> {
         const { name, version } = pieceMetadata
         switch (pieceMetadata.packageType) {
             case PackageType.ARCHIVE: {
-                const { pieceVersion, archiveId } = await getPieceVersionAndArchiveId(engineToken, {
+                const { archiveId, pieceVersion } = await getPieceVersionAndArchiveId(engineToken, pieceMetadata.archiveId, {
                     pieceName: name,
                     pieceVersion: version,
                 }, log)
@@ -85,19 +85,20 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function getPieceVersionAndArchiveId(engineToken: string, piece: BasicPieceInformation, log: FastifyBaseLogger): Promise<{ pieceVersion: string, archiveId?: string }> {
+async function getPieceVersionAndArchiveId(engineToken: string, archiveId: string | undefined, piece: BasicPieceInformation, log: FastifyBaseLogger): Promise<{ pieceVersion: string, archiveId?: string }> {
     const isExactVersion = EXACT_VERSION_REGEX.test(piece.pieceVersion)
+
+    if (!isNil(archiveId) && isExactVersion) {
+        return {
+            pieceVersion: piece.pieceVersion,
+            archiveId,
+        }
+    }
     const pieceMetadata = await engineApiService(engineToken, log).getPiece(piece.pieceName, {
         version: piece.pieceVersion,
     })
-    if (isNil(pieceMetadata.archiveId) || !isExactVersion) {
-        return {
-            pieceVersion: pieceMetadata.version,
-            archiveId: pieceMetadata.archiveId!,
-        }
-    }
     return {
-        pieceVersion: piece.pieceVersion,
+        pieceVersion: pieceMetadata.version,
         archiveId: pieceMetadata.archiveId!,
     }
 }
