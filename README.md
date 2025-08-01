@@ -356,7 +356,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ChineseHamberger"><img src="https://avatars.githubusercontent.com/u/101547635?v=4?s=100" width="100px;" alt="张晟杰"/><br /><sub><b>张晟杰</b></sub></a><br /><a href="#plugin-ChineseHamberger" title="Plugin/utility libraries">🔌</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/AshotZaqoyan/"><img src="https://avatars.githubusercontent.com/u/72438085?v=4?s=100" width="100px;" alt="Ashot"/><br /><sub><b>Ashot</b></sub></a><br /><a href="#plugin-AshotZaqoyan" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://codesign.rf.gd"><img src="https://avatars.githubusercontent.com/u/72438085?v=4?s=100" width="100px;" alt="Ashot"/><br /><sub><b>Ashot</b></sub></a><br /><a href="#plugin-AshotZaqoyan" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/amrabuaza"><img src="https://avatars.githubusercontent.com/u/30035105?v=4?s=100" width="100px;" alt="Amr Abu Aza"/><br /><sub><b>Amr Abu Aza</b></sub></a><br /><a href="#plugin-amrabuaza" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://johng.io"><img src="https://avatars.githubusercontent.com/u/9030780?v=4?s=100" width="100px;" alt="John Goodliff"/><br /><sub><b>John Goodliff</b></sub></a><br /><a href="#plugin-jerboa88" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/DiwashDev"><img src="https://avatars.githubusercontent.com/u/182864159?v=4?s=100" width="100px;" alt="Diwash Dev"/><br /><sub><b>Diwash Dev</b></sub></a><br /><a href="#plugin-DiwashDev" title="Plugin/utility libraries">🔌</a></td>
@@ -437,6 +437,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/owuzo"><img src="https://avatars.githubusercontent.com/u/173556464?v=4?s=100" width="100px;" alt="Owuzo Joy"/><br /><sub><b>Owuzo Joy</b></sub></a><br /><a href="#plugin-owuzo" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/helenedurand-smet"><img src="https://avatars.githubusercontent.com/u/206527847?v=4?s=100" width="100px;" alt="helenedurand-smet"/><br /><sub><b>helenedurand-smet</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=helenedurand-smet" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
