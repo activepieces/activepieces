@@ -17,6 +17,17 @@ const polling: Polling<PiecePropValueSchema<typeof trelloAuth>, Props> = {
         const { board_id, list_id_opt, time_before_due, time_unit } = propsValue;
         const getCards = list_id_opt ? getCardsInList : getCardsInBoard;
         const cards: any[] = await getCards(auth.username, auth.password, list_id_opt || board_id);
+
+        if(lastFetchEpochMS ===0)
+        {
+            // If lastFetchEpochMS is 0, we assume this is the first run and return all cards with due dates
+            return cards
+                .filter(card => card.due && !card.dueComplete)
+                .map(card => ({
+                    epochMilliSeconds: dayjs(card.due).valueOf(),
+                    data: card,
+                }));
+        }
         const now = dayjs();
         const upcoming = now.add(time_before_due, time_unit as dayjs.ManipulateType);
 
@@ -69,10 +80,5 @@ export const deadlineTrigger = createTrigger({
     async test(context) {
         return await pollingHelper.test(polling, context);
     },
-    sampleData: {
-        id: 'card-id',
-        name: 'Card close to deadline',
-        due: dayjs().add(12, 'hour').toISOString(),
-        dueComplete: false,
-    },
+    sampleData: undefined,
 });
