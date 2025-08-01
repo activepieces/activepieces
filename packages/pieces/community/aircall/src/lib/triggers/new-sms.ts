@@ -12,7 +12,8 @@ export const newSmsTrigger = createTrigger({
   props: {},
   onEnable: async (context) => {
     const client = makeClient({
-      apiToken: context.auth.apiToken,
+      username: context.auth.username,
+      password: context.auth.password,
       baseUrl: context.auth.baseUrl || 'https://api.aircall.io/v1',
     });
 
@@ -27,7 +28,8 @@ export const newSmsTrigger = createTrigger({
     const webhook = await context.store.get<CreateWebhookResponse>('aircall_new_sms');
     if (webhook) {
       const client = makeClient({
-        apiToken: context.auth.apiToken,
+        username: context.auth.username,
+        password: context.auth.password,
         baseUrl: context.auth.baseUrl || 'https://api.aircall.io/v1',
       });
       await client.deleteWebhook(webhook.id);

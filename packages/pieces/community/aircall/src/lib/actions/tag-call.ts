@@ -31,7 +31,8 @@ export const tagCallAction = createAction({
     }
 
     const client = makeClient({
-      apiToken: context.auth.apiToken,
+      username: context.auth.username,
+      password: context.auth.password,
       baseUrl: context.auth.baseUrl || 'https://api.aircall.io/v1',
     });
 
