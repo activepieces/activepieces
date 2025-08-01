@@ -72,6 +72,9 @@
       "@activepieces/piece-anyhook-websocket": [
         "packages/pieces/community/anyhook-websocket/src/index.ts"
       ],
+      "@activepieces/piece-api-template": [
+        "packages/pieces/community/api-template/src/index.ts"
+      ],
       "@activepieces/piece-apify": [
         "packages/pieces/community/apify/src/index.ts"
       ],
@@ -646,6 +649,9 @@
       ],
       "@activepieces/piece-pandadoc": [
         "packages/pieces/community/pandadoc/src/index.ts"
+      ],
+      "@activepieces/piece-paperform-api": [
+        "packages/pieces/community/paperform-api/src/index.ts"
       ],
       "@activepieces/piece-pastebin": [
         "packages/pieces/community/pastebin/src/index.ts"
