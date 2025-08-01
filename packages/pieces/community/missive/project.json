@@ -1,0 +1,37 @@
+{
+  "name": "pieces-missive",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/missive/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/missive",
+        "tsConfig": "packages/pieces/community/missive/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/missive/package.json",
+        "main": "packages/pieces/community/missive/src/index.ts",
+        "assets": [
+          "packages/pieces/community/missive/*.md",
+          {
+            "input": "packages/pieces/community/missive/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    }
+  },
+  "tags": []
+} 
