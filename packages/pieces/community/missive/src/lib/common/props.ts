@@ -1,5 +1,4 @@
 import { Property } from '@activepieces/pieces-framework';
-import { getContactBooks, getContactGroups } from './utils';
 
 export const contactBookDropdown = Property.Dropdown({
   displayName: 'Contact Book',
@@ -7,13 +6,9 @@ export const contactBookDropdown = Property.Dropdown({
   required: true,
   refreshers: [],
   options: async () => {
-    const contactBooks = await getContactBooks('');
     return {
       disabled: false,
-      options: contactBooks.map((book) => ({
-        label: book.name,
-        value: book.id,
-      })),
+      options: [],
     };
   },
 });
@@ -31,13 +26,9 @@ export const contactGroupDropdown = Property.Dropdown({
         options: [],
       };
     }
-    const contactGroups = await getContactGroups('', contactBookId);
     return {
       disabled: false,
-      options: contactGroups.map((group) => ({
-        label: group.name,
-        value: group.id,
-      })),
+      options: [],
     };
   },
 });
