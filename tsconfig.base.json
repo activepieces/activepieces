@@ -744,6 +744,9 @@
       "@activepieces/piece-respaid": [
         "packages/pieces/community/respaid/src/index.ts"
       ],
+      "@activepieces/piece-respond-io": [
+        "packages/pieces/community/respond-io/src/index.ts"
+      ],
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
       ],
