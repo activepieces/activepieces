@@ -45,15 +45,58 @@ export const newNumberCreatedTrigger = createTrigger({
     
     return [];
   },
-  sampleData: {
-    event: 'number.created',
-    data: {
-      id: 123,
-      name: 'Main Office',
-      number: '+1234567890',
-      country: 'US',
-      time_zone: 'America/New_York',
-      created_at: '2023-01-01T12:00:00Z',
-    },
+  sampleData: async ({ auth }: { auth: { username: string; password: string; baseUrl?: string } }) => {
+    try {
+      const client = makeClient({
+        username: auth.username,
+        password: auth.password,
+        baseUrl: auth.baseUrl || 'https://api.aircall.io/v1',
+      });
+
+      // Fetch real numbers from Aircall API
+      const numbers = await client.getNumbers();
+      
+      if (numbers && numbers.length > 0) {
+        const number = numbers[0];
+        return {
+          event: 'number.created',
+          data: {
+            id: number.id,
+            name: number.name,
+            number: number.number,
+            country: number.country,
+            time_zone: number.time_zone,
+            created_at: number.created_at,
+          },
+        };
+      }
+
+      // Fallback to sample data if no numbers found
+      return {
+        event: 'number.created',
+        data: {
+          id: 123,
+          name: 'Main Office',
+          number: '+1234567890',
+          country: 'US',
+          time_zone: 'America/New_York',
+          created_at: '2023-01-01T12:00:00Z',
+        },
+      };
+    } catch (error) {
+      console.error('Error fetching sample data:', error);
+      // Return fallback sample data on error
+      return {
+        event: 'number.created',
+        data: {
+          id: 123,
+          name: 'Main Office',
+          number: '+1234567890',
+          country: 'US',
+          time_zone: 'America/New_York',
+          created_at: '2023-01-01T12:00:00Z',
+        },
+      };
+    }
   },
 }); 

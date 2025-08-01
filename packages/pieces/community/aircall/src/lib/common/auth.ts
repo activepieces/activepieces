@@ -60,8 +60,6 @@ export const aircallAuth = PieceAuth.CustomAuth({
       };
     }
 
-    // For development/testing, we can skip the actual API call validation
-    // and just validate the format to avoid timeout issues
     const trimmedUsername = auth.username.trim();
     const trimmedPassword = auth.password.trim();
     
@@ -80,29 +78,58 @@ export const aircallAuth = PieceAuth.CustomAuth({
       };
     }
 
-    // Skip API validation for now to avoid connection issues
-    // In production, you might want to enable this with a very short timeout
+    // Test authentication with the API
     try {
       const credentials = Buffer.from(`${trimmedUsername}:${trimmedPassword}`).toString('base64');
       
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${baseUrl}/users`,
-        headers: {
-          'Authorization': `Basic ${credentials}`,
-          'Content-Type': 'application/json',
-          'User-Agent': 'Activepieces-Aircall/1.0',
-          'Accept': 'application/json',
-        },
-        timeout: 3000, // Very short timeout
-      });
+      console.log('Testing Aircall authentication with base URL:', baseUrl);
+      
+      // Try the ping endpoint first, fallback to users endpoint
+      let response;
+      try {
+        response = await httpClient.sendRequest({
+          method: HttpMethod.GET,
+          url: `${baseUrl}/ping`,
+          headers: {
+            'Authorization': `Basic ${credentials}`,
+            'Content-Type': 'application/json',
+            'User-Agent': 'Activepieces-Aircall/1.0',
+            'Accept': 'application/json',
+          },
+          timeout: 10000, // Increased timeout to 10 seconds
+        });
+        console.log('Ping endpoint successful, status:', response.status);
+      } catch (pingError) {
+        // If ping fails, try the users endpoint as fallback
+        console.warn('Ping endpoint failed, trying users endpoint:', pingError);
+        response = await httpClient.sendRequest({
+          method: HttpMethod.GET,
+          url: `${baseUrl}/users`,
+          headers: {
+            'Authorization': `Basic ${credentials}`,
+            'Content-Type': 'application/json',
+            'User-Agent': 'Activepieces-Aircall/1.0',
+            'Accept': 'application/json',
+          },
+          timeout: 10000,
+        });
+        console.log('Users endpoint successful, status:', response.status);
+      }
 
       if (response.status >= 200 && response.status < 300) {
-        return { valid: true };
+        return { 
+          valid: true,
+          message: 'Authentication successful. Connected to Aircall API.'
+        };
       } else if (response.status === 401) {
         return {
           valid: false,
           error: 'Invalid API credentials. Please check your username and password.',
+        };
+      } else if (response.status === 403) {
+        return {
+          valid: false,
+          error: 'Access denied. Your API credentials may not have sufficient permissions.',
         };
       } else {
         return {
@@ -112,14 +139,12 @@ export const aircallAuth = PieceAuth.CustomAuth({
       }
       
     } catch (error) {
-      // For network errors, we'll assume credentials are valid for now
-      // This prevents connection issues from blocking the piece setup
-      console.warn('Aircall validation warning:', error);
+      console.warn('Aircall validation error:', error);
       
       if (error && typeof error === 'object') {
         const errorObj = error as HttpError;
         
-        // Only fail on authentication errors, not network issues
+        // Handle specific HTTP errors
         if (errorObj.response?.status === 401) {
           return {
             valid: false,
@@ -133,12 +158,56 @@ export const aircallAuth = PieceAuth.CustomAuth({
             error: 'Access denied. Your API credentials may not have sufficient permissions.',
           };
         }
+        
+        if (errorObj.response?.status === 404) {
+          return {
+            valid: false,
+            error: 'API endpoint not found. Please check your base URL.',
+          };
+        }
+        
+        if (errorObj.response?.status === 429) {
+          return {
+            valid: false,
+            error: 'Rate limit exceeded. Please wait a moment and try again.',
+          };
+        }
+        
+        if (errorObj.response?.status && errorObj.response.status >= 500) {
+          return {
+            valid: false,
+            error: 'Aircall API is temporarily unavailable. Please try again later.',
+          };
+        }
+        
+        // Network errors
+        if (errorObj.code === 'ENOTFOUND' || errorObj.code === 'ECONNREFUSED') {
+          return {
+            valid: false,
+            error: 'Cannot connect to Aircall API. Check your network connection and base URL.',
+          };
+        }
+        
+        if (errorObj.code === 'ETIMEDOUT' || errorObj.message?.includes('timeout')) {
+          return {
+            valid: false,
+            error: 'Request timeout. Please check your network connection and try again.',
+          };
+        }
+
+        // SSL/TLS errors
+        if (errorObj.code?.includes('CERT') || errorObj.message?.includes('certificate')) {
+          return {
+            valid: false,
+            error: 'SSL certificate error. Please contact support.',
+          };
+        }
       }
       
-      // For timeouts and network errors, assume valid to avoid blocking setup
-      return { 
-        valid: true,
-        // We could add a warning here but it might confuse users
+      // Generic error fallback
+      return {
+        valid: false,
+        error: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}. Please verify your credentials and try again.`,
       };
     }
   },

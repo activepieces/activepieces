@@ -45,16 +45,61 @@ export const newSmsTrigger = createTrigger({
     
     return [];
   },
-  sampleData: {
-    event: 'message.received',
-    data: {
-      id: 123,
-      type: 'message',
-      direction: 'inbound',
-      content: 'Hello from Aircall!',
-      from: '+1234567890',
-      to: '+0987654321',
-      created_at: '2023-01-01T12:00:00Z',
-    },
+  sampleData: async ({ auth }: { auth: { username: string; password: string; baseUrl?: string } }) => {
+    try {
+      const client = makeClient({
+        username: auth.username,
+        password: auth.password,
+        baseUrl: auth.baseUrl || 'https://api.aircall.io/v1',
+      });
+
+      // Fetch real messages from Aircall API
+      const messages = await client.getMessages({ limit: 1 });
+      
+      if (messages && messages.length > 0) {
+        const message = messages[0];
+        return {
+          event: 'message.received',
+          data: {
+            id: message.id,
+            type: message.type,
+            direction: message.direction,
+            content: message.content,
+            from: message.from,
+            to: message.to,
+            created_at: message.created_at,
+          },
+        };
+      }
+
+      // Fallback to sample data if no messages found
+      return {
+        event: 'message.received',
+        data: {
+          id: 123,
+          type: 'message',
+          direction: 'inbound',
+          content: 'Hello from Aircall!',
+          from: '+1234567890',
+          to: '+0987654321',
+          created_at: '2023-01-01T12:00:00Z',
+        },
+      };
+    } catch (error) {
+      console.error('Error fetching sample data:', error);
+      // Return fallback sample data on error
+      return {
+        event: 'message.received',
+        data: {
+          id: 123,
+          type: 'message',
+          direction: 'inbound',
+          content: 'Hello from Aircall!',
+          from: '+1234567890',
+          to: '+0987654321',
+          created_at: '2023-01-01T12:00:00Z',
+        },
+      };
+    }
   },
 }); 

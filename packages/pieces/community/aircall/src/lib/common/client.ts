@@ -158,6 +158,80 @@ export class AircallClient {
       url: '/webhooks',
     });
   }
+
+  // Fetch real data methods
+  async getContacts(params?: { limit?: number; offset?: number }): Promise<any[]> {
+    const queryParams: Record<string, string> = {};
+    if (params?.['limit']) queryParams['limit'] = params['limit'].toString();
+    if (params?.['offset']) queryParams['offset'] = params['offset'].toString();
+
+    return this.makeRequest<any[]>({
+      method: HttpMethod.GET,
+      url: '/contacts',
+      queryParams,
+    });
+  }
+
+  async getContact(contactId: number): Promise<any> {
+    return this.makeRequest<any>({
+      method: HttpMethod.GET,
+      url: `/contacts/${contactId}`,
+    });
+  }
+
+  async getCalls(params?: { limit?: number; offset?: number; from?: string; to?: string }): Promise<any[]> {
+    const queryParams: Record<string, string> = {};
+    if (params?.['limit']) queryParams['limit'] = params['limit'].toString();
+    if (params?.['offset']) queryParams['offset'] = params['offset'].toString();
+    if (params?.['from']) queryParams['from'] = params['from'];
+    if (params?.['to']) queryParams['to'] = params['to'];
+
+    return this.makeRequest<any[]>({
+      method: HttpMethod.GET,
+      url: '/calls',
+      queryParams,
+    });
+  }
+
+  async getCall(callId: number): Promise<any> {
+    return this.makeRequest<any>({
+      method: HttpMethod.GET,
+      url: `/calls/${callId}`,
+    });
+  }
+
+  async getNotes(callId: number): Promise<any[]> {
+    return this.makeRequest<any[]>({
+      method: HttpMethod.GET,
+      url: `/calls/${callId}/comments`,
+    });
+  }
+
+  async getNumbers(): Promise<any[]> {
+    return this.makeRequest<any[]>({
+      method: HttpMethod.GET,
+      url: '/numbers',
+    });
+  }
+
+  async getNumber(numberId: number): Promise<any> {
+    return this.makeRequest<any>({
+      method: HttpMethod.GET,
+      url: `/numbers/${numberId}`,
+    });
+  }
+
+  async getMessages(params?: { limit?: number; offset?: number }): Promise<any[]> {
+    const queryParams: Record<string, string> = {};
+    if (params?.['limit']) queryParams['limit'] = params['limit'].toString();
+    if (params?.['offset']) queryParams['offset'] = params['offset'].toString();
+
+    return this.makeRequest<any[]>({
+      method: HttpMethod.GET,
+      url: '/messages',
+      queryParams,
+    });
+  }
 }
 
 export const makeClient = (auth: AircallAuth, timeout?: number): AircallClient => {

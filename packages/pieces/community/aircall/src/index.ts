@@ -1,4 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { aircallAuth } from './lib/common/auth';
 import { newSmsTrigger } from './lib/triggers/new-sms';
 import { newNumberCreatedTrigger } from './lib/triggers/new-number-created';
@@ -16,9 +17,12 @@ import { findCallsAction } from './lib/actions/find-calls';
 
 export const aircall = createPiece({
   displayName: 'Aircall',
+  description: 'Cloud-based call center platform for managing calls, contacts, and communications',
   logoUrl: 'https://cdn.activepieces.com/pieces/aircall.png',
   auth: aircallAuth,
-  authors: ['activepieces'],
+  minimumSupportedRelease: '0.30.0',
+  categories: [PieceCategory.COMMUNICATION, PieceCategory.CUSTOMER_SUPPORT],
+  authors: ['pranjal'],
   actions: [
     commentCallAction,
     tagCallAction,
