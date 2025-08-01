@@ -6,15 +6,14 @@ export async function makeRequest(
   api_key: string,
   method: HttpMethod,
   path: string,
-  body?: unknown,
-  
+  body?: unknown
 ) {
   try {
     const response = await httpClient.sendRequest({
       method,
       url: `${BASE_URL}${path}`,
       headers: {
-       'Softr-Api-Key': api_key,
+        'Softr-Api-Key': api_key,
         'Content-Type': 'application/json',
       },
       body,

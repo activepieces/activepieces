@@ -31,6 +31,10 @@ export const createDatabaseRecord = createAction({
       }
     );
 
-    return response;
+    return {
+      record: response.data,
+      success: true,
+      message: 'Record created successfully',
+    };
   },
 });
