@@ -105,10 +105,12 @@
     "@tanstack/react-table": "8.19.2",
     "@tanstack/react-virtual": "3.13.11",
     "@tiptap/extension-mention": "2.5.4",
+    "@tiptap/extension-typography": "^2.22.3",
     "@tiptap/extension-placeholder": "2.5.5",
     "@tiptap/pm": "2.5.4",
     "@tiptap/react": "2.5.4",
     "@tiptap/starter-kit": "2.5.4",
+    "tiptap-markdown": "^0.8.10",
     "@tiptap/suggestion": "2.5.4",
     "@tryfabric/martian": "1.2.0",
     "@types/amqplib": "0.10.5",
@@ -445,7 +447,6 @@
     },
     "vite": {
       "rollup": "npm:@rollup/wasm-node"
-    },
-    "stylus": "0.0.1-security"
+    }
   }
 }

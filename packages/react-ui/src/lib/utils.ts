@@ -5,7 +5,7 @@ import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-import { LocalesEnum, Permission } from '@activepieces/shared';
+import { LocalesEnum } from '@activepieces/shared';
 
 import { authenticationSession } from './authentication-session';
 
@@ -29,7 +29,6 @@ export const formatUtils = {
   formatNumber(number: number) {
     return new Intl.NumberFormat('en-US').format(number);
   },
-
   formatDateOnlyOrFail(date: Date, fallback: string) {
     try {
       return this.formatDateOnly(date);
@@ -232,19 +231,11 @@ export const useTimeAgo = (date: Date) => {
   return timeAgo;
 };
 
-export const determineDefaultRoute = (
-  checkAccess: (permission: Permission) => boolean,
-) => {
-  if (checkAccess(Permission.READ_FLOW)) {
+export const determineDefaultRoute = (isEmbedded: boolean) => {
+  if (isEmbedded) {
     return authenticationSession.appendProjectRoutePrefix('/flows');
   }
-  if (checkAccess(Permission.READ_RUN)) {
-    return authenticationSession.appendProjectRoutePrefix('/runs');
-  }
-  if (checkAccess(Permission.READ_ISSUES)) {
-    return authenticationSession.appendProjectRoutePrefix('/issues');
-  }
-  return authenticationSession.appendProjectRoutePrefix('/settings');
+  return authenticationSession.appendProjectRoutePrefix('/agents');
 };
 
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
