@@ -95,6 +95,7 @@ export * from './lib/oauth-apps'
 export * from './lib/mcp'
 export * from './lib/botx'
 export * from './lib/project-member'
+export * from './lib/email'
 TypeSystemPolicy.ExactOptionalPropertyTypes = false
 export * from './lib/issues/index'
 export * from './lib/issues/issues-requests'

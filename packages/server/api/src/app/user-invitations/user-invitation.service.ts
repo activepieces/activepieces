@@ -8,6 +8,7 @@ import { repoFactory } from '../core/db/repo-factory'
 // import { emailService } from '../ee/helper/email/email-service'
 // import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 // import { projectRoleService } from '../ee/projects/project-role/project-role.service'
+import { emailService } from '../email/email.service'
 import { domainHelper } from '../helper/domain-helper'
 import { jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
@@ -289,11 +290,14 @@ const enrichWithInvitationLink = async (platform: Platform, userInvitation: User
     //     userInvitation,
     //     invitationLink,
     // })
-    // return userInvitation
+    // todo(Rupal): enable email service when it's fixed
     return {
         ...userInvitation,
         link: invitationLink,
     }
+
+    // await emailService(log).sendInvitation({ ...userInvitation, link: invitationLink })
+    // return userInvitation
 }
 type ListUserParams = {
     platformId: string
