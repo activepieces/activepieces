@@ -659,6 +659,9 @@
       "@activepieces/piece-pandadoc": [
         "packages/pieces/community/pandadoc/src/index.ts"
       ],
+      "@activepieces/piece-paperform": [
+        "packages/pieces/community/paperform/src/index.ts"
+      ],
       "@activepieces/piece-pastebin": [
         "packages/pieces/community/pastebin/src/index.ts"
       ],
