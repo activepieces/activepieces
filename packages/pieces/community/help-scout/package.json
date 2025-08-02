@@ -1,0 +1,20 @@
+{
+  "name": "@activepieces/piece-help-scout",
+  "version": "0.1.0",
+  "description": "Help Scout integration for Activepieces",
+  "main": "src/index.ts",
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-common": "^0.30.0",
+    "@activepieces/pieces-framework": "^0.30.0",
+    "@activepieces/shared": "^0.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"No tests specified\" && exit 0"
+  }
+}
