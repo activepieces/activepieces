@@ -1035,6 +1035,9 @@
       "@activepieces/piece-zoom": [
         "packages/pieces/community/zoom/src/index.ts"
       ],
+      "@activepieces/piece-missive": [
+        "packages/pieces/community/missive/src/index.ts"
+      ],
       "@activepieces/pieces-common": [
         "packages/pieces/community/common/src/index.ts"
       ],
