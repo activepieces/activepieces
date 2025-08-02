@@ -1,0 +1,33 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { aircallAuth } from '../common/auth';
+import { makeRequest } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { callIdDropdown, tagIdDropdown } from '../common/props';
+
+export const tagACall = createAction({
+  auth: aircallAuth,
+  name: 'tagACall',
+  displayName: 'Tag a Call',
+  description: 'Add tags to a specific call in Aircall',
+  props: {
+    callId: callIdDropdown,
+    tags: tagIdDropdown,
+  },
+  async run(context) {
+    const { callId, tags } = context.propsValue;
+    const accessToken = context.auth.access_token;
+
+    const response = await makeRequest(
+      accessToken,
+      HttpMethod.POST,
+      `/calls/${callId}/tags`,
+      { tags }
+    );
+
+    return {
+      status: 'success',
+      message: `Tags added successfully to call ${callId}`,
+      data: response,
+    };
+  },
+});
