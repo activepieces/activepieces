@@ -168,6 +168,17 @@ activepieces:
   triggerFailuresThreshold: ""
   engineExecutablePath: "dist/packages/engine/main.js"
 
+  # OpenTelemetry Configuration
+  otel:
+    enabled: false
+    exporterOtlpEndpoint: ""
+    exporterOtlpHeaders: ""
+
+  # Axiom Configuration
+  axiom:
+    token: ""
+    dataset: ""
+
 postgresql:
   enabled: true
   host: ""

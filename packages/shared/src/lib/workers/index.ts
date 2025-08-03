@@ -64,7 +64,7 @@ export const WorkerMachineHealthcheckResponse = Type.Object({
     LOKI_USERNAME: Type.Optional(Type.String()),
     AXIOM_DATASET: Type.Optional(Type.String()),
     AXIOM_TOKEN: Type.Optional(Type.String()),
-    AXIOM_DOMAIN: Type.Optional(Type.String()),
+    OTEL_ENABLED: Type.Boolean(),
     FILE_STORAGE_LOCATION: Type.String(),
     S3_USE_SIGNED_URLS: Type.String(),
 })

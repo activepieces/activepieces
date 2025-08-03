@@ -392,6 +392,28 @@ spec:
             - name: AP_ENGINE_EXECUTABLE_PATH
               value: {{ .Values.activepieces.engineExecutablePath | quote }}
             {{- end }}
+            # OpenTelemetry configuration
+            {{- if .Values.activepieces.otel.enabled }}
+            - name: AP_OTEL_ENABLED
+              value: {{ .Values.activepieces.otel.enabled | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.otel.exporterOtlpEndpoint }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.activepieces.otel.exporterOtlpEndpoint | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.otel.exporterOtlpHeaders }}
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: {{ .Values.activepieces.otel.exporterOtlpHeaders | quote }}
+            {{- end }}
+            # Axiom configuration
+            {{- if .Values.activepieces.axiom.token }}
+            - name: AP_AXIOM_TOKEN
+              value: {{ .Values.activepieces.axiom.token | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.axiom.dataset }}
+            - name: AP_AXIOM_DATASET
+              value: {{ .Values.activepieces.axiom.dataset | quote }}
+            {{- end }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
