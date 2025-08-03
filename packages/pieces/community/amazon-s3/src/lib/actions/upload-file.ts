@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { amazonS3Auth } from '../..';
 import { createS3 } from '../common';
 import { ObjectCannedACL } from '@aws-sdk/client-s3';
+import mime from 'mime-types';
 
 export const amazons3UploadFile = createAction({
   auth: amazonS3Auth,
@@ -16,7 +17,7 @@ export const amazons3UploadFile = createAction({
     fileName: Property.ShortText({
       displayName: 'File Name',
       required: false,
-      description: 'my-file-name (no extension)',
+      description: 'The File Name to use, if not set the API will try to figure out the file name.',
     }),
     acl: Property.StaticDropdown({
       displayName: 'ACL',
@@ -54,54 +55,11 @@ export const amazons3UploadFile = createAction({
         ],
       },
     }),
-    type: Property.StaticDropdown({
-      displayName: 'Type',
-      required: true,
-      options: {
-        options: [
-          {
-            label: 'image/png',
-            value: 'image/png',
-          },
-          {
-            label: 'image/jpeg',
-            value: 'image/jpeg',
-          },
-          {
-            label: 'image/gif',
-            value: 'image/gif',
-          },
-          {
-            label: 'audio/mpeg',
-            value: 'audio/mpeg',
-          },
-          {
-            label: 'audio/wav',
-            value: 'audio/wav',
-          },
-          {
-            label: 'video/mp4',
-            value: 'video/mp4',
-          },
-          {
-            label: 'application/pdf',
-            value: 'application/pdf',
-          },
-          {
-            label: 'application/msword',
-            value: 'application/msword',
-          },
-          {
-            label: 'text/plain',
-            value: 'text/plain',
-          },
-          {
-            label: 'application/json',
-            value: 'application/json',
-          },
-        ],
-      },
-    }),
+    type: Property.ShortText({
+      displayName: "Content Type",
+      description: "Content Type of the uploaded file, if not set the API will try to figure out the content type.",
+      required: false
+    })
   },
   async run(context) {
     const { bucket } = context.auth;
@@ -109,13 +67,26 @@ export const amazons3UploadFile = createAction({
 
     const s3 = createS3(context.auth);
 
-    const contentType = type;
-    const [_, ext] = contentType.split('/');
-    const extension = '.' + ext;
+    let contentType, extension = null
+
+    if(!type) {
+      if (!file.extension || file.extension === undefined || !mime.contentType(file.extension)) {
+        throw new Error("Content type could not be interpreted, please check the input file.")
+      }
+
+      extension = '.' + file.extension
+      contentType = mime.contentType(extension) as string
+    } 
+    else if (!mime.extension(type as string)) {
+      throw new Error("The content type entered does not exist or is misspelled, please check your input.")
+    } else {
+      contentType = type
+      extension = '.' + mime.extension(type)
+    }
 
     const generatedName = new Date().toISOString() + Date.now() + extension;
 
-    const finalFileName = fileName ? fileName + extension : generatedName;
+    const finalFileName = fileName ? (fileName.endsWith(extension) ? fileName : fileName + extension) : generatedName;
 
     const uploadResponse = await s3.putObject({
       Bucket: bucket,

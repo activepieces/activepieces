@@ -6,6 +6,7 @@ import {
   CreateAgentRequest,
   AgentRun,
   RunAgentRequestBody,
+  EnhaceAgentPrompt,
 } from '@activepieces/shared';
 
 import { agentsApi, agentRunsApi } from './agents-api';
@@ -37,6 +38,13 @@ export const agentHooks = {
   useCreate: () => {
     return useMutation({
       mutationFn: (request: CreateAgentRequest) => agentsApi.create(request),
+    });
+  },
+
+  useEnhanceAgentPrompt: () => {
+    return useMutation({
+      mutationFn: (request: EnhaceAgentPrompt) =>
+        agentsApi.enhanceAgentPrompt(request),
     });
   },
 

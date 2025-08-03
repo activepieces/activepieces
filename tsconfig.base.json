@@ -78,6 +78,9 @@
       "@activepieces/piece-apitable": [
         "packages/pieces/community/apitable/src/index.ts"
       ],
+      "@activepieces/piece-apitemplate-io": [
+        "packages/pieces/community/apitemplate-io/src/index.ts"
+      ],
       "@activepieces/piece-apollo": [
         "packages/pieces/community/apollo/src/index.ts"
       ],
@@ -131,6 +134,9 @@
       ],
       "@activepieces/piece-blockscout": [
         "packages/pieces/community/blockscout/src/index.ts"
+      ],
+      "@activepieces/piece-bluesky": [
+        "packages/pieces/community/bluesky/src/index.ts"
       ],
       "@activepieces/piece-bonjoro": [
         "packages/pieces/community/bonjoro/src/index.ts"
@@ -455,6 +461,9 @@
       ],
       "@activepieces/piece-hubspot": [
         "packages/pieces/community/hubspot/src/index.ts"
+      ],
+      "@activepieces/piece-hunter": [
+        "packages/pieces/community/hunter/src/index.ts"
       ],
       "@activepieces/piece-image-ai": [
         "packages/pieces/community/image-ai/src/index.ts"

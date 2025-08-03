@@ -1,5 +1,5 @@
 import { apAxios, AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -36,11 +36,15 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/populated-flows', GetAllFlowsByProjectParams, async (request) => {
         return flowService(request.log).list({
             projectId: request.principal.projectId,
-            limit: 1000000,
-            cursorRequest: null,
-            folderId: undefined,
-            status: undefined,
-            name: undefined,
+            limit: request.query.limit ?? 1000000,
+            cursorRequest: request.query.cursor ?? null,
+            folderId: request.query.folderId,
+            status: request.query.status,
+            name: request.query.name,
+            versionState: request.query.versionState,
+            connectionExternalIds: request.query.connectionExternalIds,
+            agentExternalIds: request.query.agentExternalIds,
+            externalIds: request.query.externalIds,
         })
     })
 
@@ -305,7 +309,9 @@ const GetAllFlowsByProjectParams = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE],
     },
-    schema: {},
+    schema: {
+        querystring: Type.Omit(ListFlowsRequest, ['projectId']),
+    },
 }
 const CheckTaskLimitParams = {
     config: {

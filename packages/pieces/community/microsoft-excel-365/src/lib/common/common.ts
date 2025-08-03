@@ -4,8 +4,8 @@ import {
 	HttpMethod,
 	AuthenticationType,
 	HttpRequest,
-	getAccessTokenOrThrow,
 } from '@activepieces/pieces-common';
+import { isNil } from '@activepieces/shared';
 
 export const excelCommon = {
 	baseUrl: 'https://graph.microsoft.com/v1.0/me/drive',
@@ -346,7 +346,7 @@ export const excelCommon = {
 	
 		// Fetch the folder contents
 		const folders: { id: string, name: string }[] = (
-			await httpClient.sendRequest<{ value: { id: string, name: string }[] }>({
+			await httpClient.sendRequest<{ value: { id: string, name: string,folder?: unknown }[] }>({
 				url: apiUrl,
 				method: HttpMethod.GET,
 				authentication: {
@@ -355,7 +355,7 @@ export const excelCommon = {
 				}
 			})
 		).body.value
-		.filter(object => object.hasOwnProperty('folder')) // Filter only folder objects
+		.filter(object => !isNil(object.folder)) // Filter only folder objects
 		.map(folder => ({
 			id: `${folder.id}`,
 			name: `${currentPath}/${folder.name}`,
