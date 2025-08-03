@@ -122,6 +122,9 @@ export const updatePipelineRecord = createAction({
       }
     );
 
-    return response;
+    return {
+      message: 'Pipeline record (deal) updated successfully',
+      data: response,
+    };
   },
 });

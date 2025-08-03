@@ -133,7 +133,7 @@ export const updateTask = createAction({
 
     return {
       message: 'Task updated successfully',
-      data: response.data[0],
+      data: response,
     };
   },
 });

@@ -131,6 +131,6 @@ export const updateContact = createAction({
       }
     );
 
-    return { message: 'Contact updated successfully', data: response.data[0] };
+    return { message: 'Contact updated successfully', data: response };
   },
 });

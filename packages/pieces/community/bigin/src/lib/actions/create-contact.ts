@@ -129,6 +129,9 @@ export const createContact = createAction({
       }
     );
 
-    return { data: response.data[0] || response.data }; // Return the created contact or the first item in the response data
+    return {
+      message: 'Contact created successfully',
+      data: response.data[0] || response.data
+    }; 
   },
 });

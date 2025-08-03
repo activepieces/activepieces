@@ -136,6 +136,9 @@ export const createCall = createAction({
       }
     );
 
-    return { data: response.data[0] };
+    return {
+      message: 'Call created successfully',
+      data: response.data[0],
+    };
   },
 });

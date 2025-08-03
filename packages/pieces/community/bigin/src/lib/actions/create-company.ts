@@ -101,6 +101,9 @@ export const createCompany = createAction({
       }
     );
 
-    return response;
+    return {
+      message: 'Company created successfully',
+      data: response.data[0],
+    };
   },
 });

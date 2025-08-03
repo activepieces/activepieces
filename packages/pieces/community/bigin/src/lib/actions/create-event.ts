@@ -129,6 +129,9 @@ export const createEvent = createAction({
       }
     );
 
-    return { data: response.data[0] };
+    return {
+      message: 'Event created successfully',
+      data: response.data[0],
+    };
   },
 });
