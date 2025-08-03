@@ -278,7 +278,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         httpRequestId,
         parentRunId,
         failParentOnFailure,
-        returnResponseAction,
+        returnResponseActionPattern,
     }: StartParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
@@ -308,16 +308,16 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executeTrigger,
             executionType,
             progressUpdateType,
-            returnResponseAction,
+            returnResponseActionPattern,
         })
 
         return flowRun
     },
 
-    async test({ projectId, flowVersionId, parentRunId }: TestParams): Promise<FlowRun> {
+    async test({ projectId, flowVersionId, parentRunId, payload, returnResponseActionPattern }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
-        const sampleData = await sampleDataService(log).getOrReturnEmpty({
+        const sampleData = payload ?? await sampleDataService(log).getOrReturnEmpty({
             projectId,
             flowVersion,
             stepName: flowVersion.trigger.name,
@@ -335,6 +335,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             failParentOnFailure: true,
+            returnResponseActionPattern,
         })
     },
 
@@ -610,13 +611,15 @@ type StartParams = {
     httpRequestId: string | undefined
     progressUpdateType: ProgressUpdateType
     executionType: ExecutionType
-    returnResponseAction?: string
+    returnResponseActionPattern?: string
 }
 
 type TestParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
     parentRunId?: FlowRunId
+    payload?: unknown
+    returnResponseActionPattern?: string
 }
 
 type PauseParams = {

@@ -127,35 +127,7 @@ export const callFlow = createAction({
     })
   },
   async test(context) {
-    if (!context.propsValue.waitForResponse) {
-      return {
-        status: 'success',
-        data: context.propsValue.flowProps['payload'],
-      }
-    }
-
-    const flow = await findFlowByExternalIdOrThrow({
-      flowsContext: context.flows,
-      externalId: context.propsValue.flow?.externalId,
-    });
-
-    const response = await httpClient.sendRequest<FlowRun>({
-      method: HttpMethod.POST,
-      url: `${context.serverUrl}v1/test-flow-version/${flow.version.id}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.server.token,
-      },
-      body: {
-        parentFlowId: flow.id,
-        parentFlowVersionId: flow.version.id,
-        parentFlowDisplayName: flow.version.displayName,
-        returnResponseAction: pieceActionNaming.constructActionName('@activepieces/piece-subflows', 'returnResponse'),
-        payload: context.propsValue.flowProps['payload'],
-      },
-    });
-
-    return response.body;
+    return context.propsValue.flowProps['payload'];
   },
   async run(context) {
     if (context.executionType === ExecutionType.RESUME) {

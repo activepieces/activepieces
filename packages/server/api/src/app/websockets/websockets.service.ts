@@ -3,11 +3,14 @@ import { Principal, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
+import { EventEmitter } from 'events'
 
 export type WebsocketListener<T> = (socket: Socket) => (data: T) => Promise<void>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const listener: Record<string, WebsocketListener<any>> = {}
+
+export const serverEventBus = new EventEmitter()
 
 export const websocketService = {
     async init(socket: Socket, log: FastifyBaseLogger): Promise<void> {

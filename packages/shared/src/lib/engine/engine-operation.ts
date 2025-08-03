@@ -88,7 +88,7 @@ export type ExecuteStepOperation = BaseEngineOperation & {
     sampleData: Record<string, unknown>
     runEnvironment: RunEnvironment
     requestId: string
-    returnResponseAction?: string
+    returnResponseActionPattern?: string
 }
 
 export type ExecuteToolOperation = BaseEngineOperation & {
@@ -118,7 +118,7 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     serverHandlerId: string | null
     httpRequestId: string | null
     progressUpdateType: ProgressUpdateType
-    returnResponseAction: string | null
+    returnResponseActionPattern: string | null
 }
 
 export enum ProgressUpdateType {

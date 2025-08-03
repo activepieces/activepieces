@@ -242,19 +242,25 @@ export const testStepHooks = {
   },
   /**To reset the loading state of the mutation use a new mutation key, but to make sure sucess never gets called, use the abortSignal */
   useTestAction: ({
+    input,
+    externalFlowId,
     currentStep,
     setErrorMessage,
     setConsoleLogs,
     onSuccess,
     onProgress,
     mutationKey,
+    returnResponseActionPattern,
   }: {
+    input: unknown;
+    externalFlowId?: string;
     currentStep: Action;
     setErrorMessage: ((msg: string | undefined) => void) | undefined;
     setConsoleLogs: ((logs: string | null) => void) | undefined;
     onSuccess: (() => void) | undefined;
     onProgress?: (progress: StepRunResponse) => void;
     mutationKey?: string[];
+    returnResponseActionPattern?: string;
   }) => {
     const socket = useSocket();
     const { flowVersionId } = useRequiredStateToTestSteps().builderState;
@@ -273,6 +279,9 @@ export const testStepHooks = {
           {
             flowVersionId,
             stepName: currentStep.name,
+            externalFlowId,
+            returnResponseActionPattern,
+            input,
           },
           (progress) => {
             if (params?.abortSignal?.aborted) {

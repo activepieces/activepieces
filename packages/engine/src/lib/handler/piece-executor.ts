@@ -145,8 +145,8 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 return url.toString()
             },
         }
-        const constructedActionName = pieceActionNaming.constructActionName(action.settings.pieceName, action.settings.actionName)
-        const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test) && constants.returnResponseAction !== constructedActionName) ? pieceAction.test : pieceAction.run
+        const actionNamePattern = pieceActionNaming.constructActionName(action.settings.pieceName, action.settings.actionName)
+        const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test) && constants.returnResponseActionPattern !== actionNamePattern) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)
         const newExecutionContext = executionState.addTags(params.hookResponse.tags)
 

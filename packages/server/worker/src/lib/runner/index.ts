@@ -100,58 +100,6 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         }
         return execute(log, input, EngineOperationType.EXECUTE_VALIDATE_AUTH)
     },
-    async executeAction(engineToken, operation) {
-        log.debug({
-            stepName: operation.stepName,
-            flowVersionId: operation.flowVersion.id,
-        }, '[threadEngineRunner#executeAction]')
-
-        const step = flowStructureUtil.getActionOrThrow(operation.stepName, operation.flowVersion.trigger)
-        switch (step.type) {
-            case ActionType.PIECE: {
-                const lockedPiece = await pieceEngineUtil(log).getExactPieceForStep(engineToken, step)
-                await executionFiles(log).provision({
-                    pieces: [lockedPiece],
-                    codeSteps: [],
-                    customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
-                })
-                break
-            }
-            case ActionType.CODE: {
-                const codes = pieceEngineUtil(log).getCodeSteps(operation.flowVersion).filter((code) => code.name === operation.stepName)
-                await executionFiles(log).provision({
-                    pieces: [],
-                    codeSteps: codes,
-                    customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
-                })
-                break
-            }
-            case ActionType.ROUTER:
-            case ActionType.LOOP_ON_ITEMS:
-                break
-        }
-
-        const lockedFlowVersion = await pieceEngineUtil(log).lockSingleStepPieceVersion({
-            engineToken,
-            flowVersion: operation.flowVersion,
-            stepName: operation.stepName,
-        })
-
-        const input: ExecuteStepOperation = {
-            requestId: operation.requestId,
-            flowVersion: lockedFlowVersion,
-            stepName: operation.stepName,
-            projectId: operation.projectId,
-            sampleData: operation.sampleData,
-            publicApiUrl: workerMachine.getPublicApiUrl(),
-            internalApiUrl: workerMachine.getInternalApiUrl(),
-            engineToken,
-            runEnvironment: operation.runEnvironment,
-            returnResponseAction: operation.returnResponseAction,
-        }
-
-        return execute(log, input, EngineOperationType.EXECUTE_STEP)
-    },
     async executeProp(engineToken, operation) {
         log.debug({
             piece: operation.piece,

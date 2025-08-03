@@ -83,10 +83,6 @@ export type EngineRunner = {
         engineToken: string,
         operation: Omit<ExecuteValidateAuthOperation, EngineConstants>,
     ): Promise<EngineHelperResponse<EngineHelperValidateAuthResult>>
-    executeAction(
-        engineToken: string,
-        operation: Omit<ExecuteStepOperation, EngineConstants>,
-    ): Promise<EngineHelperResponse<EngineHelperActionResult>>
     excuteTool(
         engineToken: string,
         operation: Omit<ExecuteToolOperation, EngineConstants>,

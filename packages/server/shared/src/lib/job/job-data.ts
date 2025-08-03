@@ -76,7 +76,7 @@ export const OneTimeJobData = Type.Object({
     executeTrigger: Type.Optional(Type.Boolean()),
     executionType: Type.Enum(ExecutionType),
     progressUpdateType: Type.Enum(ProgressUpdateType),
-    returnResponseAction: Type.Optional(Type.String()),
+    returnResponseActionPattern: Type.Optional(Type.String()),
 })
 export type OneTimeJobData = Static<typeof OneTimeJobData>
 
@@ -125,7 +125,6 @@ export type WebhookJobData = Static<typeof WebhookJobData>
 
 export enum UserInteractionJobType {
     EXECUTE_VALIDATION = 'EXECUTE_VALIDATION',
-    EXECUTE_ACTION = 'EXECUTE_ACTION',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
@@ -142,19 +141,6 @@ export const ExecuteValidateAuthJobData = Type.Object({
     connectionValue: Type.Unknown(),
 })
 export type ExecuteValidateAuthJobData = Static<typeof ExecuteValidateAuthJobData>
-
-export const ExecuteActionJobData = Type.Object({
-    requestId: Type.String(),
-    jobType: Type.Literal(UserInteractionJobType.EXECUTE_ACTION),
-    projectId: Type.String(),
-    flowVersion: FlowVersion,
-    stepName: Type.String(),
-    webserverId: Type.String(),
-    sampleData: Type.Record(Type.String(), Type.Unknown()),
-    runEnvironment: Type.Enum(RunEnvironment),
-    returnResponseAction: Type.Optional(Type.String()),
-})
-export type ExecuteActionJobData = Static<typeof ExecuteActionJobData>
 
 export const ExecuteToolJobData = Type.Object({
     requestId: Type.String(),
@@ -209,7 +195,6 @@ export type ExecuteExtractPieceMetadataJobData = Static<typeof ExecuteExtractPie
 
 export const UserInteractionJobData = Type.Union([
     ExecuteValidateAuthJobData,
-    ExecuteActionJobData,
     ExecuteTriggerHookJobData,
     ExecuteToolJobData,
     ExecutePropertyJobData,
@@ -219,7 +204,6 @@ export type UserInteractionJobData = Static<typeof UserInteractionJobData>
 
 export const UserInteractionJobDataWithoutWatchingInformation = Type.Union([
     Type.Omit(ExecuteValidateAuthJobData, ['webserverId', 'requestId']),
-    Type.Omit(ExecuteActionJobData, ['webserverId', 'requestId']),
     Type.Omit(ExecuteToolJobData, ['webserverId', 'requestId']),
     Type.Omit(ExecuteTriggerHookJobData, ['webserverId', 'requestId']),
     Type.Omit(ExecutePropertyJobData, ['webserverId', 'requestId']),
