@@ -239,6 +239,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         duration,
         failedStepName,
     }: FinishParams): Promise<FlowRun> {
+        log.info({
+            flowRunId,
+            status,
+            tasks,
+            duration,
+            failedStepName,
+        }, '[FlowRunService#updateRun]')
 
         await flowRunRepo().update({
             id: flowRunId,
