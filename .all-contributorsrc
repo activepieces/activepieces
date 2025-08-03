@@ -1985,6 +1985,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "helenedurand-smet",
+      "name": "helenedurand-smet",
+      "avatar_url": "https://avatars.githubusercontent.com/u/206527847?v=4",
+      "profile": "https://github.com/helenedurand-smet",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
