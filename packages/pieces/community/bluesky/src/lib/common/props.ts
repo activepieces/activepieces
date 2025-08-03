@@ -312,7 +312,7 @@ export function extractPostInfoFromUrl(url: string): { uri?: string; handle?: st
     return { uri: url };
   }
   
-  const urlMatch = url.match(/https?:\/\/bsky\.app\/profile\/([^\/]+)\/post\/([^\/\?]+)/);
+  const urlMatch = url.match(/https?:\/\/bsky\.app\/profile\/([^/]+)\/post\/([^/?]+)/);
   if (urlMatch) {
     const handle = urlMatch[1];
     const postId = urlMatch[2];
@@ -373,7 +373,7 @@ export async function parseBlueskyUrl(url: string, agent: any): Promise<string> 
     return url;
   }
   
-  const urlMatch = url.match(/https?:\/\/bsky\.app\/profile\/([^\/]+)\/post\/([^\/\?]+)/);
+  const urlMatch = url.match(/https?:\/\/bsky\.app\/profile\/([^/]+)\/post\/([^/?]+)/);
   if (urlMatch) {
     const handle = urlMatch[1];
     const postId = urlMatch[2];
