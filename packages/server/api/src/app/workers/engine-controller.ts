@@ -11,9 +11,9 @@ import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
+import { serverEventBus } from '../websockets/websockets.service'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
-import { serverEventBus } from '../websockets/websockets.service'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 

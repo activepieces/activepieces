@@ -1,9 +1,9 @@
+import { EventEmitter } from 'events'
 import { exceptionHandler } from '@activepieces/server-shared'
 import { Principal, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
-import { EventEmitter } from 'events'
 
 export type WebsocketListener<T> = (socket: Socket) => (data: T) => Promise<void>
 

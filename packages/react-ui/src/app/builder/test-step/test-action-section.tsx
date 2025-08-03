@@ -82,25 +82,35 @@ const extractExternalFlowId = (step: Action): string | undefined => {
     return undefined;
   }
   const flow = step.settings.input['flow'];
-  if (typeof flow !== 'object' || flow === null || !('externalId' in flow) || step.settings.input['waitForResponse'] !== true) {
+  if (
+    typeof flow !== 'object' ||
+    flow === null ||
+    !('externalId' in flow) ||
+    step.settings.input['waitForResponse'] !== true
+  ) {
     return undefined;
   }
   return flow.externalId as string;
-}
+};
 
 const extractSubflowInput = (currentStep: Action) => {
-  const input = currentStep.type === ActionType.PIECE && !isNil(currentStep.settings.actionName) ? currentStep.settings.input : undefined
-  const flowPropsInput = input?.flowProps as { payload: Record<string, unknown> }
+  const input =
+    currentStep.type === ActionType.PIECE &&
+    !isNil(currentStep.settings.actionName)
+      ? currentStep.settings.input
+      : undefined;
+  const flowPropsInput = input?.flowProps as {
+    payload: Record<string, unknown>;
+  };
   if (isNil(flowPropsInput)) {
-    return
+    return;
   }
   const payload = {
     data: flowPropsInput.payload,
     callbackUrl: `MOCK`,
-  }
-  return payload
-}
-
+  };
+  return payload;
+};
 
 const TestStepSectionImplementation = React.memo(
   ({
@@ -130,8 +140,17 @@ const TestStepSectionImplementation = React.memo(
     const form = useFormContext<ActionWithoutNext>();
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const [mutationKey, setMutationKey] = useState<string[]>([]);
-    const returnResponseActionPattern = currentStep.type === ActionType.PIECE && !isNil(currentStep.settings.actionName) ? pieceActionNaming.constructActionName(currentStep.settings.pieceName, currentStep.settings.actionName) : undefined
-    const input = isSubFlowsCallFlow(currentStep) ? extractSubflowInput(currentStep) : undefined
+    const returnResponseActionPattern =
+      currentStep.type === ActionType.PIECE &&
+      !isNil(currentStep.settings.actionName)
+        ? pieceActionNaming.constructActionName(
+            currentStep.settings.pieceName,
+            currentStep.settings.actionName,
+          )
+        : undefined;
+    const input = isSubFlowsCallFlow(currentStep)
+      ? extractSubflowInput(currentStep)
+      : undefined;
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
         input,

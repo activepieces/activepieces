@@ -1,12 +1,11 @@
 import { CreateStepRunRequestBody, ExecutioOutputFile, GetSampleDataRequest, isNil, PrincipalType, ProjectId, SERVICE_KEY_SECURITY_OPENAPI, StepOutputStatus, StepRunResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { websocketService } from '../../websockets/websockets.service'
-import { flowService } from '../flow/flow.service'
-import { sampleDataService } from './sample-data.service'
-import { flowRunService } from '../flow-run/flow-run-service'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../../file/file.service'
-import { serverEventBus } from '../../websockets/websockets.service'
+import { serverEventBus, websocketService } from '../../websockets/websockets.service'
+import { flowService } from '../flow/flow.service'
+import { flowRunService } from '../flow-run/flow-run-service'
+import { sampleDataService } from './sample-data.service'
 
 export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) => {
     websocketService.addListener(WebsocketServerEvent.TEST_STEP_RUN, (socket) => {
@@ -103,7 +102,7 @@ async function callAnotherFlow(params: CallAnotherFlowParams) {
     const { externalFlowId, projectId, input, returnResponseActionPattern, log } = params
     const flow = await flowService(log).list({
         externalIds: [externalFlowId],
-        projectId: projectId,
+        projectId,
         cursorRequest: null,
         limit: 1,
         folderId: undefined,
@@ -114,7 +113,7 @@ async function callAnotherFlow(params: CallAnotherFlowParams) {
         throw new Error('Subflow is not found')
     }
     const flowRun = await flowRunService(log).test({
-        projectId: projectId,
+        projectId,
         flowVersionId: flow.data[0].version.id,
         payload: input,
         returnResponseActionPattern,
