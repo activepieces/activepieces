@@ -117,9 +117,10 @@ export enum AppSystemProp {
     LOKI_USERNAME = 'LOKI_USERNAME',
     AXIOM_DATASET = 'AXIOM_DATASET',
     AXIOM_TOKEN = 'AXIOM_TOKEN',
-
+    
     // OpenTelemetry
     OTEL_ENABLED = 'OTEL_ENABLED',
+    HYPERDX_TOKEN = 'HYPERDX_TOKEN',
 
     // Cloudflare
     CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN',
