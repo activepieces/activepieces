@@ -26,8 +26,7 @@ export const CreateStepRunRequestBody = Type.Object({
     flowVersionId: Type.String(),
     stepName: Type.String(),
     id: Type.String(),
-    input: Type.Unknown(),
-    externalFlowId: Type.Optional(Type.String()),
+    payload: Type.Unknown(),
     returnResponseActionPattern: Type.Optional(Type.String()),
 })
 

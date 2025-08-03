@@ -12,16 +12,10 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
             const principal = await websocketService.verifyPrincipal(socket)
             fastify.log.debug({ data }, '[Socket#testStepRun]')
             
-            const flowRun = data.externalFlowId ? await stepRunProgressHandler.executeSubflow({
-                externalFlowId: data.externalFlowId,
-                projectId: principal.projectId,
-                input: data.input,
-                returnResponseActionPattern: data.returnResponseActionPattern,
-                log: fastify.log,
-            }) : await flowRunService(fastify.log).test({
+            const flowRun = await flowRunService(fastify.log).test({
                 projectId: principal.projectId,
                 flowVersionId: data.flowVersionId,
-                payload: undefined,
+                payload: data.payload,
                 returnResponseActionPattern: data.returnResponseActionPattern,
             })
 

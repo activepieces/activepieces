@@ -77,22 +77,6 @@ const isSubFlowsCallFlow = (step: Action) => {
   );
 };
 
-const extractExternalFlowId = (step: Action): string | undefined => {
-  if (step.type !== ActionType.PIECE) {
-    return undefined;
-  }
-  const flow = step.settings.input['flow'];
-  if (
-    typeof flow !== 'object' ||
-    flow === null ||
-    !('externalId' in flow) ||
-    step.settings.input['waitForResponse'] !== true
-  ) {
-    return undefined;
-  }
-  return flow.externalId as string;
-};
-
 const extractSubflowInput = (currentStep: Action) => {
   const input =
     currentStep.type === ActionType.PIECE &&
@@ -148,13 +132,12 @@ const TestStepSectionImplementation = React.memo(
             currentStep.settings.actionName,
           )
         : undefined;
-    const input = isSubFlowsCallFlow(currentStep)
+    const payload = isSubFlowsCallFlow(currentStep)
       ? extractSubflowInput(currentStep)
       : undefined;
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
-        input,
-        externalFlowId: extractExternalFlowId(currentStep),
+        payload,
         returnResponseActionPattern,
         mutationKey,
         currentStep,
@@ -184,7 +167,7 @@ const TestStepSectionImplementation = React.memo(
       const testStepResponse = await flowRunsApi.testStep(socket, {
         flowVersionId,
         stepName: currentStep.name,
-        input: undefined,
+        payload: undefined,
       });
       const output = testStepResponse.output as PopulatedTodo;
       if (testStepResponse.success && !isNil(output)) {

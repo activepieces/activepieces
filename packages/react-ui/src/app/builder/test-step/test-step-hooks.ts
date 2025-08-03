@@ -242,8 +242,7 @@ export const testStepHooks = {
   },
   /**To reset the loading state of the mutation use a new mutation key, but to make sure sucess never gets called, use the abortSignal */
   useTestAction: ({
-    input,
-    externalFlowId,
+    payload,
     currentStep,
     setErrorMessage,
     setConsoleLogs,
@@ -252,8 +251,7 @@ export const testStepHooks = {
     mutationKey,
     returnResponseActionPattern,
   }: {
-    input: unknown;
-    externalFlowId?: string;
+    payload: unknown;
     currentStep: Action;
     setErrorMessage: ((msg: string | undefined) => void) | undefined;
     setConsoleLogs: ((logs: string | null) => void) | undefined;
@@ -279,9 +277,8 @@ export const testStepHooks = {
           {
             flowVersionId,
             stepName: currentStep.name,
-            externalFlowId,
             returnResponseActionPattern,
-            input,
+            payload,
           },
           (progress) => {
             if (params?.abortSignal?.aborted) {

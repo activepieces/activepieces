@@ -9,33 +9,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { fileService } from '../../file/file.service'
-import { flowService } from '../flow/flow.service'
 import { flowRunService } from '../flow-run/flow-run-service'
-
-async function executeSubflow(params: SubflowExecutionParams) {
-    const { externalFlowId, projectId, input, returnResponseActionPattern, log } = params
-    
-    const flowSearchResult = await flowService(log).list({
-        externalIds: [externalFlowId],
-        projectId,
-        cursorRequest: null,
-        limit: 1,
-        folderId: undefined,
-        status: undefined,
-        name: undefined,
-    })
-    
-    if (flowSearchResult.data.length === 0) {
-        throw new Error('Subflow not found')
-    }
-    
-    return flowRunService(log).test({
-        projectId,
-        flowVersionId: flowSearchResult.data[0].version.id,
-        payload: input,
-        returnResponseActionPattern,
-    })
-}
 
 function createProgressHandler(context: StepExecutionContext) {
     return async (progressEvent: FlowRunProgressEvent): Promise<void> => {
@@ -88,14 +62,6 @@ function createProgressHandler(context: StepExecutionContext) {
     }
 } 
 
-type SubflowExecutionParams = {
-    externalFlowId: string
-    projectId: ProjectId
-    input: unknown
-    returnResponseActionPattern: string | undefined
-    log: FastifyBaseLogger
-}
-
 type FlowRunProgressEvent = {
     runId: string
 }
@@ -110,7 +76,6 @@ type StepExecutionContext = {
 }
 
 export const stepRunProgressHandler = {
-    executeSubflow,
     createProgressHandler,
 }
 
