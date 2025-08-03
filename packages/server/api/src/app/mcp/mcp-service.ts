@@ -116,12 +116,13 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
 
     async update({ mcpId, token, name, tools, agentId }: UpdateParams): Promise<McpWithTools> {
         const enrichedTools = !isNil(tools) ? await Promise.all(tools.map(async (tool) => {
-            const existingToolId = await findToolId(mcpId, tool)
+            const existingTool = await findToolId(mcpId, tool)
             return {
                 ...tool,
-                id: existingToolId || apId(),
+                id: existingTool?.id || apId(),
+                externalId: existingTool?.externalId || apId(),
                 mcpId,
-                created: existingToolId ? undefined : dayjs().toISOString(),
+                created: existingTool ? undefined : dayjs().toISOString(),
                 updated: dayjs().toISOString(),
             }
         })) : undefined
@@ -198,7 +199,7 @@ async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogge
     }
 }
 
-async function findToolId(mcpId: ApId, tool: McpToolRequest) {
+async function findToolId(mcpId: ApId, tool: McpToolRequest): Promise<{ id: ApId, externalId: ApId } | undefined> {
     switch (tool.type) {
         case McpToolType.PIECE: {
             const result = await mcpToolRepo()
@@ -207,10 +208,10 @@ async function findToolId(mcpId: ApId, tool: McpToolRequest) {
                 .andWhere('mcp_tool.type = :type', { type: tool.type })
                 .andWhere('mcp_tool."pieceMetadata"->>\'actionName\' = :actionName', { actionName: tool.pieceMetadata?.actionName })
                 .getOne()
-            return result?.id
+            return result ? { id: result.id, externalId: result.externalId } : undefined
         }
         case McpToolType.FLOW: {
-            return mcpToolRepo().findOne({ where: { mcpId, type: tool.type, flowId: tool.flowId } }).then(tool => tool?.id)
+            return mcpToolRepo().findOne({ where: { mcpId, type: tool.type, flowId: tool.flowId } }).then(tool => tool ? { id: tool.id, externalId: tool.externalId } : undefined)
         }
     }
 }
