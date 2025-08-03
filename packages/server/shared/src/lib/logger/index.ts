@@ -3,9 +3,10 @@ import pino, { Level, Logger } from 'pino'
 import 'pino-loki'
 import { AxiomCredentials, createAxiomTransport } from './axiom-pino'
 import { createLokiTransport, LokiCredentials } from './loki-pino'
+import { HyperDXCredentials, createHyperDXTransport } from './hyperdx-pino'
 
 export const pinoLogging = {
-    initLogger: (loggerLevel: Level | undefined, logPretty: boolean, loki: LokiCredentials, axiom: AxiomCredentials): Logger => {
+    initLogger: (loggerLevel: Level | undefined, logPretty: boolean, loki: LokiCredentials, axiom: AxiomCredentials, hyperdx: HyperDXCredentials): Logger => {
         const level: Level = loggerLevel ?? 'info'
         const pretty = logPretty ?? false
 
@@ -34,6 +35,11 @@ export const pinoLogging = {
         const axiomLogger = createAxiomTransport(level, defaultTargets, axiom)
         if (axiomLogger) {
             return axiomLogger
+        }
+
+        const hyperdxLogger = createHyperDXTransport(level, defaultTargets, hyperdx)
+        if (hyperdxLogger) {
+            return hyperdxLogger
         }
 
         const lokiLogger = createLokiTransport(level, defaultTargets, loki)
