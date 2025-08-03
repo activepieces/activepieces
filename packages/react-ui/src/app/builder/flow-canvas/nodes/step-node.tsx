@@ -106,7 +106,7 @@ const ApStepCanvasNode = React.memo(
 
                 <div
                   className={cn(
-                    'items-center relative grou-hover:-mt-[2px]  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3',
+                    'items-center relative mt-0 transition-all  group-hover:-mt-[2px]  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3',
                     {},
                   )}
                   onClick={(e) => {
@@ -117,14 +117,14 @@ const ApStepCanvasNode = React.memo(
                 >
                   <div
                     className={cn(
-                      'bg-background flex items-center justify-center rounded-lg shadow-step-node group-hover:shadow-hovered-step-node  border  transition-all duration-150 ease-in group-hover:-translate-y-[2px]',
+                      'bg-white flex items-center justify-center rounded-lg shadow-step-node group-hover:shadow-hovered-step-node dark:group-hover:shadow-dark-hovered-step-node  transition-all ease-in group-hover-:mt-[2px]',
                       {
-                        'border-primary shadow-selected-step-node dark:shadow-selected-step-node-dark':
-                          isSelected,
                         'shadow-trigger-node border-slate-400':
                           isTrigger && !isSelected,
                         'rounded-full': isRoundedStep,
                         'bg-accent': isSkipped,
+                        'shadow-selected-step-node dark:border dark:border-primary dark:shadow-selected-step-node-dark group-hover:shadow-selected-step-node dark:group-hover:shadow-selected-step-node-dark':
+                          isSelected,
                       },
                     )}
                     style={{
@@ -244,11 +244,10 @@ const StepNodeImage = ({
   return (
     <div
       className={cn(
-        'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-white  border-box rounded-md border border-solid border-border/75',
+        'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-white  rounded-md  ',
         {
           'rounded-full': isRoundedStep,
-          'm-1 border-transparent rounded-sm size-[56px]  p-[4px] bg-white':
-            hasGradientBorder,
+          'm-1 rounded-sm size-[56px]  p-[4px] bg-white': hasGradientBorder,
           'bg-accent dark:bg-gray-300': isSkipped,
         },
       )}

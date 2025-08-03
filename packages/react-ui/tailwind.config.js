@@ -178,9 +178,10 @@ module.exports = {
         'rotate-gradient': 'rotate-gradient 5s ease-in-out infinite'
       },
       boxShadow: {
-        'selected-step-node': '0px 1px 1px 0px rgba(0, 0, 0, 0.01), 0px 1px 24px 0px rgba(0, 0, 0, 0.08), 0px 0px 0px 4px hsl(var(--primary)/0.1)',
-        'selected-step-node-dark': '0px 1px 1px 0px rgba(0, 0, 0, 0.01), 0px 1px 24px 0px rgba(0, 0, 0, 0.08), 0px 0px 0px 4px hsl(var(--primary)/0.5)',
+        'selected-step-node': '0px 1px 24px hsl(var(--primary)/0.2), 0px 0px 0px 2px hsl(var(--primary)), 0px 0px 0px 6px hsl(var(--primary)/0.12)',
+        'selected-step-node-dark': '0px 1px 24px hsl(var(--primary)), 0px 0px 0px 2px hsl(var(--primary)), 0px 0px 0px 6px hsl(var(--primary)/0.25)',
         'hovered-step-node': '0px 0px 0px 1px rgba(0, 0, 0, 0.08), 0px 2px 24px rgba(0, 0, 0, 0.16), 0px 0px 2px rgba(0, 0, 0, 0.2)',
+        'dark-hovered-step-node': '0px 0px 0px 1px rgba(255, 255, 255, 0.08), 0px 2px 24px rgba(255, 255, 255, 0.16), 0px 0px 2px rgba(255, 255, 255, 0.2)',
         'add-button': 'var(--add-button-shadow)',
         'step-node': '0px 1px 24px rgba(0, 0, 0, 0.08), 0px 0px 0px 1px rgba(0, 0, 0, 0.08), 0px 1px 1px rgba(0, 0, 0, 0.12)',
         'trigger-node': ' 0px 1px 1px 0px #0000001F, 0px 1px 24px 0px #00000014, 0px 0px 0px 3px #94A3B833',

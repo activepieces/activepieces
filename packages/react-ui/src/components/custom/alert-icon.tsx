@@ -10,6 +10,8 @@ export const InvalidStepIcon = createLucideIcon('InvalidStepIcon', [
       fill: 'hsl(var(--warning-100))',
       fillOpacity: '1',
       key: 'circle',
+      stroke: 'hsl(var(--warning)/0.3)',
+      strokeWidth: '1px',
     },
   ],
   [

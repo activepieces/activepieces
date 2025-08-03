@@ -88,7 +88,7 @@ const ApStepNodeStatus = ({
             <InvalidStepIcon
               size={20}
               viewBox="0 0 16 15"
-              className="stroke-0 animate-fade drop-shadow-lg"
+              className="stroke-0 animate-fade "
             ></InvalidStepIcon>
           </TooltipTrigger>
           <TooltipContent side="bottom">
