@@ -51,36 +51,6 @@ export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
 
 export const flowRunService = (log: FastifyBaseLogger) => ({
-    async getOrCreate({
-        existingFlowRunId,
-        projectId,
-        flowId,
-        flowVersionId,
-        flowDisplayName,
-        environment,
-        parentRunId,
-        failParentOnFailure,
-    }: CreateParams): Promise<FlowRun> {
-        if (existingFlowRunId) {
-            return flowRunService(log).getOneOrThrow({
-                id: existingFlowRunId,
-                projectId,
-            })
-        }
-
-        return flowRunRepo().save({
-            id: apId(),
-            projectId,
-            flowId,
-            flowVersionId,
-            environment,
-            flowDisplayName,
-            startTime: new Date().toISOString(),
-            parentRunId,
-            failParentOnFailure: failParentOnFailure ?? true,
-            status: FlowRunStatus.QUEUED,
-        })
-    },
     async list({
         projectId,
         flowId,
@@ -287,7 +257,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
         })
 
-        const flowRun = await this.getOrCreate({
+        const flowRun = await getOrCreate({
             existingFlowRunId,
             projectId: flow.projectId,
             flowId: flowVersion.flowId,
@@ -296,6 +266,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             flowDisplayName: flowVersion.displayName,
             parentRunId,
             failParentOnFailure,
+            log,
         })
 
         const priority = await getJobPriority(synchronousHandlerId)
@@ -547,6 +518,38 @@ function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: st
     }
 }
 
+async function getOrCreate({
+    existingFlowRunId,
+    projectId,
+    flowId,
+    flowVersionId,
+    flowDisplayName,
+    environment,
+    parentRunId,
+    failParentOnFailure,
+    log,
+}: GetOrCreateParams): Promise<FlowRun> {
+    if (existingFlowRunId) {
+        return flowRunService(log).getOneOrThrow({
+            id: existingFlowRunId,
+            projectId,
+        })
+    }
+
+    return flowRunRepo().save({
+        id: apId(),
+        projectId,
+        flowId,
+        flowVersionId,
+        environment,
+        flowDisplayName,
+        startTime: new Date().toISOString(),
+        parentRunId,
+        failParentOnFailure: failParentOnFailure ?? true,
+        status: FlowRunStatus.QUEUED,
+    })
+}
+
 type UpdateLogs = {
     flowRunId: FlowRunId
     logsFileId: string | undefined
@@ -570,7 +573,7 @@ type FinishParams = {
     failedStepName?: string | undefined
 }
 
-type CreateParams = {
+type GetOrCreateParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
     parentRunId?: FlowRunId
@@ -579,6 +582,7 @@ type CreateParams = {
     flowId: FlowId
     flowDisplayName: string
     environment: RunEnvironment
+    log: FastifyBaseLogger
 }
 
 type ListParams = {
