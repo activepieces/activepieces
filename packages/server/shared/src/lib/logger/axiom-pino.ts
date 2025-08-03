@@ -1,4 +1,5 @@
 import { Level, Logger, pino, TransportTargetOptions } from 'pino'
+import '@axiomhq/pino'
 
 export type AxiomCredentials = {        
     dataset: string | undefined
