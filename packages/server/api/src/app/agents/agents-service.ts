@@ -1,4 +1,4 @@
-import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AIUsageFeature, apId, createAIProvider, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AIUsageFeature, apId, createAIProvider, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, PopulatedAgent, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -28,6 +28,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         const mcp = await mcpService(log).create({
             name: params.displayName,
             projectId: params.projectId,
+            externalId: params.mcpExternalId,
         })
         const id = apId()
         const { description, displayName, systemPrompt } = await this.enhanceAgentPrompt({ platformId: params.platformId, projectId: params.projectId, systemPrompt: params.systemPrompt, agentId: id })
@@ -37,14 +38,14 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             description,
             systemPrompt,
             platformId: params.platformId,
-            profilePictureUrl: getAgentProfilePictureUrl(),
-            testPrompt: '',
+            profilePictureUrl: params.profilePictureUrl ?? getAgentProfilePictureUrl(),
+            testPrompt: params.testPrompt ?? '',
             maxSteps: 10,
             projectId: params.projectId,
-            externalId: apId(),
+            externalId: params.externalId ?? apId(),
             mcpId: mcp.id,
-            outputType: AgentOutputType.NO_OUTPUT,
-            outputFields: [],
+            outputType: params.outputType ?? AgentOutputType.NO_OUTPUT,
+            outputFields: params.outputFields ?? [],
         }
         const agent = await agentRepo().save(agentPayload)
         await mcpService(log).update({
@@ -172,6 +173,28 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             cursor,
         )
     },
+    async getAllPopulated(projectId: string): Promise<PopulatedAgent[]> {
+        const querySelector: Record<string, string | FindOperator<string>> = {
+            projectId: Equal(projectId),
+        }
+        const queryBuilder = agentRepo()
+            .createQueryBuilder('agent')
+            .where(querySelector)
+
+        const agentsInTable = await tableService.getAllAgentIds({ projectId })        
+        queryBuilder.andWhere({
+            id: Not(In(agentsInTable)),
+        })
+
+        const agents = await queryBuilder.getMany()
+        return Promise.all(agents.map(async (agent) => {
+            const mcp = await mcpService(log).getOrThrow({ mcpId: agent.mcpId, projectId })
+            return {
+                ...agent,
+                mcp,
+            }
+        }))
+    },
 })
 
 async function enrichAgent(agent: Omit<Agent, 'runCompleted'>, log: FastifyBaseLogger): Promise<Agent> {
@@ -212,6 +235,7 @@ type ListParams = {
     projectId: string
     limit: number
     cursorRequest: Cursor
+
 }
 
 type CreateParams = {
@@ -220,6 +244,12 @@ type CreateParams = {
     systemPrompt: string
     platformId: string
     projectId: string
+    profilePictureUrl?: string
+    testPrompt?: string
+    outputType?: AgentOutputType
+    outputFields?: AgentOutputField[]
+    externalId?: string
+    mcpExternalId?: string
 }
 
 type UpdateParams = {
