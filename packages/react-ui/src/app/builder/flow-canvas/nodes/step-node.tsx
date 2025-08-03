@@ -106,7 +106,7 @@ const ApStepCanvasNode = React.memo(
 
                 <div
                   className={cn(
-                    'items-center relative mt-0 transition-all  group-hover:-mt-[2px]  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3',
+                    'items-center relative transition-all  group-hover:-top-[2px]  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3',
                     {},
                   )}
                   onClick={(e) => {
