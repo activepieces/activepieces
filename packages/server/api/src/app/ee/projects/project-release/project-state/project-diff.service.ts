@@ -1,4 +1,4 @@
-import { ActionType, AgentOperation, AgentOperationType, AgentState, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, FieldType, flowPieceUtil, FlowProjectOperationType, flowStructureUtil, FlowVersion, isNil, McpOperation, McpOperationType, McpState, PopulatedFlow, ProjectOperation, ProjectState, Step, TableOperation, TableOperationType, TableState, TriggerType } from '@activepieces/shared'
+import { ActionType, AgentOperation, AgentOperationType, AgentState, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, FieldType, flowPieceUtil, FlowProjectOperationType, flowStructureUtil, FlowVersion, isNil, McpOperation, McpOperationType, McpState, McpToolType, PopulatedFlow, ProjectOperation, ProjectState, Step, TableOperation, TableOperationType, TableState, TriggerType } from '@activepieces/shared'
 import semver from 'semver'
 
 export const projectDiffService = {
@@ -95,9 +95,32 @@ function isAgentChanged(stateOne: AgentState, stateTwo: AgentState): boolean {
     return fieldsToCompare.some(field => JSON.stringify(stateOne[field]) !== JSON.stringify(stateTwo[field])) || isMcpChanged(stateOne.mcp, stateTwo.mcp)
 }
 
-// TODO: compare tools
 function isMcpChanged(stateOne: McpState, stateTwo: McpState): boolean {
-    return stateOne.name !== stateTwo.name
+    if (stateOne.name !== stateTwo.name) {
+        return true
+    }
+
+    const toolsOne = stateOne.tools || []
+    const toolsTwo = stateTwo.tools || []
+
+    for (const tool of toolsOne) {
+        const matchingTool = toolsTwo.find(t => t.externalId === tool.externalId)
+        if (!matchingTool || JSON.stringify(tool?.toolName) !== JSON.stringify(matchingTool?.toolName) || JSON.stringify(tool?.type) !== JSON.stringify(matchingTool?.type)) {
+            return true
+        }
+        if (tool.type === McpToolType.PIECE && matchingTool.type === McpToolType.PIECE && JSON.stringify(tool?.pieceMetadata) !== JSON.stringify(matchingTool?.pieceMetadata)) {
+            return true
+        }
+    }
+
+    for (const tool of toolsTwo) {
+        const matchingTool = toolsOne.find(t => t.externalId === tool.externalId)
+        if (!matchingTool) {
+            return true
+        }
+    }
+
+    return false
 }
 
 function getFlowConnections(currentState: ProjectState, newState: ProjectState): ConnectionOperation[] {

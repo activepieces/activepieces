@@ -140,7 +140,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             .createQueryBuilder('agent')
             .where(querySelector)
 
-        const agentsInTable = await tableService.getAllAgentIds({ projectId })
+        const agentsInTable = await tableService.getAllAgentIds({ projectId })        
         queryBuilder.andWhere({
             id: Not(In(agentsInTable)),
         })
