@@ -49,6 +49,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
             },
         },
     }) 
+    
     await app.register(fastifyFavicon)
     await app.register(fastifyMultipart, {
         attachFieldsToBody: 'keyValues',

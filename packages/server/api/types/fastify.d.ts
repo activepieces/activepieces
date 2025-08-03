@@ -22,5 +22,6 @@ declare module 'fastify' {
         skipAuth?: boolean
         scope?: EndpointScope
         permission?: Permission
+        otel?: boolean
     }
 }
