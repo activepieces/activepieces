@@ -1,4 +1,4 @@
-import { Pencil } from 'lucide-react';
+import { Pencil, Activity } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ interface AgentCardProps {
   description: string;
   onDelete?: () => Promise<void>;
   onDescriptionChange?: (newDescription: string) => Promise<void>;
+  runCompleted: number;
 }
 
 export const AgentCard: React.FC<AgentCardProps> = ({
@@ -21,6 +22,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
   description,
   onDelete,
   onDescriptionChange,
+  runCompleted,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedDescription, setEditedDescription] = useState(description);
@@ -34,11 +36,11 @@ export const AgentCard: React.FC<AgentCardProps> = ({
 
   return (
     <div className="flex flex-col">
-      <Card className="w-full h-[100px] cursor-pointer hover:border-gray-400 transition-colors duration-200 flex flex-col justify-between">
-        <CardContent className="p-4 flex flex-col h-full">
+      <Card className="w-full cursor-pointer hover:border-gray-400 transition-colors duration-200 flex flex-col justify-between">
+        <CardContent className="px-4 py-2 flex flex-col h-full">
           <div className="flex gap-4 items-center">
             <div className="flex-shrink-0">
-              <div className="w-14 h-14  overflow-hidden">
+              <div className="w-16 h-16  overflow-hidden">
                 <img
                   src={picture}
                   alt={title}
@@ -89,10 +91,16 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                   </Button>
                 </div>
               ) : (
-                <div className="text-left text-sm text-muted-foreground overflow-hidden line-clamp-2 min-h-[2.5em]">
+                <div className="text-left text-xs text-muted-foreground overflow-hidden line-clamp-2 min-h-[2.5em]">
                   {description}
                 </div>
               )}
+              <div className="flex items-center gap-2 ">
+                <Activity className="h-4 w-4 text-success" />
+                <span className="text-xs font-medium">
+                  Task Completed: {runCompleted}
+                </span>
+              </div>
             </div>
           </div>
         </CardContent>

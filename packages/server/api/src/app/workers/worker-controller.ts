@@ -112,7 +112,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             body: SubmitPayloadsRequest,
         },
     }, async (request) => {
-        const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType, environment } = request.body
+        const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType, environment, parentRunId, failParentOnFailure } = request.body
 
         const flowVersionExists = await flowVersionService(request.log).exists(flowVersionId)
         if (!flowVersionExists) {
@@ -122,8 +122,8 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             flowVersionId,
             payloads,
         )
-        const createFlowRuns = filterPayloads.map((payload) =>
-            flowRunService(request.log).start({
+        const createFlowRuns = filterPayloads.map((payload) =>{
+            return  flowRunService(request.log).start({
                 environment,
                 flowVersionId,
                 payload,
@@ -133,8 +133,10 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
                 executionType: ExecutionType.BEGIN,
                 progressUpdateType,
                 executeTrigger: false,
-            }),
-        )
+                parentRunId,
+                failParentOnFailure,
+            })
+        })
         return Promise.all(createFlowRuns)
     })
 
@@ -147,6 +149,10 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (request) => {
         const data = request.body
+        const flowRun = await flowRunService(request.log).getOneOrThrow({
+            id: data.runId,
+            projectId: data.projectId,
+        })
         await flowRunService(request.log).start({
             payload: null,
             existingFlowRunId: data.runId,
@@ -158,6 +164,8 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             httpRequestId: data.httpRequestId,
             environment: RunEnvironment.PRODUCTION,
             progressUpdateType: data.progressUpdateType ?? ProgressUpdateType.NONE,
+            parentRunId: flowRun.parentRunId,
+            failParentOnFailure: flowRun.failParentOnFailure,
         })
     })
 
@@ -261,6 +269,7 @@ async function getProjectIdAndPlatformId(queueName: QueueName, job: JobData): Pr
     platformId: string
 }> {
     switch (queueName) {
+        case QueueName.AGENTS:
         case QueueName.ONE_TIME:
         case QueueName.WEBHOOK:
         case QueueName.SCHEDULED: {

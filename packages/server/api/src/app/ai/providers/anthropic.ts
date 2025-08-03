@@ -39,4 +39,4 @@ export const anthropicProvider: AIProviderStrategy = {
         const body = request.body as { stream?: boolean }
         return body.stream ?? false
     },
-} 
+}

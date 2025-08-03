@@ -435,6 +435,10 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/balwant1707"><img src="https://avatars.githubusercontent.com/u/17769387?v=4?s=100" width="100px;" alt="Balwant Singh"/><br /><sub><b>Balwant Singh</b></sub></a><br /><a href="#plugin-balwant1707" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ravikiranvm"><img src="https://avatars.githubusercontent.com/u/36404296?v=4?s=100" width="100px;" alt="Ravi Kiran Vallamkonda"/><br /><sub><b>Ravi Kiran Vallamkonda</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=ravikiranvm" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/owuzo"><img src="https://avatars.githubusercontent.com/u/173556464?v=4?s=100" width="100px;" alt="Owuzo Joy"/><br /><sub><b>Owuzo Joy</b></sub></a><br /><a href="#plugin-owuzo" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/helenedurand-smet"><img src="https://avatars.githubusercontent.com/u/206527847?v=4?s=100" width="100px;" alt="helenedurand-smet"/><br /><sub><b>helenedurand-smet</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=helenedurand-smet" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 

@@ -2,15 +2,17 @@
 import { DelayedJobData, RenewWebhookJobData, RepeatableJobType, RepeatingJobData, ScheduledJobData } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, FlowVersion, ProgressUpdateType, RunEnvironment, TriggerPayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { engineApiService, workerApiService } from '../api/server-api.service'
+import { flowWorkerCache } from '../api/flow-worker-cache'
+import { workerApiService } from '../api/server-api.service'
 import { triggerHooks } from './trigger/hooks/trigger-consumer'
 
 export const repeatingJobExecutor = (log: FastifyBaseLogger) => ({
     async executeRepeatingJob({ data, engineToken, workerToken }: Params): Promise<void> {
         const { flowVersionId, jobType } = data
 
-        const populatedFlow = await engineApiService(engineToken, log).getFlowWithExactPieces({
-            versionId: flowVersionId,
+        const populatedFlow = await flowWorkerCache(log).getFlow({
+            engineToken,
+            flowVersionId,
         })
         const flowVersion = populatedFlow?.version ?? null
         assertNotNullOrUndefined(flowVersion, 'flowVersion')
@@ -35,6 +37,7 @@ const consumePieceTrigger = async (data: RepeatingJobData, flowVersion: FlowVers
         flowVersion,
         payload: {} as TriggerPayload,
         simulate: false,
+        throwErrorOnFailure: false,
     })
     await workerApiService(workerToken).startRuns({
         flowVersionId: data.flowVersionId,
