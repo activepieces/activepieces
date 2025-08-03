@@ -41,18 +41,13 @@ export const createContact = createAction({
       required: false,
       defaultValue: false,
     }),
-    owner: Property.Json({
-      displayName: 'Owner',
-      description: 'The owner of the contact record',
-      required: false,
-    }),
-    // owner: userIdDropdown,
+    owner: userIdDropdown,
     accountName: Property.Json({
       displayName: 'Account Name',
       description: 'Associated account (object with id)',
       required: false,
     }),
-    tag: Property.Json({
+    tag: Property.Array({
       displayName: 'Tag',
       description: 'Tags for the contact (array of objects with name property)',
       required: false,
@@ -131,7 +126,7 @@ export const createContact = createAction({
 
     return {
       message: 'Contact created successfully',
-      data: response.data[0] || response.data
-    }; 
+      data: response.data[0] || response.data,
+    };
   },
 });

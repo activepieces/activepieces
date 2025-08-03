@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
+import { userIdDropdown } from '../common/props';
 
 export const createPipelineRecord = createAction({
   auth: biginAuth,
@@ -9,29 +10,12 @@ export const createPipelineRecord = createAction({
   displayName: 'Create Pipeline Record',
   description: 'Create a new pipeline record (deal) in Bigin',
   props: {
-    owner: Property.Json({
-      displayName: 'Owner',
-      description:
-        'The ID of the owner to which the pipeline record (deal) will be assigned. You can get the owner ID (or user ID) from the Get users data API.',
-      required: false,
-    }),
     dealName: Property.ShortText({
       displayName: 'Deal Name',
       description: 'Provide the name for the pipeline record (deal)',
       required: true,
     }),
-    accountName: Property.Json({
-      displayName: 'Account Name',
-      description:
-        'The ID of the company to which the pipeline record (deal) will be associated. You can get the company ID from the Get records API.',
-      required: false,
-    }),
-    contactName: Property.Json({
-      displayName: 'Contact Name',
-      description:
-        'The ID of the contact to which the pipeline record (deal) will be assigned. You can get the contact ID from the Get records API.',
-      required: false,
-    }),
+
     subPipeline: Property.ShortText({
       displayName: 'Sub Pipeline',
       description:
@@ -43,6 +27,19 @@ export const createPipelineRecord = createAction({
       description:
         'Provide the current stage of the pipeline record (deal) within the Sub-Pipeline',
       required: true,
+    }),
+    owner: userIdDropdown,
+    accountName: Property.Json({
+      displayName: 'Account Name',
+      description:
+        'The ID of the company to which the pipeline record (deal) will be associated. You can get the company ID from the Get records API.',
+      required: false,
+    }),
+    contactName: Property.Json({
+      displayName: 'Contact Name',
+      description:
+        'The ID of the contact to which the pipeline record (deal) will be assigned. You can get the contact ID from the Get records API.',
+      required: false,
     }),
     amount: Property.Number({
       displayName: 'Amount',

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
+import { userIdDropdown } from '../common/props';
 
 export const createCompany = createAction({
   auth: biginAuth,
@@ -9,12 +10,6 @@ export const createCompany = createAction({
   displayName: 'Create Company',
   description: 'Create a new company record in Bigin',
   props: {
-    owner: Property.Json({
-      displayName: 'Owner',
-      description:
-        'The ID of the owner to which the company record will be assigned. You can get the owner ID (or user ID) from the Get users data API.',
-      required: false,
-    }),
     accountName: Property.ShortText({
       displayName: 'Account Name',
       description: 'Provide the name of the company',
@@ -30,7 +25,7 @@ export const createCompany = createAction({
       description: 'Provide a website URL for the company',
       required: false,
     }),
-    tag: Property.Json({
+    tag: Property.Array({
       displayName: 'Tag',
       description:
         'Provide the list of tags that can be associated with the company. You can get the list of tags from the Get all tags API',
@@ -42,6 +37,7 @@ export const createCompany = createAction({
         'Provide additional descriptions or notes related to the company',
       required: false,
     }),
+    owner: userIdDropdown,
     billingStreet: Property.ShortText({
       displayName: 'Billing Street',
       description: 'The street address of the company',

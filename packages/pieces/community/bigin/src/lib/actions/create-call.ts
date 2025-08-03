@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
+import { userIdDropdown } from '../common/props';
 
 export const createCall = createAction({
   auth: biginAuth,
@@ -31,16 +32,56 @@ export const createCall = createAction({
         ],
       },
     }),
-    owner: Property.Json({
-      displayName: 'Owner',
-      description: 'The owner of the call record',
-      required: false,
-    }),
+    owner: userIdDropdown,
     contactName: Property.ShortText({
       displayName: 'Contact ID',
-      description:
-        'The ID of the contact to which the call record is associated. You can get the contact ID from the Get records API.',
+      description: 'The ID of the contact to which the call record is associated. You can get the contact ID from the Get records API.',
       required: false,
+    }),
+    subject: Property.ShortText({
+      displayName: 'Subject',
+      description: 'Subject of the call',
+      required: false,
+    }),
+    description: Property.LongText({
+      displayName: 'Description',
+      description: 'Description or notes about the call',
+      required: false,
+    }),
+    callResult: Property.ShortText({
+      displayName: 'Call Result',
+      description: 'The result or outcome of the call',
+      required: false,
+    }),
+    callPurpose: Property.StaticDropdown({
+      displayName: 'Call Purpose',
+      description: 'The purpose of the call',
+      required: false,
+      options: {
+        options: [
+          { label: 'Administrative', value: 'Administrative' },
+          { label: 'Sales', value: 'Sales' },
+          { label: 'Support', value: 'Support' },
+          { label: 'Follow-up', value: 'Follow-up' },
+        ],
+      },
+    }),
+    reminder: Property.ShortText({
+      displayName: 'Reminder',
+      description: 'Reminder time (e.g., "10 mins", "1 hour")',
+      required: false,
+    }),
+    billable: Property.Checkbox({
+      displayName: 'Billable',
+      description: 'Whether this call is billable',
+      required: false,
+      defaultValue: false,
+    }),
+    sendNotification: Property.Checkbox({
+      displayName: 'Send Notification',
+      description: 'Whether to send notification for this call',
+      required: false,
+      defaultValue: false,
     }),
     relatedTo: Property.ShortText({
       displayName: 'Related To',
@@ -52,26 +93,9 @@ export const createCall = createAction({
       description: 'The module this call is related to',
       required: false,
     }),
-    subject: Property.Json({
-      displayName: 'Subject',
-      description: 'Subject of the call (array format)',
-      required: false,
-    }),
-    description: Property.Checkbox({
-      displayName: 'Description',
-      description: 'Call description flag',
-      required: false,
-      defaultValue: false,
-    }),
     callAgenda: Property.Checkbox({
       displayName: 'Call Agenda',
       description: 'Whether call has an agenda',
-      required: false,
-      defaultValue: false,
-    }),
-    reminder: Property.Checkbox({
-      displayName: 'Reminder',
-      description: 'Set reminder for this call',
       required: false,
       defaultValue: false,
     }),
@@ -109,22 +133,18 @@ export const createCall = createAction({
 
     // Add optional fields if provided
     if (context.propsValue.owner) body['Owner'] = context.propsValue.owner;
-    if (context.propsValue.contactName)
-      body['Contact_Name'] = context.propsValue.contactName;
-    if (context.propsValue.relatedTo)
-      body['Related_To'] = context.propsValue.relatedTo;
-    if (context.propsValue.relatedModule)
-      body['$related_module'] = context.propsValue.relatedModule;
-    if (context.propsValue.subject)
-      body['Subject'] = context.propsValue.subject;
-    if (context.propsValue.description)
-      body['Description'] = context.propsValue.description;
-    if (context.propsValue.callAgenda)
-      body['Call_Agenda'] = context.propsValue.callAgenda;
-    if (context.propsValue.reminder)
-      body['Reminder'] = context.propsValue.reminder;
-    if (context.propsValue.dialledNumber)
-      body['Dialled_Number'] = context.propsValue.dialledNumber;
+    if (context.propsValue.contactName) body['Contact_Name'] = context.propsValue.contactName;
+    if (context.propsValue.subject) body['Subject'] = context.propsValue.subject;
+    if (context.propsValue.description) body['Description'] = context.propsValue.description;
+    if (context.propsValue.callResult) body['Call_Result'] = context.propsValue.callResult;
+    if (context.propsValue.callPurpose) body['Call_Purpose'] = context.propsValue.callPurpose;
+    if (context.propsValue.reminder) body['Reminder'] = context.propsValue.reminder;
+    if (context.propsValue.billable !== undefined) body['Billable'] = context.propsValue.billable;
+    if (context.propsValue.sendNotification !== undefined) body['send_notification'] = context.propsValue.sendNotification;
+    if (context.propsValue.relatedTo) body['Related_To'] = context.propsValue.relatedTo;
+    if (context.propsValue.relatedModule) body['$related_module'] = context.propsValue.relatedModule;
+    if (context.propsValue.callAgenda) body['Call_Agenda'] = context.propsValue.callAgenda;
+    if (context.propsValue.dialledNumber) body['Dialled_Number'] = context.propsValue.dialledNumber;
     if (context.propsValue.tag) body['Tag'] = context.propsValue.tag;
 
     const response = await makeRequest(
@@ -136,9 +156,6 @@ export const createCall = createAction({
       }
     );
 
-    return {
-      message: 'Call created successfully',
-      data: response.data[0],
-    };
+    return response;
   },
 });

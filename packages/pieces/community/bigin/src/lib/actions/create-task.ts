@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
+import { userIdDropdown } from '../common/props';
 
 export const createTask = createAction({
   auth: biginAuth,
@@ -9,17 +10,12 @@ export const createTask = createAction({
   displayName: 'Create Task',
   description: 'Create a new task record in Bigin',
   props: {
-    owner: Property.Json({
-      displayName: 'Owner',
-      description:
-        'The ID of the owner to which the task record will be assigned. You can get the owner ID (or user ID) from the Get users data API.',
-      required: false,
-    }),
     subject: Property.ShortText({
       displayName: 'Subject',
       description: 'Provide the subject or title of the task',
       required: true,
     }),
+    owner: userIdDropdown,
     dueDate: Property.ShortText({
       displayName: 'Due Date',
       description: 'Provide the due date of the task (YYYY-MM-DD format)',
@@ -84,7 +80,7 @@ export const createTask = createAction({
         ],
       },
     }),
-    tag: Property.Json({
+    tag: Property.Array({
       displayName: 'Tag',
       description:
         'Provide the list of tags that can be associated with the task. You can get the list of tags from the Get all tags API',

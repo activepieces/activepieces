@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
+import { formatDateTime, userIdDropdown } from '../common/props';
 
 export const createEvent = createAction({
   auth: biginAuth,
@@ -9,12 +10,6 @@ export const createEvent = createAction({
   displayName: 'Create Event',
   description: 'Create a new event record in Bigin',
   props: {
-    owner: Property.Json({
-      displayName: 'Owner',
-      description:
-        'The ID of the owner to which the event record will be assigned. You can get the owner ID (or user ID) from the Get users data API.',
-      required: false,
-    }),
     eventTitle: Property.ShortText({
       displayName: 'Event Title',
       description: 'Provide the title or name of the event',
@@ -30,6 +25,7 @@ export const createEvent = createAction({
       description: 'Provide the end date and time (ISO8601) of the event',
       required: true,
     }),
+    owner: userIdDropdown,
     allDay: Property.Checkbox({
       displayName: 'All Day',
       description: 'Provide whether the event is an all-day event',
@@ -77,7 +73,7 @@ export const createEvent = createAction({
         'Provide additional descriptions or notes related to the event',
       required: false,
     }),
-    tag: Property.Json({
+    tag: Property.Array({
       displayName: 'Tag',
       description:
         'Provide the list of tags that can be associated with the event. You can get the list of tags from the Get all tags API',
@@ -85,16 +81,6 @@ export const createEvent = createAction({
     }),
   },
   async run(context) {
-    // Format datetime for Bigin API
-    const formatDateTime = (dateTime: string | Date): string => {
-      if (typeof dateTime === 'string') {
-        return dateTime.replace('.000Z', '+00:00');
-      } else {
-        const date = new Date(dateTime);
-        return date.toISOString().replace('.000Z', '+00:00');
-      }
-    };
-
     const body: Record<string, unknown> = {
       Event_Title: context.propsValue.eventTitle,
       Start_DateTime: formatDateTime(context.propsValue.startDateTime),

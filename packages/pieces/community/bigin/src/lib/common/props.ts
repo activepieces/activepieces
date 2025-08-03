@@ -2,6 +2,15 @@ import { Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
+export const formatDateTime = (dateTime: string | Date): string => {
+  if (typeof dateTime === 'string') {
+    return dateTime.replace('.000Z', '+00:00');
+  } else {
+    const date = new Date(dateTime);
+    return date.toISOString().replace('.000Z', '+00:00');
+  }
+};
+
 export const userIdDropdown = Property.Dropdown({
   displayName: 'User ID',
   description: 'Select the user ',
