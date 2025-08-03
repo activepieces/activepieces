@@ -1,4 +1,4 @@
-import { CreateStepRunRequestBody, GetSampleDataRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { CreateStepRunRequestBody, GetSampleDataRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { serverEventBus, websocketService } from '../../websockets/websockets.service'
 import { flowService } from '../flow/flow.service'
@@ -27,7 +27,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
 
             const onProgress = stepRunProgressHandler.createProgressHandler({
                 socket,
-                principal,
+                projectId: principal.projectId,
                 logger: fastify.log,
                 stepName: data.stepName,
                 requestId: data.id,

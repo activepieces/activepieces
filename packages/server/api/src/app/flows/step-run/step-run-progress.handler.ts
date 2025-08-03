@@ -4,12 +4,13 @@ import {
     ProjectId, 
     StepOutputStatus, 
     StepRunResponse,
-    WebsocketClientEvent
+    WebsocketClientEvent,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../../file/file.service'
 import { flowService } from '../flow/flow.service'
 import { flowRunService } from '../flow-run/flow-run-service'
+import { Socket } from 'socket.io'
 
 async function executeSubflow(params: SubflowExecutionParams) {
     const { externalFlowId, projectId, input, returnResponseActionPattern, log } = params
@@ -28,7 +29,7 @@ async function executeSubflow(params: SubflowExecutionParams) {
         throw new Error('Subflow not found')
     }
     
-    return await flowRunService(log).test({
+    return flowRunService(log).test({
         projectId,
         flowVersionId: flowSearchResult.data[0].version.id,
         payload: input,
@@ -38,7 +39,7 @@ async function executeSubflow(params: SubflowExecutionParams) {
 
 function createProgressHandler(context: StepExecutionContext) {
     return async (progressEvent: FlowRunProgressEvent): Promise<void> => {
-        const { socket, principal, logger, stepName, requestId } = context
+        const { socket, projectId, logger, stepName, requestId } = context
         
         if (progressEvent.runId !== context.runId) {
             return
@@ -47,7 +48,7 @@ function createProgressHandler(context: StepExecutionContext) {
         try {
             const flowRun = await flowRunService(logger).getOneOrThrow({
                 id: progressEvent.runId,
-                projectId: principal.projectId,
+                projectId,
             })
             
             if (isNil(flowRun.logsFileId)) {
@@ -100,8 +101,8 @@ type FlowRunProgressEvent = {
 }
 
 type StepExecutionContext = {
-    socket: any
-    principal: any
+    socket: Socket
+    projectId: ProjectId
     logger: FastifyBaseLogger
     stepName: string
     requestId: string
