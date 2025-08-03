@@ -1,11 +1,29 @@
+version: '3.8'
+
+networks:
+  activepieces:
+    driver: bridge
+
 services:
+  app:
+    privileged: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspace:cached
+    networks:
+      - activepieces
+    command: sleep infinity
+
   db:
     image: postgres:14.4
     environment:
       POSTGRES_DB: activepieces
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: A79Vm5D4p2VQHOp2gd5
-
+      POSTGRES_PASSWORD: 123
+    networks:
+      - activepieces
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -13,10 +31,25 @@ services:
 
   redis:
     image: redis:7.0.7
+    networks:
+      - activepieces
     volumes:
       - redis_data:/data
     ports:
       - "6379:6379"
+
+  activepieces:
+    image: activepieces/activepieces:latest
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgres://postgres:123@db:5432/activepieces
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3000:80"
+    networks:
+      - activepieces
 
 volumes:
   postgres_data:

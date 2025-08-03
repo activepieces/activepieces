@@ -5,34 +5,12 @@ networks:
     driver: bridge
 
 services:
-  app:
-    privileged: true
-    build:
-      context: .
-      dockerfile: Dockerfile
-
-    volumes:
-      - ..:/workspace:cached
-
-    # Connect the app to the same network as db and redis
-    networks:
-      - activepieces
-
-    # Overrides default command so things don't shut down after the process ends.
-    command: sleep infinity
-
-    # Uncomment the next line to use a non-root user for all processes.
-    # user: node
-
-    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
-    # (Adding the "ports" property to this file will not forward from a Codespace.)
-
   db:
     image: postgres:14.4
     environment:
       POSTGRES_DB: activepieces
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: A79Vm5D4p2VQHOp2gd5
+      POSTGRES_PASSWORD: 123
     networks:
       - activepieces
     volumes:
@@ -48,6 +26,29 @@ services:
       - redis_data:/data
     ports:
       - "6379:6379"
+
+  activepieces:
+    image: activepieces/activepieces:latest
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgres://postgres:123@db:5432/activepieces
+      - REDIS_URL=redis://redis:6379
+      - AP_REDIS_HOST=redis
+      - AP_REDIS_PORT=6379
+      - AP_POSTGRES_HOST=db
+      - AP_POSTGRES_PORT=5432
+      - AP_POSTGRES_USERNAME=postgres
+      - AP_POSTGRES_PASSWORD=123
+      - AP_POSTGRES_DATABASE=activepieces
+      - AP_ENCRYPTION_KEY=49df736df07d198e1897c9a9fc2e4d85
+      - AP_JWT_SECRET=my_super_secure_jwt_secret_123456789
+      - API_KEY=my_api_key
+    ports:
+      - "3000:80"
+    networks:
+      - activepieces
 
 volumes:
   postgres_data:
