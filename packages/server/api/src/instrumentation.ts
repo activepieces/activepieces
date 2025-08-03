@@ -16,31 +16,31 @@ function getServiceName(): string {
 }
 
 if (system.get(AppSystemProp.OTEL_ENABLED)) {
-        const traceExporter = new OTLPTraceExporter()
+    const traceExporter = new OTLPTraceExporter()
 
-        // Creating a resource to identify your service in traces
-        const resource = resourceFromAttributes({
-            [ATTR_SERVICE_NAME]: getServiceName(),
-        })
+    // Creating a resource to identify your service in traces
+    const resource = resourceFromAttributes({
+        [ATTR_SERVICE_NAME]: getServiceName(),
+    })
 
-        // Configuring the OpenTelemetry Node SDK
-        const sdk = new NodeSDK({
-            // Adding a BatchSpanProcessor to batch and send traces
-            spanProcessor: new BatchSpanProcessor(traceExporter),
+    // Configuring the OpenTelemetry Node SDK
+    const sdk = new NodeSDK({
+        // Adding a BatchSpanProcessor to batch and send traces
+        spanProcessor: new BatchSpanProcessor(traceExporter),
 
-            // Registering the resource to the SDK
-            resource,
+        // Registering the resource to the SDK
+        resource,
 
-            // Adding auto-instrumentations to automatically collect trace data
-            instrumentations: [
-                getNodeAutoInstrumentations(),
-                new FastifyOtelInstrumentation({
-                    servername: getServiceName(),
-                    registerOnInitialization: true,
-                }),
-            ],
-        })
+        // Adding auto-instrumentations to automatically collect trace data
+        instrumentations: [
+            getNodeAutoInstrumentations(),
+            new FastifyOtelInstrumentation({
+                servername: getServiceName(),
+                registerOnInitialization: true,
+            }),
+        ],
+    })
 
-        // Starting the OpenTelemetry SDK to begin collecting telemetry data
+    // Starting the OpenTelemetry SDK to begin collecting telemetry data
     sdk.start()
 }
