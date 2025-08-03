@@ -29,21 +29,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Depot CLI
-        uses: depot/setup-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
-        uses: depot/build-push-action@v1
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
         with:
-          project: du7O4b0e8P
-          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           context: .
           file: ./Dockerfile
-          platforms: |
-            linux/amd64
+          platforms: linux/amd64
           push: true
-          tags: |
-            ghcr.io/activepieces/activepieces:${{ env.RELEASE }}.${{ github.sha }}.enterprise
+          tags: ghcr.io/activepieces/activepieces:testing-ee
 
       - name: Configure SSH
         run: |
@@ -64,7 +60,7 @@ jobs:
           
       - name: Deploy with Docker Compose
         run: |
-          ssh pre-prod -t -t 'bash -ic "cd enterprise-activepieces && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.enterprise docker compose pull && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.enterprise docker compose up -d --force-recreate enterprise-activepieces; exit"' 
+          ssh pre-prod -t -t 'bash -ic "cd enterprise-activepieces && IMAGE_TAG=testing-ee docker compose pull && IMAGE_TAG=testing-ee docker compose up -d --force-recreate enterprise-activepieces; exit"' 
 
   Enterprise-E2E-Tests:
     needs: Release

@@ -223,6 +223,7 @@ async function ensureAgentExists({ tableId, projectId }: EnsureAgentExistsParams
     const agent = await agentsService(system.globalLogger()).create({
         projectId,
         displayName: `${table.name} Agent`,
+        systemPrompt: '',
         description: '',
         platformId,
     })
