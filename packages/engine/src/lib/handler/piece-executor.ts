@@ -1,6 +1,6 @@
 import { URL } from 'url'
 import { ActionContext, InputPropertyMap, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { ActionType, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, pieceActionNaming, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { ActionType, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { PausedFlowTimeoutError } from '../helper/execution-errors'
@@ -145,8 +145,11 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 return url.toString()
             },
         }
-        const actionNamePattern = pieceActionNaming.constructActionName(action.settings.pieceName, action.settings.actionName)
-        const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test) && constants.returnResponseActionPattern !== actionNamePattern) ? pieceAction.test : pieceAction.run
+        const actionData = {
+            actionName: action.settings.actionName,
+            pieceName: action.settings.pieceName,
+        }
+        const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test) && constants.returnResponseActionData !== actionData) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)
         const newExecutionContext = executionState.addTags(params.hookResponse.tags)
 

@@ -23,6 +23,7 @@ import {
   FlowOperationType,
   flowStructureUtil,
   SampleDataFileType,
+  ReturnResponseActionData,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -242,23 +243,21 @@ export const testStepHooks = {
   },
   /**To reset the loading state of the mutation use a new mutation key, but to make sure sucess never gets called, use the abortSignal */
   useTestAction: ({
-    payload,
     currentStep,
     setErrorMessage,
     setConsoleLogs,
     onSuccess,
     onProgress,
     mutationKey,
-    returnResponseActionPattern,
+    returnResponseActionData,
   }: {
-    payload: unknown;
+    returnResponseActionData?: ReturnResponseActionData;
     currentStep: Action;
     setErrorMessage: ((msg: string | undefined) => void) | undefined;
     setConsoleLogs: ((logs: string | null) => void) | undefined;
     onSuccess: (() => void) | undefined;
     onProgress?: (progress: StepRunResponse) => void;
     mutationKey?: string[];
-    returnResponseActionPattern?: string;
   }) => {
     const socket = useSocket();
     const { flowVersionId } = useRequiredStateToTestSteps().builderState;
@@ -277,8 +276,7 @@ export const testStepHooks = {
           {
             flowVersionId,
             stepName: currentStep.name,
-            returnResponseActionPattern,
-            payload,
+            returnResponseActionData,
           },
           (progress) => {
             if (params?.abortSignal?.aborted) {

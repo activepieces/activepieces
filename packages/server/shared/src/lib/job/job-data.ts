@@ -6,6 +6,7 @@ import {
     PiecePackage,
     PieceType,
     ProgressUpdateType,
+    ReturnResponseActionData,
     RunEnvironment,
     TriggerHookType,
     TriggerPayload,
@@ -76,7 +77,7 @@ export const OneTimeJobData = Type.Object({
     executeTrigger: Type.Optional(Type.Boolean()),
     executionType: Type.Enum(ExecutionType),
     progressUpdateType: Type.Enum(ProgressUpdateType),
-    returnResponseActionPattern: Type.Optional(Type.String()),
+    returnResponseActionData: Type.Optional(ReturnResponseActionData),
 })
 export type OneTimeJobData = Static<typeof OneTimeJobData>
 

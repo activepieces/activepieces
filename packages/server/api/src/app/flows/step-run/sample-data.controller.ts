@@ -15,8 +15,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
             const flowRun = await flowRunService(fastify.log).test({
                 projectId: principal.projectId,
                 flowVersionId: data.flowVersionId,
-                payload: data.payload,
-                returnResponseActionPattern: data.returnResponseActionPattern,
+                returnResponseActionData: data.returnResponseActionData,
             })
 
             const onProgress = stepRunProgressHandler.createProgressHandler({

@@ -1,4 +1,4 @@
-import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, ReturnResponseActionData, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -24,7 +24,7 @@ type EngineConstantsParams = {
     httpRequestId: string | null
     resumePayload?: ResumePayload
     runEnvironment?: RunEnvironment
-    returnResponseActionPattern?: string
+    returnResponseActionData?: ReturnResponseActionData
 }
 
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
@@ -59,7 +59,7 @@ export class EngineConstants {
     public readonly httpRequestId: string | null
     public readonly resumePayload?: ResumePayload
     public readonly runEnvironment?: RunEnvironment
-    public readonly returnResponseActionPattern?: string
+    public readonly returnResponseActionData?: ReturnResponseActionData
 
     private project: Project | null = null
 
@@ -99,7 +99,7 @@ export class EngineConstants {
         this.httpRequestId = params.httpRequestId
         this.resumePayload = params.resumePayload
         this.runEnvironment = params.runEnvironment
-        this.returnResponseActionPattern = params.returnResponseActionPattern
+        this.returnResponseActionData = params.returnResponseActionData
     }
 
     public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
@@ -124,7 +124,7 @@ export class EngineConstants {
             httpRequestId: input.httpRequestId ?? null,
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             runEnvironment: input.runEnvironment,
-            returnResponseActionPattern: input.returnResponseActionPattern ?? undefined,
+            returnResponseActionData: input.returnResponseActionData ?? undefined,
         })
     }
 
@@ -150,7 +150,7 @@ export class EngineConstants {
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
-            returnResponseActionPattern: undefined,
+            returnResponseActionData: undefined,
         })
     }
 
@@ -176,7 +176,7 @@ export class EngineConstants {
             httpRequestId: input.requestId ?? null,
             resumePayload: undefined,
             runEnvironment: input.runEnvironment,
-            returnResponseActionPattern: input.returnResponseActionPattern ?? undefined,
+            returnResponseActionData: input.returnResponseActionData ?? undefined,
         })
     }
 
@@ -202,7 +202,7 @@ export class EngineConstants {
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
-            returnResponseActionPattern: undefined,
+            returnResponseActionData: undefined,
         })
     }
 
@@ -228,7 +228,7 @@ export class EngineConstants {
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
-            returnResponseActionPattern: undefined,
+            returnResponseActionData: undefined,
         })
     }
 

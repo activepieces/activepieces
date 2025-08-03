@@ -150,7 +150,6 @@ const TestWaitForNextWebhookDialog = ({
 }: TestWaitForNextWebhookDialogProps) => {
   const { mutate: onSubmit, isPending: isLoading } =
     testStepHooks.useTestAction({
-      payload: undefined,
       currentStep,
       setErrorMessage: undefined,
       setConsoleLogs: undefined,

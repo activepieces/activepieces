@@ -52,9 +52,3 @@ export enum PieceCategory {
     MARKETING = 'MARKETING',
     SALES_AND_CRM = 'SALES_AND_CRM',
 }
-
-export const pieceActionNaming = {
-    constructActionName(pieceName: string, actionName: string): string {
-        return `${pieceName}_${actionName}`
-    },
-}

@@ -17,7 +17,6 @@ import {
   flowStructureUtil,
   isNil,
   StepRunResponse,
-  pieceActionNaming,
 } from '@activepieces/shared';
 
 import { AgentRunDialog } from '../../../features/agents/agent-run-dialog';
@@ -69,33 +68,6 @@ const isReturnResponseAndWaitForWebhook = (step: Action) => {
   );
 };
 
-const isSubFlowsCallFlow = (step: Action) => {
-  return (
-    step.type === ActionType.PIECE &&
-    step.settings.pieceName === '@activepieces/piece-subflows' &&
-    step.settings.actionName === 'callFlow'
-  );
-};
-
-const extractSubflowInput = (currentStep: Action) => {
-  const input =
-    currentStep.type === ActionType.PIECE &&
-    !isNil(currentStep.settings.actionName)
-      ? currentStep.settings.input
-      : undefined;
-  const flowPropsInput = input?.flowProps as {
-    payload: Record<string, unknown>;
-  };
-  if (isNil(flowPropsInput)) {
-    return;
-  }
-  const payload = {
-    data: flowPropsInput.payload,
-    callbackUrl: `MOCK`,
-  };
-  return payload;
-};
-
 const TestStepSectionImplementation = React.memo(
   ({
     isSaving,
@@ -124,21 +96,17 @@ const TestStepSectionImplementation = React.memo(
     const form = useFormContext<ActionWithoutNext>();
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const [mutationKey, setMutationKey] = useState<string[]>([]);
-    const returnResponseActionPattern =
+    const returnResponseActionData =
       currentStep.type === ActionType.PIECE &&
       !isNil(currentStep.settings.actionName)
-        ? pieceActionNaming.constructActionName(
-            currentStep.settings.pieceName,
-            currentStep.settings.actionName,
-          )
+        ? {
+            actionName: currentStep.settings.actionName,
+            pieceName: currentStep.settings.pieceName,
+          }
         : undefined;
-    const payload = isSubFlowsCallFlow(currentStep)
-      ? extractSubflowInput(currentStep)
-      : undefined;
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
-        payload,
-        returnResponseActionPattern,
+        returnResponseActionData,
         mutationKey,
         currentStep,
         setErrorMessage,
@@ -167,7 +135,6 @@ const TestStepSectionImplementation = React.memo(
       const testStepResponse = await flowRunsApi.testStep(socket, {
         flowVersionId,
         stepName: currentStep.name,
-        payload: undefined,
       });
       const output = testStepResponse.output as PopulatedTodo;
       if (testStepResponse.success && !isNil(output)) {

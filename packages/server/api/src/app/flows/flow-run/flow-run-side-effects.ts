@@ -9,6 +9,7 @@ import {
     isNil,
     PauseType,
     ProgressUpdateType,
+    ReturnResponseActionData,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -26,7 +27,7 @@ type StartParams = {
     synchronousHandlerId: string | undefined
     progressUpdateType: ProgressUpdateType
     httpRequestId: string | undefined
-    returnResponseActionPattern: string | undefined
+    returnResponseActionData: ReturnResponseActionData | undefined
 }
 
 type PauseParams = {
@@ -70,7 +71,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         priority,
         progressUpdateType,
         executeTrigger,
-        returnResponseActionPattern,
+        returnResponseActionData,
     }: StartParams): Promise<void> {
         log.info({
             flowRunId: flowRun.id,
@@ -92,7 +93,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                 httpRequestId,
                 executionType,
                 progressUpdateType,
-                returnResponseActionPattern,
+                returnResponseActionData,
             },
         })
         eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {

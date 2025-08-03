@@ -5,6 +5,11 @@ export enum SampleDataFileType {
     INPUT = 'INPUT',
     OUTPUT = 'OUTPUT',
 }
+export const ReturnResponseActionData = Type.Object({
+    actionName: Type.String(),
+    pieceName: Type.String(),
+})
+export type ReturnResponseActionData = Static<typeof ReturnResponseActionData>
 
 export const SaveSampleDataRequest = Type.Object({
     stepName: Type.String(),
@@ -26,8 +31,7 @@ export const CreateStepRunRequestBody = Type.Object({
     flowVersionId: Type.String(),
     stepName: Type.String(),
     id: Type.String(),
-    payload: Type.Unknown(),
-    returnResponseActionPattern: Type.Optional(Type.String()),
+    returnResponseActionData: Type.Optional(ReturnResponseActionData),
 })
 
 export type CreateStepRunRequestBody = Static<typeof CreateStepRunRequestBody>
@@ -74,3 +78,4 @@ export const DEFAULT_SAMPLE_DATA_SETTINGS: SampleDataSettings = {
 
 export const SaveSampleDataResponse = Pick(File, ['id', 'size', 'type'])
 export type SaveSampleDataResponse = Static<typeof SaveSampleDataResponse>
+

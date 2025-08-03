@@ -3,6 +3,7 @@ import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
+import { ReturnResponseActionData } from '../flows/sample-data'
 import { PiecePackage } from '../pieces'
 import { PlatformId } from '../platform'
 import { ProjectId } from '../project/project'
@@ -87,7 +88,7 @@ export type ExecuteStepOperation = BaseEngineOperation & {
     sampleData: Record<string, unknown>
     runEnvironment: RunEnvironment
     requestId: string
-    returnResponseActionPattern?: string
+    returnResponseActionData?: ReturnResponseActionData
 }
 
 export type ExecuteToolOperation = BaseEngineOperation & {
@@ -117,7 +118,7 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     serverHandlerId: string | null
     httpRequestId: string | null
     progressUpdateType: ProgressUpdateType
-    returnResponseActionPattern: string | null
+    returnResponseActionData: ReturnResponseActionData | null
 }
 
 export enum ProgressUpdateType {

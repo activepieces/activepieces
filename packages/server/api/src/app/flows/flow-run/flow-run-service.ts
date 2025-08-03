@@ -21,6 +21,7 @@ import {
     PauseType,
     ProgressUpdateType,
     ProjectId,
+    ReturnResponseActionData,
     RunEnvironment,
     SampleDataFileType,
     SeekPage,
@@ -248,7 +249,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         httpRequestId,
         parentRunId,
         failParentOnFailure,
-        returnResponseActionPattern,
+        returnResponseActionData,
     }: StartParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
@@ -279,16 +280,16 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executeTrigger,
             executionType,
             progressUpdateType,
-            returnResponseActionPattern,
+            returnResponseActionData,
         })
 
         return flowRun
     },
 
-    async test({ projectId, flowVersionId, parentRunId, payload, returnResponseActionPattern }: TestParams): Promise<FlowRun> {
+    async test({ projectId, flowVersionId, parentRunId, returnResponseActionData }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
-        const sampleData = payload ?? await sampleDataService(log).getOrReturnEmpty({
+        const sampleData = await sampleDataService(log).getOrReturnEmpty({
             projectId,
             flowVersion,
             stepName: flowVersion.trigger.name,
@@ -306,7 +307,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             failParentOnFailure: true,
-            returnResponseActionPattern,
+            returnResponseActionData,
         })
     },
 
@@ -615,15 +616,14 @@ type StartParams = {
     httpRequestId: string | undefined
     progressUpdateType: ProgressUpdateType
     executionType: ExecutionType
-    returnResponseActionPattern?: string
+    returnResponseActionData?: ReturnResponseActionData
 }
 
 type TestParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
     parentRunId?: FlowRunId
-    payload?: unknown
-    returnResponseActionPattern?: string
+    returnResponseActionData?: ReturnResponseActionData
 }
 
 type PauseParams = {
