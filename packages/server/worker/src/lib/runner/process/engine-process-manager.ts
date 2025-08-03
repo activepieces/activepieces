@@ -238,8 +238,6 @@ function getFlowVersionId(operation: EngineOperation, type: EngineOperationType)
             return (operation as ExecuteFlowOperation).flowVersion.id
         case EngineOperationType.EXECUTE_PROPERTY:
             return (operation as ExecutePropsOptions).flowVersion?.id
-        case EngineOperationType.EXECUTE_STEP:
-            return (operation as ExecuteStepOperation).flowVersion.id
         case EngineOperationType.EXECUTE_TRIGGER_HOOK:
             return (operation as ExecuteTriggerOperation<TriggerHookType>).flowVersion.id
         case EngineOperationType.EXECUTE_TOOL:

@@ -10,14 +10,12 @@ import {
     ExecuteExtractPieceMetadata,
     ExecuteFlowOperation,
     ExecutePropsOptions,
-    ExecuteStepOperation,
     ExecuteToolOperation,
     ExecuteTriggerOperation,
     ExecuteTriggerResponse,
     ExecuteValidateAuthOperation,
     ExecutionType,
     FlowRunResponse,
-    flowStructureUtil,
     GenericStepOutput,
     StepOutput,
     StepOutputStatus,
@@ -83,27 +81,6 @@ async function executeActionForTool(input: ExecuteToolOperation): Promise<Execut
         action: step,
         executionState: FlowExecutorContext.empty(),
         constants: EngineConstants.fromExecuteActionInput(input),
-    })
-    return {
-        success: output.verdict !== ExecutionVerdict.FAILED,
-        input: output.steps[step.name].input,
-        output: cleanSampleData(output.steps[step.name]),
-    }
-}
-
-async function executeStep(input: ExecuteStepOperation): Promise<ExecuteActionResponse> {
-    const step = flowStructureUtil.getActionOrThrow(input.stepName, input.flowVersion.trigger)
-    const output = await flowExecutor.getExecutorForAction(step.type).handle({
-        action: step,
-        executionState: await testExecutionContext.stateFromFlowVersion({
-            apiUrl: input.internalApiUrl,
-            flowVersion: input.flowVersion,
-            excludedStepName: step.name,
-            projectId: input.projectId,
-            engineToken: input.engineToken,
-            sampleData: input.sampleData,
-        }),
-        constants: EngineConstants.fromExecuteStepInput(input),
     })
     return {
         success: output.verdict !== ExecutionVerdict.FAILED,
@@ -217,14 +194,6 @@ export async function execute(operationType: EngineOperationType, operation: Eng
             case EngineOperationType.EXECUTE_TOOL: {
                 const input = operation as ExecuteToolOperation
                 const output = await executeActionForTool(input)
-                return {
-                    status: EngineResponseStatus.OK,
-                    response: output,
-                }
-            }
-            case EngineOperationType.EXECUTE_STEP: {
-                const input = operation as ExecuteStepOperation
-                const output = await executeStep(input)
                 return {
                     status: EngineResponseStatus.OK,
                     response: output,
