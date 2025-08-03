@@ -10,17 +10,14 @@ const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, Record<string, 
     try {
       const agent = await createBlueskyAgent(auth);
       
-      // Get the user's timeline using app.bsky.feed.getTimeline
       const response = await agent.getTimeline({
-        algorithm: 'reverse-chronological', // Get chronological feed
-        limit: 50 // Get recent posts
+        limit: 50
       });
 
       if (!response.data?.feed || !Array.isArray(response.data.feed)) {
         return [];
       }
 
-      // Filter posts since last fetch
       const cutoffTime = lastFetchEpochMS || 0;
 
       return response.data.feed
@@ -33,29 +30,24 @@ const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, Record<string, 
         .map((item: any) => ({
           epochMilliSeconds: dayjs(item.post.indexedAt).valueOf(),
           data: {
-            // Post information
             uri: item.post.uri,
             cid: item.post.cid,
             author: item.post.author,
             record: item.post.record,
             indexedAt: item.post.indexedAt,
             
-            // Engagement metrics
             replyCount: item.post.replyCount || 0,
             repostCount: item.post.repostCount || 0,
             likeCount: item.post.likeCount || 0,
             quoteCount: item.post.quoteCount || 0,
             
-            // Additional metadata
             labels: item.post.labels || [],
             viewer: item.post.viewer || {},
             embed: item.post.embed || null,
             
-            // Feed context (repost reason, etc.)
-            reason: item.reason || null, // If this is a repost
-            reply: item.reply || null, // If this is a reply context
+            reason: item.reason || null,
+            reply: item.reply || null,
             
-            // Feed metadata
             feedContext: {
               isRepost: !!item.reason,
               repostBy: item.reason?.by || null,
@@ -65,10 +57,10 @@ const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, Record<string, 
             }
           }
         }))
-        .sort((a: any, b: any) => b.epochMilliSeconds - a.epochMilliSeconds); // Most recent first
+        .sort((a: any, b: any) => b.epochMilliSeconds - a.epochMilliSeconds);
 
     } catch (error) {
-      console.error('Error fetching timeline:', error);
+      console.warn('Failed to fetch timeline posts:', error instanceof Error ? error.message : 'Unknown error');
       return [];
     }
   }
@@ -78,10 +70,9 @@ export const newTimelinePosts = createTrigger({
   auth: blueskyAuth,
   name: 'newTimelinePosts',
   displayName: 'New Timeline Posts',
-  description: 'Triggers when new posts appear in your "Following" feed (chronological timeline)',
+  description: 'Triggers when new posts appear in your timeline',
   props: {},
   sampleData: {
-    // Post information
     uri: 'at://did:plc:example123/app.bsky.feed.post/example456',
     cid: 'bafyreib2rxk3vcfbqij7y6kzgy4knknc7ff4t5jn2m5fbn6jdl7czfqyqe',
     author: {
@@ -103,13 +94,11 @@ export const newTimelinePosts = createTrigger({
     },
     indexedAt: '2024-01-01T12:00:00.000Z',
     
-    // Engagement metrics
     replyCount: 3,
     repostCount: 8,
     likeCount: 15,
     quoteCount: 2,
     
-    // Additional metadata
     labels: [],
     viewer: {
       repost: null,
@@ -117,9 +106,8 @@ export const newTimelinePosts = createTrigger({
     },
     embed: null,
     
-    // Feed context
-    reason: null, // No repost reason (original post)
-    reply: null, // Not a reply
+    reason: null,
+    reply: null,
     feedContext: {
       isRepost: false,
       repostBy: null,

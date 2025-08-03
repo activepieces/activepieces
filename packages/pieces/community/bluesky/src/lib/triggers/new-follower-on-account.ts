@@ -10,7 +10,6 @@ const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, Record<string, 
     try {
       const agent = await createBlueskyAgent(auth);
       
-      // Get the authenticated user's session to get their DID
       const session = agent.session;
       if (!session?.did) {
         throw new Error('Could not get user DID from session');
@@ -18,30 +17,22 @@ const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, Record<string, 
 
       const userDid = session.did;
 
-      // Get followers using app.bsky.graph.getFollowers
       const response = await agent.getFollowers({
         actor: userDid,
-        limit: 100 // Get recent followers
+        limit: 100
       });
 
       if (!response.data?.followers || !Array.isArray(response.data.followers)) {
         return [];
       }
 
-      // Since the API doesn't provide follow timestamps, we'll use the current time
-      // and filter based on previous fetches using a different strategy
       const currentTime = Date.now();
       const cutoffTime = lastFetchEpochMS || 0;
 
-      // For new followers, we'll use the indexedAt from their profiles as a proxy
-      // This isn't perfect but it's the best we can do with the available data
       return response.data.followers
         .filter((follower: any) => {
-          // Use profile creation time as a rough indicator of when they might have followed
-          // In a real implementation, you'd want to store the previous list of followers
-          // and compare to find truly new ones
           const profileTime = follower.indexedAt ? dayjs(follower.indexedAt).valueOf() : currentTime;
-          return profileTime > cutoffTime - (24 * 60 * 60 * 1000); // Within last 24 hours as fallback
+          return profileTime > cutoffTime - (24 * 60 * 60 * 1000);
         })
         .map((follower: any) => ({
           epochMilliSeconds: follower.indexedAt ? dayjs(follower.indexedAt).valueOf() : currentTime,
@@ -61,7 +52,7 @@ const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, Record<string, 
             createdAt: follower.createdAt || null
           }
         }))
-        .sort((a: any, b: any) => b.epochMilliSeconds - a.epochMilliSeconds); // Most recent first
+        .sort((a: any, b: any) => b.epochMilliSeconds - a.epochMilliSeconds);
 
     } catch (error) {
       console.error('Error fetching followers:', error);

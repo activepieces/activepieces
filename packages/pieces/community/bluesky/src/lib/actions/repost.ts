@@ -9,11 +9,11 @@ export const repostPost = createAction({
   auth: blueskyAuth,
   name: 'repostPost',
   displayName: 'Repost Post',
-  description: 'Repost a specific post by its URL or URI',
+  description: 'Share someone else\'s post to your timeline',
   props: {
     selectionMethod: Property.StaticDropdown({
-      displayName: 'How to select post?',
-      description: 'Choose how you want to select the post to repost',
+      displayName: 'Select Method',
+      description: 'How to choose the post',
       required: true,
       defaultValue: 'timeline',
       options: {
@@ -50,7 +50,7 @@ export const repostPost = createAction({
 
     postUrl: Property.ShortText({
       displayName: 'Post URL',
-      description: 'Bluesky post URL or AT-URI (only when "Enter URL manually" is selected above). Example: https://bsky.app/profile/username.bsky.social/post/xxx',
+      description: 'Paste the Bluesky post URL',
       required: false,
     }),
   },
@@ -82,7 +82,6 @@ export const repostPost = createAction({
     try {
       const agent = await createBlueskyAgent(auth);
       
-      // Get the post to retrieve its CID and validate it exists
       const postsResponse = await agent.getPosts({ uris: [postUri] });
       
       if (!postsResponse.data.posts || postsResponse.data.posts.length === 0) {
@@ -91,7 +90,6 @@ export const repostPost = createAction({
       
       const post = postsResponse.data.posts[0];
       
-      // Create the repost using the agent's repost method
       const response = await agent.repost(postUri, post.cid);
 
       return {

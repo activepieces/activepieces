@@ -7,7 +7,7 @@ export const findPost = createAction({
   auth: blueskyAuth,
   name: 'findPost',
   displayName: 'Find Post',
-  description: 'Retrieve a single post\'s details using its URL/URI',
+  description: 'Get detailed information about a specific post',
   props: {
     postUrl: postUrlProperty,
   },
@@ -17,17 +17,13 @@ export const findPost = createAction({
     try {
       const agent = await createBlueskyAgent(auth);
       
-      // Extract post information from user-friendly URL
       const postInfo = extractPostInfoFromUrl(postUrl);
       let atUri = postInfo.uri;
 
-      // If we don't have an AT-URI but have handle and postId, we need to resolve the handle to DID
       if (!atUri && postInfo.handle && postInfo.postId) {
-        // First, resolve the handle to get the DID
         const didDoc = await agent.resolveHandle({ handle: postInfo.handle });
         
         if (didDoc.data?.did) {
-          // Construct the proper AT-URI
           atUri = `at://${didDoc.data.did}/app.bsky.feed.post/${postInfo.postId}`;
         } else {
           throw new Error(`Could not resolve handle: ${postInfo.handle}`);
@@ -38,12 +34,10 @@ export const findPost = createAction({
         throw new Error('Could not parse the post URL. Please make sure you are using a valid Bluesky post URL like: https://bsky.app/profile/username.bsky.social/post/xxx');
       }
 
-      // Validate AT-URI format
       if (!atUri.startsWith('at://')) {
         throw new Error('Invalid URI format. Must be an AT-URI starting with "at://" or a valid Bluesky URL');
       }
 
-      // Retrieve the post using the agent's getPosts method
       const response = await agent.getPosts({ uris: [atUri] });
 
       if (!response.data?.posts || response.data.posts.length === 0) {

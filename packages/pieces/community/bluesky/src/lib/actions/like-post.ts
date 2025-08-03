@@ -8,11 +8,11 @@ export const likePost = createAction({
   auth: blueskyAuth,
   name: 'likePost',
   displayName: 'Like Post',
-  description: 'Like a specific post by its URI',
+  description: 'Like a post on Bluesky',
   props: {
     selectionMethod: Property.StaticDropdown({
-      displayName: 'How to select post?',
-      description: 'Choose how you want to select the post to like',
+      displayName: 'Select Method',
+      description: 'How to choose the post',
       required: true,
       defaultValue: 'timeline',
       options: {
@@ -49,7 +49,7 @@ export const likePost = createAction({
 
     postUrl: Property.ShortText({
       displayName: 'Post URL',
-      description: 'Bluesky post URL or AT-URI (only when "Enter URL manually" is selected above). Example: https://bsky.app/profile/username.bsky.social/post/xxx',
+      description: 'Paste the Bluesky post URL',
       required: false,
     }),
   },

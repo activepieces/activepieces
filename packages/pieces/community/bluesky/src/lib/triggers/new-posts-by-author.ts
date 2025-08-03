@@ -1,40 +1,54 @@
 import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { blueskyAuth } from '../common/auth';
+import { blueskyAuth, BlueSkyAuthType } from '../common/auth';
 import { createBlueskyAgent } from '../common/client';
 import dayjs from 'dayjs';
 
 const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, { 
-  authorHandle: string;
+  authorSelection: string;
+  authorFromFollowing?: string;
+  authorHandle?: string;
   includeReplies?: boolean;
   includeReposts?: boolean;
 }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const { authorHandle, includeReplies = false, includeReposts = false } = propsValue;
+    const { authorSelection, authorFromFollowing, authorHandle, includeReplies = false, includeReposts = false } = propsValue;
+    
+    let selectedAuthorHandle: string;
+    if (authorSelection === 'following') {
+      if (!authorFromFollowing) {
+        return [];
+      }
+      selectedAuthorHandle = authorFromFollowing;
+    } else if (authorSelection === 'manual') {
+      if (!authorHandle) {
+        return [];
+      }
+      selectedAuthorHandle = authorHandle;
+    } else {
+      return [];
+    }
     
     try {
-      if (!authorHandle || authorHandle.trim().length === 0) {
+      if (!selectedAuthorHandle || selectedAuthorHandle.trim().length === 0) {
         return [];
       }
 
       const agent = await createBlueskyAgent(auth);
       
-      // Normalize the handle (remove @ if present)
-      const normalizedHandle = authorHandle.replace('@', '').trim();
+      const normalizedHandle = selectedAuthorHandle.replace('@', '').trim();
       
-      // Get the author's feed using app.bsky.feed.getAuthorFeed
       const response = await agent.getAuthorFeed({
         actor: normalizedHandle,
         limit: 50,
-        filter: 'posts_with_replies' // Get all posts including replies
+        filter: 'posts_with_replies'
       });
 
       if (!response.data?.feed || !Array.isArray(response.data.feed)) {
         return [];
       }
 
-      // Filter posts since last fetch
       const cutoffTime = lastFetchEpochMS || 0;
 
       return response.data.feed
@@ -42,19 +56,15 @@ const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, {
           const post = feedItem.post;
           if (!post || !post.indexedAt) return false;
           
-          // Check if post is newer than last fetch
           const postTime = dayjs(post.indexedAt).valueOf();
           if (postTime <= cutoffTime) return false;
 
-          // Filter based on post type preferences
           const isReply = post.record?.reply !== undefined;
           const isRepost = feedItem.reason?.$type === 'app.bsky.feed.defs#reasonRepost';
           
-          // Apply filters
           if (isReply && !includeReplies) return false;
           if (isRepost && !includeReposts) return false;
           
-          // Only include posts by the specified author (not reposts by others)
           return post.author.handle === normalizedHandle || post.author.did === normalizedHandle;
         })
         .map((feedItem: any) => {
@@ -62,25 +72,21 @@ const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, {
           return {
             epochMilliSeconds: dayjs(post.indexedAt).valueOf(),
             data: {
-              // Core post information
               uri: post.uri,
               cid: post.cid,
               author: post.author,
               record: post.record,
               indexedAt: post.indexedAt,
               
-              // Engagement metrics
               replyCount: post.replyCount || 0,
               repostCount: post.repostCount || 0,
               likeCount: post.likeCount || 0,
               quoteCount: post.quoteCount || 0,
               
-              // Additional metadata
               labels: post.labels || [],
               viewer: post.viewer || {},
               embed: post.embed || null,
               
-              // Post context
               postContext: {
                 authorHandle: normalizedHandle,
                 isReply: post.record?.reply !== undefined,
@@ -93,10 +99,10 @@ const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, {
             }
           };
         })
-        .sort((a: any, b: any) => b.epochMilliSeconds - a.epochMilliSeconds); // Most recent first
+        .sort((a: any, b: any) => b.epochMilliSeconds - a.epochMilliSeconds);
 
     } catch (error) {
-      console.error('Error fetching author posts:', error);
+      console.warn('Failed to fetch author posts:', error instanceof Error ? error.message : 'Unknown error');
       return [];
     }
   }
@@ -106,12 +112,58 @@ export const newPostsByAuthor = createTrigger({
   auth: blueskyAuth,
   name: 'newPostsByAuthor',
   displayName: 'New Posts by Author',
-  description: 'Fires when a selected author creates a new post',
+  description: 'Triggers when a selected author creates a new post',
   props: {
+    authorSelection: Property.StaticDropdown({
+      displayName: 'How to select author?',
+      description: 'Choose how to select the author',
+      required: true,
+      defaultValue: 'following',
+      options: {
+        options: [
+          { label: 'From my following list', value: 'following' },
+          { label: 'Enter handle manually', value: 'manual' },
+        ],
+      },
+    }),
+    
+    authorFromFollowing: Property.Dropdown({
+      displayName: 'Select Author',
+      description: 'Choose from accounts you follow',
+      required: false,
+      refreshers: ['auth'],
+      options: async ({ auth }) => {
+        try {
+          const agent = await createBlueskyAgent(auth as BlueSkyAuthType);
+          const session = agent.session;
+          
+          if (!session?.did) {
+            return { options: [{ label: 'Please authenticate first', value: '' }] };
+          }
+          
+          const followingResponse = await agent.getFollows({ 
+            actor: session.did, 
+            limit: 100 
+          });
+          
+          return {
+            options: followingResponse.data.follows.map(follow => ({
+              label: `${follow.displayName || follow.handle} (@${follow.handle})`,
+              value: follow.handle
+            }))
+          };
+        } catch (error) {
+          return { 
+            options: [{ label: 'Error loading following list', value: '' }] 
+          };
+        }
+      }
+    }),
+    
     authorHandle: Property.ShortText({
       displayName: 'Author Handle',
-      description: 'Bluesky username to monitor (e.g., username.bsky.social or @username.bsky.social)',
-      required: true
+      description: 'Enter the Bluesky username (e.g., username.bsky.social)',
+      required: false
     }),
     includeReplies: Property.Checkbox({
       displayName: 'Include Replies',
@@ -127,7 +179,6 @@ export const newPostsByAuthor = createTrigger({
     })
   },
   sampleData: {
-    // Core post information
     uri: 'at://did:plc:example123/app.bsky.feed.post/example456',
     cid: 'bafyreib2rxk3vcfbqij7y6kzgy4knknc7ff4t5jn2m5fbn6jdl7czfqyqe',
     author: {
@@ -152,13 +203,11 @@ export const newPostsByAuthor = createTrigger({
     },
     indexedAt: '2024-01-01T12:00:00.000Z',
     
-    // Engagement metrics
     replyCount: 3,
     repostCount: 8,
     likeCount: 25,
     quoteCount: 2,
     
-    // Additional metadata
     labels: [],
     viewer: {
       repost: null,
@@ -166,7 +215,6 @@ export const newPostsByAuthor = createTrigger({
     },
     embed: null,
     
-    // Post context
     postContext: {
       authorHandle: 'author.bsky.social',
       isReply: false,

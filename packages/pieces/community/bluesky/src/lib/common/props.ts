@@ -1,6 +1,5 @@
 import { Property } from '@activepieces/pieces-framework';
 
-// Common language codes for Bluesky posts
 export const languageOptions = [
   { label: 'English', value: 'en' },
   { label: 'Spanish', value: 'es' },
@@ -35,7 +34,6 @@ export const languageOptions = [
 ];
 
 
-// Common dropdown properties
 export const languageDropdown = Property.StaticDropdown({
   displayName: 'Language',
   description: 'Select the language for the post',
@@ -123,7 +121,6 @@ export const moderationLabelDropdown = Property.StaticMultiSelectDropdown({
   },
 });
 
-// User-friendly input properties that don't require technical knowledge
 export const postUrlProperty = Property.ShortText({
   displayName: 'Post URL',
   description: 'Paste the Bluesky post URL (e.g., https://bsky.app/profile/username.bsky.social/post/xxx)',
@@ -132,8 +129,45 @@ export const postUrlProperty = Property.ShortText({
 
 export const userHandleProperty = Property.ShortText({
   displayName: 'User Handle',
-  description: 'Bluesky username (e.g., username.bsky.social or @username.bsky.social)',
+  description: 'Bluesky username (e.g., username.bsky.social)',
   required: true,
+});
+
+export const authorSelectionProperty = Property.Dropdown({
+  displayName: 'Select Author',
+  description: 'Choose from accounts you follow',
+  required: false,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    try {
+      const { createBlueskyAgent } = await import('./client');
+      
+      const agent = await createBlueskyAgent(auth as any);
+      const session = agent.session;
+      
+      if (!session?.did) {
+        return { options: [{ label: 'Please authenticate first', value: '' }] };
+      }
+      
+      const followingResponse = await agent.getFollows({ 
+        actor: session.did, 
+        limit: 100 
+      });
+      
+      const options = followingResponse.data.follows.map((follow: any) => ({
+        label: `${follow.displayName || follow.handle} (@${follow.handle})`,
+        value: follow.handle
+      }));
+      
+      options.unshift({ label: 'Enter handle manually', value: 'manual' });
+      
+      return { options };
+    } catch (error) {
+      return { 
+        options: [{ label: 'Error loading following list', value: '' }] 
+      };
+    }
+  }
 });
 
 export const postSearchProperty = Property.ShortText({
@@ -142,44 +176,39 @@ export const postSearchProperty = Property.ShortText({
   required: false,
 });
 
-// Enhanced post text with character counter guidance
 export const postTextProperty = Property.LongText({
   displayName: 'Post Text',
-  description: 'What do you want to post? (Maximum 300 characters - about 2-3 sentences)',
+  description: 'What do you want to post? (Max 300 characters)',
   required: true,
 });
 
-// Simple image upload - just URLs, no complex configuration
 export const imageUrlsProperty = Property.Array({
   displayName: 'Image URLs',
-  description: 'Add up to 4 images by pasting their URLs (JPG, PNG, GIF supported)',
+  description: 'Add up to 4 images by URL',
   required: false,
 });
 
 export const imageDescriptionsProperty = Property.Array({
   displayName: 'Image Descriptions',
-  description: 'Describe each image for accessibility (optional but recommended)',
+  description: 'Describe each image for accessibility',
   required: false,
 });
 
-// Simplified external link - just the URL, we'll fetch metadata
 export const linkUrlProperty = Property.ShortText({
   displayName: 'Link to Share',
-  description: 'Paste any URL to share (we\'ll automatically get the title and description)',
+  description: 'URL to share with your post',
   required: false,
 });
 
-// User-friendly reply selection
 export const replyToPostProperty = Property.ShortText({
   displayName: 'Reply to Post',
-  description: 'Paste the URL of the post you want to reply to',
+  description: 'URL of post to reply to',
   required: false,
 });
 
-// Content type dropdown for better organization
 export const postTypeDropdown = Property.StaticDropdown({
   displayName: 'Post Type',
-  description: 'What kind of post are you creating?',
+  description: 'Type of content you\'re sharing',
   required: false,
   defaultValue: 'text',
   options: {
@@ -193,10 +222,9 @@ export const postTypeDropdown = Property.StaticDropdown({
   },
 });
 
-// Simplified language selection with common languages first
 export const simpleLanguageDropdown = Property.StaticDropdown({
   displayName: 'Post Language',
-  description: 'What language is this post in?',
+  description: 'Language of your post',
   required: false,
   defaultValue: 'en',
   options: {
@@ -220,7 +248,6 @@ export const simpleLanguageDropdown = Property.StaticDropdown({
   },
 });
 
-// Thread navigation made simple
 export const replyDepthDropdown = Property.StaticDropdown({
   displayName: 'How many replies to show?',
   description: 'Choose how deep to go into the conversation',
@@ -251,10 +278,9 @@ export const parentPostsDropdown = Property.StaticDropdown({
   },
 });
 
-// Content warnings made user-friendly
 export const contentWarningDropdown = Property.StaticMultiSelectDropdown({
   displayName: 'Content Warnings',
-  description: 'Add warnings if your post contains sensitive content (optional)',
+  description: 'Add warnings for sensitive content',
   required: false,
   options: {
     options: [
@@ -267,10 +293,9 @@ export const contentWarningDropdown = Property.StaticMultiSelectDropdown({
   },
 });
 
-// Audience selection
 export const audienceDropdown = Property.StaticDropdown({
-  displayName: 'Who can see this post?',
-  description: 'Choose your audience',
+  displayName: 'Audience',
+  description: 'Who can see this post',
   required: false,
   defaultValue: 'public',
   options: {
@@ -282,25 +307,19 @@ export const audienceDropdown = Property.StaticDropdown({
   },
 });
 
-// Helper functions to convert user-friendly inputs to technical formats
 export function extractPostInfoFromUrl(url: string): { uri?: string; handle?: string; postId?: string } {
-  // Handle both bsky.app URLs and AT-URI formats
   if (url.startsWith('at://')) {
     return { uri: url };
   }
   
-  // Parse bsky.app URLs: https://bsky.app/profile/username.bsky.social/post/postid
   const urlMatch = url.match(/https?:\/\/bsky\.app\/profile\/([^\/]+)\/post\/([^\/\?]+)/);
   if (urlMatch) {
     const handle = urlMatch[1];
     const postId = urlMatch[2];
     
-    // For now, return the extracted components without creating a placeholder URI
-    // The calling code will need to handle URL-to-AT-URI conversion differently
     return {
       handle: handle,
       postId: postId,
-      // Don't return a placeholder URI - let the calling code handle this
     };
   }
   
@@ -308,10 +327,8 @@ export function extractPostInfoFromUrl(url: string): { uri?: string; handle?: st
 }
 
 export function normalizeHandle(handle: string): string {
-  // Remove @ symbol and ensure proper format
   let cleanHandle = handle.replace(/^@/, '');
   
-  // Add .bsky.social if no domain specified
   if (!cleanHandle.includes('.')) {
     cleanHandle += '.bsky.social';
   }
@@ -320,11 +337,10 @@ export function normalizeHandle(handle: string): string {
 }
 
 export function createSimpleExternalLink(url: string): { uri: string; title: string; description?: string } {
-  // For now, return basic structure. In a full implementation, you'd fetch the metadata
   return {
     uri: url,
-    title: url, // Would be replaced with actual page title
-    description: 'Shared link' // Would be replaced with actual meta description
+    title: url,
+    description: 'Shared link'
   };
 }
 
@@ -357,7 +373,6 @@ export async function parseBlueskyUrl(url: string, agent: any): Promise<string> 
     return url;
   }
   
-  // Parse bsky.app URLs: https://bsky.app/profile/username.bsky.social/post/postid
   const urlMatch = url.match(/https?:\/\/bsky\.app\/profile\/([^\/]+)\/post\/([^\/\?]+)/);
   if (urlMatch) {
     const handle = urlMatch[1];

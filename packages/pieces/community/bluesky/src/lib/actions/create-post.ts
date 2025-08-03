@@ -16,31 +16,31 @@ import {
 
 const videoUrlProperty = Property.ShortText({
   displayName: 'Video URL',
-  description: 'URL to a video file (MP4, up to 100MB)',
+  description: 'Link to video file (MP4, max 100MB)',
   required: false,
 });
 
 const videoAltTextProperty = Property.LongText({
-  displayName: 'Video Alt Text',
-  description: 'Describe the video content for accessibility',
+  displayName: 'Video Description',
+  description: 'Describe the video for accessibility',
   required: false,
 });
 
 const videoCaptionsProperty = Property.Array({
   displayName: 'Video Captions',
-  description: 'Caption files for the video (VTT format URLs)',
+  description: 'Caption file URLs (optional)',
   required: false,
 });
 
 const threadContentProperty = Property.Array({
   displayName: 'Thread Posts',
-  description: 'Additional posts to create as a thread (each item becomes a separate post)',
+  description: 'Create additional connected posts',
   required: false,
 });
 
 const additionalHashtagsProperty = Property.ShortText({
-  displayName: 'Additional Hashtags',
-  description: 'Extra hashtags to add (comma-separated, e.g., #tech,#bluesky)',
+  displayName: 'Hashtags',
+  description: 'Add hashtags (e.g., tech,bluesky)',
   required: false,
 });
 
@@ -49,13 +49,11 @@ async function parsePostUrl(url: string, agent: any): Promise<string> {
     return url;
   }
   
-  // Parse bsky.app URLs: https://bsky.app/profile/username.bsky.social/post/postid
   const urlMatch = url.match(/https?:\/\/bsky\.app\/profile\/([^\/]+)\/post\/([^\/\?]+)/);
   if (urlMatch) {
     const handle = urlMatch[1];
     const postId = urlMatch[2];
     
-    // Resolve handle to DID
     const didDoc = await agent.resolveHandle({ handle });
     return `at://${didDoc.data.did}/app.bsky.feed.post/${postId}`;
   }
@@ -97,7 +95,6 @@ async function createEnhancedLinkEmbed(url: string, agent: any): Promise<any> {
     
     const html = await response.text();
     
-    // Parse basic metadata
     const titleMatch = html.match(/<meta\s+property="og:title"\s+content="([^"]*)"[^>]*>/i) ||
                       html.match(/<title[^>]*>([^<]*)<\/title>/i);
     const title = titleMatch ? titleMatch[1].trim() : url;
@@ -129,7 +126,6 @@ async function createEnhancedLinkEmbed(url: string, agent: any): Promise<any> {
         if (imageResponse.ok) {
           const imageBlob = await imageResponse.blob();
           
-          // Only upload reasonable sized images (max 1MB for thumbnails)
           if (imageBlob.size <= 1000000 && imageBlob.type.startsWith('image/')) {
             const thumbResponse = await agent.uploadBlob(imageBlob, {
               encoding: imageBlob.type,
@@ -147,7 +143,6 @@ async function createEnhancedLinkEmbed(url: string, agent: any): Promise<any> {
       external,
     };
   } catch (error) {
-    // Return basic embed if metadata fetching fails
     return {
       $type: 'app.bsky.embed.external',
       external: {
@@ -163,7 +158,7 @@ export const createPost = createAction({
   auth: blueskyAuth,
   name: 'createPost',
   displayName: 'Create Post',
-  description: 'Publish a new post with text, embeds, images, video, hashtags, language, and threading options',
+  description: 'Create a new post on Bluesky',
   props: {
     postType: postTypeDropdown,
     text: postTextProperty,
@@ -213,7 +208,6 @@ export const createPost = createAction({
         }
       }
 
-      // Create RichText with automatic facet detection
       const richText = new RichText({ text: processedText });
       await richText.detectFacets(agent);
 
