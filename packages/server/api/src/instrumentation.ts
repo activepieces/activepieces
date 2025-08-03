@@ -15,37 +15,40 @@ function getServiceName(): string {
     return serviceName
 }
 
-// Initialize OTLP trace exporter with the endpoint URL and headers
-const traceExporter = new OTLPTraceExporter({
-    url: `https://${system.get(AppSystemProp.AXIOM_DOMAIN)}/v1/traces`,
-    headers: {
-        'Authorization': `Bearer ${system.getOrThrow(AppSystemProp.AXIOM_TOKEN)}`,
-        'X-Axiom-Dataset': system.getOrThrow(AppSystemProp.AXIOM_DATASET),
-    },
-})
+const axiomToken = system.get(AppSystemProp.AXIOM_TOKEN)
+if (axiomToken) {
+    // Initialize OTLP trace exporter with the endpoint URL and headers
+    const traceExporter = new OTLPTraceExporter({
+        url: `https://${system.get(AppSystemProp.AXIOM_DOMAIN)}/v1/traces`,
+        headers: {
+            'Authorization': `Bearer ${axiomToken}`,
+            'X-Axiom-Dataset': system.getOrThrow(AppSystemProp.AXIOM_DATASET),
+        },
+    })
 
-// Creating a resource to identify your service in traces
-const resource = resourceFromAttributes({
-    [ATTR_SERVICE_NAME]: getServiceName(),
-})
+    // Creating a resource to identify your service in traces
+    const resource = resourceFromAttributes({
+        [ATTR_SERVICE_NAME]: getServiceName(),
+    })
 
-// Configuring the OpenTelemetry Node SDK
-const sdk = new NodeSDK({
-    // Adding a BatchSpanProcessor to batch and send traces
-    spanProcessor: new BatchSpanProcessor(traceExporter),
+    // Configuring the OpenTelemetry Node SDK
+    const sdk = new NodeSDK({
+        // Adding a BatchSpanProcessor to batch and send traces
+        spanProcessor: new BatchSpanProcessor(traceExporter),
 
-    // Registering the resource to the SDK
-    resource,
+        // Registering the resource to the SDK
+        resource,
 
-    // Adding auto-instrumentations to automatically collect trace data
-    instrumentations: [
-        getNodeAutoInstrumentations(),
-        new FastifyOtelInstrumentation({
-            servername: getServiceName(),
-            registerOnInitialization: true,
-        }),
-    ],
-})
+        // Adding auto-instrumentations to automatically collect trace data
+        instrumentations: [
+            getNodeAutoInstrumentations(),
+            new FastifyOtelInstrumentation({
+                servername: getServiceName(),
+                registerOnInitialization: true,
+            }),
+        ],
+    })
 
-// Starting the OpenTelemetry SDK to begin collecting telemetry data
-sdk.start()
+    // Starting the OpenTelemetry SDK to begin collecting telemetry data
+    sdk.start()
+}
