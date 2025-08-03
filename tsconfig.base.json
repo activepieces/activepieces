@@ -420,6 +420,9 @@
       "@activepieces/piece-google-tasks": [
         "packages/pieces/community/google-tasks/src/index.ts"
       ],
+      "@activepieces/piece-googlechat-api": [
+        "packages/pieces/community/googlechat-api/src/index.ts"
+      ],
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
@@ -1006,6 +1009,9 @@
       ],
       "@activepieces/piece-zerobounce": [
         "packages/pieces/community/zerobounce/src/index.ts"
+      ],
+      "@activepieces/piece-zoho": [
+        "packages/pieces/community/zoho/src/index.ts"
       ],
       "@activepieces/piece-zoho-books": [
         "packages/pieces/community/zoho-books/src/index.ts"
