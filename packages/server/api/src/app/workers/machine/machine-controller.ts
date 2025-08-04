@@ -48,9 +48,8 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
             SENTRY_DSN: system.get(AppSystemProp.SENTRY_DSN),
             LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
             LOKI_URL: system.get(AppSystemProp.LOKI_URL),
-            AXIOM_DATASET: system.get(AppSystemProp.AXIOM_DATASET),
-            AXIOM_TOKEN: system.get(AppSystemProp.AXIOM_TOKEN),
             LOKI_USERNAME: system.get(AppSystemProp.LOKI_USERNAME),
+            OTEL_ENABLED: system.get(AppSystemProp.OTEL_ENABLED) === 'true',
             PUBLIC_URL: await domainHelper.getPublicUrl({
                 path: '',
             }),

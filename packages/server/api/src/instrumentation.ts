@@ -15,16 +15,8 @@ function getServiceName(): string {
     return serviceName
 }
 
-const axiomToken = system.get(AppSystemProp.AXIOM_TOKEN)
-if (axiomToken) {
-    // Initialize OTLP trace exporter with the endpoint URL and headers
-    const traceExporter = new OTLPTraceExporter({
-        url: `https://${system.get(AppSystemProp.AXIOM_DOMAIN)}/v1/traces`,
-        headers: {
-            'Authorization': `Bearer ${axiomToken}`,
-            'X-Axiom-Dataset': system.getOrThrow(AppSystemProp.AXIOM_DATASET),
-        },
-    })
+if (system.get(AppSystemProp.OTEL_ENABLED)) {
+    const traceExporter = new OTLPTraceExporter()
 
     // Creating a resource to identify your service in traces
     const resource = resourceFromAttributes({
