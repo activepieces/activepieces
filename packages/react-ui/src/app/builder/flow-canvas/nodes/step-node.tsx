@@ -60,9 +60,7 @@ const ApStepCanvasNode = React.memo(
     const isTrigger = flowStructureUtil.isTrigger(step.type);
     const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
     const isRoundedStep = flowCanvasUtils.isRoundedNode(step.type);
-    const hasGradientBorder = flowCanvasUtils.isAiNode(
-      stepMetadata?.categories || [],
-    );
+
     const stepNodeAttributes = useStepNodeAttributes(step);
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -93,10 +91,7 @@ const ApStepCanvasNode = React.memo(
               stepToReplacePieceDisplayName={stepMetadata?.displayName}
             >
               <div>
-                <StepNodeBackgroundBlur
-                  hasGradientBorder={hasGradientBorder}
-                  isSelected={isSelected}
-                />
+                <StepNodeBackgroundBlur isSelected={isSelected} />
                 <DisplayedText
                   stepIndex={stepIndex}
                   step={step}
@@ -134,11 +129,9 @@ const ApStepCanvasNode = React.memo(
                     }}
                   >
                     <div className="relative">
-                      {hasGradientBorder && <AiNodeGradient />}
                       <StepEllipsesButton stepName={step.name} />
                       <StepNodeImage
                         isRoundedStep={isRoundedStep}
-                        hasGradientBorder={hasGradientBorder}
                         isSkipped={isSkipped}
                         stepMetadata={stepMetadata}
                         step={step}
@@ -165,12 +158,6 @@ const ApStepCanvasNode = React.memo(
     );
   },
 );
-
-const AiNodeGradient = () => {
-  return (
-    <div className="absolute size-[60px] top-[2px] left-[2px]  backdrop-blur-2xl   rounded-md bg-ai-gradient animate-rotate-gradient"></div>
-  );
-};
 
 const DisplayedText = ({
   stepIndex,
@@ -203,13 +190,7 @@ const DisplayedText = ({
   );
 };
 
-const StepNodeBackgroundBlur = ({
-  hasGradientBorder,
-  isSelected,
-}: {
-  hasGradientBorder: boolean;
-  isSelected: boolean;
-}) => {
+const StepNodeBackgroundBlur = ({ isSelected }: { isSelected: boolean }) => {
   return (
     <div
       style={{
@@ -220,7 +201,6 @@ const StepNodeBackgroundBlur = ({
       className={cn(
         'opacity-0 transition-all absolute left-0 top-0 rounded-md',
         {
-          'blur-2xl bg-ai-transparent-gradient opacity-75': hasGradientBorder,
           'opacity-100': isSelected,
         },
       )}
@@ -230,13 +210,11 @@ const StepNodeBackgroundBlur = ({
 
 const StepNodeImage = ({
   isRoundedStep,
-  hasGradientBorder,
   isSkipped,
   stepMetadata,
   step,
 }: {
   isRoundedStep: boolean;
-  hasGradientBorder: boolean;
   isSkipped: boolean;
   stepMetadata?: StepMetadataWithActionOrTriggerOrAgentDisplayName;
   step: Step;
@@ -247,7 +225,6 @@ const StepNodeImage = ({
         'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-white  rounded-md  ',
         {
           'rounded-full': isRoundedStep,
-          'm-1 rounded-sm size-[56px]  p-[4px] bg-white': hasGradientBorder,
           'bg-accent dark:bg-gray-300': isSkipped,
         },
       )}
@@ -266,7 +243,6 @@ const StepNodeImage = ({
       <div
         className={cn('absolute bottom-[2px] right-[2px]', {
           'right-[3px] bottom-[3px]': isRoundedStep,
-          'right-[1px] bottom-0': hasGradientBorder,
         })}
       >
         <ApStepNodeStatus stepName={step.name} isStepRounded={isRoundedStep} />

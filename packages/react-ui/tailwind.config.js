@@ -23,10 +23,7 @@ module.exports = {
       },
     },
     extend: {
-      backgroundImage: {
-        'ai-gradient': 'conic-gradient(from var(--gradient-angle, 180deg) at 50% 50%, #8142E3 0deg, hsla(220, 74%, 57%, 1) 131.57deg, hsla(185, 100%, 47%, 1) 230.19deg, hsla(263, 74%, 57%, 1) 360deg)',
-        'ai-transparent-gradient': 'conic-gradient(from 180deg at 50% 50%, #8142E3 0deg, hsla(220, 74%, 57%, 0.25) 131.57deg, hsla(185, 100%, 47%, 0.25) 230.19deg, hsla(263, 74%, 57%, 0.25) 360deg)',
-      },
+     
       width: {
         '4.5': '1.125rem'
       },
@@ -158,14 +155,7 @@ module.exports = {
             backgroundPosition: '0%'
           }
         },
-        'rotate-gradient': {
-          '0%': {
-            '--gradient-angle': '0deg',
-          },
-          '100%': {
-            '--gradient-angle': '360deg',
-          }
-        }
+       
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -175,7 +165,6 @@ module.exports = {
         typing: 'typing 0.7s steps(7) alternate',
         'typing-sm': 'typing 0.5s steps(5) alternate',
         'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite',
-        'rotate-gradient': 'rotate-gradient 5s ease-in-out infinite'
       },
       boxShadow: {
         'selected-step-node': '0px 1px 24px hsl(var(--primary)/0.2), 0px 0px 0px 2px hsl(var(--primary)), 0px 0px 0px 6px hsl(var(--primary)/0.12)',
