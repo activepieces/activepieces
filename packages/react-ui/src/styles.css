@@ -70,7 +70,7 @@
     --slate-300: 213 27% 84%;
     --slate-500: 215 16% 47%;
     --slate-600: 215 19% 35%;
-    --flow-bg: var(--slate-50);
+    --flow-bg: 0 0% 99%;
     --flow-bg-pattern: var(--slate-300);
     --slate-950: 229 84% 5%;
   }
