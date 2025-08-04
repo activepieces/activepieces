@@ -11,6 +11,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
+import { useTheme } from '@/components/theme-provider';
 import {
   ActionType,
   flowStructureUtil,
@@ -90,6 +91,7 @@ export const FlowCanvas = React.memo(
     setHasCanvasBeenInitialised: (value: boolean) => void;
     lefSideBarContainerWidth: number;
   }) => {
+    const { theme } = useTheme();
     const [
       flowVersion,
       setSelectedNodes,
@@ -108,6 +110,7 @@ export const FlowCanvas = React.memo(
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
+
     useShowChevronNextToSelection();
     useFocusOnStep();
     useHandleKeyPressOnCanvas();
@@ -247,10 +250,10 @@ export const FlowCanvas = React.memo(
               <AboveFlowWidgets></AboveFlowWidgets>
               <Background
                 gap={30}
-                size={2}
+                size={4}
                 variant={BackgroundVariant.Dots}
-                className="!bg-flow-bg"
-                patternClassName="!fill-flow-bg-pattern"
+                bgColor={theme === 'dark' ? ' #1a1e23' : '#ffffff'}
+                color={theme === 'dark' ? ' #372727' : '#F2F2F2'}
               />
             </ReactFlow>
           </CanvasContextMenu>

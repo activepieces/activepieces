@@ -41,9 +41,9 @@ const Container = ({
   return (
     <Alert
       className={cn('rounded-md border', {
-        'bg-warning-100 !text-warning-300 border-none':
+        'bg-warning-100 text-warning-300 border-none':
           variant === MarkdownVariant.WARNING,
-        'bg-success-100 !text-success-300 border-none':
+        'bg-success-100 text-success-300 border-none':
           variant === MarkdownVariant.TIP,
         'p-0 bg-transparent border-none':
           variant === MarkdownVariant.BORDERLESS,
@@ -55,7 +55,7 @@ const Container = ({
             <Info className="w-4 h-4 mt-1" />
           )}
           {variant === MarkdownVariant.WARNING && (
-            <AlertTriangle className="w-4 h-4 mt-1 !text-warning-300 " />
+            <AlertTriangle className="w-4 h-4 mt-1" />
           )}
           {variant === MarkdownVariant.TIP && (
             <Lightbulb className="w-4 h-4 mt-1" />

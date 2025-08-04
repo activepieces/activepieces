@@ -63,19 +63,16 @@ const ApBigAddButtonCanvasNode = React.memo(
                     width: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                   }}
                   id={id}
-                  className={cn(
-                    'rounded-full bg-slate-200 dark:bg-slate-400 relative',
-                    {
-                      'bg-primary/80 dark:bg-primary/80':
-                        isShowingDropIndicator || isPieceSelectorOpened,
-                      'shadow-add-button':
-                        isIsStepInsideDropzone || isPieceSelectorOpened,
-                      'transition-all':
-                        isIsStepInsideDropzone ||
-                        isPieceSelectorOpened ||
-                        isShowingDropIndicator,
-                    },
-                  )}
+                  className={cn('rounded bg-accent relative', {
+                    'bg-primary/80':
+                      isShowingDropIndicator || isPieceSelectorOpened,
+                    'shadow-add-button':
+                      isIsStepInsideDropzone || isPieceSelectorOpened,
+                    'transition-all':
+                      isIsStepInsideDropzone ||
+                      isPieceSelectorOpened ||
+                      isShowingDropIndicator,
+                  })}
                 >
                   {!isShowingDropIndicator && (
                     <PieceSelector
@@ -87,17 +84,13 @@ const ApBigAddButtonCanvasNode = React.memo(
                       <span>
                         <Button
                           variant="transparent"
-                          className="w-full h-full flex items-center hover:bg-accent-foreground rounded-full"
+                          className="w-full h-full flex items-center hover:bg-accent-foreground rounded"
                         >
                           <Plus
-                            className={cn(
-                              'w-6 h-6 text-slate-500  dark:text-slate-200 ',
-                              {
-                                'opacity-0':
-                                  isShowingDropIndicator ||
-                                  isPieceSelectorOpened,
-                              },
-                            )}
+                            className={cn('w-6 h-6 text-accent-foreground ', {
+                              'opacity-0':
+                                isShowingDropIndicator || isPieceSelectorOpened,
+                            })}
                           />
                         </Button>
                       </span>

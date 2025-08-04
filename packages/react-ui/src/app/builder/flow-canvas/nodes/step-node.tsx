@@ -1,14 +1,13 @@
+import { useDraggable } from '@dnd-kit/core';
 import { Handle, NodeProps, Position } from '@xyflow/react';
+import { ChevronDown } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import {
-  useBuilderStateContext,
-  useStepNodeAttributes,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
+import { Button } from '@/components/ui/button';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { StepMetadataWithActionOrTriggerOrAgentDisplayName } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   FlowOperationType,
@@ -17,11 +16,10 @@ import {
   flowStructureUtil,
 } from '@activepieces/shared';
 
-import { flowUtilConsts } from '../utils/consts';
+import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../utils/consts';
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApStepNode } from '../utils/types';
 
-import { StepEllipsesButton } from './step-ellipses-button';
 import { ApStepNodeStatus } from './step-node-status';
 
 const getPieceSelectorOperationType = (step: Step) => {
@@ -37,6 +35,7 @@ const ApStepCanvasNode = React.memo(
       selectStepByName,
       isSelected,
       isDragging,
+      readonly,
       flowVersion,
       setSelectedBranchIndex,
       isPieceSelectorOpened,
@@ -45,6 +44,7 @@ const ApStepCanvasNode = React.memo(
       state.selectStepByName,
       state.selectedStep === step.name,
       state.activeDraggingStep === step.name,
+      state.readonly,
       state.flowVersion,
       state.setSelectedBranchIndex,
       state.openedPieceSelectorStepNameOrAddButtonId === step.name,
@@ -59,9 +59,15 @@ const ApStepCanvasNode = React.memo(
     }, [step, flowVersion]);
     const isTrigger = flowStructureUtil.isTrigger(step.type);
     const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
-    const isRoundedStep = flowCanvasUtils.isRoundedNode(step.type);
 
-    const stepNodeAttributes = useStepNodeAttributes(step);
+    const { attributes, listeners, setNodeRef } = useDraggable({
+      id: step.name,
+      disabled: isTrigger || readonly,
+      data: {
+        type: flowUtilConsts.DRAGGED_STEP_TAG,
+      },
+    });
+
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
@@ -73,13 +79,50 @@ const ApStepCanvasNode = React.memo(
       e.preventDefault();
       e.stopPropagation();
     };
+    const stepNodeDivAttributes = isPieceSelectorOpened ? {} : attributes;
+    const stepNodeDivListeners = isPieceSelectorOpened ? {} : listeners;
     return (
       <div
+        {...{ [`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name }}
+        style={{
+          height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
+          width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+          maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+        }}
+        className={cn(
+          'transition-all border-box rounded-sm border border-solid border-border relative hover:border-primary/70 group',
+          {
+            'border-primary/70': isSelected,
+            'bg-background': !isDragging,
+            'border-none': isDragging,
+            'shadow-none': isDragging,
+            'bg-accent/90': isSkipped,
+          },
+        )}
+        onClick={(e) => handleStepClick(e)}
         key={step.name}
-        {...stepNodeAttributes}
-        className=" group transition-all duration-150 ease-in"
+        ref={isPieceSelectorOpened ? null : setNodeRef}
+        {...stepNodeDivAttributes}
+        {...stepNodeDivListeners}
       >
-        <div className="relative h-full w-full cursor-default">
+        <div
+          className="absolute left-full pl-3 text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
+          style={{
+            top: `${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 - 12}px`,
+          }}
+        >
+          {step.name}
+        </div>
+        <div
+          className={cn(
+            'absolute left-0 top-0 pointer-events-none  rounded-sm w-full h-full',
+            {
+              'border-t-[2px] border-primary/70 border-solid':
+                isSelected && !isDragging,
+            },
+          )}
+        ></div>
+        <div className="px-3 h-full w-full overflow-hidden">
           {!isDragging && (
             <PieceSelector
               operation={{
@@ -90,53 +133,69 @@ const ApStepCanvasNode = React.memo(
               openSelectorOnClick={false}
               stepToReplacePieceDisplayName={stepMetadata?.displayName}
             >
-              <div>
-                <StepNodeBackgroundBlur isSelected={isSelected} />
-                <DisplayedText
-                  stepIndex={stepIndex}
-                  step={step}
-                  stepMetadata={stepMetadata}
-                  handleStepClick={handleStepClick}
-                />
-
+              <div
+                className="flex items-center justify-center h-full w-full gap-3"
+                onClick={(e) => {
+                  if (!isPieceSelectorOpened) {
+                    handleStepClick(e);
+                  }
+                }}
+              >
                 <div
-                  className={cn(
-                    'items-center relative transition-all  group-hover:-top-[2px]  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3',
-                    {},
-                  )}
-                  onClick={(e) => {
-                    if (!isPieceSelectorOpened) {
-                      handleStepClick(e);
-                    }
-                  }}
+                  className={cn('flex items-center justify-center h-full ', {
+                    'opacity-80': isSkipped,
+                  })}
                 >
-                  <div
-                    className={cn(
-                      'bg-white flex items-center justify-center rounded-lg shadow-step-node group-hover:shadow-hovered-step-node dark:group-hover:shadow-dark-hovered-step-node  transition-all ease-in group-hover-:mt-[2px]',
-                      {
-                        'shadow-trigger-node border-slate-400':
-                          isTrigger && !isSelected,
-                        'rounded-full': isRoundedStep,
-                        'bg-accent': isSkipped,
-                        'shadow-selected-step-node dark:border dark:border-primary dark:shadow-selected-step-node-dark group-hover:shadow-selected-step-node dark:group-hover:shadow-selected-step-node-dark':
-                          isSelected,
-                      },
-                    )}
-                    style={{
-                      height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
-                      width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-                      maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-                    }}
-                  >
-                    <div className="relative">
-                      <StepEllipsesButton stepName={step.name} />
-                      <StepNodeImage
-                        isRoundedStep={isRoundedStep}
-                        isSkipped={isSkipped}
-                        stepMetadata={stepMetadata}
-                        step={step}
-                      />
+                  <ImageWithFallback
+                    src={stepMetadata?.logoUrl}
+                    alt={stepMetadata?.displayName}
+                    className="w-12 h-12"
+                  />
+                </div>
+                <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
+                  <div className=" flex items-center justify-between min-w-0 w-full">
+                    <div
+                      className={cn('text-sm truncate grow shrink ', {
+                        'text-accent-foreground/70': isSkipped,
+                      })}
+                    >
+                      {stepIndex}. {step.displayName}
                     </div>
+
+                    {(!readonly || !isTrigger) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 size-7 "
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          if (e.target) {
+                            const rightClickEvent = new MouseEvent(
+                              'contextmenu',
+                              {
+                                bubbles: true,
+                                cancelable: true,
+                                view: window,
+                                button: 2,
+                                clientX: e.clientX,
+                                clientY: e.clientY,
+                              },
+                            );
+                            e.target.dispatchEvent(rightClickEvent);
+                          }
+                        }}
+                      >
+                        <ChevronDown className="w-4 h-4 stroke-muted-foreground" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="flex justify-between w-full items-center">
+                    <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
+                      {stepMetadata?.displayName}
+                    </div>
+                    <ApStepNodeStatus stepName={step.name} />
                   </div>
                 </div>
               </div>
@@ -159,96 +218,5 @@ const ApStepCanvasNode = React.memo(
   },
 );
 
-const DisplayedText = ({
-  stepIndex,
-  step,
-  stepMetadata,
-  handleStepClick,
-}: {
-  stepIndex: number;
-  step: Step;
-  stepMetadata?: StepMetadataWithActionOrTriggerOrAgentDisplayName;
-  handleStepClick: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
-}) => {
-  return (
-    <div
-      className="absolute left-[80px] flex flex-col gap-1 text-sm  !cursor-pointer z-10"
-      onClick={handleStepClick}
-      style={{
-        maxWidth: `${flowUtilConsts.STEP_DISPLAY_META_WIDTH}px`,
-        // 18px is the height of the text
-        top: `calc(50% - 18px)`,
-      }}
-    >
-      <div className="truncate grow shrink bg-flow-bg/50">
-        {stepIndex}. {step.displayName}
-      </div>
-      <div className="text-muted-foreground break-keep text-nowrap truncate grow shrink bg-flow-bg/50">
-        {stepMetadata?.displayName}
-      </div>
-    </div>
-  );
-};
-
-const StepNodeBackgroundBlur = ({ isSelected }: { isSelected: boolean }) => {
-  return (
-    <div
-      style={{
-        height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
-        width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-        maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-      }}
-      className={cn(
-        'opacity-0 transition-all absolute left-0 top-0 rounded-md',
-        {
-          'opacity-100': isSelected,
-        },
-      )}
-    ></div>
-  );
-};
-
-const StepNodeImage = ({
-  isRoundedStep,
-  isSkipped,
-  stepMetadata,
-  step,
-}: {
-  isRoundedStep: boolean;
-  isSkipped: boolean;
-  stepMetadata?: StepMetadataWithActionOrTriggerOrAgentDisplayName;
-  step: Step;
-}) => {
-  return (
-    <div
-      className={cn(
-        'transition-all relative flex justify-center items-center size-[60px] m-0.5 bg-white  rounded-md  ',
-        {
-          'rounded-full': isRoundedStep,
-          'bg-accent dark:bg-gray-300': isSkipped,
-        },
-      )}
-    >
-      <ImageWithFallback
-        src={stepMetadata?.logoUrl}
-        alt={stepMetadata?.displayName}
-        className={cn(
-          'size-[52px] min-w-[52px] min-h-[52px] bg-white rounded-sm object-contain',
-          {
-            'rounded-full': isRoundedStep,
-            'bg-accent dark:bg-gray-300': isSkipped,
-          },
-        )}
-      />
-      <div
-        className={cn('absolute bottom-[2px] right-[2px]', {
-          'right-[3px] bottom-[3px]': isRoundedStep,
-        })}
-      >
-        <ApStepNodeStatus stepName={step.name} isStepRounded={isRoundedStep} />
-      </div>
-    </div>
-  );
-};
 ApStepCanvasNode.displayName = 'ApStepCanvasNode';
 export { ApStepCanvasNode };

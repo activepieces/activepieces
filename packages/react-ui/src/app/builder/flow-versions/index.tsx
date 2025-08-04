@@ -39,12 +39,7 @@ const FlowVersionsList = () => {
         {t('Version History')}
       </SidebarHeader>
       <CardList>
-        {isLoading && (
-          <CardListItemSkeleton
-            numberOfCards={10}
-            skeletonClassName="bg-background"
-          />
-        )}
+        {isLoading && <CardListItemSkeleton numberOfCards={10} />}
         {isError && <div>{t('Error, please try again.')}</div>}
         {flowVersionPage && flowVersionPage.data && (
           <ScrollArea className="w-full h-full">

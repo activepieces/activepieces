@@ -17,7 +17,6 @@ import {
   Trigger,
   StepOutput,
   StepRunResponse,
-  PieceCategory,
 } from '@activepieces/shared';
 
 import {
@@ -38,28 +37,24 @@ export const CORE_STEP_METADATA: Record<
     logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
     description: t('Powerful Node.js & TypeScript code with npm'),
     type: ActionType.CODE as const,
-    categories: [],
   },
   [ActionType.LOOP_ON_ITEMS]: {
     displayName: t('Loop on Items'),
     logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
     description: 'Iterate over a list of items',
     type: ActionType.LOOP_ON_ITEMS as const,
-    categories: [PieceCategory.FLOW_CONTROL],
   },
   [ActionType.ROUTER]: {
     displayName: t('Router'),
     logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
     description: t('Split your flow into branches depending on condition(s)'),
     type: ActionType.ROUTER as const,
-    categories: [PieceCategory.FLOW_CONTROL],
   },
   [TriggerType.EMPTY]: {
     displayName: t('Empty Trigger'),
     logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
     description: t('Empty Trigger'),
     type: TriggerType.EMPTY as const,
-    categories: [],
   },
 } as const;
 export const CORE_ACTIONS_METADATA = [
@@ -138,7 +133,6 @@ export const stepUtils = {
           errorHandlingOptions: mapErrorHandlingOptions(piece, step),
           actionOrTriggerOrAgentDisplayName:
             agentDisplayName ?? actionOrTriggerDisplayName,
-          categories: metadata.categories as PieceCategory[],
         };
       }
     }

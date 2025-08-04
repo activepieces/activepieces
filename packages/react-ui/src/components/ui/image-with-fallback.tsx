@@ -35,7 +35,7 @@ const ImageWithFallback = ({
           {fallback ?? <Skeleton className="w-full h-full" />}
         </span>
       )}
-      {!hasError && src ? (
+      {!hasError ? (
         <img
           src={src}
           alt={alt}
