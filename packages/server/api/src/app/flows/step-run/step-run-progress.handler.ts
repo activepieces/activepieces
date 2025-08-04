@@ -1,3 +1,4 @@
+import { exceptionHandler } from '@activepieces/server-shared'
 import { 
     isNil, 
     ProjectId, 
@@ -8,7 +9,6 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { flowRunService } from '../flow-run/flow-run-service'
-import { exceptionHandler } from '@activepieces/server-shared'
 
 function createProgressHandler(context: StepExecutionContext) {
     return async (progressEvent: FlowRunProgressEvent): Promise<void> => {

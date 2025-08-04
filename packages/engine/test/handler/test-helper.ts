@@ -30,7 +30,7 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             resumePayload: params?.resumePayload,
             runEnvironment: params?.runEnvironment ?? RunEnvironment.TESTING,
             returnResponseActionData: params?.returnResponseActionData,
-    })
+        })
 }
 
 export function buildSimpleLoopAction({
