@@ -135,6 +135,9 @@
       "@activepieces/piece-blockscout": [
         "packages/pieces/community/blockscout/src/index.ts"
       ],
+      "@activepieces/piece-bluesky": [
+        "packages/pieces/community/bluesky/src/index.ts"
+      ],
       "@activepieces/piece-bonjoro": [
         "packages/pieces/community/bonjoro/src/index.ts"
       ],

@@ -491,7 +491,9 @@ export const formUtils = {
         case PropertyType.MULTI_SELECT_DROPDOWN:
         case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
           propsSchema[name] = Type.Union([
-            Type.Array(Type.Any()),
+            Type.Array(Type.Any(), {
+              minItems: property.required ? 1 : undefined,
+            }),
             Type.String({
               minLength: property.required ? 1 : undefined,
             }),

@@ -346,7 +346,7 @@ export const excelCommon = {
 	
 		// Fetch the folder contents
 		const folders: { id: string, name: string }[] = (
-			await httpClient.sendRequest<{ value: { id: string, name: string,folder?:{} }[] }>({
+			await httpClient.sendRequest<{ value: { id: string, name: string,folder?: unknown }[] }>({
 				url: apiUrl,
 				method: HttpMethod.GET,
 				authentication: {
