@@ -119,6 +119,7 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     httpRequestId: string | null
     progressUpdateType: ProgressUpdateType
     returnResponseActionData: ReturnResponseActionData | null
+    testSingleStepMode?: boolean
 }
 
 export enum ProgressUpdateType {

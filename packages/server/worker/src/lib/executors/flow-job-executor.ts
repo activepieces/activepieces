@@ -10,7 +10,6 @@ type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
 
 async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, attempsStarted: number, engineToken: string, log: FastifyBaseLogger): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {
-
     switch (jobData.executionType) {
         case ExecutionType.BEGIN:{
             const flowRun =  (jobData.executionType === ExecutionType.BEGIN && attempsStarted > 1) ? await engineApiService(engineToken, log).getRun({
@@ -32,6 +31,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 httpRequestId: jobData.httpRequestId ?? null,
                 progressUpdateType: jobData.progressUpdateType,
                 returnResponseActionData: jobData.returnResponseActionData ?? null,
+                testSingleStepMode: jobData.testSingleStepMode,
             }
         }
         case ExecutionType.RESUME: {
@@ -54,6 +54,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 resumePayload: jobData.payload as ResumePayload,
                 progressUpdateType: jobData.progressUpdateType,
                 returnResponseActionData: jobData.returnResponseActionData ?? null,
+                testSingleStepMode: jobData.testSingleStepMode,
             }
         }
     }

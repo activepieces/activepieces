@@ -28,6 +28,7 @@ type StartParams = {
     progressUpdateType: ProgressUpdateType
     httpRequestId: string | undefined
     returnResponseActionData: ReturnResponseActionData | undefined
+    testSingleStepMode?: boolean
 }
 
 type PauseParams = {
@@ -72,6 +73,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         progressUpdateType,
         executeTrigger,
         returnResponseActionData,
+        testSingleStepMode,
     }: StartParams): Promise<void> {
         log.info({
             flowRunId: flowRun.id,
@@ -94,6 +96,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                 executionType,
                 progressUpdateType,
                 returnResponseActionData,
+                testSingleStepMode,
             },
         })
         eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {

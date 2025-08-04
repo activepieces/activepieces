@@ -78,6 +78,7 @@ export const OneTimeJobData = Type.Object({
     executionType: Type.Enum(ExecutionType),
     progressUpdateType: Type.Enum(ProgressUpdateType),
     returnResponseActionData: Type.Optional(ReturnResponseActionData),
+    testSingleStepMode: Type.Optional(Type.Boolean()),
 })
 export type OneTimeJobData = Static<typeof OneTimeJobData>
 

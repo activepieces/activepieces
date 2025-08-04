@@ -16,6 +16,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
                 projectId: principal.projectId,
                 flowVersionId: data.flowVersionId,
                 returnResponseActionData: data.returnResponseActionData,
+                testSingleStepMode: true,
             })
 
             const onProgress = stepRunProgressHandler.createProgressHandler({

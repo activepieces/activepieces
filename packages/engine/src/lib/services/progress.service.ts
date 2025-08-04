@@ -98,7 +98,7 @@ type CreateOutputContextParams = {
 const queueUpdates: UpdateStepProgressParams[] = []
 
 const sendUpdateRunRequest = async (_updateParams: UpdateStepProgressParams): Promise<void> => {
-    if (_updateParams.engineConstants.isRunningApTests || _updateParams.engineConstants.testSingleStepMode) {
+    if (_updateParams.engineConstants.isRunningApTests) {
         return
     }
     queueUpdates.push(_updateParams)

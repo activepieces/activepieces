@@ -250,6 +250,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         parentRunId,
         failParentOnFailure,
         returnResponseActionData,
+        testSingleStepMode,
     }: StartParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
@@ -281,12 +282,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executionType,
             progressUpdateType,
             returnResponseActionData,
+            testSingleStepMode,
         })
 
         return flowRun
     },
 
-    async test({ projectId, flowVersionId, parentRunId, returnResponseActionData }: TestParams): Promise<FlowRun> {
+    async test({ projectId, flowVersionId, parentRunId, returnResponseActionData, testSingleStepMode }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
         const sampleData = await sampleDataService(log).getOrReturnEmpty({
@@ -308,6 +310,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             failParentOnFailure: true,
             returnResponseActionData,
+            testSingleStepMode: testSingleStepMode ?? false,
         })
     },
 
@@ -617,6 +620,7 @@ type StartParams = {
     progressUpdateType: ProgressUpdateType
     executionType: ExecutionType
     returnResponseActionData?: ReturnResponseActionData
+    testSingleStepMode?: boolean
 }
 
 type TestParams = {
@@ -624,6 +628,7 @@ type TestParams = {
     flowVersionId: FlowVersionId
     parentRunId?: FlowRunId
     returnResponseActionData?: ReturnResponseActionData
+    testSingleStepMode?: boolean
 }
 
 type PauseParams = {

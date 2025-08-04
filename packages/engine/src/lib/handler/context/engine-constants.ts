@@ -1,4 +1,4 @@
-import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, ReturnResponseActionData, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, ReturnResponseActionData, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -118,7 +118,7 @@ export class EngineConstants {
                 engineToken: input.engineToken,
                 apiUrl: input.internalApiUrl,
             }),
-            testSingleStepMode: false,
+            testSingleStepMode: input.testSingleStepMode ?? false,
             progressUpdateType: input.progressUpdateType,
             serverHandlerId: input.serverHandlerId ?? null,
             httpRequestId: input.httpRequestId ?? null,
@@ -151,32 +151,6 @@ export class EngineConstants {
             resumePayload: undefined,
             runEnvironment: undefined,
             returnResponseActionData: undefined,
-        })
-    }
-
-    public static fromExecuteStepInput(input: ExecuteStepOperation): EngineConstants {
-        return new EngineConstants({
-            flowId: input.flowVersion.flowId,
-            flowVersionId: input.flowVersion.id,
-            flowVersionState: input.flowVersion.state,
-            flowRunId: 'test-run',
-            publicApiUrl: input.publicApiUrl,
-            internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
-            retryConstants: DEFAULT_RETRY_CONSTANTS,
-            engineToken: input.engineToken,
-            projectId: input.projectId,
-            propsResolver: createPropsResolver({
-                projectId: input.projectId,
-                engineToken: input.engineToken,
-                apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
-            }),
-            testSingleStepMode: true,
-            progressUpdateType: ProgressUpdateType.NONE,
-            serverHandlerId: null,
-            httpRequestId: input.requestId ?? null,
-            resumePayload: undefined,
-            runEnvironment: input.runEnvironment,
-            returnResponseActionData: input.returnResponseActionData ?? undefined,
         })
     }
 
