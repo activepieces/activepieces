@@ -1,7 +1,6 @@
 import { t } from 'i18next';
 import { useEffect } from 'react';
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -25,7 +24,7 @@ const TestButton = ({
   showKeyboardShortcut = true,
 }: TestButtonProps) => {
   const isMac = /(Mac)/i.test(navigator.userAgent);
-  const isSaving = useBuilderStateContext((state) => state.saving);
+
   useEffect(() => {
     const keydownHandler = (event: KeyboardEvent) => {
       if (
@@ -53,8 +52,8 @@ const TestButton = ({
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
-          className="h-8 !bg-primary-100 text-primary-300 disabled:pointer-events-auto hover:!border-primary hover:!text-primary-300 border-primary/50 border border-solid rounded-full animate-fade"
-          disabled={disabled || isSaving}
+          className="h-8 !bg-primary-100/80 text-primary-300 disabled:pointer-events-auto hover:!border-primary hover:!text-primary-300 border-primary/50 border border-solid rounded-full animate-fade"
+          disabled={disabled}
           loading={loading}
           onClick={onClick}
         >
@@ -72,9 +71,6 @@ const TestButton = ({
         <TooltipContent side="bottom">
           {t('Please test the trigger first')}
         </TooltipContent>
-      )}
-      {isSaving && !disabled && (
-        <TooltipContent side="bottom">{t('Saving...')}</TooltipContent>
       )}
     </Tooltip>
   );

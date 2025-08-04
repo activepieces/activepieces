@@ -58,7 +58,6 @@ const GenericActionOrTriggerItem = ({
             displayName={stepMetadataWithSuggestions.displayName}
             showTooltip={false}
             size={'sm'}
-            className="rounded-xs dark:p-[1px]"
           />
         </div>
         <div className="flex flex-col gap-0.5">

@@ -23,7 +23,6 @@ module.exports = {
       },
     },
     extend: {
-     
       width: {
         '4.5': '1.125rem'
       },
@@ -85,15 +84,6 @@ module.exports = {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
         },
-        slate:{
-          400: 'hsl(var(--slate-400))',
-          50: 'hsl(var(--slate-50))',
-          500: 'hsl(var(--slate-500))',
-        },
-        flow: {
-          bg: 'hsl(var(--flow-bg))',
-          'bg-pattern': 'hsl(var(--flow-bg-pattern))',
-        }
       },
       borderRadius: {
         lg: `var(--radius)`,
@@ -154,8 +144,7 @@ module.exports = {
           '100%': {
             backgroundPosition: '0%'
           }
-        },
-       
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -164,16 +153,11 @@ module.exports = {
         highlight: 'highlight 1s ease-out',
         typing: 'typing 0.7s steps(7) alternate',
         'typing-sm': 'typing 0.5s steps(5) alternate',
-        'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite',
+        'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite'
       },
       boxShadow: {
-        'selected-step-node': '0px 1px 24px hsl(var(--primary)/0.2), 0px 0px 0px 2px hsl(var(--primary)), 0px 0px 0px 6px hsl(var(--primary)/0.12)',
-        'selected-step-node-dark': '0px 1px 24px hsl(var(--primary)), 0px 0px 0px 2px hsl(var(--primary)), 0px 0px 0px 6px hsl(var(--primary)/0.25)',
-        'hovered-step-node': '0px 0px 0px 1px rgba(0, 0, 0, 0.08), 0px 2px 24px rgba(0, 0, 0, 0.16), 0px 0px 2px rgba(0, 0, 0, 0.2)',
-        'dark-hovered-step-node': '0px 0px 0px 1px rgba(255, 255, 255, 0.08), 0px 2px 24px rgba(255, 255, 255, 0.16), 0px 0px 2px rgba(255, 255, 255, 0.2)',
+        'step-container': '0px 0px 22px hsl(var(--border) / 0.4)',
         'add-button': 'var(--add-button-shadow)',
-        'step-node': '0px 1px 24px rgba(0, 0, 0, 0.08), 0px 0px 0px 1px rgba(0, 0, 0, 0.08), 0px 1px 1px rgba(0, 0, 0, 0.12)',
-        'trigger-node': ' 0px 1px 1px 0px #0000001F, 0px 1px 24px 0px #00000014, 0px 0px 0px 3px #94A3B833',
       },
     },
   },

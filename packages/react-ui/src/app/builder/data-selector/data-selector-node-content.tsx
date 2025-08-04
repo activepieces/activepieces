@@ -93,7 +93,6 @@ const DataSelectorNodeContent = ({
               circle={false}
               border={false}
               size="sm"
-              className="rounded-xs dark:p-[1px]"
             ></PieceIcon>
           </div>
         )}

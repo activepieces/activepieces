@@ -46,7 +46,7 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
           <ImageWithFallback
             src={stepMetadata.logoUrl}
             alt={modifiedTitle ?? ''}
-            className="w-12 h-12 rounded-sm bg-white p-[1px]"
+            className="w-12 h-12"
           />
         )}
       </div>

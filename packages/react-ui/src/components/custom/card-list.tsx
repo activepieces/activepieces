@@ -74,23 +74,18 @@ export { CardListItem };
 type CardListItemSkeletonProps = {
   numberOfCards?: number;
   withCircle?: boolean;
-  skeletonClassName?: string;
 };
 
 const CardListItemSkeleton: React.FC<CardListItemSkeletonProps> = React.memo(
-  ({ numberOfCards = 3, withCircle = true, skeletonClassName }) => {
+  ({ numberOfCards = 3, withCircle = true }) => {
     return (
       <>
         {[...Array(numberOfCards)].map((_, index) => (
           <div key={index} className="flex items-center gap-4 w-full py-4 px-5">
-            {withCircle && (
-              <Skeleton
-                className={cn('h-8 w-8 rounded-full', skeletonClassName)}
-              />
-            )}
+            {withCircle && <Skeleton className="h-8 w-8 rounded-full" />}
             <div className="space-y-2">
-              <Skeleton className={cn('h-4 w-[250px]', skeletonClassName)} />
-              <Skeleton className={cn('h-4 w-[200px]', skeletonClassName)} />
+              <Skeleton className="h-4 w-[250px]" />
+              <Skeleton className="h-4 w-[200px]" />
             </div>
           </div>
         ))}

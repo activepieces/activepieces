@@ -16,13 +16,14 @@ const AboveFlowWidgets = React.memo(() => {
     <ViewportPortal>
       <div
         style={{
+          transform: `translate(0px,-${
+            flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 + 8
+          }px )`,
           position: 'absolute',
           pointerEvents: 'auto',
-          top: `-${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 + 12}px`,
-          left: `-99px`,
         }}
       >
-        <div className="flex items-center justify-center w-[260px]">
+        <div className="justify-center items-center flex w-[260px]">
           <TestFlowWidget></TestFlowWidget>
           {!readonly && (
             <IncompleteSettingsButton

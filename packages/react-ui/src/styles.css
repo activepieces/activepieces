@@ -65,14 +65,6 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    --slate-50: 210 40% 98%;
-    --slate-400: 215 20% 65%;
-    --slate-300: 213 27% 84%;
-    --slate-500: 215 16% 47%;
-    --slate-600: 215 19% 35%;
-    --flow-bg: 0 0% 99%;
-    --flow-bg-pattern: var(--slate-300);
-    --slate-950: 229 84% 5%;
   }
 
 .dark {
@@ -88,13 +80,13 @@
   --accent: 210 35% 25%;
   --accent-foreground: 210 90% 95%;
 
-  --primary-100: 210 90% 10%;
+  --primary-100: 210 80% 40%;
   --primary: 210 90% 50%;
   --primary-300: 210 100% 85%;
   --primary-foreground: 210 90% 98%;
 
   --success-100: 140 60% 40%;
-  --success: 140 74% 38%;
+  --success: 140 80% 50%;
   --success-300: 140 90% 85%;
 
   --destructive-100: 0 70% 38%;
@@ -103,7 +95,7 @@
 
   --warning-100: 40 90% 50%;
   --warning: 40 100% 45%;
-  --warning-300: 40 100% 15.27%;
+  --warning-300: 40 100% 30%;
 
   --border: 210 15% 25%;
   --input: 210 15% 22%;
@@ -127,8 +119,6 @@
   --sidebar-accent-foreground: 210 30% 90%;
   --sidebar-border: 210 15% 22%;
   --sidebar-ring: 210 90% 70%;
-  --flow-bg: 212 13% 5%;
-  --flow-bg-pattern: var(--slate-600);
 }
 
 
@@ -156,10 +146,7 @@
   --node-border-default: 0px solid #b1b1b7 !important;
   --xy-selection-border-default: 1px dotted hsl(var(--primary-300)) !important;
   --xy-selection-background-color-default: hsl(var(--primary-100)/0.25) !important;
-  --xy-background-pattern-color-props: hsl(var(--slate-50)/ 0.1) !important;
-  --xy-edge-stroke-default: hsl(var(--slate-500)) !important;
 }
-
 
 .react-flow__pane.selection,
 .react-flow__nodesselection-rect {

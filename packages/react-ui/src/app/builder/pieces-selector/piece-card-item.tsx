@@ -78,9 +78,7 @@ const PieceCardListItem = ({
             displayName={pieceMetadata.displayName}
             showTooltip={false}
             size={'sm'}
-            className="p-[1px] rounded-xs"
           />
-
           <div className="flex-grow h-full flex items-center justify-left text-sm">
             {pieceMetadata.displayName}
           </div>

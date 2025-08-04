@@ -103,11 +103,20 @@ export const ApRouterStartCanvasEdge = ({
       {!data.isBranchEmpty && (
         <foreignObject
           x={targetX - flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2}
-          y={targetY - verticalLineLength / 2}
+          y={targetY - verticalLineLength / 2 + 10}
           width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
           height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
           className="overflow-visible"
         >
+          {data.stepLocationRelativeToParent !==
+            StepLocationRelativeToParent.INSIDE_BRANCH && (
+            <ApAddButton
+              edgeId={id}
+              stepLocationRelativeToParent={data.stepLocationRelativeToParent}
+              parentStepName={source}
+            ></ApAddButton>
+          )}
+
           {data.stepLocationRelativeToParent ===
             StepLocationRelativeToParent.INSIDE_BRANCH && (
             <ApAddButton
@@ -121,18 +130,18 @@ export const ApRouterStartCanvasEdge = ({
       )}
 
       <foreignObject
-        width={flowUtilConsts.LABEL_WIDTH + 'px'}
+        width={flowUtilConsts.AP_NODE_SIZE.STEP.width - 10 + 'px'}
         height={
           flowUtilConsts.LABEL_HEIGHT +
           flowUtilConsts.LABEL_VERTICAL_PADDING +
           'px'
         }
-        x={targetX - flowUtilConsts.LABEL_WIDTH / 2}
+        x={targetX - (flowUtilConsts.AP_NODE_SIZE.STEP.width - 10) / 2}
         y={
           targetY -
           verticalLineLength / 2 -
           flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height -
-          35
+          40
         }
         className="flex items-center "
       >
