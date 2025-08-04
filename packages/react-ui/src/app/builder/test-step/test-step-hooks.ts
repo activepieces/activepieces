@@ -23,7 +23,6 @@ import {
   FlowOperationType,
   flowStructureUtil,
   SampleDataFileType,
-  ReturnResponseActionData,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -249,9 +248,7 @@ export const testStepHooks = {
     onSuccess,
     onProgress,
     mutationKey,
-    returnResponseActionData,
   }: {
-    returnResponseActionData?: ReturnResponseActionData;
     currentStep: Action;
     setErrorMessage: ((msg: string | undefined) => void) | undefined;
     setConsoleLogs: ((logs: string | null) => void) | undefined;
@@ -276,7 +273,6 @@ export const testStepHooks = {
           {
             flowVersionId,
             stepName: currentStep.name,
-            returnResponseActionData,
           },
           (progress) => {
             if (params?.abortSignal?.aborted) {

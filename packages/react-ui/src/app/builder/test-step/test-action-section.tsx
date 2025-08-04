@@ -96,17 +96,8 @@ const TestStepSectionImplementation = React.memo(
     const form = useFormContext<ActionWithoutNext>();
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const [mutationKey, setMutationKey] = useState<string[]>([]);
-    const returnResponseActionData =
-      currentStep.type === ActionType.PIECE &&
-      !isNil(currentStep.settings.actionName)
-        ? {
-            actionName: currentStep.settings.actionName,
-            pieceName: currentStep.settings.pieceName,
-          }
-        : undefined;
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
-        returnResponseActionData,
         mutationKey,
         currentStep,
         setErrorMessage,

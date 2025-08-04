@@ -145,11 +145,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 return url.toString()
             },
         }
-        const actionData = {
-            actionName: action.settings.actionName,
-            pieceName: action.settings.pieceName,
-        }
-        const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test) && JSON.stringify(constants.returnResponseActionData) !== JSON.stringify(actionData)) ? pieceAction.test : pieceAction.run
+        const runMethodToExecute = (!isNil(pieceAction.test) && constants.stepNameToTest !== action.name) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)
         const newExecutionContext = executionState.addTags(params.hookResponse.tags)
 

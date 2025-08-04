@@ -1,8 +1,10 @@
 import { exceptionHandler } from '@activepieces/server-shared'
 import { 
+    FlowVersion, 
     isNil, 
     ProjectId, 
-    StepOutputStatus, 
+    StepOutput, 
+    StepOutputStatus,
     StepRunResponse,
     WebsocketClientEvent,
 } from '@activepieces/shared'
@@ -24,7 +26,7 @@ function createProgressHandler(context: StepExecutionContext) {
                 projectId,
             })
             
-            const stepOutput = flowRun.steps[stepName]
+            const stepOutput = flowRun.steps ? findStepOutputInNestedStructure(flowRun.steps, stepName) : undefined
             if (isNil(stepOutput) || [StepOutputStatus.RUNNING, StepOutputStatus.PAUSED].includes(stepOutput.status)) {
                 return
             }
@@ -59,6 +61,30 @@ function createProgressHandler(context: StepExecutionContext) {
     }
 } 
 
+
+const findStepOutputInNestedStructure = (data: unknown, stepName: string): StepOutput | undefined => {
+    if (isNil(data) || typeof data !== 'object') {
+        return undefined
+    }
+    
+    const dataAsRecord = data as Record<string, unknown>
+    
+    const foundStepOutput = !isNil(dataAsRecord[stepName]) && typeof dataAsRecord[stepName] === 'object'
+    if (foundStepOutput) {
+        return dataAsRecord[stepName] as StepOutput
+    }
+    
+    for (const [, value] of Object.entries(dataAsRecord)) {
+        if (value && typeof value === 'object') {
+            const result = findStepOutputInNestedStructure(value, stepName)
+            if (result) {
+                return result
+            }
+        }
+    }
+    return undefined
+}
+
 type FlowRunProgressEvent = {
     runId: string
 }
@@ -70,6 +96,7 @@ type StepExecutionContext = {
     stepName: string
     requestId: string
     runId: string
+    flowVersion: FlowVersion
 }
 
 export const stepRunProgressHandler = {

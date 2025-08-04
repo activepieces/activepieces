@@ -78,6 +78,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: String,
             nullable: true,
         },
+        stepNameToTest: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {

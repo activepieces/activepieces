@@ -30,8 +30,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,
                 progressUpdateType: jobData.progressUpdateType,
-                returnResponseActionData: jobData.returnResponseActionData ?? null,
-                testSingleStepMode: jobData.testSingleStepMode,
+                stepNameToTest: jobData.stepNameToTest ?? null,
             }
         }
         case ExecutionType.RESUME: {
@@ -53,8 +52,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 httpRequestId: jobData.httpRequestId ?? null,
                 resumePayload: jobData.payload as ResumePayload,
                 progressUpdateType: jobData.progressUpdateType,
-                returnResponseActionData: jobData.returnResponseActionData ?? null,
-                testSingleStepMode: jobData.testSingleStepMode,
+                stepNameToTest: jobData.stepNameToTest ?? null,
             }
         }
     }

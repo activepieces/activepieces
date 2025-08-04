@@ -3,6 +3,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { serverEventBus, websocketService } from '../../websockets/websockets.service'
 import { flowService } from '../flow/flow.service'
 import { flowRunService } from '../flow-run/flow-run-service'
+import { flowVersionService } from '../flow-version/flow-version.service'
 import { sampleDataService } from './sample-data.service'
 import { stepRunProgressHandler } from './step-run-progress.handler'
 
@@ -11,12 +12,12 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
         return async (data: CreateStepRunRequestBody) => {
             const principal = await websocketService.verifyPrincipal(socket)
             fastify.log.debug({ data }, '[Socket#testStepRun]')
+            const flowVersion = await flowVersionService(fastify.log).getOneOrThrow(data.flowVersionId)
             
             const flowRun = await flowRunService(fastify.log).test({
                 projectId: principal.projectId,
                 flowVersionId: data.flowVersionId,
-                returnResponseActionData: data.returnResponseActionData,
-                testSingleStepMode: true,
+                stepNameToTest: data.stepName,
             })
 
             const onProgress = stepRunProgressHandler.createProgressHandler({
@@ -26,6 +27,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
                 stepName: data.stepName,
                 requestId: data.id,
                 runId: flowRun.id,
+                flowVersion,
             })
 
             serverEventBus.on(WebsocketServerEvent.TEST_STEP_RUN_PROGRESS, onProgress)

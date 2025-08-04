@@ -21,7 +21,6 @@ import {
     PauseType,
     ProgressUpdateType,
     ProjectId,
-    ReturnResponseActionData,
     RunEnvironment,
     SampleDataFileType,
     SeekPage,
@@ -194,6 +193,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 environment: RunEnvironment.PRODUCTION,
                 parentRunId: flowRunToResume.parentRunId,
                 failParentOnFailure: flowRunToResume.failParentOnFailure,
+                stepNameToTest: flowRunToResume.stepNameToTest,
             })
         }
         return null
@@ -249,8 +249,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         httpRequestId,
         parentRunId,
         failParentOnFailure,
-        returnResponseActionData,
-        testSingleStepMode,
+        stepNameToTest,
     }: StartParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
@@ -268,6 +267,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             flowDisplayName: flowVersion.displayName,
             parentRunId,
             failParentOnFailure,
+            stepNameToTest,
             log,
         })
 
@@ -281,14 +281,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executeTrigger,
             executionType,
             progressUpdateType,
-            returnResponseActionData,
-            testSingleStepMode,
+            stepNameToTest,
         })
 
         return flowRun
     },
 
-    async test({ projectId, flowVersionId, parentRunId, returnResponseActionData, testSingleStepMode }: TestParams): Promise<FlowRun> {
+    async test({ projectId, flowVersionId, parentRunId, stepNameToTest }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
         const sampleData = await sampleDataService(log).getOrReturnEmpty({
@@ -309,8 +308,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             failParentOnFailure: true,
-            returnResponseActionData,
-            testSingleStepMode: testSingleStepMode ?? false,
+            stepNameToTest,
         })
     },
 
@@ -531,6 +529,7 @@ async function getOrCreate({
     environment,
     parentRunId,
     failParentOnFailure,
+    stepNameToTest,
     log,
 }: GetOrCreateParams): Promise<FlowRun> {
     if (existingFlowRunId) {
@@ -551,6 +550,7 @@ async function getOrCreate({
         parentRunId,
         failParentOnFailure: failParentOnFailure ?? true,
         status: FlowRunStatus.QUEUED,
+        stepNameToTest,
     })
 }
 
@@ -582,6 +582,7 @@ type GetOrCreateParams = {
     flowVersionId: FlowVersionId
     parentRunId?: FlowRunId
     failParentOnFailure?: boolean
+    stepNameToTest?: string
     existingFlowRunId?: FlowRunId
     flowId: FlowId
     flowDisplayName: string
@@ -619,16 +620,14 @@ type StartParams = {
     httpRequestId: string | undefined
     progressUpdateType: ProgressUpdateType
     executionType: ExecutionType
-    returnResponseActionData?: ReturnResponseActionData
-    testSingleStepMode?: boolean
+    stepNameToTest?: string
 }
 
 type TestParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
     parentRunId?: FlowRunId
-    returnResponseActionData?: ReturnResponseActionData
-    testSingleStepMode?: boolean
+    stepNameToTest?: string
 }
 
 type PauseParams = {

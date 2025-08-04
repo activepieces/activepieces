@@ -1,4 +1,4 @@
-import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, ReturnResponseActionData, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -18,13 +18,12 @@ type EngineConstantsParams = {
     engineToken: string
     projectId: ProjectId
     propsResolver: PropsResolver
-    testSingleStepMode: boolean
     progressUpdateType: ProgressUpdateType
     serverHandlerId: string | null
     httpRequestId: string | null
     resumePayload?: ResumePayload
     runEnvironment?: RunEnvironment
-    returnResponseActionData?: ReturnResponseActionData
+    stepNameToTest?: string
 }
 
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
@@ -53,13 +52,12 @@ export class EngineConstants {
     public readonly engineToken: string
     public readonly projectId: ProjectId
     public readonly propsResolver: PropsResolver
-    public readonly testSingleStepMode: boolean
     public readonly progressUpdateType: ProgressUpdateType
     public readonly serverHandlerId: string | null
     public readonly httpRequestId: string | null
     public readonly resumePayload?: ResumePayload
     public readonly runEnvironment?: RunEnvironment
-    public readonly returnResponseActionData?: ReturnResponseActionData
+    public readonly stepNameToTest?: string
 
     private project: Project | null = null
 
@@ -93,13 +91,12 @@ export class EngineConstants {
         this.engineToken = params.engineToken
         this.projectId = params.projectId
         this.propsResolver = params.propsResolver
-        this.testSingleStepMode = params.testSingleStepMode
         this.progressUpdateType = params.progressUpdateType
         this.serverHandlerId = params.serverHandlerId
         this.httpRequestId = params.httpRequestId
         this.resumePayload = params.resumePayload
         this.runEnvironment = params.runEnvironment
-        this.returnResponseActionData = params.returnResponseActionData
+        this.stepNameToTest = params.stepNameToTest
     }
 
     public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
@@ -118,13 +115,12 @@ export class EngineConstants {
                 engineToken: input.engineToken,
                 apiUrl: input.internalApiUrl,
             }),
-            testSingleStepMode: input.testSingleStepMode ?? false,
             progressUpdateType: input.progressUpdateType,
             serverHandlerId: input.serverHandlerId ?? null,
             httpRequestId: input.httpRequestId ?? null,
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             runEnvironment: input.runEnvironment,
-            returnResponseActionData: input.returnResponseActionData ?? undefined,
+            stepNameToTest: input.stepNameToTest ?? undefined,
         })
     }
 
@@ -144,13 +140,12 @@ export class EngineConstants {
                 engineToken: input.engineToken,
                 apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
             }),
-            testSingleStepMode: true,
             progressUpdateType: ProgressUpdateType.NONE,
             serverHandlerId: null,
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
-            returnResponseActionData: undefined,
+            stepNameToTest: undefined,
         })
     }
 
@@ -170,13 +165,12 @@ export class EngineConstants {
                 engineToken: input.engineToken,
                 apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
             }),
-            testSingleStepMode: true,
             progressUpdateType: ProgressUpdateType.NONE,
             serverHandlerId: null,
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
-            returnResponseActionData: undefined,
+            stepNameToTest: undefined,
         })
     }
 
@@ -196,13 +190,12 @@ export class EngineConstants {
                 engineToken: input.engineToken,
                 apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
             }),
-            testSingleStepMode: true,
             progressUpdateType: ProgressUpdateType.NONE,
             serverHandlerId: null,
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
-            returnResponseActionData: undefined,
+            stepNameToTest: undefined,
         })
     }
 

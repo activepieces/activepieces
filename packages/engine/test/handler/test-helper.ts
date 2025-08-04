@@ -23,13 +23,12 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
                 engineToken: 'engineToken',
                 apiUrl: 'http://127.0.0.1:3000',
             }),
-            testSingleStepMode: params?.testSingleStepMode ?? false,
             progressUpdateType: params?.progressUpdateType ?? ProgressUpdateType.NONE,
             serverHandlerId: params?.serverHandlerId ?? null,
             httpRequestId: params?.httpRequestId ?? null,
             resumePayload: params?.resumePayload,
             runEnvironment: params?.runEnvironment ?? RunEnvironment.TESTING,
-            returnResponseActionData: params?.returnResponseActionData,
+            stepNameToTest: params?.stepNameToTest ?? undefined,
         })
 }
 

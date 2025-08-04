@@ -3,7 +3,6 @@ import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
-import { ReturnResponseActionData } from '../flows/sample-data'
 import { PiecePackage } from '../pieces'
 import { PlatformId } from '../platform'
 import { ProjectId } from '../project/project'
@@ -27,7 +26,6 @@ export enum TriggerHookType {
 }
 
 export type EngineOperation =
-    | ExecuteStepOperation
     | ExecuteToolOperation
     | ExecuteFlowOperation
     | ExecutePropsOptions
@@ -82,15 +80,6 @@ export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'
 
 export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }
 
-export type ExecuteStepOperation = BaseEngineOperation & {
-    stepName: string
-    flowVersion: FlowVersion
-    sampleData: Record<string, unknown>
-    runEnvironment: RunEnvironment
-    requestId: string
-    returnResponseActionData?: ReturnResponseActionData
-}
-
 export type ExecuteToolOperation = BaseEngineOperation & {
     actionName: string
     pieceName: string
@@ -118,8 +107,7 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     serverHandlerId: string | null
     httpRequestId: string | null
     progressUpdateType: ProgressUpdateType
-    returnResponseActionData: ReturnResponseActionData | null
-    testSingleStepMode?: boolean
+    stepNameToTest: string | null
 }
 
 export enum ProgressUpdateType {

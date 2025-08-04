@@ -1,4 +1,4 @@
-import { ActivepiecesError, CodeAction, FlowRunStatus, PieceAction } from '@activepieces/shared'
+import { ActivepiecesError, CodeAction, FlowRunStatus, isNil, PieceAction } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext, VerdictResponse } from '../handler/context/flow-execution-context'
 import { ExecutionError, ExecutionErrorType } from './execution-errors'
@@ -16,7 +16,7 @@ export async function runWithExponentialBackoff<T extends CodeAction | PieceActi
         executionFailedWithRetryableError(resultExecutionState) &&
         attemptCount < constants.retryConstants.maxAttempts &&
         retryEnabled &&
-        !constants.testSingleStepMode
+        isNil(constants.stepNameToTest)
     ) {
         const backoffTime = Math.pow(constants.retryConstants.retryExponential, attemptCount) * constants.retryConstants.retryInterval
         await new Promise(resolve => setTimeout(resolve, backoffTime))
@@ -36,7 +36,7 @@ export async function continueIfFailureHandler(
     if (
         executionState.verdict === ExecutionVerdict.FAILED &&
         continueOnFailure &&
-        !constants.testSingleStepMode
+        isNil(constants.stepNameToTest)
     ) {
         return executionState
             .setVerdict(ExecutionVerdict.RUNNING, undefined)
