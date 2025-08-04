@@ -1,67 +1,79 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { SoftrAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
-import { databaseIdDropdown, tableIdDropdown } from '../common/props';
+import { makeRequest, transformRecordFields } from '../common/client';
+import { databaseIdDropdown, tableFieldIdDropdown, tableIdDropdown } from '../common/props';
+import { TableField } from '../common/types';
 
 export const findDatabaseRecord = createAction({
-  auth: SoftrAuth,
-  name: 'findDatabaseRecord',
-  displayName: 'Find Database Record',
-  description:
-    'Search for records in a Softr database table based on filter criteria',
-  props: {
-    databaseId: databaseIdDropdown,
-    tableId: tableIdDropdown,
-    filter: Property.Object({
-      displayName: 'Filter',
-      description:
-        'Filter conditions to search records. Leave empty to return all records.',
-      required: false,
-    }),
-    sort: Property.Object({
-      displayName: 'Sort',
-      description: 'Sort configuration for the results',
-      required: false,
-    }),
-    offset: Property.Number({
-      displayName: 'Offset',
-      description: 'Number of records to skip (for pagination)',
-      required: false,
-      defaultValue: 0,
-    }),
-    limit: Property.Number({
-      displayName: 'Limit',
-      description: 'Maximum number of records to return',
-      required: false,
-      defaultValue: 10,
-    }),
-  },
-  async run({ auth, propsValue }) {
-    const { databaseId, tableId, filter, sort, offset, limit } = propsValue;
+	auth: SoftrAuth,
+	name: 'findDatabaseRecord',
+	displayName: 'Find Database Record',
+	description: 'Finds a record in table.',
+	props: {
+		databaseId: databaseIdDropdown,
+		tableId: tableIdDropdown,
+		fieldId: tableFieldIdDropdown,
+		fieldValue: Property.ShortText({
+			displayName: 'Field Value',
+			required: true,
+		}),
+	},
+	async run({ auth, propsValue }) {
+		const { databaseId, tableId, fieldId, fieldValue } = propsValue;
 
-    const requestBody: any = {
-      paging: {
-        offset: offset || 0,
-        limit: limit || 10,
-      },
-    };
+		const requestBody = {
+			paging: {
+				limit: 1,
+			},
+			filter: {
+				condition: {
+					operator: 'AND',
+					conditions: [
+						{
+							leftSide: fieldId,
+							operator: 'IS',
+							rightSide: fieldValue,
+						},
+					],
+				},
+			},
+		};
 
-    if (filter) {
-      requestBody.filter = filter;
-    }
+		const response = await makeRequest<{
+			data: {
+				fields: TableField[];
+			}[];
+		}>(
+			auth,
+			HttpMethod.POST,
+			`/databases/${databaseId}/tables/${tableId}/records/search`,
+			requestBody,
+		);
 
-    if (sort) {
-      requestBody.sort = sort;
-    }
+		if (Array.isArray(response.data) && response.data.length === 0) {
+			return {
+				found: false,
+				data: {},
+			};
+		}
 
-    const response = await makeRequest(
-      auth,
-      HttpMethod.POST,
-      `/databases/${databaseId}/tables/${tableId}/records/search`,
-      requestBody
-    );
+		const foundRecord = response.data[0];
 
-    return response;
-  },
+		const tableReponse = await makeRequest<{
+			data: {
+				fields: TableField[];
+			};
+		}>(auth, HttpMethod.GET, `/databases/${databaseId}/tables/${tableId}`);
+
+		const transformedFields = transformRecordFields(tableReponse.data.fields, foundRecord.fields);
+
+		return {
+			found: true,
+			data: {
+				...foundRecord,
+				fields: transformedFields,
+			},
+		};
+	},
 });

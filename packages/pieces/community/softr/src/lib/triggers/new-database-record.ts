@@ -1,126 +1,102 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  Property,
-  StaticPropsValue,
-} from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { SoftrAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
+import { makeRequest, transformRecordFields } from '../common/client';
+import { databaseIdDropdown, tableIdDropdown } from '../common/props';
+import { TableField } from '../common/types';
 
-const props = {
-  databaseId: Property.ShortText({
-    displayName: 'Database ID',
-    description: 'The ID of the database to monitor',
-    required: true,
-  }),
-  tableId: Property.ShortText({
-    displayName: 'Table ID',
-    description: 'The ID of the table to monitor for new records',
-    required: true,
-  }),
-  createdDateField: Property.ShortText({
-    displayName: 'Created Date Field ID',
-    description:
-      'The field ID that contains the record creation date (e.g., created_date, createdAt)',
-    required: false,
-    defaultValue: 'created_date',
-  }),
+type Props = {
+	databaseId: string;
+	tableId: string;
 };
 
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const { databaseId, tableId, createdDateField } = propsValue;
-    const dateField = createdDateField || 'created_date';
+const polling: Polling<string, Props> = {
+	strategy: DedupeStrategy.TIMEBASED,
+	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+		const { databaseId, tableId } = propsValue;
 
-    // Build request body for search
-    const requestBody: any = {
-      paging: {
-        offset: 0,
-        limit: 100,
-      },
-    };
+		let offset = 0;
+		let hasMore = true;
+		const isTest = lastFetchEpochMS === 0;
 
-    // If we have a lastFetchEpochMS, filter for records created after that time
-    if (lastFetchEpochMS) {
-      const lastFetchDate = dayjs(lastFetchEpochMS).toISOString();
-      requestBody.filter = {
-        condition: {
-          operator: 'GREATER_THAN',
-          leftSide: dateField,
-          rightSide: lastFetchDate,
-        },
-      };
+		const result = [];
 
-      // Sort by creation date ascending
-      requestBody.sort = {
-        field: dateField,
-        direction: 'ASC',
-      };
-    }
+		let count = 0;
 
-    try {
-      const response = await makeRequest<any>(
-        auth,
-        HttpMethod.POST,
-        `/databases/${databaseId}/tables/${tableId}/records/search`,
-        requestBody
-      );
+		do {
+			const response = await makeRequest<{
+				data: { createdAt: string; fields: Record<string, any> }[];
+			}>(
+				auth,
+				HttpMethod.GET,
+				`/databases/${databaseId}/tables/${tableId}/records?limit=100&offset=${offset}`,
+			);
 
-      // Handle different possible response structures
-      const records = Array.isArray(response)
-        ? response
-        : response.records || response.data || [];
+			const items = response.data ?? [];
 
-      return records.map((record: any) => ({
-        epochMilliSeconds: record.fields?.[dateField]
-          ? dayjs(record.fields[dateField]).valueOf()
-          : dayjs().valueOf(),
-        data: record,
-      }));
-    } catch (error) {
-      console.error('Error fetching records:', error);
-      return [];
-    }
-  },
+			result.push(...items);
+
+			if (isTest) break;
+			hasMore = items.length > 0;
+			offset += 100;
+			count++;
+		} while (hasMore);
+
+
+		console.log('COUNT',count)
+
+		const tableReponse = await makeRequest<{
+			data: {
+				fields: TableField[];
+			};
+		}>(auth, HttpMethod.GET, `/databases/${databaseId}/tables/${tableId}`);
+
+		return result.map((record) => {
+			const transformedFields = transformRecordFields(tableReponse.data.fields, record.fields);
+			return {
+				epochMilliSeconds: dayjs(record.createdAt).valueOf(),
+				data: {
+					...record,
+					fields: transformedFields,
+				},
+			};
+		});
+	},
 };
 
 export const newDatabaseRecord = createTrigger({
-  auth: SoftrAuth,
-  name: 'newDatabaseRecord',
-  displayName: 'New Database Record',
-  description: 'Triggers when a new record is added to a Softr database table',
-  props,
-  sampleData: {
-    id: 'rec123456',
-    fields: {
-      created_date: '2025-08-01T10:00:00Z',
-      field1: 'Sample Value',
-      field2: 'Another Value',
-    },
-  },
-  type: TriggerStrategy.POLLING,
-  async test(context) {
-    const { store, auth, propsValue, files } = context;
-    return await pollingHelper.test(polling, { store, auth, propsValue, files });
-  },
-  async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
-  },
-  async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
-  },
-  async run(context) {
-    const { store, auth, propsValue, files } = context;
-    return await pollingHelper.poll(polling, { store, auth, propsValue, files });
-  },
+	auth: SoftrAuth,
+	name: 'newDatabaseRecord',
+	displayName: 'New Database Record',
+	description: 'Triggers when a new record is added.',
+	props: {
+		databaseId: databaseIdDropdown,
+		tableId: tableIdDropdown,
+	},
+	sampleData: {
+		id: 'rec123456',
+		fields: {
+			created_date: '2025-08-01T10:00:00Z',
+			field1: 'Sample Value',
+			field2: 'Another Value',
+		},
+	},
+	type: TriggerStrategy.POLLING,
+	async test(context) {
+		const { store, auth, propsValue, files } = context;
+		return await pollingHelper.test(polling, { store, auth, propsValue, files });
+	},
+	async onEnable(context) {
+		const { store, auth, propsValue } = context;
+		await pollingHelper.onEnable(polling, { store, auth, propsValue });
+	},
+	async onDisable(context) {
+		const { store, auth, propsValue } = context;
+		await pollingHelper.onDisable(polling, { store, auth, propsValue });
+	},
+	async run(context) {
+		const { store, auth, propsValue, files } = context;
+		return await pollingHelper.poll(polling, { store, auth, propsValue, files });
+	},
 });

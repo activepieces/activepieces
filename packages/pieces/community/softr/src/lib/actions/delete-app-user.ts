@@ -6,16 +6,16 @@ export const deleteAppUser = createAction({
   auth: SoftrAuth,
   name: 'deleteAppUser',
   displayName: 'Delete App User',
-  description: 'Delete a user from a Softr app by their email address',
+  description: 'Deletes a user from a Softr app.',
   props: {
     email: Property.ShortText({
       displayName: 'User Email',
-      description: 'The email address of the user to delete',
+      description: 'The email address of the user to delete.',
       required: true,
     }),
     domain: Property.ShortText({
       displayName: 'Softr Domain',
-      description: 'The domain or subdomain of the Softr app (e.g., yourdomain.com or subdomain.softr.app)',
+      description: 'The domain or subdomain of the Softr app (e.g., yourdomain.com or subdomain.softr.app).',
       required: true,
     }),
   },

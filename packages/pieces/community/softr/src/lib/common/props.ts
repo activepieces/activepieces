@@ -78,6 +78,44 @@ export const recordIdField = Property.ShortText({
 	required: true,
 });
 
+export const tableFieldIdDropdown = Property.Dropdown({
+	displayName:'Field',
+	refreshers: ['auth', 'databaseId', 'tableId'],
+	required:true,
+	options:async ({auth,databaseId,tableId})=>{
+		if (!auth || !databaseId || !tableId) {
+			return {
+				disabled: true,
+				options: [],
+				placeholder: 'Please connect your account and select a table first.',
+			};
+		}
+
+		try {
+			const response = await makeRequest<{
+				data: {
+					fields: TableField[];
+				};
+			}>(auth as unknown as string, HttpMethod.GET, `/databases/${databaseId}/tables/${tableId}`);
+
+			return {
+				disabled: false,
+				options: response.data.fields.map((field) => ({
+					label: field.name,
+					value: field.id,
+				})),
+			};
+		} catch (error) {
+			return {
+				disabled: true,
+				options: [],
+				placeholder: 'Error loading Fields.',
+			};
+		}
+
+	}
+})
+
 export const tableFields = Property.DynamicProperties({
 	displayName: 'Fields',
 	required: true,

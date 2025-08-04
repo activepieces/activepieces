@@ -1,38 +1,37 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { SoftrAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
 
 export const createAppUser = createAction({
   auth: SoftrAuth,
   name: 'createAppUser',
   displayName: 'Create App User',
-  description: 'Add a new user to a Softr app with email, name, and password',
+  description: 'Creates a new user inside a Softr app.',
   props: {
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'The email address of the new user',
+      description: 'The email address of the new user.',
       required: true,
     }),
     full_name: Property.ShortText({
       displayName: 'Name',
-      description: 'The full name of the new user',
+      description: 'The full name of the new user.',
       required: true,
     }),
     password: Property.ShortText({
       displayName: 'Password',
-      description: 'The password for the new user',
+      description: 'The password for the new user.',
       required: true,
     }),
     domain: Property.ShortText({
       displayName: 'Domain',
       description:
-        'The domain or subdomain of the Softr app where the user will be created',
+        'The domain or subdomain of the Softr app where the user will be created.',
       required: true,
     }),
     generate_magic_link: Property.Checkbox({
       displayName: 'Generate Magic Link',
-      description: 'If checked, a magic link will be generated for the user',
+      description: 'If checked, a magic link will be generated for the user.',
       required: false,
       defaultValue: false,
     }),
