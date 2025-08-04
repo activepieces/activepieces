@@ -8,59 +8,48 @@ export const addTagToContact = createAction({
   auth: respondIoAuth,
   name: 'add_tag_to_contact',
   displayName: 'Add Tag to Contact',
-  description: 'Assign one or more tags to a contact.',
+  description: 'Add one or multiple tags to a contact in Respond.io.',
   props: {
     identifier: contactIdentifierDropdown,
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'The tags to add to the contact (1 to 10 tags).',
+      description: 'Tags to add to the contact (minimum 1, maximum 10 tags).',
       required: true,
+      properties: {
+        tag: Property.ShortText({
+          displayName: 'Tag Name',
+          description: 'Name of the tag to add.',
+          required: true,
+        }),
+      },
     }),
   },
   async run({ propsValue, auth }) {
     const { identifier, tags } = propsValue;
 
-    const body = tags;
-
-    try {
-      return await respondIoApiCall<{ contactId: number }>({
-        method: HttpMethod.POST,
-        url: `/contact/${identifier}/tag`,
-        auth: auth,
-        body,
-      });
-    } catch (error: unknown) {
-      const errorWithResponse = error as {
-        response?: { status?: number; body?: { message?: string } };
-      };
-      const status = errorWithResponse.response?.status;
-      const message =
-        errorWithResponse.response?.body?.message ||
-        'An unknown error occurred.';
-
-      switch (status) {
-        case 400:
-          throw new Error(
-            `Bad Request: The request may be missing tags or the format is incorrect. Details: ${message}`
-          );
-        case 401:
-        case 403:
-          throw new Error(
-            `Authentication Error: Please check your API Token. Details: ${message}`
-          );
-        case 404:
-          throw new Error(
-            `Not Found: The contact with the specified identifier does not exist. Details: ${message}`
-          );
-        case 429:
-          throw new Error(
-            `Rate Limit Exceeded: Too many requests. Please wait and try again. Details: ${message}`
-          );
-        default:
-          throw new Error(
-            `Respond.io API Error (Status ${status || 'N/A'}): ${message}`
-          );
-      }
+    // Validate tag count (API requirement: 1-10 tags)
+    if (!tags || !Array.isArray(tags) || tags.length === 0) {
+      throw new Error('At least one tag is required.');
     }
+    if (tags.length > 10) {
+      throw new Error('Maximum of 10 tags allowed per request.');
+    }
+
+    // Transform array of objects to array of strings
+    const tagNames = tags
+      .map((tagObj: any) => tagObj.tag)
+      .filter((tag) => tag && tag.trim())
+      .map((tag) => tag.trim());
+
+    if (tagNames.length === 0) {
+      throw new Error('At least one valid tag name is required.');
+    }
+
+    return await respondIoApiCall({
+      method: HttpMethod.POST,
+      url: `/contact/${identifier}/tag`,
+      auth: auth,
+      body: tagNames,
+    });
   },
 });

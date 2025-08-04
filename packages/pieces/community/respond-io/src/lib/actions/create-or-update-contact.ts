@@ -2,16 +2,19 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { respondIoApiCall } from '../common/client';
 import { respondIoAuth } from '../common/auth';
-import { contactIdentifierDropdown } from '../common/props';
 
 export const createOrUpdateContact = createAction({
   auth: respondIoAuth,
   name: 'create_or_update_contact',
   displayName: 'Create or Update Contact',
-  description:
-    'Creates a new contact or updates an existing one by ID, email, or phone.',
+  description: 'Create a new contact or update an existing one by email, phone, or ID.',
   props: {
-    identifier: contactIdentifierDropdown,
+    identifier: Property.ShortText({
+      displayName: 'Identifier',
+      description:
+        'Identifier for the contact. Use format: `id:123`, `email:user@example.com`, or `phone:+60123456789`. If contact exists, it will be updated; if not, a new one will be created.',
+      required: true,
+    }),
     firstName: Property.ShortText({
       displayName: 'First Name',
       required: true,
@@ -46,21 +49,63 @@ export const createOrUpdateContact = createAction({
         'Country code (e.g., "US", "MY") following ISO 3166-1 alpha-2.',
       required: false,
     }),
-    customFieldName: Property.ShortText({
-      displayName: 'Custom Field Name',
-      description: 'Name of the custom field (e.g., "Company Website", "Department").',
+    customFields: Property.Array({
+      displayName: 'Custom Fields',
+      description: 'Add custom fields for the contact.',
       required: false,
-    }),
-    customFieldValue: Property.ShortText({
-      displayName: 'Custom Field Value',
-      description: 'Value of the custom field. Format based on field type:\n- Text: "string"\n- Number: 123 (no quotes)\n- Email: "user@domain.com"\n- URL: "https://example.com"\n- Date: "yyyy-mm-dd"\n- Time: "HH:MM" (24H format)\n- Checkbox: "true" or "false"',
-      required: false,
+      properties: {
+        name: Property.ShortText({
+          displayName: 'Field Name',
+          description: 'Name of the custom field (e.g., "Company Website", "Department").',
+          required: true,
+        }),
+        value: Property.ShortText({
+          displayName: 'Field Value',
+          description: 'Value of the custom field. Format based on field type:\n- Text: "string" (use quotation marks)\n- Number: 123 (without quotation marks)\n- Email: "user@domain.com"\n- URL: "https://example.com"\n- Date: "yyyy-mm-dd"\n- Time: "HH:MM" (24H format)\n- Checkbox: "true" or "false"',
+          required: false,
+        }),
+      },
     }),
   },
   async run({ propsValue, auth }) {
-    const { identifier, customFieldName, customFieldValue, ...contactData } = propsValue;
+    const { identifier, customFields, ...contactData } = propsValue;
 
-    // The API sends all data in the body
+    // Field validation
+    if (contactData.email && contactData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(contactData.email)) {
+        throw new Error('Invalid email format. Please provide a valid email address.');
+      }
+    }
+
+    if (contactData.phone && contactData.phone.trim()) {
+      const e164Regex = /^\+[1-9]\d{1,14}$/;
+      if (!e164Regex.test(contactData.phone)) {
+        throw new Error('Invalid phone format. Please provide phone number in E.164 format (e.g., +60123456789).');
+      }
+    }
+
+    if (contactData.profilePic && contactData.profilePic.trim()) {
+      const urlRegex = /^https?:\/\/[^\s$.?#].[^\s]*$/;
+      if (!urlRegex.test(contactData.profilePic)) {
+        throw new Error('Invalid profile picture URL format. Please provide a valid HTTP/HTTPS URL.');
+      }
+    }
+
+    if (contactData.language && contactData.language.trim()) {
+      const iso639Regex = /^[a-z]{2}$/;
+      if (!iso639Regex.test(contactData.language)) {
+        throw new Error('Invalid language code. Please provide a valid ISO 639-1 two-letter language code (e.g., "en", "es").');
+      }
+    }
+
+    if (contactData.countryCode && contactData.countryCode.trim()) {
+      const iso3166Regex = /^[A-Z]{2}$/;
+      if (!iso3166Regex.test(contactData.countryCode)) {
+        throw new Error('Invalid country code. Please provide a valid ISO 3166-1 alpha-2 two-letter country code (e.g., "US", "MY").');
+      }
+    }
+
     const body: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(contactData)) {
       if (value !== undefined && value !== null) {
@@ -68,53 +113,21 @@ export const createOrUpdateContact = createAction({
       }
     }
 
-    if (customFieldName && customFieldValue !== undefined && customFieldValue !== null) {
-      body['custom_fields'] = [
-        {
-          name: customFieldName,
-          value: customFieldValue
-        }
-      ];
+    // Add custom fields array if provided
+    if (customFields && Array.isArray(customFields) && customFields.length > 0) {
+      body['custom_fields'] = customFields
+        .filter((field: any) => field.name && field.name.trim())
+        .map((field: any) => ({
+          name: field.name,
+          value: field.value || null,
+        }));
     }
 
-    try {
-      return await respondIoApiCall({
-        method: HttpMethod.POST,
-        url: `/contact/create_or_update/${identifier}`,
-        auth: auth,
-        body,
-      });
-    } catch (error: unknown) {
-      const err = error as {
-        response?: { status?: number; body?: { message?: string } };
-      };
-      const status = err.response?.status;
-      const message =
-        err.response?.body?.message || 'An unknown error occurred.';
-
-      switch (status) {
-        case 400:
-          throw new Error(
-            `Bad Request: The server could not process the request, please check the format of your input. Details: ${message}`
-          );
-        case 401:
-        case 403:
-          throw new Error(
-            `Authentication Error: Please check your API Token. Details: ${message}`
-          );
-        case 409:
-          throw new Error(
-            `Conflict: The resource already exists or there is a conflict. Details: ${message}`
-          );
-        case 429:
-          throw new Error(
-            `Rate Limit Exceeded: Too many requests. Please wait and try again. Details: ${message}`
-          );
-        default:
-          throw new Error(
-            `Respond.io API Error (Status ${status || 'N/A'}): ${message}`
-          );
-      }
-    }
+    return await respondIoApiCall({
+      method: HttpMethod.POST,
+      url: `/contact/create_or_update/${identifier}`,
+      auth: auth,
+      body,
+    });
   },
 });

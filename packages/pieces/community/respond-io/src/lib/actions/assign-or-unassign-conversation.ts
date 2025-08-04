@@ -8,7 +8,7 @@ export const assignOrUnassignConversation = createAction({
   auth: respondIoAuth,
   name: 'assign_or_unassign_conversation',
   displayName: 'Assign or Unassign Conversation',
-  description: 'Change the assignee on a conversation.',
+  description: 'Assign or unassign a conversation to/from a team member in Respond.io.',
   props: {
     identifier: contactIdentifierDropdown,
     assignee: {
@@ -33,53 +33,13 @@ export const assignOrUnassignConversation = createAction({
       }
     }
 
-    const body = {
-      assignee: assigneeValue,
-    };
-
-    try {
-      return await respondIoApiCall<{ contactId: number }>({
-        method: HttpMethod.POST,
-        url: `/contact/${identifier}/conversation/assignee`,
-        auth: auth,
-        body,
-      });
-    } catch (error: unknown) {
-      const errorWithResponse = error as {
-        response?: { status?: number; body?: { message?: string } };
-      };
-      const status = errorWithResponse.response?.status;
-      const message =
-        errorWithResponse.response?.body?.message ||
-        'An unknown error occurred.';
-
-      switch (status) {
-        case 400:
-          throw new Error(
-            `Bad Request: Invalid request format or parameters. Check if the assignee ID (${assigneeValue}) is valid and the contact identifier (${identifier}) is correct. Details: ${message}`
-          );
-        case 401:
-        case 403:
-          throw new Error(
-            `Authentication Error: Please check your API Token. Details: ${message}`
-          );
-        case 404:
-          throw new Error(
-            `Not Found: The contact with identifier "${identifier}" does not exist or has no active conversation. Details: ${message}`
-          );
-        case 429:
-          throw new Error(
-            `Rate Limit Exceeded: Too many requests. Please wait and try again. Details: ${message}`
-          );
-        case 449:
-          throw new Error(
-            `Conflict: There may be a conflict with the current assignment state. Details: ${message}`
-          );
-        default:
-          throw new Error(
-            `Respond.io API Error (Status ${status || 'N/A'}): ${message}. Request details - Contact Identifier: ${identifier}, Assignee: ${assigneeValue}`
-          );
-      }
-    }
+    return await respondIoApiCall({
+      method: HttpMethod.POST,
+      url: `/contact/${identifier}/conversation/assignee`,
+      auth: auth,
+      body: {
+        assignee: assigneeValue,
+      },
+    });
   },
 });

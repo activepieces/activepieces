@@ -7,79 +7,65 @@ export const findContact = createAction({
   auth: respondIoAuth,
   name: 'find_contact',
   displayName: 'Find Contact',
-  description: 'Search for a contact by a name, email, or phone number.',
+  description: 'Search for contacts by name, email, or phone number in Respond.io.',
   props: {
     search: Property.ShortText({
       displayName: 'Search Term',
       description:
-        'The value to search for (e.g., an email address, phone number, or name).',
+        'The value to search for (e.g., email address, phone number, or name).',
       required: true,
     }),
     timezone: Property.ShortText({
       displayName: 'Timezone',
       description:
-        'The timezone to consider for the search (e.g., "Asia/Kuala_Lumpur").',
+        'Timezone for the search (e.g., "Asia/Kuala_Lumpur"). Optional.',
       required: false,
     }),
     limit: Property.Number({
       displayName: 'Result Limit',
-      description: 'Number of contacts to return i.e. page size. Must be between 1 and 99.',
+      description: 'Number of contacts to return (1-99). Default is 10.',
       required: false,
       defaultValue: 10,
     }),
+    cursorId: Property.Number({
+      displayName: 'Cursor ID',
+      description: 'Contact ID to start from for pagination. Optional.',
+      required: false,
+    }),
   },
   async run({ propsValue, auth }) {
-    const { search, timezone, limit = 10 } = propsValue;
+    const { search, timezone, limit = 10, cursorId } = propsValue;
 
-    if (limit < 1 || limit > 99) {
+    // Validate limit (API requirement: >= 1 < 100)
+    if (limit < 1 || limit >= 100) {
       throw new Error('Limit must be between 1 and 99.');
     }
 
+    // Build query parameters
+    const queryParams = [`limit=${limit}`];
+    if (cursorId) {
+      queryParams.push(`cursorId=${cursorId}`);
+    }
+
+    // Build request body
     const body: {
       search: string;
       timezone?: string;
-    } = { search };
+      filter?: { $and: any[] };
+    } = { 
+      search,
+      filter: { $and: [] }
+    };
 
     if (timezone) {
       body.timezone = timezone;
     }
 
-    try {
-      const response = await respondIoApiCall<{ data: unknown[] }>({
-        method: HttpMethod.POST,
-        url: `/contact/list?limit=${limit}`,
-        auth: auth,
-        body,
-      });
-
-      return response.data.length === 1 ? response.data[0] : response.data;
-    } catch (error: unknown) {
-      const err = error as {
-        response?: { status?: number; body?: { message?: string } };
-      };
-      const status = err.response?.status;
-      const message =
-        err.response?.body?.message || 'An unknown error occurred.';
-
-      switch (status) {
-        case 400:
-          throw new Error(
-            `Bad Request: The search term or timezone may be invalid. Details: ${message}`
-          );
-        case 401:
-        case 403:
-          throw new Error(
-            `Authentication Error: Please check your API Token. Details: ${message}`
-          );
-        case 429:
-          throw new Error(
-            `Rate Limit Exceeded: Too many requests. Please wait and try again. Details: ${message}`
-          );
-        default:
-          throw new Error(
-            `Respond.io API Error (Status ${status || 'N/A'}): ${message}`
-          );
-      }
-    }
+    return await respondIoApiCall({
+      method: HttpMethod.POST,
+      url: `/contact/list?${queryParams.join('&')}`,
+      auth: auth,
+      body,
+    });
   },
 });
