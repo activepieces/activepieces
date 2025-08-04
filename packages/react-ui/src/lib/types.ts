@@ -12,6 +12,7 @@ import {
   TriggerType,
   FlowOperationType,
   StepLocationRelativeToParent,
+  PieceCategory,
 } from '@activepieces/shared';
 
 type BaseStepMetadata = {
@@ -37,6 +38,7 @@ export type PrimitiveStepMetadata = BaseStepMetadata & {
     | ActionType.LOOP_ON_ITEMS
     | ActionType.ROUTER
     | TriggerType.EMPTY;
+  categories: PieceCategory[];
 };
 
 export type PieceStepMetadataWithSuggestions = PieceStepMetadata &
@@ -55,6 +57,7 @@ export type StepMetadata = PieceStepMetadata | PrimitiveStepMetadata;
 
 export type StepMetadataWithActionOrTriggerOrAgentDisplayName = StepMetadata & {
   actionOrTriggerOrAgentDisplayName: string;
+  categories: PieceCategory[];
 };
 
 export type PieceSelectorOperation =
