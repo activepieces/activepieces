@@ -4,6 +4,7 @@ import {
   ExecutionType,
   PauseType,
 } from '@activepieces/shared';
+import { ChatPostMessageResponse } from '@slack/web-api';
 
 export const requestAction = async (conversationId: string, context: any) => {
   const { actions } = context.propsValue;
@@ -50,11 +51,12 @@ export const requestAction = async (conversationId: string, context: any) => {
           text: action.actionText,
         },
         style: 'primary',
-        url: actionLink,
+        value: actionLink,
+        action_id: action.actionId,
       };
     });
 
-    await slackSendMessage({
+    const messageResponse: ChatPostMessageResponse = await slackSendMessage({
       token,
       text: `${context.propsValue.text}`,
       username,
@@ -77,13 +79,52 @@ export const requestAction = async (conversationId: string, context: any) => {
     });
 
     return {
-      action: 'N/A',
+      action: actionTextToIds.at(0) || 'N/A',
+      payload: {
+        type: 'action_blocks',
+        user: {
+          id: messageResponse.message?.user,
+          username: 'user.name',
+          name: 'john.smith',
+          team_id: messageResponse.message?.team,
+        },
+        container: {
+          type: 'message',
+          message_ts: messageResponse.ts,
+          channel_id: messageResponse.channel,
+          is_ephemeral: false,
+        },
+        trigger_id: 'trigger_id',
+        team: {
+          id: messageResponse.message?.team,
+          domain: 'team_name',
+        },
+        channel: {
+          id: messageResponse.channel,
+          name: '#channel',
+        },
+        message: messageResponse.message,
+        state: {},
+        actions: [
+          {
+            action_id: 'action_id',
+            block_id: 'actions',
+            value: 'resume_url',
+            style: 'primary',
+            type: 'button',
+            action_ts: 'action_ts',
+          },
+        ],
+      },
     };
   } else {
-    const payload = context.resumePayload.queryParams as { action: string };
+    const payloadQueryParams = context.resumePayload.queryParams as {
+      action: string;
+    };
 
     return {
-      action: decodeURI(payload.action),
+      action: decodeURI(payloadQueryParams.action),
+      payload: context.resumePayload.body,
     };
   }
 };

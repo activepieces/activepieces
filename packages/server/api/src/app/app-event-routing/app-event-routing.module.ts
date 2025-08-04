@@ -27,6 +27,7 @@ import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook
 import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
+import { getPublicUrl } from '../../../../worker/src/lib/utils/machine';
 
 const appWebhooks: Record<string, Piece> = {
     slack,
@@ -88,6 +89,9 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             assertNotNullOrUndefined(piece.events, 'Event is possible in this piece')
             const { reply, event, identifierValue } = piece.events.parseAndReply({
                 payload,
+                server: {
+                    publicUrl: getPublicUrl(),
+                },
             })
             if (!isNil(reply)) {
                 request.log.info(
