@@ -69,8 +69,8 @@ const findStepOutputInNestedStructure = (data: unknown, stepName: string): StepO
     
     const dataAsRecord = data as Record<string, unknown>
     
-    const foundStepOutput = !isNil(dataAsRecord[stepName]) && typeof dataAsRecord[stepName] === 'object'
-    if (foundStepOutput) {
+    const stepOutput = !isNil(dataAsRecord[stepName]) && typeof dataAsRecord[stepName] === 'object'
+    if (stepOutput) {
         return dataAsRecord[stepName] as StepOutput
     }
     
