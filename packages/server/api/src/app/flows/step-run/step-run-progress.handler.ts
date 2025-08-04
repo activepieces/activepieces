@@ -1,5 +1,4 @@
 import { 
-    ExecutioOutputFile, 
     isNil, 
     ProjectId, 
     StepOutputStatus, 
@@ -8,8 +7,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
-import { fileService } from '../../file/file.service'
 import { flowRunService } from '../flow-run/flow-run-service'
+import { exceptionHandler } from '@activepieces/server-shared'
 
 function createProgressHandler(context: StepExecutionContext) {
     return async (progressEvent: FlowRunProgressEvent): Promise<void> => {
@@ -20,35 +19,33 @@ function createProgressHandler(context: StepExecutionContext) {
         }
 
         try {
-            const flowRun = await flowRunService(logger).getOneOrThrow({
+            const flowRun = await flowRunService(logger).getOnePopulatedOrThrow({
                 id: progressEvent.runId,
                 projectId,
             })
             
-            if (isNil(flowRun.logsFileId)) {
-                return
-            }
-
-            const { data: fileData } = await fileService(logger).getDataOrThrow({
-                fileId: flowRun.logsFileId,
-                projectId: flowRun.projectId,
-            })
-            
-            const executionData: ExecutioOutputFile = JSON.parse(fileData.toString('utf8'))
-            const stepOutput = executionData.executionState.steps[stepName]
-            
-            if (isNil(stepOutput) || stepOutput.status === StepOutputStatus.RUNNING) {
+            const stepOutput = flowRun.steps[stepName]
+            if (isNil(stepOutput) || [StepOutputStatus.RUNNING, StepOutputStatus.PAUSED].includes(stepOutput.status)) {
                 return
             }
             
             if (stepOutput.status !== StepOutputStatus.SUCCEEDED) {
+                const response: StepRunResponse = {
+                    id: requestId,
+                    success: false,
+                    input: stepOutput.input ?? {},
+                    output: stepOutput.output ?? {},
+                    standardError: stepOutput.errorMessage as string,
+                    standardOutput: '',
+                }
+                socket.emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
                 throw new Error('Step execution failed')
             }
             
             const response: StepRunResponse = {
                 id: requestId,
                 success: true,
-                input: executionData.executionState.steps,
+                input: stepOutput.input ?? {},
                 output: stepOutput.output ?? {},
                 standardError: '',
                 standardOutput: '',
@@ -57,7 +54,7 @@ function createProgressHandler(context: StepExecutionContext) {
             socket.emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
         }
         catch (error) {
-            logger.error(error, '[handleFlowRunProgress]')
+            exceptionHandler.handle(error, logger)
         }
     }
 } 

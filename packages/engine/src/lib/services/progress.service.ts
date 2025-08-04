@@ -60,29 +60,11 @@ export const progressService = {
         const { engineConstants, flowExecutorContext, stepName, stepOutput } = params
         return {
             update: async (params: { data: unknown }) => {
-
-                if (engineConstants.testSingleStepMode) {
-                    assertNotNullOrUndefined(engineConstants.httpRequestId, 'httpRequestId is required when running in test single step mode')
-                    await notifyFrontend(engineConstants, {
-                        type: WebsocketClientEvent.TEST_STEP_PROGRESS,
-                        data: {
-                            id: engineConstants.httpRequestId,
-                            success: true,
-                            input: stepOutput.input,
-                            output: params.data,
-                            standardError: '',
-                            standardOutput: '',
-                            sampleDataFileId: undefined,
-                        },
-                    })
-                }
-                else {
-                    await sendUpdateRunRequest({
-                        engineConstants,
-                        flowExecutorContext: flowExecutorContext.upsertStep(stepName, stepOutput.setOutput(params.data)),
-                        updateImmediate: true,
-                    })
-                }
+                await sendUpdateRunRequest({
+                    engineConstants,
+                    flowExecutorContext: flowExecutorContext.upsertStep(stepName, stepOutput.setOutput(params.data)),
+                    updateImmediate: true,
+                })
             },
         }
     },

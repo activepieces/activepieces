@@ -95,7 +95,10 @@ export const callFlow = createAction({
     }),
   },
   async test(context) {
-    return context.propsValue.flowProps['payload'];
+    return { 
+      status: 'success', 
+      data: context.propsValue.flowProps['payload']
+    }
   },
   async run(context) {
     if (context.executionType === ExecutionType.RESUME) {
