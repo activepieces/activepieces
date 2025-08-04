@@ -115,6 +115,10 @@ export enum AppSystemProp {
     LOKI_PASSWORD = 'LOKI_PASSWORD',
     LOKI_URL = 'LOKI_URL',
     LOKI_USERNAME = 'LOKI_USERNAME',
+    
+    // OpenTelemetry
+    OTEL_ENABLED = 'OTEL_ENABLED',
+    HYPERDX_TOKEN = 'HYPERDX_TOKEN',
 
     // Cloudflare
     CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN',

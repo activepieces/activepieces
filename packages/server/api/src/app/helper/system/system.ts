@@ -93,10 +93,13 @@ export const system = {
             const lokiUrl = this.get(AppSystemProp.LOKI_URL)
             const lokiPassword = this.get(AppSystemProp.LOKI_PASSWORD)
             const lokiUsername = this.get(AppSystemProp.LOKI_USERNAME)
+            const hyperdxToken = this.get(AppSystemProp.HYPERDX_TOKEN)
             globalLogger = pinoLogging.initLogger(logLevel, logPretty, {
                 url: lokiUrl,
                 password: lokiPassword,
                 username: lokiUsername,
+            }, {
+                token: hyperdxToken,
             })
         }
         return globalLogger
