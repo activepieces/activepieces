@@ -8,6 +8,7 @@ import { system } from '../../helper/system/system'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
 import { redisRateLimiter } from './redis-rate-limiter'
+import { BullMQOtel } from "bullmq-otel";
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
@@ -117,9 +118,11 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
     if (!isNil(bullMqGroups[queueName])) {
         return bullMqGroups[queueName]
     }
+    const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
     bullMqGroups[queueName] = new Queue(
         queueName,
         {
+            telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
             connection: createRedisClient(),
             defaultJobOptions: jobTypeToDefaultJobOptions[queueName],
         },

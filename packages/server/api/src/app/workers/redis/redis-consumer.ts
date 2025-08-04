@@ -7,6 +7,7 @@ import { createRedisClient } from '../../database/redis-connection'
 import { system } from '../../helper/system/system'
 import { ConsumerManager } from '../consumer/consumer-manager'
 import { redisRateLimiter } from './redis-rate-limiter'
+import { BullMQOtel } from "bullmq-otel";
 
 const consumer: Record<string, Worker> = {}
 
@@ -73,6 +74,7 @@ async function ensureWorkerExists(queueName: QueueName): Promise<Worker> {
     if (!isNil(consumer[queueName])) {
         return consumer[queueName]
     }
+    const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
     const lockDuration = getLockDurationInMs(queueName)
     consumer[queueName] = new Worker(queueName, null, {
         connection: createRedisClient(),
@@ -80,6 +82,7 @@ async function ensureWorkerExists(queueName: QueueName): Promise<Worker> {
         maxStalledCount: 5,
         drainDelay: 5,
         stalledInterval: 30000,
+        telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
     })
 
     await consumer[queueName].waitUntilReady()
