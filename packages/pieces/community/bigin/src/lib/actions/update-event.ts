@@ -134,9 +134,6 @@ export const updateEvent = createAction({
       }
     );
 
-    return {
-      message: 'Event updated successfully',
-      data: response,
-    };
+   return response.data[0];
   },
 });

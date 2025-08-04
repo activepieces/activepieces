@@ -49,7 +49,11 @@ export const userIdDropdown = Property.Dropdown({
 });
 
 // Factory function to create module-specific record dropdowns
-export const createRecordIdDropdown = (module: string, displayName?: string, description?: string) => {
+export const createRecordIdDropdown = (
+  module: string,
+  displayName?: string,
+  description?: string
+) => {
   return Property.Dropdown({
     displayName: displayName || `${module} Record`,
     description: description || `Select the ${module.toLowerCase()} record`,
@@ -65,18 +69,26 @@ export const createRecordIdDropdown = (module: string, displayName?: string, des
       }
 
       try {
+        const accessToken =
+          (auth as { access_token?: string })?.access_token ?? (auth as string);
         const response = await makeRequest(
-          auth as string,
+          accessToken,
           HttpMethod.GET,
-          `/${module}`
+          `/${module}?fields=Last_Name`
         );
-        
+
         const records = response.data || response[module.toLowerCase()] || [];
-        
+
         return {
           disabled: false,
           options: records.map((record: any) => ({
-            label: record.name || record.first_name + ' ' + record.last_name || record.Deal_Name || record.Company_Name || record.Subject || record.id,
+            label:
+              record.name ||
+              record.Last_Name ||
+              record.Deal_Name ||
+              record.Company_Name ||
+              record.Subject ||
+              record.id,
             value: record.id,
           })),
         };
@@ -91,14 +103,43 @@ export const createRecordIdDropdown = (module: string, displayName?: string, des
   });
 };
 
-// Pre-configured dropdowns for common modules
-export const contactIdDropdown = createRecordIdDropdown('Contacts', 'Contact', 'Select the contact');
-export const companyIdDropdown = createRecordIdDropdown('Companies', 'Company', 'Select the company');
-export const pipelineIdDropdown = createRecordIdDropdown('Pipelines', 'Deal', 'Select the deal/pipeline record');
-export const taskIdDropdown = createRecordIdDropdown('Tasks', 'Task', 'Select the task');
-export const eventIdDropdown = createRecordIdDropdown('Events', 'Event', 'Select the event');
-export const callIdDropdown = createRecordIdDropdown('Calls', 'Call', 'Select the call');
 
+export const contactIdDropdown = createRecordIdDropdown(
+  'Contacts',
+  'Contact',
+  'Select the contact'
+);
+export const companyIdDropdown = createRecordIdDropdown(
+  'Companies',
+  'Company',
+  'Select the company'
+);
+export const pipelineIdDropdown = createRecordIdDropdown(
+  'Pipelines',
+  'Deal',
+  'Select the deal/pipeline record'
+);
+export const taskIdDropdown = createRecordIdDropdown(
+  'Tasks',
+  'Task',
+  'Select the task'
+);
+export const eventIdDropdown = createRecordIdDropdown(
+  'Events',
+  'Event',
+  'Select the event'
+);
+export const callIdDropdown = createRecordIdDropdown(
+  'Calls',
+  'Call',
+  'Select the call'
+);
+
+export const productidDropdown = createRecordIdDropdown(
+  'Products',
+  'Product',
+  'Select the product'
+);
 // Keep the original for backward compatibility
 export const recordIdDropdown = Property.Dropdown({
   displayName: 'Record ID',

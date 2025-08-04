@@ -10,6 +10,7 @@ export const createCompany = createAction({
   displayName: 'Create Company',
   description: 'Create a new company record in Bigin',
   props: {
+    owner: userIdDropdown,
     accountName: Property.ShortText({
       displayName: 'Account Name',
       description: 'Provide the name of the company',
@@ -37,7 +38,7 @@ export const createCompany = createAction({
         'Provide additional descriptions or notes related to the company',
       required: false,
     }),
-    owner: userIdDropdown,
+
     billingStreet: Property.ShortText({
       displayName: 'Billing Street',
       description: 'The street address of the company',
@@ -69,7 +70,6 @@ export const createCompany = createAction({
       Account_Name: context.propsValue.accountName,
     };
 
-    // Add optional fields if provided
     if (context.propsValue.owner) body['Owner'] = context.propsValue.owner;
     if (context.propsValue.phone) body['Phone'] = context.propsValue.phone;
     if (context.propsValue.website)

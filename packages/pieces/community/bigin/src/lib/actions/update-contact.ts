@@ -128,6 +128,6 @@ export const updateContact = createAction({
       }
     );
 
-    return { message: 'Contact updated successfully', data: response };
+    return response.data[0];
   },
 });

@@ -1,8 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
-import { userIdDropdown } from '../common/props';
+import {
+  contactIdDropdown,
+  userIdDropdown,
+  createRecordIdDropdown,
+} from '../common/props';
 
 export const createCall = createAction({
   auth: biginAuth,
@@ -15,9 +19,10 @@ export const createCall = createAction({
       description: 'When the call started (ISO8601 format)',
       required: true,
     }),
-    callDuration: Property.Number({
+    callDuration: Property.ShortText({
       displayName: 'Call Duration',
-      description: 'Duration of the call in minutes',
+      description:
+        'Duration of the call in MM:SS format (e.g., "90:00" for 90 minutes)',
       required: true,
     }),
     callType: Property.StaticDropdown({
@@ -33,11 +38,7 @@ export const createCall = createAction({
       },
     }),
     owner: userIdDropdown,
-    contactName: Property.ShortText({
-      displayName: 'Contact ID',
-      description: 'The ID of the contact to which the call record is associated. You can get the contact ID from the Get records API.',
-      required: false,
-    }),
+    contactName: contactIdDropdown,
     subject: Property.ShortText({
       displayName: 'Subject',
       description: 'Subject of the call',
@@ -48,68 +49,44 @@ export const createCall = createAction({
       description: 'Description or notes about the call',
       required: false,
     }),
-    callResult: Property.ShortText({
-      displayName: 'Call Result',
-      description: 'The result or outcome of the call',
+    callAgenda: Property.LongText({
+      displayName: 'Call Agenda',
+      description: 'Agenda or purpose of the call',
       required: false,
     }),
-    callPurpose: Property.StaticDropdown({
-      displayName: 'Call Purpose',
-      description: 'The purpose of the call',
-      required: false,
-      options: {
-        options: [
-          { label: 'Administrative', value: 'Administrative' },
-          { label: 'Sales', value: 'Sales' },
-          { label: 'Support', value: 'Support' },
-          { label: 'Follow-up', value: 'Follow-up' },
-        ],
-      },
-    }),
-    reminder: Property.ShortText({
+    reminder: Property.DateTime({
       displayName: 'Reminder',
-      description: 'Reminder time (e.g., "10 mins", "1 hour")',
+      description: 'Reminder date and time for the call',
       required: false,
     }),
-    billable: Property.Checkbox({
-      displayName: 'Billable',
-      description: 'Whether this call is billable',
-      required: false,
-      defaultValue: false,
-    }),
-    sendNotification: Property.Checkbox({
-      displayName: 'Send Notification',
-      description: 'Whether to send notification for this call',
-      required: false,
-      defaultValue: false,
-    }),
-    relatedTo: Property.ShortText({
-      displayName: 'Related To',
-      description: 'What this call is related to',
+    dialledNumber: Property.ShortText({
+      displayName: 'Dialled Number',
+      description: 'Phone number that was dialled',
       required: false,
     }),
-    relatedModule: Property.ShortText({
+    relatedTo: createRecordIdDropdown(
+      'Deals',
+      'Related Deal',
+      'Select the related deal'
+    ),
+    relatedModule: Property.StaticDropdown({
       displayName: 'Related Module',
       description: 'The module this call is related to',
       required: false,
+      options: {
+        options: [
+          { label: 'Deals', value: 'Deals' },
+          { label: 'Contacts', value: 'Contacts' },
+          { label: 'Companies', value: 'Companies' },
+          { label: 'Events', value: 'Events' },
+          { label: 'Tasks', value: 'Tasks' },
+        ],
+      },
     }),
-    callAgenda: Property.Checkbox({
-      displayName: 'Call Agenda',
-      description: 'Whether call has an agenda',
+    tags: Property.Array({
+      displayName: 'Tags',
+      description: 'Tags for the call (array of tag names)',
       required: false,
-      defaultValue: false,
-    }),
-    dialledNumber: Property.Checkbox({
-      displayName: 'Dialled Number',
-      description: 'Whether number was dialled',
-      required: false,
-      defaultValue: false,
-    }),
-    tag: Property.Checkbox({
-      displayName: 'Tag',
-      description: 'Tag for the call',
-      required: false,
-      defaultValue: false,
     }),
   },
   async run(context) {
@@ -125,27 +102,68 @@ export const createCall = createAction({
       formattedStartTime = date.toISOString().replace('.000Z', '+00:00');
     }
 
+    // Format reminder time if provided
+    let formattedReminder: string | undefined;
+    if (context.propsValue.reminder) {
+      const reminderTime = context.propsValue.reminder;
+      if (typeof reminderTime === 'string') {
+        formattedReminder = reminderTime;
+      } else {
+        const reminderDate = new Date(reminderTime);
+        formattedReminder = reminderDate
+          .toISOString()
+          .replace('.000Z', '+00:00');
+      }
+    }
+
     const body: Record<string, unknown> = {
       Call_Start_Time: formattedStartTime,
       Call_Duration: context.propsValue.callDuration,
       Call_Type: context.propsValue.callType,
     };
 
-    // Add optional fields if provided
-    if (context.propsValue.owner) body['Owner'] = context.propsValue.owner;
-    if (context.propsValue.contactName) body['Contact_Name'] = context.propsValue.contactName;
-    if (context.propsValue.subject) body['Subject'] = context.propsValue.subject;
-    if (context.propsValue.description) body['Description'] = context.propsValue.description;
-    if (context.propsValue.callResult) body['Call_Result'] = context.propsValue.callResult;
-    if (context.propsValue.callPurpose) body['Call_Purpose'] = context.propsValue.callPurpose;
-    if (context.propsValue.reminder) body['Reminder'] = context.propsValue.reminder;
-    if (context.propsValue.billable !== undefined) body['Billable'] = context.propsValue.billable;
-    if (context.propsValue.sendNotification !== undefined) body['send_notification'] = context.propsValue.sendNotification;
-    if (context.propsValue.relatedTo) body['Related_To'] = context.propsValue.relatedTo;
-    if (context.propsValue.relatedModule) body['$related_module'] = context.propsValue.relatedModule;
-    if (context.propsValue.callAgenda) body['Call_Agenda'] = context.propsValue.callAgenda;
-    if (context.propsValue.dialledNumber) body['Dialled_Number'] = context.propsValue.dialledNumber;
-    if (context.propsValue.tag) body['Tag'] = context.propsValue.tag;
+    // Add optional fields if provided - using correct field names and formats
+    if (context.propsValue.owner) {
+      body['Owner'] = { id: context.propsValue.owner };
+    }
+
+    if (context.propsValue.contactName) {
+      body['Contact_Name'] = { id: context.propsValue.contactName };
+    }
+
+    if (context.propsValue.subject) {
+      body['Subject'] = context.propsValue.subject;
+    }
+
+    if (context.propsValue.description) {
+      body['Description'] = context.propsValue.description;
+    }
+
+    if (context.propsValue.callAgenda) {
+      body['Call_Agenda'] = context.propsValue.callAgenda;
+    }
+
+    if (formattedReminder) {
+      body['Reminder'] = formattedReminder;
+    }
+
+    if (context.propsValue.dialledNumber) {
+      body['Dialled_Number'] = context.propsValue.dialledNumber;
+    }
+
+    if (context.propsValue.relatedTo) {
+      body['Related_To'] = {
+        id: context.propsValue.relatedTo,
+      };
+    }
+
+    if (context.propsValue.relatedModule) {
+      body['$related_module'] = context.propsValue.relatedModule;
+    }
+
+    if (context.propsValue.tags && Array.isArray(context.propsValue.tags)) {
+      body['Tag'] = context.propsValue.tags;
+    }
 
     const response = await makeRequest(
       context.auth.access_token,

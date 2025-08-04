@@ -10,10 +10,32 @@ export const biginAuth = PieceAuth.OAuth2({
     'ZohoBigin.notifications.WRITE',
     'ZohoBigin.notifications.CREATE',
     'ZohoBigin.notifications.DELETE',
+
     'ZohoBigin.modules.ALL',
     'ZohoBigin.modules.contacts.ALL',
     'ZohoBigin.modules.contacts.READ',
     'ZohoBigin.modules.contacts.CREATE',
+
+    'ZohoBigin.modules.pipelines.ALL',
+    'ZohoBigin.modules.pipelines.READ',
+    'ZohoBigin.modules.pipelines.CREATE',
+  
+    'ZohoBigin.modules.accounts.ALL',
+    'ZohoBigin.modules.accounts.READ',
+    'ZohoBigin.modules.accounts.CREATE',
+
+    'ZohoBigin.modules.products.ALL',
+    'ZohoBigin.modules.products.READ',
+    'ZohoBigin.modules.products.CREATE',
+
+    'ZohoBigin.modules.tasks.ALL',
+    'ZohoBigin.modules.tasks.READ',
+    'ZohoBigin.modules.tasks.CREATE',
+
+    'ZohoBigin.modules.events.ALL',
+    'ZohoBigin.modules.events.READ',
+    'ZohoBigin.modules.events.CREATE',
+
     'ZohoBigin.modules.calls.ALL',
     'ZohoBigin.modules.calls.READ',
     'ZohoBigin.modules.calls.CREATE',

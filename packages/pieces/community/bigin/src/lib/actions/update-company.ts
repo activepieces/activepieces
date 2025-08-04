@@ -13,7 +13,8 @@ export const updateCompany = createAction({
     recordId: companyIdDropdown,
     owner: Property.Json({
       displayName: 'Owner',
-      description: 'The ID of the owner to which the company record will be assigned. You can get the owner ID (or user ID) from the Get users data API.',
+      description:
+        'The ID of the owner to which the company record will be assigned. You can get the owner ID (or user ID) from the Get users data API.',
       required: false,
     }),
     accountName: Property.ShortText({
@@ -33,12 +34,14 @@ export const updateCompany = createAction({
     }),
     tag: Property.Json({
       displayName: 'Tag',
-      description: 'Provide the list of tags that can be associated with the company. You can get the list of tags from the Get all tags API',
+      description:
+        'Provide the list of tags that can be associated with the company. You can get the list of tags from the Get all tags API',
       required: false,
     }),
     description: Property.ShortText({
       displayName: 'Description',
-      description: 'Provide additional descriptions or notes related to the company',
+      description:
+        'Provide additional descriptions or notes related to the company',
       required: false,
     }),
     billingStreet: Property.ShortText({
@@ -74,16 +77,24 @@ export const updateCompany = createAction({
 
     // Add optional fields if provided
     if (context.propsValue.owner) body['Owner'] = context.propsValue.owner;
-    if (context.propsValue.accountName) body['Account_Name'] = context.propsValue.accountName;
+    if (context.propsValue.accountName)
+      body['Account_Name'] = context.propsValue.accountName;
     if (context.propsValue.phone) body['Phone'] = context.propsValue.phone;
-    if (context.propsValue.website) body['Website'] = context.propsValue.website;
+    if (context.propsValue.website)
+      body['Website'] = context.propsValue.website;
     if (context.propsValue.tag) body['Tag'] = context.propsValue.tag;
-    if (context.propsValue.description) body['Description'] = context.propsValue.description;
-    if (context.propsValue.billingStreet) body['Billing_Street'] = context.propsValue.billingStreet;
-    if (context.propsValue.billingCity) body['Billing_City'] = context.propsValue.billingCity;
-    if (context.propsValue.billingState) body['Billing_State'] = context.propsValue.billingState;
-    if (context.propsValue.billingCountry) body['Billing_Country'] = context.propsValue.billingCountry;
-    if (context.propsValue.billingCode) body['Billing_Code'] = context.propsValue.billingCode;
+    if (context.propsValue.description)
+      body['Description'] = context.propsValue.description;
+    if (context.propsValue.billingStreet)
+      body['Billing_Street'] = context.propsValue.billingStreet;
+    if (context.propsValue.billingCity)
+      body['Billing_City'] = context.propsValue.billingCity;
+    if (context.propsValue.billingState)
+      body['Billing_State'] = context.propsValue.billingState;
+    if (context.propsValue.billingCountry)
+      body['Billing_Country'] = context.propsValue.billingCountry;
+    if (context.propsValue.billingCode)
+      body['Billing_Code'] = context.propsValue.billingCode;
 
     const response = await makeRequest(
       context.auth.access_token,
@@ -94,9 +105,6 @@ export const updateCompany = createAction({
       }
     );
 
-    return {
-      message: 'Company updated successfully',
-      data: response,
-    };
+    return response.data[0];
   },
 });

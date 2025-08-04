@@ -128,9 +128,6 @@ export const updateTask = createAction({
       }
     );
 
-    return {
-      message: 'Task updated successfully',
-      data: response,
-    };
+    return response.data[0];
   },
 });

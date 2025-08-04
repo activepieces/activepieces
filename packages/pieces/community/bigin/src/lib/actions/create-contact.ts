@@ -86,7 +86,6 @@ export const createContact = createAction({
   async run(context) {
     const body: Record<string, unknown> = {};
 
-    // Add required fields
     if (context.propsValue.lastName)
       body['Last_Name'] = context.propsValue.lastName;
 

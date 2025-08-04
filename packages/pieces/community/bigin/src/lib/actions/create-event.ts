@@ -115,9 +115,6 @@ export const createEvent = createAction({
       }
     );
 
-    return {
-      message: 'Event created successfully',
-      data: response.data[0],
-    };
+    return response.data[0];
   },
 });
