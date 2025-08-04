@@ -21,7 +21,6 @@ export const addCommentToConversation = createAction({
   async run({ propsValue, auth }) {
     const { identifier, text } = propsValue;
 
-    // Validate comment text length (API requirement: max 1000 characters)
     if (!text || text.trim().length === 0) {
       throw new Error('Comment text is required and cannot be empty.');
     }

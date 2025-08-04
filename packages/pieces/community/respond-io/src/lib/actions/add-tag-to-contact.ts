@@ -27,7 +27,6 @@ export const addTagToContact = createAction({
   async run({ propsValue, auth }) {
     const { identifier, tags } = propsValue;
 
-    // Validate tag count (API requirement: 1-10 tags)
     if (!tags || !Array.isArray(tags) || tags.length === 0) {
       throw new Error('At least one tag is required.');
     }
@@ -35,7 +34,6 @@ export const addTagToContact = createAction({
       throw new Error('Maximum of 10 tags allowed per request.');
     }
 
-    // Transform array of objects to array of strings
     const tagNames = tags
       .map((tagObj: any) => tagObj.tag)
       .filter((tag) => tag && tag.trim())

@@ -70,7 +70,6 @@ export const createContact = createAction({
   async run({ propsValue, auth }) {
     const { identifier, customFields, ...contactData } = propsValue;
 
-    // Field validation
     if (contactData.email && contactData.email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(contactData.email)) {
@@ -113,7 +112,6 @@ export const createContact = createAction({
       }
     }
 
-    // Add custom fields array if provided
     if (customFields && Array.isArray(customFields) && customFields.length > 0) {
       body['custom_fields'] = customFields
         .filter((field: any) => field.name && field.name.trim())
