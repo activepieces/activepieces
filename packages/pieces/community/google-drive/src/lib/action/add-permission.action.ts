@@ -70,7 +70,8 @@ export const addPermission = createAction({
         const result = await drive.permissions.create({
             requestBody: permission,
             fileId: fileId,
-            sendNotificationEmail: send_invitation_email
+            sendNotificationEmail: send_invitation_email,
+            supportsAllDrives: true,
         });
 
         return result.data;
