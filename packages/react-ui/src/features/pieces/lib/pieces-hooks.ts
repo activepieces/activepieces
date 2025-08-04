@@ -246,10 +246,17 @@ export const piecesHooks = {
           ...popularCategory,
           metadata: popularCategory.metadata.filter(isAppPiece),
         };
-        return {
+        const result = {
           isLoading: false,
           data: [popularAppsCategory, appsCategory],
         };
+        if (pinnedPieces.length > 0) {
+          result.data.unshift({
+            title: t('Highlights'),
+            metadata: pinnedPieces,
+          });
+        }
+        return result;
       }
 
       case PieceSelectorTabType.NONE:
@@ -348,13 +355,6 @@ const getExploreTabContent = (
     (piece) => piece.type === ActionType.LOOP_ON_ITEMS,
   );
 
-  if (pinnedPieces.length > 0) {
-    hightlightedPiecesCategory.metadata = [
-      ...pinnedPieces,
-      ...hightlightedPiecesCategory.metadata,
-    ];
-  }
-
   if (highlightedPieces.length > 0) {
     hightlightedPiecesCategory.metadata.push(...highlightedPieces);
   }
@@ -368,6 +368,12 @@ const getExploreTabContent = (
   }
   if (loopPiece) {
     hightlightedPiecesCategory.metadata.splice(5, 0, loopPiece);
+  }
+  if (pinnedPieces.length > 0) {
+    hightlightedPiecesCategory.metadata = [
+      ...pinnedPieces,
+      ...hightlightedPiecesCategory.metadata,
+    ];
   }
 
   return [popularCategory, hightlightedPiecesCategory];
