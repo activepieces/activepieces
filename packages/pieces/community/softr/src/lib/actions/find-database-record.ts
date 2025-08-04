@@ -3,7 +3,6 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { SoftrAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { databaseIdDropdown, tableIdDropdown } from '../common/props';
-import { table } from 'console';
 
 export const findDatabaseRecord = createAction({
   auth: SoftrAuth,

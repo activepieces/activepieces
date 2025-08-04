@@ -4,20 +4,19 @@ import { SoftrAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import {
   databaseIdDropdown,
-  recordIdDropdown,
+  recordIdField,
   tableIdDropdown,
 } from '../common/props';
-import { table } from 'console';
 
 export const deleteDatabaseRecord = createAction({
   auth: SoftrAuth,
   name: 'deleteDatabaseRecord',
   displayName: 'Delete Database Record',
-  description: 'Delete a specific record from a Softr database table by its ID',
+  description: 'Deletes a existing database record.',
   props: {
     databaseId: databaseIdDropdown,
     tableId: tableIdDropdown,
-    recordId: recordIdDropdown,
+    recordId: recordIdField,
   },
   async run({ auth, propsValue }) {
     const { databaseId, tableId, recordId } = propsValue;

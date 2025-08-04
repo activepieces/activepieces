@@ -61,7 +61,7 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
     }
 
     try {
-      const response = await makeRequest(
+      const response = await makeRequest<any>(
         auth,
         HttpMethod.POST,
         `/databases/${databaseId}/tables/${tableId}/records/search`,

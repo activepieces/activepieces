@@ -1,233 +1,182 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { TableField } from './types';
 
 export const databaseIdDropdown = Property.Dropdown({
-  displayName: 'Database ID',
-  description: 'Select the database to insert the record into',
-  required: true,
-  refreshers: [],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Please connect your account first',
-      };
-    }
+	displayName: 'Database ID',
+	description: 'Select the database to insert the record into',
+	required: true,
+	refreshers: [],
+	options: async ({ auth }) => {
+		if (!auth) {
+			return {
+				disabled: true,
+				options: [],
+				placeholder: 'Please connect your account first',
+			};
+		}
 
-    try {
-      const databases = await makeRequest(
-        auth as string,
-        HttpMethod.GET,
-        '/databases'
-      );
-      return {
-        disabled: false,
-        options: databases.data.map((database: any) => ({
-          label: database.name,
-          value: database.id,
-        })),
-      };
-    } catch (error) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Error loading teams',
-      };
-    }
-  },
+		try {
+			const databases = await makeRequest<{
+				data: { id: string; name: string }[];
+			}>(auth as string, HttpMethod.GET, '/databases');
+			return {
+				disabled: false,
+				options: databases.data.map((database) => ({
+					label: database.name,
+					value: database.id,
+				})),
+			};
+		} catch (error) {
+			return {
+				disabled: true,
+				options: [],
+				placeholder: 'Error loading teams',
+			};
+		}
+	},
 });
 
 export const tableIdDropdown = Property.Dropdown({
-  displayName: 'Table ID',
-  description: 'Select the table to insert the record into',
-  required: true,
-  refreshers: ['auth', 'databaseId'],
-  options: async ({ auth, databaseId }) => {
-    if (!auth || !databaseId) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Please connect your account and select a database first',
-      };
-    }
+	displayName: 'Table ID',
+	description: 'Select the table to insert the record into',
+	required: true,
+	refreshers: ['auth', 'databaseId'],
+	options: async ({ auth, databaseId }) => {
+		if (!auth || !databaseId) {
+			return {
+				disabled: true,
+				options: [],
+				placeholder: 'Please connect your account and select a database first',
+			};
+		}
 
-    try {
-      const tables = await makeRequest(
-        auth as string,
-        HttpMethod.GET,
-        `/databases/${databaseId}/tables`
-      );
-      return {
-        disabled: false,
-        options: tables.data.map((table: any) => ({
-          label: table.name,
-          value: table.id,
-        })),
-      };
-    } catch (error) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Error loading tables',
-      };
-    }
-  },
+		try {
+			const tables = await makeRequest<{
+				data: { id: string; name: string }[];
+			}>(auth as string, HttpMethod.GET, `/databases/${databaseId}/tables`);
+			return {
+				disabled: false,
+				options: tables.data.map((table) => ({
+					label: table.name,
+					value: table.id,
+				})),
+			};
+		} catch (error) {
+			return {
+				disabled: true,
+				options: [],
+				placeholder: 'Error loading tables',
+			};
+		}
+	},
 });
 
-export const recordIdDropdown = Property.Dropdown({
-  displayName: 'Record ID',
-
-  description: 'Select the record to update',
-  required: true,
-  refreshers: ['auth', 'databaseId', 'tableId'],
-  options: async ({ auth, databaseId, tableId }) => {
-    if (!auth || !databaseId || !tableId) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder:
-          'Please connect your account and select a database and table first',
-      };
-    }
-
-    try {
-      const records = await makeRequest(
-        auth as string,
-        HttpMethod.GET,
-        `/databases/${databaseId}/tables/${tableId}/records`
-      );
-      return {
-        disabled: false,
-        options: records.data.map((record: any) => ({
-          label: record.id,
-          value: record.id,
-        })),
-      };
-    } catch (error) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Error loading records',
-      };
-    }
-  },
+export const recordIdField = Property.ShortText({
+	displayName: 'Record ID',
+	required: true,
 });
 
-export const getdynamicfields = Property.DynamicProperties({
-  displayName: 'Fields',
-  description: 'The fields to create in the record',
-  required: true,
-  refreshers: ['auth', 'databaseId', 'tableId'],
-  props: async ({ auth, databaseId, tableId }) => {
-    if (!databaseId || !tableId) {
-      return {};
-    }
+export const tableFields = Property.DynamicProperties({
+	displayName: 'Fields',
+	required: true,
+	refreshers: ['auth', 'databaseId', 'tableId'],
+	props: async ({ auth, databaseId, tableId }) => {
+		if (!databaseId || !tableId) {
+			return {};
+		}
 
-    try {
-      const response = await makeRequest(
-        auth as unknown as string,
-        HttpMethod.GET,
-        `/databases/${databaseId}/tables/${tableId}`
-      );
+		try {
+			const response = await makeRequest<{
+				data: {
+					fields: TableField[];
+				};
+			}>(auth as unknown as string, HttpMethod.GET, `/databases/${databaseId}/tables/${tableId}`);
 
-      const tableData = response.data || response;
-      const fields = tableData.fields || [];
-      const dynamicProps: DynamicPropsValue = {};
+			const tableData = response.data || response;
+			const fields = tableData.fields || [];
+			const dynamicProps: DynamicPropsValue = {};
 
-      fields.forEach((field: any) => {
-        // Skip readonly fields
-        if (field.readonly) {
-          return;
-        }
+			fields.forEach((field) => {
+				// Skip readonly fields
+				if (field.readonly) {
+					return;
+				}
 
-        const fieldId = field.id;
-        const fieldName = field.name || fieldId;
-        const fieldType = field.type;
-        const isRequired = field.required || false;
+				const fieldId = field.id;
+				const fieldName = field.name || fieldId;
+				const fieldType = field.type;
+				const isRequired = false;
 
-        // Create appropriate property based on field type
-        switch (fieldType?.toLowerCase()) {
-          case 'text':
-          case 'email':
-          case 'url':
-          case 'phone':
-            dynamicProps[fieldId] = Property.ShortText({
-              displayName: fieldName,
-              description: `${fieldType} field`,
-              required: isRequired,
-              defaultValue: field.defaultValue || undefined,
-            });
-            break;
+				switch (fieldType) {
+					case 'SINGLE_LINE_TEXT':
+					case 'EMAIL':
+					case 'URL':
+					case 'PHONE':
+						dynamicProps[fieldId] = Property.ShortText({
+							displayName: fieldName,
+							required: isRequired,
+						});
+						break;
 
-          case 'long_text':
-          case 'rich_text':
-            dynamicProps[fieldId] = Property.LongText({
-              displayName: fieldName,
-              description: `${fieldType} field`,
-              required: isRequired,
-              defaultValue: field.defaultValue || undefined,
-            });
-            break;
+					case 'SELECT': {
+						const options = field.options.choices
+							? field.options.choices.map((option) => ({
+									label: option.label,
+									value: option.id,
+							  }))
+							: [];
+						dynamicProps[fieldId] = field.allowMultipleEntries
+							? Property.StaticMultiSelectDropdown({
+									displayName: fieldName,
+									required: isRequired,
+									options: { options },
+							  })
+							: Property.StaticDropdown({
+									displayName: fieldName,
+									required: isRequired,
+									options: { options },
+							  });
+						break;
+					}
+					case 'LONG_TEXT':
+						dynamicProps[fieldId] = Property.LongText({
+							displayName: fieldName,
+							required: isRequired,
+						});
+						break;
 
-          case 'number':
-          case 'currency':
-          case 'percent':
-            dynamicProps[fieldId] = Property.Number({
-              displayName: fieldName,
-              description: `${fieldType} field`,
-              required: isRequired,
-              defaultValue: field.defaultValue
-                ? Number(field.defaultValue)
-                : undefined,
-            });
-            break;
-          case 'checkbox':
-          case 'boolean':
-            dynamicProps[fieldId] = Property.Checkbox({
-              displayName: fieldName,
-              description: `${fieldType} field`,
-              required: isRequired,
-              defaultValue:
-                field.defaultValue === 'true' || field.defaultValue === true,
-            });
-            break;
+					case 'NUMBER':
+					case 'CURRENCY':
+					case 'PERCENT':
+					case 'RATING':
+						dynamicProps[fieldId] = Property.Number({
+							displayName: fieldName,
+							required: isRequired,
+						});
+						break;
+					case 'CHECKBOX':
+						dynamicProps[fieldId] = Property.Checkbox({
+							displayName: fieldName,
+							required: isRequired,
+						});
+						break;
+					case 'DATETIME':
+						dynamicProps[fieldId] = Property.DateTime({
+							displayName: fieldName,
+							required: isRequired,
+						});
+						break;
+					default:
+						break;
+				}
+			});
 
-          case 'date':
-          case 'datetime':
-            dynamicProps[fieldId] = Property.DateTime({
-              displayName: fieldName,
-              description: `${fieldType} field`,
-              required: isRequired,
-              defaultValue: field.defaultValue || undefined,
-            });
-            break;
-
-          case 'file':
-          case 'attachment':
-            dynamicProps[fieldId] = Property.File({
-              displayName: fieldName,
-              description: `${fieldType} field`,
-              required: isRequired,
-            });
-            break;
-          default:
-            // Fallback to short text for unknown field types
-            dynamicProps[fieldId] = Property.ShortText({
-              displayName: fieldName,
-              description: `${fieldType || 'Unknown'} field`,
-              required: isRequired,
-              defaultValue: field.defaultValue || undefined,
-            });
-            break;
-        }
-      });
-
-      return dynamicProps;
-    } catch (error) {
-      console.error('Error fetching table fields:', error);
-      return {};
-    }
-  },
+			return dynamicProps;
+		} catch (error) {
+			console.error('Error fetching table fields:', error);
+			return {};
+		}
+	},
 });

@@ -8,6 +8,8 @@ import { findDatabaseRecord } from './lib/actions/find-database-record';
 import { updateDatabaseRecord } from './lib/actions/update-database-record';
 import { newDatabaseRecord } from './lib/triggers/new-database-record';
 import { updatedDatabaseRecord } from './lib/triggers/updated-database-record';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { BASE_URL } from './lib/common/client';
 
 export const softr = createPiece({
   displayName: 'Softr',
@@ -22,6 +24,16 @@ export const softr = createPiece({
     deleteDatabaseRecord,
     findDatabaseRecord,
     updateDatabaseRecord,
+    createCustomApiCallAction({
+      auth:SoftrAuth,
+      baseUrl:()=>BASE_URL,
+      authMapping:async (auth)=>{
+        return{
+          'Softr-Api-Key':auth as string
+        }
+      }
+
+    })
   ],
   triggers: [newDatabaseRecord, updatedDatabaseRecord],
 });
