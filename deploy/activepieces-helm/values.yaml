@@ -174,11 +174,6 @@ activepieces:
     exporterOtlpEndpoint: ""
     exporterOtlpHeaders: ""
 
-  # Axiom Configuration
-  axiom:
-    token: ""
-    dataset: ""
-
 postgresql:
   enabled: true
   host: ""

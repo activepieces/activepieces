@@ -1,5 +1,5 @@
+import * as HyperDX from '@hyperdx/node-opentelemetry'
 import { Level, Logger, pino, TransportTargetOptions } from 'pino'
-import * as HyperDX from '@hyperdx/node-opentelemetry';
 
 export type HyperDXCredentials = {
     token: string | undefined
@@ -16,7 +16,7 @@ export const createHyperDXTransport = (level: Level, targets: TransportTargetOpt
     HyperDX.init({
         apiKey: token,
         service: 'activepieces',
-    });
+    })
 
     return pino(
         { level, mixin: HyperDX.getPinoMixinFunction },
@@ -28,5 +28,5 @@ export const createHyperDXTransport = (level: Level, targets: TransportTargetOpt
                 ...targets,
             ],
         }),
-    );
+    )
 } 

@@ -93,16 +93,11 @@ export const system = {
             const lokiUrl = this.get(AppSystemProp.LOKI_URL)
             const lokiPassword = this.get(AppSystemProp.LOKI_PASSWORD)
             const lokiUsername = this.get(AppSystemProp.LOKI_USERNAME)
-            const axiomDataset = this.get(AppSystemProp.AXIOM_DATASET)
-            const axiomToken = this.get(AppSystemProp.AXIOM_TOKEN)
             const hyperdxToken = this.get(AppSystemProp.HYPERDX_TOKEN)
             globalLogger = pinoLogging.initLogger(logLevel, logPretty, {
                 url: lokiUrl,
                 password: lokiPassword,
                 username: lokiUsername,
-            }, {
-                dataset: axiomDataset,
-                token: axiomToken,
             }, {
                 token: hyperdxToken,
             })

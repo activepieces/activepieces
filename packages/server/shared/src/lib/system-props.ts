@@ -115,8 +115,6 @@ export enum AppSystemProp {
     LOKI_PASSWORD = 'LOKI_PASSWORD',
     LOKI_URL = 'LOKI_URL',
     LOKI_USERNAME = 'LOKI_USERNAME',
-    AXIOM_DATASET = 'AXIOM_DATASET',
-    AXIOM_TOKEN = 'AXIOM_TOKEN',
     
     // OpenTelemetry
     OTEL_ENABLED = 'OTEL_ENABLED',

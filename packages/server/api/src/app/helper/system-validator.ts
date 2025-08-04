@@ -62,8 +62,6 @@ const systemPropValidators: {
     [AppSystemProp.LOKI_URL]: urlValidator,
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
     
-    [AppSystemProp.AXIOM_DATASET]: stringValidator,
-    [AppSystemProp.AXIOM_TOKEN]: stringValidator,
     [AppSystemProp.OTEL_ENABLED]: booleanValidator,    
     [AppSystemProp.HYPERDX_TOKEN]: stringValidator,
     [WorkerSystemProp.FRONTEND_URL]: urlValidator,
