@@ -1,13 +1,13 @@
 import { AppSystemProp, exceptionHandler, JobStatus, memoryLock, QueueName, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { Job, Worker } from 'bullmq'
+import { BullMQOtel } from 'bullmq-otel'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
 import { system } from '../../helper/system/system'
 import { ConsumerManager } from '../consumer/consumer-manager'
 import { redisRateLimiter } from './redis-rate-limiter'
-import { BullMQOtel } from "bullmq-otel";
 
 const consumer: Record<string, Worker> = {}
 
