@@ -1,6 +1,8 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { googleChatAuth } from '../common/auth';
 import { GoogleChatWebhookPayload } from '../common/types';
+import { getSpacesOptions } from '../common/utils';
+import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 
 export const newMessageTrigger = createTrigger({
   auth: googleChatAuth,
@@ -22,30 +24,7 @@ export const newMessageTrigger = createTrigger({
           };
         }
 
-        const response = await fetch('https://chat.googleapis.com/v1/spaces', {
-          headers: {
-            Authorization: `Bearer ${(auth as { access_token: string }).access_token}`,
-          },
-        });
-
-        if (!response.ok) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Error loading spaces',
-          };
-        }
-
-        const data = await response.json();
-        const spaces = data.spaces || [];
-
-        return {
-          disabled: false,
-          options: spaces.map((space: { displayName?: string; name: string }) => ({
-            label: space.displayName || space.name,
-            value: space.name,
-          })),
-        };
+        return getSpacesOptions(auth as OAuth2PropertyValue);
       },
     }),
     ignoreBotMessages: Property.Checkbox({

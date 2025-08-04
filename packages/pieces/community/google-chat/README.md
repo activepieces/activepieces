@@ -21,11 +21,35 @@ This piece integrates with Google Chat API to enable automation of messaging, sp
 ## Authentication
 
 This piece uses OAuth2 authentication with the following scopes:
-- `https://www.googleapis.com/auth/chat.bot`
 - `https://www.googleapis.com/auth/chat.messages`
 - `https://www.googleapis.com/auth/chat.spaces`
 - `https://www.googleapis.com/auth/chat.messages.readonly`
 - `https://www.googleapis.com/auth/chat.spaces.readonly`
+
+### Setup Instructions
+
+1. **Create a Google Cloud Project** (if you don't have one)
+2. **Enable the Google Chat API**:
+   - Go to "APIs & Services" > "Library"
+   - Search for "Google Chat API"
+   - Click "Enable"
+3. **Create OAuth 2.0 Credentials**:
+   - Go to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "OAuth 2.0 Client IDs"
+   - Choose "Web application" as the application type
+   - Add the following redirect URI: `https://cloud.activepieces.com/api/v1/webhooks/oauth/callback`
+   - For local development, also add: `http://localhost:4200/redirect`
+   - Save your Client ID and Client Secret
+4. **Configure OAuth Consent Screen**:
+   - Go to "APIs & Services" > "OAuth consent screen"
+   - Add your email as a test user if in testing mode
+   - Make sure the app is properly configured
+
+**Important**: The redirect URI must be exactly `https://cloud.activepieces.com/api/v1/webhooks/oauth/callback` to work with Activepieces.
+
+**Note**: The `https://www.googleapis.com/auth/chat.bot` scope is not included as it requires special approval from Google for bot applications. The piece works with regular Google Chat API access using the available scopes.
+
+**Troubleshooting**: If you get "access_denied" errors, make sure the Google Chat API is enabled in your project and you've added your email as a test user in the OAuth consent screen.
 
 ## API Reference
 
