@@ -1,100 +1,45 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import {
+  createTrigger,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 
 import { respondIoAuth } from '../common/auth';
-import { respondIoApiCall } from '../common/client';
-
-const TRIGGER_KEY = 'respond-io-contact-tag-updated';
 
 export const contactTagUpdatedTrigger = createTrigger({
-  auth: respondIoAuth,
   name: 'contact_tag_updated',
   displayName: 'Contact Tag Updated',
   description: 'Triggers when a tag is added or removed from a contact in Respond.io.',
+  auth: respondIoAuth,
+  props: {
+    webhookInstructions: Property.MarkDown({
+      value: `
+			To use this trigger, you need to manually set up a webhook in your Respond.io account:
+
+			1. Login to your Respond.io account.
+			2. Go to Settings > Integrations > Webhooks.
+			3. Click on "Add Webhook" or "Create New Webhook".
+			4. Add the following URL in the **Webhook URL** field:
+			\`\`\`text
+			{{webhookUrl}}
+			\`\`\`
+			5. Select **contact.tag.updated** from the event types.
+			6. Click Save to create the webhook.
+			`,
+    }),
+  },
   type: TriggerStrategy.WEBHOOK,
-  props: {},
+  sampleData: undefined,
 
   async onEnable(context) {
-    try {
-      const response = await respondIoApiCall<{
-        data: { id: string };
-      }>({
-        method: HttpMethod.POST,
-        url: '/webhooks',
-        auth: context.auth,
-        body: {
-          url: context.webhookUrl,
-          event_types: ['contact.tag.updated'],
-        },
-      });
-
-      await context.store.put<string>(TRIGGER_KEY, response.data.id);
-    } catch (error) {
-      throw new Error(`Failed to register webhook: ${(error as Error).message}`);
-    }
+    // No need to register webhooks programmatically as user will do it manually
   },
 
   async onDisable(context) {
-    const webhookId = await context.store.get<string>(TRIGGER_KEY);
-
-    if (!isNil(webhookId)) {
-      try {
-        await respondIoApiCall({
-          method: HttpMethod.DELETE,
-          url: `/webhooks/${webhookId}`,
-          auth: context.auth,
-        });
-      } catch (error) {
-        console.warn(`Warning: Failed to delete webhook ${webhookId}:`, (error as Error).message);
-      } finally {
-        await context.store.delete(TRIGGER_KEY);
-      }
-    }
+    // No need to unregister webhooks as user will do it manually
   },
 
   async run(context) {
-    const payload = context.payload.body as {
-      event_type: string;
-      contact: Record<string, unknown>;
-      tag: string;
-      action: 'add' | 'remove';
-    };
-
-    if (payload.event_type !== 'contact.tag.updated') return [];
-
-    return [payload];
+    return [context.payload.body];
   },
-
-  async test() {
-    return [
-      {
-        event_type: 'contact.tag.updated',
-        event_id: '51f4244b-266d-49d9-9477-74dfeea7dae4',
-        tag: 'sampleTag2',
-        action: 'add',
-        contact: {
-          id: 1,
-          firstName: 'John',
-          lastName: 'Doe',
-          phone: '+60123456789',
-          email: 'johndoe@sample.com',
-          language: 'en',
-          profilePic: 'https://cdn.chatapi.net/johndoe.png',
-          countryCode: 'MY',
-          status: 'open',
-          tags: ['sampleTag1', 'sampleTag2'],
-          assignee: {
-            id: 2,
-            firstName: 'John',
-            lastName: 'Doe',
-            email: 'johndoe@sample.com',
-          },
-          created_at: 1663274081,
-        },
-      },
-    ];
-  },
-
-  sampleData: {},
 });
