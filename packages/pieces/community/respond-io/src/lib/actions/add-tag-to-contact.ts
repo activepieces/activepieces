@@ -26,7 +26,7 @@ export const addTagToContact = createAction({
       return await respondIoApiCall<{ contactId: number }>({
         method: HttpMethod.POST,
         url: `/contact/${identifier}/tag`,
-        auth: auth.token,
+        auth: auth,
         body,
       });
     } catch (error: unknown) {

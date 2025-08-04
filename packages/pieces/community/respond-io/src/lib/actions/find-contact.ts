@@ -48,7 +48,7 @@ export const findContact = createAction({
       const response = await respondIoApiCall<{ data: unknown[] }>({
         method: HttpMethod.POST,
         url: `/contact/list?limit=${limit}`,
-        auth: auth.token,
+        auth: auth,
         body,
       });
 

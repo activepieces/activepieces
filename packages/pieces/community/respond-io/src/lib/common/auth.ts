@@ -11,12 +11,13 @@ export const RespondIoAuth = PieceAuth.SecretText({
 
 export const respondIoAuth = PieceAuth.CustomAuth({
   description: `
-  Please visit your Respond.io settings to get your API token.
+  Please follow these steps to get your Respond.io API token:
   
-  1. Go to your **Settings** module.
-  2. Click on **User Settings**.
-  3. Go to the **API Token** tab.
-  4. Click **Generate Token** and copy the v2 token.`,
+  1. Log in to your Respond.io account.
+  2. In the left sidebar, navigate to Settings.
+  3. Under Workspace Settings, click on Integrations.
+  4. Locate and click on the Developer API option.
+  5. Within the Developer API section, find your API key or generate a new one if needed.`,
   props: {
     token: RespondIoAuth,
   },
@@ -26,7 +27,7 @@ export const respondIoAuth = PieceAuth.CustomAuth({
       await respondIoApiCall({
         method: HttpMethod.GET,
         url: '/space/user',
-        auth: auth.token,
+        auth: auth,
       });
       return { valid: true };
     } catch (e) {

@@ -16,15 +16,13 @@ export const newOutgoingMessageTrigger = createTrigger({
   props: {},
 
   async onEnable(context) {
-    const token = context.auth as unknown as string;
-
     try {
       const response = await respondIoApiCall<{
         data: { id: string; url: string };
       }>({
         method: HttpMethod.POST,
         url: '/webhooks',
-        auth: token,
+        auth: context.auth,
         body: {
           url: context.webhookUrl,
           event_types: ['message.sent'],
@@ -38,7 +36,6 @@ export const newOutgoingMessageTrigger = createTrigger({
   },
 
   async onDisable(context) {
-    const token = context.auth as unknown as string;
     const webhookId = await context.store.get<string>(TRIGGER_KEY);
 
     if (!isNil(webhookId)) {
@@ -46,7 +43,7 @@ export const newOutgoingMessageTrigger = createTrigger({
         await respondIoApiCall({
           method: HttpMethod.DELETE,
           url: `/webhooks/${webhookId}`,
-          auth: token,
+          auth: context.auth,
         });
       } catch (error) {
         console.warn(`Warning: Failed to delete webhook ${webhookId}:`, (error as Error).message);

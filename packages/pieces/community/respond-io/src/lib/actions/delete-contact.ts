@@ -19,7 +19,7 @@ export const deleteContact = createAction({
       await respondIoApiCall({
         method: HttpMethod.DELETE,
         url: `/contact/${identifier}`,
-        auth: auth.token,
+        auth: auth,
       });
       return {
         success: true,

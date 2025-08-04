@@ -23,7 +23,7 @@ export const openConversation = createAction({
       return await respondIoApiCall<{ contactId: number }>({
         method: HttpMethod.POST,
         url: `/contact/${identifier}/conversation/status`,
-        auth: auth.token,
+        auth: auth,
         body,
       });
     } catch (error: unknown)

@@ -29,7 +29,7 @@ export const addCommentToConversation = createAction({
       return await respondIoApiCall({
         method: HttpMethod.POST,
         url: `/contact/${identifier}/comment`,
-        auth: auth.token,
+        auth: auth,
         body,
       });
     } catch (error: unknown) {

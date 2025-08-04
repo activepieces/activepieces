@@ -46,16 +46,19 @@ export const createOrUpdateContact = createAction({
         'Country code (e.g., "US", "MY") following ISO 3166-1 alpha-2.',
       required: false,
     }),
-    custom_fields: Property.Json({
-      displayName: 'Custom Fields',
-      description:
-        'A JSON array of custom fields. E.g., `[{"name": "Field Name", "value": "Field Value"}]`',
+    customFieldName: Property.ShortText({
+      displayName: 'Custom Field Name',
+      description: 'Name of the custom field (e.g., "Company Website", "Department").',
       required: false,
-      defaultValue: [],
+    }),
+    customFieldValue: Property.ShortText({
+      displayName: 'Custom Field Value',
+      description: 'Value of the custom field. Format based on field type:\n- Text: "string"\n- Number: 123 (no quotes)\n- Email: "user@domain.com"\n- URL: "https://example.com"\n- Date: "yyyy-mm-dd"\n- Time: "HH:MM" (24H format)\n- Checkbox: "true" or "false"',
+      required: false,
     }),
   },
   async run({ propsValue, auth }) {
-    const { identifier, ...contactData } = propsValue;
+    const { identifier, customFieldName, customFieldValue, ...contactData } = propsValue;
 
     // The API sends all data in the body
     const body: Record<string, unknown> = {};
@@ -65,11 +68,20 @@ export const createOrUpdateContact = createAction({
       }
     }
 
+    if (customFieldName && customFieldValue !== undefined && customFieldValue !== null) {
+      body['custom_fields'] = [
+        {
+          name: customFieldName,
+          value: customFieldValue
+        }
+      ];
+    }
+
     try {
       return await respondIoApiCall({
         method: HttpMethod.POST,
         url: `/contact/create_or_update/${identifier}`,
-        auth: auth.token,
+        auth: auth,
         body,
       });
     } catch (error: unknown) {

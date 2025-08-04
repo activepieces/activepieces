@@ -2,104 +2,174 @@ import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { respondIoApiCall } from './client';
 import { PiecePropValueSchema } from '@activepieces/pieces-framework';
-import { RespondIoAuth } from './auth';
+import { respondIoAuth } from './auth';
 
 // --- Interfaces for Contact Dropdown ---
 interface RespondIoContact {
-  id: string;
+  id: number;
   firstName: string;
-  lastName: string;
+  lastName: string | null;
   email: string | null;
   phone: string | null;
+  status: string;
+  tags: string[];
+  assignee?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  lifecycle: string | null;
+  created_at: number;
+  language: string | null;
+  profilePic: string | null;
+  countryCode: string | null;
+  custom_fields: Array<{ name: string; value: string }> | null;
 }
 
 interface RespondIoContactListResponse {
-    data: RespondIoContact[];
-    paging?: { next?: string };
+  items: RespondIoContact[];
+  pagination?: {
+    next?: string;
+    previous?: string;
+  };
 }
 
 // --- Interfaces for Assignee (User) Dropdown ---
 interface RespondIoUser {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  team?: {
+    id: number;
+    name: string;
+  } | null;
+  restrictions: string[];
 }
 
 interface RespondIoUserListResponse {
-    data: RespondIoUser[];
+  items: RespondIoUser[];
+  pagination?: {
+    next?: string;
+    previous?: string;
+  };
 }
-
 
 // --- Contact Dropdown ---
 export const contactIdentifierDropdown = Property.Dropdown({
-    displayName: 'Contact',
-    description: 'Select the contact.',
-    required: true,
-    refreshers: ['auth'],
-    options: async ({ auth }) => {
-        if (!auth) {
-            return { disabled: true, options: [], placeholder: 'Connect your Respond.io account first' };
-        }
-        try {
-            const response = await respondIoApiCall<RespondIoContactListResponse>({
-                auth: auth as PiecePropValueSchema<typeof RespondIoAuth>,
-                method: HttpMethod.GET,
-                url: '/contact/list?limit=100',
-            });
-            const contacts = response.data;
-            if (contacts.length === 0) {
-                return { disabled: true, options: [], placeholder: 'No contacts found in your workspace.' };
-            }
-            return {
-                disabled: false,
-                options: contacts.map((contact) => {
-                    const contactInfo = contact.email || contact.phone || `ID: ${contact.id}`;
-                    return {
-                        label: `${contact.firstName || ''} ${contact.lastName || ''} (${contactInfo})`.trim(),
-                        value: `id:${contact.id}`,
-                    };
-                }),
-            };
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-            return { disabled: true, options: [], placeholder: `Error loading contacts: ${errorMessage}` };
-        }
-    },
+  displayName: 'Contact',
+  description: 'Select the contact.',
+  required: true,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Connect your Respond.io account first',
+      };
+    }
+    try {
+      const response = await respondIoApiCall<RespondIoContactListResponse>({
+        auth: auth as PiecePropValueSchema<typeof respondIoAuth>,
+        method: HttpMethod.POST,
+        url: '/contact/list',
+        body: {
+          search: '',
+          filter: {
+            $and: [],
+          },
+          timezone: 'UTC',
+        },
+      });
+      const contacts = response.items;
+      if (contacts.length === 0) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'No contacts found in your workspace.',
+        };
+      }
+      return {
+        disabled: false,
+        options: contacts.map((contact) => {
+          const contactInfo =
+            contact.email || contact.phone || `ID: ${contact.id}`;
+          return {
+            label: `${contact.firstName || ''} ${
+              contact.lastName || ''
+            } (${contactInfo})`.trim(),
+            value: `id:${contact.id}`,
+          };
+        }),
+      };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
+      return {
+        disabled: true,
+        options: [],
+        placeholder: `Error loading contacts: ${errorMessage}`,
+      };
+    }
+  },
 });
 
 // --- Assignee (User) Dropdown ---
 export const assigneeDropdown = Property.Dropdown({
-    displayName: 'Assignee',
-    description: 'Select the user to assign the conversation to.',
-    required: true,
-    refreshers: ['auth'],
-    options: async ({ auth }) => {
-        if (!auth) {
-            return { disabled: true, options: [], placeholder: 'Connect your Respond.io account first' };
-        }
-        try {
-            // This endpoint correctly lists all users in the workspace.
-            const response = await respondIoApiCall<RespondIoUserListResponse>({
-                auth: auth as PiecePropValueSchema<typeof RespondIoAuth>,
-                method: HttpMethod.GET,
-                url: '/space/user',
-            });
-            const users = response.data;
-            if (users.length === 0) {
-                return { disabled: true, options: [], placeholder: 'No users found in your workspace.' };
-            }
-            return {
-                disabled: false,
-                options: users.map((user) => ({
-                    label: `${user.firstName} ${user.lastName} (${user.email})`.trim(),
-                    // The 'assign' action requires the User ID
-                    value: user.id,
-                })),
-            };
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-            return { disabled: true, options: [], placeholder: `Error loading users: ${errorMessage}` };
-        }
-    },
+  displayName: 'Assignee',
+  description: 'Select the user to assign the conversation to.',
+  required: true,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Connect your Respond.io account first',
+      };
+    }
+
+    try {
+      const response = await respondIoApiCall<RespondIoUserListResponse>({
+        auth: auth as PiecePropValueSchema<typeof respondIoAuth>,
+        method: HttpMethod.GET,
+        url: '/space/user',
+      });
+
+      const users = response.items;
+
+      if (users.length === 0) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'No users found in your workspace.',
+        };
+      }
+
+      return {
+        disabled: false,
+        options: [
+          {
+            label: 'Unassigned',
+            value: 'null', // MUST be string "null"
+          },
+          ...users.map((user) => ({
+            label: `${user.firstName} ${user.lastName} (${user.email})`,
+            value: user.id.toString(), // always string
+          })),
+        ],
+      };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
+      return {
+        disabled: true,
+        options: [],
+        placeholder: `Error loading users: ${errorMessage}`,
+      };
+    }
+  },
 });

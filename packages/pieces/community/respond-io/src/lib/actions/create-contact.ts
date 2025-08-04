@@ -2,7 +2,6 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { respondIoApiCall } from '../common/client';
 import { respondIoAuth } from '../common/auth';
-import { contactIdentifierDropdown } from '../common/props';
 
 export const createContact = createAction({
   auth: respondIoAuth,
@@ -10,7 +9,12 @@ export const createContact = createAction({
   displayName: 'Create Contact',
   description: 'Create a new contact.',
   props: {
-    identifier: contactIdentifierDropdown,
+    identifier: Property.ShortText({
+      displayName: 'Identifier',
+      description:
+        'Must be a unique identifier for the new contact. Use format: `email:user@example.com` or `phone:+60123456789`.',
+      required: true,
+    }),
     firstName: Property.ShortText({
       displayName: 'First Name',
       required: true,
@@ -41,50 +45,85 @@ export const createContact = createAction({
     }),
     countryCode: Property.ShortText({
       displayName: 'Country Code',
-      description: 'Country code (e.g., "US", "MY") following ISO 3166-1 alpha-2.',
+      description:
+        'Country code (e.g., "US", "MY") following ISO 3166-1 alpha-2.',
       required: false,
     }),
-    custom_fields: Property.Json({
-        displayName: 'Custom Fields',
-        description: 'A JSON array of custom fields. E.g., `[{"name": "Field Name", "value": "Field Value"}]`',
-        required: false,
-        defaultValue: [],
-    })
+    customFieldName: Property.ShortText({
+      displayName: 'Custom Field Name',
+      description:
+        'Name of the custom field (e.g., "Company Website", "Department").',
+      required: false,
+    }),
+    customFieldValue: Property.ShortText({
+      displayName: 'Custom Field Value',
+      description:
+        'Value of the custom field. Format based on field type:\n- Text: "string"\n- Number: 123 (no quotes)\n- Email: "user@domain.com"\n- URL: "https://example.com"\n- Date: "yyyy-mm-dd"\n- Time: "HH:MM" (24H format)\n- Checkbox: "true" or "false"',
+      required: false,
+    }),
   },
   async run({ propsValue, auth }) {
-    const { identifier, ...contactData } = propsValue;
+    const { identifier, customFieldName, customFieldValue, ...contactData } =
+      propsValue;
 
     const body: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(contactData)) {
-        if (value !== undefined && value !== null) {
-            body[key] = value;
-        }
+      if (value !== undefined && value !== null) {
+        body[key] = value;
+      }
+    }
+
+    // Add custom fields array if both name and value are provided
+    if (
+      customFieldName &&
+      customFieldValue !== undefined &&
+      customFieldValue !== null
+    ) {
+      body['custom_fields'] = [
+        {
+          name: customFieldName,
+          value: customFieldValue,
+        },
+      ];
     }
 
     try {
       return await respondIoApiCall({
         method: HttpMethod.POST,
         url: `/contact/${identifier}`,
-        auth: auth.token,
+        auth: auth,
         body,
       });
     } catch (error: unknown) {
-      const err = error as { response?: { status?: number; body?: { message?: string } } };
+      const err = error as {
+        response?: { status?: number; body?: { message?: string } };
+      };
       const status = err.response?.status;
-      const message = err.response?.body?.message || 'An unknown error occurred.';
+      const message =
+        err.response?.body?.message || 'An unknown error occurred.';
 
       switch (status) {
         case 400:
-          throw new Error(`Bad Request: The server could not process the request, please check the format of your input. Details: ${message}`);
+          throw new Error(
+            `Bad Request: The server could not process the request, please check the format of your input. Details: ${message}`
+          );
         case 401:
         case 403:
-          throw new Error(`Authentication Error: Please check your API Token. Details: ${message}`);
+          throw new Error(
+            `Authentication Error: Please check your API Token. Details: ${message}`
+          );
         case 409:
-          throw new Error(`Conflict: A contact with this identifier may already exist. Details: ${message}`);
+          throw new Error(
+            `Conflict: A contact with this identifier may already exist. Details: ${message}`
+          );
         case 429:
-            throw new Error(`Rate Limit Exceeded: Too many requests. Please wait and try again. Details: ${message}`);
+          throw new Error(
+            `Rate Limit Exceeded: Too many requests. Please wait and try again. Details: ${message}`
+          );
         default:
-          throw new Error(`Respond.io API Error (Status ${status || 'N/A'}): ${message}`);
+          throw new Error(
+            `Respond.io API Error (Status ${status || 'N/A'}): ${message}`
+          );
       }
     }
   },

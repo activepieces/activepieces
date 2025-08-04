@@ -21,16 +21,27 @@ export const assignOrUnassignConversation = createAction({
   async run({ propsValue, auth }) {
     const { identifier, assignee } = propsValue;
 
-    // If assignee is not provided, send null to unassign.
+    // Convert assignee to proper format
+    let assigneeValue: string | number | null = null;
+    
+    if (assignee && assignee.trim() !== '' && assignee !== 'null') {
+      const userId = parseInt(assignee, 10);
+      if (!isNaN(userId)) {
+        assigneeValue = userId;
+      } else {
+        assigneeValue = assignee;
+      }
+    }
+
     const body = {
-      assignee: assignee || null,
+      assignee: assigneeValue,
     };
 
     try {
       return await respondIoApiCall<{ contactId: number }>({
         method: HttpMethod.POST,
         url: `/contact/${identifier}/conversation/assignee`,
-        auth: auth.token,
+        auth: auth,
         body,
       });
     } catch (error: unknown) {
@@ -45,7 +56,7 @@ export const assignOrUnassignConversation = createAction({
       switch (status) {
         case 400:
           throw new Error(
-            `Bad Request: The user ID may be invalid or the format is incorrect. Details: ${message}`
+            `Bad Request: Invalid request format or parameters. Check if the assignee ID (${assigneeValue}) is valid and the contact identifier (${identifier}) is correct. Details: ${message}`
           );
         case 401:
         case 403:
@@ -54,15 +65,19 @@ export const assignOrUnassignConversation = createAction({
           );
         case 404:
           throw new Error(
-            `Not Found: The contact with the specified identifier does not exist. Details: ${message}`
+            `Not Found: The contact with identifier "${identifier}" does not exist or has no active conversation. Details: ${message}`
           );
         case 429:
           throw new Error(
             `Rate Limit Exceeded: Too many requests. Please wait and try again. Details: ${message}`
           );
+        case 449:
+          throw new Error(
+            `Conflict: There may be a conflict with the current assignment state. Details: ${message}`
+          );
         default:
           throw new Error(
-            `Respond.io API Error (Status ${status || 'N/A'}): ${message}`
+            `Respond.io API Error (Status ${status || 'N/A'}): ${message}. Request details - Contact Identifier: ${identifier}, Assignee: ${assigneeValue}`
           );
       }
     }
