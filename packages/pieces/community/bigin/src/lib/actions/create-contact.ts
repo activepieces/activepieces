@@ -124,9 +124,6 @@ export const createContact = createAction({
       }
     );
 
-    return {
-      message: 'Contact created successfully',
-      data: response.data[0] || response.data,
-    };
+    return response.data[0];
   },
 });

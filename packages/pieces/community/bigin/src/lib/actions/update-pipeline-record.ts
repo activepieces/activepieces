@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
+import { pipelineIdDropdown } from '../common/props';
 
 export const updatePipelineRecord = createAction({
   auth: biginAuth,
@@ -9,11 +10,7 @@ export const updatePipelineRecord = createAction({
   displayName: 'Update Pipeline Record',
   description: 'Update an existing pipeline record (deal) in Bigin',
   props: {
-    recordId: Property.ShortText({
-      displayName: 'Record ID',
-      description: 'The ID of the pipeline record (deal) to update',
-      required: true,
-    }),
+    recordId: pipelineIdDropdown,
     owner: Property.Json({
       displayName: 'Owner',
       description:

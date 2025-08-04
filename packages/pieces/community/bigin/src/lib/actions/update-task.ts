@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
+import { taskIdDropdown } from '../common/props';
 
 export const updateTask = createAction({
   auth: biginAuth,
@@ -9,11 +10,7 @@ export const updateTask = createAction({
   displayName: 'Update Task',
   description: 'Update an existing task record in Bigin',
   props: {
-    recordId: Property.ShortText({
-      displayName: 'Record ID',
-      description: 'The ID of the task record to update',
-      required: true,
-    }),
+    recordId: taskIdDropdown,
     owner: Property.Json({
       displayName: 'Owner',
       description:

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
+import { eventIdDropdown } from '../common/props';
 
 export const updateEvent = createAction({
   auth: biginAuth,
@@ -9,11 +10,7 @@ export const updateEvent = createAction({
   displayName: 'Update Event',
   description: 'Update an existing event record in Bigin',
   props: {
-    recordId: Property.ShortText({
-      displayName: 'Record ID',
-      description: 'The ID of the event record to update',
-      required: true,
-    }),
+    recordId: eventIdDropdown,
     owner: Property.Json({
       displayName: 'Owner',
       description:

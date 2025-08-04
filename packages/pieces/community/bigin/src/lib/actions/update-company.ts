@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
+import { companyIdDropdown, createRecordIdDropdown } from '../common/props';
 
 export const updateCompany = createAction({
   auth: biginAuth,
@@ -9,11 +10,7 @@ export const updateCompany = createAction({
   displayName: 'Update Company',
   description: 'Update an existing company record in Bigin',
   props: {
-    recordId: Property.ShortText({
-      displayName: 'Record ID',
-      description: 'The ID of the company record to update',
-      required: true,
-    }),
+    recordId: companyIdDropdown,
     owner: Property.Json({
       displayName: 'Owner',
       description: 'The ID of the owner to which the company record will be assigned. You can get the owner ID (or user ID) from the Get users data API.',

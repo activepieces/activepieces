@@ -156,6 +156,6 @@ export const createCall = createAction({
       }
     );
 
-    return response;
+    return response.data[0];
   },
 });

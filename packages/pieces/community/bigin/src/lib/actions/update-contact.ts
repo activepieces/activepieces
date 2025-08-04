@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
+import { contactIdDropdown } from '../common/props';
 
 export const updateContact = createAction({
   auth: biginAuth,
@@ -9,11 +10,7 @@ export const updateContact = createAction({
   displayName: 'Update Contact',
   description: 'Update an existing contact record in Bigin',
   props: {
-    recordId: Property.ShortText({
-      displayName: 'Record ID',
-      description: 'The ID of the contact record to update',
-      required: true,
-    }),
+    recordId: contactIdDropdown,
     firstName: Property.ShortText({
       displayName: 'First Name',
       description: 'First name of the contact',

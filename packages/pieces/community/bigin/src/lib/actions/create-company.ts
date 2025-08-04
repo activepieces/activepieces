@@ -91,15 +91,12 @@ export const createCompany = createAction({
     const response = await makeRequest(
       context.auth.access_token,
       HttpMethod.POST,
-      '/Companies',
+      '/Accounts',
       {
         data: [body],
       }
     );
 
-    return {
-      message: 'Company created successfully',
-      data: response.data[0],
-    };
+    return response.data[0];
   },
 });
