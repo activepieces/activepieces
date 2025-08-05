@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import { CircleHelp, Zap } from 'lucide-react';
 import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -11,6 +12,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PlatformBillingInformation } from '@activepieces/shared';
+
 import { ExtraActiveFlowsDialog } from './extra-active-flows-dialog';
 
 type BusinessActiveFlowsProps = {
@@ -25,7 +27,9 @@ export function ActiveFlowAddon({
   const currentActiveFlows = usage.activeFlows || 0;
   const activeFlowsLimit = plan.activeFlowsLimit ?? 10;
   const usagePercentage =
-    activeFlowsLimit > 0 ? Math.round((currentActiveFlows / activeFlowsLimit) * 100) : 0;
+    activeFlowsLimit > 0
+      ? Math.round((currentActiveFlows / activeFlowsLimit) * 100)
+      : 0;
 
   return (
     <>
@@ -56,7 +60,9 @@ export function ActiveFlowAddon({
         <CardContent className="p-6">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h4 className="text-base font-medium">{t('Active Flows Usage')}</h4>
+              <h4 className="text-base font-medium">
+                {t('Active Flows Usage')}
+              </h4>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>

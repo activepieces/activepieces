@@ -124,8 +124,8 @@ export const ExtraSeatsDialog = ({
               updateUserSeats({
                 plan: PlanName.BUSINESS,
                 addons: {
-                  userSeats: newSeatCount
-                }
+                  userSeats: newSeatCount,
+                },
               })
             }
             disabled={isPending || newSeatCount === currentUserLimit}

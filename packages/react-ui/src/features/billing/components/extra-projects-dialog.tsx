@@ -33,7 +33,9 @@ export const ExtraProjectsDialog = ({
   const { plan } = platformSubscription;
 
   const currentProjectLimit = plan.projectsLimit ?? DEFAULT_PROJECTS;
-  const [selectedProjects, setSelectedProjects] = useState([currentProjectLimit]);
+  const [selectedProjects, setSelectedProjects] = useState([
+    currentProjectLimit,
+  ]);
 
   const newProjectCount = selectedProjects[0];
   const projectDifference = newProjectCount - currentProjectLimit;
@@ -123,8 +125,8 @@ export const ExtraProjectsDialog = ({
               updateProjects({
                 plan: PlanName.BUSINESS,
                 addons: {
-                  projects: newProjectCount
-                }
+                  projects: newProjectCount,
+                },
               })
             }
             disabled={isPending || newProjectCount === currentProjectLimit}

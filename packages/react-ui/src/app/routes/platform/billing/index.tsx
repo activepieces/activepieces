@@ -7,14 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { ActivateLicenseDialog } from '@/features/billing/components/activate-license-dialog';
+import { ActiveFlowAddon } from '@/features/billing/components/active-flow-addon';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
 import { AiCreditsUsageTable } from '@/features/billing/components/ai-credits-usage-table';
-import { UserSeatAddon } from '@/features/billing/components/user-seat-addon';
 import { FeatureStatus } from '@/features/billing/components/features-status';
 import { LicenseKey } from '@/features/billing/components/lisence-key';
+import { ProjectAddon } from '@/features/billing/components/project-addon';
 import { SubscriptionInfo } from '@/features/billing/components/subscription-info';
 import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { UsageCards } from '@/features/billing/components/usage-cards';
+import { UserSeatAddon } from '@/features/billing/components/user-seat-addon';
 import {
   billingMutations,
   billingQueries,
@@ -23,8 +25,6 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
-import { ActiveFlowAddon } from '@/features/billing/components/active-flow-addon';
-import { ProjectAddon } from '@/features/billing/components/project-addon';
 
 export default function Billing() {
   const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
@@ -112,19 +112,17 @@ export default function Billing() {
 
       <UsageCards platformSubscription={platformPlanInfo} />
 
-      {!isFree && (
-        <ActiveFlowAddon platformSubscription={platformPlanInfo} />
-      )}
+      {!isFree && <ActiveFlowAddon platformSubscription={platformPlanInfo} />}
 
       {isBusinessPlan && (
-        <div className='grid grid-cols-2 gap-6'>
+        <div className="grid grid-cols-2 gap-6">
           <ProjectAddon platformSubscription={platformPlanInfo} />
           <UserSeatAddon platformSubscription={platformPlanInfo} />
         </div>
       )}
 
       {!isEnterprise && (
-          <AICreditUsage platformSubscription={platformPlanInfo} />
+        <AICreditUsage platformSubscription={platformPlanInfo} />
       )}
 
       {isEnterprise && (

@@ -11,7 +11,11 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
-import { getPlanLimits, PlanName, PRICE_PER_EXTRA_5_ACTIVE_FLOWS } from '@activepieces/ee-shared';
+import {
+  getPlanLimits,
+  PlanName,
+  PRICE_PER_EXTRA_5_ACTIVE_FLOWS,
+} from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
@@ -26,13 +30,13 @@ type ExtraActiveFlowsDialogProps = {
 };
 
 const getMaxActiveFlows = (plan?: string) => {
-    if (plan === PlanName.PLUS) {
-      return MAX_ACTIVE_FLOWS_PLUS
-    }
-    if (plan === PlanName.BUSINESS) {
-      return MAX_ACTIVE_FLOWS_BUSINESS
-    }
+  if (plan === PlanName.PLUS) {
     return MAX_ACTIVE_FLOWS_PLUS;
+  }
+  if (plan === PlanName.BUSINESS) {
+    return MAX_ACTIVE_FLOWS_BUSINESS;
+  }
+  return MAX_ACTIVE_FLOWS_PLUS;
 };
 
 export const ExtraActiveFlowsDialog = ({
@@ -42,14 +46,18 @@ export const ExtraActiveFlowsDialog = ({
 }: ExtraActiveFlowsDialogProps) => {
   const { plan } = platformSubscription;
 
-  const DEFAULT_ACTIVE_FLOWS = getPlanLimits(plan.plan as PlanName).activeFlowsLimit ?? 0
+  const DEFAULT_ACTIVE_FLOWS =
+    getPlanLimits(plan.plan as PlanName).activeFlowsLimit ?? 0;
   const currentActiveFlowLimit = plan.activeFlowsLimit ?? DEFAULT_ACTIVE_FLOWS;
-  const [selectedActiveFlows, setSelectedActiveFlows] = useState([currentActiveFlowLimit]);
+  const [selectedActiveFlows, setSelectedActiveFlows] = useState([
+    currentActiveFlowLimit,
+  ]);
 
   const maxActiveFlows = getMaxActiveFlows(plan.plan);
   const newActiveFlowCount = selectedActiveFlows[0];
   const activeFlowDifference = newActiveFlowCount - currentActiveFlowLimit;
-  const costDifference = (activeFlowDifference / 5) * PRICE_PER_EXTRA_5_ACTIVE_FLOWS;
+  const costDifference =
+    (activeFlowDifference / 5) * PRICE_PER_EXTRA_5_ACTIVE_FLOWS;
 
   const { mutate: updateActiveFlows, isPending } =
     billingMutations.useUpdateSubscription(() => onOpenChange(false));
@@ -76,7 +84,9 @@ export const ExtraActiveFlowsDialog = ({
               <label className="text-sm font-medium">
                 Total number of active flows
               </label>
-              <p className="text-lg font-bold px-3 py-1">{newActiveFlowCount}</p>
+              <p className="text-lg font-bold px-3 py-1">
+                {newActiveFlowCount}
+              </p>
             </div>
             <div className="space-y-3">
               <Slider
@@ -138,11 +148,13 @@ export const ExtraActiveFlowsDialog = ({
               updateActiveFlows({
                 plan: plan.plan as PlanName.PLUS | PlanName.BUSINESS,
                 addons: {
-                    activeFlows: newActiveFlowCount
-                }
+                  activeFlows: newActiveFlowCount,
+                },
               })
             }
-            disabled={isPending || newActiveFlowCount === currentActiveFlowLimit}
+            disabled={
+              isPending || newActiveFlowCount === currentActiveFlowLimit
+            }
           >
             {isPending ? (
               <>

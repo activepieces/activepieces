@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import { CircleHelp, FolderOpen } from 'lucide-react';
 import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -11,15 +12,14 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PlatformBillingInformation } from '@activepieces/shared';
+
 import { ExtraProjectsDialog } from './extra-projects-dialog';
 
 type BusinessProjectsProps = {
   platformSubscription: PlatformBillingInformation;
 };
 
-export function ProjectAddon({
-  platformSubscription,
-}: BusinessProjectsProps) {
+export function ProjectAddon({ platformSubscription }: BusinessProjectsProps) {
   const [addProjectsOpen, setAddProjectsOpen] = useState(false);
   const { plan, usage } = platformSubscription;
   const currentProjects = usage.projects || 0;
