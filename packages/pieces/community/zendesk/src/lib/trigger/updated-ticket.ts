@@ -26,29 +26,7 @@ export const updatedTicket = createTrigger({
       required: true,
     }),
   },
-  sampleData: {
-    id: 123456,
-    ticket_id: 5,
-    type: 'Comment',
-    public: true,
-    body: 'Ticket was updated',
-    html_body: '<p>Ticket was updated</p>',
-    plain_body: 'Ticket was updated',
-    author_id: 8193592318236,
-    via: {
-      channel: 'web',
-      source: {
-        from: {},
-        to: {},
-        rel: null,
-      },
-    },
-    created_at: '2023-03-25T02:39:41Z',
-    updated_at: '2023-03-25T02:39:41Z',
-    metadata: {},
-    file_attachments: [],
-    uploads: [],
-  },
+  sampleData: undefined,
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {
       auth: context.auth,

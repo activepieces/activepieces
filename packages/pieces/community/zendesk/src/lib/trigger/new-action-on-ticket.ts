@@ -26,38 +26,7 @@ export const newActionOnTicket = createTrigger({
       required: true,
     }),
   },
-  sampleData: {
-    id: 123456,
-    ticket_id: 5,
-    type: 'Change',
-    public: true,
-    body: 'Ticket action occurred',
-    html_body: '<p>Ticket action occurred</p>',
-    plain_body: 'Ticket action occurred',
-    author_id: 8193592318236,
-    via: {
-      channel: 'web',
-      source: {
-        from: {},
-        to: {},
-        rel: null,
-      },
-    },
-    created_at: '2023-03-25T02:39:41Z',
-    updated_at: '2023-03-25T02:39:41Z',
-    metadata: {},
-    file_attachments: [],
-    uploads: [],
-    events: [
-      {
-        id: 789,
-        type: 'Change',
-        field_name: 'status',
-        value: 'open',
-        previous_value: 'pending',
-      },
-    ],
-  },
+  sampleData: undefined,
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {
       auth: context.auth,

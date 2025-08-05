@@ -19,22 +19,7 @@ export const newOrganization = createTrigger({
   description: 'Triggers when a new organization record is created',
   type: TriggerStrategy.POLLING,
   props: {},
-  sampleData: {
-    id: 8193599387420,
-    url: 'https://activepieceshelp.zendesk.com/api/v2/organizations/8193599387420.json',
-    external_id: null,
-    name: 'Organization Name',
-    created_at: '2023-03-25T02:39:41Z',
-    updated_at: '2023-03-25T02:39:41Z',
-    domain_names: ['example.com'],
-    details: 'Organization details',
-    notes: 'Organization notes',
-    group_id: null,
-    shared_tickets: false,
-    shared_comments: false,
-    tags: [],
-    organization_fields: [],
-  },
+  sampleData: undefined,
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {
       auth: context.auth,
