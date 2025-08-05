@@ -73,7 +73,7 @@ export default function Billing() {
 
   return (
     <article className="flex flex-col w-full gap-6">
-      <div className="flex justify-between items-center border sticky top-0 bg-background z-30">
+      <div className="flex justify-between items-center">
         <div>
           <TableTitle>{t('Billing')}</TableTitle>
           <p className="text-sm text-muted-foreground">

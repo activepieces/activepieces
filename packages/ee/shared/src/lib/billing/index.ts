@@ -5,7 +5,7 @@ import Stripe from 'stripe'
 import { BUSINESS_CLOUD_PLAN, FREE_CLOUD_PLAN, PLUS_CLOUD_PLAN } from './plan-limits'
 
 export const PRICE_PER_EXTRA_USER = 20
-export const PRICE_PER_EXTRA_PROJECT = 15
+export const PRICE_PER_EXTRA_PROJECT = 10
 export const PRICE_PER_EXTRA_5_ACTIVE_FLOWS = 15
 export const AI_CREDITS_USAGE_THRESHOLD = 150000
 
@@ -108,7 +108,7 @@ export const getPriceIdFor = (price: string, stripeKey?: string): string => {
         case PRICE_NAMES.USER_SEAT:
             return devEnv ? 'price_1Rsn8nQN93Aoq4f8nNmwAA1I' : 'price_1RflgiKZ0dZRqLEKiDFoa17I'
         case PRICE_NAMES.PROJECT:
-            return devEnv ? 'price_1RsKDOQN93Aoq4f85dCbFRcq' : ''
+            return devEnv ? 'price_1RsoJ4QN93Aoq4f8JzLCO1BL' : 'price_1RsoHsKZ0dZRqLEKIQGB6RPe'
         default:
             throw new Error('No price with the given price name is available')
     }
