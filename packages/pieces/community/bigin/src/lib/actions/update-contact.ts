@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
-import { companyIdDropdown, contactIdDropdown, userIdDropdown } from '../common/props';
+import { companyIdDropdown, contactIdDropdown, tagDropdown, userIdDropdown } from '../common/props';
 
 export const updateContact = createAction({
   auth: biginAuth,
@@ -43,11 +43,7 @@ export const updateContact = createAction({
     }),
     owner: userIdDropdown,
     accountName: companyIdDropdown,
-    tag: Property.Array({
-      displayName: 'Tag',
-      description: 'Tags for the contact (array of objects with name property)',
-      required: false,
-    }),
+    tag: tagDropdown('Contacts'),
     description: Property.ShortText({
       displayName: 'Description',
       description: 'Description of the contact',

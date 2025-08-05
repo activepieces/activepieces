@@ -6,6 +6,7 @@ import {
   userIdDropdown,
   contactIdDropdown,
   createRecordIdDropdown,
+  tagDropdown,
 } from '../common/props';
 
 export const createTask = createAction({
@@ -158,12 +159,7 @@ export const createTask = createAction({
         ],
       },
     }),
-    tags: Property.Array({
-      displayName: 'Tags',
-      description:
-        'Provide the list of tags that can be associated with the task',
-      required: false,
-    }),
+    tags:tagDropdown('Tasks'),
   },
   async run(context) {
     // Format due date

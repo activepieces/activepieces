@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
-import { eventIdDropdown, userIdDropdown } from '../common/props';
+import { eventIdDropdown, tagDropdown, userIdDropdown } from '../common/props';
 
 export const updateEvent = createAction({
   auth: biginAuth,
@@ -102,12 +102,7 @@ export const updateEvent = createAction({
         'Provide additional descriptions or notes related to the event',
       required: false,
     }),
-    tag: Property.Json({
-      displayName: 'Tag',
-      description:
-        'Provide the list of tags that can be associated with the event. You can get the list of tags from the Get all tags API',
-      required: false,
-    }),
+    tag: tagDropdown('Events'),
   },
   async run(context) {
     // Format datetime for Bigin API

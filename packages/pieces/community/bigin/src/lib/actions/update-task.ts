@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
-import { taskIdDropdown, userIdDropdown } from '../common/props';
+import { tagDropdown, taskIdDropdown, userIdDropdown } from '../common/props';
 
 export const updateTask = createAction({
   auth: biginAuth,
@@ -99,12 +99,7 @@ export const updateTask = createAction({
         ],
       },
     }),
-    tag: Property.Array({
-      displayName: 'Tag',
-      description:
-        'Provide the list of tags that can be associated with the task. You can get the list of tags from the Get all tags API',
-      required: false,
-    }),
+    tag: tagDropdown('Tasks'),
   },
   async run(context) {
     const body: Record<string, unknown> = {
@@ -117,7 +112,7 @@ export const updateTask = createAction({
       body['Subject'] = context.propsValue.subject;
     if (context.propsValue.dueDate)
       body['Due_Date'] = context.propsValue.dueDate;
-    
+
     if (context.propsValue.relatedTo)
       body['Related_To'] = context.propsValue.relatedTo;
     if (context.propsValue.relatedModule)

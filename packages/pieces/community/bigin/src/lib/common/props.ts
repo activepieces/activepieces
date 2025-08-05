@@ -12,6 +12,51 @@ export const formatDateTime = (dateTime: string | Date): string => {
   }
 };
 
+export const tagDropdown = (module: string) => {
+  return Property.Dropdown({
+    displayName: 'Tag',
+    description: 'Select a tag for the record',
+    required: false,
+    refreshers: ['auth'],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your account first',
+        };
+      }
+
+      try {
+        const typedAuth = auth as {
+          access_token: string;
+          props?: { [key: string]: any };
+        };
+        const accessToken = typedAuth.access_token;
+
+        const response = await makeRequest(
+          accessToken,
+          HttpMethod.GET,
+          `/settings/tags?module=${module}`,
+          typedAuth.props?.['location'] || 'com'
+        );
+        return {
+          disabled: false,
+          options: response.tags.map((tag: any) => ({
+            label: tag.name,
+            value: tag.name,
+          })),
+        };
+      } catch (error) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Error loading tags',
+        };
+      }
+    },
+  });
+};
 export const userIdDropdown = Property.Dropdown({
   displayName: 'User ID',
   description: 'Select the user ',
@@ -25,7 +70,7 @@ export const userIdDropdown = Property.Dropdown({
         placeholder: 'Please connect your account first',
       };
     }
-    
+
     try {
       const typedAuth = auth as {
         access_token: string;

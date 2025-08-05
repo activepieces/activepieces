@@ -7,6 +7,7 @@ import {
   userIdDropdown,
   createRecordIdDropdown,
   formatDateTime,
+  tagDropdown,
 } from '../common/props';
 
 export const createCall = createAction({
@@ -84,11 +85,7 @@ export const createCall = createAction({
         ],
       },
     }),
-    tags: Property.Array({
-      displayName: 'Tags',
-      description: 'Tags for the call (array of tag names)',
-      required: false,
-    }),
+    tags: tagDropdown('Calls'),
   },
   async run(context) {
     // Format datetime for Bigin API - they expect YYYY-MM-DDTHH:mm:ss+HH:MM format

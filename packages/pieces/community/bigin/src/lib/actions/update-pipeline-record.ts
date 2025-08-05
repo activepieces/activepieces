@@ -8,6 +8,7 @@ import {
   createRecordIdDropdown,
   pipelineIdDropdown,
   productidDropdown,
+  tagDropdown,
   userIdDropdown,
 } from '../common/props';
 
@@ -54,12 +55,7 @@ export const updatePipelineRecord = createAction({
         'Provide the expected or actual closing date of the pipeline record (deal) in YYYY-MM-DD format',
       required: false,
     }),
-    tag: Property.Array({
-      displayName: 'Tag',
-      description:
-        'Provide the list of tags that can be associated with the pipeline record (deal). You can get the list of tags from the Get all tags API',
-      required: false,
-    }),
+    tag: tagDropdown('Pipelines'),
     pipeline: pipelineIdDropdown,
     associatedProducts: productidDropdown,
   },
