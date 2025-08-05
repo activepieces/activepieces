@@ -20,8 +20,6 @@ export async function makeRequest(
       body,
     });
 
-    // Check if the response contains Bigin API errors
-    // The actual response data is nested under response.body.data
     const responseData = response.body?.data;
     if (responseData && Array.isArray(responseData) && responseData.length > 0) {
       const firstItem = responseData[0];

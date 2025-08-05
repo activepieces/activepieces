@@ -1,9 +1,44 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
 export const biginAuth = PieceAuth.OAuth2({
+  props: {
+    location: Property.StaticDropdown({
+      displayName: 'Location',
+      description: 'The location of your Zoho CRM account',
+      required: true,
+      options: {
+        options: [
+          {
+            label: 'zoho.eu (Europe)',
+            value: 'zoho.eu',
+          },
+          {
+            label: 'zoho.com (United States)',
+            value: 'zoho.com',
+          },
+          {
+            label: 'zoho.com.au (Australia)',
+            value: 'zoho.com.au',
+          },
+          {
+            label: 'zoho.jp (Japan)',
+            value: 'zoho.jp',
+          },
+          {
+            label: 'zoho.in (India)',
+            value: 'zoho.in',
+          },
+          {
+            label: 'zohocloud.ca (Canada)',
+            value: 'zohocloud.ca',
+          },
+        ],
+      },
+    }),
+  },
   description: 'Authenticate with your Bigin account',
-  authUrl: 'https://accounts.zoho.in/oauth/v2/auth',
-  tokenUrl: 'https://accounts.zoho.in/oauth/v2/token',
+  authUrl: 'https://accounts.{location}/oauth/v2/auth',
+  tokenUrl: 'https://accounts.{location}/oauth/v2/token',
   required: true,
   scope: [
     'ZohoBigin.notifications.ALL',
