@@ -121,6 +121,24 @@ export const text = Property.LongText({
 export const actions = Property.Array({
   displayName: 'Action Buttons',
   required: true,
+  properties: {
+    label: Property.ShortText({
+      displayName: 'Label',
+      required: true,
+    }),
+    style: Property.StaticDropdown({
+      displayName: 'Style',
+      required: false,
+      defaultValue: null,
+      options: {
+        options: [
+          { label: 'Default', value: null },
+          { label: 'Primary', value: 'primary' },
+          { label: 'Danger', value: 'danger' },
+        ],
+      },
+    }),
+  },
 });
 
 export async function getChannels(accessToken: string) {
