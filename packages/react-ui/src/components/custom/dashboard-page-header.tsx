@@ -15,7 +15,7 @@ export const DashboardPageHeader = ({
     <div className="w-full flex items-center justify-between border-b absolute left-0 top-0 bg-background py-3 px-6 z-30">
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold">{title}</h1>
+          <h1 className="text-xl font-semibold">{title}</h1>
           {beta && (
             <div className="flex items-center">
               <BetaBadge />
