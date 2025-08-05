@@ -25,10 +25,10 @@ import {
     EngineHelperResponse,
     EngineHelperTriggerResult,
 } from 'server-worker'
-import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
-import { system } from '../helper/system/system'
-import { jobQueue } from '../workers/queue'
-import { userInteractionWatcher } from '../workers/user-interaction-watcher'
+import { appEventRoutingService } from '../../app-event-routing/app-event-routing.service'
+import { system } from '../../helper/system/system'
+import { jobQueue } from '../../workers/queue'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 
 export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
     return {

@@ -10,7 +10,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
 import { distributedLock } from '../../helper/lock'
 import { triggerEventService } from '../trigger-events/trigger-event.service'
-import { triggerService } from '../trigger-service'
+import { triggerSourceService } from '../trigger-source/trigger-source-service'
 
 
 export const testTriggerService = (log: FastifyBaseLogger) => {
@@ -27,19 +27,19 @@ export const testTriggerService = (log: FastifyBaseLogger) => {
 
                 switch (testStrategy) {
                     case TriggerTestStrategy.SIMULATION: {
-                        const exists = await triggerService(log).existsByFlowId({
+                        const exists = await triggerSourceService(log).existsByFlowId({
                             flowId: executeParams.flowId,
                             simulate: true,
                         })
                         if (exists) {
-                            return await triggerService(log).disable({
+                            return await triggerSourceService(log).disable({
                                 flowId: executeParams.flowId,
                                 projectId: executeParams.projectId,
                                 simulate: true,
                                 ignoreError: true,
                             })
                         }
-                        await triggerService(log).enable({
+                        await triggerSourceService(log).enable({
                             flowVersion: populatedFlow.version,
                             projectId: executeParams.projectId,
                             simulate: true,
@@ -62,15 +62,15 @@ export const testTriggerService = (log: FastifyBaseLogger) => {
             const { flowId, projectId } = params
             const lock = await createLock({ flowId, log })
             try {
-                const trigger = await triggerService(log).get({
-                    id: flowId,
+                const trigger = await triggerSourceService(log).getByFlowId({
+                    flowId,
                     projectId,
                     simulate: true,
                 })
                 if (isNil(trigger)) {
                     return
                 }
-                return await triggerService(log).disable({
+                return await triggerSourceService(log).disable({
                     flowId,
                     simulate: true,
                     projectId,

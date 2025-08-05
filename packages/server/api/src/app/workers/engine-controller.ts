@@ -1,5 +1,5 @@
 import { apAxios, AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -11,6 +11,8 @@ import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
+import { triggerRunService } from '../trigger/trigger-run/trigger-run.service'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
 
@@ -150,6 +152,25 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         return {}
     })
 
+    app.post('/create-trigger-run', CreateTriggerRunParams, async (request) => {
+        const { status, payload, flowId, simulate } = request.body
+        const { projectId } = request.principal
+        const trigger = await triggerSourceService(request.log).getByFlowId({
+            flowId,
+            projectId,
+            simulate,
+        })
+        if (!isNil(trigger)) {
+            await triggerRunService(request.log).create({
+                status,
+                payload,
+                triggerSourceId: trigger.id,
+                projectId,
+            })
+        }
+
+    })
+
     app.get('/check-task-limit', CheckTaskLimitParams, async (request) => {
         const edition = system.getEdition()
         if (edition === ApEdition.COMMUNITY) {
@@ -263,7 +284,7 @@ async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePr
     }
 }
 
-async function markParentRunAsFailed({  
+async function markParentRunAsFailed({
     parentRunId,
     childRunId,
     projectId,
@@ -277,7 +298,7 @@ async function markParentRunAsFailed({
 
     const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
     assertNotNullOrUndefined(requestId, 'Parent run has no request id')
-    
+
     const callbackUrl = await domainHelper.getPublicApiUrl({ path: `/v1/flow-runs/${parentRunId}/requests/${requestId}`, platformId })
     const childRunUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/runs/${childRunId}`, platformId })
     await apAxios.post(callbackUrl, {
@@ -349,6 +370,16 @@ const GetLockedVersionRequest = {
         response: {
             [StatusCodes.OK]: PopulatedFlow,
         },
+    },
+}
+
+const CreateTriggerRunParams = {
+
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {
+        body: CreateTriggerRunRequestBody,
     },
 }
 

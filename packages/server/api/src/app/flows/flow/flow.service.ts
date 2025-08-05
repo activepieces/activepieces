@@ -33,7 +33,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
-import { triggerService } from '../../trigger/trigger-service'
+import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowSideEffects } from './flow-service-side-effects'
@@ -216,8 +216,9 @@ export const flowService = (log: FastifyBaseLogger) => ({
             entityManager,
         })
 
-        const trigger = await triggerService(log).getByFlowId({
+        const trigger = await triggerSourceService(log).getByFlowId({
             flowId: id,
+            projectId,
             simulate: true,
         })
 
@@ -412,7 +413,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
 
         if (flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)) {
-            await triggerService(log).disable({
+            await triggerSourceService(log).disable({
                 flowId: flowToUpdate.id,
                 projectId: flowToUpdate.projectId,
                 simulate: false,

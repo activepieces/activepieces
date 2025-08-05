@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
-import { Cursor } from '../../common/seek-page'
-import { FlowId } from '../flow'
+import { Cursor } from '../../../common/seek-page'
+import { FlowId } from '../../flow'
 
 export const ListTriggerEventsRequest = Type.Object({
     flowId: Type.String({}),

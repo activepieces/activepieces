@@ -1,16 +1,17 @@
-import { ActivepiecesError, apId, ErrorCode, FlowVersion, isNil, Trigger } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, FlowVersion, isNil, TriggerSource } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { repoFactory } from '../core/db/repo-factory'
-import { flowVersionService } from '../flows/flow-version/flow-version.service'
+import { IsNull } from 'typeorm'
+import { repoFactory } from '../../core/db/repo-factory'
+import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { flowTriggerSideEffect } from './flow-trigger-side-effect'
-import { TriggerEntity } from './trigger-entity'
+import { TriggerSourceEntity } from './trigger-source-entity'
 import { triggerUtils } from './trigger-utils'
 
-export const triggerRepo = repoFactory(TriggerEntity)
+export const triggerSourceRepo = repoFactory(TriggerSourceEntity)
 
-export const triggerService = (log: FastifyBaseLogger) => {
+export const triggerSourceService = (log: FastifyBaseLogger) => {
     return {
-        async enable(params: EnableTriggerParams): Promise<Trigger> {
+        async enable(params: EnableTriggerParams): Promise<TriggerSource> {
             const { flowVersion, projectId, simulate } = params
             const pieceTrigger = await triggerUtils(log).getPieceTriggerOrThrow({ flowVersion, projectId })
 
@@ -21,7 +22,7 @@ export const triggerService = (log: FastifyBaseLogger) => {
                 pieceTrigger,
                 simulate,
             })
-            const trigger: Omit<Trigger, 'created' | 'updated'> = {
+            const triggerSource: Omit<TriggerSource, 'created' | 'updated'> = {
                 id: apId(),
                 type: pieceTrigger.type,
                 projectId,
@@ -33,34 +34,37 @@ export const triggerService = (log: FastifyBaseLogger) => {
                 schedule: scheduleOptions,
                 simulate,
             }
-            return triggerRepo().save(trigger)
+            return triggerSourceRepo().save(triggerSource)
         },
-        async get(params: GetTriggerParams): Promise<Trigger | null> {
+        async get(params: GetTriggerParams): Promise<TriggerSource | null> {
             const { projectId, id } = params
-            return triggerRepo().findOne({
+            return triggerSourceRepo().findOne({
                 where: {
                     id,
                     projectId,
+                    deleted: IsNull(),
                 },
             })
         },
-        async getByFlowId(params: GetByFlowIdParams): Promise<Trigger | null> {
+        async getByFlowId(params: GetByFlowIdParams): Promise<TriggerSource | null> {
             const { flowId, simulate } = params
-            return triggerRepo().findOne({
+            return triggerSourceRepo().findOne({
                 where: {
                     flowId,
                     simulate,
+                    deleted: IsNull(),
                 },
             })
         },
-        async getOrThrow({ projectId, id }: GetTriggerParams): Promise<Trigger> {
-            const trigger = await triggerRepo().findOne({
+        async getOrThrow({ projectId, id }: GetTriggerParams): Promise<TriggerSource> {
+            const triggerSource = await triggerSourceRepo().findOne({
                 where: {
                     id,
                     projectId,
+                    deleted: IsNull(),
                 },
             })
-            if (isNil(trigger)) {
+            if (isNil(triggerSource)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
@@ -69,40 +73,43 @@ export const triggerService = (log: FastifyBaseLogger) => {
                     },
                 })
             }
-            return trigger
+            return triggerSource
         },
         async existsByFlowId(params: ExistsByFlowIdParams): Promise<boolean> {
             const { flowId, simulate } = params
-            return triggerRepo().existsBy({
+            return triggerSourceRepo().existsBy({
                 flowId,
                 simulate,
+                deleted: IsNull(),
             })
         },
         async disable(params: DisableTriggerParams): Promise<void> {
             const { projectId, flowId, simulate } = params
-            const trigger = await triggerRepo().findOneBy({
+            const triggerSource = await triggerSourceRepo().findOneBy({
                 flowId,
                 projectId,
                 simulate,
+                deleted: IsNull(),
             })
-            if (isNil(trigger)) {
+            if (isNil(triggerSource)) {
                 return
             }
-            const flowVersion = await flowVersionService(log).getOneOrThrow(trigger.flowVersionId)
+            const flowVersion = await flowVersionService(log).getOneOrThrow(triggerSource.flowVersionId)
             const pieceTrigger = await triggerUtils(log).getPieceTrigger({ flowVersion, projectId })
             if (!isNil(pieceTrigger)) {
                 await flowTriggerSideEffect(log).disable({
                     flowVersion,
                     projectId,
-                    pieceName: trigger.pieceName,
+                    pieceName: triggerSource.pieceName,
                     pieceTrigger,
                     simulate,
                     ignoreError: params.ignoreError,
                 })
             }
-            await triggerRepo().delete({
-                id: trigger.id,
+            await triggerSourceRepo().softDelete({
+                id: triggerSource.id,
                 projectId,
+                deleted: new Date().toISOString(),
             })
         },
     }
@@ -115,13 +122,13 @@ type ExistsByFlowIdParams = {
 
 type GetByFlowIdParams = {
     flowId: string
+    projectId: string
     simulate: boolean
 }
 
 type GetTriggerParams = {
     projectId: string
     id: string
-    simulate: boolean
 }
 
 type DisableTriggerParams = {

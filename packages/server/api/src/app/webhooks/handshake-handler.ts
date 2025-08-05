@@ -3,7 +3,7 @@ import { EngineResponseStatus, FlowId, FlowVersion, FlowVersionId, isNil, Projec
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { triggerUtils } from '../trigger/trigger-utils'
+import { triggerUtils } from '../trigger/trigger-source/trigger-utils'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 
 export const handshakeHandler = {

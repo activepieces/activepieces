@@ -2,7 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { Metadata } from '../common/metadata'
-import { Trigger } from '../trigger'
+import { TriggerSource } from '../trigger'
 import { FlowVersion } from './flow-version'
 
 export type FlowId = ApId
@@ -27,7 +27,7 @@ export const PopulatedFlow = Type.Composite([
     Flow,
     Type.Object({
         version: FlowVersion,
-        trigger: Type.Optional(Type.Pick(Trigger, ['schedule', 'handshakeConfiguration'])),
+        trigger: Type.Optional(Type.Pick(TriggerSource, ['schedule', 'handshakeConfiguration'])),
     }),
 ])
 

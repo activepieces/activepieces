@@ -27,7 +27,7 @@ export const ScheduleOptions = Type.Object({
 })
 export type ScheduleOptions = Static<typeof ScheduleOptions>
 
-export const Trigger = Type.Object({
+export const TriggerSource = Type.Object({
     ...BaseModelSchema,
     type: Type.Enum(TriggerStrategy),
     projectId: Type.String(),
@@ -37,7 +37,8 @@ export const Trigger = Type.Object({
     flowVersionId: Type.String(),
     pieceName: Type.String(),
     pieceVersion: Type.String(),
+    deleted: Nullable(Type.String()),
     simulate: Type.Boolean(),
 })
 
-export type Trigger = Static<typeof Trigger>
+export type TriggerSource = Static<typeof TriggerSource>

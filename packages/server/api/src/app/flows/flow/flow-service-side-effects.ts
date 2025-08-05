@@ -6,7 +6,7 @@ import {
     isNil,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { triggerService } from '../../trigger/trigger-service'
+import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { sampleDataService } from '../step-run/sample-data.service'
 
 export const flowSideEffects = (log: FastifyBaseLogger) => ({
@@ -17,7 +17,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
     }: PreUpdateStatusParams): Promise<void> {
         switch (newStatus) {
             case FlowStatus.ENABLED: {
-                await triggerService(log).enable({
+                await triggerSourceService(log).enable({
                     flowVersion: publishedFlowVersion,
                     projectId: flowToUpdate.projectId,
                     simulate: false,
@@ -25,7 +25,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                 break
             }
             case FlowStatus.DISABLED: {
-                await triggerService(log).disable({
+                await triggerSourceService(log).disable({
                     flowId: publishedFlowVersion.flowId,
                     projectId: flowToUpdate.projectId,
                     simulate: false,
@@ -43,7 +43,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         ) {
             return
         }
-        await triggerService(log).disable({
+        await triggerSourceService(log).disable({
             flowId: flowToDelete.id,
             projectId: flowToDelete.projectId,
             simulate: false,

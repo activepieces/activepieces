@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionRepo } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
-import { triggerService } from '../trigger/trigger-service'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
@@ -129,7 +129,7 @@ async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | '
         parentRunId,
         failParentOnFailure,
     })
-    await triggerService(logger).disable({ flowId: flow.id, projectId: flow.projectId, simulate: true, ignoreError: true })
+    await triggerSourceService(logger).disable({ flowId: flow.id, projectId: flow.projectId, simulate: true, ignoreError: true })
 }
 
 

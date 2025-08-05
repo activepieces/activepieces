@@ -31,7 +31,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { telemetry } from '../../helper/telemetry.utils'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
-import { triggerService } from '../../trigger/trigger-service'
+import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
@@ -262,7 +262,7 @@ async function addFlowToServer(
                 flowId: populatedFlow.id,
                 async: !returnsResponse,
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                saveSampleData: await triggerService(logger).existsByFlowId({
+                saveSampleData: await triggerSourceService(logger).existsByFlowId({
                     flowId,
                     simulate: true,
                 }),

@@ -11,7 +11,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { mcpService } from '../../mcp/mcp-service'
-import { triggerService } from '../../trigger/trigger-service'
+import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 
@@ -125,7 +125,7 @@ async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowV
 
 async function handleUpdateTriggerWebhookSimulation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest, log: FastifyBaseLogger): Promise<void> {
     if (operation.type === FlowOperationType.UPDATE_TRIGGER) {
-        await triggerService(log).disable({
+        await triggerSourceService(log).disable({
             flowId: flowVersion.flowId,
             projectId,
             simulate: true,

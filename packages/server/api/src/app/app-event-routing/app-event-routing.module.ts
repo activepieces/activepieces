@@ -22,7 +22,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowService } from '../flows/flow/flow.service'
-import { triggerService } from '../trigger/trigger-service'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun, webhookHandler } from '../webhooks/webhook-handler'
 import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
@@ -132,7 +132,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         payload,
                         flowId: listener.flowId,
                         runEnvironment: RunEnvironment.PRODUCTION,
-                        saveSampleData: await triggerService(request.log).existsByFlowId({
+                        saveSampleData: await triggerSourceService(request.log).existsByFlowId({
                             flowId: listener.flowId,
                             simulate: true,
                         },

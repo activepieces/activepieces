@@ -9,6 +9,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { flowWorkerCache } from '../api/flow-worker-cache'
 import { workerApiService } from '../api/server-api.service'
 import { webhookUtils } from '../utils/webhook-utils'
+import { triggerHooks } from '../utils/trigger-hook'
 
 export const webhookExecutor = (log: FastifyBaseLogger) => ({
     async consumeWebhook(
@@ -41,8 +42,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         if (onlySaveSampleData) {
             return
         }
-        const filteredPayloads = await webhookUtils(webhookLogger).extractPayload({
-            engineToken,
+        const filteredPayloads = await triggerHooks(log).extractPayloads(engineToken, {
             flowVersion: populatedFlowToRun.version,
             payload,
             projectId: populatedFlowToRun.projectId,
@@ -70,8 +70,7 @@ async function handleSampleData(
     log: FastifyBaseLogger,
     payload: EventPayload,
 ): Promise<void> {
-    const payloads = await webhookUtils(log).extractPayload({
-        engineToken,
+    const payloads = await triggerHooks(log).extractPayloads(engineToken, {
         flowVersion: latestFlowVersion.version,
         payload,
         projectId: latestFlowVersion.projectId,

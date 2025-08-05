@@ -13,7 +13,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { projectService } from '../project/project-service'
-import { triggerService } from '../trigger/trigger-service'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun } from './webhook-handler'
 import { webhookService } from './webhook.service'
 
@@ -29,7 +29,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 flowId: request.params.flowId,
                 async: false,
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                saveSampleData: await triggerService(request.log).existsByFlowId({
+                saveSampleData: await triggerSourceService(request.log).existsByFlowId({
                     flowId: request.params.flowId,
                     simulate: true,
                 },
@@ -53,7 +53,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 logger: request.log,
                 flowId: request.params.flowId,
                 async: true,
-                saveSampleData: await triggerService(request.log).existsByFlowId({
+                saveSampleData: await triggerSourceService(request.log).existsByFlowId({
                     flowId: request.params.flowId,
                     simulate: true,
                 },

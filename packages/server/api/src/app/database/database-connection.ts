@@ -58,8 +58,9 @@ import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
 import { TagEntity } from '../tags/tag-entity'
 import { TodoActivityEntity } from '../todos/activity/todos-activity.entity'
 import { TodoEntity } from '../todos/todo.entity'
-import { TriggerEntity } from '../trigger/trigger-entity'
 import { TriggerEventEntity } from '../trigger/trigger-events/trigger-event.entity'
+import { TriggerRunEntity } from '../trigger/trigger-run/trigger-run.entity'
+import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
@@ -108,7 +109,8 @@ function getEntities(): EntitySchema<unknown>[] {
         McpRunEntity,
         AIUsageEntity,
         AgentRunEntity,
-        TriggerEntity,
+        TriggerSourceEntity,
+        TriggerRunEntity,
     ]
 
     switch (edition) {
@@ -222,4 +224,4 @@ export function APArrayContains<T>(
 }
 
 // Uncomment the below line when running `nx db-migration server-api --name=<MIGRATION_NAME>` and recomment it after the migration is generated
-// export const exportedConnection = databaseConnection()
+export const exportedConnection = databaseConnection()

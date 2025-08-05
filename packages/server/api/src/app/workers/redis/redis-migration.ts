@@ -5,7 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { distributedLock } from '../../helper/lock'
-import { triggerRepo } from '../../trigger/trigger-service'
+import { triggerSourceRepo } from '../../trigger/trigger-source/trigger-source-service'
 import { bullMqGroups } from './redis-queue'
 
 export const redisMigrations = (log: FastifyBaseLogger) => ({
@@ -159,7 +159,7 @@ async function updateCronExpressionOfRedisToPostgresTable(job: Job, log: Fastify
         return
     }
     const flowVersion = await flowVersionService(log).getOneOrThrow(flow.publishedVersionId)
-    await triggerRepo().save({
+    await triggerSourceRepo().save({
         id: apId(),
         flowId: flow.id,
         flowVersionId: flow.publishedVersionId,

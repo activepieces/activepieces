@@ -7,7 +7,7 @@ import { nanoid } from 'nanoid'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
-import { triggerUtils } from '../../trigger/trigger-utils'
+import { triggerUtils } from '../../trigger/trigger-source/trigger-utils'
 import { QueueManager } from '../queue/queue-manager'
 import { ApMemoryQueue } from './ap-memory-queue'
 
