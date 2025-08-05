@@ -35,6 +35,7 @@ interface PieceIconCircleProps extends VariantProps<typeof pieceIconVariants> {
   displayName?: string;
   logoUrl?: string;
   showTooltip: boolean;
+  className?: string;
 }
 
 const PieceIcon = React.memo(
@@ -45,6 +46,7 @@ const PieceIcon = React.memo(
     size,
     circle = false,
     showTooltip,
+    className,
   }: PieceIconCircleProps) => {
     return (
       <Tooltip>
@@ -54,7 +56,10 @@ const PieceIcon = React.memo(
               <ImageWithFallback
                 src={logoUrl}
                 alt={displayName}
-                className="object-contain w-full h-full "
+                className={cn(
+                  'object-contain w-full h-full dark:bg-white/70',
+                  className,
+                )}
                 key={logoUrl}
                 fallback={<Skeleton className="rounded-full w-full h-full" />}
               />
