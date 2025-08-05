@@ -1994,6 +1994,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "nuvex-dev",
+      "name": "Nuvex",
+      "avatar_url": "https://avatars.githubusercontent.com/u/181783827?v=4",
+      "profile": "https://github.com/nuvex-dev",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
