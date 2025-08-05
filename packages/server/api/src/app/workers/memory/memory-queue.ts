@@ -1,6 +1,6 @@
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import { AgentJobData, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
-import { DelayPauseMetadata, FlowRun, FlowRunStatus, FlowTriggerType, isNil, PauseType, PopulatedFlow, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
+import { DelayPauseMetadata, FlowRun, FlowRunStatus, FlowTriggerType, isNil, PauseType, PopulatedFlow, ProgressUpdateType, RunEnvironment, TriggerSourceScheduleType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -83,6 +83,7 @@ export const memoryQueue = (log: FastifyBaseLogger): QueueManager => ({
 type FlowWithRenewWebhook = {
     flow: PopulatedFlow
     scheduleOptions: {
+        type: TriggerSourceScheduleType
         cronExpression: string
         timezone: string
     }
@@ -122,7 +123,7 @@ async function addDelayedRun(log: FastifyBaseLogger): Promise<void> {
 
 async function renewEnabledRepeating(log: FastifyBaseLogger): Promise<void> {
     const enabledFlows = await flowService(log).getAllEnabled()
-    const enabledRepeatingFlows = enabledFlows.filter((flow) => flow.trigger?.schedule)
+    const enabledRepeatingFlows = enabledFlows.filter((flow) => flow.triggerSource?.schedule)
     enabledRepeatingFlows.forEach((flow) => {
         memoryQueue(log).add({
             id: flow.id,
@@ -137,8 +138,9 @@ async function renewEnabledRepeating(log: FastifyBaseLogger): Promise<void> {
                 jobType: RepeatableJobType.EXECUTE_TRIGGER,
             },
             scheduleOptions: {
-                cronExpression: flow.trigger!.schedule!.cronExpression,
-                timezone: flow.trigger!.schedule!.timezone,
+                type: flow.triggerSource!.schedule!.type,
+                cronExpression: flow.triggerSource!.schedule!.cronExpression,
+                timezone: flow.triggerSource!.schedule!.timezone,
             },
         }).catch((e) => log.error(e, '[MemoryQueue#init] add'))
     })

@@ -216,7 +216,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             entityManager,
         })
 
-        const trigger = await triggerSourceService(log).getByFlowId({
+        const triggerSource = await triggerSourceService(log).getByFlowId({
             flowId: id,
             projectId,
             simulate: true,
@@ -225,7 +225,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         return {
             ...flow,
             version: flowVersion,
-            trigger: trigger ?? undefined,
+            triggerSource: triggerSource ?? undefined,
         }
     },
 

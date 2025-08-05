@@ -1,4 +1,6 @@
+import { FastifyBaseLogger } from 'fastify'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class AddTriggerSqlite1754421706602 implements MigrationInterface {
     name = 'AddTriggerSqlite1754421706602'
@@ -29,7 +31,7 @@ export class AddTriggerSqlite1754421706602 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_trigger_flow_id_simulate" ON "trigger_source" ("flowId", "simulate")
             WHERE deleted IS NULL
         `)
-        await insertScheduleFromFlowsMigration(queryRunner)
+        await insertScheduleFromFlowsMigration(queryRunner, system.globalLogger())
 
         await queryRunner.query(`
             CREATE TABLE "trigger_run" (
@@ -462,17 +464,24 @@ export class AddTriggerSqlite1754421706602 implements MigrationInterface {
 
 }
 
-export async function insertScheduleFromFlowsMigration(queryRunner: QueryRunner) {
-
-    const flowIds: { id: string }[]  = await queryRunner.query(`
-        SELECT "id" FROM "flow" where "status" = 'ENABLED'
+export async function insertScheduleFromFlowsMigration(queryRunner: QueryRunner, log: FastifyBaseLogger) {
+    const flowIds: { id: string }[] = await queryRunner.query(`
+        SELECT "id" FROM "flow" WHERE "status" = 'ENABLED'
     `)
+    log.info({
+        name: 'insertScheduleFromFlowsMigration',
+        message: 'fetched total flows',
+        total: flowIds.length,
+    })
     for (let i = 0; i < flowIds.length; i += 1000) {
         const flowIdsChunk: string[] = flowIds.slice(i, i + 1000).map((flowId) => flowId.id)
         const flowIdsChunkPromises = flowIdsChunk.map((flowId) => migrateSingleFlow(queryRunner, flowId))
         await Promise.all(flowIdsChunkPromises)
+        log.info({
+            name: 'insertScheduleFromFlowsMigration',
+            migrated: flowIdsChunk.length,
+        })
     }
-
 }
 
 async function migrateSingleFlow(queryRunner: QueryRunner, flowId: string) {
@@ -523,21 +532,14 @@ async function migrateSingleFlow(queryRunner: QueryRunner, flowId: string) {
     // Compose insert/upsert query
     let insertQuery: string
     let insertParams: unknown[]
+
     if (dbType === 'postgres') {
         insertQuery = `
             INSERT INTO "trigger_source" (
                 "id", "flowId", "flowVersionId", "handshakeConfiguration", "projectId", "type", "schedule", "pieceName", "pieceVersion", "simulate"
             )
             VALUES (${param(1)}, ${param(2)}, ${param(3)}, ${param(4)}, ${param(5)}, ${param(6)}, ${param(7)}, ${param(8)}, ${param(9)}, ${param(10)})
-            ON CONFLICT("flowId", "simulate") DO UPDATE SET
-                "id" = excluded."id",
-                "flowVersionId" = excluded."flowVersionId",
-                "handshakeConfiguration" = excluded."handshakeConfiguration",
-                "projectId" = excluded."projectId",
-                "type" = excluded."type",
-                "schedule" = excluded."schedule",
-                "pieceName" = excluded."pieceName",
-                "pieceVersion" = excluded."pieceVersion"
+            ON CONFLICT DO NOTHING
         `
         insertParams = [
             flowRow.id,
@@ -559,15 +561,7 @@ async function migrateSingleFlow(queryRunner: QueryRunner, flowId: string) {
                 "id", "flowId", "flowVersionId", "handshakeConfiguration", "projectId", "type", "schedule", "pieceName", "pieceVersion", "simulate"
             )
             VALUES (${param(1)}, ${param(2)}, ${param(3)}, ${param(4)}, ${param(5)}, ${param(6)}, ${param(7)}, ${param(8)}, ${param(9)}, ${param(10)})
-            ON CONFLICT("flowId", "simulate") DO UPDATE SET
-                "id" = excluded."id",
-                "flowVersionId" = excluded."flowVersionId",
-                "handshakeConfiguration" = excluded."handshakeConfiguration",
-                "projectId" = excluded."projectId",
-                "type" = excluded."type",
-                "schedule" = excluded."schedule",
-                "pieceName" = excluded."pieceName",
-                "pieceVersion" = excluded."pieceVersion"
+            ON CONFLICT DO NOTHING
         `
         insertParams = [
             flowRow.id,

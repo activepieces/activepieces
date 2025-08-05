@@ -36,7 +36,7 @@ export const flowsUtils = {
     const trigger = flow.version.trigger;
     switch (trigger?.type) {
       case FlowTriggerType.PIECE: {
-        const cronExpression = flow.trigger?.schedule?.cronExpression;
+        const cronExpression = flow.triggerSource?.schedule?.cronExpression;
         return cronExpression
           ? `${t('Run')} ${cronstrue
               .toString(cronExpression, { locale: 'en' })
@@ -56,7 +56,7 @@ export const flowsUtils = {
     const trigger = flow.version.trigger;
     switch (trigger?.type) {
       case FlowTriggerType.PIECE: {
-        const cronExpression = flow.trigger?.schedule?.cronExpression;
+        const cronExpression = flow.triggerSource?.schedule?.cronExpression;
         if (cronExpression) {
           return <TimerReset className="h-4 w-4 text-foreground" />;
         } else {

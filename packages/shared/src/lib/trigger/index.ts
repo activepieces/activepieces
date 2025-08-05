@@ -14,7 +14,11 @@ export enum WebhookHandshakeStrategy {
     QUERY_PRESENT = 'QUERY_PRESENT',
     BODY_PARAM_PRESENT = 'BODY_PARAM_PRESENT',
 }
-  
+
+export enum TriggerSourceScheduleType {
+    CRON_EXPRESSION = 'CRON_EXPRESSION',
+}
+
 export const WebhookHandshakeConfiguration = Type.Object({
     strategy: Type.Enum(WebhookHandshakeStrategy),
     paramName: Type.Optional(Type.String()),
@@ -22,6 +26,7 @@ export const WebhookHandshakeConfiguration = Type.Object({
 export type WebhookHandshakeConfiguration = Static<typeof WebhookHandshakeConfiguration>
   
 export const ScheduleOptions = Type.Object({
+    type: Type.Enum(TriggerSourceScheduleType),
     cronExpression: Type.String(),
     timezone: Type.String(),
 })

@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { insertScheduleFromFlowsMigration } from '../sqlite/1754421706602-AddTriggerSqlite'
 
 export class AddTrigger1754426627795 implements MigrationInterface {
@@ -31,7 +32,7 @@ export class AddTrigger1754426627795 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_trigger_flow_id_simulate" ON "trigger_source" ("flowId", "simulate")
             WHERE deleted IS NULL
         `)
-        await insertScheduleFromFlowsMigration(queryRunner)
+        await insertScheduleFromFlowsMigration(queryRunner, system.globalLogger())
         await queryRunner.query(`
             CREATE TABLE "trigger_run" (
                 "id" character varying(21) NOT NULL,

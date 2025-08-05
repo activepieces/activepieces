@@ -27,7 +27,7 @@ export const PopulatedFlow = Type.Composite([
     Flow,
     Type.Object({
         version: FlowVersion,
-        trigger: Type.Optional(Type.Pick(TriggerSource, ['schedule', 'handshakeConfiguration'])),
+        triggerSource: Type.Optional(Type.Pick(TriggerSource, ['schedule', 'handshakeConfiguration'])),
     }),
 ])
 

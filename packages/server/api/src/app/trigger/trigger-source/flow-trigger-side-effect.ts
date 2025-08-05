@@ -18,6 +18,7 @@ import {
     RunEnvironment,
     ScheduleOptions,
     TriggerHookType,
+    TriggerSourceScheduleType,
     WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -139,6 +140,7 @@ async function handleWebhookTrigger({ flowVersion, projectId, pieceTrigger, log 
                     jobType: RepeatableJobType.RENEW_WEBHOOK,
                 },
                 scheduleOptions: {
+                    type: TriggerSourceScheduleType.CRON_EXPRESSION,
                     cronExpression: renewConfiguration.cronExpression,
                     timezone: 'UTC',
                 },
@@ -161,6 +163,7 @@ async function handlePollingTrigger({ engineHelperResponse, flowVersion, project
         engineHelperResponse.result.scheduleOptions = {
             cronExpression: pollingFrequencyCronExpression,
             timezone: 'UTC',
+            type: TriggerSourceScheduleType.CRON_EXPRESSION,
         }
     }
     await jobQueue(log).add({
