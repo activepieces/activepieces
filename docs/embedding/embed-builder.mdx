@@ -45,6 +45,12 @@ activepieces.configure({
       handler: ({ route }) => {
           // The iframe route has changed, make sure you check the navigation section.
         }
+    },
+    flowProgress: {
+      handler: ({ flowId }) => {
+        // Handle flow progress updates
+        console.log('Flow progress update for flow:', flowId);
+      }
     }
   },
 });
@@ -83,6 +89,7 @@ Please check the [navigation](./navigation) section, as it's very important to u
 | embedding.hideDuplicateFlow | ❌ |  boolean | Hides the option to duplicate a flow  (added in [0.5.0](./sdk-changelog#03%2F07%2F2025-0-5-0))|
 | embedding.locale | ❌ |  'en' \| 'nl' \| 'it' \| 'de' \| 'fr' \| 'bg' \| 'uk' \| 'hu' \| 'es' \| 'ja' \| 'id' \| 'vi' \| 'zh' \| 'pt'  | it takes [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) locale codes (added in [0.5.0](./sdk-changelog#03%2F07%2F2025-0-5-0))|
 | navigation.handler  | ❌ | `({route:string}) => void`  | This callback will be triggered each time a route in Activepieces changes, you can read more about it [here](/embedding/navigation) |
+| embedding.flowProgress.handler | ❌ | `({flowId:string}) => void` | This callback will be triggered when flow progress updates occur, you can read more about it [here](/embedding/flow-progress) |
 
 <Tip>
  For the font to be loaded, you need to set both the `fontUrl` and `fontFamily` properties.
