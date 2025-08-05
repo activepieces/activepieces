@@ -21,6 +21,9 @@ import { createOrganizationAction } from './lib/actions/create-organization';
 import { updateOrganizationAction } from './lib/actions/update-organization';
 import { createUserAction } from './lib/actions/create-user';
 import { deleteUserAction } from './lib/actions/delete-user';
+import { findOrganizationAction } from './lib/actions/find-organization';
+import { findTicketsAction } from './lib/actions/find-tickets';
+import { findUserAction } from './lib/actions/find-user';
 
 const markdownProperty = `
 **Organization**: The organization name can be found in the URL (e.g https://ORGANIZATION_NAME.zendesk.com).
@@ -70,6 +73,9 @@ export const zendesk = createPiece({
     updateOrganizationAction,
     createUserAction,
     deleteUserAction,
+    findOrganizationAction,
+    findTicketsAction,
+    findUserAction,
     createCustomApiCallAction({
       baseUrl: (auth) =>
         `https://${
