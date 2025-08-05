@@ -1,14 +1,13 @@
 import { Page, expect } from '@playwright/test';
 import { BasePage } from './base';
 import { configUtils } from '../helper/config';
+import { ADD_STEP_BUTTON_TEST_ID, PIECE_SELECTOR_SEARCH_INPUT_TEST_ID, TRIGGER_NODE_TEST_ID } from '@activepieces/shared';
 
 export class BuilderPage extends BasePage {
   url = `${configUtils.getConfig().instanceUrl}/builder`;
-
   getters = {
-    searchPlaceholder: (page: Page) => page.getByRole('textbox', { name: 'Search' }),
-    triggerNode: (page: Page) => page.locator('div[data-testid="rf__node-trigger"]').filter({ hasText: 'Select Trigger' }),
-    addButton: (page: Page) => page.locator('div.bg-light-blue'),
+    pieceSelectorSearchInput: (page: Page) => page.getByTestId(PIECE_SELECTOR_SEARCH_INPUT_TEST_ID),
+    triggerNode: (page: Page) => page.getByTestId(TRIGGER_NODE_TEST_ID),
     testFlowButton: (page: Page) => page.getByRole('button', { name: 'Test Flow' }),
     testStepButton: (page: Page) => page.getByRole('button', { name: 'Test Step Ctrl + G' }),
     testTriggerButton: (page: Page) => page.getByRole('button', { name: 'Test Trigger Ctrl + G' }),
@@ -22,21 +21,25 @@ export class BuilderPage extends BasePage {
     webhookInput: (page: Page) => page.locator('input.grow.bg-background'),
     publishButton: (page: Page) => page.getByRole('button', { name: 'Publish' }),
     codeEditor: (page: Page) => page.locator('div.cm-activeLine.cm-line'),
+    lastAddStepButton: (page: Page) => page.getByTestId(ADD_STEP_BUTTON_TEST_ID).last(),
   };
 
   actions = {
     selectInitialTrigger: async (page: Page, params: { piece: string; trigger: string }) => {
-      await this.getters.triggerNode(page).click();
-      await this.getters.searchPlaceholder(page).fill(params.trigger);
+      await this.getters.triggerNode(page).waitFor({ state: 'visible' });
+      await this.getters.triggerNode(page).click({force: true});
+      await this.getters.pieceSelectorSearchInput(page).fill(params.trigger);
+      await page.waitForTimeout(2000);
       await page.getByText(params.trigger).click();
       await page.waitForTimeout(2000);
     },
 
     addAction: async (page: Page, params: { piece: string; action: string }) => {
-      await this.getters.addButton(page).click();
-      await this.getters.searchPlaceholder(page).fill(params.piece);
-      await page.getByText(params.piece, { exact: true }).click();
-      await page.getByText(params.action).click();
+      await this.getters.lastAddStepButton(page).click({force: true});
+      await this.getters.pieceSelectorSearchInput(page).fill(params.piece);
+      await page.waitForTimeout(2000);
+      await page.getByText(params.action).last().click();
+      await page.waitForTimeout(2000);
     },
 
     testFlowAndWaitForSuccess: async (page: Page) => {
@@ -103,7 +106,7 @@ export class BuilderPage extends BasePage {
       await this.getters.codeEditor(page).fill(code);
     },
 
-    waitFor: async (page: Page) => {
+    waitUntilPageIsLoaded: async (page: Page) => {
       await page.waitForURL('**/flows/**');
       await page.waitForSelector('.react-flow__nodes', { state: 'visible' });
       await page.waitForSelector('.react-flow__node', { state: 'visible' });

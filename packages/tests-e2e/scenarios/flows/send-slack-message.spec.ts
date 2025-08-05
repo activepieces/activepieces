@@ -39,7 +39,7 @@ test.describe('Slack Integration', () => {
     
     await flowsPage.actions.newFlowFromScratch(page);
 
-    await builderPage.actions.waitFor(page);
+    await builderPage.actions.waitUntilPageIsLoaded(page);
 
     await builderPage.actions.selectInitialTrigger(page, {
       piece: 'Schedule',

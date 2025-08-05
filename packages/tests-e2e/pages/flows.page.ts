@@ -14,7 +14,7 @@ export class FlowsPage extends BasePage {
     confirmDeleteInput: (page: Page) => page.getByPlaceholder('DELETE'),
     confirmButton: (page: Page) => page.getByRole('button', { name: 'Confirm' }),
     sidebarFlowsLink: (page: Page) => page.getByRole('link', { name: 'Flows' }),
-    mutedForegroundSpans: (page: Page) => page.locator('span.text-muted-foreground'),
+    flowRowsInTable: (page: Page) => page.locator('span.text-muted-foreground'),
     deleteButton: (page: Page) => page.locator('td:nth-child(7)').first(),
     removeButton: (page: Page) => page.getByRole('button', { name: 'Remove' }),
   };
@@ -33,7 +33,7 @@ export class FlowsPage extends BasePage {
     },
 
     cleanupExistingFlows: async (page: Page) => {
-      while ((await this.getters.mutedForegroundSpans(page).count()) > 1) {
+      while ((await this.getters.flowRowsInTable(page).count()) > 1) {
         if (!(await this.getters.deleteButton(page).count())) break;
         await this.getters.deleteButton(page).click();
         await this.getters.deleteMenuItem(page).click();

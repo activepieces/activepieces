@@ -5,6 +5,7 @@ import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
 } from '@/features/pieces/lib/piece-selector-tabs-provider';
+import { PIECE_SELECTOR_SEARCH_INPUT_TEST_ID } from '@activepieces/shared';
 
 import { SearchInput } from '../../../components/ui/search-input';
 
@@ -42,6 +43,7 @@ const PiecesSearchInput = ({
         </Button>
       )}
       <SearchInput
+        data-testid={PIECE_SELECTOR_SEARCH_INPUT_TEST_ID}
         placeholder="Search"
         value={searchQuery}
         ref={searchInputRef}

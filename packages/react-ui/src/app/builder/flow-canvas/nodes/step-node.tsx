@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import {
   FlowOperationType,
   Step,
+  TRIGGER_NODE_TEST_ID,
   TriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
@@ -100,8 +101,11 @@ const ApStepCanvasNode = React.memo(
                 />
 
                 <div
+                  data-testid={
+                    step.name === 'trigger' ? TRIGGER_NODE_TEST_ID : ''
+                  }
                   className={cn(
-                    'items-center relative transition-all  group-hover:-top-[2px]  cursor-pointer left-0  top-0 justify-center h-full w-full gap-3',
+                    'items-center relative transition-all group-hover:-top-[2px] cursor-pointer left-0  top-0 justify-center h-full w-full gap-3',
                     {},
                   )}
                   onClick={(e) => {
@@ -129,7 +133,10 @@ const ApStepCanvasNode = React.memo(
                     }}
                   >
                     <div className="relative">
-                      <StepEllipsesButton stepName={step.name} />
+                      <StepEllipsesButton
+                        stepName={step.name}
+                        type={step.type}
+                      />
                       <StepNodeImage
                         isRoundedStep={isRoundedStep}
                         isSkipped={isSkipped}
