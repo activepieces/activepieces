@@ -1,5 +1,5 @@
 
-import { FlowAction, FlowActionType, BranchExecutionType, RouterAction, RouterExecutionType } from '../../actions/action'
+import { BranchExecutionType, FlowAction, FlowActionType, RouterAction, RouterExecutionType } from '../../actions/action'
 import { FlowVersion } from '../../flow-version'
 import { flowStructureUtil } from '../../util/flow-structure-util'
 import { Migration } from '.'

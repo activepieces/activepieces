@@ -168,9 +168,7 @@ export const flowsTableColumns = ({
           className="flex items-center space-x-2"
           onClick={(e) => e.stopPropagation()}
         >
-          <FlowStatusToggle
-            flow={row.original}
-          ></FlowStatusToggle>
+          <FlowStatusToggle flow={row.original}></FlowStatusToggle>
         </div>
       );
     },

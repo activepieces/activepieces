@@ -1,4 +1,3 @@
-import { isNil } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class SeperateTriggerFromFlowsSqlite1754358230010 implements MigrationInterface {
@@ -315,7 +314,7 @@ async function migrateSingleFlow(queryRunner: QueryRunner, flowId: string) {
 
     // Use parameterized queries for both sqlite and postgres
     // For sqlite, use '?', for postgres, use '$1', '$2', etc.
-    const param = (i: number) => dbType === 'postgres' ? `$${i}` : `?`
+    const param = (i: number) => dbType === 'postgres' ? `$${i}` : '?'
 
     // Fetch flow
     const flowQuery = `SELECT * FROM "flow" WHERE "id" = ${param(1)}`
@@ -338,10 +337,12 @@ async function migrateSingleFlow(queryRunner: QueryRunner, flowId: string) {
     if (typeof flowVersionRow.trigger === 'string') {
         try {
             trigger = JSON.parse(flowVersionRow.trigger)
-        } catch (e) {
+        }
+        catch (e) {
             throw new Error(`Failed to parse trigger JSON for flowVersion ${flowVersionRow.id}`)
         }
-    } else {
+    }
+    else {
         trigger = flowVersionRow.trigger
     }
 
@@ -354,7 +355,7 @@ async function migrateSingleFlow(queryRunner: QueryRunner, flowId: string) {
 
     // Compose insert/upsert query
     let insertQuery: string
-    let insertParams: any[]
+    let insertParams: unknown[]
     if (dbType === 'postgres') {
         insertQuery = `
             INSERT INTO "trigger" (
@@ -383,7 +384,8 @@ async function migrateSingleFlow(queryRunner: QueryRunner, flowId: string) {
             pieceVersion,
             false,
         ]
-    } else {
+    }
+    else {
         // sqlite
         insertQuery = `
             INSERT INTO "trigger" (

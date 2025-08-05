@@ -1,6 +1,4 @@
 import {
-    FlowAction,
-    FlowActionType,
     BeginExecuteFlowOperation,
     EngineOperation,
     EngineOperationType,
@@ -16,6 +14,8 @@ import {
     ExecuteTriggerResponse,
     ExecuteValidateAuthOperation,
     ExecutionType,
+    FlowAction,
+    FlowActionType,
     FlowRunResponse,
     flowStructureUtil,
     GenericStepOutput,

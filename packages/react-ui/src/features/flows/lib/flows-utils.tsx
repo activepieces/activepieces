@@ -4,10 +4,7 @@ import JSZip from 'jszip';
 import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
 
 import { downloadFile } from '@/lib/utils';
-import {
-  PopulatedFlow,
-  FlowTriggerType,
-} from '@activepieces/shared';
+import { PopulatedFlow, FlowTriggerType } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
 
@@ -42,8 +39,8 @@ export const flowsUtils = {
         const cronExpression = flow.trigger?.schedule?.cronExpression;
         return cronExpression
           ? `${t('Run')} ${cronstrue
-            .toString(cronExpression, { locale: 'en' })
-            .toLocaleLowerCase()}`
+              .toString(cronExpression, { locale: 'en' })
+              .toLocaleLowerCase()}`
           : t('Real time flow');
       }
       case FlowTriggerType.EMPTY:

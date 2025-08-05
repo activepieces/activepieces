@@ -5,8 +5,8 @@ import {
 import {
     EventPayload,
     FlowId,
-    FlowVersion,
     FlowTriggerType,
+    FlowVersion,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'

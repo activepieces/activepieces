@@ -1,6 +1,7 @@
 import {
     DiscriminatedUnion,
     ExecutionType,
+    FlowTriggerType,
     FlowVersion,
     PackageType,
     PiecePackage,
@@ -9,7 +10,6 @@ import {
     RunEnvironment,
     TriggerHookType,
     TriggerPayload,
-    FlowTriggerType,
 } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 

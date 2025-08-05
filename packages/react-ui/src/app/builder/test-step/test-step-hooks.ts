@@ -107,7 +107,7 @@ export const testStepHooks = {
   }) => {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
-    const flowVersionId = builderState.flowVersionId
+    const flowVersionId = builderState.flowVersionId;
     const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
       form.getValues().name,
     );
@@ -118,7 +118,11 @@ export const testStepHooks = {
         const ids = (
           await triggerEventsApi.list({ flowId, cursor: undefined, limit: 5 })
         ).data.map((triggerEvent) => triggerEvent.id);
-        await triggerEventsApi.test({ flowId, flowVersionId, testStrategy: TriggerTestStrategy.SIMULATION });
+        await triggerEventsApi.test({
+          flowId,
+          flowVersionId,
+          testStrategy: TriggerTestStrategy.SIMULATION,
+        });
         let attempt = 0;
         while (attempt < 1000) {
           if (abortSignal.aborted) {
@@ -167,12 +171,10 @@ export const testStepHooks = {
 
     return useMutation({
       mutationFn: async (mockData: unknown) => {
-        const data = await triggerEventsApi.saveTriggerMockdata(
-          {
-            flowId,
-            mockData,
-          },
-        );
+        const data = await triggerEventsApi.saveTriggerMockdata({
+          flowId,
+          mockData,
+        });
         await updateSampleData({
           response: { success: true, output: data.payload },
         });
@@ -190,7 +192,7 @@ export const testStepHooks = {
   }) => {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
-    const flowVersionId = builderState.flowVersionId
+    const flowVersionId = builderState.flowVersionId;
     const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
       form.getValues().name,
     );
@@ -198,7 +200,11 @@ export const testStepHooks = {
     return useMutation<TriggerEventWithPayload[], Error, void>({
       mutationFn: async () => {
         setErrorMessage(undefined);
-        const { data } = await triggerEventsApi.test({ flowId, flowVersionId, testStrategy: TriggerTestStrategy.TEST_FUNCTION });
+        const { data } = await triggerEventsApi.test({
+          flowId,
+          flowVersionId,
+          testStrategy: TriggerTestStrategy.TEST_FUNCTION,
+        });
         if (data.length > 0) {
           await updateSampleData({
             response: { success: true, output: data[0].payload },

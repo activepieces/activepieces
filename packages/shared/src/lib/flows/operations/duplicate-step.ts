@@ -1,5 +1,5 @@
 import { isNil } from '../../common'
-import { FlowAction, BranchExecutionType, RouterAction } from '../actions/action'
+import { BranchExecutionType, FlowAction, RouterAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { addActionUtils } from './add-action-util'

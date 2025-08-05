@@ -1,4 +1,4 @@
-import { FlowActionType, BranchExecutionType } from '../actions/action'
+import { BranchExecutionType, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { MoveBranchRequest } from '.'
