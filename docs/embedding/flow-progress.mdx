@@ -1,0 +1,105 @@
+---
+title: "Flow Progress Updates"
+description: "Listen to flow progress updates in your embedded Activepieces instance"
+icon: "activity"
+---
+
+The flow progress hook allows you to receive real-time updates when flow progress changes occur in your embedded Activepieces instance. This is useful for updating your parent UI when flows are modified, executed, or their status changes.
+
+## Configuration
+
+You can configure the flow progress handler when setting up the embed SDK:
+
+```js
+const instanceUrl = 'YOUR_INSTANCE_URL';
+const jwtToken = 'YOUR_GENERATED_JWT_TOKEN';
+const containerId = 'YOUR_CONTAINER_ID';
+
+activepieces.configure({
+  instanceUrl,
+  jwtToken,
+  embedding: {
+    containerId,
+    flowProgress: {
+      handler: ({ flowId }) => {
+        // Handle flow progress updates
+        console.log('Flow progress update for flow:', flowId);
+        
+        // You can use this to trigger UI updates in your parent application
+        // For example, refresh flow data, update status indicators, etc.
+      }
+    }
+  }
+});
+```
+
+## Event Data
+
+The flow progress handler receives an object with the following properties:
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `flowId` | `string` | The ID of the flow that was updated |
+
+## Use Cases
+
+Common use cases for the flow progress hook include:
+
+- **Real-time UI updates**: Update your parent application's UI when flows are modified
+- **Status synchronization**: Keep your application's flow status in sync with Activepieces
+- **Data refresh**: Trigger data refetching when flows are updated
+- **Notifications**: Show notifications to users when flow changes occur
+
+## Example Implementation
+
+Here's an example of how you might use the flow progress hook to update your application:
+
+```js
+activepieces.configure({
+  instanceUrl,
+  jwtToken,
+  embedding: {
+    containerId,
+    flowProgress: {
+      handler: ({ flowId }) => {
+        // Update your application's flow data
+        refreshFlowData(flowId);
+        
+        // Show a notification to the user
+        showNotification(`Flow ${flowId} has been updated`);
+        
+        // Update any status indicators
+        updateFlowStatus(flowId);
+      }
+    }
+  }
+});
+```
+
+## Integration with Navigation
+
+The flow progress hook works alongside the navigation handler to provide comprehensive flow management:
+
+```js
+activepieces.configure({
+  instanceUrl,
+  jwtToken,
+  embedding: {
+    containerId,
+    navigation: {
+      handler: ({ route }) => {
+        // Handle route changes
+        updateBrowserHistory(route);
+      }
+    },
+    flowProgress: {
+      handler: ({ flowId }) => {
+        // Handle flow progress updates
+        refreshFlowData(flowId);
+      }
+    }
+  }
+});
+```
+
+This combination allows you to maintain a synchronized state between your parent application and the embedded Activepieces instance. 
