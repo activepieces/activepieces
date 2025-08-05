@@ -2,95 +2,24 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { paperformAuth } from '../common/auth';
 import { paperformCommon } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { PaperformProduct } from '../common/types';
+import { PaperformCreateProductResponse } from '../common/types';
+import { paperformCommonProps } from '../common/props';
+import { isNil } from '@activepieces/shared';
 
 export const updateFormProduct = createAction({
   auth: paperformAuth,
   name: 'updateFormProduct',
   displayName: 'Update Form Product',
-  description: 'Update existing product\'s price, description, or availability.',
+  description: 'Updates an existing form product.',
   props: {
-    formId: Property.Dropdown({
-      displayName: 'Form',
-      description: 'Select the form to update a product for',
-      required: true,
-      refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please connect your account first',
-            options: [],
-          };
-        }
-        
-        try {
-          const forms = await paperformCommon.getForms({
-            auth: auth as string,
-            limit: 100,
-          });
-          
-          return {
-            disabled: false,
-            options: forms.results.forms.map((form) => ({
-              label: form.title,
-              value: form.id,
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Error loading forms',
-            options: [],
-          };
-        }
-      },
-    }),
-    productSku: Property.Dropdown({
-      displayName: 'Product',
-      description: 'Select the product to update',
-      required: true,
-      refreshers: ['auth', 'formId'],
-      options: async ({ auth, formId }) => {
-        if (!auth || !formId) {
-          return {
-            disabled: true,
-            placeholder: 'Please select a form first',
-            options: [],
-          };
-        }
-        
-        try {
-          const products = await paperformCommon.getProducts({
-            formSlugOrId: formId as string,
-            auth: auth as string,
-            limit: 100,
-          });
-          
-          return {
-            disabled: false,
-            options: products.results.products.map((product: PaperformProduct) => ({
-              label: `${product.name} (${product.SKU}) - $${product.price}`,
-              value: product.SKU,
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Error loading products',
-            options: [],
-          };
-        }
-      },
-    }),
+    formId: paperformCommonProps.formId,
+    productSku: paperformCommonProps.productSku,
     name: Property.ShortText({
       displayName: 'Product Name',
-      description: 'Product name',
       required: false,
     }),
     price: Property.Number({
       displayName: 'Product Price',
-      description: 'Product price',
       required: false,
     }),
     quantity: Property.Number({
@@ -100,17 +29,14 @@ export const updateFormProduct = createAction({
     }),
     minimum: Property.Number({
       displayName: 'Minimum Quantity',
-      description: 'Minimum number of products to be selected',
       required: false,
     }),
     maximum: Property.Number({
       displayName: 'Maximum Quantity',
-      description: 'Maximum number of products to be selected',
       required: false,
     }),
     discountable: Property.Checkbox({
-      displayName: 'Discountable',
-      description: 'Whether the product can be discounted',
+      displayName: 'Discountable ?',
       required: false,
     }),
     imageUrl: Property.ShortText({
@@ -120,12 +46,12 @@ export const updateFormProduct = createAction({
     }),
     imageWidth: Property.Number({
       displayName: 'Image Width',
-      description: 'Width of the product image in pixels',
+      description: 'Width of the product image in pixels.',
       required: false,
     }),
     imageHeight: Property.Number({
       displayName: 'Image Height',
-      description: 'Height of the product image in pixels (optional)',
+      description: 'Height of the product image in pixels (optional).',
       required: false,
     }),
   },
@@ -163,6 +89,12 @@ export const updateFormProduct = createAction({
     if (minimum !== undefined && maximum !== undefined && minimum > maximum) {
       throw new Error('Minimum quantity cannot be greater than maximum quantity');
     }
+
+    if(imageUrl && isNil(imageWidth))
+        {
+          throw new Error('Provide Image Width.');
+    
+        }
     
     const requestBody: any = {};
     
@@ -205,18 +137,14 @@ export const updateFormProduct = createAction({
     }
     
     try {
-      const response = await paperformCommon.apiCall({
+      const response = await paperformCommon.apiCall<PaperformCreateProductResponse>({
         method: HttpMethod.PUT,
         url: `/forms/${formId}/products/${productSku}`,
         body: requestBody,
         auth: auth as string,
       });
       
-      return {
-        success: true,
-        message: `Product "${productSku}" has been successfully updated.`,
-        product: response,
-      };
+      return response.results.product;
     } catch (error: any) {
       throw new Error(`Failed to update product: ${error.message}`);
     }

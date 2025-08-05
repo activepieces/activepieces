@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PaperformFormsResponse, PaperformWebhookResponse, PaperformSubmissionsResponse, PaperformPartialSubmissionsResponse, PaperformCouponsResponse, PaperformFieldsResponse, PaperformProductsResponse, PaperformSpacesResponse } from './types';
+import { PaperformFormsResponse, PaperformWebhookResponse, PaperformSubmissionsResponse, PaperformPartialSubmissionsResponse, PaperformCouponsResponse, PaperformFieldsResponse, PaperformProductsResponse, PaperformSpacesResponse, PaperformField, PaperformSubmission } from './types';
 
 export const paperformCommon = {
   baseUrl: 'https://api.paperform.co/v1',
@@ -244,9 +244,23 @@ export const paperformCommon = {
     submissionId: string;
     auth: string | { apiKey: string };
   }) {
-    return this.apiCall({
+    return this.apiCall<{results:{submission:PaperformSubmission}}>({
       method: HttpMethod.GET,
       url: `/submissions/${submissionId}`,
+      auth,
+    });
+  },
+
+  async getPartialSubmission({
+    submissionId,
+    auth,
+  }: {
+    submissionId: string;
+    auth: string | { apiKey: string };
+  }) {
+    return this.apiCall<{results:{'partial-submission':PaperformSubmission}}>({
+      method: HttpMethod.GET,
+      url: `/partial-submissions/${submissionId}`,
       auth,
     });
   },
@@ -286,4 +300,24 @@ export const paperformCommon = {
         auth,
       });
   },
+
+  transformSubmissionData(
+    formFields:PaperformField[],
+    submissionFields:Record<string,any>
+  ):Record<string,any>{
+    const fieldMap: Record<string, string> = formFields.reduce((acc, field) => {
+		acc[field.key] = field.title;
+		return acc;
+	}, {} as Record<string, string>);
+
+	const transformedFields: Record<string, any> = {};
+
+	for (const [key, value] of Object.entries(submissionFields)) {
+		const label = fieldMap[key] ?? key;
+		transformedFields[label] = value;
+	}
+
+	return transformedFields;
+  }
 };
+

@@ -18,10 +18,14 @@ import { updateSpace } from './lib/actions/update-space';
 import { findFormProduct } from './lib/actions/find-form-product';
 import { findForm } from './lib/actions/find-form';
 import { findSpace } from './lib/actions/find-space';
+import { createCustomApiCallAction } from "@activepieces/pieces-common";
+import { paperformCommon } from "./lib/common/client";
+import { PieceCategory } from "@activepieces/shared";
 
 export const paperform = createPiece({
   displayName: "Paperform",
   auth: paperformAuth,
+  categories:[PieceCategory.FORMS_AND_SURVEYS],
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/paperform.png",
   authors: ['nuvex-dev'],
@@ -39,6 +43,15 @@ export const paperform = createPiece({
     findFormProduct,
     findForm,
     findSpace,
+    createCustomApiCallAction({
+      auth:paperformAuth,
+      baseUrl:()=>paperformCommon.baseUrl,
+      authMapping:async (auth)=>{
+        return{
+          Authorization:`Bearer ${auth}`
+        }
+      }
+    })
   ],
   triggers: [newFormSubmission, newPartialFormSubmission],
 });

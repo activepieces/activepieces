@@ -16,7 +16,6 @@ export const paperformAuth = PieceAuth.SecretText({
       
       return {
         valid: true,
-        message: 'API key validated successfully. Connected to Paperform.'
       };
     } catch (error: any) {
       if (error.message.includes('401') || error.message.includes('403')) {

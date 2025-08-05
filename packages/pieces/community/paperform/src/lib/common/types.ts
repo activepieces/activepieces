@@ -191,3 +191,38 @@ export interface PaperformWebhookResponse {
     webhook: PaperformWebhook;
   };
 }
+
+export interface PaperformCreateSpaceResponse{
+  results:{
+    space:{
+      id:number,
+      name:string
+    }
+  }
+}
+
+export interface PaperformUpdateSpaceResponse{
+  results:{
+    space:{
+      id:number,
+      name:string
+    }
+  }
+}
+
+export interface PaperformCreateProductResponse{
+  results:{
+    product:{
+      name:string
+    }
+  }
+}
+
+export interface PaperformCreateCouponResponse{
+  results:{
+    coupon:{
+      code:string
+    }
+  }
+}
+

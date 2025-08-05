@@ -1,13 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { paperformAuth } from '../common/auth';
 import { paperformCommon } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
 
 export const findFormProduct = createAction({
   auth: paperformAuth,
   name: 'findFormProduct',
   displayName: 'Find Form Product',
-  description: 'Retrieve product metadata from a form by product ID or name.',
+  description: 'Finds a form product by name.',
   props: {
     formId: Property.Dropdown({
       displayName: 'Form',
@@ -22,13 +21,13 @@ export const findFormProduct = createAction({
             options: [],
           };
         }
-        
+
         try {
           const forms = await paperformCommon.getForms({
             auth: auth as string,
             limit: 100,
           });
-          
+
           return {
             disabled: false,
             options: forms.results.forms.map((form) => ({
@@ -46,14 +45,13 @@ export const findFormProduct = createAction({
       },
     }),
     search: Property.ShortText({
-      displayName: 'Search Products',
-      description: 'Search products by name (optional)',
-      required: false,
+      displayName: 'Form Product Name',
+      required: true,
     }),
   },
   async run({ auth, propsValue }) {
     const { formId, search } = propsValue;
-    
+
     try {
       const response = await paperformCommon.getProducts({
         formSlugOrId: formId as string,
@@ -61,13 +59,10 @@ export const findFormProduct = createAction({
         search: search as string,
         limit: 100,
       });
-      
+
       return {
-        success: true,
-        message: `Found ${response.results.products.length} product(s)${search ? ` matching "${search}"` : ''}.`,
-        products: response.results.products,
-        total: response.total,
-        has_more: response.has_more,
+        found: response.results.products.length > 0,
+        data: response.results.products,
       };
     } catch (error: any) {
       throw new Error(`Failed to find products: ${error.message}`);

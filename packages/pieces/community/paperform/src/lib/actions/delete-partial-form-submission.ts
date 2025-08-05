@@ -3,52 +3,17 @@ import { paperformAuth } from '../common/auth';
 import { paperformCommon } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { PaperformPartialSubmission } from '../common/types';
+import { paperformCommonProps } from '../common/props';
 
 export const deletePartialFormSubmission = createAction({
   auth: paperformAuth,
   name: 'deletePartialFormSubmission',
   displayName: 'Delete Partial Form Submission',
-  description: 'Permanently delete a partial/in-progress submission by its ID.',
+  description: 'Deletes a partial/in-progress submission by its ID.',
   props: {
-    formId: Property.Dropdown({
-      displayName: 'Form',
-      description: 'Select the form to get partial submissions from',
-      required: true,
-      refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please connect your account first',
-            options: [],
-          };
-        }
-        
-        try {
-          const forms = await paperformCommon.getForms({
-            auth: auth as string,
-            limit: 100,
-          });
-          
-          return {
-            disabled: false,
-            options: forms.results.forms.map((form) => ({
-              label: form.title,
-              value: form.id,
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Error loading forms',
-            options: [],
-          };
-        }
-      },
-    }),
+    formId: paperformCommonProps.formId,
     partialSubmissionId: Property.Dropdown({
-      displayName: 'Partial Submission',
-      description: 'Select the partial submission to delete',
+      displayName: 'Partial Submission ID',
       required: true,
       refreshers: ['auth', 'formId'],
       options: async ({ auth, formId }) => {
