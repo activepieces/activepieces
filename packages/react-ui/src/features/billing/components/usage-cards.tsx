@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Bot, Database, LayoutGrid, Users, Workflow } from 'lucide-react';
+import { Bot, ClipboardCheck, Database, LayoutGrid, Users, Workflow } from 'lucide-react';
 
 import mcpDark from '@/assets/img/custom/mcp-dark.svg';
 import mcpLight from '@/assets/img/custom/mcp-light.svg';
@@ -18,21 +18,38 @@ export const UsageCards = ({
   const { theme } = useTheme();
   const { usage, plan } = platformSubscription;
   const isBusinessPlan = plan.plan === PlanName.BUSINESS;
+  const isFree = plan.plan === PlanName.FREE
 
   return (
     <div
       className={cn(
-        'grid grid-cols-3 gap-6',
-        isBusinessPlan ? 'xl:grid-cols-5' : '2xl:grid-cols-6',
+        'grid gap-6',
+        {
+          'grid-cols-3': true,
+          'grid-cols-4': isBusinessPlan,
+          '2xl:grid-cols-6': plan.plan === PlanName.PLUS,
+          '2xl:grid-cols-7': isFree,
+        },
       )}
     >
       <UsageCard
-        icon={<Workflow className="w-4 h-4" />}
-        title={t('Active flows')}
-        used={usage.activeFlows}
-        total={plan.activeFlowsLimit}
+        icon={<ClipboardCheck className="w-5 h-5" />}
+        title={t('Tasks')}
+        used={usage.tasks}
+        total={plan.tasksLimit}
       />
 
+      {
+        isFree && (
+          <UsageCard
+            icon={<Workflow className="w-4 h-4" />}
+            title={t('Active flows')}
+            used={usage.activeFlows}
+            total={plan.activeFlowsLimit}
+          />
+        )
+      }
+      
       {!isBusinessPlan && (
         <UsageCard
           icon={<Users className="w-4 h-4" />}
@@ -42,13 +59,17 @@ export const UsageCards = ({
         />
       )}
 
-      <UsageCard
-        icon={<LayoutGrid className="w-4 h-4" />}
-        title={t('Projects')}
-        used={usage.projects}
-        total={plan.projectsLimit}
-      />
-
+      {
+        !isBusinessPlan && (
+            <UsageCard
+              icon={<LayoutGrid className="w-4 h-4" />}
+              title={t('Projects')}
+              used={usage.projects}
+              total={plan.projectsLimit}
+            />
+        )
+      }
+      
       <UsageCard
         icon={
           <img

@@ -9,11 +9,10 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { ActivateLicenseDialog } from '@/features/billing/components/activate-license-dialog';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
 import { AiCreditsUsageTable } from '@/features/billing/components/ai-credits-usage-table';
-import { BusinessUserSeats } from '@/features/billing/components/business-user-seats';
+import { UserSeatAddon } from '@/features/billing/components/user-seat-addon';
 import { FeatureStatus } from '@/features/billing/components/features-status';
 import { LicenseKey } from '@/features/billing/components/lisence-key';
 import { SubscriptionInfo } from '@/features/billing/components/subscription-info';
-import { TasksUsage } from '@/features/billing/components/tasks-usage';
 import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { UsageCards } from '@/features/billing/components/usage-cards';
 import {
@@ -24,6 +23,8 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
+import { ActiveFlowAddon } from '@/features/billing/components/active-flow-addon';
+import { ProjectAddon } from '@/features/billing/components/project-addon';
 
 export default function Billing() {
   const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
@@ -45,7 +46,7 @@ export default function Billing() {
     status as ApSubscriptionStatus,
   );
   const isBusinessPlan = platformPlanInfo?.plan.plan === PlanName.BUSINESS;
-  const isEnterpriseEdition = edition === ApEdition.ENTERPRISE;
+  const isFree = platformPlanInfo?.plan.plan === PlanName.FREE;
   const isEnterprise =
     !isNil(platformPlanInfo?.plan.licenseKey) ||
     edition === ApEdition.ENTERPRISE;
@@ -71,8 +72,8 @@ export default function Billing() {
   }
 
   return (
-    <article className="flex flex-col w-full gap-8">
-      <div className="flex justify-between items-center">
+    <article className="flex flex-col w-full gap-6">
+      <div className="flex justify-between items-center border sticky top-0 bg-background z-30">
         <div>
           <TableTitle>{t('Billing')}</TableTitle>
           <p className="text-sm text-muted-foreground">
@@ -110,17 +111,23 @@ export default function Billing() {
       {!isEnterprise && <SubscriptionInfo info={platformPlanInfo} />}
 
       <UsageCards platformSubscription={platformPlanInfo} />
-      {isBusinessPlan && (
-        <BusinessUserSeats platformSubscription={platformPlanInfo} />
-      )}
-      {!isEnterpriseEdition && (
-        <>
-          <AICreditUsage platformSubscription={platformPlanInfo} />
-          <TasksUsage platformSubscription={platformPlanInfo} />
-        </>
+
+      {!isFree && (
+        <ActiveFlowAddon platformSubscription={platformPlanInfo} />
       )}
 
-      {isEnterpriseEdition && (
+      {isBusinessPlan && (
+        <div className='grid grid-cols-2 gap-6'>
+          <ProjectAddon platformSubscription={platformPlanInfo} />
+          <UserSeatAddon platformSubscription={platformPlanInfo} />
+        </div>
+      )}
+
+      {!isEnterprise && (
+          <AICreditUsage platformSubscription={platformPlanInfo} />
+      )}
+
+      {isEnterprise && (
         <>
           <h3 className="text-lg font-semibold">{t('AI Credits')}</h3>
           <AiCreditsUsageTable />

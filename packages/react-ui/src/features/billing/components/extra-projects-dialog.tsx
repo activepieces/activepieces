@@ -11,77 +11,76 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
-import { PlanName, PRICE_PER_EXTRA_USER } from '@activepieces/ee-shared';
+import { PlanName, PRICE_PER_EXTRA_PROJECT } from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
 
-const MAX_SEATS = 20;
-const DEFAULT_SEATS = 5;
+const MAX_PROJECTS = 30;
+const DEFAULT_PROJECTS = 10;
 
-type ExtraSeatsDialogProps = {
+type ExtraProjectsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   platformSubscription: PlatformBillingInformation;
 };
 
-export const ExtraSeatsDialog = ({
+export const ExtraProjectsDialog = ({
   open,
   onOpenChange,
   platformSubscription,
-}: ExtraSeatsDialogProps) => {
+}: ExtraProjectsDialogProps) => {
   const { plan } = platformSubscription;
 
-  const currentUserLimit = plan.userSeatsLimit ?? DEFAULT_SEATS;
-  const [selectedSeats, setSelectedSeats] = useState([currentUserLimit]);
+  const currentProjectLimit = plan.projectsLimit ?? DEFAULT_PROJECTS;
+  const [selectedProjects, setSelectedProjects] = useState([currentProjectLimit]);
 
-  const newSeatCount = selectedSeats[0];
-  const seatDifference = newSeatCount - currentUserLimit;
-  const costDifference = seatDifference * PRICE_PER_EXTRA_USER;
+  const newProjectCount = selectedProjects[0];
+  const projectDifference = newProjectCount - currentProjectLimit;
+  const costDifference = projectDifference * PRICE_PER_EXTRA_PROJECT;
 
-  const { mutate: updateUserSeats, isPending } =
+  const { mutate: updateProjects, isPending } =
     billingMutations.useUpdateSubscription(() => onOpenChange(false));
 
   useEffect(() => {
-    setSelectedSeats([currentUserLimit]);
-  }, [currentUserLimit]);
+    setSelectedProjects([currentProjectLimit]);
+  }, [currentProjectLimit]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            Manage User Seats
+            Manage Projects
           </DialogTitle>
           <DialogDescription>
-            Adjust your team&apos;s capacity by modifying the number of user
-            seats.
+            Adjust your project capacity by modifying the number of projects.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 py-4">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <label className="text-sm font-medium">
-                Total number of seats
+                Total number of projects
               </label>
-              <p className="text-lg font-bold px-3 py-1">{newSeatCount}</p>
+              <p className="text-lg font-bold px-3 py-1">{newProjectCount}</p>
             </div>
             <div className="space-y-3">
               <Slider
-                value={selectedSeats}
-                onValueChange={setSelectedSeats}
-                max={MAX_SEATS}
-                min={DEFAULT_SEATS}
+                value={selectedProjects}
+                onValueChange={setSelectedProjects}
+                max={MAX_PROJECTS}
+                min={DEFAULT_PROJECTS}
                 step={1}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{DEFAULT_SEATS} seats (minimum)</span>
-                <span>{MAX_SEATS} seats (maximum)</span>
+                <span>{DEFAULT_PROJECTS} projects (minimum)</span>
+                <span>{MAX_PROJECTS} projects (maximum)</span>
               </div>
             </div>
             <div className="text-xs text-muted-foreground">
-              Current seats: {currentUserLimit}
+              Current projects: {currentProjectLimit}
             </div>
           </div>
           <div className="bg-muted/50 rounded-lg p-4">
@@ -93,9 +92,9 @@ export const ExtraSeatsDialog = ({
                     : 'Monthly Savings'}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {Math.abs(seatDifference)} seat
-                  {Math.abs(seatDifference) !== 1 ? 's' : ''} × $
-                  {PRICE_PER_EXTRA_USER}
+                  {Math.abs(projectDifference)} project
+                  {Math.abs(projectDifference) !== 1 ? 's' : ''} × $
+                  {PRICE_PER_EXTRA_PROJECT}
                 </div>
               </div>
               <div
@@ -108,7 +107,7 @@ export const ExtraSeatsDialog = ({
             </div>
           </div>
 
-          {seatDifference < 0 && (
+          {projectDifference < 0 && (
             <div className="text-xs text-muted-foreground">
               You will be charged a prorated amount for the remaining days of
               the month.
@@ -121,22 +120,22 @@ export const ExtraSeatsDialog = ({
           </Button>
           <Button
             onClick={() =>
-              updateUserSeats({
+              updateProjects({
                 plan: PlanName.BUSINESS,
                 addons: {
-                  userSeats: newSeatCount
+                  projects: newProjectCount
                 }
               })
             }
-            disabled={isPending || newSeatCount === currentUserLimit}
+            disabled={isPending || newProjectCount === currentProjectLimit}
           >
             {isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                Updating Seats
+                Updating Projects
               </>
             ) : (
-              'Update Seats'
+              'Update Projects'
             )}
           </Button>
         </DialogFooter>

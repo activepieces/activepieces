@@ -19,7 +19,7 @@ type BusinessUserSeatsProps = {
   platformSubscription: PlatformBillingInformation;
 };
 
-export function BusinessUserSeats({
+export function UserSeatAddon({
   platformSubscription,
 }: BusinessUserSeatsProps) {
   const [addUserSeatsOpen, setAddUserSeatsOpen] = useState(false);
