@@ -34,17 +34,16 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { ApEdition, ApFlagId, Permission } from '@activepieces/shared';
-
+import { ApEdition, ApFlagId, isNil, Permission } from '@activepieces/shared';
 import { ShowPoweredBy } from '../../../components/show-powered-by';
 import { platformHooks } from '../../../hooks/platform-hooks';
 import { ApDashboardSidebarHeader } from '../ap-dashboard-sidebar-header';
 import { HelpAndFeedback } from '../help-and-feedback';
-
 import { SidebarInviteUserButton } from './sidebar-invite-user';
 import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
 import { SidebarUser } from './sidebar-user';
 import UsageLimitsButton from './usage-limits-button';
+import TutorialsDialog, { TabType } from '@/components/custom/tutorials-dialog';
 
 type Link = {
   icon: React.ReactNode;
@@ -63,6 +62,7 @@ type CustomTooltipLinkProps = {
   newWindow?: boolean;
   isActive?: (pathname: string) => boolean;
   isSubItem: boolean;
+  tutorialTab?: TabType;
 };
 export const CustomTooltipLink = ({
   to,
@@ -73,11 +73,14 @@ export const CustomTooltipLink = ({
   locked,
   newWindow,
   isActive,
+  tutorialTab,
 }: CustomTooltipLinkProps) => {
   const location = useLocation();
-
+  const {platform} = platformHooks.useCurrentPlatform();
+  const {data: edition} = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isLinkActive =
     location.pathname.startsWith(to) || isActive?.(location.pathname);
+  const showTutorials = (isNil(platform.plan?.licenseKey) || platform.plan.licenseKey.length === 0 || edition === ApEdition.COMMUNITY) && tutorialTab;
   return (
     <Link
       to={to}
@@ -120,6 +123,9 @@ export const CustomTooltipLink = ({
             className="absolute right-2 top-1/2 transform -translate-y-1/2 size-2 rounded-full "
           />
         )}
+        { showTutorials && <div className="mr-2">
+          <TutorialsDialog key={tutorialTab} initialTab={tutorialTab} />
+          </div>}
       </div>
     </Link>
   );
@@ -154,6 +160,7 @@ export type SidebarLink = {
   isActive?: (pathname: string) => boolean;
   separatorBefore?: boolean;
   separatorAfter?: boolean;
+  tutorialTab?: TabType;
 };
 
 export type SidebarItem = SidebarLink | SidebarGroup;
@@ -289,6 +296,7 @@ function ApSidebarMenuItem(item: SidebarLink, index: number) {
                 locked={item.locked}
                 isActive={item.isActive}
                 isSubItem={item.isSubItem}
+                tutorialTab={item.tutorialTab}
               />
             </SidebarMenuButton>
           </SidebarMenuItem>
