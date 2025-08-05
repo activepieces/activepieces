@@ -62,20 +62,12 @@ export const flowRunsApi = {
         }
       };
 
-      const handleProgress = (progress: StepRunResponse) => {
-        if (progress.id === id) {
-          onProgress?.(progress);
-        }
-      };
-
       const handleError = (error: any) => {
         socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-        socket.off(WebsocketClientEvent.TEST_STEP_PROGRESS, handleProgress);
         socket.off('error', handleError);
         reject(error);
       };
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-      socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleProgress);
       socket.on('error', handleError);
     });
   },

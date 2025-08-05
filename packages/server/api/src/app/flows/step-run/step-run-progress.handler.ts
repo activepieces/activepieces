@@ -1,80 +1,91 @@
 import { exceptionHandler } from '@activepieces/server-shared'
 import { 
-    FlowVersion, 
+    FlowRunId,
     isNil, 
-    ProjectId, 
+    PauseType, 
     StepOutput, 
     StepOutputStatus,
     StepRunResponse,
-    WebsocketClientEvent,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Socket } from 'socket.io'
+import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { flowRunService } from '../flow-run/flow-run-service'
 
-function createProgressHandler(context: StepExecutionContext) {
-    return async (progressEvent: FlowRunProgressEvent): Promise<void> => {
-        const { socket, projectId, logger, stepName, requestId } = context
-        
-        if (progressEvent.runId !== context.runId) {
-            return
-        }
-
+export const stepRunProgressHandler = {
+    async notifyStepFinished(params: NotifyStepFinishedParams): Promise<void> {
+        const { runId, logger } = params
         try {
-            const flowRun = await flowRunService(logger).getOnePopulatedOrThrow({
-                id: progressEvent.runId,
-                projectId,
-            })
+            const flowRun = await getFlowRun(runId, logger)
             
-            const stepOutput = flowRun.steps ? findStepOutputInNestedStructure(flowRun.steps, stepName) : undefined
-            if (isNil(stepOutput) || [StepOutputStatus.RUNNING, StepOutputStatus.PAUSED].includes(stepOutput.status)) {
+            const stepOutput = flowRun.stepNameToTest 
+                ? findStepOutputInNestedStructure(flowRun.steps, flowRun.stepNameToTest)
+                : undefined
+
+            const shouldStopProcessingStepCompletion = isNil(stepOutput) || [StepOutputStatus.RUNNING, StepOutputStatus.PAUSED].includes(stepOutput.status)
+            if (shouldStopProcessingStepCompletion) {
                 return
             }
-            
-            if (stepOutput.status !== StepOutputStatus.SUCCEEDED) {
-                const response: StepRunResponse = {
-                    id: requestId,
-                    success: false,
-                    input: stepOutput.input ?? {},
-                    output: stepOutput.output ?? {},
-                    standardError: stepOutput.errorMessage as string,
-                    standardOutput: '',
-                }
-                socket.emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
-                throw new Error('Step execution failed')
+
+            if (flowRun.pauseMetadata?.type !== PauseType.WEBHOOK) {
+                return
             }
-            
-            const response: StepRunResponse = {
-                id: requestId,
-                success: true,
-                input: stepOutput.input ?? {},
-                output: stepOutput.output ?? {},
-                standardError: '',
-                standardOutput: '',
+
+            const { testCallbackRequestId, handlerId } = flowRun.pauseMetadata
+            if (isNil(handlerId) || isNil(testCallbackRequestId)) {
+                return
             }
-            
-            socket.emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
+
+            const response = createStepRunResponse(stepOutput, testCallbackRequestId)
+            await engineResponseWatcher(logger).publish(testCallbackRequestId, handlerId, response)
         }
         catch (error) {
             exceptionHandler.handle(error, logger)
         }
+    },
+}
+
+async function getFlowRun(runId: FlowRunId, logger: FastifyBaseLogger) {
+    let flowRun = await flowRunService(logger).getOnePopulatedOrThrow({
+        id: runId,
+        projectId: undefined,
+    })
+    
+    if (!isNil(flowRun.parentRunId)) {
+        flowRun = await flowRunService(logger).getOnePopulatedOrThrow({
+            id: flowRun.parentRunId,
+            projectId: undefined,
+        })
     }
-} 
+    
+    return flowRun
+}
 
+function createStepRunResponse(stepOutput: StepOutput, testCallbackRequestId: string): StepRunResponse {
+    const isSuccess = stepOutput.status === StepOutputStatus.SUCCEEDED
+    
+    return {
+        id: testCallbackRequestId,
+        success: isSuccess,
+        input: stepOutput.input ?? {},
+        output: stepOutput.output ?? {},
+        standardError: isSuccess ? '' : (stepOutput.errorMessage as string),
+        standardOutput: '',
+    }
+}
 
-const findStepOutputInNestedStructure = (data: unknown, stepName: string): StepOutput | undefined => {
+function findStepOutputInNestedStructure(data: unknown, stepName: string): StepOutput | undefined {
     if (isNil(data) || typeof data !== 'object') {
         return undefined
     }
     
     const dataAsRecord = data as Record<string, unknown>
     
-    const stepOutput = !isNil(dataAsRecord[stepName]) && typeof dataAsRecord[stepName] === 'object'
-    if (stepOutput) {
-        return dataAsRecord[stepName] as StepOutput
+    const stepOutput = dataAsRecord[stepName]
+    if (!isNil(stepOutput) && typeof stepOutput === 'object') {
+        return stepOutput as StepOutput
     }
     
-    for (const [, value] of Object.entries(dataAsRecord)) {
+    for (const value of Object.values(dataAsRecord)) {
         if (value && typeof value === 'object') {
             const result = findStepOutputInNestedStructure(value, stepName)
             if (result) {
@@ -82,24 +93,11 @@ const findStepOutputInNestedStructure = (data: unknown, stepName: string): StepO
             }
         }
     }
+    
     return undefined
 }
 
-type FlowRunProgressEvent = {
-    runId: string
-}
-
-type StepExecutionContext = {
-    socket: Socket
-    projectId: ProjectId
+type NotifyStepFinishedParams = {
+    runId: FlowRunId
     logger: FastifyBaseLogger
-    stepName: string
-    requestId: string
-    runId: string
-    flowVersion: FlowVersion
 }
-
-export const stepRunProgressHandler = {
-    createProgressHandler,
-}
-

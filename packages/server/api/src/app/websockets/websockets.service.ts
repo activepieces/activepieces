@@ -1,4 +1,3 @@
-import { EventEmitter } from 'events'
 import { exceptionHandler } from '@activepieces/server-shared'
 import { Principal, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -9,8 +8,6 @@ export type WebsocketListener<T> = (socket: Socket) => (data: T) => Promise<void
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const listener: Record<string, WebsocketListener<any>> = {}
-
-export const serverEventBus = new EventEmitter()
 
 export const websocketService = {
     async init(socket: Socket, log: FastifyBaseLogger): Promise<void> {

@@ -185,12 +185,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 existingFlowRunId: flowRunToResume.id,
                 projectId: flowRunToResume.projectId,
                 flowVersionId: flowRunToResume.flowVersionId,
-                synchronousHandlerId: returnHandlerId(pauseMetadata, requestId, log),
+                synchronousHandlerId: flowRunToResume.stepNameToTest ? pauseMetadata?.handlerId : returnHandlerId(pauseMetadata, requestId, log),
                 httpRequestId: requestId,
                 progressUpdateType,
                 executeTrigger: false,
                 executionType,
-                environment: RunEnvironment.PRODUCTION,
+                environment: flowRunToResume.stepNameToTest ? RunEnvironment.TESTING : RunEnvironment.PRODUCTION,
                 parentRunId: flowRunToResume.parentRunId,
                 failParentOnFailure: flowRunToResume.failParentOnFailure,
                 stepNameToTest: flowRunToResume.stepNameToTest,
@@ -250,6 +250,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         parentRunId,
         failParentOnFailure,
         stepNameToTest,
+        pauseMetadata,
     }: StartParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
@@ -268,6 +269,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             parentRunId,
             failParentOnFailure,
             stepNameToTest,
+            pauseMetadata,
             log,
         })
 
@@ -287,7 +289,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return flowRun
     },
 
-    async test({ projectId, flowVersionId, parentRunId, stepNameToTest }: TestParams): Promise<FlowRun> {
+    async test({ projectId, flowVersionId, parentRunId, stepNameToTest, pauseMetadata }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
         const sampleData = await sampleDataService(log).getOrReturnEmpty({
@@ -309,6 +311,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             failParentOnFailure: true,
             stepNameToTest,
+            pauseMetadata,
         })
     },
 
@@ -319,15 +322,23 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }, '[FlowRunService] pausing flow run')
 
         const { flowRunId, pauseMetadata } = params
-        await flowRunRepo().update(flowRunId, {
-            status: FlowRunStatus.PAUSED,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            pauseMetadata: pauseMetadata as any,
-        })
-
         const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
 
-        await flowRunSideEffects(log).pause({ flowRun })
+        await flowRunRepo().update(flowRunId, {
+            status: FlowRunStatus.PAUSED,
+            pauseMetadata: {
+                ...flowRun.pauseMetadata,
+                ...(Object.fromEntries(
+                    Object.entries(pauseMetadata).filter(([_, value]) => value !== undefined),
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ) as any),
+            },
+            
+        })
+
+        const updatedFlowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
+
+        await flowRunSideEffects(log).pause({ flowRun: updatedFlowRun })
     },
 
     async getOneOrThrow(params: GetOneParams): Promise<FlowRun> {
@@ -530,6 +541,7 @@ async function getOrCreate({
     parentRunId,
     failParentOnFailure,
     stepNameToTest,
+    pauseMetadata,
     log,
 }: GetOrCreateParams): Promise<FlowRun> {
     if (existingFlowRunId) {
@@ -551,6 +563,7 @@ async function getOrCreate({
         failParentOnFailure: failParentOnFailure ?? true,
         status: FlowRunStatus.QUEUED,
         stepNameToTest,
+        pauseMetadata,
     })
 }
 
@@ -588,6 +601,7 @@ type GetOrCreateParams = {
     flowDisplayName: string
     environment: RunEnvironment
     log: FastifyBaseLogger
+    pauseMetadata?: PauseMetadata
 }
 
 type ListParams = {
@@ -621,6 +635,7 @@ type StartParams = {
     progressUpdateType: ProgressUpdateType
     executionType: ExecutionType
     stepNameToTest?: string
+    pauseMetadata?: PauseMetadata
 }
 
 type TestParams = {
@@ -628,6 +643,7 @@ type TestParams = {
     flowVersionId: FlowVersionId
     parentRunId?: FlowRunId
     stepNameToTest?: string
+    pauseMetadata?: PauseMetadata
 }
 
 type PauseParams = {
