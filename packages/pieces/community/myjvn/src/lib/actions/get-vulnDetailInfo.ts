@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { propsValidation } from '@activepieces/pieces-common';
+import { myjvnCommon } from '../common';
+import { Parser } from 'xml2js';
 import { z } from 'zod';
 
 export const getVulnDetailInfo = createAction({
@@ -26,24 +28,8 @@ export const getVulnDetailInfo = createAction({
       required: true,
       defaultValue: [],
     }),
-    lang: Property.StaticDropdown({
-      displayName: 'lang',
-      description: 'language',
-      required: true,
-      options: {
-        options: [
-          {
-            label: 'japanese',
-            value: 'ja',
-          },
-          {
-            label: 'english',
-            value: 'en',
-          },
-        ],
-      },
-      defaultValue: 'ja'
-    })
+    lang: myjvnCommon.lang,
+    ft: myjvnCommon.ft,
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
@@ -51,22 +37,31 @@ export const getVulnDetailInfo = createAction({
       maxCountItem: z.number().min(1).max(10,'maxCountItem (1 to 10)').optional(),
     });
 
+    const {startItem, maxCountItem, vulnId, lang, ft} = context.propsValue;
+
     const params: Record<string, unknown> = {};
 
-    if (context.propsValue.startItem !== undefined) params['startItem'] = context.propsValue.startItem;
-    if (context.propsValue.maxCountItem !== undefined) params['maxCountItem'] = context.propsValue.maxCountItem;
+    if (startItem) params['startItem'] = startItem;
+    if (maxCountItem) params['maxCountItem'] = maxCountItem;
+    if (vulnId && vulnId.length > 0) params['vulnId'] = vulnId.join('+');
+    if (lang) params['lang'] = lang;
 
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.GET,
-      url: 'https://jvndb.jvn.jp/myjvn',
+      url: myjvnCommon.baseUrl,
       queryParams: {
         method: 'getVulnDetailInfo',
         feed: 'hnd',
         ...params,
-        vulnId: context.propsValue.vulnId.join('+'),
-        lang: context.propsValue.lang,
       },
     });
-    return res.body;
+
+    if (ft === 'json') {
+      const parser = new Parser({explicitArray: false});
+      const jsonData = await parser.parseStringPromise(res.body);
+      return jsonData;
+    } else {
+      return res.body;
+    }
   },
 });

@@ -12,7 +12,7 @@ export const myjvn = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/myjvn.png",
-  authors: ["HijiriIshi"],
+  authors: ["hijiriishi"],
   actions: [
     getAlertList,
     getVendorList,

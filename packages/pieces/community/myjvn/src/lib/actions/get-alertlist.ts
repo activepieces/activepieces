@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { propsValidation } from '@activepieces/pieces-common';
+import { myjvnCommon } from '../common';
 import { z } from 'zod';
 
 export const getAlertList = createAction({
@@ -36,24 +37,7 @@ export const getAlertList = createAction({
       required: false,
       defaultValue: [],
     }),
-    ft: Property.StaticDropdown({
-      displayName: 'format',
-      description: 'Response Format',
-      required: true,
-      options: {
-        options: [
-          {
-            label: 'json',
-            value: 'json',
-          },
-          {
-            label: 'xml',
-            value: 'xml',
-          },
-        ],
-      },
-      defaultValue: 'json'
-    })
+    ft: myjvnCommon.ft,
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
@@ -63,22 +47,24 @@ export const getAlertList = createAction({
       dateFirstPublished: z.string().regex(/^\d{4}$/, 'dateFirstPublished (YYYY)').optional(),
     });
 
+    const {startItem, maxCountItem, datePublished, dateFirstPublished, cpeName, ft} = context.propsValue;
+
     const params: Record<string, unknown> = {};
 
-    if (context.propsValue.startItem !== undefined) params['startItem'] = context.propsValue.startItem;
-    if (context.propsValue.maxCountItem !== undefined) params['maxCountItem'] = context.propsValue.maxCountItem;
-    if (context.propsValue.datePublished !== undefined) params['datePublished'] = context.propsValue.datePublished;
-    if (context.propsValue.dateFirstPublished !== undefined) params['dateFirstPublished'] = context.propsValue.dateFirstPublished;
-    if (context.propsValue.cpeName !== undefined && context.propsValue.cpeName.length > 0) params['cpeName'] = context.propsValue.cpeName.join('+');
+    if (startItem) params['startItem'] = startItem;
+    if (maxCountItem) params['maxCountItem'] = maxCountItem;
+    if (datePublished) params['datePublished'] = datePublished;
+    if (dateFirstPublished) params['dateFirstPublished'] = dateFirstPublished;
+    if (cpeName && cpeName.length > 0) params['cpeName'] = cpeName.join('+');
+    if (ft) params['ft'] = ft;
 
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.GET,
-      url: 'https://jvndb.jvn.jp/myjvn',
+      url: myjvnCommon.baseUrl,
       queryParams: {
         method: 'getAlertList',
         feed: 'hnd',
         ...params,
-        ft: context.propsValue.ft,
       },
     });
     return res.body;

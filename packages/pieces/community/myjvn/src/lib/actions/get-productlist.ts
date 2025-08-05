@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { propsValidation } from '@activepieces/pieces-common';
+import { myjvnCommon } from '../common';
+import { Parser } from 'xml2js';
 import { z } from 'zod';
 
 export const getProductList = createAction({
@@ -43,24 +45,8 @@ export const getProductList = createAction({
 			description: 'Keyword for partial match search of vendor name',
       required: false,
     }),
-    lang: Property.StaticDropdown({
-      displayName: 'lang',
-      description: 'language',
-      required: true,
-      options: {
-        options: [
-          {
-            label: 'japanese',
-            value: 'ja',
-          },
-          {
-            label: 'english',
-            value: 'en',
-          },
-        ],
-      },
-      defaultValue: 'ja'
-    })
+    lang: myjvnCommon.lang,
+    ft: myjvnCommon.ft,
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
@@ -68,25 +54,34 @@ export const getProductList = createAction({
       maxCountItem: z.number().min(1).max(10000,'maxCountItem (1 to 10000)').optional(),
     });
 
+    const {startItem, maxCountItem, cpeName, vendorId, productId, keyword, lang, ft} = context.propsValue;
+
     const params: Record<string, unknown> = {};
 
-    if (context.propsValue.startItem !== undefined) params['startItem'] = context.propsValue.startItem;
-    if (context.propsValue.maxCountItem !== undefined) params['maxCountItem'] = context.propsValue.maxCountItem;
-    if (context.propsValue.cpeName !== undefined && context.propsValue.cpeName.length > 0) params['cpeName'] = context.propsValue.cpeName.join('+');
-    if (context.propsValue.vendorId !== undefined && context.propsValue.vendorId.length > 0) params['vendorId'] = context.propsValue.vendorId.join('+');
-    if (context.propsValue.productId !== undefined && context.propsValue.productId.length > 0) params['productId'] = context.propsValue.productId.join('+');
-    if (context.propsValue.keyword !== undefined) params['keyword'] = context.propsValue.keyword;
+    if (startItem) params['startItem'] = startItem;
+    if (maxCountItem) params['maxCountItem'] = maxCountItem;
+    if (cpeName && cpeName.length > 0) params['cpeName'] = cpeName.join('+');
+    if (vendorId && vendorId.length > 0) params['vendorId'] = vendorId.join('+');
+    if (productId && productId.length > 0) params['productId'] = productId.join('+');
+    if (keyword) params['keyword'] = keyword;
+    if (lang) params['lang'] = lang;
 
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.GET,
-      url: 'https://jvndb.jvn.jp/myjvn',
+      url: myjvnCommon.baseUrl,
       queryParams: {
         method: 'getProductList',
         feed: 'hnd',
         ...params,
-        lang: context.propsValue.lang,
       },
     });
-    return res.body;
+
+    if (ft === 'json') {
+      const parser = new Parser({explicitArray: false});
+      const jsonData = await parser.parseStringPromise(res.body);
+      return jsonData;
+    } else {
+      return res.body;
+    }
   },
 });
