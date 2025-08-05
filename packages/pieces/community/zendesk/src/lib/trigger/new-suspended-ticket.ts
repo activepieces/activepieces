@@ -1,7 +1,6 @@
 import {
   TriggerStrategy,
   createTrigger,
-  Property,
 } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
@@ -13,53 +12,16 @@ import {
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
 
-export const newTicketInView = createTrigger({
+export const newSuspendedTicket = createTrigger({
   auth: zendeskAuth,
-  name: 'new_ticket_in_view',
-  displayName: 'New ticket in view',
-  description: 'Triggers when a new ticket is created in a view',
+  name: 'new_suspended_ticket',
+  displayName: 'New Suspended Ticket',
+  description: 'Triggers when a ticket is suspended. Suspended tickets auto-delete after 14 days.',
   type: TriggerStrategy.POLLING,
-  props: {
-    view_id: Property.Dropdown({
-      displayName: 'View',
-      description: 'The view to monitor for new tickets',
-      refreshers: [],
-      required: true,
-      options: async ({ auth }) => {
-        const authentication = auth as AuthProps;
-        if (
-          !authentication?.['email'] ||
-          !authentication?.['subdomain'] ||
-          !authentication?.['token']
-        ) {
-          return {
-            placeholder: 'Fill your authentication first',
-            disabled: true,
-            options: [],
-          };
-        }
-        const response = await httpClient.sendRequest<{ views: Array<{ id: number; title: string }> }>({
-          url: `https://${authentication.subdomain}.zendesk.com/api/v2/views.json`,
-          method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.email + '/token',
-            password: authentication.token,
-          },
-        });
-        return {
-          placeholder: 'Select a view',
-          options: response.body.views.map((view: { id: number; title: string }) => ({
-            label: view.title,
-                          value: view.id.toString(),
-          })),
-        };
-      },
-    }),
-  },
+  props: {},
   sampleData: {
-    url: 'https://activepieceshelp.zendesk.com/api/v2/tickets/5.json',
     id: 5,
+    url: 'https://activepieceshelp.zendesk.com/api/v2/suspended_tickets/5.json',
     external_id: null,
     via: {
       channel: 'web',
@@ -72,11 +34,11 @@ export const newTicketInView = createTrigger({
     created_at: '2023-03-25T02:39:41Z',
     updated_at: '2023-03-25T02:39:41Z',
     type: null,
-    subject: 'Subject',
-    raw_subject: 'Raw Subject',
-    description: 'Description',
+    subject: 'Suspended Ticket Subject',
+    raw_subject: 'Raw Suspended Ticket Subject',
+    description: 'Suspended ticket description',
     priority: null,
-    status: 'open',
+    status: 'suspended',
     recipient: null,
     requester_id: 8193592318236,
     submitter_id: 8193592318236,
@@ -142,10 +104,10 @@ type AuthProps = {
   subdomain: string;
 };
 
-const polling: Polling<AuthProps, { view_id: string }> = {
+const polling: Polling<AuthProps, Record<string, never>> = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, propsValue }) => {
-    const items = await getTickets(auth, propsValue.view_id);
+  items: async ({ auth }) => {
+    const items = await getSuspendedTickets(auth);
     return items.map((item) => ({
       id: item.id,
       data: item,
@@ -153,10 +115,10 @@ const polling: Polling<AuthProps, { view_id: string }> = {
   },
 };
 
-async function getTickets(authentication: AuthProps, view_id: string) {
+async function getSuspendedTickets(authentication: AuthProps) {
   const { email, token, subdomain } = authentication;
-  const response = await httpClient.sendRequest<{ tickets: Array<{ id: number; [key: string]: unknown }> }>({
-    url: `https://${subdomain}.zendesk.com/api/v2/views/${view_id}/tickets.json?sort_order=desc&sort_by=created_at&per_page=200`,
+  const response = await httpClient.sendRequest<{ suspended_tickets: Array<{ id: number; [key: string]: unknown }> }>({
+    url: `https://${subdomain}.zendesk.com/api/v2/suspended_tickets.json?sort_order=desc&sort_by=created_at&per_page=200`,
     method: HttpMethod.GET,
     authentication: {
       type: AuthenticationType.BASIC,
@@ -164,5 +126,5 @@ async function getTickets(authentication: AuthProps, view_id: string) {
       password: token,
     },
   });
-  return response.body.tickets;
-}
+  return response.body.suspended_tickets;
+} 
