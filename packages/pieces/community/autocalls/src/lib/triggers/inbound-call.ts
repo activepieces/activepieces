@@ -68,6 +68,18 @@ export const inboundCall = createTrigger({
         });
     },
     async onDisable(context) {
+        await httpClient.sendRequest({
+            method: HttpMethod.POST,
+            url: baseApiUrl + 'api/user/assistants/disable-inbound-webhook',
+            body: {
+                assistant_id: context.propsValue['assistant'],
+            },
+            headers: {
+                Authorization: "Bearer " + context.auth,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+        });
     },
     async run(context) {
         return [context.payload.body]
