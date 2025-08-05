@@ -90,6 +90,7 @@ const FlowsPage = () => {
       <div className="flex flex-col gap-4 w-full grow">
         <div className="flex items-center justify-between">
           <TableTitle
+            tutorialTab="flows"
             description={t(
               'Create and manage your flows, run history and run issues',
             )}

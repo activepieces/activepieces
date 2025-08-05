@@ -220,6 +220,7 @@ const ApTablesPage = () => {
       <div className="flex-col w-full gap-4">
         <div className="flex justify-between items-center">
           <TableTitle
+            tutorialTab="tables"
             description={t(
               'Create and manage your tables to store your automation data',
             )}

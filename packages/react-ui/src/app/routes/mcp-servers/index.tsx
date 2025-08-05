@@ -211,8 +211,8 @@ const McpServersPage = () => {
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between">
           <TableTitle
-            beta={true}
             description={t('Create and manage your MCP servers')}
+            tutorialTab="mcpServers"
           >
             {t('MCP Servers')}
           </TableTitle>

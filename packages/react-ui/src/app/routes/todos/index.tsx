@@ -321,6 +321,7 @@ function TodosPage() {
     <div className="flex-col w-full">
       <div className="flex items-center gap-2">
         <TableTitle
+          tutorialTab="todos"
           description={t(
             'Manage todos for your project that are created by automations',
           )}
