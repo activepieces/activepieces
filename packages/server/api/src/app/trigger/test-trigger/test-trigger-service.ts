@@ -1,3 +1,4 @@
+import { ApLock } from '@activepieces/server-shared'
 import {
     FlowId,
     FlowVersionId,
@@ -7,11 +8,9 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
-import { triggerEventService } from '../../flows/trigger-events/trigger-event.service'
-import { triggerService } from '../trigger-service'
-import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { distributedLock } from '../../helper/lock'
-import { ApLock } from '@activepieces/server-shared'
+import { triggerEventService } from '../trigger-events/trigger-event.service'
+import { triggerService } from '../trigger-service'
 
 
 export const testTriggerService = (log: FastifyBaseLogger) => {
@@ -33,27 +32,29 @@ export const testTriggerService = (log: FastifyBaseLogger) => {
                             simulate: true,
                         })
                         if (exists) {
-                            return triggerService(log).disable({
+                            return await triggerService(log).disable({
                                 flowId: executeParams.flowId,
                                 projectId: executeParams.projectId,
                                 simulate: true,
                                 ignoreError: true,
                             })
                         }
-                        return triggerService(log).enable({
+                        await triggerService(log).enable({
                             flowVersion: populatedFlow.version,
                             projectId: executeParams.projectId,
                             simulate: true,
                         })
+                        return
                     }
                     case TriggerTestStrategy.TEST_FUNCTION: {
-                        return triggerEventService(log).test({
+                        return await triggerEventService(log).test({
                             flow: populatedFlow,
                             projectId: executeParams.projectId,
                         })
                     }
                 }
-            } finally {
+            }
+            finally {
                 await lock.release()
             }
         },
@@ -69,13 +70,14 @@ export const testTriggerService = (log: FastifyBaseLogger) => {
                 if (isNil(trigger)) {
                     return
                 }
-                return triggerService(log).disable({
+                return await triggerService(log).disable({
                     flowId,
                     simulate: true,
                     projectId,
                     ignoreError: false,
                 })
-            } finally {
+            }
+            finally {
                 await lock.release()
             }
         },

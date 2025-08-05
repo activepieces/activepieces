@@ -1,6 +1,6 @@
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import { AgentJobData, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
-import { DelayPauseMetadata, Flow, FlowRun, FlowRunStatus, isNil, PauseType, ProgressUpdateType, RunEnvironment, FlowTriggerType } from '@activepieces/shared'
+import { DelayPauseMetadata, FlowRun, FlowRunStatus, FlowTriggerType, isNil, PauseType, PopulatedFlow, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -81,7 +81,7 @@ export const memoryQueue = (log: FastifyBaseLogger): QueueManager => ({
 })
 
 type FlowWithRenewWebhook = {
-    flow: Flow
+    flow: PopulatedFlow
     scheduleOptions: {
         cronExpression: string
         timezone: string
@@ -158,7 +158,7 @@ async function renewWebhooks(log: FastifyBaseLogger): Promise<void> {
                     return null
                 }
 
-                const piece = await triggerUtils(log).getPieceTriggerOrThrow({
+                const piece = await triggerUtils(log).getPieceTrigger({
                     flowVersion,
                     projectId: flow.projectId,
                 })

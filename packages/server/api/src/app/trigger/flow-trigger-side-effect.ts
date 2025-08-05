@@ -6,21 +6,19 @@ import {
 import {
     AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION,
     RepeatableJobType,
-    UserInteractionJobType
+    UserInteractionJobType,
 } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     EngineResponseStatus,
     ErrorCode,
+    FlowTriggerType,
     FlowVersion,
     isNil,
-    PieceTrigger,
-    ProjectId,
     RunEnvironment,
-    TriggerHookType,
-    FlowTriggerType,
-    WebhookHandshakeConfiguration,
     ScheduleOptions,
+    TriggerHookType,
+    WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import {
@@ -28,9 +26,9 @@ import {
     EngineHelperTriggerResult,
 } from 'server-worker'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
+import { system } from '../helper/system/system'
 import { jobQueue } from '../workers/queue'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
-import { system } from '../helper/system/system'
 
 export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
     return {
@@ -49,21 +47,21 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
 
             switch (pieceTrigger.type) {
                 case TriggerStrategy.APP_WEBHOOK: {
-                    return await handleAppWebhookTrigger({
+                    return handleAppWebhookTrigger({
                         engineHelperResponse,
                         log,
                         ...params,
                     })
                 }
                 case TriggerStrategy.WEBHOOK: {
-                    return await handleWebhookTrigger({
+                    return handleWebhookTrigger({
                         engineHelperResponse,
                         log,
                         ...params,
                     })
                 }
                 case TriggerStrategy.POLLING: {
-                    return await handlePollingTrigger({
+                    return handlePollingTrigger({
                         engineHelperResponse,
                         log,
                         ...params,
@@ -105,7 +103,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                     })
                     break
             }
-        }
+        },
 
     }
 }

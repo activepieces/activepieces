@@ -33,12 +33,12 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
+import { triggerService } from '../../trigger/trigger-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
-import { triggerService } from '../../trigger/trigger-service'
 
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId }: CreateParams): Promise<PopulatedFlow> {
@@ -199,9 +199,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 id,
                 projectId,
             },
-            relations: {
-                trigger: true,
-            },
         })
 
         const projectExists = await projectService.exists({
@@ -219,9 +216,15 @@ export const flowService = (log: FastifyBaseLogger) => ({
             entityManager,
         })
 
+        const trigger = await triggerService(log).getByFlowId({
+            flowId: id,
+            simulate: true,
+        })
+
         return {
             ...flow,
             version: flowVersion,
+            trigger: trigger ?? undefined,
         }
     },
 
@@ -241,6 +244,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             removeSampleData,
             entityManager,
         })
+
         assertFlowIsNotNull(flow)
         return flow
     },
@@ -460,10 +464,15 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async getAllEnabled(): Promise<Flow[]> {
-        return flowRepo().findBy({
+    async getAllEnabled(): Promise<PopulatedFlow[]> {
+        const flows = await flowRepo().findBy({
             status: FlowStatus.ENABLED,
         })
+        return Promise.all(flows.map(async (flow) => this.getOnePopulatedOrThrow({
+            id: flow.id,
+            projectId: flow.projectId,
+            versionId: flow.publishedVersionId ?? undefined,
+        })))
     },
 
     async getTemplate({
@@ -656,12 +665,6 @@ type UpdateStatusParams = {
     projectId: ProjectId
     newStatus: FlowStatus
     entityManager?: EntityManager
-}
-
-type UpdateFailureCountParams = {
-    flowId: FlowId
-    projectId: ProjectId
-    success: boolean
 }
 
 type UpdatePublishedVersionIdParams = {

@@ -3,10 +3,10 @@ import { apId, ExecutionType, isNil, RunEnvironment, TriggerStrategy } from '@ac
 import { Job, RepeatableJob } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../flows/flow/flow.repo'
-import { distributedLock } from '../../helper/lock'
-import { bullMqGroups } from './redis-queue'
-import { triggerRepo } from '../../trigger/trigger-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { distributedLock } from '../../helper/lock'
+import { triggerRepo } from '../../trigger/trigger-service'
+import { bullMqGroups } from './redis-queue'
 
 export const redisMigrations = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {

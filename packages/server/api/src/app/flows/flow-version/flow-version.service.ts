@@ -1,15 +1,17 @@
 import {
-    FlowAction,
-    FlowActionType,
     ActivepiecesError,
     apId,
     Cursor,
     ErrorCode,
+    FlowAction,
+    FlowActionType,
     FlowId,
     FlowOperationRequest,
     flowOperations,
     FlowOperationType,
     flowStructureUtil,
+    FlowTrigger,
+    FlowTriggerType,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -19,8 +21,6 @@ import {
     ProjectId,
     sanitizeObjectForPostgresql,
     SeekPage,
-    FlowTrigger,
-    FlowTriggerType,
     UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'

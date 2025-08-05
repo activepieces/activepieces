@@ -5,8 +5,6 @@ import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
 
 import { downloadFile } from '@/lib/utils';
 import {
-  Flow,
-  FlowVersion,
   PopulatedFlow,
   FlowTriggerType,
 } from '@activepieces/shared';
@@ -37,29 +35,29 @@ const zipFlows = async (flows: PopulatedFlow[]) => {
 export const flowsUtils = {
   downloadFlow,
   zipFlows,
-  flowStatusToolTipRenderer: (flow: Flow, version: FlowVersion) => {
-    const trigger = version.trigger;
-    switch (trigger.type) {
+  flowStatusToolTipRenderer: (flow: PopulatedFlow) => {
+    const trigger = flow.version.trigger;
+    switch (trigger?.type) {
       case FlowTriggerType.PIECE: {
         const cronExpression = flow.trigger?.schedule?.cronExpression;
         return cronExpression
           ? `${t('Run')} ${cronstrue
-              .toString(cronExpression, { locale: 'en' })
-              .toLocaleLowerCase()}`
+            .toString(cronExpression, { locale: 'en' })
+            .toLocaleLowerCase()}`
           : t('Real time flow');
       }
       case FlowTriggerType.EMPTY:
         console.error(
           t("Flow can't be published with empty trigger {name}", {
-            name: version.displayName,
+            name: flow.version.displayName,
           }),
         );
         return t('Please contact support as your published flow has a problem');
     }
   },
-  flowStatusIconRenderer: (flow: Flow, version: FlowVersion) => {
-    const trigger = version.trigger;
-    switch (trigger.type) {
+  flowStatusIconRenderer: (flow: PopulatedFlow) => {
+    const trigger = flow.version.trigger;
+    switch (trigger?.type) {
       case FlowTriggerType.PIECE: {
         const cronExpression = flow.trigger?.schedule?.cronExpression;
         if (cronExpression) {
@@ -71,7 +69,7 @@ export const flowsUtils = {
       case FlowTriggerType.EMPTY: {
         console.error(
           t("Flow can't be published with empty trigger {name}", {
-            name: version.displayName,
+            name: flow.version.displayName,
           }),
         );
         return <TriangleAlert className="h-4 w-4 text-destructive" />;

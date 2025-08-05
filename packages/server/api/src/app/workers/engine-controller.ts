@@ -1,4 +1,4 @@
-import { apAxios, AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { apAxios, AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
@@ -337,15 +337,6 @@ const UpdateRunProgress = {
     },
     schema: {
         body: UpdateRunProgressRequest,
-    },
-}
-
-const UpdateFailureCount = {
-    config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
-    },
-    schema: {
-        body: UpdateFailureCountRequest,
     },
 }
 

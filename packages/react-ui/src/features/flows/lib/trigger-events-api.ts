@@ -10,7 +10,7 @@ import {
 
 export const triggerEventsApi = {
   test(request: TestTriggerRequestBody) {
-    return api.get<SeekPage<TriggerEventWithPayload>>(
+    return api.post<SeekPage<TriggerEventWithPayload>>(
       '/v1/test-trigger',
       request,
     );

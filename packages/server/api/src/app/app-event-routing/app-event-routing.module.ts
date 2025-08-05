@@ -22,11 +22,11 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowService } from '../flows/flow/flow.service'
+import { triggerService } from '../trigger/trigger-service'
 import { WebhookFlowVersionToRun, webhookHandler } from '../webhooks/webhook-handler'
 import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
-import { triggerService } from '../trigger/trigger-service'
 
 const appWebhooks: Record<string, Piece> = {
     slack,
@@ -133,9 +133,9 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         flowId: listener.flowId,
                         runEnvironment: RunEnvironment.PRODUCTION,
                         saveSampleData: await triggerService(request.log).existsByFlowId({
-                                flowId: listener.flowId,
-                                simulate: true,
-                            },
+                            flowId: listener.flowId,
+                            simulate: true,
+                        },
                         ),
                         flowVersionIdToRun,
                         execute: flow.status === FlowStatus.ENABLED,

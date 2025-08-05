@@ -31,13 +31,13 @@ import { flowService } from '../../flows/flow/flow.service'
 import { telemetry } from '../../helper/telemetry.utils'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { triggerService } from '../../trigger/trigger-service'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
 import { mcpService } from '../mcp-service'
 import { mcpUtils } from '../mcp-utils'
-import { triggerService } from '../../trigger/trigger-service'
 
 
 

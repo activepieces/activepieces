@@ -170,7 +170,6 @@ export const flowsTableColumns = ({
         >
           <FlowStatusToggle
             flow={row.original}
-            flowVersion={row.original.version}
           ></FlowStatusToggle>
         </div>
       );

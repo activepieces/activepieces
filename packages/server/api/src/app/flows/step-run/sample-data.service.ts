@@ -1,11 +1,12 @@
 import { UserInteractionJobType } from '@activepieces/server-shared'
 import {
-    FlowAction,
     apId,
     FileCompression,
     FileType,
+    FlowAction,
     FlowId,
     flowStructureUtil,
+    FlowTrigger,
     FlowVersion,
     FlowVersionId,
     isNil,
@@ -16,7 +17,6 @@ import {
     SaveSampleDataResponse,
     Step,
     StepRunResponse,
-    FlowTrigger,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'

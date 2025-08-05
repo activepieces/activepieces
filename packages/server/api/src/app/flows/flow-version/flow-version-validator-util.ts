@@ -6,6 +6,7 @@ import {
     FlowActionType,
     FlowOperationRequest,
     FlowOperationType,
+    FlowTriggerType,
     isNil,
     LoopOnItemsActionSettings,
     PieceActionSettings,
@@ -13,7 +14,6 @@ import {
     PlatformId,
     ProjectId,
     RouterActionSettingsWithValidation,
-    FlowTriggerType,
 } from '@activepieces/shared'
 import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'

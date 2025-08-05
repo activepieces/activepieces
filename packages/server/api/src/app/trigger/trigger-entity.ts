@@ -1,6 +1,6 @@
-import { Flow, Project, Trigger } from "@activepieces/shared";
-import { EntitySchema } from "typeorm";
-import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from "../database/database-common";
+import { Flow, Project, Trigger } from '@activepieces/shared'
+import { EntitySchema } from 'typeorm'
+import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../database/database-common'
 
 
 export type TriggerSchema = Trigger & {
@@ -16,9 +16,17 @@ export const TriggerEntity = new EntitySchema<TriggerSchema>({
             type: String,
             nullable: false,
         },
+        flowVersionId: {
+            type: String,
+            nullable: false,
+        },
         handshakeConfiguration: {
             type: JSONB_COLUMN_TYPE,
             nullable: true,
+        },
+        projectId: {
+            type: String,
+            nullable: false,
         },
         type: {
             type: String,

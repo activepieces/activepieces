@@ -7,12 +7,12 @@ import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { dedupeService } from '../flows/trigger/dedupe'
-import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
 import { projectService } from '../project/project-service'
+import { triggerEventService } from '../trigger/trigger-events/trigger-event.service'
+import { triggerService } from '../trigger/trigger-service'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
 import { jobQueue } from './queue'
-import { triggerService } from '../trigger/trigger-service'
 
 export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 

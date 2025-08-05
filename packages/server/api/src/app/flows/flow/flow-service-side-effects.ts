@@ -4,12 +4,10 @@ import {
     FlowStatus,
     FlowVersion,
     isNil,
-    WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowVersionService } from '../flow-version/flow-version.service'
-import { sampleDataService } from '../step-run/sample-data.service'
 import { triggerService } from '../../trigger/trigger-service'
+import { sampleDataService } from '../step-run/sample-data.service'
 
 export const flowSideEffects = (log: FastifyBaseLogger) => ({
     async preUpdateStatus({

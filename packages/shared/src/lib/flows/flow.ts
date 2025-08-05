@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { Static, Type, Pick } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { Metadata } from '../common/metadata'
@@ -20,7 +20,6 @@ export const Flow = Type.Object({
     status: Type.Enum(FlowStatus),
     publishedVersionId: Nullable(Type.String()),
     metadata: Nullable(Metadata),
-    trigger: Type.Optional(Trigger),
 })
 
 export type Flow = Static<typeof Flow>
@@ -28,6 +27,7 @@ export const PopulatedFlow = Type.Composite([
     Flow,
     Type.Object({
         version: FlowVersion,
+        trigger: Type.Optional(Type.Pick(Trigger, ['schedule', 'handshakeConfiguration'])),
     }),
 ])
 

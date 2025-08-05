@@ -1,10 +1,10 @@
-import { ActivepiecesError, apId, ErrorCode, FlowVersion, isNil, Trigger } from "@activepieces/shared"
-import { TriggerEntity } from "./trigger-entity"
-import { repoFactory } from "../core/db/repo-factory"
-import { FastifyBaseLogger } from "fastify"
-import { triggerUtils } from "./trigger-utils"
-import { flowTriggerSideEffect } from "./flow-trigger-side-effect"
-import { flowVersionService } from "../flows/flow-version/flow-version.service"
+import { ActivepiecesError, apId, ErrorCode, FlowVersion, isNil, Trigger } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { repoFactory } from '../core/db/repo-factory'
+import { flowVersionService } from '../flows/flow-version/flow-version.service'
+import { flowTriggerSideEffect } from './flow-trigger-side-effect'
+import { TriggerEntity } from './trigger-entity'
+import { triggerUtils } from './trigger-utils'
 
 export const triggerRepo = repoFactory(TriggerEntity)
 
@@ -33,14 +33,23 @@ export const triggerService = (log: FastifyBaseLogger) => {
                 schedule: scheduleOptions,
                 simulate,
             }
-            return await triggerRepo().save(trigger)
+            return triggerRepo().save(trigger)
         },
         async get(params: GetTriggerParams): Promise<Trigger | null> {
             const { projectId, id } = params
-            return await triggerRepo().findOne({
+            return triggerRepo().findOne({
                 where: {
                     id,
                     projectId,
+                },
+            })
+        },
+        async getByFlowId(params: GetByFlowIdParams): Promise<Trigger | null> {
+            const { flowId, simulate } = params
+            return triggerRepo().findOne({
+                where: {
+                    flowId,
+                    simulate,
                 },
             })
         },
@@ -64,7 +73,7 @@ export const triggerService = (log: FastifyBaseLogger) => {
         },
         async existsByFlowId(params: ExistsByFlowIdParams): Promise<boolean> {
             const { flowId, simulate } = params
-            return await triggerRepo().existsBy({
+            return triggerRepo().existsBy({
                 flowId,
                 simulate,
             })
@@ -95,30 +104,35 @@ export const triggerService = (log: FastifyBaseLogger) => {
                 id: trigger.id,
                 projectId,
             })
-        }
+        },
     }
 }
 
 type ExistsByFlowIdParams = {
-    flowId: string,
-    simulate: boolean,
+    flowId: string
+    simulate: boolean
+}
+
+type GetByFlowIdParams = {
+    flowId: string
+    simulate: boolean
 }
 
 type GetTriggerParams = {
-    projectId: string,
-    id: string,
-    simulate: boolean,
+    projectId: string
+    id: string
+    simulate: boolean
 }
 
 type DisableTriggerParams = {
-    projectId: string,
-    flowId: string,
-    simulate: boolean,
-    ignoreError: boolean,
+    projectId: string
+    flowId: string
+    simulate: boolean
+    ignoreError: boolean
 }
 
 type EnableTriggerParams = {
-    flowVersion: FlowVersion,
-    projectId: string,
+    flowVersion: FlowVersion
+    projectId: string
     simulate: boolean
 }

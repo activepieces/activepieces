@@ -1,5 +1,5 @@
 import { UserInteractionJobType } from '@activepieces/server-shared'
-import { EngineResponseStatus, FlowId, FlowVersion, FlowVersionId, isNil, PieceTrigger, ProjectId, TriggerHookType, TriggerPayload, FlowTriggerType, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared'
+import { EngineResponseStatus, FlowId, FlowVersion, FlowVersionId, isNil, ProjectId, TriggerHookType, TriggerPayload, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'

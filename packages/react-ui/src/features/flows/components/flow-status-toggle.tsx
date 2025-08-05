@@ -24,11 +24,10 @@ import { flowsApi } from '../lib/flows-api';
 import { flowsUtils } from '../lib/flows-utils';
 
 type FlowStatusToggleProps = {
-  flow: Flow;
-  flowVersion: FlowVersion;
+  flow: PopulatedFlow;
 };
 
-const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
+const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
   const [isFlowPublished, setIsChecked] = useState(
     flow.status === FlowStatus.ENABLED,
   );
@@ -92,11 +91,11 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
           <Tooltip>
             <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
               <div className="p-2 rounded-full ">
-                {flowsUtils.flowStatusIconRenderer(flow, flowVersion)}
+                {flowsUtils.flowStatusIconRenderer(flow)}
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {flowsUtils.flowStatusToolTipRenderer(flow, flowVersion)}
+              {flowsUtils.flowStatusToolTipRenderer(flow)}
             </TooltipContent>
           </Tooltip>
         )

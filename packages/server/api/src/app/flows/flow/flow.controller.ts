@@ -11,6 +11,7 @@ import {
     FlowStatus,
     flowStructureUtil,
     FlowTemplateWithoutProjectInformation,
+    FlowTrigger,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
     isNil,
@@ -21,7 +22,6 @@ import {
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    FlowTrigger,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,

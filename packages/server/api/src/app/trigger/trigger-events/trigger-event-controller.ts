@@ -1,18 +1,15 @@
+
 import {
     ListTriggerEventsRequest,
     SaveTriggerEventRequest,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { flowService } from '../flow/flow.service'
+import { flowService } from '../../flows/flow/flow.service'
 import { triggerEventService } from './trigger-event.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
-export const triggerEventModule: FastifyPluginAsyncTypebox = async (app) => {
-    await app.register(triggerEventController, { prefix: '/v1/trigger-events' })
-}
-
-const triggerEventController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const triggerEventController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 
     fastify.post('/', SaveTriggerEventRequestParams, async (request) => {
@@ -38,8 +35,6 @@ const triggerEventController: FastifyPluginAsyncTypebox = async (fastify) => {
     },
     )
 }
-
-
 
 
 const ListTriggerEventsRequestParams = {

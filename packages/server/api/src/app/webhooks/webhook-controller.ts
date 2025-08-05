@@ -13,9 +13,9 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { projectService } from '../project/project-service'
+import { triggerService } from '../trigger/trigger-service'
 import { WebhookFlowVersionToRun } from './webhook-handler'
 import { webhookService } from './webhook.service'
-import { triggerService } from '../trigger/trigger-service'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
