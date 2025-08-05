@@ -1,4 +1,4 @@
-import { slackSendMessage } from './utils';
+import { processMessageTimestamp, slackSendMessage } from './utils';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
@@ -61,6 +61,7 @@ export const requestAction = async (conversationId: string, context: any) => {
       text: `${context.propsValue.text}`,
       username,
       profilePicture,
+      threadTs: context.propsValue.threadTs ? processMessageTimestamp(context.propsValue.threadTs) : undefined,
       blocks: [
         {
           type: 'section',
