@@ -94,3 +94,4 @@ TypeSystemPolicy.ExactOptionalPropertyTypes = false
 export * from './lib/issues/index'
 export * from './lib/issues/issues-requests'
 export * from './lib/issues/issue-dto'
+export * from './lib/e2e'

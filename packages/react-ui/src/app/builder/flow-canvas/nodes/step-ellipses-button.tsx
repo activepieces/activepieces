@@ -1,12 +1,20 @@
 import { EllipsisVertical } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { ActionType, TriggerType } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
-export const StepEllipsesButton = ({ stepName }: { stepName: string }) => {
+export const StepEllipsesButton = ({
+  stepName,
+  type,
+}: {
+  stepName: string;
+  type: ActionType | TriggerType;
+}) => {
   const [readonly] = useBuilderStateContext((state) => [state.readonly]);
-  if (readonly && stepName === 'trigger') return null;
+  if ((readonly && stepName === 'trigger') || type === TriggerType.EMPTY)
+    return null;
   return (
     <Button
       onClick={(e) => {

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import { ADD_STEP_BUTTON_TEST_ID, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../utils/consts';
@@ -69,6 +69,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
           id={props.edgeId}
         >
           <div
+            data-testid={ADD_STEP_BUTTON_TEST_ID}
             style={{
               width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
               height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
