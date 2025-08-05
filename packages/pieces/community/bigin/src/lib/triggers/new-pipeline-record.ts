@@ -41,6 +41,7 @@ export const newPipelineRecord = createTrigger({
       context.auth.access_token,
       HttpMethod.POST,
       '/actions/watch',
+      context.auth.props?.['location'] || 'com',
       body
     );
 
@@ -65,7 +66,8 @@ export const newPipelineRecord = createTrigger({
         await makeRequest(
           context.auth.access_token,
           HttpMethod.DELETE,
-          endpoint
+          endpoint,
+          context.auth.props?.['location'] || 'com',
         );
       } catch (error) {
         console.error('Error disabling webhook:', error);

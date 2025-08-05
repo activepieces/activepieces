@@ -1,6 +1,7 @@
-import { Property } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { biginAuth } from './auth';
 
 export const formatDateTime = (dateTime: string | Date): string => {
   if (typeof dateTime === 'string') {
@@ -24,12 +25,19 @@ export const userIdDropdown = Property.Dropdown({
         placeholder: 'Please connect your account first',
       };
     }
-
+    
     try {
+      const typedAuth = auth as {
+        access_token: string;
+        props?: { [key: string]: any };
+      };
+      const accessToken = typedAuth.access_token;
+
       const response = await makeRequest(
-        auth as string,
+        accessToken,
         HttpMethod.GET,
-        '/users'
+        '/users',
+        typedAuth.props?.['location'] || 'com'
       );
       return {
         disabled: false,
@@ -67,14 +75,24 @@ export const createRecordIdDropdown = (
           placeholder: 'Please connect your account first',
         };
       }
-
+      if (!module) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Module not specified',
+        };
+      }
       try {
-        const accessToken =
-          (auth as { access_token?: string })?.access_token ?? (auth as string);
+        const typedAuth = auth as {
+          access_token: string;
+          props?: { [key: string]: any };
+        };
+        const accessToken = typedAuth.access_token;
         const response = await makeRequest(
           accessToken,
           HttpMethod.GET,
-          `/${module}?fields=Last_Name`
+          `/${module}?fields=Last_Name`,
+          typedAuth.props?.['location'] || 'com'
         );
 
         const records = response.data || response[module.toLowerCase()] || [];
@@ -102,7 +120,6 @@ export const createRecordIdDropdown = (
     },
   });
 };
-
 
 export const contactIdDropdown = createRecordIdDropdown(
   'Contacts',
@@ -156,10 +173,16 @@ export const recordIdDropdown = Property.Dropdown({
     }
 
     try {
+      const typedAuth = auth as {
+        access_token: string;
+        props?: { [key: string]: any };
+      };
+      const accessToken = typedAuth.access_token;
       const response = await makeRequest(
-        auth as string,
+        accessToken,
         HttpMethod.GET,
-        '/records'
+        '/records',
+        typedAuth.props?.['location'] || 'com'
       );
       return {
         disabled: false,

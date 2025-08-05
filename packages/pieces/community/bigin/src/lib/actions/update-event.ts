@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
-import { eventIdDropdown } from '../common/props';
+import { eventIdDropdown, userIdDropdown } from '../common/props';
 
 export const updateEvent = createAction({
   auth: biginAuth,
@@ -11,12 +11,7 @@ export const updateEvent = createAction({
   description: 'Update an existing event record in Bigin',
   props: {
     recordId: eventIdDropdown,
-    owner: Property.Json({
-      displayName: 'Owner',
-      description:
-        'The ID of the owner to which the event record will be assigned. You can get the owner ID (or user ID) from the Get users data API.',
-      required: false,
-    }),
+    owner: userIdDropdown,
     eventTitle: Property.ShortText({
       displayName: 'Event Title',
       description: 'Provide the title or name of the event',
@@ -37,10 +32,39 @@ export const updateEvent = createAction({
       description: 'Provide whether the event is an all-day event',
       required: false,
     }),
-    recurringActivity: Property.Json({
-      displayName: 'Recurring Activity',
+    dueDate: Property.DateTime({
+      displayName: 'Due Date',
+      description: 'Provide the due date of the task (YYYY-MM-DD format)',
+      required: false,
+    }),
+    // Recurring Activity - simplified props for easier configuration
+    isRecurring: Property.Checkbox({
+      displayName: 'Is Recurring Task',
+      description: 'Check if this is a recurring task',
+      required: false,
+    }),
+    recurringFrequency: Property.StaticDropdown({
+      displayName: 'Recurring Frequency',
+      description: 'How often the task should repeat',
+      required: false,
+      options: {
+        options: [
+          { label: 'Daily', value: 'DAILY' },
+          { label: 'Weekly', value: 'WEEKLY' },
+          { label: 'Monthly', value: 'MONTHLY' },
+          { label: 'Yearly', value: 'YEARLY' },
+        ],
+      },
+    }),
+    recurringInterval: Property.Number({
+      displayName: 'Recurring Interval',
       description:
-        'Contains the details about the recurrence pattern of the event in the key RRULE. Example: {"RRULE": "FREQ=MONTHLY;INTERVAL=1;BYDAY=MO;UNTIL=2023-09-05"}',
+        'Interval for recurrence (e.g., 1 for every week, 2 for every 2 weeks)',
+      required: false,
+    }),
+    recurringUntil: Property.DateTime({
+      displayName: 'Recurring Until',
+      description: 'End date for recurring task',
       required: false,
     }),
     remindAt: Property.Json({
@@ -110,8 +134,7 @@ export const updateEvent = createAction({
       body['End_DateTime'] = formatDateTime(context.propsValue.endDateTime);
     if (context.propsValue.allDay !== undefined)
       body['All_day'] = context.propsValue.allDay;
-    if (context.propsValue.recurringActivity)
-      body['Recurring_Activity'] = context.propsValue.recurringActivity;
+   
     if (context.propsValue.remindAt)
       body['Remind_At'] = context.propsValue.remindAt;
     if (context.propsValue.venue) body['Venue'] = context.propsValue.venue;
@@ -124,16 +147,40 @@ export const updateEvent = createAction({
     if (context.propsValue.description)
       body['Description'] = context.propsValue.description;
     if (context.propsValue.tag) body['Tag'] = context.propsValue.tag;
+    
+    if (
+      context.propsValue.isRecurring &&
+      context.propsValue.recurringFrequency
+    ) {
+      let rrule = `FREQ=${context.propsValue.recurringFrequency}`;
+
+      if (context.propsValue.recurringInterval) {
+        rrule += `;INTERVAL=${context.propsValue.recurringInterval}`;
+      }
+
+      if (context.propsValue.recurringUntil) {
+        const untilDate = new Date(context.propsValue.recurringUntil);
+        rrule += `;UNTIL=${untilDate.toISOString().split('T')[0]}`;
+      }
+
+      if (context.propsValue.dueDate) {
+        const startDate = new Date(context.propsValue.dueDate);
+        rrule += `;DTSTART=${startDate.toISOString().split('T')[0]}`;
+      }
+
+      body['Recurring_Activity'] = { RRULE: rrule };
+    }
 
     const response = await makeRequest(
       context.auth.access_token,
       HttpMethod.PUT,
       '/Events',
+      context.auth.props?.['location'] || 'com',
       {
         data: [body],
       }
     );
 
-   return response.data[0];
+    return response.data[0];
   },
 });

@@ -48,7 +48,6 @@ export const createPipelineRecord = createAction({
       'Secondary Contacts',
       'Provide a list of additional contacts associated with the pipeline record (deal)'
     ),
-
     closingDate: Property.DateTime({
       displayName: 'Closing Date',
       description:
@@ -93,6 +92,7 @@ export const createPipelineRecord = createAction({
       context.auth.access_token,
       HttpMethod.POST,
       '/Pipelines',
+      context.auth.props?.['location'] || 'com',
       {
         data: [body],
       }

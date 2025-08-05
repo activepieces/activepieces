@@ -6,6 +6,7 @@ import {
   contactIdDropdown,
   userIdDropdown,
   createRecordIdDropdown,
+  formatDateTime,
 } from '../common/props';
 
 export const createCall = createAction({
@@ -92,29 +93,11 @@ export const createCall = createAction({
   async run(context) {
     // Format datetime for Bigin API - they expect YYYY-MM-DDTHH:mm:ss+HH:MM format
     const callStartTime = context.propsValue.callStartTime;
-    let formattedStartTime: string;
+    const formattedStartTime = formatDateTime(callStartTime);
 
-    if (typeof callStartTime === 'string') {
-      formattedStartTime = callStartTime;
-    } else {
-      const date = new Date(callStartTime);
-      // Format as YYYY-MM-DDTHH:mm:ss+00:00 (Bigin expects timezone offset)
-      formattedStartTime = date.toISOString().replace('.000Z', '+00:00');
-    }
-
-    // Format reminder time if provided
-    let formattedReminder: string | undefined;
-    if (context.propsValue.reminder) {
-      const reminderTime = context.propsValue.reminder;
-      if (typeof reminderTime === 'string') {
-        formattedReminder = reminderTime;
-      } else {
-        const reminderDate = new Date(reminderTime);
-        formattedReminder = reminderDate
-          .toISOString()
-          .replace('.000Z', '+00:00');
-      }
-    }
+    const formattedReminder = context.propsValue.reminder
+      ? formatDateTime(context.propsValue.reminder)
+      : undefined;
 
     const body: Record<string, unknown> = {
       Call_Start_Time: formattedStartTime,
@@ -169,6 +152,7 @@ export const createCall = createAction({
       context.auth.access_token,
       HttpMethod.POST,
       '/Calls',
+      context.auth.props?.['location'] || 'com',
       {
         data: [body],
       }

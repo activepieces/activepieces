@@ -92,6 +92,7 @@ export const createCompany = createAction({
       context.auth.access_token,
       HttpMethod.POST,
       '/Accounts',
+      context.auth.props?.['location'] || 'com',
       {
         data: [body],
       }

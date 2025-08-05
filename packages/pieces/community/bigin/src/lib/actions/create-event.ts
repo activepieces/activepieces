@@ -32,13 +32,38 @@ export const createEvent = createAction({
       required: false,
       defaultValue: false,
     }),
-    recurringActivity: Property.Json({
-      displayName: 'Recurring Activity',
-      description:
-        'Contains the details about the recurrence pattern of the event in the key RRULE. Example: {"RRULE": "FREQ=MONTHLY;INTERVAL=1;BYDAY=MO;UNTIL=2023-09-05"}',
+
+    // Recurring Activity - simplified props for easier configuration
+    isRecurring: Property.Checkbox({
+      displayName: 'Is Recurring Task',
+      description: 'Check if this is a recurring task',
       required: false,
     }),
-    remindAt: Property.Json({
+    recurringFrequency: Property.StaticDropdown({
+      displayName: 'Recurring Frequency',
+      description: 'How often the task should repeat',
+      required: false,
+      options: {
+        options: [
+          { label: 'Daily', value: 'DAILY' },
+          { label: 'Weekly', value: 'WEEKLY' },
+          { label: 'Monthly', value: 'MONTHLY' },
+          { label: 'Yearly', value: 'YEARLY' },
+        ],
+      },
+    }),
+    recurringInterval: Property.Number({
+      displayName: 'Recurring Interval',
+      description:
+        'Interval for recurrence (e.g., 1 for every week, 2 for every 2 weeks)',
+      required: false,
+    }),
+    recurringUntil: Property.DateTime({
+      displayName: 'Recurring Until',
+      description: 'End date for recurring task',
+      required: false,
+    }),
+    remindAt: Property.Array({
       displayName: 'Remind At',
       description:
         'Provide the reminder list to notify or prompt participants before the event. Set this using time unit values such as unit and period',
@@ -49,7 +74,7 @@ export const createEvent = createAction({
       description: 'Provide the location or venue of the event',
       required: false,
     }),
-    relatedTo: Property.Json({
+    relatedTo: Property.Array({
       displayName: 'Related To',
       description:
         'Provide the unique ID of the entity (Contact, Pipeline or Company) that the event is related to',
@@ -61,10 +86,10 @@ export const createEvent = createAction({
         'Provide the type of entity the event is linked to. Use Contacts, Deals or Accounts to match the record in Related_To',
       required: false,
     }),
-    participants: Property.Json({
+    participants: Property.Array({
       displayName: 'Participants',
       description:
-        'Provide a list of participants or attendees associated with the event',
+        'Provide the unique ID(s) of the user(s) participating in the event',
       required: false,
     }),
     description: Property.LongText({
@@ -91,8 +116,7 @@ export const createEvent = createAction({
     if (context.propsValue.owner) body['Owner'] = context.propsValue.owner;
     if (context.propsValue.allDay !== undefined)
       body['All_day'] = context.propsValue.allDay;
-    if (context.propsValue.recurringActivity)
-      body['Recurring_Activity'] = context.propsValue.recurringActivity;
+
     if (context.propsValue.remindAt)
       body['Remind_At'] = context.propsValue.remindAt;
     if (context.propsValue.venue) body['Venue'] = context.propsValue.venue;
@@ -106,10 +130,28 @@ export const createEvent = createAction({
       body['Description'] = context.propsValue.description;
     if (context.propsValue.tag) body['Tag'] = context.propsValue.tag;
 
+    if (
+      context.propsValue.isRecurring &&
+      context.propsValue.recurringFrequency
+    ) {
+      let rrule = `FREQ=${context.propsValue.recurringFrequency}`;
+
+      if (context.propsValue.recurringInterval) {
+        rrule += `;INTERVAL=${context.propsValue.recurringInterval}`;
+      }
+
+      if (context.propsValue.recurringUntil) {
+        const untilDate = new Date(context.propsValue.recurringUntil);
+        rrule += `;UNTIL=${untilDate.toISOString().split('T')[0]}`;
+      }
+
+      body['Recurring_Activity'] = { RRULE: rrule };
+    }
     const response = await makeRequest(
       context.auth.access_token,
       HttpMethod.POST,
       '/Events',
+      context.auth.props?.['location'] || 'com',
       {
         data: [body],
       }

@@ -2,7 +2,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
-import { pipelineIdDropdown } from '../common/props';
+import {
+  companyIdDropdown,
+  contactIdDropdown,
+  createRecordIdDropdown,
+  pipelineIdDropdown,
+  productidDropdown,
+  userIdDropdown,
+} from '../common/props';
 
 export const updatePipelineRecord = createAction({
   auth: biginAuth,
@@ -11,29 +18,14 @@ export const updatePipelineRecord = createAction({
   description: 'Update an existing pipeline record (deal) in Bigin',
   props: {
     recordId: pipelineIdDropdown,
-    owner: Property.Json({
-      displayName: 'Owner',
-      description:
-        'The ID of the owner to which the pipeline record (deal) will be assigned. You can get the owner ID (or user ID) from the Get users data API.',
-      required: false,
-    }),
+    owner: userIdDropdown,
     dealName: Property.ShortText({
       displayName: 'Deal Name',
       description: 'Provide the name for the pipeline record (deal)',
       required: false,
     }),
-    accountName: Property.Json({
-      displayName: 'Account Name',
-      description:
-        'The ID of the company to which the pipeline record (deal) will be associated. You can get the company ID from the Get records API.',
-      required: false,
-    }),
-    contactName: Property.Json({
-      displayName: 'Contact Name',
-      description:
-        'The ID of the contact to which the pipeline record (deal) will be assigned. You can get the contact ID from the Get records API.',
-      required: false,
-    }),
+    accountName: companyIdDropdown,
+    contactName: contactIdDropdown,
     subPipeline: Property.ShortText({
       displayName: 'Sub Pipeline',
       description:
@@ -51,36 +43,25 @@ export const updatePipelineRecord = createAction({
       description: 'The amount of the pipeline record (deal)',
       required: false,
     }),
-    secondaryContacts: Property.Json({
-      displayName: 'Secondary Contacts',
-      description:
-        'Provide a list of additional contacts associated with the pipeline record (deal)',
-      required: false,
-    }),
+    secondaryContacts: createRecordIdDropdown(
+      'Contacts',
+      'Secondary Contacts',
+      'Provide a list of additional contacts associated with the pipeline record (deal)'
+    ),
     closingDate: Property.ShortText({
       displayName: 'Closing Date',
       description:
         'Provide the expected or actual closing date of the pipeline record (deal) in YYYY-MM-DD format',
       required: false,
     }),
-    tag: Property.Json({
+    tag: Property.Array({
       displayName: 'Tag',
       description:
         'Provide the list of tags that can be associated with the pipeline record (deal). You can get the list of tags from the Get all tags API',
       required: false,
     }),
-    pipeline: Property.Json({
-      displayName: 'Pipeline',
-      description:
-        'Provide the name and ID of the Team Pipeline to which the pipeline record (deal) belongs. You can get the Team Pipeline ID from the Get layouts metadata API.',
-      required: false,
-    }),
-    associatedProducts: Property.Json({
-      displayName: 'Associated Products',
-      description:
-        'Provide the list of products in JSON format that need to be associated with the pipeline record (deal). You can get the product ID from the Get records API.',
-      required: false,
-    }),
+    pipeline: pipelineIdDropdown,
+    associatedProducts: productidDropdown,
   },
   async run(context) {
     const body: Record<string, unknown> = {
@@ -114,6 +95,7 @@ export const updatePipelineRecord = createAction({
       context.auth.access_token,
       HttpMethod.PUT,
       '/Pipelines',
+      context.auth.props?.['location'] || 'com',
       {
         data: [body],
       }

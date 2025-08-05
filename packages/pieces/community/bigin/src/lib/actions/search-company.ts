@@ -69,6 +69,7 @@ export const searchCompany = createAction({
     const response = await makeRequest(
       context.auth.access_token,
       HttpMethod.GET,
+      context.auth.props?.['location'] || 'com',
       `/Companies/search?${queryParams.toString()}`
     );
 

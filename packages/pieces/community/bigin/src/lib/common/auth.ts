@@ -10,23 +10,23 @@ export const biginAuth = PieceAuth.OAuth2({
         options: [
           {
             label: 'zoho.eu (Europe)',
-            value: 'zoho.eu',
+            value: 'eu',
           },
           {
             label: 'zoho.com (United States)',
-            value: 'zoho.com',
+            value: 'com',
           },
           {
             label: 'zoho.com.au (Australia)',
-            value: 'zoho.com.au',
+            value: 'com.au',
           },
           {
             label: 'zoho.jp (Japan)',
-            value: 'zoho.jp',
+            value: 'jp',
           },
           {
             label: 'zoho.in (India)',
-            value: 'zoho.in',
+            value: 'in',
           },
           {
             label: 'zohocloud.ca (Canada)',
@@ -37,8 +37,8 @@ export const biginAuth = PieceAuth.OAuth2({
     }),
   },
   description: 'Authenticate with your Bigin account',
-  authUrl: 'https://accounts.{location}/oauth/v2/auth',
-  tokenUrl: 'https://accounts.{location}/oauth/v2/token',
+  authUrl: 'https://accounts.zoho.{location}/oauth/v2/auth',
+  tokenUrl: 'https://accounts.zoho.{location}/oauth/v2/token',
   required: true,
   scope: [
     'ZohoBigin.notifications.ALL',

@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
-import { userIdDropdown } from '../common/props';
+import { companyIdDropdown, userIdDropdown } from '../common/props';
 
 export const createContact = createAction({
   auth: biginAuth,
@@ -42,11 +42,7 @@ export const createContact = createAction({
       defaultValue: false,
     }),
     owner: userIdDropdown,
-    accountName: Property.Json({
-      displayName: 'Account Name',
-      description: 'Associated account (object with id)',
-      required: false,
-    }),
+    accountName: companyIdDropdown,
     tag: Property.Array({
       displayName: 'Tag',
       description: 'Tags for the contact (array of objects with name property)',
@@ -118,6 +114,7 @@ export const createContact = createAction({
       context.auth.access_token,
       HttpMethod.POST,
       '/Contacts',
+      context.auth.props?.['location'] || 'com',
       {
         data: [body],
       }

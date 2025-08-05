@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
-import { companyIdDropdown, createRecordIdDropdown } from '../common/props';
+import { companyIdDropdown, createRecordIdDropdown, userIdDropdown } from '../common/props';
 
 export const updateCompany = createAction({
   auth: biginAuth,
@@ -11,12 +11,7 @@ export const updateCompany = createAction({
   description: 'Update an existing company record in Bigin',
   props: {
     recordId: companyIdDropdown,
-    owner: Property.Json({
-      displayName: 'Owner',
-      description:
-        'The ID of the owner to which the company record will be assigned. You can get the owner ID (or user ID) from the Get users data API.',
-      required: false,
-    }),
+    owner: userIdDropdown,
     accountName: Property.ShortText({
       displayName: 'Account Name',
       description: 'Provide the name of the company',
@@ -32,7 +27,7 @@ export const updateCompany = createAction({
       description: 'Provide a website URL for the company',
       required: false,
     }),
-    tag: Property.Json({
+    tag: Property.Array({
       displayName: 'Tag',
       description:
         'Provide the list of tags that can be associated with the company. You can get the list of tags from the Get all tags API',
@@ -100,6 +95,7 @@ export const updateCompany = createAction({
       context.auth.access_token,
       HttpMethod.PUT,
       '/Accounts',
+      context.auth.props?.['location'] || 'com',
       {
         data: [body],
       }

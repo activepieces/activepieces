@@ -274,6 +274,7 @@ export const createTask = createAction({
     const response = await makeRequest(
       context.auth.access_token,
       HttpMethod.POST,
+      context.auth.props?.['location'] || 'com',
       '/Tasks',
       {
         data: [body],

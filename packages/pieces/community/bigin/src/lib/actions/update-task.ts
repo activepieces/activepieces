@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
-import { taskIdDropdown } from '../common/props';
+import { taskIdDropdown, userIdDropdown } from '../common/props';
 
 export const updateTask = createAction({
   auth: biginAuth,
@@ -11,32 +11,45 @@ export const updateTask = createAction({
   description: 'Update an existing task record in Bigin',
   props: {
     recordId: taskIdDropdown,
-    owner: Property.Json({
-      displayName: 'Owner',
-      description:
-        'The ID of the owner to which the task record will be assigned. You can get the owner ID (or user ID) from the Get users data API.',
-      required: false,
-    }),
+    owner: userIdDropdown,
     subject: Property.ShortText({
       displayName: 'Subject',
       description: 'Provide the subject or title of the task',
       required: false,
     }),
-    dueDate: Property.ShortText({
+    dueDate: Property.DateTime({
       displayName: 'Due Date',
       description: 'Provide the due date of the task (YYYY-MM-DD format)',
       required: false,
     }),
-    recurringActivity: Property.Json({
-      displayName: 'Recurring Activity',
-      description:
-        'Contains the details about the recurrence pattern of the task in the key RRULE. Example: {"RRULE": "FREQ=MONTHLY;INTERVAL=1;BYDAY=MO;UNTIL=2023-09-05"}',
+    // Recurring Activity - simplified props for easier configuration
+    isRecurring: Property.Checkbox({
+      displayName: 'Is Recurring Task',
+      description: 'Check if this is a recurring task',
       required: false,
     }),
-    remindAt: Property.Json({
-      displayName: 'Remind At',
+    recurringFrequency: Property.StaticDropdown({
+      displayName: 'Recurring Frequency',
+      description: 'How often the task should repeat',
+      required: false,
+      options: {
+        options: [
+          { label: 'Daily', value: 'DAILY' },
+          { label: 'Weekly', value: 'WEEKLY' },
+          { label: 'Monthly', value: 'MONTHLY' },
+          { label: 'Yearly', value: 'YEARLY' },
+        ],
+      },
+    }),
+    recurringInterval: Property.Number({
+      displayName: 'Recurring Interval',
       description:
-        'Provide the reminder to notify or prompt members associated with the task in the key ALARM. Example: {"ALARM": "ACTION=EMAIL;TRIGGER=P1D;TRIGGER_TIME=22:45"}',
+        'Interval for recurrence (e.g., 1 for every week, 2 for every 2 weeks)',
+      required: false,
+    }),
+    recurringUntil: Property.DateTime({
+      displayName: 'Recurring Until',
+      description: 'End date for recurring task',
       required: false,
     }),
     relatedTo: Property.Json({
@@ -86,7 +99,7 @@ export const updateTask = createAction({
         ],
       },
     }),
-    tag: Property.Json({
+    tag: Property.Array({
       displayName: 'Tag',
       description:
         'Provide the list of tags that can be associated with the task. You can get the list of tags from the Get all tags API',
@@ -104,10 +117,7 @@ export const updateTask = createAction({
       body['Subject'] = context.propsValue.subject;
     if (context.propsValue.dueDate)
       body['Due_Date'] = context.propsValue.dueDate;
-    if (context.propsValue.recurringActivity)
-      body['Recurring_Activity'] = context.propsValue.recurringActivity;
-    if (context.propsValue.remindAt)
-      body['Remind_At'] = context.propsValue.remindAt;
+    
     if (context.propsValue.relatedTo)
       body['Related_To'] = context.propsValue.relatedTo;
     if (context.propsValue.relatedModule)
@@ -119,10 +129,34 @@ export const updateTask = createAction({
     if (context.propsValue.status) body['Status'] = context.propsValue.status;
     if (context.propsValue.tag) body['Tag'] = context.propsValue.tag;
 
+    if (
+      context.propsValue.isRecurring &&
+      context.propsValue.recurringFrequency
+    ) {
+      let rrule = `FREQ=${context.propsValue.recurringFrequency}`;
+
+      if (context.propsValue.recurringInterval) {
+        rrule += `;INTERVAL=${context.propsValue.recurringInterval}`;
+      }
+
+      if (context.propsValue.recurringUntil) {
+        const untilDate = new Date(context.propsValue.recurringUntil);
+        rrule += `;UNTIL=${untilDate.toISOString().split('T')[0]}`;
+      }
+
+      if (context.propsValue.dueDate) {
+        const startDate = new Date(context.propsValue.dueDate);
+        rrule += `;DTSTART=${startDate.toISOString().split('T')[0]}`;
+      }
+
+      body['Recurring_Activity'] = { RRULE: rrule };
+    }
+
     const response = await makeRequest(
       context.auth.access_token,
       HttpMethod.PUT,
       '/Tasks',
+      context.auth.props?.['location'] || 'com',
       {
         data: [body],
       }

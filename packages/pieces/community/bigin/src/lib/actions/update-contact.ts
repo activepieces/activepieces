@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
-import { contactIdDropdown } from '../common/props';
+import { companyIdDropdown, contactIdDropdown, userIdDropdown } from '../common/props';
 
 export const updateContact = createAction({
   auth: biginAuth,
@@ -41,17 +41,9 @@ export const updateContact = createAction({
       description: 'Whether the contact has opted out of emails',
       required: false,
     }),
-    owner: Property.Json({
-      displayName: 'Owner',
-      description: 'The owner of the contact record (object with id)',
-      required: false,
-    }),
-    accountName: Property.Json({
-      displayName: 'Account Name',
-      description: 'Associated account (object with id)',
-      required: false,
-    }),
-    tag: Property.Json({
+    owner: userIdDropdown,
+    accountName: companyIdDropdown,
+    tag: Property.Array({
       displayName: 'Tag',
       description: 'Tags for the contact (array of objects with name property)',
       required: false,
@@ -123,6 +115,7 @@ export const updateContact = createAction({
       context.auth.access_token,
       HttpMethod.PUT,
       '/Contacts',
+      context.auth.props?.['location'] || 'com',
       {
         data: [body],
       }

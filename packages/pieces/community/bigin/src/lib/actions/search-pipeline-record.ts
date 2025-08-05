@@ -73,12 +73,12 @@ export const searchPipelineRecord = createAction({
     const response = await makeRequest(
       context.auth.access_token,
       HttpMethod.GET,
+      context.auth.props?.['location'] || 'com',
       `/Deals/search?${queryParams.toString()}`
     );
 
     return {
       deals: response.data || [],
-      totalRecords: response.info?.count || 0,
     };
   },
 }); 

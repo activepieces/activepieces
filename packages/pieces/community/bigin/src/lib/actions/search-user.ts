@@ -76,6 +76,7 @@ export const searchUser = createAction({
     const response = await makeRequest(
       context.auth.access_token,
       HttpMethod.GET,
+      context.auth.props?.['location'] || 'com',
       `/users?${queryParams.toString()}`
     );
 
