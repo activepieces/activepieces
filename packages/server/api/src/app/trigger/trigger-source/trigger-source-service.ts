@@ -109,7 +109,6 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
             await triggerSourceRepo().softDelete({
                 id: triggerSource.id,
                 projectId,
-                deleted: new Date().toISOString(),
             })
         },
     }
