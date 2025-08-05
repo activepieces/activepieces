@@ -30,12 +30,6 @@ export const addTagToTicket = createAction({
     const { auth, propsValue } = context;
     const { email, token, subdomain } = auth as { email: string; token: string; subdomain: string };
 
-    const ticketData: { ticket: { tags: unknown[] } } = {
-      ticket: {
-        tags: propsValue.tags,
-      },
-    };
-
     const response = await httpClient.sendRequest<{ ticket: Record<string, unknown> }>({
       url: `https://${subdomain}.zendesk.com/api/v2/tickets/${propsValue.ticket_id}.json`,
       method: HttpMethod.PUT,
@@ -44,7 +38,12 @@ export const addTagToTicket = createAction({
         username: email + '/token',
         password: token,
       },
-      body: ticketData,
+      body: {
+        ticket: {
+          tags: propsValue.tags,
+        },
+      },
+      timeout: 30000,
     });
 
     return response.body;

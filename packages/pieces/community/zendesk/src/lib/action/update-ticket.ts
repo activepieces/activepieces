@@ -154,7 +154,10 @@ export const updateTicket = createAction({
         username: email + '/token',
         password: token,
       },
-      body: ticketData,
+      body: {
+        ticket: ticketData,
+      },
+      timeout: 30000, // 30 seconds timeout
     });
 
     return response.body;

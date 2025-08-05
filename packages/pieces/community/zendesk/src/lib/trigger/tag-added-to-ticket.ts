@@ -86,6 +86,7 @@ async function getTicketWithTags(authentication: AuthProps, ticket_id: string) {
       username: email + '/token',
       password: token,
     },
+    timeout: 30000, // 30 seconds timeout
   });
   return [response.body.ticket];
 } 

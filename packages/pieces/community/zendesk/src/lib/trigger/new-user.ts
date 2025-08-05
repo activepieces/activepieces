@@ -72,13 +72,15 @@ const polling: Polling<AuthProps, Record<string, never>> = {
 async function getUsers(authentication: AuthProps) {
   const { email, token, subdomain } = authentication;
   const response = await httpClient.sendRequest<{ users: Array<{ id: number; [key: string]: unknown }> }>({
-    url: `https://${subdomain}.zendesk.com/api/v2/users.json?sort_order=desc&sort_by=created_at&per_page=200`,
+    url: `https://${subdomain}.zendesk.com/api/v2/users.json?sort_order=desc&sort_by=created_at&per_page=50`,
     method: HttpMethod.GET,
     authentication: {
       type: AuthenticationType.BASIC,
       username: email + '/token',
       password: token,
     },
+    timeout: 30000, // 30 seconds timeout
+    retries: 3, // Retry up to 3 times on failure
   });
   return response.body.users;
 } 

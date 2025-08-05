@@ -36,15 +36,6 @@ export const addCommentToTicket = createAction({
     const { auth, propsValue } = context;
     const { email, token, subdomain } = auth as { email: string; token: string; subdomain: string };
 
-    const ticketData: { ticket: { comment: { body: string; public: boolean } } } = {
-      ticket: {
-        comment: {
-          body: propsValue.comment,
-          public: propsValue.public ?? true,
-        },
-      },
-    };
-
     const response = await httpClient.sendRequest<{ ticket: Record<string, unknown> }>({
       url: `https://${subdomain}.zendesk.com/api/v2/tickets/${propsValue.ticket_id}.json`,
       method: HttpMethod.PUT,
@@ -53,7 +44,15 @@ export const addCommentToTicket = createAction({
         username: email + '/token',
         password: token,
       },
-      body: ticketData,
+      body: {
+        ticket: {
+          comment: {
+            body: propsValue.comment,
+            public: propsValue.public,
+          },
+        },
+      },
+      timeout: 30000, // 30 seconds timeout
     });
 
     return response.body;

@@ -33,6 +33,7 @@ export const deleteUser = createAction({
         username: email + '/token',
         password: token,
       },
+      timeout: 30000, // 30 seconds timeout
     });
 
     return {

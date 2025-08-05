@@ -125,7 +125,10 @@ export const createUser = createAction({
         username: email + '/token',
         password: token,
       },
-      body: userData,
+      body: {
+        user: userData,
+      },
+      timeout: 30000, // 30 seconds timeout
     });
 
     return response.body;

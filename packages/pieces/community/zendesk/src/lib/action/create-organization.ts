@@ -94,7 +94,10 @@ export const createOrganization = createAction({
         username: email + '/token',
         password: token,
       },
-      body: organizationData,
+      body: {
+        organization: organizationData,
+      },
+      timeout: 30000, // 30 seconds timeout
     });
 
     return response.body;

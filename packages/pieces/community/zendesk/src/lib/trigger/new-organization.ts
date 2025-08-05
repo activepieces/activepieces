@@ -72,13 +72,14 @@ const polling: Polling<AuthProps, Record<string, never>> = {
 async function getOrganizations(authentication: AuthProps) {
   const { email, token, subdomain } = authentication;
   const response = await httpClient.sendRequest<{ organizations: Array<{ id: number; name: string }> }>({
-    url: `https://${subdomain}.zendesk.com/api/v2/organizations.json?sort_order=desc&sort_by=created_at&per_page=200`,
+    url: `https://${subdomain}.zendesk.com/api/v2/organizations.json?sort_order=desc&sort_by=created_at&per_page=50`,
     method: HttpMethod.GET,
     authentication: {
       type: AuthenticationType.BASIC,
       username: email + '/token',
       password: token,
     },
+    timeout: 30000, // 30 seconds timeout
   });
   return response.body.organizations;
 } 

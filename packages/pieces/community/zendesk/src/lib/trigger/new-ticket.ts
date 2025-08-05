@@ -120,7 +120,7 @@ const polling: Polling<AuthProps, { organization_id?: string }> = {
 
 async function getTickets(authentication: AuthProps, organization_id?: string) {
   const { email, token, subdomain } = authentication;
-  let url = `https://${subdomain}.zendesk.com/api/v2/tickets.json?sort_order=desc&sort_by=created_at&per_page=200`;
+  let url = `https://${subdomain}.zendesk.com/api/v2/tickets.json?sort_order=desc&sort_by=created_at&per_page=50`;
   
   if (organization_id) {
     url += `&organization_id=${organization_id}`;
@@ -134,6 +134,8 @@ async function getTickets(authentication: AuthProps, organization_id?: string) {
       username: email + '/token',
       password: token,
     },
+    timeout: 30000, // 30 seconds timeout
+    retries: 3, // Retry up to 3 times on failure
   });
   return response.body.tickets;
 } 

@@ -72,13 +72,14 @@ const polling: Polling<AuthProps, Record<string, never>> = {
 async function getSuspendedTickets(authentication: AuthProps) {
   const { email, token, subdomain } = authentication;
   const response = await httpClient.sendRequest<{ suspended_tickets: Array<{ id: number; [key: string]: unknown }> }>({
-    url: `https://${subdomain}.zendesk.com/api/v2/suspended_tickets.json?sort_order=desc&sort_by=created_at&per_page=200`,
+    url: `https://${subdomain}.zendesk.com/api/v2/suspended_tickets.json?sort_order=desc&sort_by=created_at&per_page=50`,
     method: HttpMethod.GET,
     authentication: {
       type: AuthenticationType.BASIC,
       username: email + '/token',
       password: token,
     },
+    timeout: 30000, // 30 seconds timeout
   });
   return response.body.suspended_tickets;
 } 

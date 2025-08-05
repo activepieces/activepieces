@@ -111,6 +111,8 @@ export const findUser = createAction({
         username: email + '/token',
         password: token,
       },
+      timeout: 30000, // 30 seconds timeout
+      retries: 3, // Retry up to 3 times on failure
     });
 
     return response.body;

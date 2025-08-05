@@ -144,6 +144,8 @@ export const createTicket = createAction({
         password: token,
       },
       body: ticketData,
+      timeout: 30000, // 30 seconds timeout
+      retries: 3, // Retry up to 3 times on failure
     });
 
     return response.body;

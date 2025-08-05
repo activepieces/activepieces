@@ -79,13 +79,14 @@ const polling: Polling<AuthProps, { ticket_id: string }> = {
 async function getTicketAudits(authentication: AuthProps, ticket_id: string) {
   const { email, token, subdomain } = authentication;
   const response = await httpClient.sendRequest<{ audits: Array<{ id: number; [key: string]: unknown }> }>({
-    url: `https://${subdomain}.zendesk.com/api/v2/tickets/${ticket_id}/audits.json?sort_order=desc&sort_by=created_at&per_page=200`,
+    url: `https://${subdomain}.zendesk.com/api/v2/tickets/${ticket_id}/audits.json?sort_order=desc&sort_by=created_at&per_page=50`,
     method: HttpMethod.GET,
     authentication: {
       type: AuthenticationType.BASIC,
       username: email + '/token',
       password: token,
     },
+    timeout: 30000, // 30 seconds timeout
   });
   return response.body.audits;
 } 
