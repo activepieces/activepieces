@@ -68,14 +68,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         return {}
     })
 
-    app.post('/update-failure-count', UpdateFailureCount, async (request) => {
-        const { flowId, projectId, success } = request.body
-        await flowService(request.log).updateFailureCount({
-            flowId,
-            projectId,
-            success,
-        })
-    })
 
     app.post('/notify-frontend', NotifyFrontendParams, async (request) => {
         const { type, data } = request.body

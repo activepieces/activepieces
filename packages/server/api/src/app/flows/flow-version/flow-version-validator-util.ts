@@ -3,7 +3,7 @@ import {
     PropertyType,
 } from '@activepieces/pieces-framework'
 import {
-    ActionType,
+    FlowActionType,
     FlowOperationRequest,
     FlowOperationType,
     isNil,
@@ -13,7 +13,7 @@ import {
     PlatformId,
     ProjectId,
     RouterActionSettingsWithValidation,
-    TriggerType,
+    FlowTriggerType,
 } from '@activepieces/shared'
 import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
@@ -43,12 +43,12 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
         switch (clonedRequest.type) {
             case FlowOperationType.ADD_ACTION:
                 switch (clonedRequest.request.action.type) {
-                    case ActionType.LOOP_ON_ITEMS:
+                    case FlowActionType.LOOP_ON_ITEMS:
                         clonedRequest.request.action.valid = loopSettingsValidator.Check(
                             clonedRequest.request.action.settings,
                         ) 
                         break
-                    case ActionType.PIECE: {
+                    case FlowActionType.PIECE: {
                         const result = await validateAction(
                             clonedRequest.request.action.settings,
                             projectId,
@@ -61,24 +61,24 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         }
                         break
                     }
-                    case ActionType.ROUTER:
+                    case FlowActionType.ROUTER:
                         clonedRequest.request.action.valid = routerSettingsValidator.Check(
                             clonedRequest.request.action.settings,
                         )
                         break
-                    case ActionType.CODE: {
+                    case FlowActionType.CODE: {
                         break
                     }
                 }
                 break
             case FlowOperationType.UPDATE_ACTION:
                 switch (clonedRequest.request.type) {
-                    case ActionType.LOOP_ON_ITEMS:
+                    case FlowActionType.LOOP_ON_ITEMS:
                         clonedRequest.request.valid = loopSettingsValidator.Check(
                             clonedRequest.request.settings,
                         )
                         break
-                    case ActionType.PIECE: {
+                    case FlowActionType.PIECE: {
                         const result = await validateAction(
                             clonedRequest.request.settings,
                             projectId,
@@ -91,22 +91,22 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         }
                         break
                     }
-                    case ActionType.ROUTER:
+                    case FlowActionType.ROUTER:
                         clonedRequest.request.valid = routerSettingsValidator.Check(
                             clonedRequest.request.settings,
                         )
                         break
-                    case ActionType.CODE: {
+                    case FlowActionType.CODE: {
                         break
                     }
                 }
                 break
             case FlowOperationType.UPDATE_TRIGGER:
                 switch (clonedRequest.request.type) {
-                    case TriggerType.EMPTY:
+                    case FlowTriggerType.EMPTY:
                         clonedRequest.request.valid = false
                         break
-                    case TriggerType.PIECE: {
+                    case FlowTriggerType.PIECE: {
                         const result = await validateTrigger(
                             clonedRequest.request.settings,
                             projectId,

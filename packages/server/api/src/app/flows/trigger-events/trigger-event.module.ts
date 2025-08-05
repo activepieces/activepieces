@@ -1,6 +1,6 @@
 import {
     ListTriggerEventsRequest,
-    TestPollingTriggerRequest,
+    SaveTriggerEventRequest,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { flowService } from '../flow/flow.service'
@@ -13,23 +13,13 @@ export const triggerEventModule: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const triggerEventController: FastifyPluginAsyncTypebox = async (fastify) => {
-    fastify.get('/poll', TestPollingTriggerRequestParams, async (request) => {
-        const flow = await flowService(request.log).getOnePopulatedOrThrow({
-            projectId: request.principal.projectId,
-            id: request.query.flowId,
-        })
 
-        return triggerEventService(request.log).test({
-            projectId: request.principal.projectId,
-            flow,
-        })
-    })
 
-    fastify.post('/', PollRequestParams, async (request) => {
-        return triggerEventService(request.log) .saveEvent({
+    fastify.post('/', SaveTriggerEventRequestParams, async (request) => {
+        return triggerEventService(request.log).saveEvent({
             projectId: request.principal.projectId,
-            flowId: request.query.flowId,
-            payload: request.body,
+            flowId: request.body.flowId,
+            payload: request.body.mockData,
         })
     })
 
@@ -51,11 +41,6 @@ const triggerEventController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 
 
-const TestPollingTriggerRequestParams = {
-    schema: {
-        querystring: TestPollingTriggerRequest,
-    },
-}
 
 const ListTriggerEventsRequestParams = {
     schema: {
@@ -63,8 +48,8 @@ const ListTriggerEventsRequestParams = {
     },
 }
 
-const PollRequestParams = {
+const SaveTriggerEventRequestParams = {
     schema: {
-        querystring: TestPollingTriggerRequest,
+        body: SaveTriggerEventRequest,
     },
 }

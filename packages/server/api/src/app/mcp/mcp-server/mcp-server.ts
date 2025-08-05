@@ -32,12 +32,12 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
-import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
 import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
 import { mcpService } from '../mcp-service'
 import { mcpUtils } from '../mcp-utils'
+import { triggerService } from '../../trigger/trigger-service'
 
 
 
@@ -262,7 +262,10 @@ async function addFlowToServer(
                 flowId: populatedFlow.id,
                 async: !returnsResponse,
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                saveSampleData: await webhookSimulationService(logger).exists(flowId),
+                saveSampleData: await triggerService(logger).existsByFlowId({
+                    flowId,
+                    simulate: true,
+                }),
                 payload: originalParams,
                 execute: true,
                 failParentOnFailure: false,

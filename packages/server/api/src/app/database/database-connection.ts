@@ -61,10 +61,10 @@ import { TodoActivityEntity } from '../todos/activity/todos-activity.entity'
 import { TodoEntity } from '../todos/todo.entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
-import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
+import { TriggerEntity } from '../trigger/trigger-entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -83,7 +83,6 @@ function getEntities(): EntitySchema<unknown>[] {
         StoreEntryEntity,
         UserEntity,
         AppConnectionEntity,
-        WebhookSimulationEntity,
         FolderEntity,
         PieceMetadataEntity,
         PlatformEntity,
@@ -109,6 +108,7 @@ function getEntities(): EntitySchema<unknown>[] {
         McpRunEntity,
         AIUsageEntity,
         AgentRunEntity,
+        TriggerEntity,
     ]
 
     switch (edition) {

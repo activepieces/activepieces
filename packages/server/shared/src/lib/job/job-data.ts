@@ -9,7 +9,7 @@ import {
     RunEnvironment,
     TriggerHookType,
     TriggerPayload,
-    TriggerType,
+    FlowTriggerType,
 } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
@@ -38,7 +38,7 @@ export const RepeatingJobData = Type.Object({
     schemaVersion: Type.Number(),
     flowVersionId: Type.String(),
     flowId: Type.String(),
-    triggerType: Type.Enum(TriggerType),
+    triggerType: Type.Enum(FlowTriggerType),
     jobType: Type.Literal(RepeatableJobType.EXECUTE_TRIGGER),
 })
 export type RepeatingJobData = Static<typeof RepeatingJobData>

@@ -6,7 +6,7 @@ import {
     EventPayload,
     FlowId,
     FlowVersion,
-    TriggerType,
+    FlowTriggerType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
@@ -37,7 +37,7 @@ export const webhookUtils = (log: FastifyBaseLogger) => ({
         engineToken,
         simulate,
     }: ExtractPayloadParams): Promise<unknown[]> {
-        if (flowVersion.trigger.type === TriggerType.EMPTY) {
+        if (flowVersion.trigger.type === FlowTriggerType.EMPTY) {
             log.warn({
                 flowVersionId: flowVersion.id,
             }, '[WebhookUtils#extractPayload] empty trigger, skipping')

@@ -14,8 +14,8 @@ import { FastifyRequest } from 'fastify'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { projectService } from '../project/project-service'
 import { WebhookFlowVersionToRun } from './webhook-handler'
-import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { webhookService } from './webhook.service'
+import { triggerService } from '../trigger/trigger-service'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -29,8 +29,10 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 flowId: request.params.flowId,
                 async: false,
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                saveSampleData: await webhookSimulationService(request.log).exists(
-                    request.params.flowId,
+                saveSampleData: await triggerService(request.log).existsByFlowId({
+                    flowId: request.params.flowId,
+                    simulate: true,
+                },
                 ),
                 execute: true,
                 ...extractHeaderFromRequest(request),
@@ -51,8 +53,10 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 logger: request.log,
                 flowId: request.params.flowId,
                 async: true,
-                saveSampleData: await webhookSimulationService(request.log).exists(
-                    request.params.flowId,
+                saveSampleData: await triggerService(request.log).existsByFlowId({
+                    flowId: request.params.flowId,
+                    simulate: true,
+                },
                 ),
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                 execute: true,

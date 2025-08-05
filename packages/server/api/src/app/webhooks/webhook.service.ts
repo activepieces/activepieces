@@ -50,7 +50,7 @@ export const webhookService = {
 
         const response = await handshakeHandler.handleHandshakeRequest({
             payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
-            handshakeConfiguration: flow.handshakeConfiguration ?? null,
+            handshakeConfiguration: flow.trigger?.handshakeConfiguration ?? null,
             log: pinoLogger,
             flowId: flow.id,
             flowVersionId: flowVersionIdToRun,

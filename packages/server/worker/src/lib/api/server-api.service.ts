@@ -115,9 +115,6 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
         async updateJobStatus(request: UpdateJobRequest): Promise<void> {
             await client.post('/v1/engine/update-job', request)
         },
-        async updateFailureCount(request: UpdateFailureCountRequest): Promise<void> {
-            await client.post('/v1/engine/update-failure-count', request)
-        },
         async getRun(request: GetRunForWorkerRequest): Promise<FlowRun> {
             return client.get<FlowRun>('/v1/engine/runs/' + request.runId, {})
         },

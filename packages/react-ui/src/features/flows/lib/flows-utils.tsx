@@ -8,7 +8,7 @@ import {
   Flow,
   FlowVersion,
   PopulatedFlow,
-  TriggerType,
+  FlowTriggerType,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -40,15 +40,15 @@ export const flowsUtils = {
   flowStatusToolTipRenderer: (flow: Flow, version: FlowVersion) => {
     const trigger = version.trigger;
     switch (trigger.type) {
-      case TriggerType.PIECE: {
-        const cronExpression = flow.schedule?.cronExpression;
+      case FlowTriggerType.PIECE: {
+        const cronExpression = flow.trigger?.schedule?.cronExpression;
         return cronExpression
           ? `${t('Run')} ${cronstrue
               .toString(cronExpression, { locale: 'en' })
               .toLocaleLowerCase()}`
           : t('Real time flow');
       }
-      case TriggerType.EMPTY:
+      case FlowTriggerType.EMPTY:
         console.error(
           t("Flow can't be published with empty trigger {name}", {
             name: version.displayName,
@@ -60,15 +60,15 @@ export const flowsUtils = {
   flowStatusIconRenderer: (flow: Flow, version: FlowVersion) => {
     const trigger = version.trigger;
     switch (trigger.type) {
-      case TriggerType.PIECE: {
-        const cronExpression = flow.schedule?.cronExpression;
+      case FlowTriggerType.PIECE: {
+        const cronExpression = flow.trigger?.schedule?.cronExpression;
         if (cronExpression) {
           return <TimerReset className="h-4 w-4 text-foreground" />;
         } else {
           return <Zap className="h-4 w-4 text-foreground fill-foreground" />;
         }
       }
-      case TriggerType.EMPTY: {
+      case FlowTriggerType.EMPTY: {
         console.error(
           t("Flow can't be published with empty trigger {name}", {
             name: version.displayName,

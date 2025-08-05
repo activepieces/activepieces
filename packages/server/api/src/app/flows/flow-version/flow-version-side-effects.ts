@@ -10,13 +10,13 @@ import {
     FlowVersion,
     isNil,
     ProjectId,
-    TriggerType,
+    FlowTriggerType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { mcpService } from '../../mcp/mcp-service'
-import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
 import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
+import { triggerService } from '../../trigger/trigger-service'
 
 type OnApplyOperationParams = {
     projectId: ProjectId
@@ -24,33 +24,6 @@ type OnApplyOperationParams = {
     operation: FlowOperationRequest
 }
 
-type DeleteWebhookSimulationParams = {
-    projectId: ProjectId
-    flowId: FlowId
-}
-
-const deleteWebhookSimulation = async (
-    params: DeleteWebhookSimulationParams,
-    log: FastifyBaseLogger,
-): Promise<void> => {
-    const { projectId, flowId } = params
-
-    try {
-        await webhookSimulationService(log).delete({
-            projectId,
-            flowId,
-        })
-    }
-    catch (e: unknown) {
-        const notWebhookSimulationNotFoundError = !(
-            e instanceof ActivepiecesError &&
-            e.error.code === ErrorCode.ENTITY_NOT_FOUND
-        )
-        if (notWebhookSimulationNotFoundError) {
-            throw e
-        }
-    }
-}
 
 export const flowVersionSideEffects = (log: FastifyBaseLogger) => ({
     async preApplyOperation({
@@ -84,7 +57,7 @@ type PostApplyOperation = {
     operation: FlowOperationRequest
 }
 function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
-    return flowVersion.trigger.type === TriggerType.PIECE && 
+    return flowVersion.trigger.type === FlowTriggerType.PIECE && 
            flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
 }
 
@@ -155,10 +128,12 @@ async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowV
 
 async function handleUpdateTriggerWebhookSimulation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest, log: FastifyBaseLogger): Promise<void> {
     if (operation.type === FlowOperationType.UPDATE_TRIGGER) {
-        await deleteWebhookSimulation({
-            projectId,
+        await triggerService(log).disable({
             flowId: flowVersion.flowId,
-        }, log)
+            projectId,
+            simulate: true,
+            ignoreError: true,
+        })
     }
 }
 

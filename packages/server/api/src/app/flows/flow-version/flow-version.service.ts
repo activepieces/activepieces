@@ -1,6 +1,6 @@
 import {
-    Action,
-    ActionType,
+    FlowAction,
+    FlowActionType,
     ActivepiecesError,
     apId,
     Cursor,
@@ -19,8 +19,8 @@ import {
     ProjectId,
     sanitizeObjectForPostgresql,
     SeekPage,
-    Trigger,
-    TriggerType,
+    FlowTrigger,
+    FlowTriggerType,
     UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -54,7 +54,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         const platformId = await projectService.getPlatformId(projectId)
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         for (const step of steps) {
-            const stepTypeIsPiece = [ActionType.PIECE, TriggerType.PIECE].includes(
+            const stepTypeIsPiece = [FlowActionType.PIECE, FlowTriggerType.PIECE].includes(
                 step.type,
             )
             if (stepTypeIsPiece) {
@@ -116,13 +116,13 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 if (flowStructureUtil.isAction(modifiedStep.type)) {
                     operations = [{
                         type: FlowOperationType.UPDATE_ACTION,
-                        request: modifiedStep as Action,
+                        request: modifiedStep as FlowAction,
                     }]
                 }
                 else {
                     operations = [{
                         type: FlowOperationType.UPDATE_TRIGGER,
-                        request: modifiedStep as Trigger,
+                        request: modifiedStep as FlowTrigger,
                     }]
                 }
                 break
@@ -304,7 +304,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             displayName: request.displayName,
             flowId,
             trigger: {
-                type: TriggerType.EMPTY,
+                type: FlowTriggerType.EMPTY,
                 name: 'trigger',
                 settings: {},
                 valid: false,

@@ -21,7 +21,7 @@ import {
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    Trigger,
+    FlowTrigger,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -182,7 +182,7 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
                     },
                 },
             }
-        }) as Trigger
+        }) as FlowTrigger
         return {
             ...operation,
             request: {
