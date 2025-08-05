@@ -291,7 +291,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddParentRunIdToFlowRunSqlite1753719777841,
         AddCascadeOnAgentsSqlite1753727589109,
         AddExternalIdToMCPSqlite1753786833156,
-        AddStepNameToTestInFlowRunEntitySqlite1754355397885
+        AddStepNameToTestInFlowRunEntitySqlite1754355397885,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
