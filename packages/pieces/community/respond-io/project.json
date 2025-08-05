@@ -1,0 +1,36 @@
+{
+  "name": "piece-respond-io",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/respond-io/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/respond-io",
+        "tsConfig": "packages/pieces/community/respond-io/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/respond-io/package.json",
+        "main": "packages/pieces/community/respond-io/src/index.ts",
+        "assets": ["packages/pieces/community/respond-io/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/community/respond-io/**/*.ts"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/pieces/community/respond-io/jest.config.ts"
+      }
+    }
+  },
+  "tags": []
+} 
