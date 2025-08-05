@@ -130,7 +130,7 @@ export const createTask = createAction({
                     console.error('Failed to fetch task options:', error);
                 }
 
-                let props: any = {};
+                const props: any = {};
 
                 props.organization = Property.StaticDropdown({
                     displayName: 'Organization',

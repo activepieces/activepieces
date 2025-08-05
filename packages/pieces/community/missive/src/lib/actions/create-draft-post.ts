@@ -4,17 +4,17 @@ import { missiveAuth } from '../common/auth';
 import { missiveCommon } from '../common/client';
 
 export const createDraftPost = createAction({
-  name: 'create_draft_post',
-  displayName: 'Create Draft/Post',
-  description: 'Create a draft message or post in Missive, with option to send',
-  auth: missiveAuth,
-  props: {
+    name: 'create_draft_post',
+    displayName: 'Create Draft/Post',
+    description: 'Create a draft message or post in Missive, with option to send',
+    auth: missiveAuth,
+    props: {
     message_type: Property.StaticDropdown({
       displayName: 'Message Type',
       description: 'Type of message to create',
-      required: true,
-      options: {
-        options: [
+            required: true,
+            options: {
+                options: [
           { label: 'Email', value: 'email' },
           { label: 'SMS', value: 'sms' },
           { label: 'WhatsApp', value: 'whatsapp' },
@@ -25,20 +25,20 @@ export const createDraftPost = createAction({
         ],
       },
     }),
-    subject: Property.ShortText({
-      displayName: 'Subject',
+        subject: Property.ShortText({
+            displayName: 'Subject',
       description: 'Subject line (primarily for email)',
-      required: false,
-    }),
-    body: Property.LongText({
+            required: false,
+        }),
+        body: Property.LongText({
       displayName: 'Message Body',
       description: 'The content of your message (supports HTML for email)',
-      required: true,
-    }),
+            required: true,
+        }),
     message_fields: Property.DynamicProperties({
       displayName: 'Message Configuration',
       description: 'Configure sender, recipients, and message-specific options',
-      required: false,
+            required: false,
       refreshers: ['message_type'],
       props: async ({ auth, message_type }) => {
         if (!auth || !message_type) {
@@ -46,18 +46,18 @@ export const createDraftPost = createAction({
             placeholder: Property.ShortText({
               displayName: 'Select Message Type',
               description: 'Please select a message type first',
-              required: false,
-            }),
+            required: false,
+        }),
           };
         }
 
-        let props: any = {};
+        const props: any = {};
 
         props.quote_previous_message = Property.Checkbox({
           displayName: 'Quote Previous Message',
           description:
             '⚠️ WARNING: Only use if you know the conversation content. May leak sensitive information.',
-          required: false,
+            required: false,
           defaultValue: false,
         });
 
@@ -72,46 +72,46 @@ export const createDraftPost = createAction({
             props.from_name = Property.ShortText({
               displayName: 'From Name',
               description: 'Sender display name',
-              required: false,
+            required: false,
             });
             props.to_emails = Property.Array({
               displayName: 'To Recipients',
               description: 'Email recipients',
-              required: true,
-              properties: {
+                    required: true,
+            properties: {
                 address: Property.ShortText({
-                  displayName: 'Email Address',
-                  required: true,
+                    displayName: 'Email Address',
+                    required: true,
                 }),
                 name: Property.ShortText({
                   displayName: 'Display Name',
-                  required: false,
-                }),
+                    required: false,
+        }),
               },
             });
             props.cc_emails = Property.Array({
-              displayName: 'CC Recipients',
+            displayName: 'CC Recipients',
               description: 'Carbon copy recipients',
-              required: false,
-              properties: {
+            required: false,
+            properties: {
                 address: Property.ShortText({
-                  displayName: 'Email Address',
-                  required: true,
+                    displayName: 'Email Address',
+                    required: true,
                 }),
                 name: Property.ShortText({
                   displayName: 'Display Name',
-                  required: false,
-                }),
+                    required: false,
+        }),
               },
             });
             props.bcc_emails = Property.Array({
-              displayName: 'BCC Recipients',
+            displayName: 'BCC Recipients',
               description: 'Blind carbon copy recipients',
-              required: false,
-              properties: {
+            required: false,
+            properties: {
                 address: Property.ShortText({
-                  displayName: 'Email Address',
-                  required: true,
+                    displayName: 'Email Address',
+                    required: true,
                 }),
                 name: Property.ShortText({
                   displayName: 'Display Name',
@@ -245,8 +245,8 @@ export const createDraftPost = createAction({
             existing_conversation_id: Property.ShortText({
               displayName: 'Authenticate First',
               description: 'Please authenticate to access conversation options',
-              required: false,
-            }),
+            required: false,
+        }),
             references: Property.Array({
               displayName: 'Message References',
               description: 'Please authenticate to access conversation options',
@@ -254,8 +254,8 @@ export const createDraftPost = createAction({
               properties: {
                 reference: Property.ShortText({
                   displayName: 'Reference ID',
-                  required: false,
-                }),
+            required: false,
+        }),
               },
             }),
             organization: Property.StaticDropdown({
@@ -268,7 +268,7 @@ export const createDraftPost = createAction({
               },
             }),
             team: Property.StaticDropdown({
-              displayName: 'Team',
+            displayName: 'Team',
               description: 'Please authenticate first',
               required: false,
               options: {
@@ -294,9 +294,9 @@ export const createDraftPost = createAction({
             remove_shared_labels: Property.StaticMultiSelectDropdown({
               displayName: 'Remove Shared Labels',
               description: 'Please authenticate first',
-              required: false,
+            required: false,
               options: {
-                disabled: true,
+                        disabled: true,
                 options: [{ label: 'Please authenticate first', value: '' }],
               },
             }),
@@ -310,7 +310,7 @@ export const createDraftPost = createAction({
               description: 'Please authenticate first',
               required: false,
               options: {
-                disabled: true,
+                        disabled: true,
                 options: [{ label: 'Please authenticate first', value: '' }],
               },
             }),
@@ -342,7 +342,7 @@ export const createDraftPost = createAction({
         try {
           const orgsResponse = await missiveCommon.apiCall({
             auth: auth as unknown as string,
-            method: HttpMethod.GET,
+                        method: HttpMethod.GET,
             resourceUri: '/organizations',
           });
           organizationOptions =
@@ -358,8 +358,8 @@ export const createDraftPost = createAction({
           });
           teamOptions =
             teamsResponse.body?.teams?.map((team: any) => ({
-              label: team.name,
-              value: team.id,
+                        label: team.name,
+                        value: team.id,
             })) || [];
 
           const labelsResponse = await missiveCommon.apiCall({
@@ -376,7 +376,7 @@ export const createDraftPost = createAction({
           console.error('Failed to fetch conversation options:', error);
         }
 
-        return {
+                    return {
           existing_conversation_id: Property.ShortText({
             displayName: 'Existing Conversation ID',
             description: 'Add to existing conversation (optional)',
@@ -416,14 +416,14 @@ export const createDraftPost = createAction({
                   ? teamOptions
                   : [{ label: 'No teams found', value: '' }],
             },
-          }),
-          force_team: Property.Checkbox({
+        }),
+        force_team: Property.Checkbox({
             displayName: 'Force Team Assignment',
             description:
               'Force new team even if conversation is in another team',
             required: false,
             defaultValue: false,
-          }),
+        }),
           add_shared_labels: Property.StaticMultiSelectDropdown({
             displayName: 'Add Shared Labels',
             description: 'Shared labels to add to conversation',
@@ -468,81 +468,81 @@ export const createDraftPost = createAction({
               ],
             },
           }),
-          add_to_inbox: Property.Checkbox({
+        add_to_inbox: Property.Checkbox({
             displayName: 'Add to Inbox',
             description: 'Move conversation to Inbox for everyone',
             required: false,
             defaultValue: false,
-          }),
-          add_to_team_inbox: Property.Checkbox({
+        }),
+        add_to_team_inbox: Property.Checkbox({
             displayName: 'Add to Team Inbox',
             description:
               'Move conversation to team inbox (requires team selection)',
             required: false,
             defaultValue: false,
-          }),
+        }),
           close_conversation: Property.Checkbox({
             displayName: 'Close Conversation',
             description: 'Close the conversation for everyone',
             required: false,
             defaultValue: false,
-          }),
+        }),
         };
       },
     }),
     send_immediately: Property.Checkbox({
       displayName: 'Send Immediately',
       description: 'Send the draft immediately instead of saving as draft',
-      required: false,
+            required: false,
       defaultValue: false,
     }),
     schedule_send: Property.Checkbox({
       displayName: 'Schedule Send',
       description: 'Schedule the message to be sent later',
-      required: false,
-      defaultValue: false,
-    }),
+            required: false,
+            defaultValue: false,
+        }),
     send_at_timestamp: Property.Number({
       displayName: 'Send At (Unix Timestamp)',
       description:
         'Unix timestamp when to send the message (required if scheduling)',
-      required: false,
-    }),
-    auto_followup: Property.Checkbox({
+            required: false,
+        }),
+        auto_followup: Property.Checkbox({
       displayName: 'Auto Follow-up',
       description:
         'Cancel scheduled send if there is a reply (requires scheduling)',
-      required: false,
-      defaultValue: false,
-    }),
-    attachments: Property.Array({
-      displayName: 'Attachments',
+            required: false,
+            defaultValue: false,
+        }),
+        attachments: Property.Array({
+            displayName: 'Attachments',
       description: 'File attachments (up to 25 files, max 10MB total)',
-      required: false,
-      properties: {
+            required: false,
+            properties: {
         filename: Property.ShortText({
           displayName: 'Filename',
           description: 'Name of the file (e.g., document.pdf)',
           required: true,
         }),
         base64_data: Property.LongText({
-          displayName: 'Base64 Data',
-          description: 'Base64-encoded file content',
-          required: true,
-        }),
+                    displayName: 'Base64 Data',
+                    description: 'Base64-encoded file content',
+                    required: true,
+                }),
       },
     }),
-  },
-  async run(context) {
+    },
+    async run(context) {
     const propsValue = context.propsValue as any;
-    const {
+        const {
       message_type,
-      subject,
-      body,
+            subject,
+            body,
       send_immediately,
       schedule_send,
       send_at_timestamp,
-      auto_followup,
+            auto_followup,
       attachments,
     } = propsValue;
 
@@ -572,7 +572,7 @@ export const createDraftPost = createAction({
         if (messageFields.to_emails && Array.isArray(messageFields.to_emails)) {
           draftData.to_fields = messageFields.to_emails.map(
             (recipient: any) => ({
-              address: recipient.address,
+                address: recipient.address,
               ...(recipient.name && { name: recipient.name }),
             })
           );
@@ -585,7 +585,7 @@ export const createDraftPost = createAction({
         ) {
           draftData.cc_fields = messageFields.cc_emails.map(
             (recipient: any) => ({
-              address: recipient.address,
+                address: recipient.address,
               ...(recipient.name && { name: recipient.name }),
             })
           );
@@ -598,7 +598,7 @@ export const createDraftPost = createAction({
         ) {
           draftData.bcc_fields = messageFields.bcc_emails.map(
             (recipient: any) => ({
-              address: recipient.address,
+                address: recipient.address,
               ...(recipient.name && { name: recipient.name }),
             })
           );
@@ -758,19 +758,19 @@ export const createDraftPost = createAction({
     if (attachments && Array.isArray(attachments) && attachments.length > 0) {
       draftData.attachments = attachments.map((attachment: any) => ({
         filename: attachment.filename,
-        base64_data: attachment.base64_data,
-      }));
-    }
+                base64_data: attachment.base64_data,
+            }));
+        }
 
-    const response = await missiveCommon.apiCall({
-      auth: context.auth,
-      method: HttpMethod.POST,
+        const response = await missiveCommon.apiCall({
+            auth: context.auth,
+            method: HttpMethod.POST,
       resourceUri: '/drafts',
-      body: {
+            body: {
         drafts: draftData,
-      },
-    });
+            },
+        });
 
-    return response.body;
-  },
-});
+        return response.body;
+    },
+}); 
