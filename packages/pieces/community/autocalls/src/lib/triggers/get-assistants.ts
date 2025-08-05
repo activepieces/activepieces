@@ -1,11 +1,11 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { baseApiUrl } from '../..';
 import dayjs from 'dayjs';
 
-const polling: Polling<PiecePropValueSchema<any>, Record<string, never>> = {
+const polling: Polling<PiecePropValueSchema<any>, { start?: string; end?: string }> = {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+    items: async ({ auth, propsValue }) => {
         const res = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: baseApiUrl + 'api/user/assistants',
@@ -19,10 +19,32 @@ const polling: Polling<PiecePropValueSchema<any>, Record<string, never>> = {
         }
 
         const assistants = res.body || [];
-        
+
+        const filteredAssistants = assistants.filter((assistant: any) => {
+            const assistantDate = assistant.created_at ? dayjs(assistant.created_at) : dayjs(assistant.updated_at);
+            
+            // Check start date filter
+            if (propsValue['start']) {
+                const startDate = dayjs(propsValue['start']);
+                if (assistantDate.isBefore(startDate)) {
+                    return false;
+                }
+            }
+            
+            // Check end date filter
+            if (propsValue['end']) {
+                const endDate = dayjs(propsValue['end']);
+                if (assistantDate.isAfter(endDate)) {
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+
         return [{
             epochMilliSeconds: dayjs().valueOf(),
-            data: assistants,
+            data: filteredAssistants,
         }];
         }
 };
@@ -31,7 +53,18 @@ export const getAssistants = createTrigger({
 name: 'getAssistants',
     displayName: 'Get Assistants',
     description: 'Triggers when assistants are fetched or updated in your Autocalls account.',
-props: {},
+props: {
+        start: Property.DateTime({
+            displayName: 'Start Date',
+            description: 'Filter assistants created after this date. Example: 2024-01-15T10:30:00Z',
+            required: false,
+        }),
+        end: Property.DateTime({
+            displayName: 'End Date', 
+            description: 'Filter assistants created before this date. Example: 2024-12-31T23:59:59Z',
+            required: false,
+        }),
+    },
     sampleData: {
         id: "assistant_123",
         name: "Customer Support Assistant",
