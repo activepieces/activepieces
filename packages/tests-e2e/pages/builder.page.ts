@@ -1,7 +1,8 @@
 import { Page, expect } from '@playwright/test';
 import { BasePage } from './base';
 import { configUtils } from '../helper/config';
-import { ADD_STEP_BUTTON_TEST_ID, PIECE_SELECTOR_SEARCH_INPUT_TEST_ID, TRIGGER_NODE_TEST_ID } from '@activepieces/shared';
+//Checkly doesn't support importing things with paths, so we need to import the shared package directly https://www.checklyhq.com/docs/runtimes/#why-cant-i-import-any-npm-package-or-other-3rd-party-dependencies
+import { ADD_STEP_BUTTON_TEST_ID, PIECE_SELECTOR_SEARCH_INPUT_TEST_ID, TRIGGER_NODE_TEST_ID } from '../../shared/src/lib/e2e';
 
 export class BuilderPage extends BasePage {
   url = `${configUtils.getConfig().instanceUrl}/builder`;
