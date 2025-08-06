@@ -88,7 +88,6 @@ export const createCall = createAction({
     tags: tagDropdown('Calls'),
   },
   async run(context) {
-    // Format datetime for Bigin API - they expect YYYY-MM-DDTHH:mm:ss+HH:MM format
     const callStartTime = context.propsValue.callStartTime;
     const formattedStartTime = formatDateTime(callStartTime);
 

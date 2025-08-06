@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
-import { userIdDropdown } from '../common/props';
+import { tagDropdown, userIdDropdown } from '../common/props';
 
 export const createCompany = createAction({
   auth: biginAuth,
@@ -26,12 +26,7 @@ export const createCompany = createAction({
       description: 'Provide a website URL for the company',
       required: false,
     }),
-    tag: Property.Array({
-      displayName: 'Tag',
-      description:
-        'Provide the list of tags that can be associated with the company. You can get the list of tags from the Get all tags API',
-      required: false,
-    }),
+    tag: tagDropdown('Accounts'),
     description: Property.ShortText({
       displayName: 'Description',
       description:

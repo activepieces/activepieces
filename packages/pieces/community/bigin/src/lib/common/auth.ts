@@ -54,7 +54,7 @@ export const biginAuth = PieceAuth.OAuth2({
     'ZohoBigin.modules.pipelines.ALL',
     'ZohoBigin.modules.pipelines.READ',
     'ZohoBigin.modules.pipelines.CREATE',
-  
+
     'ZohoBigin.modules.accounts.ALL',
     'ZohoBigin.modules.accounts.READ',
     'ZohoBigin.modules.accounts.CREATE',
@@ -74,6 +74,9 @@ export const biginAuth = PieceAuth.OAuth2({
     'ZohoBigin.modules.calls.ALL',
     'ZohoBigin.modules.calls.READ',
     'ZohoBigin.modules.calls.CREATE',
+
+    'ZohoBigin.users.ALL',
+    'ZohoBigin.users.READ',
   ],
   extra: {
     response_type: 'code',

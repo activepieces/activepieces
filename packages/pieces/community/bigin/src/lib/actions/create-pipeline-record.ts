@@ -47,7 +47,8 @@ export const createPipelineRecord = createAction({
     secondaryContacts: createRecordIdDropdown(
       'Contacts',
       'Secondary Contacts',
-      'Provide a list of additional contacts associated with the pipeline record (deal)'
+      'Provide a list of additional contacts associated with the pipeline record (deal)',
+      ['First_Name', 'Last_Name']
     ),
     closingDate: Property.DateTime({
       displayName: 'Closing Date',

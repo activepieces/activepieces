@@ -66,8 +66,8 @@ export const searchContact = createAction({
     const response = await makeRequest(
       context.auth.access_token,
       HttpMethod.GET,
-     context.auth.props?.['location'] || 'com',
-      `/Contacts/search?${queryParams.toString()}`
+      `/Contacts/search?${queryParams.toString()}`,
+       context.auth.props?.['location'] || 'com',
     );
 
     return {

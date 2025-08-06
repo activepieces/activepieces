@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
-import { tagDropdown, taskIdDropdown, userIdDropdown } from '../common/props';
+import { pipelineIdDropdown, tagDropdown, taskIdDropdown, userIdDropdown } from '../common/props';
 
 export const updateTask = createAction({
   auth: biginAuth,
@@ -52,12 +52,7 @@ export const updateTask = createAction({
       description: 'End date for recurring task',
       required: false,
     }),
-    relatedTo: Property.Json({
-      displayName: 'Related To',
-      description:
-        'Provide the unique ID of the entity (Contact, Pipeline or Company) that the task is related to',
-      required: false,
-    }),
+    relatedTo: pipelineIdDropdown,
     relatedModule: Property.ShortText({
       displayName: 'Related Module',
       description:

@@ -105,7 +105,8 @@ export const userIdDropdown = Property.Dropdown({
 export const createRecordIdDropdown = (
   module: string,
   displayName?: string,
-  description?: string
+  description?: string,
+  fields?: string[]
 ) => {
   return Property.Dropdown({
     displayName: displayName || `${module} Record`,
@@ -133,10 +134,14 @@ export const createRecordIdDropdown = (
           props?: { [key: string]: any };
         };
         const accessToken = typedAuth.access_token;
+
+        const fieldsToFetch = fields ?? [];
+        const fieldsParam = fieldsToFetch.join(',');
+
         const response = await makeRequest(
           accessToken,
           HttpMethod.GET,
-          `/${module}?fields=Last_Name`,
+          `/${module}?fields=${fieldsParam}`,
           typedAuth.props?.['location'] || 'com'
         );
 
@@ -149,7 +154,8 @@ export const createRecordIdDropdown = (
               record.name ||
               record.Last_Name ||
               record.Deal_Name ||
-              record.Company_Name ||
+              record.Account_Name ||
+              record.Event_Title ||
               record.Subject ||
               record.id,
             value: record.id,
@@ -169,38 +175,45 @@ export const createRecordIdDropdown = (
 export const contactIdDropdown = createRecordIdDropdown(
   'Contacts',
   'Contact',
-  'Select the contact'
+  'Select the contact',
+  ['First_Name', 'Last_Name']
 );
 export const companyIdDropdown = createRecordIdDropdown(
-  'Companies',
+  'Accounts',
   'Company',
-  'Select the company'
+  'Select the company',
+  ['Account_Name']
 );
 export const pipelineIdDropdown = createRecordIdDropdown(
   'Pipelines',
   'Deal',
-  'Select the deal/pipeline record'
+  'Select the deal/pipeline record',
+  ['Deal_Name']
 );
 export const taskIdDropdown = createRecordIdDropdown(
   'Tasks',
   'Task',
-  'Select the task'
+  'Select the task',
+  ['Subject']
 );
 export const eventIdDropdown = createRecordIdDropdown(
   'Events',
   'Event',
-  'Select the event'
+  'Select the event',
+  ['Event_Name']
 );
 export const callIdDropdown = createRecordIdDropdown(
   'Calls',
   'Call',
-  'Select the call'
+  'Select the call',
+  ['Call_Name']
 );
 
 export const productidDropdown = createRecordIdDropdown(
   'Products',
   'Product',
-  'Select the product'
+  'Select the product',
+  ['Product_Name']
 );
 // Keep the original for backward compatibility
 export const recordIdDropdown = Property.Dropdown({

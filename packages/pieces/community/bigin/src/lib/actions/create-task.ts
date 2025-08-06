@@ -7,6 +7,8 @@ import {
   contactIdDropdown,
   createRecordIdDropdown,
   tagDropdown,
+  formatDateTime,
+  pipelineIdDropdown,
 } from '../common/props';
 
 export const createTask = createAction({
@@ -107,11 +109,7 @@ export const createTask = createAction({
         'Time for reminder in HH:MM format (24-hour, for recurring tasks)',
       required: false,
     }),
-    relatedTo: createRecordIdDropdown(
-      'Deals',
-      'Related Deal',
-      'Select the related deal'
-    ),
+    relatedTo: pipelineIdDropdown,
     relatedModule: Property.StaticDropdown({
       displayName: 'Related Module',
       description: 'The module this task is related to',
@@ -159,14 +157,13 @@ export const createTask = createAction({
         ],
       },
     }),
-    tags:tagDropdown('Tasks'),
+    tags: tagDropdown('Tasks'),
   },
   async run(context) {
     // Format due date
     let formattedDueDate: string | undefined;
     if (context.propsValue.dueDate) {
-      const dueDate = new Date(context.propsValue.dueDate);
-      formattedDueDate = dueDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+      formattedDueDate = formatDateTime(context.propsValue.dueDate);
     }
 
     const body: Record<string, unknown> = {
@@ -270,8 +267,8 @@ export const createTask = createAction({
     const response = await makeRequest(
       context.auth.access_token,
       HttpMethod.POST,
-      context.auth.props?.['location'] || 'com',
       '/Tasks',
+      context.auth.props?.['location'] || 'com',
       {
         data: [body],
       }
