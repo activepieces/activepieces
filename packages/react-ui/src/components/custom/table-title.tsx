@@ -23,7 +23,7 @@ export const TableTitle = ({
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-semibold">{children}</h1>
           {tutorialTab && (
-            <TutorialsDialog initialTab={tutorialTab}>
+            <TutorialsDialog location="table-title" initialTab={tutorialTab}>
               <Button variant="outline-primary" size="icon">
                 <VideoIcon className="size-4"></VideoIcon>
               </Button>
@@ -34,7 +34,6 @@ export const TableTitle = ({
               <BetaBadge />
             </div>
           )}
-        
         </div>
         {description && (
           <span className="text-md text-muted-foreground">{description}</span>

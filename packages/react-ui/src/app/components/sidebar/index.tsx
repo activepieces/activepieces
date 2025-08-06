@@ -11,6 +11,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
 import TutorialsDialog, { TabType } from '@/components/custom/tutorials-dialog';
+import { Button } from '@/components/ui/button';
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -47,7 +48,6 @@ import { SidebarInviteUserButton } from './sidebar-invite-user';
 import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
 import { SidebarUser } from './sidebar-user';
 import UsageLimitsButton from './usage-limits-button';
-import { Button } from '@/components/ui/button';
 
 type Link = {
   icon: React.ReactNode;
@@ -77,7 +77,7 @@ export const CustomTooltipLink = ({
   locked,
   newWindow,
   isActive,
-  tutorialTab
+  tutorialTab,
 }: CustomTooltipLinkProps) => {
   const location = useLocation();
   const isLinkActive =
@@ -87,7 +87,6 @@ export const CustomTooltipLink = ({
       to={to}
       target={newWindow ? '_blank' : ''}
       rel={newWindow ? 'noopener noreferrer' : ''}
-      
     >
       <div
         className={cn(
@@ -113,10 +112,17 @@ export const CustomTooltipLink = ({
                 : null}
               <span className="text-sm">{label}</span>
             </div>
-            <div className='grow'></div>
+            <div className="grow"></div>
             {tutorialTab && (
-              <TutorialsDialog initialTab={tutorialTab}>
-                <Button variant="ghost" size="icon" className="p-1 size-6 group-hover/link:opacity-100 opacity-0 transition-all duration-150 ease-in-out">
+              <TutorialsDialog
+                location="small-button-inside-sidebar-item"
+                initialTab={tutorialTab}
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="p-1 size-6 group-hover/link:opacity-100 opacity-0 transition-all duration-150 ease-in-out"
+                >
                   <VideoIcon className="size-4"></VideoIcon>
                 </Button>
               </TutorialsDialog>
@@ -241,7 +247,10 @@ export function SidebarComponent({
                         {showTutorials && (
                           <SidebarMenuItem>
                             <SidebarMenuButton asChild>
-                              <TutorialsDialog showTooltip={false}>
+                              <TutorialsDialog
+                                location="tutorials-sidebar-item"
+                                showTooltip={false}
+                              >
                                 <div className="flex items-center gap-2 text-sm px-2 py-1.5 cursor-pointer hover:bg-sidebar-accent rounded-sm transition-colors">
                                   <VideoIcon className="size-4"></VideoIcon>
                                   <span>{t('Tutorials')}</span>

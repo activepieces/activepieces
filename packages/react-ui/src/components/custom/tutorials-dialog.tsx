@@ -15,8 +15,15 @@ import { McpSvg } from '@/assets/img/custom/mcp';
 import { Tabs, TabsTrigger, TabsList } from '@/components/ui/tabs';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  ClickedTutorialTelemetryParams,
+  isNil,
+  TelemetryEventName,
+} from '@activepieces/shared';
 
+import { useTelemetry } from '../telemetry-provider';
 import { Button } from '../ui/button';
 import {
   Dialog,
@@ -29,27 +36,24 @@ import {
 import { Separator } from '../ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
-export type TabType =
-  | 'flows'
-  | 'mcpServers'
-  | 'tables'
-  | 'agents'
-  | 'todos'
-  | 'gettingStarted';
+export type TabType = ClickedTutorialTelemetryParams['tab'];
 const TutorialsDialog = ({
   initialTab,
   children,
   showTooltip = true,
+  location,
 }: {
   initialTab?: TabType;
   children?: React.ReactNode;
   showTooltip?: boolean;
+  location: ClickedTutorialTelemetryParams['location'];
 }) => {
   const [selectedTab, setSelectedTab] = useState<TabType>(
     initialTab ?? 'gettingStarted',
   );
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { capture } = useTelemetry();
   const showTutorials =
     isNil(platform.plan?.licenseKey) ||
     platform.plan.licenseKey.length === 0 ||
@@ -101,26 +105,28 @@ const TutorialsDialog = ({
   return (
     <Dialog>
       <Tooltip>
-      <TooltipTrigger asChild>
-      <DialogTrigger asChild>
-        
-          {children ? (
-          children
-        ) : (
-          <Button variant="outline-primary" size="icon">
-            <VideoIcon className="size-4"></VideoIcon>
-          </Button>
-        )}
-      </DialogTrigger>
-      </TooltipTrigger>
-         {
-          showTooltip && (
-            <TooltipContent>
-              {t('Tutorial')}
-            </TooltipContent>
-          )
-         }
-        </Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <div
+              onClick={() => {
+                capture({
+                  name: TelemetryEventName.CLICKED_TUTORIAL,
+                  payload: { tab: initialTab ?? 'gettingStarted', location },
+                });
+              }}
+            >
+              {children ? (
+                children
+              ) : (
+                <Button variant="outline-primary" size="icon">
+                  <VideoIcon className="size-4"></VideoIcon>
+                </Button>
+              )}
+            </div>
+          </DialogTrigger>
+        </TooltipTrigger>
+        {showTooltip && <TooltipContent>{t('Tutorial')}</TooltipContent>}
+      </Tooltip>
       <DialogContent
         withCloseButton={false}
         className="p-0 h-[80vh] w-[70vw] max-w-[1280px] overflow-hidden"
