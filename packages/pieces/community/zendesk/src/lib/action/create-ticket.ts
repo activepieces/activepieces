@@ -25,6 +25,12 @@ export const createTicket = createAction({
       description: 'The description of the ticket',
       required: true,
     }),
+    use_html: Property.Checkbox({
+      displayName: 'Use HTML Content',
+      description: 'Check this if the description contains HTML content. If checked, HTML will be preserved; if unchecked, HTML will be stripped.',
+      required: false,
+      defaultValue: false,
+    }),
     requester_id: Property.ShortText({
       displayName: 'Requester ID',
       description: 'The ID of the user requesting the ticket',
@@ -86,6 +92,51 @@ export const createTicket = createAction({
       description: 'Custom fields for the ticket (JSON format)',
       required: false,
     }),
+    collaborator_ids: Property.Array({
+      displayName: 'Collaborator IDs',
+      description: 'Array of user IDs who should be added as collaborators to the ticket',
+      required: false,
+    }),
+    follower_ids: Property.Array({
+      displayName: 'Follower IDs',
+      description: 'Array of user IDs who should be added as followers to the ticket',
+      required: false,
+    }),
+    email_cc_ids: Property.Array({
+      displayName: 'Email CC IDs',
+      description: 'Array of user IDs who should be CC\'d on ticket updates',
+      required: false,
+    }),
+    metadata: Property.Json({
+      displayName: 'Metadata',
+      description: 'Custom metadata to add to the ticket audit (JSON format)',
+      required: false,
+    }),
+    status: Property.StaticDropdown({
+      displayName: 'Status',
+      description: 'The status of the ticket',
+      required: false,
+      options: {
+        options: [
+          { label: 'New', value: 'new' },
+          { label: 'Open', value: 'open' },
+          { label: 'Pending', value: 'pending' },
+          { label: 'Solved', value: 'solved' },
+          { label: 'Closed', value: 'closed' },
+        ],
+      },
+    }),
+    satisfaction_rating: Property.StaticDropdown({
+      displayName: 'Satisfaction Rating',
+      description: 'The satisfaction rating for the ticket',
+      required: false,
+      options: {
+        options: [
+          { label: 'Offered', value: 'offered' },
+          { label: 'Unoffered', value: 'unoffered' },
+        ],
+      },
+    }),
   },
   async run(context) {
     const { auth, propsValue } = context;
@@ -95,7 +146,7 @@ export const createTicket = createAction({
       ticket: {
         subject: propsValue.subject,
         comment: {
-          body: propsValue.description,
+          [propsValue.use_html ? 'html_body' : 'body']: propsValue.description,
         },
       },
     };
@@ -113,6 +164,10 @@ export const createTicket = createAction({
 
     if (propsValue.type) {
       ticketData.ticket.type = propsValue.type;
+    }
+
+    if (propsValue.status) {
+      ticketData.ticket.status = propsValue.status;
     }
 
     if (propsValue.organization_id) {
@@ -133,6 +188,27 @@ export const createTicket = createAction({
 
     if (propsValue.custom_fields) {
       ticketData.ticket.custom_fields = propsValue.custom_fields;
+    }
+
+    if (propsValue.collaborator_ids && propsValue.collaborator_ids.length > 0) {
+      ticketData.ticket.collaborator_ids = propsValue.collaborator_ids.map((id: unknown) => parseInt(id as string));
+    }
+
+    if (propsValue.follower_ids && propsValue.follower_ids.length > 0) {
+      ticketData.ticket.follower_ids = propsValue.follower_ids.map((id: unknown) => parseInt(id as string));
+    }
+
+    if (propsValue.email_cc_ids && propsValue.email_cc_ids.length > 0) {
+      ticketData.ticket.email_cc_ids = propsValue.email_cc_ids.map((id: unknown) => parseInt(id as string));
+    }
+
+    if (propsValue.satisfaction_rating) {
+      ticketData.ticket.satisfaction_rating = propsValue.satisfaction_rating;
+    }
+
+    // Add metadata if provided
+    if (propsValue.metadata) {
+      ticketData.ticket.metadata = propsValue.metadata;
     }
 
     const response = await httpClient.sendRequest<{ ticket: Record<string, unknown> }>({

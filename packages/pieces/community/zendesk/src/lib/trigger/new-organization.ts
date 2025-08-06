@@ -19,7 +19,22 @@ export const newOrganization = createTrigger({
   description: 'Triggers when a new organization record is created',
   type: TriggerStrategy.POLLING,
   props: {},
-  sampleData: undefined,
+  sampleData: {
+    id: 123456789,
+    url: 'https://activepieceshelp.zendesk.com/api/v2/organizations/123456789.json',
+    name: 'Acme Corporation',
+    created_at: '2023-03-25T02:39:41Z',
+    updated_at: '2023-03-25T02:39:41Z',
+    domain_names: ['acme.com', 'acmecorp.com'],
+    details: 'A leading technology company',
+    notes: 'Enterprise customer',
+    group_id: 8193569448092,
+    shared_tickets: false,
+    shared_comments: false,
+    external_id: 'acme-corp-123',
+    tags: ['enterprise', 'premium'],
+    organization_fields: [],
+  },
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {
       auth: context.auth,
@@ -80,6 +95,7 @@ async function getOrganizations(authentication: AuthProps) {
       password: token,
     },
     timeout: 30000, // 30 seconds timeout
+    retries: 3, // Retry up to 3 times on failure
   });
   return response.body.organizations;
 } 

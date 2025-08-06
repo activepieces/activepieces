@@ -27,7 +27,7 @@ export const createUser = createAction({
     }),
     role: Property.StaticDropdown({
       displayName: 'Role',
-      description: 'The role of the user',
+      description: 'The role of the user. If creating an agent with a custom role, set this to "agent" and provide custom_role_id',
       required: false,
       options: {
         options: [
@@ -37,9 +37,19 @@ export const createUser = createAction({
         ],
       },
     }),
+    custom_role_id: Property.ShortText({
+      displayName: 'Custom Role ID',
+      description: 'The ID of the custom role for agents. Required when creating agents with specific roles',
+      required: false,
+    }),
     organization_id: Property.ShortText({
       displayName: 'Organization ID',
       description: 'The ID of the organization for this user',
+      required: false,
+    }),
+    organization_name: Property.ShortText({
+      displayName: 'Organization Name',
+      description: 'The name of the organization to create or assign to this user',
       required: false,
     }),
     phone: Property.ShortText({
@@ -72,6 +82,22 @@ export const createUser = createAction({
       description: 'Custom user fields (JSON format)',
       required: false,
     }),
+    agent_brand_ids: Property.Array({
+      displayName: 'Agent Brand IDs',
+      description: 'Array of brand IDs to assign the agent to',
+      required: false,
+    }),
+    identities: Property.Json({
+      displayName: 'Identities',
+      description: 'Array of user identities (JSON format). Example: [{"type": "email", "value": "test@user.com"}, {"type": "twitter", "value": "username"}]',
+      required: false,
+    }),
+    skip_verify_email: Property.Checkbox({
+      displayName: 'Skip Verification Email',
+      description: 'Skip sending verification email to the user',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run(context) {
     const { auth, propsValue } = context;
@@ -89,7 +115,16 @@ export const createUser = createAction({
       userData.user.role = propsValue.role;
     }
 
-    if (propsValue.organization_id) {
+    if (propsValue.custom_role_id) {
+      userData.user.custom_role_id = parseInt(propsValue.custom_role_id);
+    }
+
+    // Handle organization - prefer organization object over ID if both are provided
+    if (propsValue.organization_name) {
+      userData.user.organization = {
+        name: propsValue.organization_name,
+      };
+    } else if (propsValue.organization_id) {
       userData.user.organization_id = parseInt(propsValue.organization_id);
     }
 
@@ -117,6 +152,18 @@ export const createUser = createAction({
       userData.user.user_fields = propsValue.user_fields;
     }
 
+    if (propsValue.agent_brand_ids && propsValue.agent_brand_ids.length > 0) {
+      userData.user.agent_brand_ids = propsValue.agent_brand_ids.map((id: unknown) => parseInt(id as string));
+    }
+
+    if (propsValue.identities) {
+      userData.user.identities = propsValue.identities;
+    }
+
+    if (propsValue.skip_verify_email) {
+      userData.user.skip_verify_email = propsValue.skip_verify_email;
+    }
+
     const response = await httpClient.sendRequest<{ user: Record<string, unknown> }>({
       url: `https://${subdomain}.zendesk.com/api/v2/users.json`,
       method: HttpMethod.POST,
@@ -125,9 +172,7 @@ export const createUser = createAction({
         username: email + '/token',
         password: token,
       },
-      body: {
-        user: userData,
-      },
+      body: userData,
       timeout: 30000, // 30 seconds timeout
     });
 

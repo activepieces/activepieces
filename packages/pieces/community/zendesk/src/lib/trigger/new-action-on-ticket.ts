@@ -26,7 +26,55 @@ export const newActionOnTicket = createTrigger({
       required: true,
     }),
   },
-  sampleData: undefined,
+  sampleData: {
+    id: 123456789,
+    ticket_id: 5,
+    created_at: '2023-03-25T02:39:41Z',
+    author_id: 8193592318236,
+    via: {
+      channel: 'web',
+      source: {
+        from: {},
+        to: {},
+        rel: null,
+      },
+    },
+    events: [
+      {
+        id: 123456789,
+        type: 'Comment',
+        public: true,
+        body: 'This is a comment on the ticket',
+        html_body: '<p>This is a comment on the ticket</p>',
+        plain_body: 'This is a comment on the ticket',
+        audit_id: 123456789,
+        created_at: '2023-03-25T02:39:41Z',
+        author_id: 8193592318236,
+        metadata: {
+          client: 'web',
+          location: 'unknown',
+          via: {
+            channel: 'web',
+            source: {
+              from: {},
+              to: {},
+              rel: null,
+            },
+          },
+        },
+      },
+    ],
+    metadata: {
+      system: {
+        client: 'web',
+        ip_address: '192.168.1.1',
+        location: 'unknown',
+        latitude: null,
+        longitude: null,
+      },
+      custom: {},
+    },
+  },
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {
       auth: context.auth,
@@ -87,6 +135,7 @@ async function getTicketAudits(authentication: AuthProps, ticket_id: string) {
       password: token,
     },
     timeout: 30000, // 30 seconds timeout
+    retries: 3, // Retry up to 3 times on failure
   });
   return response.body.audits;
 } 

@@ -55,35 +55,33 @@ export const createOrganization = createAction({
     const { auth, propsValue } = context;
     const { email, token, subdomain } = auth as { email: string; token: string; subdomain: string };
 
-    const organizationData: { organization: Record<string, unknown> } = {
-      organization: {
-        name: propsValue.name,
-      },
+    const organizationData: Record<string, unknown> = {
+      name: propsValue.name,
     };
 
     // Add optional fields if provided
     if (propsValue.domain_names && propsValue.domain_names.length > 0) {
-      organizationData.organization.domain_names = propsValue.domain_names;
+      organizationData.domain_names = propsValue.domain_names;
     }
 
     if (propsValue.details) {
-      organizationData.organization.details = propsValue.details;
+      organizationData.details = propsValue.details;
     }
 
     if (propsValue.notes) {
-      organizationData.organization.notes = propsValue.notes;
+      organizationData.notes = propsValue.notes;
     }
 
     if (propsValue.external_id) {
-      organizationData.organization.external_id = propsValue.external_id;
+      organizationData.external_id = propsValue.external_id;
     }
 
     if (propsValue.tags && propsValue.tags.length > 0) {
-      organizationData.organization.tags = propsValue.tags;
+      organizationData.tags = propsValue.tags;
     }
 
     if (propsValue.organization_fields) {
-      organizationData.organization.organization_fields = propsValue.organization_fields;
+      organizationData.organization_fields = propsValue.organization_fields;
     }
 
     const response = await httpClient.sendRequest<{ organization: Record<string, unknown> }>({

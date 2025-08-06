@@ -38,26 +38,82 @@ export const newTicketInView = createTrigger({
             options: [],
           };
         }
-        const response = await httpClient.sendRequest<{ views: Array<{ id: number; title: string }> }>({
-          url: `https://${authentication.subdomain}.zendesk.com/api/v2/views.json`,
-          method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.email + '/token',
-            password: authentication.token,
-          },
-        });
-        return {
-          placeholder: 'Select a view',
-          options: response.body.views.map((view: { id: number; title: string }) => ({
-            label: view.title,
-                          value: view.id.toString(),
-          })),
-        };
+        try {
+          const response = await httpClient.sendRequest<{ views: Array<{ id: number; title: string }> }>({
+            url: `https://${authentication.subdomain}.zendesk.com/api/v2/views.json`,
+            method: HttpMethod.GET,
+            authentication: {
+              type: AuthenticationType.BASIC,
+              username: authentication.email + '/token',
+              password: authentication.token,
+            },
+            timeout: 30000, // 30 seconds timeout
+            retries: 3, // Retry up to 3 times on failure
+          });
+          return {
+            placeholder: 'Select a view',
+            options: response.body.views.map((view) => ({
+              label: view.title,
+              value: view.id,
+            })),
+          };
+        } catch (error) {
+          return {
+            placeholder: 'Error loading views',
+            disabled: true,
+            options: [],
+          };
+        }
       },
     }),
   },
-  sampleData: undefined,
+  sampleData: {
+    url: 'https://activepieceshelp.zendesk.com/api/v2/tickets/5.json',
+    id: 5,
+    external_id: null,
+    via: {
+      channel: 'web',
+      source: {
+        from: {},
+        to: {},
+        rel: null,
+      },
+    },
+    created_at: '2023-03-25T02:39:41Z',
+    updated_at: '2023-03-25T02:39:41Z',
+    type: null,
+    subject: 'Subject',
+    raw_subject: 'Raw Subject',
+    description: 'Description',
+    priority: null,
+    status: 'open',
+    recipient: null,
+    requester_id: 8193592318236,
+    submitter_id: 8193592318236,
+    assignee_id: 8193592318236,
+    organization_id: 8193599387420,
+    group_id: 8193569448092,
+    collaborator_ids: [],
+    follower_ids: [],
+    email_cc_ids: [],
+    forum_topic_id: null,
+    problem_id: null,
+    has_incidents: false,
+    is_public: true,
+    due_at: null,
+    tags: [],
+    custom_fields: [],
+    satisfaction_rating: null,
+    sharing_agreement_ids: [],
+    custom_status_id: 8193592472348,
+    fields: [],
+    followup_ids: [],
+    ticket_form_id: 8193569410076,
+    brand_id: 8193583542300,
+    allow_channelback: false,
+    allow_attachments: true,
+    from_messaging_channel: false,
+  },
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {
       auth: context.auth,
@@ -96,7 +152,7 @@ type AuthProps = {
   subdomain: string;
 };
 
-const polling: Polling<AuthProps, { view_id: string }> = {
+const polling: Polling<AuthProps, { view_id: number }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue }) => {
     const items = await getTickets(auth, propsValue.view_id);
@@ -107,10 +163,10 @@ const polling: Polling<AuthProps, { view_id: string }> = {
   },
 };
 
-async function getTickets(authentication: AuthProps, view_id: string) {
+async function getTickets(authentication: AuthProps, view_id: number) {
   const { email, token, subdomain } = authentication;
   const response = await httpClient.sendRequest<{ tickets: Array<{ id: number; [key: string]: unknown }> }>({
-    url: `https://${subdomain}.zendesk.com/api/v2/views/${view_id}/tickets.json?sort_order=desc&sort_by=created_at&per_page=50`,
+    url: `https://${subdomain}.zendesk.com/api/v2/views/${view_id}/tickets.json?sort_order=desc&sort_by=created_at&per_page=200`,
     method: HttpMethod.GET,
     authentication: {
       type: AuthenticationType.BASIC,
@@ -118,6 +174,7 @@ async function getTickets(authentication: AuthProps, view_id: string) {
       password: token,
     },
     timeout: 30000, // 30 seconds timeout
+    retries: 3, // Retry up to 3 times on failure
   });
   return response.body.tickets;
 }

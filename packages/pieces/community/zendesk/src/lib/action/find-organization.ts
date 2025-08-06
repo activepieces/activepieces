@@ -13,42 +13,41 @@ export const findOrganization = createAction({
   auth: zendeskAuth,
   name: 'find_organization',
   displayName: 'Find Organization',
-  description: 'Look up an organization by name or ID',
+  description: 'Search for organizations by name or external ID. Note: You can search by either name OR external_id, but not both. Only admins and agents with organization permissions can search.',
   props: {
     organization_id: Property.ShortText({
       displayName: 'Organization ID',
-      description: 'The ID of the organization to retrieve',
+      description: 'The ID of the organization to retrieve (for direct lookup)',
       required: false,
     }),
     name: Property.ShortText({
       displayName: 'Organization Name',
-      description: 'Search for organizations by name',
+      description: 'Search for organizations by name (exact match, case insensitive). Cannot be used with External ID.',
       required: false,
     }),
-    external_id: Property.ShortText({
+    external_id: Property.Number({
       displayName: 'External ID',
-      description: 'Search for organizations by external ID',
+      description: 'Search for organizations by external ID (exact match, case insensitive). Cannot be used with Name.',
       required: false,
-    }),
-    per_page: Property.Number({
-      displayName: 'Results Per Page',
-      description: 'Number of results to return (max 100)',
-      required: false,
-      defaultValue: 25,
     }),
   },
   async run(context) {
     const { auth, propsValue } = context;
     const { email, token, subdomain } = auth as { email: string; token: string; subdomain: string };
 
+    // Validate that only one search parameter is provided
+    if (propsValue.name && propsValue.external_id) {
+      throw new Error('You can search by either name OR external_id, but not both');
+    }
+
     let url: string;
 
     if (propsValue.organization_id) {
       // Get specific organization by ID
       url = `https://${subdomain}.zendesk.com/api/v2/organizations/${propsValue.organization_id}.json`;
-    } else {
-      // Search organizations
-      url = `https://${subdomain}.zendesk.com/api/v2/organizations.json`;
+    } else if (propsValue.name || propsValue.external_id) {
+      // Search organizations using the search endpoint
+      url = `https://${subdomain}.zendesk.com/api/v2/organizations/search.json`;
       
       const params = new URLSearchParams();
       
@@ -57,16 +56,15 @@ export const findOrganization = createAction({
       }
       
       if (propsValue.external_id) {
-        params.append('external_id', propsValue.external_id);
-      }
-      
-      if (propsValue.per_page) {
-        params.append('per_page', propsValue.per_page.toString());
+        params.append('external_id', propsValue.external_id.toString());
       }
       
       if (params.toString()) {
         url += `?${params.toString()}`;
       }
+    } else {
+      // List all organizations (fallback)
+      url = `https://${subdomain}.zendesk.com/api/v2/organizations.json`;
     }
 
     const response = await httpClient.sendRequest<{ organizations?: Array<Record<string, unknown>>; organization?: Record<string, unknown> }>({
