@@ -1,8 +1,10 @@
 import { VideoIcon } from 'lucide-react';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
-import TutorialsDialog, { TabType } from './tutorials-dialog';
+
 import { Button } from '../ui/button';
+
+import TutorialsDialog, { TabType } from './tutorials-dialog';
 
 export const DashboardPageHeader = ({
   title,
