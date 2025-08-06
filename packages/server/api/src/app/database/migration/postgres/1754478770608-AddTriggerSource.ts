@@ -2,8 +2,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 import { insertScheduleFromFlowsMigration } from '../sqlite/1754477404726-AddTriggerSqlite'
 
-export class AddTrigger1754426627795 implements MigrationInterface {
-    name = 'AddTrigger1754426627795'
+export class AddTriggerSource1754478770608 implements MigrationInterface {
+    name = 'AddTriggerSource1754478770608'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -33,29 +33,30 @@ export class AddTrigger1754426627795 implements MigrationInterface {
             WHERE deleted IS NULL
         `)
         await insertScheduleFromFlowsMigration(queryRunner, system.globalLogger())
+
         await queryRunner.query(`
             CREATE TABLE "trigger_run" (
                 "id" character varying(21) NOT NULL,
                 "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "payloadFileId" character varying,
+                "pieceName" character varying NOT NULL,
+                "pieceVersion" character varying NOT NULL,
                 "error" character varying,
                 "status" character varying NOT NULL,
                 "triggerSourceId" character varying(21) NOT NULL,
                 "projectId" character varying(21) NOT NULL,
                 "platformId" character varying(21) NOT NULL,
                 "flowId" character varying(21),
-                "pieceName" character varying NOT NULL,
-                "pieceVersion" character varying NOT NULL,
                 CONSTRAINT "REL_b76b435f583d4e68c892a7fafa" UNIQUE ("payloadFileId"),
                 CONSTRAINT "PK_851d8c64cc2afc9b528c4473213" PRIMARY KEY ("id")
             )
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "idx_trigger_run_project_id_trigger_source_id"
+            CREATE INDEX "idx_trigger_run_project_id_trigger_source_id_status" ON "trigger_run" ("projectId", "triggerSourceId")
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_trigger_run_project_id_trigger_source_id_status" ON "trigger_run" ("projectId", "triggerSourceId")
+            CREATE INDEX "idx_created_piece_name_platform_id" ON "trigger_run" ("created", "platformId", "pieceName")
         `)
         await queryRunner.query(`
             ALTER TABLE "flow" DROP COLUMN "schedule"
@@ -77,11 +78,12 @@ export class AddTrigger1754426627795 implements MigrationInterface {
         `)
         await queryRunner.query(`
             ALTER TABLE "trigger_run"
-            ADD CONSTRAINT "FK_d14e1444c9b2b55075702e6b177" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+            ADD CONSTRAINT "fk_trigger_run_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
         await queryRunner.query(`
             ALTER TABLE "trigger_run"
-            ADD CONSTRAINT "fk_trigger_run_payload_file_id" FOREIGN KEY ("payloadFileId") REFERENCES "file"("id") ON DELETE SET NULL ON UPDATE NO ACTION
+            ADD CONSTRAINT "fk_trigger_run_payload_file_id" FOREIGN KEY ("payloadFileId") REFERENCES "file"("id") ON DELETE
+            SET NULL ON UPDATE NO ACTION
         `)
         await queryRunner.query(`
             ALTER TABLE "trigger_run"
@@ -104,7 +106,7 @@ export class AddTrigger1754426627795 implements MigrationInterface {
             ALTER TABLE "trigger_run" DROP CONSTRAINT "fk_trigger_run_payload_file_id"
         `)
         await queryRunner.query(`
-            ALTER TABLE "trigger_run" DROP CONSTRAINT "FK_d14e1444c9b2b55075702e6b177"
+            ALTER TABLE "trigger_run" DROP CONSTRAINT "fk_trigger_run_platform_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "trigger_run" DROP CONSTRAINT "fk_trigger_run_trigger_source_id"
@@ -124,16 +126,19 @@ export class AddTrigger1754426627795 implements MigrationInterface {
             ADD "schedule" jsonb
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "idx_trigger_run_project_id_trigger_source_id_status"
+            DROP INDEX "idx_created_piece_name_platform_id"
+        `)
+        await queryRunner.query(`
+            DROP INDEX "idx_trigger_run_project_id_trigger_source_id_status"
         `)
         await queryRunner.query(`
             DROP TABLE "trigger_run"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "idx_trigger_flow_id_simulate"
+            DROP INDEX "idx_trigger_flow_id_simulate"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "idx_trigger_project_id_flow_id_simulate"
+            DROP INDEX "idx_trigger_project_id_flow_id_simulate"
         `)
         await queryRunner.query(`
             DROP TABLE "trigger_source"
