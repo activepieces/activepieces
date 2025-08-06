@@ -27,7 +27,7 @@ import { WebhookFlowVersionToRun, webhookHandler } from '../webhooks/webhook-han
 import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
-import { getPublicUrl } from '../../../../worker/src/lib/utils/machine';
+import { domainHelper } from '../ee/custom-domains/domain-helper'
 
 const appWebhooks: Record<string, Piece> = {
     slack,
@@ -90,7 +90,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             const { reply, event, identifierValue } = piece.events.parseAndReply({
                 payload,
                 server: {
-                    publicUrl: getPublicUrl(),
+                    publicUrl: await domainHelper.getPublicUrl({ path: '' }),
                 },
             })
             if (!isNil(reply)) {

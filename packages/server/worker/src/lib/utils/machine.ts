@@ -84,7 +84,7 @@ export const workerMachine = {
     },
 }
 
-export function getPublicUrl(): string {
+function getPublicUrl(): string {
     if (isNil(settings)) {
         const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
         return url
