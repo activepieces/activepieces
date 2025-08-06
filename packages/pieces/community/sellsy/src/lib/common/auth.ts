@@ -5,7 +5,7 @@ export const sellsyAuth = PieceAuth.OAuth2({
   authUrl: 'https://login.sellsy.com/oauth2/authorization',
   tokenUrl: 'https://login.sellsy.com/oauth2/access-tokens',
   required: true,
-  scope: ['contacts.write','comments.read', 'comments.write'],
+  scope: ['webhooks.write','webhooks.read', 'contacts.write', 'comments.read', 'comments.write'],
   pkce: true,
 });
 

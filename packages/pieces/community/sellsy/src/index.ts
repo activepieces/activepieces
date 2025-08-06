@@ -8,6 +8,7 @@ import { findContact } from './lib/actions/find-contact';
 import { findCompany } from './lib/actions/find-company';
 import { updateContact } from './lib/actions/update-contact';
 import { updateOpportunity } from './lib/actions/update-opportunity';
+import { newContact } from './lib/triggers/new-contact';
 
 export const sellsy = createPiece({
   displayName: 'Sellsy',
@@ -25,5 +26,7 @@ export const sellsy = createPiece({
     updateContact,
     updateOpportunity,
   ],
-  triggers: [],
+  triggers: [
+    newContact,
+  ],
 });
