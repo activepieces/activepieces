@@ -5,7 +5,33 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { newTicketInView } from './lib/trigger/new-ticket-in-view';
+
+// Import all triggers
+import {
+  newTicketInView,
+  newTicket,
+  updatedTicket,
+  tagAddedToTicket,
+  newOrganization,
+  newUser,
+  newSuspendedTicket,
+  newActionOnTicket,
+} from './lib/triggers';
+
+// Import all actions
+import {
+  createTicket,
+  updateTicket,
+  addTagToTicket,
+  addCommentToTicket,
+  createOrganization,
+  updateOrganization,
+  createUser,
+  deleteUser,
+  findTickets,
+  findOrganization,
+  findUser,
+} from './lib/actions';
 
 const markdownProperty = `
 **Organization**: The organization name can be found in the URL (e.g https://ORGANIZATION_NAME.zendesk.com).
@@ -47,6 +73,22 @@ export const zendesk = createPiece({
   categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: zendeskAuth,
   actions: [
+    // Write Actions
+    createTicket,
+    updateTicket,
+    addTagToTicket,
+    addCommentToTicket,
+    createOrganization,
+    updateOrganization,
+    createUser,
+    deleteUser,
+    
+    // Search Actions
+    findTickets,
+    findOrganization,
+    findUser,
+    
+    // Custom API Call (existing)
     createCustomApiCallAction({
       baseUrl: (auth) =>
         `https://${
@@ -62,5 +104,14 @@ export const zendesk = createPiece({
       }),
     }),
   ],
-  triggers: [newTicketInView],
+  triggers: [
+    newTicketInView,
+    newTicket,
+    updatedTicket,
+    tagAddedToTicket,
+    newOrganization,
+    newUser,
+    newSuspendedTicket,
+    newActionOnTicket,
+  ],
 });
