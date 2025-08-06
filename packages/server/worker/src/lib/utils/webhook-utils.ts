@@ -3,7 +3,6 @@ import {
     rejectedPromiseHandler,
 } from '@activepieces/server-shared'
 import {
-    EventPayload,
     FlowId,
     FlowVersion,
 } from '@activepieces/shared'
@@ -56,13 +55,6 @@ type GetWebhookUrlParams = {
     publicApiUrl: string
 }
 
-type ExtractPayloadParams = {
-    engineToken: string
-    projectId: string
-    flowVersion: FlowVersion
-    payload: EventPayload
-    simulate: boolean
-}
 
 type SaveSampleDataParams = {
     flowVersion: FlowVersion

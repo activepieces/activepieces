@@ -4,7 +4,7 @@ import { assertNotNullOrUndefined, FlowVersion, ProgressUpdateType, RunEnvironme
 import { FastifyBaseLogger } from 'fastify'
 import { flowWorkerCache } from '../api/flow-worker-cache'
 import { workerApiService } from '../api/server-api.service'
-import { triggerHooks } from '../utils/trigger-hook'
+import { triggerHooks } from '../utils/trigger-utils'
 
 export const repeatingJobExecutor = (log: FastifyBaseLogger) => ({
     async executeRepeatingJob({ data, engineToken, workerToken }: Params): Promise<void> {

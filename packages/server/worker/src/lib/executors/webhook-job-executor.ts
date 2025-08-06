@@ -8,8 +8,8 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { flowWorkerCache } from '../api/flow-worker-cache'
 import { workerApiService } from '../api/server-api.service'
+import { triggerHooks } from '../utils/trigger-utils'
 import { webhookUtils } from '../utils/webhook-utils'
-import { triggerHooks } from '../utils/trigger-hook'
 
 export const webhookExecutor = (log: FastifyBaseLogger) => ({
     async consumeWebhook(

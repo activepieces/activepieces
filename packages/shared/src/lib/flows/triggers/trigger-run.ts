@@ -1,5 +1,5 @@
-import { Static, Type } from "@sinclair/typebox";
-import { BaseModelSchema, Nullable } from "../../common";
+import { Static, Type } from '@sinclair/typebox'
+import { BaseModelSchema, Nullable } from '../../common'
 
 
 export enum TriggerRunStatus {
