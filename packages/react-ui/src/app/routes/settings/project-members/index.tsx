@@ -33,7 +33,6 @@ export default function ProjectMembersPage() {
     <LockedFeatureGuard
       featureKey="TEAM"
       locked={!platform.plan.projectRolesEnabled}
-      cloudOnlyFeature={true}
       lockTitle={t('Unlock Team Permissions')}
       lockDescription={t(
         'You can invite users to your Platform for free in the community edition. For advanced roles and permissions request trial',

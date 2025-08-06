@@ -3,7 +3,7 @@ import { VersionType } from '../../pieces'
 import { SampleDataSetting } from '../sample-data'
 import { PieceTriggerSettings } from '../triggers/trigger'
 
-export enum ActionType {
+export enum FlowActionType {
     CODE = 'CODE',
     PIECE = 'PIECE',
     LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
@@ -64,7 +64,7 @@ export type CodeActionSettings = Static<typeof CodeActionSettings>
 
 export const CodeActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(ActionType.CODE),
+    type: Type.Literal(FlowActionType.CODE),
     settings: CodeActionSettings,
 })
 export const PieceActionSettings = Type.Object({
@@ -79,7 +79,7 @@ export type PieceActionSettings = Static<typeof PieceActionSettings>
 
 export const PieceActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(ActionType.PIECE),
+    type: Type.Literal(FlowActionType.PIECE),
     settings: PieceActionSettings,
 })
 
@@ -94,7 +94,7 @@ export type LoopOnItemsActionSettings = Static<
 
 export const LoopOnItemsActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(ActionType.LOOP_ON_ITEMS),
+    type: Type.Literal(FlowActionType.LOOP_ON_ITEMS),
     settings: LoopOnItemsActionSettings,
 })
 
@@ -271,7 +271,7 @@ export type RouterActionSettings = Static<typeof RouterActionSettings>
 
 // Union of all actions
 
-export const Action = Type.Recursive((action) =>
+export const FlowAction = Type.Recursive((action) =>
     Type.Union([
         Type.Intersect([
             CodeActionSchema,
@@ -295,7 +295,7 @@ export const Action = Type.Recursive((action) =>
         Type.Intersect([
             Type.Object({
                 ...commonActionProps,
-                type: Type.Literal(ActionType.ROUTER),
+                type: Type.Literal(FlowActionType.ROUTER),
                 settings: RouterActionSettings,
             }),
             Type.Object({
@@ -307,7 +307,7 @@ export const Action = Type.Recursive((action) =>
 )
 export const RouterActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(ActionType.ROUTER),
+    type: Type.Literal(FlowActionType.ROUTER),
     settings: RouterActionSettings,
 })
 
@@ -317,25 +317,25 @@ export const SingleActionSchema = Type.Union([
     LoopOnItemsActionSchema,
     RouterActionSchema,
 ])
-export type Action = Static<typeof Action>
+export type FlowAction = Static<typeof FlowAction>
 
 
 export type RouterAction = Static<typeof RouterActionSchema> & {
-    nextAction?: Action
-    children: (Action | null)[]
+    nextAction?: FlowAction
+    children: (FlowAction | null)[]
 }
 
 export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema> & {
-    nextAction?: Action
-    firstLoopAction?: Action
+    nextAction?: FlowAction
+    firstLoopAction?: FlowAction
 }
 
 export type PieceAction = Static<typeof PieceActionSchema> & {
-    nextAction?: Action
+    nextAction?: FlowAction
 }
 
 export type CodeAction = Static<typeof CodeActionSchema> & {
-    nextAction?: Action
+    nextAction?: FlowAction
 }
 
 export type StepSettings =
