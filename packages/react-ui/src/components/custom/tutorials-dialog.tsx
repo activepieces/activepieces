@@ -14,12 +14,9 @@ import { useState } from 'react';
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { Tabs, TabsTrigger, TabsList } from '@/components/ui/tabs';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import {
-  ApEdition,
   ApFlagId,
   ClickedTutorialTelemetryParams,
-  isNil,
   TelemetryEventName,
 } from '@activepieces/shared';
 
@@ -51,13 +48,10 @@ const TutorialsDialog = ({
   const [selectedTab, setSelectedTab] = useState<TabType>(
     initialTab ?? 'gettingStarted',
   );
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { capture } = useTelemetry();
-  const showTutorials =
-    isNil(platform.plan?.licenseKey) ||
-    platform.plan.licenseKey.length === 0 ||
-    edition === ApEdition.COMMUNITY;
+  const { data: showTutorials } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_TUTORIALS,
+  );
   const tabs = {
     gettingStarted: {
       icon: <Star className="size-4"></Star>,
@@ -160,7 +154,7 @@ const TutorialsDialog = ({
               onValueChange={(value) => setSelectedTab(value as TabType)}
               className="overflow-x-auto  w-[70vw] max-w-[1280px]"
             >
-              <TabsList className="  bg-background  p-0 justify-start rounded-none ">
+              <TabsList className="bg-background  p-0 justify-start rounded-none ">
                 {Object.entries(tabs).map(([key, tab]) => (
                   <TabsTrigger
                     key={key}
