@@ -86,6 +86,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       pathname.includes('/flows') ||
       pathname.includes('/runs') ||
       pathname.includes('/issues'),
+    tutorialTab: 'flows',
   };
 
   const mcpLink: SidebarLink = {
@@ -101,6 +102,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     ),
     hasPermission: checkAccess(Permission.READ_MCP),
     isSubItem: false,
+    tutorialTab: 'mcpServers',
   };
 
   const agentsLink: SidebarLink = {
@@ -112,6 +114,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     hasPermission: true,
     isSubItem: false,
     name: t('Products'),
+    tutorialTab: 'agents',
   };
 
   const tablesLink: SidebarLink = {
@@ -122,6 +125,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     icon: <Table2 />,
     hasPermission: checkAccess(Permission.READ_TABLE),
     isSubItem: false,
+    tutorialTab: 'tables',
   };
 
   const todosLink: SidebarLink = {
@@ -132,6 +136,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     icon: <ListTodo />,
     hasPermission: checkAccess(Permission.READ_TODOS),
     isSubItem: false,
+    tutorialTab: 'todos',
   };
 
   const items: SidebarItem[] = [

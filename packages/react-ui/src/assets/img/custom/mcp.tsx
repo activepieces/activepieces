@@ -14,6 +14,7 @@ export const McpSvg = ({
     className={cn('w-6 h-6', className)}
   >
     <path
+      className='transition-all duration-150 ease-in-out'
       stroke={isActive ? 'hsl(var(--primary))' : 'hsl(var(--foreground))'}
       strokeLinecap="round"
       strokeWidth="4.312"

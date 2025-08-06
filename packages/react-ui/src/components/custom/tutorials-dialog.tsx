@@ -27,6 +27,7 @@ import {
   DialogTrigger,
 } from '../ui/dialog';
 import { Separator } from '../ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 export type TabType =
   | 'flows'
@@ -38,9 +39,11 @@ export type TabType =
 const TutorialsDialog = ({
   initialTab,
   children,
+  showTooltip = true,
 }: {
   initialTab?: TabType;
   children?: React.ReactNode;
+  showTooltip?: boolean;
 }) => {
   const [selectedTab, setSelectedTab] = useState<TabType>(
     initialTab ?? 'gettingStarted',
@@ -97,8 +100,11 @@ const TutorialsDialog = ({
 
   return (
     <Dialog>
+      <Tooltip>
+      <TooltipTrigger asChild>
       <DialogTrigger asChild>
-        {children ? (
+        
+          {children ? (
           children
         ) : (
           <Button variant="outline-primary" size="icon">
@@ -106,6 +112,15 @@ const TutorialsDialog = ({
           </Button>
         )}
       </DialogTrigger>
+      </TooltipTrigger>
+         {
+          showTooltip && (
+            <TooltipContent>
+              {t('Tutorial')}
+            </TooltipContent>
+          )
+         }
+        </Tooltip>
       <DialogContent
         withCloseButton={false}
         className="p-0 h-[80vh] w-[70vw] max-w-[1280px] overflow-hidden"
