@@ -1,4 +1,4 @@
-import { apId, FileCompression, FileType, ProjectId, TriggerRun, TriggerRunStatus, TriggerStatusReport } from '@activepieces/shared'
+import { FileCompression, FileType, ProjectId, TriggerRun, TriggerRunStatus, TriggerStatusReport } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
@@ -10,9 +10,8 @@ const triggerRunRepo = repoFactory(TriggerRunEntity)
 
 export const triggerRunService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<TriggerRun> {
-        const { projectId, triggerSourceId, status, payload, error, pieceName, pieceVersion } = params
+        const { projectId, triggerSourceId, status, payload, error, pieceName, pieceVersion, id } = params
         const buffer = Buffer.from(JSON.stringify(payload))
-        const triggerRunId = apId()
         const platformId = await projectService.getPlatformId(projectId)
         const file = await fileService(log).save({
             projectId,
@@ -26,7 +25,7 @@ export const triggerRunService = (log: FastifyBaseLogger) => ({
             },
         })
         const request: Omit<TriggerRun, 'created' | 'updated'> = {
-            id: triggerRunId,
+            id,
             projectId,
             status,
             pieceName,
@@ -36,7 +35,8 @@ export const triggerRunService = (log: FastifyBaseLogger) => ({
             payloadFileId: file.id,
             error,
         }
-        return triggerRunRepo().save(request)
+        await triggerRunRepo().upsert(request, ['id'])
+        return triggerRunRepo().findOneByOrFail({ id })
     },
     async getStatusReport(params: GetStatusReportParams): Promise<TriggerStatusReport> {
         const { platformId } = params
@@ -88,6 +88,7 @@ type GetStatusReportParams = {
 
 type CreateParams = {
     projectId: ProjectId
+    id: string
     triggerSourceId: string
     status: TriggerRunStatus
     pieceName: string

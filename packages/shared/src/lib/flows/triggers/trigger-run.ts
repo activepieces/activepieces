@@ -25,6 +25,7 @@ export type TriggerRun = Static<typeof TriggerRun>
 
 
 export const CreateTriggerRunRequestBody = Type.Object({
+    jobId: Type.String(),
     status: Type.Enum(TriggerRunStatus),
     payload: Type.Unknown(),
     error: Nullable(Type.String()),
