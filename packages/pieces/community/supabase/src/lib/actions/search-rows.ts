@@ -52,20 +52,26 @@ export const searchRows = createAction({
     const { url, apiKey } = context.auth;
     const { table, columns, filter, orderBy, ascending, limit, offset } = context.propsValue;
 
+    if (!table || !table.trim()) {
+      throw new Error('Table name is required');
+    }
+
     const supabase = createClient(url, apiKey);
 
     // Validate and set limits
-    const finalLimit = Math.min(limit || 100, 1000);
+    const finalLimit = Math.min(Math.max(limit || 100, 1), 1000);
     const finalOffset = Math.max(offset || 0, 0);
     const selectColumns = columns?.trim() || '*';
 
     // Build the query
-    let query = supabase.from(table).select(selectColumns, { count: 'exact' });
+    let query = supabase.from(table.trim()).select(selectColumns, { count: 'exact' });
 
     // Apply filters
     if (filter && typeof filter === 'object') {
       Object.entries(filter).forEach(([key, value]) => {
-        query = query.eq(key, value);
+        if (value !== null && value !== undefined) {
+          query = query.eq(key, value);
+        }
       });
     }
 
@@ -91,7 +97,7 @@ export const searchRows = createAction({
       limit: finalLimit,
       offset: finalOffset,
       hasMore: count ? (finalOffset + finalLimit) < count : false,
-      message: `Found ${data ? data.length : 0} rows`,
+      message: `Found ${data ? data.length : 0} rows${count !== null ? ` out of ${count} total` : ''}`,
     };
   },
 });

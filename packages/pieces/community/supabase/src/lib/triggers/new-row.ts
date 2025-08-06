@@ -69,12 +69,20 @@ const polling: Polling<{ url: string; apiKey: string }, { table: string; orderCo
     const { url, apiKey } = auth;
     const { table, orderColumn } = propsValue;
     
+    if (!table || !table.trim()) {
+      throw new Error('Table name is required');
+    }
+    
+    if (!orderColumn || !orderColumn.trim()) {
+      throw new Error('Order column is required');
+    }
+    
     const supabase = createClient(url, apiKey);
     
     const { data, error } = await supabase
-      .from(table)
+      .from(table.trim())
       .select('*')
-      .order(orderColumn, { ascending: false })
+      .order(orderColumn.trim(), { ascending: false })
       .limit(100);
 
     if (error) {
@@ -86,7 +94,7 @@ const polling: Polling<{ url: string; apiKey: string }, { table: string; orderCo
     }
 
     return data.map((row, index) => ({
-      id: row[orderColumn] || `${table}_${index}_${Date.now()}`,
+      id: row[orderColumn.trim()] || `${table.trim()}_${index}_${Date.now()}`,
       data: row,
     }));
   },

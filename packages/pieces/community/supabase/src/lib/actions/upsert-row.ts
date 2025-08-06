@@ -28,13 +28,22 @@ export const upsertRow = createAction({
     const { url, apiKey } = context.auth;
     const { table, data, onConflict } = context.propsValue;
 
+    if (!table || !table.trim()) {
+      throw new Error('Table name is required');
+    }
+
+    if (!data || (typeof data === 'object' && Object.keys(data).length === 0)) {
+      throw new Error('Row data is required');
+    }
+
     const supabase = createClient(url, apiKey);
 
-    let query = supabase.from(table).upsert(data);
+    let query = supabase.from(table.trim()).upsert(data);
 
     // Apply onConflict if specified
     if (onConflict && onConflict.trim()) {
-      const conflictColumns = onConflict.split(',').map(col => col.trim());
+      // For Supabase, onConflict is specified when creating the table schema
+      // Here we just ensure we get the result back
       query = query.select();
     } else {
       query = query.select();

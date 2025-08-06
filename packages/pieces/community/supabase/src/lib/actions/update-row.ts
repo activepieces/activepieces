@@ -28,17 +28,27 @@ export const updateRow = createAction({
     const { url, apiKey } = context.auth;
     const { table, filter, data } = context.propsValue;
 
+    if (!table || !table.trim()) {
+      throw new Error('Table name is required');
+    }
+
+    if (!filter || typeof filter !== 'object' || Object.keys(filter).length === 0) {
+      throw new Error('Filter criteria is required for update operations');
+    }
+
+    if (!data || (typeof data === 'object' && Object.keys(data).length === 0)) {
+      throw new Error('Update data is required');
+    }
+
     const supabase = createClient(url, apiKey);
 
     // Build the query with filters
-    let query = supabase.from(table).update(data);
+    let query = supabase.from(table.trim()).update(data);
     
     // Apply filters
-    if (filter && typeof filter === 'object') {
-      Object.entries(filter).forEach(([key, value]) => {
-        query = query.eq(key, value);
-      });
-    }
+    Object.entries(filter).forEach(([key, value]) => {
+      query = query.eq(key, value);
+    });
 
     const { data: result, error } = await query.select();
 

@@ -23,17 +23,23 @@ export const deleteRows = createAction({
     const { url, apiKey } = context.auth;
     const { table, filter } = context.propsValue;
 
+    if (!table || !table.trim()) {
+      throw new Error('Table name is required');
+    }
+
+    if (!filter || typeof filter !== 'object' || Object.keys(filter).length === 0) {
+      throw new Error('Filter criteria is required for delete operations to prevent accidental deletion of all rows');
+    }
+
     const supabase = createClient(url, apiKey);
 
     // Build the query with filters
-    let query = supabase.from(table).delete();
+    let query = supabase.from(table.trim()).delete();
     
     // Apply filters
-    if (filter && typeof filter === 'object') {
-      Object.entries(filter).forEach(([key, value]) => {
-        query = query.eq(key, value);
-      });
-    }
+    Object.entries(filter).forEach(([key, value]) => {
+      query = query.eq(key, value);
+    });
 
     const { data, error } = await query;
 

@@ -23,10 +23,18 @@ export const createRow = createAction({
     const { url, apiKey } = context.auth;
     const { table, data } = context.propsValue;
 
+    if (!table || !table.trim()) {
+      throw new Error('Table name is required');
+    }
+
+    if (!data || (typeof data === 'object' && Object.keys(data).length === 0)) {
+      throw new Error('Row data is required');
+    }
+
     const supabase = createClient(url, apiKey);
 
     const { data: result, error } = await supabase
-      .from(table)
+      .from(table.trim())
       .insert(data)
       .select();
 
