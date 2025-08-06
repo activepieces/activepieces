@@ -1,27 +1,27 @@
 import { VideoIcon } from 'lucide-react';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
-
+import TutorialsDialog, { TabType } from './tutorials-dialog';
 import { Button } from '../ui/button';
 
-import TutorialsDialog, { TabType } from './tutorials-dialog';
-
-export const TableTitle = ({
+export const DashboardPageHeader = ({
+  title,
   children,
   description,
   beta = false,
   tutorialTab,
 }: {
-  children: React.ReactNode;
+  title: string;
+  children?: React.ReactNode;
   description?: React.ReactNode;
   beta?: boolean;
   tutorialTab?: TabType;
 }) => {
   return (
-    <div className="flex items-center justify-between mb-4">
+    <div className="w-full flex items-center justify-between border-b absolute left-0 top-0 bg-background py-3 px-6 z-30">
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold">{children}</h1>
+          <h1 className="text-2xl font-semibold">{title}</h1>
           {tutorialTab && (
             <TutorialsDialog location="table-title" initialTab={tutorialTab}>
               <Button variant="outline-primary" size="icon">
@@ -36,10 +36,10 @@ export const TableTitle = ({
           )}
         </div>
         {description && (
-          <span className="text-md text-muted-foreground">{description}</span>
+          <span className="text-sm text-muted-foreground">{description}</span>
         )}
       </div>
+      {children}
     </div>
   );
 };
-TableTitle.displayName = 'TableTitle';

@@ -287,7 +287,7 @@ export function SidebarComponent({
           })}
         >
           <ScrollArea
-            className={cn('px-6 py-6 w-full h-full bg-background', {
+            className={cn('w-full pb-6 pt-28 px-6 h-full bg-background', {
               'rounded-lg border-b-0 border': !hideSideNav,
             })}
             style={{
