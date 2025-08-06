@@ -72,3 +72,4 @@ export const DEFAULT_SAMPLE_DATA_SETTINGS: SampleDataSettings = {
 
 export const SaveSampleDataResponse = Pick(File, ['id', 'size', 'type'])
 export type SaveSampleDataResponse = Static<typeof SaveSampleDataResponse>
+

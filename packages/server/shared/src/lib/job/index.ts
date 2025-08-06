@@ -89,7 +89,6 @@ export type ResumeRunRequest = Static<typeof ResumeRunRequest>
 
 export function getEngineTimeout(operationType: EngineOperationType, flowTimeoutSandbox: number, triggerTimeoutSandbox: number): number {
     switch (operationType) {
-        case EngineOperationType.EXECUTE_STEP:
         case EngineOperationType.EXECUTE_FLOW:
         case EngineOperationType.EXECUTE_TOOL:
             return flowTimeoutSandbox

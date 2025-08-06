@@ -1,7 +1,10 @@
-import { CreateStepRunRequestBody, GetSampleDataRequest, PrincipalType, RunEnvironment, SERVICE_KEY_SECURITY_OPENAPI, StepRunResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { CreateStepRunRequestBody, EngineHttpResponse, GetSampleDataRequest, PauseType, PrincipalType, ProgressUpdateType, SERVICE_KEY_SECURITY_OPENAPI, WebhookPauseMetadata, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
 import { websocketService } from '../../websockets/websockets.service'
+import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { flowService } from '../flow/flow.service'
+import { flowRunService, WEBHOOK_TIMEOUT_MS } from '../flow-run/flow-run-service'
 import { sampleDataService } from './sample-data.service'
 
 export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) => {
@@ -9,22 +12,32 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
         return async (data: CreateStepRunRequestBody) => {
             const principal = await websocketService.verifyPrincipal(socket)
             fastify.log.debug({ data }, '[Socket#testStepRun]')
-            const stepRun = await sampleDataService(fastify.log).runAction({
-                projectId: principal.projectId,
-                platformId: principal.platform.id,
-                flowVersionId: data.flowVersionId,
-                stepName: data.stepName,
-                runEnvironment: RunEnvironment.TESTING,
-                requestId: data.id,
-            })
-            const response: StepRunResponse = {
-                id: data.id,
-                success: stepRun.success,
-                input: stepRun.input,
-                output: stepRun.output,
-                standardError: stepRun.standardError,
-                standardOutput: stepRun.standardOutput,
+            const synchronousHandlerId = engineResponseWatcher(fastify.log).getServerId()
+            const testCallbackRequestId = data.id
+            const pauseMetadata: WebhookPauseMetadata = {
+                type: PauseType.WEBHOOK,
+                requestId: testCallbackRequestId,
+                testCallbackRequestId,
+                handlerId: synchronousHandlerId,
+                response: {
+                    status: StatusCodes.NO_CONTENT,
+                    body: {},
+                    headers: {},
+                },
+                progressUpdateType: ProgressUpdateType.NONE,    
             }
+            await flowRunService(fastify.log).test({
+                projectId: principal.projectId,
+                flowVersionId: data.flowVersionId,
+                stepNameToTest: data.stepName,
+                pauseMetadata,
+            })
+            const response = await engineResponseWatcher(fastify.log).oneTimeListener<EngineHttpResponse>(testCallbackRequestId, true, WEBHOOK_TIMEOUT_MS, {
+                status: StatusCodes.NO_CONTENT,
+                body: {},
+                headers: {},
+            })
+
             socket.emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
         }
     })
@@ -44,7 +57,6 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
         return sampleData
     })
 }
-
 
 
 const GetSampleDataRequestParams = {

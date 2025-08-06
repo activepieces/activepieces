@@ -13,6 +13,17 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         executionState,
         constants,
     }) {
+        if (!isNil(constants.stepNameToTest)) {
+            const stepOutput = LoopStepOutput.init({
+                input: {},
+            })
+            const newExecutionContext = executionState.upsertStep(action.name, stepOutput).setVerdict(ExecutionVerdict.RUNNING)
+            return flowExecutor.execute({
+                action: action.firstLoopAction,
+                executionState: newExecutionContext,
+                constants,
+            })
+        }
         const stepStartTime = performance.now()
         const { resolvedInput, censoredInput } = await constants.propsResolver.resolve<LoopOnActionResolvedSettings>({
             unresolvedInput: {
@@ -48,7 +59,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
                 stepOutput = stepOutput.addIteration()
             }
             newExecutionContext = newExecutionContext.upsertStep(action.name, stepOutput).setCurrentPath(newCurrentPath)
-            if (!isNil(firstLoopAction) && !constants.testSingleStepMode) {
+            if (!isNil(firstLoopAction)) {
                 newExecutionContext = await flowExecutor.execute({
                     action: firstLoopAction,
                     executionState: newExecutionContext,
@@ -62,7 +73,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
                 return newExecutionContext.upsertStep(action.name, stepOutput.setDuration(performance.now() - stepStartTime))
             }
 
-            if (constants.testSingleStepMode) {
+            if (!isNil(constants.stepNameToTest)) {
                 break
             }
         }

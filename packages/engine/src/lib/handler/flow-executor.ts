@@ -69,7 +69,9 @@ export const flowExecutor = {
                 constants,
             })
 
-            if (flowExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
+            const shouldBreakExecution = flowExecutionContext.verdict !== ExecutionVerdict.RUNNING || shouldStopExecution({ stepNameToTest: constants.stepNameToTest, executionState: flowExecutionContext })
+
+            if (shouldBreakExecution) {
                 break
             }
 
@@ -79,4 +81,16 @@ export const flowExecutor = {
         const flowEndTime = performance.now()
         return flowExecutionContext.setDuration(flowEndTime - flowStartTime)
     },
+}
+
+function shouldStopExecution({ stepNameToTest, executionState }: ShouldStopExecutionParams) {
+    if (isNil(stepNameToTest)) {
+        return false
+    }
+    return executionState.isCompleted({ stepName: stepNameToTest })
+}
+
+type ShouldStopExecutionParams = {
+    stepNameToTest: string | undefined
+    executionState: FlowExecutorContext
 }
