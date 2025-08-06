@@ -21,6 +21,14 @@ export const TriggerRunEntity = new EntitySchema<TriggerRunSchema>({
             type: String,
             nullable: true,
         },
+        pieceName: {
+            type: String,
+            nullable: false,
+        },
+        pieceVersion: {
+            type: String,
+            nullable: false,
+        },
         error: {
             type: String,
             nullable: true,
@@ -39,8 +47,8 @@ export const TriggerRunEntity = new EntitySchema<TriggerRunSchema>({
             unique: false,
         },
         {
-            name: 'idx_trigger_run_platform_id_project_id_trigger_source_id',
-            columns: ['platformId', 'projectId', 'triggerSourceId'],
+            name: 'idx_created_piece_name_platform_id',
+            columns: ['created', 'platformId', 'pieceName'],
             unique: false,
         },
     ],
@@ -60,12 +68,16 @@ export const TriggerRunEntity = new EntitySchema<TriggerRunSchema>({
             target: 'platform',
             cascade: true,
             onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'platformId',
+                foreignKeyConstraintName: 'fk_trigger_run_platform_id',
+            },
         },
         payloadFile: {
             type: 'one-to-one',
             target: 'file',
             cascade: true,
-            onDelete: 'CASCADE',
+            onDelete: 'SET NULL',
             joinColumn: {
                 name: 'payloadFileId',
                 foreignKeyConstraintName: 'fk_trigger_run_payload_file_id',

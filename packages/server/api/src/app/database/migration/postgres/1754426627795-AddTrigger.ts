@@ -45,15 +45,17 @@ export class AddTrigger1754426627795 implements MigrationInterface {
                 "projectId" character varying(21) NOT NULL,
                 "platformId" character varying(21) NOT NULL,
                 "flowId" character varying(21),
+                "pieceName" character varying NOT NULL,
+                "pieceVersion" character varying NOT NULL,
                 CONSTRAINT "REL_b76b435f583d4e68c892a7fafa" UNIQUE ("payloadFileId"),
                 CONSTRAINT "PK_851d8c64cc2afc9b528c4473213" PRIMARY KEY ("id")
             )
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_trigger_run_project_id_trigger_source_id_status" ON "trigger_run" ("projectId", "triggerSourceId")
+            CREATE INDEX "idx_trigger_run_project_id_trigger_source_id" ON "trigger_run" ("projectId", "triggerSourceId")
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_trigger_run_platform_id_project_id_trigger_source_id" ON "trigger_run" ("platformId", "projectId", "triggerSourceId")
+            CREATE INDEX "idx_created_piece_name_platform_id" ON "trigger_run" ("created", "pieceName", "platformId")
         `)
         await queryRunner.query(`
             ALTER TABLE "flow" DROP COLUMN "schedule"
@@ -79,7 +81,7 @@ export class AddTrigger1754426627795 implements MigrationInterface {
         `)
         await queryRunner.query(`
             ALTER TABLE "trigger_run"
-            ADD CONSTRAINT "fk_trigger_run_payload_file_id" FOREIGN KEY ("payloadFileId") REFERENCES "file"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+            ADD CONSTRAINT "fk_trigger_run_payload_file_id" FOREIGN KEY ("payloadFileId") REFERENCES "file"("id") ON DELETE SET NULL ON UPDATE NO ACTION
         `)
         await queryRunner.query(`
             ALTER TABLE "trigger_run"

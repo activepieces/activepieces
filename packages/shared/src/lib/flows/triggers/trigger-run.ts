@@ -14,6 +14,8 @@ export const TriggerRun = Type.Object({
     platformId: Type.String(),
     payloadFileId: Type.String(),
     error: Nullable(Type.String()),
+    pieceName: Type.String(),
+    pieceVersion: Type.String(),
     projectId: Type.String(),
     status: Type.Enum(TriggerRunStatus),
     triggerSourceId: Type.String(),
@@ -31,3 +33,15 @@ export const CreateTriggerRunRequestBody = Type.Object({
 })
 
 export type CreateTriggerRunRequestBody = Static<typeof CreateTriggerRunRequestBody>
+
+export const TriggerStatusReport = Type.Object({
+    pieces: Type.Record(Type.String(), Type.Object({
+        dailyStats: Type.Record(Type.String(), Type.Object({
+            success: Type.Number(),
+            failure: Type.Number(),
+        })),
+        totalRuns: Type.Number(),
+    })),
+})
+
+export type TriggerStatusReport = Static<typeof TriggerStatusReport>

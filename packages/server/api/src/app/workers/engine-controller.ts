@@ -166,6 +166,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 payload,
                 triggerSourceId: trigger.id,
                 projectId,
+                pieceName: trigger.pieceName,
+                pieceVersion: trigger.pieceVersion,
             })
         }
 

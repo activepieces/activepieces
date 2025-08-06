@@ -1,7 +1,8 @@
-import { apId, FileCompression, FileType, ProjectId, TriggerRun, TriggerRunStatus } from '@activepieces/shared'
+import { apId, FileCompression, FileType, ProjectId, TriggerRun, TriggerRunStatus, TriggerStatusReport } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
+import { apDayjs } from '../../helper/dayjs-helper'
 import { projectService } from '../../project/project-service'
 import { TriggerRunEntity } from './trigger-run.entity'
 
@@ -9,7 +10,7 @@ const triggerRunRepo = repoFactory(TriggerRunEntity)
 
 export const triggerRunService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<TriggerRun> {
-        const { projectId, triggerSourceId, status, payload, error } = params
+        const { projectId, triggerSourceId, status, payload, error, pieceName, pieceVersion } = params
         const buffer = Buffer.from(JSON.stringify(payload))
         const triggerRunId = apId()
         const platformId = await projectService.getPlatformId(projectId)
@@ -28,6 +29,8 @@ export const triggerRunService = (log: FastifyBaseLogger) => ({
             id: triggerRunId,
             projectId,
             status,
+            pieceName,
+            pieceVersion,
             triggerSourceId,
             platformId,
             payloadFileId: file.id,
@@ -35,13 +38,59 @@ export const triggerRunService = (log: FastifyBaseLogger) => ({
         }
         return triggerRunRepo().save(request)
     },
+    async getStatusReport(params: GetStatusReportParams): Promise<TriggerStatusReport> {
+        const { platformId } = params
+        const fourteenDaysAgo = apDayjs().subtract(14, 'day').startOf('day').toDate()
+        const runs: { day: string, pieceName: string, status: TriggerRunStatus, count: number }[] = await triggerRunRepo()
+            .createQueryBuilder('trigger_run')
+            .select([
+                'DATE("trigger_run"."created") as day',
+                '"trigger_run"."pieceName" as "pieceName"',
+                '"trigger_run"."status" as "status"',
+                'COUNT(*) as count',
+            ])
+            .where('"trigger_run"."platformId" = :platformId', { platformId })
+            .andWhere('"trigger_run"."created" >= :fourteenDaysAgo', { fourteenDaysAgo })
+            .groupBy('day')
+            .addGroupBy('"trigger_run"."pieceName"')
+            .addGroupBy('"trigger_run"."status"')
+            .getRawMany()
+
+        const pieces: TriggerStatusReport['pieces'] = {}
+
+        for (const run of runs) {
+            if (!pieces[run.pieceName]) {
+                pieces[run.pieceName] = {
+                    dailyStats: {},
+                    totalRuns: 0,
+                }
+            }
+            if (!pieces[run.pieceName].dailyStats[run.day]) {
+                pieces[run.pieceName].dailyStats[run.day] = { success: 0, failure: 0 }
+            }
+            if (run.status === TriggerRunStatus.COMPLETED) {
+                pieces[run.pieceName].dailyStats[run.day].success += Number(run.count)
+            }
+            else {
+                pieces[run.pieceName].dailyStats[run.day].failure += Number(run.count)
+            }
+            pieces[run.pieceName].totalRuns += Number(run.count)
+        }
+
+        return { pieces }
+    },
 })
 
+type GetStatusReportParams = {
+    platformId: ProjectId
+}
 
 type CreateParams = {
     projectId: ProjectId
     triggerSourceId: string
     status: TriggerRunStatus
+    pieceName: string
+    pieceVersion: string
     payload?: unknown
     error?: string
 }
