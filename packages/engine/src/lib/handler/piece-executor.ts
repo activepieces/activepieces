@@ -1,6 +1,6 @@
 import { URL } from 'url'
 import { ActionContext, InputPropertyMap, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { ActionType, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { PausedFlowTimeoutError } from '../helper/execution-errors'
@@ -37,7 +37,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
     const stepStartTime = performance.now()
     const stepOutput = GenericStepOutput.create({
         input: {},
-        type: ActionType.PIECE,
+        type: FlowActionType.PIECE,
         status: StepOutputStatus.RUNNING,
     })
 

@@ -1,4 +1,4 @@
-import { ActionType, BranchExecutionType } from '../actions/action'
+import { BranchExecutionType, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { MoveBranchRequest } from '.'
@@ -7,7 +7,7 @@ import { MoveBranchRequest } from '.'
 const isIndexWithinBounds = (index: number, arrayLength: number) => index >= 0 && index < arrayLength
 export function _moveBranch(flowVersion: FlowVersion, request: MoveBranchRequest): FlowVersion {
     return flowStructureUtil.transferFlow(flowVersion, (stepToUpdate) => {
-        if (stepToUpdate.name !== request.stepName || stepToUpdate.type !== ActionType.ROUTER) {
+        if (stepToUpdate.name !== request.stepName || stepToUpdate.type !== FlowActionType.ROUTER) {
             return stepToUpdate
         }
         const routerStep = stepToUpdate

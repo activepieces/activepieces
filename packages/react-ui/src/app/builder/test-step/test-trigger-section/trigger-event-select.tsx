@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trigger, TriggerEventWithPayload } from '@activepieces/shared';
+import { FlowTrigger, TriggerEventWithPayload } from '@activepieces/shared';
 
 import { testStepHooks } from '../test-step-hooks';
 
@@ -24,7 +24,7 @@ export const TriggerEventSelect = React.memo(
   ({ pollResults, sampleData }: TriggerEventSelectProps) => {
     const selectedId = getSelectedId(sampleData, pollResults?.data ?? []);
 
-    const form = useFormContext<Trigger>();
+    const form = useFormContext<FlowTrigger>();
     const formValues = form.getValues();
 
     const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(

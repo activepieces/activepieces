@@ -4,7 +4,7 @@ import { SampleDataSetting } from '../sample-data'
 
 export const AUTHENTICATION_PROPERTY_NAME = 'auth'
 
-export enum TriggerType {
+export enum FlowTriggerType {
     EMPTY = 'EMPTY',
     PIECE = 'PIECE_TRIGGER',
 }
@@ -18,7 +18,7 @@ const commonProps = {
 
 export const EmptyTrigger = Type.Object({
     ...commonProps,
-    type: Type.Literal(TriggerType.EMPTY),
+    type: Type.Literal(FlowTriggerType.EMPTY),
     settings: Type.Any(),
 })
 
@@ -36,15 +36,15 @@ export type PieceTriggerSettings = Static<typeof PieceTriggerSettings>
 
 export const PieceTrigger = Type.Object({
     ...commonProps,
-    type: Type.Literal(TriggerType.PIECE),
+    type: Type.Literal(FlowTriggerType.PIECE),
     settings: PieceTriggerSettings,
 })
 
 export type PieceTrigger = Static<typeof PieceTrigger>
 
-export const Trigger = Type.Union([
+export const FlowTrigger = Type.Union([
     PieceTrigger,
     EmptyTrigger,
 ])
 
-export type Trigger = Static<typeof Trigger>
+export type FlowTrigger = Static<typeof FlowTrigger>
