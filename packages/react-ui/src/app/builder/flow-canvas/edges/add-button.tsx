@@ -90,14 +90,15 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                   height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
                 }}
                 className={cn(
-                  'bg-slate-200  dark:bg-slate-400 relative group overflow-visible rounded-full cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
+                  'bg-slate-200 hover:shadow-bordered dark:shadow-slate-200 shadow-slate-500    dark:hover:bg-slate-200 group hover:bg-slate-500 dark:bg-slate-400 relative group overflow-visible rounded-full cursor-pointer  flex items-center justify-center  transition-all duration-150 ease-in-out',
                   {
-                    'bg-primary dark:bg-primary': isPieceSelectorOpen,
+                    'bg-primary dark:bg-primary hover:!bg-primary !shadow-bordered shadow-primary/80 ':
+                      isPieceSelectorOpen,
                   },
                 )}
               >
                 {!isPieceSelectorOpen && (
-                  <Plus className="w-3 h-3 stroke-[3px] text-slate-500 dark:text-slate-200  " />
+                  <Plus className="size-[12px] stroke-[3px] group-hover:size-[14px] text-slate-500 dark:text-slate-200  group-hover:dark:text-slate-400 group-hover:text-slate-200   " />
                 )}
               </div>
             </div>

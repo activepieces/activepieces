@@ -116,7 +116,7 @@ const ApStepCanvasNode = React.memo(
                 >
                   <div
                     className={cn(
-                      'bg-white flex items-center justify-center rounded-lg shadow-step-node group-hover:shadow-hovered-step-node dark:group-hover:shadow-dark-hovered-step-node  transition-all ease-in group-hover-:mt-[2px]',
+                      'bg-white flex items-center justify-center rounded-lg shadow-step-node group-hover:shadow-hovered-step-node dark:group-hover:shadow-dark-hovered-step-node  transition-all ease-in',
                       {
                         'shadow-trigger-node border-slate-400':
                           isTrigger && !isSelected,
@@ -179,7 +179,7 @@ const DisplayedText = ({
 }) => {
   return (
     <div
-      className="absolute left-[80px] flex flex-col gap-1 text-sm  !cursor-pointer z-10"
+      className="absolute left-[65px] pl-[14px] flex flex-col gap-1 text-sm  !cursor-pointer z-10"
       onClick={handleStepClick}
       style={{
         maxWidth: `${flowUtilConsts.STEP_DISPLAY_META_WIDTH}px`,

@@ -174,6 +174,7 @@ module.exports = {
         'add-button': 'var(--add-button-shadow)',
         'step-node': '0px 1px 24px rgba(0, 0, 0, 0.08), 0px 0px 0px 1px rgba(0, 0, 0, 0.08), 0px 1px 1px rgba(0, 0, 0, 0.12)',
         'trigger-node': ' 0px 1px 1px 0px #0000001F, 0px 1px 24px 0px #00000014, 0px 0px 0px 3px #94A3B833',
+        'bordered': '0 0 0 1px var(--tw-shadow-color)',
       },
     },
   },
