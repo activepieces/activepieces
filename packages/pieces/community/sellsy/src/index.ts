@@ -9,6 +9,13 @@ import { findCompany } from './lib/actions/find-company';
 import { updateContact } from './lib/actions/update-contact';
 import { updateOpportunity } from './lib/actions/update-opportunity';
 import { newContact } from './lib/triggers/new-contact';
+import { newCompany } from './lib/triggers/new-company';
+import { newOpportunity } from './lib/triggers/new-opportunity';
+import { newTask } from './lib/triggers/new-task';
+import { updatedCompany } from './lib/triggers/updated-company';
+import { updatedContact } from './lib/triggers/updated-contact';
+import { updatedOpportunityStatus } from './lib/triggers/updated-opportunity-status';
+import { updatedTask } from './lib/triggers/updated-task';
 
 export const sellsy = createPiece({
   displayName: 'Sellsy',
@@ -28,5 +35,13 @@ export const sellsy = createPiece({
   ],
   triggers: [
     newContact,
+    newCompany,
+    newOpportunity,
+    newTask,
+    updatedCompany,
+    updatedContact,
+    updatedOpportunityStatus,
+    updatedTask
+
   ],
 });
