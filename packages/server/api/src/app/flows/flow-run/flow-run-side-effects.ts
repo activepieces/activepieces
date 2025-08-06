@@ -50,7 +50,8 @@ const calculateDelayForPausedRun = (
 
 export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
     async finish(flowRun: FlowRun): Promise<void> {
-        if (!isFlowUserTerminalState(flowRun.status)) {
+        const isTestingStep = !isNil(flowRun.stepNameToTest)
+        if (!isFlowUserTerminalState(flowRun.status) && !isTestingStep) {
             return
         }
         await flowRunHooks(log).onFinish(flowRun)

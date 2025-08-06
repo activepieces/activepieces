@@ -13,6 +13,17 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         executionState,
         constants,
     }) {
+        if (!isNil(constants.stepNameToTest)) {
+            const stepOutput = LoopStepOutput.init({
+                input: {},
+            })
+            const newExecutionContext = executionState.upsertStep(action.name, stepOutput).setVerdict(ExecutionVerdict.RUNNING)
+            return flowExecutor.execute({
+                action: action.firstLoopAction,
+                executionState: newExecutionContext,
+                constants,
+            })
+        }
         const stepStartTime = performance.now()
         const { resolvedInput, censoredInput } = await constants.propsResolver.resolve<LoopOnActionResolvedSettings>({
             unresolvedInput: {

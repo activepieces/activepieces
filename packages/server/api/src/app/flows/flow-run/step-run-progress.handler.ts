@@ -9,7 +9,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
-import { flowRunService } from '../flow-run/flow-run-service'
+import { flowRunService } from './flow-run-service'
+
 
 export const stepRunProgressHandler = {
     async notifyStepFinished(params: NotifyStepFinishedParams): Promise<void> {
@@ -18,7 +19,7 @@ export const stepRunProgressHandler = {
             const flowRun = await getFlowRun(runId, logger)
             
             const stepOutput = flowRun.stepNameToTest 
-                ? findStepOutputInNestedStructure(flowRun.steps, flowRun.stepNameToTest)
+                ? flowRun.steps[flowRun.stepNameToTest]
                 : undefined
 
             const shouldStopProcessingStepCompletion = isNil(stepOutput) || [StepOutputStatus.RUNNING, StepOutputStatus.PAUSED].includes(stepOutput.status)
@@ -71,30 +72,6 @@ function createStepRunResponse(stepOutput: StepOutput, testCallbackRequestId: st
         standardError: isSuccess ? '' : (stepOutput.errorMessage as string),
         standardOutput: '',
     }
-}
-
-function findStepOutputInNestedStructure(data: unknown, stepName: string): StepOutput | undefined {
-    if (isNil(data) || typeof data !== 'object') {
-        return undefined
-    }
-    
-    const dataAsRecord = data as Record<string, unknown>
-    
-    const stepOutput = dataAsRecord[stepName]
-    if (!isNil(stepOutput) && typeof stepOutput === 'object') {
-        return stepOutput as StepOutput
-    }
-    
-    for (const value of Object.values(dataAsRecord)) {
-        if (value && typeof value === 'object') {
-            const result = findStepOutputInNestedStructure(value, stepName)
-            if (result) {
-                return result
-            }
-        }
-    }
-    
-    return undefined
 }
 
 type NotifyStepFinishedParams = {
