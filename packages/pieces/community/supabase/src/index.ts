@@ -6,6 +6,13 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { uploadFile } from './lib/actions/upload-file';
+import { createClient } from '@supabase/supabase-js';
+import { createRowAction } from './lib/actions/create-row';
+import { deleteRowsAction } from './lib/actions/delete-row';
+import { searchRowsAction } from './lib/actions/search-rows';
+import { updateRowAction } from './lib/actions/update-row';
+import { upsertRowAction } from './lib/actions/upsert-row';
+import { newRowTrigger } from './lib/triggers/new-row';
 
 const markdown = `
 Copy the **URL** and **Service API Key** from your Supabase project settings.
@@ -34,6 +41,11 @@ export const supabase = createPiece({
   authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     uploadFile,
+    createRowAction,
+    deleteRowsAction,
+    searchRowsAction,
+    updateRowAction,
+    upsertRowAction,
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { url: string }).url,
       auth: supabaseAuth,
@@ -42,5 +54,11 @@ export const supabase = createPiece({
       }),
     }),
   ],
-  triggers: [],
+  triggers: [
+    newRowTrigger
+  ],
 });
+
+export function createSupabaseClient(auth: any) {
+  return createClient(auth.url, auth.apiKey);
+}
