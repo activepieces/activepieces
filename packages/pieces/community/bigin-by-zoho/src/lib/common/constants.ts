@@ -49,10 +49,20 @@ export const DATA_CENTER_REGIONS = [
   }
 ];
 
-export function getZohoBiginAccountAuthorizationUrl(region: typeof DATA_CENTER_REGIONS[number]['REGION']) {
-  if (region === "CN") {
-    return "https://accounts.zoho.com.cn";
-  }
+export const ZOHO_WEBHOOK_TOKEN = 'bigin_webhook_token';
 
-  return "https://accounts.zoho.com";
-}
+export const API_ENDPOINTS = {
+  WEBHOOKS: `/actions/watch`,
+  USERS: `/users`,
+  COMPANIES: `/Accounts`,
+  PIPELINES: `/Pipelines`,
+  CONTACTS: `/Contacts`,
+  TASKS: `/Tasks`,
+  CALLS: `/Calls`,
+  EVENTS: `/Events`,
+  MODULES: `/settings/modules`,
+  LAYOUTS: `/settings/layouts`,
+  TAGS: `/settings/tags`,
+  PRODUCTS: `/Products`,
+  FIELDS: `/settings/fields`,
+};
