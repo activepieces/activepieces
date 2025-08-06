@@ -146,10 +146,15 @@ export const productsDropdown = Property.MultiSelectDropdown({
   refreshers: ['auth'],
   options: async ({ auth }: any) => {
     if (!auth) return handleDropdownError('Please Connect your account first');
-    const resp = await biginApiService.fetchPipelinesRecords(
+    const resp = await biginApiService.fetchProducts(
       auth.access_token,
       auth.api_domain
     );
+
+    if (!Array.isArray(resp.data) || resp.data.length === 0) {
+      return handleDropdownError('No products found. Please add products first.');
+    }
+
     return {
       options: resp.data.map((a: any) => ({
         label: a.Product_Name,
