@@ -1,6 +1,4 @@
 import {
-    Action,
-    ActionType,
     BeginExecuteFlowOperation,
     EngineOperation,
     EngineOperationType,
@@ -15,6 +13,8 @@ import {
     ExecuteTriggerResponse,
     ExecuteValidateAuthOperation,
     ExecutionType,
+    FlowAction,
+    FlowActionType,
     FlowRunResponse,
     GenericStepOutput,
     StepOutput,
@@ -56,10 +56,10 @@ const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorCon
 
 
 async function executeActionForTool(input: ExecuteToolOperation): Promise<ExecuteActionResponse> {
-    const step: Action = {
+    const step: FlowAction = {
         name: input.actionName,
         displayName: input.actionName,
-        type: ActionType.PIECE,
+        type: FlowActionType.PIECE,
         settings: {
             input: input.input,
             actionName: input.actionName,

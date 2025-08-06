@@ -1,5 +1,5 @@
 import { InputPropertyMap, PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { assertEqual, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, isNil, PieceTrigger, ScheduleOptions, Trigger, TriggerHookType } from '@activepieces/shared'
+import { assertEqual, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, FlowTrigger, isNil, PieceTrigger, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -18,7 +18,7 @@ type Listener = {
 }
 
 export const triggerHelper = {
-    async executeOnStart(trigger: Trigger, constants: EngineConstants, payload: unknown) {
+    async executeOnStart(trigger: FlowTrigger, constants: EngineConstants, payload: unknown) {
         const { pieceName, pieceVersion, triggerName, input, inputUiInfo } = (trigger as PieceTrigger).settings
         assertNotNullOrUndefined(triggerName, 'triggerName is required')
         const { pieceTrigger, processedInput } = await prepareTriggerExecution({
@@ -100,9 +100,9 @@ export const triggerHelper = {
                     throw new Error(`Invalid cron expression: ${request.cronExpression}`)
                 }
                 scheduleOptions = {
+                    type: TriggerSourceScheduleType.CRON_EXPRESSION,
                     cronExpression: request.cronExpression,
                     timezone: request.timezone ?? 'UTC',
-                    failureCount: request.failureCount ?? 0,
                 }
             },
             flows: createFlowsContext({

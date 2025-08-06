@@ -5,8 +5,8 @@ import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -209,13 +209,11 @@ const McpServersPage = () => {
       lockDescription={t('Create and manage your MCP servers')}
     >
       <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between">
-          <TableTitle
-            beta={true}
-            description={t('Create and manage your MCP servers')}
-          >
-            {t('MCP Servers')}
-          </TableTitle>
+        <DashboardPageHeader
+          title={t('MCP Servers')}
+          description={t('Create and manage your MCP servers')}
+          tutorialTab="mcpServers"
+        >
           <PermissionNeededTooltip hasPermission={userHasMcpWritePermission}>
             <Button
               className="flex items-center gap-2"
@@ -226,7 +224,8 @@ const McpServersPage = () => {
               {t('New MCP Server')}
             </Button>
           </PermissionNeededTooltip>
-        </div>
+        </DashboardPageHeader>
+
         <DataTable
           filters={[]}
           emptyStateIcon={<Table2 className="size-14" />}

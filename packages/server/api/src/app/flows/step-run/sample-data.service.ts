@@ -1,10 +1,11 @@
 import {
-    Action,
     apId,
     FileCompression,
     FileType,
+    FlowAction,
     FlowId,
     flowStructureUtil,
+    FlowTrigger,
     FlowVersion,
     FlowVersionId,
     isNil,
@@ -12,7 +13,6 @@ import {
     SampleDataFileType,
     SaveSampleDataResponse,
     Step,
-    Trigger,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -121,7 +121,7 @@ export async function saveSampleData({
     })
 }
 
-async function useExistingOrCreateNewSampleId(projectId: ProjectId, flowVersion: FlowVersion, step: Action | Trigger, fileType: FileType, log: FastifyBaseLogger): Promise<string> {
+async function useExistingOrCreateNewSampleId(projectId: ProjectId, flowVersion: FlowVersion, step: FlowAction | FlowTrigger, fileType: FileType, log: FastifyBaseLogger): Promise<string> {
     const sampleDataId = fileType === FileType.SAMPLE_DATA ? step.settings.inputUiInfo?.sampleDataFileId : step.settings.inputUiInfo?.sampleDataInputFileId
     if (isNil(sampleDataId)) {
         return apId()

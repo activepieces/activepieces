@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { ActionType, FileLocation, GenericStepOutput, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { FileLocation, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -74,7 +74,7 @@ type CreateOutputContextParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
     stepName: string
-    stepOutput: GenericStepOutput<ActionType.PIECE, unknown>
+    stepOutput: GenericStepOutput<FlowActionType.PIECE, unknown>
 }
 
 const queueUpdates: UpdateStepProgressParams[] = []
@@ -185,7 +185,7 @@ export const extractFailedStepName = (steps: Record<string, StepOutput>): string
 
     const failedStep = Object.entries(steps).find(([_, step]) => {
         const stepOutput = step as StepOutput
-        if (stepOutput.type === ActionType.LOOP_ON_ITEMS) {
+        if (stepOutput.type === FlowActionType.LOOP_ON_ITEMS) {
             const loopOutput = stepOutput as LoopStepOutput
             return loopOutput.output?.iterations.some(iteration =>
                 Object.values(iteration).some(iterationStep =>
