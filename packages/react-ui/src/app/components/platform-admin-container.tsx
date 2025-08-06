@@ -187,6 +187,13 @@ export function PlatformAdminContainer({
           isSubItem: true,
           show: true,
         },
+        {
+          type: 'link',
+          to: '/platform/infrastructure/triggers',
+          label: t('Triggers'),
+          isSubItem: true,
+          show: true,
+        },
       ],
     },
   ];

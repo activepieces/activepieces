@@ -336,6 +336,9 @@ export type TriggerEnableErrorParams = BaseErrorParams<
 ErrorCode.TRIGGER_ENABLE,
 {
     flowVersionId?: FlowVersionId
+    message?: string
+    standardOutput?: string
+    standardError?: string
 }
 >
 

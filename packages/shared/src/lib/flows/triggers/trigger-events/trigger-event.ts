@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModel } from '../../common/base-model'
+import { BaseModel } from '../../../common'
 
 export type TriggerEventId = string
 

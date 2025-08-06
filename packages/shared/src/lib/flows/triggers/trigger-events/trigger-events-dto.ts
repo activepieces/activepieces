@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
-import { Cursor } from '../../common/seek-page'
-import { FlowId } from '../flow'
+import { Cursor } from '../../../common/seek-page'
+import { FlowId } from '../../flow'
 
 export const ListTriggerEventsRequest = Type.Object({
     flowId: Type.String({}),
@@ -13,8 +13,9 @@ export type ListTriggerEventsRequest = Omit<Static<typeof ListTriggerEventsReque
     cursor: Cursor | undefined
 }
 
-export const TestPollingTriggerRequest = Type.Object({
+export const SaveTriggerEventRequest = Type.Object({
     flowId: Type.String({}),
+    mockData: Type.Unknown(),
 })
 
-export type TestPollingTriggerRequest = Static<typeof TestPollingTriggerRequest>
+export type SaveTriggerEventRequest = Static<typeof SaveTriggerEventRequest>

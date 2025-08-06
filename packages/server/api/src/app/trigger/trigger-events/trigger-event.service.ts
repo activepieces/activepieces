@@ -7,25 +7,25 @@ import {
     FileCompression,
     FileType,
     FlowId,
+    FlowTrigger,
+    FlowTriggerType,
     getPieceMajorAndMinorVersion,
     PieceTrigger,
     PopulatedFlow,
     ProjectId,
     SeekPage,
-    Trigger,
     TriggerEventWithPayload,
     TriggerHookType,
-    TriggerType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
+import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
-import { flowService } from '../flow/flow.service'
 import { TriggerEventEntity } from './trigger-event.entity'
 
 export const triggerEventRepo = repoFactory(TriggerEventEntity)
@@ -72,7 +72,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
         const trigger = flow.version.trigger
         const emptyPage = paginationHelper.createPage<TriggerEventWithPayload>([], null)
         switch (trigger.type) {
-            case TriggerType.PIECE: {
+            case FlowTriggerType.PIECE: {
 
                 const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.TEST>>>({
                     hookType: TriggerHookType.TEST,
@@ -109,7 +109,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                     limit: engineResponse.result.output.length,
                 })
             }
-            case TriggerType.EMPTY:
+            case FlowTriggerType.EMPTY:
                 return emptyPage
         }
     },
@@ -152,9 +152,9 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
     },
 })
 
-function getSourceName(trigger: Trigger): string {
+function getSourceName(trigger: FlowTrigger): string {
     switch (trigger.type) {
-        case TriggerType.PIECE: {
+        case FlowTriggerType.PIECE: {
             const pieceTrigger = trigger as PieceTrigger
             const pieceName = pieceTrigger.settings.pieceName
             const pieceVersion = getPieceMajorAndMinorVersion(
@@ -164,7 +164,7 @@ function getSourceName(trigger: Trigger): string {
             return `${pieceName}@${pieceVersion}:${triggerName}`
         }
 
-        case TriggerType.EMPTY:
+        case FlowTriggerType.EMPTY:
             return trigger.type
     }
 }
