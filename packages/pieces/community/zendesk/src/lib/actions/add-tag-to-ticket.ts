@@ -8,6 +8,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
+import { ticketIdDropdown } from '../common/props';
 
 type AuthProps = {
   email: string;
@@ -21,11 +22,7 @@ export const addTagToTicketAction = createAction({
   displayName: 'Add Tag to Ticket',
   description: 'Apply one or more tags to a ticket.',
   props: {
-    ticket_id: Property.Number({
-      displayName: 'Ticket ID',
-      description: 'The ID of the ticket to add tags to',
-      required: true,
-    }),
+    ticket_id: ticketIdDropdown,
     tags: Property.Array({
       displayName: 'Tags',
       description: 'Array of tags to add to the ticket. These will be added to existing tags, not replace them.',

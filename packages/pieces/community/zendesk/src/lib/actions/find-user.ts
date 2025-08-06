@@ -8,6 +8,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
+import { userIdDropdown } from '../common/props';
 
 type AuthProps = {
   email: string;
@@ -33,11 +34,7 @@ export const findUserAction = createAction({
         ],
       },
     }),
-    user_id: Property.Number({
-      displayName: 'User ID',
-      description: 'The ID of the user to retrieve',
-      required: false,
-    }),
+    user_id: userIdDropdown,
     email: Property.ShortText({
       displayName: 'Email Address',
       description: 'The email address of the user to search for',

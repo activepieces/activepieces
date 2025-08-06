@@ -8,6 +8,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
+import { userIdDropdown } from '../common/props';
 
 type AuthProps = {
   email: string;
@@ -21,11 +22,7 @@ export const deleteUserAction = createAction({
   displayName: 'Delete User',
   description: 'Remove a user and associated records from the account.',
   props: {
-    user_id: Property.Number({
-      displayName: 'User ID',
-      description: 'The ID of the user to delete',
-      required: true,
-    }),
+    user_id: userIdDropdown,
     confirmation: Property.Checkbox({
       displayName: 'Confirm Deletion',
       description: 'I understand that deleted users are not recoverable and this action cannot be undone.',

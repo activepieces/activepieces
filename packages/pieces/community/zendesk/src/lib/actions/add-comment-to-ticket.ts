@@ -8,6 +8,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
+import { ticketIdDropdown } from '../common/props';
 
 type AuthProps = {
   email: string;
@@ -21,11 +22,7 @@ export const addCommentToTicketAction = createAction({
   displayName: 'Add Comment to Ticket',
   description: 'Append a public/private comment to a ticket.',
   props: {
-    ticket_id: Property.Number({
-      displayName: 'Ticket ID',
-      description: 'The ID of the ticket to add a comment to',
-      required: true,
-    }),
+    ticket_id: ticketIdDropdown,
     comment_body: Property.LongText({
       displayName: 'Comment Body',
       description: 'The comment body (plain text). Use this for plain text comments.',

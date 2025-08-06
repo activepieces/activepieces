@@ -1,13 +1,11 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
+import { ticketIdDropdown } from '../common/props';
 
 type AuthProps = {
   email: string;
@@ -18,45 +16,26 @@ type AuthProps = {
 export const findTicketsAction = createAction({
   auth: zendeskAuth,
   name: 'find-tickets',
-  displayName: 'Find Ticket(s)',
-  description: 'Search tickets by ID, field, or content.',
+  displayName: 'Find Ticket',
+  description: 'Retrieve a specific ticket by ID.',
   props: {
-    ticket_ids: Property.Array({
-      displayName: 'Ticket IDs',
-      description: 'Array of ticket IDs to retrieve (maximum 100 tickets)',
-      required: true,
-    }),
+    ticket_id: ticketIdDropdown,
   },
   async run({ propsValue, auth }) {
     const authentication = auth as AuthProps;
     const {
-      ticket_ids,
+      ticket_id,
     } = propsValue;
 
-    // Validation
-    if (!Array.isArray(ticket_ids) || ticket_ids.length === 0) {
-      throw new Error('At least one ticket ID is required.');
+    // Validate ticket ID
+    const ticketId = typeof ticket_id === 'string' ? parseInt(ticket_id.trim()) : Number(ticket_id);
+    if (isNaN(ticketId) || ticketId <= 0) {
+      throw new Error(`Invalid ticket ID: ${ticket_id}. Ticket ID must be a positive number.`);
     }
-
-    if (ticket_ids.length > 100) {
-      throw new Error('Maximum of 100 ticket IDs allowed per request.');
-    }
-
-    // Convert array to comma-separated string and validate IDs
-    const validatedIds = [];
-    for (const id of ticket_ids) {
-      const ticketId = typeof id === 'string' ? parseInt(id.trim()) : Number(id);
-      if (isNaN(ticketId) || ticketId <= 0) {
-        throw new Error(`Invalid ticket ID: ${id}. All ticket IDs must be positive numbers.`);
-      }
-      validatedIds.push(ticketId);
-    }
-
-    const idsString = validatedIds.join(',');
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.subdomain}.zendesk.com/api/v2/tickets/show_many.json?ids=${idsString}`,
+        url: `https://${authentication.subdomain}.zendesk.com/api/v2/tickets/${ticketId}.json`,
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BASIC,
@@ -65,26 +44,18 @@ export const findTicketsAction = createAction({
         },
       });
 
-      const responseBody = response.body as { tickets: Array<Record<string, unknown>> };
-      const tickets = responseBody.tickets || [];
+      const responseBody = response.body as { ticket: Record<string, unknown> };
+      const ticket = responseBody.ticket;
 
-      // Identify which tickets were found and which were not
-      const foundTicketIds = tickets.map(ticket => ticket.id);
-      const notFoundIds = validatedIds.filter(id => !foundTicketIds.includes(id));
+      if (!ticket) {
+        throw new Error(`Ticket with ID ${ticketId} not found.`);
+      }
 
       return {
         success: true,
-        message: `Found ${tickets.length} out of ${validatedIds.length} requested ticket(s)`,
+        message: `Successfully retrieved ticket #${ticketId}`,
         data: response.body,
-        tickets,
-        summary: {
-          requested_count: validatedIds.length,
-          found_count: tickets.length,
-          not_found_count: notFoundIds.length,
-          requested_ids: validatedIds,
-          found_ids: foundTicketIds,
-          not_found_ids: notFoundIds,
-        },
+        ticket,
       };
     } catch (error) {
       const errorMessage = (error as Error).message;

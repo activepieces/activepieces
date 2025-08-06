@@ -8,6 +8,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
+import { ticketIdDropdown } from '../common/props';
 
 type AuthProps = {
   email: string;
@@ -21,11 +22,7 @@ export const updateTicketAction = createAction({
   displayName: 'Update Ticket',
   description: 'Modify ticket fields or status via API call.',
   props: {
-    ticket_id: Property.Number({
-      displayName: 'Ticket ID',
-      description: 'The ID of the ticket to update',
-      required: true,
-    }),
+    ticket_id: ticketIdDropdown,
     subject: Property.ShortText({
       displayName: 'Subject',
       description: 'Update the subject of the ticket',

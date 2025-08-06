@@ -8,6 +8,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
+import { organizationIdDropdown } from '../common/props';
 
 type AuthProps = {
   email: string;
@@ -50,11 +51,7 @@ export const createUserAction = createAction({
       description: 'The ID of a custom role for agents. Used when role is "agent" to specify the exact agent role.',
       required: false,
     }),
-    organization_id: Property.Number({
-      displayName: 'Organization ID',
-      description: 'The ID of the organization to associate the user with',
-      required: false,
-    }),
+    organization_id: organizationIdDropdown,
     organization_name: Property.ShortText({
       displayName: 'Organization Name',
       description: 'Create and associate user with a new organization by name (alternative to Organization ID)',

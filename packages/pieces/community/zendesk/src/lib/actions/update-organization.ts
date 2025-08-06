@@ -8,6 +8,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
+import { organizationIdDropdown } from '../common/props';
 
 type AuthProps = {
   email: string;
@@ -21,11 +22,7 @@ export const updateOrganizationAction = createAction({
   displayName: 'Update Organization',
   description: 'Update existing organization fields.',
   props: {
-    organization_id: Property.Number({
-      displayName: 'Organization ID',
-      description: 'The ID of the organization to update',
-      required: true,
-    }),
+    organization_id: organizationIdDropdown,
     name: Property.ShortText({
       displayName: 'Organization Name',
       description: 'Update the name of the organization (must be unique)',
