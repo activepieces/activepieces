@@ -21,13 +21,13 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { flowService } from '../flows/flow/flow.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun, webhookHandler } from '../webhooks/webhook-handler'
 import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
-import { domainHelper } from '../ee/custom-domains/domain-helper'
 
 const appWebhooks: Record<string, Piece> = {
     slack,
