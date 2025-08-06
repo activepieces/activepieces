@@ -1,128 +1,85 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginZohoAuth } from '../../index';
-import { makeRequest, BiginCompany } from '../common';
+import { makeRequest, userIdDropdown, tagDropdown } from '../common';
 
 export const createCompany = createAction({
   auth: biginZohoAuth,
-  name: 'bigin_create_company',
+  name: 'createCompany',
   displayName: 'Create Company',
-  description: 'Creates a new company/account in Bigin',
+  description: 'Create a new company record in Bigin',
   props: {
+    owner: userIdDropdown,
     accountName: Property.ShortText({
       displayName: 'Account Name',
-      description: 'The name of the company/account',
+      description: 'Provide the name of the company',
       required: true,
-    }),
-    accountType: Property.StaticDropdown({
-      displayName: 'Account Type',
-      required: false,
-      options: {
-        options: [
-          { label: 'Analyst', value: 'Analyst' },
-          { label: 'Competitor', value: 'Competitor' },
-          { label: 'Customer', value: 'Customer' },
-          { label: 'Integrator', value: 'Integrator' },
-          { label: 'Investor', value: 'Investor' },
-          { label: 'Partner', value: 'Partner' },
-          { label: 'Press', value: 'Press' },
-          { label: 'Prospect', value: 'Prospect' },
-          { label: 'Reseller', value: 'Reseller' },
-          { label: 'Other', value: 'Other' },
-        ],
-      },
-    }),
-    industry: Property.ShortText({
-      displayName: 'Industry',
-      required: false,
-    }),
-    annualRevenue: Property.Number({
-      displayName: 'Annual Revenue',
-      required: false,
     }),
     phone: Property.ShortText({
       displayName: 'Phone',
-      required: false,
-    }),
-    fax: Property.ShortText({
-      displayName: 'Fax',
+      description: 'Provide a phone number for the company',
       required: false,
     }),
     website: Property.ShortText({
       displayName: 'Website',
+      description: 'Provide a website URL for the company',
+      required: false,
+    }),
+    tag: tagDropdown('Companies'),
+    description: Property.ShortText({
+      displayName: 'Description',
+      description: 'Provide additional descriptions or notes related to the company',
       required: false,
     }),
     billingStreet: Property.ShortText({
       displayName: 'Billing Street',
+      description: 'The street address of the company',
       required: false,
     }),
     billingCity: Property.ShortText({
       displayName: 'Billing City',
+      description: 'The city where the company is located',
       required: false,
     }),
     billingState: Property.ShortText({
       displayName: 'Billing State',
-      required: false,
-    }),
-    billingCode: Property.ShortText({
-      displayName: 'Billing Code',
+      description: 'The state or province where the company is located',
       required: false,
     }),
     billingCountry: Property.ShortText({
       displayName: 'Billing Country',
+      description: 'The country of the company',
       required: false,
     }),
-    description: Property.LongText({
-      displayName: 'Description',
+    billingCode: Property.ShortText({
+      displayName: 'Billing Code',
+      description: 'The ZIP or postal code of the company',
       required: false,
     }),
   },
   async run(context) {
-    const {
-      accountName,
-      accountType,
-      industry,
-      annualRevenue,
-      phone,
-      fax,
-      website,
-      billingStreet,
-      billingCity,
-      billingState,
-      billingCode,
-      billingCountry,
-      description,
-    } = context.propsValue;
+    const body: Record<string, unknown> = {};
 
-    const companyData: Partial<BiginCompany> = {
-      Account_Name: accountName,
-    };
-
-    // Add optional fields if provided
-    if (accountType) companyData.Account_Type = accountType;
-    if (industry) companyData.Industry = industry;
-    if (annualRevenue) companyData.Annual_Revenue = annualRevenue;
-    if (phone) companyData.Phone = phone;
-    if (fax) companyData.Fax = fax;
-    if (website) companyData.Website = website;
-    if (billingStreet) companyData.Billing_Street = billingStreet;
-    if (billingCity) companyData.Billing_City = billingCity;
-    if (billingState) companyData.Billing_State = billingState;
-    if (billingCode) companyData.Billing_Code = billingCode;
-    if (billingCountry) companyData.Billing_Country = billingCountry;
-    if (description) companyData.Description = description;
-
-    const requestBody = {
-      data: [companyData],
-    };
+    if (context.propsValue.accountName) body['Account_Name'] = context.propsValue.accountName;
+    if (context.propsValue.owner) body['Owner'] = { id: context.propsValue.owner };
+    if (context.propsValue.phone) body['Phone'] = context.propsValue.phone;
+    if (context.propsValue.website) body['Website'] = context.propsValue.website;
+    if (context.propsValue.tag) body['Tag'] = context.propsValue.tag;
+    if (context.propsValue.description) body['Description'] = context.propsValue.description;
+    if (context.propsValue.billingStreet) body['Billing_Street'] = context.propsValue.billingStreet;
+    if (context.propsValue.billingCity) body['Billing_City'] = context.propsValue.billingCity;
+    if (context.propsValue.billingState) body['Billing_State'] = context.propsValue.billingState;
+    if (context.propsValue.billingCountry) body['Billing_Country'] = context.propsValue.billingCountry;
+    if (context.propsValue.billingCode) body['Billing_Code'] = context.propsValue.billingCode;
 
     const response = await makeRequest(
-      context.auth,
+      context.auth.access_token,
       HttpMethod.POST,
       '/Accounts',
-      requestBody
+      context.auth.props?.['location'] || 'com',
+      { data: [body] }
     );
 
-    return response;
+    return response.data[0];
   },
 }); 

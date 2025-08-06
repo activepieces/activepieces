@@ -1,99 +1,83 @@
-import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
-import { BiginZohoAuthType } from './auth';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-export class BiginClient {
-  constructor(private auth: BiginZohoAuthType) {}
+export async function makeRequest(
+  access_token: string,
+  method: HttpMethod,
+  path: string,
+  location?: string,
+  body?: unknown
+) {
+  try {
+    const BASE_URL = `https://www.zohoapis.${location}/bigin/v2`;
 
-  private getBaseUrl(): string {
-    return 'https://www.zohoapis.com/bigin/v1';
-  }
-
-  async makeRequest<T = any>(
-    method: HttpMethod,
-    endpoint: string,
-    body?: any,
-    queryParams?: Record<string, string>
-  ): Promise<T> {
-    const request: HttpRequest = {
+    const response = await httpClient.sendRequest({
       method,
-      url: `${this.getBaseUrl()}${endpoint}`,
+      url: `${BASE_URL}${path}`,
       headers: {
-        Authorization: `Zoho-oauthtoken ${this.auth.access_token}`,
+        Authorization: `Zoho-oauthtoken ${access_token}`,
         'Content-Type': 'application/json',
       },
-    };
-
-    if (body) {
-      request.body = JSON.stringify(body);
-    }
-
-    if (queryParams) {
-      const searchParams = new URLSearchParams(queryParams);
-      request.url += `?${searchParams.toString()}`;
-    }
-
-    const response = await httpClient.sendRequest(request);
-    return response.body;
-  }
-
-  async getUsers(type: string = 'ActiveUsers'): Promise<any> {
-    return this.makeRequest(HttpMethod.GET, '/users', undefined, { type });
-  }
-
-  async getFieldsMetadata(module: string): Promise<any> {
-    return this.makeRequest(HttpMethod.GET, '/settings/fields', undefined, { module });
-  }
-
-  async getModules(): Promise<any> {
-    return this.makeRequest(HttpMethod.GET, '/settings/modules');
-  }
-
-  async createRecord(module: string, data: any): Promise<any> {
-    const requestBody = { data: [data] };
-    return this.makeRequest(HttpMethod.POST, `/${module}`, requestBody);
-  }
-
-  async updateRecord(module: string, recordId: string, data: any): Promise<any> {
-    const requestBody = { data: [data] };
-    return this.makeRequest(HttpMethod.PUT, `/${module}/${recordId}`, requestBody);
-  }
-
-  async searchRecords(module: string, criteria: Record<string, string>): Promise<any> {
-    const searchParams = new URLSearchParams();
-    Object.entries(criteria).forEach(([key, value]) => {
-      if (value) {
-        searchParams.append(key, value);
-      }
+      body,
     });
-    
-    return this.makeRequest(HttpMethod.GET, `/${module}/search`, undefined, Object.fromEntries(searchParams));
-  }
 
-  async getRecords(module: string, options?: {
-    fields?: string[];
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-    perPage?: number;
-    page?: number;
-  }): Promise<any> {
-    const queryParams: Record<string, string> = {};
-    
-    if (options?.fields) {
-      queryParams['fields'] = options.fields.join(',');
-    }
-    if (options?.sortBy) {
-      queryParams['sort_by'] = options.sortBy;
-    }
-    if (options?.sortOrder) {
-      queryParams['sort_order'] = options.sortOrder;
-    }
-    if (options?.perPage) {
-      queryParams['per_page'] = options.perPage.toString();
-    }
-    if (options?.page) {
-      queryParams['page'] = options.page.toString();
+    const responseData = response.body?.data;
+    if (
+      responseData &&
+      Array.isArray(responseData) &&
+      responseData.length > 0
+    ) {
+      const firstItem = responseData[0];
+      if (firstItem.status === 'error' && firstItem.code) {
+        const details = firstItem.details
+          ? ` (Expected: ${firstItem.details.expected_data_type} for field: ${firstItem.details.api_name})`
+          : '';
+        throw new Error(
+          `Bigin API Error (${firstItem.code}): ${firstItem.message}${details}`
+        );
+      }
     }
 
-    return this.makeRequest(HttpMethod.GET, `/${module}`, undefined, queryParams);
+    return response.body;
+  } catch (error: any) {
+    if (error.response?.body) {
+      const errorBody = error.response.body;
+
+      if (
+        errorBody?.data &&
+        Array.isArray(errorBody.data) &&
+        errorBody.data.length > 0
+      ) {
+        const firstError = errorBody.data[0];
+        if (firstError.status === 'error' && firstError.code) {
+          const details = firstError.details
+            ? ` (Expected: ${firstError.details.expected_data_type} for field: ${firstError.details.api_name})`
+            : '';
+          throw new Error(
+            `Bigin API Error (${firstError.code}): ${firstError.message}${details}`
+          );
+        }
+      }
+
+      if (Array.isArray(errorBody) && errorBody.length > 0) {
+        const firstError = errorBody[0];
+        if (firstError.status === 'error' && firstError.code) {
+          throw new Error(
+            `Bigin API Error (${firstError.code}): ${firstError.message}`
+          );
+        }
+      }
+
+      if (errorBody.code && errorBody.message) {
+        throw new Error(
+          `Bigin API Error (${errorBody.code}): ${errorBody.message}`
+        );
+      }
+    }
+
+    if (error.message && error.message.includes('Bigin API Error')) {
+      throw error;
+    }
+
+    throw new Error(`Unexpected error: ${error.message || String(error)}`);
   }
 } 

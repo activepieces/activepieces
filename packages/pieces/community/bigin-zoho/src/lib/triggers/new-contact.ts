@@ -1,110 +1,131 @@
-import {
-  AuthenticationType,
-  DedupeStrategy,
-  httpClient,
-  HttpMethod,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  createTrigger,
-  OAuth2PropertyValue,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { biginZohoAuth } from '../../index';
+import { makeRequest } from '../common';
 
 export const newContact = createTrigger({
   auth: biginZohoAuth,
-  name: 'bigin_new_contact',
+  name: 'newContact',
   displayName: 'New Contact',
-  description: 'Triggers when a new contact is created in Bigin',
-  sampleData: {
-    Owner: {
-      name: 'John Doe',
-      id: '123456789',
-      email: 'john@example.com',
-    },
-    Email: 'contact@example.com',
-    Description: 'Sample contact description',
-    First_Name: 'Jane',
-    Last_Name: 'Smith',
-    Full_Name: 'Jane Smith',
-    Title: 'Marketing Manager',
-    Phone: '+1-555-123-4567',
-    Mobile: '+1-555-987-6543',
-    Website: 'www.example.com',
-    Account_Name: {
-      name: 'Example Corp',
-      id: '987654321',
-    },
-    Created_Time: '2023-03-26T00:01:56+01:00',
-    Modified_Time: '2023-03-26T00:02:28+01:00',
-    Created_By: {
-      name: 'John Doe',
-      id: '123456789',
-    },
-    Modified_By: {
-      name: 'John Doe',
-      id: '123456789',
-    },
-    id: '560094000000349199',
-  },
-  type: TriggerStrategy.POLLING,
+  description: 'Fires when a contact is added',
   props: {},
-  async run(context) {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+  sampleData: {
+    module: 'Contacts',
+    operation: 'insert',
+    record: {
+      id: '5555615000000346002',
+      First_Name: 'John',
+      Last_Name: 'Doe',
+      Full_Name: 'John Doe',
+      Email: 'john.doe@example.com',
+      Mobile: '555-0123',
+      Phone: '555-0124',
+      Title: 'Sales Manager',
+      Account_Name: {
+        name: 'Acme Corporation',
+        id: '5555615000000346003',
+      },
+      Mailing_Street: '123 Main St',
+      Mailing_City: 'San Francisco',
+      Mailing_State: 'CA',
+      Mailing_Country: 'USA',
+      Mailing_Zip: '94105',
+      Owner: {
+        name: 'Sarah Johnson',
+        id: '5555615000000181017',
+        email: 'sarah.johnson@example.com',
+      },
+      Created_Time: '2019-01-27T15:10:00+05:30',
+      Modified_Time: '2019-01-27T15:10:00+05:30',
+      Created_By: {
+        name: 'Sarah Johnson',
+        id: '5555615000000181017',
+        email: 'sarah.johnson@example.com',
+      },
+      Modified_By: {
+        name: 'Sarah Johnson',
+        id: '5555615000000181017',
+        email: 'sarah.johnson@example.com',
+      },
+    },
   },
-  async test({ auth, propsValue, store, files }): Promise<unknown[]> {
-    return await pollingHelper.test(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-      files: files,
-    });
-  },
-  async onEnable({ auth, propsValue, store }): Promise<void> {
-    await pollingHelper.onEnable(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-    });
-  },
-  async onDisable({ auth, propsValue, store }): Promise<void> {
-    await pollingHelper.onDisable(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-    });
-  },
-});
+  type: TriggerStrategy.WEBHOOK,
+  async onEnable(context) {
+    const channelId = Date.now();
 
-const polling: Polling<OAuth2PropertyValue, unknown> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth }) => {
-    const response = await httpClient.sendRequest<{
-      data: { Created_Time: string }[];
-    }>({
-      url: 'https://www.zohoapis.com/bigin/v1/Contacts',
-      method: HttpMethod.GET,
-      queryParams: {
-        per_page: '200',
-        sort_order: 'desc',
-        sort_by: 'Created_Time',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.access_token,
-      },
+    const body = {
+      watch: [
+        {
+          channel_id: channelId,
+          events: ['Contacts.create'],
+          channel_type: 'web',
+          notify_url: context.webhookUrl,
+          token: `TOKEN_FOR_VERIFICATION_OF_${channelId}`,
+        },
+      ],
+    };
+
+    const response = await makeRequest(
+      context.auth.access_token,
+      HttpMethod.POST,
+      '/actions/watch',
+      context.auth.props?.['location'] || 'com',
+      body
+    );
+
+    await context.store?.put('webhook_details', {
+      channel_id: channelId,
+      response: response,
     });
-    return response.body.data.map((record) => ({
-      epochMilliSeconds: dayjs(record.Created_Time).valueOf(),
-      data: record,
-    }));
+
+    return response;
   },
-}; 
+
+  async onDisable(context) {
+    const webhookDetails = (await context.store?.get('webhook_details')) as {
+      channel_id: number;
+      response: any;
+    };
+
+    if (webhookDetails?.channel_id) {
+      try {
+        await makeRequest(
+          context.auth.access_token,
+          HttpMethod.DELETE,
+          `/actions/watch?channel_ids=${webhookDetails.channel_id}`,
+          context.auth.props?.['location'] || 'com'
+        );
+      } catch (error) {
+        console.error('Error disabling webhook:', error);
+      }
+    }
+  },
+
+  async run(context) {
+    type ContactPayload = {
+      module?: string;
+      operation?: string;
+      record?: {
+        id?: string;
+        [key: string]: any;
+      };
+      [key: string]: any;
+    };
+
+    let payload: ContactPayload = context.payload?.body as ContactPayload;
+
+    if (typeof payload === 'string') {
+      try {
+        payload = JSON.parse(payload) as ContactPayload;
+      } catch (e) {
+        console.log('Failed to parse payload as JSON:', e);
+      }
+    }
+
+    if (payload?.module === 'Contacts' && payload?.operation === 'insert') {
+      return [payload];
+    }
+
+    return [];
+  },
+}); 

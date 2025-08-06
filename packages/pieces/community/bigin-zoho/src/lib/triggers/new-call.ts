@@ -1,110 +1,105 @@
-import {
-  AuthenticationType,
-  DedupeStrategy,
-  httpClient,
-  HttpMethod,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  createTrigger,
-  OAuth2PropertyValue,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { biginZohoAuth } from '../../index';
+import { makeRequest } from '../common';
 
 export const newCall = createTrigger({
   auth: biginZohoAuth,
-  name: 'bigin_new_call',
+  name: 'newCall',
   displayName: 'New Call',
-  description: 'Triggers when a call log is created in Bigin',
-  sampleData: {
-    Owner: {
-      name: 'John Doe',
-      id: '123456789',
-      email: 'john@example.com',
-    },
-    Subject: 'Follow-up call with prospect',
-    Call_Type: 'Outbound',
-    Call_Start_Time: '2023-03-26T10:00:00+01:00',
-    Call_Duration: '00:15:30',
-    What_Id: {
-      name: 'Enterprise Software Deal',
-      id: '987654321',
-    },
-    Who_Id: {
-      name: 'Jane Smith',
-      id: '123987654',
-    },
-    Description: 'Discussion about project requirements and timeline',
-    Created_Time: '2023-03-26T00:01:56+01:00',
-    Modified_Time: '2023-03-26T00:01:56+01:00',
-    Created_By: {
-      name: 'John Doe',
-      id: '123456789',
-    },
-    Modified_By: {
-      name: 'John Doe',
-      id: '123456789',
-    },
-    id: '560094000000349202',
-  },
-  type: TriggerStrategy.POLLING,
+  description: 'Fires when a call is created',
   props: {},
-  async run(context) {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+  sampleData: {
+    server_time: 1696942911242,
+    query_params: {},
+    module: 'Calls',
+    resource_uri: 'https://www.zohoapis.com/bigin/v2/Calls',
+    ids: ['5436046000000930004'],
+    affected_fields: [],
+    operation: 'insert',
+    channel_id: '1001',
+    token: 'TOKEN_FOR_VERIFICATION_OF_1001',
   },
-  async test({ auth, propsValue, store, files }): Promise<unknown[]> {
-    return await pollingHelper.test(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-      files: files,
-    });
-  },
-  async onEnable({ auth, propsValue, store }): Promise<void> {
-    await pollingHelper.onEnable(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-    });
-  },
-  async onDisable({ auth, propsValue, store }): Promise<void> {
-    await pollingHelper.onDisable(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-    });
-  },
-});
+  type: TriggerStrategy.WEBHOOK,
+  async onEnable(context) {
+    const channelId = Date.now();
 
-const polling: Polling<OAuth2PropertyValue, unknown> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth }) => {
-    const response = await httpClient.sendRequest<{
-      data: { Created_Time: string }[];
-    }>({
-      url: 'https://www.zohoapis.com/bigin/v1/Calls',
-      method: HttpMethod.GET,
-      queryParams: {
-        per_page: '200',
-        sort_order: 'desc',
-        sort_by: 'Created_Time',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.access_token,
-      },
+    const body = {
+      watch: [
+        {
+          channel_id: channelId,
+          events: ['Calls.create'],
+          channel_type: 'web',
+          notify_url: context.webhookUrl,
+          token: `TOKEN_FOR_VERIFICATION_OF_${channelId}`,
+        },
+      ],
+    };
+
+    const response = await makeRequest(
+      context.auth.access_token,
+      HttpMethod.POST,
+      '/actions/watch',
+      context.auth.props?.['location'] || 'com',
+      body
+    );
+
+    await context.store?.put('webhook_details', {
+      channel_id: channelId,
+      response: response,
     });
-    return response.body.data.map((record) => ({
-      epochMilliSeconds: dayjs(record.Created_Time).valueOf(),
-      data: record,
-    }));
+
+    return response;
   },
-}; 
+
+  async onDisable(context) {
+    const webhookDetails = (await context.store?.get('webhook_details')) as {
+      channel_id: number;
+      response: any;
+    };
+
+    if (webhookDetails?.channel_id) {
+      try {
+        await makeRequest(
+          context.auth.access_token,
+          HttpMethod.DELETE,
+          `/actions/watch?channel_ids=${webhookDetails.channel_id}`,
+          context.auth.props?.['location'] || 'com'
+        );
+      } catch (error) {
+        console.error('Error disabling webhook:', error);
+      }
+    }
+  },
+
+  async run(context) {
+    type CallPayload = {
+      server_time?: number;
+      query_params?: Record<string, any>;
+      module?: string;
+      resource_uri?: string;
+      ids?: string[];
+      affected_fields?: string[];
+      operation?: string;
+      channel_id?: string;
+      token?: string;
+      [key: string]: any;
+    };
+
+    let payload: CallPayload = context.payload?.body as CallPayload;
+
+    if (typeof payload === 'string') {
+      try {
+        payload = JSON.parse(payload) as CallPayload;
+      } catch (e) {
+        console.log('Failed to parse payload as JSON:', e);
+      }
+    }
+
+    if (payload?.module === 'Calls' && payload?.operation === 'insert') {
+      return [payload];
+    }
+
+    return [];
+  },
+}); 

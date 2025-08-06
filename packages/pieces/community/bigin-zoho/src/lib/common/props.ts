@@ -1,260 +1,258 @@
-import { Property, DropdownOption } from '@activepieces/pieces-framework';
-import { BiginClient } from './client';
-import { BiginZohoAuthType } from './auth';
+import { Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { makeRequest } from './client';
 
-const buildEmptyList = ({ placeholder }: { placeholder: string }) => {
-  return {
-    disabled: true,
-    options: [],
-    placeholder,
-  };
+export const formatDateTime = (dateTime: string | Date): string => {
+  if (typeof dateTime === 'string') {
+    return dateTime.replace('.000Z', '+00:00');
+  } else {
+    const date = new Date(dateTime);
+    return date.toISOString().replace('.000Z', '+00:00');
+  }
 };
 
-export const userDropdown = Property.Dropdown({
-  displayName: 'User',
-  description: 'Select a user',
-  required: false,
-  refreshers: [],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return buildEmptyList({
-        placeholder: 'Please connect your Bigin account first',
-      });
-    }
-
-    try {
-      const client = new BiginClient(auth as BiginZohoAuthType);
-      const response = await client.getUsers('ActiveUsers');
-      
-      if (!response.users || response.users.length === 0) {
+export const tagDropdown = (module: string) => {
+  return Property.Dropdown({
+    displayName: 'Tag',
+    description: 'Select a tag for the record',
+    required: false,
+    refreshers: ['auth'],
+    options: async ({ auth }) => {
+      if (!auth) {
         return {
+          disabled: true,
           options: [],
-          placeholder: 'No active users found',
+          placeholder: 'Please connect your account first',
         };
       }
 
-      const options: DropdownOption<string>[] = response.users.map((user: any) => ({
-        label: user.full_name || user.email,
-        value: user.id,
-      }));
+      try {
+        const typedAuth = auth as {
+          access_token: string;
+          props?: { [key: string]: any };
+        };
+        const accessToken = typedAuth.access_token;
 
+        const response = await makeRequest(
+          accessToken,
+          HttpMethod.GET,
+          `/settings/tags?module=${module}`,
+          typedAuth.props?.['location'] || 'com'
+        );
+        return {
+          disabled: false,
+          options: response.tags.map((tag: any) => ({
+            label: tag.name,
+            value: tag.name,
+          })),
+        };
+      } catch (error) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Error loading tags',
+        };
+      }
+    },
+  });
+};
+
+export const userIdDropdown = Property.Dropdown({
+  displayName: 'User ID',
+  description: 'Select the user',
+  required: false,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) {
       return {
-        options,
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+    try {
+      const typedAuth = auth as {
+        access_token: string;
+        props?: { [key: string]: any };
+      };
+      const accessToken = typedAuth.access_token;
+
+      const response = await makeRequest(
+        accessToken,
+        HttpMethod.GET,
+        '/users',
+        typedAuth.props?.['location'] || 'com'
+      );
+      return {
+        disabled: false,
+        options: response.users.map((user: any) => ({
+          label: user.first_name + ' ' + user.last_name,
+          value: user.id,
+        })),
       };
     } catch (error) {
-      return buildEmptyList({
-        placeholder: 'Failed to load users. Check your permissions.',
-      });
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading users',
+      };
     }
   },
 });
 
-export const contactDropdown = Property.Dropdown({
-  displayName: 'Contact',
-  description: 'Select a contact',
+// Factory function to create module-specific record dropdowns
+export const createRecordIdDropdown = (
+  module: string,
+  displayName?: string,
+  description?: string
+) => {
+  return Property.Dropdown({
+    displayName: displayName || `${module} Record`,
+    description: description || `Select the ${module.toLowerCase()} record`,
+    required: false,
+    refreshers: ['auth'],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your account first',
+        };
+      }
+      if (!module) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Module not specified',
+        };
+      }
+      try {
+        const typedAuth = auth as {
+          access_token: string;
+          props?: { [key: string]: any };
+        };
+        const accessToken = typedAuth.access_token;
+        const response = await makeRequest(
+          accessToken,
+          HttpMethod.GET,
+          `/${module}?fields=Last_Name,First_Name,Deal_Name,Account_Name,Subject,Event_Title,Product_Name`,
+          typedAuth.props?.['location'] || 'com'
+        );
+
+        const records = response.data || response[module.toLowerCase()] || [];
+
+        return {
+          disabled: false,
+          options: records.map((record: any) => ({
+            label:
+              record.name ||
+              record.Last_Name ||
+              record.Deal_Name ||
+              record.Account_Name ||
+              record.Subject ||
+              record.Event_Title ||
+              record.Product_Name ||
+              (record.First_Name && record.Last_Name 
+                ? `${record.First_Name} ${record.Last_Name}` 
+                : record.First_Name || record.Last_Name) ||
+              record.id,
+            value: record.id,
+          })),
+        };
+      } catch (error) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: `Error loading ${module.toLowerCase()} records`,
+        };
+      }
+    },
+  });
+};
+
+export const contactIdDropdown = createRecordIdDropdown(
+  'Contacts',
+  'Contact',
+  'Select the contact'
+);
+
+export const companyIdDropdown = createRecordIdDropdown(
+  'Accounts',
+  'Company',
+  'Select the company'
+);
+
+export const pipelineIdDropdown = createRecordIdDropdown(
+  'Pipelines',
+  'Deal',
+  'Select the deal/pipeline record'
+);
+
+export const taskIdDropdown = createRecordIdDropdown(
+  'Tasks',
+  'Task',
+  'Select the task'
+);
+
+export const eventIdDropdown = createRecordIdDropdown(
+  'Events',
+  'Event',
+  'Select the event'
+);
+
+export const callIdDropdown = createRecordIdDropdown(
+  'Calls',
+  'Call',
+  'Select the call'
+);
+
+export const productidDropdown = createRecordIdDropdown(
+  'Products',
+  'Product',
+  'Select the product'
+);
+
+// Keep the original for backward compatibility
+export const recordIdDropdown = Property.Dropdown({
+  displayName: 'Record ID',
+  description: 'Select the record ID',
   required: false,
-  refreshers: [],
+  refreshers: ['auth'],
   options: async ({ auth }) => {
     if (!auth) {
-      return buildEmptyList({
-        placeholder: 'Please connect your Bigin account first',
-      });
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
     }
 
     try {
-      const client = new BiginClient(auth as BiginZohoAuthType);
-      const response = await client.getRecords('Contacts', {
-        fields: ['id', 'First_Name', 'Last_Name', 'Email'],
-        perPage: 50,
-      });
-      
-      if (!response.data || response.data.length === 0) {
-        return {
-          options: [],
-          placeholder: 'No contacts found',
-        };
-      }
-
-      const options: DropdownOption<string>[] = response.data.map((contact: any) => ({
-        label: `${contact.First_Name || ''} ${contact.Last_Name || ''}`.trim() || contact.Email || `Contact ${contact.id}`,
-        value: contact.id,
-      }));
-
+      const typedAuth = auth as {
+        access_token: string;
+        props?: { [key: string]: any };
+      };
+      const accessToken = typedAuth.access_token;
+      const response = await makeRequest(
+        accessToken,
+        HttpMethod.GET,
+        '/records',
+        typedAuth.props?.['location'] || 'com'
+      );
       return {
-        options,
+        disabled: false,
+        options: response.records.map((record: any) => ({
+          label: record.name || record.id,
+          value: record.id,
+        })),
       };
     } catch (error) {
-      return buildEmptyList({
-        placeholder: 'Failed to load contacts. Check your permissions.',
-      });
-    }
-  },
-});
-
-export const companyDropdown = Property.Dropdown({
-  displayName: 'Company',
-  description: 'Select a company',
-  required: false,
-  refreshers: [],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return buildEmptyList({
-        placeholder: 'Please connect your Bigin account first',
-      });
-    }
-
-    try {
-      const client = new BiginClient(auth as BiginZohoAuthType);
-      const response = await client.getRecords('Accounts', {
-        fields: ['id', 'Account_Name'],
-        perPage: 50,
-      });
-      
-      if (!response.data || response.data.length === 0) {
-        return {
-          options: [],
-          placeholder: 'No companies found',
-        };
-      }
-
-      const options: DropdownOption<string>[] = response.data.map((company: any) => ({
-        label: company.Account_Name || `Company ${company.id}`,
-        value: company.id,
-      }));
-
       return {
-        options,
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading records',
       };
-    } catch (error) {
-      return buildEmptyList({
-        placeholder: 'Failed to load companies. Check your permissions.',
-      });
-    }
-  },
-});
-
-export const pipelineStageDropdown = Property.Dropdown({
-  displayName: 'Stage',
-  description: 'Select a pipeline stage',
-  required: false,
-  refreshers: [],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return buildEmptyList({
-        placeholder: 'Please connect your Bigin account first',
-      });
-    }
-
-    try {
-      const client = new BiginClient(auth as BiginZohoAuthType);
-      const response = await client.getFieldsMetadata('Pipelines');
-      
-      const stageField = response.fields?.find((field: any) => field.api_name === 'Stage');
-      
-      if (!stageField?.pick_list_values || stageField.pick_list_values.length === 0) {
-        return {
-          options: [],
-          placeholder: 'No pipeline stages found',
-        };
-      }
-
-      const options: DropdownOption<string>[] = stageField.pick_list_values.map((stage: any) => ({
-        label: stage.display_value,
-        value: stage.actual_value,
-      }));
-
-      return {
-        options,
-      };
-    } catch (error) {
-      return buildEmptyList({
-        placeholder: 'Failed to load pipeline stages. Check your permissions.',
-      });
-    }
-  },
-});
-
-export const subPipelineDropdown = Property.Dropdown({
-  displayName: 'Sub-Pipeline',
-  description: 'Select a sub-pipeline',
-  required: false,
-  refreshers: [],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return buildEmptyList({
-        placeholder: 'Please connect your Bigin account first',
-      });
-    }
-
-    try {
-      const client = new BiginClient(auth as BiginZohoAuthType);
-      const response = await client.getFieldsMetadata('Pipelines');
-      
-      const subPipelineField = response.fields?.find((field: any) => field.api_name === 'Sub_Pipeline');
-      
-      if (!subPipelineField?.pick_list_values || subPipelineField.pick_list_values.length === 0) {
-        return {
-          options: [],
-          placeholder: 'No sub-pipelines found',
-        };
-      }
-
-      const options: DropdownOption<string>[] = subPipelineField.pick_list_values
-        .filter((item: any) => item.type === 'used')
-        .map((subPipeline: any) => ({
-          label: subPipeline.display_value,
-          value: subPipeline.actual_value,
-        }));
-
-      return {
-        options,
-      };
-    } catch (error) {
-      return buildEmptyList({
-        placeholder: 'Failed to load sub-pipelines. Check your permissions.',
-      });
-    }
-  },
-});
-
-export const productDropdown = Property.Dropdown({
-  displayName: 'Product',
-  description: 'Select a product',
-  required: false,
-  refreshers: [],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return buildEmptyList({
-        placeholder: 'Please connect your Bigin account first',
-      });
-    }
-
-    try {
-      const client = new BiginClient(auth as BiginZohoAuthType);
-      const response = await client.getRecords('Products', {
-        fields: ['id', 'Product_Name', 'Product_Code'],
-        perPage: 50,
-      });
-      
-      if (!response.data || response.data.length === 0) {
-        return {
-          options: [],
-          placeholder: 'No products found',
-        };
-      }
-
-      const options: DropdownOption<string>[] = response.data.map((product: any) => ({
-        label: `${product.Product_Name}${product.Product_Code ? ` (${product.Product_Code})` : ''}`,
-        value: product.id,
-      }));
-
-      return {
-        options,
-      };
-    } catch (error) {
-      return buildEmptyList({
-        placeholder: 'Failed to load products. Check your permissions.',
-      });
     }
   },
 });
@@ -262,127 +260,27 @@ export const productDropdown = Property.Dropdown({
 export const commonProps = {
   firstName: Property.ShortText({
     displayName: 'First Name',
+    description: 'First name',
     required: false,
   }),
   lastName: Property.ShortText({
     displayName: 'Last Name',
+    description: 'Last name',
     required: false,
   }),
   email: Property.ShortText({
     displayName: 'Email',
+    description: 'Email address',
     required: false,
   }),
   phone: Property.ShortText({
     displayName: 'Phone',
-    required: false,
-  }),
-  mobile: Property.ShortText({
-    displayName: 'Mobile',
-    required: false,
-  }),
-  website: Property.ShortText({
-    displayName: 'Website',
+    description: 'Phone number',
     required: false,
   }),
   description: Property.LongText({
     displayName: 'Description',
-    required: false,
-  }),
-  amount: Property.Number({
-    displayName: 'Amount',
-    required: false,
-  }),
-  closingDate: Property.DateTime({
-    displayName: 'Closing Date',
-    required: false,
-  }),
-  dealName: Property.ShortText({
-    displayName: 'Deal Name',
-    required: false,
-  }),
-  accountName: Property.ShortText({
-    displayName: 'Company Name',
-    required: false,
-  }),
-  subject: Property.ShortText({
-    displayName: 'Subject',
-    required: false,
-  }),
-  dueDate: Property.DateTime({
-    displayName: 'Due Date',
-    required: false,
-  }),
-  priority: Property.StaticDropdown({
-    displayName: 'Priority',
-    required: false,
-    options: {
-      options: [
-        { label: 'High', value: 'High' },
-        { label: 'Normal', value: 'Normal' },
-        { label: 'Low', value: 'Low' },
-      ],
-    },
-  }),
-  status: Property.StaticDropdown({
-    displayName: 'Status',
-    required: false,
-    options: {
-      options: [
-        { label: 'Not Started', value: 'Not Started' },
-        { label: 'In Progress', value: 'In Progress' },
-        { label: 'Completed', value: 'Completed' },
-        { label: 'Deferred', value: 'Deferred' },
-      ],
-    },
-  }),
-  eventTitle: Property.ShortText({
-    displayName: 'Event Title',
-    required: false,
-  }),
-  venue: Property.ShortText({
-    displayName: 'Venue',
-    required: false,
-  }),
-  startDateTime: Property.DateTime({
-    displayName: 'Start Date & Time',
-    required: false,
-  }),
-  endDateTime: Property.DateTime({
-    displayName: 'End Date & Time',
-    required: false,
-  }),
-  allDay: Property.Checkbox({
-    displayName: 'All Day Event',
-    required: false,
-  }),
-  callType: Property.StaticDropdown({
-    displayName: 'Call Type',
-    required: false,
-    options: {
-      options: [
-        { label: 'Inbound', value: 'Inbound' },
-        { label: 'Outbound', value: 'Outbound' },
-      ],
-    },
-  }),
-  callStartTime: Property.DateTime({
-    displayName: 'Call Start Time',
-    required: false,
-  }),
-  productName: Property.ShortText({
-    displayName: 'Product Name',
-    required: false,
-  }),
-  productCode: Property.ShortText({
-    displayName: 'Product Code',
-    required: false,
-  }),
-  unitPrice: Property.Number({
-    displayName: 'Unit Price',
-    required: false,
-  }),
-  productCategory: Property.ShortText({
-    displayName: 'Product Category',
+    description: 'Description',
     required: false,
   }),
 }; 

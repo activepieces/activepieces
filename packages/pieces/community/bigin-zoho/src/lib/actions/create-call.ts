@@ -1,94 +1,132 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginZohoAuth } from '../../index';
-import { makeRequest, BiginCall } from '../common';
+import { makeRequest, userIdDropdown, contactIdDropdown, pipelineIdDropdown, tagDropdown, formatDateTime } from '../common';
 
 export const createCall = createAction({
   auth: biginZohoAuth,
-  name: 'bigin_create_call',
+  name: 'createCall',
   displayName: 'Create Call',
-  description: 'Log a new call entry in Bigin',
+  description: 'Create a new call record in Bigin',
   props: {
-    subject: Property.ShortText({
-      displayName: 'Subject',
-      description: 'Subject of the call',
+    callStartTime: Property.DateTime({
+      displayName: 'Call Start Time',
+      description: 'When the call started (ISO8601 format)',
+      required: true,
+    }),
+    callDuration: Property.ShortText({
+      displayName: 'Call Duration',
+      description: 'Duration of the call in MM:SS format (e.g., "90:00" for 90 minutes)',
       required: true,
     }),
     callType: Property.StaticDropdown({
       displayName: 'Call Type',
-      required: false,
+      description: 'Type of call',
+      required: true,
       options: {
         options: [
-          { label: 'Inbound', value: 'Inbound' },
           { label: 'Outbound', value: 'Outbound' },
+          { label: 'Inbound', value: 'Inbound' },
           { label: 'Missed', value: 'Missed' },
         ],
       },
     }),
-    callStartTime: Property.ShortText({
-      displayName: 'Call Start Time',
-      description: 'Start time of the call (YYYY-MM-DD HH:MM:SS format)',
-      required: false,
-    }),
-    callDuration: Property.ShortText({
-      displayName: 'Call Duration',
-      description: 'Duration of the call (e.g., "00:15:30" for 15 minutes 30 seconds)',
-      required: false,
-    }),
-    relatedTo: Property.ShortText({
-      displayName: 'Related To (What ID)',
-      description: 'ID of the related record (Account, Deal, etc.)',
-      required: false,
-    }),
-    relatedContact: Property.ShortText({
-      displayName: 'Related Contact (Who ID)',
-      description: 'ID of the related contact',
+    owner: userIdDropdown,
+    contactName: contactIdDropdown,
+    subject: Property.ShortText({
+      displayName: 'Subject',
+      description: 'Subject of the call',
       required: false,
     }),
     description: Property.LongText({
       displayName: 'Description',
-      description: 'Call notes and description',
+      description: 'Description or notes about the call',
       required: false,
     }),
+    callAgenda: Property.LongText({
+      displayName: 'Call Agenda',
+      description: 'Agenda or purpose of the call',
+      required: false,
+    }),
+    reminder: Property.DateTime({
+      displayName: 'Reminder',
+      description: 'Reminder date and time for the call',
+      required: false,
+    }),
+    dialledNumber: Property.ShortText({
+      displayName: 'Dialled Number',
+      description: 'Phone number that was dialled',
+      required: false,
+    }),
+    relatedTo: pipelineIdDropdown,
+    relatedModule: Property.StaticDropdown({
+      displayName: 'Related Module',
+      description: 'The module this call is related to',
+      required: false,
+      options: {
+        options: [
+          { label: 'Deals', value: 'Deals' },
+          { label: 'Contacts', value: 'Contacts' },
+          { label: 'Companies', value: 'Companies' },
+          { label: 'Events', value: 'Events' },
+          { label: 'Tasks', value: 'Tasks' },
+        ],
+      },
+    }),
+    tags: tagDropdown('Calls'),
   },
   async run(context) {
-    const {
-      subject,
-      callType,
-      callStartTime,
-      callDuration,
-      relatedTo,
-      relatedContact,
-      description,
-    } = context.propsValue;
+    const callStartTime = context.propsValue.callStartTime;
+    const formattedStartTime = formatDateTime(callStartTime);
+    const formattedReminder = context.propsValue.reminder 
+      ? formatDateTime(context.propsValue.reminder)
+      : undefined;
 
-    const callData: Partial<BiginCall> = {
-      Subject: subject,
+    const body: Record<string, unknown> = {
+      Call_Start_Time: formattedStartTime,
+      Call_Duration: context.propsValue.callDuration,
+      Call_Type: context.propsValue.callType,
     };
 
-    // Add optional fields if provided
-    if (callType) callData.Call_Type = callType;
-    if (callStartTime) callData.Call_Start_Time = callStartTime;
-    if (callDuration) callData.Call_Duration = callDuration;
-    if (relatedTo) {
-      callData.What_Id = { id: relatedTo };
+    if (context.propsValue.owner) {
+      body['Owner'] = { id: context.propsValue.owner };
     }
-    if (relatedContact) {
-      callData.Who_Id = { id: relatedContact };
+    if (context.propsValue.contactName) {
+      body['Contact_Name'] = { id: context.propsValue.contactName };
     }
-    if (description) callData.Description = description;
-
-    const requestBody = {
-      data: [callData],
-    };
+    if (context.propsValue.subject) {
+      body['Subject'] = context.propsValue.subject;
+    }
+    if (context.propsValue.description) {
+      body['Description'] = context.propsValue.description;
+    }
+    if (context.propsValue.callAgenda) {
+      body['Call_Agenda'] = context.propsValue.callAgenda;
+    }
+    if (formattedReminder) {
+      body['Reminder'] = formattedReminder;
+    }
+    if (context.propsValue.dialledNumber) {
+      body['Dialled_Number'] = context.propsValue.dialledNumber;
+    }
+    if (context.propsValue.relatedTo) {
+      body['Related_To'] = { id: context.propsValue.relatedTo };
+    }
+    if (context.propsValue.relatedModule) {
+      body['$related_module'] = context.propsValue.relatedModule;
+    }
+    if (context.propsValue.tags) {
+      body['Tag'] = context.propsValue.tags;
+    }
 
     const response = await makeRequest(
-      context.auth,
+      context.auth.access_token,
       HttpMethod.POST,
       '/Calls',
-      requestBody
+      context.auth.props?.['location'] || 'com',
+      { data: [body] }
     );
 
-    return response;
+    return response.data[0];
   },
 }); 

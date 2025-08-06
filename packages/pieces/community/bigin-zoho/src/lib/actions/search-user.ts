@@ -2,29 +2,32 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { biginZohoAuth } from '../../index';
 import { makeRequest } from '../common';
+import { BiginZohoAuthType } from '../common/auth';
 
 export const searchUser = createAction({
   auth: biginZohoAuth,
-  name: 'bigin_search_user',
+  name: 'searchUser',
   displayName: 'Search User',
-  description: 'Search for users by email',
+  description: 'Locate users by email',
   props: {
-    searchBy: Property.StaticDropdown({
-      displayName: 'Search By',
-      description: 'Field to search by',
+    searchCriteria: Property.ShortText({
+      displayName: 'Search Criteria',
+      description: 'Enter the email or name to search for',
       required: true,
+    }),
+    searchField: Property.StaticDropdown({
+      displayName: 'Search Field',
+      description: 'Select which field to search in',
+      required: false,
       options: {
         options: [
+          { label: 'All Fields', value: 'all' },
           { label: 'Email', value: 'email' },
           { label: 'First Name', value: 'first_name' },
           { label: 'Last Name', value: 'last_name' },
+          { label: 'Full Name', value: 'full_name' },
         ],
       },
-    }),
-    searchValue: Property.ShortText({
-      displayName: 'Search Value',
-      description: 'Value to search for',
-      required: true,
     }),
     page: Property.Number({
       displayName: 'Page',
@@ -33,33 +36,51 @@ export const searchUser = createAction({
       defaultValue: 1,
     }),
     perPage: Property.Number({
-      displayName: 'Records Per Page',
-      description: 'Number of records per page (max: 200, default: 50)',
+      displayName: 'Per Page',
+      description: 'Number of records per page (max: 200, default: 20)',
       required: false,
-      defaultValue: 50,
+      defaultValue: 20,
     }),
   },
   async run(context) {
-    const {
-      searchBy,
-      searchValue,
-      page = 1,
-      perPage = 50,
-    } = context.propsValue;
-
-    // Build search parameters
-    const searchParams = new URLSearchParams({
-      criteria: `(${searchBy}:equals:${searchValue})`,
-      page: page.toString(),
-      per_page: Math.min(perPage, 200).toString(),
-    });
+    const searchCriteria = context.propsValue.searchCriteria;
+    const searchField = context.propsValue.searchField || 'all';
+    const page = context.propsValue.page || 1;
+    const perPage = Math.min(context.propsValue.perPage || 20, 200);
 
     const response = await makeRequest(
-      context.auth,
+      context.auth.access_token,
       HttpMethod.GET,
-      `/users/search?${searchParams.toString()}`
+      `/users?page=${page}&per_page=${perPage}`,
+      context.auth.props?.['location'] || 'com'
     );
 
-    return response;
+    const users = response.users || [];
+    let filteredUsers = users;
+
+    if (searchField !== 'all') {
+      filteredUsers = users.filter((user: any) => {
+        const searchValue = user[searchField] || '';
+        return searchValue.toLowerCase().includes(searchCriteria.toLowerCase());
+      });
+    } else {
+      filteredUsers = users.filter((user: any) => {
+        const email = user.email || '';
+        const firstName = user.first_name || '';
+        const lastName = user.last_name || '';
+        const fullName = user.full_name || '';
+        const searchLower = searchCriteria.toLowerCase();
+        
+        return email.toLowerCase().includes(searchLower) ||
+               firstName.toLowerCase().includes(searchLower) ||
+               lastName.toLowerCase().includes(searchLower) ||
+               fullName.toLowerCase().includes(searchLower);
+      });
+    }
+
+    return {
+      users: filteredUsers,
+      totalRecords: filteredUsers.length,
+    };
   },
 }); 
