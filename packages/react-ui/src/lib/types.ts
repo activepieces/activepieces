@@ -6,10 +6,10 @@ import {
   TriggerBase,
 } from '@activepieces/pieces-framework';
 import {
-  ActionType,
+  FlowActionType,
   PackageType,
   PieceType,
-  TriggerType,
+  FlowTriggerType,
   FlowOperationType,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
@@ -21,7 +21,7 @@ type BaseStepMetadata = {
 };
 
 export type PieceStepMetadata = BaseStepMetadata & {
-  type: ActionType.PIECE | TriggerType.PIECE;
+  type: FlowActionType.PIECE | FlowTriggerType.PIECE;
   pieceName: string;
   pieceVersion: string;
   categories: string[];
@@ -33,10 +33,10 @@ export type PieceStepMetadata = BaseStepMetadata & {
 
 export type PrimitiveStepMetadata = BaseStepMetadata & {
   type:
-    | ActionType.CODE
-    | ActionType.LOOP_ON_ITEMS
-    | ActionType.ROUTER
-    | TriggerType.EMPTY;
+    | FlowActionType.CODE
+    | FlowActionType.LOOP_ON_ITEMS
+    | FlowActionType.ROUTER
+    | FlowTriggerType.EMPTY;
 };
 
 export type PieceStepMetadataWithSuggestions = PieceStepMetadata &
@@ -90,12 +90,12 @@ export type AskAiButtonOperations = Exclude<
 export type PieceSelectorPieceItem =
   | {
       actionOrTrigger: TriggerBase;
-      type: TriggerType.PIECE;
+      type: FlowTriggerType.PIECE;
       pieceMetadata: PieceStepMetadata;
     }
   | ({
       actionOrTrigger: ActionBase;
-      type: ActionType.PIECE;
+      type: FlowActionType.PIECE;
       pieceMetadata: PieceStepMetadata;
     } & {
       auth?: PieceAuthProperty;

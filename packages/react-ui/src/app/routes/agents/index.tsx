@@ -66,6 +66,7 @@ export const AgentsPage = () => {
           title={t('Agents')}
           description={t('Build and manage your team of digital workers')}
           beta={true}
+          tutorialTab="agents"
         >
           {isNil(selectedAgent) && (
             <CreateAgentButton

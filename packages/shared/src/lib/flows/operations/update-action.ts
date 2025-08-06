@@ -1,6 +1,6 @@
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { isNil } from '../../common'
-import { Action, ActionType, SingleActionSchema } from '../actions/action'
+import { FlowAction, FlowActionType, SingleActionSchema } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateActionRequest } from './index'
@@ -13,7 +13,7 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             return stepToUpdate
         }
      
-        const baseProps: Omit<Action, 'type' | 'settings'> = {
+        const baseProps: Omit<FlowAction, 'type' | 'settings'> = {
             displayName: request.displayName,
             name: request.name,
             valid: false,
@@ -21,42 +21,42 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             customLogoUrl: request.customLogoUrl,
         }
 
-        let updatedAction: Action
+        let updatedAction: FlowAction
         switch (request.type) {
-            case ActionType.CODE: {
+            case FlowActionType.CODE: {
                 updatedAction = {
                     ...baseProps,
                     settings: request.settings,
-                    type: ActionType.CODE,
+                    type: FlowActionType.CODE,
                     nextAction: stepToUpdate.nextAction,
                 }
                 break
             }
-            case ActionType.PIECE: {
+            case FlowActionType.PIECE: {
                 updatedAction = {
                     ...baseProps,
                     settings: request.settings,
-                    type: ActionType.PIECE,
+                    type: FlowActionType.PIECE,
                     nextAction: stepToUpdate.nextAction,
                 }
                 break
             }
-            case ActionType.LOOP_ON_ITEMS: {
+            case FlowActionType.LOOP_ON_ITEMS: {
                 updatedAction = {
                     ...baseProps,
                     settings: request.settings,
-                    type: ActionType.LOOP_ON_ITEMS,
+                    type: FlowActionType.LOOP_ON_ITEMS,
                     firstLoopAction: 'firstLoopAction' in stepToUpdate ? stepToUpdate.firstLoopAction : undefined,
                     nextAction: stepToUpdate.nextAction,
                 }
                 break
             }
           
-            case ActionType.ROUTER: {
+            case FlowActionType.ROUTER: {
                 updatedAction = {
                     ...baseProps,
                     settings: request.settings,
-                    type: ActionType.ROUTER,
+                    type: FlowActionType.ROUTER,
                     nextAction: stepToUpdate.nextAction,
                     children: 'children' in stepToUpdate ? stepToUpdate.children : [null, null],
                 }

@@ -324,6 +324,7 @@ function TodosPage() {
           'Manage todos for your project that are created by automations',
         )}
         title={t('Todos')}
+        tutorialTab="todos"
       />
       <Tabs
         value={activeTab}

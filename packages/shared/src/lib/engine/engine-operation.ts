@@ -6,6 +6,7 @@ import { FlowVersion } from '../flows/flow-version'
 import { PiecePackage } from '../pieces'
 import { PlatformId } from '../platform'
 import { ProjectId } from '../project/project'
+import { ScheduleOptions } from '../trigger'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
@@ -241,11 +242,6 @@ export type ExecuteValidateAuthResponse =
     | ValidExecuteValidateAuthResponseOutput
     | InvalidExecuteValidateAuthResponseOutput
 
-export type ScheduleOptions = {
-    cronExpression: string
-    timezone: string
-    failureCount: number
-}
 
 export type EngineResponse<T> = {
     status: EngineResponseStatus

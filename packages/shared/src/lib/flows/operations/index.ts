@@ -5,7 +5,7 @@ import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceAction
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { SaveSampleDataRequest } from '../sample-data'
-import { EmptyTrigger, PieceTrigger, Trigger } from '../triggers/trigger'
+import { EmptyTrigger, FlowTrigger, PieceTrigger } from '../triggers/trigger'
 import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { _addAction } from './add-action'
@@ -96,7 +96,7 @@ export type LockFlowRequest = Static<typeof LockFlowRequest>
 
 export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
-    trigger: Trigger,
+    trigger: FlowTrigger,
     schemaVersion: Nullable(Type.String()),
 })
 

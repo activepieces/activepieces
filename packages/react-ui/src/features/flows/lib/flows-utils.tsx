@@ -4,12 +4,7 @@ import JSZip from 'jszip';
 import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
 
 import { downloadFile } from '@/lib/utils';
-import {
-  Flow,
-  FlowVersion,
-  PopulatedFlow,
-  TriggerType,
-} from '@activepieces/shared';
+import { PopulatedFlow, FlowTriggerType } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
 
@@ -37,41 +32,41 @@ const zipFlows = async (flows: PopulatedFlow[]) => {
 export const flowsUtils = {
   downloadFlow,
   zipFlows,
-  flowStatusToolTipRenderer: (flow: Flow, version: FlowVersion) => {
-    const trigger = version.trigger;
-    switch (trigger.type) {
-      case TriggerType.PIECE: {
-        const cronExpression = flow.schedule?.cronExpression;
+  flowStatusToolTipRenderer: (flow: PopulatedFlow) => {
+    const trigger = flow.version.trigger;
+    switch (trigger?.type) {
+      case FlowTriggerType.PIECE: {
+        const cronExpression = flow.triggerSource?.schedule?.cronExpression;
         return cronExpression
           ? `${t('Run')} ${cronstrue
               .toString(cronExpression, { locale: 'en' })
               .toLocaleLowerCase()}`
           : t('Real time flow');
       }
-      case TriggerType.EMPTY:
+      case FlowTriggerType.EMPTY:
         console.error(
           t("Flow can't be published with empty trigger {name}", {
-            name: version.displayName,
+            name: flow.version.displayName,
           }),
         );
         return t('Please contact support as your published flow has a problem');
     }
   },
-  flowStatusIconRenderer: (flow: Flow, version: FlowVersion) => {
-    const trigger = version.trigger;
-    switch (trigger.type) {
-      case TriggerType.PIECE: {
-        const cronExpression = flow.schedule?.cronExpression;
+  flowStatusIconRenderer: (flow: PopulatedFlow) => {
+    const trigger = flow.version.trigger;
+    switch (trigger?.type) {
+      case FlowTriggerType.PIECE: {
+        const cronExpression = flow.triggerSource?.schedule?.cronExpression;
         if (cronExpression) {
           return <TimerReset className="h-4 w-4 text-foreground" />;
         } else {
           return <Zap className="h-4 w-4 text-foreground fill-foreground" />;
         }
       }
-      case TriggerType.EMPTY: {
+      case FlowTriggerType.EMPTY: {
         console.error(
           t("Flow can't be published with empty trigger {name}", {
-            name: version.displayName,
+            name: flow.version.displayName,
           }),
         );
         return <TriangleAlert className="h-4 w-4 text-destructive" />;

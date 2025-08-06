@@ -19,6 +19,8 @@ import {
 
 import { platformApi } from '../lib/platforms-api';
 
+import { flagsHooks } from './flags-hooks';
+
 export const platformHooks = {
   isCopilotEnabled: () => {
     const { platform } = platformHooks.useCurrentPlatform();
@@ -55,6 +57,9 @@ export const platformHooks = {
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: ['platform', currentPlatformId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: flagsHooks.queryKey,
         });
         toast({
           title: t('Success'),
