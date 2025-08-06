@@ -2,8 +2,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 
-export class AddTriggerSqlite1754421706602 implements MigrationInterface {
-    name = 'AddTriggerSqlite1754421706602'
+export class AddTriggerSqlite1754477404726 implements MigrationInterface {
+    name = 'AddTriggerSqlite1754477404726'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -23,6 +23,7 @@ export class AddTriggerSqlite1754421706602 implements MigrationInterface {
                 "simulate" boolean NOT NULL
             )
         `)
+        await insertScheduleFromFlowsMigration(queryRunner, system.globalLogger())
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_trigger_project_id_flow_id_simulate" ON "trigger_source" ("projectId", "flowId", "simulate")
             WHERE deleted IS NULL
@@ -31,8 +32,29 @@ export class AddTriggerSqlite1754421706602 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_trigger_flow_id_simulate" ON "trigger_source" ("flowId", "simulate")
             WHERE deleted IS NULL
         `)
-        await insertScheduleFromFlowsMigration(queryRunner, system.globalLogger())
-
+        await queryRunner.query(`
+            CREATE TABLE "trigger_run" (
+                "id" varchar(21) PRIMARY KEY NOT NULL,
+                "created" datetime NOT NULL DEFAULT (datetime('now')),
+                "updated" datetime NOT NULL DEFAULT (datetime('now')),
+                "payloadFileId" varchar,
+                "pieceName" varchar NOT NULL,
+                "pieceVersion" varchar NOT NULL,
+                "error" varchar,
+                "status" varchar NOT NULL,
+                "triggerSourceId" varchar(21) NOT NULL,
+                "projectId" varchar(21) NOT NULL,
+                "platformId" varchar(21) NOT NULL,
+                "flowId" varchar(21),
+                CONSTRAINT "REL_b76b435f583d4e68c892a7fafa" UNIQUE ("payloadFileId")
+            )
+        `)
+        await queryRunner.query(`
+            CREATE INDEX "idx_trigger_run_project_id_trigger_source_id_status" ON "trigger_run" ("projectId", "triggerSourceId")
+        `)
+        await queryRunner.query(`
+            CREATE INDEX "idx_created_piece_name_platform_id" ON "trigger_run" ("created", "platformId", "pieceName")
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
         `)
@@ -168,36 +190,72 @@ export class AddTriggerSqlite1754421706602 implements MigrationInterface {
             DROP INDEX "idx_trigger_run_project_id_trigger_source_id_status"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_trigger_run_platform_id_project_id_trigger_source_id"
+            DROP INDEX "idx_created_piece_name_platform_id"
         `)
         await queryRunner.query(`
-            CREATE TABLE "trigger_run" (
+            CREATE TABLE "temporary_trigger_run" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
                 "updated" datetime NOT NULL DEFAULT (datetime('now')),
                 "payloadFileId" varchar,
+                "pieceName" varchar NOT NULL,
+                "pieceVersion" varchar NOT NULL,
                 "error" varchar,
                 "status" varchar NOT NULL,
                 "triggerSourceId" varchar(21) NOT NULL,
                 "projectId" varchar(21) NOT NULL,
                 "platformId" varchar(21) NOT NULL,
                 "flowId" varchar(21),
-                "pieceName" varchar NOT NULL,
-                "pieceVersion" varchar NOT NULL,
                 CONSTRAINT "REL_b76b435f583d4e68c892a7fafa" UNIQUE ("payloadFileId"),
                 CONSTRAINT "fk_trigger_run_trigger_source_id" FOREIGN KEY ("triggerSourceId") REFERENCES "trigger_source" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_trigger_run_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
-                CONSTRAINT "fk_trigger_run_payload_file_id" FOREIGN KEY ("payloadFileId") REFERENCES "file" ("id") ON DELETE SET NULL ON UPDATE NO ACTION,
-                CONSTRAINT "fk_trigger_run_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
-                CONSTRAINT "fk_trigger_run_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+                CONSTRAINT "fk_trigger_run_payload_file_id" FOREIGN KEY ("payloadFileId") REFERENCES "file" ("id") ON DELETE
+                SET NULL ON UPDATE NO ACTION,
+                    CONSTRAINT "fk_trigger_run_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+                    CONSTRAINT "fk_trigger_run_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-       
         await queryRunner.query(`
-            CREATE INDEX "idx_trigger_run_project_id_trigger_source_id" ON "trigger_run" ("projectId", "triggerSourceId")
+            INSERT INTO "temporary_trigger_run"(
+                    "id",
+                    "created",
+                    "updated",
+                    "payloadFileId",
+                    "pieceName",
+                    "pieceVersion",
+                    "error",
+                    "status",
+                    "triggerSourceId",
+                    "projectId",
+                    "platformId",
+                    "flowId"
+                )
+            SELECT "id",
+                "created",
+                "updated",
+                "payloadFileId",
+                "pieceName",
+                "pieceVersion",
+                "error",
+                "status",
+                "triggerSourceId",
+                "projectId",
+                "platformId",
+                "flowId"
+            FROM "trigger_run"
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_created_piece_name_platform_id" ON "trigger_run" ("created", "pieceName", "platformId")
+            DROP TABLE "trigger_run"
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "temporary_trigger_run"
+                RENAME TO "trigger_run"
+        `)
+        await queryRunner.query(`
+            CREATE INDEX "idx_trigger_run_project_id_trigger_source_id_status" ON "trigger_run" ("projectId", "triggerSourceId")
+        `)
+        await queryRunner.query(`
+            CREATE INDEX "idx_created_piece_name_platform_id" ON "trigger_run" ("created", "platformId", "pieceName")
         `)
     }
 
@@ -206,7 +264,7 @@ export class AddTriggerSqlite1754421706602 implements MigrationInterface {
             DROP INDEX "idx_created_piece_name_platform_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_trigger_run_project_id_trigger_source_id"
+            DROP INDEX "idx_trigger_run_project_id_trigger_source_id_status"
         `)
         await queryRunner.query(`
             ALTER TABLE "trigger_run"
@@ -218,6 +276,8 @@ export class AddTriggerSqlite1754421706602 implements MigrationInterface {
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
                 "updated" datetime NOT NULL DEFAULT (datetime('now')),
                 "payloadFileId" varchar,
+                "pieceName" varchar NOT NULL,
+                "pieceVersion" varchar NOT NULL,
                 "error" varchar,
                 "status" varchar NOT NULL,
                 "triggerSourceId" varchar(21) NOT NULL,
@@ -233,6 +293,8 @@ export class AddTriggerSqlite1754421706602 implements MigrationInterface {
                     "created",
                     "updated",
                     "payloadFileId",
+                    "pieceName",
+                    "pieceVersion",
                     "error",
                     "status",
                     "triggerSourceId",
@@ -244,6 +306,8 @@ export class AddTriggerSqlite1754421706602 implements MigrationInterface {
                 "created",
                 "updated",
                 "payloadFileId",
+                "pieceName",
+                "pieceVersion",
                 "error",
                 "status",
                 "triggerSourceId",
@@ -256,10 +320,11 @@ export class AddTriggerSqlite1754421706602 implements MigrationInterface {
             DROP TABLE "temporary_trigger_run"
         `)
         await queryRunner.query(`
+            CREATE INDEX "idx_created_piece_name_platform_id" ON "trigger_run" ("created", "platformId", "pieceName")
+        `)
+        await queryRunner.query(`
             CREATE INDEX "idx_trigger_run_project_id_trigger_source_id_status" ON "trigger_run" ("projectId", "triggerSourceId")
         `)
-        // No extra index recreated here
-
         await queryRunner.query(`
             DROP INDEX "idx_trigger_flow_id_simulate"
         `)
@@ -392,6 +457,9 @@ export class AddTriggerSqlite1754421706602 implements MigrationInterface {
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
         `)
         await queryRunner.query(`
+            DROP INDEX "idx_created_piece_name_platform_id"
+        `)
+        await queryRunner.query(`
             DROP INDEX "idx_trigger_run_project_id_trigger_source_id_status"
         `)
         await queryRunner.query(`
@@ -409,6 +477,7 @@ export class AddTriggerSqlite1754421706602 implements MigrationInterface {
     }
 
 }
+
 
 export async function insertScheduleFromFlowsMigration(queryRunner: QueryRunner, log: FastifyBaseLogger) {
     const flowIds: { id: string }[] = await queryRunner.query(`

@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
-import { insertScheduleFromFlowsMigration } from '../sqlite/1754421706602-AddTriggerSqlite'
+import { insertScheduleFromFlowsMigration } from '../sqlite/1754477404726-AddTriggerSqlite'
 
 export class AddTrigger1754426627795 implements MigrationInterface {
     name = 'AddTrigger1754426627795'
