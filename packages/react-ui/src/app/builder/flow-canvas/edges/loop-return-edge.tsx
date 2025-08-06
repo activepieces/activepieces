@@ -60,7 +60,7 @@ export const ApLoopReturnLineCanvasEdge = ({
       <BaseEdge
         path={path}
         style={{ strokeWidth: `${flowUtilConsts.LINE_WIDTH}px` }}
-        className="relative"
+        className="relative "
       ></BaseEdge>
       {showDebugForLineEndPoint && (
         <foreignObject

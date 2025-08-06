@@ -38,15 +38,12 @@ test.describe('Webhooks', () => {
     
     await flowsPage.actions.newFlowFromScratch(page);
 
-    await builderPage.actions.waitFor(page);
+    await builderPage.actions.waitUntilPageIsLoaded(page);
 
-    await page.locator('div[data-testid="rf__node-trigger"]')
-      .filter({ hasText: 'Select Trigger' })
-      .click();
-    await page.getByRole('textbox', { name: 'Search' }).fill('Catch Webhook');
-    await page.getByText('Catch Webhook').click();
-    await page.waitForTimeout(2000);
-
+    await builderPage.actions.selectInitialTrigger(page, {
+        piece: 'Webhook',
+        trigger: 'Catch Webhook'
+      });
     const webhookInput = builderPage.getters.webhookInput(page);
     const webhookUrl = await webhookInput.inputValue();
     const runVersion = Math.floor(Math.random() * 100000);
@@ -55,13 +52,15 @@ test.describe('Webhooks', () => {
     await page.waitForTimeout(2000);
     await builderPage.actions.testTrigger(page);
 
-    const apiRequest = await page.context().request;
-    await apiRequest.get(urlWithParams);
+    const apiRequestToRunWebhook = await page.context().request;
+    await apiRequestToRunWebhook.get(urlWithParams);
     await page.waitForTimeout(5000);
 
-    await page.locator('div.bg-light-blue').click();
-    await page.getByRole('textbox', { name: 'Search' }).fill('Webhook');
-    await page.getByText('Return Response').nth(1).click();
+    await builderPage.actions.addAction(page, {
+      piece: 'Webhook',
+      action: 'Return Response'
+    });
+
     await page.waitForTimeout(3000);
 
     await builderPage.actions.fillCodeEditor(page,
@@ -71,7 +70,7 @@ test.describe('Webhooks', () => {
     await page.waitForTimeout(1000);
     await builderPage.actions.publishFlow(page);
 
-    const response = await apiRequest.get(urlWithParams);
+    const response = await apiRequestToRunWebhook.get(urlWithParams);
     const body = await response.json();
     
     expect(body.targetRunVersion).toBe(runVersion.toString());

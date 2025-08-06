@@ -155,7 +155,7 @@ const JsonViewer = React.memo(
     }
 
     return (
-      <div className="rounded-lg border border-solid border-dividers overflow-hidden">
+      <div className="rounded-lg border border-solid border-dividers overflow-hidden bg-background">
         <div className="px-3 py-2 flex border-solid border-b border-dividers justify-center items-center">
           <div className="flex-grow justify-center items-center">
             <span className="text-md">{title}</span>

@@ -39,6 +39,7 @@ const ApBigAddButtonCanvasNode = React.memo(
         setIsStepInsideDropzone(false);
       },
     });
+
     return (
       <>
         {
@@ -55,7 +56,13 @@ const ApBigAddButtonCanvasNode = React.memo(
                   height: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}px`,
                   width: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                 }}
-                className=" cursor-auto border-none flex items-center justify-center relative "
+                className={cn(
+                  ' cursor-auto border-none flex rounded-full items-center justify-center relative transition-all duration-150 ease-in-out',
+                  {
+                    'shadow-add-button':
+                      isIsStepInsideDropzone || isPieceSelectorOpened,
+                  },
+                )}
               >
                 <div
                   style={{
@@ -63,16 +70,13 @@ const ApBigAddButtonCanvasNode = React.memo(
                     width: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                   }}
                   id={id}
-                  className={cn('rounded bg-accent relative', {
-                    'bg-primary/80':
-                      isShowingDropIndicator || isPieceSelectorOpened,
-                    'shadow-add-button':
-                      isIsStepInsideDropzone || isPieceSelectorOpened,
-                    'transition-all':
-                      isIsStepInsideDropzone ||
-                      isPieceSelectorOpened ||
-                      isShowingDropIndicator,
-                  })}
+                  className={cn(
+                    'rounded-full bg-slate-200 dark:shadow-slate-200 shadow-slate-500  hover:shadow-bordered dark:shadow-slate-200 shadow-slate-500   dark:hover:bg-slate-200 group hover:bg-slate-500 dark:bg-slate-400 relative transition-all duration-150 ease-in-out',
+                    {
+                      'bg-primary/80 dark:bg-primary/80  !shadow-bordered  shadow-primary/80 hover:bg-primary/80':
+                        isShowingDropIndicator || isPieceSelectorOpened,
+                    },
+                  )}
                 >
                   {!isShowingDropIndicator && (
                     <PieceSelector
@@ -84,13 +88,17 @@ const ApBigAddButtonCanvasNode = React.memo(
                       <span>
                         <Button
                           variant="transparent"
-                          className="w-full h-full flex items-center hover:bg-accent-foreground rounded"
+                          className="w-full h-full flex items-center rounded-full"
                         >
                           <Plus
-                            className={cn('w-6 h-6 text-accent-foreground ', {
-                              'opacity-0':
-                                isShowingDropIndicator || isPieceSelectorOpened,
-                            })}
+                            className={cn(
+                              'size-6.5 group-hover:size-7 text-slate-500  dark:text-slate-200 group-hover:dark:text-slate-400 group-hover:text-slate-200',
+                              {
+                                'opacity-0':
+                                  isShowingDropIndicator ||
+                                  isPieceSelectorOpened,
+                              },
+                            )}
                           />
                         </Button>
                       </span>

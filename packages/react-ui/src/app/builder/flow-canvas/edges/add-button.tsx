@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import { ADD_STEP_BUTTON_TEST_ID, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../utils/consts';
@@ -47,7 +47,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
             width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
             height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
           }}
-          className={cn('transition-all bg-primary/90  rounded-xs', {
+          className={cn('transition-all bg-primary/90  rounded-full', {
             'shadow-add-button': isStepInsideDropZone,
           })}
         >
@@ -58,7 +58,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
               left: `${-flowUtilConsts.AP_NODE_SIZE.STEP.width / 2}px`,
               top: `${-flowUtilConsts.AP_NODE_SIZE.STEP.height / 2}px`,
             }}
-            className={cn(' absolute    rounded-xs box-content ')}
+            className={cn(' absolute    rounded-full box-content ')}
             ref={setNodeRef}
           ></div>
         </div>
@@ -69,6 +69,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
           id={props.edgeId}
         >
           <div
+            data-testid={ADD_STEP_BUTTON_TEST_ID}
             style={{
               width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
               height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
@@ -79,7 +80,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                 width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
                 height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
               }}
-              className={cn('rounded-xs cursor-pointer transition-all z-50', {
+              className={cn('rounded-full cursor-pointer transition-all z-50', {
                 'shadow-add-button': isPieceSelectorOpen,
               })}
             >
@@ -89,14 +90,15 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                   height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
                 }}
                 className={cn(
-                  'bg-light-blue  relative group overflow-visible rounded-xs cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
+                  'bg-slate-200 hover:shadow-bordered dark:shadow-slate-200 shadow-slate-500    dark:hover:bg-slate-200 group hover:bg-slate-500 dark:bg-slate-400 relative group overflow-visible rounded-full cursor-pointer  flex items-center justify-center  transition-all duration-150 ease-in-out',
                   {
-                    'bg-primary ': isPieceSelectorOpen,
+                    'bg-primary dark:bg-primary hover:!bg-primary !shadow-bordered shadow-primary/80 ':
+                      isPieceSelectorOpen,
                   },
                 )}
               >
                 {!isPieceSelectorOpen && (
-                  <Plus className="w-3 h-3 stroke-[3px] text-white" />
+                  <Plus className="size-[12px] stroke-[3px] group-hover:size-[14px] text-slate-500 dark:text-slate-200  group-hover:dark:text-slate-400 group-hover:text-slate-200   " />
                 )}
               </div>
             </div>

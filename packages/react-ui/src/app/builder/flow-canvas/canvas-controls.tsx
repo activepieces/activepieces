@@ -73,7 +73,7 @@ const PanningModeIndicator = ({ toggled }: { toggled: boolean }) => {
   return (
     <div
       className={cn(
-        'absolute transition-all bg-primary/15 w-full h-full top-0 left-0',
+        'absolute transition-all opacity-100 bg-primary/15 dark:bg-primary/80 w-full h-full top-0 left-0',
         {
           'opacity-0': !toggled,
         },
@@ -213,7 +213,7 @@ const CanvasControls = ({
               className="relative focus:outline-0"
             >
               <PanningModeIndicator toggled={!isInGrabMode} />
-              <MousePointer className="w-5 h-5"></MousePointer>
+              <MousePointer className="size-5 z-10"></MousePointer>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">{t('Select Mode')}</TooltipContent>
@@ -233,7 +233,7 @@ const CanvasControls = ({
             >
               <PanningModeIndicator toggled={isInGrabMode} />
 
-              <Hand className="w-5 h-5"></Hand>
+              <Hand className="size-5 z-10"></Hand>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">{t('Move Mode')}</TooltipContent>
@@ -243,7 +243,7 @@ const CanvasControls = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="accent" size="sm" onClick={handleZoomReset}>
-              <RotateCw className="w-5 h-5" />
+              <RotateCw className="size-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">{t('Reset Zoom')}</TooltipContent>
@@ -252,7 +252,7 @@ const CanvasControls = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="accent" size="sm" onClick={handleZoomIn}>
-              <Plus className="w-5 h-5" />
+              <Plus className="size-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">{t('Zoom In')}</TooltipContent>
@@ -261,7 +261,7 @@ const CanvasControls = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="accent" size="sm" onClick={handleZoomOut}>
-              <Minus className="w-5 h-5" />
+              <Minus className="size-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">{t('Zoom Out')}</TooltipContent>
@@ -274,7 +274,7 @@ const CanvasControls = ({
               size="sm"
               onClick={() => handleFitToView(false)}
             >
-              <Fullscreen className="w-5 h-5" />
+              <Fullscreen className="size-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">{t('Fit to View')}</TooltipContent>

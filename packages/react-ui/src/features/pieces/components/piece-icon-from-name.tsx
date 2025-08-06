@@ -29,6 +29,7 @@ const PieceIconWithPieceName = ({
       displayName={pieceModel?.displayName}
       logoUrl={pieceModel?.logoUrl}
       showTooltip={showTooltip}
+      className="rounded-xs p-[1px]"
     />
   );
 };

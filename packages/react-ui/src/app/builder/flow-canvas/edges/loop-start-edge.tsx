@@ -34,7 +34,7 @@ export const ApLoopStartLineCanvasEdge = ({
       flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2 +
       horizontalLineLength +
       flowUtilConsts.ARC_LENGTH * 2,
-    y: startY + verticalLineLength + flowUtilConsts.ARC_LENGTH,
+    y: startY + verticalLineLength + flowUtilConsts.ARC_LENGTH - 2,
   };
 
   return (

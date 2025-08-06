@@ -33,7 +33,7 @@ const StepStatusIcon = React.memo(
       runStatus === FlowRunStatus.RUNNING &&
       status === StepOutputStatus.RUNNING
     ) {
-      return <LoadingSpinner className="w-4 h-4 "></LoadingSpinner>;
+      return <LoadingSpinner className="size-4 "></LoadingSpinner>;
     }
     return (
       <Tooltip>
@@ -46,8 +46,9 @@ const StepStatusIcon = React.memo(
               'h-4': size === '4',
               'w-5': size === '5',
               'h-5': size === '5',
-              'text-success': variant === 'success',
-              'text-destructive': variant === 'error',
+              'bg-success text-white rounded-full p-0.5': variant === 'success',
+              'bg-destructive text-white rounded-full p-0.5':
+                variant === 'error',
               'text-foreground': variant === 'default',
             })}
           ></Icon>
