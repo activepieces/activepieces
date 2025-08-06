@@ -1,4 +1,4 @@
-import { FileCompression, FileType, ProjectId, TriggerRun, TriggerRunStatus, TriggerStatusReport } from '@activepieces/shared'
+import { apId, FileCompression, FileType, ProjectId, TriggerRun, TriggerRunStatus, TriggerStatusReport } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
@@ -10,7 +10,7 @@ const triggerRunRepo = repoFactory(TriggerRunEntity)
 
 export const triggerRunService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<TriggerRun> {
-        const { projectId, triggerSourceId, status, payload, error, pieceName, pieceVersion, id } = params
+        const { projectId, triggerSourceId, status, payload, error, pieceName, pieceVersion, jobId } = params
         const buffer = Buffer.from(JSON.stringify(payload))
         const platformId = await projectService.getPlatformId(projectId)
         const file = await fileService(log).save({
@@ -24,8 +24,10 @@ export const triggerRunService = (log: FastifyBaseLogger) => ({
                 triggerSourceId,
             },
         })
+        const triggerRunId = apId()
         const request: Omit<TriggerRun, 'created' | 'updated'> = {
-            id,
+            id: triggerRunId,
+            jobId,
             projectId,
             status,
             pieceName,
@@ -35,8 +37,8 @@ export const triggerRunService = (log: FastifyBaseLogger) => ({
             payloadFileId: file.id,
             error,
         }
-        await triggerRunRepo().upsert(request, ['id'])
-        return triggerRunRepo().findOneByOrFail({ id })
+        await triggerRunRepo().upsert(request, ['jobId'])
+        return triggerRunRepo().findOneByOrFail({ jobId })
     },
     async getStatusReport(params: GetStatusReportParams): Promise<TriggerStatusReport> {
         const { platformId } = params
@@ -88,7 +90,7 @@ type GetStatusReportParams = {
 
 type CreateParams = {
     projectId: ProjectId
-    id: string
+    jobId: string
     triggerSourceId: string
     status: TriggerRunStatus
     pieceName: string
