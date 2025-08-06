@@ -1,10 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { baseApiUrl } from '../..';
+import { autocallsAuth, baseApiUrl } from '../..';
 
 export const makePhoneCall = createAction({
+  auth:autocallsAuth,
   name: 'makePhoneCall',
-  displayName: 'Make phone call',
+  displayName: 'Make Phone Call',
   description: "Call a customer by it's phone number using an assistant from our platform.",
   props: {
     assistant: Property.Dropdown({

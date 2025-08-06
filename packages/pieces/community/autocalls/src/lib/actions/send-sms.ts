@@ -1,10 +1,11 @@
 import { createAction, Property} from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { baseApiUrl } from '../..';
+import { autocallsAuth, baseApiUrl } from '../..';
 
 export const sendSms = createAction({
+  auth:autocallsAuth,
   name: 'sendSms',
-  displayName: 'Send SMS to a customer',
+  displayName: 'Send SMS to Customer',
   description: "Send an SMS to a customer using a phone number from our platform.",
   props: {
     from: Property.Dropdown({

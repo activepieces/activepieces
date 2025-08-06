@@ -1,11 +1,12 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { baseApiUrl } from '../..';
+import { autocallsAuth, baseApiUrl } from '../..';
 
 export const inboundCall = createTrigger({
+    auth:autocallsAuth,
     name: 'inboundCall',
-    displayName: 'Inbound call variables',
-    description: 'Inject variables before connecting an inbound call.',
+    displayName: 'Inbound Call',
+    description: 'Triggers for variables before connecting an inbound call.',
     props: {
         assistant: Property.Dropdown({
             displayName: 'Assistant',
@@ -58,7 +59,7 @@ export const inboundCall = createTrigger({
             url: baseApiUrl + 'api/user/assistants/enable-inbound-webhook',
             body: {
                 assistant_id: context.propsValue['assistant'],
-                webhook_url: context.webhookUrl + '/sync',
+                webhook_url: context.webhookUrl,
             },
             headers: {
                 Authorization: "Bearer " + context.auth,

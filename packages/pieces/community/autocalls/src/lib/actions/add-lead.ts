@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { baseApiUrl } from '../..';
+import { autocallsAuth, baseApiUrl } from '../..';
 
 export const addLead = createAction({
+  auth:autocallsAuth,
   name: 'addLead',
   displayName: 'Add lead to a campaign',
   description: "Add lead to an outbound campaign, to be called by an assistant from our platform.",

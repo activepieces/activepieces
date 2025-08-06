@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { baseApiUrl } from '../..';
+import { autocallsAuth, baseApiUrl } from '../..';
 
 export const deleteLead = createAction({
+  auth:autocallsAuth,
   name: 'deleteLead',
   displayName: 'Delete Lead',
   description: "Delete a lead from a campaign.",

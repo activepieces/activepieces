@@ -11,11 +11,9 @@ import { deleteLead } from "./lib/actions/delete-lead";
 
 export const baseApiUrl = 'https://app.autocalls.ai/';
 
-export const autocalls = createPiece({
-  displayName: "Autocalls",
-  auth: PieceAuth.SecretText({
+export const autocallsAuth =  PieceAuth.SecretText({
     displayName: 'API Key',
-    description: 'Create an API key in your Autocalls account and paste the value here. Get API key here -> https://app.autocalls.ai',
+    description: 'Create an API key in your Autocalls account and paste the value here. Get API key here -> https://app.autocalls.ai.',
     required: true,
     validate: async ({ auth }) => {
       try {
@@ -46,11 +44,15 @@ export const autocalls = createPiece({
         };
       }
     }
-  }),
+  })
+
+export const autocalls = createPiece({
+  displayName: "Autocalls",
+  auth:autocallsAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://autocalls.ai/doar-logo.png",
+  logoUrl: "https://cdn.activepieces.com/pieces/autocalls.png",
   description: "Automate phone calls using our AI calling platform.",
-  authors: ['Stefan Petrea'],
+  authors: ['Zebi15'],
   actions: [addLead,sendSms,campaignControl,makePhoneCall,deleteLead],
   triggers: [phoneCallEnded,getAssistants,inboundCall],
 });

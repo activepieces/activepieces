@@ -1,10 +1,11 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { baseApiUrl } from '../..';
+import { autocallsAuth, baseApiUrl } from '../..';
 
 export const phoneCallEnded = createTrigger({
+    auth:autocallsAuth,
     name: 'phoneCallEnded',
-    displayName: 'Phone call ended',
+    displayName: 'Phone Call Ended',
     description: 'Triggers when a phone call ends, with extracted variables.',
     props: {
         assistant: Property.Dropdown({
@@ -37,7 +38,7 @@ export const phoneCallEnded = createTrigger({
                 }
 
                 return {
-                    options: res.body.map((assistant: any) => ({
+                    options: res.body.map((assistant: {id:number,name:string}) => ({
                         value: assistant.id,
                         label: assistant.name,
                     })),

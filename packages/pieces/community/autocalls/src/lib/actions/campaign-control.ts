@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { baseApiUrl } from '../..';
+import { autocallsAuth, baseApiUrl } from '../..';
 
 export const campaignControl = createAction({
+  auth:autocallsAuth,
   name: 'campaignControl',
   displayName: 'Start/Stop Campaign',
   description: "Start or stop an outbound campaign from our platform.",

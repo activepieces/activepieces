@@ -1,57 +1,70 @@
 import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { baseApiUrl } from '../..';
+import { autocallsAuth, baseApiUrl } from '../..';
 import dayjs from 'dayjs';
 
 const polling: Polling<PiecePropValueSchema<any>, { start?: string; end?: string }> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue }) => {
-        const res = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: baseApiUrl + 'api/user/assistants',
-            headers: {
-                Authorization: "Bearer " + auth,
-            },
-        });
+    const res = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: baseApiUrl + 'api/user/assistants',
+      headers: {
+        Authorization: 'Bearer ' + auth,
+      },
+    });
 
-        if (res.status !== 200) {
-            throw new Error(`Failed to fetch assistants. Status: ${res.status}`);
+    if (res.status !== 200) {
+      throw new Error(`Failed to fetch assistants. Status: ${res.status}`);
+    }
+
+    const assistants =
+      (res.body as Array<{
+        id: number;
+        created_at: string;
+        updated_at: string;
+      }>) || [];
+
+    const filteredAssistants = assistants.filter((assistant) => {
+      const assistantDate = assistant.created_at
+        ? dayjs(assistant.created_at)
+        : dayjs(assistant.updated_at);
+
+      // Check start date filter
+      if (propsValue['start']) {
+        const startDate = dayjs(propsValue['start']);
+        if (assistantDate.isBefore(startDate)) {
+          return false;
         }
+      }
 
-        const assistants = res.body || [];
-
-        const filteredAssistants = assistants.filter((assistant: any) => {
-            const assistantDate = assistant.created_at ? dayjs(assistant.created_at) : dayjs(assistant.updated_at);
-            
-            // Check start date filter
-            if (propsValue['start']) {
-                const startDate = dayjs(propsValue['start']);
-                if (assistantDate.isBefore(startDate)) {
-                    return false;
-                }
-            }
-            
-            // Check end date filter
-            if (propsValue['end']) {
-                const endDate = dayjs(propsValue['end']);
-                if (assistantDate.isAfter(endDate)) {
-                    return false;
-                }
-            }
-            
-            return true;
-        });
-
-        return [{
-            epochMilliSeconds: dayjs().valueOf(),
-            data: filteredAssistants,
-        }];
+      // Check end date filter
+      if (propsValue['end']) {
+        const endDate = dayjs(propsValue['end']);
+        if (assistantDate.isAfter(endDate)) {
+          return false;
         }
+      }
+
+      return true;
+    });
+
+    return filteredAssistants.map((assistant) => {
+      const assistantDate = assistant.created_at
+        ? dayjs(assistant.created_at)
+        : dayjs(assistant.updated_at);
+      return {
+        epochMilliSeconds: assistantDate.valueOf(),
+        data: assistant,
+      };
+    });
+  },
 };
 
 export const getAssistants = createTrigger({
+    auth:autocallsAuth,
 name: 'getAssistants',
-    displayName: 'Get Assistants',
+    displayName: 'Updated Assistant',
     description: 'Triggers when assistants are fetched or updated in your Autocalls account.',
 props: {
         start: Property.DateTime({

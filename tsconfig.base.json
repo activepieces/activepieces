@@ -99,6 +99,9 @@
       "@activepieces/piece-attio": [
         "packages/pieces/community/attio/src/index.ts"
       ],
+      "@activepieces/piece-autocalls": [
+        "packages/pieces/community/autocalls/src/index.ts"
+      ],
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
       ],
