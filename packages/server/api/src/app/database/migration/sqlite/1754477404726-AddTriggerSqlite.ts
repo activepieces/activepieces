@@ -512,7 +512,7 @@ async function migrateSingleFlow(queryRunner: QueryRunner, flowId: string) {
     const flow = await queryRunner.query(flowQuery, [flowId])
     const flowRow = flow[0] || (flow.records && flow.records[0])
     if (!flowRow) {
-        throw new Error(`Flow not found for id ${flowId}`)
+        return
     }
 
     // Fetch flow version
@@ -520,7 +520,7 @@ async function migrateSingleFlow(queryRunner: QueryRunner, flowId: string) {
     const flowVersion = await queryRunner.query(flowVersionQuery, [flowRow.publishedVersionId])
     const flowVersionRow = flowVersion[0] || (flowVersion.records && flowVersion.records[0])
     if (!flowVersionRow) {
-        throw new Error(`Flow version not found for id ${flowRow.publishedVersionId}`)
+        return
     }
 
     // Parse trigger from flowVersion
