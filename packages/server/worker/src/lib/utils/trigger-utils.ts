@@ -1,3 +1,4 @@
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -10,11 +11,10 @@ import {
     TriggerRunStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../runner'
 import { workerMachine } from './machine'
 import { webhookUtils } from './webhook-utils'
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { engineApiService } from '../api/server-api.service'
 
 export const triggerHooks = (log: FastifyBaseLogger) => ({
     renewWebhook: async (params: RenewParams): Promise<void> => {
@@ -101,14 +101,16 @@ async function getTriggerPayloadsAndStatus(
                 payloads: result.output as unknown[],
                 status: TriggerRunStatus.COMPLETED,
             }
-        } else {
+        }
+        else {
             return {
                 payloads: [],
                 status: TriggerRunStatus.INTERNAL_ERROR,
                 error: result.message,
             }
         }
-    } catch (e) {
+    }
+    catch (e) {
         const isTimeoutError = e instanceof ActivepiecesError && e.error.code === ErrorCode.EXECUTION_TIMEOUT
         if (isTimeoutError) {
             return {
