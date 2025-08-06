@@ -57,7 +57,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             platformId,
         })
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = await federatedAuthnService(request.log).getThirdPartyRedirectUrl(platformId)
-        modifiedFlags[ApFlagId.SHOW_TUTORIALS] = system.getEdition() === ApEdition.COMMUNITY || isNil(platformWithPlan.plan.licenseKey) || platformWithPlan.plan.licenseKey.length === 0
+        modifiedFlags[ApFlagId.SHOW_TUTORIALS] = !platformWithPlan.plan.embeddingEnabled
         return modifiedFlags
     },
 }

@@ -20,7 +20,7 @@ interface StatusProgressBarProps {
 export function StatusProgressBar({ days, className }: StatusProgressBarProps) {
   return (
     <div className={cn('flex gap-1', className)}>
-      {days.map((day, index) => {
+      {[...days].reverse().map((day, index) => {
         const totalRuns = day.success + day.failure;
         return (
           <Tooltip key={index}>
