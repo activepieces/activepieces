@@ -1,0 +1,31 @@
+{
+  "name": "@activepieces/piece-sellsy",
+  "version": "0.0.1",
+  "description": "Sellsy CRM and sales management platform integration",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix"
+  },
+  "dependencies": {
+    "@activepieces/pieces-framework": "0.3.0",
+    "@activepieces/shared": "0.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "activepieces",
+    "sellsy",
+    "crm",
+    "sales",
+    "automation"
+  ],
+  "author": "Activepieces",
+  "license": "MIT"
+} 

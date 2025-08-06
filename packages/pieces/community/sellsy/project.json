@@ -1,0 +1,23 @@
+{
+  "name": "sellsy",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/sellsy/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/sellsy",
+        "main": "packages/pieces/community/sellsy/src/index.ts",
+        "tsConfig": "packages/pieces/community/sellsy/tsconfig.json",
+        "assets": ["packages/pieces/community/sellsy/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  },
+  "tags": []
+} 
