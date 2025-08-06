@@ -52,10 +52,10 @@ export class AddTrigger1754426627795 implements MigrationInterface {
             )
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_trigger_run_project_id_trigger_source_id" ON "trigger_run" ("projectId", "triggerSourceId")
+            DROP INDEX IF EXISTS "idx_trigger_run_project_id_trigger_source_id"
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_created_piece_name_platform_id" ON "trigger_run" ("created", "pieceName", "platformId")
+            CREATE INDEX "idx_trigger_run_project_id_trigger_source_id_status" ON "trigger_run" ("projectId", "triggerSourceId")
         `)
         await queryRunner.query(`
             ALTER TABLE "flow" DROP COLUMN "schedule"
@@ -124,19 +124,16 @@ export class AddTrigger1754426627795 implements MigrationInterface {
             ADD "schedule" jsonb
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_trigger_run_platform_id_project_id_trigger_source_id"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_trigger_run_project_id_trigger_source_id_status"
+            DROP INDEX IF EXISTS "idx_trigger_run_project_id_trigger_source_id_status"
         `)
         await queryRunner.query(`
             DROP TABLE "trigger_run"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_trigger_flow_id_simulate"
+            DROP INDEX IF EXISTS "idx_trigger_flow_id_simulate"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_trigger_project_id_flow_id_simulate"
+            DROP INDEX IF EXISTS "idx_trigger_project_id_flow_id_simulate"
         `)
         await queryRunner.query(`
             DROP TABLE "trigger_source"
