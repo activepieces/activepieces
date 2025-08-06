@@ -59,20 +59,21 @@ export const triggerRunService = (log: FastifyBaseLogger) => ({
         const pieces: TriggerStatusReport['pieces'] = {}
 
         for (const run of runs) {
+            const formattedDay = apDayjs(run.day).format('YYYY-MM-DD')
             if (!pieces[run.pieceName]) {
                 pieces[run.pieceName] = {
                     dailyStats: {},
                     totalRuns: 0,
                 }
             }
-            if (!pieces[run.pieceName].dailyStats[run.day]) {
-                pieces[run.pieceName].dailyStats[run.day] = { success: 0, failure: 0 }
+            if (!pieces[run.pieceName].dailyStats[formattedDay]) {
+                pieces[run.pieceName].dailyStats[formattedDay] = { success: 0, failure: 0 }
             }
             if (run.status === TriggerRunStatus.COMPLETED) {
-                pieces[run.pieceName].dailyStats[run.day].success += Number(run.count)
+                pieces[run.pieceName].dailyStats[formattedDay].success += Number(run.count)
             }
             else {
-                pieces[run.pieceName].dailyStats[run.day].failure += Number(run.count)
+                pieces[run.pieceName].dailyStats[formattedDay].failure += Number(run.count)
             }
             pieces[run.pieceName].totalRuns += Number(run.count)
         }
