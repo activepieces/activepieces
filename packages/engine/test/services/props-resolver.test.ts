@@ -1,5 +1,5 @@
 import { ApFile, PieceAuth, Property } from '@activepieces/pieces-framework'
-import { FlowActionType, GenericStepOutput, StepOutputStatus, FlowTriggerType } from '@activepieces/shared'
+import { FlowActionType, FlowTriggerType, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
