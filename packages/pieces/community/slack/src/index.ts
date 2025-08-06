@@ -98,22 +98,28 @@ export const slack = createPiece({
       if (
         payload.headers['content-type'] === 'application/x-www-form-urlencoded'
       ) {
-        const interactionPayloadBody = JSON.parse(
-          (payload.body as { payload: string }).payload
-        ) as InteractionPayloadBody;
-        if (interactionPayloadBody.type === 'block_actions') {
-          const action = interactionPayloadBody.actions?.at(0);
-          if (
-            action &&
-            action.type === 'button' &&
-            action.value?.startsWith(server.publicUrl)
-          ) {
-            // We don't await the promise as we don't handle the response anyway
-            httpClient.sendRequest({
-              url: action.value,
-              method: HttpMethod.POST,
-              body: interactionPayloadBody,
-            });
+        if (
+          payload.body &&
+          typeof payload.body == 'object' &&
+          'payload' in payload.body
+        ) {
+          const interactionPayloadBody = JSON.parse(
+            (payload.body as { payload: string }).payload
+          ) as InteractionPayloadBody;
+          if (interactionPayloadBody.type === 'block_actions') {
+            const action = interactionPayloadBody.actions?.at(0);
+            if (
+              action &&
+              action.type === 'button' &&
+              action.value?.startsWith(server.publicUrl)
+            ) {
+              // We don't await the promise as we don't handle the response anyway
+              httpClient.sendRequest({
+                url: action.value,
+                method: HttpMethod.POST,
+                body: interactionPayloadBody,
+              });
+            }
           }
         }
         return {
