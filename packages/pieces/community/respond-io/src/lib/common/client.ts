@@ -3,7 +3,7 @@ import {
   HttpMethod,
   HttpRequest,
   HttpMessageBody,
-  AuthenticationType,
+  AuthenticationType
 } from '@activepieces/pieces-common';
 import { PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { respondIoAuth } from './auth';
@@ -19,37 +19,37 @@ export async function respondIoApiCall<T extends HttpMessageBody>({
   method,
   url,
   body,
-  auth,
+  auth
 }: RespondIoApiCallParams): Promise<T> {
   const request: HttpRequest = {
     method,
     url: `https://api.respond.io/v2${url}`,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth.token,
+      token: auth.token
     },
     headers: {
       'Content-Type': 'application/json',
-      accept: 'application/json',
+      accept: 'application/json'
     },
-    body,
+    body
   };
 
   try {
     const response = await httpClient.sendRequest<T>(request);
     return response.body;
   } catch (error: unknown) {
-    const err = error as { 
-      response?: { 
-        status?: number; 
-        body?: { message?: string } 
-      }; 
-      message?: string 
+    const err = error as {
+      response?: {
+        status?: number;
+        body?: { message?: string };
+      };
+      message?: string;
     };
-    
+
     const status = err.response?.status;
     const apiMessage = err.response?.body?.message || 'No details provided';
-    
+
     // Provide specific, user-friendly error messages based on status codes
     switch (status) {
       case 400:
@@ -84,11 +84,14 @@ export async function respondIoApiCall<T extends HttpMessageBody>({
         throw new Error(
           `Server Error: Respond.io is experiencing technical difficulties. Please try again later or contact Respond.io support. Details: ${apiMessage}`
         );
-      default:
+      default: {
         const fallbackMessage = err.message || 'Unknown error occurred';
         throw new Error(
-          `Respond.io API Error (Status ${status || 'Unknown'}): ${apiMessage || fallbackMessage}`
+          `Respond.io API Error (Status ${status || 'Unknown'}): ${
+            apiMessage || fallbackMessage
+          }`
         );
+      }
     }
   }
 }
