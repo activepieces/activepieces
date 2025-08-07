@@ -132,7 +132,6 @@ async function getMcpClient<T extends AgentJobSource>(params: AgentToolsParams<T
         return null
     }
     const mcpServerUrl = `${params.publicUrl}v1/mcp/${params.mcp.token}/sse`
-    // console.log('MCP SERVER URL', mcpServerUrl)
     return experimental_createMCPClient({
         transport: {
             type: 'sse',

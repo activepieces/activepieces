@@ -11,7 +11,7 @@ export class AddIndexForAgentTable1753400133786 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_agent_run_project_agent_starttime"
+            DROP INDEX "idx_agent_run_project_agent_starttime"
         `)
     }
 

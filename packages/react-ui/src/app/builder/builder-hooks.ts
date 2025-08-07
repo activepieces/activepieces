@@ -22,7 +22,6 @@ import {
   FlowVersionState,
   Permission,
   PopulatedFlow,
-  TriggerType,
   flowOperations,
   flowStructureUtil,
   isNil,
@@ -30,6 +29,7 @@ import {
   FlowRunStatus,
   apId,
   StepSettings,
+  FlowTriggerType,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -209,7 +209,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     );
     const isEmptyTriggerInitiallySelected =
       initiallySelectedStep === 'trigger' &&
-      initialState.flowVersion.trigger.type === TriggerType.EMPTY;
+      initialState.flowVersion.trigger.type === FlowTriggerType.EMPTY;
     return {
       loopsIndexes:
         initialState.run && initialState.run.steps
@@ -290,7 +290,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
 
           const rightSidebar =
             selectedStep === 'trigger' &&
-            state.flowVersion.trigger.type === TriggerType.EMPTY
+            state.flowVersion.trigger.type === FlowTriggerType.EMPTY
               ? RightSideBarType.NONE
               : RightSideBarType.PIECE_SETTINGS;
 
@@ -300,7 +300,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
 
           const isEmptyTrigger =
             selectedStep === 'trigger' &&
-            state.flowVersion.trigger.type === TriggerType.EMPTY;
+            state.flowVersion.trigger.type === FlowTriggerType.EMPTY;
 
           return {
             openedPieceSelectorStepNameOrAddButtonId: isEmptyTrigger
@@ -464,7 +464,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         );
         const isEmptyTriggerInitiallySelected =
           initiallySelectedStep === 'trigger' &&
-          flowVersion.trigger.type === TriggerType.EMPTY;
+          flowVersion.trigger.type === FlowTriggerType.EMPTY;
         set((state) => ({
           flowVersion,
           run: null,
@@ -589,14 +589,14 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           overrideDefaultSettings: overrideSettings,
         });
         const isTrigger =
-          defaultValues.type === TriggerType.PIECE ||
-          defaultValues.type === TriggerType.EMPTY;
+          defaultValues.type === FlowTriggerType.PIECE ||
+          defaultValues.type === FlowTriggerType.EMPTY;
         switch (operation.type) {
           case FlowOperationType.UPDATE_TRIGGER: {
             if (!isTrigger) {
               break;
             }
-            if (flowVersion.trigger.type === TriggerType.EMPTY) {
+            if (flowVersion.trigger.type === FlowTriggerType.EMPTY) {
               set(() => {
                 return {
                   rightSidebar: RightSideBarType.PIECE_SETTINGS,
@@ -687,7 +687,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       ) => {
         return set((state) => {
           const isReplacingEmptyTrigger =
-            state.flowVersion.trigger.type === TriggerType.EMPTY &&
+            state.flowVersion.trigger.type === FlowTriggerType.EMPTY &&
             stepNameOrAddButtonId === 'trigger';
           return {
             openedPieceSelectorStepNameOrAddButtonId: stepNameOrAddButtonId,

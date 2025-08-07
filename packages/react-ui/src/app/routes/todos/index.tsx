@@ -13,7 +13,7 @@ import {
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { TableTitle } from '@/components/custom/table-title';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -319,16 +319,13 @@ function TodosPage() {
 
   return (
     <div className="flex-col w-full">
-      <div className="flex items-center gap-2">
-        <TableTitle
-          description={t(
-            'Manage todos for your project that are created by automations',
-          )}
-        >
-          {t('Todos')}
-        </TableTitle>
-      </div>
-
+      <DashboardPageHeader
+        description={t(
+          'Manage todos for your project that are created by automations',
+        )}
+        title={t('Todos')}
+        tutorialTab="todos"
+      />
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as 'all' | 'needs-action')}

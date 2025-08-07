@@ -2,7 +2,7 @@ import { t } from 'i18next';
 import { Wand, Zap } from 'lucide-react';
 import { useState } from 'react';
 
-import { TableTitle } from '@/components/custom/table-title';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
@@ -53,8 +53,7 @@ export default function Billing() {
 
   if (isPlatformSubscriptionLoading || isNil(platformPlanInfo)) {
     return (
-      <article className="flex flex-col w-full gap-8">
-        <TableTitle>Billing</TableTitle>
+      <article className="h-full flex items-center justify-center w-full">
         <LoadingSpinner />
       </article>
     );
@@ -62,25 +61,19 @@ export default function Billing() {
 
   if (isError) {
     return (
-      <article className="flex flex-col w-full gap-8">
-        <TableTitle>Billing</TableTitle>
-        <div className="flex items-center justify-center h-[400px] text-destructive">
-          {t('Failed to load billing information')}
-        </div>
+      <article className="h-full flex items-center justify-center w-full">
+        {t('Failed to load billing information')}
       </article>
     );
   }
 
   return (
-    <article className="flex flex-col w-full gap-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <TableTitle>{t('Billing')}</TableTitle>
-          <p className="text-sm text-muted-foreground">
-            {t('Manage billing, usage and limits')}
-          </p>
-        </div>
-
+    <>
+      <DashboardPageHeader
+        title={t('Billing')}
+        description={t('Manage billing, usage and limits')}
+        beta={true}
+      >
         {isEnterprise ? (
           <Button
             variant="default"
@@ -106,9 +99,9 @@ export default function Billing() {
             </Button>
           </div>
         )}
-      </div>
-
-      {!isEnterprise && <SubscriptionInfo info={platformPlanInfo} />}
+      </DashboardPageHeader>
+      <section className="flex flex-col w-full gap-6">
+        {!isEnterprise && <SubscriptionInfo info={platformPlanInfo} />}
 
       <UsageCards platformSubscription={platformPlanInfo} />
 
@@ -132,39 +125,40 @@ export default function Billing() {
         </>
       )}
 
-      {isEnterprise ? (
-        <LicenseKey platform={platform} />
-      ) : (
-        <Card>
-          <CardHeader className="border-b">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg border">
-                  <Wand className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">
-                    {t('Enabled Features')}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {t(
-                      'The following features are currently enabled as part of your platform plan.',
-                    )}
-                  </p>
+        {isEnterprise ? (
+          <LicenseKey platform={platform} />
+        ) : (
+          <Card>
+            <CardHeader className="border-b">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg border">
+                    <Wand className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      {t('Enabled Features')}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {t(
+                        'The following features are currently enabled as part of your platform plan.',
+                      )}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </CardHeader>
+            </CardHeader>
 
-          <CardContent className="space-y-6 p-6">
-            <FeatureStatus platform={platform} />
-          </CardContent>
-        </Card>
-      )}
-      <ActivateLicenseDialog
-        isOpen={isActivateLicenseKeyDialogOpen}
-        onOpenChange={setIsActivateLicenseKeyDialogOpen}
-      />
-    </article>
+            <CardContent className="space-y-6 p-6">
+              <FeatureStatus platform={platform} />
+            </CardContent>
+          </Card>
+        )}
+        <ActivateLicenseDialog
+          isOpen={isActivateLicenseKeyDialogOpen}
+          onOpenChange={setIsActivateLicenseKeyDialogOpen}
+        />
+      </section>{' '}
+    </>
   );
 }

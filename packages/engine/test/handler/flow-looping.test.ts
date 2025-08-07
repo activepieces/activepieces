@@ -1,4 +1,4 @@
-import { Action, LoopStepOutput } from '@activepieces/shared'
+import { FlowAction, LoopStepOutput } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildCodeAction, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
@@ -67,7 +67,7 @@ describe('flow with looping', () => {
     })
 
     it('should skip loop in flow', async () => {
-        const flow: Action = {
+        const flow: FlowAction = {
             ...buildSimpleLoopAction({ name: 'loop', loopItems: '{{ [4,5,6] }}', skip: true }),
             nextAction: {
                 ...buildCodeAction({
