@@ -60,38 +60,38 @@ const TutorialsDialog = ({
       icon: <Star className="size-4"></Star>,
       name: t('Intro'),
       description: t('Get started with Activepieces'),
-      link: `https://www.youtube.com/embed/cUbkaBFvHLE?si=t9ZEpk4-rt-OdY5t`,
+      link: `https://www.youtube.com/embed/b97bgcOigIs?si=Zlly9_WkP1oOnJ-K`,
     },
     agents: {
       icon: <Bot className="size-4"></Bot>,
       name: t('Agents'),
       description: t('Add a touch of AI to your workflows'),
-      link: `https://www.youtube.com/embed/KiUpZ6T_h60?si=PQY407Xm37hdgwAh`,
+      link: `https://www.youtube.com/embed/9qhhhfKmpoo?si=Ik8FmAmrWxDOggJP`,
     },
     flows: {
       icon: <Workflow className="size-4"></Workflow>,
       name: t('Flows'),
       description: t('Automate repetitive tasks to save your time'),
-      link: `https://www.youtube.com/embed/sCQ1qUQ03Nk?si=QlShJxElzKWwBsa1`,
+      link: `https://www.youtube.com/embed/BWKrqmdNlzY?si=fjKiHx9GJe9eN2_x`,
     },
     tables: {
       icon: <Table2 className="size-4"></Table2>,
       name: t('Tables'),
       description: t('Store and automate your data'),
-      link: `https://www.youtube.com/embed/qAUhS4wGqik?si=eF5YMfsXZaTRIGTM"`,
+      link: `https://www.youtube.com/embed/vj8aGGee6E0?si=6gvulHNgk1rWVWHX"`,
     },
     mcpServers: {
       icon: <McpSvg className="size-4" />,
       name: t('MCPs'),
       description: t('Connect AI tools to external apps'),
-      link: `https://www.youtube.com/embed/Orkr85D59ss?si=uQufecFIln_QbUBk`,
+      link: `https://www.youtube.com/embed/q1UdLIBZ3Ps?si=Ey8N8oNX9ihJen76`,
     },
 
     todos: {
       icon: <ListTodo className="size-4"></ListTodo>,
       name: t('Todos'),
       description: t('Manage tasks that require human approval'),
-      link: `https://www.youtube.com/embed/rQlDlUNRUfY?si=eu5Dwkho7-uqM_S4`,
+      link: `https://www.youtube.com/embed/csKkXa71eoo?si=EMpJGMsVqzzrF__8`,
     },
   } as const;
 
