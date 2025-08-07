@@ -61,7 +61,7 @@ jobs:
             git add .
             
             # Commit with a descriptive message
-            git commit -m "Auto-update: Bump translated pieces [skip ci]"
+            git commit -m "chore: auto bump translated pieces"
             
             # Push changes back to the PR branch
             git push origin HEAD:${{ github.event.pull_request.head.ref }}
