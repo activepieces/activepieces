@@ -1,0 +1,17 @@
+{
+  "Gotify": "Goify",
+  "Self-hosted push notification service": "セルフホスティングされたプッシュ通知サービス",
+  "Server URL": "サーバー URL",
+  "App Token": "アプリトークン",
+  "Gotify Instance URL": "Goify Instance URL",
+  "Gotify App Token": "Goify App Token",
+  "\n    To obtain a token:\n\n    1. Log in to your Gotify instance.\n    2. Click on Apps\n    3. Select the Eye icon in the same row as your App to copy your token, or CREATE APPLICATION if you do not have one app yet.\n    4. Copy your access token & and paste them into the fields below.\n    ": "\n    To obtain a token:\n\n    1. Log in to your Gotify instance.\n    2. Click on Apps\n    3. Select the Eye icon in the same row as your App to copy your token, or CREATE APPLICATION if you do not have one app yet.\n    4. Copy your access token & and paste them into the fields below.\n    ",
+  "Send Notification": "通知を送信",
+  "Send a notification to gotify": "gotifyに通知を送信",
+  "Title": "タイトル",
+  "Message": "メッセージ",
+  "Priority": "優先度",
+  "The title of the notification": "通知のタイトル",
+  "The message to send": "送信するメッセージ",
+  "The priority of the notification (0-10). 0 is lowest priority.": "通知 (0-10) の優先度。0 は最も低い優先度です。"
+}
