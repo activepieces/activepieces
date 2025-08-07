@@ -19,7 +19,7 @@ export const getCallSummaryAction = createAction({
     const { callId } = context.propsValue;
     const api = new OpenPhoneAPI(context.auth);
 
-    const result = await api.makeRequest<any>(HttpMethod.GET, `/calls/${callId}/summary`);
+    const result = await api.makeRequest<any>(HttpMethod.GET, `https://api.openphone.com/v1/call-summaries/{callId}`);
     
     return {
       success: true,

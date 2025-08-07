@@ -19,7 +19,7 @@ export const getCallTranscriptionAction = createAction({
     const { callId } = context.propsValue;
     const api = new OpenPhoneAPI(context.auth);
 
-    const result = await api.makeRequest<any>(HttpMethod.GET, `/calls/${callId}/transcription`);
+    const result = await api.makeRequest<any>(HttpMethod.GET, `https://api.openphone.com/v1/call-transcripts/{id}`, { id: callId });
     
     return {
       success: true,
