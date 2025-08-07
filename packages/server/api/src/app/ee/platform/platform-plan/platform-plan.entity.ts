@@ -118,6 +118,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
+        stripeBillingCycle: {
+            type: String
+        },
         tablesEnabled: {
             type: Boolean,
         },
