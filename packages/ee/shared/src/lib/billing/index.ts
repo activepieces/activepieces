@@ -1,7 +1,6 @@
-import { AiOverageState, isNil, PiecesFilterType, PlatformPlanLimits, PlatformUsageMetric } from '@activepieces/shared'
+import { AiOverageState, PiecesFilterType, PlatformPlanLimits, PlatformUsageMetric } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 export * from './plan-limits'
-import Stripe from 'stripe'
 import { BUSINESS_CLOUD_PLAN, FREE_CLOUD_PLAN, PLUS_CLOUD_PLAN } from './plan-limits'
 
 export const PRICE_PER_EXTRA_USER = 20
@@ -22,6 +21,11 @@ export enum ApSubscriptionStatus {
     ACTIVE = 'active',
     CANCELED = 'canceled',
     TRIALING = 'trialing',
+}
+
+export enum BillingCycle {
+    MONTHLY = 'monthly',
+    ANNUAL = 'annual',
 }
 
 export enum PlanName {
@@ -60,6 +64,7 @@ export const RESOURCE_TO_MESSAGE_MAPPING = {
 
 export const CreateSubscriptionParamsSchema = Type.Object({
     plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
+    cycle: Type.Enum(BillingCycle)
 })
 export type CreateSubscriptionParams = Static<typeof CreateSubscriptionParamsSchema>
 
@@ -82,6 +87,7 @@ const Addons = Type.Object({
 export const UpdateSubscriptionParamsSchema = Type.Object({
     plan: Type.Union([Type.Literal(PlanName.FREE), Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
     addons: Addons,
+    cycle: Type.Enum(BillingCycle)
 })
 export type UpdateSubscriptionParams = Static<typeof UpdateSubscriptionParamsSchema>
 
@@ -92,26 +98,6 @@ export enum PRICE_NAMES {
     ACTIVE_FLOWS = 'active-flow',
     USER_SEAT = 'user-seat',
     PROJECT = 'project',
-}
-
-export const getPriceIdFor = (price: string, stripeKey?: string): string => {
-    const devEnv = stripeKey?.startsWith('sk_test')
-    switch (price) {
-        case PRICE_NAMES.PLUS_PLAN:
-            return devEnv ? 'price_1RTRd4QN93Aoq4f8E22qF5JU' : 'price_1RflgUKZ0dZRqLEK5COq9Kn8'
-        case PRICE_NAMES.BUSINESS_PLAN:
-            return devEnv ? 'price_1RTReBQN93Aoq4f8v9CnMTFT' : 'price_1RflgbKZ0dZRqLEKaW4Nlt0P'
-        case PRICE_NAMES.AI_CREDITS:
-            return devEnv ? 'price_1RnbNPQN93Aoq4f8GLiZbJFj' : 'price_1Rnj5bKZ0dZRqLEKQx2gwL7s'
-        case PRICE_NAMES.ACTIVE_FLOWS:
-            return devEnv ? 'price_1RsK9qQN93Aoq4f8nhN9xvvu' : 'price_1RsK79KZ0dZRqLEKRGbtT1Pn'
-        case PRICE_NAMES.USER_SEAT:
-            return devEnv ? 'price_1Rsn8nQN93Aoq4f8nNmwAA1I' : 'price_1RflgiKZ0dZRqLEKiDFoa17I'
-        case PRICE_NAMES.PROJECT:
-            return devEnv ? 'price_1RsoJ4QN93Aoq4f8JzLCO1BL' : 'price_1RsoHsKZ0dZRqLEKIQGB6RPe'
-        default:
-            throw new Error('No price with the given price name is available')
-    }
 }
 
 export const getPlanLimits = (planName: PlanName): Partial<PlatformPlanLimits> => {
@@ -127,77 +113,72 @@ export const getPlanLimits = (planName: PlanName): Partial<PlatformPlanLimits> =
     }
 }
 
-export function checkIsTrialSubscription(subscription: Stripe.Subscription): boolean {
-    return isNil(subscription.metadata['trialSubscription']) ? false : subscription.metadata['trialSubscription'] === 'true'
-}
-
-export function getPlanFromSubscription(subscription: Stripe.Subscription): PlanName {
-    if (subscription.status === ApSubscriptionStatus.TRIALING) {
-        return PlanName.PLUS
-    }
-
-    if (subscription.status !== ApSubscriptionStatus.ACTIVE) {
-        return PlanName.FREE
-    }
-
-    const priceId = subscription.items.data[0].price.id
-    switch (priceId) {
-        case 'price_1RTRd4QN93Aoq4f8E22qF5JU':
-        case 'price_1RflgUKZ0dZRqLEK5COq9Kn8':
-            return PlanName.PLUS
-        case 'price_1RTReBQN93Aoq4f8v9CnMTFT':
-        case 'price_1RflgbKZ0dZRqLEKaW4Nlt0P':
-            return PlanName.BUSINESS
-        default:
-            return PlanName.FREE
-    }
-}
-
-const PLAN_HIERARCHY = {
+export const PLAN_HIERARCHY = {
     [PlanName.FREE]: 0,
     [PlanName.PLUS]: 1,
     [PlanName.BUSINESS]: 2,
     [PlanName.ENTERPRISE]: 3,
 } as const
 
-export const isUpgradeExperience = (params: IsUpgradeEperienceParams): boolean => {
-    const {
-        currentActiveFlowsLimit,
-        currentPlan,
-        currentProjectsLimit,
-        currentUserSeatsLimit,
-        newActiveFlowsLimit,
-        newPlan,
-        newProjectsLimit,
-        newUserSeatsLimit,
-    } = params
-
-    const currentTier = PLAN_HIERARCHY[currentPlan]
-    const newTier = PLAN_HIERARCHY[newPlan]
-
-    if (newTier > currentTier) {
-        return true
+export const PRICE_ID_MAP = {
+  [PRICE_NAMES.PLUS_PLAN]: {
+    [BillingCycle.MONTHLY]: {
+      dev: 'price_1RTRd4QN93Aoq4f8E22qF5JU',
+      prod: 'price_1RflgUKZ0dZRqLEK5COq9Kn8'
+    },
+    [BillingCycle.ANNUAL]: {
+      dev: 'price_1RtPYWQN93Aoq4f8kq6Fts1A',
+      prod: ''
     }
-
-    if (newTier < currentTier) {
-        return false
+  },
+  [PRICE_NAMES.BUSINESS_PLAN]: {
+    [BillingCycle.MONTHLY]: {
+      dev: 'price_1RTReBQN93Aoq4f8v9CnMTFT',
+      prod: 'price_1RflgbKZ0dZRqLEKaW4Nlt0P'
+    },
+    [BillingCycle.ANNUAL]: {
+      dev: 'price_1RtPZZQN93Aoq4f819GrY1ea',
+      prod: ''
     }
-
-    const isAddonUpgrade =
-        (!isNil(newActiveFlowsLimit) && newActiveFlowsLimit > currentActiveFlowsLimit) ||
-        (!isNil(newProjectsLimit) && newProjectsLimit > currentProjectsLimit) ||
-        (!isNil(newUserSeatsLimit) && newUserSeatsLimit > currentUserSeatsLimit)
-
-    return isAddonUpgrade
-}
-
-type IsUpgradeEperienceParams = {
-    currentPlan: PlanName 
-    newPlan: PlanName
-    newUserSeatsLimit?: number
-    newProjectsLimit?: number
-    newActiveFlowsLimit?: number
-    currentUserSeatsLimit: number
-    currentProjectsLimit: number
-    currentActiveFlowsLimit: number
+  },
+  [PRICE_NAMES.AI_CREDITS]: {
+    [BillingCycle.MONTHLY]: {
+      dev: 'price_1RnbNPQN93Aoq4f8GLiZbJFj',
+      prod: 'price_1Rnj5bKZ0dZRqLEKQx2gwL7s'
+    },
+    [BillingCycle.ANNUAL]: {
+      dev: 'price_1RtPc0QN93Aoq4f8JAPe5HbG',
+      prod: ''
+    }
+  },
+  [PRICE_NAMES.ACTIVE_FLOWS]: {
+    [BillingCycle.MONTHLY]: {
+      dev: 'price_1RsK9qQN93Aoq4f8nhN9xvvu',
+      prod: 'price_1RsK79KZ0dZRqLEKRGbtT1Pn'
+    },
+    [BillingCycle.ANNUAL]: {
+      dev: 'price_1RtPg8QN93Aoq4f8CG6CZR6I',
+      prod: ''
+    }
+  },
+  [PRICE_NAMES.USER_SEAT]: {
+    [BillingCycle.MONTHLY]: {
+      dev: 'price_1Rsn8nQN93Aoq4f8nNmwAA1I',
+      prod: 'price_1RflgiKZ0dZRqLEKiDFoa17I'
+    },
+    [BillingCycle.ANNUAL]: {
+      dev: 'price_1RtPiuQN93Aoq4f8O7ReOsZO',
+      prod: ''
+    }
+  },
+  [PRICE_NAMES.PROJECT]: {
+    [BillingCycle.MONTHLY]: {
+      dev: 'price_1RsoJ4QN93Aoq4f8JzLCO1BL',
+      prod: 'price_1RsoHsKZ0dZRqLEKIQGB6RPe'
+    },
+    [BillingCycle.ANNUAL]: {
+      dev: 'price_1RtPeZQN93Aoq4f8Mw8H9nGa',
+      prod: ''
+    }
+  }
 }

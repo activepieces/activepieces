@@ -1,4 +1,4 @@
-import { METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, PlanName, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, BillingCycle, METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, PLAN_HIERARCHY, PlanName, PRICE_ID_MAP, PRICE_NAMES, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
 import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlatformPlanLimits, PlatformUsageMetric, UserStatus } from '@activepieces/shared'
 import { flowService } from '../../../flows/flow/flow.service'
 import { system } from '../../../helper/system/system'
@@ -7,8 +7,11 @@ import { userService } from '../../../user/user-service'
 import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
+import Stripe from 'stripe'
+import { AppSystemProp } from '@activepieces/server-shared'
 
 const edition = system.getEdition()
+const stripeSecretKey = system.get(AppSystemProp.STRIPE_SECRET_KEY)
 
 export const PlatformPlanHelper = {
     checkQuotaOrThrow: async (params: QuotaCheckParams): Promise<void> => {
@@ -107,6 +110,78 @@ export const PlatformPlanHelper = {
         await handleActiveFlows(projectIds, usage.activeFlows, newLimits.activeFlowsLimit)
         await handleUserSeats(projectIds, usage.seats, platformId, newLimits.userSeatsLimit)
     },
+    isUpgradeExperience: (params: IsUpgradeEperienceParams): boolean => {
+        const {
+            currentActiveFlowsLimit,
+            currentPlan,
+            currentProjectsLimit,
+            currentUserSeatsLimit,
+            newActiveFlowsLimit,
+            newPlan,
+            newProjectsLimit,
+            newUserSeatsLimit,
+        } = params
+
+        const currentTier = PLAN_HIERARCHY[currentPlan]
+        const newTier = PLAN_HIERARCHY[newPlan]
+
+        if (newTier > currentTier) {
+            return true
+        }
+
+        if (newTier < currentTier) {
+            return false
+        }
+
+        const isAddonUpgrade =
+            (!isNil(newActiveFlowsLimit) && newActiveFlowsLimit > currentActiveFlowsLimit) ||
+            (!isNil(newProjectsLimit) && newProjectsLimit > currentProjectsLimit) ||
+            (!isNil(newUserSeatsLimit) && newUserSeatsLimit > currentUserSeatsLimit)
+
+        return isAddonUpgrade
+    },
+    checkIsTrialSubscription: (subscription: Stripe.Subscription): boolean => {
+        return isNil(subscription.metadata['trialSubscription']) ? false : subscription.metadata['trialSubscription'] === 'true'
+    },
+    getPlanFromSubscription: (subscription: Stripe.Subscription): PlanName => {
+        const isDev = stripeSecretKey?.startsWith('sk_test')
+        const env = isDev ? 'dev' : 'prod'
+
+        if (subscription.status === ApSubscriptionStatus.TRIALING) {
+            return PlanName.PLUS
+        }
+
+        if (subscription.status !== ApSubscriptionStatus.ACTIVE) {
+            return PlanName.FREE
+        }
+
+        const priceId = subscription.items.data[0].price.id
+        switch (priceId) {
+            case PRICE_ID_MAP[PRICE_NAMES.PLUS_PLAN][BillingCycle.ANNUAL][env]:
+            case PRICE_ID_MAP[PRICE_NAMES.PLUS_PLAN][BillingCycle.MONTHLY][env]:
+                return PlanName.PLUS
+            case PRICE_ID_MAP[PRICE_NAMES.BUSINESS_PLAN][BillingCycle.ANNUAL][env]:
+            case PRICE_ID_MAP[PRICE_NAMES.BUSINESS_PLAN][BillingCycle.MONTHLY][env]:
+                return PlanName.BUSINESS
+            default:
+                return PlanName.FREE
+        }
+    },
+    getPriceIdFor: (price: PRICE_NAMES): Record<BillingCycle, string> => {
+        const isDev = stripeSecretKey?.startsWith('sk_test')
+        const env = isDev ? 'dev' : 'prod'
+
+        const entry = PRICE_ID_MAP[price]
+
+        if (!entry) {
+            throw new Error(`No price with the given price name '${price}' is available`)
+        }
+
+        return {
+            [BillingCycle.MONTHLY]: entry[BillingCycle.MONTHLY][env],
+            [BillingCycle.ANNUAL]: entry[BillingCycle.ANNUAL][env]
+        }
+    }
 }
 
 async function handleProjects(projectIds: string[], currentUsage: number, newLimit?: number | null): Promise<void> {
@@ -205,4 +280,15 @@ type CheckLegitSubscriptionUpdateOrThrowParams = {
     newPlan: PlanName
     projectsAddon?: number
     userSeatsAddon?: number
+}
+
+type IsUpgradeEperienceParams = {
+    currentPlan: PlanName 
+    newPlan: PlanName
+    newUserSeatsLimit?: number
+    newProjectsLimit?: number
+    newActiveFlowsLimit?: number
+    currentUserSeatsLimit: number
+    currentProjectsLimit: number
+    currentActiveFlowsLimit: number
 }

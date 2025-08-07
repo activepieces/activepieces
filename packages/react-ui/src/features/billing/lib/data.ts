@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 
-import { PlanName } from '@activepieces/ee-shared';
+import { BillingCycle, PlanName } from '@activepieces/ee-shared';
 
 export const planData = {
   tabs: [t('Monthly'), t('Annual')],
@@ -10,25 +10,37 @@ export const planData = {
       name: PlanName.FREE,
       description: t('Explorers & Tinkers'),
       featuresTitle: t('Get started with'),
-      price: 0,
+      price: {
+        [BillingCycle.MONTHLY]: 0,
+        [BillingCycle.ANNUAL]: 0
+      }
     },
     {
       name: PlanName.PLUS,
       description: t('Standard Users'),
       featuresTitle: t('Everything in Free, and'),
-      price: 25,
+      price: {
+        [BillingCycle.MONTHLY]: 25,
+        [BillingCycle.ANNUAL]: 255
+      }
     },
     {
       name: PlanName.BUSINESS,
       description: t('Power Users & Small Teams'),
       featuresTitle: t('Everything in Plus, and'),
-      price: 150,
+      price: {
+        [BillingCycle.MONTHLY]: 150,
+        [BillingCycle.ANNUAL]: 1530
+      }
     },
     {
       name: PlanName.ENTERPRISE,
       description: t('Cloud or Self-Hosted'),
       featuresTitle: t('Maximum Capabilities'),
-      price: 'Custom',
+      price: {
+        [BillingCycle.MONTHLY]: 'Custom',
+        [BillingCycle.ANNUAL]: 'Custom'
+      },
     },
   ],
 
