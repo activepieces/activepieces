@@ -28,6 +28,14 @@
   "Bottom": "Abajo",
   "Card Moved to list": "Tarjeta movida a la lista",
   "New Card": "Nueva tarjeta",
+  "Card Deadline": "Card Deadline",
   "Trigger when a card is moved to the list specified": "Activar cuando una tarjeta se mueve a la lista especificada",
-  "Trigger when a new card is created": "Activar cuando se crea una nueva tarjeta"
+  "Trigger when a new card is created": "Activar cuando se crea una nueva tarjeta",
+  "Triggers at a specified time before a card deadline.": "Triggers at a specified time before a card deadline.",
+  "Time unit": "Time unit",
+  "Time before due": "Time before due",
+  "Select unit for time before due": "Select unit for time before due",
+  "How long before the due date the trigger should run (use with time unit)": "How long before the due date the trigger should run (use with time unit)",
+  "Minutes": "Minutes",
+  "Hours": "Hours"
 }
