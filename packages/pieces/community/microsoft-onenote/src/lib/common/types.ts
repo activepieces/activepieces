@@ -1,5 +1,5 @@
 export interface OneNotePage {
-  id: string;
+  id?: string;
   title: string;
   contentUrl: string;
   lastModifiedDateTime: string;

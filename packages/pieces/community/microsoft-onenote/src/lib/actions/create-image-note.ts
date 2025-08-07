@@ -2,20 +2,20 @@ import { microsoftOneNoteAuth } from '../../';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { MicrosoftOneNoteClient } from '../common';
 
-export const createImagePageAction = createAction({
+export const createImageNoteAction = createAction({
   auth: microsoftOneNoteAuth,
-  name: 'microsoft_onenote_create_image_page',
-  displayName: 'Create Image Page',
-  description: 'Creates a new page with an embedded image in a OneNote section.',
+  name: 'microsoft_onenote_create_image_note',
+  displayName: 'Create Image Note',
+  description: 'Create a note containing an embedded image via a public image URL.',
   props: {
     sectionId: Property.ShortText({
       displayName: 'Section ID',
-      description: 'The ID of the section where the page will be created',
+      description: 'The ID of the section where the note will be created',
       required: true,
     }),
     title: Property.ShortText({
-      displayName: 'Page Title',
-      description: 'The title of the page',
+      displayName: 'Note Title',
+      description: 'The title of the note',
       required: true,
     }),
     imageUrl: Property.ShortText({

@@ -6,7 +6,7 @@ export const createNotebookAction = createAction({
   auth: microsoftOneNoteAuth,
   name: 'microsoft_onenote_create_notebook',
   displayName: 'Create Notebook',
-  description: 'Creates a new OneNote notebook.',
+  description: 'Creates a notebook',
   props: {
     displayName: Property.ShortText({
       displayName: 'Notebook Name',

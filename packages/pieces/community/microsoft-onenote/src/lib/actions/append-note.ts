@@ -6,7 +6,7 @@ export const appendNoteAction = createAction({
   auth: microsoftOneNoteAuth,
   name: 'microsoft_onenote_append_note',
   displayName: 'Append Note',
-  description: 'Appends content to the end of an existing note.',
+  description: 'Append content to the end of an existing note.',
   props: {
     pageId: Property.ShortText({
       displayName: 'Page ID',
@@ -24,13 +24,14 @@ export const appendNoteAction = createAction({
     
     const client = new MicrosoftOneNoteClient(context.auth.access_token);
     
-    // Note: Microsoft Graph API doesn't have a direct "append" endpoint
-    // This would require fetching the existing content and then updating the page
-    // For now, we'll return a message indicating this limitation
-    return {
-      message: 'Append functionality requires fetching existing content first. This is a placeholder implementation.',
-      pageId,
-      contentToAppend: content,
-    };
+    // Get the existing page content first
+    const existingPage = await client.getPage(pageId);
+    const existingContent = existingPage.content || '';
+    
+    // Combine existing content with new content
+    const updatedContent = existingContent + content;
+    
+    // Update the page with combined content
+    return await client.updatePage(pageId, { content: updatedContent });
   },
 }); 

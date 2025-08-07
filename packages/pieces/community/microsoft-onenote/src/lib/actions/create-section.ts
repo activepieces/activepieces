@@ -6,7 +6,7 @@ export const createSectionAction = createAction({
   auth: microsoftOneNoteAuth,
   name: 'microsoft_onenote_create_section',
   displayName: 'Create Section',
-  description: 'Creates a new section in a OneNote notebook.',
+  description: 'Creates a new section in notebook.',
   props: {
     notebookId: Property.ShortText({
       displayName: 'Notebook ID',

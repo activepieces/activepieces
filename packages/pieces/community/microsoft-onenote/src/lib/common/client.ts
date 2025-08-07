@@ -111,6 +111,7 @@ export class MicrosoftOneNoteClient {
     request: CreatePageRequest,
   ): Promise<OneNotePage> {
     // For OneNote, we need to send HTML content directly
+    // According to the API docs: https://learn.microsoft.com/en-us/graph/api/section-post-pages?view=graph-rest-1.0&tabs=http
     const htmlContent = this.buildPageHtml(request.title, request.content);
     
     const httpRequest: HttpRequest = {
@@ -154,8 +155,48 @@ export class MicrosoftOneNoteClient {
     return res.body;
   }
 
+  async getPage(pageId: string): Promise<OneNotePage> {
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `https://graph.microsoft.com/v1.0/me/onenote/pages/${pageId}`,
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    };
+    const res = await httpClient.sendRequest(request);
+    if (res.status !== 200) {
+      throw new Error(`Failed to get page: ${res.status}`);
+    }
+    return res.body;
+  }
+
+  async updatePage(
+    pageId: string,
+    request: { content: string },
+  ): Promise<OneNotePage> {
+    const htmlContent = this.buildPageHtml(undefined, request.content);
+    
+    const httpRequest: HttpRequest = {
+      method: HttpMethod.PATCH,
+      url: `https://graph.microsoft.com/v1.0/me/onenote/pages/${pageId}`,
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        'Content-Type': 'text/html',
+      },
+      body: htmlContent,
+    };
+
+    const res = await httpClient.sendRequest(httpRequest);
+    if (res.status !== 200) {
+      throw new Error(`Failed to update page: ${res.status}`);
+    }
+    return res.body;
+  }
+
   private buildPageHtml(title: string | undefined, content: string): string {
     const titleHtml = title ? `<title>${title}</title>` : '';
+    // Following the API documentation format
     return `<!DOCTYPE html>
 <html>
   <head>
@@ -169,6 +210,7 @@ export class MicrosoftOneNoteClient {
   }
 
   private buildImagePageHtml(title: string, imageUrl: string): string {
+    // Following the API documentation format for images
     return `<!DOCTYPE html>
 <html>
   <head>

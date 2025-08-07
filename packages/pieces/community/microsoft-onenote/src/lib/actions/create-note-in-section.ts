@@ -2,25 +2,25 @@ import { microsoftOneNoteAuth } from '../../';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { MicrosoftOneNoteClient } from '../common';
 
-export const createPageAction = createAction({
+export const createNoteInSectionAction = createAction({
   auth: microsoftOneNoteAuth,
-  name: 'microsoft_onenote_create_page',
-  displayName: 'Create Page',
-  description: 'Creates a page in section.',
+  name: 'microsoft_onenote_create_note_in_section',
+  displayName: 'Create Note in Section',
+  description: 'Create a new note in a specific notebook and section with title and content.',
   props: {
     sectionId: Property.ShortText({
       displayName: 'Section ID',
-      description: 'The ID of the section where the page will be created',
+      description: 'The ID of the section where the note will be created',
       required: true,
     }),
     title: Property.ShortText({
-      displayName: 'Page Title',
-      description: 'The title of the page (optional)',
-      required: false,
+      displayName: 'Note Title',
+      description: 'The title of the note',
+      required: true,
     }),
     content: Property.LongText({
-      displayName: 'Page Content',
-      description: 'The HTML content of the page',
+      displayName: 'Note Content',
+      description: 'The content of the note (HTML format)',
       required: true,
     }),
   },
