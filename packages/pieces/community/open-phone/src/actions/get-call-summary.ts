@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { openphoneAuth } from '../common/auth';
 import { OpenPhoneAPI } from '../common/common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const getCallSummaryAction = createAction({
   auth: openphoneAuth,
@@ -18,7 +19,7 @@ export const getCallSummaryAction = createAction({
     const { callId } = context.propsValue;
     const api = new OpenPhoneAPI(context.auth);
 
-    const result = await api.makeRequest<any>('GET', `/calls/${callId}/summary`);
+    const result = await api.makeRequest<any>(HttpMethod.GET, `/calls/${callId}/summary`);
     
     return {
       success: true,

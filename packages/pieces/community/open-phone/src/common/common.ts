@@ -1,5 +1,8 @@
-import { HttpRequest, HttpMethod, httpClient } from '@activepieces/pieces-framework';
-
+import {
+  HttpMethod,
+  httpClient,
+  HttpRequest
+} from '@activepieces/pieces-common';
 export interface OpenPhoneAuthConfig {
   apiKey: string;
   baseUrl: string;

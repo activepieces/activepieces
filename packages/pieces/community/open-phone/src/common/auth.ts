@@ -1,7 +1,6 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
 export const openphoneAuth = PieceAuth.CustomAuth({
-  displayName: 'OpenPhone Authentication',
   description: 'Enter your OpenPhone API key',
   required: true,
   props: {

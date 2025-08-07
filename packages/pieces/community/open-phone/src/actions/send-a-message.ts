@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { openphoneAuth } from '../common/auth';
 import { OpenPhoneAPI, Message } from '../common/common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const sendMessageAction = createAction({
   auth: openphoneAuth,
@@ -40,7 +41,7 @@ export const sendMessageAction = createAction({
       ...(mediaUrls && mediaUrls.length > 0 && { mediaUrls })
     };
 
-    const result = await api.makeRequest<Message>('POST', '/messages', messageData);
+    const result = await api.makeRequest<Message>(HttpMethod.POST, '/messages', messageData);
     
     return {
       success: true,

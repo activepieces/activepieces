@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { openphoneAuth } from '../common/auth';
 import { OpenPhoneAPI, Contact } from '../common/common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const updateContactAction = createAction({
   auth: openphoneAuth,
@@ -82,7 +83,7 @@ export const updateContactAction = createAction({
       ];
     }
 
-    const result = await api.makeRequest<Contact>('PUT', `/contacts/${contactId}`, updateData);
+    const result = await api.makeRequest<Contact>(HttpMethod.PUT, `/contacts/${contactId}`, updateData);
     
     return {
       success: true,
