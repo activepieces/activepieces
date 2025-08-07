@@ -1,0 +1,15 @@
+{
+  "GenerateBanners": "バナーを生成",
+  "Image generation API for banners and social media posts": "バナーやソーシャルメディア投稿用の画像生成API",
+  "Public API Key": "パブリック API キー",
+  "Secret API Key": "シークレットAPIキー",
+  "\nTo obtain your GenerateBanners public and secret API Keys, you can follow the steps below:\n\n1. Go to the [GenerateBanners homepage](https://www.generatebanners.com/).\n2. Sign up or log in into your account.\n3. Go to your [account page](https://www.generatebanners.com/app/account).\n4. The public and secret API keys are now displayed, copy them one by one into the right Activepieces fields.\n": "\nTo obtain your GenerateBanners public and secret API Keys, you can follow the steps below:\n\n1. Go to the [GenerateBanners homepage](https://www.generatebanners.com/).\n2. Sign up or log in into your account.\n3. Go to your [account page](https://www.generatebanners.com/app/account).\n4. The public and secret API keys are now displayed, copy them one by one into the right Activepieces fields.\n",
+  "Render Template": "テンプレートをレンダリング",
+  "Render a GenerateBanners template": "GenerateBannersテンプレートをレンダリングする",
+  "Template": "テンプレート",
+  "File type": "ファイルの種類",
+  "Variables": "変数",
+  "Image (jpg)": "画像 (jpg)",
+  "Image (png)": "画像 (png)",
+  "Document (pdf)": "ドキュメント (pdf)"
+}
