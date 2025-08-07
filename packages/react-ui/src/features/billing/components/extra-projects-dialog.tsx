@@ -11,7 +11,11 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
-import { PlanName, PRICE_PER_EXTRA_PROJECT } from '@activepieces/ee-shared';
+import {
+  BillingCycle,
+  PlanName,
+  PRICE_PER_EXTRA_PROJECT,
+} from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
@@ -127,6 +131,7 @@ export const ExtraProjectsDialog = ({
                 addons: {
                   projects: newProjectCount,
                 },
+                cycle: plan.stripeBillingCycle as BillingCycle,
               })
             }
             disabled={isPending || newProjectCount === currentProjectLimit}

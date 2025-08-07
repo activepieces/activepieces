@@ -256,6 +256,7 @@ import { AddExternalIdToAgentId1753641361099 } from './migration/postgres/175364
 import { AddParentRunIdToFlowRun1753699877817 } from './migration/postgres/1753699877817-AddParentRunIdToFlowRun'
 import { AddCascadeOnAgents1753727379513 } from './migration/postgres/1753727379513-AddCascadeOnAgents'
 import { AddExternalIdToMCPPostgres1753787093467 } from './migration/postgres/1753787093467-AddExternalIdToMCPPostgres'
+import { AddBillingCycle1754559781173 } from './migration/postgres/1754559781173-addBillingCycle'
 import { AddTriggerSource1754478770608 } from './migration/postgres/1754478770608-AddTriggerSource'
 import { AddJobIdToTriggerRun1754510611628 } from './migration/postgres/1754510611628-AddJobIdToTriggerRun'
 
@@ -536,6 +537,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddLockedColumnToProjectPlan1751878623268,
                 AddMcpsEnabled1751989232042,
                 AddPlatformAnalyticsReportEntity1753091760355,
+                AddBillingCycle1754559781173,
             )
             break
         case ApEdition.COMMUNITY:

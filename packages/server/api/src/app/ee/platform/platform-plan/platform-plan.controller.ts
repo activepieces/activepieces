@@ -1,4 +1,4 @@
-import { ApSubscriptionStatus, CreateSubscriptionParamsSchema, getPlanLimits, isUpgradeExperience, PlanName, SetAiCreditsOverageLimitParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, BillingCycle, CreateSubscriptionParamsSchema, getPlanLimits, PlanName, SetAiCreditsOverageLimitParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, ListAICreditsUsageRequest, ListAICreditsUsageResponse, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
@@ -169,21 +169,21 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const customerId = platformPlan.stripeCustomerId
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
-        const { plan } = request.body
+        const { plan, cycle } = request.body
 
         return stripeHelper(request.log).createSubscriptionCheckoutUrl(
             platformPlan.platformId,
             customerId,
-            { plan },
+            { plan, cycle },
         )
 
     })
 
     fastify.post('/update-subscription', UpgradeRequest, async (request) => {
-        const { plan: currentPlan, stripeSubscriptionId: subscriptionId, projectsLimit, activeFlowsLimit, userSeatsLimit } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        const { plan: currentPlan, stripeSubscriptionId: subscriptionId, projectsLimit, activeFlowsLimit, userSeatsLimit, stripeBillingCycle } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         assertNotNullOrUndefined(subscriptionId, 'Stripe subscription id is not set')
 
-        const { plan: newPlan, addons } = request.body
+        const { plan: newPlan, addons, cycle } = request.body
 
         const baseLimits = getPlanLimits(currentPlan as PlanName)
         const baseUserSeatsLimit = baseLimits.userSeatsLimit ?? 0
@@ -202,7 +202,18 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
         const extraProjects = Math.max(0, newProjectsLimit - baseProjectsLimit)
 
-        const isUpgrade = isUpgradeExperience({ currentActiveFlowsLimit, currentProjectsLimit, currentUserSeatsLimit, newPlan, currentPlan: currentPlan as PlanName, newActiveFlowsLimit, newProjectsLimit, newUserSeatsLimit  })
+        const isUpgrade = PlatformPlanHelper.isUpgradeExperience({
+            currentActiveFlowsLimit,
+            currentProjectsLimit,
+            currentUserSeatsLimit,
+            newPlan,
+            currentPlan: currentPlan as PlanName,
+            newActiveFlowsLimit,
+            newProjectsLimit,
+            newUserSeatsLimit,
+            newCycle: cycle,
+            currentCycle: stripeBillingCycle as BillingCycle,
+        })
 
         await PlatformPlanHelper.checkLegitSubscriptionUpdateOrThrow({ projectsAddon: addons.projects, userSeatsAddon: addons.userSeats, newPlan })
 
@@ -213,6 +224,8 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             isUpgrade,
             newPlan,
             subscriptionId,
+            newCycle: cycle,
+            currentCycle: stripeBillingCycle as BillingCycle,
         })
     })
 
@@ -274,7 +287,6 @@ const UpgradeRequest = {
     },
 }
 
-
 const CreateSubscriptionRequest = {
     schema: {
         body: CreateSubscriptionParamsSchema,
@@ -283,7 +295,6 @@ const CreateSubscriptionRequest = {
         allowedPrincipals: [PrincipalType.USER],
     },
 }
-
 
 const SetAiCreditsOverageLimitRequest = {
     schema: {
@@ -313,7 +324,6 @@ const StartTrialRequest = {
         }),
     },
 }
-
 
 const ListAIUsageRequest = {
     config: {
