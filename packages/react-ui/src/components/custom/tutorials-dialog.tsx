@@ -62,17 +62,17 @@ const TutorialsDialog = ({
       description: t('Get started with Activepieces'),
       link: `https://www.youtube.com/embed/b97bgcOigIs?si=Zlly9_WkP1oOnJ-K`,
     },
-    agents: {
-      icon: <Bot className="size-4"></Bot>,
-      name: t('Agents'),
-      description: t('Add a touch of AI to your workflows'),
-      link: `https://www.youtube.com/embed/9qhhhfKmpoo?si=Ik8FmAmrWxDOggJP`,
-    },
     flows: {
       icon: <Workflow className="size-4"></Workflow>,
       name: t('Flows'),
       description: t('Automate repetitive tasks to save your time'),
       link: `https://www.youtube.com/embed/BWKrqmdNlzY?si=fjKiHx9GJe9eN2_x`,
+    },
+    agents: {
+      icon: <Bot className="size-4"></Bot>,
+      name: t('Agents'),
+      description: t('Add a touch of AI to your workflows'),
+      link: `https://www.youtube.com/embed/9qhhhfKmpoo?si=Ik8FmAmrWxDOggJP`,
     },
     tables: {
       icon: <Table2 className="size-4"></Table2>,

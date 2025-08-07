@@ -1,4 +1,4 @@
-import { ApSubscriptionStatus, BUSINESS_CLOUD_PLAN, FREE_CLOUD_PLAN, OPEN_SOURCE_PLAN, PlanName, PlatformPlanWithOnlyLimits, PLUS_CLOUD_PLAN } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, FREE_CLOUD_PLAN, OPEN_SOURCE_PLAN, PlatformPlanWithOnlyLimits } from '@activepieces/ee-shared'
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -19,19 +19,6 @@ type UpdatePlatformBillingParams = {
 } & Partial<PlatformPlanLimits>
 
 const edition = system.getEdition()
-
-function getPlanLimits(planName: PlanName): Partial<PlatformPlanLimits> {
-    switch (planName) {
-        case PlanName.FREE:
-            return FREE_CLOUD_PLAN
-        case PlanName.PLUS:
-            return PLUS_CLOUD_PLAN
-        case PlanName.BUSINESS:
-            return BUSINESS_CLOUD_PLAN
-        default:
-            throw new Error(`Invalid plan name: ${planName}`)
-    }
-}
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
@@ -102,8 +89,6 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
 
         return platformPlanRepo().findOneByOrFail({ stripeCustomerId: customerId })
     },
-
-    getPlanLimits,
 })
 
 async function createInitialBilling(platformId: string, log: FastifyBaseLogger): Promise<PlatformPlan> {
@@ -139,8 +124,6 @@ function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {
     }
 }
 
-
-
 async function createInitialCustomer(user: UserWithMetaInformation, platformId: string, log: FastifyBaseLogger): Promise<string | undefined> {
     const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
     if (edition !== ApEdition.CLOUD || environment === ApEnvironment.TESTING) {
@@ -150,10 +133,8 @@ async function createInitialCustomer(user: UserWithMetaInformation, platformId: 
         user,
         platformId,
     )
-
     return stripeCustomerId
 }
-
 
 type UpdateByCustomerId = {
     customerId: string

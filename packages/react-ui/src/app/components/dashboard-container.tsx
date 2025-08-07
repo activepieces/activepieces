@@ -80,6 +80,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     label: t('Flows'),
     hasPermission: checkAccess(Permission.READ_FLOW),
     isSubItem: false,
+    name: t('Products'),
     show: true,
     isActive: (pathname) =>
       pathname.includes('/flows') ||
@@ -107,7 +108,6 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     show: platform.plan.agentsEnabled || !embedState.isEmbedded,
     hasPermission: true,
     isSubItem: false,
-    name: t('Products'),
     tutorialTab: 'agents',
   };
 
@@ -134,8 +134,8 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
   };
 
   const items: SidebarItem[] = [
-    agentsLink,
     flowsLink,
+    agentsLink,
     tablesLink,
     mcpLink,
     todosLink,
