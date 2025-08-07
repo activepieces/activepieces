@@ -173,14 +173,14 @@ const TutorialsDialog = ({
 
             <Separator className="mb-4"></Separator>
 
-            <div className="rounded-2xl overflow-hidden shadow-xl grow p-2 flex bg-black">
+            <div className="overflow-hidden shadow-xl grow p-2 flex bg-black">
               <iframe
                 key={selectedTab}
                 src={`${tabs[selectedTab].link}&autoplay=1&rel=0`}
                 title={tabs[selectedTab].name}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
-                className="grow rounded-2xl w-full h-full"
+                className="grow  w-full h-full"
               ></iframe>
             </div>
           </div>
