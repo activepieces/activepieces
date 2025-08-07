@@ -1,5 +1,6 @@
 import { microsoftOneNoteAuth } from '../../';
 import { TriggerStrategy, createTrigger, Property } from '@activepieces/pieces-framework';
+import { MicrosoftOneNoteClient } from '../common';
 
 export const newNoteInSectionTrigger = createTrigger({
   auth: microsoftOneNoteAuth,
@@ -17,21 +18,52 @@ export const newNoteInSectionTrigger = createTrigger({
   async onEnable(context) {
     // Store the section ID for polling
     await context.store.put('sectionId', context.propsValue.sectionId);
+    // Store the last check time
+    await context.store.put('lastCheckTime', new Date().toISOString());
   },
   async run(context) {
-    const sectionId = await context.store.get('sectionId');
+    const sectionId = await context.store.get<string>('sectionId');
+    const lastCheckTime = await context.store.get<string>('lastCheckTime');
+    
     if (!sectionId) {
       return [];
     }
 
-    // This is a simplified implementation
-    // In a real implementation, you would compare with previous state
-    // to detect new notes
-    return [];
+    const client = new MicrosoftOneNoteClient(context.auth.access_token);
+    
+    try {
+      // Get pages from the section
+      const pagesResponse = await client.listPages(sectionId);
+      const currentTime = new Date().toISOString();
+      
+      // Filter pages modified after the last check
+      const newPages = pagesResponse.value.filter(page => {
+        if (!page.lastModifiedDateTime) return false;
+        const pageModifiedTime = new Date(page.lastModifiedDateTime);
+        const lastCheck = new Date(lastCheckTime || '');
+        return pageModifiedTime > lastCheck;
+      });
+
+      // Update the last check time
+      await context.store.put('lastCheckTime', currentTime);
+
+      return newPages.map(page => ({
+        id: page.id,
+        title: page.title,
+        contentUrl: page.contentUrl,
+        lastModifiedDateTime: page.lastModifiedDateTime,
+        createdByAppId: page.createdByAppId,
+        links: page.links,
+      }));
+    } catch (error) {
+      console.error('Error polling for new notes:', error);
+      return [];
+    }
   },
   async onDisable(context) {
     // Clean up stored data
     await context.store.delete('sectionId');
+    await context.store.delete('lastCheckTime');
   },
   sampleData: {
     id: 'page-id-123',

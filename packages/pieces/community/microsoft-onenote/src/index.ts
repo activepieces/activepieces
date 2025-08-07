@@ -10,6 +10,7 @@ import { createPageAction } from './lib/actions/create-page';
 import { createNoteInSectionAction } from './lib/actions/create-note-in-section';
 import { createImageNoteAction } from './lib/actions/create-image-note';
 import { appendNoteAction } from './lib/actions/append-note';
+import { newNoteInSectionTrigger } from './lib/triggers/new-note-in-section';
 
 const authGuide = `
 To obtain your Microsoft Graph API access token, follow these steps:
@@ -69,5 +70,5 @@ export const microsoftOnenote = createPiece({
     createImageNoteAction,
     appendNoteAction,
   ],
-  triggers: [],
+  triggers: [newNoteInSectionTrigger],
 }); 
