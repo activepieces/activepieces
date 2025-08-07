@@ -1,0 +1,17 @@
+{
+  "Mailchain": "Mailchain",
+  "Mailchain is a simple, secure, and decentralized communications protocol that enables blockchain-based email.": "Mailchain ist ein einfaches, sicheres und dezentralisiertes Kommunikationsprotokoll, das blockchain-basierte E-Mails ermöglicht.",
+  "The secret recovery phrase (25-word mnemonic phrase) to authenticate with the Mailchain Protocol. You can obtain this phrase when setting up your Mailchain account.": "Die geheime Wiederherstellungsphrase (25-Wort-mnemonische Phrase), die mit dem Mailchain-Protokoll authentifiziert werden soll. Sie können diese Phrase bei der Einrichtung Ihres Mailchain-Kontos erhalten.",
+  "Get Authenticated User": "Authentifizierten Benutzer holen",
+  "Send Email": "E-Mail senden",
+  "Get the authenticated user to the Mailchain Protocol": "Lade den authentifizierten Benutzer zum Mailchain-Protokoll",
+  "Send an email to blockchain or mailchain addresses": "Sende eine E-Mail an Blockchain oder Mailchain Adressen",
+  "Markdown": "Markdown",
+  "To": "An",
+  "Subject": "Betreff",
+  "Content": "Inhalt",
+  "**Getting Started with Mailchain:**\n\nTo send emails using the Mailchain Protocol, you need to first create an account on [Mailchain](https://app.mailchain.com/). Once your account is set up, you will receive a Mailchain address. You can also connect your wallet to associate a blockchain address with your Mailchain account.\n\n**Recipients:**\n\nWhen sending an email, you can use either a Mailchain address or a blockchain address as the recipient. For blockchain addresses, you can leverage supported web3 domain ": "**Erste Schritte mit Mailchain:**\n\nUm E-Mails mit dem Mailchain-Protokoll zu senden, musst du zuerst ein Konto bei [Mailchain](https://app.mailchain.com/). Sobald Ihr Konto eingerichtet ist, erhalten Sie eine Mailchain-Adresse. Sie können Ihre Brieftasche auch verbinden, um eine Blockchain Adresse mit Ihrem Mailchain Konto zu verknüpfen.\n\n**Empfänger:**\n\nBeim Senden einer E-Mail können Sie entweder eine Mailchain-Adresse oder eine Blockchain-Adresse als Empfänger verwenden. Bei Blockchain-Adressen können Sie unterstützte web3-Domain-Dienste nutzen, einschließlich ENS, Unstoppable Domains, Lens, Coinbase und viele andere.\n\n**Verwendung:**\n- **Mailchain Adresse:** 'yourname@mailchain. om'\n- **Blockchain-Adresse:** 'yourname.eth' (ENS), 'yourname.crypto' (Unstoppbare Domains), etc.\n\nUm deinen Posteingang zu verwalten und E-Mails zu senden, besuche [Mailchain's Web App](https://app.mailchain.com/).\n",
+  "The blockchain or mailchain addresses to send the email to": "Die Blockchain oder Mailchain-Adresse, an die die E-Mail gesendet werden soll",
+  "The subject of the email": "Der Betreff der E-Mail",
+  "The content of the email": "Der Inhalt der E-Mail"
+}

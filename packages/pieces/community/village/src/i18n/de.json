@@ -1,0 +1,17 @@
+{
+  "Village": "Dorf",
+  "The Social Capital API": "Die Social Capital API",
+  "Your Village API Key": "Dein Dorf-API-Schlüssel",
+  "Find Person Paths": "Finde Personenpfade",
+  "Find Company Paths": "Unternehmenspfade finden",
+  "Enrich a person record with all available intro paths": "Personensatz mit allen verfügbaren Intro Pfaden bereichern",
+  "Enrich a company record with all people that have available intro paths": "Erweitern Sie eine Firmen-Aufzeichnung bei allen Personen, die über einen Intro Pfade verfügen",
+  "User Identifier": "Benutzerkennung",
+  "Person Linkedin URL": "Person LinkedIn-URL",
+  "Company Domain URL": "Firmendomänen-URL",
+  "Company Linkedin URL": "Firma Linkedin URL",
+  "If you're a Village Partner, use this field that identifies your user": "Wenn du ein Dorfpartner bist, benutze dieses Feld, das deinen Benutzer identifiziert",
+  "The Linkedin URL of the person you're trying to find paths to.": "Die Linkedin-URL der Person, zu der Sie Pfade finden möchten.",
+  "The Company Domain URL of the company you're trying to find paths to. E.g. https://openai.com/": "Die Domain URL des Unternehmens, zu dem Sie Pfade finden möchten. Z.B. https://openai.com/",
+  "The Company Linkedin URL of the company you're trying to find paths to. E.g. https://www.linkedin.com/company/openai/": "Die Firmen-Linkedin URL des Unternehmens, zu dem Sie Pfade finden möchten. Z.B. https://www.linkedin.com/company/openai/"
+}

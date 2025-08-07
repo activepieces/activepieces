@@ -1,0 +1,17 @@
+{
+  "Gotify": "Gotify",
+  "Self-hosted push notification service": "Selbstgehosteter Push-Benachrichtigungsdienst",
+  "Server URL": "Server-URL",
+  "App Token": "App-Token",
+  "Gotify Instance URL": "Gotify Instanz URL",
+  "Gotify App Token": "Gotify App Token",
+  "\n    To obtain a token:\n\n    1. Log in to your Gotify instance.\n    2. Click on Apps\n    3. Select the Eye icon in the same row as your App to copy your token, or CREATE APPLICATION if you do not have one app yet.\n    4. Copy your access token & and paste them into the fields below.\n    ": "\n    Um ein Token zu erhalten:\n\n    1. Melden Sie sich bei Ihrer Gotify-Instanz an.\n    2. Klicken Sie auf Apps\n    3. Wähle das Augensymbol in der gleichen Zeile wie deine App, um dein Token zu kopieren, oder ERSTELLEN ANWENDUNG, wenn Sie noch keine App haben.\n    4. Kopieren Sie Ihren Zugangs-Token & und fügen Sie ihn in die Felder unten ein.\n    ",
+  "Send Notification": "Benachrichtigung senden",
+  "Send a notification to gotify": "Benachrichtigung zum Verhandeln senden",
+  "Title": "Titel",
+  "Message": "Nachricht",
+  "Priority": "Priorität",
+  "The title of the notification": "Der Titel der Benachrichtigung",
+  "The message to send": "Die Nachricht zum Senden",
+  "The priority of the notification (0-10). 0 is lowest priority.": "Die Priorität der Benachrichtigung (0-10). 0 hat die niedrigste Priorität."
+}

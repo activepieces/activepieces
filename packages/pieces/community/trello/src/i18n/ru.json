@@ -28,6 +28,14 @@
   "Bottom": "Внизу",
   "Card Moved to list": "Карта перемещена в список",
   "New Card": "Новая карта",
+  "Card Deadline": "Срок действия карты",
   "Trigger when a card is moved to the list specified": "Срабатывать при перемещении карты в указанный список",
-  "Trigger when a new card is created": "Срабатывать при создании новой карты"
+  "Trigger when a new card is created": "Срабатывать при создании новой карты",
+  "Triggers at a specified time before a card deadline.": "Триггеры в указанное время до истечения срока действия карты.",
+  "Time unit": "Единица времени",
+  "Time before due": "Время до выполнения",
+  "Select unit for time before due": "Выберите единицу за время до завершения",
+  "How long before the due date the trigger should run (use with time unit)": "Как долго до окончания запуска триггера (используйте с единицей времени)",
+  "Minutes": "Минут",
+  "Hours": "Часы"
 }

@@ -1,0 +1,8 @@
+{
+  "SimplePDF": "SimplePDF",
+  "PDF editing and generation tool": "PDF編集と生成ツール",
+  "New Submission": "新しい提出",
+  "Triggers when a form receives a new submission": "フォームが新しい提出物を受け取ったときにトリガーします",
+  "Markdown": "Markdown",
+  "\n- Paste this URL in the webhook integration endpoint:\n```text\n{{webhookUrl}}\n```\n- Click update (keep other settings unchanged)\n<br>\n<br>\n\n_[Read more about configuring webhooks](https://simplepdf.eu/help/how-to/configure-webhooks-pdf-form-submissions)_\n": "\n- Paste this URL in the webhook integration endpoint:\n```text\n{{webhookUrl}}\n```\n- Click update (keep other settings unchanged)\n<br>\n<br>\n\n_[Read more about configuring webhooks](https://simplepdf.eu/help/how-to/configure-webhooks-pdf-form-submissions)_\n"
+}

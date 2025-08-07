@@ -1,0 +1,22 @@
+{
+  "SOAP": "СОАР",
+  "Simple Object Access Protocol for communication between applications": "Простой протокол доступа к объектам для связи между приложениями",
+  "Authentication Type": "Тип аутентификации",
+  "Username": "Имя пользователя",
+  "Password": "Пароль",
+  "Custom Header": "Пользовательский заголовок",
+  "The WS Security username": "Имя пользователя The WS Security",
+  "The WS Security password": "Пароль безопасности WS",
+  "Custom Header Content": "Пользовательское содержимое заголовка",
+  "None": "Нет",
+  "WS Security": "Безопасность WS",
+  "Basic Auth": "Базовая авторизация",
+  "Call SOAP Method": "Метод вызова SOAP",
+  "Call a SOAP from a given wsdl specification": "Вызвать SOAP из данной спецификации wsdl",
+  "WSDL URL": "WSDL URL",
+  "Method": "Метод",
+  "Parameters": "Параметры",
+  "Parsed": "Parsed",
+  "The SOAP Method": "Метод SOAP",
+  "Arguments for the SOAP method": "Аргументы метода SOAP"
+}

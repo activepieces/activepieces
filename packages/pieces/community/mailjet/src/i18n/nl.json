@@ -1,0 +1,21 @@
+{
+  "Mailjet": "Mailjet",
+  "Email delivery service for sending transactional and marketing emails": "E-mailbezorging service voor het verzenden van transactionele en marketing e-mails",
+  "API Key": "API Sleutel",
+  "Enter your API Key here": "Voer hier uw API-sleutel in",
+  "API Secret": "API Geheim",
+  "Enter your API Secret here": "Voer hier uw API Secret in",
+  "Enter your api credentials": "Voer uw api referenties in",
+  "Send Email": "E-mail verzenden",
+  "Send a text, HTML or template email through Mailjet": "Stuur een tekst, HTML of sjabloon e-mail via Mailjet",
+  "From (Email)": "Van (Email)",
+  "From (Name)": "Van (Naam)",
+  "Emails of recipients": "E-mails van ontvangers",
+  "Subject": "Onderwerp",
+  "Text part": "Tekst onderdeel",
+  "HTML part": "HTML deel",
+  "Template Id": "Sjabloon ID",
+  "Template variables": "Template variabelen",
+  "Sender email, must be verified in Mailjet": "Afzender e-mail, moet worden geverifieerd in Mailjet",
+  "Template Id (number) defined in Mailjet": "Sjabloon Id (nummer) gedefinieerd in Mailjet"
+}

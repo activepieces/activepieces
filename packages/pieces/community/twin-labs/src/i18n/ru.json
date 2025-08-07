@@ -1,0 +1,10 @@
+{
+  "Twin Web Agent": "Веб Агент Twin",
+  "Please use ***your-twin-labs-api-key*** as value for API Key": "Пожалуйста, используйте ***your-twin-labs-api-key*** в качестве значения ключа API",
+  "Browse": "Обзор",
+  "Browse the internet with an AI web navigation agent that can find information for you": "Просмотреть интернет с агентом ИИ веб-навигации, который может найти информацию для вас",
+  "startUrl": "startUrl",
+  "Goal": "Цель",
+  "The URL where the browsing task should begin": "URL-адрес, в котором должна начинаться задача просмотра",
+  "The goal or objective of the browsing task": "Цель или цель браузерной задачи"
+}
