@@ -202,7 +202,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
 
             if (isUpgrade) {
                 for (const schedule of relevantSchedules) {
-                    await stripe.subscriptionSchedules.cancel(schedule.id)
+                    await stripe.subscriptionSchedules.release(schedule.id)
                 }
 
                 await updateSubscription({ stripe, subscriptionId: subscription.id, plan: newPlan as PlanName.PLUS | PlanName.BUSINESS, extraUserSeats, extraActiveFlows, extraProjects, newCycle, currentCycle })
@@ -210,14 +210,14 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             else {
                 if (relevantSchedules.length > 0) {
                     const schedule = relevantSchedules[0]
-                    await updateSubscriptionSchedule({ stripe, scheduleId: schedule.id, subscription, newPlan, extraUserSeats, logger: log, extraActiveFlows, extraProjects, cycle: newCycle })
+                    await updateSubscriptionSchedule({ stripe, scheduleId: schedule.id, subscription, newPlan, extraUserSeats, logger: log, extraActiveFlows, extraProjects, newCycle, currentCycle })
                 
                     for (let i = 1; i < relevantSchedules.length; i++) {
-                        await stripe.subscriptionSchedules.cancel(relevantSchedules[i].id)
+                        await stripe.subscriptionSchedules.release(relevantSchedules[i].id)
                     }
                 }
                 else {
-                    await createSubscriptionSchedule({ stripe, subscription, newPlan, extraUserSeats, logger: log, extraActiveFlows, extraProjects, cycle: newCycle })
+                    await createSubscriptionSchedule({ stripe, subscription, newPlan, extraUserSeats, logger: log, extraActiveFlows, extraProjects, newCycle, currentCycle })
                 }
             }
             return `/platform/setup/billing/success?action=${isUpgrade ? 'upgrade' : 'downgrade'}&plan=${newPlan}`
@@ -297,50 +297,65 @@ async function updateSubscription(params: UpdateSubscriptionParams): Promise<voi
 }
 
 async function updateSubscriptionSchedule(params: UpdateSubscriptionScheduleParams): Promise<void> {
-    const { extraActiveFlows, extraProjects, extraUserSeats, logger, newPlan, scheduleId, stripe, subscription, cycle  } = params
-
+    const { extraActiveFlows, extraProjects, extraUserSeats, logger, newPlan, scheduleId, stripe, subscription, currentCycle, newCycle } = params
+    
     const { startDate: currentPeriodStart, endDate: currentPeriodEnd } = await stripeHelper(logger).getSubscriptionCycleDates(subscription)
     const isFreeDowngrade = newPlan === PlanName.FREE
 
-    const phases: Stripe.SubscriptionScheduleUpdateParams.Phase[] = [
-        {
-            items: subscription.items.data.map(item => ({
-                price: item.price.id,
-                quantity: !isNil(item.quantity) ? item.quantity : undefined,
-            })),
-            start_date: currentPeriodStart,
-            end_date: currentPeriodEnd,
-        },
-    ]
-
-    if (!isFreeDowngrade) {
-        const nextPhaseItems: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[] = [
+    const buildPhaseItems = (cycle: BillingCycle, plan: PlanName, userSeats: number, projects: number, activeFlows: number) => {
+        const items: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[] = [
             {
-                price: newPlan === PlanName.PLUS ? PLUS_PLAN_PRICE_ID[cycle] : BUSINESS_PLAN_PRICE_ID[cycle],
+                price: plan === PlanName.PLUS ? PLUS_PLAN_PRICE_ID[cycle] : BUSINESS_PLAN_PRICE_ID[cycle],
                 quantity: 1,
             },
-            { price: AI_CREDIT_PRICE_ID[cycle] },
+            { price: AI_CREDIT_PRICE_ID[cycle] }
         ]
 
-        if (extraUserSeats > 0) {
-            nextPhaseItems.push({
-                price: USER_SEAT_PRICE_ID[cycle],
-                quantity: extraUserSeats,
-            })
-        }
-        if (extraProjects > 0) {
-            nextPhaseItems.push({
-                price: PROJECT_PRICE_ID[cycle],
-                quantity: extraProjects,
-            })
-        }
-        if (extraActiveFlows > 0) {
-            nextPhaseItems.push({
-                price: ACTIVE_FLOW_PRICE_ID[cycle],
-                quantity: extraActiveFlows,
-            })
-        }
+        const optionalItems = [
+            { condition: userSeats > 0, price: USER_SEAT_PRICE_ID[cycle], quantity: userSeats },
+            { condition: projects > 0, price: PROJECT_PRICE_ID[cycle], quantity: projects },
+            { condition: activeFlows > 0, price: ACTIVE_FLOW_PRICE_ID[cycle], quantity: activeFlows }
+        ]
 
+        optionalItems.forEach(({ condition, price, quantity }) => {
+            if (condition) {
+                items.push({ price, quantity })
+            }
+        })
+
+        return items
+    }
+
+    const phases: Stripe.SubscriptionScheduleUpdateParams.Phase[] = []
+
+    let currentPhaseItems: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[]
+
+    if (currentCycle === newCycle) {
+        currentPhaseItems = subscription.items.data.map(item => ({
+            price: item.price.id,
+            quantity: !isNil(item.quantity) ? item.quantity : undefined,
+        }))
+    } else {
+        const currentPlan = subscription.items.data.some(item => 
+            [PLUS_PLAN_PRICE_ID[currentCycle], BUSINESS_PLAN_PRICE_ID[currentCycle]].includes(item.price.id)
+        ) ? (subscription.items.data.some(item => item.price.id === PLUS_PLAN_PRICE_ID[currentCycle]) ? PlanName.PLUS : PlanName.BUSINESS) : PlanName.PLUS
+
+        const currentUserSeats = subscription.items.data.find(item => item.price.id === USER_SEAT_PRICE_ID[currentCycle])?.quantity || 0
+        const currentProjects = subscription.items.data.find(item => item.price.id === PROJECT_PRICE_ID[currentCycle])?.quantity || 0
+        const currentActiveFlows = subscription.items.data.find(item => item.price.id === ACTIVE_FLOW_PRICE_ID[currentCycle])?.quantity || 0
+
+        currentPhaseItems = buildPhaseItems(currentCycle, currentPlan, currentUserSeats, currentProjects, currentActiveFlows)
+    }
+
+    phases.push({
+        items: currentPhaseItems,
+        start_date: currentPeriodStart,
+        end_date: currentPeriodEnd,
+    })
+
+    if (!isFreeDowngrade) {
+        const nextPhaseItems = buildPhaseItems(newCycle, newPlan, extraUserSeats, extraProjects, extraActiveFlows)
+        
         phases.push({
             items: nextPhaseItems,
             start_date: currentPeriodEnd,
@@ -358,21 +373,23 @@ async function updateSubscriptionSchedule(params: UpdateSubscriptionSchedulePara
     logger.info('Updated subscription schedule for plan change', {
         scheduleId,
         subscriptionId: subscription.id,
+        currentPlan: currentCycle === newCycle ? 'unchanged' : 'cycle-changed',
         newPlan,
+        currentCycle,
+        newCycle,
         effectiveDate: new Date(currentPeriodEnd * 1000).toISOString(),
         willCancel: isFreeDowngrade,
     })
 }
 
 async function createSubscriptionSchedule(params: CreateSubscriptionScheduleParams): Promise<Stripe.SubscriptionSchedule> {
-    const { extraActiveFlows, extraProjects, extraUserSeats, logger, newPlan, stripe, subscription, cycle } = params
+    const { extraActiveFlows, extraProjects, extraUserSeats, logger, newPlan, stripe, subscription, currentCycle, newCycle } = params
 
     const schedule = await stripe.subscriptionSchedules.create({
         from_subscription: subscription.id,
     })
 
-    await updateSubscriptionSchedule({ stripe, scheduleId: schedule.id, subscription, newPlan, extraUserSeats, logger, extraActiveFlows, extraProjects, cycle })
-
+    await updateSubscriptionSchedule({ stripe, scheduleId: schedule.id, subscription, newPlan, extraUserSeats, logger, extraActiveFlows, extraProjects, currentCycle, newCycle })
     return schedule
 }
 
@@ -399,7 +416,8 @@ type UpdateSubscriptionParams = {
 }
 
 type UpdateSubscriptionScheduleParams = {
-    cycle: BillingCycle
+    currentCycle: BillingCycle,
+    newCycle: BillingCycle
     stripe: Stripe
     scheduleId: string
     subscription: Stripe.Subscription
@@ -411,7 +429,8 @@ type UpdateSubscriptionScheduleParams = {
 }
 
 type CreateSubscriptionScheduleParams = {
-    cycle: BillingCycle
+    currentCycle: BillingCycle,
+    newCycle: BillingCycle
     stripe: Stripe
     subscription: Stripe.Subscription
     newPlan: PlanName
