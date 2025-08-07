@@ -1,0 +1,10 @@
+{
+  "Approval (Legacy)": "承認 (レガシー)",
+  "Build approval process in your workflows": "ワークフローで承認プロセスを構築する",
+  "Wait for Approval": "承認待ち",
+  "Create Approval Links": "承認リンクを作成",
+  "Pauses the flow and wait for the approval from the user": "フローを一時停止し、ユーザーの承認を待つ",
+  "Create links only without pausing the flow, use wait for approval to pause": "フローを一時停止せずにリンクを作成します。承認待ちを使用してください",
+  "Markdown": "Markdown",
+  "Please use Manual Task feature instead from 0.48.0 and above": "0.48.0以降の手動タスク機能を使用してください"
+}
