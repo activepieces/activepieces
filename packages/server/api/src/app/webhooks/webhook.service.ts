@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 // import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { flowService } from '../flows/flow/flow.service'
 import { platformPlanService } from '../platform-plan/platform-plan.service'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { handshakeHandler } from './handshake-handler'
 import { WebhookFlowVersionToRun, webhookHandler } from './webhook-handler'
@@ -50,9 +51,14 @@ export const webhookService = {
             })
         }
 
+        const trigger = await triggerSourceService(pinoLogger).getByFlowId({
+            flowId: flow.id,
+            projectId: flow.projectId,
+            simulate: saveSampleData,
+        })
         const response = await handshakeHandler.handleHandshakeRequest({
             payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
-            handshakeConfiguration: flow.handshakeConfiguration ?? null,
+            handshakeConfiguration: trigger?.handshakeConfiguration ?? null,
             log: pinoLogger,
             flowId: flow.id,
             flowVersionId: flowVersionIdToRun,

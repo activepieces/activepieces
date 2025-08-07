@@ -30,7 +30,6 @@ export const flagService = {
                 ApFlagId.CLOUD_AUTH_ENABLED,
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
-                ApFlagId.IS_CLOUD_PLATFORM,
                 ApFlagId.EMAIL_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
@@ -118,12 +117,7 @@ export const flagService = {
                 created,
                 updated,
             },
-            {
-                id: ApFlagId.IS_CLOUD_PLATFORM,
-                value: false,
-                created,
-                updated,
-            },
+
             {
                 id: ApFlagId.SHOW_BILLING,
                 value: system.getEdition() === ApEdition.CLOUD,
@@ -276,6 +270,12 @@ export const flagService = {
             {
                 id: ApFlagId.MAX_FILE_SIZE_MB,
                 value: system.getNumber(AppSystemProp.MAX_FILE_SIZE_MB),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_TUTORIALS,
+                value: false,
                 created,
                 updated,
             },

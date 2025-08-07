@@ -18,7 +18,11 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { McpToolType, McpWithTools, TriggerType } from '@activepieces/shared';
+import {
+  McpToolType,
+  McpWithTools,
+  FlowTriggerType,
+} from '@activepieces/shared';
 import type {
   McpTool,
   McpToolRequest,
@@ -64,7 +68,7 @@ export function McpFlowDialog({
         .then((response) => {
           return response.data.filter(
             (flow: PopulatedFlow) =>
-              flow.version.trigger.type === TriggerType.PIECE &&
+              flow.version.trigger.type === FlowTriggerType.PIECE &&
               flow.version.trigger.settings.pieceName ===
                 '@activepieces/piece-mcp',
           );

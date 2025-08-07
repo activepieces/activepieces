@@ -32,20 +32,16 @@ export function PlatformAdminContainer({
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
-  const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_PLATFORM_DEMO,
-  );
-
   const isCloudPlatform = platformHooks.useIsCloudPlatform();
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
-  const isLocked = (locked: boolean) => locked || (showPlatformDemo ?? false);
+
   const items: SidebarItem[] = [
     // {
     //   type: 'link',
     //   to: '/platform/analytics',
     //   label: t('Overview'),
     //   icon: <LineChart />,
-    //   locked: isLocked(!platform.plan.analyticsEnabled),
+    //   locked: !platform.plan.analyticsEnabled,
     //   isSubItem: false,
     //   show: true,
     // },
@@ -54,7 +50,7 @@ export function PlatformAdminContainer({
       to: '/platform/projects',
       label: t('Projects'),
       icon: <LayoutGrid />,
-      locked: false && isLocked(!platform.plan.manageProjectsEnabled),
+      locked: !platform.plan.manageProjectsEnabled,
       isSubItem: false,
       show: true,
     },
@@ -116,7 +112,7 @@ export function PlatformAdminContainer({
           to: '/platform/setup/billing',
           label: t('Billing'),
           isSubItem: true,
-          show: edition !== ApEdition.COMMUNITY && !showPlatformDemo,
+          show: edition !== ApEdition.COMMUNITY,
         },
       ],
     },
@@ -186,6 +182,13 @@ export function PlatformAdminContainer({
           type: 'link',
           to: '/platform/infrastructure/health',
           label: t('Health'),
+          isSubItem: true,
+          show: true,
+        },
+        {
+          type: 'link',
+          to: '/platform/infrastructure/triggers',
+          label: t('Triggers'),
           isSubItem: true,
           show: true,
         },

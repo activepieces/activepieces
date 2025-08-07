@@ -168,7 +168,7 @@ export function EditProjectDialog({
               )}
             />
 
-            {platform.plan.manageProjectsEnabled && (
+            {platform.plan.manageProjectsEnabled && false && (
               <>
                 <FormField
                   name="tasks"

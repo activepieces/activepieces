@@ -1,6 +1,6 @@
 import { TlsOptions } from 'node:tls'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
@@ -73,6 +73,8 @@ import { AddExternalIdToAgentId1753641361099 } from './migration/postgres/175364
 import { AddParentRunIdToFlowRun1753699877817 } from './migration/postgres/1753699877817-AddParentRunIdToFlowRun'
 import { AddCascadeOnAgents1753727379513 } from './migration/postgres/1753727379513-AddCascadeOnAgents'
 import { AddExternalIdToMCPPostgres1753787093467 } from './migration/postgres/1753787093467-AddExternalIdToMCPPostgres'
+import { AddTriggerSource1754478770608 } from './migration/postgres/1754478770608-AddTriggerSource'
+import { AddJobIdToTriggerRun1754510611628 } from './migration/postgres/1754510611628-AddJobIdToTriggerRun'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -86,6 +88,8 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AddJobIdToTriggerRun1754510611628,
+        AddTriggerSource1754478770608,
         AddExternalIdToMCPPostgres1753787093467,
         AddCascadeOnAgents1753727379513,
         AddParentRunIdToFlowRun1753699877817,
@@ -212,6 +216,7 @@ export const createPostgresDataSource = (): DataSource => {
         password,
         database,
         ssl: getSslConfig(),
+        ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
         ...migrationConfig,
         ...commonProperties,
     })

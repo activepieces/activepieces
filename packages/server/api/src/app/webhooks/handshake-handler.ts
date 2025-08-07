@@ -1,9 +1,9 @@
 import { UserInteractionJobType } from '@activepieces/server-shared'
-import { EngineResponseStatus, FlowId, FlowVersion, FlowVersionId, isNil, PieceTrigger, ProjectId, TriggerHookType, TriggerPayload, TriggerType, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared'
+import { EngineResponseStatus, FlowId, FlowVersion, FlowVersionId, isNil, ProjectId, TriggerHookType, TriggerPayload, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { triggerUtils } from '../flows/trigger/hooks/trigger-utils'
+import { triggerUtils } from '../trigger/trigger-source/trigger-utils'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 
 export const handshakeHandler = {
@@ -33,16 +33,12 @@ export const handshakeHandler = {
         }
         return engineHelperResponse.result?.response ?? null
     },
-    async getWebhookHandshakeConfiguration(flowVersion: FlowVersion, projectId: ProjectId, log: FastifyBaseLogger): Promise<WebhookHandshakeConfiguration | null> {
-        const flowTrigger = flowVersion.trigger as PieceTrigger
-        if (flowTrigger.type !== TriggerType.PIECE) {
-            return null
-        }
-        const pieceTrigger = await triggerUtils(log).getPieceTriggerOrThrow({
-            trigger: flowTrigger,
+    async getWebhookHandshakeConfiguration(flowVersion: FlowVersion, projectId: ProjectId, log: FastifyBaseLogger): Promise<WebhookHandshakeConfiguration | null> { 
+        const pieceTrigger = await triggerUtils(log).getPieceTrigger({
+            flowVersion,
             projectId,
         })
-        return pieceTrigger.handshakeConfiguration ?? null
+        return pieceTrigger?.handshakeConfiguration ?? null
     },
 }
 

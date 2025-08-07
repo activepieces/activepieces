@@ -73,7 +73,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         log.info({
             flowRunId: flowRun.id,
             executionType,
-        }, `[FlowRunSideEffects#start]`)
+        }, '[FlowRunSideEffects#start]')
 
         await jobQueue(log).add({
             id: flowRun.id,

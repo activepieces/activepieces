@@ -50,7 +50,15 @@ export type DALLE2PricingPerImage = TableData<
 number
 >
 
-type ImageModelPricing = DALLE3PricingPerImage | DALLE2PricingPerImage | number
+export type GPTImage1PricingPerImage = {
+    input: {
+        image: number
+        text: number
+    }
+    output: number
+}
+
+type ImageModelPricing = DALLE3PricingPerImage | DALLE2PricingPerImage | GPTImage1PricingPerImage | number
 
 // $ per million tokens
 export type FlatLanguageModelPricing = {
@@ -197,6 +205,17 @@ It is strongly recommended that you add your credit card information to your Ope
             },
         ],
         imageModels: [
+            {
+                displayName: 'GPT-Image-1',
+                instance: openai.image('gpt-image-1'),
+                pricing: {
+                    input: {
+                        image: 10.00,
+                        text: 5.00,
+                    },
+                    output: 40.00,
+                },
+            },
             {
                 displayName: 'DALL-E 3',
                 instance: openai.image('dall-e-3'),

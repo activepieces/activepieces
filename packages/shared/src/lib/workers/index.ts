@@ -62,6 +62,8 @@ export const WorkerMachineHealthcheckResponse = Type.Object({
     LOKI_PASSWORD: Type.Optional(Type.String()),
     LOKI_URL: Type.Optional(Type.String()),
     LOKI_USERNAME: Type.Optional(Type.String()),
+    OTEL_ENABLED: Type.Boolean(),
+    HYPERDX_TOKEN: Type.Optional(Type.String()),
     FILE_STORAGE_LOCATION: Type.String(),
     S3_USE_SIGNED_URLS: Type.String(),
 })
