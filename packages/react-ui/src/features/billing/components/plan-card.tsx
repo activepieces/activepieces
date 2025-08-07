@@ -7,7 +7,12 @@ import { billingMutations } from '@/features/billing/lib/billing-hooks';
 import { planData } from '@/features/billing/lib/data';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
-import { ApSubscriptionStatus, BillingCycle, PlanName, StripePlanName } from '@activepieces/ee-shared';
+import {
+  ApSubscriptionStatus,
+  BillingCycle,
+  PlanName,
+  StripePlanName,
+} from '@activepieces/ee-shared';
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
 type PlanCardProps = {
@@ -28,9 +33,11 @@ export const PlanCard = ({
   const isTrial =
     billingInformation?.plan.stripeSubscriptionStatus ===
     ApSubscriptionStatus.TRIALING;
-  const currentBillingCycle = billingInformation?.plan.stripeBillingCycle
+  const currentBillingCycle = billingInformation?.plan.stripeBillingCycle;
 
-  const isSelected = (isTrial && plan.name === PlanName.FREE) || ((currentPlan === plan.name && currentBillingCycle === cycle) && !isTrial)
+  const isSelected =
+    (isTrial && plan.name === PlanName.FREE) ||
+    (currentPlan === plan.name && currentBillingCycle === cycle && !isTrial);
   const isPopular = plan.name === PlanName.PLUS && !isSelected;
 
   const { mutate: updateSubscription, isPending: isUpdatingSubscription } =
@@ -102,14 +109,17 @@ export const PlanCard = ({
           } else if (!isSelected) {
             if (hasActiveSubscription) {
               updateSubscription({
-                plan: plan.name as PlanName.BUSINESS | PlanName.FREE | PlanName.PLUS,
+                plan: plan.name as
+                  | PlanName.BUSINESS
+                  | PlanName.FREE
+                  | PlanName.PLUS,
                 addons: {},
-                cycle
+                cycle,
               });
             } else {
               createSubscription({
                 plan: plan.name as StripePlanName,
-                cycle
+                cycle,
               });
             }
           }

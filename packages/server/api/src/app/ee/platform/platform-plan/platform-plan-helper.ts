@@ -1,5 +1,7 @@
 import { ApSubscriptionStatus, BILLING_CYCLE_HIERARCHY, BillingCycle, METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, PLAN_HIERARCHY, PlanName, PRICE_ID_MAP, PRICE_NAMES, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlatformPlanLimits, PlatformUsageMetric, UserStatus } from '@activepieces/shared'
+import Stripe from 'stripe'
 import { flowService } from '../../../flows/flow/flow.service'
 import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
@@ -7,8 +9,6 @@ import { userService } from '../../../user/user-service'
 import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
-import Stripe from 'stripe'
-import { AppSystemProp } from '@activepieces/server-shared'
 
 const edition = system.getEdition()
 const stripeSecretKey = system.get(AppSystemProp.STRIPE_SECRET_KEY)
@@ -21,33 +21,33 @@ export const PROJECT_PRICE_ID = getPriceIdFor(PRICE_NAMES.PROJECT)
 export const USER_SEAT_PRICE_ID = getPriceIdFor(PRICE_NAMES.USER_SEAT)
 
 export const AI_CREDIT_PRICE_IDS = [
-  AI_CREDIT_PRICE_ID[BillingCycle.ANNUAL],
-  AI_CREDIT_PRICE_ID[BillingCycle.MONTHLY]
+    AI_CREDIT_PRICE_ID[BillingCycle.ANNUAL],
+    AI_CREDIT_PRICE_ID[BillingCycle.MONTHLY],
 ]
 
 export const PLUS_PLAN_PRICE_IDS = [
-  PLUS_PLAN_PRICE_ID[BillingCycle.ANNUAL],
-  PLUS_PLAN_PRICE_ID[BillingCycle.MONTHLY]
+    PLUS_PLAN_PRICE_ID[BillingCycle.ANNUAL],
+    PLUS_PLAN_PRICE_ID[BillingCycle.MONTHLY],
 ]
 
 export const BUSINESS_PLAN_PRICE_IDS = [
-  BUSINESS_PLAN_PRICE_ID[BillingCycle.ANNUAL],
-  BUSINESS_PLAN_PRICE_ID[BillingCycle.MONTHLY]
+    BUSINESS_PLAN_PRICE_ID[BillingCycle.ANNUAL],
+    BUSINESS_PLAN_PRICE_ID[BillingCycle.MONTHLY],
 ]
 
 export const ACTIVE_FLOW_PRICE_IDS = [
-  ACTIVE_FLOW_PRICE_ID[BillingCycle.ANNUAL],
-  ACTIVE_FLOW_PRICE_ID[BillingCycle.MONTHLY]
+    ACTIVE_FLOW_PRICE_ID[BillingCycle.ANNUAL],
+    ACTIVE_FLOW_PRICE_ID[BillingCycle.MONTHLY],
 ]
 
 export const USER_SEAT_PRICE_IDS = [
-  USER_SEAT_PRICE_ID[BillingCycle.ANNUAL],
-  USER_SEAT_PRICE_ID[BillingCycle.MONTHLY]
+    USER_SEAT_PRICE_ID[BillingCycle.ANNUAL],
+    USER_SEAT_PRICE_ID[BillingCycle.MONTHLY],
 ]
 
 export const PROJECT_PRICE_IDS = [
-  PROJECT_PRICE_ID[BillingCycle.ANNUAL],
-  PROJECT_PRICE_ID[BillingCycle.MONTHLY]
+    PROJECT_PRICE_ID[BillingCycle.ANNUAL],
+    PROJECT_PRICE_ID[BillingCycle.MONTHLY],
 ]
 
 export const PlatformPlanHelper = {
@@ -192,7 +192,7 @@ export const PlatformPlanHelper = {
     checkIsTrialSubscription: (subscription: Stripe.Subscription): boolean => {
         return isNil(subscription.metadata['trialSubscription']) ? false : subscription.metadata['trialSubscription'] === 'true'
     },
-    getPlanFromSubscription: (subscription: Stripe.Subscription): {plan: PlanName, cycle: BillingCycle} => {
+    getPlanFromSubscription: (subscription: Stripe.Subscription): { plan: PlanName, cycle: BillingCycle } => {
         const isDev = stripeSecretKey?.startsWith('sk_test')
         const env = isDev ? 'dev' : 'prod'
 
@@ -233,7 +233,7 @@ function getPriceIdFor(price: PRICE_NAMES): Record<BillingCycle, string> {
 
     return {
         [BillingCycle.MONTHLY]: entry[BillingCycle.MONTHLY][env],
-        [BillingCycle.ANNUAL]: entry[BillingCycle.ANNUAL][env]
+        [BillingCycle.ANNUAL]: entry[BillingCycle.ANNUAL][env],
     }
 }
 
@@ -338,8 +338,8 @@ type CheckLegitSubscriptionUpdateOrThrowParams = {
 type IsUpgradeEperienceParams = {
     currentPlan: PlanName 
     newPlan: PlanName
-    currentCycle: BillingCycle,
-    newCycle: BillingCycle,
+    currentCycle: BillingCycle
+    newCycle: BillingCycle
     newUserSeatsLimit?: number
     newProjectsLimit?: number
     newActiveFlowsLimit?: number

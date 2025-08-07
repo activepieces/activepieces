@@ -11,8 +11,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
-import { BillingCycle } from '@activepieces/ee-shared';
 import {
+  BillingCycle,
   getPlanLimits,
   PlanName,
   PRICE_PER_EXTRA_5_ACTIVE_FLOWS,
@@ -148,11 +148,11 @@ export const ExtraActiveFlowsDialog = ({
           <Button
             onClick={() =>
               updateActiveFlows({
-                plan: plan.plan as StripePlanName, 
+                plan: plan.plan as StripePlanName,
                 addons: {
                   activeFlows: newActiveFlowCount,
                 },
-                cycle: plan.stripeBillingCycle as BillingCycle
+                cycle: plan.stripeBillingCycle as BillingCycle,
               })
             }
             disabled={

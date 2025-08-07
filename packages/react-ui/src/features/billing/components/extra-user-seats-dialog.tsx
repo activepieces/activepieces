@@ -11,7 +11,11 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
-import { BillingCycle, PlanName, PRICE_PER_EXTRA_USER } from '@activepieces/ee-shared';
+import {
+  BillingCycle,
+  PlanName,
+  PRICE_PER_EXTRA_USER,
+} from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
@@ -126,7 +130,7 @@ export const ExtraSeatsDialog = ({
                 addons: {
                   userSeats: newSeatCount,
                 },
-                cycle: plan.stripeBillingCycle as BillingCycle
+                cycle: plan.stripeBillingCycle as BillingCycle,
               })
             }
             disabled={isPending || newSeatCount === currentUserLimit}

@@ -62,7 +62,7 @@ export const RESOURCE_TO_MESSAGE_MAPPING = {
 
 export const CreateSubscriptionParamsSchema = Type.Object({
     plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
-    cycle: Type.Enum(BillingCycle)
+    cycle: Type.Enum(BillingCycle),
 })
 export type CreateSubscriptionParams = Static<typeof CreateSubscriptionParamsSchema>
 
@@ -85,7 +85,7 @@ const Addons = Type.Object({
 export const UpdateSubscriptionParamsSchema = Type.Object({
     plan: Type.Union([Type.Literal(PlanName.FREE), Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
     addons: Addons,
-    cycle: Type.Enum(BillingCycle)
+    cycle: Type.Enum(BillingCycle),
 })
 export type UpdateSubscriptionParams = Static<typeof UpdateSubscriptionParamsSchema>
 
@@ -124,66 +124,66 @@ export const BILLING_CYCLE_HIERARCHY = {
 } as const
 
 export const PRICE_ID_MAP = {
-  [PRICE_NAMES.PLUS_PLAN]: {
-    [BillingCycle.MONTHLY]: {
-      dev: 'price_1RTRd4QN93Aoq4f8E22qF5JU',
-      prod: 'price_1RflgUKZ0dZRqLEK5COq9Kn8'
+    [PRICE_NAMES.PLUS_PLAN]: {
+        [BillingCycle.MONTHLY]: {
+            dev: 'price_1RTRd4QN93Aoq4f8E22qF5JU',
+            prod: 'price_1RflgUKZ0dZRqLEK5COq9Kn8',
+        },
+        [BillingCycle.ANNUAL]: {
+            dev: 'price_1RtZrSQN93Aoq4f8KLZq4yif',
+            prod: 'price_1RtZwlKZ0dZRqLEKBiPradv4',
+        },
     },
-    [BillingCycle.ANNUAL]: {
-      dev: 'price_1RtZrSQN93Aoq4f8KLZq4yif',
-      prod: 'price_1RtZwlKZ0dZRqLEKBiPradv4'
-    }
-  },
-  [PRICE_NAMES.BUSINESS_PLAN]: {
-    [BillingCycle.MONTHLY]: {
-      dev: 'price_1RTReBQN93Aoq4f8v9CnMTFT',
-      prod: 'price_1RflgbKZ0dZRqLEKaW4Nlt0P'
+    [PRICE_NAMES.BUSINESS_PLAN]: {
+        [BillingCycle.MONTHLY]: {
+            dev: 'price_1RTReBQN93Aoq4f8v9CnMTFT',
+            prod: 'price_1RflgbKZ0dZRqLEKaW4Nlt0P',
+        },
+        [BillingCycle.ANNUAL]: {
+            dev: 'price_1RtZpuQN93Aoq4f8mNgEjs0b',
+            prod: 'price_1RtZxNKZ0dZRqLEKqTYawR8q',
+        },
     },
-    [BillingCycle.ANNUAL]: {
-      dev: 'price_1RtZpuQN93Aoq4f8mNgEjs0b',
-      prod: 'price_1RtZxNKZ0dZRqLEKqTYawR8q'
-    }
-  },
-  [PRICE_NAMES.AI_CREDITS]: {
-    [BillingCycle.MONTHLY]: {
-      dev: 'price_1RnbNPQN93Aoq4f8GLiZbJFj',
-      prod: 'price_1Rnj5bKZ0dZRqLEKQx2gwL7s'
+    [PRICE_NAMES.AI_CREDITS]: {
+        [BillingCycle.MONTHLY]: {
+            dev: 'price_1RnbNPQN93Aoq4f8GLiZbJFj',
+            prod: 'price_1Rnj5bKZ0dZRqLEKQx2gwL7s',
+        },
+        [BillingCycle.ANNUAL]: {
+            dev: 'price_1RtPc0QN93Aoq4f8JAPe5HbG',
+            prod: 'price_1RtZziKZ0dZRqLEKiWU2iAz8',
+        },
     },
-    [BillingCycle.ANNUAL]: {
-      dev: 'price_1RtPc0QN93Aoq4f8JAPe5HbG',
-      prod: 'price_1RtZziKZ0dZRqLEKiWU2iAz8'
-    }
-  },
-  [PRICE_NAMES.ACTIVE_FLOWS]: {
-    [BillingCycle.MONTHLY]: {
-      dev: 'price_1RsK9qQN93Aoq4f8nhN9xvvu',
-      prod: 'price_1RsK79KZ0dZRqLEKRGbtT1Pn'
+    [PRICE_NAMES.ACTIVE_FLOWS]: {
+        [BillingCycle.MONTHLY]: {
+            dev: 'price_1RsK9qQN93Aoq4f8nhN9xvvu',
+            prod: 'price_1RsK79KZ0dZRqLEKRGbtT1Pn',
+        },
+        [BillingCycle.ANNUAL]: {
+            dev: 'price_1RtZmHQN93Aoq4f8OqAfOl8R',
+            prod: 'price_1RtZvzKZ0dZRqLEKGHOXlfDP',
+        },
     },
-    [BillingCycle.ANNUAL]: {
-      dev: 'price_1RtZmHQN93Aoq4f8OqAfOl8R',
-      prod: 'price_1RtZvzKZ0dZRqLEKGHOXlfDP'
-    }
-  },
-  [PRICE_NAMES.USER_SEAT]: {
-    [BillingCycle.MONTHLY]: {
-      dev: 'price_1Rsn8nQN93Aoq4f8nNmwAA1I',
-      prod: 'price_1RflgiKZ0dZRqLEKiDFoa17I'
+    [PRICE_NAMES.USER_SEAT]: {
+        [BillingCycle.MONTHLY]: {
+            dev: 'price_1Rsn8nQN93Aoq4f8nNmwAA1I',
+            prod: 'price_1RflgiKZ0dZRqLEKiDFoa17I',
+        },
+        [BillingCycle.ANNUAL]: {
+            dev: 'price_1RtPiuQN93Aoq4f8O7ReOsZO',
+            prod: 'price_1RtZyMKZ0dZRqLEKrVLN4h15',
+        },
     },
-    [BillingCycle.ANNUAL]: {
-      dev: 'price_1RtPiuQN93Aoq4f8O7ReOsZO',
-      prod: 'price_1RtZyMKZ0dZRqLEKrVLN4h15'
-    }
-  },
-  [PRICE_NAMES.PROJECT]: {
-    [BillingCycle.MONTHLY]: {
-      dev: 'price_1RsoJ4QN93Aoq4f8JzLCO1BL',
-      prod: 'price_1RsoHsKZ0dZRqLEKIQGB6RPe'
+    [PRICE_NAMES.PROJECT]: {
+        [BillingCycle.MONTHLY]: {
+            dev: 'price_1RsoJ4QN93Aoq4f8JzLCO1BL',
+            prod: 'price_1RsoHsKZ0dZRqLEKIQGB6RPe',
+        },
+        [BillingCycle.ANNUAL]: {
+            dev: 'price_1RtPeZQN93Aoq4f8Mw8H9nGa',
+            prod: 'price_1RtZv4KZ0dZRqLEKxR6uO7WQ',
+        },
     },
-    [BillingCycle.ANNUAL]: {
-      dev: 'price_1RtPeZQN93Aoq4f8Mw8H9nGa',
-      prod: 'price_1RtZv4KZ0dZRqLEKxR6uO7WQ'
-    }
-  }
 }
 
 export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {

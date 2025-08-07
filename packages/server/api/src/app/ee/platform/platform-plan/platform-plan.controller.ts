@@ -212,7 +212,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             newProjectsLimit,
             newUserSeatsLimit,
             newCycle: cycle,
-            currentCycle: stripeBillingCycle as BillingCycle
+            currentCycle: stripeBillingCycle as BillingCycle,
         })
 
         await PlatformPlanHelper.checkLegitSubscriptionUpdateOrThrow({ projectsAddon: addons.projects, userSeatsAddon: addons.userSeats, newPlan })
@@ -225,7 +225,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             newPlan,
             subscriptionId,
             newCycle: cycle,
-            currentCycle: stripeBillingCycle as BillingCycle
+            currentCycle: stripeBillingCycle as BillingCycle,
         })
     })
 

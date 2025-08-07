@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+
 import { BillingCycle, PlanName } from '@activepieces/ee-shared';
 
 export const planData = {
@@ -9,8 +10,8 @@ export const planData = {
       featuresTitle: t('Get started with'),
       price: {
         [BillingCycle.MONTHLY]: 0,
-        [BillingCycle.ANNUAL]: 0
-      }
+        [BillingCycle.ANNUAL]: 0,
+      },
     },
     {
       name: PlanName.PLUS,
@@ -18,8 +19,8 @@ export const planData = {
       featuresTitle: t('Everything in Free, and'),
       price: {
         [BillingCycle.MONTHLY]: 25,
-        [BillingCycle.ANNUAL]: 228
-      }
+        [BillingCycle.ANNUAL]: 228,
+      },
     },
     {
       name: PlanName.BUSINESS,
@@ -27,8 +28,8 @@ export const planData = {
       featuresTitle: t('Everything in Plus, and'),
       price: {
         [BillingCycle.MONTHLY]: 150,
-        [BillingCycle.ANNUAL]: 1368
-      }
+        [BillingCycle.ANNUAL]: 1368,
+      },
     },
     {
       name: PlanName.ENTERPRISE,
@@ -36,7 +37,7 @@ export const planData = {
       featuresTitle: t('Maximum Capabilities'),
       price: {
         [BillingCycle.MONTHLY]: 'Custom',
-        [BillingCycle.ANNUAL]: 'Custom'
+        [BillingCycle.ANNUAL]: 'Custom',
       },
     },
   ],

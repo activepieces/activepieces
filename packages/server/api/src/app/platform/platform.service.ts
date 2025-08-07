@@ -190,7 +190,7 @@ async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
             ...OPEN_SOURCE_PLAN,
             stripeSubscriptionStartDate: 0,
             stripeSubscriptionEndDate: 0,
-            stripeBillingCycle: BillingCycle.MONTHLY
+            stripeBillingCycle: BillingCycle.MONTHLY,
         }
     }
     return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)

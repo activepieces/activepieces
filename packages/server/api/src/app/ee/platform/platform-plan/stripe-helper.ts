@@ -9,8 +9,8 @@ import { getRedisConnection } from '../../../database/redis-connection'
 import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
 import { userService } from '../../../user/user-service'
-import { platformPlanService } from './platform-plan.service'
 import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID, BUSINESS_PLAN_PRICE_ID, BUSINESS_PLAN_PRICE_IDS, PLUS_PLAN_PRICE_ID, PLUS_PLAN_PRICE_IDS, PROJECT_PRICE_ID, USER_SEAT_PRICE_ID } from './platform-plan-helper'
+import { platformPlanService } from './platform-plan.service'
 
 export const stripeWebhookSecret = system.get(AppSystemProp.STRIPE_WEBHOOK_SECRET)!
 const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)
@@ -267,9 +267,9 @@ async function updateSubscription(params: UpdateSubscriptionParams): Promise<voi
     })
 
     const handleOptionalItem = (
-        currentItem: any, 
         quantity: number, 
-        priceId: string
+        priceId: string,
+        currentItem?: Stripe.SubscriptionItem,
     ) => {
         if (quantity > 0) {
             items.push({
@@ -277,7 +277,8 @@ async function updateSubscription(params: UpdateSubscriptionParams): Promise<voi
                 price: priceId,
                 quantity,
             })
-        } else if (newCycle === currentCycle && currentItem?.id) {
+        }
+        else if (newCycle === currentCycle && currentItem?.id) {
             items.push({
                 id: currentItem.id,
                 deleted: true,
@@ -285,9 +286,9 @@ async function updateSubscription(params: UpdateSubscriptionParams): Promise<voi
         }
     }
 
-    handleOptionalItem(currentUserSeatsItem, extraUserSeats, USER_SEAT_PRICE_ID[newCycle])
-    handleOptionalItem(currentActiveFlowsItem, extraActiveFlows, ACTIVE_FLOW_PRICE_ID[newCycle])
-    handleOptionalItem(currentProjectsItem, extraProjects, PROJECT_PRICE_ID[newCycle])
+    handleOptionalItem(extraUserSeats, USER_SEAT_PRICE_ID[newCycle], currentUserSeatsItem)
+    handleOptionalItem(extraActiveFlows, ACTIVE_FLOW_PRICE_ID[newCycle], currentActiveFlowsItem)
+    handleOptionalItem(extraProjects, PROJECT_PRICE_ID[newCycle], currentProjectsItem)
 
     await stripe.subscriptions.update(subscriptionId, {
         items,
@@ -308,13 +309,13 @@ async function updateSubscriptionSchedule(params: UpdateSubscriptionSchedulePara
                 price: plan === PlanName.PLUS ? PLUS_PLAN_PRICE_ID[cycle] : BUSINESS_PLAN_PRICE_ID[cycle],
                 quantity: 1,
             },
-            { price: AI_CREDIT_PRICE_ID[cycle] }
+            { price: AI_CREDIT_PRICE_ID[cycle] },
         ]
 
         const optionalItems = [
             { condition: userSeats > 0, price: USER_SEAT_PRICE_ID[cycle], quantity: userSeats },
             { condition: projects > 0, price: PROJECT_PRICE_ID[cycle], quantity: projects },
-            { condition: activeFlows > 0, price: ACTIVE_FLOW_PRICE_ID[cycle], quantity: activeFlows }
+            { condition: activeFlows > 0, price: ACTIVE_FLOW_PRICE_ID[cycle], quantity: activeFlows },
         ]
 
         optionalItems.forEach(({ condition, price, quantity }) => {
@@ -335,9 +336,10 @@ async function updateSubscriptionSchedule(params: UpdateSubscriptionSchedulePara
             price: item.price.id,
             quantity: !isNil(item.quantity) ? item.quantity : undefined,
         }))
-    } else {
+    }
+    else {
         const currentPlan = subscription.items.data.some(item => 
-            [PLUS_PLAN_PRICE_ID[currentCycle], BUSINESS_PLAN_PRICE_ID[currentCycle]].includes(item.price.id)
+            [PLUS_PLAN_PRICE_ID[currentCycle], BUSINESS_PLAN_PRICE_ID[currentCycle]].includes(item.price.id),
         ) ? (subscription.items.data.some(item => item.price.id === PLUS_PLAN_PRICE_ID[currentCycle]) ? PlanName.PLUS : PlanName.BUSINESS) : PlanName.PLUS
 
         const currentUserSeats = subscription.items.data.find(item => item.price.id === USER_SEAT_PRICE_ID[currentCycle])?.quantity || 0
@@ -405,7 +407,7 @@ type HandleSubscriptionUpdateParams = {
 }
 
 type UpdateSubscriptionParams = {
-    currentCycle: BillingCycle,
+    currentCycle: BillingCycle
     newCycle: BillingCycle
     stripe: Stripe
     subscriptionId: string
@@ -416,7 +418,7 @@ type UpdateSubscriptionParams = {
 }
 
 type UpdateSubscriptionScheduleParams = {
-    currentCycle: BillingCycle,
+    currentCycle: BillingCycle
     newCycle: BillingCycle
     stripe: Stripe
     scheduleId: string
@@ -429,7 +431,7 @@ type UpdateSubscriptionScheduleParams = {
 }
 
 type CreateSubscriptionScheduleParams = {
-    currentCycle: BillingCycle,
+    currentCycle: BillingCycle
     newCycle: BillingCycle
     stripe: Stripe
     subscription: Stripe.Subscription

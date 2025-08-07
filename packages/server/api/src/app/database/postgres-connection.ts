@@ -533,7 +533,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddLockedColumnToProjectPlan1751878623268,
                 AddMcpsEnabled1751989232042,
                 AddPlatformAnalyticsReportEntity1753091760355,
-                AddBillingCycle1754559781173
+                AddBillingCycle1754559781173,
             )
             break
         case ApEdition.COMMUNITY:

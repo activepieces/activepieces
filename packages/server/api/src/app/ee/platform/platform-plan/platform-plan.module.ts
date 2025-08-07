@@ -1,3 +1,4 @@
+import { BillingCycle } from '@activepieces/ee-shared'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
@@ -6,12 +7,11 @@ import { userIdentityService } from '../../../authentication/user-identity/user-
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { emailService } from '../../helper/email/email-service'
+import { AI_CREDIT_PRICE_ID } from './platform-plan-helper'
 import { platformPlanController } from './platform-plan.controller'
 import { platformPlanService } from './platform-plan.service'
 import { stripeBillingController } from './stripe-billing.controller'
 import { stripeHelper } from './stripe-helper'
-import { BillingCycle } from '@activepieces/ee-shared'
-import { AI_CREDIT_PRICE_ID } from './platform-plan-helper'
 
 export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.AI_USAGE_REPORT, async (data) => {
