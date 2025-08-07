@@ -20,10 +20,10 @@ import {
   CategorizedStepMetadataWithSuggestions,
 } from '@/lib/types';
 import {
-  ActionType,
+  FlowActionType,
   Agent,
   FlowOperationType,
-  TriggerType,
+  FlowTriggerType,
 } from '@activepieces/shared';
 
 import { cn } from '../../../lib/utils';
@@ -193,7 +193,7 @@ const getItemHeight = (
   const { ACTION_OR_TRIGGER_ITEM_HEIGHT, PIECE_ITEM_HEIGHT } =
     PIECE_SELECTOR_ELEMENTS_HEIGHTS;
   if (
-    pieceMetadata.type === ActionType.PIECE &&
+    pieceMetadata.type === FlowActionType.PIECE &&
     showActionsOrTriggersInsidePiecesList
   ) {
     const actionsListWithoutHiddenActions =
@@ -207,7 +207,7 @@ const getItemHeight = (
     );
   }
   if (
-    pieceMetadata.type === TriggerType.PIECE &&
+    pieceMetadata.type === FlowTriggerType.PIECE &&
     showActionsOrTriggersInsidePiecesList
   ) {
     return (
@@ -217,9 +217,9 @@ const getItemHeight = (
     );
   }
   const isCoreAction =
-    pieceMetadata.type === ActionType.CODE ||
-    pieceMetadata.type === ActionType.LOOP_ON_ITEMS ||
-    pieceMetadata.type === ActionType.ROUTER;
+    pieceMetadata.type === FlowActionType.CODE ||
+    pieceMetadata.type === FlowActionType.LOOP_ON_ITEMS ||
+    pieceMetadata.type === FlowActionType.ROUTER;
   if (isCoreAction && showActionsOrTriggersInsidePiecesList) {
     return ACTION_OR_TRIGGER_ITEM_HEIGHT + PIECE_ITEM_HEIGHT;
   }
@@ -231,7 +231,7 @@ const getNumberOfExtraActions = (
   agents: Agent[] | undefined,
 ) => {
   if (
-    pieceMetadata.type === ActionType.PIECE &&
+    pieceMetadata.type === FlowActionType.PIECE &&
     pieceMetadata.pieceName === '@activepieces/piece-agent'
   ) {
     return agents?.length ?? 0;

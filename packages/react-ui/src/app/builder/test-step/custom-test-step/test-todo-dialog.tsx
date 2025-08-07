@@ -6,7 +6,7 @@ import { todosApi } from '@/features/todos/lib/todos-api';
 import {
   PopulatedTodo,
   TodoType,
-  Action,
+  FlowAction,
   CreateTodoResult,
   CreateAndWaitTodoResult,
 } from '@activepieces/shared';
@@ -17,7 +17,7 @@ type TodoTestingDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   todo: PopulatedTodo;
-  currentStep: Action;
+  currentStep: FlowAction;
   type: TodoType;
   setErrorMessage: (errorMessage: string | undefined) => void;
 };

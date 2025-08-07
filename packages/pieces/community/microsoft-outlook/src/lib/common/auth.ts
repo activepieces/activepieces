@@ -6,6 +6,7 @@ export const microsoftOutlookAuth = PieceAuth.OAuth2({
 	tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
 	required: true,
 	scope: ['Mail.ReadWrite', 'Mail.Send', 'Calendars.Read', 'offline_access', 'User.Read'],
+	prompt: 'omit',
 	validate: async ({ auth }) => {
 		try {
 			const authValue = auth as OAuth2PropertyValue;

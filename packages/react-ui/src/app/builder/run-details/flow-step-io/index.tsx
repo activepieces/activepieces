@@ -1,12 +1,11 @@
 import React from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { stepUtils } from '@/features/pieces/lib/step-utils';
 import {
   flowStructureUtil,
   StepOutput,
-  Action,
-  ActionType,
+  FlowAction,
+  FlowActionType,
 } from '@activepieces/shared';
 
 import { FlowStepAgent } from './flow-step-agent';
@@ -26,7 +25,7 @@ const FlowStepIO = React.memo(({ stepDetails }: FlowStepIOProps) => {
     ? (flowStructureUtil.getStep(
         selectedStepName,
         flowVersion.trigger,
-      ) as Action)
+      ) as FlowAction)
     : undefined;
 
   if (!selectedStep) {
@@ -34,8 +33,8 @@ const FlowStepIO = React.memo(({ stepDetails }: FlowStepIOProps) => {
   }
 
   const isAgentStep =
-    selectedStep.type === ActionType.PIECE &&
-    stepUtils.isAgentPiece(selectedStep);
+    selectedStep.type === FlowActionType.PIECE &&
+    flowStructureUtil.isAgentPiece(selectedStep);
   if (isAgentStep) {
     return (
       <FlowStepAgent stepDetails={stepDetails} selectedStep={selectedStep} />

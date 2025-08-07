@@ -1,6 +1,7 @@
 import { AppSystemProp, exceptionHandler, JobType, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
+import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
@@ -31,9 +32,13 @@ const jobTypeToDefaultJobOptions: Record<QueueName, DefaultJobOptions> = {
     [QueueName.ONE_TIME]: defaultJobOptions,
     [QueueName.USERS_INTERACTION]: {
         ...defaultJobOptions,
+        removeOnFail: true,
         attempts: 1,
     },
-    [QueueName.WEBHOOK]: defaultJobOptions,
+    [QueueName.WEBHOOK]: {
+        ...defaultJobOptions,
+        attempts: 3,
+    },
     [QueueName.AGENTS]: defaultJobOptions,
 }
 
@@ -113,9 +118,11 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
     if (!isNil(bullMqGroups[queueName])) {
         return bullMqGroups[queueName]
     }
+    const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
     bullMqGroups[queueName] = new Queue(
         queueName,
         {
+            telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
             connection: createRedisClient(),
             defaultJobOptions: jobTypeToDefaultJobOptions[queueName],
         },

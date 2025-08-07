@@ -1,5 +1,5 @@
 import { aiProps } from '@activepieces/pieces-common';
-import { SUPPORTED_AI_PROVIDERS, createAIProvider } from '@activepieces/shared';
+import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, createAIProvider } from '@activepieces/shared';
 import { createAction, Property, Action } from '@activepieces/pieces-framework';
 import { LanguageModel, generateText } from 'ai';
 
@@ -42,6 +42,9 @@ export const summarizeText: Action = createAction({
       modelInstance,
       apiKey: engineToken,
       baseURL,
+      metadata: {
+        feature: AIUsageFeature.TEXT_AI,
+      },
     });
 
     const response = await generateText({
@@ -53,9 +56,6 @@ export const summarizeText: Action = createAction({
         },
       ],
       maxTokens: context.propsValue.maxTokens,
-      headers: {
-        'Authorization': `Bearer ${engineToken}`,
-      },
     });
 
     return response.text ?? '';

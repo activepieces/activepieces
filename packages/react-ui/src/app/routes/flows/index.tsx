@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -32,8 +33,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import { Permission, PopulatedFlow } from '@activepieces/shared';
-
-import { TableTitle } from '../../../components/custom/table-title';
 
 import { FlowsTable } from './flows-table';
 import { IssuesTable } from './issues-table';
@@ -86,61 +85,58 @@ const FlowsPage = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 grow">
-      <div className="flex flex-col gap-4 w-full grow">
-        <div className="flex items-center justify-between">
-          <TableTitle
-            description={t(
-              'Create and manage your flows, run history and run issues',
-            )}
-          >
-            {t('Flows')}
-          </TableTitle>
-          {activeTab === FlowsPageTabs.FLOWS && <CreateFlowDropdown />}
-        </div>
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) => handleTabChange(v as FlowsPageTabs)}
-          className="w-full"
-        >
-          {!embedState.hideFlowsPageNavbar ? (
-            <TabsList variant="outline">
-              <TabsTrigger value={FlowsPageTabs.FLOWS} variant="outline">
-                <Workflow className="h-4 w-4 mr-2" />
-                {t('Flows')}
+    <div className="flex flex-col gap-4 w-full grow">
+      <DashboardPageHeader
+        tutorialTab="flows"
+        title={t('Flows')}
+        description={t(
+          'Create and manage your flows, run history and run issues',
+        )}
+      >
+        {activeTab === FlowsPageTabs.FLOWS && <CreateFlowDropdown />}
+      </DashboardPageHeader>
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => handleTabChange(v as FlowsPageTabs)}
+        className="w-full"
+      >
+        {!embedState.hideFlowsPageNavbar ? (
+          <TabsList variant="outline">
+            <TabsTrigger value={FlowsPageTabs.FLOWS} variant="outline">
+              <Workflow className="h-4 w-4 mr-2" />
+              {t('Flows')}
+            </TabsTrigger>
+            {checkAccess(Permission.READ_RUN) && (
+              <TabsTrigger value={FlowsPageTabs.HISTORY} variant="outline">
+                <History className="h-4 w-4 mr-2" />
+                {t('Runs')}
               </TabsTrigger>
-              {checkAccess(Permission.READ_RUN) && (
-                <TabsTrigger value={FlowsPageTabs.HISTORY} variant="outline">
-                  <History className="h-4 w-4 mr-2" />
-                  {t('Runs')}
-                </TabsTrigger>
-              )}
-              {checkAccess(Permission.READ_ISSUES) && (
-                <TabsTrigger value={FlowsPageTabs.ISSUES} variant="outline">
-                  <CircleAlert className="h-4 w-4 mr-2" />
-                  <span className="flex items-center gap-2">
-                    {t('Issues')}
-                    {showIssuesNotification && (
-                      <span className="ml-1 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
-                    )}
-                  </span>
-                </TabsTrigger>
-              )}
-            </TabsList>
-          ) : (
-            <></>
-          )}
-          <TabsContent value={FlowsPageTabs.FLOWS}>
-            <FlowsTable />
-          </TabsContent>
-          <TabsContent value={FlowsPageTabs.HISTORY}>
-            <RunsTable />
-          </TabsContent>
-          <TabsContent value={FlowsPageTabs.ISSUES}>
-            <IssuesTable />
-          </TabsContent>
-        </Tabs>
-      </div>
+            )}
+            {checkAccess(Permission.READ_ISSUES) && (
+              <TabsTrigger value={FlowsPageTabs.ISSUES} variant="outline">
+                <CircleAlert className="h-4 w-4 mr-2" />
+                <span className="flex items-center gap-2">
+                  {t('Issues')}
+                  {showIssuesNotification && (
+                    <span className="ml-1 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
+                  )}
+                </span>
+              </TabsTrigger>
+            )}
+          </TabsList>
+        ) : (
+          <></>
+        )}
+        <TabsContent value={FlowsPageTabs.FLOWS}>
+          <FlowsTable />
+        </TabsContent>
+        <TabsContent value={FlowsPageTabs.HISTORY}>
+          <RunsTable />
+        </TabsContent>
+        <TabsContent value={FlowsPageTabs.ISSUES}>
+          <IssuesTable />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

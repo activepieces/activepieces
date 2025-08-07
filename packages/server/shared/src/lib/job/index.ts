@@ -41,16 +41,6 @@ export const UpdateJobRequest = Type.Object({
 })
 export type UpdateJobRequest = Static<typeof UpdateJobRequest>
 
-export const UpdateFailureCountRequest = Type.Object({
-    flowId: Type.String(),
-    projectId: Type.String(),
-    success: Type.Boolean(),
-})
-
-export type UpdateFailureCountRequest = Static<
-  typeof UpdateFailureCountRequest
->
-
 export const ApQueueJob = Type.Object({
     id: Type.String(),
     data: JobData,
@@ -82,6 +72,8 @@ export const SubmitPayloadsRequest = Type.Object({
     httpRequestId: Type.Optional(Type.String()),
     payloads: Type.Array(Type.Unknown()),
     environment: Type.Enum(RunEnvironment),
+    parentRunId: Type.Optional(Type.String()),
+    failParentOnFailure: Type.Optional(Type.Boolean()),
 })
 
 export type SubmitPayloadsRequest = Static<typeof SubmitPayloadsRequest>

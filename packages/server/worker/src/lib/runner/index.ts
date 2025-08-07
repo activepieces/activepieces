@@ -1,6 +1,7 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, isNil, PackageType, PieceActionSettings, PieceTriggerSettings, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { pieceWorkerCache } from '../api/piece-worker-cache'
 import { executionFiles } from '../cache/execution-files'
 import { pieceEngineUtil } from '../utils/flow-engine-util'
 import { workerMachine } from '../utils/machine'
@@ -17,7 +18,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             flowVersion: operation.flowVersion.id,
             projectId: operation.projectId,
         }, '[threadEngineRunner#executeFlow]')
-        await prepareFlowSandbox(log, engineToken, operation.flowVersion, operation.runEnvironment, operation.projectId)
+        await prepareFlowSandbox(log, engineToken, operation.flowVersion, operation.projectId)
 
         const input: ExecuteFlowOperation = {
             ...operation,
@@ -66,7 +67,13 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async extractPieceMetadata(engineToken, operation) {
         log.debug({ operation }, '[threadEngineRunner#extractPieceMetadata]')
 
-        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, operation)
+        const lockedPiece = await pieceEngineUtil(log).enrichPieceWithArchive(engineToken, {
+            name: operation.pieceName,
+            version: operation.pieceVersion,
+            packageType: operation.packageType,
+            pieceType: operation.pieceType,
+            archiveId: operation.packageType === PackageType.ARCHIVE ? operation.archiveId : undefined,
+        })
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
@@ -75,7 +82,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         return execute(log, operation, EngineOperationType.EXTRACT_PIECE_METADATA)
     },
     async executeValidateAuth(engineToken, operation) {
-        
+
         log.debug({ ...operation.piece, platformId: operation.platformId }, '[threadEngineRunner#executeValidateAuth]')
 
         const { piece } = operation
@@ -101,7 +108,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
 
         const step = flowStructureUtil.getActionOrThrow(operation.stepName, operation.flowVersion.trigger)
         switch (step.type) {
-            case ActionType.PIECE: {
+            case FlowActionType.PIECE: {
                 const lockedPiece = await pieceEngineUtil(log).getExactPieceForStep(engineToken, step)
                 await executionFiles(log).provision({
                     pieces: [lockedPiece],
@@ -110,7 +117,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
                 })
                 break
             }
-            case ActionType.CODE: {
+            case FlowActionType.CODE: {
                 const codes = pieceEngineUtil(log).getCodeSteps(operation.flowVersion).filter((code) => code.name === operation.stepName)
                 await executionFiles(log).provision({
                     pieces: [],
@@ -119,8 +126,8 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
                 })
                 break
             }
-            case ActionType.ROUTER:
-            case ActionType.LOOP_ON_ITEMS:
+            case FlowActionType.ROUTER:
+            case FlowActionType.LOOP_ON_ITEMS:
                 break
         }
 
@@ -192,14 +199,21 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     },
 })
 
-async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion, runEnvironment: RunEnvironment, projectId: string): Promise<void> {
-    const pieces = await pieceEngineUtil(log).extractFlowPieces({
-        flowVersion,
-        engineToken,
+async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion, projectId: string): Promise<void> {
+    const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+    const pieces = steps.filter((step) => step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE).map(async (step) => {
+        const { pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
+        const pieceMetadata = await pieceWorkerCache(log).getPiece({
+            engineToken,
+            pieceName,
+            pieceVersion,
+            projectId,
+        })
+        return pieceEngineUtil(log).enrichPieceWithArchive(engineToken, pieceMetadata)
     })
     const codeSteps = pieceEngineUtil(log).getCodeSteps(flowVersion)
     await executionFiles(log).provision({
-        pieces,
+        pieces: await Promise.all(pieces),
         codeSteps,
         customPiecesPath: executionFiles(log).getCustomPiecesPath({ projectId }),
     })
