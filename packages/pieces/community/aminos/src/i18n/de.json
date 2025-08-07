@@ -1,0 +1,16 @@
+{
+  "Aminos": "Aminos",
+  "Base URL": "Basis-URL",
+  "API key": "API-Schlüssel",
+  "Enter the base URL": "Basis-URL eingeben",
+  "Enter the API key from your Aminos One panel": "Geben Sie den API-Schlüssel aus Ihrem Aminos One Panel ein",
+  "Enter Aminos One authentication details": "Aminos One Authentifizierungsdetails eingeben",
+  "Create User on Aminos One": "Benutzer auf Aminos 1 erstellen",
+  "Create a user and plan in Aminos One Panel": "Benutzer erstellen und in Aminos One Panel planen",
+  "Username (e-mail)": "Benutzername (E-Mail)",
+  "Name of user": "Benutzername",
+  "Plan ID": "Plan ID",
+  "Username, should be an e-mail address": "Benutzername sollte eine E-Mail-Adresse sein",
+  "The name of the user": "Der Name des Benutzers",
+  "Plan ID number from the plans in your Aminos One panel": "Plan ID Nummer aus den Abos in Ihrem Aminos One Panel"
+}
