@@ -143,7 +143,7 @@ export const upsertRow = createAction({
             count: count_upserted ? 'exact' : undefined
         };
 
-        let upsertQuery = supabase
+        const upsertQuery = supabase
             .from(table_name as string)
             .upsert(row_data, upsertOptions);
 

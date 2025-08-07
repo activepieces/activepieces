@@ -83,8 +83,10 @@ export const supabaseCommon = {
               options: tableOptions
             };
           } else if (error) {
+            console.log('RPC get_public_tables error:', error);
           }
         } catch (rpcError) {
+          console.log('RPC function not available, using OpenAPI spec');
         }
         
         let openApiSpec: any;
@@ -175,8 +177,10 @@ export const supabaseCommon = {
           if (!error && rpcColumns && rpcColumns.length > 0) {
             columns = rpcColumns;
           } else if (error) {
+            console.log('RPC get_table_columns error:', error);
           }
         } catch (rpcError) {
+          console.log('RPC function not available for columns');
         }
         
         if (columns.length === 0) {
@@ -590,6 +594,7 @@ export const supabaseCommon = {
             columns = rpcColumns;
           }
         } catch (rpcError) {
+          console.log('RPC function not available for upsert columns');
         }
         
         if (columns.length === 0) {

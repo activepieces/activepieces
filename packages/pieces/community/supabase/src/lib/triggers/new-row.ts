@@ -74,6 +74,7 @@ For more details, see [Supabase Database Webhooks documentation](https://supabas
         try {
             await context.store.delete('webhook_config');
         } catch (error) {
+            console.log('Error cleaning up webhook config:', error);
         }
     },
 

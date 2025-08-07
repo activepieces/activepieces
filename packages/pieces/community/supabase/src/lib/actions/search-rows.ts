@@ -143,10 +143,11 @@ export const searchRows = createAction({
                         case 'is':
                             query = query.is(filter.field, filter.value);
                             break;
-                        case 'in':
+                        case 'in': {
                             const inValues = Array.isArray(filter.value) ? filter.value : String(filter.value).split(',');
                             query = query.in(filter.field, inValues);
                             break;
+                        }
                         case 'contains':
                             if (typeof filter.value === 'string' || Array.isArray(filter.value) || (filter.value && typeof filter.value === 'object')) {
                                 query = query.contains(filter.field, filter.value);
