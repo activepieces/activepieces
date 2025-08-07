@@ -54,8 +54,8 @@ jobs:
             echo "Changes detected, committing..."
             
             # Configure git
-            git config --local user.email "apps@activepieces.com"
-            git config --local user.name "Automerge Crowdin PR Action"
+            git config --local user.email "abdulyki@activepieces.com"
+            git config --local user.name "AbdulTheActivePiecer"
             
             # Add all changes
             git add .
