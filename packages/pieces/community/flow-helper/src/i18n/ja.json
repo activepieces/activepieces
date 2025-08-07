@@ -1,0 +1,10 @@
+{
+  "Flow Helper": "フローヘルパー",
+  "Get Run Info": "実行情報を取得",
+  "Fail Flow": "失敗の流れ",
+  "Stop Flow": "フローを停止",
+  "Fails the flow execution with a custom message.": "カスタムメッセージでフローの実行に失敗します。",
+  "Stops the flow immediately this step is reached.": "このステップに到達した直後にフローを停止します。",
+  "Error Message": "エラー メッセージ",
+  "The error message to show when the flow fails.": "フローが失敗したときに表示されるエラーメッセージ。"
+}
