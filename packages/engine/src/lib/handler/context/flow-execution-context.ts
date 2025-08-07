@@ -1,4 +1,4 @@
-import { ActionType, assertEqual, FlowError, FlowRunResponse, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, RespondResponse, spreadIfDefined, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertEqual, FlowActionType, FlowError, FlowRunResponse, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, RespondResponse, spreadIfDefined, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
@@ -64,9 +64,9 @@ export class FlowExecutorContext {
         if (isNil(stepOutput)) {
             return undefined
         }
-        assertEqual(stepOutput.type, ActionType.LOOP_ON_ITEMS, 'stepOutput.type', 'LOOP_ON_ITEMS')
+        assertEqual(stepOutput.type, FlowActionType.LOOP_ON_ITEMS, 'stepOutput.type', 'LOOP_ON_ITEMS')
         // The new LoopStepOutput is needed as casting directly to LoopClassOutput will just cast the data but the class methods will not be available
-        return new LoopStepOutput(stepOutput as GenericStepOutput<ActionType.LOOP_ON_ITEMS, LoopStepResult>)
+        return new LoopStepOutput(stepOutput as GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>)
     }
 
     public isCompleted({ stepName }: { stepName: string }): boolean {
@@ -216,7 +216,7 @@ export class FlowExecutorContext {
         let targetMap = this.steps
         this.currentPath.path.forEach(([stepName, iteration]) => {
             const stepOutput = targetMap[stepName]
-            if (!stepOutput.output || stepOutput.type !== ActionType.LOOP_ON_ITEMS) {
+            if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
                 throw new Error('[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
             }
             targetMap = stepOutput.output.iterations[iteration]
@@ -242,7 +242,7 @@ function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath
     let targetMap = steps
     currentPath.path.forEach(([stepName, iteration]) => {
         const stepOutput = targetMap[stepName]
-        if (!stepOutput.output || stepOutput.type !== ActionType.LOOP_ON_ITEMS) {
+        if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
             throw new Error('[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
         }
         targetMap = stepOutput.output.iterations[iteration]

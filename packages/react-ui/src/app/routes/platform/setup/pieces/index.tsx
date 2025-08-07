@@ -9,6 +9,7 @@ import { ApplyTags } from '@/app/routes/platform/setup/pieces/apply-tags';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
@@ -33,7 +34,6 @@ import {
   PieceScope,
 } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../../components/custom/table-title';
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.managePiecesEnabled;
@@ -185,6 +185,24 @@ const PlatformPiecesPage = () => {
 
   return (
     <div className="flex w-full flex-col items-center justify-center gap-4">
+      <DashboardPageHeader
+        description={t('Manage the pieces that are available to your users')}
+        title={t('Pieces')}
+      >
+        <div className="flex gap-3">
+          <ApplyTags
+            selectedPieces={selectedPieces}
+            onApplyTags={() => {
+              refetchPieces();
+            }}
+          ></ApplyTags>
+          <SyncPiecesButton />
+          <InstallPieceDialog
+            onInstallPiece={() => refetchPieces()}
+            scope={PieceScope.PLATFORM}
+          />
+        </div>
+      </DashboardPageHeader>
       <div className="mx-auto w-full flex-col">
         {!isEnabled && (
           <LockedAlert
@@ -200,30 +218,6 @@ const PlatformPiecesPage = () => {
             }
           />
         )}
-        <div className="mb-4 flex">
-          <TableTitle
-            description={t(
-              'Manage the pieces that are available to your users',
-            )}
-          >
-            {t('Pieces')}
-          </TableTitle>
-          <div className="ml-auto">
-            <div className="flex gap-3">
-              <ApplyTags
-                selectedPieces={selectedPieces}
-                onApplyTags={() => {
-                  refetchPieces();
-                }}
-              ></ApplyTags>
-              <SyncPiecesButton />
-              <InstallPieceDialog
-                onInstallPiece={() => refetchPieces()}
-                scope={PieceScope.PLATFORM}
-              />
-            </div>
-          </div>
-        </div>
         <DataTable
           emptyStateTextTitle={t('No pieces found')}
           emptyStateTextDescription={t(

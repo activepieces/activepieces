@@ -1,5 +1,5 @@
-import { apAxios, AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { apAxios, AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateJobRequest } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -13,6 +13,8 @@ import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { domainHelper } from '../helper/domain-helper'
 import { system } from '../helper/system/system'
 import { platformPlanService } from '../platform-plan/platform-plan.service'
+import { triggerRunService } from '../trigger/trigger-run/trigger-run.service'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
 
@@ -70,14 +72,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         return {}
     })
 
-    app.post('/update-failure-count', UpdateFailureCount, async (request) => {
-        const { flowId, projectId, success } = request.body
-        await flowService(request.log).updateFailureCount({
-            flowId,
-            projectId,
-            success,
-        })
-    })
 
     app.post('/notify-frontend', NotifyFrontendParams, async (request) => {
         const { type, data } = request.body
@@ -158,6 +152,28 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             runResponse,
         )
         return {}
+    })
+
+    app.post('/create-trigger-run', CreateTriggerRunParams, async (request) => {
+        const { status, payload, flowId, simulate, jobId } = request.body
+        const { projectId } = request.principal
+        const trigger = await triggerSourceService(request.log).getByFlowId({
+            flowId,
+            projectId,
+            simulate,
+        })
+        if (!isNil(trigger)) {
+            await triggerRunService(request.log).create({
+                status,
+                payload,
+                triggerSourceId: trigger.id,
+                projectId,
+                pieceName: trigger.pieceName,
+                pieceVersion: trigger.pieceVersion,
+                jobId,
+            })
+        }
+
     })
 
     app.get('/check-task-limit', CheckTaskLimitParams, async (request) => {
@@ -274,7 +290,7 @@ async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePr
     }
 }
 
-async function markParentRunAsFailed({  
+async function markParentRunAsFailed({
     parentRunId,
     childRunId,
     projectId,
@@ -351,15 +367,6 @@ const UpdateRunProgress = {
     },
 }
 
-const UpdateFailureCount = {
-    config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
-    },
-    schema: {
-        body: UpdateFailureCountRequest,
-    },
-}
-
 const GetLockedVersionRequest = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE],
@@ -369,6 +376,16 @@ const GetLockedVersionRequest = {
         response: {
             [StatusCodes.OK]: PopulatedFlow,
         },
+    },
+}
+
+const CreateTriggerRunParams = {
+
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {
+        body: CreateTriggerRunRequestBody,
     },
 }
 

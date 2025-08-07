@@ -11,8 +11,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { TableTitle } from '@/components/custom/table-title';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -152,27 +152,24 @@ const ProjectReleasesPage = () => {
 
   return (
     <div className="flex-col w-full gap-4">
-      <div className="mb-8 flex items-center justify-between">
-        <TableTitle
-          description={
-            <>
-              {t(
-                'Track and manage your project version history and deployments. ',
-              )}
-              <a
-                href="https://www.activepieces.com/docs/operations/git-sync"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                {t('Environments & Releases')}
-              </a>
-            </>
-          }
-        >
-          {t('Project Releases')}
-        </TableTitle>
-
+      <DashboardPageHeader
+        title={t('Project Releases')}
+        description={
+          <>
+            {t(
+              'Track and manage your project version history and deployments. ',
+            )}
+            <a
+              href="https://www.activepieces.com/docs/operations/git-sync"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              {t('Environments & Releases')}
+            </a>
+          </>
+        }
+      >
         <div className="flex items-center gap-2">
           <PushEverythingDialog>
             <Button
@@ -227,7 +224,7 @@ const ProjectReleasesPage = () => {
             </DropdownMenu>
           </PermissionNeededTooltip>
         </div>
-      </div>
+      </DashboardPageHeader>
       <DataTable
         emptyStateTextTitle={t('No project releases found')}
         emptyStateTextDescription={t('Create a project release to get started')}

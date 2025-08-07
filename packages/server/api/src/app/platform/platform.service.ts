@@ -49,7 +49,7 @@ const DEFAULT_PLAN = {
     managePiecesEnabled: false,
     manageTemplatesEnabled: true,
     customAppearanceEnabled: false,
-    manageProjectsEnabled: false,
+    manageProjectsEnabled: true,
     projectRolesEnabled: true,
     customDomainsEnabled: false,
     apiKeysEnabled: false,

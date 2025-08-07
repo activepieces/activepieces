@@ -7,7 +7,7 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
-import { Action, isNil, Trigger } from '@activepieces/shared';
+import { FlowAction, isNil, FlowTrigger } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
@@ -22,6 +22,7 @@ type SelectPiecePropertyProps = {
   disabled: boolean;
   onChange: (value: unknown | undefined) => void;
   showDeselect?: boolean;
+  shouldRefreshOnSearch?: boolean;
 };
 const DynamicDropdownPiecePropertyImplementation = React.memo(
   (props: SelectPiecePropertyProps) => {
@@ -29,10 +30,12 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       state.flowVersion,
       state.readonly,
     ]);
-    const form = useFormContext<Action | Trigger>();
+    const form = useFormContext<FlowAction | FlowTrigger>();
     const isFirstRender = useRef(true);
     const previousValues = useRef<undefined | unknown[]>(undefined);
-
+    const firstDropdownState = useRef<DropdownState<unknown> | undefined>(
+      undefined,
+    );
     const newRefreshers = [...props.refreshers, 'auth'];
     const [dropdownState, setDropdownState] = useState<DropdownState<unknown>>({
       disabled: false,
@@ -68,7 +71,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       }),
     );
     /* eslint-enable react-hooks/rules-of-hooks */
-    const refresh = () => {
+    const refresh = (term?: string) => {
       const input: Record<string, unknown> = {};
       newRefreshers.forEach((refresher, index) => {
         input[refresher] = refresherValues[index];
@@ -86,11 +89,15 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
             input,
             flowVersionId: flowVersion.id,
             flowId: flowVersion.flowId,
+            searchValue: term,
           },
           propertyType: PropertyType.DROPDOWN,
         },
         {
           onSuccess: (response) => {
+            if (!firstDropdownState.current) {
+              firstDropdownState.current = response.options;
+            }
             setDropdownState(response.options);
           },
         },
@@ -112,26 +119,28 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
 
     const selectOptions = dropdownState.options.map((option) => ({
       label: option.label,
-      value: option.value as React.Key,
+      value: option.value,
     }));
+    const isDisabled = dropdownState.disabled || props.disabled;
     return props.multiple ? (
       <MultiSelectPieceProperty
         placeholder={dropdownState.placeholder ?? t('Select an option')}
         options={selectOptions}
         loading={isPending}
         onChange={(value) => props.onChange(value)}
-        disabled={dropdownState.disabled || props.disabled}
+        disabled={isDisabled}
         initialValues={props.value as unknown[]}
         showDeselect={
           props.showDeselect &&
           !isNil(props.value) &&
           Array.isArray(props.value) &&
           props.value.length > 0 &&
-          !props.disabled &&
-          !dropdownState.disabled
+          !isDisabled
         }
         showRefresh={!isPending && !readonly}
         onRefresh={refresh}
+        refreshOnSearch={props.shouldRefreshOnSearch ? refresh : undefined}
+        cachedOptions={firstDropdownState.current?.options ?? []}
       />
     ) : (
       <SearchableSelect
@@ -139,13 +148,15 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         disabled={dropdownState.disabled || props.disabled}
         loading={isPending}
         placeholder={dropdownState.placeholder ?? t('Select an option')}
-        value={props.value as React.Key}
+        value={props.value}
         onChange={(value) => props.onChange(value)}
         showDeselect={
           props.showDeselect && !isNil(props.value) && !props.disabled
         }
         onRefresh={refresh}
         showRefresh={!isPending && !readonly}
+        refreshOnSearch={props.shouldRefreshOnSearch ? refresh : undefined}
+        cachedOptions={firstDropdownState.current?.options ?? []}
       />
     );
   },
