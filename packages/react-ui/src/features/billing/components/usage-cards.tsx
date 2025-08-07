@@ -47,7 +47,7 @@ export const UsageCards = ({
       />
 
       <UsageCard
-        icon={<McpSvg isActive={false} className="size-4" />}
+        icon={<McpSvg className="size-4" />}
         title={t('MCP Servers')}
         used={usage.mcps}
         total={plan.mcpLimit}
