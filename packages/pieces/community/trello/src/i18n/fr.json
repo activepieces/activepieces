@@ -28,6 +28,14 @@
   "Bottom": "Bas",
   "Card Moved to list": "Carte déplacée vers la liste",
   "New Card": "Nouvelle carte",
+  "Card Deadline": "Card Deadline",
   "Trigger when a card is moved to the list specified": "Déclencher quand une carte est déplacée dans la liste spécifiée",
-  "Trigger when a new card is created": "Déclencher quand une nouvelle carte est créée"
+  "Trigger when a new card is created": "Déclencher quand une nouvelle carte est créée",
+  "Triggers at a specified time before a card deadline.": "Triggers at a specified time before a card deadline.",
+  "Time unit": "Time unit",
+  "Time before due": "Time before due",
+  "Select unit for time before due": "Select unit for time before due",
+  "How long before the due date the trigger should run (use with time unit)": "How long before the due date the trigger should run (use with time unit)",
+  "Minutes": "Minutes",
+  "Hours": "Hours"
 }
