@@ -1,0 +1,21 @@
+{
+  "NetSuite": "NetSuite",
+  "Account ID": "帐户 ID",
+  "Consumer Key": "消费者密钥",
+  "Consumer Secret": "消费者密钥",
+  "Token ID": "Token ID",
+  "Token Secret": "令牌密钥",
+  "Your NetSuite account ID": "您的 NetSuite 帐户 ID",
+  "Your NetSuite consumer key": "您的 NetSuite 消费密钥",
+  "Your NetSuite consumer secret": "您的 NetSuite 消费者密钥",
+  "Your NetSuite token ID": "您的 NetSuite token ID",
+  "Your NetSuite token secret": "您的 NetSuite 令牌密钥",
+  "Get Vendor": "Get Vendor",
+  "Get Customer": "获取客户",
+  "Gets vendor details from NetSuite.": "从 NetSuite获取供应商详细信息。",
+  "Gets customer details from NetSuite.": "从 NetSuite获取客户详细信息。",
+  "Vendor ID": "供货商ID",
+  "Customer ID": "客户 ID",
+  "The ID of the vendor to retrieve.": "要检索的供应商ID。",
+  "The ID of the customer to retrieve.": "要检索的客户ID。"
+}
