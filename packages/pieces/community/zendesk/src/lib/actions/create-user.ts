@@ -5,7 +5,11 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
-import { organizationIdDropdown, customRoleIdDropdown } from '../common/props';
+import {
+  organizationIdDropdown,
+  customRoleIdDropdown,
+  agentBrandIdDropdown,
+} from '../common/props';
 
 type AuthProps = {
   email: string;
@@ -166,12 +170,7 @@ export const createUserAction = createAction({
       description: "The ID of the user's default group (for agents)",
       required: false,
     }),
-    agent_brand_ids: Property.Array({
-      displayName: 'Agent Brand IDs',
-      description:
-        'Array of brand IDs that the agent can access (for agents only)',
-      required: false,
-    }),
+    agent_brand_ids: agentBrandIdDropdown,
     tags: Property.Array({
       displayName: 'Tags',
       description: 'Array of tags to apply to the user',

@@ -8,7 +8,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
-import { organizationIdDropdown, brandIdDropdown, problemTicketIdDropdown } from '../common/props';
+import { organizationIdDropdown, brandIdDropdown, problemTicketIdDropdown, groupIdDropdown } from '../common/props';
 
 type AuthProps = {
   email: string;
@@ -105,11 +105,7 @@ export const createTicketAction = createAction({
       required: false,
     }),
     organization_id: organizationIdDropdown,
-    group_id: Property.Number({
-      displayName: 'Group ID',
-      description: 'The ID of the group to assign the ticket to.',
-      required: false,
-    }),
+    group_id: groupIdDropdown,
     external_id: Property.ShortText({
       displayName: 'External ID',
       description: 'An external ID for the ticket (useful for integrations).',

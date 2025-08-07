@@ -79,6 +79,18 @@ interface ZendeskCustomRolesResponse {
   custom_roles: ZendeskCustomRole[];
 }
 
+interface ZendeskGroup {
+  id: number;
+  name: string;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ZendeskGroupsResponse {
+  groups: ZendeskGroup[];
+}
+
 export const ticketIdDropdown = Property.Dropdown({
   displayName: 'Ticket',
   description: 'Select the ticket to work with',
@@ -393,3 +405,106 @@ export const customRoleIdDropdown = Property.Dropdown({
     }
   },
 });
+
+export const agentBrandIdDropdown = Property.MultiSelectDropdown({
+  displayName: 'Agent Brand Access',
+  description: 'Select the brands that the agent can access (for agents only)',
+  required: false,
+  refreshers: ['auth'],
+  options: async (propsValue) => {
+    const auth = propsValue.auth;
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Connect your Zendesk account first',
+      };
+    }
+
+    try {
+      const authentication = auth as AuthProps;
+      const response = await httpClient.sendRequest<ZendeskBrandsResponse>({
+        url: `https://${authentication.subdomain}.zendesk.com/api/v2/brands.json`,
+        method: HttpMethod.GET,
+        authentication: {
+          type: AuthenticationType.BASIC,
+          username: authentication.email + '/token',
+          password: authentication.token,
+        },
+      });
+
+      const brands = response.body.brands;
+
+      return {
+        disabled: false,
+        options: brands
+          .filter((brand) => brand.active) // Only show active brands
+          .map((brand) => ({
+            label: `${brand.name}${brand.default ? ' (Default)' : ''} - ${brand.subdomain}`,
+            value: brand.id.toString(),
+          })),
+        placeholder:
+          brands.length === 0 ? 'No brands available' : 'Select brands for agent access',
+      };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return {
+        disabled: true,
+        options: [],
+        placeholder: `Error loading brands: ${errorMessage}`,
+      };
+    }
+  },
+});
+
+export const groupIdDropdown = Property.Dropdown({
+  displayName: 'Group',
+  description: 'Select the group to assign',
+  required: false,
+  refreshers: ['auth'],
+  options: async (propsValue) => {
+    const auth = propsValue.auth;
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Connect your Zendesk account first',
+      };
+    }
+
+    try {
+      const authentication = auth as AuthProps;
+      const response = await httpClient.sendRequest<ZendeskGroupsResponse>({
+        url: `https://${authentication.subdomain}.zendesk.com/api/v2/groups.json?per_page=100`,
+        method: HttpMethod.GET,
+        authentication: {
+          type: AuthenticationType.BASIC,
+          username: authentication.email + '/token',
+          password: authentication.token,
+        },
+      });
+
+      const groups = response.body.groups;
+
+      return {
+        disabled: false,
+        options: groups.map((group) => ({
+          label: `${group.name}${group.is_public ? ' (Public)' : ' (Private)'} - ID: ${group.id}`,
+          value: group.id.toString(),
+        })),
+        placeholder:
+          groups.length === 0 ? 'No groups available' : 'Select a group',
+      };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return {
+        disabled: true,
+        options: [],
+        placeholder: `Error loading groups: ${errorMessage}`,
+      };
+    }
+  },
+});
+

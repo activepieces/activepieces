@@ -5,7 +5,11 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
-import { organizationIdDropdown, ticketIdDropdown } from '../common/props';
+import {
+  organizationIdDropdown,
+  ticketIdDropdown,
+  groupIdDropdown,
+} from '../common/props';
 
 type AuthProps = {
   email: string;
@@ -101,11 +105,7 @@ export const updateTicketAction = createAction({
       required: false,
     }),
     organization_id: organizationIdDropdown,
-    group_id: Property.Number({
-      displayName: 'Group ID',
-      description: 'Update the group assigned to the ticket',
-      required: false,
-    }),
+    group_id: groupIdDropdown,
     external_id: Property.ShortText({
       displayName: 'External ID',
       description: 'Update the external ID for the ticket',
