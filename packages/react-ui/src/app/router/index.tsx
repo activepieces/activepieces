@@ -43,6 +43,7 @@ import McpServersPage from '../routes/mcp-servers';
 import McpPage from '../routes/mcp-servers/id';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
+import TriggerHealthPage from '../routes/platform/infra/triggers';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
 import ProjectsPage from '../routes/platform/projects';
@@ -546,6 +547,16 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="System Health">
           <SettingsHealthPage />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/infrastructure/triggers',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Trigger Health">
+          <TriggerHealthPage />
         </PageTitle>
       </PlatformAdminContainer>
     ),
