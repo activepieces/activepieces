@@ -114,6 +114,42 @@ It is strongly recommended that you add your credit card information to your Ope
         streaming: true,
         languageModels: [
             {
+                displayName: 'GPT-5',
+                instance: openai('gpt-5'),
+                functionCalling: true,
+                pricing: {
+                    input: 1.25,
+                    output: 10.00,
+                },
+            },
+            {
+                displayName: 'GPT-5 Chat',
+                instance: openai('gpt-5-chat-latest'),
+                functionCalling: false,
+                pricing: {
+                    input: 1.25,
+                    output: 10.00,
+                },
+            },
+            {
+                displayName: 'GPT-5 Mini',
+                instance: openai('gpt-5-mini'),
+                functionCalling: true,
+                pricing: {
+                    input: 0.25,
+                    output: 2.00,
+                },
+            },
+            {
+                displayName: 'GPT-5 Nano',
+                instance: openai('gpt-5-nano'),
+                functionCalling: true,
+                pricing: {
+                    input: 0.05,
+                    output: 0.40,
+                },
+            },
+            {
                 displayName: 'GPT-4o',
                 instance: openai('gpt-4o'),
                 functionCalling: true,
