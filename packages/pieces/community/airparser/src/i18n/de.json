@@ -1,0 +1,20 @@
+{
+  "Airparser": "Airparser",
+  "Extract structured data from emails, PDFs, or documents with Airparser.": "Extrahieren Sie strukturierte Daten aus E-Mails, PDFs oder Dokumenten mit Airparser.",
+  "You can find your API key in the Airparser dashboard under Account Settings.": "Ihren API-Schlüssel finden Sie im Airparser-Dashboard in den Kontoeinstellungen.",
+  "Get Data from Document": "Daten aus dem Dokument abrufen",
+  "Upload Document": "Dokument hochladen",
+  "Retrieves parsed JSON data from a specific document.": "Ruft die analysierten JSON-Daten eines bestimmten Dokuments ab.",
+  "Upload a document to an Airparser inbox for parsing.": "Laden Sie ein Dokument in einen Airparser-Posteingang zum Parsen hoch.",
+  "Inbox": "Inbox",
+  "Document": "Dokument",
+  "File": "Datei",
+  "File Name": "Dateiname",
+  "Metadata": "Metadaten",
+  "The document file to upload for parsing.": "Die Dokumentdatei, die zum Parsen hochgeladen werden soll.",
+  "Optional metadata to associate with the document.": "Optionale Metadaten, die dem Dokument zugeordnet werden sollen.",
+  "Document Parsed": "Dokument analysiert",
+  "Triggers when a new document is parsed in a specific inbox.": "Wird ausgelöst, wenn ein neues Dokument in einem bestimmten Posteingang analysiert wird.",
+  "Markdown": "Markdown",
+  "## Airparser Webhook Setup\n\t\t\tTo use this trigger, you need to manually set up a webhook in your Airparser account:\n\n\t\t\t1. Login to your Airparser account.\n\t\t\t2. Navigate to **Integrations** > **Webhooks** in the left sidebar.\n\t\t\t3. Enter the following URL in the webhooks field and select **Document Parsed** as webhook trigger:\n\t\t\t```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n\t\t\t4. Click Save to register the webhook.\n\t\t\t": "## Airparser Webhook Setup\n\t\t\tUm diesen Trigger nutzen zu können, müssen Sie manuell einen Webhook in Ihrem Airparser-Konto einrichten:\n\n\t\t\t1. Melden Sie sich mit Ihrem Airparser-Konto an.\n\t\t\t2. Navigieren Sie zu **Integrations** > **Webhooks** in der linken Seitenleiste.\n\t\t\t3. Geben Sie die folgende URL im Webhooks Feld ein und wählen Sie **Document Parsed** als Webhook Trigger aus:\n\t\t\t```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n\t\t\t4. Klicken Sie auf Speichern, um den Webhook zu registrieren.\n\t\t\t"
+}
