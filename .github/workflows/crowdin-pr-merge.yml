@@ -47,6 +47,32 @@ jobs:
           echo "Running Node.js script..."
           npm run bump-translated-pieces
       
+      - name: Check for changes and commit
+        run: |
+          # Check if there are any changes
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "Changes detected, committing..."
+            
+            # Configure git
+            git config --local user.email "apps@activepieces.com"
+            git config --local user.name "Automerge Crowdin PR Action"
+            
+            # Add all changes
+            git add .
+            
+            # Commit with a descriptive message
+            git commit -m "Auto-update: Bump translated pieces [skip ci]"
+            
+            # Push changes back to the PR branch
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+            
+            echo "Changes committed and pushed to PR branch"
+          else
+            echo "No changes detected, skipping commit"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Auto merge PR
         uses: actions/github-script@v7
         with:
@@ -58,4 +84,4 @@ jobs:
               merge_method: 'squash'
             })
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CROWDIN_PRS }}
