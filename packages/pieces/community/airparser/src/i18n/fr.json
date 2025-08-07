@@ -1,0 +1,20 @@
+{
+  "Airparser": "Aéroparseur",
+  "Extract structured data from emails, PDFs, or documents with Airparser.": "Extraire des données structurées des courriels, des PDF ou des documents avec Airparser.",
+  "You can find your API key in the Airparser dashboard under Account Settings.": "Vous pouvez trouver votre clé API dans le tableau de bord Airparser sous Paramètres du compte.",
+  "Get Data from Document": "Récupérer les données du document",
+  "Upload Document": "Télécharger le document",
+  "Retrieves parsed JSON data from a specific document.": "Récupère les données JSON analysées à partir d'un document spécifique.",
+  "Upload a document to an Airparser inbox for parsing.": "Télécharger un document dans une boîte de réception Airparser pour l'analyse.",
+  "Inbox": "Boîte de réception",
+  "Document": "Document",
+  "File": "Ficher",
+  "File Name": "Nom du fichier",
+  "Metadata": "Métadonnées",
+  "The document file to upload for parsing.": "Le fichier de document à télécharger pour l'analyse.",
+  "Optional metadata to associate with the document.": "Métadonnées facultatives à associer au document.",
+  "Document Parsed": "Document analysé",
+  "Triggers when a new document is parsed in a specific inbox.": "Déclenche lorsqu'un nouveau document est analysé dans une boîte de réception spécifique.",
+  "Markdown": "Markdown",
+  "## Airparser Webhook Setup\n\t\t\tTo use this trigger, you need to manually set up a webhook in your Airparser account:\n\n\t\t\t1. Login to your Airparser account.\n\t\t\t2. Navigate to **Integrations** > **Webhooks** in the left sidebar.\n\t\t\t3. Enter the following URL in the webhooks field and select **Document Parsed** as webhook trigger:\n\t\t\t```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n\t\t\t4. Click Save to register the webhook.\n\t\t\t": "## Configuration du Webhook Airparser\n\t\t\tPour utiliser ce déclencheur, vous devez configurer manuellement un webhook dans votre compte Airparser :\n\n\t\t\t1. Connectez-vous à votre compte Airparser.\n\t\t\t2. Accédez à **Intégrations** > **Webhooks** dans la barre latérale gauche.\n\t\t\t3. Entrez l'URL suivante dans le champ Webhooks et sélectionnez **Document Parsed** comme déclencheur de webhook :\n\t\t\t```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n\t\t\t4. Cliquez sur Enregistrer pour enregistrer le webhook.\n\t\t\t"
+}
