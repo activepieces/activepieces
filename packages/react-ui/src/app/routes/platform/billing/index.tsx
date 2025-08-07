@@ -7,15 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { ActivateLicenseDialog } from '@/features/billing/components/activate-license-dialog';
+import { ActiveFlowAddon } from '@/features/billing/components/active-flow-addon';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
 import { AiCreditsUsageTable } from '@/features/billing/components/ai-credits-usage-table';
-import { BusinessUserSeats } from '@/features/billing/components/business-user-seats';
 import { FeatureStatus } from '@/features/billing/components/features-status';
 import { LicenseKey } from '@/features/billing/components/lisence-key';
+import { ProjectAddon } from '@/features/billing/components/project-addon';
 import { SubscriptionInfo } from '@/features/billing/components/subscription-info';
-import { TasksUsage } from '@/features/billing/components/tasks-usage';
 import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { UsageCards } from '@/features/billing/components/usage-cards';
+import { UserSeatAddon } from '@/features/billing/components/user-seat-addon';
 import {
   billingMutations,
   billingQueries,
@@ -45,7 +46,7 @@ export default function Billing() {
     status as ApSubscriptionStatus,
   );
   const isBusinessPlan = platformPlanInfo?.plan.plan === PlanName.BUSINESS;
-  const isEnterpriseEdition = edition === ApEdition.ENTERPRISE;
+  const isFree = platformPlanInfo?.plan.plan === PlanName.FREE;
   const isEnterprise =
     !isNil(platformPlanInfo?.plan.licenseKey) ||
     edition === ApEdition.ENTERPRISE;
@@ -102,23 +103,27 @@ export default function Billing() {
       <section className="flex flex-col w-full gap-6">
         {!isEnterprise && <SubscriptionInfo info={platformPlanInfo} />}
 
-        <UsageCards platformSubscription={platformPlanInfo} />
-        {isBusinessPlan && (
-          <BusinessUserSeats platformSubscription={platformPlanInfo} />
-        )}
-        {!isEnterpriseEdition && (
-          <>
-            <AICreditUsage platformSubscription={platformPlanInfo} />
-            <TasksUsage platformSubscription={platformPlanInfo} />
-          </>
-        )}
+      <UsageCards platformSubscription={platformPlanInfo} />
 
-        {isEnterpriseEdition && (
-          <>
-            <h3 className="text-lg font-semibold">{t('AI Credits')}</h3>
-            <AiCreditsUsageTable />
-          </>
-        )}
+      {!isFree && <ActiveFlowAddon platformSubscription={platformPlanInfo} />}
+
+      {isBusinessPlan && (
+        <div className="grid grid-cols-2 gap-6">
+          <ProjectAddon platformSubscription={platformPlanInfo} />
+          <UserSeatAddon platformSubscription={platformPlanInfo} />
+        </div>
+      )}
+
+      {!isEnterprise && (
+        <AICreditUsage platformSubscription={platformPlanInfo} />
+      )}
+
+      {isEnterprise && (
+        <>
+          <h3 className="text-lg font-semibold">{t('AI Credits')}</h3>
+          <AiCreditsUsageTable />
+        </>
+      )}
 
         {isEnterprise ? (
           <LicenseKey platform={platform} />

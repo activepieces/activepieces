@@ -9,7 +9,7 @@ import { emailService } from '../../helper/email/email-service'
 import { platformPlanController } from './platform-plan.controller'
 import { platformPlanService } from './platform-plan.service'
 import { stripeBillingController } from './stripe-billing.controller'
-import { AI_CREDITS_PRICE_ID, stripeHelper } from './stripe-helper'
+import { AI_CREDIT_PRICE_ID, stripeHelper } from './stripe-helper'
 
 export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.AI_USAGE_REPORT, async (data) => {
@@ -30,7 +30,7 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
 
         const subscription: Stripe.Subscription = await stripe.subscriptions.retrieve(subscriptionId)
 
-        const item = subscription.items.data.find((item) => item.price.id === AI_CREDITS_PRICE_ID)
+        const item = subscription.items.data.find((item) => item.price.id === AI_CREDIT_PRICE_ID)
         if (isNil(item)) {
             return
         }
