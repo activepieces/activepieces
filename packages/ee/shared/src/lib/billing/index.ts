@@ -118,6 +118,11 @@ export const PLAN_HIERARCHY = {
     [PlanName.ENTERPRISE]: 3,
 } as const
 
+export const BILLING_CYCLE_HIERARCHY = {
+    [BillingCycle.MONTHLY]: 0,
+    [BillingCycle.ANNUAL]: 1,
+} as const
+
 export const PRICE_ID_MAP = {
   [PRICE_NAMES.PLUS_PLAN]: {
     [BillingCycle.MONTHLY]: {

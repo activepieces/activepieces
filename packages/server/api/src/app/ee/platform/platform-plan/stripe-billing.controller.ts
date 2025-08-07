@@ -12,39 +12,9 @@ import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { emailService } from '../../helper/email/email-service'
 import { platformUsageService } from '../platform-usage-service'
-import { PlatformPlanHelper } from './platform-plan-helper'
+import { ACTIVE_FLOW_PRICE_IDS, AI_CREDIT_PRICE_IDS, BUSINESS_PLAN_PRICE_IDS, PlatformPlanHelper, PLUS_PLAN_PRICE_IDS, PROJECT_PRICE_IDS, USER_SEAT_PRICE_IDS } from './platform-plan-helper'
 import { platformPlanRepo, platformPlanService } from './platform-plan.service'
-import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID, BUSINESS_PLAN_PRICE_ID, PLUS_PLAN_PRICE_ID, PROJECT_PRICE_ID, stripeHelper, USER_SEAT_PRICE_ID } from './stripe-helper'
-
-const AI_CREDIT_PRICE_IDS = [
-  AI_CREDIT_PRICE_ID[BillingCycle.ANNUAL],
-  AI_CREDIT_PRICE_ID[BillingCycle.MONTHLY]
-]
-
-const PLUS_PLAN_PRICE_IDS = [
-  PLUS_PLAN_PRICE_ID[BillingCycle.ANNUAL],
-  PLUS_PLAN_PRICE_ID[BillingCycle.MONTHLY]
-]
-
-const BUSINESS_PLAN_PRICE_IDS = [
-  BUSINESS_PLAN_PRICE_ID[BillingCycle.ANNUAL],
-  BUSINESS_PLAN_PRICE_ID[BillingCycle.MONTHLY]
-]
-
-const ACTIVE_FLOW_PRICE_IDS = [
-  ACTIVE_FLOW_PRICE_ID[BillingCycle.ANNUAL],
-  ACTIVE_FLOW_PRICE_ID[BillingCycle.MONTHLY]
-]
-
-const USER_SEAT_PRICE_IDS = [
-  USER_SEAT_PRICE_ID[BillingCycle.ANNUAL],
-  USER_SEAT_PRICE_ID[BillingCycle.MONTHLY]
-]
-
-const PROJECT_PRICE_IDS = [
-  PROJECT_PRICE_ID[BillingCycle.ANNUAL],
-  PROJECT_PRICE_ID[BillingCycle.MONTHLY]
-]
+import { stripeHelper } from './stripe-helper'
 
 export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
@@ -100,7 +70,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             }
                         }
 
-                        const newPlan = PlatformPlanHelper.getPlanFromSubscription(subscription)
+                        const { plan: newPlan, cycle } = PlatformPlanHelper.getPlanFromSubscription(subscription)
                         request.log.info('Processing subscription event', {
                             webhookType: webhook.type,
                             subscriptionStatus: subscription.status,
@@ -143,6 +113,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             ...newLimits,
                             platformId,
                             eligibleForTrial: false,
+                            stripeBillingCycle: cycle,
                             stripeSubscriptionId: isFreePlan ? undefined : stripeSubscriptionId,
                             aiCreditsOverageState: isFreePlan || isTrialSubscription ? AiOverageState.NOT_ALLOWED : AiOverageState.ALLOWED_BUT_OFF,
                         })

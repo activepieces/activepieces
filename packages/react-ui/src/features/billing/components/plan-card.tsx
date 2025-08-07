@@ -28,10 +28,9 @@ export const PlanCard = ({
   const isTrial =
     billingInformation?.plan.stripeSubscriptionStatus ===
     ApSubscriptionStatus.TRIALING;
+  const currentBillingCycle = billingInformation?.plan.stripeBillingCycle
 
-  const isSelected =
-    (currentPlan === plan.name && !isTrial) ||
-    (isTrial && plan.name === PlanName.FREE);
+  const isSelected = (isTrial && plan.name === PlanName.FREE) || ((currentPlan === plan.name && currentBillingCycle === cycle) && !isTrial)
   const isPopular = plan.name === PlanName.PLUS && !isSelected;
 
   const { mutate: updateSubscription, isPending: isUpdatingSubscription } =

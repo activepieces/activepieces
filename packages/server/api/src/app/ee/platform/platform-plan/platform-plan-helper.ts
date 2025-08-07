@@ -1,4 +1,4 @@
-import { ApSubscriptionStatus, BillingCycle, METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, PLAN_HIERARCHY, PlanName, PRICE_ID_MAP, PRICE_NAMES, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, BILLING_CYCLE_HIERARCHY, BillingCycle, METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, PLAN_HIERARCHY, PlanName, PRICE_ID_MAP, PRICE_NAMES, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
 import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlatformPlanLimits, PlatformUsageMetric, UserStatus } from '@activepieces/shared'
 import { flowService } from '../../../flows/flow/flow.service'
 import { system } from '../../../helper/system/system'
@@ -12,6 +12,43 @@ import { AppSystemProp } from '@activepieces/server-shared'
 
 const edition = system.getEdition()
 const stripeSecretKey = system.get(AppSystemProp.STRIPE_SECRET_KEY)
+
+export const PLUS_PLAN_PRICE_ID = getPriceIdFor(PRICE_NAMES.PLUS_PLAN)
+export const BUSINESS_PLAN_PRICE_ID = getPriceIdFor(PRICE_NAMES.BUSINESS_PLAN)
+export const AI_CREDIT_PRICE_ID = getPriceIdFor(PRICE_NAMES.AI_CREDITS)
+export const ACTIVE_FLOW_PRICE_ID = getPriceIdFor(PRICE_NAMES.ACTIVE_FLOWS)
+export const PROJECT_PRICE_ID = getPriceIdFor(PRICE_NAMES.PROJECT)
+export const USER_SEAT_PRICE_ID = getPriceIdFor(PRICE_NAMES.USER_SEAT)
+
+export const AI_CREDIT_PRICE_IDS = [
+  AI_CREDIT_PRICE_ID[BillingCycle.ANNUAL],
+  AI_CREDIT_PRICE_ID[BillingCycle.MONTHLY]
+]
+
+export const PLUS_PLAN_PRICE_IDS = [
+  PLUS_PLAN_PRICE_ID[BillingCycle.ANNUAL],
+  PLUS_PLAN_PRICE_ID[BillingCycle.MONTHLY]
+]
+
+export const BUSINESS_PLAN_PRICE_IDS = [
+  BUSINESS_PLAN_PRICE_ID[BillingCycle.ANNUAL],
+  BUSINESS_PLAN_PRICE_ID[BillingCycle.MONTHLY]
+]
+
+export const ACTIVE_FLOW_PRICE_IDS = [
+  ACTIVE_FLOW_PRICE_ID[BillingCycle.ANNUAL],
+  ACTIVE_FLOW_PRICE_ID[BillingCycle.MONTHLY]
+]
+
+export const USER_SEAT_PRICE_IDS = [
+  USER_SEAT_PRICE_ID[BillingCycle.ANNUAL],
+  USER_SEAT_PRICE_ID[BillingCycle.MONTHLY]
+]
+
+export const PROJECT_PRICE_IDS = [
+  PROJECT_PRICE_ID[BillingCycle.ANNUAL],
+  PROJECT_PRICE_ID[BillingCycle.MONTHLY]
+]
 
 export const PlatformPlanHelper = {
     checkQuotaOrThrow: async (params: QuotaCheckParams): Promise<void> => {
@@ -114,6 +151,8 @@ export const PlatformPlanHelper = {
         const {
             currentActiveFlowsLimit,
             currentPlan,
+            currentCycle,
+            newCycle,
             currentProjectsLimit,
             currentUserSeatsLimit,
             newActiveFlowsLimit,
@@ -122,14 +161,24 @@ export const PlatformPlanHelper = {
             newUserSeatsLimit,
         } = params
 
-        const currentTier = PLAN_HIERARCHY[currentPlan]
-        const newTier = PLAN_HIERARCHY[newPlan]
+        const currentPlanTier = PLAN_HIERARCHY[currentPlan]
+        const newPlanTier = PLAN_HIERARCHY[newPlan]
+        const currentCycleTier = BILLING_CYCLE_HIERARCHY[currentCycle]
+        const newCycleTier = BILLING_CYCLE_HIERARCHY[newCycle]
 
-        if (newTier > currentTier) {
+        if (newCycleTier > currentCycleTier) {
             return true
         }
 
-        if (newTier < currentTier) {
+        if (newCycleTier < currentCycleTier) {
+            return false
+        }
+
+        if (newPlanTier > currentPlanTier) {
+            return true
+        }
+
+        if (newPlanTier < currentPlanTier) {
             return false
         }
 
@@ -143,44 +192,48 @@ export const PlatformPlanHelper = {
     checkIsTrialSubscription: (subscription: Stripe.Subscription): boolean => {
         return isNil(subscription.metadata['trialSubscription']) ? false : subscription.metadata['trialSubscription'] === 'true'
     },
-    getPlanFromSubscription: (subscription: Stripe.Subscription): PlanName => {
+    getPlanFromSubscription: (subscription: Stripe.Subscription): {plan: PlanName, cycle: BillingCycle} => {
         const isDev = stripeSecretKey?.startsWith('sk_test')
         const env = isDev ? 'dev' : 'prod'
 
         if (subscription.status === ApSubscriptionStatus.TRIALING) {
-            return PlanName.PLUS
+            return { plan: PlanName.PLUS, cycle: BillingCycle.MONTHLY }
         }
 
         if (subscription.status !== ApSubscriptionStatus.ACTIVE) {
-            return PlanName.FREE
+            return { plan: PlanName.FREE, cycle: BillingCycle.MONTHLY }
         }
 
         const priceId = subscription.items.data[0].price.id
         switch (priceId) {
             case PRICE_ID_MAP[PRICE_NAMES.PLUS_PLAN][BillingCycle.ANNUAL][env]:
+                return { plan: PlanName.PLUS, cycle: BillingCycle.ANNUAL }
             case PRICE_ID_MAP[PRICE_NAMES.PLUS_PLAN][BillingCycle.MONTHLY][env]:
-                return PlanName.PLUS
+                return { plan: PlanName.PLUS, cycle: BillingCycle.MONTHLY }
             case PRICE_ID_MAP[PRICE_NAMES.BUSINESS_PLAN][BillingCycle.ANNUAL][env]:
+                return { plan: PlanName.BUSINESS, cycle: BillingCycle.ANNUAL }
             case PRICE_ID_MAP[PRICE_NAMES.BUSINESS_PLAN][BillingCycle.MONTHLY][env]:
-                return PlanName.BUSINESS
+                return { plan: PlanName.BUSINESS, cycle: BillingCycle.MONTHLY }
             default:
-                return PlanName.FREE
+                return { plan: PlanName.FREE, cycle: BillingCycle.MONTHLY }
         }
     },
-    getPriceIdFor: (price: PRICE_NAMES): Record<BillingCycle, string> => {
-        const isDev = stripeSecretKey?.startsWith('sk_test')
-        const env = isDev ? 'dev' : 'prod'
+    
+}
 
-        const entry = PRICE_ID_MAP[price]
+function getPriceIdFor(price: PRICE_NAMES): Record<BillingCycle, string> {
+    const isDev = stripeSecretKey?.startsWith('sk_test')
+    const env = isDev ? 'dev' : 'prod'
 
-        if (!entry) {
-            throw new Error(`No price with the given price name '${price}' is available`)
-        }
+    const entry = PRICE_ID_MAP[price]
 
-        return {
-            [BillingCycle.MONTHLY]: entry[BillingCycle.MONTHLY][env],
-            [BillingCycle.ANNUAL]: entry[BillingCycle.ANNUAL][env]
-        }
+    if (!entry) {
+        throw new Error(`No price with the given price name '${price}' is available`)
+    }
+
+    return {
+        [BillingCycle.MONTHLY]: entry[BillingCycle.MONTHLY][env],
+        [BillingCycle.ANNUAL]: entry[BillingCycle.ANNUAL][env]
     }
 }
 
@@ -285,6 +338,8 @@ type CheckLegitSubscriptionUpdateOrThrowParams = {
 type IsUpgradeEperienceParams = {
     currentPlan: PlanName 
     newPlan: PlanName
+    currentCycle: BillingCycle,
+    newCycle: BillingCycle,
     newUserSeatsLimit?: number
     newProjectsLimit?: number
     newActiveFlowsLimit?: number

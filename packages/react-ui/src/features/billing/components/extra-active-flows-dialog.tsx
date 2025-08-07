@@ -152,7 +152,7 @@ export const ExtraActiveFlowsDialog = ({
                 addons: {
                   activeFlows: newActiveFlowCount,
                 },
-                cycle: BillingCycle.MONTHLY
+                cycle: plan.stripeBillingCycle as BillingCycle
               })
             }
             disabled={

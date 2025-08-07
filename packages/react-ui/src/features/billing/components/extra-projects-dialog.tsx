@@ -127,7 +127,7 @@ export const ExtraProjectsDialog = ({
                 addons: {
                   projects: newProjectCount,
                 },
-                cycle: BillingCycle.MONTHLY
+                cycle: plan.stripeBillingCycle as BillingCycle
               })
             }
             disabled={isPending || newProjectCount === currentProjectLimit}

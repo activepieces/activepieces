@@ -126,7 +126,7 @@ export const ExtraSeatsDialog = ({
                 addons: {
                   userSeats: newSeatCount,
                 },
-                cycle: BillingCycle.MONTHLY
+                cycle: plan.stripeBillingCycle as BillingCycle
               })
             }
             disabled={isPending || newSeatCount === currentUserLimit}
