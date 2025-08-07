@@ -4,13 +4,13 @@ import {
     FlowOperationRequest,
     flowOperations,
     FlowOperationType,
+    FlowTrigger,
+    FlowTriggerType,
     FlowVersion,
     FlowVersionState,
     PackageType,
     PieceType,
     StepLocationRelativeToParent,
-    FlowTrigger,
-    FlowTriggerType,
 } from '../../src'
 import { _getImportOperations } from '../../src/lib/flows/operations/import-flow'
 
