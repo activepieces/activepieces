@@ -21,6 +21,10 @@ export const TriggerRunEntity = new EntitySchema<TriggerRunSchema>({
             type: String,
             nullable: true,
         },
+        jobId: {
+            type: String,
+            nullable: false,
+        },
         pieceName: {
             type: String,
             nullable: false,
@@ -41,6 +45,11 @@ export const TriggerRunEntity = new EntitySchema<TriggerRunSchema>({
         platformId: ApIdSchema,
     },
     indices: [
+        {
+            name: 'idx_trigger_run_job_id',
+            columns: ['jobId'],
+            unique: true,
+        },
         {
             name: 'idx_trigger_run_project_id_trigger_source_id_status',
             columns: ['projectId', 'triggerSourceId'],

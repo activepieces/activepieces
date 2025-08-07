@@ -253,7 +253,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_TUTORIALS,
-                value: system.getEdition() === ApEdition.COMMUNITY,
+                value: true,
                 created,
                 updated,
             },

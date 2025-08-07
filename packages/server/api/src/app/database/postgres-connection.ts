@@ -257,6 +257,7 @@ import { AddParentRunIdToFlowRun1753699877817 } from './migration/postgres/17536
 import { AddCascadeOnAgents1753727379513 } from './migration/postgres/1753727379513-AddCascadeOnAgents'
 import { AddExternalIdToMCPPostgres1753787093467 } from './migration/postgres/1753787093467-AddExternalIdToMCPPostgres'
 import { AddTriggerSource1754478770608 } from './migration/postgres/1754478770608-AddTriggerSource'
+import { AddJobIdToTriggerRun1754510611628 } from './migration/postgres/1754510611628-AddJobIdToTriggerRun'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -437,6 +438,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddCascadeOnAgents1753727379513,
         AddExternalIdToMCPPostgres1753787093467,
         AddTriggerSource1754478770608,
+        AddJobIdToTriggerRun1754510611628,
     ]
 
     const edition = system.getEdition()

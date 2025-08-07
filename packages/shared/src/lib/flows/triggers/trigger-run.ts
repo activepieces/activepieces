@@ -11,6 +11,7 @@ export enum TriggerRunStatus {
 
 export const TriggerRun = Type.Object({
     ...BaseModelSchema,
+    jobId: Type.String(),
     platformId: Type.String(),
     payloadFileId: Type.String(),
     error: Nullable(Type.String()),
@@ -25,6 +26,7 @@ export type TriggerRun = Static<typeof TriggerRun>
 
 
 export const CreateTriggerRunRequestBody = Type.Object({
+    jobId: Type.String(),
     status: Type.Enum(TriggerRunStatus),
     payload: Type.Unknown(),
     error: Nullable(Type.String()),
