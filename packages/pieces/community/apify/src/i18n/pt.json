@@ -1,0 +1,23 @@
+{
+  "Apify": "Apify",
+  "Your full‑stack platform for web scraping": "Sua plataforma completa de pilha para web scraping",
+  "API Key": "Chave de API",
+  "Find your API key on Apify in the settings, API & Integrations section.": "Encontre a sua chave de API no Apify nas configurações, na seção API e integrações.",
+  "Enter API key authentication details": "Inserir detalhes de autenticação de chaves API",
+  "Get Dataset Items": "Obter Itens do Conjunto de Dados",
+  "Get user's Actors": "Obter Personagens do Usuário",
+  "Get last run details": "Obter detalhes da última execução",
+  "Start an Apify Actor": "Iniciar um Apify Actor",
+  "Gets the data from an Actors run.": "Obtém os dados de um ator executado.",
+  "Gets the list of Actors available to the user.": "Obtém a lista de Personagens disponíveis para o usuário.",
+  "Gets last run details for a given Actor.": "Obtém os detalhes da última execução para um determinado Ator",
+  "Starts an Apify Actor web scraper": "Inicia um Apify Actor Web scraper",
+  "The runid of the Actor (alphanumeric)": "O runido do ator (alfanumérico)",
+  "The id of the Actor (alphanumeric)": "O id do ator (alfanumérico)",
+  "The id or name of the Actor (alphanumeric)": "O id ou nome do ator (alfanumérico)",
+  "JSON input": "JSON input",
+  "The runid of the completed Actors run [defaultDatasetId] (compulsory)": "O runido dos personagens concluídos executa [defaultDatasetId] (obrigatório)",
+  "The id [defaultDatasetId] of the Actor to get run information [you can also use the username then ~ then the name] (compulsory)": "Ajuda [defaultDatasetId] do Ator para obter informações de execução [você também pode usar o nome de usuário e então o nome] (obrigatório)",
+  "The id of the Actor to run [Use either id, or the username then ~ then the name] (compulsory)": "Identificação do Ator para executar [Use id ou o nome de usuário então ~ então o nome] (obrigatório)",
+  "The JSON input to pass to the Actor [you can get the JSON from a run in your Apify account]. If left blank will use defaults. (optional)": "A entrada JSON para passar para o ator [você pode obter o JSON de uma execução em sua conta Apify]. Se deixado em branco usará os padrões. (opcional)"
+}
