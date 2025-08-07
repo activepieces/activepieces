@@ -15,10 +15,10 @@ export const tagACall = createAction({
   },
   async run(context) {
     const { callId, tags } = context.propsValue;
-    const accessToken = context.auth.access_token;
+   
 
     const response = await makeRequest(
-      accessToken,
+       context.auth,
       HttpMethod.POST,
       `/calls/${callId}/tags`,
       { tags }

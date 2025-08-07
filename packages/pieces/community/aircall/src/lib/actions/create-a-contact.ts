@@ -74,7 +74,7 @@ export const createAContact = createAction({
       phone_numbers,
       emails,
     } = context.propsValue;
-    const accessToken = context.auth.access_token;
+   
 
     // Prepare request body
     const requestBody: any = {
@@ -91,7 +91,7 @@ export const createAContact = createAction({
     }
 
     const response = await makeRequest(
-      accessToken,
+      context.auth,
       HttpMethod.POST,
       '/contacts',
       requestBody

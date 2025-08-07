@@ -35,7 +35,7 @@ export const getCall = createAction({
   async run(context) {
     const { callId, fetch_contact, fetch_short_urls, fetch_call_timeline } =
       context.propsValue;
-    const accessToken = context.auth.access_token;
+    
 
     // Build query parameters
     const queryParams = new URLSearchParams();
@@ -46,7 +46,7 @@ export const getCall = createAction({
     const queryString = queryParams.toString();
     const path = `/calls/${callId}${queryString ? `?${queryString}` : ''}`;
 
-    const response = await makeRequest(accessToken, HttpMethod.GET, path);
+    const response = await makeRequest( context.auth, HttpMethod.GET, path);
 
     return response;
   },

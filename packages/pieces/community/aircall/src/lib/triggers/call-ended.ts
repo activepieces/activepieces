@@ -72,10 +72,10 @@ export const callEnded = createTrigger({
 
   async onEnable(context) {
     const webhookUrl = context.webhookUrl;
-    const accessToken = context.auth.access_token;
+    
 
     const webhook = await makeRequest(
-      accessToken,
+      context.auth,
       HttpMethod.POST,
       '/webhooks',
       {
@@ -89,11 +89,11 @@ export const callEnded = createTrigger({
 
   async onDisable(context) {
     const webhookId = await context.store?.get('webhook_id');
-    const accessToken = context.auth.access_token;
+    
 
     if (webhookId) {
       await makeRequest(
-        accessToken,
+        context.auth,
         HttpMethod.DELETE,
         `/webhooks/${webhookId}`
       );

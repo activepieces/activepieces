@@ -38,7 +38,7 @@ export const sendMessage = createAction({
   },
   async run(context) {
     const { numberId, to, body, mediaUrl } = context.propsValue;
-    const accessToken = context.auth.access_token;
+   
 
     // Prepare request body
     const requestBody: any = {
@@ -52,7 +52,7 @@ export const sendMessage = createAction({
     }
 
     const response = await makeRequest(
-      accessToken,
+       context.auth,
       HttpMethod.POST,
       `/numbers/${numberId}/messages/send`,
       requestBody

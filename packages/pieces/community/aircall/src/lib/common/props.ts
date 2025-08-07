@@ -18,7 +18,7 @@ export const callIdDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth as { username: string; password: string },
         HttpMethod.GET,
         '/calls'
       );
@@ -55,7 +55,7 @@ export const numberIdDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth as { username: string; password: string },
         HttpMethod.GET,
         '/numbers'
       );
@@ -93,7 +93,7 @@ export const contactIdDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth as { username: string; password: string },
         HttpMethod.GET,
         '/contacts'
       );
@@ -130,7 +130,7 @@ export const tagIdDropdown = Property.MultiSelectDropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth as { username: string; password: string },
         HttpMethod.GET,
         '/tags'
       );

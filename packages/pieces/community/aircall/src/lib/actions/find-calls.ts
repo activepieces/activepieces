@@ -99,7 +99,7 @@ export const findCalls = createAction({
       fetch_short_urls,
       fetch_call_timeline,
     } = context.propsValue;
-    const accessToken = context.auth.access_token;
+    
 
     // Build query parameters
     const queryParams = new URLSearchParams();
@@ -122,7 +122,7 @@ export const findCalls = createAction({
     const queryString = queryParams.toString();
     const path = `/calls/search${queryString ? `?${queryString}` : ''}`;
 
-    const response = await makeRequest(accessToken, HttpMethod.GET, path);
+    const response = await makeRequest( context.auth, HttpMethod.GET, path);
 
     return {
       calls: response.calls,

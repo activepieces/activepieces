@@ -20,10 +20,10 @@ export const commentACall = createAction({
   },
   async run(context) {
     const { callId, content } = context.propsValue;
-    const accessToken = context.auth.access_token;
+    const auth = context.auth;
 
     const response = await makeRequest(
-      accessToken,
+      auth,
       HttpMethod.POST,
       `/calls/${callId}/comments`,
       { content }

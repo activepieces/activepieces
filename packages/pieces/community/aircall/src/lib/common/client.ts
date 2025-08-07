@@ -3,17 +3,20 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 export const BASE_URL = `https://api.aircall.io/v1`;
 
 export async function makeRequest(
-  api_key: string,
+  auth: { username: string; password: string },
   method: HttpMethod,
   path: string,
   body?: unknown
 ) {
   try {
+    const api_key = Buffer.from(`${auth.username}:${auth.password}`).toString(
+      'base64'
+    );
     const response = await httpClient.sendRequest({
       method,
       url: `${BASE_URL}${path}`,
       headers: {
-        Authorization: `Bearer ${api_key}`,
+        Authorization: `Basic ${api_key}`,
         'Content-Type': 'application/json',
       },
       body,

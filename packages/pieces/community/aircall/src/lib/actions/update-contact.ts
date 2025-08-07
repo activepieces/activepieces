@@ -35,8 +35,7 @@ export const updateContact = createAction({
   async run(context) {
     const { contactId, first_name, last_name, company_name, information } =
       context.propsValue;
-    const accessToken = context.auth.access_token;
-
+    
     // Prepare request body with only provided fields
     const requestBody: any = {};
 
@@ -46,7 +45,7 @@ export const updateContact = createAction({
     if (information) requestBody.information = information;
 
     const response = await makeRequest(
-      accessToken,
+       context.auth,
       HttpMethod.POST,
       `/contacts/${contactId}`,
       requestBody

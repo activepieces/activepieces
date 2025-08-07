@@ -58,7 +58,7 @@ export const findContact = createAction({
   async run(context) {
     const { phone_number, email, from, to, order, order_by } =
       context.propsValue;
-    const accessToken = context.auth.access_token;
+    
 
     // Build query parameters
     const queryParams = new URLSearchParams();
@@ -72,7 +72,7 @@ export const findContact = createAction({
     const queryString = queryParams.toString();
     const path = `/contacts/search${queryString ? `?${queryString}` : ''}`;
 
-    const response = await makeRequest(accessToken, HttpMethod.GET, path);
+    const response = await makeRequest( context.auth, HttpMethod.GET, path);
 
     return response;
   },
