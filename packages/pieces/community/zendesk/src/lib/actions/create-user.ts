@@ -1,14 +1,11 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
-import { organizationIdDropdown } from '../common/props';
+import { organizationIdDropdown, customRoleIdDropdown } from '../common/props';
 
 type AuthProps = {
   email: string;
@@ -34,7 +31,8 @@ export const createUserAction = createAction({
     }),
     role: Property.StaticDropdown({
       displayName: 'Role',
-      description: 'The role of the user. Defaults to "end-user" if not specified.',
+      description:
+        'The role of the user. Defaults to "end-user" if not specified.',
       required: false,
       options: {
         disabled: false,
@@ -46,15 +44,12 @@ export const createUserAction = createAction({
         ],
       },
     }),
-    custom_role_id: Property.Number({
-      displayName: 'Custom Role ID',
-      description: 'The ID of a custom role for agents. Used when role is "agent" to specify the exact agent role.',
-      required: false,
-    }),
+    custom_role_id: customRoleIdDropdown,
     organization_id: organizationIdDropdown,
     organization_name: Property.ShortText({
       displayName: 'Organization Name',
-      description: 'Create and associate user with a new organization by name (alternative to Organization ID)',
+      description:
+        'Create and associate user with a new organization by name (alternative to Organization ID)',
       required: false,
     }),
     phone: Property.ShortText({
@@ -79,7 +74,8 @@ export const createUserAction = createAction({
     }),
     external_id: Property.ShortText({
       displayName: 'External ID',
-      description: 'A unique external ID for the user (useful for integrations)',
+      description:
+        'A unique external ID for the user (useful for integrations)',
       required: false,
     }),
     time_zone: Property.ShortText({
@@ -104,12 +100,14 @@ export const createUserAction = createAction({
     }),
     shared: Property.Checkbox({
       displayName: 'Shared',
-      description: 'Whether the user is shared from a different Zendesk Support instance',
+      description:
+        'Whether the user is shared from a different Zendesk Support instance',
       required: false,
     }),
     shared_agent: Property.Checkbox({
       displayName: 'Shared Agent',
-      description: 'Whether the user is a shared agent from a different Zendesk Support instance',
+      description:
+        'Whether the user is a shared agent from a different Zendesk Support instance',
       required: false,
     }),
     moderator: Property.Checkbox({
@@ -124,7 +122,8 @@ export const createUserAction = createAction({
     }),
     restricted_agent: Property.Checkbox({
       displayName: 'Restricted Agent',
-      description: 'Whether the agent has restrictions on what tickets they can access',
+      description:
+        'Whether the agent has restrictions on what tickets they can access',
       required: false,
     }),
     only_private_comments: Property.Checkbox({
@@ -159,17 +158,18 @@ export const createUserAction = createAction({
     }),
     signature: Property.LongText({
       displayName: 'Signature',
-      description: 'The user\'s signature for email responses',
+      description: "The user's signature for email responses",
       required: false,
     }),
     default_group_id: Property.Number({
       displayName: 'Default Group ID',
-      description: 'The ID of the user\'s default group (for agents)',
+      description: "The ID of the user's default group (for agents)",
       required: false,
     }),
     agent_brand_ids: Property.Array({
       displayName: 'Agent Brand IDs',
-      description: 'Array of brand IDs that the agent can access (for agents only)',
+      description:
+        'Array of brand IDs that the agent can access (for agents only)',
       required: false,
     }),
     tags: Property.Array({
@@ -179,12 +179,14 @@ export const createUserAction = createAction({
     }),
     user_fields: Property.Json({
       displayName: 'User Fields',
-      description: 'Custom user field values as JSON object. Example: {"field_key": "value"}',
+      description:
+        'Custom user field values as JSON object. Example: {"field_key": "value"}',
       required: false,
     }),
     identities: Property.Json({
       displayName: 'Identities',
-      description: 'Array of identity objects with type and value. Example: [{"type": "email", "value": "test@user.com"}, {"type": "twitter", "value": "username"}]',
+      description:
+        'Array of identity objects with type and value. Example: [{"type": "email", "value": "test@user.com"}, {"type": "twitter", "value": "username"}]',
       required: false,
     }),
   },
@@ -223,29 +225,24 @@ export const createUserAction = createAction({
       identities,
     } = propsValue;
 
-    // Build the user object
     const user: Record<string, unknown> = {
       name,
     };
 
-    // Add email if provided
     if (email) {
       user.email = email;
     }
 
-    // Handle role and custom_role_id logic as per documentation
     if (role) {
       user.role = role;
       if (role === 'agent' && custom_role_id) {
         user.custom_role_id = custom_role_id;
       }
     } else if (custom_role_id) {
-      // If custom_role_id is provided without role, set role to agent
       user.role = 'agent';
       user.custom_role_id = custom_role_id;
     }
 
-    // Handle organization - either by ID or by name
     if (organization_id) {
       user.organization_id = organization_id;
     } else if (organization_name) {
@@ -254,7 +251,6 @@ export const createUserAction = createAction({
       };
     }
 
-    // Add boolean parameters
     const booleanParams = {
       verified,
       active,
@@ -273,7 +269,6 @@ export const createUserAction = createAction({
       }
     }
 
-    // Add string/number parameters
     const optionalParams = {
       phone,
       alias,
@@ -294,50 +289,59 @@ export const createUserAction = createAction({
       }
     }
 
-    // Add agent_brand_ids if provided and user is an agent
-    if (agent_brand_ids && Array.isArray(agent_brand_ids) && agent_brand_ids.length > 0) {
-      // Convert string array to number array if needed
-      const brandIds = agent_brand_ids.map(id => typeof id === 'string' ? parseInt(id) : id);
+    if (
+      agent_brand_ids &&
+      Array.isArray(agent_brand_ids) &&
+      agent_brand_ids.length > 0
+    ) {
+      const brandIds = agent_brand_ids.map((id) =>
+        typeof id === 'string' ? parseInt(id) : id
+      );
       user.agent_brand_ids = brandIds;
     }
 
-    // Add user fields if provided
     if (user_fields) {
       try {
-        const userFieldsObj = typeof user_fields === 'string' ? JSON.parse(user_fields) : user_fields;
+        const userFieldsObj =
+          typeof user_fields === 'string'
+            ? JSON.parse(user_fields)
+            : user_fields;
         user.user_fields = userFieldsObj;
       } catch (error) {
         throw new Error('Invalid user fields format. Expected JSON object.');
       }
     }
 
-    // Add identities if provided
     if (identities) {
       try {
-        const identitiesArray = typeof identities === 'string' ? JSON.parse(identities) : identities;
+        const identitiesArray =
+          typeof identities === 'string' ? JSON.parse(identities) : identities;
         if (!Array.isArray(identitiesArray)) {
-          throw new Error('Identities must be an array of objects with type and value properties.');
+          throw new Error(
+            'Identities must be an array of objects with type and value properties.'
+          );
         }
-        
-        // Validate identities format
+
         for (const identity of identitiesArray) {
           if (!identity.type || !identity.value) {
-            throw new Error('Each identity must have both "type" and "value" properties.');
+            throw new Error(
+              'Each identity must have both "type" and "value" properties.'
+            );
           }
         }
-        
+
         user.identities = identitiesArray;
       } catch (error) {
-        throw new Error(`Invalid identities format: ${(error as Error).message}`);
+        throw new Error(
+          `Invalid identities format: ${(error as Error).message}`
+        );
       }
     }
 
-    // Build request body
     const requestBody: Record<string, unknown> = {
       user,
     };
 
-    // Add skip_verify_email at the top level if specified
     if (skip_verify_email) {
       requestBody.skip_verify_email = true;
     }
@@ -371,19 +375,19 @@ export const createUserAction = createAction({
           'Invalid request parameters. Please check your input values and try again.'
         );
       }
-      
+
       if (errorMessage.includes('401') || errorMessage.includes('403')) {
         throw new Error(
           'Authentication failed or insufficient permissions. Please check your API credentials and permissions to manage users.'
         );
       }
-      
+
       if (errorMessage.includes('422')) {
         throw new Error(
           'Validation error. The email may already exist, be invalid, or required fields may be missing.'
         );
       }
-      
+
       if (errorMessage.includes('429')) {
         throw new Error(
           'Rate limit exceeded. Please wait a moment before trying again.'

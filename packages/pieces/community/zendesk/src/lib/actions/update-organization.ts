@@ -90,15 +90,12 @@ export const updateOrganizationAction = createAction({
       shared_comments,
     } = propsValue;
 
-    // Build the organization update object
     const organization: Record<string, unknown> = {};
 
-    // Add name with trimming if provided
     if (name !== undefined && name !== null && name !== '') {
       organization.name = name.trim();
     }
 
-    // Add optional parameters
     const optionalParams = {
       details,
       notes,
@@ -116,7 +113,6 @@ export const updateOrganizationAction = createAction({
       }
     }
 
-    // Add organization fields if provided
     if (organization_fields) {
       try {
         const orgFieldsObj = typeof organization_fields === 'string' ? JSON.parse(organization_fields) : organization_fields;
@@ -126,7 +122,6 @@ export const updateOrganizationAction = createAction({
       }
     }
 
-    // Check if there's anything to update
     if (Object.keys(organization).length === 0) {
       throw new Error('No fields provided to update. Please specify at least one field to modify.');
     }

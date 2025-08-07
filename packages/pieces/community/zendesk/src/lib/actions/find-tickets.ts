@@ -27,7 +27,6 @@ export const findTicketsAction = createAction({
       ticket_id,
     } = propsValue;
 
-    // Validate ticket ID
     const ticketId = typeof ticket_id === 'string' ? parseInt(ticket_id.trim()) : Number(ticket_id);
     if (isNaN(ticketId) || ticketId <= 0) {
       throw new Error(`Invalid ticket ID: ${ticket_id}. Ticket ID must be a positive number.`);

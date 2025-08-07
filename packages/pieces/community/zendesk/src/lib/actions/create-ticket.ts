@@ -8,6 +8,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
+import { organizationIdDropdown, brandIdDropdown, problemTicketIdDropdown } from '../common/props';
 
 type AuthProps = {
   email: string;
@@ -103,11 +104,7 @@ export const createTicketAction = createAction({
       description: 'Array of tags to apply to the ticket.',
       required: false,
     }),
-    organization_id: Property.Number({
-      displayName: 'Organization ID',
-      description: 'The ID of the organization to associate with the ticket.',
-      required: false,
-    }),
+    organization_id: organizationIdDropdown,
     group_id: Property.Number({
       displayName: 'Group ID',
       description: 'The ID of the group to assign the ticket to.',
@@ -143,21 +140,13 @@ export const createTicketAction = createAction({
       description: 'Whether the comment is public (visible to the requester). Defaults to true.',
       required: false,
     }),
-    brand_id: Property.Number({
-      displayName: 'Brand ID',
-      description: 'The ID of the brand associated with the ticket.',
-      required: false,
-    }),
+    brand_id: brandIdDropdown,
     forum_topic_id: Property.Number({
       displayName: 'Forum Topic ID',
       description: 'The ID of the forum topic associated with the ticket.',
       required: false,
     }),
-    problem_id: Property.Number({
-      displayName: 'Problem ID',
-      description: 'The ID of the problem ticket this ticket is an incident of.',
-      required: false,
-    }),
+    problem_id: problemTicketIdDropdown,
   },
   async run({ propsValue, auth }) {
     const authentication = auth as AuthProps;
@@ -185,12 +174,10 @@ export const createTicketAction = createAction({
       problem_id,
     } = propsValue;
 
-    // Validation: Either comment_body or comment_html_body is required
     if (!comment_body && !comment_html_body) {
       throw new Error('Either Comment Body or Comment HTML Body is required');
     }
 
-    // Build the comment object
     const comment: Record<string, unknown> = {};
     if (comment_html_body) {
       comment.html_body = comment_html_body;
@@ -198,18 +185,15 @@ export const createTicketAction = createAction({
       comment.body = comment_body;
     }
 
-    // Set public flag for comment
     if (comment_public !== undefined) {
       comment.public = comment_public;
     }
 
-    // Build the ticket object
     const ticket: Record<string, unknown> = {
       subject,
       comment,
     };
 
-    // Helper function to resolve user by email
     const resolveUserByEmail = async (email: string) => {
       try {
         const response = await httpClient.sendRequest({
@@ -230,13 +214,11 @@ export const createTicketAction = createAction({
       }
     };
 
-    // Resolve requester
     if (requester_email) {
       const requesterId = await resolveUserByEmail(requester_email);
       if (requesterId) {
         ticket.requester_id = requesterId;
       } else {
-        // Create new requester object
         ticket.requester = {
           email: requester_email,
           name: requester_name || requester_email,
@@ -244,7 +226,6 @@ export const createTicketAction = createAction({
       }
     }
 
-    // Resolve assignee
     if (assignee_email) {
       const assigneeId = await resolveUserByEmail(assignee_email);
       if (assigneeId) {
@@ -254,7 +235,6 @@ export const createTicketAction = createAction({
       }
     }
 
-    // Resolve collaborators
     if (collaborator_emails && Array.isArray(collaborator_emails) && collaborator_emails.length > 0) {
       const collaboratorIds = [];
       for (const email of collaborator_emails) {
@@ -268,7 +248,6 @@ export const createTicketAction = createAction({
       }
     }
 
-    // Resolve followers
     if (follower_emails && Array.isArray(follower_emails) && follower_emails.length > 0) {
       const followerIds = [];
       for (const email of follower_emails) {
@@ -282,7 +261,6 @@ export const createTicketAction = createAction({
       }
     }
 
-    // Add optional parameters
     const optionalParams = {
       priority,
       type,
@@ -303,7 +281,6 @@ export const createTicketAction = createAction({
       }
     }
 
-    // Add custom fields if provided
     if (custom_fields) {
       try {
         const customFieldsObj = typeof custom_fields === 'string' ? JSON.parse(custom_fields) : custom_fields;

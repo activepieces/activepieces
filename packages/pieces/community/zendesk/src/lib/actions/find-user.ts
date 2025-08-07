@@ -90,7 +90,6 @@ export const findUserAction = createAction({
           search_criteria: searchCriteria,
         };
       } else {
-        // Search by email - ensure email is defined
         if (!email) {
           throw new Error('Email address is required for email search.');
         }
@@ -125,7 +124,6 @@ export const findUserAction = createAction({
           };
         }
 
-        // Return the first matching user (there should typically be only one)
         const user = users[0];
         
         return {

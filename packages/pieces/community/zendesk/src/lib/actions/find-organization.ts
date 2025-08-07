@@ -37,36 +37,23 @@ export const findOrganizationAction = createAction({
       displayName: 'Organization Name',
       description: 'The exact name of the organization to search for (case insensitive)',
       required: false,
-    }),
-    external_id: Property.ShortText({
-      displayName: 'External ID',
-      description: 'The exact external ID of the organization to search for (case insensitive)',
-      required: false,
-    }),
+    })
   },
   async run({ propsValue, auth }) {
     const authentication = auth as AuthProps;
     const {
       search_type,
-      name,
-      external_id,
+      name
     } = propsValue;
 
     // Validation based on search type
     if (search_type === 'name' && !name) {
       throw new Error('Organization name is required when searching by name.');
     }
-    
-    if (search_type === 'external_id' && !external_id) {
-      throw new Error('External ID is required when searching by external ID.');
-    }
 
-    // Build query parameters
     const queryParams = new URLSearchParams();
     if (search_type === 'name' && name) {
       queryParams.append('name', name);
-    } else if (search_type === 'external_id' && external_id) {
-      queryParams.append('external_id', external_id);
     }
 
     try {
@@ -90,7 +77,7 @@ export const findOrganizationAction = createAction({
         organizations,
         search_criteria: {
           type: search_type,
-          value: search_type === 'name' ? name : external_id,
+          value: search_type === 'name' ? name : undefined,
         },
         found_count: organizations.length,
       };
