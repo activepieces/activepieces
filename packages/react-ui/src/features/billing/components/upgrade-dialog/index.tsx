@@ -68,7 +68,7 @@ export const UpgradeDialog: FC = () => {
               >
                 {t('Annual')}
                 <span className="ml-2 font-semibold text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                {t('Save 15%')}
+                {t('Save 24%')}
                   
                 </span>
               </Button>

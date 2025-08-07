@@ -1,10 +1,7 @@
 import { t } from 'i18next';
-
 import { BillingCycle, PlanName } from '@activepieces/ee-shared';
 
 export const planData = {
-  tabs: [t('Monthly'), t('Annual')],
-
   plans: [
     {
       name: PlanName.FREE,
@@ -21,7 +18,7 @@ export const planData = {
       featuresTitle: t('Everything in Free, and'),
       price: {
         [BillingCycle.MONTHLY]: 25,
-        [BillingCycle.ANNUAL]: 255
+        [BillingCycle.ANNUAL]: 228
       }
     },
     {
@@ -30,7 +27,7 @@ export const planData = {
       featuresTitle: t('Everything in Plus, and'),
       price: {
         [BillingCycle.MONTHLY]: 150,
-        [BillingCycle.ANNUAL]: 1530
+        [BillingCycle.ANNUAL]: 1368
       }
     },
     {

@@ -130,8 +130,8 @@ export const PRICE_ID_MAP = {
       prod: 'price_1RflgUKZ0dZRqLEK5COq9Kn8'
     },
     [BillingCycle.ANNUAL]: {
-      dev: 'price_1RtPYWQN93Aoq4f8kq6Fts1A',
-      prod: ''
+      dev: 'price_1RtZrSQN93Aoq4f8KLZq4yif',
+      prod: 'price_1RtZwlKZ0dZRqLEKBiPradv4'
     }
   },
   [PRICE_NAMES.BUSINESS_PLAN]: {
@@ -140,8 +140,8 @@ export const PRICE_ID_MAP = {
       prod: 'price_1RflgbKZ0dZRqLEKaW4Nlt0P'
     },
     [BillingCycle.ANNUAL]: {
-      dev: 'price_1RtPZZQN93Aoq4f819GrY1ea',
-      prod: ''
+      dev: 'price_1RtZpuQN93Aoq4f8mNgEjs0b',
+      prod: 'price_1RtZxNKZ0dZRqLEKqTYawR8q'
     }
   },
   [PRICE_NAMES.AI_CREDITS]: {
@@ -151,7 +151,7 @@ export const PRICE_ID_MAP = {
     },
     [BillingCycle.ANNUAL]: {
       dev: 'price_1RtPc0QN93Aoq4f8JAPe5HbG',
-      prod: ''
+      prod: 'price_1RtZziKZ0dZRqLEKiWU2iAz8'
     }
   },
   [PRICE_NAMES.ACTIVE_FLOWS]: {
@@ -160,8 +160,8 @@ export const PRICE_ID_MAP = {
       prod: 'price_1RsK79KZ0dZRqLEKRGbtT1Pn'
     },
     [BillingCycle.ANNUAL]: {
-      dev: 'price_1RtPg8QN93Aoq4f8CG6CZR6I',
-      prod: ''
+      dev: 'price_1RtZmHQN93Aoq4f8OqAfOl8R',
+      prod: 'price_1RtZvzKZ0dZRqLEKGHOXlfDP'
     }
   },
   [PRICE_NAMES.USER_SEAT]: {
@@ -171,7 +171,7 @@ export const PRICE_ID_MAP = {
     },
     [BillingCycle.ANNUAL]: {
       dev: 'price_1RtPiuQN93Aoq4f8O7ReOsZO',
-      prod: ''
+      prod: 'price_1RtZyMKZ0dZRqLEKrVLN4h15'
     }
   },
   [PRICE_NAMES.PROJECT]: {
@@ -181,7 +181,7 @@ export const PRICE_ID_MAP = {
     },
     [BillingCycle.ANNUAL]: {
       dev: 'price_1RtPeZQN93Aoq4f8Mw8H9nGa',
-      prod: ''
+      prod: 'price_1RtZv4KZ0dZRqLEKxR6uO7WQ'
     }
   }
 }
