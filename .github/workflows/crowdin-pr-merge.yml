@@ -39,6 +39,9 @@ jobs:
               labels: ['auto-merge', 'translations','skip-changelog']
             })
       
+      - name: Fetch main branch
+        run: git fetch origin main:main
+      
       - name: Run Node.js script
         run: |
           echo "Running Node.js script..."
