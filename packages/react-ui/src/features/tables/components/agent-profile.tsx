@@ -1,21 +1,25 @@
-import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
 interface AgentProfileProps {
   imageUrl?: string;
-  isEnabled?: boolean;
+  enableGlowClass?: boolean;
   onClick?: () => void;
   toggleStatus?: () => void;
   className?: string;
+  imageClassName?: string;
   size?: 'sm' | 'md' | 'lg';
+  isRunning?: boolean;
 }
 
 const AgentProfile = ({
   imageUrl = 'https://cdn.activepieces.com/quicknew/agents/robots/robot_186.png',
-  isEnabled = false,
+  enableGlowClass = false,
   onClick,
   className,
   size = 'md',
+  imageClassName,
+  isRunning = false,
 }: AgentProfileProps) => {
   const sizeClasses = {
     sm: 'w-6 h-6',
@@ -36,37 +40,26 @@ const AgentProfile = ({
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={handleClick}
-      className={cn(
-        'p-0 border-0 bg-transparent hover:bg-transparent',
-        'transition-none', // Remove all transitions
-        className,
-      )}
-      aria-label="Agent Profile"
-    >
-      <div
+    <div className="relative">
+      <Avatar
         className={cn(
-          'relative rounded-full overflow-hidden',
           sizeClasses[size],
-          isEnabled && glowClasses[size],
+          enableGlowClass && glowClasses[size],
+          className,
+          'border-1 border border-opacity-60 border-black',
         )}
+        onClick={handleClick}
       >
-        <img
+        <AvatarImage
           src={imageUrl}
           alt="Agent"
-          className="w-full h-full object-cover"
-          style={{ display: isEnabled ? 'block' : 'none' }}
+          className={cn('w-full h-full object-cover', imageClassName)}
         />
-        {!isEnabled && (
-          <div className="w-full h-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-            <div className="w-3 h-3 bg-gray-400 dark:bg-gray-500 rounded-full" />
-          </div>
-        )}
-      </div>
-    </Button>
+      </Avatar>
+      {isRunning && (
+        <div className="bg-radial-colorwheel w-7 h-7 rounded-full absolute right-7 top-0.5 border-2 border-white animate-spin"></div>
+      )}
+    </div>
   );
 };
 

@@ -103,27 +103,27 @@ export default function Billing() {
       <section className="flex flex-col w-full gap-6">
         {!isEnterprise && <SubscriptionInfo info={platformPlanInfo} />}
 
-      <UsageCards platformSubscription={platformPlanInfo} />
+        <UsageCards platformSubscription={platformPlanInfo} />
 
-      {!isFree && <ActiveFlowAddon platformSubscription={platformPlanInfo} />}
+        {!isFree && <ActiveFlowAddon platformSubscription={platformPlanInfo} />}
 
-      {isBusinessPlan && (
-        <div className="grid grid-cols-2 gap-6">
-          <ProjectAddon platformSubscription={platformPlanInfo} />
-          <UserSeatAddon platformSubscription={platformPlanInfo} />
-        </div>
-      )}
+        {isBusinessPlan && (
+          <div className="grid grid-cols-2 gap-6">
+            <ProjectAddon platformSubscription={platformPlanInfo} />
+            <UserSeatAddon platformSubscription={platformPlanInfo} />
+          </div>
+        )}
 
-      {!isEnterprise && (
-        <AICreditUsage platformSubscription={platformPlanInfo} />
-      )}
+        {!isEnterprise && (
+          <AICreditUsage platformSubscription={platformPlanInfo} />
+        )}
 
-      {isEnterprise && (
-        <>
-          <h3 className="text-lg font-semibold">{t('AI Credits')}</h3>
-          <AiCreditsUsageTable />
-        </>
-      )}
+        {isEnterprise && (
+          <>
+            <h3 className="text-lg font-semibold">{t('AI Credits')}</h3>
+            <AiCreditsUsageTable />
+          </>
+        )}
 
         {isEnterprise ? (
           <LicenseKey platform={platform} />

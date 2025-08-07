@@ -45,13 +45,13 @@ export type ActionInfo = {
   actionDisplayName: string;
 };
 
-export function McpPieceDialog({
+export const McpPieceDialog = ({
   mcp,
   open,
   onToolsUpdate,
   children,
   onClose,
-}: McpPieceDialogProps) {
+}: McpPieceDialogProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedConnectionExternalId, setSelectedConnectionExternalId] =
     useState<string | null>(null);
@@ -239,4 +239,4 @@ export function McpPieceDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};

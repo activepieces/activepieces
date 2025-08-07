@@ -1,5 +1,5 @@
 import { AgentJobData, AgentJobSource } from '@activepieces/server-shared'
-import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, AIUsageFeature, assertNotNullOrUndefined, ContentBlockType, createAIProvider, Field, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
+import { agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, AIUsageFeature, assertNotNullOrUndefined, ContentBlockType, createAIProvider, Field, isNil, McpToolType, McpWithTools, PopulatedAgent, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { APICallError, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -178,6 +178,7 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
                 pieceName: pieceMetadata.pieceName,
                 pieceVersion: pieceMetadata.pieceVersion,
                 actionName: tool.pieceMetadata.actionName,
+                logoUrl: tool.pieceMetadata.logoUrl,
             }
         }
         case McpToolType.FLOW: {
@@ -192,7 +193,7 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
     }
 }
 
-async function constructSystemPrompt(agent: Agent, fields: Field[] | undefined, record: Record<string, unknown> | undefined) {
+async function constructSystemPrompt(agent: PopulatedAgent, fields: Field[] | undefined, record: Record<string, unknown> | undefined) {
     let systemPrompt = `
     You are an autonomous assistant designed to efficiently achieve the user's goal.
     YOU MUST ALWAYS call the mark as complete tool with the output or message wether you have successfully completed the task or not.
@@ -204,6 +205,22 @@ async function constructSystemPrompt(agent: Agent, fields: Field[] | undefined, 
     ---
     ${agent.systemPrompt}
     `
+
+    if (!agent.settings.allowAgentCreateColumns) {
+        systemPrompt += `
+        You CANNOT create new columns. Only work with existing columns.
+        `
+    }
+    if (agent.settings.limitColumnEditing) {
+        systemPrompt += `
+        You can only edit the columns that are in the fields list. ${JSON.stringify(fields, null, 2)}
+        `
+    }
+    else {
+        systemPrompt += `
+        You can edit any existing columns in the table.
+        `
+    }
 
     if (fields && record) {
         systemPrompt += `

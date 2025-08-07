@@ -32,6 +32,10 @@ module.exports = {
       transitionDuration: {
         1500: '1500ms',
       },
+      backgroundImage: {
+        'radial-colorwheel': 'conic-gradient(from 180deg at 50% 50%, #FF9D00 0deg, #9333EA 60.58deg, #EA33B3 140.19deg, #EA3C33 231.92deg, #FF9D00 360deg)',
+        'radial-colorwheel-purple-red': 'linear-gradient(to right,rgb(133, 22, 238) 0%,rgb(236, 31, 20) 100%)',
+      },
       colors: {
         'light-blue': 'hsl(var(--light-blue))',
         warning: {

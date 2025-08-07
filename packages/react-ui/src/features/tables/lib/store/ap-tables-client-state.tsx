@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import {
   Field,
   FieldType,
+  PopulatedAgent,
   PopulatedRecord,
   Table,
   TableAutomationStatus,
@@ -81,6 +82,7 @@ export type TableState = {
   toggleStatus: () => void;
   serverFields: Field[];
   serverRecords: PopulatedRecord[];
+  updateAgent: (agent: PopulatedAgent) => void;
 };
 
 export const createApTableStore = (
@@ -221,6 +223,16 @@ export const createApTableStore = (
         return set((state) => {
           return {
             records: mapRecorddToClientRecordsData(records, serverState.fields),
+          };
+        });
+      },
+      updateAgent: (agent: PopulatedAgent) => {
+        return set((state) => {
+          return {
+            table: {
+              ...state.table,
+              agent: agent,
+            },
           };
         });
       },

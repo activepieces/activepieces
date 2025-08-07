@@ -1,6 +1,6 @@
 * {
-    --rdg-row-selected-background-color: none !important;
-    --rdg-row-selected-hover-background-color: none !important;
+    --rdg-row-selected-background-color: rgba(250, 245, 255, 1) !important;
+    --rdg-row-selected-hover-background-color: rgba(248, 250, 252, 1) !important;
     --rdg-selection-color: none !important;
     --rdg-summary-row-top: 0px !important;
     --rdg-cell-frozen-box-shadow: none !important;

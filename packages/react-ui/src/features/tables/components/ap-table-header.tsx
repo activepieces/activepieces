@@ -3,14 +3,11 @@ import {
   ArrowLeft,
   ChevronDown,
   RefreshCw,
-  Trash2,
   Import,
   Download,
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -19,45 +16,80 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import EditableText from '@/components/ui/editable-text';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Permission } from '@activepieces/shared';
+import { isNil, Permission, PopulatedAgent } from '@activepieces/shared';
 
+import { AgentProfile } from './agent-profile';
+import { AgentSetupDialog } from './agent-setup-dialog';
 import { useTableState } from './ap-table-state-provider';
 import { ImportCsvDialog } from './import-csv-dialog';
 
 interface ApTableHeaderProps {
   onBack: () => void;
+  agent: PopulatedAgent;
+  setIsAgentConfigureOpen: (isOpen: boolean) => void;
 }
 
-export function ApTableHeader({ onBack }: ApTableHeaderProps) {
-  const [
-    selectedRecords,
-    setSelectedRecords,
-    isSaving,
-    records,
-    table,
-    renameTable,
-    deleteRecords,
-  ] = useTableState((state) => [
-    state.selectedRecords,
-    state.setSelectedRecords,
-    state.isSaving,
-    state.records,
-    state.table,
-    state.renameTable,
-    state.deleteRecords,
-  ]);
+export const ApTableHeader = ({
+  onBack,
+  agent,
+  setIsAgentConfigureOpen,
+}: ApTableHeaderProps) => {
+  const [isSaving, table, renameTable, updateAgent, selectedAgentRunId] =
+    useTableState((state) => [
+      state.isSaving,
+      state.table,
+      state.renameTable,
+      state.updateAgent,
+      state.selectedAgentRunId,
+    ]);
+
+  const { mutate: updateAgentSettings } = agentHooks.useUpdate(
+    agent.id,
+    updateAgent,
+  );
   const [isImportCsvDialogOpen, setIsImportCsvDialogOpen] = useState(false);
   const [isEditingTableName, setIsEditingTableName] = useState(false);
+  const [isAiAgentMode, setIsAiAgentMode] = useState(
+    agent?.settings?.aiMode ?? false,
+  );
+  const [isAgentSetupDialogOpen, setIsAgentSetupDialogOpen] = useState(
+    (agent?.settings?.aiMode && agent?.created === agent?.updated) ?? false,
+  );
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
+
+  if (!agent?.id) {
+    return null;
+  }
 
   const exportTable = async () => {
     const { tablesApi } = await import('../lib/tables-api');
     const { tablesUtils } = await import('../lib/utils');
     const exportedTable = await tablesApi.export(table.id);
     tablesUtils.exportTables([exportedTable]);
+  };
+
+  const showAgentSetupDialog = (checked: boolean) => {
+    if (checked && !isNil(agent) && agent.created === agent.updated) {
+      setIsAgentSetupDialogOpen(true);
+    } else {
+      setIsAgentSetupDialogOpen(false);
+    }
+    setIsAiAgentMode(checked);
+    if (agent) {
+      updateAgentSettings({
+        ...agent,
+        settings: {
+          ...agent.settings,
+          aiMode: checked,
+        },
+      });
+    }
   };
 
   return (
@@ -114,46 +146,47 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
               <span className="text-sm">{t('Saving...')}</span>
             </div>
           )}
-          {selectedRecords.size > 0 && (
-            <PermissionNeededTooltip
-              hasPermission={userHasTableWritePermission}
-            >
-              <ConfirmationDeleteDialog
-                title={t('Delete Records')}
-                message={t(
-                  'Are you sure you want to delete the selected records? This action cannot be undone.',
-                )}
-                entityName={
-                  selectedRecords.size === 1 ? t('record') : t('records')
-                }
-                mutationFn={async () => {
-                  const indices = Array.from(selectedRecords).map((row) =>
-                    records.findIndex((r) => r.uuid === row),
-                  );
-                  deleteRecords(indices.map((index) => index.toString()));
-                  setSelectedRecords(new Set());
-                }}
-              >
-                <Button
-                  variant="destructive"
-                  className="flex gap-2 items-center"
-                  disabled={!userHasTableWritePermission}
-                >
-                  <Trash2 className="size-4" />
-                  {t('Delete Records')}{' '}
-                  {selectedRecords.size > 0 ? `(${selectedRecords.size})` : ''}
-                </Button>
-              </ConfirmationDeleteDialog>
-            </PermissionNeededTooltip>
-          )}
         </div>
       </div>
-      <div>
-        <ImportCsvDialog
-          open={isImportCsvDialogOpen}
-          setIsOpen={setIsImportCsvDialogOpen}
+      <div className="flex items-center gap-2 w-full justify-end">
+        <div className="flex items-center gap-2">
+          <AgentProfile
+            className="cursor-pointer"
+            size="lg"
+            imageUrl={agent?.profilePictureUrl}
+            isRunning={!isNil(selectedAgentRunId)}
+            onClick={() => {
+              setIsAgentConfigureOpen(true);
+            }}
+          />
+        </div>
+
+        <Separator orientation="vertical" className="h-8" />
+        <AgentSetupDialog
+          open={isAgentSetupDialogOpen}
+          setOpen={setIsAgentSetupDialogOpen}
+          agent={agent}
+          updateAgent={updateAgent}
+          trigger={
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={isAiAgentMode}
+                colorWheel={true}
+                onCheckedChange={(checked) => {
+                  showAgentSetupDialog(checked);
+                }}
+              />
+              <span className="text-md bg-radial-colorwheel-purple-red bg-clip-text text-transparent">
+                AI Agent Mode
+              </span>
+            </div>
+          }
         />
       </div>
+      <ImportCsvDialog
+        open={isImportCsvDialogOpen}
+        setIsOpen={setIsImportCsvDialogOpen}
+      />
     </>
   );
-}
+};

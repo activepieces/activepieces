@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { DiscriminatedUnion, Nullable } from '../common/base-model'
+import { DiscriminatedUnion, Nullable } from '../../common/base-model'
 
 export enum ContentBlockType {
     MARKDOWN = 'MARKDOWN',
@@ -48,6 +48,7 @@ export const ToolCallContentBlock = DiscriminatedUnion('toolCallType', [
         pieceName: Type.String(),
         pieceVersion: Type.String(),
         actionName: Type.String(),
+        logoUrl: Type.String(),
     }),
     Type.Object({
         ...ToolCallBase,

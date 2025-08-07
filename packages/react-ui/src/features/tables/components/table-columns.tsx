@@ -21,6 +21,7 @@ import {
 import { ClientRecordData } from '../lib/store/ap-tables-client-state';
 import { Row } from '../lib/types';
 
+import { AgentProfileTool } from './agent-profile-tool';
 import { ApFieldHeader } from './ap-field-header';
 import { useTableState } from './ap-table-state-provider';
 import { EditableCell } from './editable-cell';
@@ -64,17 +65,23 @@ export function useTableColumns(createEmptyRecord: () => void) {
       sortable: false,
       frozen: true,
       renderHeaderCell: () => <SelectHeaderCell />,
-      renderCell: (props) => (
-        <SelectCell
-          row={props.row}
-          rowIndex={props.rowIdx + 1}
-          onClick={() => {
-            if (props.row.locked && props.row.agentRunId) {
-              setSelectedAgentRunId(props.row.agentRunId);
-            }
-          }}
-        />
-      ),
+      renderCell: (props) => {
+        if (props.row.agentRunId) {
+          return <AgentProfileTool agentRunId={props.row.agentRunId} />;
+        } else {
+          return (
+            <SelectCell
+              row={props.row}
+              rowIndex={props.rowIdx + 1}
+              onClick={() => {
+                if (props.row.locked && props.row.agentRunId) {
+                  setSelectedAgentRunId(props.row.agentRunId);
+                }
+              }}
+            />
+          );
+        }
+      },
       renderSummaryCell: () => (
         <AddRecordButton
           handleClick={createEmptyRecord}

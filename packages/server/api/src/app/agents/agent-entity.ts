@@ -1,10 +1,11 @@
-import { Agent, Platform, Project } from '@activepieces/shared'
+import { Agent, AgentSettings, Platform, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../database/database-common'
 
 type AgentSchema = Agent & {
     project: Project    
     platform: Platform
+    settings: AgentSettings
 }
 export const AgentEntity = new EntitySchema<AgentSchema>({
     name: 'agent',
@@ -88,6 +89,12 @@ export const AgentEntity = new EntitySchema<AgentSchema>({
                 name: 'platformId',
                 foreignKeyConstraintName: 'fk_agent_platform_id',
             },
+        },
+        settings: {
+            type: 'one-to-one',
+            target: 'agent_settings',
+            inverseSide: 'agent',
+            cascade: true,
         },
     },
 })

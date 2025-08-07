@@ -19,8 +19,8 @@ import {
   McpToolRequest,
 } from '@activepieces/shared';
 
-import { McpFlowDialog } from './mcp-flow-tool-dialog';
-import { McpPieceDialog } from './mcp-piece-tool-dialog';
+import { McpFlowDialog } from '../../../../features/mcp/components/mcp-flow-tool-dialog';
+import { McpPieceDialog } from '../../../../features/mcp/components/mcp-piece-tool-dialog';
 
 type McpAddToolDropdownProps = {
   mcp: McpWithTools;

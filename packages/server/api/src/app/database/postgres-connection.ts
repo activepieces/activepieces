@@ -258,6 +258,7 @@ import { AddCascadeOnAgents1753727379513 } from './migration/postgres/1753727379
 import { AddExternalIdToMCPPostgres1753787093467 } from './migration/postgres/1753787093467-AddExternalIdToMCPPostgres'
 import { AddTriggerSource1754478770608 } from './migration/postgres/1754478770608-AddTriggerSource'
 import { AddJobIdToTriggerRun1754510611628 } from './migration/postgres/1754510611628-AddJobIdToTriggerRun'
+import { AgentSettingsEntity1754595679670 } from './migration/postgres/1754595679670-AgentSettingsEntity'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -439,6 +440,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddExternalIdToMCPPostgres1753787093467,
         AddTriggerSource1754478770608,
         AddJobIdToTriggerRun1754510611628,
+        AgentSettingsEntity1754595679670,
     ]
 
     const edition = system.getEdition()

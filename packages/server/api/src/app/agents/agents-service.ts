@@ -1,4 +1,4 @@
-import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AIUsageFeature, apId, createAIProvider, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AgentSettings, AIUsageFeature, apId, createAIProvider, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, PopulatedAgent, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -19,7 +19,7 @@ import { agentRunsService } from './agent-runs/agent-runs-service'
 export const agentRepo = repoFactory(AgentEntity)
 
 export const agentsService = (log: FastifyBaseLogger) => ({
-    async create(params: CreateParams): Promise<Agent> {
+    async create(params: CreateParams): Promise<PopulatedAgent> {
         await PlatformPlanHelper.checkQuotaOrThrow({
             platformId: params.platformId,
             projectId: params.projectId,
@@ -46,7 +46,20 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             outputType: AgentOutputType.NO_OUTPUT,
             outputFields: [],
         }
-        const agent = await agentRepo().save(agentPayload)
+        const agentSettings: Omit<AgentSettings, 'created' | 'updated'> = {
+            id: apId(),
+            agentId: id,
+            aiMode: false,
+            triggerOnNewRow: false,
+            triggerOnFieldUpdate: false,
+            allowAgentCreateColumns: true,
+            limitColumnEditing: false,
+            editableColumns: [],
+        }
+        const agent = await agentRepo().save({
+            ...agentPayload,
+            settings: agentSettings,
+        })
         await mcpService(log).update({
             mcpId: mcp.id,
             agentId: agent.id,
@@ -99,31 +112,38 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         }
         return agent
     },
-    async update(params: UpdateParams): Promise<Agent> {
+    async update(params: UpdateParams): Promise<PopulatedAgent> {
         const platformId = await projectService.getPlatformId(params.projectId)
         await PlatformPlanHelper.checkResourceLocked({ platformId, resource: PlatformUsageMetric.AGENTS })
+        
+        const agent = await agentRepo().findOneOrFail({
+            where: { id: params.id },
+            relations: { settings: true },
+        })
 
-        await agentRepo().update({
-            id: params.id,
-            projectId: params.projectId,
-        }, {
+        await agentRepo().save({
+            ...agent,
             ...spreadIfDefined('displayName', params.displayName),
             ...spreadIfDefined('systemPrompt', params.systemPrompt),
             ...spreadIfDefined('description', params.description),
             ...spreadIfDefined('testPrompt', params.testPrompt),
             ...spreadIfDefined('outputType', params.outputType),
             ...spreadIfDefined('outputFields', params.outputFields),
+            ...spreadIfDefined('settings', params.settings),
         })
         return this.getOneOrThrow({ id: params.id, projectId: params.projectId })
     },
-    async getOne(params: GetOneParams): Promise<Agent | null> {
-        const agent = await agentRepo().findOneBy({ id: params.id })
+    async getOne(params: GetOneParams): Promise<PopulatedAgent | null> {
+        const agent = await agentRepo().findOne({
+            where: { id: params.id },
+            relations: { settings: true },
+        })
         if (isNil(agent)) {
             return null
         }
         return enrichAgent(agent, log)
     },
-    async getOneOrThrow(params: GetOneParams): Promise<Agent> {
+    async getOneOrThrow(params: GetOneParams): Promise<PopulatedAgent> {
         const agent = await this.getOne({ id: params.id, projectId: params.projectId })
         if (isNil(agent)) {
             throw new ActivepiecesError({
@@ -167,17 +187,19 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         })
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
-        return paginationHelper.createPage<Agent>(
+        return paginationHelper.createPage<PopulatedAgent>(
             await Promise.all(data.map(agent => enrichAgent(agent, log))),
             cursor,
         )
     },
 })
 
-async function enrichAgent(agent: Omit<Agent, 'runCompleted'>, log: FastifyBaseLogger): Promise<Agent> {
+async function enrichAgent(agent: Omit<PopulatedAgent, 'runCompleted' | 'mcp'>, log: FastifyBaseLogger): Promise<PopulatedAgent> {
+    const mcp = await mcpService(log).getOrThrow({ mcpId: agent.mcpId, projectId: agent.projectId })
     return {
         ...agent,
         runCompleted: await agentRunsService(log).count({ agentId: agent.id, projectId: agent.projectId }),
+        mcp,
     }
 }
 
@@ -231,6 +253,7 @@ type UpdateParams = {
     testPrompt?: string
     outputType?: string
     outputFields?: AgentOutputField[]
+    settings?: AgentSettings
 }
 
 type GetOneParams = {

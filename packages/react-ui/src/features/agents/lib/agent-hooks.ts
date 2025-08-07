@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import {
   ListAgentsQueryParams,
@@ -7,6 +7,8 @@ import {
   AgentRun,
   RunAgentRequestBody,
   EnhaceAgentPrompt,
+  UpdateAgentRequestBody,
+  PopulatedAgent,
 } from '@activepieces/shared';
 
 import { agentsApi, agentRunsApi } from './agents-api';
@@ -51,6 +53,17 @@ export const agentHooks = {
   useDelete: () => {
     return useMutation({
       mutationFn: (id: string) => agentsApi.delete(id),
+    });
+  },
+  useUpdate: (id: string, updateAgent: (agent: PopulatedAgent) => void) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (request: UpdateAgentRequestBody) =>
+        agentsApi.update(id!, request),
+      onSuccess: (agent) => {
+        queryClient.invalidateQueries({ queryKey: ['agents', id] });
+        updateAgent(agent);
+      },
     });
   },
 };

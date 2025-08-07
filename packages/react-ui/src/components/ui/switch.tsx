@@ -10,6 +10,7 @@ export interface SwitchProps
   variant?: 'default' | 'square';
   size?: 'default' | 'sm' | 'lg' | 'xl';
   color?: 'default' | 'secondary';
+  colorWheel?: boolean;
 }
 
 const Switch = React.forwardRef<
@@ -25,6 +26,7 @@ const Switch = React.forwardRef<
       variant = 'default',
       size = 'default',
       color = 'default',
+      colorWheel = false,
       ...props
     },
     ref,
@@ -70,11 +72,16 @@ const Switch = React.forwardRef<
         'data-[state=checked]:bg-secondary data-[state=unchecked]:bg-input',
     };
 
+    const colorWheelClasses =
+      colorWheel && isChecked && !props.disabled
+        ? 'bg-radial-colorwheel'
+        : colorClasses[color];
+
     return (
       <SwitchPrimitives.Root
         className={cn(
-          'peer inline-flex shrink-0 cursor-pointer items-center border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50',
-          colorClasses[color],
+          'peer inline-flex shrink-0 cursor-pointer items-center p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50',
+          colorWheelClasses,
           variant === 'square' ? 'rounded-md' : 'rounded-full',
           sizeClasses[size],
           className,

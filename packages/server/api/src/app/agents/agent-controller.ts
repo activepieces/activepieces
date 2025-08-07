@@ -1,4 +1,4 @@
-import { Agent,  CreateAgentRequest, EnhanceAgentPrompt, EnhancedAgentPrompt,  ListAgentsQueryParams,  PrincipalType, SeekPage, UpdateAgentRequestBody } from '@activepieces/shared'
+import { Agent,  CreateAgentRequest, EnhanceAgentPrompt, EnhancedAgentPrompt,  ListAgentsQueryParams,  PopulatedAgent,  PrincipalType, SeekPage, UpdateAgentRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { agentsService } from './agents-service'
@@ -44,7 +44,7 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', UpdateAgentRequest, async (request) => {
         const { id } = request.params
-        const { displayName, systemPrompt, description, testPrompt, outputType, outputFields } = request.body
+        const { displayName, systemPrompt, description, testPrompt, outputType, outputFields, settings } = request.body
         return agentsService(request.log).update({
             id,
             displayName,
@@ -54,6 +54,7 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
             outputType,
             outputFields,
             projectId: request.principal.projectId,
+            settings,
         })
     })
 
@@ -72,7 +73,7 @@ const ListAgentsRequest = {
     schema: {
         querystring: ListAgentsQueryParams,
         response: {
-            [StatusCodes.OK]: SeekPage(Agent),
+            [StatusCodes.OK]: SeekPage(PopulatedAgent),
         },
     },
     config: {
@@ -84,7 +85,7 @@ const CreateAgentRequestParams = {
     schema: {
         body: CreateAgentRequest,
         response: {
-            [StatusCodes.CREATED]: Agent,
+            [StatusCodes.CREATED]: PopulatedAgent,
         },
     },
     config: {
@@ -110,7 +111,7 @@ const GetAgentRequest = {
             id: Type.String(),
         }),
         response: {
-            [StatusCodes.OK]: Agent,
+            [StatusCodes.OK]: PopulatedAgent,
         },
     },
     config: {
@@ -125,7 +126,7 @@ const UpdateAgentRequest = {
         }),
         body: UpdateAgentRequestBody,
         response: {
-            [StatusCodes.OK]: Agent,
+            [StatusCodes.OK]: PopulatedAgent,
         },
     },
     config: {
