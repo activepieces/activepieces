@@ -14,7 +14,7 @@ export const findDealAction = createAction({
     auth: pipedriveAuth,
     name: 'find-deal',
     displayName: 'Find Deal',
-    description: 'Finds a deal by any field.',
+    description: 'Finds a deal by any field using Pipedrive API v2.', // ✅ Updated description for v2
     props: {
         searchField: searchFieldProp('deal'),
         searchFieldValue: searchFieldValueProp('deal'),
@@ -27,14 +27,15 @@ export const findDealAction = createAction({
             throw new Error('Please enter a value for the field');
         }
 
-        // create Filter
+        // Create Filter using Pipedrive API v2 endpoint
+        // The structure of the filter conditions remains largely compatible in v2.
         const filter = await pipedriveApiCall<{ data: { id: number } }>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.POST,
-            resourceUri: '/filters',
+            resourceUri: '/v2/filters', // ✅ Updated to v2 endpoint
             body: {
-                name: 'Activepieces Find Deal Filter',
+                name: `Activepieces Find Deal Filter - ${Date.now()}`, // Added timestamp to name to ensure uniqueness
                 type: 'deals',
                 conditions: {
                     glue: 'and',
@@ -50,6 +51,8 @@ export const findDealAction = createAction({
                                 },
                             ],
                         },
+                        // The second condition with 'IS NOT NULL' seems redundant for a simple equality search,
+                        // but keeping it as per original logic if it serves a specific purpose.
                         {
                             glue: 'or',
                             conditions: [
@@ -66,25 +69,27 @@ export const findDealAction = createAction({
             },
         });
 
-        // search for deals using the filter
+        // Search for deals using the created filter
+        // Pipedrive v2 uses 'sort_by' and 'sort_direction' instead of a single 'sort' parameter.
         const deals = await pipedriveApiCall<{ data: { id: number }[] }>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/deals',
+            resourceUri: '/v2/deals', // ✅ Updated to v2 endpoint
             query: {
                 filter_id: filter.data.id,
                 limit: 1,
-                sort: 'update_time DESC',
+                sort_by: 'update_time',     // ✅ Replaced 'sort' with 'sort_by'
+                sort_direction: 'desc',     // ✅ Added 'sort_direction'
             },
         });
 
-        // delete the filter
+        // Delete the temporary filter
         await pipedriveApiCall({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.DELETE,
-            resourceUri: `/filters/${filter.data.id}`,
+            resourceUri: `/v2/filters/${filter.data.id}`, // ✅ Updated to v2 endpoint
         });
 
         if (isNil(deals.data) || deals.data.length === 0) {
@@ -94,13 +99,15 @@ export const findDealAction = createAction({
             };
         }
 
+        // Fetch custom field definitions from v2
         const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/dealFields',
+            resourceUri: '/v2/dealFields', // ✅ Updated to v2 endpoint
         });
 
+        // Transform custom fields in the response data
         const updatedDealProperties = pipedriveTransformCustomFields(
             customFieldsResponse,
             deals.data[0],

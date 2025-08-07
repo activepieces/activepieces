@@ -1,58 +1,63 @@
 import { pipedriveAuth } from '../../index';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { labelIdsProp, personIdProp } from '../common/props';
 import {
-	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
-	pipedriveTransformCustomFields,
+    pipedriveApiCall,
+    pipedrivePaginatedApiCall,
+    pipedriveTransformCustomFields,
 } from '../common';
-import { GetField, PersonCreateResponse } from '../common/types';
+import { GetField, GetPersonResponse } from '../common/types'; 
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const addLabelToPersonAction = createAction({
-	auth: pipedriveAuth,
-	name: 'add-labels-to-person',
-	displayName: 'Add Labels to Person',
-	description: 'Adds an existing labels to an existing person.',
-	props: {
-		personId: personIdProp(true),
-		labelIds: labelIdsProp('person', 'label_ids', true),
-	},
-	async run(context) {
-		const { personId } = context.propsValue;
-		const labelIds = (context.propsValue.labelIds as number[]) ?? [];
+    auth: pipedriveAuth,
+    name: 'add-labels-to-person',
+    displayName: 'Add Labels to Person',
+    description: 'Adds existing labels to an existing person ', 
+    props: {
+        personId: personIdProp(true),
+        labelIds: labelIdsProp('person', 'label_ids', true),
+    },
+    async run(context) {
+        const { personId } = context.propsValue;
+        const labelIds = (context.propsValue.labelIds as number[]) ?? [];
 
-		const personDefaultFields: Record<string, any> = {};
+        const personUpdatePayload: Record<string, any> = {};
 
-		if (labelIds.length > 0) {
-			personDefaultFields.label_ids = labelIds;
-		}
+        if (labelIds.length > 0) {
+            personUpdatePayload.label_ids = labelIds; 
+        }
 
-		const updatedPersonResponse = await pipedriveApiCall<PersonCreateResponse>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.PUT,
-			resourceUri: `/persons/${personId}`,
-			body: {
-				...personDefaultFields,
-			},
-		});
+        // ✅ Use PATCH method for updates and specify v2 endpoint
+        const updatedPersonResponse = await pipedriveApiCall<GetPersonResponse>({ 
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.PATCH, // ✅ Changed from HttpMethod.PUT to HttpMethod.PATCH
+            resourceUri: `/v2/persons/${personId}`, // ✅ Updated to v2 endpoint
+            body: {
+                ...personUpdatePayload,
+                // If this action were to also update custom fields, they would need to be nested here:
+                // custom_fields: context.propsValue.customfields,
+            },
+        });
 
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.GET,
-			resourceUri: '/personFields',
-		});
+        // ✅ Fetch custom field definitions from v2
+        const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.GET,
+            resourceUri: '/v2/personFields', // ✅ Updated to v2 endpoint
+        });
 
-		const updatedPersonProperties = pipedriveTransformCustomFields(
-			customFieldsResponse,
-			updatedPersonResponse.data,
-		);
+        // This function transforms the custom fields in the *response* data
+        const transformedPersonData = pipedriveTransformCustomFields( // ✅ Renamed variable for clarity
+            customFieldsResponse,
+            updatedPersonResponse.data,
+        );
 
-		return {
-			...updatedPersonResponse,
-			data: updatedPersonProperties,
-		};
-	},
+        return {
+            ...updatedPersonResponse,
+            data: transformedPersonData, // ✅ Assign transformed data to 'data'
+        };
+    },
 });

@@ -1,111 +1,119 @@
 import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { leadCommonProps } from '../common/props';
+import { leadCommonProps, customFieldsProp } from '../common/props';
 import {
-	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
-	pipedriveTransformCustomFields,
+    pipedriveApiCall,
+    pipedrivePaginatedApiCall,
+    pipedriveTransformCustomFields,
 } from '../common';
-import { GetField, OrganizationCreateResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { GetField, GetLeadResponse } from '../common/types';
 import dayjs from 'dayjs';
 
 export const createLeadAction = createAction({
-	auth: pipedriveAuth,
-	name: 'create-lead',
-	displayName: 'Create Lead',
-	description: 'Creates a new lead.',
-	props: {
-		title: Property.ShortText({
-			displayName: 'Title',
-			required: true,
-		}),
-		...leadCommonProps,
-	},
-	async run(context) {
-		const {
-			title,
-			ownerId,
-			channel,
-			organizationId,
-			personId,
-			expectedCloseDate,
-			visibleTo,
-			leadValue,
-			leadValueCurrency,
-		} = context.propsValue;
+    auth: pipedriveAuth,
+    name: 'create-lead',
+    displayName: 'Create Lead',
+    description: 'Creates a new lead using Pipedrive API v2.',
+    props: {
+        title: Property.ShortText({
+            displayName: 'Title',
+            required: true,
+        }),
+        ...leadCommonProps, // Spreads all the common lead properties
+        customfields: customFieldsProp('lead'), // Added dynamic custom fields for leads
+    },
+    async run(context) {
+        const {
+            title,
+            leadValue,
+            leadValueCurrency,
+            expectedCloseDate,
+            visibleTo,
+            ownerId,
+            organizationId,
+            personId,
+            // Removed 'creationTime' from destructuring as it's not in leadCommonProps
+        } = context.propsValue;
 
-		if (!personId && !organizationId) {
-			throw new Error(
-				'Neither an Organization nor a Person were provided. One of them must be provided in order to create a lead.',
-			);
-		}
+        // label_ids for leads are strings (UUIDs) in v2.
+        const labelIds = (context.propsValue.labelIds as string[]) ?? [];
 
-		const labelIds = (context.propsValue.labelIds as string[]) ?? [];
-		const customFields = context.propsValue.customfields ?? {};
+        // Define standard properties that are NOT custom fields for leads
+        const standardPropKeys = new Set([
+            'title',
+            'leadValue',
+            'leadValueCurrency',
+            'expectedCloseDate',
+            'visibleTo',
+            'ownerId',
+            'organizationId',
+            'personId',
+            'labelIds', // Add labelIds here as it's a standard prop
+            'channel', // Add if you include channel in leadCommonProps
+            'channelId', // Add if you include channelId in leadCommonProps
+            // Removed 'creationTime' from standardPropKeys
+        ]);
 
-		const leadDefaultFields: Record<string, any> = {
-			title,
-			owner_id: ownerId,
-			organization_id: organizationId,
-			person_id: personId,
-			channel: channel,
-			visible_to: visibleTo,
-		};
+        // Collect custom fields by filtering out standard properties from context.propsValue
+        const customFields: Record<string, unknown> = {};
+        const allProps = context.propsValue as Record<string, any>;
+        for (const key in allProps) {
+            if (Object.prototype.hasOwnProperty.call(allProps, key) && !standardPropKeys.has(key)) {
+                customFields[key] = allProps[key];
+            }
+        }
 
-		if (labelIds.length > 0) {
-			leadDefaultFields.label_ids = labelIds;
-		}
+        const leadPayload: Record<string, any> = {
+            title,
+            owner_id: ownerId,
+            org_id: organizationId,
+            person_id: personId,
+            visible_to: visibleTo,
+            // 'add_time' is typically set automatically by Pipedrive for leads.
+            // If you need to explicitly set it, you'd add a property to leadCommonProps.
+            value: (leadValue !== undefined && leadValueCurrency) ? {
+                amount: leadValue,
+                currency: leadValueCurrency,
+            } : undefined,
+        };
 
-		if(expectedCloseDate)
-		{
-			leadDefaultFields.expected_close_date= dayjs(expectedCloseDate).format('YYYY-MM-DD')
+        if (labelIds.length > 0) {
+            leadPayload.label_ids = labelIds;
+        }
 
-		}
+        if (expectedCloseDate) {
+            leadPayload.expected_close_date = dayjs(expectedCloseDate).format('YYYY-MM-DD');
+        }
 
-		if (leadValue) {
-			if (!leadValueCurrency) {
-				throw new Error('lead Value Currency is required when lead Value is provided');
-			}
-			leadDefaultFields.value = {
-				amount: leadValue,
-				currency: leadValueCurrency,
-			};
-		}
+        // Assign the collected custom fields to the 'custom_fields' object in the payload
+        if (Object.keys(customFields).length > 0) {
+            leadPayload.custom_fields = customFields;
+        }
 
-		const leadCustomFields: Record<string, any> = {};
+        const createdLeadResponse = await pipedriveApiCall<GetLeadResponse>({
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.POST,
+            resourceUri: '/v2/leads',
+            body: leadPayload,
+        });
 
-		Object.entries(customFields).forEach(([key, value]) => {
-			// Format values if they are arrays
-			leadCustomFields[key] = Array.isArray(value) ? value.join(',') : value;
-		});
+        const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.GET,
+            resourceUri: '/v2/leadFields',
+        });
 
-		const createdLeadResponse = await pipedriveApiCall<OrganizationCreateResponse>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.POST,
-			resourceUri: '/leads',
-			body: {
-				...leadDefaultFields,
-				...leadCustomFields,
-			},
-		});
+        const updatedLeadProperties = pipedriveTransformCustomFields(
+            customFieldsResponse,
+            createdLeadResponse.data,
+        );
 
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.GET,
-			resourceUri: '/dealFields',
-		});
-
-		const updatedLeadProperties = pipedriveTransformCustomFields(
-			customFieldsResponse,
-			createdLeadResponse.data,
-		);
-
-		return {
-			...createdLeadResponse,
-			data: updatedLeadProperties,
-		};
-	},
+        return {
+            ...createdLeadResponse,
+            data: updatedLeadProperties,
+        };
+    },
 });
