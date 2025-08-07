@@ -1,0 +1,14 @@
+{
+  "AnyHook Websocket": "Веб-сокет AnyHook",
+  "AnyHook Websocket enables real-time communication through AnyHook proxy server by allowing you to subscribe and listen to websocket events": "AnyHook Websocket позволяет общаться в реальном времени через AnyHook прокси сервер, позволяя подписаться и слушать события веб-сокетов",
+  "AnyHook Server URL": "URL сервера AnyHook",
+  "The URL of your AnyHook server": "URL вашего сервера AnyHook",
+  "New Websocket Subscription Event": "Новое событие подписки на веб-сокет",
+  "Triggers on a new Websocket subscription event": "Триггеры при новом событии подписки на Websocket",
+  "Endpoint URL": "Endpoint URL",
+  "Headers": "Заголовки",
+  "Subscription Message": "Сообщение о подписке",
+  "Websocket endpoint URL to connect to.": "URL-адрес конечной точки веб-сокета для подключения.",
+  "Custom headers for the Websocket connection, such as authentication tokens.": "Пользовательские заголовки для соединения с Websocket, такие как токены аутентификации.",
+  "The message to send to the Websocket server to subscribe to events.": "Сообщение для отправки на сервер Websocket для подписки на события."
+}
