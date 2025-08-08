@@ -1,3 +1,4 @@
+import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import {
     FlowOperationType,
     FlowStatus,
@@ -22,7 +23,6 @@ import {
     createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
-import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 
 let app: FastifyInstance | null = null
 
@@ -108,25 +108,25 @@ describe('Flow API', () => {
                 name: '@activepieces/piece-schedule',
                 version: '0.1.5',
                 triggers: {
-                    "every_hour": {
-                        "name": "every_hour",
-                        "displayName": "Every Hour",
-                        "description": "Triggers the current flow every hour",
-                        "requireAuth": true,
-                        "props": {
+                    'every_hour': {
+                        'name': 'every_hour',
+                        'displayName': 'Every Hour',
+                        'description': 'Triggers the current flow every hour',
+                        'requireAuth': true,
+                        'props': {
 
                         },
-                        "type": TriggerStrategy.WEBHOOK,
-                        "handshakeConfiguration": {
-                            "strategy": WebhookHandshakeStrategy.NONE
+                        'type': TriggerStrategy.WEBHOOK,
+                        'handshakeConfiguration': {
+                            'strategy': WebhookHandshakeStrategy.NONE,
                         },
-                        "renewConfiguration": {
-                            "strategy": WebhookRenewStrategy.NONE
+                        'renewConfiguration': {
+                            'strategy': WebhookRenewStrategy.NONE,
                         },
-                        "sampleData": {
+                        'sampleData': {
 
                         },
-                        "testStrategy": TriggerTestStrategy.TEST_FUNCTION
+                        'testStrategy': TriggerTestStrategy.TEST_FUNCTION,
                     },
                 },
                 pieceType: PieceType.OFFICIAL,
@@ -290,25 +290,25 @@ describe('Flow API', () => {
                 name: '@activepieces/piece-schedule',
                 version: '0.1.5',
                 triggers: {
-                    "every_hour": {
-                        "name": "every_hour",
-                        "displayName": "Every Hour",
-                        "description": "Triggers the current flow every hour",
-                        "requireAuth": true,
-                        "props": {
+                    'every_hour': {
+                        'name': 'every_hour',
+                        'displayName': 'Every Hour',
+                        'description': 'Triggers the current flow every hour',
+                        'requireAuth': true,
+                        'props': {
 
                         },
-                        "type": TriggerStrategy.WEBHOOK,
-                        "handshakeConfiguration": {
-                            "strategy": WebhookHandshakeStrategy.NONE
+                        'type': TriggerStrategy.WEBHOOK,
+                        'handshakeConfiguration': {
+                            'strategy': WebhookHandshakeStrategy.NONE,
                         },
-                        "renewConfiguration": {
-                            "strategy": WebhookRenewStrategy.NONE
+                        'renewConfiguration': {
+                            'strategy': WebhookRenewStrategy.NONE,
                         },
-                        "sampleData": {
+                        'sampleData': {
 
                         },
-                        "testStrategy": TriggerTestStrategy.TEST_FUNCTION
+                        'testStrategy': TriggerTestStrategy.TEST_FUNCTION,
                     },
                 },
                 pieceType: PieceType.OFFICIAL,
