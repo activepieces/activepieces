@@ -1,76 +1,102 @@
 import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { organizationCommonProps } from '../common/props';
+import { organizationCommonProps, customFieldsProp } from '../common/props';
 import {
-	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
-	pipedriveTransformCustomFields,
+    pipedriveApiCall,
+    pipedrivePaginatedApiCall,
+    pipedriveTransformCustomFields,
 } from '../common';
-import { GetField, OrganizationCreateResponse } from '../common/types';
+import { GetField, GetOrganizationResponse } from '../common/types'; 
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createOrganizationAction = createAction({
-	auth: pipedriveAuth,
-	name: 'create-organization',
-	displayName: 'Create Organization',
-	description: 'Creates a new organization.',
-	props: {
-		name: Property.ShortText({
-			displayName: 'Name',
-			required: true,
-		}),
-		...organizationCommonProps,
-	},
-	async run(context) {
-		const { name, ownerId, address, visibleTo } = context.propsValue;
+    auth: pipedriveAuth,
+    name: 'create-organization',
+    displayName: 'Create Organization',
+    description: 'Creates a new organization using Pipedrive API v2.',
+    props: {
+        name: Property.ShortText({
+            displayName: 'Name',
+            required: true,
+        }),
+        ...organizationCommonProps, 
+        customfields: customFieldsProp('organization'), 
+    },
+    async run(context) {
+        const { name, ownerId, address, visibleTo } = context.propsValue;
 
-		const labelIds = (context.propsValue.labelIds as number[]) ?? [];
-		const customFields = context.propsValue.customfields ?? {};
+        
+        const labelIds = (context.propsValue.labelIds as number[]) ?? [];
 
-		const organizationDefaultFields: Record<string, any> = {
-			name: name,
-			owner_id: ownerId,
-			visible_to: visibleTo,
-			address: address,
-		};
+        
+        const standardPropKeys = new Set([
+            'name',
+            'ownerId',
+            'address',
+            'visibleTo',
+            'labelIds', 
+        ]);
 
-		if (labelIds.length > 0) {
-			organizationDefaultFields.label_ids = labelIds;
-		}
+        
+        const customFields: Record<string, unknown> = {};
+        
+        const allProps = context.propsValue as Record<string, any>;
+        for (const key in allProps) {
+            if (Object.prototype.hasOwnProperty.call(allProps, key) && !standardPropKeys.has(key)) {
+                customFields[key] = allProps[key];
+            }
+        }
 
-		const organizationCustomFields: Record<string, string> = {};
+        const organizationPayload: Record<string, any> = {
+            name: name,
+            owner_id: ownerId,
+            visible_to: visibleTo,
+        };
 
-		Object.entries(customFields).forEach(([key, value]) => {
-			// Format values if they are arrays
-			organizationCustomFields[key] = Array.isArray(value) ? value.join(',') : value;
-		});
+        
+        if (address) {
+            if (typeof address === 'string') {
+                organizationPayload.address = { value: address }; 
+            } else if (typeof address === 'object') {
+                organizationPayload.address = address; // Assume it's already a structured object
+            }
+        }
 
-		const createdOrganizationResponse = await pipedriveApiCall<OrganizationCreateResponse>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.POST,
-			resourceUri: '/organizations',
-			body: {
-				...organizationDefaultFields,
-				...organizationCustomFields,
-			},
-		});
+        if (labelIds.length > 0) {
+            organizationPayload.label_ids = labelIds;
+        }
 
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.GET,
-			resourceUri: '/organizationFields',
-		});
+        // Assign the collected custom fields to the 'custom_fields' object in the payload
+        if (Object.keys(customFields).length > 0) {
+            organizationPayload.custom_fields = customFields;
+        }
 
-		const updatedOrganizationProperties = pipedriveTransformCustomFields(
-			customFieldsResponse,
-			createdOrganizationResponse.data,
-		);
+       
+        const createdOrganizationResponse = await pipedriveApiCall<GetOrganizationResponse>({
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.POST,
+            resourceUri: '/v2/organizations',
+            body: organizationPayload,
+        });
 
-		return {
-			...createdOrganizationResponse,
-			data: updatedOrganizationProperties,
-		};
-	},
+        
+        const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.GET,
+            resourceUri: '/v2/organizationFields',
+        });
+
+        // This function transforms the custom fields in the *response* data
+        const updatedOrganizationProperties = pipedriveTransformCustomFields(
+            customFieldsResponse,
+            createdOrganizationResponse.data,
+        );
+
+        return {
+            ...createdOrganizationResponse,
+            data: updatedOrganizationProperties,
+        };
+    },
 });
