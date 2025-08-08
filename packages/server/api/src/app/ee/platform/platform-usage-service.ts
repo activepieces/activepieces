@@ -47,7 +47,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             projects,
             seats,
             tables,
-            agents
+            agents,
         ] = await Promise.all([
             this.getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate }),
             this.getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate }),
@@ -56,7 +56,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             getProjectsCount(platformId),
             getActiveUsers(platformId),
             getTables(platformId),
-            getAgentsCount(platformId)
+            getAgentsCount(platformId),
         ])
 
         return { tasks: platformTasksUsage, aiCredits: platformAICreditUsage, activeFlows, mcps, projects, seats, tables, agents }
