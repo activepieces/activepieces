@@ -194,7 +194,6 @@ describe('Flow API', () => {
                 body: mockUpdateFlowStatusRequest,
             })
             const responseBody = response?.json()
-            console.log(responseBody)
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
