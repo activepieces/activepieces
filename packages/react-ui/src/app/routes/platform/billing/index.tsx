@@ -2,19 +2,21 @@ import { t } from 'i18next';
 import { Wand, Zap } from 'lucide-react';
 import { useState } from 'react';
 
-import { TableTitle } from '@/components/custom/table-title';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { ActivateLicenseDialog } from '@/features/billing/components/activate-license-dialog';
+import { ActiveFlowAddon } from '@/features/billing/components/active-flow-addon';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
-import { BusinessUserSeats } from '@/features/billing/components/business-user-seats';
+import { AiCreditsUsageTable } from '@/features/billing/components/ai-credits-usage-table';
 import { FeatureStatus } from '@/features/billing/components/features-status';
 import { LicenseKey } from '@/features/billing/components/lisence-key';
-import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
+import { ProjectAddon } from '@/features/billing/components/project-addon';
 import { SubscriptionInfo } from '@/features/billing/components/subscription-info';
-import { TasksUsage } from '@/features/billing/components/tasks-usage';
+import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { UsageCards } from '@/features/billing/components/usage-cards';
+import { UserSeatAddon } from '@/features/billing/components/user-seat-addon';
 import {
   billingMutations,
   billingQueries,
@@ -28,7 +30,7 @@ export default function Billing() {
   const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
     useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
-  const [managePlanOpen, setManagePlanOpen] = useState(false);
+  const openDialog = useManagePlanDialogStore((state) => state.openDialog);
 
   const {
     data: platformPlanInfo,
@@ -44,14 +46,16 @@ export default function Billing() {
     status as ApSubscriptionStatus,
   );
   const isBusinessPlan = platformPlanInfo?.plan.plan === PlanName.BUSINESS;
+  const isPlus = platformPlanInfo?.plan.plan === PlanName.PLUS;
+  const isTrial = status === ApSubscriptionStatus.TRIALING;
   const isEnterprise =
     !isNil(platformPlanInfo?.plan.licenseKey) ||
+    platformPlanInfo?.plan.plan === PlanName.ENTERPRISE ||
     edition === ApEdition.ENTERPRISE;
 
   if (isPlatformSubscriptionLoading || isNil(platformPlanInfo)) {
     return (
-      <article className="flex flex-col w-full gap-8">
-        <TableTitle>Billing</TableTitle>
+      <article className="h-full flex items-center justify-center w-full">
         <LoadingSpinner />
       </article>
     );
@@ -59,25 +63,19 @@ export default function Billing() {
 
   if (isError) {
     return (
-      <article className="flex flex-col w-full gap-8">
-        <TableTitle>Billing</TableTitle>
-        <div className="flex items-center justify-center h-[400px] text-destructive">
-          {t('Failed to load billing information')}
-        </div>
+      <article className="h-full flex items-center justify-center w-full">
+        {t('Failed to load billing information')}
       </article>
     );
   }
 
   return (
-    <article className="flex flex-col w-full gap-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <TableTitle>{t('Billing')}</TableTitle>
-          <p className="text-sm text-muted-foreground">
-            {t('Manage billing, usage and limits')}
-          </p>
-        </div>
-
+    <>
+      <DashboardPageHeader
+        title={t('Billing')}
+        description={t('Manage billing, usage and limits')}
+        beta={true}
+      >
         {isEnterprise ? (
           <Button
             variant="default"
@@ -98,57 +96,73 @@ export default function Billing() {
                 {t('Access Billing Portal')}
               </Button>
             )}
-            <Button variant="default" onClick={() => setManagePlanOpen(true)}>
+            <Button variant="default" onClick={() => openDialog()}>
               {t('Upgrade Plan')}
             </Button>
           </div>
         )}
-      </div>
+      </DashboardPageHeader>
+      <section className="flex flex-col w-full gap-6">
+        {!isEnterprise && <SubscriptionInfo info={platformPlanInfo} />}
 
-      {!isEnterprise && <SubscriptionInfo info={platformPlanInfo} />}
+        <UsageCards platformSubscription={platformPlanInfo} />
 
-      <UsageCards platformSubscription={platformPlanInfo} />
-      {isBusinessPlan && (
-        <BusinessUserSeats platformSubscription={platformPlanInfo} />
-      )}
-      <AICreditUsage platformSubscription={platformPlanInfo} />
-      <TasksUsage platformSubscription={platformPlanInfo} />
+        {isBusinessPlan ||
+          (isPlus && !isTrial && (
+            <ActiveFlowAddon platformSubscription={platformPlanInfo} />
+          ))}
 
-      {isEnterprise ? (
-        <LicenseKey platform={platform} />
-      ) : (
-        <Card>
-          <CardHeader className="border-b">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg border">
-                  <Wand className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">
-                    {t('Enabled Features')}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {t(
-                      'The following features are currently enabled as part of your platform plan.',
-                    )}
-                  </p>
+        {isBusinessPlan && (
+          <div className="grid grid-cols-2 gap-6">
+            <ProjectAddon platformSubscription={platformPlanInfo} />
+            <UserSeatAddon platformSubscription={platformPlanInfo} />
+          </div>
+        )}
+
+        {!isEnterprise && (
+          <AICreditUsage platformSubscription={platformPlanInfo} />
+        )}
+
+        {isEnterprise && (
+          <>
+            <h3 className="text-lg font-semibold">{t('AI Credits')}</h3>
+            <AiCreditsUsageTable />
+          </>
+        )}
+
+        {isEnterprise ? (
+          <LicenseKey platform={platform} />
+        ) : (
+          <Card>
+            <CardHeader className="border-b">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg border">
+                    <Wand className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      {t('Enabled Features')}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {t(
+                        'The following features are currently enabled as part of your platform plan.',
+                      )}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-6 p-6">
-            <FeatureStatus platform={platform} />
-          </CardContent>
-        </Card>
-      )}
-
-      <ManagePlanDialog open={managePlanOpen} setOpen={setManagePlanOpen} />
-      <ActivateLicenseDialog
-        isOpen={isActivateLicenseKeyDialogOpen}
-        onOpenChange={setIsActivateLicenseKeyDialogOpen}
-      />
-    </article>
+            </CardHeader>
+            <CardContent className="space-y-6 p-6">
+              <FeatureStatus platform={platform} />
+            </CardContent>
+          </Card>
+        )}
+        <ActivateLicenseDialog
+          isOpen={isActivateLicenseKeyDialogOpen}
+          onOpenChange={setIsActivateLicenseKeyDialogOpen}
+        />
+      </section>{' '}
+    </>
   );
 }

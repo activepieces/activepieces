@@ -5,7 +5,7 @@ import { DimoClient } from '../../common/helpers';
 
 const deviceDefinitionApiAction = createAction({
 	auth: dimoAuth,
-	name: 'decode-vin',
+	name: 'device-definitions-decode-vin',
 	displayName: 'Device Definitions : Decode VIN',
 	description:
 		'Submits a decoding request for vehicle identification number, returns the device definition ID corresponding to the VIN.',
@@ -46,7 +46,7 @@ const deviceDefinitionApiAction = createAction({
 
 const deviceDefinitionsSearchAction = createAction({
 	auth: dimoAuth,
-	name: 'lookup-device-definitions',
+	name: 'device-definitions-lookup-device-definitions',
 	displayName: 'Device Definitions : Lookup',
 	description: 'Search for device definitions by query and filters.',
 	props: {

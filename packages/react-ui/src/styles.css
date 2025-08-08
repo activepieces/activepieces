@@ -57,7 +57,7 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     
-    --sidebar-background: 0 0% 99%;
+    --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 257 74% 57%;
     --sidebar-primary-foreground: 0 0% 98%;
@@ -156,4 +156,9 @@
 .react-flow__edge.selectable>path {
   /* If necessary, add !important to the rule */
   pointer-events: none !important;
+}
+
+/* This is a hack to fix the issue with the pointer events being set to none when the vaul drawer is open */
+body {
+  pointer-events: auto !important;
 }

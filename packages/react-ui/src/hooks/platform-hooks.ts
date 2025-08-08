@@ -7,9 +7,19 @@ import { t } from 'i18next';
 
 import { toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
-import { PlatformWithoutSensitiveData } from '@activepieces/shared';
+import {
+  METRIC_TO_LIMIT_MAPPING,
+  METRIC_TO_USAGE_MAPPING,
+} from '@activepieces/ee-shared';
+import {
+  isNil,
+  PlatformUsageMetric,
+  PlatformWithoutSensitiveData,
+} from '@activepieces/shared';
 
 import { platformApi } from '../lib/platforms-api';
+
+import { flagsHooks } from './flags-hooks';
 
 export const platformHooks = {
   isCopilotEnabled: () => {
@@ -48,18 +58,47 @@ export const platformHooks = {
         queryClient.invalidateQueries({
           queryKey: ['platform', currentPlatformId],
         });
+        queryClient.invalidateQueries({
+          queryKey: flagsHooks.queryKey,
+        });
         toast({
           title: t('Success'),
           description: t('License activated successfully!'),
         });
       },
-      onError: (error: any) => {
+      onError: () => {
         toast({
           title: t('Error'),
-          description: t('Activation failed, invalid lisence key'),
+          description: t('Activation failed, invalid license key'),
           variant: 'destructive',
         });
       },
     });
+  },
+  useCheckResourceIsLocked: (
+    resource: Exclude<
+      PlatformUsageMetric,
+      PlatformUsageMetric.AI_CREDITS | PlatformUsageMetric.TASKS
+    >,
+  ): boolean => {
+    const { platform } = platformHooks.useCurrentPlatform();
+
+    const plan = platform.plan;
+    const usage = platform.usage;
+    if (isNil(usage)) {
+      return false;
+    }
+
+    const limitKey = METRIC_TO_LIMIT_MAPPING[resource];
+    const usageKey = METRIC_TO_USAGE_MAPPING[resource];
+
+    const limit = plan[limitKey];
+    const currentUsage = usage[usageKey];
+
+    if (!isNil(limit) && currentUsage > limit) {
+      return true;
+    }
+
+    return false;
   },
 };

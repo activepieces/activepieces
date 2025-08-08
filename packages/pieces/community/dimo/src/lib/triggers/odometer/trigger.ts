@@ -83,7 +83,7 @@ export const odometerTrigger = createTrigger({
 			},
 			setup: triggerFrequency as 'Realtime' | 'Hourly',
 			description: `Odometer trigger: ${operator} ${odometerValue} km`,
-			targetUri: context.webhookUrl,
+			target_uri: context.webhookUrl,
 			status: 'Active',
 			verification_token: verificationToken,
 		};

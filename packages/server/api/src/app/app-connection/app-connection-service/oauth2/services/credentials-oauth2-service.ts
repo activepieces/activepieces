@@ -1,4 +1,5 @@
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
+import { apAxios } from '@activepieces/server-shared'
 import { ActivepiecesError,
     AppConnectionType,
     BaseOAuth2ConnectionValue,
@@ -8,7 +9,7 @@ import { ActivepiecesError,
     OAuth2GrantType,
     resolveValueFromProps,
 } from '@activepieces/shared'
-import axios, { AxiosError } from 'axios'
+import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import {
     ClaimOAuth2Request,
@@ -16,6 +17,7 @@ import {
     RefreshOAuth2Request,
 } from '../oauth2-service'
 import { oauth2Util } from '../oauth2-util'
+
 
 export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<OAuth2ConnectionValueWithApp> => ({
     async claim({
@@ -67,7 +69,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                     throw new Error(`Unknown authorization method: ${authorizationMethod}`)
             }
             const response = (
-                await axios.post(request.tokenUrl, new URLSearchParams(body), {
+                await apAxios.post(request.tokenUrl, new URLSearchParams(body), {
                     headers,
                 })
             ).data
@@ -160,7 +162,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 throw new Error(`Unknown authorization method: ${authorizationMethod}`)
         }
         const response = (
-            await axios.post(appConnection.token_url, new URLSearchParams(body), {
+            await apAxios.post(appConnection.token_url, new URLSearchParams(body), {
                 headers,
                 timeout: 10000,
             })

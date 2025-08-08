@@ -49,7 +49,7 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdateMcpRequest, async (req) => {
         const mcpId = req.params.id
         const { name, tools } = req.body
-
+        await PlatformPlanHelper.checkResourceLocked({ platformId: req.principal.platform.id, resource: PlatformUsageMetric.MCPS })
         return mcpService(req.log).update({
             mcpId,
             name,
@@ -146,7 +146,7 @@ const RotateTokenRequest = {
 
 const GetMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.WORKER],
         permissions: [Permission.READ_MCP],
     },
     schema: {

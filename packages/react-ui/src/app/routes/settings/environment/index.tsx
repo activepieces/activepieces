@@ -5,7 +5,7 @@ import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { ConnectGitDialog } from '@/features/git-sync/components/connect-git-dialog';
 import { gitSyncApi } from '@/features/git-sync/lib/git-sync-api';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
@@ -38,9 +38,6 @@ const EnvironmentPage = () => {
         duration: 3000,
       });
     },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
   });
 
   return (
@@ -54,7 +51,7 @@ const EnvironmentPage = () => {
     >
       <div className="flex w-full flex-col items-start justify-center gap-4">
         <div className="flex flex-col justify-start items-start w-full">
-          <h1 className="text-2xl font-bold flex-grow">{t('Environments')}</h1>
+          <h1 className="text-xl font-bold flex-grow">{t('Environments')}</h1>
           <span className="text-muted-foreground text-md">
             {t(
               'Connect to Git to enable version control, backup your flows, and manage multiple environments. ',

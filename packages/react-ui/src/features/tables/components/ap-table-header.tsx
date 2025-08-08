@@ -47,7 +47,7 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
     state.renameTable,
     state.deleteRecords,
   ]);
-
+  const [isImportCsvDialogOpen, setIsImportCsvDialogOpen] = useState(false);
   const [isEditingTableName, setIsEditingTableName] = useState(false);
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
@@ -62,7 +62,7 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
 
   return (
     <>
-      <div className="flex items-center gap-1 justify-between p-4">
+      <div className="flex items-center gap-1 justify-between p-4 w-full">
         <div className="flex items-center gap-1">
           <Button
             variant="basic"
@@ -93,7 +93,9 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setIsImportCsvDialogOpen(true)}
+                >
                   <Import className="mr-2 h-4 w-4" />
                   {t('Import')}
                 </DropdownMenuItem>
@@ -133,7 +135,6 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
                 }}
               >
                 <Button
-                  size="sm"
                   variant="destructive"
                   className="flex gap-2 items-center"
                   disabled={!userHasTableWritePermission}
@@ -147,8 +148,11 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
           )}
         </div>
       </div>
-      <div className="hidden">
-        <ImportCsvDialog />
+      <div>
+        <ImportCsvDialog
+          open={isImportCsvDialogOpen}
+          setIsOpen={setIsImportCsvDialogOpen}
+        />
       </div>
     </>
   );

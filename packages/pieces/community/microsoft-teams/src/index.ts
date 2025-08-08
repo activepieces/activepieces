@@ -29,6 +29,7 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
     'User.ReadBasic.All',
     'Presence.Read.All',
 	],
+	prompt: 'omit',
 	authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
 	tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
 	validate: async ({ auth }) => {

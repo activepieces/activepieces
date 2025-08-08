@@ -2,29 +2,26 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 
-import {
-  INTERNAL_ERROR_TOAST,
-  PROJECT_LOCKED_MESSAGE,
-  toast,
-} from '@/components/ui/use-toast';
+import { useSocket } from '@/components/socket-provider';
+import { toast } from '@/components/ui/use-toast';
+import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { downloadFile } from '@/lib/utils';
 import {
   ApFlagId,
-  ErrorCode,
   FlowOperationType,
+  FlowRun,
   FlowStatus,
   FlowVersion,
   FlowVersionMetadata,
   ListFlowsRequest,
   PopulatedFlow,
-  Trigger,
-  TriggerType,
+  FlowTrigger,
+  FlowTriggerType,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -47,13 +44,11 @@ export const flowsHooks = {
     flowId,
     setFlow,
     setVersion,
-    showUpgradeDialog,
     setIsPublishing,
   }: {
     flowId: string;
     setFlow: (flow: PopulatedFlow) => void;
     setVersion: (version: FlowVersion) => void;
-    showUpgradeDialog: () => void;
     setIsPublishing: (isPublishing: boolean) => void;
   }) => {
     const { data: enableFlowOnPublish } = flagsHooks.useFlag<boolean>(
@@ -82,13 +77,6 @@ export const flowsHooks = {
         setIsPublishing(false);
       },
       onError: (err: Error) => {
-        if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
-          showUpgradeDialog();
-        } else if (api.isApError(err, ErrorCode.PROJECT_LOCKED)) {
-          toast(PROJECT_LOCKED_MESSAGE);
-        } else {
-          toast(INTERNAL_ERROR_TOAST);
-        }
         setIsPublishing(false);
       },
     });
@@ -122,7 +110,6 @@ export const flowsHooks = {
           });
         }
       },
-      onError: () => toast(INTERNAL_ERROR_TOAST),
     });
   },
 
@@ -139,10 +126,6 @@ export const flowsHooks = {
         return result.version;
       },
       onSuccess,
-      onError: (error) => {
-        toast(INTERNAL_ERROR_TOAST);
-        console.error(error);
-      },
     });
   },
   useOverWriteDraftWithVersion: ({
@@ -161,10 +144,6 @@ export const flowsHooks = {
         return result;
       },
       onSuccess,
-      onError: (error) => {
-        toast(INTERNAL_ERROR_TOAST);
-        console.error(error);
-      },
     });
   },
   useCreateMcpFlow: () => {
@@ -186,13 +165,13 @@ export const flowsHooks = {
           stepName: 'trigger',
           pieceSelectorItem: {
             actionOrTrigger: trigger,
-            type: TriggerType.PIECE,
+            type: FlowTriggerType.PIECE,
             pieceMetadata: stepUtils.mapPieceToMetadata({
               piece: mcpPiece,
               type: 'trigger',
             }),
           },
-        }) as Trigger;
+        }) as FlowTrigger;
         await flowsApi.update(flow.id, {
           type: FlowOperationType.UPDATE_TRIGGER,
           request: stepData,
@@ -208,9 +187,33 @@ export const flowsHooks = {
     return useQuery({
       queryKey: ['flow', flowId],
       queryFn: async () => {
-        return await flowsApi.get(flowId);
+        try {
+          return await flowsApi.get(flowId);
+        } catch (err) {
+          console.error(err);
+          return null;
+        }
       },
       staleTime: 0,
+    });
+  },
+  useTestFlow: ({
+    flowVersionId,
+    onUpdateRun,
+  }: {
+    flowVersionId: string;
+    onUpdateRun: (run: FlowRun) => void;
+  }) => {
+    const socket = useSocket();
+    return useMutation<void>({
+      mutationFn: () =>
+        flowRunsApi.testFlow(
+          socket,
+          {
+            flowVersionId,
+          },
+          onUpdateRun,
+        ),
     });
   },
 };

@@ -1,0 +1,19 @@
+{
+  "PDF": "PDF",
+  "Extract Text": "テキストを抽出",
+  "Convert to Image": "画像に変換",
+  "Text to PDF": "PDF にテキスト",
+  "Image to PDF": "PDFへの画像",
+  "Extract text from PDF file or url": "PDFファイルまたはURLからテキストを抽出",
+  "Convert a PDF file or URL to an image": "PDFファイルまたはURLを画像に変換",
+  "Convert text to PDF": "テキストをPDFに変換する",
+  "Convert image to PDF": "画像をPDFに変換",
+  "PDF File or URL": "PDFファイルまたはURL",
+  "Output Image Type": "出力イメージタイプ",
+  "text": "テキスト",
+  "image": "画像",
+  "Enter text to convert": "変換するテキストを入力してください",
+  "Image has to be png, jpeg or jpg and it will be scaled down to fit the page when image is larger than an A4 page": "画像はpngでなければなりません jpegまたはjpgと画像がA4ページより大きいときにページに合わせて縮小します",
+  "Single Combined Image": "単一の複合画像",
+  "Separate Image for Each Page": "各ページごとに画像を分離する"
+}

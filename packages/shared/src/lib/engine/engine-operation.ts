@@ -3,9 +3,10 @@ import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
-import { PackageType, PiecePackage, PieceType } from '../pieces'
+import { PiecePackage } from '../pieces'
 import { PlatformId } from '../platform'
 import { ProjectId } from '../project/project'
+import { ScheduleOptions } from '../trigger'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
@@ -94,8 +95,6 @@ export type ExecuteToolOperation = BaseEngineOperation & {
     actionName: string
     pieceName: string
     pieceVersion: string
-    pieceType: PieceType
-    packageType: PackageType
     input: Record<string, unknown>
 }
 
@@ -243,11 +242,6 @@ export type ExecuteValidateAuthResponse =
     | ValidExecuteValidateAuthResponseOutput
     | InvalidExecuteValidateAuthResponseOutput
 
-export type ScheduleOptions = {
-    cronExpression: string
-    timezone: string
-    failureCount: number
-}
 
 export type EngineResponse<T> = {
     status: EngineResponseStatus

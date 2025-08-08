@@ -1,5 +1,4 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
@@ -14,22 +13,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { SupportedAIProvider } from '@activepieces/shared';
+import {
+  SupportedAIProvider,
+  CreateAIProviderRequest,
+} from '@activepieces/shared';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
-
-const UpsertAIProviderInput = Type.Object({
-  provider: Type.String(),
-  apiKey: Type.String(),
-});
-
-export type UpsertAIProviderInput = Static<typeof UpsertAIProviderInput>;
 
 type UpsertAIProviderDialogProps = {
   provider: string;
@@ -37,6 +38,7 @@ type UpsertAIProviderDialogProps = {
   children: React.ReactNode;
   onSave: () => void;
   isConfigured?: boolean;
+  showAzureOpenAI?: boolean;
 };
 
 export const UpsertAIProviderDialog = ({
@@ -45,32 +47,37 @@ export const UpsertAIProviderDialog = ({
   provider,
   providerMetadata,
   isConfigured = false,
+  showAzureOpenAI = false,
 }: UpsertAIProviderDialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<UpsertAIProviderInput>({
-    resolver: typeboxResolver(UpsertAIProviderInput),
+  const form = useForm<CreateAIProviderRequest>({
+    resolver: typeboxResolver(CreateAIProviderRequest),
     defaultValues: {
       provider,
       apiKey: '',
+      useAzureOpenAI: false,
+      resourceName: '',
     },
   });
 
   const { refetch } = flagsHooks.useFlags();
-
-  const { toast } = useToast();
 
   const { mutate, isPending } = useMutation({
     mutationFn: (): Promise<void> => {
       return aiProviderApi.upsert(form.getValues());
     },
     onSuccess: () => {
-      form.reset({ provider, apiKey: '' });
+      form.reset({
+        provider,
+        apiKey: '',
+        useAzureOpenAI: false,
+        resourceName: '',
+      });
       setOpen(false);
       refetch();
       onSave();
     },
     onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
       setOpen(false);
     },
   });
@@ -80,7 +87,12 @@ export const UpsertAIProviderDialog = ({
       open={open}
       onOpenChange={(open) => {
         if (!open) {
-          form.reset({ provider, apiKey: '' });
+          form.reset({
+            provider,
+            apiKey: '',
+            useAzureOpenAI: false,
+            resourceName: '',
+          });
         }
         setOpen(open);
       }}
@@ -102,6 +114,78 @@ export const UpsertAIProviderDialog = ({
 
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
+            {showAzureOpenAI && (
+              <FormField
+                name="useAzureOpenAI"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <Label className="text-sm font-medium">
+                      {t('Provider')}
+                    </Label>
+                    <FormControl>
+                      <RadioGroup
+                        value={field.value ? 'azure' : 'openai'}
+                        onValueChange={(value) =>
+                          field.onChange(value === 'azure')
+                        }
+                        className="flex gap-4"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="openai" id="openai" />
+                          <label
+                            htmlFor="openai"
+                            className="flex items-center gap-2 cursor-pointer text-sm"
+                          >
+                            <img
+                              src="https://cdn.activepieces.com/pieces/openai.png"
+                              alt="OpenAI"
+                              className="w-4 h-4"
+                            />
+                            OpenAI
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="azure" id="azure" />
+                          <label
+                            htmlFor="azure"
+                            className="flex items-center gap-2 cursor-pointer text-sm"
+                          >
+                            <img
+                              src="https://cdn.activepieces.com/pieces/azure-openai.png"
+                              alt="Azure OpenAI"
+                              className="w-4 h-4"
+                            />
+                            Azure OpenAI
+                          </label>
+                        </div>
+                      </RadioGroup>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {showAzureOpenAI && form.watch('useAzureOpenAI') && (
+              <FormField
+                name="resourceName"
+                render={({ field }) => (
+                  <FormItem className="grid space-y-3">
+                    <Label htmlFor="resourceName">{t('Resource Name')}</Label>
+                    <div className="flex gap-2 items-center justify-center">
+                      <Input
+                        {...field}
+                        required
+                        id="resourceName"
+                        placeholder={t('your-resource-name')}
+                        className="rounded-sm"
+                      />
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormField
               name="apiKey"
               render={({ field }) => (

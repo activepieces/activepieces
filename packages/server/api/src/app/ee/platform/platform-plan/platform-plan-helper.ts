@@ -1,3 +1,4 @@
+import { METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, PlanName, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
 import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlatformPlanLimits, PlatformUsageMetric, UserStatus } from '@activepieces/shared'
 import { flowService } from '../../../flows/flow/flow.service'
 import { system } from '../../../helper/system/system'
@@ -8,24 +9,6 @@ import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 
 const edition = system.getEdition()
-
-const METRIC_TO_LIMIT_MAPPING = {
-    [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlowsLimit',
-    [PlatformUsageMetric.USER_SEATS]: 'userSeatsLimit',
-    [PlatformUsageMetric.PROJECTS]: 'projectsLimit',
-    [PlatformUsageMetric.TABLES]: 'tablesLimit',
-    [PlatformUsageMetric.MCPS]: 'mcpLimit',
-    [PlatformUsageMetric.AGENTS]: 'agentsLimit',
-} as const
-
-const METRIC_TO_USAGE_MAPPING = {
-    [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlows',
-    [PlatformUsageMetric.USER_SEATS]: 'seats',
-    [PlatformUsageMetric.PROJECTS]: 'projects',
-    [PlatformUsageMetric.TABLES]: 'tables',
-    [PlatformUsageMetric.MCPS]: 'mcps',
-    [PlatformUsageMetric.AGENTS]: 'agents',
-} as const
 
 export const PlatformPlanHelper = {
     checkQuotaOrThrow: async (params: QuotaCheckParams): Promise<void> => {
@@ -66,6 +49,56 @@ export const PlatformPlanHelper = {
             })
         }
     },
+    checkResourceLocked: async (params: CheckResourceLockedParams): Promise<void> => {
+        const { platformId, resource } = params
+
+        if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)) {
+            return
+        }
+
+        const plan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
+        const platformUsage = await platformUsageService(system.globalLogger()).getAllPlatformUsage(platformId)
+
+        const limitKey = METRIC_TO_LIMIT_MAPPING[resource]
+        const usageKey = METRIC_TO_USAGE_MAPPING[resource]
+
+        if (!limitKey || !usageKey) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `Unknown resource: ${resource}`,
+                },
+            })
+        }
+
+        const limit = plan[limitKey]
+        const currentUsage = platformUsage[usageKey]
+
+        if (!isNil(limit) && currentUsage > limit) {
+            throw new ActivepiecesError({
+                code: ErrorCode.RESOURCE_LOCKED,
+                params: {
+                    message: RESOURCE_TO_MESSAGE_MAPPING[resource],
+                },
+            })
+        }
+    },
+    checkLegitSubscriptionUpdateOrThrow: async (params: CheckLegitSubscriptionUpdateOrThrowParams) => {
+        const { projectsAddon, userSeatsAddon, newPlan } = params
+
+        const isNotBusinessPlan = newPlan !== PlanName.BUSINESS
+        const requestUserSeatAddon = !isNil(userSeatsAddon)
+        const requestProjectAddon = !isNil(projectsAddon)
+
+        if (isNotBusinessPlan && (requestUserSeatAddon || requestProjectAddon)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Extra users and projects are only available for the Business plan',
+                },
+            })
+        }
+    },
     handleResourceLocking: async ({ platformId, newLimits }: HandleResourceLockingParams): Promise<void> => {
         const usage = await platformUsageService(system.globalLogger()).getAllPlatformUsage(platformId)
         const projectIds = await projectService.getProjectIdsByPlatform(platformId)
@@ -76,7 +109,7 @@ export const PlatformPlanHelper = {
     },
 }
 
-async function handleProjects(projectIds: string[], currentUsage: number, newLimit?: number): Promise<void> {
+async function handleProjects(projectIds: string[], currentUsage: number, newLimit?: number | null): Promise<void> {
     if (isNil(newLimit)) return 
 
     if (currentUsage > newLimit) {
@@ -93,7 +126,7 @@ async function handleProjects(projectIds: string[], currentUsage: number, newLim
 async function handleActiveFlows(
     projectIds: string[], 
     currentUsage: number,
-    newLimit?: number, 
+    newLimit?: number | null, 
 ): Promise<void> {
     if (isNil(newLimit) || currentUsage <= newLimit) return
 
@@ -127,7 +160,7 @@ async function handleUserSeats(
     projectIds: string[], 
     currentUsage: number,
     platformId: string,
-    newLimit?: number,
+    newLimit?: number | null,
 ): Promise<void> {
     if (isNil(newLimit) || currentUsage <= newLimit) return
 
@@ -158,7 +191,18 @@ type HandleResourceLockingParams = {
 }
 
 type QuotaCheckParams = {
-    platformId: string
     projectId?: string
-    metric: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_TOKENS | PlatformUsageMetric.TASKS>
+    platformId: string
+    metric: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_CREDITS | PlatformUsageMetric.TASKS>
+}
+
+type CheckResourceLockedParams = {
+    platformId: string
+    resource: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_CREDITS | PlatformUsageMetric.TASKS | PlatformUsageMetric.USER_SEATS | PlatformUsageMetric.ACTIVE_FLOWS>
+}
+
+type CheckLegitSubscriptionUpdateOrThrowParams = {
+    newPlan: PlanName
+    projectsAddon?: number
+    userSeatsAddon?: number
 }

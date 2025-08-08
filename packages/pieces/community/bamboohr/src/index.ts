@@ -4,6 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { reportFieldChanged } from './lib/triggers/report-field-changed';
 
 export const bambooHrAuth = PieceAuth.CustomAuth({
   required: true,
@@ -46,5 +47,5 @@ export const bambooHr = createPiece({
       },
     }),
   ],
-  triggers: [],
+  triggers: [reportFieldChanged],
 });

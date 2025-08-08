@@ -14,6 +14,7 @@ type AIProviderCardProps = {
   onSave: () => void;
   isDeleting: boolean;
   allowWrite?: boolean;
+  showAzureOpenAI?: boolean;
 };
 
 const AIProviderCard = ({
@@ -23,13 +24,18 @@ const AIProviderCard = ({
   isDeleting,
   onSave,
   allowWrite = true,
+  showAzureOpenAI = false,
 }: AIProviderCardProps) => {
   return (
     <Card className="w-full px-4 py-4">
       <div className="flex w-full gap-2 justify-center items-center">
         <div className="flex flex-col gap-2 text-center mr-2">
           <img
-            src={providerMetadata.logoUrl}
+            src={
+              showAzureOpenAI
+                ? 'https://cdn.activepieces.com/pieces/azure-openai.png'
+                : providerMetadata.logoUrl
+            }
             alt="icon"
             width={32}
             height={32}
@@ -37,7 +43,9 @@ const AIProviderCard = ({
         </div>
         <div className="flex flex-grow flex-col">
           <div className="text-lg flex items-center">
-            {providerMetadata.displayName}
+            {showAzureOpenAI
+              ? `${providerMetadata.displayName} / Azure ${providerMetadata.displayName}`
+              : providerMetadata.displayName}
           </div>
           {allowWrite && (
             <div className="text-sm text-muted-foreground">
@@ -54,6 +62,7 @@ const AIProviderCard = ({
               providerMetadata={providerMetadata}
               isConfigured={isConfigured}
               onSave={onSave}
+              showAzureOpenAI={showAzureOpenAI}
             >
               <Button variant={isConfigured ? 'ghost' : 'basic'} size={'sm'}>
                 {isConfigured ? <Pencil className="size-4" /> : t('Enable')}

@@ -9,13 +9,16 @@ import {
     Platform,
     PlatformId,
     PlatformPlanLimits,
+    PlatformUsage,
     PlatformWithoutSensitiveData,
     spreadIfDefined,
     UpdatePlatformRequestBody,
     UserId,
+    UserStatus,
 } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
+import { platformUsageService } from '../ee/platform/platform-usage-service'
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
@@ -27,15 +30,11 @@ export const platformRepo = repoFactory<Platform>(PlatformEntity)
 
 
 export const platformService = {
-    async hasAnyPlatforms(): Promise<boolean> {
-        const count = await platformRepo().count()
-        return count > 0
-    },
     async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
         const users = await userService.getByIdentityId({ identityId: params.identityId })
 
         const platformsWithProjects = await Promise.all(users.map(async (user) => {
-            if (isNil(user.platformId)) {
+            if (isNil(user.platformId) || user.status === UserStatus.INACTIVE) {
                 return null
             }
             const hasProjects = await projectService.userHasProjects({
@@ -162,6 +161,7 @@ export const platformService = {
         }
         return {
             ...platform,
+            usage: await platformUsageService(system.globalLogger()).getAllPlatformUsage(platform.id),
             plan: await getPlan(platform),
         }
     },
@@ -169,6 +169,7 @@ export const platformService = {
         const platform = await this.getOneOrThrow(id)
         return {
             ...platform,
+            usage: await getUsage(platform),
             plan: await getPlan(platform),
         }
     },
@@ -179,6 +180,14 @@ export const platformService = {
     },
 }
 
+
+async function getUsage(platform: Platform): Promise<PlatformUsage | undefined> {
+    const edition = system.getEdition()
+    if (edition === ApEdition.COMMUNITY) {
+        return undefined
+    }
+    return platformUsageService(system.globalLogger()).getAllPlatformUsage(platform.id)
+}
 
 async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()

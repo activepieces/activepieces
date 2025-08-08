@@ -10,6 +10,7 @@ import {
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
+import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -31,19 +32,15 @@ export function PlatformAdminContainer({
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
-  const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_PLATFORM_DEMO,
-  );
-
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
-  const isLocked = (locked: boolean) => locked || (showPlatformDemo ?? false);
+
   const items: SidebarItem[] = [
     {
       type: 'link',
       to: '/platform/analytics',
       label: t('Overview'),
       icon: <LineChart />,
-      locked: isLocked(!platform.plan.analyticsEnabled),
+      locked: !platform.plan.analyticsEnabled,
       isSubItem: false,
       show: true,
     },
@@ -52,7 +49,7 @@ export function PlatformAdminContainer({
       to: '/platform/projects',
       label: t('Projects'),
       icon: <LayoutGrid />,
-      locked: isLocked(!platform.plan.manageProjectsEnabled),
+      locked: !platform.plan.manageProjectsEnabled,
       isSubItem: false,
       show: true,
     },
@@ -113,7 +110,7 @@ export function PlatformAdminContainer({
           to: '/platform/setup/billing',
           label: t('Billing'),
           isSubItem: true,
-          show: edition !== ApEdition.COMMUNITY && !showPlatformDemo,
+          show: edition !== ApEdition.COMMUNITY,
         },
       ],
     },
@@ -186,6 +183,13 @@ export function PlatformAdminContainer({
           isSubItem: true,
           show: true,
         },
+        {
+          type: 'link',
+          to: '/platform/infrastructure/triggers',
+          label: t('Triggers'),
+          isSubItem: true,
+          show: true,
+        },
       ],
     },
   ];
@@ -196,6 +200,7 @@ export function PlatformAdminContainer({
       ) : (
         <Navigate to="/" />
       )}
+      {edition === ApEdition.CLOUD && <UpgradeDialog />}
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

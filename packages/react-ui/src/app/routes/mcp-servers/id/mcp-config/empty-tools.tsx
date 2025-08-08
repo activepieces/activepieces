@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Puzzle } from 'lucide-react';
 
-export const EmptyTools = () => {
+export const McpEmptyTools = () => {
   return (
     <div className="flex flex-col items-center justify-center py-16 space-y-4 border rounded-lg bg-muted/20">
       <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">

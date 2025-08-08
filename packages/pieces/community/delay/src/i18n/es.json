@@ -1,0 +1,20 @@
+{
+  "Delay": "Retraso",
+  "Use it to delay the execution of the next action": "Úsalo para retrasar la ejecución de la siguiente acción",
+  "Delay For": "Retraso para",
+  "Delay Until": "Retraso hasta",
+  "Delays the execution of the next action for a given duration": "Retrasa la ejecución de la siguiente acción durante una duración determinada",
+  "Delays the execution of the next action until a given timestamp": "Retrasa la ejecución de la siguiente acción hasta una marca de tiempo",
+  "Markdown": "Markdown",
+  "Unit": "Unidad",
+  "Amount": "Cantidad",
+  "Date and Time": "Fecha y hora",
+  "\n**Note:** The maximum duration per step is {{pausedFlowTimeoutDays}} days.\n": "\n**Note:** The maximum duration per step is {{pausedFlowTimeoutDays}} days.\n",
+  "The unit of time to delay the execution of the next action": "La unidad de tiempo para retrasar la ejecución de la siguiente acción",
+  "The number of units to delay the execution of the next action": "El número de unidades para retrasar la ejecución de la siguiente acción",
+  "Specifies the date and time until which the execution of the next action should be delayed. It supports multiple formats, including ISO format.": "Especifica la fecha y hora hasta que la ejecución de la siguiente acción debe ser retrasada. Soporta múltiples formatos, incluyendo el formato ISO.",
+  "Seconds": "Segundos",
+  "Minutes": "Minutos",
+  "Hours": "Horas",
+  "Days": "Días"
+}

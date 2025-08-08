@@ -3,34 +3,43 @@ import { Hammer } from 'lucide-react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/use-toast';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import type { McpTool } from '@activepieces/shared';
+import type {
+  McpTool,
+  McpToolRequest,
+  McpWithTools,
+} from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
 
 import { McpAddToolDropdown } from '../mcp-add-tool-actions';
 
-import { EmptyTools } from './empty-tools';
 import { McpFlowTool } from './mcp-flow-tool';
 import { McpPieceTool } from './mcp-piece-tool';
 
 interface McpToolsSectionProps {
-  mcpId: string;
+  mcp: McpWithTools | undefined;
+  isLoading: boolean;
+  description: string;
+  emptyState?: React.ReactNode;
+  onToolsUpdate: (tools: McpToolRequest[]) => void;
 }
 
-export const McpToolsSection = ({ mcpId }: McpToolsSectionProps) => {
-  const { toast } = useToast();
+export const McpToolsSection = ({
+  mcp,
+  isLoading,
+  description,
+  emptyState,
+  onToolsUpdate,
+}: McpToolsSectionProps) => {
   const { pieces } = piecesHooks.usePieces({});
-  const { data: mcp, isLoading, refetch: refetchMcp } = mcpHooks.useMcp(mcpId);
 
-  const { mutate: removeTool } = mcpHooks.useRemoveTool(mcpId, () => {
-    toast({
-      description: t('Tool removed successfully'),
-      duration: 3000,
-    });
-    refetchMcp();
-  });
+  const removeTool = async (toolIds: string[]): Promise<void> => {
+    if (!mcp || !onToolsUpdate) return;
+    const newTools = mcp.tools.filter(
+      (tool: McpTool) => !toolIds.includes(tool.id),
+    );
+    onToolsUpdate(newTools);
+  };
 
   if (isNil(mcp) || isLoading) {
     return (
@@ -81,14 +90,14 @@ export const McpToolsSection = ({ mcpId }: McpToolsSectionProps) => {
             <Hammer className="w-4 h-4" />
             <span>{t('Tools')}</span>
           </h1>
-          <p className="text-sm text-muted-foreground">
-            {t('Manage your connected tools and flows')}
-          </p>
+          <p className="text-sm text-muted-foreground">{description}</p>
         </div>
         <div className="flex gap-2">
           <McpAddToolDropdown
             mcp={mcp}
-            refetchMcp={refetchMcp}
+            onToolsUpdate={(tools) => {
+              onToolsUpdate?.(tools);
+            }}
             tools={mcp?.tools || []}
           />
         </div>
@@ -107,9 +116,7 @@ export const McpToolsSection = ({ mcpId }: McpToolsSectionProps) => {
                         mcp={mcp}
                         tools={tools}
                         pieces={pieces || []}
-                        removeTool={async () =>
-                          removeTool(tools.map((tool) => tool.id))
-                        }
+                        removeTool={removeTool}
                       />
                     );
                   } else if (tools[0].type === McpToolType.FLOW) {
@@ -117,7 +124,7 @@ export const McpToolsSection = ({ mcpId }: McpToolsSectionProps) => {
                       <McpFlowTool
                         key={toolKey}
                         tool={tools[0]}
-                        removeTool={async () => removeTool([tools[0].id])}
+                        removeTool={removeTool}
                       />
                     );
                   }
@@ -125,9 +132,9 @@ export const McpToolsSection = ({ mcpId }: McpToolsSectionProps) => {
                 })}
             </div>
           </ScrollArea>
-        ) : (
-          <EmptyTools />
-        )}
+        ) : !isNil(emptyState) ? (
+          emptyState
+        ) : null}
       </div>
     </div>
   );

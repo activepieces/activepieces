@@ -3,7 +3,6 @@ import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { EditProjectDialog } from '@/app/routes/platform/projects/edit-project-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,6 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';

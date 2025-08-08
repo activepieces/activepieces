@@ -69,3 +69,11 @@ div[role="gridcell"]:focus-within {
     @apply touch-none select-none transition-colors;
   }
 }
+
+.locked-row {
+  background-color: #ffedd5 !important; /* orange-100 */
+}
+.locked-row .lock-icon {
+  color: #f97316 !important; /* orange-500 */
+  margin-right: 0.5rem;
+}

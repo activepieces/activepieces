@@ -52,8 +52,6 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                     actionName: jobData.actionName,
                     pieceName: jobData.pieceName,
                     pieceVersion: jobData.pieceVersion,
-                    pieceType: jobData.pieceType,
-                    packageType: jobData.packageType,
                     input: jobData.input,
                     projectId: jobData.projectId,
                 })

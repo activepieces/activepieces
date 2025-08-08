@@ -63,9 +63,7 @@ export type NumericTriggerField =
 	| TriggerField.ChassisAxleRow2WheelLeftTirePressure
 	| TriggerField.ChassisAxleRow2WheelRightTirePressure;
 
-export type BooleanTriggerField = TriggerField.PowertrainTractionBatteryChargingIsCharging;
-
-export type OnOffTriggerField = TriggerField.IsIgnitionOn;
+export type BooleanTriggerField = TriggerField.PowertrainTractionBatteryChargingIsCharging | TriggerField.IsIgnitionOn
 
 export type NumericOperator = Operator;
 
@@ -85,13 +83,7 @@ export type BooleanTrigger = {
 	value: boolean;
 };
 
-export type OnOffTrigger = {
-	field: OnOffTriggerField;
-	operator: BooleanOperator;
-	value: 'ON' | 'OFF';
-};
-
-export type VehicleEventTrigger = NumericTrigger | BooleanTrigger | OnOffTrigger;
+export type VehicleEventTrigger = NumericTrigger | BooleanTrigger;
 
 export interface CreateWebhookParams {
 	service: 'Telemetry';
@@ -99,7 +91,7 @@ export interface CreateWebhookParams {
 	trigger: VehicleEventTrigger;
 	setup: 'Realtime' | 'Hourly';
 	description?: string;
-	targetUri: string;
+	target_uri: string;
 	status: 'Active' | 'Inactive';
 	verification_token: string;
 }

@@ -1,12 +1,8 @@
 import {
-    ApSubscriptionStatus,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ApEdition,
-    ApEnvironment,
     assertNotNullOrUndefined,
     Cursor,
     ErrorCode,
@@ -25,11 +21,11 @@ import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
-import { flagService } from '../../flags/flag.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
+import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -63,17 +59,15 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     }: UpdateParams): Promise<ProjectWithLimits> {
         await projectService.update(projectId, request)
         if (!isNil(request.plan)) {
-            const isSubscribed = await isSubscribedInStripe(projectId, log)
             const project = await projectService.getOneOrThrow(projectId)
-            const isCustomerProject = isCustomerPlatform(project.platformId)
-            if (isSubscribed || isCustomerProject) {
-                const newTasks = request.plan.tasks ?? undefined
+            const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
+            if (platform.plan.manageProjectsEnabled) {
                 await projectLimitsService(log).upsert(
                     {
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
-                        ...spreadIfDefined('tasks', newTasks),
-                        ...spreadIfDefined('aiCredits', request.plan.aiCredits),
+                        tasks: request.plan.tasks ?? null,
+                        aiCredits: request.plan.aiCredits ?? null,
                     },
                     projectId,
                 )
@@ -172,26 +166,6 @@ type GetAllParams = {
     limit: number
 }
 
-async function isSubscribedInStripe(projectId: ProjectId, log: FastifyBaseLogger): Promise<boolean> {
-    const isCloud = system.getEdition() === ApEdition.CLOUD
-    if (!isCloud) {
-        return false
-    }
-    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
-    if (environment === ApEnvironment.TESTING) {
-        return false
-    }
-    const project = await projectService.getOneOrThrow(projectId)
-    const status = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-    return status.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE
-}
-function isCustomerPlatform(platformId: string | undefined): boolean {
-    if (isNil(platformId)) {
-        return true
-    }
-    return !flagService.isCloudPlatform(platformId)
-}
-
 async function enrichProject(
     project: Project,
     log: FastifyBaseLogger,
@@ -203,7 +177,10 @@ async function enrichProject(
         .createQueryBuilder('project_member')
         .leftJoin('user', 'user', 'user.id = project_member."userId"')
         .groupBy('user.id')
-        .where(`user.status = '${UserStatus.ACTIVE}' and project_member."projectId" = '${project.id}'`)
+        .where('user.status = :activeStatus and project_member."projectId" = :projectId', {
+            activeStatus: UserStatus.ACTIVE,
+            projectId: project.id,
+        })
         .getCount()
 
     const totalFlows = await flowService(log).count({

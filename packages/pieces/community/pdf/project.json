@@ -58,6 +58,13 @@
       "outputs": [
         "{options.outputFile}"
       ]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/pieces/community/pdf/jest.config.ts"
+      }
     }
   },
   "tags": []

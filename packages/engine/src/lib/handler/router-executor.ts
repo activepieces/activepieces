@@ -70,15 +70,19 @@ async function handleRouterExecution({ action, executionState, constants, censor
                 break
             }
             const condition = routerOutput.output?.branches[i].evaluation
-            if (condition) {
-                executionState = (await flowExecutor.execute({
-                    action: action.children[i],
-                    executionState,
-                    constants,
-                }))
-                if (routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH) {
-                    break
-                }
+            if (!condition) {
+                continue
+            }
+
+            executionState = await flowExecutor.execute({
+                action: action.children[i],
+                executionState,
+                constants,
+            })
+
+            const shouldBreakExecution = executionState.verdict !== ExecutionVerdict.RUNNING || routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH
+            if (shouldBreakExecution) {
+                break
             }
         }
         return executionState
@@ -89,7 +93,6 @@ async function handleRouterExecution({ action, executionState, constants, censor
         return executionState.upsertStep(action.name, failedStepOutput).setVerdict(ExecutionVerdict.FAILED, undefined)
     }
 }
-
 
 export function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
     let orOperator = false

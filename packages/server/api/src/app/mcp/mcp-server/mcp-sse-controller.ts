@@ -10,16 +10,16 @@ import { mcpSessionManager } from './mcp-session-manager'
 const HEARTBEAT_INTERVAL = 30 * 1000 // 30 seconds
 
 export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
-    app.get('/:id/sse', SSERequest, async (req, reply) => {
-        const token = req.params.id
+    app.get('/:token/sse', SSERequest, async (req, reply) => {
+        const token = req.params.token
         const mcp = await mcpService(req.log).getByToken({
             token,
         })
         await handleSSERequest(reply, mcp.id, mcp.projectId, req.log)
     })
 
-    app.post('/:id/sse', SSERequest, async (req, reply) => {
-        const token = req.params.id
+    app.post('/:token/sse', SSERequest, async (req, reply) => {
+        const token = req.params.token
         const mcp = await mcpService(req.log).getByToken({
             token,
         })
@@ -126,7 +126,7 @@ const SSERequest = {
     },
     schema: {
         params: Type.Object({
-            id: ApId,
+            token: ApId,
         }),
     },
 } 

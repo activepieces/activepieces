@@ -27,6 +27,7 @@ export const businessCentralAuth = PieceAuth.OAuth2({
     'https://api.businesscentral.dynamics.com/user_impersonation',
     'https://api.businesscentral.dynamics.com/Financials.ReadWrite.All',
   ],
+  prompt: 'omit',
   authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
 });

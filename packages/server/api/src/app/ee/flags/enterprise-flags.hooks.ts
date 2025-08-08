@@ -1,6 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, isNil, PrincipalType, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
-import { flagService } from '../../flags/flag.service'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
@@ -23,8 +22,6 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             }
             return modifiedFlags
         }
-
-        modifiedFlags[ApFlagId.IS_CLOUD_PLATFORM] = flagService.isCloudPlatform(platformId)
         modifiedFlags[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] = edition !== ApEdition.CLOUD || platformId === system.get(AppSystemProp.CLOUD_PLATFORM_ID)
         const platformWithPlan = await platformService.getOneWithPlanOrThrow(platformId)
         const platform = await platformService.getOneOrThrow(platformId)
@@ -44,7 +41,6 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         modifiedFlags[ApFlagId.SHOW_COMMUNITY] = platformWithPlan.plan.showPoweredBy
         modifiedFlags[ApFlagId.SHOW_CHANGELOG] = !platformWithPlan.plan.embeddingEnabled
         modifiedFlags[ApFlagId.SHOW_BILLING] = !platformUtils.isCustomerOnDedicatedDomain(platformWithPlan) && system.getEdition() === ApEdition.CLOUD
-        modifiedFlags[ApFlagId.PROJECT_LIMITS_ENABLED] = true
         modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
         modifiedFlags[ApFlagId.PUBLIC_URL] = await domainHelper.getPublicUrl({
             path: '',
@@ -61,6 +57,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             platformId,
         })
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = await federatedAuthnService(request.log).getThirdPartyRedirectUrl(platformId)
+        modifiedFlags[ApFlagId.SHOW_TUTORIALS] = !platformWithPlan.plan.embeddingEnabled
         return modifiedFlags
     },
 }

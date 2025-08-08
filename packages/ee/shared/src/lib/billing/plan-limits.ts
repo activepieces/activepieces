@@ -39,19 +39,19 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 }
 
 
-export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit }: { planName: string, tasksLimit: number, userSeatsLimit: number }): PlatformPlanWithOnlyLimits => {
+export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit, agentsLimit, tablesLimit, mcpLimit }: { planName: string, tasksLimit: number, userSeatsLimit: number, agentsLimit: number, tablesLimit: number, mcpLimit: number }): PlatformPlanWithOnlyLimits => {
     return {
         plan: planname,
         tasksLimit,
         userSeatsLimit,
         includedAiCredits: 200,
-        aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
+        aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
         aiCreditsOverageLimit: undefined,
         activeFlowsLimit: undefined,
         projectsLimit: 1,
-        mcpLimit: 1,
-        tablesLimit: 1,
-        agentsLimit: 5,
+        mcpLimit,
+        tablesLimit,
+        agentsLimit,
         eligibleForTrial: false,
 
         agentsEnabled: true,

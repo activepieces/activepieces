@@ -82,7 +82,7 @@ export const fuelAbsoluteTrigger = createTrigger({
 			},
 			setup: triggerFrequency as 'Realtime' | 'Hourly',
 			description: `Fuel absolute level trigger: ${operator} ${fuelLiters}L`,
-			targetUri: context.webhookUrl,
+			target_uri: context.webhookUrl,
 			status: 'Active',
 			verification_token: verificationToken,
 		};

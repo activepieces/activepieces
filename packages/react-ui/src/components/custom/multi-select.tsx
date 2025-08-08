@@ -13,6 +13,7 @@ import { SelectUtilButton } from '@/components/custom/select-util-button';
 import { cn } from '@/lib/utils';
 
 import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 import {
   Command,
   CommandEmpty,
@@ -194,15 +195,16 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 
 MultiSelect.displayName = 'MultiSelect';
 
-type MultiSelectTriggerElement = React.ElementRef<typeof Primitive.div>;
+type MultiSelectTriggerElement = React.ElementRef<typeof Primitive.button>;
 
 type MultiSelectTriggerProps = ComponentPropsWithoutRef<
-  typeof Primitive.div
+  typeof Primitive.button
 > & {
   showDeselect?: boolean;
   onDeselect?: () => void;
   showRefresh?: boolean;
   onRefresh?: () => void;
+  loading?: boolean;
 };
 
 const PreventClick = (e: React.MouseEvent | React.TouchEvent) => {
@@ -215,18 +217,19 @@ const MultiSelectTrigger = React.forwardRef<
   MultiSelectTriggerProps
 >(
   (
-    { className, children, showDeselect, onDeselect, ...props },
+    { className, children, showDeselect, onDeselect, loading, ...props },
     forwardedRef,
   ) => {
     const { disabled } = useMultiSelect();
 
     return (
       <PopoverPrimitive.Trigger ref={forwardedRef as any} asChild>
-        <div
-          role="combobox"
+        <Button
+          variant="outline"
           aria-disabled={disabled}
-          data-disabled={disabled}
-          {...props}
+          disabled={disabled}
+          role="combobox"
+          loading={loading}
           className={cn(
             'flex min-h-10  w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap rounded-sm border border-input bg-transparent px-4 py-1 text-sm  ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring [&>span]:line-clamp-1',
             {
@@ -263,7 +266,7 @@ const MultiSelectTrigger = React.forwardRef<
               className="h-4 w-4 opacity-50 shrink-0"
             />
           </div>
-        </div>
+        </Button>
       </PopoverPrimitive.Trigger>
     );
   },

@@ -33,7 +33,7 @@ export abstract class PieceManager {
         }
         catch (error) {
             const contextKey = '[PieceManager#install]'
-            const contextValue = { projectPath, pieces }
+            const contextValue = { projectPath }
 
             const enrichedError = enrichErrorContext({
                 error,

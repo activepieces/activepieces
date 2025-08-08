@@ -1,0 +1,19 @@
+{
+  "PDF": "PDF",
+  "Extract Text": "提取文本",
+  "Convert to Image": "轉換為圖片",
+  "Text to PDF": "文本轉換為 PDF",
+  "Image to PDF": "圖片轉換為 PDF",
+  "Extract text from PDF file or url": "從 PDF 文件或網址中提取文本",
+  "Convert a PDF file or URL to an image": "將 PDF 文件或網址轉換為圖像",
+  "Convert text to PDF": "將文本轉換為 PDF",
+  "Convert image to PDF": "將圖像轉換為 PDF",
+  "PDF File or URL": "PDF 文件或網址",
+  "Output Image Type": "輸出圖片類型",
+  "text": "文本",
+  "image": "圖像",
+  "Enter text to convert": "輸入待轉文本",
+  "Image has to be png, jpeg or jpg and it will be scaled down to fit the page when image is larger than an A4 page": "圖片必須為 png、jpeg 或 jpg，當圖片大於 A4 大小時將縮小至適合頁面",
+  "Single Combined Image": "單一合併圖像",
+  "Separate Image for Each Page": "每頁單獨圖像"
+}

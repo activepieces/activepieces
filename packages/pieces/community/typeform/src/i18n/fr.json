@@ -1,0 +1,23 @@
+{
+  "Typeform": "Formulaire de type",
+  "Create beautiful online forms and surveys": "Créez de beaux formulaires et sondages en ligne",
+  "Custom API Call": "Appel API personnalisé",
+  "Make a custom API call to a specific endpoint": "Passez un appel API personnalisé à un point de terminaison spécifique",
+  "Method": "Méthode",
+  "Headers": "En-têtes",
+  "Query Parameters": "Paramètres de requête",
+  "Body": "Corps",
+  "No Error on Failure": "Aucune erreur en cas d'échec",
+  "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
+  "GET": "OBTENIR",
+  "POST": "POSTER",
+  "PATCH": "PATCH",
+  "PUT": "EFFACER",
+  "DELETE": "SUPPRIMER",
+  "HEAD": "TÊTE",
+  "New Submission": "Nouvelle soumission",
+  "Triggers when Typeform receives a new submission": "Déclenche lorsque le formulaire de type reçoit une nouvelle soumission",
+  "Form": "Forme",
+  "Form Name": "Nom du formulaire"
+}

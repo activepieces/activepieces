@@ -2,6 +2,7 @@ import { MoreVertical, Trash2 } from 'lucide-react';
 import React from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +21,8 @@ export const AgentCardMenu: React.FC<AgentCardMenuProps> = ({
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
 
+  const [menuOpen, setMenuOpen] = React.useState(false);
+
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteDialog(true);
@@ -27,13 +30,30 @@ export const AgentCardMenu: React.FC<AgentCardMenuProps> = ({
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu
+        open={menuOpen}
+        onOpenChange={(open) => {
+          setMenuOpen(open);
+        }}
+      >
         <DropdownMenuTrigger asChild>
-          <button className="p-1 hover:bg-gray-100 rounded-full">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            className="p-1"
+          >
             <MoreVertical className="h-4 w-4" />
-          </button>
+          </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent
+          align="end"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
             onClick={handleDeleteClick}

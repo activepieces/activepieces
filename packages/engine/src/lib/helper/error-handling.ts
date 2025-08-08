@@ -1,4 +1,4 @@
-import { CodeAction, FlowRunStatus, PieceAction } from '@activepieces/shared'
+import { ActivepiecesError, CodeAction, FlowRunStatus, PieceAction } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext, VerdictResponse } from '../handler/context/flow-execution-context'
 import { ExecutionError, ExecutionErrorType } from './execution-errors'
@@ -49,8 +49,10 @@ export async function continueIfFailureHandler(
 export const handleExecutionError = (error: unknown): ErrorHandlingResponse => {
     console.log(error)
     const isEngineError = (error instanceof ExecutionError) && error.type === ExecutionErrorType.ENGINE
+    const isActivepiecesError = error instanceof ActivepiecesError
+    const errorMessage = isActivepiecesError ? JSON.stringify(error?.error?.params) : JSON.stringify(error)
     return {
-        message: error instanceof Error ? error.message : JSON.stringify(error),
+        message: error instanceof Error ? error.message : errorMessage,
         verdictResponse: isEngineError ? {
             reason: FlowRunStatus.INTERNAL_ERROR,
         } : undefined,

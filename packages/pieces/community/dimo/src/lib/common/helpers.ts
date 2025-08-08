@@ -255,7 +255,7 @@ export class DimoClient {
 				trigger: vehicleEventTriggerToText(input.params.trigger),
 				setup: input.params.setup,
 				description: input.params.description,
-				target_uri: input.params.targetUri,
+				target_uri: input.params.target_uri,
 				status: input.params.status,
 				verification_token: input.params.verification_token,
 			},
@@ -338,7 +338,7 @@ export async function sendIdentityGraphQLRequest(query: string, variables: Recor
 export function getNumberExpression(comparisonType: Operator, value: number): string {
 	switch (comparisonType) {
 		case Operator.EQUAL:
-			return `valueNumber = ${value}`;
+			return `valueNumber == ${value}`;
 		case Operator.GREATER_THAN:
 			return `valueNumber > ${value}`;
 		case Operator.LESS_THAN:
@@ -353,18 +353,69 @@ export function getNumberExpression(comparisonType: Operator, value: number): st
 	}
 }
 
-export function vehicleEventTriggerToText(trigger: VehicleEventTrigger): string {
-	if ('value' in trigger && typeof trigger.value === 'number') {
-		// NumericTrigger
-		return getNumberExpression(trigger.operator as Operator, trigger.value);
-	} else if ('value' in trigger && typeof trigger.value === 'boolean') {
-		// BooleanTrigger
-		return `valueNumber = ${trigger.value ? 1 : 0}`;
-	} else if ('value' in trigger && typeof trigger.value === 'string') {
-		// OnOffTrigger
-		return `valueNumber = ${trigger.value}`;
+export function getBooleanExpression(value: boolean): string {
+    return `valueNumber == ${value ? 1 : 0}`;
+}
+
+export function vehicleEventTriggerToText(trigger: VehicleEventTrigger): string;
+export function vehicleEventTriggerToText(
+	field: TriggerField,
+	operator: Operator,
+	triggerNumber?: number | null,
+	triggerExpression?: boolean
+): string;
+export function vehicleEventTriggerToText(
+	arg1: VehicleEventTrigger | TriggerField,
+	arg2?: Operator,
+	arg3?: number | null,
+	arg4?: boolean
+): string {
+    let triggerField: TriggerField;
+    let triggerOperator: Operator;
+    let triggerValue: number | boolean | null = null;
+
+	if (typeof arg1 === 'object' && 'field' in arg1 && 'operator' in arg1) {
+        triggerField = arg1.field;
+        triggerOperator = arg1.operator as Operator;
+        triggerValue = arg1.value;
+	} else {
+		triggerField = arg1;
+		triggerOperator = arg2!;
+		triggerValue = arg3 ?? (arg4 ? true : false);
 	}
+
+	if (typeof triggerValue === 'number') {
+		return getNumberExpression(triggerOperator, triggerValue);
+	} else if (typeof triggerValue === 'boolean') {
+		return getBooleanExpression(triggerValue);
+	}
+
 	throw new Error('Unknown trigger type');
+}
+
+
+export function isNumericField(field: TriggerField): boolean {
+	const numericFields: TriggerField[] = [
+		TriggerField.Speed,
+		TriggerField.PowertrainTransmissionTravelledDistance,
+		TriggerField.PowertrainFuelSystemRelativeLevel,
+		TriggerField.PowertrainFuelSystemAbsoluteLevel,
+		TriggerField.PowertrainTractionBatteryCurrentPower,
+		TriggerField.PowertrainTractionBatteryStateOfChargeCurrent,
+		TriggerField.ChassisAxleRow1WheelLeftTirePressure,
+		TriggerField.ChassisAxleRow1WheelRightTirePressure,
+		TriggerField.ChassisAxleRow2WheelLeftTirePressure,
+		TriggerField.ChassisAxleRow2WheelRightTirePressure,
+	];
+	return numericFields.includes(field);
+}
+
+export function isBooleanField(field: TriggerField): boolean {
+	const booleanFields: TriggerField[] = [
+		TriggerField.PowertrainTractionBatteryChargingIsCharging,
+        TriggerField.IsIgnitionOn,
+	];
+	return booleanFields.includes(field);
 }
 
 export const getTirePressurePositionLabel = (position: TriggerField): string => {

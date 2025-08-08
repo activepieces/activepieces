@@ -80,7 +80,7 @@ export const McpPieceTool = ({
 
   return (
     <Card key={`piece-${toolName}`}>
-      <CardContent className="flex items-center justify-between p-3 h-[70px]">
+      <CardContent className="flex items-center justify-between p-3 h-[60px]">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
             {pieceInfoMap[tools[0].id]?.logoUrl ? (

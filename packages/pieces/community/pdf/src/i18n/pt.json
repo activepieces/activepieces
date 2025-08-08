@@ -1,0 +1,19 @@
+{
+  "PDF": "Pdf",
+  "Extract Text": "Extrair Texto",
+  "Convert to Image": "Converter para imagem",
+  "Text to PDF": "Texto para PDF",
+  "Image to PDF": "Imagem para PDF",
+  "Extract text from PDF file or url": "Extrair texto do arquivo PDF ou URL",
+  "Convert a PDF file or URL to an image": "Converta um arquivo PDF ou URL para uma imagem",
+  "Convert text to PDF": "Converter texto para PDF",
+  "Convert image to PDF": "Converter imagem para PDF",
+  "PDF File or URL": "Arquivo PDF ou URL",
+  "Output Image Type": "Tipo de Imagem de Saída",
+  "text": "texto",
+  "image": "Imagem",
+  "Enter text to convert": "Digite o texto a ser convertido",
+  "Image has to be png, jpeg or jpg and it will be scaled down to fit the page when image is larger than an A4 page": "A imagem tem que ser png, jpeg ou jpg e ele será redimensionado para se encaixar na página quando a imagem é maior que uma página A4",
+  "Single Combined Image": "Imagem Combinada Simples",
+  "Separate Image for Each Page": "Imagem separada para cada página"
+}

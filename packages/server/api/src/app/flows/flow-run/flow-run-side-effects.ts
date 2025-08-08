@@ -70,9 +70,10 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         progressUpdateType,
         executeTrigger,
     }: StartParams): Promise<void> {
-        log.info(
-            `[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`,
-        )
+        log.info({
+            flowRunId: flowRun.id,
+            executionType,
+        }, '[FlowRunSideEffects#start]')
 
         await jobQueue(log).add({
             id: flowRun.id,
@@ -123,6 +124,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                     data: {
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         runId: flowRun.id,
+                        flowId: flowRun.flowId,
                         synchronousHandlerId: flowRun.pauseMetadata?.handlerId ?? null,
                         progressUpdateType: flowRun.pauseMetadata?.progressUpdateType ?? ProgressUpdateType.NONE,
                         projectId: flowRun.projectId,
