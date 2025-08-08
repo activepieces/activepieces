@@ -107,9 +107,10 @@ export default function Billing() {
 
         <UsageCards platformSubscription={platformPlanInfo} />
 
-        {isBusinessPlan || (isPlus && !isTrial) && (
-          <ActiveFlowAddon platformSubscription={platformPlanInfo} />
-        )}
+        {isBusinessPlan ||
+          (isPlus && !isTrial && (
+            <ActiveFlowAddon platformSubscription={platformPlanInfo} />
+          ))}
 
         {isBusinessPlan && (
           <div className="grid grid-cols-2 gap-6">
