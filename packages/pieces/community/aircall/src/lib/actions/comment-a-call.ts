@@ -3,18 +3,16 @@ import { aircallAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { callIdDropdown } from '../common/props';
-import { stat } from 'fs';
 
 export const commentACall = createAction({
   auth: aircallAuth,
   name: 'commentACall',
   displayName: 'Comment a Call',
-  description: 'Add a comment (note) to a specific call in Aircall',
+  description: 'Adds a comment (note) to a specific call.',
   props: {
     callId: callIdDropdown,
     content: Property.LongText({
       displayName: 'Comment Content',
-      description: 'The content of the comment to add to the call',
       required: true,
     }),
   },
@@ -31,7 +29,7 @@ export const commentACall = createAction({
 
     return {
       status: 'success',
-      message: `Comment added successfully to call ${callId}`,
+      message: `Comment added successfully to call ${callId}.`,
       comment: content,
       data: response,
     };

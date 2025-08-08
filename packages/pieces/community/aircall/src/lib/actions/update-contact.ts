@@ -8,12 +8,11 @@ export const updateContact = createAction({
   auth: aircallAuth,
   name: 'updateContact',
   displayName: 'Update Contact',
-  description: 'Update a shared contact in Aircall',
+  description: 'Update an existing contact.',
   props: {
     contactId: contactIdDropdown,
     first_name: Property.ShortText({
       displayName: 'First Name',
-      description: 'First name of the contact',
       required: false,
     }),
     last_name: Property.ShortText({
@@ -23,7 +22,6 @@ export const updateContact = createAction({
     }),
     company_name: Property.ShortText({
       displayName: 'Company Name',
-      description: 'Company name of the contact',
       required: false,
     }),
     information: Property.LongText({
@@ -37,12 +35,12 @@ export const updateContact = createAction({
       context.propsValue;
     
     // Prepare request body with only provided fields
-    const requestBody: any = {};
+    const requestBody: Record<string,any> = {};
 
-    if (first_name) requestBody.first_name = first_name;
-    if (last_name) requestBody.last_name = last_name;
-    if (company_name) requestBody.company_name = company_name;
-    if (information) requestBody.information = information;
+    if (first_name) requestBody['first_name'] = first_name;
+    if (last_name) requestBody['last_name'] = last_name;
+    if (company_name) requestBody['company_name'] = company_name;
+    if (information) requestBody['information'] = information;
 
     const response = await makeRequest(
        context.auth,

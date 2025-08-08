@@ -3,18 +3,15 @@ import { aircallAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
+const TRIGGER_KEY = 'trigger_new-contact'
+
 export const newContact = createTrigger({
   auth: aircallAuth,
   name: 'newContact',
   displayName: 'New Contact',
-  description: 'Fires when a new contact is created in your Aircall account',
+  description: 'Triggers when a new contact is created.',
   props: {},
-  sampleData: {
-    event: 'contact.created',
-    resource: 'contact',
-    timestamp: 158561587,
-    token: '45XXYYZZa08',
-    data: {
+  sampleData:  {
       id: 456,
       first_name: 'John',
       last_name: 'Doe',
@@ -42,7 +39,6 @@ export const newContact = createTrigger({
           value: 'john.doe@acme.com'
         }
       ]
-    }
   },
   type: TriggerStrategy.WEBHOOK,
 
@@ -50,7 +46,7 @@ export const newContact = createTrigger({
     const webhookUrl = context.webhookUrl;
    
 
-    const webhook = await makeRequest(
+    const response = await makeRequest(
       context.auth,
       HttpMethod.POST,
       '/webhooks',
@@ -60,11 +56,12 @@ export const newContact = createTrigger({
       }
     );
 
-    await context.store?.put('webhook_id', webhook.webhook.id);
-  },
+  const { webhook } = response as { webhook: { webhook_id: string } };
+
+    await context.store.put<string>(TRIGGER_KEY, webhook.webhook_id);  },
 
   async onDisable(context) {
-    const webhookId = await context.store?.get('webhook_id');
+    const webhookId = await context.store.get<string>(TRIGGER_KEY);
     
 
     if (webhookId) {
@@ -77,13 +74,26 @@ export const newContact = createTrigger({
   },
 
   async run(context) {
-    const payload = context.payload.body as { event?: string };
-    
-    // Verify this is a contact created event
+ const payload = context.payload.body as {
+      event: string;
+      data: Record<string, any>;
+    };    
+
     if (payload.event === 'contact.created') {
-      return [payload];
+      return [payload.data];
     }
     
     return [];
+  },
+    async test(context) {
+    const response = await makeRequest(
+      context.auth,
+      HttpMethod.GET,
+      '/contacts?order=desc&per_page=10'
+    );
+
+    const { contacts } = response as { contacts: { id: number }[] };
+
+    return contacts;
   },
 });

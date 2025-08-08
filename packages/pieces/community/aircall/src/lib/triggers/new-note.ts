@@ -3,18 +3,15 @@ import { aircallAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
+const TRIGGER_KEY = 'trigger_new-note';
+
 export const newNote = createTrigger({
   auth: aircallAuth,
   name: 'newNote',
   displayName: 'New Note',
-  description: 'Fires when a new note (comment) is added to a call',
+  description: 'Triggers when a new note is added to a call.',
   props: {},
-  sampleData: {
-    event: 'call.commented',
-    resource: 'call',
-    timestamp: 1589609314,
-    token: '45XXYYZZa08',
-    data: {
+  sampleData:  {
       id: 12345,
       direction: 'inbound',
       status: 'answered',
@@ -33,9 +30,9 @@ export const newNote = createTrigger({
           posted_by: {
             id: 456,
             name: 'John Smith',
-            email: 'john.smith@company.com'
-          }
-        }
+            email: 'john.smith@company.com',
+          },
+        },
       ],
       contact: {
         id: 456,
@@ -45,19 +42,17 @@ export const newNote = createTrigger({
           {
             id: 789,
             label: 'Mobile',
-            value: '+1234567890'
-          }
-        ]
-      }
-    }
+            value: '+1234567890',
+          },
+        ],
+      },
   },
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(context) {
     const webhookUrl = context.webhookUrl;
-    
 
-    const webhook = await makeRequest(
+    const response = await makeRequest(
       context.auth,
       HttpMethod.POST,
       '/webhooks',
@@ -67,12 +62,13 @@ export const newNote = createTrigger({
       }
     );
 
-    await context.store?.put('webhook_id', webhook.webhook.id);
+    const { webhook } = response as { webhook: { webhook_id: string } };
+
+    await context.store.put<string>(TRIGGER_KEY, webhook.webhook_id);
   },
 
   async onDisable(context) {
-    const webhookId = await context.store?.get('webhook_id');
- 
+    const webhookId = await context.store.get<string>(TRIGGER_KEY);
 
     if (webhookId) {
       await makeRequest(
@@ -84,13 +80,16 @@ export const newNote = createTrigger({
   },
 
   async run(context) {
-    const payload = context.payload.body as { event?: string };
-    
+    const payload = context.payload.body as {
+      event: string;
+      data: Record<string, any>;
+    };
+
     // Verify this is a call commented event
     if (payload.event === 'call.commented') {
-      return [payload];
+      return [payload.data];
     }
-    
+
     return [];
   },
 });

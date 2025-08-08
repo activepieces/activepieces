@@ -3,8 +3,7 @@ import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const callIdDropdown = Property.Dropdown({
-  displayName: 'Call ID',
-  description: 'Select the call to comment on',
+  displayName: 'Call',
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
@@ -22,10 +21,12 @@ export const callIdDropdown = Property.Dropdown({
         HttpMethod.GET,
         '/calls'
       );
+
+      const {calls} = response as {calls:{id:number,raw_digits:string, direction:string}[]}
       return {
         disabled: false,
-        options: response.calls.map((call: any) => ({
-          label: call.name,
+        options: calls.map((call) => ({
+          label: `${call.raw_digits} - ${call.direction}`,
           value: call.id,
         })),
       };
@@ -33,7 +34,7 @@ export const callIdDropdown = Property.Dropdown({
       return {
         disabled: true,
         options: [],
-        placeholder: 'Error loading calls',
+        placeholder: 'Error loading calls.',
       };
     }
   },
@@ -41,7 +42,6 @@ export const callIdDropdown = Property.Dropdown({
 
 export const numberIdDropdown = Property.Dropdown({
   displayName: 'Number ID',
-  description: 'Select the number to use',
   required: true,
   refreshers: ['auth'],
   options: async ({ auth }) => {
@@ -97,10 +97,12 @@ export const contactIdDropdown = Property.Dropdown({
         HttpMethod.GET,
         '/contacts'
       );
+
+      const {contacts} = response as {contacts:{id:string,first_name:string,last_name:string}[]}
       return {
         disabled: false,
-        options: response.contacts.map((contact: any) => ({
-          label: `${contact.first_name} ${contact.last_name}`,
+        options: contacts.map((contact) => ({
+          label:  `${contact.first_name || ""} ${contact.last_name || ""}` || contact.id,
           value: contact.id,
         })),
       };
@@ -115,8 +117,7 @@ export const contactIdDropdown = Property.Dropdown({
 });
 
 export const tagIdDropdown = Property.MultiSelectDropdown({
-  displayName: 'Tag IDs',
-  description: 'Select tags to apply to the call',
+  displayName: 'Tags',
   required: false,
   refreshers: ['auth'],
   options: async ({ auth }) => {
@@ -135,9 +136,11 @@ export const tagIdDropdown = Property.MultiSelectDropdown({
         '/tags'
       );
 
+      const {tags} = response as {tags:{id:number,name:string}[]}
+
       return {
         disabled: false,
-        options: response.tags.map((tag: any) => ({
+        options: tags.map((tag) => ({
           label: tag.name,
           value: tag.id,
         })),

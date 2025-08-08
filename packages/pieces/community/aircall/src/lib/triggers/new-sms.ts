@@ -3,18 +3,15 @@ import { aircallAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
+const TRIGGER_KEY = 'trigger_new-sms'
+
 export const newSms = createTrigger({
   auth: aircallAuth,
   name: 'newSms',
   displayName: 'New SMS',
-  description: 'Fires when a new SMS message is received',
+  description: 'Triggers when a new SMS message is received.',
   props: {},
-  sampleData: {
-    event: 'message.received',
-    resource: 'message',
-    timestamp: 1589609314,
-    token: '45XXYYZZa08',
-    data: {
+  sampleData:  {
       id: 12345,
       direction: 'inbound',
       body: 'Hello, this is a test SMS message',
@@ -38,7 +35,6 @@ export const newSms = createTrigger({
           },
         ],
       },
-    },
   },
   type: TriggerStrategy.WEBHOOK,
 
@@ -46,7 +42,7 @@ export const newSms = createTrigger({
     const webhookUrl = context.webhookUrl;
     
 
-    const webhook = await makeRequest(
+    const response = await makeRequest(
       context.auth,
       HttpMethod.POST,
       '/webhooks',
@@ -56,11 +52,12 @@ export const newSms = createTrigger({
       }
     );
 
-    await context.store?.put('webhook_id', webhook.webhook.id);
-  },
+ const { webhook } = response as { webhook: { webhook_id: string } };
+
+    await context.store.put<string>(TRIGGER_KEY, webhook.webhook_id);   },
 
   async onDisable(context) {
-    const webhookId = await context.store?.get('webhook_id');
+    const webhookId = await context.store.get<string>(TRIGGER_KEY);
   
 
     if (webhookId) {
@@ -73,11 +70,13 @@ export const newSms = createTrigger({
   },
 
   async run(context) {
-    const payload = context.payload.body as { event?: string };
-    
-    // Verify this is a message received event
+ const payload = context.payload.body as {
+      event: string;
+      data: Record<string, any>;
+    };     
+
     if (payload.event === 'message.received') {
-      return [payload];
+      return [payload.data];
     }
     
     return [];
