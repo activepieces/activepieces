@@ -21,6 +21,7 @@ export default defineConfig(({ command, mode }) => {
     cacheDir: '../../node_modules/.vite/packages/react-ui',
 
     server: {
+      allowedHosts: true,
       proxy: {
         '/api': {
           target: 'http://127.0.0.1:3000',
@@ -46,19 +47,19 @@ export default defineConfig(({ command, mode }) => {
         '@': path.resolve(__dirname, './src'),
         '@activepieces/shared': path.resolve(
           __dirname,
-          '../../packages/shared/src',
+          '../../packages/shared/src'
         ),
         'ee-embed-sdk': path.resolve(
           __dirname,
-          '../../packages/ee/ui/embed-sdk/src',
+          '../../packages/ee/ui/embed-sdk/src'
         ),
         '@activepieces/ee-shared': path.resolve(
           __dirname,
-          '../../packages/ee/shared/src',
+          '../../packages/ee/shared/src'
         ),
         '@activepieces/pieces-framework': path.resolve(
           __dirname,
-          '../../packages/pieces/community/framework/src',
+          '../../packages/pieces/community/framework/src'
         ),
       },
     },
