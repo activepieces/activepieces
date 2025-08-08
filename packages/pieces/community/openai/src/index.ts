@@ -80,6 +80,7 @@ export const openai = createPiece({
     'MoShizzle',
     'khaledmashaly',
     'abuaboud',
+    'amrdb',
   ],
   triggers: [],
 });
