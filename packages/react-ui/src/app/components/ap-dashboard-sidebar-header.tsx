@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
@@ -29,7 +30,8 @@ const ApDashboardSidebarHeader = ({
     edition !== ApEdition.COMMUNITY &&
     !embedState.isEmbedded &&
     !isInPlatformAdmin;
-  const defaultRoute = determineDefaultRoute(embedState.isEmbedded);
+  const { checkAccess } = useAuthorization();
+  const defaultRoute = determineDefaultRoute(checkAccess);
 
   return (
     <SidebarHeader className="pb-0">

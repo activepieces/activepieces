@@ -1,4 +1,4 @@
-import { Action } from '../actions/action'
+import { FlowAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { addActionUtils } from './add-action-util'
@@ -22,14 +22,14 @@ export type OutsideBranchPasteLocation = {
 export type PasteLocation = InsideBranchPasteLocation | OutsideBranchPasteLocation
 
 export const _getOperationsForPaste = (
-    actions: Action[],
+    actions: FlowAction[],
     flowVersion: FlowVersion,
     pastingDetails: PasteLocation,
 ) => {
     const newNamesMap = addActionUtils.mapToNewNames(flowVersion, actions)
-    const clonedActions: Action[] = actions.map(action => flowStructureUtil.transferStep(action, (step: Action) => {
+    const clonedActions: FlowAction[] = actions.map(action => flowStructureUtil.transferStep(action, (step: FlowAction) => {
         return addActionUtils.clone(step, newNamesMap)
-    }) as Action)
+    }) as FlowAction)
     const operations: FlowOperationRequest[] = []
     for (let i = 0; i < clonedActions.length; i++) {
         if (i === 0) {

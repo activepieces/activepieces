@@ -147,6 +147,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 actionOrTriggerName: req.body.actionOrTriggerName,
                 input: req.body.input,
                 sampleData,
+                searchValue: req.body.searchValue,
                 piece: await getPiecePackageWithoutArchive(req.log, projectId, platform.id, req.body),
             })
             return result

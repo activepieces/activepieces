@@ -80,6 +80,7 @@ export const EnhancedAgentPrompt = Type.Object({
 export type EnhancedAgentPrompt = Static<typeof EnhancedAgentPrompt>
 
 export const EnhanceAgentPrompt = Type.Object({
+    agentId: Type.String(),
     systemPrompt: Type.String(),
 })
 export type EnhaceAgentPrompt = Static<typeof EnhanceAgentPrompt>

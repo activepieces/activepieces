@@ -26,12 +26,7 @@ export const CreateAgentButton = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState('');
   const navigate = useNavigate();
-  const { mutate: createAgent, isPending: isCreatingAgent } =
-    agentHooks.useCreate();
-  const { mutate: enhancePrompt, isPending: isEnhancingAgentPrompt } =
-    agentHooks.useEnhanceAgentPrompt();
-
-  const isPending = isEnhancingAgentPrompt || isCreatingAgent;
+  const { mutate: createAgent, isPending } = agentHooks.useCreate();
 
   const handleCreateAgent = async (createAgentParams: CreateAgentRequest) => {
     return createAgent(
@@ -46,38 +41,9 @@ export const CreateAgentButton = ({
     );
   };
 
-  const handleEnhanceAndCreate = async () => {
-    if (!systemPrompt.trim()) return;
-    enhancePrompt(
-      { systemPrompt },
-      {
-        onSuccess: (enhacedAgent) => {
-          handleCreateAgent(enhacedAgent);
-        },
-        onError: () => {
-          handleCreateAgent({
-            displayName: 'Freshly Backed Agent',
-            description: 'Baked and ready for battle! sweet now, fierce soon.',
-            systemPrompt: '',
-          });
-        },
-      },
-    );
-  };
-
   const handleConfigureClick = () => {
     setOpen(false);
     navigate('/platform/setup/ai');
-  };
-
-  const getLoadingText = () => {
-    if (isEnhancingAgentPrompt) {
-      return t('Enhancing Prompt...');
-    }
-    if (isCreatingAgent) {
-      return t('Agent Cooking...');
-    }
-    return t('Agent Cooking...');
   };
 
   if (isAgentsConfigured) {
@@ -111,13 +77,20 @@ export const CreateAgentButton = ({
 
             <Button
               className="w-full"
-              onClick={handleEnhanceAndCreate}
+              onClick={() =>
+                handleCreateAgent({
+                  systemPrompt,
+                  displayName: 'Fresh Agent',
+                  description:
+                    'Fresh agent! jack of all trades, master of none',
+                })
+              }
               disabled={!systemPrompt.trim() || isPending}
             >
               {isPending ? (
                 <>
                   <LoadingSpinner className="size-4" />
-                  {getLoadingText()}
+                  {t('Preparing Agent...')}
                 </>
               ) : (
                 <>

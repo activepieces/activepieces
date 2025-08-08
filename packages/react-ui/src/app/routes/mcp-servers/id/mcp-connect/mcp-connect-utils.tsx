@@ -1,3 +1,5 @@
+export type McpClientType = 'claude' | 'cursor' | 'windsurf' | 'url';
+
 const maskToken = (url: string) => {
   return url.replace(/\/([^/]+)\/sse$/, '/•••••••••••••••••••••/sse');
 };
@@ -14,7 +16,34 @@ const replaceIpWithLocalhost = (url: string): string => {
   }
 };
 
+const constructConfig = (clientType: McpClientType, url: string) => {
+  const serverName = 'Activepieces';
+
+  switch (clientType) {
+    case 'claude':
+      return {
+        mcpServers: {
+          [serverName]: {
+            command: 'npx',
+            args: ['-y', 'mcp-remote', url],
+          },
+        },
+      };
+    case 'cursor':
+    case 'windsurf':
+    case 'url':
+      return {
+        mcpServers: {
+          [serverName]: {
+            url,
+          },
+        },
+      };
+  }
+};
+
 export const mcpConnectUtils = {
   maskToken,
   replaceIpWithLocalhost,
+  constructConfig,
 };

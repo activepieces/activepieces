@@ -1,6 +1,7 @@
 import { AppSystemProp, exceptionHandler, JobStatus, memoryLock, QueueName, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { Job, Worker } from 'bullmq'
+import { BullMQOtel } from 'bullmq-otel'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
@@ -73,6 +74,7 @@ async function ensureWorkerExists(queueName: QueueName): Promise<Worker> {
     if (!isNil(consumer[queueName])) {
         return consumer[queueName]
     }
+    const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
     const lockDuration = getLockDurationInMs(queueName)
     consumer[queueName] = new Worker(queueName, null, {
         connection: createRedisClient(),
@@ -80,6 +82,7 @@ async function ensureWorkerExists(queueName: QueueName): Promise<Worker> {
         maxStalledCount: 5,
         drainDelay: 5,
         stalledInterval: 30000,
+        telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
     })
 
     await consumer[queueName].waitUntilReady()

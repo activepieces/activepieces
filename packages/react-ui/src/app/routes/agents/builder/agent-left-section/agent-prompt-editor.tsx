@@ -98,7 +98,7 @@ export const AgentPromptEditor = () => {
 
   const handleEnhancePrompt = () => {
     enhancePrompt(
-      { systemPrompt: systemPromptValue },
+      { systemPrompt: systemPromptValue, agentId: agent.id },
       {
         onSuccess: (data) => {
           updateAgent({ ...data });

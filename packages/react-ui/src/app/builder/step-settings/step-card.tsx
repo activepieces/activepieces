@@ -5,18 +5,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadata } from '@/lib/types';
 import {
-  Action,
-  ActionType,
+  FlowAction,
+  FlowActionType,
   flowStructureUtil,
   isNil,
-  Trigger,
-  TriggerType,
+  FlowTrigger,
+  FlowTriggerType,
 } from '@activepieces/shared';
 
 import { EditAgentInFlowBuilderButton } from './edit-agent-inside-flow-builder-button';
 
 type StepCardProps = {
-  step: Action | Trigger;
+  step: FlowAction | FlowTrigger;
 };
 
 const StepCard: React.FC<StepCardProps> = ({ step }) => {
@@ -25,8 +25,8 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
   });
 
   const isPiece =
-    stepMetadata?.type === ActionType.PIECE ||
-    stepMetadata?.type === TriggerType.PIECE;
+    stepMetadata?.type === FlowActionType.PIECE ||
+    stepMetadata?.type === FlowTriggerType.PIECE;
   const pieceVersion = isPiece
     ? (stepMetadata as PieceStepMetadata)?.pieceVersion
     : undefined;
