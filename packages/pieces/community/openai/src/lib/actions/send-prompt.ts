@@ -169,7 +169,7 @@ export const askOpenAI = createAction({
       temperature: temperature,
       top_p: topP,
       frequency_penalty: frequencyPenalty,
-      presence_penalty: presencePenalty,
+      presence_penalty: presencePenalty ?? undefined,
       max_completion_tokens: maxTokens,
     });
 
