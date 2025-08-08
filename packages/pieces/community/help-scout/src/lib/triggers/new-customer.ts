@@ -1,53 +1,85 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { helpScoutAuth } from '../common/auth';
+import crypto from 'crypto';
+import { helpScoutApiRequest, verifyWebhookSignature } from '../common/api';
+import { HttpMethod } from '@activepieces/pieces-common';
 
-const WEBHOOK_KEY = 'helpscout_new_customer_webhook_id';
+const WEBHOOK_KEY = 'helpscout_new_customer';
 
 export const newCustomer = createTrigger({
   auth: helpScoutAuth,
   name: 'new_customer',
   displayName: 'New Customer',
-  description: 'Fires when a new customer is added in Help Scout.',
+  description: 'Triggers when a new customer is added.',
   type: TriggerStrategy.WEBHOOK,
   props: {},
-  sampleData: {
-    id: 654321,
-    email: 'customer@example.com',
-    firstName: 'Jane',
-    lastName: 'Doe',
-    createdAt: '2024-01-01T00:00:00Z',
-  },
-  async onEnable(context: any) {
-    const response = await fetch('https://api.helpscout.net/v2/webhooks', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${context.auth.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+  sampleData: {},
+  async onEnable(context) {
+    const secret = crypto.randomBytes(20).toString('hex');
+
+    const response = await helpScoutApiRequest({
+      auth: context.auth,
+      method: HttpMethod.POST,
+      url: '/webhooks',
+      body: {
         url: context.webhookUrl,
         events: ['customer.created'],
-      }),
+        secret,
+      },
     });
-    if (!response.ok) {
-      throw new Error('Failed to register Help Scout webhook');
-    }
-    const data = await response.json();
-    await context.store.put(WEBHOOK_KEY, data.id);
+
+    const webhookId = response.headers?.['resource-id'] as string;
+
+    await context.store.put<{ webhookId: string; WebhookSecret: string }>(
+      WEBHOOK_KEY,
+      { webhookId: webhookId, WebhookSecret: secret }
+    );
   },
-  async onDisable(context: any) {
-    const webhookId = await context.store.get(WEBHOOK_KEY);
-    if (webhookId) {
-      await fetch(`https://api.helpscout.net/v2/webhooks/${webhookId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${context.auth.access_token}`,
-        },
+  async onDisable(context) {
+    const webhookData = await context.store.get<{
+      webhookId: string;
+      WebhookSecret: string;
+    }>(WEBHOOK_KEY);
+    if (webhookData?.webhookId) {
+      await helpScoutApiRequest({
+        method: HttpMethod.DELETE,
+        url: `/webhooks/${webhookData.webhookId}`,
+        auth: context.auth,
       });
-      await context.store.delete(WEBHOOK_KEY);
     }
   },
-  async run(context: any): Promise<any[]> {
+  async run(context) {
+    const webhookData = await context.store.get<{
+      webhookId: string;
+      WebhookSecret: string;
+    }>(WEBHOOK_KEY);
+
+    const webhookSecret = webhookData?.WebhookSecret;
+    const webhookSignatureHeader =
+      context.payload.headers['x-helpscout-signature'];
+    const rawBody = context.payload.rawBody;
+
+    if (
+      !verifyWebhookSignature(webhookSecret, webhookSignatureHeader, rawBody)
+    ) {
+      return [];
+    }
+
     return [context.payload.body];
   },
-}); 
+  async test(context) {
+    const response = await helpScoutApiRequest({
+      method: HttpMethod.GET,
+      url: '/customers ',
+      auth: context.auth,
+    });
+
+    const { _embedded } = response.body as {
+      _embedded: {
+        customers: { id: number }[];
+      };
+    };
+
+    return _embedded.customers;
+  },
+});

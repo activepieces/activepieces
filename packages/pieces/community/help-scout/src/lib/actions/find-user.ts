@@ -9,22 +9,32 @@ export const findUser = createAction({
   auth: helpScoutAuth,
   name: 'find_user',
   displayName: 'Find User',
-  description: 'Retrieve a Help Scout user by ID (as documented in Help Scout API).',
+  description: 'Finds a user by email.',
   props: {
-    userId: Property.ShortText({
-      displayName: 'User ID',
+    email: Property.ShortText({
+      displayName: 'Email',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      userId: z.string().min(1, 'Please provide a valid user ID.'),
+      email: z.string().min(1, 'Please provide a valid email.'),
     });
     const response = await helpScoutApiRequest({
       method: HttpMethod.GET,
-      url: `/users/${propsValue.userId}`,
+      url: `/users?email=${propsValue.email}`,
       auth,
     });
-    return response;
+
+    const { _embedded } = response.body as {
+      _embedded: {
+        users: { id: number; firstName: string; lastName: string }[];
+      };
+    };
+
+    return {
+      found: _embedded.users.length > 0,
+      data: _embedded.users.length > 0 ? _embedded.users[0] : {},
+    };
   },
-}); 
+});

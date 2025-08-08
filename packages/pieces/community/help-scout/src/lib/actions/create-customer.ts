@@ -4,12 +4,13 @@ import { helpScoutAuth } from '../common/auth';
 import { propsValidation } from '@activepieces/pieces-common';
 import { z } from 'zod';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpStatusCode } from 'axios';
 
 export const createCustomer = createAction({
   auth: helpScoutAuth,
   name: 'create_customer',
   displayName: 'Create Customer',
-  description: 'Add a new customer to Help Scout',
+  description: 'Adds a new customer to Help Scout.',
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -69,7 +70,7 @@ export const createCustomer = createAction({
       description: 'URLs for social profiles (type will be set to "other")',
     }),
   },
-  async run({ auth, propsValue }): Promise<any> {
+  async run({ auth, propsValue }){
     await propsValidation.validateZod(propsValue, {
       email: z.string().email('Please provide a valid email address.'),
       firstName: z.string().optional(),
@@ -96,7 +97,7 @@ export const createCustomer = createAction({
       age: propsValue.age,
       gender: propsValue.gender,
       organization: propsValue.organization,
-      'social-profiles': Array.isArray(propsValue.socialProfiles)
+      socialProfiles: Array.isArray(propsValue.socialProfiles)
         ? propsValue.socialProfiles.filter((url): url is string => typeof url === 'string').map((url) => ({ value: url, type: 'other' }))
         : undefined,
     };
@@ -105,11 +106,17 @@ export const createCustomer = createAction({
         delete payload[key];
       }
     });
-    return await helpScoutApiRequest({
+    const response =  await helpScoutApiRequest({
       method: HttpMethod.POST,
       url: '/customers',
       auth,
       body: payload,
     });
+
+    const customerId = response.headers?.['resource-id'];
+
+    return {
+      id:customerId
+    }
   },
 }); 

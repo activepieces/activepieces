@@ -1,36 +1,55 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { helpScoutApiRequest } from '../common/api';
 import { helpScoutAuth } from '../common/auth';
-import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { mailboxIdDropdown, userIdDropdown } from '../common/props';
 
 export const createConversation = createAction({
   auth: helpScoutAuth,
   name: 'create_conversation',
   displayName: 'Create Conversation',
-  description: 'Start a new conversation (see Help Scout API docs for supported fields).',
+  description: 'Start a new conversation.',
   props: {
-    mailboxId: Property.Number({
-      displayName: 'Mailbox ID',
-      required: true,
-    }),
+    mailboxId: mailboxIdDropdown(true),
     subject: Property.ShortText({
       displayName: 'Subject',
       required: true,
     }),
     customerEmail: Property.ShortText({
       displayName: 'Customer Email',
-      required: false,
+      required: true,
     }),
-    customerId: Property.Number({
-      displayName: 'Customer ID',
-      required: false,
+    fromUser: userIdDropdown('From User'),
+    threadType: Property.StaticDropdown({
+      displayName: 'Thread Type',
+      required: true,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Chat', value: 'chat' },
+          { label: 'Phone', value: 'phone' },
+          { label: 'Reply', value: 'reply' },
+          { label: 'Customer', value: 'customer' },
+        ],
+      },
+    }),
+    status: Property.StaticDropdown({
+      displayName: 'Conversation Status',
+      required: true,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Active', value: 'active' },
+          { label: 'Closed', value: 'closed' },
+          { label: 'Pending', value: 'pending' },
+        ],
+      },
     }),
     body: Property.LongText({
       displayName: 'Body',
       required: true,
     }),
+    assignTo: userIdDropdown('Assigned User'),
     tags: Property.Array({
       displayName: 'Tags',
       required: false,
@@ -47,24 +66,8 @@ export const createConversation = createAction({
       displayName: 'Imported',
       required: false,
     }),
-    attachments: Property.Array({
-      displayName: 'Attachment File Names',
-      required: false,
-    }),
   },
-  async run({ auth, propsValue }): Promise<any> {
-    await propsValidation.validateZod(propsValue, {
-      mailboxId: z.number().int().positive('Mailbox ID must be a positive integer.'),
-      subject: z.string().min(1, 'Subject cannot be empty.'),
-      customerEmail: z.string().email().optional(),
-      customerId: z.number().int().positive().optional(),
-      body: z.string().min(1, 'Body cannot be empty.'),
-      tags: z.array(z.string().min(1, 'Tags cannot contain empty strings.')).optional(),
-      cc: z.array(z.string().email('Invalid email in CC')).optional(),
-      bcc: z.array(z.string().email('Invalid email in BCC')).optional(),
-      imported: z.boolean().optional(),
-      attachments: z.array(z.string().min(1, 'Attachment file name cannot be empty')).optional(),
-    });
+  async run({ auth, propsValue }) {
     if (propsValue.tags) {
       const uniqueTags = new Set(propsValue.tags);
       if (uniqueTags.size !== propsValue.tags.length) {
@@ -83,25 +86,30 @@ export const createConversation = createAction({
         throw new Error('BCC emails must be unique.');
       }
     }
-    const customer = propsValue.customerId
-      ? { id: propsValue.customerId }
-      : { email: propsValue.customerEmail };
+    const customer = { email: propsValue.customerEmail };
     const payload: Record<string, any> = {
-      type: 'email',
+      type: 'chat',
       mailboxId: propsValue.mailboxId,
       subject: propsValue.subject,
       customer,
+      status: propsValue.status,
       threads: [
         {
-          type: 'customer',
-          body: propsValue.body,
-          cc: propsValue.cc,
-          bcc: propsValue.bcc,
+          type: propsValue.threadType,
+          text: propsValue.body,
+          customer,
           imported: propsValue.imported,
-          attachments: propsValue.attachments,
+          ...(propsValue.cc &&
+            propsValue.threadType === 'customer' &&
+            propsValue.cc.length > 0 && { cc: propsValue.cc }),
+          ...(propsValue.bcc &&
+            propsValue.threadType === 'customer' &&
+            propsValue.bcc.length > 0 && { bcc: propsValue.bcc }),
         },
       ],
       tags: propsValue.tags,
+      ...(propsValue.assignTo && { assignTo: Number(propsValue.assignTo) }),
+      ...(propsValue.fromUser && { user: Number(propsValue.fromUser) }),
     };
 
     Object.keys(payload).forEach((key) => {
@@ -111,15 +119,24 @@ export const createConversation = createAction({
     });
 
     Object.keys(payload['threads'][0]).forEach((key) => {
-      if (payload['threads'][0][key] === undefined || payload['threads'][0][key] === null) {
+      if (
+        payload['threads'][0][key] === undefined ||
+        payload['threads'][0][key] === null
+      ) {
         delete payload['threads'][0][key];
       }
     });
-    return await helpScoutApiRequest({
+    const response =  await helpScoutApiRequest({
       method: HttpMethod.POST,
       url: '/conversations',
       auth,
       body: payload,
     });
+
+    const convoId = response.headers?.['resource-id'];
+
+    return {
+      id:convoId
+    }
   },
-}); 
+});

@@ -1,56 +1,102 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { helpScoutAuth } from '../common/auth';
+import { mailboxIdDropdown, userIdDropdown } from '../common/props';
+import crypto from 'crypto';
+import { helpScoutApiRequest, verifyWebhookSignature } from '../common/api';
+import { HttpMethod } from '@activepieces/pieces-common';
 
-const WEBHOOK_KEY = 'helpscout_conversation_created_webhook_id';
+const WEBHOOK_KEY = 'helpscout_conversation_created';
 
 export const conversationCreated = createTrigger({
   auth: helpScoutAuth,
   name: 'conversation_created',
   displayName: 'Conversation Created',
-  description: 'Fires when a new conversation is started in a mailbox.',
+  description: 'Triggers when a new conversation is started in a mailbox.',
   type: TriggerStrategy.WEBHOOK,
-  props: {},
-  sampleData: {
-    id: 123456,
-    subject: 'Sample conversation',
-    mailboxId: 1234,
-    createdAt: '2024-01-01T00:00:00Z',
-    status: 'active',
+  props: {
+    mailboxId: mailboxIdDropdown(true),
+    assignedTo: userIdDropdown('Assigned User'),
   },
-  async onEnable(context: any) {
-    // Register webhook for 'convo.created' event
-    const response = await fetch('https://api.helpscout.net/v2/webhooks', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${context.auth.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+  sampleData: {},
+  async onEnable(context) {
+    const secret = crypto.randomBytes(20).toString('hex');
+
+    const response = await helpScoutApiRequest({
+      auth: context.auth,
+      method: HttpMethod.POST,
+      url: '/webhooks',
+      body: {
         url: context.webhookUrl,
         events: ['convo.created'],
-      }),
+        secret,
+        mailboxIds: [context.propsValue.mailboxId],
+      },
     });
-    if (!response.ok) {
-      throw new Error('Failed to register Help Scout webhook');
-    }
-    const data = await response.json();
-    await context.store.put(WEBHOOK_KEY, data.id);
+
+    const webhookId = response.headers?.['resource-id'] as string;
+
+    await context.store.put<{ webhookId: string; WebhookSecret: string }>(
+      WEBHOOK_KEY,
+      { webhookId: webhookId, WebhookSecret: secret }
+    );
   },
-  async onDisable(context: any) {
-    // Remove webhook
-    const webhookId = await context.store.get(WEBHOOK_KEY);
-    if (webhookId) {
-      await fetch(`https://api.helpscout.net/v2/webhooks/${webhookId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${context.auth.access_token}`,
-        },
+  async onDisable(context) {
+    const webhookData = await context.store.get<{
+      webhookId: string;
+      WebhookSecret: string;
+    }>(WEBHOOK_KEY);
+    if (webhookData?.webhookId) {
+      await helpScoutApiRequest({
+        method: HttpMethod.DELETE,
+        url: `/webhooks/${webhookData.webhookId}`,
+        auth: context.auth,
       });
-      await context.store.delete(WEBHOOK_KEY);
     }
   },
-  async run(context: any): Promise<any[]> {
-    // Return the webhook payload as an array
+  async run(context) {
+    const { assignedTo } = context.propsValue;
+    const webhookData = await context.store.get<{
+      webhookId: string;
+      WebhookSecret: string;
+    }>(WEBHOOK_KEY);
+
+    const webhookSecret = webhookData?.WebhookSecret;
+    const webhookSignatureHeader =
+      context.payload.headers['x-helpscout-signature'];
+    const rawBody = context.payload.rawBody;
+
+    if (
+      !verifyWebhookSignature(webhookSecret, webhookSignatureHeader, rawBody)
+    ) {
+      return [];
+    }
+
+    const payload = context.payload.body as { assignee: { id: number } };
+
+    if (assignedTo && payload.assignee.id.toString() !== assignedTo) return [];
+
     return [context.payload.body];
   },
-}); 
+  async test(context) {
+    const { mailboxId, assignedTo } = context.propsValue;
+
+    const queryParams: Record<string, any> = { embed: 'threads' };
+    if (mailboxId) queryParams['mailbox'] = mailboxId;
+    if (assignedTo) queryParams['assigned_to'] = assignedTo;
+
+    const response = await helpScoutApiRequest({
+      method: HttpMethod.GET,
+      url: '/conversations',
+      auth: context.auth,
+      queryParams,
+    });
+
+    const { _embedded } = response.body as {
+      _embedded: {
+        conversations: { id: number; subject: string }[];
+      };
+    };
+
+    return _embedded.conversations;
+  },
+});
