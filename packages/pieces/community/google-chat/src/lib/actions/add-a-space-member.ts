@@ -14,7 +14,8 @@ export const addASpaceMember = createAction({
     space_id: spaceIdDropdown,
     name: Property.ShortText({
       displayName: 'Space Name',
-      description: 'The space resource name (e.g., spaces/SPACE_ID) where the member will be added',
+      description:
+        'The space resource name (e.g., spaces/SPACE_ID) where the member will be added',
       required: true,
     }),
     memberEmail: Property.ShortText({
@@ -55,6 +56,7 @@ export const addASpaceMember = createAction({
 
     const authClient = new OAuth2Client();
     authClient.setCredentials(context.auth);
+    
     const chat = google.chat({ version: 'v1', auth: authClient });
 
     // Construct the space name if needed
