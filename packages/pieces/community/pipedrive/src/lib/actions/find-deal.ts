@@ -14,7 +14,7 @@ export const findDealAction = createAction({
     auth: pipedriveAuth,
     name: 'find-deal',
     displayName: 'Find Deal',
-    description: 'Finds a deal by any field using Pipedrive API v2.', // ✅ Updated description for v2
+    description: 'Finds a deal by any field using Pipedrive API v2.', 
     props: {
         searchField: searchFieldProp('deal'),
         searchFieldValue: searchFieldValueProp('deal'),
@@ -33,7 +33,7 @@ export const findDealAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.POST,
-            resourceUri: '/v2/filters', // ✅ Updated to v2 endpoint
+            resourceUri: '/v2/filters', 
             body: {
                 name: `Activepieces Find Deal Filter - ${Date.now()}`, // Added timestamp to name to ensure uniqueness
                 type: 'deals',
@@ -51,8 +51,6 @@ export const findDealAction = createAction({
                                 },
                             ],
                         },
-                        // The second condition with 'IS NOT NULL' seems redundant for a simple equality search,
-                        // but keeping it as per original logic if it serves a specific purpose.
                         {
                             glue: 'or',
                             conditions: [
@@ -70,17 +68,17 @@ export const findDealAction = createAction({
         });
 
         // Search for deals using the created filter
-        // Pipedrive v2 uses 'sort_by' and 'sort_direction' instead of a single 'sort' parameter.
+        
         const deals = await pipedriveApiCall<{ data: { id: number }[] }>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/deals', // ✅ Updated to v2 endpoint
+            resourceUri: '/v2/deals', 
             query: {
                 filter_id: filter.data.id,
                 limit: 1,
-                sort_by: 'update_time',     // ✅ Replaced 'sort' with 'sort_by'
-                sort_direction: 'desc',     // ✅ Added 'sort_direction'
+                sort_by: 'update_time',     
+                sort_direction: 'desc',     
             },
         });
 
@@ -89,7 +87,7 @@ export const findDealAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.DELETE,
-            resourceUri: `/v2/filters/${filter.data.id}`, // ✅ Updated to v2 endpoint
+            resourceUri: `/v2/filters/${filter.data.id}`, 
         });
 
         if (isNil(deals.data) || deals.data.length === 0) {
@@ -104,7 +102,7 @@ export const findDealAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/dealFields', // ✅ Updated to v2 endpoint
+            resourceUri: '/v2/dealFields', 
         });
 
         // Transform custom fields in the response data

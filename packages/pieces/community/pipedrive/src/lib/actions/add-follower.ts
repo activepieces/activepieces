@@ -8,7 +8,7 @@ export const addFollowerAction = createAction({
     auth: pipedriveAuth,
     name: 'add-follower',
     displayName: 'Add Follower',
-    description: 'Adds a follower to a deal, person, organization or product using Pipedrive API v2.', // ✅ Updated description
+    description: 'Adds a follower to a deal, person, organization or product using Pipedrive API v2.', 
     props: {
         followerId: ownerIdProp('Follower', true),
         entity: Property.StaticDropdown({
@@ -20,24 +20,24 @@ export const addFollowerAction = createAction({
                 options: [
                     {
                         label: 'Deal',
-                        value: 'deals', // ✅ Changed to plural for consistency with API paths
+                        value: 'deals', 
                     },
                     {
                         label: 'Person',
-                        value: 'persons', // ✅ Changed to plural for consistency with API paths
+                        value: 'persons',
                     },
                     {
                         label: 'Organization',
-                        value: 'organizations', // ✅ Changed to plural for consistency with API paths
+                        value: 'organizations', 
                     },
                     {
                         label: 'Product',
-                        value: 'products', // ✅ Changed to plural for consistency with API paths
+                        value: 'products', 
                     },
                 ],
             },
         }),
-        entityId: Property.ShortText({ // Pipedrive IDs are typically numbers, but ShortText is fine if conversion happens downstream or API handles it.
+        entityId: Property.ShortText({ 
             displayName: 'Target Object ID',
             description: 'ID of the object to add the follower to.',
             required:true
@@ -45,11 +45,7 @@ export const addFollowerAction = createAction({
     },
     async run(context) {
         const { followerId, entity, entityId } = context.propsValue;
-
-        // The endpoint construction remains the same, assuming pipedriveApiCall
-        // automatically prefixes with '/v2/' as per general API changes.
-        // Example: /v2/deals/{id}/followers
-        const resourceUri = `/${entity}/${entityId}/followers`; // ✅ Endpoint path constructed
+        const resourceUri = `/${entity}/${entityId}/followers`; 
 
         if (!resourceUri) { // This check is technically redundant if `entity` is always one of the dropdown values
             throw new Error(`Invalid object type: ${entity}`);
@@ -59,14 +55,11 @@ export const addFollowerAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.POST,
-            resourceUri: resourceUri, // ✅ Will be prefixed with /v2/ by pipedriveApiCall
+            resourceUri: resourceUri, 
             body: {
-                user_id: followerId, // ✅ 'user_id' is still the correct parameter for adding a follower in v2
+                user_id: followerId, 
             },
         });
-
-        // The v2 API follower object response is simpler (user_id, add_time).
-        // The current return handles this automatically.
         return response;
     },
 });

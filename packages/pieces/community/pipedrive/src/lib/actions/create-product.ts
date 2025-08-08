@@ -6,7 +6,7 @@ import {
     pipedrivePaginatedApiCall,
     pipedriveTransformCustomFields,
 } from '../common';
-import { GetField, GetProductResponse } from '../common/types'; // ✅ Changed to GetProductResponse
+import { GetField, GetProductResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createProductAction = createAction({
@@ -36,11 +36,11 @@ export const createProductAction = createAction({
             required: false,
         }),
         isActive: Property.Checkbox({
-            displayName: 'Is Active ?', // This maps to `is_deleted` (negated) in v2
+            displayName: 'Is Active ?', 
             required: false,
             defaultValue: true,
         }),
-        ownerId: ownerIdProp('Owner', false), // Assumed to return numeric ID
+        ownerId: ownerIdProp('Owner', false),
         currency: Property.ShortText({
             displayName: 'Currency',
             required: false,
@@ -51,15 +51,15 @@ export const createProductAction = createAction({
             required: false,
         }),
         cost: Property.Number({
-            displayName: 'Cost', // Maps to 'cost' in v2 prices object
+            displayName: 'Cost', 
             required: false,
         }),
         overheadCost: Property.Number({
-            displayName: 'Overhead Cost', // Maps to 'direct_cost' in v2 prices object
+            displayName: 'Overhead Cost', 
             required: false,
         }),
         visibleTo: visibleToProp, // Assumed to return integer
-        customfields: customFieldsProp('product'), // ✅ Added dynamic custom fields for products
+        customfields: customFieldsProp('product'), 
     },
     async run(context) {
         const {
@@ -95,7 +95,7 @@ export const createProductAction = createAction({
 
         // Collect custom fields by filtering out standard properties from context.propsValue
         const customFields: Record<string, unknown> = {};
-        // ✅ Cast context.propsValue to a more general type to allow string indexing
+        
         const allProps = context.propsValue as Record<string, any>;
         for (const key in allProps) {
             if (Object.prototype.hasOwnProperty.call(allProps, key) && !standardPropKeys.has(key)) {
@@ -109,13 +109,13 @@ export const createProductAction = createAction({
             description,
             unit,
             tax,
-            is_deleted: !isActive, // If isActive is true, is_deleted should be false. If isActive is false, is_deleted should be true.
+            is_deleted: !isActive, 
             prices: [
                 {
                     price: price ?? 0,
                     currency: currency ?? 'USD',
                     cost: cost ?? 0,
-                    direct_cost: overheadCost ?? 0, // 'overhead_cost' is renamed to 'direct_cost' in v2
+                    direct_cost: overheadCost ?? 0, 
                 },
             ],
             visible_to: visibleTo,
@@ -125,12 +125,12 @@ export const createProductAction = createAction({
             productPayload.owner_id = ownerId;
         }
 
-        // Assign the collected custom fields to the 'custom_fields' object in the payload
+        
         if (Object.keys(customFields).length > 0) {
             productPayload.custom_fields = customFields;
         }
 
-        // ✅ Use v2 endpoint for creating a product and expect GetProductResponse
+        
         const createdProductResponse = await pipedriveApiCall<GetProductResponse>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
@@ -139,7 +139,7 @@ export const createProductAction = createAction({
             body: productPayload,
         });
 
-        // ✅ Fetch custom field definitions from v2
+        
         const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
@@ -147,7 +147,7 @@ export const createProductAction = createAction({
             resourceUri: '/v2/productFields',
         });
 
-        // This function transforms the custom fields in the *response* data
+        
         const updatedProductProperties = pipedriveTransformCustomFields(
             customFieldsResponse,
             createdProductResponse.data,

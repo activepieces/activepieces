@@ -1,9 +1,9 @@
-// Define the structure for a Pipedrive Deal in v2
+
 export interface PipedriveDealV2 {
     id: number;
     title: string;
     creator_user_id: number; // No longer an object, just the ID
-    owner_id: number; // Renamed from user_id, no longer an object, just the ID
+    owner_id: number; 
     person_id: number | null; // No longer an object, just the ID
     org_id: number | null; // No longer an object, just the ID
     stage_id: number;
@@ -36,20 +36,19 @@ export interface PipedriveDealV2 {
     last_outgoing_mail_time?: string; // RFC 3339 format
     label_ids: number[]; // Replaces 'label' (array of IDs)
     rotten_time: string | null; // RFC 3339 format
-    smart_bcc_email?: string; // Renamed from cc_email, included only when using `include_fields` parameter
+    smart_bcc_email?: string; 
     acv?: number;
     arr?: number;
     mrr?: number;
-    custom_fields: Record<string, unknown>; // Custom fields are now nested here
+    custom_fields: Record<string, unknown>; 
 }
 
-// Define the structure for a Pipedrive Activity in v2
 export interface PipedriveActivityV2 {
     id: number;
     subject: string;
-    owner_id: number; // Renamed from user_id
+    owner_id: number; 
     type: string;
-    is_deleted: boolean; // Replaces active_flag, is negation of old value
+    is_deleted: boolean; 
     done: boolean;
     conference_meeting_client: string | null;
     conference_meeting_url: string | null;
@@ -57,7 +56,7 @@ export interface PipedriveActivityV2 {
     due_date: string; // YYYY-MM-DD
     due_time: string; // HH:MM
     duration: string; // HH:MM
-    busy: boolean; // Renamed from busy_flag
+    busy: boolean; 
     add_time: string; // RFC 3339 format
     update_time: string; // RFC 3339 format
     marked_as_done_time: string | null; // RFC 3339 format, null if not done
@@ -82,7 +81,7 @@ export interface PipedriveActivityV2 {
     private: boolean;
     priority: number;
     note: string | null;
-    creator_user_id: number; // Renamed from created_by_user_id
+    creator_user_id: number; 
     attendees?: { // Included only when using include_fields parameter
         email_address: string;
         name: string;
@@ -97,31 +96,31 @@ export interface PipedriveActivityV2 {
     }[];
 }
 
-// Define the structure for a Pipedrive Person in v2
+
 export interface PipedrivePersonV2 {
     id: number;
     name: string;
     first_name: string | null;
     last_name: string | null;
-    owner_id: number; // No longer an object, just the ID
-    org_id: number | null; // No longer an object, just the ID
-    picture_id: number | null; // No longer an object, just the ID
+    owner_id: number; 
+    org_id: number | null; 
+    picture_id: number | null; 
     add_time: string; // RFC 3339 format
     update_time: string; // RFC 3339 format
-    is_deleted: boolean; // Replaces active_flag, is negation of old value
+    is_deleted: boolean; 
     visible_to: number; // Is an integer now (e.g., 1, 3, 5, 7)
-    phones: { // Renamed from 'phone', now an array of objects
+    phones: {
         value: string;
         primary: boolean;
         label: string;
     }[];
-    emails: { // Renamed from 'email', now an array of objects
+    emails: { 
         value: string;
         primary: boolean;
         label: string;
     }[];
-    label_ids: number[]; // Replaces 'label' (array of IDs)
-    custom_fields: Record<string, unknown>; // Custom fields are now nested here
+    label_ids: number[]; 
+    custom_fields: Record<string, unknown>;
     next_activity_id?: number | null;
     last_activity_id?: number | null;
     open_deals_count?: number;
@@ -147,7 +146,7 @@ export interface PipedrivePersonV2 {
     doi_status?: string;
 }
 
-// Define the structure for a Pipedrive Organization in v2
+
 export interface PipedriveOrganizationV2 {
     id: number;
     name: string;
@@ -170,7 +169,7 @@ export interface PipedriveOrganizationV2 {
         postal_code: string | null;
         formatted_address: string | null;
     } | null;
-    custom_fields: Record<string, unknown>; // Custom fields are now nested here
+    custom_fields: Record<string, unknown>;
     next_activity_id?: number | null;
     last_activity_id?: number | null;
     open_deals_count?: number;
@@ -196,7 +195,7 @@ export interface PipedriveOrganizationV2 {
     doi_status?: string;
 }
 
-// Define the structure for a Pipedrive Lead in v2
+
 export interface PipedriveLeadV2 {
     id: string; // Lead IDs are UUIDs (strings)
     title: string;
@@ -221,7 +220,7 @@ export interface PipedriveLeadV2 {
     custom_fields?: Record<string, unknown>; // Custom fields are now nested here
 }
 
-// Define the structure for a Pipedrive Note in v2
+
 export interface PipedriveNoteV2 {
     id: number;
     user_id: number; // The user who owns the note (owner_id in other contexts)
@@ -233,10 +232,10 @@ export interface PipedriveNoteV2 {
     add_time: string; // RFC 3339 format
     update_time: string; // RFC 3339 format
     is_deleted: boolean; // Replaces active_flag, is negation of old value
-    last_update_user_id: number | null; // This field is removed in v2, but kept for sample consistency if needed elsewhere
+    last_update_user_id: number | null; 
 }
 
-// Define the structure for a Pipedrive Product in v2
+
 export interface PipedriveProductV2 {
     id: number;
     name: string;
@@ -244,13 +243,13 @@ export interface PipedriveProductV2 {
     description: string | null;
     unit: string | null;
     tax: number | null;
-    prices: Array<{ // Prices are an array of objects in v2
-        id?: number; // Price ID, if existing
+    prices: Array<{
+        id?: number; 
         product_id?: number;
         price: number;
         currency: string;
-        cost?: number; // New in v2
-        direct_cost?: number; // New in v2, replaces overhead_cost
+        cost?: number; 
+        direct_cost?: number; 
         overhead_cost?: number; // Keep for backward compatibility if needed, but direct_cost is preferred
     }>;
     owner_id: number;
@@ -258,8 +257,8 @@ export interface PipedriveProductV2 {
     update_time: string; // RFC 3339 format
     is_deleted: boolean; // Replaces active_flag, is negation of old value
     visible_to: number; // Is an integer now
-    custom_fields?: Record<string, unknown>; // Custom fields are now nested here
-    // ... other product fields as per Pipedrive API v2 documentation
+    custom_fields?: Record<string, unknown>; 
+    
 }
 
 
@@ -279,8 +278,8 @@ type PaginationInfoV2 = {
     start?: number; // Optional in response
     limit?: number; // Optional in response
     more_items_in_collection: boolean;
-    next_cursor?: string; // New in v2, replaces next_start
-    // prev_cursor?: string; // Also exists in v2, but often not needed for simple iteration
+    next_cursor?: string; 
+    
 };
 
 type AdditionalDataV2 = {
@@ -291,103 +290,103 @@ export type PaginatedResponse<T> = {
     success: boolean;
     data: T[];
     additional_data?: AdditionalDataV2; // Make optional as not all responses have it
-    // Other top-level fields like 'summary' might exist but are not generic
+    
 };
 
-// --- Specific API Response Types (using V2 entity interfaces) ---
+
 
 export type FieldsResponse = {
     success: boolean;
     data: GetField[];
-    additional_data?: AdditionalDataV2; // Updated for v2 pagination
+    additional_data?: AdditionalDataV2; 
 };
 
 export type StageWithPipelineInfo = {
     id: number;
     name: string;
     pipeline_id: number;
-    // pipeline_name is removed from the stage object in v2
+    
 };
 
 export type GetStagesResponse = {
     success: boolean;
     data: StageWithPipelineInfo[];
-    additional_data?: AdditionalDataV2; // Updated for v2 pagination
+    additional_data?: AdditionalDataV2; 
 };
 
 export type ListDealsResponse = {
     success: boolean;
-    data: PipedriveDealV2[]; // Using v2 Deal interface
-    additional_data?: AdditionalDataV2; // Updated for v2 pagination
+    data: PipedriveDealV2[]; 
+    additional_data?: AdditionalDataV2;
 };
 
 export type GetDealResponse = {
     success: boolean;
-    data: PipedriveDealV2; // Using v2 Deal interface
-    additional_data?: AdditionalDataV2; // Updated for v2 pagination
+    data: PipedriveDealV2; 
+    additional_data?: AdditionalDataV2;
 }
 
 export type ListActivitiesResponse = {
     success: boolean;
-    data: PipedriveActivityV2[]; // Using v2 Activity interface
-    additional_data?: AdditionalDataV2; // Updated for v2 pagination
+    data: PipedriveActivityV2[]; 
+    additional_data?: AdditionalDataV2; 
 }
 
 export type PersonListResponse = {
     success: boolean;
-    data: PipedrivePersonV2[]; // Using v2 Person interface
-    additional_data?: AdditionalDataV2; // Updated for v2 pagination
+    data: PipedrivePersonV2[]; 
+    additional_data?: AdditionalDataV2; 
 }
 
 export type GetPersonResponse = {
     success: boolean;
-    data: PipedrivePersonV2; // Using v2 Person interface
-    additional_data?: AdditionalDataV2; // Updated for v2 pagination
+    data: PipedrivePersonV2;
+    additional_data?: AdditionalDataV2; 
 }
 
 export type OrganizationListResponse = {
     success: boolean;
-    data: PipedriveOrganizationV2[]; // Using v2 Organization interface
-    additional_data?: AdditionalDataV2; // Updated for v2 pagination
+    data: PipedriveOrganizationV2[];
+    additional_data?: AdditionalDataV2; 
 }
 
 export type GetOrganizationResponse = {
     success: boolean;
-    data: PipedriveOrganizationV2; // Using v2 Organization interface
-    additional_data?: AdditionalDataV2; // Updated for v2 pagination
+    data: PipedriveOrganizationV2; 
+    additional_data?: AdditionalDataV2; 
 }
 
 export type LeadListResponse = {
     success: boolean;
-    data: PipedriveLeadV2[]; // Using v2 Lead interface
-    additional_data?: AdditionalDataV2; // Updated for v2 pagination
+    data: PipedriveLeadV2[]; 
+    additional_data?: AdditionalDataV2; 
 }
 
 export type GetLeadResponse = {
     success: boolean;
-    data: PipedriveLeadV2; // Using v2 Lead interface
-    additional_data?: AdditionalDataV2; // Updated for v2 pagination
+    data: PipedriveLeadV2; 
+    additional_data?: AdditionalDataV2; 
 }
 
 export type GetNoteResponse = {
     success: boolean;
-    data: PipedriveNoteV2; // Using v2 Note interface
-    additional_data?: AdditionalDataV2; // Updated for v2 pagination
+    data: PipedriveNoteV2; 
+    additional_data?: AdditionalDataV2; 
 }
 
 export type WebhookCreateResponse = {
-    status?: string; // Status might be present, but not always 'success'
+    status?: string; 
     success: boolean;
     data: {
-        id: string; // ✅ Webhook ID is a string (UUID) in v2
+        id: string; 
     }
 }
 
 export type GetProductResponse = {
     success: boolean;
     data: PipedriveProductV2;
-    additional_data?: AdditionalDataV2; // Updated for v2 pagination
+    additional_data?: AdditionalDataV2; 
 }
 
-// RequestParams is already flexible enough for v2 query parameters
+
 export type RequestParams = Record<string, string | number | boolean | string[] | number[] | null | undefined>;

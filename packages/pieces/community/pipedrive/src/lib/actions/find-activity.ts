@@ -31,11 +31,11 @@ export const findActivityAction = createAction({
                 options: [
                     {
                         label: 'Done',
-                        value: true, // ✅ In v2, 'done' is a boolean
+                        value: true, 
                     },
                     {
                         label: 'Not Done',
-                        value: false, // ✅ In v2, 'done' is a boolean
+                        value: false, 
                     },
                 ],
             },
@@ -44,31 +44,27 @@ export const findActivityAction = createAction({
     async run(context) {
         const { subject, assignTo, type, filterId, status, exactMatch } = context.propsValue;
 
-        // Pipedrive v2 API for listing activities expects 'owner_id' and boolean 'done' status.
-        // It also uses 'sort_by' and 'sort_direction' instead of a single 'sort' parameter.
+        
         const queryParams: Record<string, any> = {
-            // ✅ 'user_id' is renamed to 'owner_id' in v2
+            
             owner_id: assignTo,
             type: type,
-            // ✅ 'done' expects a boolean (true/false) in v2
             done: status,
-            // ✅ 'sort' parameter is replaced by 'sort_by' and 'sort_direction' in v2
             sort_by: 'update_time',
             sort_direction: 'desc',
         };
 
-        // filter_id is still supported in v2 for listing activities
+        
         if (!isNil(filterId)) {
             queryParams.filter_id = filterId;
         }
 
-        // The pipedrivePaginatedApiCall utility should handle the cursor-based pagination
-        // internally when interacting with the /v2/activities endpoint.
+        
         const response = await pipedrivePaginatedApiCall<{ id: number; subject: string }>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/activities', // ✅ Updated to v2 endpoint
+            resourceUri: '/v2/activities', 
             query: queryParams,
         });
 

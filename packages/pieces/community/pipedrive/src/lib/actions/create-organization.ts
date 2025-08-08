@@ -1,12 +1,12 @@
 import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { organizationCommonProps, customFieldsProp } from '../common/props'; // ✅ Import customFieldsProp
+import { organizationCommonProps, customFieldsProp } from '../common/props';
 import {
     pipedriveApiCall,
     pipedrivePaginatedApiCall,
     pipedriveTransformCustomFields,
 } from '../common';
-import { GetField, GetOrganizationResponse } from '../common/types'; // ✅ Changed to GetOrganizationResponse
+import { GetField, GetOrganizationResponse } from '../common/types'; 
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createOrganizationAction = createAction({
@@ -19,27 +19,27 @@ export const createOrganizationAction = createAction({
             displayName: 'Name',
             required: true,
         }),
-        ...organizationCommonProps, // Spreads common organization properties
-        customfields: customFieldsProp('organization'), // ✅ Add dynamic custom fields for organizations
+        ...organizationCommonProps, 
+        customfields: customFieldsProp('organization'), 
     },
     async run(context) {
         const { name, ownerId, address, visibleTo } = context.propsValue;
 
-        // `label_ids` replaces the `label` field in v1 and expects an array of numbers.
+        
         const labelIds = (context.propsValue.labelIds as number[]) ?? [];
 
-        // Define standard properties that are NOT custom fields for organizations
+        
         const standardPropKeys = new Set([
             'name',
             'ownerId',
             'address',
             'visibleTo',
-            'labelIds', // Add labelIds here as it's a standard prop
+            'labelIds', 
         ]);
 
-        // Collect custom fields by filtering out standard properties from context.propsValue
+        
         const customFields: Record<string, unknown> = {};
-        // ✅ Cast context.propsValue to a more general type to allow string indexing
+        
         const allProps = context.propsValue as Record<string, any>;
         for (const key in allProps) {
             if (Object.prototype.hasOwnProperty.call(allProps, key) && !standardPropKeys.has(key)) {
@@ -53,10 +53,10 @@ export const createOrganizationAction = createAction({
             visible_to: visibleTo,
         };
 
-        // Address field in v2 is a nested object.
+        
         if (address) {
             if (typeof address === 'string') {
-                organizationPayload.address = { value: address }; // Wrap string address in an object
+                organizationPayload.address = { value: address }; 
             } else if (typeof address === 'object') {
                 organizationPayload.address = address; // Assume it's already a structured object
             }
@@ -71,7 +71,7 @@ export const createOrganizationAction = createAction({
             organizationPayload.custom_fields = customFields;
         }
 
-        // ✅ Use v2 endpoint for creating an organization and expect GetOrganizationResponse
+       
         const createdOrganizationResponse = await pipedriveApiCall<GetOrganizationResponse>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
@@ -80,7 +80,7 @@ export const createOrganizationAction = createAction({
             body: organizationPayload,
         });
 
-        // ✅ Fetch custom field definitions from v2
+        
         const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],

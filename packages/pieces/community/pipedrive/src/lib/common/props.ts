@@ -24,7 +24,7 @@ export async function fetchFiltersOptions(
         accessToken: auth.access_token,
         apiDomain: auth.data['api_domain'],
         method: HttpMethod.GET,
-        resourceUri: '/v2/filters', // ✅ Updated to v2 endpoint
+        resourceUri: '/v2/filters', 
         query: {
             type: type,
         },
@@ -34,7 +34,7 @@ export async function fetchFiltersOptions(
     for (const filter of filters.data) {
         options.push({
             label: filter.name,
-            value: filter.id, // ✅ Filter IDs are numbers
+            value: filter.id, 
         });
     }
 
@@ -55,7 +55,7 @@ export async function fetchActivityTypesOptions(
         accessToken: auth.access_token,
         apiDomain: auth.data['api_domain'],
         method: HttpMethod.GET,
-        resourceUri: '/v2/activityTypes', // ✅ Updated to v2 endpoint, removed field selector
+        resourceUri: '/v2/activityTypes', 
     });
 
     const options: DropdownOption<string>[] = [];
@@ -81,7 +81,7 @@ export async function fetchPipelinesOptions(
         accessToken: auth.access_token,
         apiDomain: auth.data['api_domain'],
         method: HttpMethod.GET,
-        resourceUri: '/v2/pipelines', // ✅ Updated to v2 endpoint, removed field selector
+        resourceUri: '/v2/pipelines', 
     });
 
     const options: DropdownOption<number>[] = [];
@@ -107,10 +107,10 @@ export async function fetchPersonsOptions(
         accessToken: auth.access_token,
         apiDomain: auth.data['api_domain'],
         method: HttpMethod.GET,
-        resourceUri: '/v2/persons', // ✅ Updated to v2 endpoint, removed field selector
+        resourceUri: '/v2/persons', 
         query: {
-            sort_by: 'update_time', // ✅ Updated sorting parameter for v2
-            sort_direction: 'desc', // ✅ Added sorting direction for v2
+            sort_by: 'update_time', 
+            sort_direction: 'desc', 
         },
     });
 
@@ -137,10 +137,10 @@ export async function fetchOwnersOptions(
         accessToken: auth.access_token,
         apiDomain: auth.data['api_domain'],
         method: HttpMethod.GET,
-        resourceUri: '/v2/users', // ✅ Updated to v2 endpoint, removed field selector
+        resourceUri: '/v2/users', 
         query: {
-            sort_by: 'update_time', // ✅ Updated sorting parameter for v2
-            sort_direction: 'desc', // ✅ Added sorting direction for v2
+            sort_by: 'update_time', 
+            sort_direction: 'desc', 
         },
     });
 
@@ -169,7 +169,7 @@ export function createPropertyDefinition(property: GetField) {
                 required: false,
             });
         case 'text':
-        case 'address': // Address fields in v2 are objects, but if input is a single string, LongText is acceptable.
+        case 'address':
             return Property.LongText({
                 displayName: property.name,
                 required: false,
@@ -184,7 +184,7 @@ export function createPropertyDefinition(property: GetField) {
                         ? property.options.map((option) => {
                             return {
                                 label: option.label,
-                                value: option.id, // ✅ Value is now number for enum/set options in v2
+                                value: option.id, 
                             };
                         })
                         : [],
@@ -200,14 +200,14 @@ export function createPropertyDefinition(property: GetField) {
                         ? property.options.map((option) => {
                             return {
                                 label: option.label,
-                                value: option.id, // ✅ Value is now number for enum/set options in v2
+                                value: option.id, 
                             };
                         })
                         : [],
                 },
             });
         case 'double':
-        case 'monetary': // Monetary fields in v2 are objects, but this defines input for the amount.
+        case 'monetary': 
             return Property.Number({
                 displayName: property.name,
                 required: false,
@@ -251,21 +251,20 @@ export async function retrieveObjectCustomProperties(
 
     switch (objectType) {
         case 'person':
-            endpoint = '/v2/personFields'; // ✅ Updated to v2 endpoint
+            endpoint = '/v2/personFields'; 
             break;
         case 'deal':
-            // Pipedrive v2 migration guide suggests 'leadFields' for leads, but actions often use 'dealFields' for deals.
-            // If lead-specific custom fields are needed, a separate 'leadFields' endpoint should be used.
-            endpoint = '/v2/dealFields'; // ✅ Updated to v2 endpoint.
+           
+            endpoint = '/v2/dealFields'; 
             break;
         case 'organization':
-            endpoint = '/v2/organizationFields'; // ✅ Updated to v2 endpoint
+            endpoint = '/v2/organizationFields'; 
             break;
         case 'product':
-            endpoint = '/v2/productFields'; // ✅ Updated to v2 endpoint
+            endpoint = '/v2/productFields';
             break;
         case 'lead': // Added case for lead custom fields
-            endpoint = '/v2/leadFields'; // ✅ Pipedrive v2 has a dedicated endpoint for lead fields
+            endpoint = '/v2/leadFields'; 
             break;
     }
 
@@ -313,19 +312,19 @@ export const searchFieldProp = (objectType: string) =>
 
             switch (objectType) {
                 case 'person':
-                    endpoint = '/v2/personFields'; // ✅ Updated to v2 endpoint
+                    endpoint = '/v2/personFields'; 
                     break;
                 case 'deal':
-                    endpoint = '/v2/dealFields'; // ✅ Updated to v2 endpoint
+                    endpoint = '/v2/dealFields'; 
                     break;
                 case 'organization':
-                    endpoint = '/v2/organizationFields'; // ✅ Updated to v2 endpoint
+                    endpoint = '/v2/organizationFields';
                     break;
                 case 'product':
-                    endpoint = '/v2/productFields'; // ✅ Updated to v2 endpoint
+                    endpoint = '/v2/productFields'; 
                     break;
                 case 'lead':
-                    endpoint = '/v2/leadFields'; // ✅ Updated to v2 endpoint
+                    endpoint = '/v2/leadFields'; 
                     break;
             }
 
@@ -339,11 +338,11 @@ export const searchFieldProp = (objectType: string) =>
             const options: DropdownOption<string>[] = [];
 
             for (const field of response) {
-                // In v2, field.key is the key to use for search, and it's a string.
-                if (!isNil(field.key)) { // Use field.key for the value, as it's the identifier for search
+                
+                if (!isNil(field.key)) { 
                     options.push({
                         label: field.name,
-                        value: field.key, // ✅ Use field.key for the value
+                        value: field.key, 
                     });
                 }
             }
@@ -375,19 +374,19 @@ export const searchFieldValueProp = (objectType: string) =>
 
             switch (objectType) {
                 case 'person':
-                    endpoint = '/v2/personFields'; // ✅ Updated to v2 endpoint
+                    endpoint = '/v2/personFields'; 
                     break;
                 case 'deal':
-                    endpoint = '/v2/dealFields'; // ✅ Updated to v2 endpoint
+                    endpoint = '/v2/dealFields'; 
                     break;
                 case 'organization':
-                    endpoint = '/v2/organizationFields'; // ✅ Updated to v2 endpoint
+                    endpoint = '/v2/organizationFields'; 
                     break;
                 case 'product':
-                    endpoint = '/v2/productFields'; // ✅ Updated to v2 endpoint
+                    endpoint = '/v2/productFields'; 
                     break;
                 case 'lead':
-                    endpoint = '/v2/leadFields'; // ✅ Updated to v2 endpoint
+                    endpoint = '/v2/leadFields'; 
                     break;
             }
 
@@ -400,9 +399,7 @@ export const searchFieldValueProp = (objectType: string) =>
             });
 
             const propertyDefinition =
-                // For 'set' (MultiSelectDropdown), Pipedrive search uses a single value for exact match.
-                // The migration guide suggests 'exact' for match parameter, but for dropdowns,
-                // it's usually the ID. Keeping it as StaticDropdown for single selection.
+                
                 response.data.field_type === 'set' || response.data.field_type === 'enum' // Also apply to enum for consistency
                     ? Property.StaticDropdown({
                         displayName: response.data.name,
@@ -413,14 +410,13 @@ export const searchFieldValueProp = (objectType: string) =>
                                 ? response.data.options.map((option) => {
                                     return {
                                         label: option.label,
-                                        value: option.id, // ✅ Value is now number for enum/set options in v2
+                                        value: option.id, 
                                     };
                                 })
                                 : [],
                         },
                     })
-                    : createPropertyDefinition(response.data); // Use existing helper for other types
-
+                    : createPropertyDefinition(response.data);
             if (propertyDefinition) {
                 props['field_value'] = propertyDefinition;
             } else {
@@ -434,11 +430,7 @@ export const searchFieldValueProp = (objectType: string) =>
         },
     });
 
-/**
- * Property definition for selecting an owner (user ID).
- * @param displayName The display name for the property.
- * @param required Whether the property is required.
- */
+
 export const ownerIdProp = (displayName: string, required = false) =>
     Property.Dropdown({
         displayName,
@@ -462,11 +454,7 @@ export const ownerIdProp = (displayName: string, required = false) =>
         },
     });
 
-/**
- * Property definition for selecting a filter ID.
- * @param type The type of object for the filter.
- * @param required Whether the property is required.
- */
+
 export const filterIdProp = (type: string, required = false) =>
     Property.Dropdown({
         displayName: 'Filter',
@@ -490,10 +478,7 @@ export const filterIdProp = (type: string, required = false) =>
         },
     });
 
-/**
- * Property definition for an Organization ID.
- * @param required Whether the property is required.
- */
+
 export const organizationIdProp = (required = false) =>
     Property.Number({
         displayName: 'Organization ID',
@@ -501,10 +486,7 @@ export const organizationIdProp = (required = false) =>
         required
     });
 
-/**
- * Property definition for a Deal Pipeline ID.
- * @param required Whether the property is required.
- */
+
 export const dealPipelineIdProp = (required = false) =>
     Property.Dropdown({
         displayName: 'Pipeline',
@@ -528,10 +510,7 @@ export const dealPipelineIdProp = (required = false) =>
         },
     });
 
-/**
- * Property definition for a Deal Stage ID.
- * @param required Whether the property is required.
- */
+
 export const dealStageIdProp = (required = false) =>
     Property.Dropdown({
         displayName: 'Stage',
@@ -548,20 +527,17 @@ export const dealStageIdProp = (required = false) =>
             }
 
             const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-            // In v2, pipeline_name is removed from the stage object, so we need to fetch it separately
-            // if we want to display it in the label. For simplicity, we can just display the stage name.
-            const response = await pipedrivePaginatedApiCall<StageWithPipelineInfo>({ // StageWithPipelineInfo might need update
+            
+            const response = await pipedrivePaginatedApiCall<StageWithPipelineInfo>({ 
                 accessToken: authValue.access_token,
                 apiDomain: authValue.data['api_domain'],
                 method: HttpMethod.GET,
-                resourceUri: '/v2/stages', // ✅ Updated to v2 endpoint
+                resourceUri: '/v2/stages', 
             });
 
             const options: DropdownOption<number>[] = [];
             for (const stage of response) {
-                // In v2, stage object still has 'pipeline_id' but 'pipeline_name' is removed.
-                // To show pipeline name, you'd need to fetch pipelines separately and map.
-                // For now, just using stage.name.
+                
                 options.push({
                     label: `${stage.name} (Pipeline ID: ${stage.pipeline_id})`, // Adjusted label as pipeline_name is removed
                     value: stage.id,
@@ -575,10 +551,7 @@ export const dealStageIdProp = (required = false) =>
         },
     });
 
-/**
- * Property definition for a Person ID.
- * @param required Whether the property is required.
- */
+
 export const personIdProp = (required = false) =>
     Property.Number({
         displayName: 'Person ID',
@@ -586,15 +559,10 @@ export const personIdProp = (required = false) =>
         required
     });
 
-/**
- * Property definition for selecting label IDs.
- * @param objectType The type of object (e.g., 'person', 'deal', 'organization').
- * @param labelFieldName The specific field key for labels (e.g., 'label_ids').
- * @param required Whether the property is required.
- */
+
 export const labelIdsProp = (objectType: string, labelFieldName: string, required = false) =>
     Property.MultiSelectDropdown({
-        displayName: 'Label IDs', // Changed from 'Label' to 'Label IDs' for clarity
+        displayName: 'Label IDs', 
         required,
         refreshers: [],
         options: async ({ auth }) => {
@@ -611,13 +579,13 @@ export const labelIdsProp = (objectType: string, labelFieldName: string, require
 
             switch (objectType) {
                 case 'person':
-                    endpoint = '/v2/personFields'; // ✅ Updated to v2 endpoint
+                    endpoint = '/v2/personFields'; 
                     break;
                 case 'deal':
-                    endpoint = '/v2/dealFields'; // ✅ Updated to v2 endpoint
+                    endpoint = '/v2/dealFields'; 
                     break;
                 case 'organization':
-                    endpoint = '/v2/organizationFields'; // ✅ Updated to v2 endpoint
+                    endpoint = '/v2/organizationFields'; 
                     break;
             }
 
@@ -630,13 +598,13 @@ export const labelIdsProp = (objectType: string, labelFieldName: string, require
 
             // Find the specific label field within the custom fields response
             const labelField = customFieldsResponse.find((field) => field.key === labelFieldName);
-            const options: DropdownOption<number>[] = []; // Options should be numbers for label IDs
+            const options: DropdownOption<number>[] = []; 
 
             if (labelField && labelField.options) {
                 for (const option of labelField.options) {
                     options.push({
                         label: option.label,
-                        value: option.id, // ✅ Value is now a number for label IDs in v2
+                        value: option.id, 
                     });
                 }
             }
@@ -648,13 +616,10 @@ export const labelIdsProp = (objectType: string, labelFieldName: string, require
         },
     });
 
-/**
- * Property definition for Lead Label IDs.
- * @param required Whether the property is required.
- */
-export const leadLabelIdsProp = (required = false) => // Renamed to leadLabelIdsProp for consistency
+
+export const leadLabelIdsProp = (required = false) => 
     Property.MultiSelectDropdown({
-        displayName: 'Lead Label IDs', // Changed from 'Label' to 'Lead Label IDs' for clarity
+        displayName: 'Lead Label IDs',
         required,
         refreshers: [],
         options: async ({ auth }) => {
@@ -666,21 +631,21 @@ export const leadLabelIdsProp = (required = false) => // Renamed to leadLabelIds
                 };
             }
             const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-            // ✅ In v2, lead labels are fetched from /v2/leadLabels
+            
             const leadLabelsResponse = await pipedriveApiCall<{
                 data: Array<{ id: string; name: string; color: string }>; // Lead label IDs are UUID strings in v2
             }>({
                 accessToken: authValue.access_token,
                 apiDomain: authValue.data['api_domain'],
                 method: HttpMethod.GET,
-                resourceUri: '/v2/leadLabels', // ✅ Updated to v2 endpoint
+                resourceUri: '/v2/leadLabels', 
             });
 
             const options: DropdownOption<string>[] = []; // Value type is string for lead label IDs
             for (const option of leadLabelsResponse.data) {
                 options.push({
                     label: `${option.name} (${option.color})`,
-                    value: option.id, // ✅ Lead label IDs are strings (UUIDs) in v2
+                    value: option.id, 
                 });
             }
 
@@ -691,11 +656,7 @@ export const leadLabelIdsProp = (required = false) => // Renamed to leadLabelIds
         },
     });
 
-/**
- * Property definition for a Product ID.
- * @param required Whether the property is required.
- */
-export const productIdProp = (required = false) => // ✅ ADDED export here
+export const productIdProp = (required = false) => 
     Property.Number({
         displayName: 'Product ID',
         description: 'You can use Find Product action to retrieve product ID.',
@@ -712,33 +673,26 @@ export const visibleToProp = Property.StaticDropdown({
         disabled: false,
         options: [
             {
-                label: 'Owner & followers', // Pipedrive v2 description
+                label: 'Owner & followers', 
                 value: 1,
             },
             {
-                label: 'Entire company', // Pipedrive v2 description
+                label: 'Entire company', 
                 value: 3,
             },
-            // Pipedrive v2 also has values 5 (Owner's visibility group) and 7 (Owner's visibility group and sub-groups) for Premium/Ultimate plans.
-            // You might consider adding these if relevant for your users.
+            
         ],
     },
 });
 
-/**
- * Property definition for a Lead ID.
- * @param required Whether the property is required.
- */
+
 export const leadIdProp = (required = false) =>
     Property.ShortText({ // Lead IDs are typically UUID strings in v2
         displayName: 'Lead ID',
         required,
     });
 
-/**
- * Property definition for an Activity Type ID.
- * @param required Whether the property is required.
- */
+
 export const activityTypeIdProp = (required = false) =>
     Property.Dropdown({
         displayName: 'Activity Type',
@@ -762,12 +716,8 @@ export const activityTypeIdProp = (required = false) =>
         },
     });
 
-/**
- * Property definition for a Deal ID.
- * This is now a function that returns a Property.Number, to be consistent with other ID props.
- * @param required Whether the property is required.
- */
-export const dealIdProp = (required = false) => // ✅ Re-defined as a function
+
+export const dealIdProp = (required = false) => 
     Property.Number({
         displayName: 'Deal ID',
         description: 'You can use Find Deal action to retrieve deal ID.',
@@ -775,11 +725,8 @@ export const dealIdProp = (required = false) => // ✅ Re-defined as a function
     });
 
 
-/**
- * Common properties for Deal actions.
- * Renamed from `dealIdProp` to `dealCommonProps` to avoid conflict.
- */
-export const dealCommonProps = { // ✅ Renamed to dealCommonProps
+
+export const dealCommonProps = { 
     creationTime: Property.DateTime({
         displayName: 'Creation Time',
         required: false,
@@ -803,7 +750,7 @@ export const dealCommonProps = { // ✅ Renamed to dealCommonProps
                     value: 'lost',
                 },
                 {
-                    label: 'Deleted', // In v2, 'deleted' is a valid status for filtering
+                    label: 'Deleted', 
                     value: 'deleted',
                 },
             ],
@@ -814,7 +761,7 @@ export const dealCommonProps = { // ✅ Renamed to dealCommonProps
     ownerId: ownerIdProp('Owner', false),
     organizationId: organizationIdProp(false),
     personId: personIdProp(false),
-    labelIds: labelIdsProp('deal', 'label', false), // ✅ Using the dedicated labelIdsProp
+    labelIds: labelIdsProp('deal', 'label', false), 
     probability: Property.Number({
         displayName: 'Probability',
         required: false,
@@ -844,14 +791,14 @@ export const leadCommonProps = {
     ownerId: ownerIdProp('Owner', false),
     organizationId: organizationIdProp(false),
     personId: personIdProp(false),
-    labelIds: leadLabelIdsProp(false), // ✅ Using the dedicated leadLabelIdsProp
+    labelIds: leadLabelIdsProp(false), 
     expectedCloseDate: Property.DateTime({
         displayName: 'Expected Close Date',
         required: false,
         description: 'Please enter date in YYYY-MM-DD format.',
     }),
     visibleTo: visibleToProp,
-    channel: Property.Dropdown({ // Changed from MultiSelectDropdown to Dropdown as channel is single select
+    channel: Property.Dropdown({ 
         displayName: 'Channel',
         required: false,
         refreshers: [],
@@ -864,14 +811,14 @@ export const leadCommonProps = {
                 };
             }
             const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-            // ✅ Fetching lead sources from /v2/leadSources as per Pipedrive API v2 documentation
+
             const leadSourcesResponse = await pipedriveApiCall<{
                 data: Array<{ id: number; name: string }>; // Lead source IDs are numbers
             }>({
                 accessToken: authValue.access_token,
                 apiDomain: authValue.data['api_domain'],
                 method: HttpMethod.GET,
-                resourceUri: '/v2/leadSources', // ✅ Updated to v2 endpoint for lead sources
+                resourceUri: '/v2/leadSources', 
             });
 
             const options: DropdownOption<number>[] = []; // Value type is number for lead source IDs
@@ -889,15 +836,15 @@ export const leadCommonProps = {
         },
     }),
     leadValue: Property.Number({
-        displayName: 'Lead Value Amount', // Clarified display name
+        displayName: 'Lead Value Amount', 
         required: false,
     }),
     leadValueCurrency: Property.ShortText({
-        displayName: 'Lead Value Currency', // Clarified display name
+        displayName: 'Lead Value Currency', 
         required: false,
         description: 'The currency of the lead value (e.g., "USD", "EUR").',
     }),
-    // REMOVED customfields from here
+    
 };
 
 /**
@@ -906,23 +853,19 @@ export const leadCommonProps = {
 export const organizationCommonProps = {
     ownerId: ownerIdProp('Owner', false),
     visibleTo: visibleToProp,
-    labelIds: labelIdsProp('organization', 'label_ids', false), // ✅ Using the dedicated labelIdsProp
-    address: Property.LongText({ // If structured address input is desired, this should be Property.Object
+    labelIds: labelIdsProp('organization', 'label_ids', false), 
+    address: Property.LongText({ 
         displayName: 'Address',
         required: false,
         description: 'For structured address, the action will need to parse this string into the v2 address object format.'
     }),
-    // REMOVED customfields from here
+    
 };
 
-/**
- * Common properties for Person actions.
- */
+
 export const personCommonProps = {
     ownerId: ownerIdProp('Owner', false),
     organizationId: organizationIdProp(false),
-    // In v2, phone and email are arrays of objects, not just string arrays.
-    // The actions will need to map these to the correct format.
     email: Property.Array({
         displayName: 'Email',
         required: false,
@@ -969,16 +912,14 @@ export const personCommonProps = {
             ],
         },
     }),
-    // REMOVED customfields from here
+    
 };
 
-/**
- * Common properties for Activity actions.
- */
+
 export const activityCommonProps = {
     organizationId: organizationIdProp(false),
     personId: personIdProp(false),
-    dealId: dealIdProp(false), // ✅ Now correctly calling the dealIdProp function
+    dealId: dealIdProp(false),
     leadId: leadIdProp(false),
     assignTo: ownerIdProp('Assign To', false),
     type: activityTypeIdProp(false),
@@ -995,14 +936,14 @@ export const activityCommonProps = {
     duration: Property.ShortText({
         displayName: 'Duration',
         required: false,
-        description: 'Please enter time in HH:MM format (e.g., "01:30" for 1 hour 30 minutes).', // Clarified format
+        description: 'Please enter time in HH:MM format (e.g., "01:30" for 1 hour 30 minutes).',
     }),
-    isDone: Property.Checkbox({ // Renamed to 'isDone' for clarity and consistency with boolean type
+    isDone: Property.Checkbox({ 
         displayName: 'Mark as Done?',
         required: false,
         defaultValue: false,
     }),
-    busy: Property.StaticDropdown({ // Renamed from 'isBusy' to 'busy' for consistency with API field
+    busy: Property.StaticDropdown({ 
         displayName: 'Free or Busy',
         required: false,
         options: {
@@ -1030,7 +971,7 @@ export const activityCommonProps = {
 };
 
 // Helper function for custom fields property definition
-export function customFieldsProp(objectType: string) { // ✅ Exported the helper
+export function customFieldsProp(objectType: string) { 
     return Property.DynamicProperties({
         displayName: 'Custom Fields',
         required: false,

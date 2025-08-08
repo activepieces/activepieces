@@ -20,8 +20,8 @@ export const createDealAction = createAction({
             displayName: 'Title',
             required: true,
         }),
-        ...dealCommonProps, // Spreads all the common deal properties
-        customfields: customFieldsProp('deal'), // This defines the dynamic custom fields
+        ...dealCommonProps, 
+        customfields: customFieldsProp('deal'), 
     },
     async run(context) {
         const {
@@ -38,13 +38,10 @@ export const createDealAction = createAction({
             organizationId,
             personId,
             creationTime,
-            // Removed 'customfields' from destructuring here, as it won't exist directly
         } = context.propsValue;
 
-        // label_ids replaces the 'label' field in v1 and expects an array of numbers.
         const labelIds = (context.propsValue.labelIds as number[]) ?? [];
 
-        // Define standard properties that are NOT custom fields
         const standardPropKeys = new Set([
             'title',
             'dealValue',
@@ -59,12 +56,12 @@ export const createDealAction = createAction({
             'organizationId',
             'personId',
             'creationTime',
-            'labelIds', // Add labelIds here as it's a standard prop
+            'labelIds', 
         ]);
 
-        // Collect custom fields by filtering out standard properties from context.propsValue
+        
         const customFields: Record<string, unknown> = {};
-        // ✅ Cast context.propsValue to a more general type to allow string indexing
+        
         const allProps = context.propsValue as Record<string, any>;
         for (const key in allProps) {
             if (Object.prototype.hasOwnProperty.call(allProps, key) && !standardPropKeys.has(key)) {

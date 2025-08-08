@@ -14,7 +14,7 @@ export const findPersonAction = createAction({
     auth: pipedriveAuth,
     name: 'find-person',
     displayName: 'Find Person',
-    description: 'Finds a person by any field using Pipedrive API v2.', // ✅ Updated description for v2
+    description: 'Finds a person by any field using Pipedrive API v2.', 
     props: {
         searchField: searchFieldProp('person'),
         searchFieldValue: searchFieldValueProp('person'),
@@ -33,7 +33,7 @@ export const findPersonAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.POST,
-            resourceUri: '/v2/filters', // ✅ Updated to v2 endpoint
+            resourceUri: '/v2/filters', 
             body: {
                 // Added timestamp to the filter name to ensure uniqueness, preventing potential conflicts
                 name: `Activepieces Find Person Filter - ${Date.now()}`,
@@ -52,8 +52,6 @@ export const findPersonAction = createAction({
                                 },
                             ],
                         },
-                        // The second condition with 'IS NOT NULL' is kept as per original logic,
-                        // assuming it serves a specific purpose in the filter's intent.
                         {
                             glue: 'or',
                             conditions: [
@@ -70,18 +68,17 @@ export const findPersonAction = createAction({
             },
         });
 
-        // Search for persons using the created filter
-        // Pipedrive v2 uses 'sort_by' and 'sort_direction' instead of a single 'sort' parameter.
+        
         const persons = await pipedriveApiCall<{ data: { id: number }[] }>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/persons', // ✅ Updated to v2 endpoint
+            resourceUri: '/v2/persons', 
             query: {
                 filter_id: filter.data.id,
                 limit: 1,
-                sort_by: 'update_time',     // ✅ Replaced 'sort' with 'sort_by'
-                sort_direction: 'desc',     // ✅ Added 'sort_direction'
+                sort_by: 'update_time',     
+                sort_direction: 'desc',     
             },
         });
 
@@ -90,7 +87,7 @@ export const findPersonAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.DELETE,
-            resourceUri: `/v2/filters/${filter.data.id}`, // ✅ Updated to v2 endpoint
+            resourceUri: `/v2/filters/${filter.data.id}`, 
         });
 
         if (isNil(persons.data) || persons.data.length === 0) {
@@ -105,7 +102,7 @@ export const findPersonAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/personFields', // ✅ Updated to v2 endpoint
+            resourceUri: '/v2/personFields', 
         });
 
         // Transform custom fields in the response data

@@ -10,25 +10,23 @@ export const findDealsAssociatedWithPersonAction = createAction({
     auth: pipedriveAuth,
     name: 'find-deals-associated-with-person',
     displayName: 'Find Deals Associated With Person',
-    description: 'Finds multiple deals related to a specific person using Pipedrive API v2.', // ✅ Updated description for v2
+    description: 'Finds multiple deals related to a specific person using Pipedrive API v2.', 
     props: {
         personId: personIdProp(true), // This prop returns the numeric person ID
     },
     async run(context) {
         const { personId } = context.propsValue;
 
-        // ✅ In Pipedrive API v2, the endpoint to get deals associated with a person
-        // is now the general /v2/deals endpoint with a person_id query parameter,
-        // replacing the old /persons/{id}/deals endpoint.
+       
         const deals = await pipedrivePaginatedApiCall<Record<string, any>>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: `/v2/deals`, // ✅ Updated to v2 general deals endpoint
+            resourceUri: `/v2/deals`, 
             query: {
-                person_id: personId, // ✅ Filter by person_id
-                sort_by: 'update_time', // ✅ Replaced 'sort' with 'sort_by'
-                sort_direction: 'desc', // ✅ Added 'sort_direction'
+                person_id: personId, 
+                sort_by: 'update_time',
+                sort_direction: 'desc', 
             },
         });
 
@@ -44,7 +42,7 @@ export const findDealsAssociatedWithPersonAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/dealFields', // ✅ Updated to v2 endpoint
+            resourceUri: '/v2/dealFields', 
         });
 
         const result = [];

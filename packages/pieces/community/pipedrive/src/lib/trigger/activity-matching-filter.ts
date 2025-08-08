@@ -18,17 +18,17 @@ export const activityMatchingFilterTrigger = createTrigger({
     async onEnable(context) {
         const ids: number[] = [];
 
-        // ✅ Use v2 endpoint and v2 sorting parameters
+        
         const response = await pipedrivePaginatedApiCall<{ id: number }>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/activities', // ✅ Updated to v2 endpoint. Field selectors like :(id) are removed in v2.
+            resourceUri: '/v2/activities', 
             query: {
-                sort_by: 'update_time', // ✅ Replaced 'sort' with 'sort_by'
-                sort_direction: 'desc', // ✅ Added 'sort_direction'
+                sort_by: 'update_time',
+                sort_direction: 'desc', 
                 filter_id: context.propsValue.filterId,
-                owner_id: 0, // ✅ 'user_id' is renamed to 'owner_id' in v2. '0' still means all users.
+                owner_id: 0, 
             },
         });
 
@@ -47,17 +47,17 @@ export const activityMatchingFilterTrigger = createTrigger({
         const activities = [];
 
         // ✅ Use v2 endpoint and v2 sorting parameters
-        const response = await pipedriveApiCall<PaginatedResponse<Record<string, unknown>>>({ // ✅ Using PaginatedResponse for list type
+        const response = await pipedriveApiCall<PaginatedResponse<Record<string, unknown>>>({ 
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/activities', // ✅ Updated to v2 endpoint
+            resourceUri: '/v2/activities', 
             query: {
                 limit: 10,
-                sort_by: 'update_time', // ✅ Replaced 'sort' with 'sort_by'
-                sort_direction: 'desc', // ✅ Added 'sort_direction'
+                sort_by: 'update_time', 
+                sort_direction: 'desc',
                 filter_id: context.propsValue.filterId,
-                owner_id: 0, // ✅ 'user_id' is renamed to 'owner_id' in v2
+                owner_id: 0, 
             },
         });
 
@@ -76,17 +76,16 @@ export const activityMatchingFilterTrigger = createTrigger({
         const existingIds = (await context.store.get<string>('activities')) ?? '[]';
         const parsedExistingIds = JSON.parse(existingIds) as number[];
 
-        // ✅ Use v2 endpoint and v2 sorting parameters
+        
         const response = await pipedrivePaginatedApiCall<{ id: number }>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/activities', // ✅ Updated to v2 endpoint
+            resourceUri: '/v2/activities', 
             query: {
-                sort_by: 'update_time', // ✅ Replaced 'sort' with 'sort_by'
-                sort_direction: 'desc', // ✅ Added 'sort_direction'
+                sort_by: 'update_time', 
                 filter_id: context.propsValue.filterId,
-                owner_id: 0, // ✅ 'user_id' is renamed to 'owner_id' in v2
+                owner_id: 0, 
             },
         });
 
@@ -99,7 +98,7 @@ export const activityMatchingFilterTrigger = createTrigger({
 
         const newIds = newActivities.map((activity) => activity.id);
 
-        // Only update store if there are new activities to avoid unnecessary writes
+        
         if (newIds.length > 0) {
             // Store new IDs by prepending them to maintain a recent history, but ensure no duplicates if ids overlap
             const updatedIds = Array.from(new Set([...newIds, ...parsedExistingIds]));
@@ -110,18 +109,18 @@ export const activityMatchingFilterTrigger = createTrigger({
     },
     sampleData: {
         id: 8,
-        owner_id: 1234, // ✅ Renamed from user_id
-        done: false, // Already boolean, good
+        owner_id: 1234, 
+        done: false, 
         type: 'deadline',
         due_date: '2020-06-09', // Good
         due_time: '10:00', // Good
         duration: '01:00', // Good
-        busy: true, // ✅ Renamed from busy_flag, already boolean
-        add_time: '2020-06-08T12:37:56Z', // ✅ RFC 3339 format
-        marked_as_done_time: '2020-08-08T08:08:38Z', // ✅ RFC 3339 format
-        subject: 'Deadline', // Good
+        busy: true, 
+        add_time: '2020-06-08T12:37:56Z', 
+        marked_as_done_time: '2020-08-08T08:08:38Z', 
+        subject: 'Deadline',
         public_description: 'This is a description', // Good
-        location: { // ✅ Nested object in v2
+        location: { 
             value: 'Mustamäe tee 3, Tallinn, Estonia',
             street_number: '3',
             route: 'Mustamäe tee',
@@ -133,21 +132,21 @@ export const activityMatchingFilterTrigger = createTrigger({
             postal_code: '10616',
             formatted_address: 'Mustamäe tee 3, 10616 Tallinn, Estonia',
         },
-        org_id: 5, // Good
-        person_id: 1101, // Good
-        deal_id: 300, // Good
-        lead_id: '46c3b0e1-db35-59ca-1828-4817378dff71', // Good
-        is_deleted: false, // ✅ Added for v2, negation of old active_flag
-        update_time: '2020-08-08T12:37:56Z', // ✅ RFC 3339 format
-        note: 'A note for the activity', // Good
-        creator_user_id: 1234, // ✅ Renamed from created_by_user_id
+        org_id: 5, 
+        person_id: 1101, 
+        deal_id: 300,
+        lead_id: '46c3b0e1-db35-59ca-1828-4817378dff71', 
+        is_deleted: false, 
+        update_time: '2020-08-08T12:37:56Z', 
+        note: 'A note for the activity', 
+        creator_user_id: 1234, 
         attendees: [
             {
                 email_address: 'attendee@pipedrivemail.com',
-                is_organizer: false, // ✅ Boolean in v2
+                is_organizer: false, 
                 name: 'Attendee',
                 person_id: 25312,
-                status: 'accepted', // Changed from 'noreply' for a more common status
+                status: 'accepted', 
                 user_id: null,
             },
         ],

@@ -8,7 +8,7 @@ export const attachFileAction = createAction({
     auth: pipedriveAuth,
     name: 'attach-file',
     displayName: 'Attach File',
-    description: 'Uploads a file and attaches it to a deal, person, organization, activity, or product using Pipedrive API v2.', // ✅ Updated description for v2
+    description: 'Uploads a file and attaches it to a deal, person, organization, activity, or product using Pipedrive API v2.', 
     props: {
         file: Property.File({
             displayName: 'File',
@@ -18,7 +18,6 @@ export const attachFileAction = createAction({
             displayName: 'File Name',
             required: true,
         }),
-        // FIX: Added contentType property as ApFile does not expose file.type
         contentType: Property.ShortText({
             displayName: 'Content Type (MIME Type)',
             description: 'e.g., application/pdf, image/png, text/plain. If left empty, it will try to infer from filename.',
@@ -28,7 +27,7 @@ export const attachFileAction = createAction({
         personId: personIdProp(false),
         organizationId: organizationIdProp(false),
         productId: productIdProp(false),
-        activityId: Property.Number({ // Pipedrive IDs are typically numbers, ensure this is handled correctly
+        activityId: Property.Number({ 
             displayName: 'Activity ID',
             required: false,
         }),
@@ -37,15 +36,10 @@ export const attachFileAction = createAction({
         const { file, fileName, contentType, dealId, personId, organizationId, productId, activityId } =
             context.propsValue;
 
-        const formData = new FormData(); // Renamed from formatData to formData for clarity
-
-        // Append the file data. Pipedrive expects the file content and filename.
-        // FIX: Use the provided contentType prop, fallback to a generic if not provided
+        const formData = new FormData(); 
         formData.append('file', file.data, { filename: fileName, contentType: contentType || 'application/octet-stream' });
 
-        // Append associated entity IDs. Pipedrive v2 expects these as numeric IDs.
-        // Assuming dealId, personId, organizationId, productId, activityId are already numbers or can be coerced by Pipedrive.
-        if (dealId) formData.append('deal_id', dealId.toString()); // Ensure IDs are sent as strings in form-data
+        if (dealId) formData.append('deal_id', dealId.toString()); 
         if (personId) formData.append('person_id', personId.toString());
         if (organizationId) formData.append('org_id', organizationId.toString());
         if (productId) formData.append('product_id', productId.toString());
@@ -53,14 +47,14 @@ export const attachFileAction = createAction({
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
-            url: `${context.auth.data['api_domain']}/api/v2/files`, // ✅ Updated to v2 endpoint
+            url: `${context.auth.data['api_domain']}/api/v2/files`, 
             body: formData,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: context.auth.access_token,
             },
             headers: {
-                ...formData.getHeaders(), // Essential for multipart/form-data
+                ...formData.getHeaders(), 
             },
         });
 

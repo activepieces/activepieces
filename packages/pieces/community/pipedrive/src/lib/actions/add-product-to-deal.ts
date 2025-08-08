@@ -8,7 +8,7 @@ export const addProductToDealAction = createAction({
     auth: pipedriveAuth,
     name: 'add-product-to-deal',
     displayName: 'Add Product to Deal',
-    description: 'Adds a product to a deal using Pipedrive API v2.', // ✅ Updated description for v2
+    description: 'Adds a product to a deal using Pipedrive API v2.', 
     props: {
         dealId: dealIdProp(true),
         productId: productIdProp(true),
@@ -94,16 +94,15 @@ export const addProductToDealAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.POST,
-            resourceUri: `/v2/deals/${dealId}/products`, // ✅ Updated to v2 endpoint
+            resourceUri: `/v2/deals/${dealId}/products`, 
             body: {
                 product_id: productId,
                 item_price: price,
                 quantity,
                 discount_type: discountType,
                 discount,
-                // In v2, 'comments' cannot be null; it should be an empty string if not set.
-                comments: comments ?? '', // ✅ Ensure comments is an empty string if null/undefined
-                is_enabled: enableProduct, // ✅ Renamed from 'enable_product' to 'is_enabled' for v2 consistency
+                comments: comments ?? '', 
+                is_enabled: enableProduct, 
                 tax: taxPercentage,
                 tax_method: taxMethod,
             },

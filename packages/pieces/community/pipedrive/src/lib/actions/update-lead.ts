@@ -1,13 +1,13 @@
 import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { leadCommonProps, leadIdProp, customFieldsProp } from '../common/props'; // ✅ Import customFieldsProp
+import { leadCommonProps, leadIdProp, customFieldsProp } from '../common/props';
 import {
     pipedriveApiCall,
     pipedrivePaginatedApiCall,
     pipedriveTransformCustomFields,
 } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { GetField, GetLeadResponse } from '../common/types'; // ✅ Changed to GetLeadResponse
+import { GetField, GetLeadResponse } from '../common/types'; 
 import dayjs from 'dayjs';
 
 export const updateLeadAction = createAction({
@@ -22,7 +22,7 @@ export const updateLeadAction = createAction({
             required: false,
         }),
         ...leadCommonProps, // Spreads common lead properties
-        customfields: customFieldsProp('lead'), // ✅ Add dynamic custom fields for leads
+        customfields: customFieldsProp('lead'), 
     },
     async run(context) {
         const {
@@ -39,7 +39,7 @@ export const updateLeadAction = createAction({
             // Removed 'customfields' from destructuring here, as it won't exist directly
         } = context.propsValue;
 
-        // ✅ label_ids for leads are strings (UUIDs) in v2, not numbers.
+       
         const labelIds = (context.propsValue.labelIds as string[]) ?? [];
 
         // Define standard properties that are NOT custom fields for leads
@@ -57,9 +57,9 @@ export const updateLeadAction = createAction({
             'labelIds', // Add labelIds here as it's a standard prop
         ]);
 
-        // Collect custom fields by filtering out standard properties from context.propsValue
+      
         const customFields: Record<string, unknown> = {};
-        // ✅ Cast context.propsValue to a more general type to allow string indexing
+        
         const allProps = context.propsValue as Record<string, any>;
         for (const key in allProps) {
             if (Object.prototype.hasOwnProperty.call(allProps, key) && !standardPropKeys.has(key)) {
@@ -77,7 +77,7 @@ export const updateLeadAction = createAction({
         };
 
         if (labelIds.length > 0) {
-            leadPayload.label_ids = labelIds; // ✅ Use label_ids as an array of strings (UUIDs)
+            leadPayload.label_ids = labelIds; 
         }
 
         if (expectedCloseDate) {
@@ -99,7 +99,7 @@ export const updateLeadAction = createAction({
             leadPayload.custom_fields = customFields;
         }
 
-        // ✅ Use PATCH method for updates and specify v2 endpoint, expecting GetLeadResponse
+       
         const updatedLeadResponse = await pipedriveApiCall<GetLeadResponse>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
@@ -108,7 +108,7 @@ export const updateLeadAction = createAction({
             body: leadPayload,
         });
 
-        // ✅ Fetch custom field definitions for leads from v2
+        
         const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],

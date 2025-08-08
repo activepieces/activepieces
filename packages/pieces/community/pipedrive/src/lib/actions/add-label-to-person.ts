@@ -28,36 +28,34 @@ export const addLabelToPersonAction = createAction({
             personUpdatePayload.label_ids = labelIds; 
         }
 
-        // ✅ Use PATCH method for updates and specify v2 endpoint
+        
         const updatedPersonResponse = await pipedriveApiCall<GetPersonResponse>({ 
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
-            method: HttpMethod.PATCH, // ✅ Changed from HttpMethod.PUT to HttpMethod.PATCH
-            resourceUri: `/v2/persons/${personId}`, // ✅ Updated to v2 endpoint
+            method: HttpMethod.PATCH, 
+            resourceUri: `/v2/persons/${personId}`,
             body: {
                 ...personUpdatePayload,
-                // If this action were to also update custom fields, they would need to be nested here:
-                // custom_fields: context.propsValue.customfields,
             },
         });
 
-        // ✅ Fetch custom field definitions from v2
+        
         const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/personFields', // ✅ Updated to v2 endpoint
+            resourceUri: '/v2/personFields',
         });
 
-        // This function transforms the custom fields in the *response* data
-        const transformedPersonData = pipedriveTransformCustomFields( // ✅ Renamed variable for clarity
+        
+        const transformedPersonData = pipedriveTransformCustomFields( 
             customFieldsResponse,
             updatedPersonResponse.data,
         );
 
         return {
             ...updatedPersonResponse,
-            data: transformedPersonData, // ✅ Assign transformed data to 'data'
+            data: transformedPersonData, 
         };
     },
 });

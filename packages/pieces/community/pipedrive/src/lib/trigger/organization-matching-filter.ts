@@ -7,21 +7,20 @@ import {
     pipedrivePaginatedApiCall,
     pipedriveTransformCustomFields,
 } from '../common';
-import { GetField } from '../common/types'; // LeadListResponse will be replaced
+import { GetField } from '../common/types';
 import { isNil } from '@activepieces/shared';
 
-// Define the structure for a Pipedrive Organization in v2
 interface PipedriveOrganizationV2 {
     id: number;
     name: string;
-    owner_id: number; // No longer an object, just the ID
-    add_time: string; // RFC 3339 format
-    update_time: string; // RFC 3339 format
-    is_deleted: boolean; // Replaces active_flag, is negation of old value
-    visible_to: number; // Is an integer now (e.g., 1, 3, 5, 7)
+    owner_id: number;
+    add_time: string;
+    update_time: string;
+    is_deleted: boolean;
+    visible_to: number;
     picture_id: number | null;
-    label_ids: number[]; // Replaces 'label' (array of IDs)
-    address: { // Is a nested object now
+    label_ids: number[];
+    address: {
         value: string | null;
         street_number: string | null;
         route: string | null;
@@ -33,8 +32,7 @@ interface PipedriveOrganizationV2 {
         postal_code: string | null;
         formatted_address: string | null;
     } | null;
-    custom_fields: Record<string, unknown>; // Custom fields are now nested here
-    // Fields that are only included with `include_fields` are marked as optional
+    custom_fields: Record<string, unknown>;
     next_activity_id?: number | null;
     last_activity_id?: number | null;
     open_deals_count?: number;
@@ -54,14 +52,12 @@ interface PipedriveOrganizationV2 {
     related_won_deals_count?: number;
     lost_deals_count?: number;
     related_lost_deals_count?: number;
-    last_incoming_mail_time?: string | null; // RFC 3339 format
-    last_outgoing_mail_time?: string | null; // RFC 3339 format
+    last_incoming_mail_time?: string | null;
+    last_outgoing_mail_time?: string | null;
     marketing_status?: string;
     doi_status?: string;
-    // Removed fields are not included here (e.g., company_id, first_char, delete_time, owner_name, cc_email, etc.)
 }
 
-// Update response interfaces for organizations
 interface OrganizationListResponseV2 {
     data: PipedriveOrganizationV2[];
     additional_data?: {
@@ -69,7 +65,7 @@ interface OrganizationListResponseV2 {
             start: number;
             limit: number;
             more_items_in_collection: boolean;
-            next_cursor?: string; // v2 uses cursor-based pagination
+            next_cursor?: string;
         };
     };
 }
@@ -78,23 +74,21 @@ export const organizationMatchingFilterTrigger = createTrigger({
     auth: pipedriveAuth,
     name: 'organization-matching-filter',
     displayName: 'Organization Matching Filter',
-    description: 'Triggers when an organization newly matches a Pipedrive filter for the first time (using Pipedrive API v2).', // Updated description
+    description: 'Triggers when an organization newly matches a Pipedrive filter for the first time (using Pipedrive API v2).',
     type: TriggerStrategy.POLLING,
     props: {
         filterId: filterIdProp('org', true),
     },
     async onEnable(context) {
         const ids: number[] = [];
-        // IMPORTANT: Changed API version from v1 to v2 and updated sorting
-        // Assumes pipedrivePaginatedApiCall handles cursor-based pagination internally for v2
         const response = await pipedrivePaginatedApiCall<{ id: number }>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/organizations', // Updated to v2 endpoint. Field selectors like :(id) are removed in v2.
+            resourceUri: '/v2/organizations',
             query: {
-                sort_by: 'update_time', // Replaced 'sort' with 'sort_by'
-                sort_direction: 'desc', // Added 'sort_direction'
+                sort_by: 'update_time',
+                sort_direction: 'desc',
                 filter_id: context.propsValue.filterId,
             },
         });
@@ -110,17 +104,15 @@ export const organizationMatchingFilterTrigger = createTrigger({
     },
     async test(context) {
         const organizations = [];
-
-        // IMPORTANT: Changed API version from v1 to v2 and updated sorting
         const response = await pipedriveApiCall<OrganizationListResponseV2>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/organizations', // Updated to v2 endpoint
+            resourceUri: '/v2/organizations',
             query: {
                 limit: 10,
-                sort_by: 'update_time', // Replaced 'sort' with 'sort_by'
-                sort_direction: 'desc', // Added 'sort_direction'
+                sort_by: 'update_time',
+                sort_direction: 'desc',
                 filter_id: context.propsValue.filterId,
             },
         });
@@ -133,18 +125,16 @@ export const organizationMatchingFilterTrigger = createTrigger({
             organizations.push(org);
         }
 
-        // IMPORTANT: Changed resourceUri for custom fields to /organizationFields
         const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/organizationFields', // Updated to v2 endpoint for organization fields
+            resourceUri: '/v2/organizationFields',
         });
 
         const result = [];
 
         for (const org of organizations) {
-            // IMPORTANT: pipedriveTransformCustomFields must be updated to handle v2 custom field structure
             const updatedOrgProperties = pipedriveTransformCustomFields(customFieldsResponse, org);
             result.push(updatedOrgProperties);
         }
@@ -154,17 +144,14 @@ export const organizationMatchingFilterTrigger = createTrigger({
     async run(context) {
         const existingIds = (await context.store.get<string>('organizations')) ?? '[]';
         const parsedExistingIds = JSON.parse(existingIds) as number[];
-
-        // IMPORTANT: Changed API version from v1 to v2 and updated sorting
-        // Assumes pipedrivePaginatedApiCall handles cursor-based pagination internally for v2
         const response = await pipedrivePaginatedApiCall<{ id: number }>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/organizations', // Updated to v2 endpoint
+            resourceUri: '/v2/organizations',
             query: {
-                sort_by: 'update_time', // Replaced 'sort' with 'sort_by'
-                sort_direction: 'desc', // Added 'sort_direction'
+                sort_by: 'update_time',
+                sort_direction: 'desc',
                 filter_id: context.propsValue.filterId,
             },
         });
@@ -173,7 +160,6 @@ export const organizationMatchingFilterTrigger = createTrigger({
             return [];
         }
 
-        // Filter valid organizations
         const newOrganizations = response.filter(
             (organization) => !parsedExistingIds.includes(organization.id),
         );
@@ -184,22 +170,18 @@ export const organizationMatchingFilterTrigger = createTrigger({
             return [];
         }
 
-        // Store new IDs
         await context.store.put('organizations', JSON.stringify([...newIds, ...parsedExistingIds]));
 
-        // IMPORTANT: Changed resourceUri for custom fields to /organizationFields
         const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/organizationFields', // Updated to v2 endpoint for organization fields
+            resourceUri: '/v2/organizationFields',
         });
 
         const result = [];
 
-        // Transform valid organizations fields
         for (const org of newOrganizations) {
-            // IMPORTANT: pipedriveTransformCustomFields must be updated to handle v2 custom field structure
             const updatedOrgProperties = pipedriveTransformCustomFields(customFieldsResponse, org);
             result.push(updatedOrgProperties);
         }
@@ -208,16 +190,16 @@ export const organizationMatchingFilterTrigger = createTrigger({
     },
     sampleData: {
         id: 1,
-        owner_id: 22701301, // No longer an object, just the ID
+        owner_id: 22701301,
         name: 'Pipedrive Sample Org',
-        add_time: '2024-12-04T03:49:06Z', // RFC 3339 format
-        update_time: '2024-12-14T11:03:19Z', // RFC 3339 format
-        is_deleted: false, // Replaces active_flag, negated boolean
-        visible_to: 3, // Is an integer now
+        add_time: '2024-12-04T03:49:06Z',
+        update_time: '2024-12-14T11:03:19Z',
+        is_deleted: false,
+        visible_to: 3,
         picture_id: null,
-        label_ids: [], // Replaces 'label' (array of numbers)
-        address: { // Nested object now
-            value: 'Mustamäe tee 3, Tallinn, Estonia', // Example address
+        label_ids: [],
+        address: {
+            value: 'Mustamäe tee 3, Tallinn, Estonia',
             street_number: '3',
             route: 'Mustamäe tee',
             sublocality: 'Kristiine',
@@ -228,11 +210,8 @@ export const organizationMatchingFilterTrigger = createTrigger({
             postal_code: '10616',
             formatted_address: 'Mustamäe tee 3, 10616 Tallinn, Estonia',
         },
-        custom_fields: { // Placeholder for custom fields in v2
+        custom_fields: {
             "your_custom_field_key": "your_custom_field_value"
         }
-        // Removed fields like company_id, country_code, first_char, delete_time,
-        // next_activity_date, next_activity_time, last_activity_id, last_activity_date,
-        // owner_name, cc_email, and all count fields (unless explicitly included via `include_fields`)
     },
 });

@@ -33,13 +33,11 @@ export const createLeadAction = createAction({
             ownerId,
             organizationId,
             personId,
-            // Removed 'creationTime' from destructuring as it's not in leadCommonProps
         } = context.propsValue;
 
-        // label_ids for leads are strings (UUIDs) in v2.
         const labelIds = (context.propsValue.labelIds as string[]) ?? [];
 
-        // Define standard properties that are NOT custom fields for leads
+        
         const standardPropKeys = new Set([
             'title',
             'leadValue',
@@ -49,13 +47,11 @@ export const createLeadAction = createAction({
             'ownerId',
             'organizationId',
             'personId',
-            'labelIds', // Add labelIds here as it's a standard prop
-            'channel', // Add if you include channel in leadCommonProps
-            'channelId', // Add if you include channelId in leadCommonProps
-            // Removed 'creationTime' from standardPropKeys
+            'labelIds', 
+            'channel', 
+            'channelId', 
         ]);
 
-        // Collect custom fields by filtering out standard properties from context.propsValue
         const customFields: Record<string, unknown> = {};
         const allProps = context.propsValue as Record<string, any>;
         for (const key in allProps) {
@@ -70,8 +66,6 @@ export const createLeadAction = createAction({
             org_id: organizationId,
             person_id: personId,
             visible_to: visibleTo,
-            // 'add_time' is typically set automatically by Pipedrive for leads.
-            // If you need to explicitly set it, you'd add a property to leadCommonProps.
             value: (leadValue !== undefined && leadValueCurrency) ? {
                 amount: leadValue,
                 currency: leadValueCurrency,

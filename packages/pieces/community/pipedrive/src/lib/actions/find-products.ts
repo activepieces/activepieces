@@ -13,7 +13,7 @@ export const findProductsAction = createAction({
     auth: pipedriveAuth,
     name: 'find-products',
     displayName: 'Find Products',
-    description: 'Finds a product or products by name or product code using Pipedrive API v2.', // ✅ Updated description for v2
+    description: 'Finds a product or products by name or product code using Pipedrive API v2.', 
     props: {
         field: Property.StaticDropdown({
             displayName: 'Field to search by',
@@ -41,24 +41,18 @@ export const findProductsAction = createAction({
     async run(context) {
         const products = [];
         let hasMoreItems = true;
-        let cursor: string | null | undefined = undefined; // ✅ Use cursor for pagination in v2
+        let cursor: string | null | undefined = undefined; 
 
         do {
             const queryParams: Record<string, any> = {
                 term: context.propsValue.fieldValue,
                 fields: context.propsValue.field,
-                limit: 500, // Max limit for search endpoint
-                // 'exact_match' parameter is replaced by 'match' in v2 itemSearch/field endpoint,
-                // but for /products/search, it's typically handled implicitly or client-side.
-                // The current implementation relies on client-side filtering for exact match.
-                // If the intent was a true exact match via API, the 'match' parameter would be needed
-                // for /v2/itemSearch/field, but /products/search doesn't expose it directly.
-                // Assuming the current behavior (broad search, then client-side filter) is acceptable.
+                limit: 500,
             };
 
             // Add cursor for pagination
             if (cursor) {
-                queryParams.cursor = cursor; // ✅ Add cursor to query parameters
+                queryParams.cursor = cursor; 
             }
 
             const response = await pipedriveApiCall<{
@@ -68,14 +62,14 @@ export const findProductsAction = createAction({
                     pagination: {
                         // In v2, pagination uses cursor and next_cursor
                         more_items_in_collection: boolean;
-                        next_cursor?: string; // ✅ next_cursor property for v2 pagination
+                        next_cursor?: string; 
                     };
                 };
             }>({
                 accessToken: context.auth.access_token,
                 apiDomain: context.auth.data['api_domain'],
                 method: HttpMethod.GET,
-                resourceUri: '/v2/products/search', // ✅ Updated to v2 endpoint
+                resourceUri: '/v2/products/search', 
                 query: queryParams,
             });
 
@@ -88,21 +82,21 @@ export const findProductsAction = createAction({
                     accessToken: context.auth.access_token,
                     apiDomain: context.auth.data['api_domain'],
                     method: HttpMethod.GET,
-                    resourceUri: `/v2/products/${productWrapper.item.id}`, // ✅ Updated to v2 endpoint
+                    resourceUri: `/v2/products/${productWrapper.item.id}`, 
                 });
                 products.push(productDetails.data); // Push the full product data
             }
 
             hasMoreItems = response.additional_data.pagination.more_items_in_collection;
-            cursor = response.additional_data.pagination.next_cursor; // ✅ Update cursor for next iteration
-        } while (hasMoreItems && cursor); // Continue as long as there are more items AND a next cursor
+            cursor = response.additional_data.pagination.next_cursor; 
+        } while (hasMoreItems && cursor); 
 
         // Fetch custom field definitions from v2 (only once, after all products are fetched)
         const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/productFields', // ✅ Updated to v2 endpoint
+            resourceUri: '/v2/productFields', 
         });
 
         // Transform custom fields for all fetched products

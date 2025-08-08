@@ -22,64 +22,61 @@ import {
 } from '../common/types';
 import { isNil } from '@activepieces/shared';
 
-// Define the structure for a Pipedrive Deal in v2 (reused from previous updates)
 interface PipedriveDealV2 {
     id: number;
     title: string;
-    creator_user_id: number; // No longer an object, just the ID
-    owner_id: number; // Renamed from user_id, no longer an object, just the ID
-    person_id: number | null; // No longer an object, just the ID
-    org_id: number | null; // No longer an object, just the ID
+    creator_user_id: number;
+    owner_id: number;
+    person_id: number | null;
+    org_id: number | null;
     stage_id: number;
     pipeline_id: number;
     value: number;
     currency: string;
-    add_time: string; // RFC 3339 format
-    update_time: string; // RFC 3339 format
-    stage_change_time: string; // RFC 3339 format
-    is_deleted: boolean; // Replaces 'active' and 'deleted' flags, is negation of old 'active'
+    add_time: string;
+    update_time: string;
+    stage_change_time: string;
+    is_deleted: boolean;
     status: 'open' | 'won' | 'lost';
     probability: number | null;
     lost_reason: string | null;
-    visible_to: number; // Is an integer now
-    close_time: string | null; // RFC 3339 format
-    won_time: string | null; // RFC 3339 format
-    first_won_time?: string; // RFC 3339 format, included only when using `include_fields` parameter
-    lost_time: string | null; // RFC 3339 format
-    products_count?: number; // Included only when using `include_fields` parameter
-    files_count?: number; // Included only when using `include_fields` parameter
-    notes_count?: number; // Included only when using `include_fields` parameter
-    followers_count?: number; // Included only when using `include_fields` parameter
-    email_messages_count?: number; // Included only when using `include_fields` parameter
+    visible_to: number;
+    close_time: string | null;
+    won_time: string | null;
+    first_won_time?: string;
+    lost_time: string | null;
+    products_count?: number;
+    files_count?: number;
+    notes_count?: number;
+    followers_count?: number;
+    email_messages_count?: number;
     activities_count?: number;
     done_activities_count?: number;
     undone_activities_count?: number;
     participants_count?: number;
-    expected_close_date: string | null; // YYYY-MM-DD
-    last_incoming_mail_time?: string; // RFC 3339 format
-    last_outgoing_mail_time?: string; // RFC 3339 format
-    label_ids: number[]; // Replaces 'label' (array of IDs)
-    rotten_time: string | null; // RFC 3339 format
-    smart_bcc_email?: string; // Renamed from cc_email, included only when using `include_fields` parameter
+    expected_close_date: string | null;
+    last_incoming_mail_time?: string;
+    last_outgoing_mail_time?: string;
+    label_ids: number[];
+    rotten_time: string | null;
+    smart_bcc_email?: string;
     acv?: number;
     arr?: number;
     mrr?: number;
-    custom_fields: Record<string, unknown>; // Custom fields are now nested here
+    custom_fields: Record<string, unknown>;
 }
 
-// Define the structure for a Pipedrive Stage in v2
 interface PipedriveStageV2 {
     id: number;
     order_nr: number;
     name: string;
-    is_deleted: boolean; // replaces "active_flag". NB: Negation of the old value.
+    is_deleted: boolean;
     deal_probability: number;
     pipeline_id: number;
-    is_deal_rot_enabled: boolean; // replaces "rotten_flag"
-    days_to_rotten: number | null; // replaces "rotten_days"
-    add_time: string; // RFC 3339 format
-    update_time: string | null; // RFC 3339 format
-    // pipeline_name and pipeline_deal_probability fields have been removed from the Stage Object directly.
+    is_deal_rot_enabled: boolean;
+    days_to_rotten: number | null;
+    add_time: string;
+    update_time: string | null;
 }
 
 interface ListDealsResponseV2 {
@@ -89,7 +86,7 @@ interface ListDealsResponseV2 {
             start: number;
             limit: number;
             more_items_in_collection: boolean;
-            next_cursor?: string; // v2 uses cursor-based pagination
+            next_cursor?: string;
         };
     };
 }
@@ -102,7 +99,7 @@ export const updatedDeal = createTrigger({
     auth: pipedriveAuth,
     name: 'updated_deal',
     displayName: 'Updated Deal',
-    description: "Triggers when a deal's stage is updated (using Pipedrive API v2).", // Updated description
+    description: "Triggers when a deal's stage is updated (using Pipedrive API v2).",
     props: {
         filter_by: Property.StaticDropdown({
             displayName: 'Filter by',
@@ -142,16 +139,15 @@ export const updatedDeal = createTrigger({
                                 { label: 'Open', value: 'open' },
                                 { label: 'Won', value: 'won' },
                                 { label: 'Lost', value: 'lost' },
-                                { label: 'Deleted', value: 'deleted' }, // 'deleted' is a valid status in v2 for filtering
+                                { label: 'Deleted', value: 'deleted' },
                             ],
                         },
                     });
                 }
                 if (filterBy === 'stage_id') {
-                    // IMPORTANT: Changed API version from v1 to v2 for stages
-                    const response = await httpClient.sendRequest<{ data: PipedriveStageV2[] }>({ // Expecting array of v2 Stage objects
+                    const response = await httpClient.sendRequest<{ data: PipedriveStageV2[] }>({
                         method: HttpMethod.GET,
-                        url: `${authValue.data['api_domain']}/api/v2/stages`, // Updated to v2 endpoint
+                        url: `${authValue.data['api_domain']}/api/v2/stages`,
                         authentication: {
                             type: AuthenticationType.BEARER_TOKEN,
                             token: authValue.access_token,
@@ -164,7 +160,7 @@ export const updatedDeal = createTrigger({
                             disabled: false,
                             options: response.body.data.map((stage) => {
                                 return {
-                                    label: stage.name, // Removed pipeline_name as it's not directly on stage object in v2
+                                    label: stage.name,
                                     value: stage.id,
                                 };
                             }),
@@ -188,10 +184,9 @@ export const updatedDeal = createTrigger({
                 }
 
                 const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-                // IMPORTANT: Changed API version from v1 to v2 for dealFields
-                const response = await httpClient.sendRequest<FieldsResponse>({ // FieldsResponse might need to be updated for v2 structure
+                const response = await httpClient.sendRequest<FieldsResponse>({
                     method: HttpMethod.GET,
-                    url: `${authValue.data['api_domain']}/api/v2/dealFields`, // Updated to v2 endpoint
+                    url: `${authValue.data['api_domain']}/api/v2/dealFields`,
                     authentication: {
                         type: AuthenticationType.BEARER_TOKEN,
                         token: authValue.access_token,
@@ -216,7 +211,6 @@ export const updatedDeal = createTrigger({
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
-        // IMPORTANT: Changed API version from v1 to v2 for webhooks
         const webhook = await pipedriveCommon.subscribeWebhook(
             'deal',
             'updated',
@@ -224,16 +218,13 @@ export const updatedDeal = createTrigger({
             context.auth.data['api_domain'],
             context.auth.access_token,
         );
-        // FIX: Store the webhook ID directly as a string
         await context.store?.put<string>('_updated_deal_trigger', webhook.data.id);
     },
     async onDisable(context) {
-        // FIX: Retrieve the webhook ID directly as a string
         const webhookId = await context.store.get<string>('_updated_deal_trigger');
-        if (webhookId) { // Check if webhookId is not null or undefined
-            // IMPORTANT: Changed API version from v1 to v2 for webhooks
+        if (webhookId) {
             await pipedriveCommon.unsubscribeWebhook(
-                webhookId, // Use the string directly
+                webhookId,
                 context.auth.data['api_domain'],
                 context.auth.access_token,
             );
@@ -245,20 +236,19 @@ export const updatedDeal = createTrigger({
 
         const qs: RequestParams = {
             limit: 10,
-            sort_by: 'update_time', // Replaced 'sort' with 'sort_by'
-            sort_direction: 'desc', // Added 'sort_direction'
+            sort_by: 'update_time',
+            sort_direction: 'desc',
         };
 
         if (filterBy && filterByValue) {
             qs[filterBy] = filterByValue;
         }
 
-        // IMPORTANT: Changed API version from v1 to v2 for deals
         const dealsResponse = await pipedriveApiCall<ListDealsResponseV2>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/deals', // Updated to v2 endpoint
+            resourceUri: '/v2/deals',
             query: qs,
         });
 
@@ -266,26 +256,23 @@ export const updatedDeal = createTrigger({
             return [];
         }
 
-        // IMPORTANT: Changed resourceUri for custom fields to /dealFields
         const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/dealFields', // Updated to v2 endpoint
+            resourceUri: '/v2/dealFields',
         });
 
         const result = [];
 
         for (const deal of dealsResponse.data) {
-            // IMPORTANT: pipedriveTransformCustomFields must be updated to handle v2 custom field structure
             const updatedDealProperties = pipedriveTransformCustomFields(customFieldsResponse, deal);
 
-            // IMPORTANT: Changed API version from v1 to v2 for stages
-            const stageResponse = await pipedriveApiCall<{ data: PipedriveStageV2 }>({ // Expected v2 Stage object
+            const stageResponse = await pipedriveApiCall<{ data: PipedriveStageV2 }>({
                 accessToken: context.auth.access_token,
                 apiDomain: context.auth.data['api_domain'],
                 method: HttpMethod.GET,
-                resourceUri: `/v2/stages/${updatedDealProperties.stage_id}`, // Updated to v2 endpoint
+                resourceUri: `/v2/stages/${updatedDealProperties.stage_id}`,
             });
 
             updatedDealProperties['stage'] = stageResponse.data;
@@ -299,7 +286,6 @@ export const updatedDeal = createTrigger({
         const filterByValue = context.propsValue.filter_by_field_value!['field_value'];
         const fieldToWatch = context.propsValue.field_to_watch;
 
-        // FIX: Change type to Record<string, any> to allow dynamic indexing
         const payloadBody = context.payload.body as {
             current: Record<string, any>;
             previous: Record<string, any>;
@@ -308,7 +294,6 @@ export const updatedDeal = createTrigger({
         const currentDealData = payloadBody.current;
         const previousDealData = payloadBody.previous;
 
-        //  No filters and no field to watch specified
         const noFilterAndNoField = !filterBy && !fieldToWatch;
         const isFieldChanged =
             fieldToWatch && currentDealData[fieldToWatch] !== previousDealData[fieldToWatch];
@@ -319,34 +304,30 @@ export const updatedDeal = createTrigger({
             (!filterBy && isFieldChanged) ||
             (isFilterMatched && (!fieldToWatch || isFieldChanged))
         ) {
-            // IMPORTANT: Changed API version from v1 to v2 for deals
             const dealResponse = await pipedriveApiCall<GetDealResponseV2>({
                 accessToken: context.auth.access_token,
                 apiDomain: context.auth.data['api_domain'],
                 method: HttpMethod.GET,
-                resourceUri: `/v2/deals/${payloadBody.current.id}`, // Updated to v2 endpoint
+                resourceUri: `/v2/deals/${payloadBody.current.id}`,
             });
 
-            // IMPORTANT: Changed resourceUri for custom fields to /dealFields
             const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
                 accessToken: context.auth.access_token,
                 apiDomain: context.auth.data['api_domain'],
                 method: HttpMethod.GET,
-                resourceUri: '/v2/dealFields', // Updated to v2 endpoint
+                resourceUri: '/v2/dealFields',
             });
 
-            // IMPORTANT: pipedriveTransformCustomFields must be updated to handle v2 custom field structure
             const updatedDealProperties = pipedriveTransformCustomFields(
                 customFieldsResponse,
                 dealResponse.data,
             );
 
-            // IMPORTANT: Changed API version from v1 to v2 for stages
-            const stageResponse = await pipedriveApiCall<{ data: PipedriveStageV2 }>({ // Expected v2 Stage object
+            const stageResponse = await pipedriveApiCall<{ data: PipedriveStageV2 }>({
                 accessToken: context.auth.access_token,
                 apiDomain: context.auth.data['api_domain'],
                 method: HttpMethod.GET,
-                resourceUri: `/v2/stages/${currentDealData.stage_id}`, // Updated to v2 endpoint
+                resourceUri: `/v2/stages/${currentDealData.stage_id}`,
             });
 
             updatedDealProperties['stage'] = stageResponse.data;
@@ -357,51 +338,51 @@ export const updatedDeal = createTrigger({
     },
     sampleData: {
         id: 1,
-        creator_user_id: 8877, // No longer an object, just the ID
-        owner_id: 8877, // Renamed from user_id, no longer an object, just the ID
-        person_id: 1101, // No longer an object, just the ID
-        org_id: 5, // No longer an object, just the ID
+        creator_user_id: 8877,
+        owner_id: 8877,
+        person_id: 1101,
+        org_id: 5,
         stage_id: 2,
         title: 'Deal One',
         value: 5000,
         currency: 'EUR',
-        add_time: '2019-05-29T04:21:51Z', // RFC 3339 format
-        update_time: '2019-11-28T16:19:50Z', // RFC 3339 format
-        stage_change_time: '2019-11-28T15:41:22Z', // RFC 3339 format
-        is_deleted: false, // Replaces 'active' and 'deleted' flags, negation of old 'active'
+        add_time: '2019-05-29T04:21:51Z',
+        update_time: '2019-11-28T16:19:50Z',
+        stage_change_time: '2019-11-28T15:41:22Z',
+        is_deleted: false,
         status: 'open',
         probability: null,
-        next_activity_id: 128, // Included only when using `include_fields` parameter
-        last_activity_id: null, // Included only when using `include_fields` parameter
+        next_activity_id: 128,
+        last_activity_id: null,
         lost_reason: null,
-        visible_to: 1, // Is an integer now
-        close_time: null, // RFC 3339 format
+        visible_to: 1,
+        close_time: null,
         pipeline_id: 1,
-        won_time: '2019-11-27T11:40:36Z', // RFC 3339 format
-        first_won_time: '2019-11-27T11:40:36Z', // RFC 3339 format, included only when using `include_fields` parameter
-        lost_time: null, // RFC 3339 format
-        products_count: 0, // Included only when using `include_fields` parameter
-        files_count: 0, // Included only when using `include_fields` parameter
-        notes_count: 2, // Included only when using `include_fields` parameter
-        followers_count: 0, // Included only when using `include_fields` parameter
-        email_messages_count: 4, // Included only when using `include_fields` parameter
+        won_time: '2019-11-27T11:40:36Z',
+        first_won_time: '2019-11-27T11:40:36Z',
+        lost_time: null,
+        products_count: 0,
+        files_count: 0,
+        notes_count: 2,
+        followers_count: 0,
+        email_messages_count: 4,
         activities_count: 1,
         done_activities_count: 0,
         undone_activities_count: 1,
         participants_count: 1,
         expected_close_date: '2019-06-29',
-        last_incoming_mail_time: '2019-05-29T18:21:42Z', // RFC 3339 format
-        last_outgoing_mail_time: '2019-05-30T03:45:35Z', // RFC 3339 format
-        label_ids: [11], // Replaces 'label' (array of numbers)
+        last_incoming_mail_time: '2019-05-29T18:21:42Z',
+        last_outgoing_mail_time: '2019-05-30T03:45:35Z',
+        label_ids: [11],
         rotten_time: null,
-        smart_bcc_email: 'company+deal1@pipedrivemail.com', // Renamed from cc_email
-        custom_fields: { // Example of nested custom fields in v2
+        smart_bcc_email: 'company+deal1@pipedrivemail.com',
+        custom_fields: {
             "d4de1c1518b4531717c676029a45911c340390a6": {
                 "value": 2300,
                 "currency": "EUR"
             }
         },
-        stage: { // Nested stage object, reflecting v2 Stage Object
+        stage: {
             id: 2,
             order_nr: 1,
             name: 'Qualification',
@@ -417,12 +398,11 @@ export const updatedDeal = createTrigger({
 });
 
 interface WebhookInformation {
-    webhookId: string; // Webhook IDs are strings (UUIDs) in Pipedrive v2
+    webhookId: string;
 }
 
 type PayloadBody = {
-    current: Record<string, any>; // FIX: Changed to Record<string, any> for dynamic indexing
-    previous: Record<string, any>; // FIX: Changed to Record<string, any> for dynamic indexing
+    current: Record<string, any>;
+    previous: Record<string, any>;
     event: string;
-    // Other webhook payload fields
 };

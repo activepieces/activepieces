@@ -1,12 +1,12 @@
 import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { personCommonProps, personIdProp, customFieldsProp } from '../common/props'; // ✅ Import customFieldsProp
+import { personCommonProps, personIdProp, customFieldsProp } from '../common/props';
 import {
     pipedriveApiCall,
     pipedrivePaginatedApiCall,
     pipedriveTransformCustomFields,
 } from '../common';
-import { GetField, GetPersonResponse } from '../common/types'; // ✅ Changed to GetPersonResponse
+import { GetField, GetPersonResponse } from '../common/types'; 
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const updatePersonAction = createAction({
@@ -15,13 +15,13 @@ export const updatePersonAction = createAction({
     displayName: 'Update Person',
     description: 'Updates an existing person using Pipedrive API v2.',
     props: {
-        personId: personIdProp(true), // This prop should return the numeric person ID
+        personId: personIdProp(true), 
         name: Property.ShortText({
             displayName: 'Name',
             required: false,
         }),
-        ...personCommonProps, // Spreads common person properties
-        customfields: customFieldsProp('person'), // ✅ Add dynamic custom fields for persons
+        ...personCommonProps,
+        customfields: customFieldsProp('person'), 
     },
     async run(context) {
         const {
@@ -38,11 +38,11 @@ export const updatePersonAction = createAction({
         // In v2, phone and email are arrays of objects.
         const rawPhones = (context.propsValue.phone as string[]) ?? [];
         const rawEmails = (context.propsValue.email as string[]) ?? [];
-        const labelIds = (context.propsValue.labelIds as number[]) ?? []; // Label IDs for persons are numbers
+        const labelIds = (context.propsValue.labelIds as number[]) ?? []; 
 
         // Define standard properties that are NOT custom fields for persons
         const standardPropKeys = new Set([
-            'personId', // Add personId to standard keys
+            'personId',
             'name',
             'ownerId',
             'organizationId',
@@ -50,14 +50,14 @@ export const updatePersonAction = createAction({
             'visibleTo',
             'firstName',
             'lastName',
-            'phone', // Include phone as a standard prop
-            'email', // Include email as a standard prop
-            'labelIds', // Include labelIds as a standard prop
+            'phone', 
+            'email',
+            'labelIds', 
         ]);
 
         // Collect custom fields by filtering out standard properties from context.propsValue
         const customFields: Record<string, unknown> = {};
-        // ✅ Cast context.propsValue to a more general type to allow string indexing
+        
         const allProps = context.propsValue as Record<string, any>;
         for (const key in allProps) {
             if (Object.prototype.hasOwnProperty.call(allProps, key) && !standardPropKeys.has(key)) {
@@ -68,14 +68,14 @@ export const updatePersonAction = createAction({
         // Transform phone and email arrays to the v2 expected format: array of objects
         const phones = rawPhones.map((value, index) => ({
             value,
-            label: 'work', // Default label, can be enhanced with more specific properties if needed
-            primary: index === 0, // Mark the first one as primary
+            label: 'work', 
+            primary: index === 0, 
         }));
 
         const emails = rawEmails.map((value, index) => ({
             value,
-            label: 'work', // Default label, can be enhanced with more specific properties if needed
-            primary: index === 0, // Mark the first one as primary
+            label: 'work', 
+            primary: index === 0, 
         }));
 
         const personPayload: Record<string, any> = {
@@ -105,7 +105,7 @@ export const updatePersonAction = createAction({
             personPayload.custom_fields = customFields;
         }
 
-        // ✅ Use PATCH method for updates and specify v2 endpoint, expecting GetPersonResponse
+       
         const updatedPersonResponse = await pipedriveApiCall<GetPersonResponse>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
@@ -114,7 +114,7 @@ export const updatePersonAction = createAction({
             body: personPayload,
         });
 
-        // ✅ Fetch custom field definitions from v2
+        
         const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
