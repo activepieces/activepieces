@@ -5,6 +5,9 @@ import { createOrder } from './lib/actions/create-order';
 import { createPaymentLink } from './lib/actions/create-payment-link';
 import { createPaymentRefund } from './lib/actions/create-payment-refund';
 import { createPayment } from './lib/actions/create-payment';
+import { searchCustomer } from './lib/actions/search-customer';
+import { searchPayment } from './lib/actions/search-payment';
+import { newCustomer } from './lib/triggers/new-customer';
 
 export const mollie = createPiece({
   displayName: 'Mollie',
@@ -18,6 +21,8 @@ export const mollie = createPiece({
     createPaymentLink,
     createPaymentRefund,
     createPayment,
+    searchCustomer,
+    searchPayment,
   ],
-  triggers: [],
+  triggers: [newCustomer],
 });
