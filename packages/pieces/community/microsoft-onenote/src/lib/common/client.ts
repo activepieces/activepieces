@@ -29,7 +29,8 @@ export class MicrosoftOneNoteClient {
     };
     const res = await httpClient.sendRequest(request);
     if (res.status !== 200) {
-      throw new Error(`Failed to list notebooks: ${res.status}`);
+      const errorMessage = res.body?.error?.message || res.body?.message || `HTTP ${res.status}`;
+      throw new Error(`Failed to list notebooks: ${errorMessage}`);
     }
     return res.body;
   }
@@ -46,7 +47,8 @@ export class MicrosoftOneNoteClient {
     };
     const res = await httpClient.sendRequest(httpRequest);
     if (res.status !== 201) {
-      throw new Error(`Failed to create notebook: ${res.status}`);
+      const errorMessage = res.body?.error?.message || res.body?.message || `HTTP ${res.status}`;
+      throw new Error(`Failed to create notebook: ${errorMessage}`);
     }
     return res.body;
   }
@@ -65,7 +67,8 @@ export class MicrosoftOneNoteClient {
     };
     const res = await httpClient.sendRequest(request);
     if (res.status !== 200) {
-      throw new Error(`Failed to list sections: ${res.status}`);
+      const errorMessage = res.body?.error?.message || res.body?.message || `HTTP ${res.status}`;
+      throw new Error(`Failed to list sections: ${errorMessage}`);
     }
     return res.body;
   }
@@ -85,7 +88,8 @@ export class MicrosoftOneNoteClient {
     };
     const res = await httpClient.sendRequest(httpRequest);
     if (res.status !== 201) {
-      throw new Error(`Failed to create section: ${res.status}`);
+      const errorMessage = res.body?.error?.message || res.body?.message || `HTTP ${res.status}`;
+      throw new Error(`Failed to create section: ${errorMessage}`);
     }
     return res.body;
   }
@@ -101,7 +105,8 @@ export class MicrosoftOneNoteClient {
     };
     const res = await httpClient.sendRequest(request);
     if (res.status !== 200) {
-      throw new Error(`Failed to list pages: ${res.status}`);
+      const errorMessage = res.body?.error?.message || res.body?.message || `HTTP ${res.status}`;
+      throw new Error(`Failed to list pages: ${errorMessage}`);
     }
     return res.body;
   }
@@ -126,7 +131,8 @@ export class MicrosoftOneNoteClient {
 
     const res = await httpClient.sendRequest(httpRequest);
     if (res.status !== 201) {
-      throw new Error(`Failed to create page: ${res.status}`);
+      const errorMessage = res.body?.error?.message || res.body?.message || `HTTP ${res.status}`;
+      throw new Error(`Failed to create page: ${errorMessage}`);
     }
     return res.body;
   }
@@ -150,7 +156,8 @@ export class MicrosoftOneNoteClient {
 
     const res = await httpClient.sendRequest(httpRequest);
     if (res.status !== 201) {
-      throw new Error(`Failed to create image page: ${res.status}`);
+      const errorMessage = res.body?.error?.message || res.body?.message || `HTTP ${res.status}`;
+      throw new Error(`Failed to create image page: ${errorMessage}`);
     }
     return res.body;
   }
@@ -166,7 +173,25 @@ export class MicrosoftOneNoteClient {
     };
     const res = await httpClient.sendRequest(request);
     if (res.status !== 200) {
-      throw new Error(`Failed to get page: ${res.status}`);
+      const errorMessage = res.body?.error?.message || res.body?.message || `HTTP ${res.status}`;
+      throw new Error(`Failed to get page: ${errorMessage}`);
+    }
+    return res.body;
+  }
+
+  async getPageContent(pageId: string): Promise<string> {
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `https://graph.microsoft.com/v1.0/me/onenote/pages/${pageId}/content`,
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        'Accept': 'text/html',
+      },
+    };
+    const res = await httpClient.sendRequest(request);
+    if (res.status !== 200) {
+      const errorMessage = res.body?.error?.message || res.body?.message || `HTTP ${res.status}`;
+      throw new Error(`Failed to get page content: ${errorMessage}`);
     }
     return res.body;
   }
@@ -189,7 +214,8 @@ export class MicrosoftOneNoteClient {
 
     const res = await httpClient.sendRequest(httpRequest);
     if (res.status !== 200) {
-      throw new Error(`Failed to update page: ${res.status}`);
+      const errorMessage = res.body?.error?.message || res.body?.message || `HTTP ${res.status}`;
+      throw new Error(`Failed to update page: ${errorMessage}`);
     }
     return res.body;
   }

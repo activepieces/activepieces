@@ -25,8 +25,7 @@ export const appendNoteAction = createAction({
     const client = new MicrosoftOneNoteClient(context.auth.access_token);
     
     // Get the existing page content first
-    const existingPage = await client.getPage(pageId);
-    const existingContent = existingPage.content || '';
+    const existingContent = await client.getPageContent(pageId);
     
     // Combine existing content with new content
     const updatedContent = existingContent + content;
