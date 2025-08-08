@@ -7,6 +7,8 @@ import {
   MousePointer,
   Plus,
   RotateCw,
+  Undo2,
+  Redo2,
 } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
@@ -18,7 +20,10 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-import { useBuilderStateContext } from '../builder-hooks';
+import {
+  useBuilderStateContext,
+  useTemporalBuilderStateContext,
+} from '../builder-hooks';
 
 import { flowUtilConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
@@ -102,6 +107,12 @@ const CanvasControls = ({
     getNode,
     getViewport,
   } = useReactFlow();
+
+  const [undo, redo] = useTemporalBuilderStateContext((state) => [
+    state.undo,
+    state.redo,
+  ]);
+
   const handleZoomIn = useCallback(() => {
     zoomIn({
       duration,
@@ -278,6 +289,31 @@ const CanvasControls = ({
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">{t('Fit to View')}</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => undo()}
+            >
+              <Undo2 className="w-5 h-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{t('Undo')} ⌘Z</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => redo()}
+            >
+              <Redo2 className="w-5 h-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{t('Redo')} ⌘Y</TooltipContent>
         </Tooltip>
       </div>
     </>

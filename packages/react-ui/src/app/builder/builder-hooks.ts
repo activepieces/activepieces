@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { usePrevious } from 'react-use';
 import { create, useStore } from 'zustand';
+import { temporal, TemporalState } from 'zundo';
 
 import { Messages } from '@/components/ui/chat/chat-message-list';
 import { flowsApi } from '@/features/flows/lib/flows-api';
@@ -30,6 +31,7 @@ import {
   apId,
   StepSettings,
   FlowTriggerType,
+  Step,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -66,6 +68,16 @@ export function useBuilderStateContext<T>(
   if (!store)
     throw new Error('Missing BuilderStateContext.Provider in the tree');
   return useStore(store, selector);
+}
+
+export function useTemporalBuilderStateContext<T>(
+  selector: (state: TemporalState<Pick<BuilderState, "flowVersion">>) => T,
+  equality?: (a: T, b: T) => boolean
+): T {
+  const store = useContext(BuilderStateContext);
+  if (!store)
+    throw new Error('Missing BuilderStateContext.Provider in the tree');
+  return useStore(store.temporal, selector, equality);
 }
 
 export enum LeftSideBarType {
@@ -195,8 +207,8 @@ export type BuilderInitialState = Pick<
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
 
-export const createBuilderStore = (initialState: BuilderInitialState) =>
-  create<BuilderState>((set, get) => {
+export const createBuilderStore = (initialState: BuilderInitialState) =>create(temporal<BuilderState, [], [], Pick<BuilderState, 'flowVersion'>>(
+  (set, get) => {
     const failedStepNameInRun = initialState.run?.steps
       ? flowRunUtils.findLastStepWithStatus(
           initialState.run.status,
@@ -704,7 +716,30 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         }));
       },
     };
-  });
+  },
+  {
+    limit: 50,
+    partialize: (s) => ({ flowVersion: structuredClone(s.flowVersion) }),
+    equality: (past, curr) => {
+      const pastSteps = steps(past.flowVersion); 
+      const currentSteps = steps(curr.flowVersion);
+      console.log("pastSteps, currentSteps",pastSteps, currentSteps)
+      if (pastSteps.size !== currentSteps.size) return false;
+      for (const k of pastSteps) if (!currentSteps.has(k)) return false;
+      return true; 
+    },
+  }
+));
+
+const steps = (flowVersion: FlowVersion): Set<string> => {
+  const linear = [
+    flowVersion.trigger,
+    ...flowStructureUtil.getAllSteps(flowVersion.trigger),
+  ];
+  return new Set(
+    linear.map((s: Step) => (s.name) as string)
+  );
+};
 
 export function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
   return localStorage.getItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE) ===
