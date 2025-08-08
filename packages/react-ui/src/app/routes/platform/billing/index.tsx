@@ -46,9 +46,11 @@ export default function Billing() {
     status as ApSubscriptionStatus,
   );
   const isBusinessPlan = platformPlanInfo?.plan.plan === PlanName.BUSINESS;
-  const isFree = platformPlanInfo?.plan.plan === PlanName.FREE;
+  const isPlus = platformPlanInfo?.plan.plan === PlanName.PLUS;
+  const isTrial = status === ApSubscriptionStatus.TRIALING;
   const isEnterprise =
     !isNil(platformPlanInfo?.plan.licenseKey) ||
+    platformPlanInfo?.plan.plan === PlanName.ENTERPRISE ||
     edition === ApEdition.ENTERPRISE;
 
   if (isPlatformSubscriptionLoading || isNil(platformPlanInfo)) {
@@ -105,7 +107,10 @@ export default function Billing() {
 
         <UsageCards platformSubscription={platformPlanInfo} />
 
-        {!isFree && <ActiveFlowAddon platformSubscription={platformPlanInfo} />}
+        {isBusinessPlan ||
+          (isPlus && !isTrial && (
+            <ActiveFlowAddon platformSubscription={platformPlanInfo} />
+          ))}
 
         {isBusinessPlan && (
           <div className="grid grid-cols-2 gap-6">
@@ -148,7 +153,6 @@ export default function Billing() {
                 </div>
               </div>
             </CardHeader>
-
             <CardContent className="space-y-6 p-6">
               <FeatureStatus platform={platform} />
             </CardContent>

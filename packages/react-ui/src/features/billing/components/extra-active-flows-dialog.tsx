@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 import {
-  getPlanLimits,
   PlanName,
   PRICE_PER_EXTRA_5_ACTIVE_FLOWS,
 } from '@activepieces/ee-shared';
@@ -22,6 +21,10 @@ import { billingMutations } from '../lib/billing-hooks';
 
 const MAX_ACTIVE_FLOWS_PLUS = 40;
 const MAX_ACTIVE_FLOWS_BUSINESS = 100;
+const DEFAULT_ACTIVE_FLOWS_MAP = {
+  [PlanName.BUSINESS]: 50,
+  [PlanName.PLUS]: 10,
+};
 
 type ExtraActiveFlowsDialogProps = {
   open: boolean;
@@ -47,7 +50,7 @@ export const ExtraActiveFlowsDialog = ({
   const { plan } = platformSubscription;
 
   const DEFAULT_ACTIVE_FLOWS =
-    getPlanLimits(plan.plan as PlanName).activeFlowsLimit ?? 0;
+    DEFAULT_ACTIVE_FLOWS_MAP[plan.plan as PlanName.PLUS | PlanName.BUSINESS];
   const currentActiveFlowLimit = plan.activeFlowsLimit ?? DEFAULT_ACTIVE_FLOWS;
   const [selectedActiveFlows, setSelectedActiveFlows] = useState([
     currentActiveFlowLimit,
