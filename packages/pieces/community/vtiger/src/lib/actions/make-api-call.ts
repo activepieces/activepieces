@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { vtigerAuth } from '../..';
 import { instanceLogin } from '../common';
 import {
+  AuthenticationType,
   HttpMessageBody,
   HttpMethod,
   HttpRequest,
@@ -28,6 +29,11 @@ export const makeAPICall = createAction({
         ],
       },
     }),
+    urlPath: Property.ShortText({
+      displayName: 'URL',
+      description: 'API endpoint\'s URL path (example: /me, /listtypes, /describe)',
+      required: false,
+    }),
     headers: Property.Json({
       displayName: 'Headers',
       description: `Enter the desired request headers. Skip the authorization headers`,
@@ -42,17 +48,13 @@ export const makeAPICall = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const vtigerInstance = await instanceLogin(
-      auth.instance_url,
-      auth.username,
-      auth.password
-    );
-    if (vtigerInstance === null) return;
+    const urlPath = propsValue.urlPath;
 
-    const data: Record<string, string> = {
-      sessionName: vtigerInstance.sessionId ?? vtigerInstance.sessionName,
-      ...(propsValue.data ?? {}),
-    };
+    if(urlPath && !urlPath.startsWith('/')){
+      return {
+        error: 'URL path must start with a slash, example: /me, /listtypes, /describe',
+      };
+    }
 
     const httpRequest: HttpRequest<HttpMessageBody> = {
       url: `${auth.instance_url}/webservice.php`,
@@ -62,6 +64,33 @@ export const makeAPICall = createAction({
         ...(propsValue.headers ?? {}),
       },
     };
+
+    let data: Record<string, unknown> = {};
+
+    if(urlPath){
+      httpRequest.url = `${auth.instance_url}/restapi/v1/vtiger/default${urlPath}`;
+      data = propsValue.data;
+
+      httpRequest.authentication = {
+        type: AuthenticationType.BASIC,
+        username: auth.username,
+        password: auth.password,
+      };
+    }
+    else {
+      const vtigerInstance = await instanceLogin(
+        auth.instance_url,
+        auth.username,
+        auth.password
+      );
+      if (vtigerInstance === null) return;
+
+      data = {
+        sessionName: vtigerInstance.sessionId ?? vtigerInstance.sessionName,
+        ...(propsValue.data ?? {}),
+      };
+    }
+
     httpRequest[propsValue.method === HttpMethod.GET ? 'queryParams' : 'body'] =
       data;
 
