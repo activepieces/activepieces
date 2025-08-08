@@ -52,45 +52,46 @@ const TutorialsDialog = ({
   const { data: showTutorials } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_TUTORIALS,
   );
-  const tabs = {
+  const tabs: Record<
+    TabType,
+    { icon: React.ReactNode; name: string; description: string; link: string }
+  > = {
     gettingStarted: {
       icon: <Star className="size-4"></Star>,
-      name: t('Getting Started'),
+      name: t('Intro'),
       description: t('Get started with Activepieces'),
-      link: `https://www.youtube.com/embed/cUbkaBFvHLE?si=t9ZEpk4-rt-OdY5t`,
-    },
-    agents: {
-      icon: <Bot className="size-4"></Bot>,
-      name: t('Agents'),
-      description: t('Add a touch of AI to your workflows'),
-      link: `https://www.youtube.com/embed/SjjCgT5gERc?si=UV1YCH5TmTgxnEyO`,
+      link: `https://www.youtube.com/embed/b97bgcOigIs?si=Zlly9_WkP1oOnJ-K`,
     },
     flows: {
       icon: <Workflow className="size-4"></Workflow>,
       name: t('Flows'),
       description: t('Automate repetitive tasks to save your time'),
-      link: `https://www.youtube.com/embed/DKMytbveZek?si=MqvSCYv6ItRvgxHj`,
+      link: `https://www.youtube.com/embed/BWKrqmdNlzY?si=fjKiHx9GJe9eN2_x`,
+    },
+    agents: {
+      icon: <Bot className="size-4"></Bot>,
+      name: t('Agents'),
+      description: t('Add a touch of AI to your workflows'),
+      link: `https://www.youtube.com/embed/9qhhhfKmpoo?si=Ik8FmAmrWxDOggJP`,
     },
     tables: {
       icon: <Table2 className="size-4"></Table2>,
       name: t('Tables'),
       description: t('Store and automate your data'),
-      link: `https://www.youtube.com/embed/8AWuPITw_Dc?si=AmX8922qbayFetIM`,
+      link: `https://www.youtube.com/embed/vj8aGGee6E0?si=6gvulHNgk1rWVWHX"`,
     },
     mcpServers: {
-      icon: (
-        <McpSvg className="size-4" isActive={selectedTab === 'mcpServers'} />
-      ),
-      name: t('MCP Servers'),
+      icon: <McpSvg className="size-4" />,
+      name: t('MCPs'),
       description: t('Connect AI tools to external apps'),
-      link: `https://www.youtube.com/embed/VgcWvsEgLHg?si=knwXBqONhp4fZ1Iu`,
+      link: `https://www.youtube.com/embed/q1UdLIBZ3Ps?si=Ey8N8oNX9ihJen76`,
     },
 
     todos: {
       icon: <ListTodo className="size-4"></ListTodo>,
       name: t('Todos'),
       description: t('Manage tasks that require human approval'),
-      link: `https://www.youtube.com/embed/BYCb_YzkoF8?si=1XU0SBI4t368MFLe`,
+      link: `https://www.youtube.com/embed/csKkXa71eoo?si=EMpJGMsVqzzrF__8`,
     },
   } as const;
 
@@ -159,7 +160,7 @@ const TutorialsDialog = ({
                   <TabsTrigger
                     key={key}
                     value={key}
-                    className={`flex gap-2 rounded-none bg-background h-full w-[150px] 
+                    className={`flex gap-2 rounded-none bg-background h-full w-[120px] 
                             data-[state=active]:text-accent-foreground data-[state=active]:shadow-none
                             border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:active  data-[state=active]:text-primary flex items-center justify-center p-2 [&>svg]:size-5  [&>svg]:shrink-0`}
                   >
@@ -172,13 +173,14 @@ const TutorialsDialog = ({
 
             <Separator className="mb-4"></Separator>
 
-            <div className="rounded-2xl overflow-hidden shadow-xl grow p-2 flex">
+            <div className="overflow-hidden shadow-xl grow p-2 flex bg-black">
               <iframe
-                src={tabs[selectedTab].link}
+                key={selectedTab}
+                src={`${tabs[selectedTab].link}&autoplay=1&rel=0`}
                 title={tabs[selectedTab].name}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
-                className="grow rounded-2xl"
+                className="grow  w-full h-full"
               ></iframe>
             </div>
           </div>

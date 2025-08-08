@@ -71,7 +71,7 @@ export const askOpenAI = createAction({
       required: false,
       description:
         'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
-      defaultValue: 0.9,
+      defaultValue: 1,
     }),
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',
@@ -99,7 +99,6 @@ export const askOpenAI = createAction({
       required: false,
       description:
         "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the mode's likelihood to talk about new topics.",
-      defaultValue: 0.6,
     }),
     memoryKey: Property.ShortText({
       displayName: 'Memory Key',
@@ -170,7 +169,7 @@ export const askOpenAI = createAction({
       temperature: temperature,
       top_p: topP,
       frequency_penalty: frequencyPenalty,
-      presence_penalty: presencePenalty,
+      presence_penalty: presencePenalty ?? undefined,
       max_completion_tokens: maxTokens,
     });
 
