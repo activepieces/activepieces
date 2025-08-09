@@ -1,0 +1,19 @@
+{
+  "name": "bigin-by-zoho",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/bigin-by-zoho/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/bigin-by-zoho",
+        "main": "packages/pieces/community/bigin-by-zoho/src/index.ts",
+        "tsConfig": "packages/pieces/community/bigin-by-zoho/tsconfig.lib.json",
+        "assets": ["packages/pieces/community/bigin-by-zoho/*.md"]
+      }
+    }
+  },
+  "tags": []
+}

@@ -132,6 +132,9 @@
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
+      "@activepieces/piece-bigin-by-zoho": [
+        "packages/pieces/community/bigin-by-zoho/src/index.ts"
+      ],
       "@activepieces/piece-binance": [
         "packages/pieces/community/binance/src/index.ts"
       ],
