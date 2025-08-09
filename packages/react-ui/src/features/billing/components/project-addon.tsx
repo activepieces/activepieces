@@ -11,6 +11,10 @@ import {
   Tooltip,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  BillingCycle,
+  PRICE_PER_EXTRA_PROJECT_MAP,
+} from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
 
 import { ExtraProjectsDialog } from './extra-projects-dialog';
@@ -21,6 +25,10 @@ type BusinessProjectsProps = {
 
 export function ProjectAddon({ platformSubscription }: BusinessProjectsProps) {
   const [addProjectsOpen, setAddProjectsOpen] = useState(false);
+  const PRICE_PER_EXTRA_PROJECT =
+    PRICE_PER_EXTRA_PROJECT_MAP[
+      platformSubscription.plan.stripeBillingCycle as BillingCycle
+    ];
   const { plan, usage } = platformSubscription;
   const currentProjects = usage.projects || 0;
   const projectsLimit = plan.projectsLimit ?? 1;
@@ -63,7 +71,9 @@ export function ProjectAddon({ platformSubscription }: BusinessProjectsProps) {
                     <CircleHelp className="w-4 h-4 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    {t('Count of projects $10 for extra 1 project')}
+                    {t(
+                      `Count of projects $${PRICE_PER_EXTRA_PROJECT} for extra 1 project`,
+                    )}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
