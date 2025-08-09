@@ -6,6 +6,24 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { newTicketInView } from './lib/trigger/new-ticket-in-view';
+import { newTicket } from './lib/trigger/new-ticket';
+import { updatedTicket } from './lib/trigger/updated-ticket';
+import { tagAddedToTicket } from './lib/trigger/tag-added-to-ticket';
+import { newOrganization } from './lib/trigger/new-organization';
+import { newUser } from './lib/trigger/new-user';
+import { newSuspendedTicket } from './lib/trigger/new-suspended-ticket';
+import { newActionOnTicket } from './lib/trigger/new-action-on-ticket';
+import { createTicket } from './lib/action/create-ticket';
+import { updateTicket } from './lib/action/update-ticket';
+import { addTagToTicket } from './lib/action/add-tag-to-ticket';
+import { addCommentToTicket } from './lib/action/add-comment-to-ticket';
+import { createOrganization } from './lib/action/create-organization';
+import { updateOrganization } from './lib/action/update-organization';
+import { createUser } from './lib/action/create-user';
+import { deleteUser } from './lib/action/delete-user';
+import { findTickets } from './lib/action/find-tickets';
+import { findOrganization } from './lib/action/find-organization';
+import { findUser } from './lib/action/find-user';
 
 const markdownProperty = `
 **Organization**: The organization name can be found in the URL (e.g https://ORGANIZATION_NAME.zendesk.com).
@@ -47,6 +65,17 @@ export const zendesk = createPiece({
   categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: zendeskAuth,
   actions: [
+    createTicket,
+    updateTicket,
+    addTagToTicket,
+    addCommentToTicket,
+    createOrganization,
+    updateOrganization,
+    createUser,
+    deleteUser,
+    findTickets,
+    findOrganization,
+    findUser,
     createCustomApiCallAction({
       baseUrl: (auth) =>
         `https://${
@@ -62,5 +91,14 @@ export const zendesk = createPiece({
       }),
     }),
   ],
-  triggers: [newTicketInView],
+  triggers: [
+    newTicketInView,
+    newTicket,
+    updatedTicket,
+    tagAddedToTicket,
+    newOrganization,
+    newUser,
+    newSuspendedTicket,
+    newActionOnTicket,
+  ],
 });

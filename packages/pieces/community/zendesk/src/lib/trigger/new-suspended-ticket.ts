@@ -1,7 +1,6 @@
 import {
   TriggerStrategy,
   createTrigger,
-  Property,
 } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
@@ -13,63 +12,16 @@ import {
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
 
-export const newTicketInView = createTrigger({
+export const newSuspendedTicket = createTrigger({
   auth: zendeskAuth,
-  name: 'new_ticket_in_view',
-  displayName: 'New ticket in view',
-  description: 'Triggers when a new ticket is created in a view',
+  name: 'new_suspended_ticket',
+  displayName: 'New Suspended Ticket',
+  description: 'Triggers when a ticket is suspended. Suspended tickets auto-delete after 14 days.',
   type: TriggerStrategy.POLLING,
-  props: {
-    view_id: Property.Dropdown({
-      displayName: 'View',
-      description: 'The view to monitor for new tickets',
-      refreshers: [],
-      required: true,
-      options: async ({ auth }) => {
-        const authentication = auth as AuthProps;
-        if (
-          !authentication?.['email'] ||
-          !authentication?.['subdomain'] ||
-          !authentication?.['token']
-        ) {
-          return {
-            placeholder: 'Fill your authentication first',
-            disabled: true,
-            options: [],
-          };
-        }
-        try {
-          const response = await httpClient.sendRequest<{ views: Array<{ id: number; title: string }> }>({
-            url: `https://${authentication.subdomain}.zendesk.com/api/v2/views.json`,
-            method: HttpMethod.GET,
-            authentication: {
-              type: AuthenticationType.BASIC,
-              username: authentication.email + '/token',
-              password: authentication.token,
-            },
-            timeout: 30000, // 30 seconds timeout
-            retries: 3, // Retry up to 3 times on failure
-          });
-          return {
-            placeholder: 'Select a view',
-            options: response.body.views.map((view) => ({
-              label: view.title,
-              value: view.id,
-            })),
-          };
-        } catch (error) {
-          return {
-            placeholder: 'Error loading views',
-            disabled: true,
-            options: [],
-          };
-        }
-      },
-    }),
-  },
+  props: {},
   sampleData: {
-    url: 'https://activepieceshelp.zendesk.com/api/v2/tickets/5.json',
-    id: 5,
+    id: 123456789,
+    url: 'https://activepieceshelp.zendesk.com/api/v2/suspended_tickets/123456789.json',
     external_id: null,
     via: {
       channel: 'web',
@@ -82,15 +34,15 @@ export const newTicketInView = createTrigger({
     created_at: '2023-03-25T02:39:41Z',
     updated_at: '2023-03-25T02:39:41Z',
     type: null,
-    subject: 'Subject',
-    raw_subject: 'Raw Subject',
-    description: 'Description',
+    subject: 'Suspended Ticket Subject',
+    raw_subject: 'Suspended Ticket Subject',
+    description: 'This ticket was suspended due to spam',
     priority: null,
-    status: 'open',
+    status: 'suspended',
     recipient: null,
     requester_id: 8193592318236,
     submitter_id: 8193592318236,
-    assignee_id: 8193592318236,
+    assignee_id: null,
     organization_id: 8193599387420,
     group_id: 8193569448092,
     collaborator_ids: [],
@@ -113,6 +65,7 @@ export const newTicketInView = createTrigger({
     allow_channelback: false,
     allow_attachments: true,
     from_messaging_channel: false,
+    cause: 'spam',
   },
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {
@@ -152,10 +105,10 @@ type AuthProps = {
   subdomain: string;
 };
 
-const polling: Polling<AuthProps, { view_id: number }> = {
+const polling: Polling<AuthProps, Record<string, never>> = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, propsValue }) => {
-    const items = await getTickets(auth, propsValue.view_id);
+  items: async ({ auth }) => {
+    const items = await getSuspendedTickets(auth);
     return items.map((item) => ({
       id: item.id,
       data: item,
@@ -163,10 +116,10 @@ const polling: Polling<AuthProps, { view_id: number }> = {
   },
 };
 
-async function getTickets(authentication: AuthProps, view_id: number) {
+async function getSuspendedTickets(authentication: AuthProps) {
   const { email, token, subdomain } = authentication;
-  const response = await httpClient.sendRequest<{ tickets: Array<{ id: number; [key: string]: unknown }> }>({
-    url: `https://${subdomain}.zendesk.com/api/v2/views/${view_id}/tickets.json?sort_order=desc&sort_by=created_at&per_page=200`,
+  const response = await httpClient.sendRequest<{ suspended_tickets: Array<{ id: number; [key: string]: unknown }> }>({
+    url: `https://${subdomain}.zendesk.com/api/v2/suspended_tickets.json?sort_order=desc&sort_by=created_at&per_page=50`,
     method: HttpMethod.GET,
     authentication: {
       type: AuthenticationType.BASIC,
@@ -176,5 +129,5 @@ async function getTickets(authentication: AuthProps, view_id: number) {
     timeout: 30000, // 30 seconds timeout
     retries: 3, // Retry up to 3 times on failure
   });
-  return response.body.tickets;
-}
+  return response.body.suspended_tickets;
+} 
