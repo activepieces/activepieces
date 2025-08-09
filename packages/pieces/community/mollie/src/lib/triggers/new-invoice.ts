@@ -81,15 +81,15 @@ export const newInvoice = createTrigger({
           `/webhooks/${webhookId}`
         );
       } catch (error) {
-        // Webhook might already be deleted, ignore error
+          
         console.warn('Failed to delete webhook:', error);
+
       }
     }
   },
   async run(context) {
     const payload = context.payload.body as { resource?: string };
 
-    // Verify this is an invoice.created event
     if (payload && payload.resource === 'invoice') {
       return [payload];
     }
