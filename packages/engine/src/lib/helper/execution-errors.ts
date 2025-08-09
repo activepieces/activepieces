@@ -1,4 +1,4 @@
-import { STORE_KEY_MAX_LENGTH } from '@activepieces/shared'
+import { ENGINE_ERROR_NAMES, STORE_KEY_MAX_LENGTH } from '@activepieces/shared'
 
 export enum ExecutionErrorType {
     ENGINE = 'ENGINE',
@@ -23,19 +23,19 @@ function formatMessage(message: string) {
 
 export class ConnectionNotFoundError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
-        super('ConnectionNotFound', formatMessage(`connection (${connectionName}) not found`), ExecutionErrorType.USER, cause)
+        super(ENGINE_ERROR_NAMES.CONNECTION_NOT_FOUND, formatMessage(`connection (${connectionName}) not found`), ExecutionErrorType.USER, cause)
     }
 }
 
 export class ConnectionLoadingError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
-        super('ConnectionLoadingFailure', formatMessage(`Failed to load connection (${connectionName})`), ExecutionErrorType.ENGINE, cause)
+        super(ENGINE_ERROR_NAMES.CONNECTION_LOADING_FAILURE, formatMessage(`Failed to load connection (${connectionName})`), ExecutionErrorType.ENGINE, cause)
     }
 }
 
 export class ConnectionExpiredError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
-        super('ConnectionExpired', formatMessage(`connection (${connectionName}) expired, reconnect again`), ExecutionErrorType.USER, cause)
+        super(ENGINE_ERROR_NAMES.CONNECTION_EXPIRED, formatMessage(`connection (${connectionName}) expired, reconnect again`), ExecutionErrorType.USER, cause)
     }
 }
 
