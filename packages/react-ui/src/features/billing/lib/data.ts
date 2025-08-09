@@ -19,7 +19,7 @@ export const planData = {
       featuresTitle: t('Everything in Free, and'),
       price: {
         [BillingCycle.MONTHLY]: 25,
-        [BillingCycle.ANNUAL]: 228,
+        [BillingCycle.ANNUAL]: 19,
       },
     },
     {
@@ -28,7 +28,7 @@ export const planData = {
       featuresTitle: t('Everything in Plus, and'),
       price: {
         [BillingCycle.MONTHLY]: 150,
-        [BillingCycle.ANNUAL]: 1368,
+        [BillingCycle.ANNUAL]: 114,
       },
     },
     {

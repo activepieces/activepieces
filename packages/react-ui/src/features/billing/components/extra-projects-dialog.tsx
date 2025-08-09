@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -14,7 +15,7 @@ import { Slider } from '@/components/ui/slider';
 import {
   BillingCycle,
   PlanName,
-  PRICE_PER_EXTRA_PROJECT,
+  PRICE_PER_EXTRA_PROJECT_MAP,
 } from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
 
@@ -36,6 +37,8 @@ export const ExtraProjectsDialog = ({
 }: ExtraProjectsDialogProps) => {
   const { plan } = platformSubscription;
 
+  const PRICE_PER_EXTRA_PROJECT =
+    PRICE_PER_EXTRA_PROJECT_MAP[plan.stripeBillingCycle as BillingCycle];
   const currentProjectLimit = plan.projectsLimit ?? DEFAULT_PROJECTS;
   const [selectedProjects, setSelectedProjects] = useState([
     currentProjectLimit,
@@ -43,7 +46,9 @@ export const ExtraProjectsDialog = ({
 
   const newProjectCount = selectedProjects[0];
   const projectDifference = newProjectCount - currentProjectLimit;
-  const costDifference = projectDifference * PRICE_PER_EXTRA_PROJECT;
+  const costDifference = Number(
+    (projectDifference * PRICE_PER_EXTRA_PROJECT).toFixed(2),
+  );
 
   const { mutate: updateProjects, isPending } =
     billingMutations.useUpdateSubscription(() => onOpenChange(false));
@@ -81,12 +86,12 @@ export const ExtraProjectsDialog = ({
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{DEFAULT_PROJECTS} projects (minimum)</span>
-                <span>{MAX_PROJECTS} projects (maximum)</span>
+                <span>{DEFAULT_PROJECTS} projects (min)</span>
+                <span>{MAX_PROJECTS} projects (max)</span>
               </div>
             </div>
             <div className="text-xs text-muted-foreground">
-              Current projects: {currentProjectLimit}
+              {t('Current projects: ')} {currentProjectLimit}
             </div>
           </div>
           <div className="bg-muted/50 rounded-lg p-4">
@@ -112,13 +117,6 @@ export const ExtraProjectsDialog = ({
               </div>
             </div>
           </div>
-
-          {projectDifference < 0 && (
-            <div className="text-xs text-muted-foreground">
-              You will be charged a prorated amount for the remaining days of
-              the month.
-            </div>
-          )}
         </div>
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>

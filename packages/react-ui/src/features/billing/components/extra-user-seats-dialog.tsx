@@ -14,7 +14,7 @@ import { Slider } from '@/components/ui/slider';
 import {
   BillingCycle,
   PlanName,
-  PRICE_PER_EXTRA_USER,
+  PRICE_PER_EXTRA_USER_MAP,
 } from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
 
@@ -36,6 +36,8 @@ export const ExtraSeatsDialog = ({
 }: ExtraSeatsDialogProps) => {
   const { plan } = platformSubscription;
 
+  const PRICE_PER_EXTRA_USER =
+    PRICE_PER_EXTRA_USER_MAP[plan.stripeBillingCycle as BillingCycle];
   const currentUserLimit = plan.userSeatsLimit ?? DEFAULT_SEATS;
   const [selectedSeats, setSelectedSeats] = useState([currentUserLimit]);
 
@@ -80,8 +82,8 @@ export const ExtraSeatsDialog = ({
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{DEFAULT_SEATS} seats (minimum)</span>
-                <span>{MAX_SEATS} seats (maximum)</span>
+                <span>{DEFAULT_SEATS} seats (min)</span>
+                <span>{MAX_SEATS} seats (max)</span>
               </div>
             </div>
             <div className="text-xs text-muted-foreground">
@@ -111,13 +113,6 @@ export const ExtraSeatsDialog = ({
               </div>
             </div>
           </div>
-
-          {seatDifference < 0 && (
-            <div className="text-xs text-muted-foreground">
-              You will be charged a prorated amount for the remaining days of
-              the month.
-            </div>
-          )}
         </div>
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>

@@ -11,6 +11,10 @@ import {
   Tooltip,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  BillingCycle,
+  PRICE_PER_EXTRA_5_ACTIVE_FLOWS_MAP,
+} from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
 
 import { ExtraActiveFlowsDialog } from './extra-active-flows-dialog';
@@ -22,6 +26,10 @@ type BusinessActiveFlowsProps = {
 export function ActiveFlowAddon({
   platformSubscription,
 }: BusinessActiveFlowsProps) {
+  const PRICE_PER_EXTRA_5_ACTIVE_FLOWS =
+    PRICE_PER_EXTRA_5_ACTIVE_FLOWS_MAP[
+      platformSubscription.plan.stripeBillingCycle as BillingCycle
+    ];
   const [addActiveFlowsOpen, setAddActiveFlowsOpen] = useState(false);
   const { plan, usage } = platformSubscription;
   const currentActiveFlows = usage.activeFlows || 0;
@@ -48,7 +56,7 @@ export function ActiveFlowAddon({
               <div>
                 <h3 className="text-lg font-semibold">{t('Active Flows')}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Monitor your active flows usage
+                  {t('Monitor your active flows usage')}
                 </p>
               </div>
             </div>
@@ -69,7 +77,9 @@ export function ActiveFlowAddon({
                     <CircleHelp className="w-4 h-4 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    {t('Count of active flows $5 for extra 1 active flow')}
+                    {t(
+                      `Count of active flows, $${PRICE_PER_EXTRA_5_ACTIVE_FLOWS} for extra 5 active flows`,
+                    )}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

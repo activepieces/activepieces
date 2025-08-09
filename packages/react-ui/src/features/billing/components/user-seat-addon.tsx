@@ -67,7 +67,7 @@ export function UserSeatAddon({
                     <CircleHelp className="w-4 h-4 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    {t('Count of user seats 10$ for extra 1 user seat')}
+                    {t('Count of user seats $15 for extra 1 user seat')}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

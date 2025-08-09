@@ -44,7 +44,7 @@ export function ProjectAddon({ platformSubscription }: BusinessProjectsProps) {
               <div>
                 <h3 className="text-lg font-semibold">{t('Projects')}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Monitor your projects usage
+                  {t('Monitor your projects usage')}
                 </p>
               </div>
             </div>
@@ -63,7 +63,7 @@ export function ProjectAddon({ platformSubscription }: BusinessProjectsProps) {
                     <CircleHelp className="w-4 h-4 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    {t('Count of projects $15 for extra 1 project')}
+                    {t('Count of projects $10 for extra 1 project')}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -85,7 +85,7 @@ export function ProjectAddon({ platformSubscription }: BusinessProjectsProps) {
                 </span>
                 {usagePercentage > 80 && (
                   <span className="text-destructive font-medium">
-                    Approaching limit
+                    {t('Approaching limit')}
                   </span>
                 )}
               </div>

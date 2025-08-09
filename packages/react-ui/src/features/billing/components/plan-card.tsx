@@ -94,7 +94,7 @@ export const PlanCard = ({
               ${plan.price[cycle]}
             </span>
             <span className="text-muted-foreground text-sm font-medium">
-              /month
+              {t('/month')}
             </span>
           </div>
         )}

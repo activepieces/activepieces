@@ -1,9 +1,24 @@
 import { AiOverageState, PiecesFilterType, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsageMetric } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
-export const PRICE_PER_EXTRA_USER = 20
-export const PRICE_PER_EXTRA_PROJECT = 10
-export const PRICE_PER_EXTRA_5_ACTIVE_FLOWS = 15
+export enum BillingCycle {
+    MONTHLY = 'monthly',
+    ANNUAL = 'annual',
+}
+
+export const PRICE_PER_EXTRA_USER_MAP = {
+    [BillingCycle.ANNUAL]: 11.4,
+    [BillingCycle.MONTHLY]: 15,
+}
+export const PRICE_PER_EXTRA_PROJECT_MAP = {
+    [BillingCycle.ANNUAL]: 7.6,
+    [BillingCycle.MONTHLY]: 10,
+}
+export const PRICE_PER_EXTRA_5_ACTIVE_FLOWS_MAP = {
+    [BillingCycle.ANNUAL]: 11.4,
+    [BillingCycle.MONTHLY]: 15,
+}
+
 export const AI_CREDITS_USAGE_THRESHOLD = 150000
 
 export type ProjectPlanLimits = {
@@ -21,10 +36,7 @@ export enum ApSubscriptionStatus {
     TRIALING = 'trialing',
 }
 
-export enum BillingCycle {
-    MONTHLY = 'monthly',
-    ANNUAL = 'annual',
-}
+
 
 export enum PlanName {
     FREE = 'free',
@@ -166,12 +178,12 @@ export const PRICE_ID_MAP = {
     },
     [PRICE_NAMES.USER_SEAT]: {
         [BillingCycle.MONTHLY]: {
-            dev: 'price_1Rsn8nQN93Aoq4f8nNmwAA1I',
-            prod: 'price_1RflgiKZ0dZRqLEKiDFoa17I',
+            dev: 'price_1Rtzi4QN93Aoq4f8l2jMsk9W',
+            prod: 'price_1Rtzl2KZ0dZRqLEKdOr3G2YG',
         },
         [BillingCycle.ANNUAL]: {
-            dev: 'price_1RtPiuQN93Aoq4f8O7ReOsZO',
-            prod: 'price_1RtZyMKZ0dZRqLEKrVLN4h15',
+            dev: 'price_1RtzkCQN93Aoq4f8thLTUyNi',
+            prod: 'price_1RtzleKZ0dZRqLEKva8yji8k',
         },
     },
     [PRICE_NAMES.PROJECT]: {
