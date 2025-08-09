@@ -7,6 +7,7 @@ export enum TriggerRunStatus {
     FAILED = 'FAILED',
     INTERNAL_ERROR = 'INTERNAL_ERROR',
     TIMED_OUT = 'TIMED_OUT',
+    CONNECTION_ERROR = 'CONNECTION_ERROR',
 }
 
 export const TriggerRun = Type.Object({

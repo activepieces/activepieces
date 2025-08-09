@@ -1,6 +1,7 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
+    ENGINE_ERROR_NAMES,
     ErrorCode,
     FlowTriggerType,
     FlowVersion,
@@ -105,6 +106,29 @@ async function getTriggerPayloadsAndStatus(
             }
         }
         else {
+            // Check if this is a connection-related failure
+            const errorMessage = result?.message || ''
+            const isConnectionError = Object.values(ENGINE_ERROR_NAMES).some(
+                errorName => errorMessage.includes(errorName)
+            )
+            
+            if (isConnectionError && !simulate) {
+                log.warn({
+                    error: errorMessage,
+                    flowId: flowVersion.flowId,
+                    triggerName: flowVersion.trigger.settings.triggerName,
+                }, 'Trigger failed due to connection error, returning raw payload for visibility')
+                
+                // Return the raw webhook payload
+                // This preserves the original data for reruns
+                // The flow run will fail when actions try to use the connection
+                return {
+                    payloads: [payload.body || payload],
+                    status: TriggerRunStatus.CONNECTION_ERROR, // Specific status for connection errors
+                    error: errorMessage,
+                }
+            }
+            
             return {
                 payloads: [],
                 status: TriggerRunStatus.INTERNAL_ERROR,
