@@ -1,0 +1,43 @@
+{
+  "name": "pieces-open-phone",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/open-phone/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/open-phone",
+        "tsConfig": "packages/pieces/community/open-phone/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/open-phone/package.json",
+        "main": "packages/pieces/community/open-phone/src/index.ts",
+        "assets": [
+          "packages/pieces/community/open-phone/*.md",
+          {
+            "input": "packages/pieces/community/open-phone/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-open-phone {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  },
+  "tags": []
+}
