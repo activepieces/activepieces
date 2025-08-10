@@ -97,11 +97,23 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-              merge_method: 'rebase'
-            })
+            # First, try to update the branch with latest main
+              await github.rest.pulls.updateBranch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number
+              })
+              
+              // Wait a moment for the update to complete
+              await new Promise(resolve => setTimeout(resolve, 2000))
+              
+              // Now merge using merge method
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                merge_method: 'merge'
+              })
+         
         env:
           GITHUB_TOKEN: ${{ secrets.CROWDIN_PRS }}
