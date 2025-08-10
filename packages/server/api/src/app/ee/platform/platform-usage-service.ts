@@ -36,20 +36,28 @@ const getDailyUsageRedisKey = (
 
 export const platformUsageService = (_log?: FastifyBaseLogger) => ({
     async getAllPlatformUsage(platformId: string): Promise<PlatformUsage> {
-        
         const platformBilling = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
-
         const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
 
-        const platformTasksUsage = await this.getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate })
-        const platformAICreditUsage = await this.getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate })
-
-        const activeFlows = await getActiveFlows(platformId)
-        const mcps = await getMCPsCount(platformId)
-        const projects = await getProjectsCount(platformId)
-        const seats = await getActiveUsers(platformId)
-        const tables = await getTables(platformId)
-        const agents = await getAgentsCount(platformId)
+        const [
+            platformTasksUsage,
+            platformAICreditUsage,
+            activeFlows,
+            mcps,
+            projects,
+            seats,
+            tables,
+            agents,
+        ] = await Promise.all([
+            this.getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate }),
+            this.getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate }),
+            getActiveFlows(platformId),
+            getMCPsCount(platformId),
+            getProjectsCount(platformId),
+            getActiveUsers(platformId),
+            getTables(platformId),
+            getAgentsCount(platformId),
+        ])
 
         return { tasks: platformTasksUsage, aiCredits: platformAICreditUsage, activeFlows, mcps, projects, seats, tables, agents }
     },

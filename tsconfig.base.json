@@ -45,6 +45,9 @@
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],
+      "@activepieces/piece-aircall": [
+        "packages/pieces/community/aircall/src/index.ts"
+      ],
       "@activepieces/piece-airparser": [
         "packages/pieces/community/airparser/src/index.ts"
       ],
@@ -452,6 +455,9 @@
       ],
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
+      ],
+      "@activepieces/piece-help-scout": [
+        "packages/pieces/community/help-scout/src/index.ts"
       ],
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"

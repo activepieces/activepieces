@@ -37,6 +37,9 @@ export const UsageCards = ({
     !isNil(plan?.licenseKey) ||
     plan?.plan === PlanName.ENTERPRISE ||
     edition === ApEdition.ENTERPRISE;
+    !isNil(plan?.licenseKey) ||
+    plan?.plan === PlanName.ENTERPRISE ||
+    edition === ApEdition.ENTERPRISE;
 
   return (
     <div

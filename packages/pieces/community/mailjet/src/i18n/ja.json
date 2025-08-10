@@ -1,0 +1,21 @@
+{
+  "Mailjet": "Mailjet",
+  "Email delivery service for sending transactional and marketing emails": "トランザクションとマーケティングの電子メールを送信するためのメール配信サービス",
+  "API Key": "API キー",
+  "Enter your API Key here": "ここにAPIキーを入力してください",
+  "API Secret": "APIシークレット",
+  "Enter your API Secret here": "ここにAPIシークレットを入力してください",
+  "Enter your api credentials": "あなたのapi資格情報を入力してください",
+  "Send Email": "メール送信",
+  "Send a text, HTML or template email through Mailjet": "Mailjetを通じてテキスト、HTMLまたはテンプレートのメールを送信する",
+  "From (Email)": "From (Email)",
+  "From (Name)": "差出人（名前）",
+  "Emails of recipients": "受信者のメール",
+  "Subject": "件名",
+  "Text part": "テキストの一部",
+  "HTML part": "HTMLパート",
+  "Template Id": "テンプレートID",
+  "Template variables": "テンプレート変数",
+  "Sender email, must be verified in Mailjet": "送信者のメールはMailjetで確認する必要があります",
+  "Template Id (number) defined in Mailjet": "Mailjetで定義されているテンプレートID（数字）"
+}

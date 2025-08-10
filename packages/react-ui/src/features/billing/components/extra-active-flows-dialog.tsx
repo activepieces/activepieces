@@ -28,6 +28,10 @@ const DEFAULT_ACTIVE_FLOWS_MAP = {
   [PlanName.BUSINESS]: 50,
   [PlanName.PLUS]: 10,
 };
+const DEFAULT_ACTIVE_FLOWS_MAP = {
+  [PlanName.BUSINESS]: 50,
+  [PlanName.PLUS]: 10,
+};
 
 type ExtraActiveFlowsDialogProps = {
   open: boolean;

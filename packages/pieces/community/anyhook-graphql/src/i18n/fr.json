@@ -1,0 +1,14 @@
+{
+  "AnyHook GraphQL": "GraphQL AnyHook",
+  "AnyHook GraphQL enables real-time communication through AnyHook proxy server by allowing you to subscribe and listen to GraphQL subscription events": "AnyHook GraphQL permet la communication en temps réel via le serveur proxy AnyHook en vous permettant de vous abonner et d'écouter les événements d'abonnement GraphQL",
+  "AnyHook Server URL": "URL du serveur AnyHook",
+  "The URL of your AnyHook server": "L'URL de votre serveur AnyHook",
+  "New GraphQL Subscription Event": "Nouvel événement d'abonnement GraphQL",
+  "Triggers on a new GraphQL subscription event": "Déclenche sur un nouvel événement d'abonnement GraphQL",
+  "Endpoint URL": "Endpoint URL",
+  "Headers": "En-têtes",
+  "GraphQL Query": "Requête GraphQL",
+  "The GraphQL websocket to connect to.": "La Websocket GraphQL à laquelle se connecter.",
+  "Custom headers for the GraphQL connection, such as authentication tokens.": "En-têtes personnalisés pour la connexion GraphQL, tels que les jetons d'authentification.",
+  "GraphQL subscription query to listen to events": "Requête d'abonnement GraphQL pour écouter les événements"
+}

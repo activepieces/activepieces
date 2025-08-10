@@ -1,0 +1,16 @@
+{
+  "Data Summarizer": "Data Summarizer",
+  "Calculate Average": "Gemiddelde berekening",
+  "Calculate Sum": "Som berekenen",
+  "Count Uniques": "Count Uniques",
+  "Find Min and Max": "Vind Min en Max",
+  "Calculates the average of a list of values.": "Berekent het gemiddelde van een lijst met waarden.",
+  "Calculates the sum of a list of values.": "Berekent de som van een lijst met waarden.",
+  "Counts the number of unique values for multiple fields": "Telt het aantal unieke waarden voor meerdere velden",
+  "Get the smallest and greatest values from a list of numeric values.": "Krijg de kleinste en beste waarden van een lijst met numerieke waarden.",
+  "Markdown": "Markdown",
+  "Values": "Waarden",
+  "Fields": "Velden",
+  "If you'd like to use the values with a previous step, click the (X) first, and then select the step you want to use.": "Als je de waardes met een vorige stap wilt gebruiken, klik dan eerst op de (X) en vervolgens op de stap die je wilt gebruiken.",
+  "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave fields empty.": "Als de gegevens die je doorgeeft een object zijn, kun je bepaalde velden opgeven waarop je moet filteren. Het object wordt verwijderd als de velden niet bestaan. Laat anders de velden leeg."
+}
