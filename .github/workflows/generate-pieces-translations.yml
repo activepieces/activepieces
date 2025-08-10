@@ -54,7 +54,7 @@ jobs:
         if: steps.check-changes.outputs.changes == 'true'
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.CROWDIN_PRS }}
           script: |
             const branchName = '${{ steps.create-branch.outputs.branch_name }}';
             const { data: pullRequest } = await github.rest.pulls.create({
