@@ -86,7 +86,7 @@ export default function Billing() {
               disabled={startingBusinessTrial}
             >
               {startingBusinessTrial && <LoadingSpinner className="size-4" />}
-              {t('Start business trial')}
+              {t('Start Business Trial')}
             </Button>
           )}
 

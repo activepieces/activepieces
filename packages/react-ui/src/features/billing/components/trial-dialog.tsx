@@ -36,7 +36,9 @@ export const WelcomeTrialDialog = () => {
         : null
       : null;
 
-  const [isOpen, setIsOpen] = useState(!!trialPlan);
+  const isTrial =
+    platform.plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
+  const [isOpen, setIsOpen] = useState(!isTrial && !!trialPlan);
   const { mutate: startTrial, isPending: startingTrial } =
     billingMutations.useStartTrial();
 
@@ -51,14 +53,15 @@ export const WelcomeTrialDialog = () => {
   };
 
   useEffectOnce(() => {
-    if (
-      platform.plan.stripeSubscriptionStatus !==
-        ApSubscriptionStatus.TRIALING &&
-      !isNil(trialPlan)
-    ) {
+    if (!isTrial && !isNil(trialPlan)) {
       startTrial({ plan: trialPlan });
     }
   });
+
+  const handleStartBusinessTrial = () => {
+    startTrial({ plan: PlanName.BUSINESS });
+    handleClose();
+  };
 
   const handleSeePlans = () => {
     openDialog();
@@ -99,17 +102,17 @@ export const WelcomeTrialDialog = () => {
 
             <div className="flex w-full flex-col gap-3">
               <Button onClick={handleClose} className="flex-1">
-                {t(`Continue on ${trialPlan?.toLowerCase()} trial`)}
+                {t(`Continue on ${trialPlan?.toLowerCase()} Trial`)}
               </Button>
 
               {canStartBusinessTrial && (
                 <Button
                   variant="outline"
-                  onClick={() => startTrial({ plan: PlanName.BUSINESS })}
+                  onClick={handleStartBusinessTrial}
                   disabled={startingTrial}
                 >
                   {startingTrial && <LoadingSpinner className="size-4" />}
-                  {t('Start business trial')}
+                  {t('Start Business Trial')}
                 </Button>
               )}
 
