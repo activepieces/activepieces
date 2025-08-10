@@ -40,7 +40,12 @@ jobs:
             })
       
       - name: Fetch main branch
-        run: git fetch origin main:main
+        run: |
+          git fetch origin main:main
+          # Reset branch to match remote repository
+          echo "Resetting branch to match remote repository..."
+          git reset --hard origin/${{ github.event.pull_request.head.ref }}
+          git clean -fd
       
       - name: Run Node.js script
         run: |
