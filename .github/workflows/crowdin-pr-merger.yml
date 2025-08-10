@@ -101,7 +101,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
-              merge_method: 'merge'
+              merge_method: 'rebase'
             })
         env:
           GITHUB_TOKEN: ${{ secrets.CROWDIN_PRS }}
