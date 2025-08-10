@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { AgentOutputField, AgentOutputType } from '../agents'
 import { PopulatedFlow } from '../flows/flow'
 import { McpTool } from '../mcp'
+import { Nullable } from '../common'
 
 export enum FlowProjectOperationType {
     UPDATE_FLOW = 'UPDATE_FLOW',
@@ -39,7 +40,7 @@ export type ConnectionState = Static<typeof ConnectionState>
 export const FieldState = Type.Object({
     name: Type.String(),
     type: Type.String(),
-    data: Type.Optional(Type.Object({
+    data: Nullable(Type.Object({
         options: Type.Array(Type.Object({
             value: Type.String(),
         })),

@@ -2,7 +2,6 @@ import {
   AgentOperationType,
   ConnectionOperationType,
   DiffReleaseRequest,
-  McpOperationType,
   ProjectReleaseType,
   ProjectSyncPlan,
   TableOperationType,
@@ -73,8 +72,7 @@ const CreateReleaseDialogContent = ({
   const isThereAnyChanges =
     (plan?.flows && plan?.flows.length > 0) ||
     (plan?.tables && plan?.tables.length > 0) ||
-    (plan?.agents && plan?.agents.length > 0) ||
-    (plan?.mcps && plan?.mcps.length > 0);
+    (plan?.agents && plan?.agents.length > 0);
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
@@ -282,7 +280,7 @@ const CreateReleaseDialogContent = ({
                 <ScrollArea viewPortClassName="max-h-[10vh]">
                   {plan?.tables.map((table, index) => (
                     <div
-                      key={table.tableState.id}
+                      key={table.tableState.externalId}
                       className="flex items-center gap-2 text-sm py-1"
                     >
                       {table.type === TableOperationType.UPDATE_TABLE && (
@@ -319,7 +317,7 @@ const CreateReleaseDialogContent = ({
                 <ScrollArea viewPortClassName="max-h-[10vh]">
                   {plan?.agents.map((agent, index) => (
                     <div
-                      key={agent.agentState.id}
+                      key={agent.agentState.externalId}
                       className="flex items-center gap-2 text-sm py-1"
                     >
                       {agent.type === AgentOperationType.UPDATE_AGENT && (
@@ -345,42 +343,6 @@ const CreateReleaseDialogContent = ({
             </div>
           )}
 
-          {plan?.mcps && plan?.mcps.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex flex-col gap-2">
-                <div className="flex flex-col justify -center gap-1 py-2 border-b">
-                  <Label className="text-sm font-medium">
-                    {t('MCPs Changes')} ({plan?.mcps?.length || 0})
-                  </Label>
-                </div>
-                <ScrollArea viewPortClassName="max-h-[10vh]">
-                  {plan?.mcps.map((mcp, index) => (
-                    <div
-                      key={mcp.mcpState.id}
-                      className="flex items-center gap-2 text-sm py-1"
-                    >
-                      {mcp.type === McpOperationType.UPDATE_MCP && (
-                        <div className="flex items-center gap-2">
-                          <PencilIcon className="w-4 h-4 shrink-0" />
-                          <div className="flex items-center gap-1">
-                            <span>{mcp.mcpState.name}</span>
-                          </div>
-                        </div>
-                      )}
-                      {mcp.type === McpOperationType.CREATE_MCP && (
-                        <div className="flex items-center gap-2">
-                          <Plus className="w-4 h-4 shrink-0 text-success" />
-                          <span className="text-success">
-                            {mcp.mcpState.name}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </ScrollArea>
-              </div>
-            </div>
-          )}
           {errorMessage && (
             <p className="text-sm text-destructive">{errorMessage}</p>
           )}
@@ -414,8 +376,7 @@ const CreateReleaseDialogContent = ({
               if (
                 selectedChanges.size === 0 &&
                 plan.tables.length === 0 &&
-                plan.agents.length === 0 &&
-                plan.mcps.length === 0
+                plan.agents.length === 0
               ) {
                 setErrorMessage(
                   'Please select at least one change to include in the release',

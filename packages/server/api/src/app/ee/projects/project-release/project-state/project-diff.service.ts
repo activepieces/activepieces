@@ -27,10 +27,10 @@ export const projectDiffService = {
     },
     async filterDeleteOperation(diffs: DiffState): Promise<DiffState> {
         return {
-            flows: diffs.flows.filter(f =>[FlowProjectOperationType.DELETE_FLOW].includes(f.type)),
+            flows: diffs.flows.filter(f =>![FlowProjectOperationType.DELETE_FLOW].includes(f.type)),
             connections: diffs.connections,
-            tables: diffs.tables.filter(t =>[TableOperationType.DELETE_TABLE].includes(t.type)),
-            agents: diffs.agents.filter(a =>[AgentOperationType.DELETE_AGENT].includes(a.type)),
+            tables: diffs.tables.filter(t =>![TableOperationType.DELETE_TABLE].includes(t.type)),
+            agents: diffs.agents.filter(a =>![AgentOperationType.DELETE_AGENT].includes(a.type)),
         }
     },
 }

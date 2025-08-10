@@ -57,8 +57,7 @@ export function ProjectSelectionDialog({
       if (
         (!plan.flows || plan.flows.length === 0) &&
         (!plan.tables || plan.tables.length === 0) &&
-        (!plan.agents || plan.agents.length === 0) &&
-        (!plan.mcps || plan.mcps.length === 0)
+        (!plan.agents || plan.agents.length === 0)
       ) {
         toast({
           title: t('No Changes Found'),

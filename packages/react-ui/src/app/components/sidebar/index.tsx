@@ -310,7 +310,7 @@ export function SidebarComponent({
 function ApSidebarMenuItem(item: SidebarLink, index: number) {
   return (
     <React.Fragment key={item.label}>
-      <SidebarGroup key={item.label} className="py-1">
+      <SidebarGroup key={item.label} className="py-0.5">
         {item.name && <SidebarGroupLabel>{item.name}</SidebarGroupLabel>}
         <SidebarMenu className="gap-0 p-0">
           <SidebarMenuItem key={item.label}>

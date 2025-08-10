@@ -1,14 +1,15 @@
-import { ExportRequestQuery, PrincipalType, Solution } from '@activepieces/shared'
+import { ExportRequestBody, PrincipalType, Solution } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { solutionService } from './solution.service'
 
 export const solutionsController: FastifyPluginAsyncTypebox = async (fastify) => {
-    fastify.get('/export', ExportRequest, async (request) => {
+    fastify.post('/export', ExportRequest, async (request) => {
+        const { name, description } = request.body
         return solutionService(fastify.log).export({
             projectId: request.principal.projectId,
-            name: request.query.name,
-            description: request.query.description,
+            name,
+            description,
         })
     })
 
@@ -27,7 +28,7 @@ const ExportRequest = {
         allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
-        querystring: ExportRequestQuery,
+        body: ExportRequestBody,
         response: {
             [StatusCodes.CREATED]: Solution,
         },
@@ -39,6 +40,6 @@ const ImportRequest = {
         allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
-        body: Type.Any(),
+        body: Solution,
     },
 }

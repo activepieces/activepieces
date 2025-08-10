@@ -140,6 +140,7 @@ import { AddExternalIdToMCPSqlite1753786833156 } from './migration/sqlite/175378
 import { AddExternalidToMCPToolSQLite1754220095236 } from './migration/sqlite/1754220095236-AddExternalidToMCPToolSQLite'
 import { AddTriggerSqlite1754477404726 } from './migration/sqlite/1754477404726-AddTriggerSqlite'
 import { AddJobIdToTriggerRun1754510243053 } from './migration/sqlite/1754510243053-AddJobIdToTriggerRun'
+import { RemoveAgentTestPromptSqlite1754863757450 } from './migration/sqlite/1754863757450-RemoveAgentTestPromptSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -296,6 +297,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddExternalidToMCPToolSQLite1754220095236,
         AddTriggerSqlite1754477404726,
         AddJobIdToTriggerRun1754510243053,
+        RemoveAgentTestPromptSqlite1754863757450,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

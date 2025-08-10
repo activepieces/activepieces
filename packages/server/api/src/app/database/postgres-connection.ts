@@ -259,6 +259,7 @@ import { AddExternalIdToMCPPostgres1753787093467 } from './migration/postgres/17
 import { AddExternalidToMCPToolPostgres1754214833292 } from './migration/postgres/1754214833292-AddExternalidToMCPToolPostgres'
 import { AddTriggerSource1754478770608 } from './migration/postgres/1754478770608-AddTriggerSource'
 import { AddJobIdToTriggerRun1754510611628 } from './migration/postgres/1754510611628-AddJobIdToTriggerRun'
+import { RemoveAgentTestPrompt1754863565929 } from './migration/postgres/1754863565929-RemoveAgentTestPrompt'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -441,6 +442,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddExternalidToMCPToolPostgres1754214833292,
         AddTriggerSource1754478770608,
         AddJobIdToTriggerRun1754510611628,
+        RemoveAgentTestPrompt1754863565929,
     ]
 
     const edition = system.getEdition()

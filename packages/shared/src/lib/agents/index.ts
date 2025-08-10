@@ -60,7 +60,6 @@ export const Agent = Type.Object({
     description: Type.String(),
     systemPrompt: Type.String(),
     profilePictureUrl: Type.String(),
-    testPrompt: Type.Optional(Type.String()),
     projectId: Type.String(),
     maxSteps: Type.Number(),
     mcpId: Type.String(),
@@ -107,7 +106,6 @@ export const UpdateAgentRequestBody = Type.Object({
     systemPrompt: Type.Optional(Type.String()),
     displayName: Type.Optional(Type.String()),  
     description: Type.Optional(Type.String()),
-    testPrompt: Type.Optional(Type.String()),
     outputType: Type.Optional(Type.Enum(AgentOutputType)),
     outputFields: Type.Optional(Type.Array(AgentOutputField)),
 })

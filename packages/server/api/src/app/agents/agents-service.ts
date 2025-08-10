@@ -45,7 +45,6 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             systemPrompt,
             platformId: params.platformId,
             profilePictureUrl: params.profilePictureUrl ?? getAgentProfilePictureUrl(),
-            testPrompt: params.testPrompt ?? '',
             maxSteps: 10,
             projectId: params.projectId,
             externalId: params.externalId ?? apId(),
@@ -117,7 +116,6 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('displayName', params.displayName),
             ...spreadIfDefined('systemPrompt', params.systemPrompt),
             ...spreadIfDefined('description', params.description),
-            ...spreadIfDefined('testPrompt', params.testPrompt),
             ...spreadIfDefined('outputType', params.outputType),
             ...spreadIfDefined('outputFields', params.outputFields),
         })
@@ -231,7 +229,6 @@ type CreateParams = {
     platformId: string
     projectId: string
     profilePictureUrl?: string
-    testPrompt?: string
     outputType?: AgentOutputType
     outputFields?: AgentOutputField[]
     externalId?: string
@@ -245,7 +242,6 @@ type UpdateParams = {
     displayName?: string
     systemPrompt?: string
     description?: string
-    testPrompt?: string
     outputType?: string
     outputFields?: AgentOutputField[]
 }
