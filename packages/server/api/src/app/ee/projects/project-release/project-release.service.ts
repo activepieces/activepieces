@@ -18,10 +18,10 @@ export const projectReleaseService = {
         const lock = await memoryLock.acquire(lockKey)
         try {
             const diffs = await findDiffStates(projectId, ownerId, params, log)
+            const filteredDiffs = await projectDiffService.filterFlows(params.selectedFlowsIds ?? [], diffs)
             await projectStateService(log).apply({
                 projectId,
-                diffs,
-                selectedFlowsIds: params.selectedFlowsIds ?? null,
+                diffs: filteredDiffs,
                 log,
                 platformId,
             })
@@ -108,7 +108,7 @@ async function findDiffStates(projectId: ProjectId, ownerId: ApId, params: DiffR
 
 async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
     const { diffs, errors } = params
-    const { flows, connections, tables, agents, mcps } = diffs
+    const { flows, connections, tables, agents } = diffs
     const responsePlans: FlowProjectOperation[] = flows.map((operation) => {
         switch (operation.type) {
             case FlowProjectOperationType.DELETE_FLOW:
@@ -147,7 +147,6 @@ async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
         connections,
         tables,
         agents,
-        mcps,
     }
 }
 async function getStateFromCreateRequest(projectId: string, ownerId: ApId, request: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectState> {

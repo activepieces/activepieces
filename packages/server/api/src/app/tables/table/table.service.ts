@@ -45,7 +45,7 @@ export const tableService = {
         })
 
         const table = await tableRepo().save({
-            id: request.id ?? apId(),
+            id: apId(),
             externalId: request.externalId ?? apId(),
             name: request.name,
             projectId,
@@ -111,10 +111,28 @@ export const tableService = {
         }
     },
 
+    async getOneByExternalIdOrThrow({
+        projectId,
+        externalId,
+    }: GetOneByExternalIdParams): Promise<Table> {
+        const table = await tableRepo().findOneBy({ projectId, externalId })
+        if (isNil(table)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'Table',
+                    entityId: externalId,
+                },
+            })
+        }
+        return table
+    },
+
     async delete({
         projectId,
         id,
     }: DeleteParams): Promise<void> {
+
         await tableRepo().delete({
             projectId,
             id,
@@ -237,7 +255,7 @@ type EnsureAgentExistsParams = {
 
 type CreateParams = {
     projectId: string
-    request: CreateTableRequest & { id?: string }
+    request: CreateTableRequest
 }
 
 type ListParams = {
@@ -251,6 +269,11 @@ type ListParams = {
 type GetByIdParams = {
     projectId: string
     id: string
+}
+
+type GetOneByExternalIdParams = {
+    projectId: string
+    externalId: string
 }
 
 type DeleteParams = {

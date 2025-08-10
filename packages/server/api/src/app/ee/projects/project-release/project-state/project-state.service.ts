@@ -1,4 +1,4 @@
-import { AgentOperationType, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowProjectOperationType, FlowSyncError, isNil, McpOperationType, ProjectId, ProjectState, TableOperationType } from '@activepieces/shared'
+import { AgentOperationType, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowProjectOperationType, FlowSyncError, isNil, ProjectId, ProjectState, TableOperationType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { agentsService } from '../../../../agents/agents-service'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
@@ -11,8 +11,8 @@ import { tableService } from '../../../../tables/table/table.service'
 import { projectStateHelper } from './project-state-helper'
 
 export const projectStateService = (log: FastifyBaseLogger) => ({
-    async apply({ projectId, diffs, selectedFlowsIds, platformId }: ApplyProjectStateRequest): Promise<void> {
-        const { flows, connections, tables, agents, mcps } = diffs
+    async apply({ projectId, diffs, platformId }: ApplyProjectStateRequest): Promise<void> {
+        const { flows, connections, tables, agents } = diffs
         const publishJobs: Promise<FlowSyncError | null>[] = []
         for (const state of connections) {
             switch (state.type) {
@@ -62,7 +62,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                     const table = await tableService.create({
                         projectId,
                         request: {
-                            id: operation.tableState.id ?? undefined,
                             name: operation.tableState.name,
                             externalId: operation.tableState.externalId,
                         },
@@ -111,64 +110,34 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                     }))
                     break
                 }
+                case TableOperationType.DELETE_TABLE: {
+                    const table = await tableService.getOneByExternalIdOrThrow({
+                        externalId: operation.tableState.externalId,
+                        projectId,
+                    })
+                    await tableService.delete({
+                        id: table.id,
+                        projectId,
+                    })
+                    break
+                }
             }
         }
 
         for (const operation of flows) {
             switch (operation.type) {
                 case FlowProjectOperationType.UPDATE_FLOW: {
-                    if (!isNil(selectedFlowsIds) && !selectedFlowsIds.includes(operation.newFlowState.id)) {
-                        continue
-                    }
                     const flowUpdated = await projectStateHelper(log).updateFlowInProject(operation.flowState, operation.newFlowState, projectId)
                     publishJobs.push(projectStateHelper(log).republishFlow({ flow: flowUpdated, projectId }))
                     break
                 }
                 case FlowProjectOperationType.CREATE_FLOW: {
-                    if (!isNil(selectedFlowsIds) && !selectedFlowsIds.includes(operation.flowState.id)) {
-                        continue
-                    }
                     const flowCreated = await projectStateHelper(log).createFlowInProject(operation.flowState, projectId)
                     publishJobs.push(projectStateHelper(log).republishFlow({ flow: flowCreated, projectId }))
                     break
                 }
                 case FlowProjectOperationType.DELETE_FLOW: {
-                    if (!isNil(selectedFlowsIds) && !selectedFlowsIds.includes(operation.flowState.id)) {
-                        continue
-                    }
                     await projectStateHelper(log).deleteFlowFromProject(operation.flowState.id, projectId)
-                    break
-                }
-            }
-        }
-
-        for (const operation of mcps) {
-            switch (operation.type) {
-                case McpOperationType.CREATE_MCP: {
-                    const createdMcp = await mcpService(log).create({
-                        name: operation.mcpState.name,
-                        projectId,
-                        externalId: operation.mcpState.externalId,
-                    })
-
-                    await mcpService(log).update({
-                        mcpId: createdMcp.id,
-                        name: operation.mcpState.name,
-                        tools: operation.mcpState.tools,
-                    })
-                    break
-                }
-                case McpOperationType.UPDATE_MCP: {
-                    const existingMcp = await mcpService(log).getOneByExternalIdOrThrow({
-                        externalId: operation.newMcpState.externalId,
-                        projectId,
-                    })
-                    
-                    await mcpService(log).update({
-                        mcpId: existingMcp.id,
-                        name: operation.newMcpState.name,
-                        tools: operation.newMcpState.tools,
-                    })
                     break
                 }
             }
@@ -182,7 +151,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         description: operation.agentState.description,
                         profilePictureUrl: operation.agentState.profilePictureUrl,
                         systemPrompt: operation.agentState.systemPrompt,
-                        testPrompt: operation.agentState.testPrompt,
                         outputType: operation.agentState.outputType,
                         outputFields: operation.agentState.outputFields,
                         platformId,
@@ -190,7 +158,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         externalId: operation.agentState.externalId,
                         mcpExternalId: operation.agentState.mcp.externalId,
                     })
-                    
+
                     const mcpState = operation.agentState.mcp
                     await mcpService(log).update({
                         mcpId: createdAgent.mcpId,
@@ -204,23 +172,33 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         externalId: operation.newAgentState.externalId,
                         projectId,
                     })
-                    
+
                     await agentsService(log).update({
                         id: existingAgent.id,
                         displayName: operation.newAgentState.displayName,
                         systemPrompt: operation.newAgentState.systemPrompt,
                         description: operation.newAgentState.description,
-                        testPrompt: operation.newAgentState.testPrompt,
                         outputType: operation.newAgentState.outputType,
                         outputFields: operation.newAgentState.outputFields,
                         projectId,
                     })
-                    
+
                     const mcpState = operation.newAgentState.mcp
                     await mcpService(log).update({
                         mcpId: existingAgent.mcpId,
                         name: mcpState.name,
                         tools: mcpState.tools,
+                    })
+                    break
+                }
+                case AgentOperationType.DELETE_AGENT: {
+                    const agent = await agentsService(log).getOneByExternalIdOrThrow({
+                        externalId: operation.agentState.externalId,
+                        projectId,
+                    })
+                    await agentsService(log).delete({
+                        id: agent.id,
+                        projectId,
                     })
                     break
                 }
@@ -284,20 +262,17 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             }
         }))
 
-        const agents = await agentsService(log).getAllPopulated(projectId)
-        const mcps = await mcpService(log).list({
+        const agents = await agentsService(log).list({
             projectId,
             limit: 1000,
             cursorRequest: null,
-            name: undefined,
         })
 
         return {
             flows: allPopulatedFlows,
             connections,
             tables: allPopulatedTables,
-            agents,
-            mcps: mcps.data,
+            agents: agents.data,
         }
     },
 })
@@ -338,7 +313,6 @@ async function handleCreateField(projectId: ProjectId, field: FieldState, tableI
 type ApplyProjectStateRequest = {
     projectId: string
     diffs: DiffState
-    selectedFlowsIds: string[] | null
     log: FastifyBaseLogger
     platformId: string
 }

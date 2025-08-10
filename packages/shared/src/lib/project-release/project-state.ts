@@ -16,16 +16,14 @@ export enum ConnectionOperationType {
 export enum TableOperationType {
     UPDATE_TABLE = 'UPDATE_TABLE',
     CREATE_TABLE = 'CREATE_TABLE',
+    DELETE_TABLE = 'DELETE_TABLE',
 }
 
-export enum McpOperationType {
-    UPDATE_MCP = 'UPDATE_MCP',
-    CREATE_MCP = 'CREATE_MCP',
-}
 
 export enum AgentOperationType {
     UPDATE_AGENT = 'UPDATE_AGENT',
     CREATE_AGENT = 'CREATE_AGENT',
+    DELETE_AGENT = 'DELETE_AGENT',
 }
 
 export const FlowState = PopulatedFlow
@@ -68,20 +66,18 @@ export const McpState = Type.Object({
 export type McpState = Static<typeof McpState>
 
 export const AgentState = Type.Object({
-    id: Type.String(),
     externalId: Type.String(),
     displayName: Type.String(),
     description: Type.String(),
     systemPrompt: Type.String(),
     profilePictureUrl: Type.String(),
-    testPrompt: Type.Optional(Type.String()),
     maxSteps: Type.Number(),
-    tableAutomationId: Type.Optional(Type.String()),
     outputType: Type.Optional(Type.Enum(AgentOutputType)),
     outputFields: Type.Optional(Type.Array(AgentOutputField)),
     runCompleted: Type.Number(),
     mcp: McpState,
 })
+
 export type AgentState = Static<typeof AgentState>
 
 export const ProjectState = Type.Object({
@@ -90,7 +86,6 @@ export const ProjectState = Type.Object({
     connections: Type.Optional(Type.Array(ConnectionState)),
     tables: Type.Optional(Type.Array(TableState)),
     agents: Type.Optional(Type.Array(AgentState)),
-    mcps: Type.Optional(Type.Array(McpState)),
 })
 export type ProjectState = Static<typeof ProjectState>
 
@@ -134,21 +129,14 @@ export const TableOperation = Type.Union([
         type: Type.Literal(TableOperationType.CREATE_TABLE),
         tableState: TableState,
     }),
+    Type.Object({
+        type: Type.Literal(TableOperationType.DELETE_TABLE),
+        tableState: Type.Object({
+            externalId: Type.String(),
+        }),
+    }),
 ])
 export type TableOperation = Static<typeof TableOperation>
-
-export const McpOperation = Type.Union([
-    Type.Object({
-        type: Type.Literal(McpOperationType.UPDATE_MCP),
-        newMcpState: McpState,
-        mcpState: McpState,
-    }),
-    Type.Object({
-        type: Type.Literal(McpOperationType.CREATE_MCP),
-        mcpState: McpState,
-    }),
-])
-export type McpOperation = Static<typeof McpOperation>
 
 export const AgentOperation = Type.Union([
     Type.Object({
@@ -160,6 +148,12 @@ export const AgentOperation = Type.Union([
         type: Type.Literal(AgentOperationType.CREATE_AGENT),
         agentState: AgentState,
     }),
+    Type.Object({
+        type: Type.Literal(AgentOperationType.DELETE_AGENT),
+        agentState: Type.Object({
+            externalId: Type.String(),
+        }),
+    }),
 ])
 export type AgentOperation = Static<typeof AgentOperation>
 
@@ -168,7 +162,6 @@ export const DiffState = Type.Object({
     connections: Type.Array(ConnectionOperation),
     tables: Type.Array(TableOperation),
     agents: Type.Array(AgentOperation),
-    mcps: Type.Array(McpOperation),
 })
 export type DiffState = Static<typeof DiffState>
 
@@ -213,7 +206,6 @@ export const ProjectSyncPlan = Type.Object({
     connections: Type.Array(ConnectionOperation),
     tables: Type.Array(TableOperation),
     agents: Type.Array(AgentOperation),
-    mcps: Type.Array(McpOperation),
     errors: Type.Array(FlowSyncError),
 })
 export type ProjectSyncPlan = Static<typeof ProjectSyncPlan>

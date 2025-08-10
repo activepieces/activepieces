@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid'
 import { projectDiffService } from '../../../../../../src/app/ee/projects/project-release/project-state/project-diff.service'
 import { flowGenerator } from '../../../../../helpers/flow-generator'
 
-describe('Project Diff Service', () => {
+describe('Flow Diff Service', () => {
 
     it('should return the flow to delete', async () => {
         const flowTwo = flowGenerator.simpleActionAndTrigger()
@@ -15,9 +15,9 @@ describe('Project Diff Service', () => {
                 flows: [],
             },
         })
-        expect(diff.operations.length).toBe(1)
-        expect(diff.operations[0].type).toBe('DELETE_FLOW')
-        expect(diff.operations[0].flowState).toBe(flowTwo)
+        expect(diff.flows.length).toBe(1)
+        expect(diff.flows[0].type).toBe('DELETE_FLOW')
+        expect(diff.flows[0].flowState).toBe(flowTwo)
     })
 
     it('should return the flow to create', async () => {
@@ -30,9 +30,9 @@ describe('Project Diff Service', () => {
                 flows: [flowTwo],
             },
         })
-        expect(diff.operations.length).toBe(1)
-        expect(diff.operations[0].type).toBe('CREATE_FLOW')
-        expect(diff.operations[0].flowState).toBe(flowTwo)
+        expect(diff.flows.length).toBe(1)
+        expect(diff.flows[0].type).toBe('CREATE_FLOW')
+        expect(diff.flows[0].flowState).toBe(flowTwo)
     })
 
     it('should return the flow to create If the mapping is invalid', async () => {
@@ -46,7 +46,7 @@ describe('Project Diff Service', () => {
                 flows: [flowOne],
             },
         })
-        expect(diff.operations).toEqual([
+        expect(diff.flows).toEqual([
             {
                 type: 'DELETE_FLOW',
                 flowState: flowTwo,
@@ -70,8 +70,8 @@ describe('Project Diff Service', () => {
                 flows: [flowTwo],
             },
         })
-        expect(diff.operations.length).toBe(1)
-        expect(diff.operations[0]).toEqual({
+        expect(diff.flows.length).toBe(1)
+        expect(diff.flows[0]).toEqual({
             type: 'UPDATE_FLOW',
             flowState: flowOne,
             newFlowState: flowTwo,
@@ -93,7 +93,7 @@ describe('Project Diff Service', () => {
                 flows: [flowOneDist],
             },
         })
-        expect(diff.operations).toEqual([])
+        expect(diff.flows).toEqual([])
     })
 
     it('should return the flow to create, update and delete', async () => {
@@ -110,8 +110,8 @@ describe('Project Diff Service', () => {
                 flows: [flowOneDist, flowTwo],
             },
         })
-        expect(diff.operations.length).toBe(3)
-        expect(diff.operations).toEqual([
+        expect(diff.flows.length).toBe(3)
+        expect(diff.flows).toEqual([
             {
                 type: 'DELETE_FLOW',
                 flowState: flowThree,

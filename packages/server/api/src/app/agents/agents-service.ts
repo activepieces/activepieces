@@ -19,7 +19,7 @@ import { agentRunsService } from './agent-runs/agent-runs-service'
 export const agentRepo = repoFactory(AgentEntity)
 
 export const agentsService = (log: FastifyBaseLogger) => ({
-    async create(params: CreateParams): Promise<Agent> {
+    async create(params: CreateParams): Promise<PopulatedAgent> {
         await PlatformPlanHelper.checkQuotaOrThrow({
             platformId: params.platformId,
             projectId: params.projectId,
@@ -94,7 +94,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         })
         return object
     },
-    async getOneByExternalIdOrThrow(params: GetOneByExternalIdParams): Promise<Agent> {
+    async getOneByExternalIdOrThrow(params: GetOneByExternalIdParams): Promise<PopulatedAgent> {
         const agent = await agentRepo().findOneBy({ externalId: params.externalId, projectId: params.projectId })
         if (isNil(agent)) {
             throw new ActivepiecesError({
@@ -104,9 +104,9 @@ export const agentsService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        return agent
+        return enrichAgent(agent, log)
     },
-    async update(params: UpdateParams): Promise<Agent> {
+    async update(params: UpdateParams): Promise<PopulatedAgent> {
         const platformId = await projectService.getPlatformId(params.projectId)
         await PlatformPlanHelper.checkResourceLocked({ platformId, resource: PlatformUsageMetric.AGENTS })
 
@@ -123,14 +123,14 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         })
         return this.getOneOrThrow({ id: params.id, projectId: params.projectId })
     },
-    async getOne(params: GetOneParams): Promise<Agent | null> {
+    async getOne(params: GetOneParams): Promise<PopulatedAgent | null> {
         const agent = await agentRepo().findOneBy({ id: params.id })
         if (isNil(agent)) {
             return null
         }
         return enrichAgent(agent, log)
     },
-    async getOneOrThrow(params: GetOneParams): Promise<Agent> {
+    async getOneOrThrow(params: GetOneParams): Promise<PopulatedAgent> {
         const agent = await this.getOne({ id: params.id, projectId: params.projectId })
         if (isNil(agent)) {
             throw new ActivepiecesError({
@@ -148,7 +148,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             id: agent.id,
         })
     },
-    async list(params: ListParams): Promise<SeekPage<Agent>> {
+    async list(params: ListParams): Promise<SeekPage<PopulatedAgent>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursorRequest)
 
         const paginator = buildPaginator({
@@ -174,39 +174,19 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         })
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
-        return paginationHelper.createPage<Agent>(
+        return paginationHelper.createPage<PopulatedAgent>(
             await Promise.all(data.map(agent => enrichAgent(agent, log))),
             cursor,
         )
     },
-    async getAllPopulated(projectId: string): Promise<PopulatedAgent[]> {
-        const querySelector: Record<string, string | FindOperator<string>> = {
-            projectId: Equal(projectId),
-        }
-        const queryBuilder = agentRepo()
-            .createQueryBuilder('agent')
-            .where(querySelector)
-
-        const agentsInTable = await tableService.getAllAgentIds({ projectId })        
-        queryBuilder.andWhere({
-            id: Not(In(agentsInTable)),
-        })
-
-        const agents = await queryBuilder.getMany()
-        return Promise.all(agents.map(async (agent) => {
-            const mcp = await mcpService(log).getOrThrow({ mcpId: agent.mcpId, projectId })
-            return {
-                ...agent,
-                mcp,
-            }
-        }))
-    },
 })
 
-async function enrichAgent(agent: Omit<Agent, 'runCompleted'>, log: FastifyBaseLogger): Promise<Agent> {
+async function enrichAgent(agent: Omit<Agent, 'runCompleted'>, log: FastifyBaseLogger): Promise<PopulatedAgent> {
+    const mcp = await mcpService(log).getOrThrow({ mcpId: agent.mcpId, projectId: agent.projectId })
     return {
         ...agent,
         runCompleted: await agentRunsService(log).count({ agentId: agent.id, projectId: agent.projectId }),
+        mcp,
     }
 }
 
