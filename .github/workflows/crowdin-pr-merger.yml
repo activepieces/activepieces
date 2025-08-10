@@ -96,21 +96,19 @@ jobs:
       - name: Auto merge PR
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.CROWDIN_PRS }}
           script: |
-            # First, try to update the branch with latest main
-              await github.rest.pulls.updateBranch({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: context.issue.number
-              })
-              
-              // Now merge using merge method
-              await github.rest.pulls.merge({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: context.issue.number,
-                merge_method: 'merge'
-              })
-         
-        env:
-          GITHUB_TOKEN: ${{ secrets.CROWDIN_PRS }}
+            // First, try to update the branch with latest main
+            await github.rest.pulls.updateBranch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            })
+            
+            // Now merge using merge method
+            await github.rest.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              merge_method: 'merge'
+            })
