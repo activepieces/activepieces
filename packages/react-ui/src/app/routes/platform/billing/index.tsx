@@ -37,6 +37,8 @@ export default function Billing() {
     isLoading: isPlatformSubscriptionLoading,
     isError,
   } = billingQueries.usePlatformSubscription(platform.id);
+  const { mutate: startBusinessTrial, isPending: startingBusinessTrial } =
+    billingMutations.useStartTrial();
 
   const { mutate: redirectToPortalSession } = billingMutations.usePortalLink();
 
@@ -76,42 +78,53 @@ export default function Billing() {
         description={t('Manage billing, usage and limits')}
         beta={true}
       >
-        {isEnterprise ? (
-          <Button
-            variant="default"
-            onClick={() => setIsActivateLicenseKeyDialogOpen(true)}
-          >
-            <Zap className="w-4 h-4" />
-            {platform.plan.licenseKey
-              ? t('Update License')
-              : t('Activate License')}
-          </Button>
-        ) : (
-          <div className="flex items-center gap-2">
-            {isSubscriptionActive && (
+        <div className="flex items-center gap-2">
+          {platformPlanInfo.plan.eligibleForBusinessTrial && (
+            <Button
+              variant="outline"
+              onClick={() => startBusinessTrial({ plan: PlanName.BUSINESS })}
+              disabled={startingBusinessTrial}
+            >
+              {startingBusinessTrial && <LoadingSpinner className="size-4" />}
+              {t('Start business trial')}
+            </Button>
+          )}
+
+          {isEnterprise ? (
+            <Button
+              variant="default"
+              onClick={() => setIsActivateLicenseKeyDialogOpen(true)}
+            >
+              <Zap className="w-4 h-4" />
+              {platform.plan.licenseKey
+                ? t('Update License')
+                : t('Activate License')}
+            </Button>
+          ) : (
+            isSubscriptionActive && (
               <Button
                 variant="outline"
                 onClick={() => redirectToPortalSession()}
               >
                 {t('Access Billing Portal')}
               </Button>
-            )}
-            <Button variant="default" onClick={() => openDialog()}>
-              {t('Upgrade Plan')}
-            </Button>
-          </div>
-        )}
+            )
+          )}
+          <Button variant="default" onClick={() => openDialog()}>
+            {t('Upgrade Plan')}
+          </Button>
+        </div>
       </DashboardPageHeader>
       <section className="flex flex-col w-full gap-6">
         {!isEnterprise && <SubscriptionInfo info={platformPlanInfo} />}
 
         <UsageCards platformSubscription={platformPlanInfo} />
 
-        {(isBusinessPlan || (isPlus && !isTrial)) && (
+        {(isBusinessPlan || isPlus) && !isTrial && (
           <ActiveFlowAddon platformSubscription={platformPlanInfo} />
         )}
 
-        {isBusinessPlan && (
+        {isBusinessPlan && !isTrial && (
           <div className="grid grid-cols-2 gap-6">
             <ProjectAddon platformSubscription={platformPlanInfo} />
             <UserSeatAddon platformSubscription={platformPlanInfo} />

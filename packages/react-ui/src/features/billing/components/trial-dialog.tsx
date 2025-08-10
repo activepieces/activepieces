@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { PartyPopper } from 'lucide-react';
 import { useState } from 'react';
@@ -5,46 +6,68 @@ import { useEffectOnce } from 'react-use';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { PlatformRole } from '@activepieces/shared';
+import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
+import { isNil, PlatformRole } from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
 
 import { useManagePlanDialogStore } from './upgrade-dialog/store';
-import { PlanName } from '@activepieces/ee-shared';
 
 export const WelcomeTrialDialog = () => {
-  const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
   const { data: user } = userHooks.useCurrentUser();
   const openDialog = useManagePlanDialogStore((state) => state.openDialog);
 
-  const isEligibleForTrial =
-    platform.plan.eligibleForTrial && user?.platformRole === PlatformRole.ADMIN;
+  const eligibleTrials = {
+    [PlanName.PLUS]: platform.plan.eligibleForPlusTrial,
+    [PlanName.BUSINESS]: platform.plan.eligibleForBusinessTrial,
+  };
 
-  const [isOpen, setIsOpen] = useState(isEligibleForTrial);
+  const trialPlan =
+    user?.platformRole === PlatformRole.ADMIN
+      ? eligibleTrials[PlanName.PLUS]
+        ? PlanName.PLUS
+        : eligibleTrials[PlanName.BUSINESS]
+        ? PlanName.BUSINESS
+        : null
+      : null;
 
-  const { mutate: startTrial } = billingMutations.useStartTrial();
+  const [isOpen, setIsOpen] = useState(!!trialPlan);
+  const { mutate: startTrial, isPending: startingTrial } =
+    billingMutations.useStartTrial();
 
   const handleClose = () => {
     setIsOpen(false);
-    refetch();
+    queryClient.invalidateQueries({
+      predicate: (query) =>
+        ['platform-billing-subscription', 'platform'].includes(
+          query.queryKey[0] as string,
+        ) && query.queryKey[1] === platform.id,
+    });
   };
 
   useEffectOnce(() => {
-    if (isEligibleForTrial) {
-      startTrial({ plan: PlanName.PLUS });
+    if (
+      platform.plan.stripeSubscriptionStatus !==
+        ApSubscriptionStatus.TRIALING &&
+      !isNil(trialPlan)
+    ) {
+      startTrial({ plan: trialPlan });
     }
   });
-
-  const handleContinue = () => {
-    handleClose();
-  };
 
   const handleSeePlans = () => {
     openDialog();
     handleClose();
   };
+
+  const isCurrentTrialPlus = trialPlan === PlanName.PLUS;
+  const canStartBusinessTrial =
+    isCurrentTrialPlus && eligibleTrials[PlanName.BUSINESS];
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -66,24 +89,35 @@ export const WelcomeTrialDialog = () => {
                   onClick={handleSeePlans}
                   className="px-0"
                 >
-                  {t('Plus')}
+                  {t(trialPlan ?? '')}
                 </Button>{' '}
                 {t(
-                  'plan explore all features and make the most of your trial.',
+                  'plan — explore all features and make the most of your trial.',
                 )}
               </p>
             </div>
-            <div className="flex w-full items-stretch flex-col justify-between gap-3">
-              <Button onClick={handleContinue} className="flex-1">
-                {t('Continue on trial')}
+
+            <div className="flex w-full flex-col gap-3">
+              <Button onClick={handleClose} className="flex-1">
+                {t(`Continue on ${trialPlan?.toLowerCase()} trial`)}
               </Button>
-              <Button
-                onClick={handleSeePlans}
-                variant="outline"
-                className="flex-1"
-              >
-                {t('View plans')}
-              </Button>
+
+              {canStartBusinessTrial && (
+                <Button
+                  variant="outline"
+                  onClick={() => startTrial({ plan: PlanName.BUSINESS })}
+                  disabled={startingTrial}
+                >
+                  {startingTrial && <LoadingSpinner className="size-4" />}
+                  {t('Start business trial')}
+                </Button>
+              )}
+
+              {!isCurrentTrialPlus && (
+                <Button variant="outline" onClick={handleSeePlans}>
+                  {t('See Plans')}
+                </Button>
+              )}
             </div>
           </div>
         </div>

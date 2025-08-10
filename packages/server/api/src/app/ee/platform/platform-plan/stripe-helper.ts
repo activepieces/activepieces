@@ -107,7 +107,8 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                 const key = `trial-gift-${platformPlan.platformId}-${platformPlan.stripeCustomerId}`
                 await platformPlanService(log).update({
                     platformId: platformPlan.platformId,
-                    eligibleForTrial: true,
+                    eligibleForPlusTrial: plan === PlanName.PLUS ? true : platformPlan.eligibleForPlusTrial,
+                    eligibleForBusinessTrial: plan === PlanName.BUSINESS ? true : platformPlan.eligibleForBusinessTrial,
                 })
                 const trialData = {
                     trialPeriodInUnixTime,

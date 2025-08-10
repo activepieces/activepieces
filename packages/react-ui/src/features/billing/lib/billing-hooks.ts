@@ -115,7 +115,8 @@ export const billingMutations = {
   },
   useStartTrial: () => {
     return useMutation({
-      mutationFn: (params: StartTrialParams) => platformBillingApi.startTrial(params),
+      mutationFn: (params: StartTrialParams) =>
+        platformBillingApi.startTrial(params),
       onError: (error) => {
         if (api.isError(error)) {
           const apError = error.response?.data as ApErrorParams;

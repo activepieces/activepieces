@@ -209,7 +209,8 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
     activeFlowsLimit: 2,
-    eligibleForTrial: true,
+    eligibleForPlusTrial: true,
+    eligibleForBusinessTrial: true,
     userSeatsLimit: 1,
     projectsLimit: 1,
     tablesLimit: 1,
@@ -251,7 +252,8 @@ export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit, a
         mcpLimit,
         tablesLimit,
         agentsLimit,
-        eligibleForTrial: false,
+        eligibleForPlusTrial: false,
+        eligibleForBusinessTrial: false,
 
         agentsEnabled: true,
         tablesEnabled: true,
@@ -283,7 +285,8 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     includedAiCredits: 500,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
-    eligibleForTrial: false,
+    eligibleForPlusTrial: false,
+    eligibleForBusinessTrial: false,
     activeFlowsLimit: 10,
     userSeatsLimit: 1,
     projectsLimit: 1,
@@ -319,7 +322,8 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     includedAiCredits: 1000,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
-    eligibleForTrial: false,
+    eligibleForPlusTrial: false,
+    eligibleForBusinessTrial: false,
     activeFlowsLimit: 50,
     userSeatsLimit: 5,
     projectsLimit: 10,
@@ -351,7 +355,8 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 }
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
-    eligibleForTrial: false,
+    eligibleForPlusTrial: false,
+    eligibleForBusinessTrial: false,
     embeddingEnabled: false,
 
     globalConnectionsEnabled: false,

@@ -231,7 +231,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const { plan } = request.body
         const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         
-        if (!platformBilling.eligibleForTrial) {
+        if (!platformBilling.eligibleForPlusTrial && !platformBilling.eligibleForBusinessTrial) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -243,15 +243,14 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const customerId = platformBilling.stripeCustomerId
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
-        const trialSubscriptionId = await stripeHelper(request.log).startTrial({ customerId, platformId: platformBilling.platformId, plan })
-        
-        if (trialSubscriptionId) {
-            await platformPlanService(request.log).update({
-                platformId: platformBilling.platformId,
-                stripeSubscriptionId: trialSubscriptionId,
-                eligibleForTrial: false,
-            })
-        }
+        const trialSubscriptionId = await stripeHelper(request.log).startTrial({ customerId, platformId: platformBilling.platformId, plan, existingSubscriptionId: platformBilling.stripeSubscriptionId })
+
+        await platformPlanService(request.log).update({
+            platformId: platformBilling.platformId,
+            stripeSubscriptionId: trialSubscriptionId,
+            eligibleForPlusTrial: plan === PlanName.PLUS ? false : platformBilling.eligibleForPlusTrial,
+            eligibleForBusinessTrial: plan === PlanName.BUSINESS ? false : platformBilling.eligibleForBusinessTrial,
+        })
         return { success: true }
     })
 

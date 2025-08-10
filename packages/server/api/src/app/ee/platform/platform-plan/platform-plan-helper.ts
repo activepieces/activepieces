@@ -196,11 +196,7 @@ export const PlatformPlanHelper = {
         const isDev = stripeSecretKey?.startsWith('sk_test')
         const env = isDev ? 'dev' : 'prod'
 
-        if (subscription.status === ApSubscriptionStatus.TRIALING) {
-            return { plan: PlanName.PLUS, cycle: BillingCycle.MONTHLY }
-        }
-
-        if (subscription.status !== ApSubscriptionStatus.ACTIVE) {
+        if (![ApSubscriptionStatus.ACTIVE, ApSubscriptionStatus.TRIALING].includes(subscription.status as ApSubscriptionStatus)) {
             return { plan: PlanName.FREE, cycle: BillingCycle.MONTHLY }
         }
 

@@ -39,7 +39,10 @@ export const platformBillingApi = {
     );
   },
   startTrial(params: StartTrialParams) {
-    return api.post<{ success: boolean }>('/v1/platform-billing/start-trial', params);
+    return api.post<{ success: boolean }>(
+      '/v1/platform-billing/start-trial',
+      params,
+    );
   },
   listAiCreditsUsage(
     params: ListAICreditsUsageRequest,
