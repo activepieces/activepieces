@@ -2,7 +2,7 @@ name: Generate Translation Files for All Pieces
 
 on:
   schedule:
-    - cron: '0 6 * * *'
+    - cron: '5 15 * * *'
   workflow_dispatch:
 
 jobs:
@@ -40,6 +40,9 @@ jobs:
         id: create-branch
         if: steps.check-changes.outputs.changes == 'true'
         run: |
+          # Configure git
+          git config --local user.email "abdulyki@activepieces.com"
+          git config --local user.name "AbdulTheActivePiecer"
           BRANCH_NAME="auto/translation-files-$(date +%Y%m%d-%H%M%S)"
           git checkout -b $BRANCH_NAME
           git add .
@@ -51,6 +54,7 @@ jobs:
         if: steps.check-changes.outputs.changes == 'true'
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const branchName = '${{ steps.create-branch.outputs.branch_name }}';
             const { data: pullRequest } = await github.rest.pulls.create({
@@ -78,5 +82,3 @@ jobs:
               pull_number: pullRequest.number,
               merge_method: 'squash'
             });
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
