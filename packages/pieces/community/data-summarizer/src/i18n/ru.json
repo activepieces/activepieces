@@ -1,0 +1,16 @@
+{
+  "Data Summarizer": "Сводка данных",
+  "Calculate Average": "Вычислить среднее",
+  "Calculate Sum": "Вычислить сумму",
+  "Count Uniques": "Count Uniques",
+  "Find Min and Max": "Найти мин и Макс",
+  "Calculates the average of a list of values.": "Вычисляет среднее значение списка.",
+  "Calculates the sum of a list of values.": "Вычисляет сумму списка значений.",
+  "Counts the number of unique values for multiple fields": "Засчитывает количество уникальных значений для нескольких полей",
+  "Get the smallest and greatest values from a list of numeric values.": "Получить наименьшие и наибольшие значения из списка числовых значений.",
+  "Markdown": "Markdown",
+  "Values": "Значения",
+  "Fields": "Поля",
+  "If you'd like to use the values with a previous step, click the (X) first, and then select the step you want to use.": "Если вы хотите использовать значения с предыдущим шагом, нажмите сначала (X), а затем выберите шаг, который вы хотите использовать.",
+  "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave fields empty.": "Если данные, в которых вы передаете это объект, вы можете указать определенные поля для фильтрации. Объект будет удален, если поля не существуют. Иначе оставьте поля пустыми."
+}
