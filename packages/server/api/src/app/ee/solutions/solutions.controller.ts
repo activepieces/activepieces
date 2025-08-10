@@ -1,5 +1,5 @@
 import { ExportRequestBody, PrincipalType, Solution } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { solutionService } from './solution.service'
 

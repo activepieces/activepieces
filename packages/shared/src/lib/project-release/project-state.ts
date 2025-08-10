@@ -1,8 +1,8 @@
 import { Static, Type } from '@sinclair/typebox'
 import { AgentOutputField, AgentOutputType } from '../agents'
+import { Nullable } from '../common'
 import { PopulatedFlow } from '../flows/flow'
 import { McpTool } from '../mcp'
-import { Nullable } from '../common'
 
 export enum FlowProjectOperationType {
     UPDATE_FLOW = 'UPDATE_FLOW',
