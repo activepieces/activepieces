@@ -1,4 +1,4 @@
-name: Auto Merge Bot PRs
+name: Auto Merge Crowdin PRs Action
 
 on:
   pull_request:
@@ -40,7 +40,14 @@ jobs:
             })
       
       - name: Fetch main branch
-        run: git fetch origin main:main
+        run: |
+          git fetch origin main:main
+          # Fetch the PR branch to make it available locally
+          git fetch origin ${{ github.event.pull_request.head.ref }}:${{ github.event.pull_request.head.ref }}
+          # Reset branch to match remote repository
+          echo "Resetting branch to match remote repository..."
+          git reset --hard origin/${{ github.event.pull_request.head.ref }}
+          git clean -fd
       
       - name: Run Node.js script
         run: |
@@ -48,6 +55,7 @@ jobs:
           npm run bump-translated-pieces
       
       - name: Check for changes and commit
+        id: check-changes
         run: |
           # Check if there are any changes
           if [[ -n "$(git status --porcelain)" ]]; then
@@ -67,33 +75,45 @@ jobs:
             git push origin HEAD:${{ github.event.pull_request.head.ref }}
             
             echo "Changes committed and pushed to PR branch"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
           else
             echo "No changes detected, skipping commit"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Update PR branch with latest main
-  uses: actions/github-script@v7
-  with:
-    script: |
-      await github.rest.pulls.updateBranch({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        pull_number: context.issue.number
-      })
-  env:
-    GITHUB_TOKEN: ${{ secrets.CROWDIN_PRS }}
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: |
+          echo "Fetching latest from remote..."
+          git fetch origin
+          echo "Pushing latest commit to PR branch..."
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.CROWDIN_PRS }}
 
       - name: Auto merge PR
+        if: steps.check-changes.outputs.has_changes == 'true'
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-              merge_method: 'merge'
-            })
+            # First, try to update the branch with latest main
+              await github.rest.pulls.updateBranch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number
+              })
+              
+             
+              
+              // Now merge using merge method
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                merge_method: 'merge'
+              })
+         
         env:
           GITHUB_TOKEN: ${{ secrets.CROWDIN_PRS }}
