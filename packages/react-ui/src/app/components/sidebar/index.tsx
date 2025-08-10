@@ -338,7 +338,7 @@ function ApSidebarMenuGroup(item: SidebarGroup) {
   const location = useLocation();
   return (
     <React.Fragment key={item.label}>
-      <SidebarGroup key={item.name} className="py-2">
+      <SidebarGroup key={item.name} className="py-0.5">
         {item.name && <SidebarGroupLabel>{item.name}</SidebarGroupLabel>}
         <SidebarMenu className="py-0">
           <Collapsible
