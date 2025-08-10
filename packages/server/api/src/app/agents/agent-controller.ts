@@ -30,6 +30,7 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
             description: request.body.description,
             projectId: request.principal.projectId,
             platformId: request.principal.platform.id,
+            enhancePrompt: true,
         })
     })
 
