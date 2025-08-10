@@ -122,8 +122,10 @@ export const ExtraSeatsDialog = ({
           <Button
             onClick={() =>
               updateUserSeats({
-                seats: newSeatCount,
                 plan: PlanName.BUSINESS,
+                addons: {
+                  userSeats: newSeatCount,
+                },
               })
             }
             disabled={isPending || newSeatCount === currentUserLimit}

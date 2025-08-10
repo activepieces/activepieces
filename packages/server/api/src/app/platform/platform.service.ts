@@ -165,7 +165,14 @@ export const platformService = {
             plan: await getPlan(platform),
         }
     },
-    async getOneWithPlanOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
+    async getOneWithPlanOrThrow(id: PlatformId): Promise<Omit<PlatformWithoutSensitiveData, 'usage'>> {
+        const platform = await this.getOneOrThrow(id)
+        return {
+            ...platform,
+            plan: await getPlan(platform),
+        }
+    },
+    async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
         return {
             ...platform,

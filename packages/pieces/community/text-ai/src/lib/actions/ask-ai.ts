@@ -76,8 +76,13 @@ export const askAI = createAction({
           content: context.propsValue.prompt,
         },
       ],
-      maxTokens: context.propsValue.maxTokens,
+      maxTokens: providerName !== 'openai' ? context.propsValue.maxTokens : undefined,
       temperature: (context.propsValue.creativity ?? 100) / 100,
+      providerOptions: {
+        [providerName]: {
+          ...(providerName === 'openai' && context.propsValue.maxTokens ? { max_completion_tokens: context.propsValue.maxTokens } : {}),
+        }
+      }
     });
 
     conversation?.push({

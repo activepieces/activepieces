@@ -1,4 +1,4 @@
-import { METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
+import { METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, PlanName, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
 import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlatformPlanLimits, PlatformUsageMetric, UserStatus } from '@activepieces/shared'
 import { flowService } from '../../../flows/flow/flow.service'
 import { system } from '../../../helper/system/system'
@@ -79,6 +79,22 @@ export const PlatformPlanHelper = {
                 code: ErrorCode.RESOURCE_LOCKED,
                 params: {
                     message: RESOURCE_TO_MESSAGE_MAPPING[resource],
+                },
+            })
+        }
+    },
+    checkLegitSubscriptionUpdateOrThrow: async (params: CheckLegitSubscriptionUpdateOrThrowParams) => {
+        const { projectsAddon, userSeatsAddon, newPlan } = params
+
+        const isNotBusinessPlan = newPlan !== PlanName.BUSINESS
+        const requestUserSeatAddon = !isNil(userSeatsAddon)
+        const requestProjectAddon = !isNil(projectsAddon)
+
+        if (isNotBusinessPlan && (requestUserSeatAddon || requestProjectAddon)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Extra users and projects are only available for the Business plan',
                 },
             })
         }
@@ -183,4 +199,10 @@ type QuotaCheckParams = {
 type CheckResourceLockedParams = {
     platformId: string
     resource: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_CREDITS | PlatformUsageMetric.TASKS | PlatformUsageMetric.USER_SEATS | PlatformUsageMetric.ACTIVE_FLOWS>
+}
+
+type CheckLegitSubscriptionUpdateOrThrowParams = {
+    newPlan: PlanName
+    projectsAddon?: number
+    userSeatsAddon?: number
 }
