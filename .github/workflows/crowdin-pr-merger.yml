@@ -1,4 +1,4 @@
-name: Auto Merge Bot PRs
+name: Auto Merge Crowdin PRs Action
 
 on:
   pull_request:
@@ -74,16 +74,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Update PR branch with latest main
-  uses: actions/github-script@v7
-  with:
-    script: |
-      await github.rest.pulls.updateBranch({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        pull_number: context.issue.number
-      })
-  env:
-    GITHUB_TOKEN: ${{ secrets.CROWDIN_PRS }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.pulls.updateBranch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            })
+        env:
+          GITHUB_TOKEN: ${{ secrets.CROWDIN_PRS }}
 
       - name: Auto merge PR
         uses: actions/github-script@v7
