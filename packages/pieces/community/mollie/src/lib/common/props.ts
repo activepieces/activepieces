@@ -53,7 +53,8 @@ export const currencyDropdown = Property.StaticDropdown({
   },
 });
 
-export const paymentMethodDropdown = Property.StaticDropdown({
+
+export const paymentMethodDropdown = Property.StaticMultiSelectDropdown({
   displayName: 'Payment Method',
   description: 'Force a specific payment method',
   required: false,

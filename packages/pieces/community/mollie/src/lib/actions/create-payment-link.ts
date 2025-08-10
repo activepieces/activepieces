@@ -75,9 +75,9 @@ export const createPaymentLink = createAction({
     if (propsValue.expiresAt) {
       paymentLinkData.expiresAt = propsValue.expiresAt;
     }
-    if (propsValue.allowedMethods && propsValue.allowedMethods.length > 0) {
-      paymentLinkData.allowedMethods = propsValue.allowedMethods;
-    }
+    // if (propsValue.allowedMethods && propsValue.allowedMethods.length > 0) {
+    //   paymentLinkData.allowedMethods = propsValue.allowedMethods;
+    // }
     if (propsValue.profileId) {
       paymentLinkData.profileId = propsValue.profileId;
     }
