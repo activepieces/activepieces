@@ -12,6 +12,7 @@ import { PlatformRole } from '@activepieces/shared';
 import { billingMutations } from '../lib/billing-hooks';
 
 import { useManagePlanDialogStore } from './upgrade-dialog/store';
+import { PlanName } from '@activepieces/ee-shared';
 
 export const WelcomeTrialDialog = () => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
@@ -32,7 +33,7 @@ export const WelcomeTrialDialog = () => {
 
   useEffectOnce(() => {
     if (isEligibleForTrial) {
-      startTrial();
+      startTrial({ plan: PlanName.PLUS });
     }
   });
 

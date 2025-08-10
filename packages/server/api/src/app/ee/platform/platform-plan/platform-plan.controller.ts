@@ -1,4 +1,4 @@
-import { ApSubscriptionStatus, BillingCycle, CreateSubscriptionParamsSchema, getPlanLimits, PlanName, SetAiCreditsOverageLimitParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, BillingCycle, CreateSubscriptionParamsSchema, getPlanLimits, PlanName, SetAiCreditsOverageLimitParamsSchema, StartTrialParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, ListAICreditsUsageRequest, ListAICreditsUsageResponse, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
@@ -12,7 +12,6 @@ import { stripeHelper } from './stripe-helper'
 
 async function getNextBillingAmount(subscriptionStatus: ApSubscriptionStatus, log: FastifyBaseLogger, subscriptionId?: string): Promise<number> {
     const stripe = stripeHelper(log).getStripe()
-    
     if (isNil(stripe)) {
         return 0
     }
@@ -57,7 +56,6 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             nextBillingDate,
             cancelAt: cancelDate,
         }
-        
         return response
     })
 
@@ -230,6 +228,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     })
 
     fastify.post('/start-trial', StartTrialRequest, async (request) => {
+        const { plan } = request.body
         const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         
         if (!platformBilling.eligibleForTrial) {
@@ -244,7 +243,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const customerId = platformBilling.stripeCustomerId
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
-        const trialSubscriptionId = await stripeHelper(request.log).startTrial(customerId, platformBilling.platformId)
+        const trialSubscriptionId = await stripeHelper(request.log).startTrial({ customerId, platformId: platformBilling.platformId, plan })
         
         if (trialSubscriptionId) {
             await platformPlanService(request.log).update({
@@ -253,7 +252,6 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
                 eligibleForTrial: false,
             })
         }
-
         return { success: true }
     })
 
@@ -317,6 +315,9 @@ const EnableAiCreditsOverageRequest = {
 const StartTrialRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
+    },
+    schema: {
+        body: StartTrialParamsSchema,
     },
     response: {
         [StatusCodes.OK]: Type.Object({

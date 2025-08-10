@@ -1,4 +1,4 @@
-import {  ApSubscriptionStatus, BillingCycle, CreateSubscriptionParams, PlanName } from '@activepieces/ee-shared'
+import {  ApSubscriptionStatus, BillingCycle, CreateSubscriptionParams, PlanName, StripePlanName } from '@activepieces/ee-shared'
 import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, assertNotNullOrUndefined, isNil, PlatformRole, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -39,34 +39,46 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         })
         return newCustomer.id
     },
-    async startTrial(customerId: string, platformId: string) {
+    async startTrial(params: StartTrialParams) {
+        const { customerId, platformId, plan, existingSubscriptionId } = params
+
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
         const redisConnection = getRedisConnection()
         const key = `trial-gift-${platformId}-${customerId}`
-        const trialPeriod = await redisConnection.get(key)
+        const redisValue = await redisConnection.get(key)
+        const parsedGiftTrial = redisValue 
+            ? JSON.parse(redisValue) 
+            : null
+
+        const trialPeriod = parsedGiftTrial?.trialPeriodInUnixTime 
+            ?? apDayjs().add(14, 'days').unix()
+
+        const trialPlan = parsedGiftTrial?.trialPlan as StripePlanName
+            ?? plan
+
+        const priceId = {
+            [PlanName.PLUS]: PLUS_PLAN_PRICE_ID,
+            [PlanName.BUSINESS]: BUSINESS_PLAN_PRICE_ID,
+        }[trialPlan][BillingCycle.MONTHLY]
+
+        if (existingSubscriptionId) {
+            await stripe.subscriptions.cancel(existingSubscriptionId)
+        }
 
         const subscription = await stripe.subscriptions.create({
             customer: customerId,
-            trial_end: isNil(trialPeriod) ? apDayjs().add(14, 'days').unix() : Number(trialPeriod),
-            items: [
-                { price: PLUS_PLAN_PRICE_ID[BillingCycle.MONTHLY], quantity: 1 },
-            ],
-            trial_settings: {
-                end_behavior: {
-                    missing_payment_method: 'cancel',
-                },
-            },
-            metadata: {
-                platformId,
-                trialSubscription: 'true',
-            },
+            trial_end: trialPeriod,
+            items: [{ price: priceId, quantity: 1 }],
+            trial_settings: { end_behavior: { missing_payment_method: 'cancel' } },
+            metadata: { platformId, trialSubscription: 'true' },
         })
 
         return subscription.id
     },
-    async giftTrialForCustomer(email: string, trialPeriod: number) {
+    async giftTrialForCustomer(params: GiftTrialForCustomerParams) {
+        const { email, trialPeriod, plan } = params
         const trialPeriodInUnixTime = dayjs().add(trialPeriod, 'months').unix()
         const stripe = this.getStripe()
         if (isNil(stripe)) {
@@ -87,15 +99,23 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             const platformPlan = await platformPlanService(log).getOrCreateForPlatform(user.platformId)
             assertNotNullOrUndefined(platformPlan.stripeCustomerId, 'customerId is not set')
                 
-            if (isNil(platformPlan.stripeSubscriptionId) || platformPlan.stripeSubscriptionStatus === ApSubscriptionStatus.CANCELED) {
+            if (
+                isNil(platformPlan.stripeSubscriptionId) || 
+                platformPlan.stripeSubscriptionStatus === ApSubscriptionStatus.CANCELED
+            ) {
                 const redisConnection = getRedisConnection()
                 const key = `trial-gift-${platformPlan.platformId}-${platformPlan.stripeCustomerId}`
-                await platformPlanService(log).update({ platformId: platformPlan.platformId, eligibleForTrial: true })
-                await redisConnection.set(key, trialPeriodInUnixTime)
+                await platformPlanService(log).update({
+                    platformId: platformPlan.platformId,
+                    eligibleForTrial: true,
+                })
+                const trialData = {
+                    trialPeriodInUnixTime,
+                    trialPlan: plan,
+                }
+                await redisConnection.set(key, JSON.stringify(trialData))
                 await redisConnection.expire(key, 60 * 60 * 15)
-
                 return
-
             }
             else if (platformPlan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING) {
                 await stripe.subscriptions.update(platformPlan.stripeSubscriptionId, {
@@ -440,4 +460,17 @@ type CreateSubscriptionScheduleParams = {
     extraProjects: number
     extraActiveFlows: number
     logger: FastifyBaseLogger
+}
+
+type StartTrialParams = {
+    customerId: string
+    platformId: string
+    plan: StripePlanName
+    existingSubscriptionId?: string
+}
+
+type GiftTrialForCustomerParams = {
+    email: string
+    trialPeriod: number
+    plan: StripePlanName
 }

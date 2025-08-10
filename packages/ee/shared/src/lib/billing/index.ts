@@ -36,8 +36,6 @@ export enum ApSubscriptionStatus {
     TRIALING = 'trialing',
 }
 
-
-
 export enum PlanName {
     FREE = 'free',
     PLUS = 'plus',
@@ -87,6 +85,12 @@ export const ToggleAiCreditsOverageEnabledParamsSchema = Type.Object({
     state: Type.Enum(AiOverageState),
 })
 export type ToggleAiCreditsOverageEnabledParams = Static<typeof ToggleAiCreditsOverageEnabledParamsSchema>
+
+export const StartTrialParamsSchema = Type.Object({
+    plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
+})
+export type StartTrialParams = Static<typeof StartTrialParamsSchema>
+
 
 const Addons = Type.Object({
     userSeats: Type.Optional(Type.Number()),
