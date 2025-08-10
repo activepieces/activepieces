@@ -1994,6 +1994,33 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "nuvex-dev",
+      "name": "Nuvex",
+      "avatar_url": "https://avatars.githubusercontent.com/u/181783827?v=4",
+      "profile": "https://github.com/nuvex-dev",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Zebi15",
+      "name": "Apostol Eusebiu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/80625145?v=4",
+      "profile": "https://github.com/Zebi15",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "fortunamide",
+      "name": "Fortunate",
+      "avatar_url": "https://avatars.githubusercontent.com/u/122938302?v=4",
+      "profile": "https://github.com/fortunamide",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

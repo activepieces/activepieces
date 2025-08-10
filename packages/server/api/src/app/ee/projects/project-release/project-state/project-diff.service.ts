@@ -1,4 +1,4 @@
-import { ActionType, AgentOperation, AgentOperationType, AgentState, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, FieldType, flowPieceUtil, FlowProjectOperationType, flowStructureUtil, FlowVersion, isNil, McpOperation, McpOperationType, McpState, McpToolType, PopulatedFlow, ProjectOperation, ProjectState, Step, TableOperation, TableOperationType, TableState, TriggerType } from '@activepieces/shared'
+import { AgentOperation, AgentOperationType, AgentState, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, FieldType, FlowActionType, flowPieceUtil, FlowProjectOperationType, flowStructureUtil, FlowTriggerType, FlowVersion, isNil, McpOperation, McpOperationType, McpState, McpToolType, PopulatedFlow, ProjectOperation, ProjectOperationType, ProjectState, Step, TableOperation, TableOperationType, TableState } from '@activepieces/shared'
 import semver from 'semver'
 
 export const projectDiffService = {
@@ -264,13 +264,13 @@ async function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow)
     const versionSetTwo = new Map<string, string>()
 
     flowStructureUtil.getAllSteps(normalizedFromFlow.trigger).forEach((step) => {
-        if ([ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
+        if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {
             versionSetOne.set(step.name, step.settings.pieceVersion)
         }
     })
 
     flowStructureUtil.getAllSteps(normalizedTargetFlow.trigger).forEach((step) => {
-        if ([ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
+        if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {
             versionSetTwo.set(step.name, step.settings.pieceVersion)
         }
     })
@@ -295,7 +295,7 @@ async function normalize(flowVersion: FlowVersion): Promise<FlowVersion> {
         clonedStep.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
         const authExists = clonedStep?.settings?.input?.auth
         
-        if ([ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
+        if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {
             clonedStep.settings.pieceVersion = ''
             if (authExists) {
                 clonedStep.settings.input.auth = ''

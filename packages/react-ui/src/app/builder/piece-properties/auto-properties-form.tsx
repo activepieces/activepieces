@@ -260,6 +260,7 @@ const selectFormComponentForProperty = ({
             propertyName={propertyName}
             multiple={property.type === PropertyType.MULTI_SELECT_DROPDOWN}
             showDeselect={!property.required}
+            shouldRefreshOnSearch={property.refreshOnSearch ?? false}
           ></DynamicDropdownPieceProperty>
         </AutoFormFieldWrapper>
       );

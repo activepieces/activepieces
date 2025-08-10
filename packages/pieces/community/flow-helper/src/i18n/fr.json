@@ -1,0 +1,10 @@
+{
+  "Flow Helper": "Assistant de Flux",
+  "Get Run Info": "Obtenir les informations sur l'exécution",
+  "Fail Flow": "Défaut Flow",
+  "Stop Flow": "Arrêter le flux",
+  "Fails the flow execution with a custom message.": "Échoue l'exécution du flux avec un message personnalisé.",
+  "Stops the flow immediately this step is reached.": "Arrête le flux immédiatement cette étape est atteinte.",
+  "Error Message": "Message d'erreur",
+  "The error message to show when the flow fails.": "Le message d'erreur à afficher lorsque le flux échoue."
+}

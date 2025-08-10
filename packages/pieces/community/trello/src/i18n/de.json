@@ -28,6 +28,14 @@
   "Bottom": "Unten",
   "Card Moved to list": "Karte in Liste verschoben",
   "New Card": "Neue Karte",
+  "Card Deadline": "Kartenfrist",
   "Trigger when a card is moved to the list specified": "Auslösen wenn eine Karte in die angegebene Liste verschoben wird",
-  "Trigger when a new card is created": "Auslösen wenn eine neue Karte erstellt wird"
+  "Trigger when a new card is created": "Auslösen wenn eine neue Karte erstellt wird",
+  "Triggers at a specified time before a card deadline.": "Löst zu einer bestimmten Zeit vor einer Kartenfrist aus.",
+  "Time unit": "Zeiteinheit",
+  "Time before due": "Zeit vor Fälligkeit",
+  "Select unit for time before due": "Einheit vor Fälligkeit auswählen",
+  "How long before the due date the trigger should run (use with time unit)": "Wie lange vor dem Fälligkeitsdatum der Trigger laufen soll (Verwendung mit Zeiteinheit)",
+  "Minutes": "Minuten",
+  "Hours": "Stunden"
 }
