@@ -68,12 +68,10 @@ export const AgentsPage = () => {
           beta={true}
           tutorialTab="agents"
         >
-          {isNil(selectedAgent) && (
-            <CreateAgentButton
-              onAgentCreated={handleAgentCreated}
-              isAgentsConfigured={isisAgentsConfigured ?? false}
-            />
-          )}
+          <CreateAgentButton
+            onAgentCreated={handleAgentCreated}
+            isAgentsConfigured={isisAgentsConfigured ?? false}
+          />
         </DashboardPageHeader>
 
         {selectedAgent && (
@@ -90,11 +88,7 @@ export const AgentsPage = () => {
             }}
             agent={selectedAgent}
             showUseInFlow={true}
-            trigger={
-              <CreateAgentButton
-                onAgentCreated={handleAgentCreated}
-                isAgentsConfigured={isisAgentsConfigured ?? false}
-              />
+            trigger={<></>
             }
           />
         )}
