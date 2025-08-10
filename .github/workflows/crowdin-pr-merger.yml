@@ -72,7 +72,7 @@ jobs:
             git commit -m "chore: auto bump translated pieces"
             
             # Push changes back to the PR branch
-            git push origin HEAD:${{ github.event.pull_request.head.sha }}
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
             
             echo "Changes committed and pushed to PR branch"
             echo "has_changes=true" >> $GITHUB_OUTPUT
