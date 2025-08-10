@@ -4,15 +4,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
+import { Drawer, DrawerContent, DrawerHeader } from '@/components/ui/drawer';
 import EditableTextWithPen from '@/components/ui/editable-text-with-pen';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Drawer, DrawerContent, DrawerHeader } from '@/components/ui/drawer';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { NEW_MCP_QUERY_PARAM } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
-import { authenticationSession } from '@/lib/authentication-session';
 
 import { McpConfigPage } from './mcp-config';
 import { McpConnectPage } from './mcp-connect';
@@ -115,7 +115,11 @@ const McpServerPage = () => {
               <Tabs defaultValue={tabs[0].value} className="w-full">
                 <TabsList variant="outline">
                   {tabs.map((tab) => (
-                    <TabsTrigger key={tab.value} value={tab.value} variant="outline">
+                    <TabsTrigger
+                      key={tab.value}
+                      value={tab.value}
+                      variant="outline"
+                    >
                       <tab.icon className="h-4 w-4 mr-2" /> {tab.name}
                     </TabsTrigger>
                   ))}
