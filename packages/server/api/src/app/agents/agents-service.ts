@@ -30,7 +30,13 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             projectId: params.projectId,
         })
         const id = apId()
-        const { description, displayName, systemPrompt } = await this.enhanceAgentPrompt({ platformId: params.platformId, projectId: params.projectId, systemPrompt: params.systemPrompt, agentId: id })
+        const { description, displayName, systemPrompt } = params.enhancePrompt ? await this.enhanceAgentPrompt({
+            platformId: params.platformId,
+            projectId: params.projectId,
+            systemPrompt: params.systemPrompt,
+            agentId: id,
+        }) : { ...params }
+
         const agentPayload: Omit<Agent, 'created' | 'updated' | 'taskCompleted' | 'runCompleted'> = {
             id,
             displayName,
@@ -80,10 +86,10 @@ export const agentsService = (log: FastifyBaseLogger) => ({
 
         const { object } = await generateObject({
             model,
-            system, 
+            system,
             prompt,
             mode: 'json',
-            schema: enhancePromptSchema, 
+            schema: enhancePromptSchema,
         })
         return object
     },
@@ -220,6 +226,7 @@ type CreateParams = {
     systemPrompt: string
     platformId: string
     projectId: string
+    enhancePrompt?: boolean
 }
 
 type UpdateParams = {
