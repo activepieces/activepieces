@@ -80,7 +80,6 @@ Authenticate with Zoho Bigin via OAuth2.
     }
 
     try {
-      // Map selected Accounts domain to the correct API domain for validation
       const region = DATA_CENTER_REGIONS.find(
         (r) => r.ACCOUNTS_DOMAIN === domain || getZohoBiginAccountAuthorizationUrl(r.REGION) === domain
       );
