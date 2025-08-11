@@ -8,7 +8,7 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { formUtils } from '@/features/pieces/lib/form-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
-import { Action, Trigger } from '@activepieces/shared';
+import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
 import { useStepSettingsContext } from '../step-settings/step-settings-context';
 
@@ -27,7 +27,7 @@ const DynamicPropertiesImplementation = React.memo(
       state.flowVersion,
       state.readonly,
     ]);
-    const form = useFormContext<Action | Trigger>();
+    const form = useFormContext<FlowAction | FlowTrigger>();
     const { updateFormSchema } = useStepSettingsContext();
     const isFirstRender = useRef(true);
     const previousValues = useRef<undefined | unknown[]>(undefined);

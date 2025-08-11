@@ -1,0 +1,10 @@
+{
+  "Approval (Legacy)": "Approval (Legacy)",
+  "Build approval process in your workflows": "Build approval process in your workflows",
+  "Wait for Approval": "Wait for Approval",
+  "Create Approval Links": "Create Approval Links",
+  "Pauses the flow and wait for the approval from the user": "Pauses the flow and wait for the approval from the user",
+  "Create links only without pausing the flow, use wait for approval to pause": "Create links only without pausing the flow, use wait for approval to pause",
+  "Markdown": "Markdown",
+  "Please use Manual Task feature instead from 0.48.0 and above": "Please use Manual Task feature instead from 0.48.0 and above"
+}

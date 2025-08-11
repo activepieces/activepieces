@@ -1,5 +1,5 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { Action, ActionType, assertEqual, CodeAction, EXACT_VERSION_REGEX, flowStructureUtil, FlowVersion, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, Step, Trigger, TriggerType } from '@activepieces/shared'
+import { assertEqual, CodeAction, EXACT_VERSION_REGEX, FlowAction, FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { CodeArtifact } from '../runner/engine-runner-types'
@@ -7,7 +7,7 @@ import { CodeArtifact } from '../runner/engine-runner-types'
 export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
     getCodeSteps(flowVersion: FlowVersion): CodeArtifact[] {
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
-        return steps.filter((step) => step.type === ActionType.CODE).map((step) => {
+        return steps.filter((step) => step.type === FlowActionType.CODE).map((step) => {
             const codeAction = step as CodeAction
             return {
                 name: codeAction.name,
@@ -18,7 +18,7 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
         })
     },
     async getTriggerPiece(engineToken: string, flowVersion: FlowVersion): Promise<PiecePackage> {
-        assertEqual(flowVersion.trigger.type, TriggerType.PIECE, 'trigger.type', 'PIECE')
+        assertEqual(flowVersion.trigger.type, FlowTriggerType.PIECE, 'trigger.type', 'PIECE')
         const { trigger } = flowVersion
         return this.getExactPieceForStep(engineToken, trigger)
     },
@@ -59,7 +59,7 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
             }
         }
     },
-    async getExactPieceForStep(engineToken: string, step: Action | Trigger): Promise<PiecePackage> {
+    async getExactPieceForStep(engineToken: string, step: FlowAction | FlowTrigger): Promise<PiecePackage> {
         const pieceSettings = step.settings as PieceTriggerSettings | PieceActionSettings
         const { pieceName, pieceVersion } = pieceSettings
         return this.resolveExactVersion(engineToken, {
@@ -103,8 +103,8 @@ async function getPieceVersionAndArchiveId(engineToken: string, archiveId: strin
     }
 }
 
-const isPieceStep = (step: Step): step is Action | Trigger => {
-    return step.type === TriggerType.PIECE || step.type === ActionType.PIECE
+const isPieceStep = (step: Step): step is FlowAction | FlowTrigger => {
+    return step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE
 }
 
 type LockFlowVersionParams = {

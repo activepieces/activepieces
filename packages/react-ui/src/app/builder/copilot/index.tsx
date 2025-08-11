@@ -11,7 +11,6 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/use-toast';
 import { CORE_STEP_METADATA } from '@/features/pieces/lib/step-utils';
 import {
-  ActionType,
   CodeAction,
   FlowOperationType,
   flowStructureUtil,
@@ -20,6 +19,7 @@ import {
   WebsocketClientEvent,
   WebsocketServerEvent,
   AskCopilotTool,
+  FlowActionType,
 } from '@activepieces/shared';
 
 import { Textarea } from '../../../components/ui/textarea';
@@ -166,7 +166,7 @@ export const CopilotSidebar = () => {
           : flowStructureUtil.findUnusedName(flowVersion.trigger);
       const codeAction = pieceSelectorUtils.getDefaultStepValues({
         stepName,
-        pieceSelectorItem: CORE_STEP_METADATA[ActionType.CODE],
+        pieceSelectorItem: CORE_STEP_METADATA[FlowActionType.CODE],
         overrideDefaultSettings: {
           input: message.content.inputs,
           sourceCode: {
@@ -198,7 +198,8 @@ export const CopilotSidebar = () => {
         );
         if (step) {
           const errorHandlingOptions =
-            step.type === ActionType.CODE || step.type === ActionType.PIECE
+            step.type === FlowActionType.CODE ||
+            step.type === FlowActionType.PIECE
               ? step.settings.errorHandlingOptions
               : codeAction.settings.errorHandlingOptions;
 
@@ -213,7 +214,7 @@ export const CopilotSidebar = () => {
                 input: message.content.inputs,
                 errorHandlingOptions,
               },
-              type: ActionType.CODE,
+              type: FlowActionType.CODE,
               valid: true,
             },
           });
