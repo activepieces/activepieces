@@ -126,10 +126,11 @@ export const appendNote = createAction({
 			case 'list_item':
 				htmlContent = `<ul><li>${content}</li></ul>`;
 				break;
-			case 'heading':
+			case 'heading': {
 				const level = heading_level || 'h2';
 				htmlContent = `<${level}>${content}</${level}>`;
 				break;
+			}
 			case 'html':
 				htmlContent = content;
 				break;
