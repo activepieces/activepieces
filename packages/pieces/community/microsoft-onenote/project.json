@@ -1,7 +1,7 @@
 {
-  "name": "pieces-onepiece",
+  "name": "pieces-microsoft-onenote",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/onepiece/src",
+  "sourceRoot": "packages/pieces/community/microsoft-onenote/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -20,14 +20,14 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/onepiece",
-        "tsConfig": "packages/pieces/community/onepiece/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/onepiece/package.json",
-        "main": "packages/pieces/community/onepiece/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/microsoft-onenote",
+        "tsConfig": "packages/pieces/community/microsoft-onenote/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/microsoft-onenote/package.json",
+        "main": "packages/pieces/community/microsoft-onenote/src/index.ts",
         "assets": [
-          "packages/pieces/community/onepiece/*.md",
+          "packages/pieces/community/microsoft-onenote/*.md",
           {
-            "input": "packages/pieces/community/onepiece/src/i18n",
+            "input": "packages/pieces/community/microsoft-onenote/src/i18n",
             "output": "./src/i18n",
             "glob": "**/!(i18n.json)"
           }

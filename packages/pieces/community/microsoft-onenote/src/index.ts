@@ -6,6 +6,7 @@ import { appendNote } from './lib/actions/append-note';
 import { newNoteInSectionTrigger } from './lib/triggers/new-note-in-section';
 import { createNoteInSection } from './lib/actions/create-note-in-section';
 import { createPage } from './lib/actions/create-page';
+import { PieceCategory } from "@activepieces/shared";
 
 export const oneNoteAuth = PieceAuth.OAuth2({
 	description:
@@ -17,12 +18,14 @@ export const oneNoteAuth = PieceAuth.OAuth2({
 	prompt: 'omit'
 });
 
-export const onepiece = createPiece({
-	displayName: "Onepiece",
+export const microsoftOnenote = createPiece({
+	displayName: "Microsoft OneNote",
+	description: "Microsoft OneNote is a note-taking app that allows you to create, edit, and share notes with others.",
+	categories: [PieceCategory.PRODUCTIVITY],
 	auth: oneNoteAuth,
 	minimumSupportedRelease: '0.36.1',
-	logoUrl: "https://cdn.activepieces.com/pieces/onepiece.png",
-	authors: [],
+	logoUrl: "https://cdn.activepieces.com/pieces/microsoft-onenote.png",
+	authors: ['fortunamide', 'onyedikachi-david'],
 	actions: [
 		createNotebook,
 		createSection,
