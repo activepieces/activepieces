@@ -25,6 +25,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 executionState: {
                     steps: !isNil(flowRun) ? flowRun.steps : {},
                 },
+                sampleData: jobData.sampleData,
                 tasks: flowRun?.tasks ?? 0,
                 executeTrigger: jobData.executeTrigger ?? false,
                 runEnvironment: jobData.environment,

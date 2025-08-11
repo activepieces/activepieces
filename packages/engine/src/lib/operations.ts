@@ -32,9 +32,9 @@ import { triggerHelper } from './helper/trigger-helper'
 import { progressService } from './services/progress.service'
 import { utils } from './utils'
 
-const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<EngineResponse<Pick<FlowRunResponse, 'status' | 'error'>>> => {
+const executeFlow = async (input: ExecuteFlowOperation): Promise<EngineResponse<Pick<FlowRunResponse, 'status' | 'error'>>> => {
     const constants = EngineConstants.fromExecuteFlowInput(input)
-    const output: FlowExecutorContext = await executieSingleStepOrFlowOperation(input, context)
+    const output: FlowExecutorContext = await executieSingleStepOrFlowOperation(input)
     const newContext = output.verdict === ExecutionVerdict.RUNNING ? output.setVerdict(ExecutionVerdict.SUCCEEDED, output.verdictResponse) : output
     await progressService.sendUpdate({
         engineConstants: constants,
@@ -51,18 +51,26 @@ const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorCon
     }
 }
 
-const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<FlowExecutorContext> => {
+const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): Promise<FlowExecutorContext> => {
     const constants = EngineConstants.fromExecuteFlowInput(input)
     if (constants.testSingleStepMode) {
+        const testContext = await testExecutionContext.stateFromFlowVersion({
+            apiUrl: input.internalApiUrl,
+            flowVersion: input.flowVersion,
+            excludedStepName: input.stepNameToTest!,
+            projectId: input.projectId,
+            engineToken: input.engineToken,
+            sampleData: input.sampleData,
+        })
         const step = flowStructureUtil.getActionOrThrow(input.stepNameToTest!, input.flowVersion.trigger)
         return flowExecutor.execute({
             action: step,
-            executionState: context,
+            executionState: await getFlowExecutionState(input, testContext),
             constants: EngineConstants.fromExecuteFlowInput(input),
         })
     }
     return flowExecutor.executeFromTrigger({
-        executionState: context,
+        executionState: await getFlowExecutionState(input, FlowExecutorContext.empty().increaseTask(input.tasks)),
         constants,
         input,
     })
@@ -129,8 +137,7 @@ async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<Tri
     return newPayload.output[0] as TriggerPayload
 }
 
-async function getFlowExecutionState(input: ExecuteFlowOperation): Promise<FlowExecutorContext> {
-    let flowContext = FlowExecutorContext.empty().increaseTask(input.tasks)
+async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
     switch (input.executionType) {
         case ExecutionType.BEGIN: {
             const newPayload = await runOrReturnPayload(input)
@@ -171,8 +178,8 @@ export async function execute(operationType: EngineOperationType, operation: Eng
             }
             case EngineOperationType.EXECUTE_FLOW: {
                 const input = operation as ExecuteFlowOperation
-                const flowExecutorContext = await getFlowExecutionState(input)
-                const output = await executeFlow(input, flowExecutorContext)
+
+                const output = await executeFlow(input)
                 return output
             }
             case EngineOperationType.EXECUTE_PROPERTY: {
