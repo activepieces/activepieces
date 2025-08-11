@@ -98,7 +98,7 @@ export default function Billing() {
         beta={true}
       >
         <div className="flex items-center gap-2">
-          {platformPlanInfo.plan.eligibleForBusinessTrial && (
+          {platformPlanInfo.plan.eligibleForTrial === PlanName.BUSINESS && (
             <Button
               variant="outline"
               onClick={handleStartBusinessTrial}

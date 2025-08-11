@@ -10,6 +10,7 @@ export const PRICE_PER_EXTRA_USER_MAP = {
     [BillingCycle.ANNUAL]: 11.4,
     [BillingCycle.MONTHLY]: 15,
 }
+
 export const PRICE_PER_EXTRA_PROJECT_MAP = {
     [BillingCycle.ANNUAL]: 7.6,
     [BillingCycle.MONTHLY]: 10,
@@ -209,8 +210,7 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
     activeFlowsLimit: 2,
-    eligibleForPlusTrial: true,
-    eligibleForBusinessTrial: true,
+    eligibleForTrial: PlanName.PLUS,
     userSeatsLimit: 1,
     projectsLimit: 1,
     tablesLimit: 1,
@@ -252,8 +252,7 @@ export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit, a
         mcpLimit,
         tablesLimit,
         agentsLimit,
-        eligibleForPlusTrial: false,
-        eligibleForBusinessTrial: false,
+        eligibleForTrial: undefined,
 
         agentsEnabled: true,
         tablesEnabled: true,
@@ -285,8 +284,7 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     includedAiCredits: 500,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
-    eligibleForPlusTrial: false,
-    eligibleForBusinessTrial: false,
+    eligibleForTrial: undefined,
     activeFlowsLimit: 10,
     userSeatsLimit: 1,
     projectsLimit: 1,
@@ -322,8 +320,7 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     includedAiCredits: 1000,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
-    eligibleForPlusTrial: false,
-    eligibleForBusinessTrial: false,
+    eligibleForTrial: undefined,
     activeFlowsLimit: 50,
     userSeatsLimit: 5,
     projectsLimit: 10,
@@ -355,8 +352,7 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 }
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
-    eligibleForPlusTrial: false,
-    eligibleForBusinessTrial: false,
+    eligibleForTrial: undefined,
     embeddingEnabled: false,
 
     globalConnectionsEnabled: false,

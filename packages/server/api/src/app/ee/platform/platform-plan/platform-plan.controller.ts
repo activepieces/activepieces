@@ -231,7 +231,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const { plan } = request.body
         const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         
-        if (!platformBilling.eligibleForPlusTrial && !platformBilling.eligibleForBusinessTrial) {
+        if (isNil(platformBilling.eligibleForTrial)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -248,8 +248,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         await platformPlanService(request.log).update({
             platformId: platformBilling.platformId,
             stripeSubscriptionId: trialSubscriptionId,
-            eligibleForPlusTrial: plan === PlanName.PLUS ? false : platformBilling.eligibleForPlusTrial,
-            eligibleForBusinessTrial: plan === PlanName.BUSINESS ? false : platformBilling.eligibleForBusinessTrial,
+            eligibleForTrial: plan === PlanName.PLUS ? PlanName.BUSINESS : undefined
         })
         return { success: true }
     })

@@ -6,7 +6,6 @@ import { useEffectOnce } from 'react-use';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
@@ -23,8 +22,8 @@ export const WelcomeTrialDialog = () => {
   const openDialog = useManagePlanDialogStore((state) => state.openDialog);
 
   const eligibleTrials = {
-    [PlanName.PLUS]: platform.plan.eligibleForPlusTrial,
-    [PlanName.BUSINESS]: platform.plan.eligibleForBusinessTrial,
+    [PlanName.PLUS]: platform.plan.eligibleForTrial === PlanName.PLUS,
+    [PlanName.BUSINESS]: platform.plan.eligibleForTrial === PlanName.BUSINESS,
   };
 
   const trialPlan =
@@ -39,7 +38,7 @@ export const WelcomeTrialDialog = () => {
   const isTrial =
     platform.plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
   const [isOpen, setIsOpen] = useState(!isTrial && !!trialPlan);
-  const { mutate: startTrial, isPending: startingTrial } =
+  const { mutate: startTrial, } =
     billingMutations.useStartTrial();
 
   const handleClose = () => {
@@ -58,19 +57,10 @@ export const WelcomeTrialDialog = () => {
     }
   });
 
-  const handleStartBusinessTrial = () => {
-    startTrial({ plan: PlanName.BUSINESS });
-    handleClose();
-  };
-
   const handleSeePlans = () => {
     openDialog();
     handleClose();
   };
-
-  const isCurrentTrialPlus = trialPlan === PlanName.PLUS;
-  const canStartBusinessTrial =
-    isCurrentTrialPlus && eligibleTrials[PlanName.BUSINESS];
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -105,22 +95,9 @@ export const WelcomeTrialDialog = () => {
                 {t(`Continue on ${trialPlan?.toLowerCase()} Trial`)}
               </Button>
 
-              {canStartBusinessTrial && (
-                <Button
-                  variant="outline"
-                  onClick={handleStartBusinessTrial}
-                  disabled={startingTrial}
-                >
-                  {startingTrial && <LoadingSpinner className="size-4" />}
-                  {t('Start Business Trial')}
-                </Button>
-              )}
-
-              {!isCurrentTrialPlus && (
-                <Button variant="outline" onClick={handleSeePlans}>
-                  {t('See Plans')}
-                </Button>
-              )}
+              <Button variant="outline" onClick={handleSeePlans}>
+                {t('See Plans')}
+              </Button>
             </div>
           </div>
         </div>

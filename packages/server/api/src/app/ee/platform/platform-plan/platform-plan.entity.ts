@@ -1,4 +1,4 @@
-import { Platform, PlatformPlan } from '@activepieces/shared'
+import { Nullable, Platform, PlatformPlan } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -33,11 +33,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
-        eligibleForPlusTrial: {
-            type: Boolean,
-        },
-        eligibleForBusinessTrial: {
-            type: Boolean,
+        eligibleForTrial: {
+            type: String,
+            nullable: true,
         },
         stripeSubscriptionStartDate: {
             type: Number,

@@ -78,7 +78,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         })
 
                         const { startDate, endDate, cancelDate } = await stripeHelper(request.log).getSubscriptionCycleDates(subscription)
-                        const { stripeSubscriptionId, eligibleForPlusTrial, eligibleForBusinessTrial } = await platformPlanService(request.log).updateByCustomerId({
+                        const { stripeSubscriptionId } = await platformPlanService(request.log).updateByCustomerId({
                             subscriptionId: subscription.id,
                             customerId: subscription.customer.toString(),
                             status: subscription.status as ApSubscriptionStatus,
@@ -112,8 +112,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         await platformPlanService(request.log).update({ 
                             ...newLimits,
                             platformId,
-                            eligibleForPlusTrial: false,
-                            eligibleForBusinessTrial: newPlan === PlanName.PLUS && isTrialSubscription ?  eligibleForBusinessTrial : false,
+                            eligibleForTrial: newPlan === PlanName.PLUS && isTrialSubscription ? PlanName.BUSINESS : undefined,
                             stripeBillingCycle: cycle,
                             stripeSubscriptionId: isFreePlan ? undefined : stripeSubscriptionId,
                             aiCreditsOverageState: isFreePlan || isTrialSubscription ? AiOverageState.NOT_ALLOWED : AiOverageState.ALLOWED_BUT_OFF,
