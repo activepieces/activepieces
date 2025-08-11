@@ -9,8 +9,6 @@ import { createPage } from './lib/actions/create-page';
 import { PieceCategory } from "@activepieces/shared";
 
 export const oneNoteAuth = PieceAuth.OAuth2({
-	description:
-		'Authenticate with your Microsoft Account. You will need to register an application in the Microsoft Entra admin center. Add **Notes.ReadWrite**, **User.Read**, **offline_access** scopes.',
 	authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
 	tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
 	required: true,
