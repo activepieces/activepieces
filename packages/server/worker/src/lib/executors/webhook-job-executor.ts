@@ -13,6 +13,7 @@ import { webhookUtils } from '../utils/webhook-utils'
 
 export const webhookExecutor = (log: FastifyBaseLogger) => ({
     async consumeWebhook(
+        jobId: string,
         data: WebhookJobData,
         engineToken: string,
         workerToken: string,
@@ -35,7 +36,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         }
 
         if (saveSampleData) {
-            await handleSampleData(populatedFlowToRun, engineToken, workerToken, webhookLogger, payload)
+            await handleSampleData(jobId, populatedFlowToRun, engineToken, workerToken, webhookLogger, payload)
         }
 
         const onlySaveSampleData = !execute
@@ -43,6 +44,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             return
         }
         const filteredPayloads = await triggerHooks(log).extractPayloads(engineToken, {
+            jobId,
             flowVersion: populatedFlowToRun.version,
             payload,
             projectId: populatedFlowToRun.projectId,
@@ -64,6 +66,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
 
 
 async function handleSampleData(
+    jobId: string,
     latestFlowVersion: PopulatedFlow,
     engineToken: string,
     workerToken: string,
@@ -71,6 +74,7 @@ async function handleSampleData(
     payload: EventPayload,
 ): Promise<void> {
     const payloads = await triggerHooks(log).extractPayloads(engineToken, {
+        jobId,
         flowVersion: latestFlowVersion.version,
         payload,
         projectId: latestFlowVersion.projectId,

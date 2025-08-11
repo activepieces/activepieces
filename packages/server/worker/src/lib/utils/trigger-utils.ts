@@ -35,7 +35,7 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
         engineToken: string,
         params: ExecuteTrigger,
     ): Promise<unknown[]> => {
-        const { payload, flowVersion, simulate } = params
+        const { payload, flowVersion, simulate, jobId } = params
         if (flowVersion.trigger.type === FlowTriggerType.EMPTY) {
             log.warn({
                 flowVersionId: flowVersion.id,
@@ -48,6 +48,7 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
             payload,
             flowId: flowVersion.flowId,
             simulate,
+            jobId,
             error: !isNil(error) && typeof error === 'string' ? error : JSON.stringify(error),
         }), log)
 
@@ -64,6 +65,7 @@ type ExtractPayloadsResult = {
 
 type ExecuteTrigger = {
     flowVersion: FlowVersion
+    jobId: string
     projectId: ProjectId
     simulate: boolean
     payload: TriggerPayload

@@ -1,0 +1,18 @@
+{
+  "Pylon": "Пилон",
+  "Custom API Call": "Пользовательский вызов API",
+  "Make a custom API call to a specific endpoint": "Сделать пользовательский API вызов к определенной конечной точке",
+  "Method": "Метод",
+  "Headers": "Заголовки",
+  "Query Parameters": "Параметры запроса",
+  "Body": "Тело",
+  "No Error on Failure": "Нет ошибок при ошибке",
+  "Timeout (in seconds)": "Таймаут (в секундах)",
+  "Authorization headers are injected automatically from your connection.": "Заголовки авторизации включаются автоматически из вашего соединения.",
+  "GET": "ПОЛУЧИТЬ",
+  "POST": "ПОСТ",
+  "PATCH": "ПАТЧ",
+  "PUT": "ПОКУПИТЬ",
+  "DELETE": "УДАЛИТЬ",
+  "HEAD": "HEAD"
+}

@@ -160,7 +160,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/create-trigger-run', CreateTriggerRunParams, async (request) => {
-        const { status, payload, flowId, simulate } = request.body
+        const { status, payload, flowId, simulate, jobId } = request.body
         const { projectId } = request.principal
         const trigger = await triggerSourceService(request.log).getByFlowId({
             flowId,
@@ -175,6 +175,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 projectId,
                 pieceName: trigger.pieceName,
                 pieceVersion: trigger.pieceVersion,
+                jobId,
             })
         }
 

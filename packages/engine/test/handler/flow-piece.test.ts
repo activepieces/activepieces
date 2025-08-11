@@ -1,4 +1,4 @@
-import { Action } from '@activepieces/shared'
+import { FlowAction } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { pieceExecutor } from '../../src/lib/handler/piece-executor'
@@ -70,7 +70,7 @@ describe('pieceExecutor', () => {
         expect(result.steps.data_mapper).toBeUndefined()
     })
     it('should skip piece action in flow', async () => {
-        const flow: Action = {
+        const flow: FlowAction = {
             ...buildPieceAction({
                 name: 'data_mapper',
                 input: {

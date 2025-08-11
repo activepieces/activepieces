@@ -26,6 +26,8 @@ export enum GitPushOperationType {
     DELETE_FLOW = 'DELETE_FLOW',
     PUSH_TABLE = 'PUSH_TABLE',
     DELETE_TABLE = 'DELETE_TABLE',
+    PUSH_AGENT = 'PUSH_AGENT',
+    DELETE_AGENT = 'DELETE_AGENT',
     PUSH_EVERYTHING = 'PUSH_EVERYTHING',
 }
 
@@ -34,7 +36,7 @@ export const PushFlowsGitRepoRequest = Type.Object({
     commitMessage: Type.String({
         minLength: 1,
     }),
-    flowIds: Type.Array(Type.String()),
+    externalFlowIds: Type.Array(Type.String()),
 })
 
 export type PushFlowsGitRepoRequest = Static<typeof PushFlowsGitRepoRequest>
@@ -44,10 +46,20 @@ export const PushTablesGitRepoRequest = Type.Object({
     commitMessage: Type.String({
         minLength: 1,
     }),
-    tableIds: Type.Array(Type.String()),
+    externalTableIds: Type.Array(Type.String()),
 })
 
 export type PushTablesGitRepoRequest = Static<typeof PushTablesGitRepoRequest>
+
+export const PushAgentsGitRepoRequest = Type.Object({
+    type: Type.Union([Type.Literal(GitPushOperationType.PUSH_AGENT), Type.Literal(GitPushOperationType.DELETE_AGENT)]),
+    commitMessage: Type.String({
+        minLength: 1,
+    }),
+    externalAgentIds: Type.Array(Type.String()),
+})
+
+export type PushAgentsGitRepoRequest = Static<typeof PushAgentsGitRepoRequest>
 
 export const PushEverythingGitRepoRequest = Type.Object({
     type: Type.Literal(GitPushOperationType.PUSH_EVERYTHING),
@@ -57,7 +69,7 @@ export const PushEverythingGitRepoRequest = Type.Object({
 })
 export type PushEverythingGitRepoRequest = Static<typeof PushEverythingGitRepoRequest>
 
-export const PushGitRepoRequest = Type.Union([PushFlowsGitRepoRequest, PushTablesGitRepoRequest, PushEverythingGitRepoRequest])
+export const PushGitRepoRequest = Type.Union([PushFlowsGitRepoRequest, PushTablesGitRepoRequest, PushAgentsGitRepoRequest, PushEverythingGitRepoRequest])
 
 export type PushGitRepoRequest = Static<typeof PushGitRepoRequest>
 

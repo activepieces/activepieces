@@ -257,7 +257,10 @@ import { AddParentRunIdToFlowRun1753699877817 } from './migration/postgres/17536
 import { AddCascadeOnAgents1753727379513 } from './migration/postgres/1753727379513-AddCascadeOnAgents'
 import { AddExternalIdToMCPPostgres1753787093467 } from './migration/postgres/1753787093467-AddExternalIdToMCPPostgres'
 import { AddStepNameToTestInFlowRunEntity1754330492027 } from './migration/postgres/1754330492027-AddStepNameToTestInFlowRunEntity'
+import { AddExternalidToMCPToolPostgres1754214833292 } from './migration/postgres/1754214833292-AddExternalidToMCPToolPostgres'
 import { AddTriggerSource1754478770608 } from './migration/postgres/1754478770608-AddTriggerSource'
+import { AddJobIdToTriggerRun1754510611628 } from './migration/postgres/1754510611628-AddJobIdToTriggerRun'
+import { RemoveAgentTestPrompt1754863565929 } from './migration/postgres/1754863565929-RemoveAgentTestPrompt'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -437,8 +440,11 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddParentRunIdToFlowRun1753699877817,
         AddCascadeOnAgents1753727379513,
         AddExternalIdToMCPPostgres1753787093467,
+        AddExternalidToMCPToolPostgres1754214833292,
         AddTriggerSource1754478770608,
         AddStepNameToTestInFlowRunEntity1754330492027,
+        AddJobIdToTriggerRun1754510611628,
+        RemoveAgentTestPrompt1754863565929,
     ]
 
     const edition = system.getEdition()

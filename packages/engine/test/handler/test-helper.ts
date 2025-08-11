@@ -40,7 +40,7 @@ export function buildSimpleLoopAction({
 }: {
     name: string
     loopItems: string
-    firstLoopAction?: FlowAction 
+    firstLoopAction?: FlowAction
     skip?: boolean
 }): LoopOnItemsAction {
     return {

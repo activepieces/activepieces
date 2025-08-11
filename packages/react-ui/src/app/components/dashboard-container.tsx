@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Bot, ListTodo, Package, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { useEmbedding } from '@/components/embed-provider';
@@ -46,7 +46,6 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
   const currentProjectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const location = useLocation();
   const { data: showBilling } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_BILLING,
   );
@@ -81,6 +80,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     label: t('Flows'),
     hasPermission: checkAccess(Permission.READ_FLOW),
     isSubItem: false,
+    name: t('Products'),
     show: true,
     isActive: (pathname) =>
       pathname.includes('/flows') ||
@@ -94,12 +94,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     to: authenticationSession.appendProjectRoutePrefix('/mcps'),
     label: t('MCP'),
     show: platform.plan.mcpsEnabled || !embedState.isEmbedded,
-    icon: (
-      <McpSvg
-        isActive={location.pathname.includes('/mcps')}
-        className="size-4"
-      />
-    ),
+    icon: <McpSvg className="size-4" />,
     hasPermission: checkAccess(Permission.READ_MCP),
     isSubItem: false,
     tutorialTab: 'mcpServers',
@@ -113,7 +108,6 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     show: platform.plan.agentsEnabled || !embedState.isEmbedded,
     hasPermission: true,
     isSubItem: false,
-    name: t('Products'),
     tutorialTab: 'agents',
   };
 
@@ -140,8 +134,8 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
   };
 
   const items: SidebarItem[] = [
-    agentsLink,
     flowsLink,
+    agentsLink,
     tablesLink,
     mcpLink,
     todosLink,

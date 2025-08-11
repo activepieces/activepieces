@@ -1,5 +1,5 @@
-import { METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
-import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlatformPlanLimits, PlatformUsageMetric, UserStatus } from '@activepieces/shared'
+import { METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, PlanName, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
+import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlatformPlanLimits, PlatformRole, PlatformUsageMetric, UserStatus } from '@activepieces/shared'
 import { flowService } from '../../../flows/flow/flow.service'
 import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
@@ -83,6 +83,22 @@ export const PlatformPlanHelper = {
             })
         }
     },
+    checkLegitSubscriptionUpdateOrThrow: async (params: CheckLegitSubscriptionUpdateOrThrowParams) => {
+        const { projectsAddon, userSeatsAddon, newPlan } = params
+
+        const isNotBusinessPlan = newPlan !== PlanName.BUSINESS
+        const requestUserSeatAddon = !isNil(userSeatsAddon)
+        const requestProjectAddon = !isNil(projectsAddon)
+
+        if (isNotBusinessPlan && (requestUserSeatAddon || requestProjectAddon)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Extra users and projects are only available for the Business plan',
+                },
+            })
+        }
+    },
     handleResourceLocking: async ({ platformId, newLimits }: HandleResourceLockingParams): Promise<void> => {
         const usage = await platformUsageService(system.globalLogger()).getAllPlatformUsage(platformId)
         const projectIds = await projectService.getProjectIdsByPlatform(platformId)
@@ -148,14 +164,14 @@ async function handleUserSeats(
 ): Promise<void> {
     if (isNil(newLimit) || currentUsage <= newLimit) return
 
-    const getAllActiveUsers = projectIds.map(id => {
+    const activeUserUnfiltered = await Promise.all(projectIds.map(id => {
         return userService.listProjectUsers({
             projectId: id, 
             platformId,
         })
-    })
+    }))
 
-    const activeUsers = (await Promise.all(getAllActiveUsers)).flatMap(user => user)
+    const activeUsers = activeUserUnfiltered.flatMap(user => user).filter(user => user.platformRole !== PlatformRole.ADMIN)
     const usersToDeactivate = activeUsers.slice(newLimit)
 
     const deactivateUsers = usersToDeactivate.map(user => {
@@ -183,4 +199,10 @@ type QuotaCheckParams = {
 type CheckResourceLockedParams = {
     platformId: string
     resource: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_CREDITS | PlatformUsageMetric.TASKS | PlatformUsageMetric.USER_SEATS | PlatformUsageMetric.ACTIVE_FLOWS>
+}
+
+type CheckLegitSubscriptionUpdateOrThrowParams = {
+    newPlan: PlanName
+    projectsAddon?: number
+    userSeatsAddon?: number
 }
