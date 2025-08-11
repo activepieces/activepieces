@@ -4,7 +4,5 @@
   "Provider": "Proveedor",
   "Model": "Modelo",
   "Prompt": "Petición",
-  "Advanced Options": "Opciones avanzadas",
-  "Resolution": "Resolución",
-  "The resolution to generate the image in.": "La resolución en la que generar la imagen."
+  "Advanced Options": "Opciones avanzadas"
 }
