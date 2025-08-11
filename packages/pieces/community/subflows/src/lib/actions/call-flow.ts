@@ -99,7 +99,7 @@ export const callFlow = createAction({
       const response = context.resumePayload.body as CallableFlowResponse;
       const shouldFailParentRun = response.status === 'error' && context.propsValue.waitForResponse
       if (shouldFailParentRun) {
-        throw new Error(JSON.stringify(response.data))
+        throw new Error(JSON.stringify(response.data, null, 2))
       }
       return {
         status: response.status,

@@ -292,7 +292,7 @@ export const testStepHooks = {
       },
       onSuccess: (testStepResponse: StepRunResponse) => {
         const { success, standardOutput, standardError } = testStepResponse;
-        const errorMessage = standardOutput ?? standardError;
+        const errorMessage = success ? standardOutput : standardError;
         setErrorMessage?.(undefined);
         setConsoleLogs?.(errorMessage ?? null);
         if (success) {
@@ -304,9 +304,9 @@ export const testStepHooks = {
           setErrorMessage?.(
             testStepUtils.formatErrorMessage(
               errorMessage ??
-                t(
-                  'Failed to run test step, please ensure settings are correct.',
-                ),
+              t(
+                'Failed to run test step, please ensure settings are correct.',
+              ),
             ),
           );
         }
@@ -333,9 +333,9 @@ const useRequiredStateToTestSteps = () => {
 
 type TestActionMutationParams =
   | {
-      preExistingSampleData?: StepRunResponse;
-      abortSignal?: AbortSignal;
-    }
+    preExistingSampleData?: StepRunResponse;
+    abortSignal?: AbortSignal;
+  }
   | undefined;
 
 const CANCEL_TEST_STEP_ERROR_MESSAGE = 'Test step aborted';
