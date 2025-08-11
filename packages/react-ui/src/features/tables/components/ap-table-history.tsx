@@ -68,11 +68,11 @@ export function ApTableHistory({ open, onOpenChange }: ApTableHistoryProps) {
           {sortedRuns && sortedRuns.length > 0 ? (
             sortedRuns.map((run) => {
               const isFailed = run.status === 'FAILED';
-              const responsePreview = run.message ?? '';
+              const responsePreview = run.title ?? '';
               const truncatedResponse =
-                responsePreview.length > 200
-                  ? responsePreview.substring(0, 200) + '...'
-                  : responsePreview;
+                run.summary && run.summary.length > 200
+                  ? run.summary?.substring(0, 200) + '...'
+                  : run.summary;
               const recordIndex = serverRecords?.findIndex(
                 (record) => record.id === run.metadata?.recordId,
               );

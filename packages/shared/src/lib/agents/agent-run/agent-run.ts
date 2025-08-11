@@ -12,6 +12,8 @@ export const AgentRun = Type.Object({
     steps: Type.Array(AgentStepBlock),
     message: Type.String(),
     prompt: Type.String(),
+    title: Type.Optional(Type.String()),
+    summary: Type.Optional(Type.String()),
     startTime: Type.String(),
     finishTime: Type.Optional(Type.String()),
     metadata: Type.Optional(Type.Object({

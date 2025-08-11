@@ -1,11 +1,12 @@
 import { AgentJobData, AgentJobSource } from '@activepieces/server-shared'
 import { agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, AIUsageFeature, assertNotNullOrUndefined, ContentBlockType, createAIProvider, Field, isNil, McpToolType, McpWithTools, PopulatedAgent, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
-import { APICallError, streamText } from 'ai'
+import { APICallError, generateObject, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentsApiService, tablesApiService } from '../api/server-api.service'
 import { agentTools } from '../utils/agent-tools'
 import { workerMachine } from '../utils/machine'
+import { z } from 'zod'
 
 export const agentJobExecutor = (log: FastifyBaseLogger) => ({
     async executeAgent(jobData: AgentJobData, engineToken: string, workerToken: string): Promise<void> {
@@ -123,10 +124,39 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                 })
             }
 
+            const summarySchema = z.object({
+                title: z.string(),
+                summary: z.string(),
+            })
+            const { object: runSummary } = await generateObject({
+                model,
+                schema: summarySchema,
+                prompt: `
+                You are an AI assistant tasked with summarizing agent run results.
+
+                CONTEXT:
+                - Original user prompt: ${jobData.prompt}
+                - Agent execution result: ${JSON.stringify(agentResult, null, 2)}
+
+                TASK:
+                Create a summary with two parts:
+                1. TITLE: A single, descriptive sentence that captures the main action or outcome of the agent run
+                2. SUMMARY: A brief, clear explanation of what the agent accomplished or what happened during execution
+
+                REQUIREMENTS:
+                - Keep the title concise and action-oriented
+                - Make the description informative but brief (1-2 sentences maximum)
+                - Focus on the key results or action items that the user should take
+                - Use clear, simple language
+                `,
+            })
+            
             const markAsComplete = agentResult.steps.find(isMarkAsComplete) as ToolCallContentBlock | undefined
             await agentsApiService(workerToken, log).updateAgentRun(jobData.agentRunId, {
                 ...agentResult,
                 output: markAsComplete?.input,
+                title: runSummary.title,
+                summary: runSummary.summary,
                 status: !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED,
                 message: concatMarkdown(agentResult.steps),
                 finishTime: new Date().toISOString(),
