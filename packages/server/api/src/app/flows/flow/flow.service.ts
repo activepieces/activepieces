@@ -34,7 +34,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { flowVersionService } from '../flow-version/flow-version.service'
+import { flowVersionService, SetFlowVersionParams } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
@@ -550,6 +550,33 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         flow.updated = dayjs().toISOString()
         await flowRepo().save(flow)
+    },
+
+    async setFlowVersion({
+        flowVersion,
+        userId,
+        projectId,
+        lock = true,
+    }: SetFlowVersionParams & {projectId: ProjectId, lock?: boolean}): Promise<PopulatedFlow> {
+      const flowLock = lock
+        ? await distributedLock.acquireLock({
+            key: flowVersion.flowId,
+            timeout: 30000,
+            log,
+          })
+        : null;
+
+        try{
+          await flowVersionService(log).setFlowVersion({flowVersion, userId })
+        }finally{
+          await flowLock?.release()
+        }
+
+
+      return this.getOnePopulatedOrThrow({
+        id: flowVersion.flowId,
+        projectId
+      })
     },
 })
 

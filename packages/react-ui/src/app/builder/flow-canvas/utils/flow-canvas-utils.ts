@@ -14,6 +14,7 @@ import {
   StepLocationRelativeToParent,
   FlowTrigger,
   FlowTriggerType,
+  Step
 } from '@activepieces/shared';
 
 import { flowUtilConsts } from './consts';
@@ -489,6 +490,46 @@ const getStepStatus = (
   return stepOutput?.status;
 };
 
+const getChildrenKey = (step: Step) => {
+  switch (step.type) {
+    case FlowActionType.LOOP_ON_ITEMS:
+      return step.firstLoopAction ? step.firstLoopAction.name : '';
+    case FlowActionType.ROUTER:
+      return step.children.reduce((routerKey, child) => {
+        const childrenKey = child
+          ? flowStructureUtil
+              .getAllSteps(child)
+              .reduce(
+                (childKey, grandChild) => `${childKey}-${grandChild.name}`,
+                ''
+              )
+          : 'null';
+        return `${routerKey}-${childrenKey}`;
+      }, '');
+    case FlowActionType.CODE:
+    case FlowActionType.PIECE:
+      return '';
+  }
+};
+
+const createGraphKey = (flowVersion: FlowVersion) => {
+  return flowStructureUtil
+    .getAllSteps(flowVersion.trigger)
+    .reduce((acc, step) => {
+      const branchesNames =
+        step.type === FlowActionType.ROUTER
+          ? step.settings.branches.map((branch) => branch.branchName).join('-')
+          : '0';
+      const childrenKey = getChildrenKey(step);
+      const agentId = flowStructureUtil.getExternalAgentId(step);
+      return `${acc}-${step.displayName}-${step.type}-${
+        step.nextAction ? step.nextAction.name : ''
+      }-${
+        step.type === FlowActionType.PIECE ? step.settings.pieceName : ''
+      }-${branchesNames}-${childrenKey}-${agentId}`;
+    }, '');
+};
+
 export const flowCanvasUtils = {
   convertFlowVersionToGraph(version: FlowVersion): ApGraph {
     const graph = buildGraph(version.trigger);
@@ -507,4 +548,5 @@ export const flowCanvasUtils = {
   createAddOperationFromAddButtonData,
   isSkipped,
   getStepStatus,
+  createGraphKey,
 };
