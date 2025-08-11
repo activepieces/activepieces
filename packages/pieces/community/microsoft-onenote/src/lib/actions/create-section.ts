@@ -7,7 +7,7 @@ export const createSection = createAction({
 	auth: oneNoteAuth,
 	name: 'create_section',
 	displayName: 'Create Section',
-	description: 'Creates a new section in a OneNote notebook.',
+	description: 'Creates a new section in notebook.',
 	props: {
 		notebook_id: Property.Dropdown({
 			displayName: 'Notebook',
@@ -45,19 +45,23 @@ export const createSection = createAction({
 			displayName,
 		};
 
-		const response = await client.api(`/me/onenote/notebooks/${notebook_id}/sections`).post(sectionBody);
+		try {
+			const response = await client.api(`/me/onenote/notebooks/${notebook_id}/sections`).post(sectionBody);
 
-		return {
-			id: response.id,
-			displayName: response.displayName,
-			isDefault: response.isDefault,
-			pagesUrl: response.pagesUrl,
-			createdDateTime: response.createdDateTime,
-			lastModifiedDateTime: response.lastModifiedDateTime,
-			createdBy: response.createdBy,
-			lastModifiedBy: response.lastModifiedBy,
-			links: response.links,
-			self: response.self,
-		};
+			return {
+				id: response.id,
+				displayName: response.displayName,
+				isDefault: response.isDefault,
+				pagesUrl: response.pagesUrl,
+				createdDateTime: response.createdDateTime,
+				lastModifiedDateTime: response.lastModifiedDateTime,
+				createdBy: response.createdBy,
+				lastModifiedBy: response.lastModifiedBy,
+				links: response.links,
+				self: response.self,
+			};
+		} catch (error: any) {
+			throw new Error(`Failed to create section: ${error.message || 'Unknown error'}`);
+		}
 	},
 });

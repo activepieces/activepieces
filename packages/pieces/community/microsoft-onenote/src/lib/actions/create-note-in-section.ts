@@ -7,7 +7,7 @@ export const createNoteInSection = createAction({
 	auth: oneNoteAuth,
 	name: 'create_note_in_section',
 	displayName: 'Create Note in Section',
-	description: 'Create a new note in a specific notebook and section with title and content.',
+	description: 'Create a new note in a specific section with title and content.',
 	props: {
 		notebook_id: Property.Dropdown({
 			displayName: 'Notebook',
@@ -70,36 +70,38 @@ export const createNoteInSection = createAction({
 			},
 		});
 
-		// Create the HTML structure for OneNote page
-		const htmlContent = `
-			<!DOCTYPE html>
-			<html>
-			<head>
-				<title>${title}</title>
-			</head>
-			<body>
-				<h1>${title}</h1>
-				${content || '<p>New note created via Activepieces</p>'}
-			</body>
-			</html>
-		`;
 
-		const response = await client
-			.api(`/me/onenote/sections/${section_id}/pages`)
-			.header('Content-Type', 'text/html')
-			.post(htmlContent);
+		const htmlContent = `<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>${title}</title>
+</head>
+<body>
+	<h1>${title}</h1>
+	${content || '<p>New note created via Activepieces</p>'}
+</body>
+</html>`;
 
-		return {
-			id: response.id,
-			title: response.title,
-			createdDateTime: response.createdDateTime,
-			lastModifiedDateTime: response.lastModifiedDateTime,
-			contentUrl: response.contentUrl,
-			createdByAppId: response.createdByAppId,
-			level: response.level,
-			order: response.order,
-			links: response.links,
-			self: response.self,
-		};
+		try {
+			const response = await client
+				.api(`/me/onenote/sections/${section_id}/pages`)
+				.header('Content-Type', 'application/xhtml+xml')
+				.post(htmlContent);
+
+			return {
+				id: response.id,
+				title: response.title,
+				createdDateTime: response.createdDateTime,
+				lastModifiedDateTime: response.lastModifiedDateTime,
+				contentUrl: response.contentUrl,
+				createdByAppId: response.createdByAppId,
+				level: response.level,
+				order: response.order,
+				links: response.links,
+				self: response.self,
+			};
+		} catch (error: any) {
+			throw new Error(`Failed to create note: ${error.message || 'Unknown error'}`);
+		}
 	},
 });

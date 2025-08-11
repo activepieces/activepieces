@@ -108,3 +108,30 @@ export async function getSectionsByNotebookDropdown(auth: OAuth2PropertyValue, n
 		};
 	}
 }
+
+export async function getPagesBySectionDropdown(auth: OAuth2PropertyValue, sectionId: string) {
+	const client = Client.initWithMiddleware({
+		authProvider: {
+			getAccessToken: () => Promise.resolve(auth.access_token),
+		},
+	});
+
+	try {
+		const response = await client.api(`/me/onenote/sections/${sectionId}/pages`).get();
+		
+		return {
+			disabled: false,
+			options: response.value.map((page: any) => ({
+				label: page.title,
+				value: page.id,
+			})),
+		};
+	} catch (error) {
+		console.error('Error fetching pages for section:', error);
+		return {
+			disabled: true,
+			placeholder: 'Failed to load pages',
+			options: [],
+		};
+	}
+}

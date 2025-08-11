@@ -6,7 +6,7 @@ export const createNotebook = createAction({
 	auth: oneNoteAuth,
 	name: 'create_notebook',
 	displayName: 'Create Notebook',
-	description: 'Creates a new OneNote notebook.',
+	description: 'Creates a notebook.',
 	props: {
 		displayName: Property.ShortText({
 			displayName: 'Notebook Name',
@@ -28,22 +28,26 @@ export const createNotebook = createAction({
 			displayName,
 		};
 
-		const response = await client.api('/me/onenote/notebooks').post(notebookBody);
+		try {
+			const response = await client.api('/me/onenote/notebooks').post(notebookBody);
 
-		return {
-			id: response.id,
-			displayName: response.displayName,
-			userRole: response.userRole,
-			isShared: response.isShared,
-			isDefault: response.isDefault,
-			createdDateTime: response.createdDateTime,
-			lastModifiedDateTime: response.lastModifiedDateTime,
-			createdBy: response.createdBy,
-			lastModifiedBy: response.lastModifiedBy,
-			sectionsUrl: response.sectionsUrl,
-			sectionGroupsUrl: response.sectionGroupsUrl,
-			links: response.links,
-			self: response.self,
-		};
+			return {
+				id: response.id,
+				displayName: response.displayName,
+				userRole: response.userRole,
+				isShared: response.isShared,
+				isDefault: response.isDefault,
+				createdDateTime: response.createdDateTime,
+				lastModifiedDateTime: response.lastModifiedDateTime,
+				createdBy: response.createdBy,
+				lastModifiedBy: response.lastModifiedBy,
+				sectionsUrl: response.sectionsUrl,
+				sectionGroupsUrl: response.sectionGroupsUrl,
+				links: response.links,
+				self: response.self,
+			};
+		} catch (error: any) {
+			throw new Error(`Failed to create notebook: ${error.message || 'Unknown error'}`);
+		}
 	},
 });

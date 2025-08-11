@@ -1,5 +1,5 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getPagesDropdown } from '../common';
+import { getNotebooksDropdown, getSectionsByNotebookDropdown, getPagesBySectionDropdown } from '../common';
 import { oneNoteAuth } from '../../index';
 import { Client } from '@microsoft/microsoft-graph-client';
 
@@ -7,13 +7,13 @@ export const appendNote = createAction({
 	auth: oneNoteAuth,
 	name: 'append_note',
 	displayName: 'Append Note',
-	description: 'Append content to the end of an existing OneNote page.',
+	description: 'Append content to the end of an existing note.',
 	props: {
-		page_id: Property.Dropdown({
-			displayName: 'Page',
-			description: 'The page to append content to.',
+		notebook_id: Property.Dropdown({
+			displayName: 'Notebook',
+			description: 'The notebook containing the page to append to.',
 			required: true,
-			refreshers: [],
+			refreshers: ['section_id'],
 			options: async ({ auth }) => {
 				if (!(auth as OAuth2PropertyValue)?.access_token) {
 					return {
@@ -22,7 +22,53 @@ export const appendNote = createAction({
 						options: [],
 					};
 				}
-				return await getPagesDropdown(auth as OAuth2PropertyValue);
+				return await getNotebooksDropdown(auth as OAuth2PropertyValue);
+			},
+		}),
+		section_id: Property.Dropdown({
+			displayName: 'Section',
+			description: 'The section containing the page to append to.',
+			required: true,
+			refreshers: ['page_id'],
+			options: async ({ auth, notebook_id }) => {
+				if (!(auth as OAuth2PropertyValue)?.access_token) {
+					return {
+						disabled: true,
+						placeholder: 'Connect your account first',
+						options: [],
+					};
+				}
+				if (!notebook_id) {
+					return {
+						disabled: true,
+						placeholder: 'Select a notebook first',
+						options: [],
+					};
+				}
+				return await getSectionsByNotebookDropdown(auth as OAuth2PropertyValue, notebook_id as string);
+			},
+		}),
+		page_id: Property.Dropdown({
+			displayName: 'Page',
+			description: 'The page to append content to.',
+			required: true,
+			refreshers: [],
+			options: async ({ auth, section_id }) => {
+				if (!(auth as OAuth2PropertyValue)?.access_token) {
+					return {
+						disabled: true,
+						placeholder: 'Connect your account first',
+						options: [],
+					};
+				}
+				if (!section_id) {
+					return {
+						disabled: true,
+						placeholder: 'Select a section first',
+						options: [],
+					};
+				}
+				return await getPagesBySectionDropdown(auth as OAuth2PropertyValue, section_id as string);
 			},
 		}),
 		content_type: Property.StaticDropdown({
@@ -71,7 +117,6 @@ export const appendNote = createAction({
 			},
 		});
 
-		// Construct HTML content based on content type
 		let htmlContent: string;
 		
 		switch (content_type) {
@@ -92,7 +137,6 @@ export const appendNote = createAction({
 				htmlContent = `<p>${content}</p>`;
 		}
 
-		// Create the update command to append content to the end of the page
 		const updateCommand = [
 			{
 				target: 'body',
@@ -101,16 +145,20 @@ export const appendNote = createAction({
 			},
 		];
 
-		const response = await client
-			.api(`/me/onenote/pages/${page_id}/content`)
-			.update(updateCommand);
+		try {
+			await client
+				.api(`/me/onenote/pages/${page_id}/content`)
+				.patch(updateCommand);
 
-		return {
-			success: true,
-			message: 'Content successfully appended to the page',
-			pageId: page_id,
-			contentType: content_type,
-			appendedContent: htmlContent,
-		};
+			return {
+				success: true,
+				message: 'Content successfully appended to the page',
+				pageId: page_id,
+				contentType: content_type,
+				appendedContent: htmlContent,
+			};
+		} catch (error: any) {
+			throw new Error(`Failed to append content: ${error.message || 'Unknown error'}`);
+		}
 	},
 });

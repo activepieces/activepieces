@@ -16,46 +16,48 @@ const polling: Polling<OAuth2PropertyValue, { notebook_id: string; section_id: s
 			},
 		});
 
-		const pages = [];
+		try {
+			const pages = [];
 
-		const filter =
-			lastFetchEpochMS === 0
-				? '$top=10'
-				: `$filter=createdDateTime gt ${dayjs(lastFetchEpochMS).toISOString()}`;
-
-		let response: PageCollection = await client
-			.api(`/me/onenote/sections/${sectionId}/pages?${filter}`)
-			.get();
-
-		if (lastFetchEpochMS === 0) {
-			for (const page of response.value) {
-				pages.push(page);
+			let queryParams: string;
+			if (lastFetchEpochMS === 0) {
+				queryParams = '$top=10&$orderby=createdDateTime desc';
+			} else {
+				const lastFetchDate = dayjs(lastFetchEpochMS).toISOString();
+				queryParams = `$filter=createdDateTime gt ${lastFetchDate}&$orderby=createdDateTime desc`;
 			}
-		} else {
+
+			let response: PageCollection = await client
+				.api(`/me/onenote/sections/${sectionId}/pages?${queryParams}`)
+				.get();
+
 			while (response.value.length > 0) {
 				for (const page of response.value) {
 					pages.push(page);
 				}
 
-				if (response['@odata.nextLink']) {
+				if (lastFetchEpochMS !== 0 && response['@odata.nextLink']) {
 					response = await client.api(response['@odata.nextLink']).get();
 				} else {
 					break;
 				}
 			}
-		}
 
-		return pages.map((page) => ({
-			epochMilliSeconds: dayjs(page.createdDateTime).valueOf(),
-			data: page,
-		}));
+			return pages.map((page) => ({
+				epochMilliSeconds: dayjs(page.createdDateTime).valueOf(),
+				data: page,
+			}));
+		} catch (error: any) {
+			console.error('Error fetching new notes from section:', error);
+			throw new Error(`Failed to fetch new notes: ${error.message || 'Unknown error'}`);
+		}
 	},
 };
 
 export const newNoteInSectionTrigger = createTrigger({
 	name: 'new_note_in_section',
 	displayName: 'New Note in Section',
-	description: 'Fires when a new note is created in a specified notebook and section.',
+	description: 'Fires when a new note is created in a specified section.',
 	auth: oneNoteAuth,
 	props: {
 		notebook_id: Property.Dropdown({
