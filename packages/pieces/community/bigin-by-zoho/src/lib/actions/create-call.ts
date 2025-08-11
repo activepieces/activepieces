@@ -15,10 +15,10 @@ export const createCall = createAction({
       description: 'Provide the start time of the call in ISO8601 format.',
       required: true,
     }),
-    callDuration: Property.ShortText({
-      displayName: 'Call Duration',
+    callDuration: Property.Number({
+      displayName: 'Call Duration (minutes)',
       description:
-        'Provide the duration of the call in minutes. For example, 30 for a 30-minute call.',
+        'Provide the duration of the call in minutes (numeric). For example, 30 for a 30-minute call.',
       required: true,
     }),
     callType: Property.StaticDropdown({
@@ -60,18 +60,17 @@ export const createCall = createAction({
       description: 'Provide the number dialed for the call.',
       required: false,
     }),
-    relatedModule: Property.Dropdown({
+    relatedModule: Property.StaticDropdown({
       displayName: 'Related Module',
       description: 'Select the type of entity the call is related to.',
       required: false,
-      refreshers: ['auth'],
       defaultValue: 'Pipelines',
-      options: async () => ({
+      options: {
         options: [
           { label: 'Pipelines', value: 'Pipelines' },
           { label: 'Companies', value: 'Companies' },
         ],
-      }),
+      },
     }),
     relatedTo: Property.Dropdown({
       displayName: 'Related To',
@@ -114,7 +113,7 @@ export const createCall = createAction({
 
       const payload: any = {
         Call_Start_Time: formatDateTime(propsValue.callStartTime),
-        Call_Duration: propsValue.callDuration,
+        Call_Duration: Number(propsValue.callDuration),
         Call_Type: propsValue.callType,
       };
   
@@ -134,7 +133,10 @@ export const createCall = createAction({
           Companies: 'Accounts',
         };
   
-        payload.$related_module = relatedModuleMap[propsValue.relatedModule as keyof typeof relatedModuleMap] || 'Pipelines';
+        payload.$related_module =
+          relatedModuleMap[
+            propsValue.relatedModule as keyof typeof relatedModuleMap
+          ] || 'Deals';
         payload.Related_To = { id: propsValue.relatedTo };
       }
   
@@ -152,7 +154,11 @@ export const createCall = createAction({
       };
     } catch (error: any) {
       console.error('Error creating call log entry:', error);
-      throw new Error(error);
+      throw new Error(
+        error instanceof Error
+          ? `Failed to create call log entry: ${error.message}`
+          : 'Failed to create call log entry due to an unknown error'
+      );
     }
   },
 });

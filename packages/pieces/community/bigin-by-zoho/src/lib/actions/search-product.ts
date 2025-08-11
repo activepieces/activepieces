@@ -6,16 +6,27 @@ export const searchProductRecord = createAction({
   auth: biginAuth,
   name: 'searchProductRecord',
   displayName: 'Search Product Record',
-  description: 'Searches for a product record in Bigin by product name',
+  description: 'Searches products by name/code via criteria or word',
   props: {
+    mode: Property.StaticDropdown({
+      displayName: 'Search Mode',
+      required: true,
+      defaultValue: 'criteria',
+      options: {
+        options: [
+          { label: 'Criteria (name/code)', value: 'criteria' },
+          { label: 'Word', value: 'word' },
+        ],
+      },
+    }),
     searchTerm: Property.ShortText({
       displayName: 'Search Term',
-      description: 'Search for product by name or Code',
+      description: 'Product name/code (criteria) or word',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
-    const { searchTerm } = propsValue;
+    const { searchTerm, mode } = propsValue as any;
 
     const { access_token, api_domain } = auth as any;
 
@@ -32,10 +43,7 @@ export const searchProductRecord = createAction({
         access_token,
         api_domain,
         'Products',
-        {
-          key: 'criteria',
-          value: criteriaValue,
-        }
+        mode === 'word' ? { key: 'word', value: searchTerm } : { key: 'criteria', value: criteriaValue }
       );
 
       return {

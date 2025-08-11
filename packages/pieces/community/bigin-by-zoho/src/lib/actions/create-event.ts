@@ -3,7 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { tagsDropdown, usersDropdown } from '../common/props';
 import { API_ENDPOINTS } from '../common/constants';
 import { biginApiService } from '../common/request';
-import { formatDateTime, getSafeLabel, handleDropdownError } from '../common/helpers';
+import { formatDateOnly, formatDateTime, getSafeLabel, handleDropdownError } from '../common/helpers';
 
 export const createEvent = createAction({
   auth: biginAuth,
@@ -52,6 +52,7 @@ export const createEvent = createAction({
                   { label: 'Daily', value: 'DAILY' },
                   { label: 'Weekly', value: 'WEEKLY' },
                   { label: 'Monthly', value: 'MONTHLY' },
+                  { label: 'Yearly', value: 'YEARLY' },
                 ],
               },
             }),
@@ -107,6 +108,11 @@ export const createEvent = createAction({
                 ],
               },
             }),
+            until: Property.ShortText({
+              displayName: 'Until (YYYY-MM-DD)',
+              description: 'Date the recurrence ends. Format: YYYY-MM-DD',
+              required: false,
+            }),
           };
         } else {
           return {};
@@ -159,19 +165,18 @@ export const createEvent = createAction({
       description: 'Location or venue of the event',
       required: false,
     }),
-    relatedModule: Property.Dropdown({
+    relatedModule: Property.StaticDropdown({
       displayName: 'Related Module',
       description: 'Select the type of entity the event is related to',
       required: false,
-      refreshers: ['auth'],
       defaultValue: 'Contacts',
-      options: async () => ({
+      options: {
         options: [
           { label: 'Contacts', value: 'Contacts' },
           { label: 'Pipelines', value: 'Pipelines' },
           { label: 'Companies', value: 'Companies' },
         ],
-      }),
+      },
     }),
     relatedTo: Property.Dropdown({
       displayName: 'Related To',
@@ -262,13 +267,27 @@ export const createEvent = createAction({
 
     if (propsValue.enableRecurring && propsValue.recurringInfo) {
       const recurringInfo = propsValue.recurringInfo as any;
-      const rruleParts = [`FREQ=${recurringInfo.freq}`];
+      const rruleParts: string[] = [];
+
+      const allowedFreq = ['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'];
+      if (!allowedFreq.includes(recurringInfo.freq)) {
+        throw new Error('Invalid recurrence frequency. Allowed values: DAILY, WEEKLY, MONTHLY, YEARLY');
+      }
+      rruleParts.push(`FREQ=${recurringInfo.freq}`);
       
-      if (recurringInfo.interval) {
+      if (recurringInfo.interval !== undefined) {
+        const interval = Number(recurringInfo.interval);
+        if (Number.isNaN(interval) || interval < 1 || interval > 99) {
+          throw new Error('Interval must be a number between 1 and 99');
+        }
         rruleParts.push(`INTERVAL=${recurringInfo.interval}`);
       }
 
-      if (recurringInfo.count) {
+      if (recurringInfo.count !== undefined) {
+        const count = Number(recurringInfo.count);
+        if (Number.isNaN(count) || count < 1 || count > 99) {
+          throw new Error('Count must be a number between 1 and 99');
+        }
         rruleParts.push(`COUNT=${recurringInfo.count}`);
       }
 
@@ -276,16 +295,25 @@ export const createEvent = createAction({
         rruleParts.push(`BYDAY=${recurringInfo.byday}`);
       }
 
-      if (recurringInfo.bymonthday) {
+      if (recurringInfo.bymonthday !== undefined) {
+        const bymonthday = Number(recurringInfo.bymonthday);
+        if (Number.isNaN(bymonthday) || bymonthday < 1 || bymonthday > 31) {
+          throw new Error('BYMONTHDAY must be a number between 1 and 31');
+        }
         rruleParts.push(`BYMONTHDAY=${recurringInfo.bymonthday}`);
       }
 
       if (recurringInfo.bysetpos) {
+        const allowedSetPos = ['1', '2', '3', '4', '-1'];
+        if (!allowedSetPos.includes(String(recurringInfo.bysetpos))) {
+          throw new Error('BYSETPOS must be one of 1, 2, 3, 4, -1');
+        }
         rruleParts.push(`BYSETPOS=${recurringInfo.bysetpos}`);
       }
 
       if (recurringInfo.until) {
-        rruleParts.push(`UNTIL=${recurringInfo.until}`);
+        const until = formatDateOnly(recurringInfo.until);
+        rruleParts.push(`UNTIL=${until}`);
       }
 
       eventData.Recurring_Activity = {

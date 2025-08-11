@@ -2,7 +2,7 @@ import { biginAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { tagsDropdown, usersDropdown } from '../common/props';
 import { API_ENDPOINTS } from '../common/constants';
-import {getSafeLabel, handleDropdownError} from '../common/helpers';
+import { formatDateOnly, formatDateTime, getSafeLabel, handleDropdownError } from '../common/helpers';
 import { biginApiService } from '../common/request';
 
 export const createTask = createAction({
@@ -44,6 +44,7 @@ export const createTask = createAction({
                   { label: 'Daily', value: 'DAILY' },
                   { label: 'Weekly', value: 'WEEKLY' },
                   { label: 'Monthly', value: 'MONTHLY' },
+                  { label: 'Yearly', value: 'YEARLY' },
                 ],
               },
             }),
@@ -98,6 +99,11 @@ export const createTask = createAction({
                   { label: 'Last Week of the Month', value: '-1' },
                 ],
               },
+            }),
+            until: Property.ShortText({
+              displayName: 'Until (YYYY-MM-DD)',
+              description: 'Date the recurrence ends. Format: YYYY-MM-DD',
+              required: false,
             }),
           };
         } else {
@@ -171,20 +177,19 @@ export const createTask = createAction({
         }
       },
     }),
-    relatedModule: Property.Dropdown({
+    relatedModule: Property.StaticDropdown({
       displayName: 'Related Module',
       description:
         'Select the type of entity the task is related to. Options: Contacts, Pipelines, Companies.',
       required: false,
-      refreshers: ['auth'],
       defaultValue: 'Contacts',
-      options: async () => ({
+      options: {
         options: [
           { label: 'Contacts', value: 'Contacts' },
           { label: 'Pipelines', value: 'Pipelines' },
           { label: 'Companies', value: 'Companies' },
         ],
-      }),
+      },
     }),
     relatedTo: Property.Dropdown({
       displayName: 'Related To',
@@ -269,26 +274,32 @@ export const createTask = createAction({
     }
 
     if (propsValue.dueDate) {
-      const dueDate = new Date(propsValue.dueDate);
-      taskData.Due_Date = dueDate.toISOString().split('T')[0];
+      taskData.Due_Date = formatDateOnly(propsValue.dueDate);
     }
 
     if (propsValue.enableRecurring && propsValue.recurringInfo) {
-      if (!propsValue.dueDate) {
-        throw new Error('Due Date is required when creating recurring tasks');
-      }
-
       const recurringInfo = propsValue.recurringInfo as any;
-      const rruleParts = [`FREQ=${recurringInfo.freq}`];
+      const rruleParts: string[] = [];
 
-      const startDate = new Date(propsValue.dueDate);
-      rruleParts.push(`DTSTART=${startDate.toISOString().split('T')[0]}`);
+      const allowedFreq = ['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'];
+      if (!allowedFreq.includes(recurringInfo.freq)) {
+        throw new Error('Invalid recurrence frequency. Allowed values: DAILY, WEEKLY, MONTHLY, YEARLY');
+      }
+      rruleParts.push(`FREQ=${recurringInfo.freq}`);
 
-      if (recurringInfo.interval) {
+      if (recurringInfo.interval !== undefined) {
+        const interval = Number(recurringInfo.interval);
+        if (Number.isNaN(interval) || interval < 1 || interval > 99) {
+          throw new Error('Interval must be a number between 1 and 99');
+        }
         rruleParts.push(`INTERVAL=${recurringInfo.interval}`);
       }
 
-      if (recurringInfo.count) {
+      if (recurringInfo.count !== undefined) {
+        const count = Number(recurringInfo.count);
+        if (Number.isNaN(count) || count < 1 || count > 99) {
+          throw new Error('Count must be a number between 1 and 99');
+        }
         rruleParts.push(`COUNT=${recurringInfo.count}`);
       }
 
@@ -296,16 +307,25 @@ export const createTask = createAction({
         rruleParts.push(`BYDAY=${recurringInfo.byday}`);
       }
 
-      if (recurringInfo.bymonthday) {
+      if (recurringInfo.bymonthday !== undefined) {
+        const bymonthday = Number(recurringInfo.bymonthday);
+        if (Number.isNaN(bymonthday) || bymonthday < 1 || bymonthday > 31) {
+          throw new Error('BYMONTHDAY must be a number between 1 and 31');
+        }
         rruleParts.push(`BYMONTHDAY=${recurringInfo.bymonthday}`);
       }
 
       if (recurringInfo.bysetpos) {
+        const allowedSetPos = ['1', '2', '3', '4', '-1'];
+        if (!allowedSetPos.includes(String(recurringInfo.bysetpos))) {
+          throw new Error('BYSETPOS must be one of 1, 2, 3, 4, -1');
+        }
         rruleParts.push(`BYSETPOS=${recurringInfo.bysetpos}`);
       }
 
       if (recurringInfo.until) {
-        rruleParts.push(`UNTIL=${recurringInfo.until}`);
+        const until = formatDateOnly(recurringInfo.until);
+        rruleParts.push(`UNTIL=${until}`);
       }
 
       taskData.Recurring_Activity = {
@@ -326,16 +346,15 @@ export const createTask = createAction({
         reminderInfo.reminderType === 'days_before'
       ) {
         const daysBefore = reminderInfo.reminderDaysBefore || 1;
-        alarmValue += `;TRIGGER=-P${daysBefore}D;TRIGGER_TIME=${reminderTime}`;
+        alarmValue += `;TRIGGER=P${daysBefore}D;TRIGGER_TIME=${reminderTime}`;
       } else if (
         propsValue.recurringInfo &&
         reminderInfo.reminderType === 'weeks_before'
       ) {
         const weeksBefore = reminderInfo.reminderWeeksBefore || 1;
-        alarmValue += `;TRIGGER=-P${weeksBefore}W;TRIGGER_TIME=${reminderTime}`;
+        alarmValue += `;TRIGGER=P${weeksBefore}W;TRIGGER_TIME=${reminderTime}`;
       } else if (reminderInfo.reminderDateTime) {
-        const reminderDate = new Date(reminderInfo.reminderDateTime);
-        alarmValue += `;TRIGGER=DATE-TIME:${reminderDate.toISOString()}`;
+        alarmValue += `;TRIGGER=DATE-TIME:${formatDateTime(reminderInfo.reminderDateTime)}`;
       }
 
       taskData.Remind_At = {

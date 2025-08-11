@@ -43,58 +43,134 @@ export const updateCompany = createAction({
       description: 'These fields will be prepopulated with company data',
       refreshers: ['companyId', 'auth'],
       required: true,
-      props: async (propsValue: any): Promise<InputPropertyMap> => {
-        if (!propsValue.companyId) return {};
+      props: async ({ companyId, auth }: any): Promise<InputPropertyMap> => {
+        if (!companyId) return {};
+        const company = JSON.parse(companyId);
+        const { access_token, api_domain } = auth as any;
 
-        const company = JSON.parse(propsValue.companyId);
+        const [fieldsResp, usersResp] = await Promise.all([
+          biginApiService.fetchModuleFields(access_token, api_domain, 'Accounts'),
+          biginApiService.fetchUsers(access_token, api_domain),
+        ]);
 
-        return {
-          accountName: Property.ShortText({
-            displayName: 'Account Name',
-            required: false,
-            defaultValue: company.Account_Name,
-          }),
-          phone: Property.ShortText({
-            displayName: 'Phone',
-            defaultValue: company.Phone,
-            required: false,
-          }),
-          website: Property.ShortText({
-            displayName: 'Website',
-            defaultValue: company.Website,
-            required: false,
-          }),
-          description: Property.ShortText({
-            displayName: 'Description',
-            defaultValue: company.Description,
-            required: false,
-          }),
-          billingStreet: Property.ShortText({
-            displayName: 'Billing Street',
-            defaultValue: company.Billing_Street,
-            required: false,
-          }),
-          billingCity: Property.ShortText({
-            displayName: 'Billing City',
-            defaultValue: company.Billing_City,
-            required: false,
-          }),
-          billingState: Property.ShortText({
-            displayName: 'Billing State',
-            defaultValue: company.Billing_State,
-            required: false,
-          }),
-          billingCountry: Property.ShortText({
-            displayName: 'Billing Country',
-            defaultValue: company.Billing_Country,
-            required: false,
-          }),
-          billingCode: Property.ShortText({
-            displayName: 'Billing Code',
-            defaultValue: company.Billing_Code,
-            required: false,
-          }),
-        };
+        const usersOptions = (usersResp.users || []).map((u: any) => ({
+          label: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim(),
+          value: u.id,
+        }));
+
+        const props: InputPropertyMap = {};
+        const fields = (fieldsResp.fields || []) as any[];
+        for (const f of fields) {
+          const apiName = f.api_name as string;
+
+          if (f.read_only || f.field_read_only) continue;
+          if (!f.view_type || f.view_type.edit !== true) continue;
+          if (apiName === 'Tag' || apiName === 'id') continue;
+
+          let defaultValue: any = company[apiName] ?? undefined;
+          if (apiName === 'Owner') defaultValue = company.Owner?.id;
+
+          switch ((f.data_type as string)?.toLowerCase()) {
+            case 'picklist': {
+              const options = (f.pick_list_values || []).map((pl: any) => ({
+                label: pl.display_value,
+                value: pl.actual_value,
+              }));
+              props[apiName] = Property.StaticDropdown({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+                options: { options },
+              });
+              break;
+            }
+            case 'multiselectpicklist': {
+              const options = (f.pick_list_values || []).map((pl: any) => ({
+                label: pl.display_value,
+                value: pl.actual_value,
+              }));
+              props[apiName] = Property.StaticMultiSelectDropdown({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+                options: { options },
+              });
+              break;
+            }
+            case 'boolean': {
+              props[apiName] = Property.Checkbox({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue: Boolean(defaultValue),
+              });
+              break;
+            }
+            case 'date': {
+              props[apiName] = Property.ShortText({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            case 'datetime': {
+              props[apiName] = Property.DateTime({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            case 'integer':
+            case 'long':
+            case 'double':
+            case 'decimal':
+            case 'currency':
+            case 'percent': {
+              props[apiName] = Property.Number({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            default: {
+              if (apiName === 'Owner') {
+                props[apiName] = Property.StaticDropdown({
+                  displayName: 'Owner',
+                  description: f.tooltip || undefined,
+                  required: false,
+                  defaultValue,
+                  options: { options: usersOptions },
+                });
+                break;
+              }
+              if (apiName === 'Description') {
+                props[apiName] = Property.LongText({
+                  displayName: 'Description',
+                  description: f.tooltip || undefined,
+                  required: false,
+                  defaultValue,
+                });
+                break;
+              }
+              props[apiName] = Property.ShortText({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue: typeof defaultValue === 'string' ? defaultValue : undefined,
+              });
+            }
+          }
+        }
+
+        return props;
       },
     }),
     tag: tagsDropdown('Accounts'),
@@ -104,34 +180,37 @@ export const updateCompany = createAction({
     try {
       const company = JSON.parse(context.propsValue.companyId);
       const companyId = company.id;
-      const updates = context.propsValue.companyDetails;
+      const updates = context.propsValue.companyDetails as Record<string, any>;
 
-      const body: Record<string, any> = {
-        Account_Name: updates['accountName'],
-        Phone: updates['phone'],
-        Website: updates['website'],
-        Tag: updates['tag']?.length
-          ? updates['tag'].map((t: string) => ({ name: t }))
-          : undefined,
-        Description: updates['description'],
-        Owner: updates['owner'] ? { id: updates['owner'] } : undefined,
-        Billing_Street: updates['billingStreet'],
-        Billing_City: updates['billingCity'],
-        Billing_State: updates['billingState'],
-        Billing_Country: updates['billingCountry'],
-        Billing_Code: updates['billingCode'],
-        id: companyId,
-      };
+      const body: Record<string, any> = { id: companyId };
 
-      Object.keys(body).forEach((key) => {
+      for (const [apiName, value] of Object.entries(updates || {})) {
         if (
-          body[key] === undefined ||
-          body[key] === null ||
-          (typeof body[key] === 'string' && body[key].trim() === '')
+          value === undefined ||
+          value === null ||
+          (typeof value === 'string' && value.trim() === '')
         ) {
-          delete body[key];
+          continue;
         }
-      });
+        if (apiName === 'Owner') {
+          body['Owner'] = { id: value };
+        } else if (apiName === 'Tag') {
+          body['Tag'] = (value as any[]).map((t: any) => ({ name: t }));
+        } else {
+          body[apiName] = value;
+        }
+      }
+
+      if (context.propsValue.owner) {
+        body['Owner'] = { id: context.propsValue.owner };
+      }
+      if (
+        context.propsValue.tag &&
+        Array.isArray(context.propsValue.tag) &&
+        context.propsValue.tag.length > 0
+      ) {
+        body['Tag'] = context.propsValue.tag.map((t: any) => ({ name: t }));
+      }
 
       const response = await biginApiService.updateCompany(
         context.auth.access_token,

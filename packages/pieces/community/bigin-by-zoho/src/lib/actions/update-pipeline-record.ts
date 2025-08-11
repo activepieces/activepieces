@@ -1,6 +1,6 @@
 import { biginAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { companyDropdown, contactsDropdown, layoutsDropdown, pipelineRecordsDropdown, productsDropdown, SubPipelineorStageDropdown, tagsDropdown, usersDropdown } from '../common/props';
+import { companyDropdown, contactsDropdown, layoutsDropdown, multiContactsDropdown, pipelineRecordsDropdown, productsDropdown, SubPipelineorStageDropdown, tagsDropdown, usersDropdown } from '../common/props';
 import { biginApiService } from '../common/request';
 import { formatDateOnly } from '../common/helpers';
 
@@ -16,36 +16,111 @@ export const updatePipelineRecord = createAction({
       description: 'These fields will be prepopulated with pipeline data',
       refreshers: ['pipelineRecordId', 'auth'],
       required: true,
-      props: async (propsValue: any) => {
-        const pipelineData = JSON.parse(propsValue.pipelineRecordId);
+      props: async ({ pipelineRecordId, auth }: any) => {
+        const pipelineData = JSON.parse(pipelineRecordId);
         const pipelineId = pipelineData.id;
         if (!pipelineId) {
           throw new Error('Pipeline ID is required to update the record');
         }
 
-        return {
-          dealName: Property.ShortText({
-            displayName: 'Deal Name',
-            description: 'Provide the name for the pipeline record (deal)',
-            required: true,
-            defaultValue: pipelineData.Deal_Name || '',
-          }),
-          amount: Property.Number({
-            displayName: 'Amount',
-            description: 'The amount of the pipeline record (deal)',
-            required: false,
-            defaultValue: pipelineData.Amount || 0,
-          }),
-          // had to comment this out because the API refuses to accept data when field is included even though correct payload is provided as per documentation https://www.bigin.com/developer/docs/apis/v2/insert-records.html.
-          // secondaryContacts: multiContactsDropdown,
-          closingDate: Property.DateTime({
-            displayName: 'Closing Date',
-            description:
-              'Provide the expected or actual closing date of the pipeline record (deal) in YYYY-MM-DD format',
-            required: false,
-            defaultValue: pipelineData.Closing_Date || '',
-          }),
-        };
+        const { access_token, api_domain } = auth as any;
+        const fieldsResp = await biginApiService.fetchModuleFields(
+          access_token,
+          api_domain,
+          'Pipelines'
+        );
+
+        const props: any = {};
+        for (const f of (fieldsResp.fields || []) as any[]) {
+          const apiName = f.api_name as string;
+          if (f.read_only || f.field_read_only) continue;
+          if (!f.view_type || f.view_type.edit !== true) continue;
+          if (apiName === 'Tag' || apiName === 'id' || apiName === 'Secondary_Contacts') continue;
+
+          let defaultValue: any = pipelineData[apiName] ?? undefined;
+          switch ((f.data_type as string)?.toLowerCase()) {
+            case 'picklist': {
+              const options = (f.pick_list_values || []).map((pl: any) => ({
+                label: pl.display_value,
+                value: pl.actual_value,
+              }));
+              props[apiName] = Property.StaticDropdown({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+                options: { options },
+              });
+              break;
+            }
+            case 'multiselectpicklist': {
+              const options = (f.pick_list_values || []).map((pl: any) => ({
+                label: pl.display_value,
+                value: pl.actual_value,
+              }));
+              props[apiName] = Property.StaticMultiSelectDropdown({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+                options: { options },
+              });
+              break;
+            }
+            case 'boolean': {
+              props[apiName] = Property.Checkbox({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue: Boolean(defaultValue),
+              });
+              break;
+            }
+            case 'date': {
+              props[apiName] = Property.ShortText({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || 'Format: YYYY-MM-DD',
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            case 'datetime': {
+              props[apiName] = Property.DateTime({
+                displayName: f.display_label || f.field_label || apiName,
+                description:
+                  f.tooltip || 'Format: ISO 8601 (YYYY-MM-DDTHH:mm:ss±HH:mm)',
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            case 'integer':
+            case 'long':
+            case 'double':
+            case 'decimal':
+            case 'currency':
+            case 'percent': {
+              props[apiName] = Property.Number({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            default: {
+              props[apiName] = Property.ShortText({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue: typeof defaultValue === 'string' ? defaultValue : undefined,
+              });
+            }
+          }
+        }
+
+        return props;
       },
     }),
     pipeline: layoutsDropdown(
@@ -66,6 +141,7 @@ export const updatePipelineRecord = createAction({
     owner: usersDropdown,
     accountName: companyDropdown,
     contactName: contactsDropdown,
+    secondaryContacts: multiContactsDropdown,
     associatedProducts: productsDropdown,
     tag: tagsDropdown('Pipelines'),
   },
@@ -88,13 +164,6 @@ export const updatePipelineRecord = createAction({
     if (propsValue.stage) payload.Stage = propsValue.stage;
     if (propsValue.pipelineDetails['dealName']) payload.Deal_Name = propsValue.pipelineDetails['dealName'];
 
-    // had to comment this out because the API refuses to accept data when field is included even though correct payload is provided as per documentation https://www.bigin.com/developer/docs/apis/v2/insert-records.html.
-    // if (propsValue.secondaryContacts)
-    //   payload.Secondary_Contacts = propsValue.secondaryContacts.map(
-    //     (contact: any) => ({
-    //       id: contact,
-    //     })
-    //   );
 
     if (propsValue.pipelineDetails['amount']) payload.Amount = propsValue.pipelineDetails['amount'];
     if (propsValue.pipelineDetails['closingDate'])
@@ -121,11 +190,35 @@ export const updatePipelineRecord = createAction({
     const {access_token, api_domain} = auth as any;
 
    try {
-     const response = await biginApiService.updatePipelineRecord(
+      const response = await biginApiService.updatePipelineRecord(
        access_token,
        api_domain,
        { data: [payload] }
      );
+
+      if (
+        propsValue.secondaryContacts &&
+        Array.isArray(propsValue.secondaryContacts)
+      ) {
+        const secondaries = (propsValue.secondaryContacts as any[])
+          .map((v: any) => String(v))
+          .filter((id: string) => id !== propsValue.contactName);
+
+        if (secondaries.length > 0) {
+          await biginApiService.updatePipelineRecord(
+            access_token,
+            api_domain,
+            {
+              data: [
+                {
+                  id: pipelineData.id,
+                  Secondary_Contacts: secondaries.map((id: string) => ({ id })),
+                },
+              ],
+            }
+          );
+        }
+      }
 
       return {
         message: 'Pipeline record updated successfully',

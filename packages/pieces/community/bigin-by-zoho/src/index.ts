@@ -28,6 +28,7 @@ import { searchPipelineRecord } from "./lib/actions/search-pipeline-records";
 import { searchCompanyRecord } from "./lib/actions/search-company-record";
 import { searchContactRecord } from "./lib/actions/search-contact-record";
 import { searchProductRecord } from "./lib/actions/search-product";
+import { searchUser } from "./lib/actions/search-user";
 
 export const biginAuth = PieceAuth.OAuth2({
   description: `
@@ -79,7 +80,12 @@ Authenticate with Zoho Bigin via OAuth2.
     }
 
     try {
-      await biginApiService.fetchModules(auth.access_token, domain);
+      // Map selected Accounts domain to the correct API domain for validation
+      const region = DATA_CENTER_REGIONS.find(
+        (r) => r.ACCOUNTS_DOMAIN === domain || getZohoBiginAccountAuthorizationUrl(r.REGION) === domain
+      );
+      const apiDomain = region?.API_DOMAIN ?? 'https://www.zohoapis.com';
+      await biginApiService.fetchModules(auth.access_token, apiDomain);
       return { valid: true };
     } catch {
       return {
@@ -115,7 +121,8 @@ export const biginByZoho = createPiece({
     searchPipelineRecord,
     searchCompanyRecord,
     searchContactRecord,
-    searchProductRecord
+    searchProductRecord,
+    searchUser
   ],
   triggers: [
     newContactCreated, 

@@ -6,16 +6,27 @@ export const searchPipelineRecord = createAction({
   auth: biginAuth,
   name: 'searchPipelineRecord',
   displayName: 'Search Pipeline Record',
-  description: 'Searches for a pipeline record (deal) in Bigin by deal name',
+  description: 'Searches deals by name via criteria or word',
   props: {
+    mode: Property.StaticDropdown({
+      displayName: 'Search Mode',
+      required: true,
+      defaultValue: 'criteria',
+      options: {
+        options: [
+          { label: 'Criteria (Deal Name)', value: 'criteria' },
+          { label: 'Word', value: 'word' },
+        ],
+      },
+    }),
     dealName: Property.ShortText({
-      displayName: 'Deal Name',
-      description: 'Name of the deal to search for',
+      displayName: 'Search Term',
+      description: 'Deal Name (criteria) or word',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
-    const { dealName } = propsValue;
+    const { dealName, mode } = propsValue as any;
 
     const { access_token, api_domain } = auth as any;
 
@@ -24,10 +35,7 @@ export const searchPipelineRecord = createAction({
         access_token,
         api_domain,
         'Pipelines',
-        {
-          key: 'criteria',
-          value: `(Deal_Name:equals:${dealName})`,
-        }
+        mode === 'word' ? { key: 'word', value: dealName } : { key: 'criteria', value: `(Deal_Name:equals:${dealName})OR(Deal_Name:starts_with:${dealName})` }
       );
 
       return {

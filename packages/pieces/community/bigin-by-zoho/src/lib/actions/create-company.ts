@@ -25,7 +25,7 @@ export const createCompany = createAction({
       required: false,
     }),
     tag: tagsDropdown('Accounts'),
-    description: Property.ShortText({
+    description: Property.LongText({
       displayName: 'Description',
       description:
         'Provide additional descriptions or notes related to the company',
@@ -60,36 +60,50 @@ export const createCompany = createAction({
   },
   async run(context) {
     try {
-      const fieldsMap: Record<string, string> = {
-        accountName: 'Account_Name',
-        owner: 'Owner',
-        phone: 'Phone',
-        website: 'Website',
-        tag: 'Tag',
-        description: 'Description',
-        billingStreet: 'Billing_Street',
-        billingCity: 'Billing_City',
-        billingState: 'Billing_State',
-        billingCountry: 'Billing_Country',
-        billingCode: 'Billing_Code',
+      const {
+        accountName,
+        owner,
+        phone,
+        website,
+        tag,
+        description,
+        billingStreet,
+        billingCity,
+        billingState,
+        billingCountry,
+        billingCode,
+      } = context.propsValue as any;
+
+      const record: Record<string, any> = {
+        Account_Name: accountName,
+        Phone: phone,
+        Website: website,
+        Description: description,
+        Billing_Street: billingStreet,
+        Billing_City: billingCity,
+        Billing_State: billingState,
+        Billing_Country: billingCountry,
+        Billing_Code: billingCode,
+        Owner: owner ? { id: owner } : undefined,
+        Tag: Array.isArray(tag) && tag.length > 0 ? tag.map((t: string) => ({ name: t })) : undefined,
       };
 
-      const body = Object.entries(fieldsMap).reduce(
-        (acc, [propKey, otherKey]) => {
-          const value =
-            context.propsValue[propKey as keyof typeof context.propsValue];
-          if (value !== undefined && value !== null && value !== '') {
-            acc[otherKey] = value;
-          }
-          return acc;
-        },
-        {} as Record<string, unknown>
-      );
+      Object.keys(record).forEach((k) => {
+        const v = (record as any)[k];
+        if (
+          v === undefined ||
+          v === null ||
+          (typeof v === 'string' && v.trim() === '') ||
+          (Array.isArray(v) && v.length === 0)
+        ) {
+          delete (record as any)[k];
+        }
+      });
 
       const response = await biginApiService.createCompany(
         context.auth.access_token,
         (context.auth as any).api_domain,
-        { data: [body] }
+        { data: [record] }
       );
 
       return {
@@ -98,7 +112,11 @@ export const createCompany = createAction({
       };
     } catch (error: any) {
       console.error('Error creating company:', error);
-      throw new Error(error);
+      throw new Error(
+        error instanceof Error
+          ? `Failed to create company: ${error.message}`
+          : 'Failed to create company due to an unknown error'
+      );
     }
   },
 });

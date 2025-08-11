@@ -6,16 +6,27 @@ export const searchCompanyRecord = createAction({
   auth: biginAuth,
   name: 'searchCompanyRecord',
   displayName: 'Search Company Record',
-  description: 'Searches for a company record in Bigin by company name',
+  description: 'Searches companies by full name (criteria) or word',
   props: {
+    mode: Property.StaticDropdown({
+      displayName: 'Search Mode',
+      required: true,
+      defaultValue: 'criteria',
+      options: {
+        options: [
+          { label: 'Criteria (full name)', value: 'criteria' },
+          { label: 'Word', value: 'word' },
+        ],
+      },
+    }),
     companyName: Property.ShortText({
-      displayName: 'Company Name',
-      description: 'Full Name of the company to search for',
+      displayName: 'Search Term',
+      description: 'Company full name (criteria) or word',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
-    const { companyName } = propsValue;
+    const { companyName, mode } = propsValue as any;
 
     const { access_token, api_domain } = auth as any;
 
@@ -24,10 +35,12 @@ export const searchCompanyRecord = createAction({
         access_token,
         api_domain,
         'Accounts',
-        {
-          key: 'criteria',
-          value: `(Account_Name:equals:${companyName})OR(Account_Name:starts_with:${companyName})`,
-        }
+        mode === 'word'
+          ? { key: 'word', value: companyName }
+          : {
+              key: 'criteria',
+              value: `(Account_Name:equals:${companyName})OR(Account_Name:starts_with:${companyName})`,
+            }
       );
 
       return {

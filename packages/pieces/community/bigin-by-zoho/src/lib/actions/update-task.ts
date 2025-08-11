@@ -37,66 +37,117 @@ export const updateTask = createAction({
     taskDetails: Property.DynamicProperties({
       displayName: 'Task Details',
       description: 'These fields will be prepopulated with task data',
-      refreshers: ['taskId'],
+      refreshers: ['taskId', 'auth'],
       required: true,
-      props: async (propsValue: any): Promise<InputPropertyMap> => {
-        if (!propsValue.taskId) return {};
+      props: async ({ taskId, auth }: any): Promise<InputPropertyMap> => {
+        if (!taskId) return {};
+        const task = JSON.parse(taskId);
+        const { access_token, api_domain } = auth as any;
 
-        const task = JSON.parse(propsValue.taskId);
-        return {
-          subject: Property.ShortText({
-            displayName: 'Subject',
-            description: 'Provide the subject or title of the task',
-            required: true,
-            defaultValue: task.Subject || '',
-          }),
-          description: Property.LongText({
-            displayName: 'Description',
-            description:
-              'Provide additional descriptions or notes related to the task',
-            required: false,
-            defaultValue: task.Description || '',
-          }),
-          dueDate: Property.DateTime({
-            displayName: 'Due Date',
-            description: 'Provide the due date of the task (YYYY-MM-DD format)',
-            required: false,
-            defaultValue: task.Due_Date || '',
-          }),
-          priority: Property.StaticDropdown({
-            displayName: 'Priority',
-            description: 'Provide the priority level of the task',
-            required: false,
-            options: {
-              options: [
-                { label: 'High', value: 'High' },
-                { label: 'Normal', value: 'Normal' },
-                { label: 'Low', value: 'Low' },
-                { label: 'Lowest', value: 'Lowest' },
-                { label: 'Highest', value: 'Highest' },
-              ],
-            },
-            defaultValue: task.Priority || 'Normal',
-          }),
-          status: Property.StaticDropdown({
-            displayName: 'Status',
-            description: 'Provide the current status of the task.',
-            required: false,
-            options: {
-              options: [
-                { label: 'In Progress', value: 'In Progress' },
-                { label: 'Completed', value: 'Completed' },
-                { label: 'Deferred', value: 'Deferred' },
-                {
-                  label: 'Waiting for input',
-                  value: 'Waiting on someone else',
-                },
-                { label: 'Not Started', value: 'Not Started' },
-              ],
-            },
-            defaultValue: task.Status || 'Not Started',
-          }),
-        };
+        const fieldsResp = await biginApiService.fetchModuleFields(
+          access_token,
+          api_domain,
+          'Tasks'
+        );
+
+        const props: InputPropertyMap = {};
+        for (const f of (fieldsResp.fields || []) as any[]) {
+          const apiName = f.api_name as string;
+          if (f.read_only || f.field_read_only) continue;
+          if (!f.view_type || f.view_type.edit !== true) continue;
+          if (apiName === 'Tag' || apiName === 'id') continue;
+
+          let defaultValue: any = task[apiName] ?? undefined;
+          switch ((f.data_type as string)?.toLowerCase()) {
+            case 'picklist': {
+              const options = (f.pick_list_values || []).map((pl: any) => ({
+                label: pl.display_value,
+                value: pl.actual_value,
+              }));
+              props[apiName] = Property.StaticDropdown({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+                options: { options },
+              });
+              break;
+            }
+            case 'multiselectpicklist': {
+              const options = (f.pick_list_values || []).map((pl: any) => ({
+                label: pl.display_value,
+                value: pl.actual_value,
+              }));
+              props[apiName] = Property.StaticMultiSelectDropdown({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+                options: { options },
+              });
+              break;
+            }
+            case 'boolean': {
+              props[apiName] = Property.Checkbox({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue: Boolean(defaultValue),
+              });
+              break;
+            }
+            case 'date': {
+              props[apiName] = Property.ShortText({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || 'Format: YYYY-MM-DD',
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            case 'datetime': {
+              props[apiName] = Property.DateTime({
+                displayName: f.display_label || f.field_label || apiName,
+                description:
+                  f.tooltip || 'Format: ISO 8601 (YYYY-MM-DDTHH:mm:ss±HH:mm)',
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            case 'integer':
+            case 'long':
+            case 'double':
+            case 'decimal':
+            case 'currency':
+            case 'percent': {
+              props[apiName] = Property.Number({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            default: {
+              if (apiName === 'Description') {
+                props[apiName] = Property.LongText({
+                  displayName: 'Description',
+                  required: false,
+                  defaultValue,
+                });
+                break;
+              }
+              props[apiName] = Property.ShortText({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue: typeof defaultValue === 'string' ? defaultValue : undefined,
+              });
+            }
+          }
+        }
+        return props;
       },
     }),
     enableRecurring: Property.Checkbox({

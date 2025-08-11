@@ -57,10 +57,19 @@ export const biginApiService = {
       access_token,
     });
   },
-  fetchUsers: async (access_token: string, api_domain: string) => {
+  fetchUsers: async (
+    access_token: string,
+    api_domain: string,
+    params?: { type?: string; page?: number; per_page?: number }
+  ) => {
+    const qs = new URLSearchParams();
+    if (params?.type) qs.set('type', params.type);
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.per_page) qs.set('per_page', String(params.per_page));
+    const query = qs.toString();
     return fireHttpRequest({
       method: HttpMethod.GET,
-      path: `${api_domain}/bigin/v2${API_ENDPOINTS.USERS}`,
+      path: `${api_domain}/bigin/v2${API_ENDPOINTS.USERS}${query ? `?${query}` : ''}`,
       access_token,
     });
   },
@@ -269,7 +278,7 @@ export const biginApiService = {
   ) => {
     return fireHttpRequest({
       method: HttpMethod.GET,
-      path: `${api_domain}/bigin/v2/${module_name}/search?${query.key}=${query.value}`,
+      path: `${api_domain}/bigin/v2/${module_name}/search?${encodeURIComponent(query.key)}=${encodeURIComponent(query.value)}`,
       access_token,
     });
   }

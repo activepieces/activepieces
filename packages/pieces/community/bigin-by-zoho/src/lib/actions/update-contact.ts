@@ -39,67 +39,158 @@ export const updateContact = createAction({
     contactDetails: Property.DynamicProperties({
       displayName: 'Contact Fields',
       description: 'Edit any of these fields',
-      refreshers: ['contactId'],
+      refreshers: ['contactId', 'auth'],
       required: true,
       props: async (
-        { contactId }: any,
-        ctx: PropertyContext
+        { contactId, auth }: any,
       ): Promise<InputPropertyMap> => {
         if (!contactId) return {};
         const contact = JSON.parse(contactId);
+        const { access_token, api_domain } = auth as any;
 
-        return {
-          firstName: Property.ShortText({
-            displayName: 'First Name',
-            defaultValue: contact.First_Name ?? '',
-            required: false,
-          }),
-          lastName: Property.ShortText({
-            displayName: 'Last Name',
-            defaultValue: contact.Last_Name ?? '',
-            required: true,
-          }),
-          email: Property.ShortText({
-            displayName: 'Email',
-            defaultValue: contact.Email ?? '',
-            required: false,
-          }),
-          mobile: Property.ShortText({
-            displayName: 'Mobile Phone Number',
-            defaultValue: contact.Mobile ?? '',
-            required: false,
-          }),
-          description: Property.ShortText({
-            displayName: 'Description',
-            defaultValue: contact.Description ?? '',
-            required: false,
-          }),
-          mailingStreet: Property.ShortText({
-            displayName: 'Mailing Street',
-            defaultValue: contact.Mailing_Street ?? '',
-            required: false,
-          }),
-          mailingState: Property.ShortText({
-            displayName: 'Mailing State',
-            defaultValue: contact.Mailing_State ?? '',
-            required: false,
-          }),
-          mailingCity: Property.ShortText({
-            displayName: 'Mailing City',
-            defaultValue: contact.Mailing_City ?? '',
-            required: false,
-          }),
-          mailingCountry: Property.ShortText({
-            displayName: 'Mailing Country',
-            defaultValue: contact.Mailing_Country ?? '',
-            required: false,
-          }),
-          mailingZip: Property.ShortText({
-            displayName: 'Mailing Zip',
-            defaultValue: contact.Mailing_Zip ?? '',
-            required: false,
-          }),
-        };
+        const [fieldsResp, usersResp, companiesResp] = await Promise.all([
+          biginApiService.fetchModuleFields(access_token, api_domain, 'Contacts'),
+          biginApiService.fetchUsers(access_token, api_domain),
+          biginApiService.fetchCompanies(access_token, api_domain),
+        ]);
+
+        const usersOptions = (usersResp.users || []).map((u: any) => ({
+          label: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim(),
+          value: u.id,
+        }));
+        const companyOptions = (companiesResp.data || []).map((c: any) => ({
+          label: c.Account_Name,
+          value: c.id,
+        }));
+
+        const props: InputPropertyMap = {};
+
+        const fields = (fieldsResp.fields || []) as any[];
+        for (const f of fields) {
+          const apiName = f.api_name as string;
+
+          if (f.read_only || f.field_read_only) continue;
+          if (!f.view_type || f.view_type.edit !== true) continue;
+
+          if (apiName === 'Tag') continue;
+          if (apiName === 'id') continue;
+
+          let defaultValue: any = contact[apiName] ?? undefined;
+          if (apiName === 'Owner') defaultValue = contact.Owner?.id;
+          if (apiName === 'Account_Name') defaultValue = contact.Account_Name?.id;
+
+          switch ((f.data_type as string)?.toLowerCase()) {
+            case 'picklist': {
+              const options = (f.pick_list_values || []).map((pl: any) => ({
+                label: pl.display_value,
+                value: pl.actual_value,
+              }));
+              props[apiName] = Property.StaticDropdown({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+                options: { options },
+              });
+              break;
+            }
+            case 'multiselectpicklist': {
+              const options = (f.pick_list_values || []).map((pl: any) => ({
+                label: pl.display_value,
+                value: pl.actual_value,
+              }));
+              props[apiName] = Property.StaticMultiSelectDropdown({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+                options: { options },
+              });
+              break;
+            }
+            case 'boolean': {
+              props[apiName] = Property.Checkbox({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue: Boolean(defaultValue),
+              });
+              break;
+            }
+            case 'date': {
+              props[apiName] = Property.ShortText({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            case 'datetime': {
+              props[apiName] = Property.DateTime({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            case 'integer':
+            case 'long':
+            case 'double':
+            case 'decimal':
+            case 'currency':
+            case 'percent': {
+              props[apiName] = Property.Number({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            default: {
+              if (apiName === 'Owner') {
+                props[apiName] = Property.StaticDropdown({
+                  displayName: 'Owner',
+                  description: f.tooltip || undefined,
+                  required: false,
+                  defaultValue,
+                  options: { options: usersOptions },
+                });
+                break;
+              }
+              if (apiName === 'Account_Name') {
+                props[apiName] = Property.StaticDropdown({
+                  displayName: 'Company',
+                  description: f.tooltip || undefined,
+                  required: false,
+                  defaultValue,
+                  options: { options: companyOptions },
+                });
+                break;
+              }
+              if (apiName === 'Description') {
+                props[apiName] = Property.LongText({
+                  displayName: 'Description',
+                  description: f.tooltip || undefined,
+                  required: false,
+                  defaultValue,
+                });
+                break;
+              }
+
+              props[apiName] = Property.ShortText({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue: typeof defaultValue === 'string' ? defaultValue : undefined,
+              });
+            }
+          }
+        }
+
+        return props;
       },
     }),
 
@@ -109,57 +200,37 @@ export const updateContact = createAction({
 
   async run(context) {
    try {
-     const {
-       contactDetails: {
-         firstName,
-         lastName,
-         title,
-         email,
-         mobile,
-         emailOptOut,
-         owner,
-         tag,
-         description,
-         mailingStreet,
-         mailingCity,
-         mailingState,
-         mailingCountry,
-         mailingZip,
-       },
-       contactId,
-       accountName,
-     } = context.propsValue;
+     const { contactDetails, contactId, accountName, tag } = context.propsValue as any;
 
-     const record: Record<string, any> = {
-       First_Name: firstName,
-       Last_Name: lastName,
-       Title: title,
-       Email: email,
-       Mobile: mobile,
-       Email_Opt_Out: emailOptOut,
-       Owner: owner ? { id: owner } : undefined,
-       Account_Name: accountName ? { id: accountName } : undefined,
-       Tag: tag?.length ? tag.map((t: any) => ({ name: t })) : undefined,
-       Description: description,
-       Mailing_Street: mailingStreet,
-       Mailing_City: mailingCity,
-       Mailing_State: mailingState,
-       Mailing_Country: mailingCountry,
-       Mailing_Zip: mailingZip,
-       id: JSON.parse(contactId).id,
-     };
+     const record: Record<string, any> = { id: JSON.parse(contactId).id };
 
-     Object.keys(record).forEach((k) => {
-       const v = record[k];
-       if (
-         v === undefined ||
-         v === null ||
-         (typeof v === 'string' && v.trim() === '') ||
-         (Array.isArray(v) && v.length === 0)
-       ) {
-         delete record[k];
+     if (contactDetails && typeof contactDetails === 'object') {
+       for (const [apiName, value] of Object.entries(contactDetails)) {
+         if (
+           value === undefined ||
+           value === null ||
+           (typeof value === 'string' && value.trim() === '') ||
+           (Array.isArray(value) && (value as any[]).length === 0)
+         ) {
+           continue;
+         }
+
+         if (apiName === 'Owner' || apiName === 'Account_Name') {
+           record[apiName] = { id: value };
+         } else if (apiName === 'Tag') {
+           record['Tag'] = (value as any[]).map((t: any) => ({ name: t }));
+         } else {
+           record[apiName] = value;
+         }
        }
-     });
+     }
+
+     if (accountName) {
+       record['Account_Name'] = { id: accountName };
+     }
+     if (tag && Array.isArray(tag) && tag.length > 0) {
+       record['Tag'] = tag.map((t: any) => ({ name: t }));
+     }
 
      const payload = { data: [record] };
 
@@ -174,8 +245,12 @@ export const updateContact = createAction({
        data: resp.data[0],
      };
    } catch (error: any) {
-    console.error('Error updating contact:', error);
-    throw new Error(error);
+     console.error('Error updating contact:', error);
+     throw new Error(
+       error instanceof Error
+         ? `Failed to update contact: ${error.message}`
+         : 'Failed to update contact due to an unknown error'
+     );
    }
   },
 });

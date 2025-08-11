@@ -1,5 +1,5 @@
 import { biginAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, InputPropertyMap, Property } from '@activepieces/pieces-framework';
 import { tagsDropdown, usersDropdown } from '../common/props';
 import { API_ENDPOINTS } from '../common/constants';
 import { biginApiService } from '../common/request';
@@ -48,82 +48,152 @@ export const updateEvent = createAction({
       displayName: 'Event Fields',
       refreshers: ['auth', 'eventId'],
       required: false,
-      props: async (propsValue, ctx): Promise<any> => {
-        if (!propsValue['eventId']) {
-          return {
-            note: Property.ShortText({
-              displayName: 'Note',
-              description: 'Select an event to see its current values',
-              required: false,
-            }),
-          };
+      props: async ({ eventId, auth }: any): Promise<InputPropertyMap> => {
+        if (!eventId) return {};
+        const event = JSON.parse(eventId);
+        const { access_token, api_domain } = auth as any;
+
+        const fieldsResp = await biginApiService.fetchModuleFields(
+          access_token,
+          api_domain,
+          'Events'
+        );
+
+        const props: InputPropertyMap = {};
+        for (const f of (fieldsResp.fields || []) as any[]) {
+          const apiName = f.api_name as string;
+
+          if (f.read_only || f.field_read_only) continue;
+          if (!f.view_type || f.view_type.edit !== true) continue;
+          if (
+            apiName === 'Tag' ||
+            apiName === 'id' ||
+            apiName === 'Owner' ||
+            apiName === 'Related_To' ||
+            apiName === '$related_module' ||
+            apiName === 'Recurring_Activity' ||
+            apiName === 'Remind_At' ||
+            apiName === 'Participants'
+          )
+            continue;
+
+          let defaultValue: any = event[apiName] ?? undefined;
+          switch ((f.data_type as string)?.toLowerCase()) {
+            case 'picklist': {
+              const options = (f.pick_list_values || []).map((pl: any) => ({
+                label: pl.display_value,
+                value: pl.actual_value,
+              }));
+              props[apiName] = Property.StaticDropdown({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+                options: { options },
+              });
+              break;
+            }
+            case 'multiselectpicklist': {
+              const options = (f.pick_list_values || []).map((pl: any) => ({
+                label: pl.display_value,
+                value: pl.actual_value,
+              }));
+              props[apiName] = Property.StaticMultiSelectDropdown({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+                options: { options },
+              });
+              break;
+            }
+            case 'boolean': {
+              props[apiName] = Property.Checkbox({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue: Boolean(defaultValue),
+              });
+              break;
+            }
+            case 'date': {
+              props[apiName] = Property.ShortText({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || 'Format: YYYY-MM-DD',
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            case 'datetime': {
+              props[apiName] = Property.DateTime({
+                displayName: f.display_label || f.field_label || apiName,
+                description:
+                  f.tooltip || 'Format: ISO 8601 (YYYY-MM-DDTHH:mm:ss±HH:mm)',
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            case 'integer':
+            case 'long':
+            case 'double':
+            case 'decimal':
+            case 'currency':
+            case 'percent': {
+              props[apiName] = Property.Number({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue,
+              });
+              break;
+            }
+            default: {
+              if (apiName === 'Description') {
+                props[apiName] = Property.LongText({
+                  displayName: 'Description',
+                  required: false,
+                  defaultValue,
+                });
+                break;
+              }
+              props[apiName] = Property.ShortText({
+                displayName: f.display_label || f.field_label || apiName,
+                description: f.tooltip || undefined,
+                required: false,
+                defaultValue: typeof defaultValue === 'string' ? defaultValue : undefined,
+              });
+            }
+          }
         }
 
-        const event = JSON.parse(propsValue['eventId'] as any);
+        props['Participants'] = Property.Array({
+          displayName: 'Participants',
+          description: 'Add participants to the event',
+          required: false,
+          defaultValue: event.Participants || [],
+          properties: {
+            type: Property.StaticDropdown({
+              displayName: 'Participant Type',
+              required: true,
+              options: {
+                options: [
+                  { label: 'User', value: 'user' },
+                  { label: 'Email', value: 'email' },
+                  { label: 'Contact', value: 'contact' },
+                ],
+              },
+            }),
+            participant: Property.ShortText({
+              displayName: 'Participant ID/Email',
+              description: 'User ID, email address, or contact ID based on type',
+              required: true,
+            }),
+          },
+        });
 
-        return {
-          eventTitle: Property.ShortText({
-            displayName: 'Event Title',
-            description: 'Title or name of the event',
-            required: false,
-            defaultValue: event.Event_Title || '',
-          }),
-          startDateTime: Property.DateTime({
-            displayName: 'Start Date & Time',
-            description: 'Start date and time of the event',
-            required: false,
-            defaultValue: event.Start_DateTime || '',
-          }),
-          endDateTime: Property.DateTime({
-            displayName: 'End Date & Time',
-            description: 'End date and time of the event',
-            required: false,
-            defaultValue: event.End_DateTime || '',
-          }),
-          allDay: Property.Checkbox({
-            displayName: 'All Day Event',
-            description: 'Mark this as an all-day event',
-            required: false,
-            defaultValue: event.All_day || false,
-          }),
-          venue: Property.ShortText({
-            displayName: 'Venue',
-            description: 'Location or venue of the event',
-            required: false,
-            defaultValue: event.Venue || '',
-          }),
-          description: Property.LongText({
-            displayName: 'Description',
-            description: 'Additional descriptions or notes',
-            required: false,
-            defaultValue: event.Description || '',
-          }),
-          participants: Property.Array({
-            displayName: 'Participants',
-            description: 'Add participants to the event',
-            required: false,
-            defaultValue: event.Participants || [],
-            properties: {
-              type: Property.StaticDropdown({
-                displayName: 'Participant Type',
-                required: true,
-                options: {
-                  options: [
-                    { label: 'User', value: 'user' },
-                    { label: 'Email', value: 'email' },
-                    { label: 'Contact', value: 'contact' },
-                  ],
-                },
-              }),
-              participant: Property.ShortText({
-                displayName: 'Participant ID/Email',
-                description:
-                  'User ID, email address, or contact ID based on type',
-                required: true,
-              }),
-            },
-          }),
-        };
+        return props;
       },
     }),
 
@@ -314,26 +384,39 @@ export const updateEvent = createAction({
       id: eventId,
     };
 
-    const eventFields = propsValue.eventFields as any;
-
-    if (eventFields?.eventTitle) {
-      eventData.Event_Title = eventFields.eventTitle;
-    }
-
-    if (eventFields?.startDateTime) {
-      eventData.Start_DateTime = formatDateTime(eventFields.startDateTime);
-    }
-
-    if (eventFields?.endDateTime) {
-      eventData.End_DateTime = formatDateTime(eventFields.endDateTime);
-    }
+    const eventFields = propsValue.eventFields as Record<string, any> | undefined;
 
     if (propsValue.owner) {
       eventData.Owner = { id: propsValue.owner };
     }
 
-    if (eventFields?.allDay !== undefined) {
-      eventData.All_day = eventFields.allDay;
+    if (eventFields && typeof eventFields === 'object') {
+      for (const [apiName, value] of Object.entries(eventFields)) {
+        if (
+          value === undefined ||
+          value === null ||
+          (typeof value === 'string' && value.trim() === '') ||
+          (Array.isArray(value) && value.length === 0)
+        ) {
+          continue;
+        }
+        if (apiName === 'Participants') {
+          eventData.Participants = (value as any[]).map((p: any) => ({
+            type: p.type,
+            participant: p.participant,
+          }));
+          continue;
+        }
+        if (apiName === 'Start_DateTime' || apiName === 'End_DateTime') {
+          eventData[apiName] = formatDateTime(value);
+          continue;
+        }
+        if (apiName === 'All_day') {
+          eventData.All_day = value;
+          continue;
+        }
+        (eventData as any)[apiName] = value;
+      }
     }
 
     if (propsValue.enableRecurring) {
@@ -382,8 +465,8 @@ export const updateEvent = createAction({
       }));
     }
 
-    if (eventFields?.venue) {
-      eventData.Venue = eventFields.venue;
+    if (eventFields?.['venue']) {
+      eventData.Venue = eventFields['venue'];
     }
 
     if (propsValue.relatedTo && propsValue.relatedModule) {
@@ -400,23 +483,6 @@ export const updateEvent = createAction({
 
       eventData.Related_To = { id: propsValue.relatedTo };
       eventData.$related_module = relatedModule;
-    }
-
-    if (
-      propsValue.eventFields?.['participants'] &&
-      Array.isArray(propsValue.eventFields?.['participants'])
-    ) {
-      const participants = propsValue.eventFields?.['participants'] as any[];
-      eventData.Participants = participants.map(
-        (participant: any) => ({
-          type: participant.type,
-          participant: participant.participant,
-        })
-      );
-    }
-
-    if (eventFields?.description) {
-      eventData.Description = eventFields.description;
     }
 
     if (

@@ -6,26 +6,53 @@ export const searchContactRecord = createAction({
   auth: biginAuth,
   name: 'searchContactRecord',
   displayName: 'Search Contact Record',
-  description: 'Searches for a contact record in Bigin by contact name',
+  description: 'Searches contacts by criteria, email, phone, or word',
   props: {
+    mode: Property.StaticDropdown({
+      displayName: 'Search Mode',
+      description: 'Choose how to search Contacts',
+      required: true,
+      defaultValue: 'criteria',
+      options: {
+        options: [
+          { label: 'Criteria (name/email/mobile)', value: 'criteria' },
+          { label: 'Email', value: 'email' },
+          { label: 'Phone', value: 'phone' },
+          { label: 'Word', value: 'word' },
+        ],
+      },
+    }),
     searchTerm: Property.ShortText({
       displayName: 'Search Term',
-      description: 'Search for contact by name, email, or mobile number',
+      description: 'Text, email, phone, or word based on the selected mode',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
-    const { searchTerm } = propsValue;
+    const { searchTerm, mode } = propsValue as any;
 
     const { access_token, api_domain } = auth as any;
 
-    const criteriaValue = ['First_Name', 'Last_Name', 'Email', 'Mobile']
-      .flatMap((key) => [
-        `${key}:equals:${searchTerm}`,
-        `${key}:starts_with:${searchTerm}`,
-      ])
-      .map((condition) => `(${condition})`)
-      .join('OR');
+    let queryKey = 'criteria';
+    let queryValue = '';
+    if (mode === 'email') {
+      queryKey = 'email';
+      queryValue = searchTerm;
+    } else if (mode === 'phone') {
+      queryKey = 'phone';
+      queryValue = searchTerm;
+    } else if (mode === 'word') {
+      queryKey = 'word';
+      queryValue = searchTerm;
+    } else {
+      queryValue = ['First_Name', 'Last_Name', 'Email', 'Mobile']
+        .flatMap((key) => [
+          `${key}:equals:${searchTerm}`,
+          `${key}:starts_with:${searchTerm}`,
+        ])
+        .map((condition) => `(${condition})`)
+        .join('OR');
+    }
 
     try {
       const response = await biginApiService.searchRecords(
@@ -33,8 +60,8 @@ export const searchContactRecord = createAction({
         api_domain,
         'Contacts',
         {
-          key: 'criteria',
-          value: criteriaValue,
+          key: queryKey,
+          value: queryValue,
         }
       );
 

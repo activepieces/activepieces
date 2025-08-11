@@ -18,13 +18,27 @@ export const usersDropdown = Property.Dropdown({
         auth.access_token,
         api_domain
       );
+      const users = Array.isArray(response?.users) ? response.users : [];
+      if (users.length === 0) {
+        return handleDropdownError('No users found');
+      }
+
+      const options = users.map((user: any) => {
+        const fullName =
+          (typeof user.full_name === 'string' && user.full_name.trim() !== ''
+            ? user.full_name
+            : [user.first_name, user.last_name]
+                .filter((p: any) => typeof p === 'string' && p.trim() !== '')
+                .join(' ')) || user.email || user.id;
+        return {
+          label: fullName,
+          value: user.id,
+        };
+      });
 
       return {
         disabled: false,
-        options: response.users.map((user: any) => ({
-          label: user.first_name + ' ' + user.last_name,
-          value: user.id,
-        })),
+        options,
       };
     } catch (error) {
       return handleDropdownError('Failed to load users');
@@ -172,18 +186,27 @@ export const tagsDropdown = (module: string, defaultValue?: string[]) => Propert
   defaultValue: defaultValue || [],
   options: async ({ auth }: any) => {
     if (!auth) return handleDropdownError('Please Connect your account first');
-    const resp = await biginApiService.fetchTags(
-      auth.access_token,
-      auth.api_domain,
-      module
-    );
+    try {
+      const resp = await biginApiService.fetchTags(
+        auth.access_token,
+        auth.api_domain,
+        module
+      );
 
-    return {
-      options: resp.tags.map((a: any) => ({
-        label: a.name,
-        value: a.name,
-      })),
-    };
+      const tags = Array.isArray(resp?.tags) ? resp.tags : [];
+      if (tags.length === 0) {
+        return handleDropdownError('No tags found. Please add tags first.');
+      }
+
+      return {
+        options: tags.map((a: any) => ({
+          label: a.name,
+          value: a.name,
+        })),
+      };
+    } catch (e) {
+      return handleDropdownError('Failed to load tags');
+    }
   },
 });
 

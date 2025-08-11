@@ -44,9 +44,9 @@ export const createContact = createAction({
     owner: usersDropdown,
     accountName: companyDropdown,
     tag: tagsDropdown('Contacts'),
-    description: Property.ShortText({
+    description: Property.LongText({
       displayName: 'Description',
-      description: 'Description of this contact',
+      description: 'Provide additional descriptions or notes related to the contact',
       required: false,
     }),
     mailingStreet: Property.ShortText({
@@ -139,7 +139,11 @@ export const createContact = createAction({
       };
     } catch (error: any) {
       console.error('Error creating contact:', error);
-      throw new Error(error);
+      throw new Error(
+        error instanceof Error
+          ? `Failed to create contact: ${error.message}`
+          : 'Failed to create contact due to an unknown error'
+      );
     }
   },
 });
