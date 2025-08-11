@@ -24,7 +24,7 @@ async function getFilesRecursively(
   maxLevel: number,
   includeTrashed: boolean,
   includeTeamDrives: boolean,
-  currentLevel: number = 0
+  currentLevel = 0
 ): Promise<FileWithLevel[]> {
   const files: FileWithLevel[] = [];
   
