@@ -6,7 +6,7 @@ import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { Agent, ApFlagId, isNil } from '@activepieces/shared';
+import { Agent, ApFlagId } from '@activepieces/shared';
 
 import agentsGroupImage from '../../../assets/img/custom/agents-group.png';
 import { AgentCard } from '../../../features/agents/agent-card';
@@ -88,8 +88,7 @@ export const AgentsPage = () => {
             }}
             agent={selectedAgent}
             showUseInFlow={true}
-            trigger={<></>
-            }
+            trigger={<></>}
           />
         )}
       </div>

@@ -1,11 +1,3 @@
-import {
-  AgentOperationType,
-  ConnectionOperationType,
-  DiffReleaseRequest,
-  ProjectReleaseType,
-  ProjectSyncPlan,
-  TableOperationType,
-} from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -13,8 +5,6 @@ import { PencilIcon, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import * as z from 'zod';
-
-import { OperationChange } from './operation-change';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -34,6 +24,16 @@ import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import {
+  AgentOperationType,
+  ConnectionOperationType,
+  DiffReleaseRequest,
+  ProjectReleaseType,
+  ProjectSyncPlan,
+  TableOperationType,
+} from '@activepieces/shared';
+
+import { OperationChange } from './operation-change';
 
 type CreateReleaseDialogProps = {
   open: boolean;
