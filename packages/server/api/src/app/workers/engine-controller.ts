@@ -9,13 +9,13 @@ import { projectLimitsService } from '../ee/projects/project-plan/project-plan.s
 import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
+import { stepRunProgressHandler } from '../flows/flow-run/step-run-progress.handler'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
 import { triggerRunService } from '../trigger/trigger-run/trigger-run.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
-import { stepRunProgressHandler } from '../flows/flow-run/step-run-progress.handler'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 

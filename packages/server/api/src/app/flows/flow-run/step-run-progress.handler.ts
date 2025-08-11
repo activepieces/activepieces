@@ -33,7 +33,8 @@ export const stepRunProgressHandler = (log: FastifyBaseLogger) => ({
                 standardError: isSuccess ? '' : (stepOutput.errorMessage as string),
                 standardOutput: '',
             }
-        } catch (error) {
+        }
+        catch (error) {
             exceptionHandler.handle(error, log)
             return null
         }

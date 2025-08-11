@@ -7,7 +7,7 @@ import { sampleDataService } from './sample-data.service'
 export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) => {
 
     fastify.post('/test-step', TestSampleDataRequestBody, async (request) => {
-        return await flowRunService(request.log).test({
+        return flowRunService(request.log).test({
             projectId: request.principal.projectId,
             flowVersionId: request.body.flowVersionId,
             stepNameToTest: request.body.stepName,
