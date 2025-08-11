@@ -61,7 +61,7 @@ export const zendesk = createPiece({
 
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zendesk.png',
-  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud","aryel780","onyedikachi-david"],
   categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: zendeskAuth,
   actions: [
