@@ -25,12 +25,15 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
+import { useNavigate } from 'react-router-dom';
+import { toast } from '@/components/ui/use-toast';
 
 export default function Billing() {
   const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
     useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const openDialog = useManagePlanDialogStore((state) => state.openDialog);
+  const navigate = useNavigate();
 
   const {
     data: platformPlanInfo,
@@ -54,6 +57,22 @@ export default function Billing() {
     !isNil(platformPlanInfo?.plan.licenseKey) ||
     platformPlanInfo?.plan.plan === PlanName.ENTERPRISE ||
     edition === ApEdition.ENTERPRISE;
+
+
+  const handleStartBusinessTrial = () => {
+    startBusinessTrial({ plan: PlanName.BUSINESS }, {
+      onSuccess: () => {
+        navigate('/platform/setup/billing/success');
+          toast({
+          title: t('Success'),
+          description: t('Business trial started successfully'),
+        });
+      },
+      onError: () => {
+        navigate(`/platform/setup/billing/error`);
+      }
+    })
+  }
 
   if (isPlatformSubscriptionLoading || isNil(platformPlanInfo)) {
     return (
@@ -82,7 +101,7 @@ export default function Billing() {
           {platformPlanInfo.plan.eligibleForBusinessTrial && (
             <Button
               variant="outline"
-              onClick={() => startBusinessTrial({ plan: PlanName.BUSINESS })}
+              onClick={handleStartBusinessTrial}
               disabled={startingBusinessTrial}
             >
               {startingBusinessTrial && <LoadingSpinner className="size-4" />}
