@@ -1,6 +1,7 @@
 import { isNil, SeekPage, AIProviderWithoutSensitiveData, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared';
 import { Property, InputPropertyMap } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from '../http';
+import { ImageModel } from 'ai';
 
 export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
     provider: Property.Dropdown<string, true>({
@@ -98,45 +99,89 @@ export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCal
         refreshers: ['provider', 'model'],
         props: async (propsValue): Promise<InputPropertyMap> => {
             const provider = propsValue['provider'] as unknown as string;
+            const model = propsValue['model'] as unknown as ImageModel;
 
             const providerMetadata = SUPPORTED_AI_PROVIDERS.find(p => p.provider === provider);
             if (isNil(providerMetadata)) {
                 return {};
             }
 
+            let options: InputPropertyMap = {};
+
             if (modelType === 'image') {
                 if (provider === 'openai') {
-                    return {
+                    options = {
                         quality: Property.StaticDropdown({
                             options: {
-                                options: [
+                                options: model.modelId === 'dall-e-3' ? [
                                     { label: 'Standard', value: 'standard' },
                                     { label: 'HD', value: 'hd' },
-                                ],
-                                disabled: false,
-                                placeholder: 'Select Image Quality',
+                                ] : model.modelId === 'gpt-image-1' ? [
+                                    { label: 'High', value: 'high' },
+                                    { label: 'Medium', value: 'medium' },
+                                    { label: 'Low', value: 'low' },
+                                ] : [],
+                                disabled: model.modelId === 'dall-e-2',
                             },
-                            defaultValue: 'standard',
-                            description:
-                                'Standard images are less detailed and faster to generate, while HD images are more detailed but slower to generate.',
+                            defaultValue: model.modelId === 'dall-e-3' ? 'standard' : 'high',
                             displayName: 'Image Quality',
-                            required: true,
+                            required: false,
                         }),
-                    };
+                        size: Property.StaticDropdown({
+                            options: {
+                                options: model.modelId === 'dall-e-3' ? [
+                                    { label: '1024x1024', value: '1024x1024' },
+                                    { label: '1792x1024', value: '1792x1024' },
+                                    { label: '1024x1792', value: '1024x1792' },
+                                ] : model.modelId === 'gpt-image-1' ? [
+                                    { label: '1024x1024', value: '1024x1024' },
+                                    { label: '1536x1024', value: '1536x1024' },
+                                    { label: '1024x1536', value: '1024x1536' },
+                                ] : [
+                                    { label: '256x256', value: '256x256' },
+                                    { label: '512x512', value: '512x512' },
+                                    { label: '1024x1024', value: '1024x1024' },
+                                ],
+                            },
+                            displayName: 'Image Size',
+                            required: false,
+                        }),
+                    }
+
+                    if (model.modelId === 'gpt-image-1') {
+                        options = {
+                            ...options,
+                            background: Property.StaticDropdown({
+                                options: {
+                                    options: [
+                                        { label: 'Auto', value: 'auto' },
+                                        { label: 'Transparent', value: 'transparent' },
+                                        { label: 'Opaque', value: 'opaque' },
+                                    ],
+                                },
+                                defaultValue: 'auto',
+                                description: 'The background of the image.',
+                                displayName: 'Background',
+                                required: true,
+                            }),
+                        }
+                    }
+
+                    return options;
                 }
 
                 if (provider === 'replicate') {
-                    return {
+                    options = {
                         negativePrompt: Property.ShortText({
                             displayName: 'Negative Prompt',
                             required: true,
                             description: 'A prompt to avoid in the generated image.',
-                          }),
-                    };
+                        }),
+                    }
                 }
             }
 
-            return {};
+            return options;
         },
     })
 })

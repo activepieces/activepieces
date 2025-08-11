@@ -41,16 +41,6 @@ export const UpdateJobRequest = Type.Object({
 })
 export type UpdateJobRequest = Static<typeof UpdateJobRequest>
 
-export const UpdateFailureCountRequest = Type.Object({
-    flowId: Type.String(),
-    projectId: Type.String(),
-    success: Type.Boolean(),
-})
-
-export type UpdateFailureCountRequest = Static<
-  typeof UpdateFailureCountRequest
->
-
 export const ApQueueJob = Type.Object({
     id: Type.String(),
     data: JobData,

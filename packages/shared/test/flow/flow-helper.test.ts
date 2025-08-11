@@ -1,16 +1,16 @@
 import {
-    Action,
-    ActionType,
+    FlowAction,
+    FlowActionType,
     FlowOperationRequest,
     flowOperations,
     FlowOperationType,
+    FlowTrigger,
+    FlowTriggerType,
     FlowVersion,
     FlowVersionState,
     PackageType,
     PieceType,
     StepLocationRelativeToParent,
-    Trigger,
-    TriggerType,
 } from '../../src'
 import { _getImportOperations } from '../../src/lib/flows/operations/import-flow'
 
@@ -24,14 +24,12 @@ const flowVersionWithBranching: FlowVersion = {
     agentIds: [],
     trigger: {
         name: 'trigger',
-        type: TriggerType.PIECE,
+        type: FlowTriggerType.PIECE,
         valid: true,
         settings: {
             input: {
                 cronExpression: '25 10 * * 0,1,2,3,4',
             },
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
             pieceName: 'schedule',
             pieceVersion: '0.0.2',
             inputUiInfo: {},
@@ -114,11 +112,11 @@ const flowVersionWithBranching: FlowVersion = {
     state: FlowVersionState.DRAFT,
 }
 
-function createCodeAction(name: string): Action {
+function createCodeAction(name: string): FlowAction {
     return {
         name,
         displayName: 'Code',
-        type: ActionType.CODE,
+        type: FlowActionType.CODE,
         valid: true,
         settings: {
             sourceCode: {
@@ -139,14 +137,12 @@ const emptyScheduleFlowVersion: FlowVersion = {
     agentIds: [],
     trigger: {
         name: 'trigger',
-        type: TriggerType.PIECE,
+        type: FlowTriggerType.PIECE,
         valid: true,
         settings: {
             input: {
                 cronExpression: '25 10 * * 0,1,2,3,4',
             },
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
             pieceName: 'schedule',
             pieceVersion: '0.0.2',
             inputUiInfo: {},
@@ -189,14 +185,12 @@ describe('Flow Helper', () => {
             agentIds: [],
             trigger: {
                 name: 'trigger',
-                type: TriggerType.PIECE,
+                type: FlowTriggerType.PIECE,
                 valid: true,
                 settings: {
                     input: {
                         cronExpression: '25 10 * * 0,1,2,3,4',
                     },
-                    packageType: PackageType.REGISTRY,
-                    pieceType: PieceType.OFFICIAL,
                     pieceName: 'schedule',
                     pieceVersion: '~0.0.2',
                     inputUiInfo: {},
@@ -238,7 +232,7 @@ describe('Flow Helper', () => {
                 parentStep: 'trigger',
                 action: {
                     name: 'step_1',
-                    type: ActionType.LOOP_ON_ITEMS,
+                    type: FlowActionType.LOOP_ON_ITEMS,
                     displayName: 'Loop',
                     valid: true,
                     settings: {
@@ -269,16 +263,14 @@ describe('Flow Helper', () => {
         resultFlow = flowOperations.apply(resultFlow, addCodeActionInside)
         resultFlow = flowOperations.apply(resultFlow, addCodeActionOnAfter)
 
-        const expectedTrigger: Trigger = {
+        const expectedTrigger: FlowTrigger = {
             name: 'trigger',
-            type: TriggerType.PIECE,
+            type: FlowTriggerType.PIECE,
             valid: true,
             settings: {
                 input: {
                     cronExpression: '25 10 * * 0,1,2,3,4',
                 },
-                packageType: PackageType.REGISTRY,
-                pieceType: PieceType.OFFICIAL,
                 pieceName: 'schedule',
                 pieceVersion: '~0.0.2',
                 inputUiInfo: {},
@@ -289,7 +281,7 @@ describe('Flow Helper', () => {
                 displayName: 'Loop',
                 name: 'step_1',
                 valid: true,
-                type: 'LOOP_ON_ITEMS',
+                type: FlowActionType.LOOP_ON_ITEMS,
                 settings: {
                     items: 'items',
                     inputUiInfo: {},
@@ -298,7 +290,7 @@ describe('Flow Helper', () => {
                     displayName: 'Code',
                     name: 'step_3',
                     valid: true,
-                    type: 'CODE',
+                    type: FlowActionType.CODE,
                     settings: {
                         input: {},
                         sourceCode: {
@@ -311,7 +303,7 @@ describe('Flow Helper', () => {
                     displayName: 'Code',
                     name: 'step_4',
                     valid: true,
-                    type: 'CODE',
+                    type: FlowActionType.CODE,
                     settings: {
                         input: {},
                         sourceCode: {
@@ -337,7 +329,7 @@ test('Duplicate Flow With Loops using Import', () => {
         agentIds: [],
         trigger: {
             name: 'trigger',
-            type: TriggerType.PIECE,
+            type: FlowTriggerType.PIECE,
             valid: true,
             settings: {
                 input: {
@@ -347,8 +339,6 @@ test('Duplicate Flow With Loops using Import', () => {
                     },
                     authentication: '{{connections.github}}',
                 },
-                packageType: PackageType.REGISTRY,
-                pieceType: PieceType.OFFICIAL,
                 pieceName: 'github',
                 pieceVersion: '0.1.3',
                 inputUiInfo: {},
@@ -356,7 +346,7 @@ test('Duplicate Flow With Loops using Import', () => {
             },
             nextAction: {
                 name: 'step_1',
-                type: 'LOOP_ON_ITEMS',
+                type: FlowActionType.LOOP_ON_ITEMS,
                 valid: false,
                 settings: {
                     items: '',
@@ -364,7 +354,7 @@ test('Duplicate Flow With Loops using Import', () => {
                 },
                 nextAction: {
                     name: 'step_3',
-                    type: 'CODE',
+                    type: FlowActionType.CODE,
                     valid: true,
                     settings: {
                         input: {},
@@ -404,7 +394,7 @@ test('Duplicate Flow With Loops using Import', () => {
                 stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
                 action: {
                     name: 'step_1',
-                    type: ActionType.LOOP_ON_ITEMS,
+                    type: FlowActionType.LOOP_ON_ITEMS,
                     valid: false,
                     settings: {
                         items: '',
@@ -421,7 +411,7 @@ test('Duplicate Flow With Loops using Import', () => {
                 stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
                 action: {
                     name: 'step_3',
-                    type: ActionType.CODE,
+                    type: FlowActionType.CODE,
                     valid: true,
                     settings: {
                         input: {},
@@ -441,7 +431,7 @@ test('Duplicate Flow With Loops using Import', () => {
                 stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
                 action: {
                     name: 'step_2',
-                    type: ActionType.CODE,
+                    type: FlowActionType.CODE,
                     valid: true,
                     settings: {
                         input: {},

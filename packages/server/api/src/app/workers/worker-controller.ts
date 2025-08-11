@@ -6,11 +6,10 @@ import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { triggerHooks } from '../flows/trigger'
 import { dedupeService } from '../flows/trigger/dedupe'
-import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
 import { projectService } from '../project/project-service'
-import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
+import { triggerEventService } from '../trigger/trigger-events/trigger-event.service'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
 import { jobQueue } from './queue'
@@ -81,7 +80,6 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         await engineResponseWatcher(request.log).publish(requestId, workerServerId, response)
         return {}
     })
-
     app.post('/save-payloads', {
         config: {
             allowedPrincipals: [PrincipalType.WORKER],
@@ -100,7 +98,12 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             }), request.log),
         )
         rejectedPromiseHandler(Promise.all(savePayloads), request.log)
-        await webhookSimulationService(request.log).delete({ flowId, projectId })
+        await triggerSourceService(request.log).disable({
+            flowId,
+            projectId,
+            simulate: true,
+            ignoreError: true,
+        })
         return {}
     })
 
@@ -240,12 +243,12 @@ async function removeScheduledJob(job: ScheduledJobData, log: FastifyBaseLogger)
     if (isNil(flowVersion)) {
         return
     }
-    await triggerHooks.disable({
+    await triggerSourceService(log).disable({
         projectId: job.projectId,
-        flowVersion,
+        flowId: flowVersion.flowId,
         simulate: false,
         ignoreError: true,
-    }, log)
+    })
 }
 
 async function enrichEngineToken(token: string, queueName: QueueName, job: { id: string, data: JobData, attempsStarted: number }) {

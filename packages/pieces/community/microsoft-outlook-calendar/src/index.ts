@@ -16,6 +16,7 @@ export const outlookCalendarAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
   required: true,
   scope: ['User.Read', 'Calendars.ReadWrite', 'offline_access'],
+  prompt: 'omit'
 });
 
 export const microsoftOutlookCalendar = createPiece({

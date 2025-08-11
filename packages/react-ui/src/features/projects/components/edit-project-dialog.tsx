@@ -183,15 +183,17 @@ export function EditProjectDialog({
                           placeholder={t('Tasks')}
                           className="rounded-sm pr-16"
                         />
-                        <Button
-                          variant="link"
-                          type="button"
-                          tabIndex={-1}
-                          className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                          onClick={() => form.setValue('tasks', '')}
-                        >
-                          {t('Clear')}
-                        </Button>
+                        {!field.disabled && (
+                          <Button
+                            variant="link"
+                            type="button"
+                            tabIndex={-1}
+                            className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
+                            onClick={() => form.setValue('tasks', '')}
+                          >
+                            {t('Clear')}
+                          </Button>
+                        )}
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -211,15 +213,17 @@ export function EditProjectDialog({
                           placeholder={t('AI Credits')}
                           className="rounded-sm pr-16"
                         />
-                        <Button
-                          variant="link"
-                          type="button"
-                          tabIndex={-1}
-                          className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                          onClick={() => form.setValue('aiCredits', '')}
-                        >
-                          {t('Clear')}
-                        </Button>
+                        {!field.disabled && (
+                          <Button
+                            variant="link"
+                            type="button"
+                            tabIndex={-1}
+                            className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
+                            onClick={() => form.setValue('aiCredits', '')}
+                          >
+                            {t('Clear')}
+                          </Button>
+                        )}
                       </div>
                       <FormMessage />
                     </FormItem>

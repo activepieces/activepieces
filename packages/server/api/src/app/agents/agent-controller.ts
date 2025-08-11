@@ -1,6 +1,8 @@
-import { Agent,  CreateAgentRequest,  ListAgentsQueryParams,  PrincipalType, SeekPage, UpdateAgentRequestBody } from '@activepieces/shared'
+import { GitPushOperationType } from '@activepieces/ee-shared'
+import { Agent,  CreateAgentRequest, EnhanceAgentPrompt, EnhancedAgentPrompt,  ListAgentsQueryParams,  PrincipalType, SeekPage, UpdateAgentRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { gitRepoService } from '../ee/projects/project-release/git-sync/git-sync.service'
 import { agentsService } from './agents-service'
 
 const DEFAULT_LIMIT = 100
@@ -24,32 +26,48 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', CreateAgentRequestParams, async (request) => {
-        const { displayName, description } = request.body
         return agentsService(request.log).create({
-            displayName,
-            description,
+            systemPrompt: request.body.systemPrompt,
+            displayName: request.body.displayName,
+            description: request.body.description,
             projectId: request.principal.projectId,
             platformId: request.principal.platform.id,
+            enhancePrompt: true,
+        })
+    })
+
+    app.post('/enhance-prompt', EnhanceAgentPromptRequestParams, async (request) => {
+        return agentsService(request.log).enhanceAgentPrompt({ 
+            projectId: request.principal.projectId,
+            systemPrompt: request.body.systemPrompt,
+            platformId: request.principal.platform.id,
+            agentId: request.body.agentId,
         })
     })
 
     app.post('/:id', UpdateAgentRequest, async (request) => {
         const { id } = request.params
-        const { displayName, systemPrompt, description, testPrompt, outputType, outputFields } = request.body
+        const { displayName, systemPrompt, description, outputType, outputFields } = request.body
         return agentsService(request.log).update({
             id,
             displayName,
             systemPrompt,
             description,
-            testPrompt,
             outputType,
             outputFields,
             projectId: request.principal.projectId,
         })
     })
 
- 
     app.delete('/:id', DeleteAgentRequest, async (request) => {
+        await gitRepoService(request.log).onDeleted({
+            type: GitPushOperationType.DELETE_AGENT,
+            idOrExternalId: request.params.id,
+            userId: request.principal.id,
+            projectId: request.principal.projectId,
+            platformId: request.principal.platform.id,
+            log: request.log,
+        })
         const { id } = request.params
         await agentsService(request.log).delete({
             id, 
@@ -77,6 +95,18 @@ const CreateAgentRequestParams = {
         body: CreateAgentRequest,
         response: {
             [StatusCodes.CREATED]: Agent,
+        },
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+}
+
+const EnhanceAgentPromptRequestParams = {
+    schema: {
+        body: EnhanceAgentPrompt,
+        response: {
+            [StatusCodes.OK]: EnhancedAgentPrompt,
         },
     },
     config: {

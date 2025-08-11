@@ -4,11 +4,11 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, isNil, PauseType, PARENT_RUN_ID_HEADER, TriggerType } from '@activepieces/shared';
-import { CallableFlowRequest, CallableFlowResponse } from '../common';
+import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PauseType, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
+import { CallableFlowRequest, CallableFlowResponse, listEnabledFlowsWithSubflowTrigger } from '../common';
 
 type FlowValue = {
-  id: string;
+  externalId: string;
   exampleData: unknown;
 };
 
@@ -22,18 +22,13 @@ export const callFlow = createAction({
       description: 'The flow to execute',
       required: true,
       options: async (_, context) => {
-        const allFlows = (await context.flows.list()).data;
-        const flows = allFlows.filter(
-          (flow) =>
-            flow.status === FlowStatus.ENABLED &&
-            flow.version.trigger.type === TriggerType.PIECE &&
-            flow.version.trigger.settings.pieceName ==
-            '@activepieces/piece-subflows'
-        );
+        const flows = await listEnabledFlowsWithSubflowTrigger({
+          flowsContext: context.flows,
+        });
         return {
           options: flows.map((flow) => ({
             value: {
-              id: flow.id,
+              externalId: flow.externalId ?? flow.id,
               exampleData: flow.version.trigger.settings.input.exampleData,
             },
             label: flow.version.displayName,
@@ -149,9 +144,24 @@ export const callFlow = createAction({
       }
     }
     const payload = context.propsValue.flowProps['payload'];
+    const externalIds = [context.propsValue.flow?.externalId].filter((id) => !isNil(id))
+    const allFlows = await listEnabledFlowsWithSubflowTrigger({
+      flowsContext: context.flows,
+      params: {
+        externalIds
+      }
+    });
+    if (allFlows.length === 0) {
+      throw new Error(JSON.stringify({
+        message: 'Flow not found',
+        externalId: context.propsValue.flow?.externalId,
+      }));
+    }
+    const flow = allFlows[0];
+
     const response = await httpClient.sendRequest<CallableFlowRequest>({
       method: HttpMethod.POST,
-      url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}`,
+      url: `${context.serverUrl}v1/webhooks/${flow?.id}`,
       headers: {
         'Content-Type': 'application/json',
         [PARENT_RUN_ID_HEADER]: context.run.id,

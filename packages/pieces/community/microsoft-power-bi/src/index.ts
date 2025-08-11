@@ -17,6 +17,7 @@ export const microsoftPowerBiAuth = PieceAuth.OAuth2({
     'https://analysis.windows.net/powerbi/api/Dataset.ReadWrite.All',
     'offline_access',
   ],
+  prompt: 'omit'
 });
 
 export const microsoftPowerBi = createPiece({

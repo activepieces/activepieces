@@ -1,0 +1,21 @@
+{
+  "NetSuite": "NetSuite",
+  "Account ID": "ID klant",
+  "Consumer Key": "Gebruiker Sleutel",
+  "Consumer Secret": "Gebruiker geheim",
+  "Token ID": "Token ID",
+  "Token Secret": "Token Geheim",
+  "Your NetSuite account ID": "Uw NetSuite account-ID",
+  "Your NetSuite consumer key": "Uw NetSuite consumentensleutel",
+  "Your NetSuite consumer secret": "Uw NetSuite consumentengeheim",
+  "Your NetSuite token ID": "Uw NetSuite token ID",
+  "Your NetSuite token secret": "Uw NetSuite token geheim",
+  "Get Vendor": "Get Vendor",
+  "Get Customer": "Klant ophalen",
+  "Gets vendor details from NetSuite.": "Verkoper gegevens ophalen uit NetSuite.",
+  "Gets customer details from NetSuite.": "Haal klantgegevens op uit NetSuite.",
+  "Vendor ID": "Verkoper ID",
+  "Customer ID": "Klant ID",
+  "The ID of the vendor to retrieve.": "De ID van de verkoper die opgehaald moet worden.",
+  "The ID of the customer to retrieve.": "Het ID van de op te halen klant."
+}

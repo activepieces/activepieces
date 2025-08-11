@@ -10,17 +10,15 @@ import {
     ApEdition,
     apId,
     ErrorCode,
-    FlowVersionState,
     isNil,
     ProjectState,
     SeekPage,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../../core/db/repo-factory'
-import { flowService } from '../../../../flows/flow/flow.service'
 import { paginationHelper } from '../../../../helper/pagination/pagination-utils'
 import { system } from '../../../../helper/system/system'
-import { tableService } from '../../../../tables/table/table.service'
+import { projectStateService } from '../project-state/project-state.service'
 import { gitHelper } from './git-helper'
 import { gitSyncHandler } from './git-sync-handler'
 import { gitSyncHelper } from './git-sync-helper'
@@ -95,7 +93,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                     request: {
                         type: GitPushOperationType.DELETE_FLOW,
                         commitMessage: `chore: deleted flow ${idOrExternalId}`,
-                        flowIds: [idOrExternalId],
+                        externalFlowIds: [idOrExternalId],
                     },
                     log,
                 })
@@ -109,7 +107,21 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                     request: {
                         type: GitPushOperationType.DELETE_TABLE,
                         commitMessage: `chore: deleted table ${idOrExternalId}`,
-                        tableIds: [idOrExternalId],
+                        externalTableIds: [idOrExternalId],
+                    },
+                    log,
+                })
+                break
+            }
+            case GitPushOperationType.DELETE_AGENT: {
+                await gitRepoService(log).push({
+                    id: gitRepo.id,
+                    platformId,
+                    userId,
+                    request: {
+                        type: GitPushOperationType.DELETE_AGENT,
+                        commitMessage: `chore: deleted agent ${idOrExternalId}`,
+                        externalAgentIds: [idOrExternalId],
                     },
                     log,
                 })
@@ -125,46 +137,42 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         }
     },
     async push({ id, platformId, userId, request, log }: PushParams): Promise<void> {
+
         switch (request.type) {
             case GitPushOperationType.PUSH_EVERYTHING: {
                 const gitRepo = await gitRepoService(log).getOrThrow({ id })
-                const flows = await flowService(log).list({
-                    projectId: gitRepo.projectId,
-                    cursorRequest: null,
-                    limit: 10000,
-                    folderId: undefined,
-                    status: undefined,
-                    name: undefined,
-                    versionState: FlowVersionState.LOCKED,
-                    connectionExternalIds: undefined,
-                })
-                const tables = await tableService.list({
-                    projectId: gitRepo.projectId,
-                    limit: 10000,
-                    cursor: undefined,
-                    name: undefined,
-                    externalIds: undefined,
-                })
-
-                await gitSyncHandler(log).flows.push({
-                    id,
-                    platformId,
-                    userId,
-                    request: {
+                const projectState = await projectStateService(log).getCurrentState(gitRepo.projectId, log)
+                const operations: PushGitRepoRequest[] = []
+                if (!isNil(projectState.flows)) {
+                    operations.push({
                         type: GitPushOperationType.PUSH_FLOW,
-                        commitMessage: request.commitMessage ?? `chore: push all flows ${flows.data.map((flow) => flow.version.displayName).join(', ')}`,
-                        flowIds: flows.data.map((flow) => flow.id),
-                    },
-                })
-                await gitSyncHandler(log).tables.push({
-                    id,
-                    userId,
-                    request: {  
+                        commitMessage: request.commitMessage ?? `chore: push all flows ${projectState.flows.map((flow) => flow.version.displayName).join(', ')}`,
+                        externalFlowIds: projectState.flows.map((flow) => flow.externalId),
+                    })
+                }
+                if (!isNil(projectState.tables)) {
+                    operations.push({
                         type: GitPushOperationType.PUSH_TABLE,
-                        commitMessage: request.commitMessage ?? `chore: push all tables ${tables.data.map((table) => table.name).join(', ')}`,
-                        tableIds: tables.data.map((table) => table.id),
-                    },
-                })
+                        commitMessage: request.commitMessage ?? `chore: push all tables ${projectState.tables.map((table) => table.name).join(', ')}`,
+                        externalTableIds: projectState.tables.map((table) => table.externalId),
+                    })
+                }
+                if (!isNil(projectState.agents)) {
+                    operations.push({
+                        type: GitPushOperationType.PUSH_AGENT,
+                        commitMessage: request.commitMessage ?? `chore: push all agents ${projectState.agents.map((agent) => agent.displayName).join(', ')}`,
+                        externalAgentIds: projectState.agents.map((agent) => agent.externalId),
+                    })
+                }
+                for (const operation of operations) {
+                    await gitRepoService(log).push({
+                        id,
+                        platformId,
+                        userId,
+                        request: operation,
+                        log,
+                    })
+                }
                 break
             }
             case GitPushOperationType.PUSH_FLOW: {
@@ -201,6 +209,22 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                 })
                 break
             }
+            case GitPushOperationType.PUSH_AGENT: {
+                await gitSyncHandler(log).agents.push({
+                    id,
+                    userId,
+                    request,
+                })
+                break
+            }
+            case GitPushOperationType.DELETE_AGENT: {
+                await gitSyncHandler(log).agents.delete({
+                    id,
+                    userId,
+                    request,
+                })
+                break
+            }
         }
     },
     async getState({ gitRepo, userId, log }: PullGitRepoRequest): Promise<ProjectState> {
@@ -228,7 +252,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
 
 type PushParams = {
     id: string
-    platformId: string  
+    platformId: string
     userId: string
     request: PushGitRepoRequest
     log: FastifyBaseLogger

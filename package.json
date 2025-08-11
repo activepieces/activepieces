@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.66.6",
+  "version": "0.67.0",
   "rcVersion": "0.67.0-rc.0",
   "scripts": {
     "prepare": "husky install",
@@ -35,6 +35,7 @@
     "@ai-sdk/openai": "1.3.22",
     "@ai-sdk/replicate": "0.2.8",
     "@anthropic-ai/sdk": "0.39.0",
+    "@atproto/api": "0.16.0",
     "@authenio/samlify-node-xmllint": "2.0.0",
     "@aws-sdk/client-s3": "3.637.0",
     "@aws-sdk/s3-request-presigner": "3.658.1",
@@ -55,11 +56,13 @@
     "@fastify/formbody": "8.0.2",
     "@fastify/http-proxy": "11.3.0",
     "@fastify/multipart": "9.0.3",
+    "@fastify/otel": "0.9.3",
     "@fastify/rate-limit": "10.3.0",
     "@fastify/swagger": "9.5.1",
     "@fastify/type-provider-typebox": "5.1.0",
     "@google/generative-ai": "0.21.0",
     "@hookform/resolvers": "3.9.0",
+    "@hyperdx/node-opentelemetry": "0.8.2",
     "@mailchimp/mailchimp_marketing": "3.0.80",
     "@mailerlite/mailerlite-nodejs": "1.1.0",
     "@microsoft/microsoft-graph-client": "3.0.7",
@@ -69,6 +72,15 @@
     "@nx/devkit": "21.1.2",
     "@octokit/rest": "21.1.1",
     "@onfleet/node-onfleet": "1.3.3",
+    "@opentelemetry/api": "1.9.0",
+    "@opentelemetry/api-logs": "0.203.0",
+    "@opentelemetry/auto-instrumentations-node": "0.62.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "0.203.0",
+    "@opentelemetry/exporter-metrics-otlp-proto": "0.203.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.203.0",
+    "@opentelemetry/sdk-logs": "0.203.0",
+    "@opentelemetry/sdk-metrics": "2.0.1",
+    "@opentelemetry/sdk-node": "0.203.0",
     "@qdrant/js-client-rest": "1.7.0",
     "@radix-ui/react-accordion": "1.2.4",
     "@radix-ui/react-avatar": "1.1.0",
@@ -106,6 +118,7 @@
     "@tanstack/react-virtual": "3.13.11",
     "@tiptap/extension-mention": "2.5.4",
     "@tiptap/extension-placeholder": "2.5.5",
+    "@tiptap/extension-typography": "^2.22.3",
     "@tiptap/pm": "2.5.4",
     "@tiptap/react": "2.5.4",
     "@tiptap/starter-kit": "2.5.4",
@@ -133,6 +146,7 @@
     "boring-avatars": "1.11.2",
     "buffer": "6.0.3",
     "bullmq": "5.28.1",
+    "bullmq-otel": "1.0.1",
     "checkly": "6.1.1",
     "cheerio": "1.0.0-rc.12",
     "chokidar": "3.6.0",
@@ -263,6 +277,7 @@
     "react-use": "17.5.1",
     "recharts": "2.12.7",
     "redlock": "5.0.0-beta.2",
+    "remark-breaks": "4.0.0",
     "remark-gfm": "4.0.0",
     "replicate": "0.34.1",
     "rollup": "4.22.5",
@@ -289,6 +304,7 @@
     "tailwind-scrollbar": "4.0.2",
     "tailwindcss-animate": "1.0.7",
     "tinycolor2": "1.6.0",
+    "tiptap-markdown": "^0.8.10",
     "tree-kill": "1.2.2",
     "tsconfig-paths": "4.2.0",
     "tslib": "2.6.2",
@@ -445,7 +461,6 @@
     },
     "vite": {
       "rollup": "npm:@rollup/wasm-node"
-    },
-    "stylus": "0.0.1-security"
+    }
   }
 }

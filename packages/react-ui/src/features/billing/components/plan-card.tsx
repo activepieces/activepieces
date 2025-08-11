@@ -105,6 +105,7 @@ export const PlanCard = ({
                   | PlanName.PLUS
                   | PlanName.BUSINESS
                   | PlanName.FREE,
+                addons: {},
               });
             } else {
               createSubscription({

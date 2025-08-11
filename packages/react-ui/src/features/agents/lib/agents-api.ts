@@ -8,6 +8,8 @@ import {
   SeekPage,
   AgentRun,
   RunAgentRequestBody,
+  EnhancedAgentPrompt,
+  EnhaceAgentPrompt,
 } from '@activepieces/shared';
 
 export const agentsApi = {
@@ -23,6 +25,15 @@ export const agentsApi = {
       externalIds: [externalId],
     });
     return seekPage.data?.[0] ?? null;
+  },
+
+  async enhanceAgentPrompt(
+    request: EnhaceAgentPrompt,
+  ): Promise<EnhancedAgentPrompt> {
+    return await api.post<EnhancedAgentPrompt>(
+      `/v1/agents/enhance-prompt`,
+      request,
+    );
   },
 
   async create(request: CreateAgentRequest): Promise<Agent> {

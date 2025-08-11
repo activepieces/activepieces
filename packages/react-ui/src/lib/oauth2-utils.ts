@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 import { useSearchParams } from 'react-router-dom';
 
-import { ThirdPartyAuthnProviderEnum } from '@activepieces/shared';
+import { isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared';
 
 import {
   FROM_QUERY_PARAM,
@@ -90,6 +90,13 @@ async function constructUrl(params: OAuth2PopupParams, pckeChallenge: string) {
     scope: params.scope,
     ...(params.extraParams || {}),
   };
+
+  if (params.prompt === 'omit') {
+    delete queryParams['prompt'];
+  } else if (!isNil(params.prompt)) {
+    queryParams['prompt'] = params.prompt;
+  }
+
   if (params.pkce) {
     const method = params.pkceMethod || 'plain';
     queryParams['code_challenge_method'] = method;
@@ -132,6 +139,7 @@ type OAuth2PopupParams = {
   clientId: string;
   redirectUrl: string;
   scope: string;
+  prompt?: 'none' | 'consent' | 'login' | 'omit';
   pkce: boolean;
   pkceMethod?: 'plain' | 'S256';
   extraParams?: Record<string, string>;
