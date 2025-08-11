@@ -88,9 +88,20 @@ jobs:
         with:
           github-token: ${{ secrets.CROWDIN_PRS }}
           script: |
+            // Wait for the push to be reflected in the PR
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            
+            // Get the latest PR info to ensure we have the updated head SHA
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            // Now attempt to merge
             await github.rest.pulls.merge({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
               merge_method: 'merge'
-            })
+            });
