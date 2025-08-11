@@ -112,8 +112,8 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         await platformPlanService(request.log).update({ 
                             ...newLimits,
                             platformId,
-                            eligibleForPlusTrial: newPlan === PlanName.PLUS ? false  : eligibleForPlusTrial,
-                            eligibleForBusinessTrial: newPlan === PlanName.BUSINESS ? false  : eligibleForBusinessTrial,
+                            eligibleForPlusTrial: false,
+                            eligibleForBusinessTrial: newPlan === PlanName.PLUS && isTrialSubscription ?  eligibleForBusinessTrial : false,
                             stripeBillingCycle: cycle,
                             stripeSubscriptionId: isFreePlan ? undefined : stripeSubscriptionId,
                             aiCreditsOverageState: isFreePlan || isTrialSubscription ? AiOverageState.NOT_ALLOWED : AiOverageState.ALLOWED_BUT_OFF,
