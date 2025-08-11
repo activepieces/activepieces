@@ -1,5 +1,5 @@
 import { METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, PlanName, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
-import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlatformPlanLimits, PlatformUsageMetric, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlatformPlanLimits, PlatformRole, PlatformUsageMetric, UserStatus } from '@activepieces/shared'
 import { flowService } from '../../../flows/flow/flow.service'
 import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
@@ -164,14 +164,14 @@ async function handleUserSeats(
 ): Promise<void> {
     if (isNil(newLimit) || currentUsage <= newLimit) return
 
-    const getAllActiveUsers = projectIds.map(id => {
+    const activeUserUnfiltered = await Promise.all(projectIds.map(id => {
         return userService.listProjectUsers({
             projectId: id, 
             platformId,
         })
-    })
+    }))
 
-    const activeUsers = (await Promise.all(getAllActiveUsers)).flatMap(user => user)
+    const activeUsers = activeUserUnfiltered.flatMap(user => user).filter(user => user.platformRole !== PlatformRole.ADMIN)
     const usersToDeactivate = activeUsers.slice(newLimit)
 
     const deactivateUsers = usersToDeactivate.map(user => {
