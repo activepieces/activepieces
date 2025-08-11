@@ -29,6 +29,7 @@ export class FlowExecutorContext {
     verdictResponse: VerdictResponse | undefined
     currentPath: StepExecutionPath
     error?: FlowError
+    testSingleStepMode?: boolean
 
     /**
      * Execution time in milliseconds
@@ -45,6 +46,7 @@ export class FlowExecutorContext {
         this.verdictResponse = copyFrom?.verdictResponse ?? undefined
         this.error = copyFrom?.error ?? undefined
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
+        this.testSingleStepMode = copyFrom?.testSingleStepMode ?? false
     }
 
     static empty(): FlowExecutorContext {

@@ -4,5 +4,7 @@
   "Provider": "プロバイダー",
   "Model": "モデル",
   "Prompt": "Prompt",
-  "Advanced Options": "詳細オプション"
+  "Advanced Options": "詳細オプション",
+  "Resolution": "解像度",
+  "The resolution to generate the image in.": "画像を生成する解像度。"
 }

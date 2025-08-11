@@ -74,7 +74,7 @@ export const testExecutionContext = {
                 case FlowTriggerType.EMPTY:
                 case FlowTriggerType.PIECE:
                     flowExecutionContext = flowExecutionContext.upsertStep(step.name, GenericStepOutput.create({
-                        input: step.settings,
+                        input: {},
                         type: stepType,
                         status: StepOutputStatus.SUCCEEDED,
                         ...spreadIfDefined('output', sampleData?.[step.name]),
