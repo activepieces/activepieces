@@ -57,7 +57,7 @@ export const updateTask = createAction({
           if (!f.view_type || f.view_type.edit !== true) continue;
           if (apiName === 'Tag' || apiName === 'id') continue;
 
-          let defaultValue: any = task[apiName] ?? undefined;
+          const defaultValue = task[apiName] ?? undefined;
           switch ((f.data_type as string)?.toLowerCase()) {
             case 'picklist': {
               const options = (f.pick_list_values || []).map((pl: any) => ({

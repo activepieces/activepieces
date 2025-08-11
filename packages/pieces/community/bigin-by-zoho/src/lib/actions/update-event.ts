@@ -77,7 +77,7 @@ export const updateEvent = createAction({
           )
             continue;
 
-          let defaultValue: any = event[apiName] ?? undefined;
+      const defaultValue = event[apiName] ?? undefined;
           switch ((f.data_type as string)?.toLowerCase()) {
             case 'picklist': {
               const options = (f.pick_list_values || []).map((pl: any) => ({

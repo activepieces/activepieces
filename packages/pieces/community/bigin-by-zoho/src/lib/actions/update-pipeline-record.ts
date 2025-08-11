@@ -37,7 +37,7 @@ export const updatePipelineRecord = createAction({
           if (!f.view_type || f.view_type.edit !== true) continue;
           if (apiName === 'Tag' || apiName === 'id' || apiName === 'Secondary_Contacts') continue;
 
-          let defaultValue: any = pipelineData[apiName] ?? undefined;
+          const defaultValue = pipelineData[apiName] ?? undefined;
           switch ((f.data_type as string)?.toLowerCase()) {
             case 'picklist': {
               const options = (f.pick_list_values || []).map((pl: any) => ({
