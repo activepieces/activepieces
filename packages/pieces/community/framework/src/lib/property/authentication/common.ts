@@ -9,7 +9,7 @@ export const BasePieceAuthSchema = Type.Object({
 export type BasePieceAuthSchema<AuthValueSchema> = {
   displayName: string;
   description?: string;
-    validate?: (params: { auth: AuthValueSchema; server: Omit<ServerContext, 'token'> }) => Promise<
+  validate?: (params: { auth: AuthValueSchema; server: Omit<ServerContext, 'token'> }) => Promise<
     | { valid: true }
     | {
     valid: false;
