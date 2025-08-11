@@ -64,7 +64,7 @@ export const newNoteInSectionTrigger = createTrigger({
 			displayName: 'Notebook',
 			description: 'The notebook to monitor for new notes.',
 			required: true,
-			refreshers: ['section_id'],
+			refreshers: [],
 			options: async ({ auth }) => {
 				if (!(auth as OAuth2PropertyValue)?.access_token) {
 					return {
@@ -80,7 +80,7 @@ export const newNoteInSectionTrigger = createTrigger({
 			displayName: 'Section',
 			description: 'The section to monitor for new notes.',
 			required: true,
-			refreshers: [],
+			refreshers: ['notebook_id'],
 			options: async ({ auth, notebook_id }) => {
 				if (!(auth as OAuth2PropertyValue)?.access_token) {
 					return {

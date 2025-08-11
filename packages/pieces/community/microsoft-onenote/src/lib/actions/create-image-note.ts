@@ -13,7 +13,7 @@ export const createImageNote = createAction({
 			displayName: 'Notebook',
 			description: 'The notebook to create the image note in.',
 			required: true,
-			refreshers: ['section_id'],
+			refreshers: [],
 			options: async ({ auth }) => {
 				if (!(auth as OAuth2PropertyValue)?.access_token) {
 					return {
@@ -29,7 +29,7 @@ export const createImageNote = createAction({
 			displayName: 'Section',
 			description: 'The section to create the image note in.',
 			required: true,
-			refreshers: [],
+			refreshers: ['notebook_id'],
 			options: async ({ auth, notebook_id }) => {
 				if (!(auth as OAuth2PropertyValue)?.access_token) {
 					return {

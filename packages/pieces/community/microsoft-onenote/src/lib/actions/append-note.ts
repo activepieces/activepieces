@@ -13,7 +13,7 @@ export const appendNote = createAction({
 			displayName: 'Notebook',
 			description: 'The notebook containing the page to append to.',
 			required: true,
-			refreshers: ['section_id'],
+			refreshers: [],
 			options: async ({ auth }) => {
 				if (!(auth as OAuth2PropertyValue)?.access_token) {
 					return {
@@ -29,7 +29,7 @@ export const appendNote = createAction({
 			displayName: 'Section',
 			description: 'The section containing the page to append to.',
 			required: true,
-			refreshers: ['page_id'],
+			refreshers: ['notebook_id'],
 			options: async ({ auth, notebook_id }) => {
 				if (!(auth as OAuth2PropertyValue)?.access_token) {
 					return {
@@ -52,7 +52,7 @@ export const appendNote = createAction({
 			displayName: 'Page',
 			description: 'The page to append content to.',
 			required: true,
-			refreshers: [],
+			refreshers: ['section_id'],
 			options: async ({ auth, section_id }) => {
 				if (!(auth as OAuth2PropertyValue)?.access_token) {
 					return {
