@@ -37,20 +37,16 @@ export const flowRunsApi = {
     const initialRun = await getInitialRun(socket, request.flowVersionId);
     onUpdate(initialRun);
   },
-  testStep(
+  async testStep(
     socket: Socket,
-    request: Omit<CreateStepRunRequestBody, 'id'>,
+    request: CreateStepRunRequestBody,
     onProgress?: (progress: StepRunResponse) => void,
   ): Promise<StepRunResponse> {
-    const id = nanoid();
-    socket.emit(WebsocketServerEvent.TEST_STEP_RUN, {
-      ...request,
-      id,
-    });
+   const stepRun = await api.post<FlowRun>('/v1/sample-data/test-step', request);
 
     return new Promise<StepRunResponse>((resolve, reject) => {
       const handleStepFinished = (response: StepRunResponse) => {
-        if (response.id === id) {
+        if (response.runId === stepRun.id) {
           socket.off(
             WebsocketClientEvent.TEST_STEP_FINISHED,
             handleStepFinished,

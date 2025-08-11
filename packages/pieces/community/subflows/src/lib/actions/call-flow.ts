@@ -94,12 +94,6 @@ export const callFlow = createAction({
       defaultValue: false,
     }),
   },
-  async test(context) {
-    return { 
-      status: 'success', 
-      data: context.propsValue.flowProps['payload']
-    }
-  },
   async run(context) {
     if (context.executionType === ExecutionType.RESUME) {
       const response = context.resumePayload.body as CallableFlowResponse;

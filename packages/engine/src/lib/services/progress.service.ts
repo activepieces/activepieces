@@ -131,6 +131,7 @@ const sendUpdateRunRequest = async (_updateParams: UpdateStepProgressParams): Pr
             type: WebsocketClientEvent.FLOW_RUN_PROGRESS,
             data: {
                 runId: engineConstants.flowRunId,
+                testSingleStepMode: engineConstants.testSingleStepMode,
             },
         })
     })

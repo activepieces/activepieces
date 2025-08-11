@@ -15,6 +15,7 @@ import { triggerRunService } from '../trigger/trigger-run/trigger-run.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
+import { stepRunProgressHandler } from '../flows/flow-run/step-run-progress.handler'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -73,6 +74,12 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/notify-frontend', NotifyFrontendParams, async (request) => {
         const { type, data } = request.body
+        if (data.testSingleStepMode) {
+            const response = await stepRunProgressHandler(request.log).extractStepResponse({
+                runId: data.runId,
+            })
+            app.io.to(request.principal.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
+        }
         app.io.to(request.principal.projectId).emit(type, data)
     })
 
@@ -89,27 +96,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             )
         }
 
-        const flowRun = await flowRunService(request.log).getOneOrThrow({
-            id: runId,
-            projectId: request.principal.projectId,
-        })
-
-        let uploadUrl: string | undefined
-        const updateLogs = !isNil(executionStateContentLength) && executionStateContentLength > 0
-        if (updateLogs) {
-            uploadUrl = await flowRunService(request.log).updateLogsAndReturnUploadUrl({
-                flowRunId: runId,
-                logsFileId: flowRun.logsFileId ?? undefined,
-                projectId: request.principal.projectId,
-                executionStateString: executionStateBuffer,
-                executionStateContentLength,
-            })
-        }
-        else {
-            app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, runId)
-        }
-
-        const updatedRunWithoutSteps = await flowRunService(request.log).updateRun({
+        const runWithoutSteps = await flowRunService(request.log).updateRun({
             flowRunId: runId,
             status: runDetails.status,
             tasks: runDetails.tasks,
@@ -118,6 +105,21 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             tags: runDetails.tags ?? [],
             failedStepName,
         })
+
+        let uploadUrl: string | undefined
+        const updateLogs = !isNil(executionStateContentLength) && executionStateContentLength > 0
+        if (updateLogs) {
+            uploadUrl = await flowRunService(request.log).updateLogsAndReturnUploadUrl({
+                flowRunId: runId,
+                logsFileId: runWithoutSteps.logsFileId ?? undefined,
+                projectId: request.principal.projectId,
+                executionStateString: executionStateBuffer,
+                executionStateContentLength,
+            })
+        }
+        else {
+            app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, runId)
+        }
 
         if (runDetails.status === FlowRunStatus.PAUSED) {
             await flowRunService(request.log).pause({
@@ -129,12 +131,12 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        await markJobAsCompleted(updatedRunWithoutSteps.status, updatedRunWithoutSteps.id, request.principal as unknown as EnginePrincipal, runDetails.error, request.log)
-        const shouldMarkParentAsFailed = updatedRunWithoutSteps.failParentOnFailure && !isNil(updatedRunWithoutSteps.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(updatedRunWithoutSteps.status)
+        await markJobAsCompleted(runWithoutSteps.status, runWithoutSteps.id, request.principal as unknown as EnginePrincipal, runDetails.error, request.log)
+        const shouldMarkParentAsFailed = runWithoutSteps.failParentOnFailure && !isNil(runWithoutSteps.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(runWithoutSteps.status)
         if (shouldMarkParentAsFailed) {
             await markParentRunAsFailed({
-                parentRunId: updatedRunWithoutSteps.parentRunId!,
-                childRunId: updatedRunWithoutSteps.id,
+                parentRunId: runWithoutSteps.parentRunId!,
+                childRunId: runWithoutSteps.id,
                 projectId: request.principal.projectId,
                 platformId: request.principal.platform.id,
                 log: request.log,

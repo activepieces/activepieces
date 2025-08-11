@@ -16,6 +16,7 @@ import {
     FlowAction,
     FlowActionType,
     FlowRunResponse,
+    flowStructureUtil,
     GenericStepOutput,
     StepOutput,
     StepOutputStatus,
@@ -33,11 +34,7 @@ import { utils } from './utils'
 
 const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<EngineResponse<Pick<FlowRunResponse, 'status' | 'error'>>> => {
     const constants = EngineConstants.fromExecuteFlowInput(input)
-    const output = await flowExecutor.executeFromTrigger({
-        executionState: context,
-        constants,
-        input,
-    })
+    const output: FlowExecutorContext = await executieSingleStepOrFlowOperation(input, context)
     const newContext = output.verdict === ExecutionVerdict.RUNNING ? output.setVerdict(ExecutionVerdict.SUCCEEDED, output.verdictResponse) : output
     await progressService.sendUpdate({
         engineConstants: constants,
@@ -52,6 +49,23 @@ const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorCon
             error: response.error,
         },
     }
+}
+
+const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<FlowExecutorContext> => {
+    const constants = EngineConstants.fromExecuteFlowInput(input)
+    if (constants.testSingleStepMode) {
+        const step = flowStructureUtil.getActionOrThrow(input.stepNameToTest!, input.flowVersion.trigger)
+        return flowExecutor.execute({
+            action: step,
+            executionState: context,
+            constants: EngineConstants.fromExecuteFlowInput(input),
+        })
+    }
+    return flowExecutor.executeFromTrigger({
+        executionState: context,
+        constants,
+        input,
+    })
 }
 
 
@@ -88,6 +102,7 @@ async function executeActionForTool(input: ExecuteToolOperation): Promise<Execut
         output: cleanSampleData(output.steps[step.name]),
     }
 }
+
 
 function cleanSampleData(stepOutput: StepOutput) {
     if (stepOutput.status === StepOutputStatus.FAILED) {

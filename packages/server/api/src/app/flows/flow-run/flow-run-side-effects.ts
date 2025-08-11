@@ -21,12 +21,13 @@ type StartParams = {
     flowRun: FlowRun
     executionType: ExecutionType
     payload: unknown
+    stepNameToTest: string | undefined
     executeTrigger: boolean
     priority: keyof typeof JOB_PRIORITY
     synchronousHandlerId: string | undefined
     progressUpdateType: ProgressUpdateType
     httpRequestId: string | undefined
-    stepNameToTest: string | undefined
+    sampleData: Record<string, unknown> | undefined
 }
 
 type PauseParams = {
@@ -50,8 +51,7 @@ const calculateDelayForPausedRun = (
 
 export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
     async finish(flowRun: FlowRun): Promise<void> {
-        const isTestingStep = !isNil(flowRun.stepNameToTest)
-        if (!isFlowUserTerminalState(flowRun.status) && !isTestingStep) {
+        if (!isFlowUserTerminalState(flowRun.status)) {
             return
         }
         await flowRunHooks(log).onFinish(flowRun)
@@ -72,6 +72,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         progressUpdateType,
         executeTrigger,
         stepNameToTest,
+        sampleData,
     }: StartParams): Promise<void> {
         log.info({
             flowRunId: flowRun.id,
@@ -94,6 +95,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                 executionType,
                 progressUpdateType,
                 stepNameToTest,
+                sampleData,
             },
         })
         eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {

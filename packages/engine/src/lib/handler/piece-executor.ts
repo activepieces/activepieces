@@ -14,9 +14,6 @@ import { propsProcessor } from '../variables/props-processor'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
 
-
-
-
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
 export const pieceExecutor: BaseExecutor<PieceAction> = {
@@ -145,7 +142,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 return url.toString()
             },
         }
-        const runMethodToExecute = (!isNil(pieceAction.test) && constants.stepNameToTest !== action.name) ? pieceAction.test : pieceAction.run
+        const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)
         const newExecutionContext = executionState.addTags(params.hookResponse.tags)
 

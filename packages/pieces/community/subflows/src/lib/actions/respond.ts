@@ -50,6 +50,9 @@ export const response = createAction({
       },
     }),
   },
+  async test(context) {
+    return context.propsValue.response['response'];
+  },
   async run(context) {
     const response = context.propsValue.response['response'];
     const callbackUrl = await context.store.get<string>(callableFlowKey(context.run.id), StoreScope.FLOW);

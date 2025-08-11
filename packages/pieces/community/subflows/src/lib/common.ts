@@ -21,11 +21,11 @@ export async function listEnabledFlowsWithSubflowTrigger({
 }: ListParams) {
     const allFlows = (await flowsContext.list(params)).data;
     const flows = allFlows.filter(
-      (flow) =>
-        flow.status === FlowStatus.ENABLED &&
-        flow.version.trigger.type === FlowTriggerType.PIECE &&
-        flow.version.trigger.settings.pieceName ==
-        '@activepieces/piece-subflows'
+        (flow) =>
+            flow.status === FlowStatus.ENABLED &&
+            flow.version.trigger.type === FlowTriggerType.PIECE &&
+            flow.version.trigger.settings.pieceName ==
+            '@activepieces/piece-subflows'
     );
     return flows;
 }

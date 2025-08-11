@@ -27,6 +27,7 @@ export const NotifyFrontendRequest = Type.Object({
     type: Type.Literal(WebsocketClientEvent.FLOW_RUN_PROGRESS),
     data: Type.Object({
         runId: Type.String(),
+        testSingleStepMode: Type.Optional(Type.Boolean()),
     }),
 })
 export type NotifyFrontendRequest = Static<typeof NotifyFrontendRequest>

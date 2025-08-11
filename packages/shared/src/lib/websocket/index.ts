@@ -35,8 +35,6 @@ export const TodoActivityCreated = Type.Object({
 export type TodoActivityCreated = Static<typeof TodoActivityCreated>
 
 export enum WebsocketServerEvent {
-    TEST_STEP_RUN = 'TEST_STEP_RUN',
     ASK_COPILOT = 'ASK_COPILOT',
     TEST_FLOW_RUN = 'TEST_FLOW_RUN',
-    TEST_STEP_RUN_PROGRESS = 'TEST_STEP_RUN_PROGRESS',
 }

@@ -8,18 +8,10 @@ import { platformUsageService } from '../../ee/platform/platform-usage-service'
 import { issuesService } from '../../flows/issues/issues-service'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
-import { stepRunProgressHandler } from './step-run-progress.handler'
 
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 export const flowRunHooks = (log: FastifyBaseLogger) => ({
     async onFinish(flowRun: FlowRun): Promise<void> {
-        if (!isNil(flowRun.stepNameToTest)) {
-            await stepRunProgressHandler.notifyStepFinished({
-                runId: flowRun.id,
-                logger: log,
-            })
-            return
-        }
         if (!isFlowUserTerminalState(flowRun.status)) {
             return
         }

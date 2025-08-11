@@ -1,4 +1,4 @@
-import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, isNil, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -23,7 +23,7 @@ type EngineConstantsParams = {
     httpRequestId: string | null
     resumePayload?: ResumePayload
     runEnvironment?: RunEnvironment
-    stepNameToTest?: string
+    testSingleStepMode?: boolean
 }
 
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
@@ -57,7 +57,7 @@ export class EngineConstants {
     public readonly httpRequestId: string | null
     public readonly resumePayload?: ResumePayload
     public readonly runEnvironment?: RunEnvironment
-    public readonly stepNameToTest?: string
+    public readonly testSingleStepMode?: boolean
 
     private project: Project | null = null
 
@@ -80,7 +80,7 @@ export class EngineConstants {
         if (!params.internalApiUrl.endsWith('/')) {
             throw new Error('Internal API URL must end with a slash, got: ' + params.internalApiUrl)
         }
-        
+
         this.flowId = params.flowId
         this.flowVersionId = params.flowVersionId
         this.flowVersionState = params.flowVersionState
@@ -96,7 +96,7 @@ export class EngineConstants {
         this.httpRequestId = params.httpRequestId
         this.resumePayload = params.resumePayload
         this.runEnvironment = params.runEnvironment
-        this.stepNameToTest = params.stepNameToTest
+        this.testSingleStepMode = params.testSingleStepMode
     }
 
     public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
@@ -120,7 +120,7 @@ export class EngineConstants {
             httpRequestId: input.httpRequestId ?? null,
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             runEnvironment: input.runEnvironment,
-            stepNameToTest: input.stepNameToTest ?? undefined,
+            testSingleStepMode: !isNil(input.stepNameToTest),
         })
     }
 
@@ -145,7 +145,7 @@ export class EngineConstants {
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
-            stepNameToTest: undefined,
+            testSingleStepMode: false,
         })
     }
 
@@ -170,7 +170,7 @@ export class EngineConstants {
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
-            stepNameToTest: undefined,
+            testSingleStepMode: false,
         })
     }
 
@@ -195,7 +195,7 @@ export class EngineConstants {
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
-            stepNameToTest: undefined,
+            testSingleStepMode: false,
         })
     }
 

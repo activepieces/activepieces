@@ -1,80 +1,46 @@
 import { exceptionHandler } from '@activepieces/server-shared'
-import { 
-    FlowRunId,
-    isNil, 
-    PauseType, 
-    StepOutput, 
+import {
+    isFlowStateTerminal,
+    isNil,
     StepOutputStatus,
     StepRunResponse,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { flowRunService } from './flow-run-service'
 
-
-export const stepRunProgressHandler = {
-    async notifyStepFinished(params: NotifyStepFinishedParams): Promise<void> {
-        const { runId, logger } = params
+export const stepRunProgressHandler = (log: FastifyBaseLogger) => ({
+    async extractStepResponse(params: NotifyStepFinishedParams): Promise<StepRunResponse | null> {
         try {
-            const flowRun = await getFlowRun(runId, logger)
-            
-            const stepOutput = flowRun.stepNameToTest 
-                ? flowRun.steps[flowRun.stepNameToTest]
-                : undefined
-
-            const shouldStopProcessingStepCompletion = isNil(stepOutput) || [StepOutputStatus.RUNNING, StepOutputStatus.PAUSED].includes(stepOutput.status)
-            if (shouldStopProcessingStepCompletion) {
-                return
+            const populatedFlowRun = await flowRunService(log).getOnePopulatedOrThrow({
+                id: params.runId,
+                projectId: undefined,
+            })
+            if (!isFlowStateTerminal(populatedFlowRun.status) || isNil(populatedFlowRun.stepNameToTest)) {
+                return null
             }
+            // In single-step execution mode, the engine executes the step directly without traverse the flow, which means the step will always be at the root level
+            const stepOutput = populatedFlowRun.steps[populatedFlowRun.stepNameToTest]
 
-            if (flowRun.pauseMetadata?.type !== PauseType.WEBHOOK) {
-                return
+            if (!stepOutput) {
+                return null
             }
-
-            const { testCallbackRequestId, handlerId } = flowRun.pauseMetadata
-            if (isNil(handlerId) || isNil(testCallbackRequestId)) {
-                return
+            const isSuccess = stepOutput.status === StepOutputStatus.SUCCEEDED
+            return {
+                runId: params.runId,
+                success: isSuccess,
+                input: stepOutput.input,
+                output: stepOutput.output,
+                standardError: isSuccess ? '' : (stepOutput.errorMessage as string),
+                standardOutput: '',
             }
-
-            const response = createStepRunResponse(stepOutput, testCallbackRequestId)
-            await engineResponseWatcher(logger).publish(testCallbackRequestId, handlerId, response)
-        }
-        catch (error) {
-            exceptionHandler.handle(error, logger)
+        } catch (error) {
+            exceptionHandler.handle(error, log)
+            return null
         }
     },
-}
+})
 
-async function getFlowRun(runId: FlowRunId, logger: FastifyBaseLogger) {
-    let flowRun = await flowRunService(logger).getOnePopulatedOrThrow({
-        id: runId,
-        projectId: undefined,
-    })
-    
-    if (!isNil(flowRun.parentRunId)) {
-        flowRun = await flowRunService(logger).getOnePopulatedOrThrow({
-            id: flowRun.parentRunId,
-            projectId: undefined,
-        })
-    }
-    
-    return flowRun
-}
-
-function createStepRunResponse(stepOutput: StepOutput, testCallbackRequestId: string): StepRunResponse {
-    const isSuccess = stepOutput.status === StepOutputStatus.SUCCEEDED
-    
-    return {
-        id: testCallbackRequestId,
-        success: isSuccess,
-        input: stepOutput.input ?? {},
-        output: stepOutput.output ?? {},
-        standardError: isSuccess ? '' : (stepOutput.errorMessage as string),
-        standardOutput: '',
-    }
-}
 
 type NotifyStepFinishedParams = {
-    runId: FlowRunId
-    logger: FastifyBaseLogger
+    runId: string
 }

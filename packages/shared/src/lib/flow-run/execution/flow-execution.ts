@@ -48,7 +48,6 @@ export const WebhookPauseMetadata = Type.Object({
     type: Type.Literal(PauseType.WEBHOOK),
     requestId: Type.String(),
     response: RespondResponse,
-    testCallbackRequestId: Type.Optional(Type.String({})),
     handlerId: Type.Optional(Type.String({})),
     progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
 })
