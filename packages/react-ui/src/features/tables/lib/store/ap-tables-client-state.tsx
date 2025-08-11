@@ -8,6 +8,7 @@ import {
   PopulatedRecord,
   Table,
   TableAutomationStatus,
+  AgentRun,
 } from '@activepieces/shared';
 
 import { createServerState } from './ap-tables-server-state';
@@ -83,12 +84,15 @@ export type TableState = {
   serverFields: Field[];
   serverRecords: PopulatedRecord[];
   updateAgent: (agent: PopulatedAgent) => void;
+  runs: AgentRun[];
+  setRuns: (runs: AgentRun[]) => void;
 };
 
 export const createApTableStore = (
   table: Table,
   fields: Field[],
   records: PopulatedRecord[],
+  runs: AgentRun[],
 ) => {
   return create<TableState>((set) => {
     const serverState = createServerState(
@@ -246,6 +250,9 @@ export const createApTableStore = (
           ),
         }));
       },
+      setRuns: (runs: AgentRun[]) => {
+        return set({ runs });
+      },
       toggleStatus: () => {
         return set((state) => {
           const newStatus =
@@ -265,6 +272,7 @@ export const createApTableStore = (
       },
       serverFields: serverState.fields,
       serverRecords: serverState.records,
+      runs: runs,
     };
   });
 };

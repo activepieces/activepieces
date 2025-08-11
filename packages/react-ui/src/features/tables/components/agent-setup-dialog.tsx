@@ -17,7 +17,9 @@ type AgentSetupDialogProps = {
   setOpen: (open: boolean) => void;
   agent: PopulatedAgent | undefined;
   updateAgent: (agent: PopulatedAgent) => void;
+  setAgentConfigureOpen: (open: boolean) => void;
   trigger?: React.ReactNode;
+  setAiAgentMode: (mode: boolean) => void;
 };
 
 export const AgentSetupDialog = ({
@@ -26,6 +28,8 @@ export const AgentSetupDialog = ({
   agent,
   trigger,
   updateAgent,
+  setAgentConfigureOpen,
+  setAiAgentMode,
 }: AgentSetupDialogProps) => {
   const [prompt, setPrompt] = useState('');
   const [allowAgentCreateColumns, setAllowAgentCreateColumns] = useState(true);
@@ -40,7 +44,13 @@ export const AgentSetupDialog = ({
   );
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(open) => {
+        setOpen(open);
+        setAiAgentMode(false);
+      }}
+    >
       <PopoverTrigger asChild>
         <div onClick={(e) => e.preventDefault()}>{trigger}</div>
       </PopoverTrigger>
@@ -99,19 +109,18 @@ export const AgentSetupDialog = ({
               <Button
                 className="w-full"
                 onClick={() => {
-                  console.log('prompt', prompt);
-                  console.log(
-                    'allowAgentCreateColumns',
-                    allowAgentCreateColumns,
-                  );
                   updateAgentSettings({
                     ...agent,
                     systemPrompt: prompt,
                     settings: {
                       ...agent.settings,
                       allowAgentCreateColumns,
+                      aiMode: true,
                     },
                   });
+                  setAiAgentMode(true);
+                  setOpen(false);
+                  setAgentConfigureOpen(true);
                 }}
               >
                 Configure agent

@@ -29,7 +29,6 @@ const AgentTimeline = ({ agentRunId, className = '' }: AgentTimelineProps) => {
   if (isNil(agentRun) || isNil(agent)) {
     return <></>;
   }
-  console.log('HAHAHAHAHAHA agentRun timeline', agentRun);
   return (
     <div className={`h-full ${className}`}>
       {agentRun.prompt !== '' && <AgentPromptBlock prompt={agentRun.prompt} />}

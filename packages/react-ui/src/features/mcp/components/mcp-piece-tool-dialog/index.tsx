@@ -1,7 +1,7 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
 import { ChevronLeft, Search } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,7 @@ type McpPieceDialogProps = {
   children: React.ReactNode;
   mcp: McpWithTools;
   open: boolean;
+  builtInPiecesTools?: string[];
   onToolsUpdate: (tools: McpToolRequest[]) => void;
   onClose: () => void;
 };
@@ -48,6 +49,7 @@ export type ActionInfo = {
 export const McpPieceDialog = ({
   mcp,
   open,
+  builtInPiecesTools,
   onToolsUpdate,
   children,
   onClose,
@@ -62,6 +64,19 @@ export const McpPieceDialog = ({
       searchQuery: debouncedQuery,
       type: 'action',
     });
+  const [allMetadata, setAllMetadata] = useState<
+    PieceStepMetadataWithSuggestions[]
+  >([]);
+
+  useEffect(() => {
+    if (debouncedQuery === '' && !isPiecesLoading) {
+      setAllMetadata(
+        metadata?.filter(
+          (m): m is PieceStepMetadataWithSuggestions => 'suggestedActions' in m,
+        ) ?? [],
+      );
+    }
+  }, [metadata, isPiecesLoading]);
 
   const [selectedPiece, setSelectedPiece] =
     useState<PieceStepMetadataWithSuggestions | null>(null);
@@ -145,7 +160,31 @@ export const McpPieceDialog = ({
       },
     }));
     const oldTools = mcp.tools;
-    onToolsUpdate([...oldTools, ...newTools]);
+    const builtInTools =
+      builtInPiecesTools?.flatMap((pieceName) => {
+        const pieces =
+          allMetadata?.filter(
+            (m): m is PieceStepMetadataWithSuggestions =>
+              'suggestedActions' in m && m.pieceName === pieceName,
+          ) ?? [];
+        if (pieces.length === 0) {
+          return [];
+        }
+        const pieceTools: McpToolRequest[] =
+          pieces[0].suggestedActions?.map((action) => ({
+            type: McpToolType.PIECE,
+            pieceMetadata: {
+              pieceName: pieces[0].pieceName,
+              actionName: action.name,
+              actionDisplayName: action.displayName,
+              pieceVersion: pieces[0].pieceVersion,
+              logoUrl: pieces[0].logoUrl,
+            },
+          })) ?? [];
+
+        return pieceTools;
+      }) ?? [];
+    onToolsUpdate([...builtInTools, ...oldTools, ...newTools]);
     handleClose();
   };
 

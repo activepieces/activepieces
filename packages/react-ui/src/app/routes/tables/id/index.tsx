@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSocket } from '@/components/socket-provider';
 import { useTheme } from '@/components/theme-provider';
 import { Drawer, DrawerContent, DrawerHeader } from '@/components/ui/drawer';
+import { agentRunsApi } from '@/features/agents/lib/agents-api';
 import { AgentConfigure } from '@/features/tables/components/agent-configure';
 import { ApTableControl } from '@/features/tables/components/ap-table-control';
 import { ApTableFooter } from '@/features/tables/components/ap-table-footer';
@@ -31,6 +32,7 @@ import {
 } from '@activepieces/shared';
 
 import './react-data-grid.css';
+import { ApTableHistory } from '@/features/tables/components/ap-table-history';
 
 const ApTableEditorPage = () => {
   const navigate = useNavigate();
@@ -48,7 +50,7 @@ const ApTableEditorPage = () => {
     setSelectedAgentRunId,
     setRecords,
     updateAgent,
-    serverRecords,
+    setRuns,
   ] = useTableState((state) => [
     state.table,
     state.setAgentRunId,
@@ -62,11 +64,12 @@ const ApTableEditorPage = () => {
     state.setSelectedAgentRunId,
     state.setRecords,
     state.updateAgent,
-    state.serverRecords,
+    state.setRuns,
   ]);
   const [isAgentConfigureOpen, setIsAgentConfigureOpen] = useState(
     table.agent?.settings.aiMode ?? false,
   );
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const gridRef = useRef<DataGridHandle>(null);
   const { theme } = useTheme();
   const { data: maxRecords } = flagsHooks.useFlag<number>(
@@ -119,7 +122,7 @@ const ApTableEditorPage = () => {
       async (agentRun: AgentRun) => {
         if (agentRun.metadata?.tableId === table.id) {
           setAgentRunId(
-            agentRun.metadata.recordId!,
+            agentRun.metadata?.recordId!,
             agentRun.status === AgentTaskStatus.IN_PROGRESS
               ? agentRun.id
               : null,
@@ -140,6 +143,12 @@ const ApTableEditorPage = () => {
               cursor: undefined,
             });
             setRecords(records.data);
+            const runs = await agentRunsApi.list({
+              agentId: table.agent?.id!,
+              limit: 999999,
+              cursor: undefined,
+            });
+            setRuns(runs.data);
           }
         }
       },
@@ -171,13 +180,14 @@ const ApTableEditorPage = () => {
               onBack={handleBack}
               agent={table.agent!}
               setIsAgentConfigureOpen={setIsAgentConfigureOpen}
+              setIsHistoryOpen={setIsHistoryOpen}
             />
           </div>
         </DrawerHeader>
 
         <div className="flex flex-col flex-1 h-full bg-muted/50">
-          <div className="flex-1 flex flex-col relative ml-10">
-            {selectedRecords.size > 0 && <ApTableControl />}
+          <div className="flex-1 flex flex-col relative ml-5">
+            <ApTableControl table={table} />
             <div className="flex-1 flex flex-row">
               <DataGrid
                 ref={gridRef}
@@ -202,22 +212,20 @@ const ApTableEditorPage = () => {
                 }
               />
             </div>
-            <AgentConfigure
-              open={isAgentConfigureOpen}
-              setOpen={setIsAgentConfigureOpen}
-              tableId={table.id}
-              agent={table.agent!}
-              selectedServerRecords={Array.from(selectedRecords)
-                .map((row) => {
-                  const recordIndex = records.findIndex((r) => r.uuid === row);
-                  return recordIndex >= 0
-                    ? serverRecords[recordIndex]?.id
-                    : null;
-                })
-                .filter((id) => id !== null)}
-              fields={fields}
-              updateAgent={updateAgent}
-            />
+            {table.agent?.created !== table.agent?.updated && (
+              <AgentConfigure
+                open={isAgentConfigureOpen}
+                setOpen={setIsAgentConfigureOpen}
+                fields={fields}
+                updateAgent={updateAgent}
+              />
+            )}
+            {table.agent?.id && isHistoryOpen && (
+              <ApTableHistory
+                open={isHistoryOpen}
+                onOpenChange={setIsHistoryOpen}
+              />
+            )}
           </div>
           <ApTableFooter
             fieldsCount={fields.length}

@@ -3,7 +3,11 @@ import { Type, Calendar, Hash, ChevronDownCircle } from 'lucide-react';
 import { createContext, ReactNode } from 'react';
 
 import { downloadFile } from '@/lib/utils';
-import { ExportTableResponse, FieldType } from '@activepieces/shared';
+import {
+  ExportTableResponse,
+  FieldType,
+  PopulatedRecord,
+} from '@activepieces/shared';
 
 import { ClientField, ClientRecordData } from './store/ap-tables-client-state';
 
@@ -102,3 +106,22 @@ export const FieldHeaderContext = createContext<{
 
 // Map<CsvColumnIndex, FieldId>
 export type FieldsMapping = (string | null)[];
+
+export const getSelectedServerRecords = (
+  selectedRecords: ReadonlySet<string>,
+  records: ClientRecordData[],
+  serverRecords: PopulatedRecord[],
+) => {
+  if (selectedRecords.size === 0) {
+    return records
+      .map((_, index) => serverRecords[index]?.id)
+      .filter((id) => id !== null);
+  }
+
+  return Array.from(selectedRecords)
+    .map((row) => {
+      const recordIndex = records.findIndex((r) => r.uuid === row);
+      return recordIndex >= 0 ? serverRecords[recordIndex]?.id : null;
+    })
+    .filter((id) => id !== null);
+};

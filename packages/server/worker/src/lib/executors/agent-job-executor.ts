@@ -211,9 +211,15 @@ async function constructSystemPrompt(agent: PopulatedAgent, fields: Field[] | un
         You CANNOT create new columns. Only work with existing columns.
         `
     }
-    if (agent.settings.limitColumnEditing) {
+    else{
         systemPrompt += `
-        You can only edit the columns that are in the fields list. ${JSON.stringify(fields, null, 2)}
+        You can only create new columns if they are not already exist in the table.
+        `
+    }
+    if (agent.settings.limitColumnEditing) {
+        const editableColumns = agent.settings.editableColumns.map((column) => column.name).join(', ')
+        systemPrompt += `
+        YOU CAN ONLY EDIT THE FOLLOWING COLUMNS: ${editableColumns}
         `
     }
     else {

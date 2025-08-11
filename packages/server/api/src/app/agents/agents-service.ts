@@ -179,6 +179,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         }
         const queryBuilder = agentRepo()
             .createQueryBuilder('agent')
+            .leftJoinAndSelect('agent.settings', 'settings')
             .where(querySelector)
 
         const agentsInTable = await tableService.getAllAgentIds({ projectId: params.projectId })

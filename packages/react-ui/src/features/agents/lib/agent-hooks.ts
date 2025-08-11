@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { tablesApi } from '@/features/tables/lib/tables-api';
 import {
   ListAgentsQueryParams,
   ListAgentRunsQueryParams,
@@ -61,8 +62,27 @@ export const agentHooks = {
       mutationFn: (request: UpdateAgentRequestBody) =>
         agentsApi.update(id!, request),
       onSuccess: (agent) => {
-        queryClient.invalidateQueries({ queryKey: ['agents', id] });
         updateAgent(agent);
+        queryClient.invalidateQueries({ queryKey: ['agents', id] });
+      },
+    });
+  },
+  useAutomate: (
+    tableId: string,
+    selectedServerRecords: string[],
+    onSuccess?: (runs: AgentRun[]) => void,
+  ) => {
+    return useMutation({
+      mutationFn: () => {
+        return tablesApi.automate(tableId, {
+          recordIds: selectedServerRecords,
+        });
+      },
+      onError: (error) => {
+        console.error('Failed to automate table:', error);
+      },
+      onSuccess: (runs) => {
+        onSuccess?.(runs);
       },
     });
   },

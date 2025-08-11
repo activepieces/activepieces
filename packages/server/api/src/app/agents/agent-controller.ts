@@ -1,4 +1,4 @@
-import { Agent,  CreateAgentRequest, EnhanceAgentPrompt, EnhancedAgentPrompt,  ListAgentsQueryParams,  PopulatedAgent,  PrincipalType, SeekPage, UpdateAgentRequestBody } from '@activepieces/shared'
+import { CreateAgentRequest, EnhanceAgentPrompt, EnhancedAgentPrompt,  ListAgentsQueryParams,  PopulatedAgent,  PrincipalType, SeekPage, UpdateAgentRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { agentsService } from './agents-service'

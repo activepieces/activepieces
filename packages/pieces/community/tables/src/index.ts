@@ -8,6 +8,8 @@ import { findRecords } from "./lib/actions/find-records";
 import { newRecordTrigger } from "./lib/triggers/new-record";
 import { deletedRecordTrigger } from "./lib/triggers/deleted-record";
 import { updatedRecordTrigger } from "./lib/triggers/updated-record";
+import { createColumn } from "./lib/actions/create-column";
+import { findColumns } from "./lib/actions/find-columns";
 
 export const tables = createPiece({
   displayName: 'Tables',
@@ -16,6 +18,6 @@ export const tables = createPiece({
   minimumSupportedRelease: '0.54.1',
   authors: ['amrdb'],
   auth: PieceAuth.None(),
-  actions: [createRecords, deleteRecord, updateRecord, getRecord, findRecords],
+  actions: [createRecords, deleteRecord, updateRecord, getRecord, findRecords, createColumn, findColumns],
   triggers: [newRecordTrigger, updatedRecordTrigger, deletedRecordTrigger],
 });

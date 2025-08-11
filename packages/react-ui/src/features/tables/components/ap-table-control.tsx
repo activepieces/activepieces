@@ -4,29 +4,69 @@ import { useTranslation } from 'react-i18next';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
+import { agentHooks } from '@/features/agents/lib/agent-hooks';
+import { agentRunsApi } from '@/features/agents/lib/agents-api';
+import { getSelectedServerRecords } from '@/features/tables/lib/utils';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Permission } from '@activepieces/shared';
+import { Permission, Table } from '@activepieces/shared';
 
 import { useTableState } from './ap-table-state-provider';
 
-export const ApTableControl = () => {
+type ApTableControlProps = {
+  table: Table;
+};
+
+export const ApTableControl = ({ table }: ApTableControlProps) => {
   const { t } = useTranslation();
-  const [records, selectedRecords, setSelectedRecords, deleteRecords] =
-    useTableState((state) => [
-      state.records,
-      state.selectedRecords,
-      state.setSelectedRecords,
-      state.deleteRecords,
-    ]);
+  const [
+    records,
+    selectedRecords,
+    serverRecords,
+    setSelectedRecords,
+    deleteRecords,
+    setRuns,
+  ] = useTableState((state) => [
+    state.records,
+    state.selectedRecords,
+    state.serverRecords,
+    state.setSelectedRecords,
+    state.deleteRecords,
+    state.setRuns,
+  ]);
+
+  const { mutate: automateTable } = agentHooks.useAutomate(
+    table.id,
+    getSelectedServerRecords(selectedRecords, records, serverRecords),
+    async () => {
+      if (!table.agent?.id) {
+        return;
+      }
+      const updatedRuns = await agentRunsApi.list({
+        agentId: table.agent?.id,
+        limit: 999999,
+        cursor: undefined,
+      });
+      setRuns(updatedRuns.data);
+    },
+  );
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
   return (
-    <div className="flex flex-row items-center p-2 my-2 border rounded-lg w-fit">
-      <span className="text-sm font-light px-2">
-        {selectedRecords.size > 0 ? `${selectedRecords.size} ` : ''}{' '}
-        {selectedRecords.size === 1 ? t('row selected') : t('rows selected')}
-      </span>
+    <div className="flex flex-row items-center my-2 rounded-lg w-fit">
+      {table.agent?.created !== table.agent?.updated && (
+        <Button
+          variant="ghost"
+          className="flex gap-2 items-center"
+          disabled={!userHasTableWritePermission}
+          onClick={() => automateTable()}
+        >
+          <Bot className="size-4" />
+          {selectedRecords.size > 0
+            ? t(`Run AI agent (${Number(selectedRecords.size)} records)`)
+            : t('Run AI agent')}
+        </Button>
+      )}
       {selectedRecords.size > 0 && (
         <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
           <ConfirmationDeleteDialog
@@ -54,14 +94,6 @@ export const ApTableControl = () => {
           </ConfirmationDeleteDialog>
         </PermissionNeededTooltip>
       )}
-      <Button
-        variant="ghost"
-        className="flex gap-2 px-2 items-center font-light"
-        disabled={!userHasTableWritePermission}
-      >
-        <Bot className="size-4" />
-        {t('Re-run AI agent')}
-      </Button>
     </div>
   );
 };

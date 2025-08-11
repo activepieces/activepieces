@@ -15,18 +15,22 @@ type FormattedRecord = {
     value: unknown;
   }>;
 }
-const getFieldTypeText = (fieldType: FieldType) => {
-  switch (fieldType) {
-    case FieldType.STATIC_DROPDOWN:
-      return 'Single Select';
-    case FieldType.DATE:
-      return 'Date';
-    case FieldType.NUMBER:
-      return 'Number';
-    case FieldType.TEXT:
-      return 'Text';
+
+export const tablesUtils = {
+  getFieldTypeText: (fieldType: FieldType) => {
+    switch (fieldType) {
+      case FieldType.STATIC_DROPDOWN:
+        return 'Single Select';
+      case FieldType.DATE:
+        return 'Date';
+      case FieldType.NUMBER:
+        return 'Number';
+      case FieldType.TEXT:
+        return 'Text';
+    }
   }
 }
+
 export const tablesCommon = {
   table_id: Property.Dropdown({
     displayName: 'Table Name',
@@ -118,7 +122,7 @@ export const tablesCommon = {
       }
 
       for (const field of tableFields) {
-        const description = getFieldTypeText(field.type);
+        const description = tablesUtils.getFieldTypeText(field.type);
 
         switch (field.type) {
           case FieldType.NUMBER:

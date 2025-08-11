@@ -5,6 +5,7 @@ import {
   RefreshCw,
   Import,
   Download,
+  History,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -20,6 +21,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { formatUtils } from '@/lib/utils';
 import { isNil, Permission, PopulatedAgent } from '@activepieces/shared';
 
 import { AgentProfile } from './agent-profile';
@@ -31,20 +33,23 @@ interface ApTableHeaderProps {
   onBack: () => void;
   agent: PopulatedAgent;
   setIsAgentConfigureOpen: (isOpen: boolean) => void;
+  setIsHistoryOpen: (isOpen: boolean) => void;
 }
 
 export const ApTableHeader = ({
   onBack,
   agent,
   setIsAgentConfigureOpen,
+  setIsHistoryOpen,
 }: ApTableHeaderProps) => {
-  const [isSaving, table, renameTable, updateAgent, selectedAgentRunId] =
+  const [isSaving, table, renameTable, updateAgent, selectedAgentRunId, runs] =
     useTableState((state) => [
       state.isSaving,
       state.table,
       state.renameTable,
       state.updateAgent,
       state.selectedAgentRunId,
+      state.runs,
     ]);
 
   const { mutate: updateAgentSettings } = agentHooks.useUpdate(
@@ -149,24 +154,47 @@ export const ApTableHeader = ({
         </div>
       </div>
       <div className="flex items-center gap-2 w-full justify-end">
-        <div className="flex items-center gap-2">
-          <AgentProfile
-            className="cursor-pointer"
-            size="lg"
-            imageUrl={agent?.profilePictureUrl}
-            isRunning={!isNil(selectedAgentRunId)}
-            onClick={() => {
-              setIsAgentConfigureOpen(true);
-            }}
-          />
-        </div>
-
-        <Separator orientation="vertical" className="h-8" />
+        {agent.created !== agent.updated && agent.settings?.aiMode && (
+          <>
+            <div className="flex items-center gap-2">
+              {runs && runs.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-fit px-2"
+                  onClick={() => setIsHistoryOpen(true)}
+                >
+                  <div className="flex items-center gap-1">
+                    <History className="h-4 w-4" />
+                    <span>
+                      last run:{' '}
+                      {formatUtils.formatDate(
+                        new Date(runs[runs.length - 1]?.created),
+                      )}
+                    </span>
+                  </div>
+                </Button>
+              )}
+              <AgentProfile
+                className="cursor-pointer"
+                size="lg"
+                imageUrl={agent?.profilePictureUrl}
+                isRunning={!isNil(selectedAgentRunId)}
+                onClick={() => {
+                  setIsAgentConfigureOpen(true);
+                }}
+              />
+            </div>
+            <Separator orientation="vertical" className="h-8" />
+          </>
+        )}
         <AgentSetupDialog
           open={isAgentSetupDialogOpen}
           setOpen={setIsAgentSetupDialogOpen}
           agent={agent}
           updateAgent={updateAgent}
+          setAgentConfigureOpen={setIsAgentConfigureOpen}
+          setAiAgentMode={setIsAiAgentMode}
           trigger={
             <div className="flex items-center gap-2">
               <Switch

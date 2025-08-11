@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
 import {
   BookOpen,
   Settings,
@@ -12,6 +11,7 @@ import {
   WorkflowIcon,
 } from 'lucide-react';
 import React, { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -21,9 +21,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import { agentsApi } from '@/features/agents/lib/agents-api';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
+import { getSelectedServerRecords } from '@/features/tables/lib/utils';
 import { cn } from '@/lib/utils';
 import {
-  debounce,
   isNil,
   EditableColumn,
   McpToolType,
@@ -32,17 +32,15 @@ import {
 
 import { McpPieceDialog } from '../../mcp/components/mcp-piece-tool-dialog';
 import { ClientField } from '../lib/store/ap-tables-client-state';
-import { tablesApi } from '../lib/tables-api';
 
 import { AgentProfile } from './agent-profile';
 import { useTableState } from './ap-table-state-provider';
 
+const BUILT_IN_TOOLS: string[] = [];
+
 type AgentConfigureProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
-  tableId: string;
-  agent: PopulatedAgent;
-  selectedServerRecords: string[];
   updateAgent: (agent: PopulatedAgent) => void;
   fields: ClientField[];
 };
@@ -50,28 +48,43 @@ type AgentConfigureProps = {
 export const AgentConfigure: React.FC<AgentConfigureProps> = ({
   open,
   setOpen,
-  tableId,
-  agent,
-  selectedServerRecords,
   fields,
   updateAgent,
 }) => {
+  const { t } = useTranslation();
   const [showAddPieceDialog, setShowAddPieceDialog] = useState(false);
-  const [systemPrompt, setSystemPrompt] = useState(agent?.systemPrompt || '');
+  const [table, serverRecords, selectedRecords, records] = useTableState(
+    (state) => [
+      state.table,
+      state.serverRecords,
+      state.selectedRecords,
+      state.records,
+    ],
+  );
+  const [systemPrompt, setSystemPrompt] = useState(
+    table.agent?.systemPrompt || '',
+  );
+  const { mutate: automateTableFirst5Rows } = agentHooks.useAutomate(
+    table.id,
+    getSelectedServerRecords(selectedRecords, records, serverRecords).slice(
+      0,
+      5,
+    ),
+  );
   const [triggerOnNewRow, setTriggerOnNewRow] = useState(
-    agent?.settings?.triggerOnNewRow ?? true,
+    table.agent?.settings?.triggerOnNewRow ?? true,
   );
   const [triggerOnFieldUpdate, setTriggerOnFieldUpdate] = useState(
-    agent?.settings?.triggerOnFieldUpdate ?? false,
+    table.agent?.settings?.triggerOnFieldUpdate ?? false,
   );
   const [allowAgentCreateColumns, setAllowAgentCreateColumns] = useState(
-    agent?.settings?.allowAgentCreateColumns ?? true,
+    table.agent?.settings?.allowAgentCreateColumns ?? true,
   );
   const [limitColumnEditing, setLimitColumnEditing] = useState(
-    agent?.settings?.limitColumnEditing ?? false,
+    table.agent?.settings?.limitColumnEditing ?? false,
   );
   const [selectedColumns, setSelectedColumns] = useState<Set<EditableColumn>>(
-    new Set(agent?.settings?.editableColumns || []),
+    new Set(table.agent?.settings?.editableColumns || []),
   );
   const [selectedAgentRunId] = useTableState((state) => [
     state.selectedAgentRunId,
@@ -79,17 +92,38 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
   const [isSaving, setIsSaving] = useState(false);
 
   const { mutate: updateTools } = mcpHooks.useUpdateTools(
-    agent?.mcpId || '',
+    table.agent?.mcpId || '',
     async () => {
-      if (agent?.id) {
-        const updatedAgent = await agentsApi.get(agent.id);
+      if (table.agent?.id) {
+        const updatedAgent = await agentsApi.get(table.agent.id);
         updateAgent(updatedAgent);
       }
     },
   );
 
+  const isThereAnyChange = useMemo(() => {
+    return (
+      systemPrompt === table.agent?.systemPrompt &&
+      triggerOnNewRow === table.agent?.settings?.triggerOnNewRow &&
+      triggerOnFieldUpdate === table.agent?.settings?.triggerOnFieldUpdate &&
+      allowAgentCreateColumns ===
+        table.agent?.settings?.allowAgentCreateColumns &&
+      limitColumnEditing === table.agent?.settings?.limitColumnEditing &&
+      JSON.stringify(Array.from(selectedColumns)) ===
+        JSON.stringify(Array.from(table.agent?.settings?.editableColumns || []))
+    );
+  }, [
+    table.agent,
+    systemPrompt,
+    triggerOnNewRow,
+    triggerOnFieldUpdate,
+    allowAgentCreateColumns,
+    limitColumnEditing,
+    selectedColumns,
+  ]);
+
   const { mutate: updateAgentSettings } = agentHooks.useUpdate(
-    agent?.id ?? '',
+    table.agent?.id ?? '',
     updateAgent,
   );
 
@@ -102,15 +136,15 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
       limitColumnEditing: boolean;
       selectedColumns: Set<EditableColumn>;
     }) => {
-      if (!agent) return;
+      if (!table.agent) return;
 
       setIsSaving(true);
       updateAgentSettings(
         {
-          ...agent,
+          ...table.agent,
           systemPrompt: values.systemPrompt,
           settings: {
-            ...agent.settings,
+            ...table.agent.settings,
             allowAgentCreateColumns: values.allowAgentCreateColumns,
             limitColumnEditing: values.limitColumnEditing,
             triggerOnNewRow: values.triggerOnNewRow,
@@ -128,44 +162,8 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
         },
       );
     },
-    [updateAgentSettings, agent],
+    [updateAgentSettings, table.agent],
   );
-
-  const debouncedSave = useMemo(() => {
-    return debounce(handleSave, 500);
-  }, [handleSave]);
-
-  const triggerSave = (
-    updates: Partial<{
-      systemPrompt: string;
-      triggerOnNewRow: boolean;
-      triggerOnFieldUpdate: boolean;
-      allowAgentCreateColumns: boolean;
-      limitColumnEditing: boolean;
-      selectedColumns: Set<EditableColumn>;
-    }>,
-  ) => {
-    debouncedSave({
-      systemPrompt,
-      triggerOnNewRow,
-      triggerOnFieldUpdate,
-      allowAgentCreateColumns,
-      limitColumnEditing,
-      selectedColumns,
-      ...updates,
-    });
-  };
-
-  const { mutate: automateTable } = useMutation({
-    mutationFn: () => {
-      return tablesApi.automate(tableId, {
-        recordIds: selectedServerRecords,
-      });
-    },
-    onError: (error) => {
-      console.error('Failed to automate table:', error);
-    },
-  });
 
   const handleColumnToggle = (column: ClientField) => {
     const newSelected = new Set<EditableColumn>(selectedColumns);
@@ -179,16 +177,15 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
     }
 
     setSelectedColumns(newSelected);
-    triggerSave({ selectedColumns: newSelected });
   };
 
-  if (!agent?.mcpId || !agent?.id || !open) {
+  if (!table.agent?.mcpId || !table.agent?.id || !open) {
     return null;
   }
 
   return (
     <div className="absolute right-0 top-0">
-      <div className="flex bg-background flex-col h-[85vh] border items-center mt-4 mr-4 rounded-lg relative">
+      <div className="flex bg-background flex-col h-[85vh] border items-center mt-4 mr-4 rounded-lg relative animate-in slide-in-from-right duration-100 ease-out ease-in">
         <div className="flex w-full pt-6 px-4 mb-3 justify-between">
           <h2 className="text-lg font-semibold">Configure your AI Agent</h2>
           <div className="flex items-center gap-2">
@@ -220,15 +217,17 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
               onChange={(e) => {
                 const newValue = e.target.value;
                 setSystemPrompt(newValue);
-                triggerSave({ systemPrompt: newValue });
               }}
               placeholder="Write an SEO-friendly blog post using the keywords: {Keyword List}, based on the topic: {Content Idea}. Then write a LinkedIn post summarizing that blog post..."
               className="min-h-[140px] border-primary/20"
             />
             <div className="flex items-center gap-3">
-              <AgentProfile size="lg" imageUrl={agent?.profilePictureUrl} />
+              <AgentProfile
+                size="lg"
+                imageUrl={table.agent?.profilePictureUrl}
+              />
               <span className="text-sm font-medium">
-                {agent?.displayName || 'Agent Name'}
+                {table.agent?.displayName || 'Agent Name'}
               </span>
               <div className="flex gap-1">
                 <Button
@@ -255,49 +254,58 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
               <h3 className="font-medium">Tools</h3>
             </div>
             <div className="space-y-2">
-              {agent?.mcp.tools.map((tool) => (
-                <div
-                  key={tool.id}
-                  className="flex items-center gap-3 p-3 bg-muted rounded-sm"
-                >
-                  <div className="flex items-center gap-2 flex-1">
-                    <div className="w-6 h-6 rounded flex items-center justify-center">
-                      <span className="text-xs font-medium text-black">
-                        {tool.type === McpToolType.PIECE && (
-                          <img
-                            src={tool.pieceMetadata.logoUrl}
-                            alt={tool.pieceMetadata.actionDisplayName}
-                            className="w-6 h-6"
-                          />
-                        )}
-                        {tool.type === McpToolType.FLOW && (
-                          <WorkflowIcon className="w-4 h-4" />
-                        )}
+              {table.agent?.mcp.tools
+                .filter(
+                  (tool) =>
+                    tool.type === McpToolType.PIECE &&
+                    !BUILT_IN_TOOLS.includes(tool.pieceMetadata.pieceName),
+                )
+                .map((tool) => (
+                  <div
+                    key={tool.id}
+                    className="flex items-center gap-3 p-3 bg-muted rounded-sm"
+                  >
+                    <div className="flex items-center gap-2 flex-1">
+                      <div className="w-6 h-6 rounded flex items-center justify-center">
+                        <span className="text-xs font-medium text-black">
+                          {tool.type === McpToolType.PIECE && (
+                            <img
+                              src={tool.pieceMetadata.logoUrl}
+                              alt={tool.pieceMetadata.actionDisplayName}
+                              className="w-6 h-6"
+                            />
+                          )}
+                          {tool.type === McpToolType.FLOW && (
+                            <WorkflowIcon className="w-4 h-4" />
+                          )}
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium">
+                        {tool.type === McpToolType.PIECE
+                          ? tool.pieceMetadata.actionDisplayName
+                          : tool.flow?.version?.displayName}
                       </span>
                     </div>
-                    <span className="text-sm font-medium">
-                      {tool.type === McpToolType.PIECE
-                        ? tool.pieceMetadata.actionDisplayName
-                        : tool.flow?.version?.displayName}
-                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                      onClick={() => {
+                        updateTools(
+                          table.agent?.mcp.tools?.filter(
+                            (t) => t.id !== tool.id,
+                          ) || [],
+                        );
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                    onClick={() => {
-                      updateTools(
-                        agent?.mcp.tools.filter((t) => t.id !== tool.id),
-                      );
-                    }}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
+                ))}
               <McpPieceDialog
                 open={showAddPieceDialog}
-                mcp={agent.mcp}
+                mcp={table.agent.mcp}
+                builtInPiecesTools={BUILT_IN_TOOLS}
                 onToolsUpdate={(tools) => {
                   updateTools(tools);
 
@@ -334,7 +342,6 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
                   checked={triggerOnNewRow}
                   onCheckedChange={(value) => {
                     setTriggerOnNewRow(value);
-                    triggerSave({ triggerOnNewRow: value });
                   }}
                 />
                 <span className="text-sm">New row is added</span>
@@ -344,7 +351,6 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
                   checked={triggerOnFieldUpdate}
                   onCheckedChange={(value) => {
                     setTriggerOnFieldUpdate(value);
-                    triggerSave({ triggerOnFieldUpdate: value });
                   }}
                 />
                 <span className="text-sm">Any field is updated</span>
@@ -363,7 +369,6 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
                   checked={allowAgentCreateColumns}
                   onCheckedChange={(value) => {
                     setAllowAgentCreateColumns(value);
-                    triggerSave({ allowAgentCreateColumns: value });
                   }}
                 />
                 <span className="text-sm w-[250px]">
@@ -375,7 +380,6 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
                   checked={limitColumnEditing}
                   onCheckedChange={(value) => {
                     setLimitColumnEditing(value);
-                    triggerSave({ limitColumnEditing: value });
                   }}
                 />
                 <span className="text-sm w-[250px]">
@@ -401,7 +405,6 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
                         })) || [],
                       );
                       setSelectedColumns(newSelected);
-                      triggerSave({ selectedColumns: newSelected });
                     }}
                     className="text-xs p-0 hover:bg-transparent hover:text-primary"
                   >
@@ -413,7 +416,6 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
                     onClick={() => {
                       const newSelected = new Set<EditableColumn>();
                       setSelectedColumns(newSelected);
-                      triggerSave({ selectedColumns: newSelected });
                     }}
                     className="text-xs p-0 hover:bg-transparent hover:text-primary"
                   >
@@ -449,15 +451,32 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-row gap-2 justify-center p-4">
-          <Button variant="outline">Test first 5 rows</Button>
+        <div className="flex flex-row gap-2 justify-center px-4 pb-4 relative before:absolute before:inset-x-3 before:-top-6 before:h-24 before:bg-gradient-to-b before:from-white/70 before:via-white before:to-transparent before:pointer-events-none before:blur-sm">
+          <Button
+            variant="outline"
+            className="z-10"
+            onClick={() => {
+              automateTableFirst5Rows();
+            }}
+          >
+            Test first 5 rows
+          </Button>
           <Button
             onClick={() => {
-              automateTable();
+              handleSave({
+                systemPrompt,
+                triggerOnNewRow,
+                triggerOnFieldUpdate,
+                allowAgentCreateColumns,
+                limitColumnEditing,
+                selectedColumns,
+              });
             }}
-            loading={!isNil(selectedAgentRunId)}
+            loading={!isNil(selectedAgentRunId) || isSaving}
+            disabled={isThereAnyChange}
+            className="z-10"
           >
-            Start AI Agent!
+            {t('Save Changes')}
           </Button>
         </div>
       </div>
