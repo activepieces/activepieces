@@ -2,7 +2,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import { GitRepo } from '@activepieces/ee-shared'
 import { fileExists } from '@activepieces/server-shared'
-import { AppConnectionScope, ConnectionState, Flow, flowMigrations, FlowState, PopulatedFlow, ProjectState, TableState } from '@activepieces/shared'
+import { AgentState, AppConnectionScope, ConnectionState, Flow, flowMigrations, FlowState, PopulatedFlow, ProjectState, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SimpleGit } from 'simple-git'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
@@ -48,6 +48,12 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
         const connectionJsonPath = path.join(folderPath, `${fileName}.json`)
         await fs.mkdir(path.dirname(connectionJsonPath), { recursive: true })
         await fs.writeFile(connectionJsonPath, JSON.stringify(connection, null, 2))
+    },
+
+    async upsertAgentToGit({ fileName, agent, agentsFolderPath }: UpsertAgentIntoProjectParams): Promise<void> {
+        const agentJsonPath = path.join(agentsFolderPath, `${fileName}.json`)
+        await fs.mkdir(path.dirname(agentJsonPath), { recursive: true })
+        await fs.writeFile(agentJsonPath, JSON.stringify(agent, null, 2))
     },
 
     async deleteFromGit({ fileName, folderPath }: DeleteFromProjectParams): Promise<boolean> {
@@ -156,6 +162,12 @@ type UpsertTableIntoProjectParams = {
     fileName: string
     table: TableState
     tablesFolderPath: string
+}
+
+type UpsertAgentIntoProjectParams = {
+    fileName: string
+    agent: AgentState
+    agentsFolderPath: string
 }
 
 type DeleteFromProjectParams = {

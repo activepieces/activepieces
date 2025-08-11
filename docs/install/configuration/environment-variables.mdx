@@ -84,6 +84,21 @@ it will produce these values. </Tip>
 | `AP_APP_TITLE` | Initial title shown in the browser tab while loading the app | `Activepieces`  | `Activepieces`
 | `AP_FAVICON_URL` | Initial favicon shown in the browser tab while loading the app | `https://cdn.activepieces.com/brand/favicon.ico` | `https://cdn.activepieces.com/brand/favicon.ico`
 
+### OpenTelemetry Configuration
+
+Activepieces supports both standard OpenTelemetry environment variables and vendor-specific configuration for observability and tracing.
+
+#### OpenTelemetry Environment Variables
+
+| Variable | Description | Default Value | Example |
+|----------|-------------|---------------|---------|
+| `AP_OTEL_ENABLED` | Enable OpenTelemetry tracing | `false` | `true` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP exporter endpoint URL | `None` | `https://your-collector:4317/v1/traces` |
+| `OTEL_EXPORTER_OTLP_HEADERS` | Headers for OTLP exporter (comma-separated key=value pairs) | `None` | `Authorization=Bearer token` |
+
+**Note**: Both `AP_OTEL_ENABLED` and `OTEL_EXPORTER_OTLP_ENDPOINT` must be set for OpenTelemetry to be enabled.
+
+
 <Warning>
   The frontend URL is essential for webhooks and app triggers to work. It must
   be accessible to third parties to send data.

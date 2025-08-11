@@ -5,7 +5,7 @@ import { Ellipsis, User } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
-import { TableTitle } from '@/components/custom/table-title';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/breadcrumb';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { Skeleton } from '@/components/ui/skeleton';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
@@ -116,49 +115,33 @@ export const ProjectRoleUsersTable = () => {
       )}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
     >
-      <div className="flex-col w-full">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex flex-col gap-2">
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink
-                    onClick={() => navigate('/platform/security/project-roles')}
-                    className="cursor-pointer hover:text-primary hover:underline"
-                  >
-                    {t('Roles')}
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  {!isNil(projectRole?.name) ? (
-                    <BreadcrumbPage>{projectRole?.name}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbPage>
-                      <Ellipsis className="text-muted-foreground" />
-                    </BreadcrumbPage>
-                  )}
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-
-            {!isNil(projectRole?.name) ? (
-              <TableTitle
-                description={t('View the users assigned to this role')}
-              >{`${projectRole?.name} ${t('Role')} ${t('Users')}`}</TableTitle>
-            ) : (
-              <Skeleton className="h-6 w-40" />
-            )}
-
-            {!isNil(projectRole?.name) ? (
-              <div className="text-sm text-muted-foreground">
-                {t('View the users assigned to this role')}
-              </div>
-            ) : (
-              <Skeleton className="h-6 w-40" />
-            )}
-          </div>
-        </div>
+      <div className="flex-colw-full">
+        <DashboardPageHeader
+          title={`${projectRole?.name} ${t('Role')} ${t('Users')}`}
+          description={t('View the users assigned to this role')}
+        />
+        <Breadcrumb className="mb-4">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                onClick={() => navigate('/platform/security/project-roles')}
+                className="cursor-pointer hover:text-primary hover:underline"
+              >
+                {t('Roles')}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              {!isNil(projectRole?.name) ? (
+                <BreadcrumbPage>{projectRole?.name}</BreadcrumbPage>
+              ) : (
+                <BreadcrumbPage>
+                  <Ellipsis className="text-muted-foreground" />
+                </BreadcrumbPage>
+              )}
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
         <DataTable
           emptyStateTextTitle={t('No users found')}

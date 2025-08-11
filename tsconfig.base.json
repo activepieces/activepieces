@@ -45,6 +45,9 @@
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],
+      "@activepieces/piece-aircall": [
+        "packages/pieces/community/aircall/src/index.ts"
+      ],
       "@activepieces/piece-airparser": [
         "packages/pieces/community/airparser/src/index.ts"
       ],
@@ -98,6 +101,9 @@
       ],
       "@activepieces/piece-attio": [
         "packages/pieces/community/attio/src/index.ts"
+      ],
+      "@activepieces/piece-autocalls": [
+        "packages/pieces/community/autocalls/src/index.ts"
       ],
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
@@ -453,6 +459,9 @@
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
       ],
+      "@activepieces/piece-help-scout": [
+        "packages/pieces/community/help-scout/src/index.ts"
+      ],
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],
@@ -611,6 +620,9 @@
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
       ],
+      "@activepieces/piece-missive": [
+        "packages/pieces/community/missive/src/index.ts"
+      ],
       "@activepieces/piece-mistral-ai": [
         "packages/pieces/community/mistral-ai/src/index.ts"
       ],
@@ -665,6 +677,9 @@
       "@activepieces/piece-pandadoc": [
         "packages/pieces/community/pandadoc/src/index.ts"
       ],
+      "@activepieces/piece-paperform": [
+        "packages/pieces/community/paperform/src/index.ts"
+      ],
       "@activepieces/piece-pastebin": [
         "packages/pieces/community/pastebin/src/index.ts"
       ],
@@ -695,6 +710,9 @@
       ],
       "@activepieces/piece-placid": [
         "packages/pieces/community/placid/src/index.ts"
+      ],
+      "@activepieces/piece-podio": [
+        "packages/pieces/community/podio/src/index.ts"
       ],
       "@activepieces/piece-poper": [
         "packages/pieces/community/poper/src/index.ts"
@@ -749,6 +767,9 @@
       ],
       "@activepieces/piece-respaid": [
         "packages/pieces/community/respaid/src/index.ts"
+      ],
+      "@activepieces/piece-respond-io": [
+        "packages/pieces/community/respond-io/src/index.ts"
       ],
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
@@ -846,6 +867,9 @@
       ],
       "@activepieces/piece-soap": [
         "packages/pieces/community/soap/src/index.ts"
+      ],
+      "@activepieces/piece-softr": [
+        "packages/pieces/community/softr/src/index.ts"
       ],
       "@activepieces/piece-sperse": [
         "packages/pieces/community/sperse/src/index.ts"

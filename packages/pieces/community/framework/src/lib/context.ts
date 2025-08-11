@@ -8,8 +8,8 @@ import {
   ResumePayload,
   SeekPage,
   TriggerPayload,
+  TriggerStrategy,
 } from '@activepieces/shared';
-import { TriggerStrategy } from './trigger/trigger';
 import {
   InputPropertyMap,
   PiecePropValueSchema,

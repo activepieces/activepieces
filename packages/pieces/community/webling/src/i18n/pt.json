@@ -1,0 +1,15 @@
+{
+  "Webling": "Webling",
+  "Base URL": "URL Base",
+  "API Key": "Chave de API",
+  "Get Events by ID": "Obter eventos por ID",
+  "Gets event data by a list of event IDs and optional calendar ID to filter.": "Obtém dados de evento por uma lista de IDs de evento e ID de calendário opcional para filtrar.",
+  "Event ID list": "Lista de ID",
+  "Calendar": "calendário",
+  "Comma separated list of event IDs (e.g. '536,525,506,535'). When at least one ID doesn't exist the whole query return a 404 error.": "Lista separada por vírgulas de IDs de eventos (por exemplo, '536,525,506,535'). Quando pelo menos um ID não existe, toda a consulta retorna um erro 404.",
+  "Calendar to filter the events by.": "Calendário para filtrar os eventos.",
+  "New or Updated Event": "Evento novo ou atualizado",
+  "On Changed Data": "Em Dados Alterados",
+  "Triggers when an event is added or updated.": "Dispara quando um evento é adicionado ou atualizado.",
+  "Triggers when anything was added, updated or deleted since last request.": "Dispara quando qualquer coisa foi adicionada, atualizada ou excluída desde a última solicitação."
+}

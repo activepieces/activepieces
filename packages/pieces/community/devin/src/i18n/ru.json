@@ -1,0 +1,21 @@
+{
+  "Devin AI": "Devin AI",
+  "AI-powered engineering assistant for automating development tasks, code generation, and technical conversations.": "AI - инженерный ассистент по автоматизации задач разработки, генерации кода и технических разговоров.",
+  "Your Devin API key (used in the Authorization header).": "Ваш ключ API Devin (используется в заголовке авторизации).",
+  "Create Session": "Создать сессию",
+  "Get Session Details": "Получить детали сессии",
+  "Send Message": "Отправить сообщение",
+  "Creates a new Devin session": "Создать новый Devin сеанс",
+  "Retrieves details of a specific Devin session": "Получает подробную информацию об отдельной сессии Devin",
+  "Sends a message to a Devin session": "Отправляет сообщение в сессию Devin",
+  "Prompt": "Prompt",
+  "Snapshot ID": "ID снимка",
+  "Playbook ID": "ID плейлиста",
+  "Unlisted": "Не занесено",
+  "Idempotent": "Idempotent",
+  "Session ID": "ID сессии",
+  "Message": "Сообщение",
+  "The ID of the session to retrieve details for": "ID сеанса для получения подробной информации",
+  "The ID of the session to send the message to": "ID сеанса для отправки сообщения",
+  "The message to send to the session": "Сообщение для отправки на сессию"
+}
