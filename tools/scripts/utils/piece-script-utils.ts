@@ -138,7 +138,7 @@ async function traverseFolder(folderPath: string): Promise<string[]> {
     return paths
 }
 
-export async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | null> {
+async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | null> {
     try {
         const packageJson = await readPackageJson(folderPath);
         
