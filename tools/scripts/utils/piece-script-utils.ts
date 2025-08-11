@@ -59,9 +59,7 @@ export function getCommunityPieceFolder(pieceName: string): string {
 export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
     const piecesPath = resolve(cwd(), 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
-    const enterprisePiecesPath = resolve(cwd(), 'packages', 'ee', 'pieces')
-    const enterprisePiecesPaths = await traverseFolder(enterprisePiecesPath)
-    return [...paths, ...enterprisePiecesPaths]
+    return paths
 }
 
 export const pieceMetadataExists = async (
@@ -126,13 +124,8 @@ export async function findAllPieces(): Promise<PieceMetadata[]> {
 
 async function findAllDistPaths(): Promise<string[]> {
     const baseDir = resolve(cwd(), 'dist', 'packages')
-    const standardPiecesPath = resolve(baseDir, 'pieces')
-    const enterprisePiecesPath = resolve(baseDir, 'ee', 'pieces')
-    const paths = [
-        ...await traverseFolder(standardPiecesPath),
-        ...await traverseFolder(enterprisePiecesPath)
-    ]
-    return paths
+    const piecesBuildOutputPath = resolve(baseDir, 'pieces')
+    return await traverseFolder(piecesBuildOutputPath)
 }
 
 async function traverseFolder(folderPath: string): Promise<string[]> {
