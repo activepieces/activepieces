@@ -1,4 +1,3 @@
-import { nanoid } from 'nanoid';
 import { Socket } from 'socket.io-client';
 
 import { api } from '@/lib/api';
@@ -42,7 +41,10 @@ export const flowRunsApi = {
     request: CreateStepRunRequestBody,
     onProgress?: (progress: StepRunResponse) => void,
   ): Promise<StepRunResponse> {
-   const stepRun = await api.post<FlowRun>('/v1/sample-data/test-step', request);
+    const stepRun = await api.post<FlowRun>(
+      '/v1/sample-data/test-step',
+      request,
+    );
 
     return new Promise<StepRunResponse>((resolve, reject) => {
       const handleStepFinished = (response: StepRunResponse) => {
