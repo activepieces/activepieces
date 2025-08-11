@@ -120,14 +120,16 @@ export default function Billing() {
 
         <UsageCards platformSubscription={platformPlanInfo} />
 
-      {!isFree && <ActiveFlowAddon platformSubscription={platformPlanInfo} />}
+        {(isBusinessPlan || isPlus) && !isTrial && (
+          <ActiveFlowAddon platformSubscription={platformPlanInfo} />
+        )}
 
-      {isBusinessPlan && (
-        <div className="grid grid-cols-2 gap-6">
-          <ProjectAddon platformSubscription={platformPlanInfo} />
-          <UserSeatAddon platformSubscription={platformPlanInfo} />
-        </div>
-      )}
+        {isBusinessPlan && !isTrial && (
+          <div className="grid grid-cols-2 gap-6">
+            <ProjectAddon platformSubscription={platformPlanInfo} />
+            <UserSeatAddon platformSubscription={platformPlanInfo} />
+          </div>
+        )}
 
         {!isEnterprise && (
           <AICreditUsage platformSubscription={platformPlanInfo} />

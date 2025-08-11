@@ -67,9 +67,12 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
           ? GitPushOperationType.PUSH_FLOW
           : GitPushOperationType.PUSH_TABLE,
       commitMessage: '',
-      externalFlowIds: props.type === 'flow' ? props.flows.map((item) => item.externalId) : [],
+      externalFlowIds:
+        props.type === 'flow' ? props.flows.map((item) => item.externalId) : [],
       externalTableIds:
-        props.type === 'table' ? props.tables.map((item) => item.externalId) : [],
+        props.type === 'table'
+          ? props.tables.map((item) => item.externalId)
+          : [],
     },
     resolver: typeboxResolver(
       props.type === 'flow'
