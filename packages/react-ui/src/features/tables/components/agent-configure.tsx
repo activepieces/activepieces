@@ -36,7 +36,7 @@ import { ClientField } from '../lib/store/ap-tables-client-state';
 import { AgentProfile } from './agent-profile';
 import { useTableState } from './ap-table-state-provider';
 
-const BUILT_IN_TOOLS: string[] = [];
+const BUILT_IN_TOOLS: string[] = ['@activepieces/piece-tables'];
 
 type AgentConfigureProps = {
   open: boolean;

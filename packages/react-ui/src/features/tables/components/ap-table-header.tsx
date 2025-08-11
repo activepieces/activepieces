@@ -21,7 +21,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { formatUtils } from '@/lib/utils';
+import { cn, formatUtils } from '@/lib/utils';
 import { isNil, Permission, PopulatedAgent } from '@activepieces/shared';
 
 import { AgentProfile } from './agent-profile';
@@ -156,7 +156,7 @@ export const ApTableHeader = ({
       <div className="flex items-center gap-2 w-full justify-end">
         {agent.created !== agent.updated && agent.settings?.aiMode && (
           <>
-            <div className="flex items-center gap-2">
+            <div className={cn("flex items-center gap-2", !isNil(selectedAgentRunId) && "gap-6")}>
               {runs && runs.length > 0 && (
                 <Button
                   variant="ghost"
