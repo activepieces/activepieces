@@ -22,20 +22,17 @@ export const addTagToTicketAction = createAction({
     ticket_id: ticketIdDropdown,
     tags: Property.Array({
       displayName: 'Tags',
-      description:
-        'Array of tags to add to the ticket. These will be added to existing tags, not replace them.',
+      description: 'Tags to add to the ticket (adds to existing tags)',
       required: true,
     }),
     safe_update: Property.Checkbox({
       displayName: 'Safe Update',
-      description:
-        'Enable safe update to prevent tag loss due to concurrent updates. Requires Updated Timestamp.',
+      description: 'Prevent tag loss from concurrent updates',
       required: false,
     }),
     updated_stamp: Property.ShortText({
       displayName: 'Updated Timestamp',
-      description:
-        "The ticket's latest updated_at timestamp for safe updates (ISO 8601 format: 2019-09-12T21:45:16Z). Required when Safe Update is enabled.",
+      description: 'Ticket timestamp from updated_at field for collision prevention',
       required: false,
     }),
   },

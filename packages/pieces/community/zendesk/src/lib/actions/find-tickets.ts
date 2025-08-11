@@ -157,7 +157,6 @@ export const findTicketsAction = createAction({
       sort_order,
     } = propsValue;
 
-    // Build search query based on search type
     let query = 'type:ticket';
     
     switch (search_type) {
@@ -219,7 +218,6 @@ export const findTicketsAction = createAction({
         throw new Error('Invalid search type selected.');
     }
 
-    // Build URL with query parameters
     const searchParams = new URLSearchParams();
     searchParams.append('query', query);
     
@@ -250,7 +248,6 @@ export const findTicketsAction = createAction({
         facets?: unknown;
       };
 
-      // Filter results to only include tickets (in case other types are returned)
       const tickets = responseBody.results.filter(result => result.result_type === 'ticket');
 
       return {

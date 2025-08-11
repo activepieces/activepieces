@@ -35,7 +35,7 @@ interface ZendeskOrganization {
 export const newOrganization = createTrigger({
   name: 'new_organization',
   displayName: 'New Organization',
-  description: 'Fires when a new organization record is created.',
+  description: 'Fires when a new organization record is created. Uses Zendesk event webhook (no Trigger needed).',
   auth: zendeskAuth,
   props: {},
   type: TriggerStrategy.WEBHOOK,
@@ -120,15 +120,12 @@ export const newOrganization = createTrigger({
     const payload = context.payload.body as {
       type?: string;
       organization?: ZendeskOrganization;
-      'zen:body'?: {
-        organization?: ZendeskOrganization;
-      };
+      detail?: ZendeskOrganization;
+      'zen:body'?: { organization?: ZendeskOrganization };
     };
-    
-    // Check if this is an organization creation event
-    const organization = payload.organization || payload['zen:body']?.organization;
-    
-    if (!organization || (payload.type && payload.type !== 'organization.created')) {
+
+    const organization = payload.organization || payload['zen:body']?.organization || payload.detail;
+    if (!organization) {
       return [];
     }
 

@@ -35,34 +35,13 @@ interface ZendeskTicket {
 export const newActionOnTicket = createTrigger({
   name: 'new_action_on_ticket',
   displayName: 'New Action on Ticket',
-  description: 'Fires when any audit/event occurs on a specific ticket (admin limited).',
+  description: 'Fires when the specified ticket updates. Requires a Zendesk Trigger with Notify active webhook.',
   auth: zendeskAuth,
   props: {
     ticket_id: Property.Number({
       displayName: 'Ticket ID',
       description: 'The specific ticket ID to monitor for actions/events.',
       required: true,
-    }),
-    event_types: Property.StaticMultiSelectDropdown({
-      displayName: 'Event Types to Monitor',
-      description: 'Select which types of events to monitor. Leave empty to monitor all events.',
-      required: false,
-      options: {
-        options: [
-          { label: 'Comment', value: 'Comment' },
-          { label: 'Change', value: 'Change' },
-          { label: 'Create', value: 'Create' },
-          { label: 'Notification', value: 'Notification' },
-          { label: 'VoiceComment', value: 'VoiceComment' },
-          { label: 'ChatComment', value: 'ChatComment' },
-          { label: 'SMSComment', value: 'SMSComment' },
-          { label: 'FacebookComment', value: 'FacebookComment' },
-          { label: 'TwitterComment', value: 'TwitterComment' },
-          { label: 'Push', value: 'Push' },
-          { label: 'LogMeInTranscript', value: 'LogMeInTranscript' },
-          { label: 'External', value: 'External' },
-        ],
-      },
     }),
   },
   type: TriggerStrategy.WEBHOOK,
@@ -196,31 +175,8 @@ export const newActionOnTicket = createTrigger({
   },
 
   async run(context) {
-    const payload = context.payload.body as {
-      type?: string;
-      ticket?: ZendeskTicket;
-      audit?: {
-        id: number;
-        ticket_id: number;
-        created_at: string;
-        author_id: number;
-        events: Array<{
-          id: number;
-          type: string;
-          field_name?: string;
-          previous_value?: string | number | boolean | string[];
-          value?: string | number | boolean | string[];
-          public?: boolean;
-          body?: string;
-          html_body?: string;
-          plain_body?: string;
-          author_id?: number;
-        }>;
-      };
-    };
-    
-    // Check if this is for the specific ticket we're monitoring
-    if (!payload.ticket || !payload.audit) {
+    const payload = context.payload.body as { ticket?: ZendeskTicket };
+    if (!payload.ticket) {
       return [];
     }
 
@@ -229,26 +185,6 @@ export const newActionOnTicket = createTrigger({
       return [];
     }
 
-    // Filter by event types if specified
-    const selectedEventTypes = context.propsValue.event_types as string[] | undefined;
-    if (selectedEventTypes && selectedEventTypes.length > 0) {
-      const hasMatchingEvent = payload.audit.events.some(event => 
-        selectedEventTypes.includes(event.type)
-      );
-      
-      if (!hasMatchingEvent) {
-        return [];
-      }
-    }
-
-    // Include full audit information and event details
-    const result: Record<string, unknown> = {
-      ...payload.ticket,
-      audit: payload.audit,
-      event_count: payload.audit.events.length,
-      event_types_in_audit: [...new Set(payload.audit.events.map(event => event.type))],
-    };
-
-    return [result];
+    return [payload.ticket];
   },
 });

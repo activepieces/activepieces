@@ -35,7 +35,7 @@ interface ZendeskTicket {
 export const tagAddedToTicket = createTrigger({
   name: 'tag_added_to_ticket',
   displayName: 'Tag Added to Ticket',
-  description: 'Fires when a tag is added to a ticket.',
+  description: 'Fires when a ticket update includes the specified tag. Requires a Zendesk Trigger with Notify active webhook.',
   auth: zendeskAuth,
   props: {
     specific_tag: Property.ShortText({
@@ -166,70 +166,22 @@ export const tagAddedToTicket = createTrigger({
   },
 
   async run(context) {
-    const payload = context.payload.body as {
-      type?: string;
-      ticket?: ZendeskTicket;
-      audit?: {
-        id: number;
-        ticket_id: number;
-        created_at: string;
-        author_id: number;
-        events: Array<{
-          id: number;
-          type: string;
-          field_name?: string;
-          previous_value?: string[] | string;
-          value?: string[] | string;
-        }>;
-      };
-    };
-    
-    // Check if this is a ticket update event with tag changes
-    if (!payload.ticket || !payload.audit) {
+    const payload = context.payload.body as { ticket?: ZendeskTicket };
+    if (!payload.ticket) {
       return [];
     }
 
-    // Look for tag addition events in the audit
-    const tagEvents = payload.audit.events.filter(
-      event => event.field_name === 'tags' && event.type === 'Change'
-    );
+    const specificTag = context.propsValue.specific_tag as string | undefined;
+    const tags = payload.ticket.tags || [];
 
-    if (tagEvents.length === 0) {
-      return [];
-    }
-
-    // Check if any tags were actually added
-    let tagsWereAdded = false;
-    const addedTags: string[] = [];
-
-    for (const event of tagEvents) {
-      const previousTags = Array.isArray(event.previous_value) ? event.previous_value : [];
-      const currentTags = Array.isArray(event.value) ? event.value : [];
-      
-      const newTags = currentTags.filter(tag => !previousTags.includes(tag));
-      if (newTags.length > 0) {
-        tagsWereAdded = true;
-        addedTags.push(...newTags);
+    if (specificTag) {
+      if (!tags.includes(specificTag)) {
+        return [];
       }
-    }
-
-    if (!tagsWereAdded) {
+    } else if (!Array.isArray(tags) || tags.length === 0) {
       return [];
     }
 
-    // Filter by specific tag if specified
-    const specificTag = context.propsValue.specific_tag;
-    if (specificTag && !addedTags.includes(specificTag)) {
-      return [];
-    }
-
-    // Include audit events and added tags in the response
-    const result: Record<string, unknown> = {
-      ...payload.ticket,
-      audit: payload.audit,
-      added_tags: addedTags,
-    };
-
-    return [result];
+    return [payload.ticket];
   },
 });

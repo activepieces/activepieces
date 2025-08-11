@@ -22,38 +22,32 @@ export const addCommentToTicketAction = createAction({
     ticket_id: ticketIdDropdown,
     comment_body: Property.LongText({
       displayName: 'Comment Body',
-      description:
-        'The comment body (plain text). Use this for plain text comments.',
+      description: 'The comment text content',
       required: false,
     }),
     comment_html_body: Property.LongText({
       displayName: 'Comment HTML Body',
-      description:
-        'The comment body (HTML). Use this for HTML formatted comments. If provided, this takes precedence over Comment Body.',
+      description: 'HTML formatted comment (takes precedence over text)',
       required: false,
     }),
     public: Property.Checkbox({
       displayName: 'Public Comment',
-      description:
-        'Whether the comment is public (visible to the requester). Defaults to true.',
+      description: 'Make comment visible to requester (default: true)',
       required: false,
     }),
     author_email: Property.ShortText({
       displayName: 'Author Email',
-      description:
-        'Email address of the comment author. If not provided, the authenticated user will be the author.',
+      description: 'Email of comment author (defaults to authenticated user)',
       required: false,
     }),
     uploads: Property.Array({
       displayName: 'Attachment Tokens',
-      description:
-        'Array of upload tokens for file attachments. Upload files first using the Attachments API.',
+      description: 'Upload tokens for file attachments',
       required: false,
     }),
     via_followup_source_id: Property.Number({
       displayName: 'Via Followup Source ID',
-      description:
-        'The ID of the original ticket if this comment is from a follow-up ticket.',
+      description: 'Original ticket ID if this is from a follow-up',
       required: false,
     }),
   },

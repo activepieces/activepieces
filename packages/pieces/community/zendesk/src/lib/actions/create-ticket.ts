@@ -24,8 +24,8 @@ export const createTicketAction = createAction({
   props: {
     subject: Property.ShortText({
       displayName: 'Subject',
-      description: 'The subject of the ticket',
-      required: true,
+      description: 'The subject of the ticket (optional - will use first comment text if not provided)',
+      required: false,
     }),
     comment_body: Property.LongText({
       displayName: 'Comment Body',
@@ -126,10 +126,151 @@ export const createTicketAction = createAction({
       description: 'The date and time when the ticket is due.',
       required: false,
     }),
-    custom_fields: Property.Json({
+    custom_fields: Property.DynamicProperties({
       displayName: 'Custom Fields',
-      description: 'Custom field values as JSON object. Example: {"field_id": "value"}',
+      description: 'Custom ticket field values',
       required: false,
+      refreshers: ['auth'],
+      props: async ({ auth }) => {
+        if (!auth) {
+          return {};
+        }
+
+        try {
+          const authentication = auth as AuthProps;
+          const response = await httpClient.sendRequest({
+            url: `https://${authentication.subdomain}.zendesk.com/api/v2/ticket_fields.json`,
+            method: HttpMethod.GET,
+            authentication: {
+              type: AuthenticationType.BASIC,
+              username: authentication.email + '/token',
+              password: authentication.token,
+            },
+          });
+
+          const fields = (response.body as { ticket_fields: Array<{
+            id: number;
+            key: string;
+            title: string;
+            description?: string;
+            type: string;
+            active: boolean;
+            removable?: boolean;
+            custom_field_options?: Array<{ name: string; value: string }>;
+            regexp_for_validation?: string;
+          }> }).ticket_fields;
+
+          const skipSystemTypes = new Set([
+            'subject',
+            'description',
+            'priority',
+            'status',
+            'tickettype',
+            'group',
+            'assignee',
+          ]);
+
+          const dynamicProps: Record<string, any> = {};
+
+          for (const field of fields) {
+            if (!field.active) continue;
+            if (skipSystemTypes.has(field.type)) continue;
+
+            const fieldKey = `field_${field.key ?? `custom_field_${field.id}`}`;
+            const displayName = field.title;
+            const description = field.description || `Custom ${field.type} field`;
+
+            switch (field.type) {
+              case 'tagger':
+                if (field.custom_field_options && field.custom_field_options.length > 0) {
+                  dynamicProps[fieldKey] = Property.StaticDropdown({
+                    displayName,
+                    description,
+                    required: false,
+                    options: {
+                      disabled: false,
+                      placeholder: `Select ${displayName}`,
+                      options: field.custom_field_options.map(option => ({
+                        label: option.name,
+                        value: option.value,
+                      })),
+                    },
+                  });
+                }
+                break;
+              case 'multiselect':
+                if (field.custom_field_options && field.custom_field_options.length > 0) {
+                  dynamicProps[fieldKey] = Property.StaticMultiSelectDropdown({
+                    displayName,
+                    description,
+                    required: false,
+                    options: {
+                      options: field.custom_field_options.map(option => ({
+                        label: option.name,
+                        value: option.value,
+                      })),
+                    },
+                  });
+                }
+                break;
+              case 'text':
+                dynamicProps[fieldKey] = Property.ShortText({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'textarea':
+                dynamicProps[fieldKey] = Property.LongText({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'integer':
+              case 'decimal':
+                dynamicProps[fieldKey] = Property.Number({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'date':
+                dynamicProps[fieldKey] = Property.DateTime({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'checkbox':
+                dynamicProps[fieldKey] = Property.Checkbox({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'regexp':
+                dynamicProps[fieldKey] = Property.ShortText({
+                  displayName,
+                  description: `${description}${field.regexp_for_validation ? ` (Pattern: ${field.regexp_for_validation})` : ''}`,
+                  required: false,
+                });
+                break;
+              default:
+                dynamicProps[fieldKey] = Property.ShortText({
+                  displayName,
+                  description: `${description} (${field.type})`,
+                  required: false,
+                });
+            }
+          }
+
+          return dynamicProps;
+        } catch (error) {
+          console.warn('Failed to load ticket fields:', error);
+          return {};
+        }
+      },
     }),
     comment_public: Property.Checkbox({
       displayName: 'Public Comment',
@@ -186,9 +327,12 @@ export const createTicketAction = createAction({
     }
 
     const ticket: Record<string, unknown> = {
-      subject,
       comment,
     };
+
+    if (subject) {
+      ticket.subject = subject;
+    }
 
     const resolveUserByEmail = async (email: string) => {
       try {
@@ -277,16 +421,45 @@ export const createTicketAction = createAction({
       }
     }
 
-    if (custom_fields) {
+    if (custom_fields && typeof custom_fields === 'object') {
       try {
-        const customFieldsObj = typeof custom_fields === 'string' ? JSON.parse(custom_fields) : custom_fields;
-        const customFieldsArray = Object.entries(customFieldsObj).map(([id, value]) => ({
-          id: parseInt(id),
-          value,
-        }));
-        ticket.custom_fields = customFieldsArray;
+        const fieldsResponse = await httpClient.sendRequest({
+          url: `https://${authentication.subdomain}.zendesk.com/api/v2/ticket_fields.json`,
+          method: HttpMethod.GET,
+          authentication: {
+            type: AuthenticationType.BASIC,
+            username: authentication.email + '/token',
+            password: authentication.token,
+          },
+        });
+
+        const fieldDefinitions = (fieldsResponse.body as { ticket_fields: Array<{
+          id: number;
+          key: string;
+          type: string;
+        }> }).ticket_fields;
+
+        const customFieldsArray: Array<{ id: number; value: unknown }> = [];
+        for (const [propKey, value] of Object.entries(custom_fields)) {
+          if (value === undefined || value === null || value === '') continue;
+
+          const fieldKey = propKey.startsWith('field_') ? propKey.substring(6) : propKey;
+          const def = fieldDefinitions.find(f => (f.key ?? `custom_field_${f.id}`) === fieldKey || f.key === fieldKey);
+          if (!def) continue;
+
+          let formattedValue: unknown = value;
+          if (def.type === 'date' && typeof value === 'string') {
+            formattedValue = new Date(value).toISOString().split('T')[0];
+          }
+
+          customFieldsArray.push({ id: def.id, value: formattedValue });
+        }
+
+        if (customFieldsArray.length > 0) {
+          ticket.custom_fields = customFieldsArray;
+        }
       } catch (error) {
-        throw new Error('Invalid custom fields format. Expected JSON object with field IDs as keys.');
+        console.warn('Failed to process custom fields:', error);
       }
     }
 

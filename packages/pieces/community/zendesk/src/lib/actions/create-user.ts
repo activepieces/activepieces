@@ -9,6 +9,7 @@ import {
   organizationIdDropdown,
   customRoleIdDropdown,
   agentBrandIdDropdown,
+  groupIdDropdown,
 } from '../common/props';
 
 type AuthProps = {
@@ -165,22 +166,145 @@ export const createUserAction = createAction({
       description: "The user's signature for email responses",
       required: false,
     }),
-    default_group_id: Property.Number({
-      displayName: 'Default Group ID',
-      description: "The ID of the user's default group (for agents)",
-      required: false,
-    }),
+    default_group_id: groupIdDropdown,
     agent_brand_ids: agentBrandIdDropdown,
     tags: Property.Array({
       displayName: 'Tags',
       description: 'Array of tags to apply to the user',
       required: false,
     }),
-    user_fields: Property.Json({
+    user_fields: Property.DynamicProperties({
       displayName: 'User Fields',
-      description:
-        'Custom user field values as JSON object. Example: {"field_key": "value"}',
+      description: 'Custom user field values',
       required: false,
+      refreshers: ['auth'],
+      props: async ({ auth }) => {
+        if (!auth) {
+          return {};
+        }
+
+        try {
+          const authentication = auth as AuthProps;
+          const response = await httpClient.sendRequest({
+            url: `https://${authentication.subdomain}.zendesk.com/api/v2/user_fields.json`,
+            method: HttpMethod.GET,
+            authentication: {
+              type: AuthenticationType.BASIC,
+              username: authentication.email + '/token',
+              password: authentication.token,
+            },
+          });
+
+          const fields = (response.body as { user_fields: Array<{
+            id: number;
+            key: string;
+            title: string;
+            description?: string;
+            type: string;
+            active: boolean;
+            custom_field_options?: Array<{ name: string; value: string }>;
+            regexp_for_validation?: string;
+          }> }).user_fields;
+
+          const dynamicProps: Record<string, any> = {};
+          for (const field of fields) {
+            if (!field.active) continue;
+
+            const fieldKey = `field_${field.key}`;
+            const displayName = field.title;
+            const description = field.description || `Custom ${field.type} field`;
+
+            switch (field.type) {
+              case 'tagger':
+                if (field.custom_field_options && field.custom_field_options.length > 0) {
+                  dynamicProps[fieldKey] = Property.StaticDropdown({
+                    displayName,
+                    description,
+                    required: false,
+                    options: {
+                      disabled: false,
+                      placeholder: `Select ${displayName}`,
+                      options: field.custom_field_options.map(option => ({
+                        label: option.name,
+                        value: option.value,
+                      })),
+                    },
+                  });
+                }
+                break;
+              case 'multiselect':
+                if (field.custom_field_options && field.custom_field_options.length > 0) {
+                  dynamicProps[fieldKey] = Property.StaticMultiSelectDropdown({
+                    displayName,
+                    description,
+                    required: false,
+                    options: {
+                      options: field.custom_field_options.map(option => ({
+                        label: option.name,
+                        value: option.value,
+                      })),
+                    },
+                  });
+                }
+                break;
+              case 'text':
+                dynamicProps[fieldKey] = Property.ShortText({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'textarea':
+                dynamicProps[fieldKey] = Property.LongText({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'integer':
+              case 'decimal':
+                dynamicProps[fieldKey] = Property.Number({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'date':
+                dynamicProps[fieldKey] = Property.DateTime({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'checkbox':
+                dynamicProps[fieldKey] = Property.Checkbox({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'regexp':
+                dynamicProps[fieldKey] = Property.ShortText({
+                  displayName,
+                  description: `${description}${field.regexp_for_validation ? ` (Pattern: ${field.regexp_for_validation})` : ''}`,
+                  required: false,
+                });
+                break;
+              default:
+                dynamicProps[fieldKey] = Property.ShortText({
+                  displayName,
+                  description: `${description} (${field.type})`,
+                  required: false,
+                });
+            }
+          }
+
+          return dynamicProps;
+        } catch (error) {
+          console.warn('Failed to load user fields:', error);
+          return {};
+        }
+      },
     }),
     identities: Property.Json({
       displayName: 'Identities',
@@ -299,15 +423,36 @@ export const createUserAction = createAction({
       user.agent_brand_ids = brandIds;
     }
 
-    if (user_fields) {
+    if (user_fields && typeof user_fields === 'object') {
       try {
-        const userFieldsObj =
-          typeof user_fields === 'string'
-            ? JSON.parse(user_fields)
-            : user_fields;
-        user.user_fields = userFieldsObj;
+        const fieldsResponse = await httpClient.sendRequest({
+          url: `https://${authentication.subdomain}.zendesk.com/api/v2/user_fields.json`,
+          method: HttpMethod.GET,
+          authentication: {
+            type: AuthenticationType.BASIC,
+            username: authentication.email + '/token',
+            password: authentication.token,
+          },
+        });
+
+        const defs = (fieldsResponse.body as { user_fields: Array<{ id: number; key: string; type: string }> }).user_fields;
+        const mapped: Record<string, unknown> = {};
+        for (const [propKey, value] of Object.entries(user_fields)) {
+          if (value === undefined || value === null || value === '') continue;
+          const key = propKey.startsWith('field_') ? propKey.substring(6) : propKey;
+          const def = defs.find(d => d.key === key);
+          if (!def) continue;
+          let formatted: unknown = value;
+          if (def.type === 'date' && typeof value === 'string') {
+            formatted = new Date(value).toISOString();
+          }
+          mapped[def.key] = formatted;
+        }
+        if (Object.keys(mapped).length > 0) {
+          user.user_fields = mapped;
+        }
       } catch (error) {
-        throw new Error('Invalid user fields format. Expected JSON object.');
+        console.warn('Failed to process user fields:', error);
       }
     }
 

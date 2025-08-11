@@ -67,7 +67,7 @@ interface ZendeskUser {
 export const newUser = createTrigger({
   name: 'new_user',
   displayName: 'New User',
-  description: 'Fires when a new user is created.',
+  description: 'Fires when a new user is created. Uses Zendesk event webhook (no Trigger needed).',
   auth: zendeskAuth,
   props: {
     user_role: Property.StaticDropdown({
@@ -180,19 +180,15 @@ export const newUser = createTrigger({
     const payload = context.payload.body as {
       type?: string;
       user?: ZendeskUser;
-      'zen:body'?: {
-        user?: ZendeskUser;
-      };
+      detail?: ZendeskUser;
+      'zen:body'?: { user?: ZendeskUser };
     };
-    
-    // Check if this is a user creation event
-    const user = payload.user || payload['zen:body']?.user;
-    
-    if (!user || (payload.type && payload.type !== 'user.created')) {
+
+    const user = payload.user || payload['zen:body']?.user || payload.detail;
+    if (!user) {
       return [];
     }
 
-    // Filter by user role if specified
     const userRole = context.propsValue.user_role;
     if (userRole && userRole !== 'all') {
       if (user.role !== userRole) {

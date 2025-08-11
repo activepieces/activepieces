@@ -35,7 +35,7 @@ interface ZendeskTicket {
 export const newSuspendedTicket = createTrigger({
   name: 'new_suspended_ticket',
   displayName: 'New Suspended Ticket',
-  description: 'Fires when a ticket is suspended. Suspended tickets auto-delete after 14 days.',
+  description: 'Fires when a ticket is suspended. Requires a Zendesk Trigger with Notify active webhook. Suspended tickets auto-delete after 14 days.',
   auth: zendeskAuth,
   props: {
     organization_filter: Property.ShortText({
@@ -166,52 +166,21 @@ export const newSuspendedTicket = createTrigger({
   },
 
   async run(context) {
-    const payload = context.payload.body as {
-      type?: string;
-      ticket?: ZendeskTicket;
-      audit?: {
-        id: number;
-        ticket_id: number;
-        created_at: string;
-        author_id: number;
-        events: Array<{
-          id: number;
-          type: string;
-          field_name?: string;
-          previous_value?: string;
-          value?: string;
-        }>;
-      };
-    };
-    
-    // Check if this is a ticket update to suspended status
-    if (!payload.ticket || !payload.audit) {
+    const payload = context.payload.body as { ticket?: ZendeskTicket };
+    if (!payload.ticket) {
       return [];
     }
 
-    // Look for status change events to suspended
-    const statusEvents = payload.audit.events.filter(
-      event => event.field_name === 'status' && 
-               event.type === 'Change' && 
-               event.value === 'suspended'
-    );
-
-    if (statusEvents.length === 0) {
+    const ticket = payload.ticket;
+    if (ticket.status !== 'suspended') {
       return [];
     }
 
-    // Filter by organization if specified
     const organizationFilter = context.propsValue.organization_filter;
-    if (organizationFilter && payload.ticket.organization_id?.toString() !== organizationFilter) {
+    if (organizationFilter && ticket.organization_id?.toString() !== organizationFilter) {
       return [];
     }
 
-    // Include audit events in the response
-    const result: Record<string, unknown> = {
-      ...payload.ticket,
-      audit: payload.audit,
-    };
-
-    return [result];
+    return [ticket];
   },
 });

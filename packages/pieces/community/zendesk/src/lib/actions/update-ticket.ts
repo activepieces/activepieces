@@ -9,6 +9,8 @@ import {
   organizationIdDropdown,
   ticketIdDropdown,
   groupIdDropdown,
+  brandIdDropdown,
+  problemTicketIdDropdown,
 } from '../common/props';
 
 type AuthProps = {
@@ -116,30 +118,160 @@ export const updateTicketAction = createAction({
       description: 'Update the date and time when the ticket is due',
       required: false,
     }),
-    custom_fields: Property.Json({
+    custom_fields: Property.DynamicProperties({
       displayName: 'Custom Fields',
-      description:
-        'Update custom field values as JSON object. Example: {"field_id": "value"}',
+      description: 'Update custom ticket field values',
       required: false,
+      refreshers: ['auth'],
+      props: async ({ auth }) => {
+        if (!auth) {
+          return {};
+        }
+
+        try {
+          const authentication = auth as AuthProps;
+          const response = await httpClient.sendRequest({
+            url: `https://${authentication.subdomain}.zendesk.com/api/v2/ticket_fields.json`,
+            method: HttpMethod.GET,
+            authentication: {
+              type: AuthenticationType.BASIC,
+              username: authentication.email + '/token',
+              password: authentication.token,
+            },
+          });
+
+          const fields = (response.body as { ticket_fields: Array<{
+            id: number;
+            key: string;
+            title: string;
+            description?: string;
+            type: string;
+            active: boolean;
+            removable?: boolean;
+            custom_field_options?: Array<{ name: string; value: string }>;
+            regexp_for_validation?: string;
+          }> }).ticket_fields;
+
+          const skipSystemTypes = new Set([
+            'subject',
+            'description',
+            'priority',
+            'status',
+            'tickettype',
+            'group',
+            'assignee',
+          ]);
+
+          const dynamicProps: Record<string, any> = {};
+
+          for (const field of fields) {
+            if (!field.active) continue;
+            if (skipSystemTypes.has(field.type)) continue;
+
+            const fieldKey = `field_${field.key ?? `custom_field_${field.id}`}`;
+            const displayName = field.title;
+            const description = field.description || `Custom ${field.type} field`;
+
+            switch (field.type) {
+              case 'tagger':
+                if (field.custom_field_options && field.custom_field_options.length > 0) {
+                  dynamicProps[fieldKey] = Property.StaticDropdown({
+                    displayName,
+                    description,
+                    required: false,
+                    options: {
+                      disabled: false,
+                      placeholder: `Select ${displayName}`,
+                      options: field.custom_field_options.map(option => ({
+                        label: option.name,
+                        value: option.value,
+                      })),
+                    },
+                  });
+                }
+                break;
+              case 'multiselect':
+                if (field.custom_field_options && field.custom_field_options.length > 0) {
+                  dynamicProps[fieldKey] = Property.StaticMultiSelectDropdown({
+                    displayName,
+                    description,
+                    required: false,
+                    options: {
+                      options: field.custom_field_options.map(option => ({
+                        label: option.name,
+                        value: option.value,
+                      })),
+                    },
+                  });
+                }
+                break;
+              case 'text':
+                dynamicProps[fieldKey] = Property.ShortText({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'textarea':
+                dynamicProps[fieldKey] = Property.LongText({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'integer':
+              case 'decimal':
+                dynamicProps[fieldKey] = Property.Number({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'date':
+                dynamicProps[fieldKey] = Property.DateTime({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'checkbox':
+                dynamicProps[fieldKey] = Property.Checkbox({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'regexp':
+                dynamicProps[fieldKey] = Property.ShortText({
+                  displayName,
+                  description: `${description}${field.regexp_for_validation ? ` (Pattern: ${field.regexp_for_validation})` : ''}`,
+                  required: false,
+                });
+                break;
+              default:
+                dynamicProps[fieldKey] = Property.ShortText({
+                  displayName,
+                  description: `${description} (${field.type})`,
+                  required: false,
+                });
+            }
+          }
+
+          return dynamicProps;
+        } catch (error) {
+          console.warn('Failed to load ticket fields:', error);
+          return {};
+        }
+      },
     }),
     custom_status_id: Property.Number({
       displayName: 'Custom Status ID',
       description: 'Set a custom status ID for the ticket',
       required: false,
     }),
-    brand_id: Property.Number({
-      displayName: 'Brand ID',
-      description: 'Update the brand associated with the ticket',
-      required: false,
-    }),
     forum_topic_id: Property.Number({
       displayName: 'Forum Topic ID',
       description: 'Update the forum topic associated with the ticket',
-      required: false,
-    }),
-    problem_id: Property.Number({
-      displayName: 'Problem ID',
-      description: 'Update the problem ticket this ticket is an incident of',
       required: false,
     }),
     collaborator_emails: Property.Array({
@@ -152,6 +284,23 @@ export const updateTicketAction = createAction({
       description: 'Replace followers with this array of email addresses',
       required: false,
     }),
+    requester_email: Property.ShortText({
+      displayName: 'Requester Email',
+      description: 'Update the requester of the ticket',
+      required: false,
+    }),
+    safe_update: Property.Checkbox({
+      displayName: 'Safe Update',
+      description: 'Prevent update collisions by checking timestamp',
+      required: false,
+    }),
+    updated_stamp: Property.ShortText({
+      displayName: 'Updated Timestamp',
+      description: 'Ticket timestamp from updated_at field for collision prevention',
+      required: false,
+    }),
+    brand_id: brandIdDropdown,
+    problem_id: problemTicketIdDropdown,
   },
   async run({ propsValue, auth }) {
     const authentication = auth as AuthProps;
@@ -172,11 +321,14 @@ export const updateTicketAction = createAction({
       due_at,
       custom_fields,
       custom_status_id,
-      brand_id,
       forum_topic_id,
-      problem_id,
       collaborator_emails,
       follower_emails,
+      requester_email,
+      safe_update,
+      updated_stamp,
+      brand_id,
+      problem_id,
     } = propsValue;
 
     const resolveUserByEmail = async (email: string) => {
@@ -232,6 +384,15 @@ export const updateTicketAction = createAction({
       }
     }
 
+    if (requester_email) {
+      const requesterId = await resolveUserByEmail(requester_email);
+      if (requesterId) {
+        ticket.requester_id = requesterId;
+      } else {
+        throw new Error(`Could not find user with email: ${requester_email}`);
+      }
+    }
+
     if (
       collaborator_emails &&
       Array.isArray(collaborator_emails) &&
@@ -262,6 +423,14 @@ export const updateTicketAction = createAction({
       ticket.follower_ids = followerIds;
     }
 
+    if (safe_update) {
+      if (!updated_stamp) {
+        throw new Error('Updated Timestamp is required when Safe Update is enabled');
+      }
+      ticket.safe_update = true;
+      ticket.updated_stamp = updated_stamp;
+    }
+
     const optionalParams = {
       subject,
       priority,
@@ -284,23 +453,43 @@ export const updateTicketAction = createAction({
       }
     }
 
-    if (custom_fields) {
+    if (custom_fields && typeof custom_fields === 'object') {
       try {
-        const customFieldsObj =
-          typeof custom_fields === 'string'
-            ? JSON.parse(custom_fields)
-            : custom_fields;
-        const customFieldsArray = Object.entries(customFieldsObj).map(
-          ([id, value]) => ({
-            id: parseInt(id),
-            value,
-          })
-        );
-        ticket.custom_fields = customFieldsArray;
+        const fieldsResponse = await httpClient.sendRequest({
+          url: `https://${authentication.subdomain}.zendesk.com/api/v2/ticket_fields.json`,
+          method: HttpMethod.GET,
+          authentication: {
+            type: AuthenticationType.BASIC,
+            username: authentication.email + '/token',
+            password: authentication.token,
+          },
+        });
+
+        const fieldDefinitions = (fieldsResponse.body as { ticket_fields: Array<{
+          id: number;
+          key: string;
+          type: string;
+        }> }).ticket_fields;
+
+        const customFieldsArray: Array<{ id: number; value: unknown }> = [];
+        for (const [propKey, value] of Object.entries(custom_fields)) {
+          if (value === undefined || value === null || value === '') continue;
+          const fieldKey = propKey.startsWith('field_') ? propKey.substring(6) : propKey;
+          const def = fieldDefinitions.find(f => (f.key ?? `custom_field_${f.id}`) === fieldKey || f.key === fieldKey);
+          if (!def) continue;
+
+          let formattedValue: unknown = value;
+          if (def.type === 'date' && typeof value === 'string') {
+            formattedValue = new Date(value).toISOString().split('T')[0];
+          }
+          customFieldsArray.push({ id: def.id, value: formattedValue });
+        }
+
+        if (customFieldsArray.length > 0) {
+          ticket.custom_fields = customFieldsArray;
+        }
       } catch (error) {
-        throw new Error(
-          'Invalid custom fields format. Expected JSON object with field IDs as keys.'
-        );
+        console.warn('Failed to process custom fields:', error);
       }
     }
 
@@ -349,6 +538,12 @@ export const updateTicketAction = createAction({
       if (errorMessage.includes('404')) {
         throw new Error(
           `Ticket with ID ${ticket_id} not found. Please verify the ticket ID.`
+        );
+      }
+
+      if (errorMessage.includes('409')) {
+        throw new Error(
+          'Update conflict detected. The ticket was modified by another user. Please fetch the latest ticket data and try again.'
         );
       }
 

@@ -39,7 +39,7 @@ interface ZendeskTicket {
 export const updatedTicket = createTrigger({
   name: 'updated_ticket',
   displayName: 'Updated Ticket',
-  description: 'Fires when an existing ticket is updated (Audit events).',
+  description: 'Fires when an existing ticket is updated. Requires a Zendesk Trigger with Notify active webhook.',
   auth: zendeskAuth,
   props: {
     organization_id: Property.Dropdown({
@@ -88,12 +88,6 @@ export const updatedTicket = createTrigger({
           };
         }
       },
-    }),
-    include_audit_events: Property.Checkbox({
-      displayName: 'Include Audit Events',
-      description: 'Include detailed audit information about what changed in the ticket',
-      required: false,
-      defaultValue: true,
     }),
   },
   type: TriggerStrategy.WEBHOOK,
@@ -218,35 +212,13 @@ export const updatedTicket = createTrigger({
   },
 
   async run(context) {
-    const payload = context.payload.body as {
-      type?: string;
-      ticket?: ZendeskTicket;
-      audit?: {
-        id: number;
-        ticket_id: number;
-        created_at: string;
-        author_id: number;
-        events: Array<{
-          id: number;
-          type: string;
-          field_name?: string;
-          previous_value?: string | number;
-          value?: string | number;
-        }>;
-      };
-    };
-    
-    // Check if this is a ticket update event
-    if (payload.type !== 'ticket_updated' && !payload.ticket) {
+    const payload = context.payload.body as { ticket?: ZendeskTicket };
+    if (!payload.ticket) {
       return [];
     }
 
     const ticket = payload.ticket;
-    if (!ticket) {
-      return [];
-    }
-    
-    // Filter by organization if specified
+
     const organizationId = context.propsValue.organization_id;
     if (organizationId && organizationId !== 'all') {
       if (!ticket.organization_id || ticket.organization_id.toString() !== organizationId) {
@@ -254,15 +226,6 @@ export const updatedTicket = createTrigger({
       }
     }
 
-    // Include audit events if requested
-    let result: Record<string, unknown> = { ...ticket };
-    if (context.propsValue.include_audit_events && payload.audit) {
-      result = {
-        ...result,
-        audit: payload.audit,
-      };
-    }
-
-    return [result];
+    return [ticket];
   },
 });

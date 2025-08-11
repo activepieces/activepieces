@@ -8,7 +8,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
-import { organizationIdDropdown } from '../common/props';
+import { organizationIdDropdown, groupIdDropdown } from '../common/props';
 
 type AuthProps = {
   email: string;
@@ -25,52 +25,177 @@ export const updateOrganizationAction = createAction({
     organization_id: organizationIdDropdown,
     name: Property.ShortText({
       displayName: 'Organization Name',
-      description: 'Update the name of the organization (must be unique)',
+      description: 'New name for the organization (must be unique)',
       required: false,
     }),
     details: Property.LongText({
       displayName: 'Details',
-      description: 'Update additional details about the organization',
+      description: 'Additional details about the organization',
       required: false,
     }),
     notes: Property.LongText({
       displayName: 'Notes',
-      description: 'Update internal notes about the organization',
+      description: 'Internal notes about the organization',
       required: false,
     }),
     external_id: Property.ShortText({
       displayName: 'External ID',
-      description: 'Update the external ID for the organization',
+      description: 'External ID for integration purposes',
       required: false,
     }),
-    url: Property.ShortText({
-      displayName: 'Organization URL',
-      description: 'Update the organization\'s website URL',
-      required: false,
-    }),
+    group_id: groupIdDropdown,
     domain_names: Property.Array({
       displayName: 'Domain Names',
-      description: 'Update domain names associated with the organization. Note: This will replace ALL existing domain names.',
+      description: 'Domain names for the organization (replaces all existing)',
       required: false,
     }),
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'Update tags applied to the organization. This will replace all existing tags.',
+      description: 'Tags for the organization (replaces all existing)',
       required: false,
     }),
-    organization_fields: Property.Json({
+    organization_fields: Property.DynamicProperties({
       displayName: 'Organization Fields',
-      description: 'Update custom organization field values as JSON object. Example: {"field_key": "value"}',
+      description: 'Custom organization field values',
       required: false,
+      refreshers: ['auth'],
+      props: async ({ auth }) => {
+        if (!auth) {
+          return {};
+        }
+
+        try {
+          const authentication = auth as AuthProps;
+          const response = await httpClient.sendRequest({
+            url: `https://${authentication.subdomain}.zendesk.com/api/v2/organization_fields.json`,
+            method: HttpMethod.GET,
+            authentication: {
+              type: AuthenticationType.BASIC,
+              username: authentication.email + '/token',
+              password: authentication.token,
+            },
+          });
+
+          const fields = (response.body as { organization_fields: Array<{
+            id: number;
+            key: string;
+            title: string;
+            description?: string;
+            type: string;
+            active: boolean;
+            custom_field_options?: Array<{ name: string; value: string }>;
+            regexp_for_validation?: string;
+          }> }).organization_fields;
+
+          const dynamicProps: Record<string, any> = {};
+
+          for (const field of fields) {
+            if (!field.active) continue;
+
+            const fieldKey = `field_${field.key}`;
+            const displayName = field.title;
+            const description = field.description || `Custom ${field.type} field`;
+
+            switch (field.type) {
+              case 'dropdown':
+                if (field.custom_field_options && field.custom_field_options.length > 0) {
+                  dynamicProps[fieldKey] = Property.StaticDropdown({
+                    displayName,
+                    description,
+                    required: false,
+                    options: {
+                      disabled: false,
+                      placeholder: `Select ${displayName}`,
+                      options: field.custom_field_options.map(option => ({
+                        label: option.name,
+                        value: option.value,
+                      })),
+                    },
+                  });
+                }
+                break;
+              case 'multiselect':
+                if (field.custom_field_options && field.custom_field_options.length > 0) {
+                  dynamicProps[fieldKey] = Property.StaticMultiSelectDropdown({
+                    displayName,
+                    description,
+                    required: false,
+                    options: {
+                      options: field.custom_field_options.map(option => ({
+                        label: option.name,
+                        value: option.value,
+                      })),
+                    },
+                  });
+                }
+                break;
+              case 'text':
+                dynamicProps[fieldKey] = Property.ShortText({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'textarea':
+                dynamicProps[fieldKey] = Property.LongText({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'integer':
+              case 'decimal':
+                dynamicProps[fieldKey] = Property.Number({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'date':
+                dynamicProps[fieldKey] = Property.DateTime({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'checkbox':
+                dynamicProps[fieldKey] = Property.Checkbox({
+                  displayName,
+                  description,
+                  required: false,
+                });
+                break;
+              case 'regexp':
+                dynamicProps[fieldKey] = Property.ShortText({
+                  displayName,
+                  description: `${description}${field.regexp_for_validation ? ` (Pattern: ${field.regexp_for_validation})` : ''}`,
+                  required: false,
+                });
+                break;
+              default:
+                dynamicProps[fieldKey] = Property.ShortText({
+                  displayName,
+                  description: `${description} (${field.type})`,
+                  required: false,
+                });
+            }
+          }
+
+          return dynamicProps;
+        } catch (error) {
+          console.warn('Failed to load organization fields:', error);
+          return {};
+        }
+      },
     }),
     shared_tickets: Property.Checkbox({
       displayName: 'Shared Tickets',
-      description: 'Update whether users in this organization can see each other\'s tickets',
+      description: 'Allow users to see each other\'s tickets',
       required: false,
     }),
     shared_comments: Property.Checkbox({
       displayName: 'Shared Comments',
-      description: 'Update whether users in this organization can see each other\'s comments',
+      description: 'Allow users to see each other\'s comments',
       required: false,
     }),
   },
@@ -82,7 +207,7 @@ export const updateOrganizationAction = createAction({
       details,
       notes,
       external_id,
-      url,
+      group_id,
       domain_names,
       tags,
       organization_fields,
@@ -100,7 +225,7 @@ export const updateOrganizationAction = createAction({
       details,
       notes,
       external_id,
-      url,
+      group_id,
       domain_names,
       tags,
       shared_tickets,
@@ -113,12 +238,47 @@ export const updateOrganizationAction = createAction({
       }
     }
 
-    if (organization_fields) {
+    if (organization_fields && typeof organization_fields === 'object') {
       try {
-        const orgFieldsObj = typeof organization_fields === 'string' ? JSON.parse(organization_fields) : organization_fields;
-        organization.organization_fields = orgFieldsObj;
+        const fieldsResponse = await httpClient.sendRequest({
+          url: `https://${authentication.subdomain}.zendesk.com/api/v2/organization_fields.json`,
+          method: HttpMethod.GET,
+          authentication: {
+            type: AuthenticationType.BASIC,
+            username: authentication.email + '/token',
+            password: authentication.token,
+          },
+        });
+
+        const fieldDefinitions = (fieldsResponse.body as { organization_fields: Array<{
+          id: number;
+          key: string;
+          type: string;
+        }> }).organization_fields;
+
+        const orgFieldsObj: Record<string, any> = {};
+
+        for (const [propKey, value] of Object.entries(organization_fields)) {
+          if (value !== null && value !== undefined && value !== '') {
+            const fieldKey = propKey.startsWith('field_') ? propKey.substring(6) : propKey;
+            
+            const fieldDef = fieldDefinitions.find(f => f.key === fieldKey);
+            if (fieldDef) {
+              let formattedValue = value;
+              if (fieldDef.type === 'date' && value) {
+                formattedValue = new Date(value as string).toISOString().split('T')[0];
+              }
+              
+              orgFieldsObj[fieldDef.key] = formattedValue;
+            }
+          }
+        }
+
+        if (Object.keys(orgFieldsObj).length > 0) {
+          organization.organization_fields = orgFieldsObj;
+        }
       } catch (error) {
-        throw new Error('Invalid organization fields format. Expected JSON object.');
+        console.warn('Failed to process organization fields:', error);
       }
     }
 

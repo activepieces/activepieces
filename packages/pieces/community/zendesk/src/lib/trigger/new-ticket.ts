@@ -31,7 +31,7 @@ interface ZendeskPayload {
 export const newTicket = createTrigger({
   name: 'new_ticket',
   displayName: 'New Ticket',
-  description: 'Fires when a new ticket is created (optionally filtered by organization).',
+  description: 'Fires when a new ticket is created (optionally filtered by organization). Requires a Zendesk Trigger with Notify active webhook.',
   auth: zendeskAuth,
   props: {
     organization_id: Property.Dropdown({
@@ -190,15 +190,12 @@ export const newTicket = createTrigger({
 
   async run(context) {
     const payload = context.payload.body as ZendeskPayload;
-    
-    // Check if this is a ticket creation event
-    if (payload.type !== 'ticket_created' && !payload.ticket) {
+    if (!payload.ticket) {
       return [];
     }
 
-    const ticket = payload.ticket || payload;
-    
-    // Filter by organization if specified
+    const ticket = payload.ticket;
+
     const organizationId = context.propsValue.organization_id;
     if (organizationId && organizationId !== 'all') {
       const ticketOrganizationId = (ticket as Record<string, unknown>).organization_id;

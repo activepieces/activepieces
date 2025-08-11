@@ -36,7 +36,6 @@ export const deleteUserAction = createAction({
       confirmation,
     } = propsValue;
 
-    // Safety check - require confirmation
     if (!confirmation) {
       throw new Error('You must confirm that you understand this action cannot be undone.');
     }
@@ -54,9 +53,9 @@ export const deleteUserAction = createAction({
 
       return {
         success: true,
-        message: `User ${user_id} has been successfully deleted`,
+        message: `User ${user_id} has been deleted`,
         data: response.body,
-        warning: 'This action cannot be undone. The user and associated records have been permanently removed.',
+        warning: "Deleted users are not recoverable in Zendesk UI. For GDPR erasure, use 'Permanently Delete User' if required.",
         note: 'To comply with GDPR, you may need to use the "Permanently Delete User" endpoint for complete data removal.',
       };
     } catch (error) {
