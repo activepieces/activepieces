@@ -105,3 +105,25 @@ jobs:
               pull_number: context.issue.number,
               merge_method: 'merge'
             });
+
+      - name: Delete branch after merge
+        uses: actions/github-script@v7
+        if: success()
+        with:
+          github-token: ${{ secrets.CROWDIN_PRS }}
+          script: |
+            // Get the PR info to get the branch name
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            // Delete the branch
+            await github.rest.git.deleteRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `heads/${pr.data.head.ref}`
+            });
+            
+            console.log(`Deleted branch: ${pr.data.head.ref}`);
