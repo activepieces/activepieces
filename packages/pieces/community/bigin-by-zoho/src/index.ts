@@ -31,19 +31,6 @@ import { searchProductRecord } from "./lib/actions/search-product";
 import { searchUser } from "./lib/actions/search-user";
 
 export const biginAuth = PieceAuth.OAuth2({
-  description: `
-Authenticate with Zoho Bigin via OAuth2.  
-[Read the official Zoho guide here](https://www.bigin.com/developer/docs/apis/v2/register-client.html).
-
-1. Log into the [Zoho API Console](https://api-console.zoho.com/).  
-2. Click **+ ADD CLIENT** and choose **Server-based Applications**.  
-3. Fill in the required details:
-   - **Client Name:** Your app name (letters, numbers, underscores \`_\` or ampersands \`&\` only).
-   - **Homepage URL:** Your app's homepage (e.g. https://cloud.activepieces.com).
-   - **Authorized Redirect URIs:** **https://cloud.activepieces.com/redirect**  
-4. Click **Create** and copy the **Client ID** and **Client Secret**.  
-5. Back here, select your **Data Center Region**, enter the Client ID & Client Secret, and click **Connect**.
-`,
   authUrl: '{domain}/oauth/v2/auth',
   tokenUrl: '{domain}/oauth/v2/token',
   required: true,
@@ -97,7 +84,7 @@ Authenticate with Zoho Bigin via OAuth2.
 });
 
 export const biginByZoho = createPiece({
-  displayName: 'Bigin-by-zoho',
+  displayName: 'Bigin by Zoho CRM',
   description:
     'Bigin by Zoho CRM is a lightweight CRM designed for small businesses to manage contacts, companies, deals (pipeline records), tasks, calls, and events.',
   auth: biginAuth,
