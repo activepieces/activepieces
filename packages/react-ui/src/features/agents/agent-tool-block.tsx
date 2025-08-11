@@ -1,7 +1,7 @@
 import { t } from 'i18next';
-import { Loader2, Wrench, CircleCheck, CircleX } from 'lucide-react';
 
 import { ApMarkdown } from '@/components/custom/markdown';
+import { DataList } from '@/components/data-list';
 import { SimpleJsonViewer } from '@/components/simple-json-viewer';
 import {
   Accordion,
@@ -9,6 +9,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from '@/components/ui/accordion';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import {
   isNil,
@@ -16,6 +17,8 @@ import {
   ToolCallContentBlock,
   ToolCallStatus,
 } from '@activepieces/shared';
+
+import { AgentToolBlockHeader } from './agent-tool-block-header';
 
 interface AgentToolBlockProps {
   block: ToolCallContentBlock;
@@ -38,6 +41,9 @@ function parseJsonOrReturnOriginal(json: unknown) {
     return json;
   }
 }
+
+const internalTools = ['markAsComplete'];
+
 export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   const { data: metadata, isLoading } = mcpHooks.useMcpToolMetadata(block);
   const isDone = block.status === ToolCallStatus.COMPLETED;
@@ -55,71 +61,88 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
     ? outputAsToolCallOutput.success
     : true;
 
+  const defaultTab = !isNil(resolvedFields) ? 'resolvedFields' : 'result';
+
+  const toolName = block.toolName;
+  const isInternalTool =
+    !isNil(toolName) && internalTools.includes(toolName as string);
+
+  if (isInternalTool) {
+    return (
+      <div className="flex items-center gap-3 py-3 border rounded-md px-4">
+        <AgentToolBlockHeader
+          metadata={metadata}
+          isLoading={isLoading}
+          isDone={isDone}
+          markAsComplete={markAsComplete}
+        />
+      </div>
+    );
+  }
+
   return (
-    <Accordion type="multiple" defaultValue={[`block-${index}`]}>
+    <Accordion type="multiple" defaultValue={[]}>
       <AccordionItem value={`block-${index}`}>
         <AccordionTrigger className="flex items-center gap-3 transition-colors">
-          {isLoading ? (
-            <div className="h-5 w-5 shrink-0">
-              <Loader2 className="h-5 w-5 animate-spin" />
-            </div>
-          ) : metadata?.logoUrl ? (
-            <img
-              src={metadata.logoUrl}
-              alt="Logo"
-              className="h-5 w-5 object-contain shrink-0"
-            />
-          ) : (
-            <div className="h-5 w-5 shrink-0">
-              <Wrench className="h-5 w-5" />
-            </div>
-          )}
-          <span className="text-sm font-medium flex-1 text-left">
-            {isLoading ? 'Loading...' : metadata?.displayName ?? 'Unknown Tool'}
-          </span>
-          {isDone ? (
-            markAsComplete ? (
-              <CircleCheck
-                className="h-4 w-4 text-emerald-600 shrink-0"
-                style={{ transform: 'none' }}
-              />
-            ) : (
-              <CircleX className="h-4 w-4 text-red-600 shrink-0" />
-            )
-          ) : (
-            <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-          )}
+          <AgentToolBlockHeader
+            metadata={metadata}
+            isLoading={isLoading}
+            isDone={isDone}
+            markAsComplete={markAsComplete}
+          />
         </AccordionTrigger>
-        <AccordionContent>
+        <AccordionContent className="mt-4">
           <div className="space-y-3">
-            <div className="flex flex-col gap-1">
-              <div className="text-xs font-medium text-muted-foreground">
-                {hasInstructions ? t('Instructions') : t('Input')}
-              </div>
-              {hasInstructions ? (
-                <ApMarkdown
-                  variant={MarkdownVariant.BORDERLESS}
-                  markdown={JSON.stringify(block.input?.instructions)}
-                />
-              ) : (
-                <SimpleJsonViewer data={block.input} hideCopyButton={true} />
-              )}
-            </div>
-            {!isNil(resolvedFields) && (
-              <div className="flex flex-col gap-1">
-                <div className="text-xs font-medium text-muted-foreground">
-                  {t('Resolved Fields')}
+            {hasInstructions && (
+              <>
+                <div className="border-t border-muted-foreground/20 my-2" />
+                <div className="flex flex-col gap-1 mt-4">
+                  <div className="text-xs font-semibold text-muted-foreground tracking-wide">
+                    {t('Instructions')}
+                  </div>
+                  <ApMarkdown
+                    variant={MarkdownVariant.BORDERLESS}
+                    markdown={block.input?.instructions as string}
+                  />
                 </div>
-                <SimpleJsonViewer data={resolvedFields} hideCopyButton={true} />
-              </div>
+              </>
             )}
-            {!isNil(output) && (
-              <div className="flex flex-col gap-1">
-                <div className="text-xs font-medium text-muted-foreground">
-                  {t('Result')}
-                </div>
-                <SimpleJsonViewer data={output} hideCopyButton={true} />
-              </div>
+            {!isLoading && (
+              <Tabs defaultValue={defaultTab} className="w-full">
+                <TabsList variant="outline" className="mb-0">
+                  <TabsTrigger value="resolvedFields" variant="outline">
+                    {t('Parameters')}
+                  </TabsTrigger>
+                  <TabsTrigger value="result" variant="outline">
+                    {t('Output')}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent
+                  value="resolvedFields"
+                  className="h-[300px] overflow-hidden mt-3"
+                >
+                  {!isNil(resolvedFields) ? (
+                    <DataList data={resolvedFields} />
+                  ) : (
+                    <div className="text-muted-foreground text-sm">
+                      {t('No resolved fields')}
+                    </div>
+                  )}
+                </TabsContent>
+                <TabsContent value="result" className="overflow-hidden mt-3">
+                  {!isNil(output) ? (
+                    <SimpleJsonViewer
+                      data={output}
+                      hideCopyButton={true}
+                      maxHeight={300}
+                    />
+                  ) : (
+                    <div className="text-muted-foreground text-sm">
+                      {t('No result')}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             )}
           </div>
         </AccordionContent>

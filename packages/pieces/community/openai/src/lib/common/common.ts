@@ -192,6 +192,14 @@ export const modelTokenLimit = (model: string) => {
       return 32768;
     case 'text-moderation-stable':
       return 32768;
+    case 'gpt-5':
+      return 400000;
+    case 'gpt-5-chat-latest':
+      return 400000;
+    case 'gpt-5-mini':
+      return 400000;
+    case 'gpt-5-nano':
+      return 400000;
     default:
       return 2048;
   }

@@ -2,11 +2,12 @@ const fs = require('fs');
 
 function main() {
   if (process.argv.length < 3) {
-    console.error('Usage: node format-checkly-report.js <path-to-md>');
+    console.error('Usage: node format-checkly-report.js <path-to-md> [environment]');
     process.exit(1);
   }
 
   const mdPath = process.argv[2];
+  const environment = process.argv[3];
   const content = fs.readFileSync(mdPath, 'utf8');
 
   const lines = content.split('\n');
@@ -46,6 +47,9 @@ function main() {
   }
 
   let message = '';
+  if (environment) {
+    message += `**Environment:** ${environment}\n\n`;
+  }
   for (const l of summaryLines) {
     if (l.trim()) {
       message += l + '\n';

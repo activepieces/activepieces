@@ -16,6 +16,7 @@ export const microsoftToDoAuth = PieceAuth.OAuth2({
 	tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
 	required: true,
 	scope: ['Tasks.ReadWrite', 'User.Read', 'offline_access'],
+	prompt: 'omit'
 });
 
 export const microsoftTodo = createPiece({

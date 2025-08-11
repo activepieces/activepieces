@@ -43,6 +43,7 @@ import McpServersPage from '../routes/mcp-servers';
 import McpPage from '../routes/mcp-servers/id';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
+import TriggerHealthPage from '../routes/platform/infra/triggers';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
 import ProjectsPage from '../routes/platform/projects';
@@ -57,7 +58,7 @@ import ViewRelease from '../routes/project-release/view-release';
 import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
 import { EnvironmentPage } from '../routes/settings/environment';
-import TeamPage from '../routes/settings/team';
+import ProjectMembersPage from '../routes/settings/project-members';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ApTablesPage } from '../routes/tables';
@@ -217,7 +218,7 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/tables/:tableId',
     element: (
-      <DashboardContainer removeGutters removeBottomPadding>
+      <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_TABLE}>
           <PageTitle title="Table">
             <ApTableStateProvider>
@@ -350,7 +351,7 @@ const routes = [
         <RoutePermissionGuard permission={Permission.READ_PROJECT_MEMBER}>
           <PageTitle title="Team">
             <ProjectSettingsLayout>
-              <TeamPage />
+              <ProjectMembersPage />
             </ProjectSettingsLayout>
           </PageTitle>
         </RoutePermissionGuard>
@@ -546,6 +547,16 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="System Health">
           <SettingsHealthPage />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/infrastructure/triggers',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Trigger Health">
+          <TriggerHealthPage />
         </PageTitle>
       </PlatformAdminContainer>
     ),

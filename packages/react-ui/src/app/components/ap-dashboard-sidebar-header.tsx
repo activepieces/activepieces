@@ -30,13 +30,15 @@ const ApDashboardSidebarHeader = ({
     edition !== ApEdition.COMMUNITY &&
     !embedState.isEmbedded &&
     !isInPlatformAdmin;
-  const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
+  const { checkAccess } = useAuthorization();
+  const defaultRoute = determineDefaultRoute(checkAccess);
 
   return (
     <SidebarHeader className="pb-0">
       <div
         className={cn('flex items-center justify-between grow gap-1', {
           'justify-start': !isHomeDashboard,
+          'justify-center': embedState.hideProjectSettings,
         })}
       >
         <Button
@@ -77,7 +79,9 @@ const ApDashboardSidebarHeader = ({
           </div>
         )}
 
-        {isHomeDashboard && <ProjectSettingsDropdownMenu />}
+        {isHomeDashboard && !embedState.hideProjectSettings && (
+          <ProjectSettingsDropdownMenu />
+        )}
       </div>
     </SidebarHeader>
   );

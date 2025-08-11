@@ -67,3 +67,20 @@ jobs:
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/workers.yml --skip-push; exit"'
 
+  Deploy-Checkly:
+    name: Deploy E2E Tests Checkly
+    needs: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Checkly Deploy
+        run: npx checkly deploy --config=packages/tests-e2e/checkly.config.ts
+        env:
+          CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
+          CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}

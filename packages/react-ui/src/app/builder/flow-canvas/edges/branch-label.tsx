@@ -5,7 +5,7 @@ import { CopyPlus, EllipsisVertical, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import {
-  ActionType,
+  FlowActionType,
   BranchExecutionType,
   FlowOperationType,
   flowStructureUtil,
@@ -54,7 +54,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
   const isFallbackBranch =
     props.stepLocationRelativeToParent ===
       StepLocationRelativeToParent.INSIDE_BRANCH &&
-    step?.type === ActionType.ROUTER &&
+    step?.type === FlowActionType.ROUTER &&
     step?.settings.branches[props.branchIndex]?.branchType ===
       BranchExecutionType.FALLBACK;
   const isNotInsideRoute =
@@ -69,7 +69,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
   const { fitView } = useReactFlow();
   const [isDropdownMenuOpen, setIsDropdownMenuOpen] = useState(false);
 
-  if (isNil(step) || step.type !== ActionType.ROUTER) {
+  if (isNil(step) || step.type !== FlowActionType.ROUTER) {
     return <></>;
   }
 
@@ -122,7 +122,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
 
           {!isBranchNonInteractive &&
             !readonly &&
-            step.type === ActionType.ROUTER && (
+            step.type === FlowActionType.ROUTER && (
               <DropdownMenu
                 modal={true}
                 open={isDropdownMenuOpen}

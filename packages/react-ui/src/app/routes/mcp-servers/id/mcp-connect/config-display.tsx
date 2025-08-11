@@ -7,7 +7,7 @@ import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
 import { SimpleJsonViewer } from '@/components/simple-json-viewer';
 import { useToast } from '@/components/ui/use-toast';
 
-import { mcpConnectUtils } from './mcp-connect-utils';
+import { McpClientType, mcpConnectUtils } from './mcp-connect-utils';
 import { SecurityNote } from './security-note';
 
 export const ConfigDisplay = ({
@@ -19,7 +19,7 @@ export const ConfigDisplay = ({
   hasPermissionToWriteMcp = true,
 }: {
   mcpServerUrl: string;
-  type: 'npx' | 'url';
+  type: McpClientType;
   onRotateToken: () => void;
   isRotating?: boolean;
   hasValidMcp?: boolean;
@@ -32,6 +32,15 @@ export const ConfigDisplay = ({
   const maskedUrl = showToken
     ? mcpServerUrl
     : mcpConnectUtils.maskToken(mcpServerUrl);
+
+  const handleCopyConfig = () => {
+    const config = mcpConnectUtils.constructConfig(type, mcpServerUrl);
+    navigator.clipboard.writeText(JSON.stringify(config, null, 2));
+    toast({
+      description: t('Configuration copied to clipboard'),
+      duration: 3000,
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -70,27 +79,7 @@ export const ConfigDisplay = ({
           />
           <ButtonWithTooltip
             tooltip={t('Copy configuration')}
-            onClick={(e) => {
-              e?.stopPropagation();
-              const config = {
-                mcpServers: {
-                  Activepieces:
-                    type === 'npx'
-                      ? {
-                          command: 'npx',
-                          args: ['-y', 'mcp-remote', mcpServerUrl],
-                        }
-                      : {
-                          url: mcpServerUrl,
-                        },
-                },
-              };
-              navigator.clipboard.writeText(JSON.stringify(config, null, 2));
-              toast({
-                description: t('Configuration copied to clipboard'),
-                duration: 3000,
-              });
-            }}
+            onClick={handleCopyConfig}
             variant="outline"
             icon={<Copy className="h-4 w-4" />}
           />
@@ -100,19 +89,7 @@ export const ConfigDisplay = ({
       <div className="rounded-lg border overflow-hidden">
         <SimpleJsonViewer
           hideCopyButton={true}
-          data={{
-            mcpServers: {
-              Activepieces:
-                type === 'npx'
-                  ? {
-                      command: 'npx',
-                      args: ['-y', 'mcp-remote', maskedUrl],
-                    }
-                  : {
-                      url: maskedUrl,
-                    },
-            },
-          }}
+          data={mcpConnectUtils.constructConfig(type, maskedUrl)}
         />
       </div>
     </div>

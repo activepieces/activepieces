@@ -1,10 +1,11 @@
 import { FastifyBaseLogger } from 'fastify'
 import pino, { Level, Logger } from 'pino'
 import 'pino-loki'
+import { createHyperDXTransport, HyperDXCredentials } from './hyperdx-pino'
 import { createLokiTransport, LokiCredentials } from './loki-pino'
 
 export const pinoLogging = {
-    initLogger: (loggerLevel: Level | undefined, logPretty: boolean, loki: LokiCredentials): Logger => {
+    initLogger: (loggerLevel: Level | undefined, logPretty: boolean, loki: LokiCredentials, hyperdx: HyperDXCredentials): Logger => {
         const level: Level = loggerLevel ?? 'info'
         const pretty = logPretty ?? false
 
@@ -21,7 +22,7 @@ export const pinoLogging = {
                 },
             })
         }
-
+        
         const defaultTargets = [
             {
                 target: 'pino/file',
@@ -29,6 +30,11 @@ export const pinoLogging = {
                 options: {},
             },
         ]
+
+        const hyperdxLogger = createHyperDXTransport(level, defaultTargets, hyperdx)
+        if (hyperdxLogger) {
+            return hyperdxLogger
+        }
 
         const lokiLogger = createLokiTransport(level, defaultTargets, loki)
         if (lokiLogger) {

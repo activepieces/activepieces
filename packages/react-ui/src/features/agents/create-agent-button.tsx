@@ -1,13 +1,16 @@
 import { PopoverTrigger } from '@radix-ui/react-popover';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Popover, PopoverContent } from '@/components/ui/popover';
-import { Agent } from '@activepieces/shared';
+import { LoadingSpinner } from '@/components/ui/spinner';
+import { Agent, CreateAgentRequest } from '@activepieces/shared';
 
+import { AgentImageLoading } from './agent-image-loading';
 import { agentHooks } from './lib/agent-hooks';
 
 interface CreateAgentButtonProps {
@@ -20,21 +23,19 @@ export const CreateAgentButton = ({
   onAgentCreated,
 }: CreateAgentButtonProps) => {
   const [open, setOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [systemPrompt, setSystemPrompt] = useState('');
   const navigate = useNavigate();
+  const { mutate: createAgent, isPending } = agentHooks.useCreate();
 
-  const createAgentMutation = agentHooks.useCreate();
-
-  const handleButtonClick = () => {
-    createAgentMutation.mutate(
-      {
-        displayName: 'Fresh Agent',
-        description:
-          'I am a fresh agent, Jack of all trades, master of none (yet)',
-      },
+  const handleCreateAgent = async (createAgentParams: CreateAgentRequest) => {
+    return createAgent(
+      { ...createAgentParams },
       {
         onSuccess: (newAgent) => {
           onAgentCreated(newAgent);
-          setOpen(false);
+          setDialogOpen(false);
+          setSystemPrompt('');
         },
       },
     );
@@ -47,13 +48,60 @@ export const CreateAgentButton = ({
 
   if (isAgentsConfigured) {
     return (
-      <Button
-        onClick={handleButtonClick}
-        disabled={createAgentMutation.isPending}
-      >
-        <Plus className="h-4 w-4 " />
-        {t('New Agent')}
-      </Button>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="h-4 w-4" />
+            {t('New Agent')}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-lg p-4 pt-6">
+          <div className="flex flex-col items-center gap-4">
+            <AgentImageLoading loading={isPending} />
+            <div className="text-center space-y-2">
+              <h2 className="text-xl font-semibold">{t('Invent an Agent')}</h2>
+              <p className="text-sm text-muted-foreground">
+                {t('Describe your agent, and let AI work its magic.')}
+              </p>
+            </div>
+
+            <textarea
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              placeholder={t(
+                'E.g A witty blog writer who specializes in short, engaging posts about tech gadgets and futurism, using a casual and slightly sarcastic tone.',
+              )}
+              className="w-full h-40 px-4 py-3 border border-input rounded-lg resize-none focus-visible:ring-0 outline-none text-sm leading-relaxed"
+              disabled={isPending}
+            />
+
+            <Button
+              className="w-full"
+              onClick={() =>
+                handleCreateAgent({
+                  systemPrompt,
+                  displayName: 'Fresh Agent',
+                  description:
+                    'Fresh agent! jack of all trades, master of none',
+                })
+              }
+              disabled={!systemPrompt.trim() || isPending}
+            >
+              {isPending ? (
+                <>
+                  <LoadingSpinner className="size-4" />
+                  {t('Preparing Agent...')}
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  {t('Invent')}
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 

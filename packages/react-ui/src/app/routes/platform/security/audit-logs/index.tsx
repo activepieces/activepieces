@@ -14,7 +14,7 @@ import {
 import { Link, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { TableTitle } from '@/components/custom/table-title';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import {
   CURSOR_QUERY_PARAM,
   DataTable,
@@ -127,11 +127,10 @@ export default function AuditLogsPage() {
       )}
     >
       <div className="flex flex-col  w-full">
-        <TableTitle
+        <DashboardPageHeader
           description={t('Track activities done within your platform')}
-        >
-          {t('Audit Logs')}
-        </TableTitle>
+          title={t('Audit Logs')}
+        />
         <DataTable
           emptyStateTextTitle={t('No audit logs found')}
           emptyStateTextDescription={t(

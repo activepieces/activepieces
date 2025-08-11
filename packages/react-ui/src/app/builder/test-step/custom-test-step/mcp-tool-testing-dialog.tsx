@@ -17,7 +17,11 @@ import {
   PiecePropertyMap,
   PieceProperty,
 } from '@activepieces/pieces-framework';
-import { Trigger, McpPropertyType, mcpToolNaming } from '@activepieces/shared';
+import {
+  FlowTrigger,
+  McpPropertyType,
+  mcpToolNaming,
+} from '@activepieces/shared';
 
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
 import { testStepHooks } from '../test-step-hooks';
@@ -58,7 +62,7 @@ function McpToolTestingDialog({
   onOpenChange,
   onTestingSuccess,
 }: McpToolTestingDialogProps) {
-  const form = useFormContext<Trigger>();
+  const form = useFormContext<FlowTrigger>();
   const formValues = form.getValues();
   const formProps = formValues.settings.input.inputSchema as McpFormField[];
   const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =

@@ -1,0 +1,17 @@
+{
+  "Gotify": "Gotify",
+  "Self-hosted push notification service": "Self-hosted push notification service",
+  "Server URL": "Server URL",
+  "App Token": "App Token",
+  "Gotify Instance URL": "Gotify Instance URL",
+  "Gotify App Token": "Gotify App Token",
+  "\n    To obtain a token:\n\n    1. Log in to your Gotify instance.\n    2. Click on Apps\n    3. Select the Eye icon in the same row as your App to copy your token, or CREATE APPLICATION if you do not have one app yet.\n    4. Copy your access token & and paste them into the fields below.\n    ": "\n    To obtain a token:\n\n    1. Log in to your Gotify instance.\n    2. Click on Apps\n    3. Select the Eye icon in the same row as your App to copy your token, or CREATE APPLICATION if you do not have one app yet.\n    4. Copy your access token & and paste them into the fields below.\n    ",
+  "Send Notification": "Send Notification",
+  "Send a notification to gotify": "Send a notification to gotify",
+  "Title": "Title",
+  "Message": "Message",
+  "Priority": "Priority",
+  "The title of the notification": "The title of the notification",
+  "The message to send": "The message to send",
+  "The priority of the notification (0-10). 0 is lowest priority.": "The priority of the notification (0-10). 0 is lowest priority."
+}

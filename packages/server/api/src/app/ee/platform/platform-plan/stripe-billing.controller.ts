@@ -1,4 +1,4 @@
-import { ApSubscriptionStatus, checkIsTrialSubscription, DEFAULT_BUSINESS_SEATS, getPlanFromSubscription, PlanName  } from '@activepieces/ee-shared'
+import { AI_CREDITS_USAGE_THRESHOLD, ApSubscriptionStatus, checkIsTrialSubscription, getPlanFromSubscription, getPlanLimits, PlanName  } from '@activepieces/ee-shared'
 import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import { AiOverageState, ALL_PRINCIPAL_TYPES, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -14,7 +14,7 @@ import { emailService } from '../../helper/email/email-service'
 import { platformUsageService } from '../platform-usage-service'
 import { PlatformPlanHelper } from './platform-plan-helper'
 import { platformPlanRepo, platformPlanService } from './platform-plan.service'
-import { stripeHelper, USER_PRICE_ID } from './stripe-helper'
+import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID, BUSINESS_PLAN_PRICE_ID, PLUS_PLAN_PRICE_ID, PROJECT_PRICE_ID, stripeHelper, USER_SEAT_PRICE_ID } from './stripe-helper'
 
 export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
@@ -45,6 +45,12 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer
                         const platformId = subscription.metadata.platformId as string
                         const isTrialSubscription = checkIsTrialSubscription(subscription)
+
+                        const isUnknowSubscription = subscription.items.data.every(item => ![PLUS_PLAN_PRICE_ID, BUSINESS_PLAN_PRICE_ID].includes(item.price.id))
+                        if (isUnknowSubscription) {
+                            break
+                        }
+
                         const trialSubscriptionStarted = webhook.type === 'customer.subscription.created' && isTrialSubscription
                         if (trialSubscriptionStarted) {
                             await sendTrialRelatedEmails(customer.email as string, platformId, request.log) 
@@ -53,18 +59,18 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         const noneTrialSubscriptionStarted = webhook.type === 'customer.subscription.created' && !isTrialSubscription
                         if (noneTrialSubscriptionStarted) {
                             await cancelTrialSubscription(subscription.customer as string, stripe) 
+                            await addThresholdOnAiCreditsItem(stripe, subscription)
                         }
 
                         const trialSubscrptionEnded = webhook.type === 'customer.subscription.deleted' && isTrialSubscription
                         if (trialSubscrptionEnded) {
-                            break
+                            const haveActiveSubscription = await haveActiveSubs(subscription.customer as string, stripe)
+                            if (haveActiveSubscription) {
+                                break
+                            }
                         }
 
                         const newPlan = getPlanFromSubscription(subscription)
-                        if (isNil(newPlan)) {
-                            break
-                        }
-
                         request.log.info('Processing subscription event', {
                             webhookType: webhook.type,
                             subscriptionStatus: subscription.status,
@@ -72,7 +78,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         })
 
                         const { startDate, endDate, cancelDate } = await stripeHelper(request.log).getSubscriptionCycleDates(subscription)
-                        const platformPlan = await platformPlanService(request.log).updateByCustomerId({
+                        const { stripeSubscriptionId } = await platformPlanService(request.log).updateByCustomerId({
                             subscriptionId: subscription.id,
                             customerId: subscription.customer.toString(),
                             status: subscription.status as ApSubscriptionStatus,
@@ -82,35 +88,38 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             stripePaymentMethod: subscription.default_payment_method as string ?? undefined,
                         })
 
-                        const extraUsers = subscription.items.data.find(item => item.price.id === USER_PRICE_ID)?.quantity ?? 0
-                        const newLimits = platformPlanService(request.log).getPlanLimits(newPlan)
+                        const extraUsers = subscription.items.data.find(item => item.price.id === USER_SEAT_PRICE_ID)?.quantity ?? 0
+                        const extraActiveFlows = subscription.items.data.find(item => item.price.id === ACTIVE_FLOW_PRICE_ID)?.quantity ?? 0
+                        const extraProjects = subscription.items.data.find(item => item.price.id === PROJECT_PRICE_ID)?.quantity ?? 0
+
+                        const newLimits = getPlanLimits(newPlan)
                         const isFreePlan = newPlan === PlanName.FREE
-                        const isBusinessPlan = newPlan === PlanName.BUSINESS
-                        const hasExtraUsers = extraUsers > 0
-                        const isUserSeatsUpgraded = isBusinessPlan && hasExtraUsers
+                        const isAddonUpgrade =  extraUsers > 0 || extraActiveFlows > 0 || extraProjects > 0
+                        const shouldResetPlatfromUsage = isFreePlan || !isAddonUpgrade
+
+                        if (isAddonUpgrade) {
+                            newLimits.userSeatsLimit = (newLimits.userSeatsLimit ?? 0) + extraUsers
+                            newLimits.activeFlowsLimit = (newLimits.activeFlowsLimit ?? 0) + extraActiveFlows
+                            newLimits.projectsLimit = (newLimits.projectsLimit ?? 0) + extraProjects
+                        }
 
                         await PlatformPlanHelper.handleResourceLocking({ platformId, newLimits })
-
-                        if (!isFreePlan && isUserSeatsUpgraded) {
-                            newLimits.userSeatsLimit = DEFAULT_BUSINESS_SEATS + extraUsers
-                        } 
-
-                        if (isFreePlan || !isUserSeatsUpgraded) {
-                            await platformUsageService(request.log).resetPlatformUsage(platformPlan.platformId)
+                        
+                        if (shouldResetPlatfromUsage) {
+                            await platformUsageService(request.log).resetPlatformUsage(platformId)
                         }
 
                         await platformPlanService(request.log).update({ 
                             ...newLimits,
-                            platformId: platformPlan.platformId,
+                            platformId,
                             eligibleForTrial: false,
-                            stripeSubscriptionId: isFreePlan ? undefined : platformPlan.stripeSubscriptionId,
+                            stripeSubscriptionId: isFreePlan ? undefined : stripeSubscriptionId,
                             aiCreditsOverageState: isFreePlan || isTrialSubscription ? AiOverageState.NOT_ALLOWED : AiOverageState.ALLOWED_BUT_OFF,
                         })
                         break
                     }
                     case 'customer.subscription.trial_will_end': {
                         const subscription = webhook.data.object as Stripe.Subscription
-
                         const platformPlan = await platformPlanRepo().findOneByOrFail({ stripeSubscriptionId: subscription.id })
                         const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer
 
@@ -151,9 +160,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         request.log.info(`Unhandled webhook event type: ${webhook.type}`)
                         break
                 }
-    
                 return await reply.status(StatusCodes.OK).send({ received: true })
-    
             }
             catch (err) {
                 request.log.error(err)
@@ -173,8 +180,6 @@ const WebhookRequest = {
         rawBody: true,
     },
 }
-
-
 
 async function sendTrialRelatedEmails(customerEmail: string, platformId: string, log: FastifyBaseLogger) {
     const user = await userIdentityService(system.globalLogger()).getIdentityByEmail(customerEmail)
@@ -201,12 +206,20 @@ async function sendTrialRelatedEmails(customerEmail: string, platformId: string,
     })
 }
 
+async function haveActiveSubs(customerId: string, stripe: Stripe) {
+    const activeSubs = await stripe.subscriptions.list({ customer: customerId, status: ApSubscriptionStatus.ACTIVE })
+    return activeSubs.data.length > 0
+}
 
 async function cancelTrialSubscription(customerId: string, stripe: Stripe) {
-    const customerSubscriptions = await stripe.subscriptions.list({ customer: customerId })
-    const trialSubscription = customerSubscriptions.data.find(sub => checkIsTrialSubscription(sub))
+    const trialSubs = await stripe.subscriptions.list({ customer: customerId, status: ApSubscriptionStatus.TRIALING })
+    trialSubs.data.forEach(async (trialSub) => stripe.subscriptions.cancel(trialSub.id))
+}
 
-    if (trialSubscription) {
-        await stripe.subscriptions.cancel(trialSubscription.id)
-    }
+async function addThresholdOnAiCreditsItem(stripe: Stripe, subscription: Stripe.Subscription): Promise<void> {
+    const subWithItems = subscription.items?.data?.length ? subscription : await stripe.subscriptions.retrieve(subscription.id, { expand: ['items.data'] })
+    const aiCreditsItem = subWithItems.items.data.find(item => item.price?.id === AI_CREDIT_PRICE_ID)
+
+    if (!aiCreditsItem) return
+    await stripe.subscriptionItems.update(aiCreditsItem.id, { billing_thresholds: { usage_gte: AI_CREDITS_USAGE_THRESHOLD } })
 }

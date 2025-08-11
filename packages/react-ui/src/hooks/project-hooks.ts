@@ -65,7 +65,6 @@ export const projectHooks = {
           document.visibilityState === 'visible' &&
           !embedState.isEmbedded
         ) {
-          console.log('Project changed', currentProjectId, projectId);
           window.location.reload();
         }
       };

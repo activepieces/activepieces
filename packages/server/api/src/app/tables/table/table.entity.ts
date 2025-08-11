@@ -1,4 +1,4 @@
-import { Field, Project, Record, Table, TableWebhook } from '@activepieces/shared'
+import { Agent, Field, Project, Record, Table, TableWebhook } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
@@ -7,6 +7,7 @@ type TableSchema = Table & {
     fields: Field[]
     records: Record[]
     tableWebhooks: TableWebhook[]
+    agent: Agent
 }
 
 export const TableEntity = new EntitySchema<TableSchema>({
@@ -18,6 +19,18 @@ export const TableEntity = new EntitySchema<TableSchema>({
         },
         externalId: {
             type: String,
+        },
+        agentId: {
+            type: String,
+            nullable: true,
+        },
+        trigger: {
+            type: String,
+            nullable: true,
+        },
+        status: {
+            type: String,
+            nullable: true,
         },
         projectId: {
             ...ApIdSchema,
@@ -55,6 +68,16 @@ export const TableEntity = new EntitySchema<TableSchema>({
             type: 'one-to-many',
             target: 'table_webhook',
             inverseSide: 'table',
+        },
+        agent: {
+            type: 'one-to-one',
+            target: 'agent',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'agentId',
+                foreignKeyConstraintName: 'fk_table_agent_id',
+            },
         },
     },
 })

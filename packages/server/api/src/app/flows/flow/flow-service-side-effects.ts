@@ -1,64 +1,38 @@
 import {
     FileType,
     Flow,
-    FlowScheduleOptions,
     FlowStatus,
     FlowVersion,
     isNil,
-    ScheduleOptions,
-    ScheduleType,
-    WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowVersionService } from '../flow-version/flow-version.service'
+import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { sampleDataService } from '../step-run/sample-data.service'
-import { triggerHooks } from '../trigger'
 
 export const flowSideEffects = (log: FastifyBaseLogger) => ({
     async preUpdateStatus({
         newStatus,
         flowToUpdate,
         publishedFlowVersion,
-    }: PreUpdateStatusParams): Promise<PreUpdateReturn> {
-
-        let scheduleOptions: ScheduleOptions | undefined
-        const webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null = flowToUpdate.handshakeConfiguration ?? null
+    }: PreUpdateStatusParams): Promise<void> {
         switch (newStatus) {
             case FlowStatus.ENABLED: {
-                const response = await triggerHooks.enable(
-                    {
-                        flowVersion: publishedFlowVersion,
-                        projectId: flowToUpdate.projectId,
-                        simulate: false,
-                    }, log)
-                scheduleOptions = response?.result.scheduleOptions
+                await triggerSourceService(log).enable({
+                    flowVersion: publishedFlowVersion,
+                    projectId: flowToUpdate.projectId,
+                    simulate: false,
+                })
                 break
             }
             case FlowStatus.DISABLED: {
-                await triggerHooks.disable(
-                    {
-                        flowVersion: publishedFlowVersion,
-                        projectId: flowToUpdate.projectId,
-                        simulate: false,
-                    }, log)
+                await triggerSourceService(log).disable({
+                    flowId: publishedFlowVersion.flowId,
+                    projectId: flowToUpdate.projectId,
+                    simulate: false,
+                    ignoreError: false,
+                })
                 break
             }
-        }
-
-        if (isNil(scheduleOptions)) {
-            return {
-                scheduleOptions: null,
-                webhookHandshakeConfiguration,
-            }
-        }
-
-        return {
-            scheduleOptions: {
-                ...scheduleOptions,
-                type: ScheduleType.CRON_EXPRESSION,
-                failureCount: flowToUpdate.schedule?.failureCount ?? 0,
-            },
-            webhookHandshakeConfiguration,
         }
     },
 
@@ -69,20 +43,12 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         ) {
             return
         }
-
-        const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
+        await triggerSourceService(log).disable({
             flowId: flowToDelete.id,
-            versionId: flowToDelete.publishedVersionId,
+            projectId: flowToDelete.projectId,
+            simulate: false,
+            ignoreError: true,
         })
-
-        await triggerHooks.disable(
-            {
-                flowVersion: publishedFlowVersion,
-                projectId: flowToDelete.projectId,
-                simulate: false,
-            },
-            log,
-        )
 
         await sampleDataService(log).deleteForFlow({
             projectId: flowToDelete.projectId,
@@ -104,10 +70,6 @@ type PreUpdateStatusParams = {
     newStatus: FlowStatus
 }
 
-type PreUpdateReturn = {
-    scheduleOptions: FlowScheduleOptions | null
-    webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null
-}
 
 type PreDeleteParams = {
     flowToDelete: Flow

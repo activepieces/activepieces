@@ -22,12 +22,16 @@ export const McpEntity = new EntitySchema<McpWithToolsWithSchema>({
             type: String,
             nullable: false,
         },
+        externalId: {
+            ...ApIdSchema,
+            nullable: false,
+        },
     },
     indices: [
         {
-            name: 'mcp_project_id',
-            columns: ['projectId'],
-            unique: false,
+            name: 'mcp_project_id_external_id',
+            columns: ['projectId', 'externalId'],
+            unique: true,
         },
         {
             name: 'mcp_agent_id',

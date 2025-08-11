@@ -54,7 +54,6 @@ const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
     const translations = JSON.parse(fileContent);
 
     if (typeof translations === 'object' && translations !== null) {
-      console.log(`Translation loaded for ${locale} in piece ${pieceOutputPath}`);
       return translations;
     }
     throw new Error(`Invalid i18n file format for ${locale} in piece ${pieceOutputPath}`);

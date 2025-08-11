@@ -54,7 +54,9 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
     async getOrCreateDefaultPlan(projectId: string): Promise<ProjectPlan> {
         const existingPlan = await projectPlanRepo().findOneBy({ projectId })
 
-        if (existingPlan) return existingPlan
+        if (!isNil(existingPlan)) {
+            return existingPlan
+        }
 
         await projectPlanRepo().upsert({
             id: apId(),

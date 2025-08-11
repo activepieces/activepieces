@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/collapsible';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn, formatUtils } from '@/lib/utils';
-import { ActionType, flowStructureUtil } from '@activepieces/shared';
+import { FlowActionType, flowStructureUtil } from '@activepieces/shared';
 
 import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
@@ -55,7 +55,7 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
   });
   const { fitView } = useReactFlow();
   const isChildSelected = useMemo(() => {
-    return step?.type === ActionType.LOOP_ON_ITEMS && selectedStep
+    return step?.type === FlowActionType.LOOP_ON_ITEMS && selectedStep
       ? flowStructureUtil.isChildOf(step, selectedStep)
       : false;
   }, [step, selectedStep]);
@@ -76,7 +76,7 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
   const children =
     stepOutput &&
     stepOutput.output &&
-    stepOutput.type === ActionType.LOOP_ON_ITEMS &&
+    stepOutput.type === FlowActionType.LOOP_ON_ITEMS &&
     stepOutput.output.iterations[loopsIndexes[stepName]]
       ? Object.keys(stepOutput.output.iterations[loopsIndexes[stepName]])
       : [];
@@ -85,7 +85,8 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
   });
   const [isOpen, setIsOpen] = React.useState(true);
 
-  const isLoopStep = stepOutput && stepOutput.type === ActionType.LOOP_ON_ITEMS;
+  const isLoopStep =
+    stepOutput && stepOutput.type === FlowActionType.LOOP_ON_ITEMS;
 
   return (
     <Collapsible open={isOpen} className="w-full">

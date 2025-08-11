@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { TableAutomationStatus, TableAutomationTrigger } from '../table'
 import { TableWebhookEventType } from '../table-webhook'
 
 export const CreateTableRequest = Type.Object({
@@ -16,6 +17,13 @@ export const ExportTableResponse = Type.Object({
 
 export type ExportTableResponse = Static<typeof ExportTableResponse>
 
+
+export const AutomateTableRequest = Type.Object({
+    recordIds: Type.Array(Type.String()),
+})
+
+export type AutomateTableRequest = Static<typeof AutomateTableRequest>
+
 export const CreateTableWebhookRequest = Type.Object({
     events: Type.Array(Type.Enum(TableWebhookEventType)),
     webhookUrl: Type.String(),
@@ -25,7 +33,9 @@ export const CreateTableWebhookRequest = Type.Object({
 export type CreateTableWebhookRequest = Static<typeof CreateTableWebhookRequest>
 
 export const UpdateTableRequest = Type.Object({
-    name: Type.String(),
+    name: Type.Optional(Type.String()),
+    trigger: Type.Optional(Type.Enum(TableAutomationTrigger)),
+    status: Type.Optional(Type.Enum(TableAutomationStatus)),
 })
 
 export type UpdateTableRequest = Static<typeof UpdateTableRequest>

@@ -36,6 +36,7 @@ type AutoFormProps = {
   markdownVariables?: Record<string, string>;
   useMentionTextInput: boolean;
   disabled?: boolean;
+  onValueChange?: (val: { value: unknown; propertyName: string }) => void;
 };
 
 const AutoPropertiesFormComponent = React.memo(
@@ -46,6 +47,7 @@ const AutoPropertiesFormComponent = React.memo(
     prefixValue,
     disabled,
     useMentionTextInput,
+    onValueChange,
   }: AutoFormProps) => {
     const form = useFormContext();
     return (
@@ -59,7 +61,17 @@ const AutoPropertiesFormComponent = React.memo(
                 control={form.control}
                 render={({ field }) =>
                   selectFormComponentForProperty({
-                    field,
+                    field: {
+                      ...field,
+                      onChange: (value) => {
+                        field.onChange(value);
+                        //must come after because the form value won't be updated yet otherwise
+                        onValueChange?.({
+                          value,
+                          propertyName,
+                        });
+                      },
+                    },
                     propertyName,
                     inputName: `${prefixValue}.${propertyName}`,
                     property: props[propertyName],
@@ -248,6 +260,7 @@ const selectFormComponentForProperty = ({
             propertyName={propertyName}
             multiple={property.type === PropertyType.MULTI_SELECT_DROPDOWN}
             showDeselect={!property.required}
+            shouldRefreshOnSearch={property.refreshOnSearch ?? false}
           ></DynamicDropdownPieceProperty>
         </AutoFormFieldWrapper>
       );

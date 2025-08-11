@@ -9,8 +9,8 @@ import { Dot } from '@/components/ui/dot';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { todosHooks } from '@/features/todos/lib/todo-hook';
 import {
-  Action,
-  ActionType,
+  FlowAction,
+  FlowActionType,
   Step,
   TodoType,
   PopulatedTodo,
@@ -19,11 +19,11 @@ import {
   StepRunResponse,
 } from '@activepieces/shared';
 
+import { AgentRunDialog } from '../../../features/agents/agent-run-dialog';
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
-import { AgentTestingDialog } from './custom-test-step/test-agent-dialog';
 import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
@@ -36,7 +36,7 @@ type TestActionComponentProps = {
   projectId: string;
 };
 
-type ActionWithoutNext = Omit<Action, 'nextAction'>;
+type ActionWithoutNext = Omit<FlowAction, 'nextAction'>;
 enum DialogType {
   NONE = 'NONE',
   TODO_CREATE_TASK = 'TODO_CREATE_TASK',
@@ -44,25 +44,25 @@ enum DialogType {
   WEBHOOK = 'WEBHOOK',
 }
 
-const isTodoCreateTask = (step: Action) => {
+const isTodoCreateTask = (step: FlowAction) => {
   return (
-    step.type === ActionType.PIECE &&
+    step.type === FlowActionType.PIECE &&
     step.settings.pieceName === '@activepieces/piece-todos' &&
     step.settings.actionName === 'createTodoAndWait'
   );
 };
 
-const isRunAgent = (step: Action) => {
+const isRunAgent = (step: FlowAction) => {
   return (
-    step.type === ActionType.PIECE &&
+    step.type === FlowActionType.PIECE &&
     step.settings.pieceName === '@activepieces/piece-agent' &&
     step.settings.actionName === 'run_agent'
   );
 };
 
-const isReturnResponseAndWaitForWebhook = (step: Action) => {
+const isReturnResponseAndWaitForWebhook = (step: FlowAction) => {
   return (
-    step.type === ActionType.PIECE &&
+    step.type === FlowActionType.PIECE &&
     step.settings.pieceName === '@activepieces/piece-webhook' &&
     step.settings.actionName === 'return_response_and_wait_for_next_webhook'
   );
@@ -73,7 +73,7 @@ const TestStepSectionImplementation = React.memo(
     isSaving,
     flowVersionId,
     currentStep,
-  }: TestActionComponentProps & { currentStep: Action }) => {
+  }: TestActionComponentProps & { currentStep: FlowAction }) => {
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
     );
@@ -86,6 +86,7 @@ const TestStepSectionImplementation = React.memo(
     const [agentProgress, setAgentProgress] = useState<StepRunResponse | null>(
       null,
     );
+    const agentRunId = stepUtils.getAgentRunId(agentProgress);
     const { sampleData, sampleDataInput } = useBuilderStateContext((state) => {
       return {
         sampleData: state.sampleData[currentStep.name],
@@ -163,7 +164,6 @@ const TestStepSectionImplementation = React.memo(
     const isTesting =
       activeDialog !== DialogType.NONE || isLoadingTodo || isWatingTestResult;
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
-    const agentId = stepUtils.getAgentId(currentStep);
     return (
       <>
         {!sampleDataExists && (
@@ -201,14 +201,14 @@ const TestStepSectionImplementation = React.memo(
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
             consoleLogs={
-              currentStep.type === ActionType.CODE ? consoleLogs : null
+              currentStep.type === FlowActionType.CODE ? consoleLogs : null
             }
             isSaving={isSaving}
             onRetest={onTestButtonClick}
           ></TestSampleDataViewer>
         )}
         {activeDialog === DialogType.TODO_CREATE_TASK &&
-          currentStep.type === ActionType.PIECE &&
+          currentStep.type === FlowActionType.PIECE &&
           todo && (
             <TodoTestingDialog
               open={true}
@@ -224,13 +224,11 @@ const TestStepSectionImplementation = React.memo(
             />
           )}
         {activeDialog === DialogType.AGENT &&
-          currentStep.type === ActionType.PIECE && (
-            <AgentTestingDialog
+          currentStep.type === FlowActionType.PIECE && (
+            <AgentRunDialog
               open={true}
               onOpenChange={(open) => !open && handleCloseDialog()}
-              agentProgress={agentProgress}
-              isTesting={isTesting}
-              agentId={agentId ?? ''}
+              agentRunId={agentRunId}
             />
           )}
         {activeDialog === DialogType.WEBHOOK && (
@@ -246,7 +244,7 @@ const TestStepSectionImplementation = React.memo(
   },
 );
 
-const isAction = (step: Step): step is Action => {
+const isAction = (step: Step): step is FlowAction => {
   return flowStructureUtil.isAction(step.type);
 };
 const TestActionSection = React.memo((props: TestActionComponentProps) => {

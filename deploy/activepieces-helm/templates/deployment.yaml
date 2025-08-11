@@ -82,10 +82,6 @@ spec:
             - name: AP_PIECES_SYNC_MODE
               value: {{ .Values.activepieces.piecesSyncMode | quote }}
             {{- end }}
-            {{- if .Values.activepieces.triggerFailuresThreshold }}
-            - name: AP_TRIGGER_FAILURES_THRESHOLD
-              value: {{ .Values.activepieces.triggerFailuresThreshold | quote }}
-            {{- end }}
             {{- if .Values.activepieces.featurebaseApiKey }}
             - name: AP_FEATUREBASE_API_KEY
               value: {{ .Values.activepieces.featurebaseApiKey | quote }}
@@ -391,6 +387,19 @@ spec:
             {{- if .Values.activepieces.engineExecutablePath }}
             - name: AP_ENGINE_EXECUTABLE_PATH
               value: {{ .Values.activepieces.engineExecutablePath | quote }}
+            {{- end }}
+            # OpenTelemetry configuration
+            {{- if .Values.activepieces.otel.enabled }}
+            - name: AP_OTEL_ENABLED
+              value: {{ .Values.activepieces.otel.enabled | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.otel.exporterOtlpEndpoint }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.activepieces.otel.exporterOtlpEndpoint | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.otel.exporterOtlpHeaders }}
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: {{ .Values.activepieces.otel.exporterOtlpHeaders | quote }}
             {{- end }}
           {{- with .Values.livenessProbe }}
           livenessProbe:

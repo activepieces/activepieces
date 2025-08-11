@@ -3,12 +3,12 @@ import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, Flow
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
-import { flowVersionRepoWrapper } from '../flows/flow-version/flow-version-repo-wrapper'
+import { flowVersionRepo } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
-import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
 export enum WebhookFlowVersionToRun {
@@ -22,7 +22,7 @@ export const webhookHandler = {
             return flow.publishedVersionId
         }
 
-        const flowVersionSchema = await flowVersionRepoWrapper.createQueryBuilder()
+        const flowVersionSchema = await flowVersionRepo().createQueryBuilder()
             .select('id')
             .where({
                 flowId: flow.id,
@@ -34,7 +34,7 @@ export const webhookHandler = {
     },
 
     async handleAsync(params: AsyncWebhookParams): Promise<EngineHttpResponse> {
-        const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment } = params
+        const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment, parentRunId, failParentOnFailure } = params
 
         await jobQueue(logger).add({
             id: webhookRequestId,
@@ -49,6 +49,8 @@ export const webhookHandler = {
                 flowVersionIdToRun,
                 runEnvironment,
                 execute,
+                parentRunId,
+                failParentOnFailure,
             },
             priority: DEFAULT_PRIORITY,
         })
@@ -63,7 +65,7 @@ export const webhookHandler = {
     },
 
     async handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse> {
-        const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun } = params
+        const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, parentRunId, failParentOnFailure } = params
 
         if (saveSampleData) {
             rejectedPromiseHandler(savePayload({
@@ -73,6 +75,8 @@ export const webhookHandler = {
                 payload,
                 flowVersionIdToRun,
                 runEnvironment,
+                parentRunId,
+                failParentOnFailure,
             }), logger)
         }
 
@@ -96,6 +100,8 @@ export const webhookHandler = {
             httpRequestId: webhookRequestId,
             executionType: ExecutionType.BEGIN,
             progressUpdateType: ProgressUpdateType.WEBHOOK_RESPONSE,
+            parentRunId,
+            failParentOnFailure,
         })
 
         params.onRunCreated?.(createdRun)
@@ -109,7 +115,7 @@ export const webhookHandler = {
 }
 
 async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | 'webhookHeader' | 'execute'>): Promise<void> {
-    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, runEnvironment } = params
+    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, runEnvironment, parentRunId, failParentOnFailure } = params
     await webhookHandler.handleAsync({
         flow,
         logger,
@@ -120,8 +126,10 @@ async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | '
         runEnvironment,
         execute: false,
         webhookHeader: '',
+        parentRunId,
+        failParentOnFailure,
     })
-    await webhookSimulationService(logger).delete({ flowId: flow.id, projectId: flow.projectId })
+    await triggerSourceService(logger).disable({ flowId: flow.id, projectId: flow.projectId, simulate: true, ignoreError: true })
 }
 
 
@@ -135,6 +143,8 @@ type AsyncWebhookParams = {
     saveSampleData: boolean
     runEnvironment: RunEnvironment
     execute: boolean
+    parentRunId?: string
+    failParentOnFailure: boolean
 }
 
 
@@ -150,5 +160,7 @@ type SyncWebhookParams = {
     synchronousHandlerId: string
     flowVersionIdToRun: FlowVersionId   
     onRunCreated?: (run: FlowRun) => void
+    parentRunId?: string
+    failParentOnFailure: boolean
 }
 

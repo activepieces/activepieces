@@ -12,9 +12,8 @@ import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useTheme } from '@/components/theme-provider';
-import { stepUtils } from '@/features/pieces/lib/step-utils';
 import {
-  ActionType,
+  FlowActionType,
   flowStructureUtil,
   FlowVersion,
   isNil,
@@ -46,9 +45,9 @@ import { useShowChevronNextToSelection } from './widgets/selection-chevron-butto
 
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
-    case ActionType.LOOP_ON_ITEMS:
+    case FlowActionType.LOOP_ON_ITEMS:
       return step.firstLoopAction ? step.firstLoopAction.name : '';
-    case ActionType.ROUTER:
+    case FlowActionType.ROUTER:
       return step.children.reduce((routerKey, child) => {
         const childrenKey = child
           ? flowStructureUtil
@@ -60,8 +59,8 @@ const getChildrenKey = (step: Step) => {
           : 'null';
         return `${routerKey}-${childrenKey}`;
       }, '');
-    case ActionType.CODE:
-    case ActionType.PIECE:
+    case FlowActionType.CODE:
+    case FlowActionType.PIECE:
       return '';
   }
 };
@@ -71,15 +70,15 @@ const createGraphKey = (flowVersion: FlowVersion) => {
     .getAllSteps(flowVersion.trigger)
     .reduce((acc, step) => {
       const branchesNames =
-        step.type === ActionType.ROUTER
+        step.type === FlowActionType.ROUTER
           ? step.settings.branches.map((branch) => branch.branchName).join('-')
           : '0';
       const childrenKey = getChildrenKey(step);
-      const agentId = stepUtils.getAgentId(step);
+      const agentId = flowStructureUtil.getExternalAgentId(step);
       return `${acc}-${step.displayName}-${step.type}-${
         step.nextAction ? step.nextAction.name : ''
       }-${
-        step.type === ActionType.PIECE ? step.settings.pieceName : ''
+        step.type === FlowActionType.PIECE ? step.settings.pieceName : ''
       }-${branchesNames}-${childrenKey}-${agentId}`;
     }, '');
 };
@@ -184,8 +183,8 @@ export const FlowCanvas = React.memo(
       );
       selectedSteps.forEach((step) => {
         if (
-          step.type === ActionType.LOOP_ON_ITEMS ||
-          step.type === ActionType.ROUTER
+          step.type === FlowActionType.LOOP_ON_ITEMS ||
+          step.type === FlowActionType.ROUTER
         ) {
           const childrenNotSelected = flowStructureUtil
             .getAllChildSteps(step)
@@ -254,7 +253,7 @@ export const FlowCanvas = React.memo(
                 size={4}
                 variant={BackgroundVariant.Dots}
                 bgColor={theme === 'dark' ? ' #1a1e23' : '#ffffff'}
-                color={theme === 'dark' ? ' #372727' : '#F2F2F2'}
+                color={theme === 'dark' ? 'rgba(77, 77, 77, 0.45)' : '#F2F2F2'}
               />
             </ReactFlow>
           </CanvasContextMenu>

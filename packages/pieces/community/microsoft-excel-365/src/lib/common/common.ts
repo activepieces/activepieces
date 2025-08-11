@@ -4,8 +4,8 @@ import {
 	HttpMethod,
 	AuthenticationType,
 	HttpRequest,
-	getAccessTokenOrThrow,
 } from '@activepieces/pieces-common';
+import { isNil } from '@activepieces/shared';
 
 export const excelCommon = {
 	baseUrl: 'https://graph.microsoft.com/v1.0/me/drive',
@@ -199,6 +199,43 @@ export const excelCommon = {
 			return properties;
 		},
 	}),
+	parent_folder: Property.Dropdown({
+		displayName: "Parent Folder",
+		description: "The parent folder to use",
+		required: true,
+		refreshers: [],
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please authenticate first',
+				};
+			}
+
+			const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+
+			// Fetch all folders, starting from the root folder
+			const rootFolderId = 'root';
+			const allFolders: { id: string, name: string }[] = await excelCommon.getAllFolders(rootFolderId, authProp['access_token'], '');
+
+			// Include the root folder explicitly
+			allFolders.unshift({
+				id: rootFolderId,
+				name: '/',
+			});
+
+			return {
+				disabled: false,
+				options: allFolders.map((table: { id: string; name: string }) => {
+					return {
+						label: table.name,
+						value: table.id,
+					};
+				}),
+			};
+		}
+	}),
 	getHeaders: async function (workbookId: string, accessToken: string, worksheetId: string) {
 		const response = await httpClient.sendRequest<{ values: string[][] }>({
 			method: HttpMethod.GET,
@@ -297,6 +334,46 @@ export const excelCommon = {
 		}
 		return columnName;
 	},
+	getAllFolders: async function (folderId: string, authToken: string, currentPath: string): Promise<{ id: string, name: string }[]> {
+		let apiUrl: string;
+	
+		// Check if we're fetching from the root folder or a specific subfolder
+		if (folderId === 'root') {
+			apiUrl = `${excelCommon.baseUrl}/root/children`;
+		} else {
+			apiUrl = `${excelCommon.baseUrl}/items/${folderId}/children`;
+		}
+	
+		// Fetch the folder contents
+		const folders: { id: string, name: string }[] = (
+			await httpClient.sendRequest<{ value: { id: string, name: string,folder?: unknown }[] }>({
+				url: apiUrl,
+				method: HttpMethod.GET,
+				authentication: {
+					type: AuthenticationType.BEARER_TOKEN,
+					token: authToken
+				}
+			})
+		).body.value
+		.filter(object => !isNil(object.folder)) // Filter only folder objects
+		.map(folder => ({
+			id: `${folder.id}`,
+			name: `${currentPath}/${folder.name}`,
+		}));
+	
+		// Base case: if no subfolders, return an empty array
+		if (folders.length === 0) {
+			return [];
+		}
+	
+		// Recursively fetch subfolders
+		for (const folder of folders) {
+			const subFolders = await excelCommon.getAllFolders(folder.id, authToken, folder.name);
+			folders.push(...subFolders);
+		}
+	
+		return folders;
+	}
 };
 
 export function objectToArray(obj: { [x: string]: any }) {

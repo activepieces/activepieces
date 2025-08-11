@@ -146,6 +146,8 @@ const EmbedPage = React.memo(() => {
                   hideDuplicateFlow: event.data.data.hideDuplicateFlow ?? false,
                   hideFlowsPageNavbar:
                     event.data.data.hideFlowsPageNavbar ?? false,
+                  hideProjectSettings:
+                    event.data.data.hideProjectSettings ?? false,
                 });
               });
               memoryRouter.navigate(initialRoute);

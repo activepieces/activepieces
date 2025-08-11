@@ -22,6 +22,7 @@ import {
   toast,
 } from '@/components/ui/use-toast';
 import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
+import { RefreshAnalyticsProvider } from '@/features/platform-admin/components/refresh-analytics-provider';
 import { api } from '@/lib/api';
 import {
   ErrorCode,
@@ -66,25 +67,27 @@ export function App() {
   const { i18n } = useTranslation();
   return (
     <QueryClientProvider client={queryClient}>
-      <EmbeddingProvider>
-        <InitialDataGuard>
-          <EmbeddingFontLoader>
-            <TelemetryProvider>
-              <TooltipProvider>
-                <React.Fragment key={i18n.language}>
-                  <ThemeProvider storageKey="vite-ui-theme">
-                    <SidebarProvider>
-                      <ApRouter />
-                      <Toaster />
-                      <ChangelogProvider />
-                    </SidebarProvider>
-                  </ThemeProvider>
-                </React.Fragment>
-              </TooltipProvider>
-            </TelemetryProvider>
-          </EmbeddingFontLoader>
-        </InitialDataGuard>
-      </EmbeddingProvider>
+      <RefreshAnalyticsProvider>
+        <EmbeddingProvider>
+          <InitialDataGuard>
+            <EmbeddingFontLoader>
+              <TelemetryProvider>
+                <TooltipProvider>
+                  <React.Fragment key={i18n.language}>
+                    <ThemeProvider storageKey="vite-ui-theme">
+                      <SidebarProvider>
+                        <ApRouter />
+                        <Toaster />
+                        <ChangelogProvider />
+                      </SidebarProvider>
+                    </ThemeProvider>
+                  </React.Fragment>
+                </TooltipProvider>
+              </TelemetryProvider>
+            </EmbeddingFontLoader>
+          </InitialDataGuard>
+        </EmbeddingProvider>
+      </RefreshAnalyticsProvider>
     </QueryClientProvider>
   );
 }

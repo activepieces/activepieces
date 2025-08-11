@@ -8,7 +8,7 @@ import { toast } from '@/components/ui/use-toast';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceSelectorOperation, PieceSelectorPieceItem } from '@/lib/types';
-import { Agent, ApFlagId } from '@activepieces/shared';
+import { Agent, ApFlagId, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
@@ -31,7 +31,6 @@ const CreateAgentActionItem = ({
   );
   const [isAgentBuilderOpen, setIsAgentBuilderOpen] = useState(false);
   const [agent, setAgent] = useState<Agent | undefined>(undefined);
-  const { refetch } = agentHooks.useList();
   const [handleAddingOrUpdatingStep] = useBuilderStateContext((state) => [
     state.handleAddingOrUpdatingStep,
   ]);
@@ -44,14 +43,17 @@ const CreateAgentActionItem = ({
     'Create a new agent to run in your flow',
   );
   const navigate = useNavigate();
+
+  if (isNil(agent)) {
+    return null;
+  }
+
   return (
     <AgentBuilder
       isOpen={isAgentBuilderOpen}
-      refetch={refetch}
       onChange={(agent) => {
         setAgent(agent);
       }}
-      hideUseAgentButton={true}
       onOpenChange={(open) => {
         setIsAgentBuilderOpen(open);
         if (!open) {
@@ -67,6 +69,7 @@ const CreateAgentActionItem = ({
         }
       }}
       agent={agent}
+      showUseInFlow={false}
       trigger={
         <GenericActionOrTriggerItem
           item={createAgentPieceSelectorItem}
@@ -99,6 +102,7 @@ const CreateAgentActionItem = ({
                 displayName: 'Fresh Agent',
                 description:
                   'I am a fresh agent, Jack of all trades, master of none (yet)',
+                systemPrompt: '',
               },
               {
                 onSuccess: (agent) => {

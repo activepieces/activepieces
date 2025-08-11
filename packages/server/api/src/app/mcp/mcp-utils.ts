@@ -19,10 +19,11 @@ IMPORTANT:
 - For dropdown, multi-select dropdown, and static dropdown properties, YOU MUST SELECT VALUES FROM THE PROVIDED OPTIONS ARRAY ONLY.
 - For array properties, YOU MUST SELECT VALUES FROM THE PROVIDED OPTIONS ARRAY ONLY.
 - For dynamic properties, YOU MUST SELECT VALUES FROM THE PROVIDED OPTIONS ARRAY ONLY.
+- THE OPTIONS ARRAY WILL BE [{ label: string, value: string | object }]. YOU MUST SELECT THE value FIELD FROM THE OPTION OBJECT.
 - For DATE_TIME properties, return date strings in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
 - Use actual values from the user instructions to determine the correct value for each property, either as a hint for selecting options from dropdowns or to fill in the property if possible.
 - Must include all required properties, even if the user does not provide a value. If a required field is missing, look up the correct value or provide a reasonable default—otherwise, the task may fail.
-
+- IMPORTANT: If a property is not required and you do not have any information to fill it, you MUST skip it.
 `
 
 function buildParameterExtractionPrompt({
@@ -104,10 +105,12 @@ function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
             break
         case PropertyType.MULTI_SELECT_DROPDOWN:
         case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-            schema = z.array(z.string())
+            schema = z.union([z.array(z.string()), z.array(z.record(z.string(), z.unknown()))])
             break
         case PropertyType.DROPDOWN:
         case PropertyType.STATIC_DROPDOWN:
+            schema = z.union([z.string(), z.record(z.string(), z.unknown())])
+            break
         case PropertyType.COLOR:
         case PropertyType.SECRET_TEXT:
         case PropertyType.BASIC_AUTH:
@@ -217,7 +220,11 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
 
     const needsRuntimeResolution = property.type === PropertyType.DYNAMIC || property.type === PropertyType.DROPDOWN || property.type === PropertyType.MULTI_SELECT_DROPDOWN
     if (!needsRuntimeResolution) {
-        const schema = depth === 0 ? z.object({ [propertyName]: piecePropertyToZod(property) }) : piecePropertyToZod(property)
+        const propertySchema = piecePropertyToZod(property)
+        let schema = depth === 0 ? z.object({ [propertyName]: propertySchema }) : propertySchema
+        if (propertySchema.optional()) {
+            schema = schema.optional()
+        }
         return {
             schema,
             value: property,

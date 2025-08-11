@@ -8,7 +8,7 @@ import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
-import { TableTitle } from '@/components/custom/table-title';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -303,23 +303,6 @@ const GlobalConnectionsTable = () => {
           );
         },
       },
-      {
-        render: () => {
-          return (
-            <NewConnectionDialog
-              isGlobalConnection={true}
-              onConnectionCreated={() => {
-                setRefresh(refresh + 1);
-                refetchGlobalConnections();
-              }}
-            >
-              <Button variant="default" size="sm">
-                {t('New Connection')}
-              </Button>
-            </NewConnectionDialog>
-          );
-        },
-      },
     ],
     [bulkDeleteGlobalConnections, selectedRows, refresh],
   );
@@ -335,13 +318,24 @@ const GlobalConnectionsTable = () => {
         )}
         lockVideoUrl="https://cdn.activepieces.com/videos/showcase/global-connections.mp4"
       >
-        <TableTitle
+        <DashboardPageHeader
           description={t(
             'Manage platform-wide connections to external systems.',
           )}
+          title={t('Global Connections')}
         >
-          {t('Global Connections')}
-        </TableTitle>
+          <NewConnectionDialog
+            isGlobalConnection={true}
+            onConnectionCreated={() => {
+              setRefresh(refresh + 1);
+              refetchGlobalConnections();
+            }}
+          >
+            <Button variant="default" size="sm">
+              {t('New Connection')}
+            </Button>
+          </NewConnectionDialog>
+        </DashboardPageHeader>
         <DataTable
           emptyStateTextTitle={t('No global connections found')}
           emptyStateTextDescription={t(

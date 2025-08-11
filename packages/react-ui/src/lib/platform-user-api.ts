@@ -9,9 +9,7 @@ import {
 
 export const platformUserApi = {
   list(request: ListUsersRequestBody) {
-    return api.get<SeekPage<UserWithMetaInformation>>('/v1/users', {
-      params: request,
-    });
+    return api.get<SeekPage<UserWithMetaInformation>>('/v1/users', request);
   },
   delete(id: string) {
     return api.delete(`/v1/users/${id}`);

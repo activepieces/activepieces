@@ -48,6 +48,7 @@ export const WorkerMachineHealthcheckResponse = Type.Object({
     FLOW_TIMEOUT_SECONDS: Type.Number(),
     FLOW_WORKER_CONCURRENCY: Type.Number(),
     SCHEDULED_WORKER_CONCURRENCY: Type.Number(),
+    AGENTS_WORKER_CONCURRENCY: Type.Number(),
     LOG_LEVEL: Type.String(),
     LOG_PRETTY: Type.String(),
     ENVIRONMENT: Type.String(),
@@ -61,6 +62,8 @@ export const WorkerMachineHealthcheckResponse = Type.Object({
     LOKI_PASSWORD: Type.Optional(Type.String()),
     LOKI_URL: Type.Optional(Type.String()),
     LOKI_USERNAME: Type.Optional(Type.String()),
+    OTEL_ENABLED: Type.Boolean(),
+    HYPERDX_TOKEN: Type.Optional(Type.String()),
     FILE_STORAGE_LOCATION: Type.String(),
     S3_USE_SIGNED_URLS: Type.String(),
 })

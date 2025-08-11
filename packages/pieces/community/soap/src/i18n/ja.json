@@ -1,0 +1,22 @@
+{
+  "SOAP": "SOAP",
+  "Simple Object Access Protocol for communication between applications": "アプリケーション間の通信のためのシンプルなオブジェクトアクセスプロトコル",
+  "Authentication Type": "認証タイプ",
+  "Username": "ユーザー名",
+  "Password": "パスワード",
+  "Custom Header": "カスタムヘッダー",
+  "The WS Security username": "WSセキュリティユーザー名",
+  "The WS Security password": "WSセキュリティパスワード",
+  "Custom Header Content": "カスタムヘッダーコンテンツ",
+  "None": "なし",
+  "WS Security": "WSセキュリティ",
+  "Basic Auth": "ベーシック認証",
+  "Call SOAP Method": "SOAP メソッドを呼び出します。",
+  "Call a SOAP from a given wsdl specification": "指定した wsdl 仕様から SOAP を呼び出します。",
+  "WSDL URL": "WSDL URL",
+  "Method": "方法",
+  "Parameters": "パラメータ",
+  "Parsed": "Parsed",
+  "The SOAP Method": "SOAP メソッド",
+  "Arguments for the SOAP method": "SOAP メソッドの引数"
+}

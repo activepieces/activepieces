@@ -511,8 +511,6 @@ const engineValidateAuth = async (
         piece: await getPiecePackageWithoutArchive(log, projectId, platformId, {
             pieceName,
             pieceVersion: pieceMetadata.version,
-            pieceType: pieceMetadata.pieceType,
-            packageType: pieceMetadata.packageType,
         }),
         projectId,
         platformId,

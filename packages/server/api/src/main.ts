@@ -1,3 +1,4 @@
+import './instrumentation'
 
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'

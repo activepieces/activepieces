@@ -1,8 +1,11 @@
 import { api } from '@/lib/api';
-import { AnalyticsReportResponse } from '@activepieces/shared';
+import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 export const analyticsApi = {
-  get(): Promise<AnalyticsReportResponse> {
-    return api.get<AnalyticsReportResponse>('/v1/analytics');
+  get(): Promise<PlatformAnalyticsReport> {
+    return api.get<PlatformAnalyticsReport>('/v1/analytics');
+  },
+  refresh(): Promise<PlatformAnalyticsReport> {
+    return api.post<PlatformAnalyticsReport>('/v1/analytics');
   },
 };

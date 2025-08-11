@@ -1,8 +1,9 @@
-import { PieceMetadataModel  } from '@activepieces/pieces-framework'
+import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { apVersionUtil, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
+    EndpointScope,
     GetPieceRequestParams,
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
@@ -61,7 +62,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const release = req.query.release ?? latestRelease
             const edition = req.query.edition ?? ApEdition.COMMUNITY
             const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
-            const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
+            const projectId = [PrincipalType.UNKNOWN, PrincipalType.SERVICE].includes(req.principal.type) ? undefined : req.principal.projectId
             const pieceMetadataSummary = await pieceMetadataService(req.log).list({
                 release,
                 includeHidden: req.query.includeHidden ?? false,
@@ -146,6 +147,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 actionOrTriggerName: req.body.actionOrTriggerName,
                 input: req.body.input,
                 sampleData,
+                searchValue: req.body.searchValue,
                 piece: await getPiecePackageWithoutArchive(req.log, projectId, platform.id, req.body),
             })
             return result
@@ -157,12 +159,13 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 const ListPiecesRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         querystring: ListPiecesRequestQuery,
-     
+
     },
- 
+
 }
 const GetPieceParamsRequest = {
     config: {
@@ -171,9 +174,9 @@ const GetPieceParamsRequest = {
     schema: {
         params: GetPieceRequestParams,
         querystring: GetPieceRequestQuery,
-    
+
     },
-   
+
 }
 
 const GetPieceParamsWithScopeRequest = {

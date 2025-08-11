@@ -1,4 +1,3 @@
-import { t } from 'i18next';
 import { Navigate } from 'react-router-dom';
 
 import { isNil } from '@activepieces/shared';
@@ -20,7 +19,6 @@ export default function ProjectSettingsLayout({
 
   return (
     <div className="w-full md:block">
-      <h2 className="text-3xl font-bold tracking-tight">{t('Settings')}</h2>
       <div className="w-full mt-4">{children}</div>
     </div>
   );

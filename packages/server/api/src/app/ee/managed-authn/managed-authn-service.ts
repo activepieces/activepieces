@@ -35,14 +35,23 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             platformId: externalPrincipal.platformId,
             externalProjectId: externalPrincipal.externalProjectId,
         })
-        await updateProjectLimits({ platformId: project.platformId,
-            projectId: project.id, 
+
+        if (!isNil(externalPrincipal.projectDisplayName)) {
+            await projectService.update(project.id, {
+                displayName: externalPrincipal.projectDisplayName,
+            })
+        }
+
+        await updateProjectLimits({
+            platformId: project.platformId,
+            projectId: project.id,
             piecesTags: externalPrincipal.pieces.tags,
             piecesFilterType: externalPrincipal.pieces.filterType,
             tasks: externalPrincipal.tasks,
-            aiCredits: externalPrincipal.aiCredits, 
-            log, 
-            isNewProject })
+            aiCredits: externalPrincipal.aiCredits,
+            log,
+            isNewProject,
+        })
 
         const user = await getOrCreateUser(externalPrincipal, log)
 

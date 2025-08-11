@@ -110,7 +110,7 @@ export const tirePressureTrigger = createTrigger({
 			description: `Tire pressure trigger: ${getTirePressurePositionLabel(
 				tirePosition,
 			)} ${operator} ${pressureKpa} kPa`,
-			targetUri: context.webhookUrl,
+			target_uri: context.webhookUrl,
 			status: 'Active',
 			verification_token: verificationToken,
 		};

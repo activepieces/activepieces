@@ -1,5 +1,5 @@
 import {
-    ActionType,
+    FlowActionType,
     GenericStepOutput,
     StepOutputStatus,
 } from '@activepieces/shared'
@@ -9,7 +9,7 @@ describe('Logging Utils', () => {
     it('Should not truncate whole step if its log size exceeds limit', async () => {
         const steps = {
             mockStep: GenericStepOutput.create({
-                type: ActionType.CODE,
+                type: FlowActionType.CODE,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {
                     a: 'a'.repeat(1024 * 1024 * 12),

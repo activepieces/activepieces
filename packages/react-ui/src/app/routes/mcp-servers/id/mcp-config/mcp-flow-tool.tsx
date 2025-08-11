@@ -33,7 +33,7 @@ export const McpFlowTool = ({ tool, removeTool }: McpFlowToolProps) => {
 
   return (
     <Card key={`flow-${tool.id}`}>
-      <CardContent className="flex items-center justify-between p-3 h-[70px]">
+      <CardContent className="flex items-center justify-between p-3 h-[60px]">
         <div
           className="flex items-center gap-3 min-w-0 group cursor-pointer"
           onClick={openFlow}

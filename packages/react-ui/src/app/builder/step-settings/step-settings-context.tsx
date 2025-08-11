@@ -12,7 +12,7 @@ import {
   PieceMetadataModel,
   PiecePropertyMap,
 } from '@activepieces/pieces-framework';
-import { Action, setAtPath, Trigger } from '@activepieces/shared';
+import { FlowAction, setAtPath, FlowTrigger } from '@activepieces/shared';
 
 import { formUtils } from '../../../features/pieces/lib/form-utils';
 
@@ -34,14 +34,14 @@ const createUpdatedSchemaKey = (propertyKey: string) => {
 };
 
 export type StepSettingsContextState = {
-  selectedStep: Action | Trigger;
+  selectedStep: FlowAction | FlowTrigger;
   pieceModel: PieceMetadataModel | undefined;
   formSchema: TObject<any>;
   updateFormSchema: (key: string, newFieldSchema: PiecePropertyMap) => void;
 };
 
 export type StepSettingsProviderProps = {
-  selectedStep: Action | Trigger;
+  selectedStep: FlowAction | FlowTrigger;
   pieceModel: PieceMetadataModel | undefined;
   children: ReactNode;
 };

@@ -7,6 +7,7 @@ import {
 } from '@activepieces/shared';
 import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
+import { ServerContext } from './context';
 
 
 export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
@@ -100,7 +101,7 @@ type CreatePieceParams<
 };
 
 type PieceEventProcessors = {
-  parseAndReply: (ctx: { payload: EventPayload }) => ParseEventResponse;
+  parseAndReply: (ctx: { payload: EventPayload, server: Omit<ServerContext, 'token' | 'apiUrl'> }) => ParseEventResponse;
   verify: (ctx: {
     webhookSecret: string | Record<string, string>;
     payload: EventPayload;

@@ -1,0 +1,13 @@
+{
+  "Text AI": "Sms'en naar AI",
+  "Ask AI": "Vraag het AI",
+  "Summarize Text": "Samenvatting tekst",
+  "Provider": "Leverancier",
+  "Model": "Model",
+  "Prompt": "Prompt",
+  "Conversation Key": "Gesprek sleutel",
+  "Creativity": "Creativiteit",
+  "Max Tokens": "Max Tokens",
+  "Text": "Tekstveld",
+  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Door de creativiteit van de AI-respons te controleren, zal een hogere waarde de AI creatiever en een lagere waarde deterministischer maken."
+}

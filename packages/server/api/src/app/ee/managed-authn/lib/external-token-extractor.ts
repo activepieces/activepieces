@@ -172,6 +172,7 @@ export type ExternalPrincipal = {
     }
     aiCredits?: number
     tasks?: number
+    projectDisplayName?: string
 }
 
 type GetSigningKeyParams = {

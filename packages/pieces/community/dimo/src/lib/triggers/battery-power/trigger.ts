@@ -81,7 +81,7 @@ export const batteryPowerTrigger = createTrigger({
 			},
 			setup: triggerFrequency as 'Realtime' | 'Hourly',
 			description: `Battery power trigger: ${operator} ${powerWatts}W`,
-			targetUri: context.webhookUrl,
+			target_uri: context.webhookUrl,
 			status: 'Active',
 			verification_token: verificationToken,
 		};

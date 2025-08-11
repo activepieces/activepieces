@@ -11,7 +11,7 @@ import {
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
 } from '@/lib/types';
-import { ActionType, isNil, TriggerType } from '@activepieces/shared';
+import { FlowActionType, isNil, FlowTriggerType } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
@@ -27,29 +27,29 @@ const convertStepMetadataToPieceSelectorItems = (
   stepMetadataWithSuggestions: StepMetadataWithSuggestions,
 ): PieceSelectorItem[] => {
   switch (stepMetadataWithSuggestions.type) {
-    case ActionType.PIECE: {
+    case FlowActionType.PIECE: {
       const actions = pieceSelectorUtils.removeHiddenActions(
         stepMetadataWithSuggestions,
       );
       return actions.map((action) => ({
         actionOrTrigger: action,
-        type: ActionType.PIECE,
+        type: FlowActionType.PIECE,
         pieceMetadata: stepMetadataWithSuggestions,
       }));
     }
-    case TriggerType.PIECE: {
+    case FlowTriggerType.PIECE: {
       const triggers = Object.values(
         stepMetadataWithSuggestions.suggestedTriggers ?? {},
       );
       return triggers.map((trigger) => ({
         actionOrTrigger: trigger,
-        type: TriggerType.PIECE,
+        type: FlowTriggerType.PIECE,
         pieceMetadata: stepMetadataWithSuggestions,
       }));
     }
-    case ActionType.CODE:
-    case ActionType.LOOP_ON_ITEMS:
-    case ActionType.ROUTER: {
+    case FlowActionType.CODE:
+    case FlowActionType.LOOP_ON_ITEMS:
+    case FlowActionType.ROUTER: {
       return CORE_ACTIONS_METADATA.filter(
         (step) => step.type === stepMetadataWithSuggestions.type,
       );
@@ -88,10 +88,10 @@ export const PieceActionsOrTriggersList: React.FC<
         {actionsOrTriggers &&
           actionsOrTriggers.map((item, index) => {
             const isCreateTodoAction =
-              item.type === ActionType.PIECE &&
+              item.type === FlowActionType.PIECE &&
               item.actionOrTrigger.name === 'createTodo';
             const isRunAgentAction =
-              item.type === ActionType.PIECE &&
+              item.type === FlowActionType.PIECE &&
               item.actionOrTrigger.name === 'run_agent';
 
             if (isCreateTodoAction) {

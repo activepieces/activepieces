@@ -1,4 +1,4 @@
-import { Action, ActionType } from '../actions/action'
+import { FlowAction, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { DeleteActionRequest } from './index'
@@ -11,21 +11,21 @@ function _deleteAction(
     for (const name of request.names) {
         clonedVersion = flowStructureUtil.transferFlow(clonedVersion, (parentStep) => {
             if (parentStep.nextAction && parentStep.nextAction.name === name) {
-                const stepToUpdate: Action = parentStep.nextAction
+                const stepToUpdate: FlowAction = parentStep.nextAction
                 parentStep.nextAction = stepToUpdate.nextAction
             }
             switch (parentStep.type) {
-                case ActionType.LOOP_ON_ITEMS: {
+                case FlowActionType.LOOP_ON_ITEMS: {
                     if (
                         parentStep.firstLoopAction &&
                         parentStep.firstLoopAction.name === name
                     ) {
-                        const stepToUpdate: Action = parentStep.firstLoopAction
+                        const stepToUpdate: FlowAction = parentStep.firstLoopAction
                         parentStep.firstLoopAction = stepToUpdate.nextAction
                     }
                     break
                 }
-                case ActionType.ROUTER: {
+                case FlowActionType.ROUTER: {
                     parentStep.children = parentStep.children.map((child) => {
                         if (child && child.name === name) {
                             return child.nextAction ?? null

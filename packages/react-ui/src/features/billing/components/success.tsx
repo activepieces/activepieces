@@ -75,7 +75,7 @@ export const Success = () => {
   const IconComponent = config.icon;
 
   return (
-    <div className="h-full bg-background flex items-center justify-center p-4">
+    <div className="h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <CardContent className="pt-8 pb-6 px-6">
           <div className="text-center space-y-6">

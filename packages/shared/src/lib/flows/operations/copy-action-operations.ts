@@ -1,9 +1,9 @@
-import { Action } from '../actions/action'
+import { FlowAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { _getImportOperations } from './import-flow'
 
-export function _getActionsForCopy(selectedSteps: string[], flowVersion: FlowVersion): Action[] {
+export function _getActionsForCopy(selectedSteps: string[], flowVersion: FlowVersion): FlowAction[] {
     const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
     const actionsToCopy = selectedSteps
         .map((stepName) => flowStructureUtil.getStepOrThrow(stepName, flowVersion.trigger))
@@ -15,5 +15,5 @@ export function _getActionsForCopy(selectedSteps: string[], flowVersion: FlowVer
             clonedAction.nextAction = undefined
             return clonedAction
         })
-        .sort((a, b) => allSteps.indexOf(a) - allSteps.indexOf(b)) as Action[]
+        .sort((a, b) => allSteps.indexOf(a) - allSteps.indexOf(b)) as FlowAction[]
 }

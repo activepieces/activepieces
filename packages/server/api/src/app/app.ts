@@ -8,6 +8,7 @@ import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifySocketIO from 'fastify-socket'
 import { Socket } from 'socket.io'
 import { agentModule } from './agents/agent-module'
+import { agentRunsModule } from './agents/agent-runs/agent-runs-module'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
@@ -19,7 +20,7 @@ import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { getRedisConnection } from './database/redis-connection'
 import { alertsModule } from './ee/alerts/alerts-module'
-import { analyticsModule } from './ee/analytics/analytics.module'
+import { platformAnalyticsModule } from './ee/analytics/platform-analytics.module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
@@ -52,6 +53,7 @@ import { gitRepoModule } from './ee/projects/project-release/git-sync/git-sync.m
 import { projectReleaseModule } from './ee/projects/project-release/project-release.module'
 import { projectRoleModule } from './ee/projects/project-role/project-role.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
+import { solutionsModule } from './ee/solutions/solutions.module'
 import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
@@ -62,7 +64,6 @@ import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { issuesModule } from './flows/issues/issues-module'
-import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { QueueMode, system } from './helper/system/system'
@@ -82,6 +83,7 @@ import { tablesModule } from './tables/tables.module'
 import { tagsModule } from './tags/tags-module'
 import { todoActivityModule } from './todos/activity/todos-activity.module'
 import { todoModule } from './todos/todo.module'
+import { triggerModule } from './trigger/trigger.module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
@@ -210,10 +212,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(webhookModule)
     await app.register(appConnectionModule)
     await app.register(openapiModule)
-    await app.register(triggerEventModule)
     await app.register(appEventRoutingModule)
     await app.register(authenticationModule)
     await app.register(copilotModule),
+    await app.register(triggerModule)
     await app.register(platformModule)
     await app.register(humanInputModule)
     await app.register(tagsModule)
@@ -233,6 +235,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(changelogModule)
     await app.register(agentModule)
     await app.register(todoActivityModule)
+    await app.register(agentRunsModule)
+    await app.register(solutionsModule)
     
     app.get(
         '/redirect',
@@ -286,7 +290,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(analyticsModule)
+            await app.register(platformAnalyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
@@ -314,7 +318,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(analyticsModule)
+            await app.register(platformAnalyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)

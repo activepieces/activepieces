@@ -11,6 +11,7 @@ export const Mcp = Type.Object({
     projectId: ApId,
     token: ApId,
     agentId: Type.Optional(ApId),
+    externalId: ApId,
 })
 
 export type Mcp = Static<typeof Mcp>

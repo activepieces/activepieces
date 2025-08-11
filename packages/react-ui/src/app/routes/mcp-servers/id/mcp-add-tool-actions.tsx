@@ -16,6 +16,7 @@ import {
   McpToolType,
   Permission,
   McpWithTools,
+  McpToolRequest,
 } from '@activepieces/shared';
 
 import { McpFlowDialog } from './mcp-flow-tool-dialog';
@@ -23,14 +24,14 @@ import { McpPieceDialog } from './mcp-piece-tool-dialog';
 
 type McpAddToolDropdownProps = {
   mcp: McpWithTools;
-  refetchMcp: () => void;
   tools: McpTool[];
+  onToolsUpdate: (tools: McpToolRequest[]) => void;
 };
 
 export const McpAddToolDropdown = ({
   mcp,
-  refetchMcp,
   tools,
+  onToolsUpdate,
 }: McpAddToolDropdownProps) => {
   const { checkAccess } = useAuthorization();
   const doesUserHavePermissionToWriteMcp = checkAccess(Permission.WRITE_MCP);
@@ -51,15 +52,15 @@ export const McpAddToolDropdown = ({
         >
           <Button disabled={!doesUserHavePermissionToWriteMcp} variant="basic">
             <span>{t('Add tool')}</span>
-            <ChevronDown className="h-4 w-4 ml-2 " />
+            <ChevronDown className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <McpPieceDialog
             open={showAddPieceDialog}
             mcp={mcp}
-            onSuccess={() => {
-              refetchMcp();
+            onToolsUpdate={(tools) => {
+              onToolsUpdate(tools);
               setShowAddPieceDialog(false);
               setOpenDropdown(false);
             }}
@@ -85,8 +86,8 @@ export const McpAddToolDropdown = ({
             selectedFlows={tools
               .filter((tool) => tool.type === McpToolType.FLOW)
               .map((tool) => tool.flowId!)}
-            onSuccess={() => {
-              refetchMcp();
+            onToolsUpdate={(newTools) => {
+              onToolsUpdate(newTools);
               setShowAddFlowDialog(false);
               setOpenDropdown(false);
             }}
@@ -94,6 +95,7 @@ export const McpAddToolDropdown = ({
               setShowAddFlowDialog(false);
               setOpenDropdown(false);
             }}
+            tools={tools}
           >
             <DropdownMenuItem
               disabled={!doesUserHavePermissionToWriteMcp}

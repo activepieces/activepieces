@@ -19,8 +19,8 @@ import {
 } from '@/components/ui/context-menu';
 import { Shortcut, ShortcutProps } from '@/components/ui/shortcut';
 import {
-  Action,
-  ActionType,
+  FlowAction,
+  FlowActionType,
   FlowOperationType,
   flowStructureUtil,
   StepLocationRelativeToParent,
@@ -79,7 +79,8 @@ export const CanvasContextMenuContent = ({
   const disabled = selectedNodes.length === 0;
   const areAllStepsSkipped = selectedNodes.every(
     (node) =>
-      !!(flowStructureUtil.getStep(node, flowVersion.trigger) as Action)?.skip,
+      !!(flowStructureUtil.getStep(node, flowVersion.trigger) as FlowAction)
+        ?.skip,
   );
   const doSelectedNodesIncludeTrigger = selectedNodes.some(
     (node) => node === flowVersion.trigger.name,
@@ -93,12 +94,12 @@ export const CanvasContextMenuContent = ({
     !readonly && contextMenuType === ContextMenuType.CANVAS;
   const showPasteAsFirstLoopAction =
     selectedNodes.length === 1 &&
-    firstSelectedStep?.type === ActionType.LOOP_ON_ITEMS &&
+    firstSelectedStep?.type === FlowActionType.LOOP_ON_ITEMS &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
   const showPasteAsBranchChild =
     selectedNodes.length === 1 &&
-    firstSelectedStep?.type === ActionType.ROUTER &&
+    firstSelectedStep?.type === FlowActionType.ROUTER &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
   const showPasteAfterCurrentStep =

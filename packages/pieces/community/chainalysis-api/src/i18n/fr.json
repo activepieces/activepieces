@@ -1,0 +1,9 @@
+{
+  "Chainalysis Screening API": "API de dépistage de chainalyse",
+  "Chainalysis Screening API allows you to check if a blockchain address is sanctioned.": "L'API de filtrage de chaînes vous permet de vérifier si une adresse blockchain est sanctionnée.",
+  "API Key for Chainalysis Screening API": "Clé API pour l'API de filtrage de chainalyse",
+  "Check Address Sanctions": "Vérifier les sanctions d'adresse",
+  "Check if an address is sanctioned": "Vérifier si une adresse est sanctionnée",
+  "Address": "Adresses",
+  "Address to check for sanctions": "Adresse pour vérifier les sanctions"
+}

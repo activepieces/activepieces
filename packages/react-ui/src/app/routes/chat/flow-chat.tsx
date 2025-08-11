@@ -142,7 +142,6 @@ export function FlowChat({
     },
 
     onSuccess: (result) => {
-      console.log(result);
       if (mode === ChatDrawerSource.TEST_STEP) {
         closeChat?.();
       }
@@ -212,7 +211,6 @@ export function FlowChat({
 
   const handleSendMessage = (message: ChatMessage) => {
     onSendingMessage?.(message);
-
     sendMessage({ isRetrying: false, message });
   };
 

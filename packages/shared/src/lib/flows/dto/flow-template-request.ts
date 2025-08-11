@@ -15,7 +15,7 @@ export enum TemplateType {
     PLATFORM = 'PLATFORM',
     PROJECT = 'PROJECT',
 }
- 
+
 export const FlowTemplate = Type.Object({
     ...BaseModelSchema,
     name: Type.String(),

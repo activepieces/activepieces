@@ -1,7 +1,7 @@
 import { cva } from 'class-variance-authority';
 import { t } from 'i18next';
 
-import { Trigger, flowStructureUtil } from '@activepieces/shared';
+import { FlowTrigger, flowStructureUtil } from '@activepieces/shared';
 
 import {
   Tooltip,
@@ -34,7 +34,7 @@ export function PieceIconList({
   trigger,
   size,
 }: {
-  trigger: Trigger;
+  trigger: FlowTrigger;
   maxNumberOfIconsToShow: number;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 }) {

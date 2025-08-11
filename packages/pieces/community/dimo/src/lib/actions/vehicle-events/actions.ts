@@ -1,59 +1,44 @@
 import { ActionContext, createAction, CustomAuthProperty, Property } from "@activepieces/pieces-framework";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { AuthenticationType, httpClient } from "@activepieces/pieces-common";
 import { VEHICLE_EVENTS_OPERATIONS } from "./constant";
 import { VehicleEventsParams, VehicleEventsBodyType } from "./type";
 import { dimoAuth } from '../../../index';
 import { DimoClient, vehicleEventTriggerToText } from "../../common/helpers";
 import { operatorStaticDropdown, verificationTokenInput } from '../../common/props';
 import { TriggerField } from '../../common/constants';
-import type { CreateWebhookParams, VehicleEventTrigger } from '../../common/types';
 
 async function sendVehicleEventsRequest({ ctx, opKey }: { ctx: ActionContext<CustomAuthProperty<any>>, opKey: keyof typeof VEHICLE_EVENTS_OPERATIONS }) {
   const op = VEHICLE_EVENTS_OPERATIONS[opKey];
-  const { webhookId, tokenId, data, operator, value, triggerFrequency, targetUri, status, verificationToken, description } = ctx.propsValue;
+  const { webhookId, tokenId, data, operator, triggerNumber, triggerExpression, triggerFrequency, targetUri, status, verificationToken, description } = ctx.propsValue;
   const { clientId, apiKey, redirectUri } = ctx.auth;
   const dimo = new DimoClient({ clientId, apiKey, redirectUri });
 
   const developerJwt = await dimo.getDeveloperJwt();
 
-  let webhookDefinition: CreateWebhookParams | undefined = undefined;
-
-  if (op.bodyType === VehicleEventsBodyType.WebhookDefinition) {
-    const trigger = { field: data, operator, value } as VehicleEventTrigger;
-    webhookDefinition = {
-      service: 'Telemetry',
-      data,
-      trigger: trigger,
-      setup: triggerFrequency,
-      description,
-      targetUri,
-      status,
-      verification_token: verificationToken,
-    };
-  }
   if (op.requiredFields) {
     for (const field of op.requiredFields) {
-      if (field === 'webhookDefinition') {
-        if (webhookDefinition === undefined || webhookDefinition === null) {
-          throw new Error(`webhookDefinition is required for this operation.`);
-        }
-      } else {
-        if (ctx.propsValue[field] === undefined || ctx.propsValue[field] === null || ctx.propsValue[field] === "") {
-          throw new Error(`${field} is required for this operation.`);
-        }
+      if (ctx.propsValue[field] === undefined || ctx.propsValue[field] === null || ctx.propsValue[field] === "") {
+        throw new Error(`${field} is required for this operation.`);
       }
     }
   }
+
   const params: VehicleEventsParams = { webhookId, tokenId };
   const url = op.url(params);
   const method = op.method;
+
   let body: unknown = undefined;
   switch (op.bodyType) {
     case VehicleEventsBodyType.WebhookDefinition: {
-        const { trigger, ...rest } = webhookDefinition!;
         body = {
-          ...rest,
-          trigger: vehicleEventTriggerToText(trigger)
+          service: 'Telemetry',
+          data,
+          setup: triggerFrequency,
+          description,
+          target_uri: targetUri,
+          status,
+          verification_token: verificationToken,
+          trigger: vehicleEventTriggerToText(data, operator, triggerNumber, triggerExpression)
         }
       break;
     }
@@ -70,19 +55,19 @@ async function sendVehicleEventsRequest({ ctx, opKey }: { ctx: ActionContext<Cus
       token: developerJwt,
     },
   });
-  if (
-    method === HttpMethod.DELETE ||
-    (method === HttpMethod.POST && op.bodyType === VehicleEventsBodyType.None)
-  ) {
-    return { success: true };
+
+  if(response.status > 299)
+  {
+    throw new Error(`Error calling Vehicle Events API: ${response.body?.message || response.status}`);
   }
+
   return response.body;
 }
 
 const listWebhooksAction = createAction({
   auth: dimoAuth,
-  name: "list-webhooks-action",
-  displayName: "List Webhooks",
+  name: "vehicle-events-list-webhooks-action",
+  displayName: "Vehicle Events: List Webhooks",
   description: "List all webhooks.",
   props: {},
   async run(ctx) {
@@ -90,24 +75,40 @@ const listWebhooksAction = createAction({
   },
 });
 
-const createWebhookAction = createAction({
+const upsertWebhookNumericAction = createAction({
   auth: dimoAuth,
-  name: "create-webhook-action",
-  displayName: "Create Webhook",
-  description: "Create a new webhook.",
+  name: "vehicle-events-upsert-webhook-numeric-action",
+  displayName: "Vehicle Events: Create/Update Webhook (Numeric)",
+  description: "Create a new webhook or update existing one for numeric vehicle signals. If Webhook ID is provided, it will update; otherwise, it will create a new webhook.",
   props: {
+    webhookId: Property.ShortText({
+      displayName: "Webhook ID (Optional)",
+      description: "ID of the webhook to update. Leave empty to create a new webhook.",
+      required: false,
+    }),
     data: Property.StaticDropdown({
       displayName: 'Signal/Data',
-      description: 'Which vehicle signal to monitor',
+      description: 'Which numeric vehicle signal to monitor',
       required: true,
       options: {
-        options: Object.values(TriggerField).map((field) => ({ label: field, value: field })),
+        options: [
+          { label: 'Speed', value: TriggerField.Speed },
+          { label: 'Travelled Distance', value: TriggerField.PowertrainTransmissionTravelledDistance },
+          { label: 'Fuel Level (Relative)', value: TriggerField.PowertrainFuelSystemRelativeLevel },
+          { label: 'Fuel Level (Absolute)', value: TriggerField.PowertrainFuelSystemAbsoluteLevel },
+          { label: 'Battery Power', value: TriggerField.PowertrainTractionBatteryCurrentPower },
+          { label: 'Battery State of Charge', value: TriggerField.PowertrainTractionBatteryStateOfChargeCurrent },
+          { label: 'Tire Pressure (Front Left)', value: TriggerField.ChassisAxleRow1WheelLeftTirePressure },
+          { label: 'Tire Pressure (Front Right)', value: TriggerField.ChassisAxleRow1WheelRightTirePressure },
+          { label: 'Tire Pressure (Rear Left)', value: TriggerField.ChassisAxleRow2WheelLeftTirePressure },
+          { label: 'Tire Pressure (Rear Right)', value: TriggerField.ChassisAxleRow2WheelRightTirePressure },
+        ],
       },
     }),
     operator: operatorStaticDropdown,
-    value: Property.ShortText({
+    triggerNumber: Property.Number({
       displayName: 'Trigger Value',
-      description: 'Value to compare against (number, boolean için true/false, string için text)',
+      description: 'Numeric value to compare against (e.g., speed in km/h, fuel percentage, battery watts, tire pressure in PSI)',
       required: true,
     }),
     triggerFrequency: Property.StaticDropdown({
@@ -147,33 +148,48 @@ const createWebhookAction = createAction({
     }),
   },
   async run(ctx) {
-    return sendVehicleEventsRequest({ ctx, opKey: "createWebhook" });
+    const { webhookId } = ctx.propsValue;
+    const opKey = webhookId ? "updateWebhook" : "createWebhook";
+    return sendVehicleEventsRequest({ ctx, opKey });
   },
 });
 
-const updateWebhookAction = createAction({
+const upsertWebhookBooleanAction = createAction({
   auth: dimoAuth,
-  name: "update-webhook-action",
-  displayName: "Update Webhook",
-  description: "Update an existing webhook.",
+  name: "vehicle-events-upsert-webhook-boolean-action",
+  displayName: "Vehicle Events: Create/Update Webhook (Boolean)",
+  description: "Create a new webhook or update existing one for boolean vehicle signals. If Webhook ID is provided, it will update; otherwise, it will create a new webhook.",
   props: {
     webhookId: Property.ShortText({
-      displayName: "Webhook ID",
-      description: "ID of the webhook.",
-      required: true,
+      displayName: "Webhook ID (Optional)",
+      description: "ID of the webhook to update. Leave empty to create a new webhook.",
+      required: false,
     }),
     data: Property.StaticDropdown({
       displayName: 'Signal/Data',
-      description: 'Which vehicle signal to monitor',
+      description: 'Which boolean vehicle signal to monitor',
       required: true,
       options: {
-        options: Object.values(TriggerField).map((field) => ({ label: field, value: field })),
+        options: [
+          { label: 'Battery Charging Status', value: TriggerField.PowertrainTractionBatteryChargingIsCharging },
+           { label: 'Ignition Status', value: TriggerField.IsIgnitionOn },
+        ],
       },
     }),
-    operator: operatorStaticDropdown,
-    value: Property.ShortText({
+    operator: Property.StaticDropdown({
+      displayName: 'Operator',
+      description: 'Comparison operator',
+      required: true,
+      defaultValue: 'equal',
+      options: {
+        options: [
+          { label: 'Is', value: 'equal' },
+        ],
+      },
+    }),
+    triggerExpression: Property.Checkbox({
       displayName: 'Trigger Value',
-      description: 'Value to compare against (number, boolean için true/false, string için text)',
+      description: 'Boolean value to compare against (checked = true/charging, unchecked = false/not charging)',
       required: true,
     }),
     triggerFrequency: Property.StaticDropdown({
@@ -213,14 +229,16 @@ const updateWebhookAction = createAction({
     }),
   },
   async run(ctx) {
-    return sendVehicleEventsRequest({ ctx, opKey: "updateWebhook" });
+    const { webhookId } = ctx.propsValue;
+    const opKey = webhookId ? "updateWebhook" : "createWebhook";
+    return sendVehicleEventsRequest({ ctx, opKey });
   },
 });
 
 const deleteWebhookAction = createAction({
   auth: dimoAuth,
-  name: "delete-webhook-action",
-  displayName: "Delete Webhook",
+  name: "vehicle-events-delete-webhook-action",
+  displayName: "Vehicle Events: Delete Webhook",
   description: "Delete a webhook.",
   props: {
     webhookId: Property.ShortText({
@@ -236,8 +254,8 @@ const deleteWebhookAction = createAction({
 
 const listSignalsAction = createAction({
   auth: dimoAuth,
-  name: "list-signals-action",
-  displayName: "List Signals",
+  name: "vehicle-events-list-signals-action",
+  displayName: "Vehicle Events: List Signals",
   description: "List all signals.",
   props: {},
   async run(ctx) {
@@ -247,8 +265,8 @@ const listSignalsAction = createAction({
 
 const listSubscribedVehiclesAction = createAction({
   auth: dimoAuth,
-  name: "list-subscribed-vehicles-action",
-  displayName: "List Subscribed Vehicles",
+  name: "vehicle-events-list-subscribed-vehicles-action",
+  displayName: "Vehicle Events: List Subscribed Vehicles",
   description: "List vehicles subscribed to a webhook.",
   props: {
     webhookId: Property.ShortText({
@@ -264,8 +282,8 @@ const listSubscribedVehiclesAction = createAction({
 
 const listVehicleSubscriptionsAction = createAction({
   auth: dimoAuth,
-  name: "list-vehicle-subscriptions-action",
-  displayName: "List Vehicle Subscriptions",
+  name: "vehicle-events-list-vehicle-subscriptions-action",
+  displayName: "Vehicle Events: List Vehicle Subscriptions",
   description: "List all subscriptions for a vehicle.",
   props: {
     tokenId: Property.Number({
@@ -281,8 +299,8 @@ const listVehicleSubscriptionsAction = createAction({
 
 const subscribeVehicleAction = createAction({
   auth: dimoAuth,
-  name: "subscribe-vehicle-action",
-  displayName: "Subscribe Vehicle",
+  name: "vehicle-events-subscribe-vehicle-action",
+  displayName: "Vehicle Events: Subscribe Vehicle",
   description: "Subscribe a vehicle to a webhook.",
   props: {
     webhookId: Property.ShortText({
@@ -303,8 +321,8 @@ const subscribeVehicleAction = createAction({
 
 const subscribeAllVehiclesAction = createAction({
   auth: dimoAuth,
-  name: "subscribe-all-vehicles-action",
-  displayName: "Subscribe All Vehicles",
+  name: "vehicle-events-subscribe-all-vehicles-action",
+  displayName: "Vehicle Events: Subscribe All Vehicles",
   description: "Subscribe all vehicles to a webhook.",
   props: {
     webhookId: Property.ShortText({
@@ -320,8 +338,8 @@ const subscribeAllVehiclesAction = createAction({
 
 const unsubscribeVehicleAction = createAction({
   auth: dimoAuth,
-  name: "unsubscribe-vehicle-action",
-  displayName: "Unsubscribe Vehicle",
+  name: "vehicle-events-unsubscribe-vehicle-action",
+  displayName: "Vehicle Events: Unsubscribe Vehicle",
   description: "Unsubscribe a vehicle from a webhook.",
   props: {
     webhookId: Property.ShortText({
@@ -342,8 +360,8 @@ const unsubscribeVehicleAction = createAction({
 
 const unsubscribeAllVehiclesAction = createAction({
   auth: dimoAuth,
-  name: "unsubscribe-all-vehicles-action",
-  displayName: "Unsubscribe All Vehicles",
+  name: "vehicle-events-unsubscribe-all-vehicles-action",
+  displayName: "Vehicle Events: Unsubscribe All Vehicles",
   description: "Unsubscribe all vehicles from a webhook.",
   props: {
     webhookId: Property.ShortText({
@@ -361,8 +379,8 @@ const unsubscribeAllVehiclesAction = createAction({
 
 export const vehicleEventsApiActions = [
   listWebhooksAction,
-  createWebhookAction,
-  updateWebhookAction,
+  upsertWebhookNumericAction,
+  upsertWebhookBooleanAction,
   deleteWebhookAction,
   listSignalsAction,
   listSubscribedVehiclesAction,

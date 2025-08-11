@@ -1,0 +1,13 @@
+{
+  "Supadata": "Supadata",
+  "YouTube Transcripts": "Transcrições do YouTube",
+  "\nTo obtain your free Supadata API Key, sign up at [Supadata](https://supadata.ai) and then copy the key available in the [dashboard](https://dash.supadata.ai).\n": "\nTo obtain your free Supadata API Key, sign up at [Supadata](https://supadata.ai) and then copy the key available in the [dashboard](https://dash.supadata.ai).\n",
+  "Get Transcript": "Get Transcript",
+  "Fetches transcript of a YouTube video.": "Obtém a transcrição de um vídeo do YouTube.",
+  "YouTube URL": "URL do YouTube",
+  "Language Preference": "Preferência de Idioma",
+  "Merge Text": "Mesclar Texto",
+  "The URL of a single YouTube video.": "A URL de um único vídeo do YouTube.",
+  "Preferred language of the transcript. If not available, the first available language will be returned.": "Idioma preferido da transcrição. Se não estiver disponível, o primeiro idioma disponível será devolvido.",
+  "If true, the transcript will be merged into a single text instead of timestamped chunks.": "Se verdadeiro, a transcrição será mesclada em um único texto ao invés de pedaços de tempo."
+}

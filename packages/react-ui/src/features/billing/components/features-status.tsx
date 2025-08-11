@@ -12,7 +12,7 @@ const LICENSE_PROPS_MAP = {
     label: 'Agents',
     description: 'AI assistants that can help automate tasks and workflows',
   },
-  environmentEnabled: {
+  environmentsEnabled: {
     label: 'Team Collaboration via Git',
     description:
       'Work together on projects with version control and team features',

@@ -35,7 +35,9 @@ export class FireberryClient {
           if (body.error.message) return body.error.message;
         }
         if (body?.message) return body.message;
-      } catch {}
+      } catch {
+        return 'Unknown error';
+      }
     }
     if (error?.message) return error.message;
     return 'Unknown error';

@@ -17,6 +17,7 @@ export const UpdateRecordRequest = Type.Object({
         value: Type.String(),
     }))),
     tableId: Type.String(),
+    agentUpdate: Type.Optional(Type.Boolean()),
 })
 
 export type UpdateRecordRequest = Static<typeof UpdateRecordRequest>

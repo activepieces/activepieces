@@ -28,7 +28,7 @@ export enum ToolCallType {
 const ToolCallBase = {
     type: Type.Literal(ContentBlockType.TOOL_CALL),
     input: Nullable(Type.Record(Type.String(), Type.Unknown())),
-    output: Type.Unknown(),
+    output: Type.Optional(Type.Unknown()),
     toolName: Type.String(),
     status: Type.Enum(ToolCallStatus),
     toolCallId: Type.String(),

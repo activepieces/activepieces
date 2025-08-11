@@ -1,5 +1,5 @@
 import { aiProps } from '@activepieces/pieces-common';
-import { SUPPORTED_AI_PROVIDERS, createAIProvider } from '@activepieces/shared';
+import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, createAIProvider } from '@activepieces/shared';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { CoreMessage, LanguageModel, generateText } from 'ai';
 
@@ -48,6 +48,9 @@ export const askAI = createAction({
       modelInstance,
       apiKey: engineToken,
       baseURL,
+      metadata: {
+        feature: AIUsageFeature.TEXT_AI,
+      },
     });
 
     const conversationKey = context.propsValue.conversationKey
@@ -73,11 +76,13 @@ export const askAI = createAction({
           content: context.propsValue.prompt,
         },
       ],
-      maxTokens: context.propsValue.maxTokens,
+      maxTokens: providerName !== 'openai' ? context.propsValue.maxTokens : undefined,
       temperature: (context.propsValue.creativity ?? 100) / 100,
-      headers: {
-        'Authorization': `Bearer ${engineToken}`,
-      },
+      providerOptions: {
+        [providerName]: {
+          ...(providerName === 'openai' && context.propsValue.maxTokens ? { max_completion_tokens: context.propsValue.maxTokens } : {}),
+        }
+      }
     });
 
     conversation?.push({

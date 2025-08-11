@@ -5,7 +5,7 @@ import { HttpError } from '@activepieces/pieces-common';
 
 const createVinVcAction = createAction({
 	auth: dimoAuth,
-	name: 'create-vin-vc',
+	name: 'attestation-create-vin-vc',
 	displayName: 'Attestation : Create VIN VC',
 	description: 'Generates the VIN VC for a given vehicle.',
 	props: {

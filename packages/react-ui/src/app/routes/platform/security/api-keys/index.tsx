@@ -5,6 +5,7 @@ import { Key, Plus, Trash } from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
@@ -71,24 +72,24 @@ const ApiKeysPage = () => {
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/api-keys.mp4"
     >
       <div className="flex-col w-full">
-        <div className="mb-4 flex">
-          <div className="flex items-center justify-between flex-row w-full">
-            <span className="text-2xl font-bold w-full">{t('API Keys')}</span>
-            <NewApiKeyDialog
-              onCreate={() =>
-                queryClient.invalidateQueries({ queryKey: ['api-keys'] })
-              }
+        <DashboardPageHeader
+          title={t('API Keys')}
+          description={t('Mange API keys')}
+        >
+          <NewApiKeyDialog
+            onCreate={() =>
+              queryClient.invalidateQueries({ queryKey: ['api-keys'] })
+            }
+          >
+            <Button
+              size="sm"
+              className="flex items-center justify-center gap-2"
             >
-              <Button
-                size="sm"
-                className="flex items-center justify-center gap-2"
-              >
-                <Plus className="size-4" />
-                {t('New Api Key')}
-              </Button>
-            </NewApiKeyDialog>
-          </div>
-        </div>
+              <Plus className="size-4" />
+              {t('New Api Key')}
+            </Button>
+          </NewApiKeyDialog>
+        </DashboardPageHeader>
         <DataTable
           emptyStateTextTitle={t('No API keys found')}
           emptyStateTextDescription={t(

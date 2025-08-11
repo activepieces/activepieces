@@ -1,0 +1,20 @@
+{
+  "Delay": "Vertraging",
+  "Use it to delay the execution of the next action": "Gebruik het om de uitvoering van de volgende actie te vertragen",
+  "Delay For": "Vertraging voor",
+  "Delay Until": "Vertraging tot",
+  "Delays the execution of the next action for a given duration": "Vertraagd de uitvoering van de volgende actie voor een bepaalde duur",
+  "Delays the execution of the next action until a given timestamp": "Vertraagd de uitvoering van de volgende actie tot een bepaalde tijdstempel",
+  "Markdown": "Markdown",
+  "Unit": "Eenheid",
+  "Amount": "Hoeveelheid",
+  "Date and Time": "Datum en tijd",
+  "\n**Note:** The maximum duration per step is {{pausedFlowTimeoutDays}} days.\n": "\n**Opmerking:** De maximale duur per stap is {{pausedFlowTimeoutDays}} dagen.\n",
+  "The unit of time to delay the execution of the next action": "De eenheid van tijd om de uitvoering van de volgende actie te vertragen",
+  "The number of units to delay the execution of the next action": "Het aantal eenheden om de uitvoering van de volgende actie te vertragen",
+  "Specifies the date and time until which the execution of the next action should be delayed. It supports multiple formats, including ISO format.": "Specificeert de datum en tijd tot waarop de uitvoering van de volgende actie moet worden vertraagd. Het ondersteunt meerdere formaten, waaronder ISO-formaat.",
+  "Seconds": "seconden",
+  "Minutes": "minuten",
+  "Hours": "Uren",
+  "Days": "dagen"
+}

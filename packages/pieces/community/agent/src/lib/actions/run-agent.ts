@@ -1,6 +1,8 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { agentCommon } from '../common';
-import { agentExecutor } from '../agent-executor';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AgentRun, RunAgentRequestBody } from '@activepieces/shared';
+import { StatusCodes } from 'http-status-codes';
 
 
 export const runAgent = createAction({
@@ -32,7 +34,7 @@ export const runAgent = createAction({
           options: agentPage.body.data.map((agent) => {
             return {
               label: agent.displayName,
-              value: agent.id,
+              value: agent.externalId,
             };
           }),
         }
@@ -48,20 +50,47 @@ export const runAgent = createAction({
     const { agentId, prompt } = context.propsValue
     const serverToken = context.server.token;
 
-
-
-    return agentExecutor.execute({
-      agentId,
+    const body: RunAgentRequestBody = {
+      externalId: agentId,
       prompt,
-      update: async (data: Record<string, unknown>) => {
+    }
+
+    const response = await httpClient.sendRequest<AgentRun>({
+      method: HttpMethod.POST,
+      url: `${context.server.publicUrl}v1/agent-runs`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: serverToken,
+      },
+      body
+    })
+
+    if (response.status !== StatusCodes.OK) {
+      throw new Error(response.body.message)
+    }
+
+    const agentRun = await agentCommon.pollAgentRunStatus({
+      publicUrl: context.server.publicUrl,
+      token: serverToken,
+      agentRunId: response.body.id,
+      update: async (data: AgentRun) => {
         await context.output.update({
-          data,
+          data: mapAgentRunToOutput(data),
         })
       },
-      serverToken,
-      publicUrl: context.server.publicUrl,
-      flowId: context.flows.current.id,
-      runId: context.run.id,
-    })
+    });
+
+    return mapAgentRunToOutput(agentRun)
   },
 });
+
+
+function mapAgentRunToOutput(agentRun: AgentRun): Record<string, unknown> {
+  return {
+    steps: agentRun.steps,
+    status: agentRun.status,
+    output: agentRun.output,
+    agentRunId: agentRun.id,
+    message: agentRun.message
+  }
+}

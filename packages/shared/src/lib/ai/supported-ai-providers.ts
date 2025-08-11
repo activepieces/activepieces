@@ -50,7 +50,15 @@ export type DALLE2PricingPerImage = TableData<
 number
 >
 
-type ImageModelPricing = DALLE3PricingPerImage | DALLE2PricingPerImage | number
+export type GPTImage1PricingPerImage = {
+    input: {
+        image: number
+        text: number
+    }
+    output: number
+}
+
+type ImageModelPricing = DALLE3PricingPerImage | DALLE2PricingPerImage | GPTImage1PricingPerImage | number
 
 // $ per million tokens
 export type FlatLanguageModelPricing = {
@@ -105,6 +113,42 @@ It is strongly recommended that you add your credit card information to your Ope
         },
         streaming: true,
         languageModels: [
+            {
+                displayName: 'GPT-5',
+                instance: openai('gpt-5'),
+                functionCalling: true,
+                pricing: {
+                    input: 1.25,
+                    output: 10.00,
+                },
+            },
+            {
+                displayName: 'GPT-5 Chat',
+                instance: openai('gpt-5-chat-latest'),
+                functionCalling: false,
+                pricing: {
+                    input: 1.25,
+                    output: 10.00,
+                },
+            },
+            {
+                displayName: 'GPT-5 Mini',
+                instance: openai('gpt-5-mini'),
+                functionCalling: true,
+                pricing: {
+                    input: 0.25,
+                    output: 2.00,
+                },
+            },
+            {
+                displayName: 'GPT-5 Nano',
+                instance: openai('gpt-5-nano'),
+                functionCalling: true,
+                pricing: {
+                    input: 0.05,
+                    output: 0.40,
+                },
+            },
             {
                 displayName: 'GPT-4o',
                 instance: openai('gpt-4o'),
@@ -197,6 +241,17 @@ It is strongly recommended that you add your credit card information to your Ope
             },
         ],
         imageModels: [
+            {
+                displayName: 'GPT-Image-1',
+                instance: openai.image('gpt-image-1'),
+                pricing: {
+                    input: {
+                        image: 10.00,
+                        text: 5.00,
+                    },
+                    output: 40.00,
+                },
+            },
             {
                 displayName: 'DALL-E 3',
                 instance: openai.image('dall-e-3'),

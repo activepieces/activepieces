@@ -1,0 +1,20 @@
+{
+  "Delay": "遅延",
+  "Use it to delay the execution of the next action": "次のアクションの実行を遅らせるために使用する",
+  "Delay For": "遅延",
+  "Delay Until": "までの遅延",
+  "Delays the execution of the next action for a given duration": "指定された期間の次のアクションの実行を遅らせます。",
+  "Delays the execution of the next action until a given timestamp": "指定したタイムスタンプまで次のアクションの実行を遅らせます。",
+  "Markdown": "Markdown",
+  "Unit": "単位",
+  "Amount": "金額",
+  "Date and Time": "日付と時刻",
+  "\n**Note:** The maximum duration per step is {{pausedFlowTimeoutDays}} days.\n": "\n**注意:** ステップあたりの最大期間は {{pausedFlowTimeoutDays}} 日です。\n",
+  "The unit of time to delay the execution of the next action": "次のアクションの実行を遅らせる時間の単位",
+  "The number of units to delay the execution of the next action": "次のアクションの実行を遅らせるユニット数",
+  "Specifies the date and time until which the execution of the next action should be delayed. It supports multiple formats, including ISO format.": "次のアクションの実行が遅延する日付と時刻を指定します。ISO 形式を含む複数の形式に対応しています。",
+  "Seconds": "秒",
+  "Minutes": "分",
+  "Hours": "時間",
+  "Days": "日数"
+}

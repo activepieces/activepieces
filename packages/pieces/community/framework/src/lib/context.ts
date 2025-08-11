@@ -8,8 +8,8 @@ import {
   ResumePayload,
   SeekPage,
   TriggerPayload,
+  TriggerStrategy,
 } from '@activepieces/shared';
-import { TriggerStrategy } from './trigger/trigger';
 import {
   InputPropertyMap,
   PiecePropValueSchema,
@@ -107,7 +107,7 @@ export type PauseHook = (params: {
 }) => void;
 
 export type FlowsContext = {
-  list(): Promise<SeekPage<PopulatedFlow>>
+  list(params?: ListFlowsContextParams): Promise<SeekPage<PopulatedFlow>>
   current: {
     id: string;
     version: {
@@ -116,6 +116,9 @@ export type FlowsContext = {
   };
 }
 
+export type ListFlowsContextParams = {
+  externalIds?: string[]
+}
 
 
 export type PropertyContext = {
