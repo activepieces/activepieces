@@ -59,9 +59,7 @@ export function getCommunityPieceFolder(pieceName: string): string {
 export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
     const piecesPath = resolve(cwd(), 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
-    const enterprisePiecesPath = resolve(cwd(), 'packages', 'ee', 'pieces')
-    const enterprisePiecesPaths = await traverseFolder(enterprisePiecesPath)
-    return [...paths, ...enterprisePiecesPaths]
+    return paths
 }
 
 export const pieceMetadataExists = async (
@@ -115,13 +113,8 @@ export async function findAllPieces(): Promise<PieceMetadata[]> {
 
 async function findAllDistPaths(): Promise<string[]> {
     const baseDir = resolve(cwd(), 'dist', 'packages')
-    const standardPiecesPath = resolve(baseDir, 'pieces')
-    const enterprisePiecesPath = resolve(baseDir, 'ee', 'pieces')
-    const paths = [
-        ...await traverseFolder(standardPiecesPath),
-        ...await traverseFolder(enterprisePiecesPath)
-    ]
-    return paths
+    const piecesBuildPath = resolve(baseDir, 'pieces')
+    return await traverseFolder(piecesBuildPath)
 }
 
 async function traverseFolder(folderPath: string): Promise<string[]> {
@@ -145,7 +138,7 @@ async function traverseFolder(folderPath: string): Promise<string[]> {
     return paths
 }
 
-async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | null> {
+export async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | null> {
     try {
         const packageJson = await readPackageJson(folderPath);
         
