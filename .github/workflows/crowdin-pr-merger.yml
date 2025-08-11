@@ -83,22 +83,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Update branch with latest main
+        if: steps.check-changes.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.CROWDIN_PRS }}
+          script: |
+            await github.rest.pulls.updateBranch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            })
+
       - name: Merge PR
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.CROWDIN_PRS }}
           script: |
-            // Wait for the push to be reflected in the PR
-            await new Promise(resolve => setTimeout(resolve, 5000));
-            
-            // Get the latest PR info to ensure we have the updated head SHA
-            const pr = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number
-            });
-            
-            // Now attempt to merge
             await github.rest.pulls.merge({
               owner: context.repo.owner,
               repo: context.repo.repo,

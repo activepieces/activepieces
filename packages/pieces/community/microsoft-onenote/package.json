@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/piece-aircall",
+  "name": "@activepieces/piece-microsoft-onenote",
   "version": "0.0.1",
   "type": "commonjs",
   "main": "./src/index.js",

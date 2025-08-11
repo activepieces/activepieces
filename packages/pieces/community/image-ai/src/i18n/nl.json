@@ -4,5 +4,7 @@
   "Provider": "Leverancier",
   "Model": "Model",
   "Prompt": "Prompt",
-  "Advanced Options": "Geavanceerde Opties"
+  "Advanced Options": "Geavanceerde Opties",
+  "Resolution": "Resolutie",
+  "The resolution to generate the image in.": "De resolutie voor het genereren van de afbeelding."
 }
