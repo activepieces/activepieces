@@ -186,7 +186,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 projectId: flowRunToResume.projectId,
                 flowVersionId: flowRunToResume.flowVersionId,
                 synchronousHandlerId: returnHandlerId(pauseMetadata, requestId, log),
-                httpRequestId: requestId,
+                httpRequestId: flowRunToResume.pauseMetadata?.requestIdToReply ?? undefined,
                 progressUpdateType,
                 executeTrigger: false,
                 executionType,
@@ -264,6 +264,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId: flow.projectId,
             flowId: flowVersion.flowId,
             flowVersionId: flowVersion.id,
+            httpRequestId,
             environment,
             flowDisplayName: flowVersion.displayName,
             parentRunId,
@@ -588,6 +589,7 @@ type GetOrCreateParams = {
     stepNameToTest?: string
     existingFlowRunId?: FlowRunId
     flowId: FlowId
+    httpRequestId: string | undefined
     flowDisplayName: string
     environment: RunEnvironment
     log: FastifyBaseLogger

@@ -23,6 +23,7 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
                 engineToken: 'engineToken',
                 apiUrl: 'http://127.0.0.1:3000',
             }),
+            triggerPieceName: params?.triggerPieceName ?? 'mcp-trigger-piece-name',
             progressUpdateType: params?.progressUpdateType ?? ProgressUpdateType.NONE,
             serverHandlerId: params?.serverHandlerId ?? null,
             httpRequestId: params?.httpRequestId ?? null,
