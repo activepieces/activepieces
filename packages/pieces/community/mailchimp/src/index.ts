@@ -1,4 +1,4 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { addMemberToList } from './lib/actions/add-member-to-list';
 import { addNoteToSubscriber } from './lib/actions/add-note-to-subscriber';
 import { removeSubscriberFromTag } from './lib/actions/remove-subscriber-from-tag';
@@ -8,6 +8,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { addSubscriberToTag } from './lib/actions/add-subscriber-to-tag';
 import { mailChimpSubscribeTrigger } from './lib/triggers/subscribe-trigger';
 import { mailChimpUnsubscriberTrigger } from './lib/triggers/unsubscribe-trigger';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const mailchimpAuth = PieceAuth.OAuth2({
   description: '',
@@ -32,6 +33,15 @@ export const mailchimp = createPiece({
     addSubscriberToTag,
     removeSubscriberFromTag,
     updateSubscriberInList,
+    createCustomApiCallAction({
+      auth: mailchimpAuth,
+			baseUrl: () => {
+        return `https://{mailChimpServerPrefix}.api.mailchimp.com/3.0/`;
+      },
+			authMapping: async (auth) => ({
+					Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`
+			}),
+    }),
   ],
   triggers: [mailChimpSubscribeTrigger, mailChimpUnsubscriberTrigger],
 });
