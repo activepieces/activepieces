@@ -16,7 +16,7 @@ export const createRefundAction = createAction({
     amount: Property.ShortText({
       displayName: 'Refund Amount',
       description: 'Amount to refund (exact amount string with 2 decimals, e.g. 10.00)',
-      required: false,
+      required: true,
     }),
     currency: Property.StaticDropdown({
       displayName: 'Currency',

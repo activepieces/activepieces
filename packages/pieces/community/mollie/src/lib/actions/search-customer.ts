@@ -8,24 +8,17 @@ export const searchCustomerAction = createAction({
   displayName: 'Search Customer',
   description: 'Finds customers based on filter',
   props: {
-    limit: Property.Number({
-      displayName: 'Limit',
-      description: 'Number of customers to return (max 250)',
-      required: false,
-      defaultValue: 50,
-    }),
-    from: Property.ShortText({
-      displayName: 'From',
-      description: 'Customer ID to start from',
-      required: false,
+    customerId: Property.ShortText({
+      displayName: 'Customer ID',
+      description: 'Customer ID ',
+      required: true,
     }),
   },
   async run(context) {
     const api = new MollieApi({ accessToken: context.auth.access_token });
     
     const params: any = {};
-    if (context.propsValue.limit) params.limit = context.propsValue.limit;
-    if (context.propsValue.from) params.from = context.propsValue.from;
+    if (context.propsValue.customerId) params.from = context.propsValue.customerId;
 
     return await api.searchCustomers(params);
   },

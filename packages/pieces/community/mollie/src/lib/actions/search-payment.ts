@@ -14,15 +14,10 @@ export const searchPaymentAction = createAction({
       required: false,
       defaultValue: 50,
     }),
-    from: Property.ShortText({
-      displayName: 'From',
-      description: 'Payment ID to start from',
-      required: false,
-    }),
-    customerId: Property.ShortText({
-      displayName: 'Customer ID',
-      description: 'Filter by customer ID',
-      required: false,
+    paymentId: Property.ShortText({
+      displayName: 'Payment ID',
+      description: 'Payment ID ',
+      required: true,
     }),
   },
   async run(context) {
@@ -30,8 +25,7 @@ export const searchPaymentAction = createAction({
     
     const params: any = {};
     if (context.propsValue.limit) params.limit = context.propsValue.limit;
-    if (context.propsValue.from) params.from = context.propsValue.from;
-    if (context.propsValue.customerId) params.customerId = context.propsValue.customerId;
+    if (context.propsValue.paymentId) params.from = context.propsValue.paymentId;
 
     return await api.searchPayments(params);
   },

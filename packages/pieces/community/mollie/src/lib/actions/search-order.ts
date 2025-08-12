@@ -14,10 +14,10 @@ export const searchOrderAction = createAction({
       required: false,
       defaultValue: 50,
     }),
-    from: Property.ShortText({
-      displayName: 'From',
-      description: 'Order ID to start from',
-      required: false,
+    orderId: Property.ShortText({
+      displayName: 'Order ID',
+      description: 'Order ID',
+      required: true,
     }),
   },
   async run(context) {
@@ -25,7 +25,7 @@ export const searchOrderAction = createAction({
     
     const params: any = {};
     if (context.propsValue.limit) params.limit = context.propsValue.limit;
-    if (context.propsValue.from) params.from = context.propsValue.from;
+    if (context.propsValue.orderId) params.from = context.propsValue.orderId;
 
     return await api.searchOrders(params);
   },

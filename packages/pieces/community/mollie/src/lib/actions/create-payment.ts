@@ -34,7 +34,7 @@ export const createPaymentAction = createAction({
     redirectUrl: Property.ShortText({
       displayName: 'Redirect URL',
       description: 'URL to redirect after payment',
-      required: false,
+      required: true,
     }),
     webhookUrl: Property.ShortText({
       displayName: 'Webhook URL',
