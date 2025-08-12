@@ -17,7 +17,7 @@ export const mollieAuth = PieceAuth.OAuth2({
   ],
   authUrl: 'https://www.mollie.com/oauth2/authorize',
   required: true,
-  description: 'Enter your Mollie API key (starts with live_ or test_)',
+  description: 'Enter your Mollie API key',
 });
 
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
@@ -38,9 +38,6 @@ export class MollieApi {
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: this.config.accessToken,
-      },
-      headers:{
-        'Content-Type': 'appplication/json',
       },
       body,
     });

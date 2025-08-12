@@ -7,7 +7,7 @@ import { newSettlementTrigger } from './lib/triggers/new-settlement';
 import { newInvoiceTrigger } from './lib/triggers/new-invoice';
 import { newPaymentTrigger } from './lib/triggers/new-payment';
 import { newRefundTrigger } from './lib/triggers/new-refund';
-import { newChargebackTrigger } from './lib/triggers/new-payment-chargeback';
+import { newPaymentChargebackTrigger } from './lib/triggers/new-payment-chargeback';
 import { createOrderAction } from './lib/actions/create-order';
 import { createPaymentLinkAction } from './lib/actions/create-payment-link';
 import { createPaymentAction } from './lib/actions/create-payment';
@@ -24,7 +24,7 @@ export const mollie = createPiece({
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mollie.png',
   categories: [PieceCategory.PAYMENT_PROCESSING],
-  authors: ['activepieces', 'Ani-4x'],
+  authors: ['Ani-4x'],
   triggers: [
     newCustomerTrigger,
     newOrderTrigger,
@@ -32,7 +32,7 @@ export const mollie = createPiece({
     newInvoiceTrigger,
     newPaymentTrigger,
     newRefundTrigger,
-    newChargebackTrigger,
+    newPaymentChargebackTrigger,
   ],
   actions: [
     createOrderAction,

@@ -1,29 +1,50 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { mollieAuth } from '../common/common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const newSettlementTrigger = createTrigger({
   auth: mollieAuth,
   name: 'new_settlement',
   displayName: 'New Settlement',
-  description: 'Fires upon a new settlement event (e.g. payout)',
+  description: 'Fires when a new settlement occurs in Mollie',
   props: {},
   sampleData: {
     id: 'stl_example123',
-    amount: { value: '1000.00', currency: 'EUR' },
-    status: 'open',
-    createdAt: '2024-01-01T12:00:00+00:00',
+    amount: {
+      value: '1000.00',
+      currency: 'EUR'
+    },
+    createdAt: '2024-01-01T12:00:00+00:00'
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
+    const webhookUrl = context.webhookUrl;
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: 'https://api.mollie.com/v2/webhooks',
+      headers: {
+        Authorization: `Bearer ${context.auth.access_token}`,
+      },
+      body: {
+        url: webhookUrl,
+        events: ['settlements.*'],
+      },
+    });
+    await context.store.put('webhook_id', response.body.id);
   },
-  async onDisable() {},
-  async run(context) {
-    const payload = context.payload.body as any;
-    
-    if (payload.id?.startsWith('evt_') && payload.type === 'settlement.created') {
-      return [payload.data];
+  async onDisable(context) {
+    const webhookId = await context.store.get('webhook_id');
+    if (webhookId) {
+      await httpClient.sendRequest({
+        method: HttpMethod.DELETE,
+        url: `https://api.mollie.com/v2/webhooks/${webhookId}`,
+        headers: {
+          Authorization: `Bearer ${context.auth.access_token}`,
+        },
+      });
     }
-    
-    return [];
+  },
+  async run(context) {
+    return [context.payload.body];
   },
 });
