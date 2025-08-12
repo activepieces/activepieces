@@ -22,6 +22,7 @@ export enum PauseType {
 export const DelayPauseMetadata = Type.Object({
     type: Type.Literal(PauseType.DELAY),
     resumeDateTime: Type.String(),
+    requestIdToReply: Type.Optional(Type.String()),
     handlerId: Type.Optional(Type.String({})),
     progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
 })
@@ -47,6 +48,7 @@ export type StopResponse = Static<typeof StopResponse>
 export const WebhookPauseMetadata = Type.Object({
     type: Type.Literal(PauseType.WEBHOOK),
     requestId: Type.String(),
+    requestIdToReply: Type.Optional(Type.String()),
     response: RespondResponse,
     handlerId: Type.Optional(Type.String({})),
     progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
