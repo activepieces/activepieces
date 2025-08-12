@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
+import { ApSubscriptionStatus, StripePlanName } from '@activepieces/ee-shared';
 import { isNil, PlatformRole } from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
@@ -20,26 +20,15 @@ export const WelcomeTrialDialog = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: user } = userHooks.useCurrentUser();
   const openDialog = useManagePlanDialogStore((state) => state.openDialog);
-
-  const eligibleTrials = {
-    [PlanName.PLUS]: platform.plan.eligibleForTrial === PlanName.PLUS,
-    [PlanName.BUSINESS]: platform.plan.eligibleForTrial === PlanName.BUSINESS,
-  };
-
   const trialPlan =
     user?.platformRole === PlatformRole.ADMIN
-      ? eligibleTrials[PlanName.PLUS]
-        ? PlanName.PLUS
-        : eligibleTrials[PlanName.BUSINESS]
-        ? PlanName.BUSINESS
-        : null
+      ? (platform.plan.eligibleForTrial as StripePlanName)
       : null;
 
   const isTrial =
     platform.plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
   const [isOpen, setIsOpen] = useState(!isTrial && !!trialPlan);
-  const { mutate: startTrial, } =
-    billingMutations.useStartTrial();
+  const { mutate: startTrial } = billingMutations.useStartTrial();
 
   const handleClose = () => {
     setIsOpen(false);

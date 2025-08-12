@@ -114,7 +114,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
                 }
             }
         }
-    }
+    },
 })
 
 async function createInitialBilling(platformId: string, log: FastifyBaseLogger): Promise<PlatformPlan> {
@@ -173,5 +173,5 @@ type UpdateByCustomerId = {
 
 type GetBillingAmountParams = {
     subscriptionId?: string
-    plan: string;
+    plan: string
 }

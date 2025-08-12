@@ -1,11 +1,13 @@
 import { t } from 'i18next';
 import { Wand, Zap } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { toast } from '@/components/ui/use-toast';
 import { ActivateLicenseDialog } from '@/features/billing/components/activate-license-dialog';
 import { ActiveFlowAddon } from '@/features/billing/components/active-flow-addon';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
@@ -25,8 +27,6 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
-import { useNavigate } from 'react-router-dom';
-import { toast } from '@/components/ui/use-toast';
 
 export default function Billing() {
   const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
@@ -58,21 +58,23 @@ export default function Billing() {
     platformPlanInfo?.plan.plan === PlanName.ENTERPRISE ||
     edition === ApEdition.ENTERPRISE;
 
-
   const handleStartBusinessTrial = () => {
-    startBusinessTrial({ plan: PlanName.BUSINESS }, {
-      onSuccess: () => {
-        navigate('/platform/setup/billing/success');
+    startBusinessTrial(
+      { plan: PlanName.BUSINESS },
+      {
+        onSuccess: () => {
+          navigate('/platform/setup/billing/success');
           toast({
-          title: t('Success'),
-          description: t('Business trial started successfully'),
-        });
+            title: t('Success'),
+            description: t('Business trial started successfully'),
+          });
+        },
+        onError: () => {
+          navigate(`/platform/setup/billing/error`);
+        },
       },
-      onError: () => {
-        navigate(`/platform/setup/billing/error`);
-      }
-    })
-  }
+    );
+  };
 
   if (isPlatformSubscriptionLoading || isNil(platformPlanInfo)) {
     return (

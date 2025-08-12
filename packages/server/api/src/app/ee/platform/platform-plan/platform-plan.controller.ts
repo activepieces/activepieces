@@ -224,7 +224,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         await platformPlanService(request.log).update({
             platformId: platformBilling.platformId,
             stripeSubscriptionId: trialSubscriptionId,
-            eligibleForTrial: plan === PlanName.PLUS ? PlanName.BUSINESS : undefined
+            eligibleForTrial: plan === PlanName.PLUS ? PlanName.BUSINESS : undefined,
         })
         return { success: true }
     })
