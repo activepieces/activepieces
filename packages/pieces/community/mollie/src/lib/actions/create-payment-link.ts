@@ -57,7 +57,7 @@ export const mollieCreatePaymentLink = createAction({
   },
   async run(context) {
     const amountValue = context.propsValue.amount.toFixed(2);
-    
+
     const paymentLinkData: any = {
       amount: {
         currency: context.propsValue.currency,
@@ -76,7 +76,9 @@ export const mollieCreatePaymentLink = createAction({
 
     if (context.propsValue.expiresAfterDays) {
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + context.propsValue.expiresAfterDays);
+      expiresAt.setDate(
+        expiresAt.getDate() + context.propsValue.expiresAfterDays
+      );
       paymentLinkData.expiresAt = expiresAt.toISOString();
     }
 

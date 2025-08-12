@@ -1,51 +1,43 @@
-import { createTrigger, TriggerStrategy, Property, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { mollieAuth } from '../..';
 import { mollieCommon } from '../common';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 export const mollieNewPayment = createTrigger({
   auth: mollieAuth,
   name: 'new_payment',
   displayName: 'New Payment',
-  description: 'Triggers when a new payment is created',
-  props: {
-    includeTestPayments: Property.Checkbox({
-      displayName: 'Include Test Payments',
-      description: 'Include test mode payments in the trigger',
-      required: false,
-      defaultValue: false,
-    }),
-  },
-  type: TriggerStrategy.POLLING,
+  description: 'Triggers when a payment status changes',
+  props: {},
+  type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
+    // Store the webhook URL for reference
+    await context.store?.put<WebhookInformation>('_mollie_payment_webhook', {
+      webhookUrl: context.webhookUrl,
     });
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    // Clean up stored webhook information
+    await context.store?.delete('_mollie_payment_webhook');
   },
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    const payloadBody = context.payload.body as PayloadBody;
+
+    // Mollie sends a POST with 'id' parameter containing the payment ID
+    if (payloadBody.id && payloadBody.id.startsWith('tr_')) {
+      // Fetch the full payment details using the ID
+      const payment = await mollieCommon.getResource(
+        context.auth as string,
+        'payments',
+        payloadBody.id
+      );
+      return [payment];
+    }
+
+    return [];
   },
   async test(context) {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    // Return sample data for testing
+    return [mollieNewPayment.sampleData];
   },
   sampleData: {
     id: 'tr_WDqYK6vllg',
@@ -84,32 +76,10 @@ export const mollieNewPayment = createTrigger({
   },
 });
 
-const polling: Polling<PiecePropValueSchema<typeof mollieAuth>, { includeTestPayments: boolean | undefined }> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const currentValues = await mollieCommon.listResources(
-      auth as string,
-      'payments',
-      {
-        limit: 250,
-        ...(lastFetchEpochMS && {
-          from: new Date(lastFetchEpochMS).toISOString(),
-        }),
-      }
-    );
-    
-    const items = currentValues._embedded?.payments || [];
-    
-    return items
-      .filter((payment: any) => {
-        if (!propsValue.includeTestPayments && payment.mode === 'test') {
-          return false;
-        }
-        return true;
-      })
-      .map((payment: any) => ({
-        epochMilliSeconds: new Date(payment.createdAt).getTime(),
-        data: payment,
-      }));
-  },
+type PayloadBody = {
+  id: string;
 };
+
+interface WebhookInformation {
+  webhookUrl: string;
+}

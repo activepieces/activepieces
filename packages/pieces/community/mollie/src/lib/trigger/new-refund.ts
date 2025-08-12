@@ -1,44 +1,58 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { mollieAuth } from '../..';
 import { mollieCommon } from '../common';
-import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const mollieNewRefund = createTrigger({
   auth: mollieAuth,
   name: 'new_refund',
   displayName: 'New Refund',
-  description: 'Triggers when a new refund is created',
+  description: 'Triggers when a refund status changes',
   props: {},
-  type: TriggerStrategy.POLLING,
+  type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
+    // Store the webhook URL for reference
+    await context.store?.put<WebhookInformation>('_mollie_refund_webhook', {
+      webhookUrl: context.webhookUrl,
     });
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    // Clean up stored webhook information
+    await context.store?.delete('_mollie_refund_webhook');
   },
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    const payloadBody = context.payload.body as PayloadBody;
+
+    // Mollie sends the payment ID when a refund status changes
+    if (payloadBody.id && payloadBody.id.startsWith('tr_')) {
+      // Fetch the payment details to get refund information
+      const payment = await mollieCommon.getResource(
+        context.auth as string,
+        'payments',
+        payloadBody.id
+      );
+
+      // If there are refunds, fetch the latest one
+      if (payment._links?.refunds) {
+        const refunds = await mollieCommon.makeRequest(
+          context.auth as string,
+          HttpMethod.GET,
+          `/payments/${payloadBody.id}/refunds`,
+          undefined,
+          { limit: 1 }
+        );
+
+        if (refunds._embedded?.refunds?.length > 0) {
+          return [refunds._embedded.refunds[0]];
+        }
+      }
+    }
+
+    return [];
   },
   async test(context) {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    // Return sample data for testing
+    return [mollieNewRefund.sampleData];
   },
   sampleData: {
     id: 're_4qqhO89gsT',
@@ -75,53 +89,10 @@ export const mollieNewRefund = createTrigger({
   },
 });
 
-const polling: Polling<PiecePropValueSchema<typeof mollieAuth>, Record<string, never>> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS }) => {
-    const refunds: any[] = [];
-    
-    const payments = await mollieCommon.listResources(
-      auth as string,
-      'payments',
-      {
-        limit: 250,
-        ...(lastFetchEpochMS && {
-          from: new Date(lastFetchEpochMS).toISOString(),
-        }),
-      }
-    );
-    
-    const paymentItems = payments._embedded?.payments || [];
-    
-    for (const payment of paymentItems) {
-      if (payment._links?.refunds) {
-        const paymentRefunds = await mollieCommon.makeRequest(
-          auth as string,
-          HttpMethod.GET,
-          `/payments/${payment.id}/refunds`,
-          undefined,
-          { limit: 250 }
-        );
-        
-        const refundItems = paymentRefunds._embedded?.refunds || [];
-        refunds.push(...refundItems.map((refund: any) => ({
-          ...refund,
-          paymentId: payment.id,
-        })));
-      }
-    }
-    
-    return refunds
-      .filter((refund: any) => {
-        if (lastFetchEpochMS) {
-          const refundTime = new Date(refund.createdAt).getTime();
-          return refundTime > lastFetchEpochMS;
-        }
-        return true;
-      })
-      .map((refund: any) => ({
-        epochMilliSeconds: new Date(refund.createdAt).getTime(),
-        data: refund,
-      }));
-  },
+type PayloadBody = {
+  id: string;
 };
+
+interface WebhookInformation {
+  webhookUrl: string;
+}

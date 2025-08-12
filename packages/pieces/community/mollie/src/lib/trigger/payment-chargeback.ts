@@ -1,44 +1,58 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { mollieAuth } from '../..';
 import { mollieCommon } from '../common';
-import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const molliePaymentChargeback = createTrigger({
   auth: mollieAuth,
   name: 'payment_chargeback',
   displayName: 'Payment Chargeback',
-  description: 'Triggers when a payment is charged back',
+  description: 'Triggers when a payment receives a chargeback',
   props: {},
-  type: TriggerStrategy.POLLING,
+  type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
+    // Store the webhook URL for reference
+    await context.store?.put<WebhookInformation>('_mollie_chargeback_webhook', {
+      webhookUrl: context.webhookUrl,
     });
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    // Clean up stored webhook information
+    await context.store?.delete('_mollie_chargeback_webhook');
   },
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    const payloadBody = context.payload.body as PayloadBody;
+
+    // Mollie sends the payment ID when a chargeback occurs
+    if (payloadBody.id && payloadBody.id.startsWith('tr_')) {
+      // Fetch the payment details to get chargeback information
+      const payment = await mollieCommon.getResource(
+        context.auth as string,
+        'payments',
+        payloadBody.id
+      );
+
+      // If there are chargebacks, fetch the latest one
+      if (payment._links?.chargebacks) {
+        const chargebacks = await mollieCommon.makeRequest(
+          context.auth as string,
+          HttpMethod.GET,
+          `/payments/${payloadBody.id}/chargebacks`,
+          undefined,
+          { limit: 1 }
+        );
+
+        if (chargebacks._embedded?.chargebacks?.length > 0) {
+          return [chargebacks._embedded.chargebacks[0]];
+        }
+      }
+    }
+
+    return [];
   },
   async test(context) {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    // Return sample data for testing
+    return [molliePaymentChargeback.sampleData];
   },
   sampleData: {
     id: 'chb_n9z0tp',
@@ -75,53 +89,10 @@ export const molliePaymentChargeback = createTrigger({
   },
 });
 
-const polling: Polling<PiecePropValueSchema<typeof mollieAuth>, Record<string, never>> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS }) => {
-    const chargebacks: any[] = [];
-    
-    const payments = await mollieCommon.listResources(
-      auth as string,
-      'payments',
-      {
-        limit: 250,
-        ...(lastFetchEpochMS && {
-          from: new Date(lastFetchEpochMS - 86400000).toISOString(), // Look back 24 hours for chargebacks
-        }),
-      }
-    );
-    
-    const paymentItems = payments._embedded?.payments || [];
-    
-    for (const payment of paymentItems) {
-      if (payment._links?.chargebacks) {
-        const paymentChargebacks = await mollieCommon.makeRequest(
-          auth as string,
-          HttpMethod.GET,
-          `/payments/${payment.id}/chargebacks`,
-          undefined,
-          { limit: 250 }
-        );
-        
-        const chargebackItems = paymentChargebacks._embedded?.chargebacks || [];
-        chargebacks.push(...chargebackItems.map((chargeback: any) => ({
-          ...chargeback,
-          paymentId: payment.id,
-        })));
-      }
-    }
-    
-    return chargebacks
-      .filter((chargeback: any) => {
-        if (lastFetchEpochMS) {
-          const chargebackTime = new Date(chargeback.createdAt).getTime();
-          return chargebackTime > lastFetchEpochMS;
-        }
-        return true;
-      })
-      .map((chargeback: any) => ({
-        epochMilliSeconds: new Date(chargeback.createdAt).getTime(),
-        data: chargeback,
-      }));
-  },
+type PayloadBody = {
+  id: string;
 };
+
+interface WebhookInformation {
+  webhookUrl: string;
+}

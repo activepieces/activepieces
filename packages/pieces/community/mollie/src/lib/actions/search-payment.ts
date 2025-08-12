@@ -61,7 +61,8 @@ export const mollieSearchPayment = createAction({
     }),
   },
   async run(context) {
-    const { searchBy, searchValue, status, fromDate, toDate, limit } = context.propsValue;
+    const { searchBy, searchValue, status, fromDate, toDate, limit } =
+      context.propsValue;
 
     if (searchBy === 'id' && searchValue) {
       try {

@@ -1,44 +1,43 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { mollieAuth } from '../..';
 import { mollieCommon } from '../common';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 export const mollieNewOrder = createTrigger({
   auth: mollieAuth,
   name: 'new_order',
   displayName: 'New Order',
-  description: 'Triggers when a new order is created',
+  description: 'Triggers when an order status changes',
   props: {},
-  type: TriggerStrategy.POLLING,
+  type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
+    // Store the webhook URL for reference
+    await context.store?.put<WebhookInformation>('_mollie_order_webhook', {
+      webhookUrl: context.webhookUrl,
     });
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    // Clean up stored webhook information
+    await context.store?.delete('_mollie_order_webhook');
   },
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    const payloadBody = context.payload.body as PayloadBody;
+
+    // Mollie sends a POST with 'id' parameter containing the order ID
+    if (payloadBody.id && payloadBody.id.startsWith('ord_')) {
+      // Fetch the full order details using the ID
+      const order = await mollieCommon.getResource(
+        context.auth as string,
+        'orders',
+        payloadBody.id
+      );
+      return [order];
+    }
+
+    return [];
   },
   async test(context) {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    // Return sample data for testing
+    return [mollieNewOrder.sampleData];
   },
   sampleData: {
     id: 'ord_kEn1PlbGa',
@@ -100,25 +99,10 @@ export const mollieNewOrder = createTrigger({
   },
 });
 
-const polling: Polling<PiecePropValueSchema<typeof mollieAuth>, Record<string, never>> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS }) => {
-    const currentValues = await mollieCommon.listResources(
-      auth as string,
-      'orders',
-      {
-        limit: 250,
-        ...(lastFetchEpochMS && {
-          from: new Date(lastFetchEpochMS).toISOString(),
-        }),
-      }
-    );
-    
-    const items = currentValues._embedded?.orders || [];
-    
-    return items.map((order: any) => ({
-      epochMilliSeconds: new Date(order.createdAt).getTime(),
-      data: order,
-    }));
-  },
+type PayloadBody = {
+  id: string;
 };
+
+interface WebhookInformation {
+  webhookUrl: string;
+}

@@ -122,7 +122,7 @@ export const mollieCreatePayment = createAction({
   },
   async run(context) {
     const amountValue = context.propsValue.amount.toFixed(2);
-    
+
     const paymentData: any = {
       amount: {
         currency: context.propsValue.currency,

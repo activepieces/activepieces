@@ -27,7 +27,7 @@ export const mollie = createPiece({
   description: 'Online payment service provider',
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mollie.png',
-  authors: ["activepieces"],
+  authors: ['activepieces'],
   categories: [PieceCategory.COMMERCE, PieceCategory.PAYMENT_PROCESSING],
   auth: mollieAuth,
   actions: [

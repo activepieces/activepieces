@@ -2,7 +2,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const mollieCommon = {
   baseUrl: 'https://api.mollie.com/v2',
-  
+
   async makeRequest<T = any>(
     auth: string,
     method: HttpMethod,
@@ -14,31 +14,13 @@ export const mollieCommon = {
       method,
       url: `${this.baseUrl}${endpoint}`,
       headers: {
-        'Authorization': `Bearer ${auth}`,
+        Authorization: `Bearer ${auth}`,
         'Content-Type': 'application/json',
       },
       body,
       queryParams,
     });
     return response.body;
-  },
-
-  async subscribeWebhook(
-    auth: string,
-    resourceId: string,
-    resourceType: 'payments' | 'orders' | 'customers' | 'settlements' | 'invoices',
-    webhookUrl: string
-  ) {
-    const endpoint = `/${resourceType}/${resourceId}`;
-    const response = await this.makeRequest(
-      auth,
-      HttpMethod.PATCH,
-      endpoint,
-      {
-        webhookUrl,
-      }
-    );
-    return response;
   },
 
   async listResources<T = any>(

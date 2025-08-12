@@ -61,7 +61,7 @@ export const mollieSearchCustomer = createAction({
     let customers = result._embedded?.customers || [];
 
     if (searchBy === 'email' && searchValue) {
-      customers = customers.filter((customer: any) => 
+      customers = customers.filter((customer: any) =>
         customer.email.toLowerCase().includes(searchValue.toLowerCase())
       );
     }

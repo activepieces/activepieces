@@ -1,7 +1,15 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  TriggerStrategy,
+  PiecePropValueSchema,
+} from '@activepieces/pieces-framework';
 import { mollieAuth } from '../..';
 import { mollieCommon } from '../common';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import {
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
+} from '@activepieces/pieces-common';
 
 export const mollieNewInvoice = createTrigger({
   auth: mollieAuth,
@@ -85,7 +93,10 @@ export const mollieNewInvoice = createTrigger({
   },
 });
 
-const polling: Polling<PiecePropValueSchema<typeof mollieAuth>, Record<string, never>> = {
+const polling: Polling<
+  PiecePropValueSchema<typeof mollieAuth>,
+  Record<string, never>
+> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     const currentValues = await mollieCommon.listResources(
@@ -98,9 +109,9 @@ const polling: Polling<PiecePropValueSchema<typeof mollieAuth>, Record<string, n
         }),
       }
     );
-    
+
     const items = currentValues._embedded?.invoices || [];
-    
+
     return items.map((invoice: any) => ({
       epochMilliSeconds: new Date(invoice.issuedAt).getTime(),
       data: invoice,

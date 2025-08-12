@@ -16,12 +16,14 @@ export const mollieCreateRefund = createAction({
     }),
     amount: Property.Number({
       displayName: 'Amount',
-      description: 'The amount to refund (leave empty to refund the full payment)',
+      description:
+        'The amount to refund (leave empty to refund the full payment)',
       required: false,
     }),
     currency: Property.StaticDropdown({
       displayName: 'Currency',
-      description: 'The currency of the refund (required if amount is specified)',
+      description:
+        'The currency of the refund (required if amount is specified)',
       required: false,
       options: {
         options: [
