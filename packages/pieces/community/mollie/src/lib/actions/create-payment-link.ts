@@ -12,7 +12,20 @@ export const createPaymentLinkAction = createAction({
       displayName: 'Amount Currency',
       required: false,
       defaultValue: 'EUR',
-      options: { options: [{ label: 'EUR', value: 'EUR' }, { label: 'USD', value: 'USD' }, { label: 'GBP', value: 'GBP' }] },
+      options: {
+        options: [{
+          label: 'EUR',
+          value: 'EUR'
+        },
+        {
+          label: 'USD',
+          value: 'USD'
+        },
+        {
+          label: 'GBP',
+          value: 'GBP'
+        }]
+      },
     }),
     amount_value: Property.ShortText({
       displayName: 'Amount Value',
@@ -23,7 +36,20 @@ export const createPaymentLinkAction = createAction({
       displayName: 'Minimum Amount Currency',
       required: false,
       defaultValue: 'EUR',
-      options: { options: [{ label: 'EUR', value: 'EUR' }, { label: 'USD', value: 'USD' }, { label: 'GBP', value: 'GBP' }] },
+      options: {
+        options: [{
+          label: 'EUR',
+          value: 'EUR'
+        },
+        {
+          label: 'USD',
+          value: 'USD'
+        },
+        {
+          label: 'GBP',
+          value: 'GBP'
+        }]
+      },
     }),
     minimumAmount_value: Property.ShortText({
       displayName: 'Minimum Amount Value',
@@ -56,14 +82,102 @@ export const createPaymentLinkAction = createAction({
       required: false,
       options: {
         options: [
-          { label: 'applepay', value: 'applepay' }, { label: 'bancomatpay', value: 'bancomatpay' }, { label: 'bancontact', value: 'bancontact' },
-          { label: 'banktransfer', value: 'banktransfer' }, { label: 'belfius', value: 'belfius' }, { label: 'blik', value: 'blik' },
-          { label: 'creditcard', value: 'creditcard' }, { label: 'eps', value: 'eps' }, { label: 'giftcard', value: 'giftcard' },
-          { label: 'ideal', value: 'ideal' }, { label: 'kbc', value: 'kbc' }, { label: 'mybank', value: 'mybank' },
-          { label: 'paybybank', value: 'paybybank' }, { label: 'paypal', value: 'paypal' }, { label: 'paysafecard', value: 'paysafecard' },
-          { label: 'pointofsale', value: 'pointofsale' }, { label: 'przelewy24', value: 'przelewy24' }, { label: 'satispay', value: 'satispay' },
-          { label: 'trustly', value: 'trustly' }, { label: 'twint', value: 'twint' }, { label: 'in3', value: 'in3' },
-          { label: 'riverty', value: 'riverty' }, { label: 'klarna', value: 'klarna' }, { label: 'billie', value: 'billie' },
+          {
+            label: 'applepay',
+            value: 'applepay'
+          },
+          {
+            label: 'bancomatpay',
+            value: 'bancomatpay'
+          },
+          {
+            label: 'bancontact',
+            value: 'bancontact'
+          },
+          {
+            label: 'banktransfer',
+            value: 'banktransfer'
+          },
+          {
+            label: 'belfius',
+            value: 'belfius'
+          },
+          {
+            label: 'blik',
+            value: 'blik'
+          },
+          {
+            label: 'creditcard',
+            value: 'creditcard'
+          },
+          {
+            label: 'eps',
+            value: 'eps'
+          },
+          {
+            label: 'giftcard',
+            value: 'giftcard'
+          },
+          {
+            label: 'ideal',
+            value: 'ideal'
+          },
+          {
+            label: 'kbc',
+            value: 'kbc'
+          },
+          {
+            label: 'mybank',
+            value: 'mybank'
+          },
+          {
+            label: 'paybybank',
+            value: 'paybybank'
+          },
+          {
+            label: 'paypal',
+            value: 'paypal'
+          },
+          {
+            label: 'paysafecard',
+            value: 'paysafecard'
+          },
+          {
+            label: 'pointofsale',
+            value: 'pointofsale'
+          },
+          {
+            label: 'przelewy24',
+            value: 'przelewy24'
+          },
+          {
+            label: 'satispay',
+            value: 'satispay'
+          },
+          {
+            label: 'trustly',
+            value: 'trustly'
+          },
+          {
+            label: 'twint',
+            value: 'twint'
+          },
+          {
+            label: 'in3',
+            value: 'in3'
+          },
+          {
+            label: 'riverty',
+            value: 'riverty'
+          },
+          {
+            label: 'klarna',
+            value: 'klarna'
+          },
+          {
+            label: 'billie',
+            value: 'billie'
+          },
         ]
       },
     }),
