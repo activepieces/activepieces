@@ -1,9 +1,9 @@
 {
   "Dato CMS": "Dato CMS",
-  "Dato is a modern headless CMS": "Dato is a modern headless CMS",
-  "API key": "API key",
-  "Environment": "Environment",
-  "Optional sandbox environment": "Optional sandbox environment",
+  "Dato is a modern headless CMS": "达托是一个无头的 CMS",
+  "API key": "API 密钥",
+  "Environment": "环境",
+  "Optional sandbox environment": "可选沙盒环境",
   "Custom API Call": "自定义 API 呼叫",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
   "Method": "方法",
