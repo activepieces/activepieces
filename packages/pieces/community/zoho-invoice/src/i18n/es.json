@@ -23,6 +23,6 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
-  "New Invoice": "New Invoice",
+  "New Invoice": "Nueva factura",
   "Trigger when a new invoice is received.": "Activar cuando se recibe una nueva factura."
 }

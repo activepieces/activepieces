@@ -156,7 +156,6 @@ function main(): void {
   
   for (const piece of pieceDirs) {
     const piecePath = path.join(piecesDir, piece);
-    
     // Check if piece has changes compared to main
     if (hasChangesComparedToMain(piecePath)) {
       // Check if it has i18n directory (indicating translations were added)
