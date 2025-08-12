@@ -6,6 +6,7 @@ import {
   Import,
   Download,
   History,
+  Zap,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -21,7 +22,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { cn, formatUtils } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { isNil, Permission, PopulatedAgent } from '@activepieces/shared';
 
 import { AgentProfile } from './agent-profile';
@@ -30,6 +31,7 @@ import { AgentConfigure } from './agent-configure';
 import { ApTableHistory } from './ap-table-history';
 import { useTableState } from './ap-table-state-provider';
 import { ImportCsvDialog } from './import-csv-dialog';
+import { ApTableTriggers } from './ap-table-triggers';
 
 interface ApTableHeaderProps {
   onBack: () => void;
@@ -67,6 +69,7 @@ export const ApTableHeader = ({
     agent?.settings?.aiMode ?? false,
   );
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isTriggersOpen, setIsTriggersOpen] = useState(false);
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
@@ -156,36 +159,34 @@ export const ApTableHeader = ({
           )}
         </div>
       </div>
-      <div className="flex items-center gap-2 w-full justify-end">
+      <div className="flex items-center gap-4 w-full justify-end">
         {agent.created !== agent.updated && agent.settings?.aiMode && (
           <>
-            <div className={cn("flex items-center gap-2", !isNil(selectedAgentRunId) && "gap-6")}>
-              {runs && runs.length > 0 && agent.settings?.aiMode && (
+            <div className={cn("flex items-center", !isNil(selectedAgentRunId) && "gap-6")}>
+              {runs && runs.length > 0 && (
                 <ApTableHistory
                   open={isHistoryOpen}
                   onOpenChange={setIsHistoryOpen}
                   trigger={
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="w-fit px-2"
-                      onClick={() => {
-                        setIsHistoryOpen(true);
-                      }}
-                    >
-                      <div className="flex items-center gap-1">
-                        <History className="h-4 w-4" />
-                        <span>
-                          last run:{' '}
-                          {formatUtils.formatDate(
-                            new Date(runs[0]?.created),
-                          )}
-                        </span>
-                      </div>
-                    </Button>
+                      <History 
+                        className="p-2 h-9 w-9 cursor-pointer rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 hover:text-primary" 
+                        onClick={() => setIsHistoryOpen(true)}
+                      />
                   }
                 />
               )}
+              <ApTableTriggers
+                open={isTriggersOpen}
+                onOpenChange={setIsTriggersOpen}
+                trigger={
+                    <Zap 
+                      className="p-2 h-9 w-9 mr-2  cursor-pointer rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 hover:text-primary" 
+                      onClick={() => setIsTriggersOpen(true)}
+                    />
+                }
+                updateAgent={updateAgent}
+              />
+              
               <AgentConfigure
                 open={isAgentConfigureOpen}
                 setOpen={setIsAgentConfigureOpen}
@@ -193,13 +194,14 @@ export const ApTableHeader = ({
                 fields={fields}
                 trigger={
                   <AgentProfile
-                    className="cursor-pointer"
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
                     size="lg"
                     onClick={() => {
                       setIsAgentConfigureOpen(true);
                     }}
                     imageUrl={agent?.profilePictureUrl}
                     isRunning={!isNil(selectedAgentRunId)}
+                    showSettingsOnHover={true}
                   />
                 }
               />
@@ -215,7 +217,7 @@ export const ApTableHeader = ({
           setAgentConfigureOpen={setIsAgentConfigureOpen}
           setAiAgentMode={setIsAiAgentMode}
           trigger={
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3  py-2">
               <Switch
                 checked={isAiAgentMode}
                 colorWheel={true}
@@ -223,7 +225,7 @@ export const ApTableHeader = ({
                   showAgentSetupDialog(checked);
                 }}
               />
-              <span className="text-md bg-radial-colorwheel-purple-red bg-clip-text text-transparent">
+              <span className="text-sm font-medium bg-gradient-to-r from-purple-600 to-red-600 bg-clip-text text-transparent">
                 AI Agent Mode
               </span>
             </div>

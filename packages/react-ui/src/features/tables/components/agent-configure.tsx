@@ -72,11 +72,11 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
   const [systemPrompt, setSystemPrompt] = useState(
     table.agent?.systemPrompt || '',
   );
-  const { mutate: automateTableFirst5Rows } = agentHooks.useAutomate(
+  const { mutate: automateTableFirst3Rows } = agentHooks.useAutomate(
     table.id,
     getSelectedServerRecords(selectedRecords, records, serverRecords).slice(
       0,
-      5,
+      3,
     ),
   );
   const [triggerOnNewRow, setTriggerOnNewRow] = useState(
@@ -376,36 +376,6 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
 
               <div className="border-t border-border pt-6 space-y-4">
                 <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                  <h3 className="font-medium">Triggers</h3>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  AI Agent will run every time
-                </p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={triggerOnNewRow}
-                      onCheckedChange={(value) => {
-                        setTriggerOnNewRow(value);
-                      }}
-                    />
-                    <span className="text-sm">New row is added</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={triggerOnFieldUpdate}
-                      onCheckedChange={(value) => {
-                        setTriggerOnFieldUpdate(value);
-                      }}
-                    />
-                    <span className="text-sm">Any field is updated</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-border pt-6 space-y-4">
-                <div className="flex items-center gap-2">
                   <Shield className="h-5 w-5 text-muted-foreground" />
                   <h3 className="font-medium">Permissions</h3>
                 </div>
@@ -500,7 +470,7 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
                 <Button
                   variant="outline"
                   onClick={() => {
-                    automateTableFirst5Rows();
+                    automateTableFirst3Rows();
                   }}
                 >
                   Test first 5 rows

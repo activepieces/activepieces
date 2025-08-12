@@ -1,4 +1,4 @@
-import { Bot, Trash2 } from 'lucide-react';
+import { Bot, Import, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -11,12 +11,18 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission, Table } from '@activepieces/shared';
 
 import { useTableState } from './ap-table-state-provider';
+import { ImportCsvDialog } from '@/features/tables/components/import-csv-dialog';
+import { useState } from 'react';
 
 type ApTableControlProps = {
   table: Table;
+  recordsCount: number;
 };
 
-export const ApTableControl = ({ table }: ApTableControlProps) => {
+export const ApTableControl = ({
+  table,
+  recordsCount,
+}: ApTableControlProps) => {
   const { t } = useTranslation();
   const [
     records,
@@ -33,7 +39,9 @@ export const ApTableControl = ({ table }: ApTableControlProps) => {
     state.deleteRecords,
     state.setRuns,
   ]);
-
+  const hasSelectedRows = selectedRecords.size > 0;
+  const areAllRecordsSelected =
+    selectedRecords.size === recordsCount && recordsCount > 0;
   const { mutate: automateTable } = agentHooks.useAutomate(
     table.id,
     getSelectedServerRecords(selectedRecords, records, serverRecords),
@@ -52,48 +60,77 @@ export const ApTableControl = ({ table }: ApTableControlProps) => {
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
+  const [isImportCsvDialogOpen, setIsImportCsvDialogOpen] = useState(false);
   return (
-    <div className="flex flex-row items-center my-2 rounded-lg w-fit">
-      {table.agent?.settings?.aiMode && table.agent?.created !== table.agent?.updated && (
-        <Button
-          variant="ghost"
-          className="flex gap-2 items-center"
-          disabled={!userHasTableWritePermission}
-          onClick={() => automateTable()}
-        >
-          <Bot className="size-4" />
-          {selectedRecords.size > 0
-            ? t(`Run AI agent (${Number(selectedRecords.size)} records)`)
-            : t('Run AI agent')}
-        </Button>
-      )}
-      {selectedRecords.size > 0 && (
-        <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-          <ConfirmationDeleteDialog
-            title={t('Delete Records')}
-            message={t(
-              'Are you sure you want to delete the selected records? This action cannot be undone.',
+    <div className="flex flex-row items-center my-2 rounded-lg w-fit justify-between">
+        <div className="flex flex-row items-center">
+        <span className="text-sm text-muted-foreground p-2">
+          {!areAllRecordsSelected && (
+              <>
+                {!hasSelectedRows &&
+                  `${t('recordsCount', {
+                    recordsCount,
+                  })}`}{' '}
+                {hasSelectedRows &&
+                  `${t('selected')} ${t('recordsCount', {
+                    recordsCount: selectedRecords.size,
+                  })}`}
+              </>
             )}
-            entityName={selectedRecords.size === 1 ? t('record') : t('records')}
-            mutationFn={async () => {
-              const indices = Array.from(selectedRecords).map((row) =>
-                records.findIndex((r) => r.uuid === row),
-              );
-              deleteRecords(indices.map((index) => index.toString()));
-              setSelectedRecords(new Set());
-            }}
+          {areAllRecordsSelected && t('All records selected')}
+        </span>
+        {table.agent?.settings?.aiMode && table.agent?.created !== table.agent?.updated && (
+          <Button
+            variant="ghost"
+            className="flex gap-2 items-center"
+            disabled={!userHasTableWritePermission}
+            onClick={() => automateTable()}
           >
-            <Button
-              variant="ghost"
-              className="flex gap-2 px-2 items-center font-light text-destructive hover:text-destructive"
-              disabled={!userHasTableWritePermission}
+            <Bot className="size-4" />
+            {selectedRecords.size > 0
+              ? t(`Run AI agent (${Number(selectedRecords.size)} records)`)
+              : t('Run AI agent')}
+          </Button>
+        )}
+        {selectedRecords.size > 0 && (
+          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+            <ConfirmationDeleteDialog
+              title={t('Delete Records')}
+              message={t(
+                'Are you sure you want to delete the selected records? This action cannot be undone.',
+              )}
+              entityName={selectedRecords.size === 1 ? t('record') : t('records')}
+              mutationFn={async () => {
+                const indices = Array.from(selectedRecords).map((row) =>
+                  records.findIndex((r) => r.uuid === row),
+                );
+                deleteRecords(indices.map((index) => index.toString()));
+                setSelectedRecords(new Set());
+              }}
             >
-              <Trash2 className="size-4" />
-              {t('Delete Records')}{' '}
-            </Button>
-          </ConfirmationDeleteDialog>
-        </PermissionNeededTooltip>
-      )}
+              <Button
+                variant="ghost"
+                className="flex gap-2 px-2 items-center font-light text-destructive hover:text-destructive"
+                disabled={!userHasTableWritePermission}
+              >
+                <Trash2 className="size-4" />
+                {t('Delete Records')}{' '}
+              </Button>
+            </ConfirmationDeleteDialog>
+          </PermissionNeededTooltip>
+        )}
+      </div>
+      <Button
+        variant="ghost"
+        className="flex gap-2 px-2 items-center font-light text-muted-foreground hover:text-muted-foreground"
+        onClick={() => setIsImportCsvDialogOpen(true)}
+      >
+        <ImportCsvDialog
+          open={isImportCsvDialogOpen}
+          setIsOpen={setIsImportCsvDialogOpen}
+        />
+        <Import className="size-4 text-muted-foreground" />
+      </Button>
     </div>
   );
 };

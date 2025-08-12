@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import DataGrid, { DataGridHandle } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +9,6 @@ import { useTheme } from '@/components/theme-provider';
 import { Drawer, DrawerContent, DrawerHeader } from '@/components/ui/drawer';
 import { agentRunsApi } from '@/features/agents/lib/agents-api';
 import { ApTableControl } from '@/features/tables/components/ap-table-control';
-import { ApTableFooter } from '@/features/tables/components/ap-table-footer';
 import { ApTableHeader } from '@/features/tables/components/ap-table-header';
 import { useTableState } from '@/features/tables/components/ap-table-state-provider';
 import {
@@ -180,7 +179,10 @@ const ApTableEditorPage = () => {
 
         <div className="flex flex-col flex-1 h-full bg-muted/50">
           <div className="flex-1 flex flex-col relative ml-5">
-            <ApTableControl table={table} />
+            <ApTableControl
+              table={table}
+              recordsCount={records.length}
+            />
             <div className="flex-1 flex flex-row">
               <DataGrid
                 ref={gridRef}
@@ -206,10 +208,6 @@ const ApTableEditorPage = () => {
               />
             </div>
           </div>
-          <ApTableFooter
-            fieldsCount={fields.length}
-            recordsCount={records.length}
-          />
         </div>
       </DrawerContent>
     </Drawer>

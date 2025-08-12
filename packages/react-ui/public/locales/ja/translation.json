@@ -1127,7 +1127,7 @@
   "Saving...": "保存中...",
   "Loading more...": "さらに読み込み中...",
   "Export Table": "テーブルをエクスポート",
-  "Delete Records": "レコードを削除",
+  "Delete records": "レコードを削除",
   "Are you sure you want to delete the selected records? This action cannot be undone.": "選択したレコードを削除してもよろしいですか？この操作は元に戻せません。",
   "record": "レコード",
   "records": "レコード",

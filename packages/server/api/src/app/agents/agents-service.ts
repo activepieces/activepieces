@@ -243,7 +243,6 @@ function getEnhancementPrompt(originalPrompt: string) {
 }
 
 async function applyWebhookSideEffects(params: ApplyWebhookSideEffectsParams) {
-    console.log('HAHAHAHAHA params in applyWebhookSideEffects', params)
     if (params.isEnabled) {
         await agentSideEffects().upsertTableWebhook({ 
             agentId: params.agentId, 
