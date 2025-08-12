@@ -18,7 +18,7 @@ export const mollie = createPiece({
   auth: MollieAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/mollie.png',
-  authors: [],
+  authors: ['Sanket6652'],
   actions: [
     createCustomer,
     createOrder,

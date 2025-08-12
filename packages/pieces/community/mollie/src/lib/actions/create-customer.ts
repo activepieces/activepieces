@@ -19,7 +19,7 @@ export const createCustomer = createAction({
     email: Property.ShortText({
       displayName: 'Email',
       description: 'Customer email address',
-      required: true,
+      required: false, // Changed from true to false
     }),
     locale: localeDropdown,
     metadata: Property.Object({
@@ -30,13 +30,14 @@ export const createCustomer = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const customerData: any = {
-      email: propsValue.email,
-    };
+    const customerData: any = {};
 
     // Add optional fields if provided
     if (propsValue.name) {
       customerData.name = propsValue.name;
+    }
+    if (propsValue.email) {
+      customerData.email = propsValue.email;
     }
     if (propsValue.locale) {
       customerData.locale = propsValue.locale;

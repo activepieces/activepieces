@@ -35,56 +35,59 @@ export const localeDropdown = Property.StaticDropdown({
   },
 });
 
-export const currencyDropdown = Property.StaticDropdown({
-  displayName: 'Currency',
-  description: 'Three-letter ISO currency code',
-  required: true,
-  options: {
-    options: [
-      { label: 'EUR - Euro', value: 'EUR' },
-      { label: 'USD - US Dollar', value: 'USD' },
-      { label: 'GBP - British Pound', value: 'GBP' },
-      { label: 'CHF - Swiss Franc', value: 'CHF' },
-      { label: 'PLN - Polish Zloty', value: 'PLN' },
-      { label: 'SEK - Swedish Krona', value: 'SEK' },
-      { label: 'DKK - Danish Krone', value: 'DKK' },
-      { label: 'NOK - Norwegian Krone', value: 'NOK' },
-    ],
-  },
-});
+export const currencyDropdown = (name: string, required = false) =>
+  Property.StaticDropdown({
+    displayName: name,
+    description: 'ISO 4217 currency for the fixed amount (optional)',
+    required: required,
+    options: {
+      options: [
+        { label: 'EUR - Euro', value: 'EUR' },
+        { label: 'USD - US Dollar', value: 'USD' },
+        { label: 'GBP - British Pound', value: 'GBP' },
+        { label: 'CHF - Swiss Franc', value: 'CHF' },
+        { label: 'PLN - Polish Zloty', value: 'PLN' },
+        { label: 'SEK - Swedish Krona', value: 'SEK' },
+        { label: 'DKK - Danish Krone', value: 'DKK' },
+        { label: 'NOK - Norwegian Krone', value: 'NOK' },
+      ],
+    },
+  });
 
-
-export const paymentMethodDropdown = Property.StaticMultiSelectDropdown({
+export const paymentMethodDropdown = Property.Dropdown({
   displayName: 'Payment Method',
   description: 'Force a specific payment method',
   required: false,
-  options: {
-    options: [
-      { label: 'Apple Pay', value: 'applepay' },
-      { label: 'Bancomatpay', value: 'bancomatpay' },
-      { label: 'Bancontact', value: 'bancontact' },
-      { label: 'Bank Transfer', value: 'banktransfer' },
-      { label: 'Belfius Pay Button', value: 'belfius' },
-      { label: 'BLIK', value: 'blik' },
-      { label: 'Credit Card', value: 'creditcard' },
-      { label: 'EPS', value: 'eps' },
-      { label: 'Gift Card', value: 'giftcard' },
-      { label: 'iDEAL', value: 'ideal' },
-      { label: 'KBC/CBC Payment Button', value: 'kbc' },
-      { label: 'MyBank', value: 'mybank' },
-      { label: 'Pay by Bank', value: 'paybybank' },
-      { label: 'PayPal', value: 'paypal' },
-      { label: 'Paysafecard', value: 'paysafecard' },
-      { label: 'Point of Sale', value: 'pointofsale' },
-      { label: 'Przelewy24', value: 'przelewy24' },
-      { label: 'Satispay', value: 'satispay' },
-      { label: 'Trustly', value: 'trustly' },
-      { label: 'Twint', value: 'twint' },
-      { label: 'in3', value: 'in3' },
-      { label: 'Riverty', value: 'riverty' },
-      { label: 'Klarna', value: 'klarna' },
-      { label: 'Billie', value: 'billie' },
-    ],
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+    try {
+      const response = await makeRequest(
+        auth as string,
+        HttpMethod.GET,
+        '/methods'
+      );
+      return {
+        disabled: false,
+        options: response._embedded.paymentMethods.map((method: any) => ({
+          label: method.name,
+          value: method.id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading payment methods',
+      };
+    }
   },
 });
 
@@ -188,7 +191,7 @@ export const mandatesIdDropdown = Property.Dropdown({
       const response = await makeRequest(
         auth as string,
         HttpMethod.GET,
-        `customers/${customerId}/mandates`
+        `/customers/${customerId}/mandates`
       );
       return {
         disabled: false,

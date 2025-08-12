@@ -24,11 +24,21 @@ export const searchPayment = createAction({
       description: 'Filter payments by profile ID',
       required: false,
     }),
+    sort: Property.StaticDropdown({
+      displayName: 'Sort',
+      description: 'Order of results',
+      required: false,
+      options: {
+        options: [
+          { label: 'Ascending', value: 'asc' },
+          { label: 'Descending', value: 'desc' },
+        ],
+      },
+    }),
   },
   async run({ auth, propsValue }) {
     const queryParams: string[] = [];
 
-    // Add query parameters if provided
     if (propsValue.from) {
       queryParams.push(`from=${encodeURIComponent(propsValue.from)}`);
     }
@@ -38,13 +48,20 @@ export const searchPayment = createAction({
     if (propsValue.profileId) {
       queryParams.push(`profileId=${encodeURIComponent(propsValue.profileId)}`);
     }
+    if (propsValue.sort) {
+      queryParams.push(`sort=${propsValue.sort}`);
+    }
 
     const queryString =
       queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
     const endpoint = `/payments${queryString}`;
 
     const response = await makeRequest(auth, HttpMethod.GET, endpoint);
-
-    return response._embedded.payments;
+    const payments = response._embedded?.payments || [];
+    const paymentCount = payments.length;
+    return {
+      payments: payments,
+      count: paymentCount,
+    };
   },
 });
