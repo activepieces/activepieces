@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-openai",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "dependencies": {
     "tiktoken": "1.0.11"
   }
