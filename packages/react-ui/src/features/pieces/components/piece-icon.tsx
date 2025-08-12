@@ -13,8 +13,8 @@ import { cn } from '@/lib/utils';
 const pieceIconVariants = cva('flex items-center justify-center   ', {
   variants: {
     circle: {
-      true: 'rounded-full  p-2',
-      false: 'dark:rounded-[2px]',
+      true: 'rounded-full p-2',
+      false: 'dark:rounded-[2px] p-1',
     },
     size: {
       xxl: 'size-[64px] p-4',
@@ -28,6 +28,13 @@ const pieceIconVariants = cva('flex items-center justify-center   ', {
       true: 'border border-solid',
     },
   },
+  compoundVariants: [
+    {
+      circle: true,
+      size: ['sm', 'xs'],
+      class: 'p-1',
+    },
+  ],
   defaultVariants: {},
 });
 

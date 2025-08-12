@@ -159,7 +159,7 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
         userId,
         operation: {
             type: FlowOperationType.IMPORT_FLOW,
-            request: replaceConnectionInFlowVersion(lastPublishedVersion, appConnection, newAppConnection),
+            request: replaceConnectionInFlowVersion(lastPublishedVersion, appConnection.externalId, newAppConnection.externalId),
         },
     })
 
@@ -189,34 +189,30 @@ async function handleDraftVersion(flow: Flow, lastVersion: FlowVersion, userId: 
         userId,
         operation: {
             type: FlowOperationType.IMPORT_FLOW,
-            request: replaceConnectionInFlowVersion(lastVersion, appConnection, newAppConnection),
+            request: replaceConnectionInFlowVersion(lastVersion, appConnection.externalId, newAppConnection.externalId),
         },
     })
 
 }
-function replaceConnectionInFlowVersion(flowVersion: FlowVersion, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData) {
+function replaceConnectionInFlowVersion(flowVersion: FlowVersion, oldExternalId: string, newExternalId: string) {
     return flowStructureUtil.transferFlow(flowVersion, (step) => {
-        if (step.settings?.input?.auth?.includes(appConnection.externalId)) {
+        if (step.settings?.input?.auth?.includes(oldExternalId)) {
             return {
                 ...step,
                 settings: {
                     ...step.settings,
                     input: {
                         ...step.settings?.input,
-                        auth: replaceConnectionIdInAuth(step.settings.input.auth, appConnection.externalId, newAppConnection.externalId),
+                        auth: step.settings.input.auth.replace(
+                            new RegExp(`connections\\['${oldExternalId}'\\]`, 'g'),
+                            `connections['${newExternalId}']`,
+                        ),
                     },
                 },
             }
         }
         return step
     })
-}
-
-function replaceConnectionIdInAuth(auth: string, oldConnectionId: string, newConnectionId: string): string {
-    return auth.replace(
-        new RegExp(`connections\\['${oldConnectionId}'\\]`, 'g'),
-        `connections['${newConnectionId}']`,
-    )
 }
 
 type UpdateFlowsWithAppConnectionParams = {

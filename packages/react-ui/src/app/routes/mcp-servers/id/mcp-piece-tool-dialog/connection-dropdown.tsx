@@ -6,11 +6,11 @@ import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Label } from '@/components/ui/label';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 
 type ConnectionDropdownProps = {
-  piece: PieceMetadataModelSummary;
+  piece: PieceMetadataModelSummary | PieceMetadataModel;
   value: string | null;
   onChange: (connectionExternalId: string | null) => void;
   disabled?: boolean;
@@ -94,7 +94,7 @@ export const ConnectionDropdown = React.memo(
           isGlobalConnection={false}
         />
 
-        <div className="space-y-2">
+        <div className="space-y-2 w-full">
           {showLabel && <Label>{label}</Label>}
           <SearchableSelect
             value={value ?? undefined}

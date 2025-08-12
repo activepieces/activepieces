@@ -64,6 +64,7 @@ import { SignUpPage } from '../routes/sign-up';
 import { ApTablesPage } from '../routes/tables';
 import { ApTableEditorPage } from '../routes/tables/id';
 import { ShareTemplatePage } from '../routes/templates/share-template';
+import { SolutionsPage } from '../routes/solutions';
 import { TodosPage } from '../routes/todos';
 import { TodoTestingPage } from '../routes/todos/id';
 
@@ -267,6 +268,16 @@ const routes = [
       <PageTitle title="Todo Testing">
         <TodoTestingPage />
       </PageTitle>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/solutions',
+    element: (
+      <DashboardContainer>
+        <PageTitle title="Solutions">
+          <SolutionsPage />
+        </PageTitle>
+      </DashboardContainer>
     ),
   }),
   ...ProjectRouterWrapper({

@@ -4,6 +4,8 @@ export const Solution = Type.Object({
     name: Type.String(),
     description: Type.String(),
     state: ProjectState,
+    thumbnail: Type.Optional(Type.String()),
+    author: Type.Optional(Type.String()),
 })
 
 export type Solution = Static<typeof Solution>
