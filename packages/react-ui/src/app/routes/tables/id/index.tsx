@@ -3,6 +3,18 @@ import { useRef, useEffect } from 'react';
 import DataGrid, { DataGridHandle } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useNavigate } from 'react-router-dom';
+import {
+  useSensor,
+  DndContext,
+  useSensors,
+  PointerSensor,
+  closestCenter,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  horizontalListSortingStrategy
+} from "@dnd-kit/sortable";
 
 import { useSocket } from '@/components/socket-provider';
 import { useTheme } from '@/components/theme-provider';
@@ -47,6 +59,7 @@ const ApTableEditorPage = () => {
     selectedAgentRunId,
     setSelectedAgentRunId,
     setRecords,
+    reorderFields
   ] = useTableState((state) => [
     state.table,
     state.setAgentRunId,
@@ -60,6 +73,7 @@ const ApTableEditorPage = () => {
     state.selectedAgentRunId,
     state.setSelectedAgentRunId,
     state.setRecords,
+    state.reorderFields
   ]);
 
   const gridRef = useRef<DataGridHandle>(null);
@@ -145,6 +159,20 @@ const ApTableEditorPage = () => {
     navigate(`/projects/${projectId}/tables`);
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (over && active.id !== over.id) {
+
+      const activeIndex = columns.findIndex(c => c.key === active.id) - 1;
+      const overIndex = columns.findIndex(c => c.key === over.id) - 1;
+
+      reorderFields(activeIndex, overIndex)
+    }
+  };
+
   return (
     <Drawer
       open={true}
@@ -163,28 +191,36 @@ const ApTableEditorPage = () => {
         <div className="flex flex-col flex-1 h-full">
           <div className="flex-1 flex flex-col">
             <div className="flex-1">
-              <DataGrid
-                ref={gridRef}
-                columns={columns}
-                rows={rows}
-                rowKeyGetter={(row: Row) => row.id}
-                selectedRows={selectedRecords}
-                onSelectedRowsChange={setSelectedRecords}
-                className={cn(
-                  'scroll-smooth w-full h-full bg-muted/30',
-                  theme === 'dark' ? 'rdg-dark' : 'rdg-light',
-                )}
-                bottomSummaryRows={
-                  userHasTableWritePermission ? [{ id: 'new-record' }] : []
-                }
-                rowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
-                headerRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
-                summaryRowHeight={
-                  isAllowedToCreateRecord
-                    ? ROW_HEIGHT_MAP[RowHeight.DEFAULT]
-                    : 0
-                }
-              />
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext items={columns.map(c => c.key)} strategy={horizontalListSortingStrategy}>
+                  <DataGrid
+                    ref={gridRef}
+                    columns={columns}
+                    rows={rows}
+                    rowKeyGetter={(row: Row) => row.id}
+                    selectedRows={selectedRecords}
+                    onSelectedRowsChange={setSelectedRecords}
+                    className={cn(
+                      'scroll-smooth w-full h-full bg-muted/30',
+                      theme === 'dark' ? 'rdg-dark' : 'rdg-light',
+                    )}
+                    bottomSummaryRows={
+                      userHasTableWritePermission ? [{ id: 'new-record' }] : []
+                    }
+                    rowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
+                    headerRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
+                    summaryRowHeight={
+                      isAllowedToCreateRecord
+                        ? ROW_HEIGHT_MAP[RowHeight.DEFAULT]
+                        : 0
+                    }
+                  />
+                </SortableContext>
+              </DndContext>
             </div>
             <ApTableFooter
               fieldsCount={fields.length}
