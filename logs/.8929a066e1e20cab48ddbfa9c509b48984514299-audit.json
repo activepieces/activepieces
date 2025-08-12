@@ -6,9 +6,9 @@
     "auditLog": "logs/.8929a066e1e20cab48ddbfa9c509b48984514299-audit.json",
     "files": [
         {
-            "date": 1754837256477,
-            "name": "logs/scrapeless-2025-08-10.log",
-            "hash": "8971b3eed0adabb2654ec4d6bd8b682d37db6ca2b7ce37845d7ed0ffb8986185"
+            "date": 1754928323577,
+            "name": "logs/scrapeless-2025-08-11.log",
+            "hash": "457339136bc019587ef5bd4bce7467bc1afcfd04d62dc88d6c6c16084304f8b3"
         }
     ],
     "hashType": "sha256"

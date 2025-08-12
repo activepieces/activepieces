@@ -257,6 +257,7 @@ import { AddParentRunIdToFlowRun1753699877817 } from './migration/postgres/17536
 import { AddCascadeOnAgents1753727379513 } from './migration/postgres/1753727379513-AddCascadeOnAgents'
 import { AddExternalIdToMCPPostgres1753787093467 } from './migration/postgres/1753787093467-AddExternalIdToMCPPostgres'
 import { AddExternalidToMCPToolPostgres1754214833292 } from './migration/postgres/1754214833292-AddExternalidToMCPToolPostgres'
+import { AddStepNameToTestInFlowRunEntity1754330492027 } from './migration/postgres/1754330492027-AddStepNameToTestInFlowRunEntity'
 import { AddTriggerSource1754478770608 } from './migration/postgres/1754478770608-AddTriggerSource'
 import { AddJobIdToTriggerRun1754510611628 } from './migration/postgres/1754510611628-AddJobIdToTriggerRun'
 import { RemoveAgentTestPrompt1754863565929 } from './migration/postgres/1754863565929-RemoveAgentTestPrompt'
@@ -441,6 +442,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddExternalIdToMCPPostgres1753787093467,
         AddExternalidToMCPToolPostgres1754214833292,
         AddTriggerSource1754478770608,
+        AddStepNameToTestInFlowRunEntity1754330492027,
         AddJobIdToTriggerRun1754510611628,
         RemoveAgentTestPrompt1754863565929,
     ]

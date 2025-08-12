@@ -44,15 +44,14 @@ async function fileExists(filePath: string) {
 
 const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
   const filePath = path.join(pieceOutputPath, 'src', 'i18n', `${locale}.json`);
-
   if (!(await fileExists(filePath))) {
+    console.log(`readLocaleFile: ${filePath} does not exist`)
     return null;
   }
 
   try {
     const fileContent = await fs.readFile(filePath, 'utf8');
     const translations = JSON.parse(fileContent);
-
     if (typeof translations === 'object' && translations !== null) {
       return translations;
     }
@@ -70,11 +69,11 @@ const extractPiecePath = async (pieceName: string) => {
    if(await fileExists(`/node_modules/${pieceName}`)) {
     return `/node_modules/${pieceName}`;
    }
-   console.log(`/node_modules/${pieceName} does not exist`)
+   console.log(`extractPiecePath: /node_modules/${pieceName} does not exist`)
     
     const distPath = path.resolve('dist/packages/pieces');
     const fastGlob = (await import('fast-glob')).default;
-    const packageJsonFiles = await fastGlob('**/**/package.json', { cwd: distPath });
+    const packageJsonFiles = await fastGlob('**/package.json', { cwd: distPath,  ignore: ['**/node_modules/**'] });
     for (const relativeFile of packageJsonFiles) {
       const fullPath = path.join(distPath, relativeFile);
       try {
