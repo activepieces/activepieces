@@ -45,7 +45,7 @@ export const addFollowerAction = createAction({
     },
     async run(context) {
         const { followerId, entity, entityId } = context.propsValue;
-        const resourceUri = `/${entity}/${entityId}/followers`; 
+        const resourceUri = `/v2/${entity}/${entityId}/followers`; 
 
         if (!resourceUri) { // This check is technically redundant if `entity` is always one of the dropdown values
             throw new Error(`Invalid object type: ${entity}`);

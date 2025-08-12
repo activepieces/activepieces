@@ -68,6 +68,9 @@ export const updateDealAction = createAction({
         
         const allProps = context.propsValue as Record<string, any>;
         for (const key in allProps) {
+            if (key==='auth' || key ==='customfields'){
+                continue; // Skip auth and customfields properties
+            }
             if (Object.prototype.hasOwnProperty.call(allProps, key) && !standardPropKeys.has(key)) {
                 customFields[key] = allProps[key];
             }
@@ -114,7 +117,7 @@ export const updateDealAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/dealFields',
+            resourceUri: '/v1/dealFields',
         });
 
         // This function transforms the custom fields in the *response* data

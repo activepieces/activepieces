@@ -54,7 +54,7 @@ interface PipedriveActivityV2 {
   }[];
   participants?: {
     person_id: number;
-    primary_flag: boolean;
+    primary: boolean;
   }[];
  
 }
@@ -165,11 +165,11 @@ export const newActivity = createTrigger({
     participants: [
       {
         person_id: 17985,
-        primary_flag: false,
+        primary: false,
       },
       {
         person_id: 1101,
-        primary_flag: true,
+        primary: true,
       },
     ],
   },

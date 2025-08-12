@@ -50,6 +50,9 @@ export const createPersonAction = createAction({
        
         const allProps = context.propsValue as Record<string, any>;
         for (const key in allProps) {
+            if (key==='auth' || key ==='customfields'){
+                continue; // Skip auth and customfields properties
+            }
             if (Object.prototype.hasOwnProperty.call(allProps, key) && !standardPropKeys.has(key)) {
                 customFields[key] = allProps[key];
             }
@@ -69,26 +72,27 @@ export const createPersonAction = createAction({
         }));
 
         const personPayload: Record<string, any> = {
-            name: name,
+            name,
             owner_id: ownerId,
             org_id: organizationId,
-            marketing_status: marketing_status,
             visible_to: visibleTo,
             first_name: firstName,
             last_name: lastName,
         };
 
-        if (phones.length > 0) {
-            personPayload.phones = phones;
+        // Phones and emails
+        if (phones.length) personPayload.phone = phones;
+        if (emails.length) personPayload.email = emails;
+        if (labelIds.length) personPayload.label_ids = labelIds;
+
+        // Flatten custom fields into top-level keys
+        for (const [key, value] of Object.entries(allProps)) {
+            if (!standardPropKeys.has(key) && key !== 'auth' && key !== 'customfields') {
+                personPayload[key] = value;
+            }
         }
 
-        if (emails.length > 0) {
-            personPayload.emails = emails;
-        }
 
-        if (labelIds.length > 0) {
-            personPayload.label_ids = labelIds;
-        }
 
         
         if (Object.keys(customFields).length > 0) {
@@ -109,7 +113,7 @@ export const createPersonAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/personFields',
+            resourceUri: '/v1/personFields',
         });
 
         

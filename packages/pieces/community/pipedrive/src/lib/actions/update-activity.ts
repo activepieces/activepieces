@@ -57,7 +57,7 @@ export const updateActivityAction = createAction({
 
         
         if (personId) {
-            activityPayload.participants = [{ person_id: personId, primary_flag: true }];
+            activityPayload.participants = [{ person_id: personId, primary: true }];
         }
 
         if (dueDate) {

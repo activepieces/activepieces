@@ -307,7 +307,7 @@ export const updatedDealStageTrigger = createTrigger({
             order_nr: 1,
             name: 'Qualification',
             is_deleted: false,
-            deal_probability: 100,
+            deal_probability: false,
             pipeline_id: 1,
             is_deal_rot_enabled: false,
             days_to_rotten: null,

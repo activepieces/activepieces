@@ -21,8 +21,7 @@ export const updateLeadAction = createAction({
             displayName: 'Title',
             required: false,
         }),
-        ...leadCommonProps, // Spreads common lead properties
-        customfields: customFieldsProp('lead'), 
+        ...leadCommonProps, // Spreads common lead properties 
     },
     async run(context) {
         const {
@@ -60,12 +59,7 @@ export const updateLeadAction = createAction({
       
         const customFields: Record<string, unknown> = {};
         
-        const allProps = context.propsValue as Record<string, any>;
-        for (const key in allProps) {
-            if (Object.prototype.hasOwnProperty.call(allProps, key) && !standardPropKeys.has(key)) {
-                customFields[key] = allProps[key];
-            }
-        }
+        
 
         const leadPayload: Record<string, any> = {
             title,
@@ -99,12 +93,16 @@ export const updateLeadAction = createAction({
             leadPayload.custom_fields = customFields;
         }
 
+        
+        if (!context.propsValue.leadId){
+            throw new Error('Lead ID is required to update a lead');
+        }
        
         const updatedLeadResponse = await pipedriveApiCall<GetLeadResponse>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.PATCH,
-            resourceUri: `/v2/leads/${leadId}`,
+            resourceUri: `/v1/leads/${context.propsValue.leadId}`,
             body: leadPayload,
         });
 
@@ -113,7 +111,7 @@ export const updateLeadAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/leadFields',
+            resourceUri: '/v1/dealFields',
         });
 
         // This function transforms the custom fields in the *response* data

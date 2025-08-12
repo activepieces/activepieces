@@ -20,7 +20,7 @@ export const getNoteAction = createAction({
                 accessToken: context.auth.access_token,
                 apiDomain: context.auth.data['api_domain'],
                 method: HttpMethod.GET,
-                resourceUri: `/v2/notes/${context.propsValue.noteId}`, 
+                resourceUri: `/v1/notes/${context.propsValue.noteId}`, 
             });
             return response;
         }

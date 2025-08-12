@@ -140,7 +140,7 @@ export async function pipedrivePaginatedApiCall<T extends HttpMessageBody>({
         if (cursor) {
             currentQuery.cursor = cursor;
         }
-        currentQuery.limit = 500; 
+        currentQuery.limit = 100; 
 
         const response = await pipedriveApiCall<PaginatedResponse<T>>({
             accessToken,

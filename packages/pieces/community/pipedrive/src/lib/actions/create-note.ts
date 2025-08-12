@@ -74,7 +74,7 @@ export const createNoteAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.POST,
-            resourceUri: '/v2/notes',
+            resourceUri: '/v1/notes',
             body: notePayload,
         });
 

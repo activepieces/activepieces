@@ -77,8 +77,7 @@ export const findActivityAction = createAction({
 
         const result = [];
 
-        // Client-side filtering for 'subject' as the /v2/activities list endpoint
-        // does not directly support 'subject' as a query parameter.
+        
         for (const activity of response) {
             if (activity.subject) { // Ensure subject exists before attempting comparison
                 if (exactMatch && activity.subject === subject) {

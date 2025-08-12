@@ -39,7 +39,7 @@ export const findUserAction = createAction({
                 accessToken: context.auth.access_token,
                 apiDomain: context.auth.data['api_domain'],
                 method: HttpMethod.GET,
-                resourceUri: '/v2/users/find', 
+                resourceUri: '/v1/users/find', 
                 query: {
                     term: fieldValue,
                    

@@ -186,7 +186,7 @@ export const updatedDeal = createTrigger({
                 const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
                 const response = await httpClient.sendRequest<FieldsResponse>({
                     method: HttpMethod.GET,
-                    url: `${authValue.data['api_domain']}/api/v2/dealFields`,
+                    url: `${authValue.data['api_domain']}/api/v1/dealFields`,
                     authentication: {
                         type: AuthenticationType.BEARER_TOKEN,
                         token: authValue.access_token,
@@ -260,7 +260,7 @@ export const updatedDeal = createTrigger({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/dealFields',
+            resourceUri: '/v1/dealFields',
         });
 
         const result = [];
@@ -315,7 +315,7 @@ export const updatedDeal = createTrigger({
                 accessToken: context.auth.access_token,
                 apiDomain: context.auth.data['api_domain'],
                 method: HttpMethod.GET,
-                resourceUri: '/v2/dealFields',
+                resourceUri: '/v1/dealFields',
             });
 
             const updatedDealProperties = pipedriveTransformCustomFields(
@@ -387,7 +387,7 @@ export const updatedDeal = createTrigger({
             order_nr: 1,
             name: 'Qualification',
             is_deleted: false,
-            deal_probability: 100,
+            deal_probability: false,
             pipeline_id: 1,
             is_deal_rot_enabled: false,
             days_to_rotten: null,

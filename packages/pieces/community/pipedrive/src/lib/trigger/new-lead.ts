@@ -59,7 +59,7 @@ export const newLeadTrigger = createTrigger({
     async onEnable(context) {
         const response = await httpClient.sendRequest<{ data: { id: string } }>({
             method: HttpMethod.POST,
-            url: `${context.auth.data['api_domain']}/api/v2/webhooks`,
+            url: `${context.auth.data['api_domain']}/api/v1/webhooks`,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: context.auth.access_token,
@@ -85,7 +85,7 @@ export const newLeadTrigger = createTrigger({
         if (response !== null && !isNil(response.webhookId)) {
             await httpClient.sendRequest({
                 method: HttpMethod.DELETE,
-                url: `${context.auth.data['api_domain']}/api/v2/webhooks/${response.webhookId}`,
+                url: `${context.auth.data['api_domain']}/api/v1/webhooks/${response.webhookId}`,
                 authentication: {
                     type: AuthenticationType.BEARER_TOKEN,
                     token: context.auth.access_token,
@@ -98,7 +98,7 @@ export const newLeadTrigger = createTrigger({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/leads',
+            resourceUri: '/v1/leads',
             query: {
                 limit: 10,
                 sort_by: 'update_time',
@@ -113,7 +113,7 @@ export const newLeadTrigger = createTrigger({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/leadFields',
+            resourceUri: '/v1/dealFields',
         });
 
         const result = [];
@@ -136,14 +136,14 @@ export const newLeadTrigger = createTrigger({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: `/v2/leads/${payloadBody.data.id}`,
+            resourceUri: `/v1/leads/${payloadBody.data.id}`,
         });
 
         const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/leadFields',
+            resourceUri: '/v1/leadFields',
         });
 
         const updatedLeadProperties = pipedriveTransformCustomFields(

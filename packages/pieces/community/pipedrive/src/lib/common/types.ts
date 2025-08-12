@@ -92,7 +92,7 @@ export interface PipedriveActivityV2 {
     }[];
     participants?: {
         person_id: number;
-        primary_flag: boolean;
+        primary: boolean;
     }[];
 }
 

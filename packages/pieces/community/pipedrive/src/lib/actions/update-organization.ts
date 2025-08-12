@@ -44,6 +44,9 @@ export const updateOrganizationAction = createAction({
         
         const allProps = context.propsValue as Record<string, any>;
         for (const key in allProps) {
+            if (key==='auth' || key ==='customfields'){
+                continue; // Skip auth and customfields properties
+            }
             if (Object.prototype.hasOwnProperty.call(allProps, key) && !standardPropKeys.has(key)) {
                 customFields[key] = allProps[key];
             }

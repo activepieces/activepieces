@@ -47,7 +47,7 @@ export const attachFileAction = createAction({
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
-            url: `${context.auth.data['api_domain']}/api/v2/files`, 
+            url: `${context.auth.data['api_domain']}/api/v1/files`, 
             body: formData,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,

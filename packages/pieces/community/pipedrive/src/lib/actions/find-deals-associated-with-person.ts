@@ -42,7 +42,7 @@ export const findDealsAssociatedWithPersonAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/dealFields', 
+            resourceUri: '/v1/dealFields', 
         });
 
         const result = [];

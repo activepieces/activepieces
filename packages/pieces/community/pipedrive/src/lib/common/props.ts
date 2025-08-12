@@ -9,6 +9,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { GetField, StageWithPipelineInfo } from './types';
 import { isNil } from '@activepieces/shared';
+import { context } from '@opentelemetry/api';
 
 /**
  * Fetches options for Pipedrive filters.
@@ -17,28 +18,28 @@ import { isNil } from '@activepieces/shared';
  * @returns Dropdown options for filters.
  */
 export async function fetchFiltersOptions(
-    auth: PiecePropValueSchema<typeof pipedriveAuth>,
-    type: string,
+	auth: PiecePropValueSchema<typeof pipedriveAuth>,
+	type: string,
 ): Promise<DropdownOption<number>[]> {
-    const filters = await pipedriveApiCall<{ data: Array<{ id: number; name: string }> }>({
-        accessToken: auth.access_token,
-        apiDomain: auth.data['api_domain'],
-        method: HttpMethod.GET,
-        resourceUri: '/v2/filters', 
-        query: {
-            type: type,
-        },
-    });
+	const filters = await pipedriveApiCall<{ data: Array<{ id: number; name: string }> }>({
+		accessToken: auth.access_token,
+		apiDomain: auth.data['api_domain'],
+		method: HttpMethod.GET,
+		resourceUri: '/v1/filters',
+		query: {
+			type: type,
+		},
+	});
 
-    const options: DropdownOption<number>[] = [];
-    for (const filter of filters.data) {
-        options.push({
-            label: filter.name,
-            value: filter.id, 
-        });
-    }
+	const options: DropdownOption<number>[] = [];
+	for (const filter of filters.data) {
+		options.push({
+			label: filter.name,
+			value: filter.id,
+		});
+	}
 
-    return options;
+	return options;
 }
 
 /**
@@ -55,7 +56,7 @@ export async function fetchActivityTypesOptions(
         accessToken: auth.access_token,
         apiDomain: auth.data['api_domain'],
         method: HttpMethod.GET,
-        resourceUri: '/v2/activityTypes', 
+        resourceUri: '/v1/activityTypes', 
     });
 
     const options: DropdownOption<string>[] = [];
@@ -81,7 +82,7 @@ export async function fetchPipelinesOptions(
         accessToken: auth.access_token,
         apiDomain: auth.data['api_domain'],
         method: HttpMethod.GET,
-        resourceUri: '/v2/pipelines', 
+        resourceUri: '/v1/pipelines', 
     });
 
     const options: DropdownOption<number>[] = [];
@@ -91,7 +92,7 @@ export async function fetchPipelinesOptions(
             value: pipeline.id,
         });
     }
-
+    console.log('Fetched pipelines options:', options); // Debugging log
     return options;
 }
 
@@ -107,7 +108,7 @@ export async function fetchPersonsOptions(
         accessToken: auth.access_token,
         apiDomain: auth.data['api_domain'],
         method: HttpMethod.GET,
-        resourceUri: '/v2/persons', 
+        resourceUri: '/v1/persons', 
         query: {
             sort_by: 'update_time', 
             sort_direction: 'desc', 
@@ -137,7 +138,7 @@ export async function fetchOwnersOptions(
         accessToken: auth.access_token,
         apiDomain: auth.data['api_domain'],
         method: HttpMethod.GET,
-        resourceUri: '/v2/users', 
+        resourceUri: '/v1/users', 
         query: {
             sort_by: 'update_time', 
             sort_direction: 'desc', 
@@ -251,20 +252,20 @@ export async function retrieveObjectCustomProperties(
 
     switch (objectType) {
         case 'person':
-            endpoint = '/v2/personFields'; 
+            endpoint = '/v1/personFields'; 
             break;
         case 'deal':
            
-            endpoint = '/v2/dealFields'; 
+            endpoint = '/v1/dealFields'; 
             break;
         case 'organization':
-            endpoint = '/v2/organizationFields'; 
+            endpoint = '/v1/organizationFields'; 
             break;
         case 'product':
-            endpoint = '/v2/productFields';
+            endpoint = '/v1/productFields';
             break;
         case 'lead': // Added case for lead custom fields
-            endpoint = '/v2/leadFields'; 
+            endpoint = '/v1/leadFields'; 
             break;
     }
 
@@ -294,65 +295,64 @@ export async function retrieveObjectCustomProperties(
  * @param objectType The type of object (e.g., 'deal', 'person').
  */
 export const searchFieldProp = (objectType: string) =>
-    Property.Dropdown({
-        displayName: 'Field to search by',
-        required: true,
-        refreshers: [],
-        options: async ({ auth }) => {
-            if (!auth) {
-                return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please connect your account.',
-                };
-            }
-            const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
+	Property.Dropdown({
+		displayName: 'Field to search by',
+		required: true,
+		refreshers: [],
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account.',
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
 
-            let endpoint = '';
+			let endpoint = '';
 
-            switch (objectType) {
-                case 'person':
-                    endpoint = '/v2/personFields'; 
+			switch (objectType) {
+				case 'person':
+					endpoint = '/v1/personFields';
+					break;
+				case 'deal':
+                    endpoint = '/v1/dealFields';
                     break;
-                case 'deal':
-                    endpoint = '/v2/dealFields'; 
-                    break;
-                case 'organization':
-                    endpoint = '/v2/organizationFields';
-                    break;
-                case 'product':
-                    endpoint = '/v2/productFields'; 
-                    break;
-                case 'lead':
-                    endpoint = '/v2/leadFields'; 
-                    break;
-            }
+				case 'lead':
+					endpoint = '/v1/leadLabels';
+					break;
+				case 'organization':
+					endpoint = '/v1/organizationFields';
+					break;
+				case 'product':
+					endpoint = '/v1/productFields';
+					break;
+			}
 
-            const response = await pipedrivePaginatedApiCall<GetField>({
-                accessToken: authValue.access_token,
-                apiDomain: authValue.data['api_domain'],
-                method: HttpMethod.GET,
-                resourceUri: endpoint,
-            });
+			const response = await pipedrivePaginatedApiCall<GetField>({
+				accessToken: authValue.access_token,
+				apiDomain: authValue.data['api_domain'],
+				method: HttpMethod.GET,
+				resourceUri: endpoint,
+			});
 
-            const options: DropdownOption<string>[] = [];
+			const options: DropdownOption<string>[] = [];
 
-            for (const field of response) {
-                
-                if (!isNil(field.key)) { 
-                    options.push({
-                        label: field.name,
-                        value: field.key, 
-                    });
-                }
-            }
+			for (const field of response) {
+				if (!isNil(field.id)) {
+					options.push({
+						label: field.name,
+						value: field.id.toString(),
+					});
+				}
+			}
 
-            return {
-                disabled: false,
-                options,
-            };
-        },
-    });
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
 
 /**
  * Property definition for the value of a search field.
@@ -360,75 +360,73 @@ export const searchFieldProp = (objectType: string) =>
  * @param objectType The type of object (e.g., 'deal', 'person').
  */
 export const searchFieldValueProp = (objectType: string) =>
-    Property.DynamicProperties({
-        displayName: 'Field Value',
-        required: true,
-        refreshers: ['searchField'],
-        props: async ({ auth, searchField }) => {
-            if (!auth || !searchField) return {};
+	Property.DynamicProperties({
+		displayName: 'Field Value',
+		required: true,
+		refreshers: ['searchField'],
+		props: async ({ auth, searchField }) => {
+			if (!auth || !searchField) return {};
 
-            const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-            const props: DynamicPropsValue = {};
+			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
+			const props: DynamicPropsValue = {};
 
-            let endpoint = '';
+			let endpoint = '';
 
-            switch (objectType) {
-                case 'person':
-                    endpoint = '/v2/personFields'; 
+			switch (objectType) {
+				case 'person':
+					endpoint = '/v1/personFields';
+					break;
+				case 'deal':
+                    endpoint= '/v1/dealFields';
                     break;
-                case 'deal':
-                    endpoint = '/v2/dealFields'; 
-                    break;
-                case 'organization':
-                    endpoint = '/v2/organizationFields'; 
-                    break;
-                case 'product':
-                    endpoint = '/v2/productFields'; 
-                    break;
-                case 'lead':
-                    endpoint = '/v2/leadFields'; 
-                    break;
-            }
+				case 'lead':
+					endpoint = '/v1/leadSources';
+					break;
+				case 'organization':
+					endpoint = '/v1/organizationFields';
+					break;
+				case 'product':
+					endpoint = '/v1/productFields';
+					break;
+			}
 
-            // Fetch the specific field definition to determine its type
-            const response = await pipedriveApiCall<{ data: GetField }>({
-                accessToken: authValue.access_token,
-                apiDomain: authValue.data['api_domain'],
-                method: HttpMethod.GET,
-                resourceUri: `${endpoint}/${searchField}`, // searchField is the field.key
-            });
+			const response = await pipedriveApiCall<{ data: GetField }>({
+				accessToken: authValue.access_token,
+				apiDomain: authValue.data['api_domain'],
+				method: HttpMethod.GET,
+				resourceUri: `${endpoint}/${searchField}`,
+			});
 
-            const propertyDefinition =
-                
-                response.data.field_type === 'set' || response.data.field_type === 'enum' // Also apply to enum for consistency
-                    ? Property.StaticDropdown({
-                        displayName: response.data.name,
-                        required: false,
-                        options: {
-                            disabled: false,
-                            options: response.data.options
-                                ? response.data.options.map((option) => {
-                                    return {
-                                        label: option.label,
-                                        value: option.id, 
-                                    };
-                                })
-                                : [],
-                        },
-                    })
-                    : createPropertyDefinition(response.data);
-            if (propertyDefinition) {
-                props['field_value'] = propertyDefinition;
-            } else {
-                // Fallback for types not explicitly handled by createPropertyDefinition
-                props['field_value'] = Property.ShortText({
-                    displayName: response.data.name,
-                    required: false,
-                });
-            }
-            return props;
-        },
-    });
+			const propertyDefinition =
+				response.data.field_type === 'set'
+					? Property.StaticDropdown({
+							displayName: response.data.name,
+							required: false,
+							options: {
+								disabled: false,
+								options: response.data.options
+									? response.data.options.map((option) => {
+											return {
+												label: option.label,
+												value: option.id.toString(),
+											};
+									  })
+									: [],
+							},
+					  })
+					: createPropertyDefinition(response.data);
+
+			if (propertyDefinition) {
+				props['field_value'] = propertyDefinition;
+			} else {
+				props['field_value'] = Property.ShortText({
+					displayName: response.data.name,
+					required: false,
+				});
+			}
+			return props;
+		},
+	});
 
 
 export const ownerIdProp = (displayName: string, required = false) =>
@@ -456,27 +454,27 @@ export const ownerIdProp = (displayName: string, required = false) =>
 
 
 export const filterIdProp = (type: string, required = false) =>
-    Property.Dropdown({
-        displayName: 'Filter',
-        refreshers: [],
-        required,
-        options: async ({ auth }) => {
-            if (!auth) {
-                return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please connect your account.',
-                };
-            }
-            const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-            const options = await fetchFiltersOptions(authValue, type);
+	Property.Dropdown({
+		displayName: 'Filter',
+		refreshers: [],
+		required,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account.',
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
+			const options = await fetchFiltersOptions(authValue, type);
 
-            return {
-                disabled: false,
-                options,
-            };
-        },
-    });
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
 
 
 export const organizationIdProp = (required = false) =>
@@ -579,13 +577,13 @@ export const labelIdsProp = (objectType: string, labelFieldName: string, require
 
             switch (objectType) {
                 case 'person':
-                    endpoint = '/v2/personFields'; 
+                    endpoint = '/v1/personFields'; 
                     break;
                 case 'deal':
-                    endpoint = '/v2/dealFields'; 
+                    endpoint = '/v1/dealFields'; 
                     break;
                 case 'organization':
-                    endpoint = '/v2/organizationFields'; 
+                    endpoint = '/v1/organizationFields'; 
                     break;
             }
 
@@ -638,7 +636,7 @@ export const leadLabelIdsProp = (required = false) =>
                 accessToken: authValue.access_token,
                 apiDomain: authValue.data['api_domain'],
                 method: HttpMethod.GET,
-                resourceUri: '/v2/leadLabels', 
+                resourceUri: '/v1/leadLabels', 
             });
 
             const options: DropdownOption<string>[] = []; // Value type is string for lead label IDs
@@ -689,7 +687,7 @@ export const visibleToProp = Property.StaticDropdown({
 export const leadIdProp = (required = false) =>
     Property.ShortText({ // Lead IDs are typically UUID strings in v2
         displayName: 'Lead ID',
-        required,
+        required:true,
     });
 
 
@@ -818,16 +816,14 @@ export const leadCommonProps = {
                 accessToken: authValue.access_token,
                 apiDomain: authValue.data['api_domain'],
                 method: HttpMethod.GET,
-                resourceUri: '/v2/leadSources', 
+                resourceUri: '/v1/leadSources', 
             });
 
-            const options: DropdownOption<number>[] = []; // Value type is number for lead source IDs
-            for (const source of leadSourcesResponse.data) {
-                options.push({
-                    label: source.name,
-                    value: source.id,
-                });
-            }
+            const sources = leadSourcesResponse.data ?? [];// Value type is number for lead source IDs
+            const options: DropdownOption<number>[] = sources.map((source) => ({
+                label: source.name ?? `Source ${source.id}`,
+                value: Number(source.id),
+            }));
 
             return {
                 disabled: false,

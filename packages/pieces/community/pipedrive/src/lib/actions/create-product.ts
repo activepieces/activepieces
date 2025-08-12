@@ -144,7 +144,7 @@ export const createProductAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/productFields',
+            resourceUri: '/v1/productFields',
         });
 
         

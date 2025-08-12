@@ -33,7 +33,7 @@ export const findDealAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.POST,
-            resourceUri: '/v2/filters', 
+            resourceUri: '/v1/filters', 
             body: {
                 name: `Activepieces Find Deal Filter - ${Date.now()}`, // Added timestamp to name to ensure uniqueness
                 type: 'deals',
@@ -87,7 +87,7 @@ export const findDealAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.DELETE,
-            resourceUri: `/v2/filters/${filter.data.id}`, 
+            resourceUri: `/v1/filters/${filter.data.id}`, 
         });
 
         if (isNil(deals.data) || deals.data.length === 0) {
@@ -102,7 +102,7 @@ export const findDealAction = createAction({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/dealFields', 
+            resourceUri: '/v1/dealFields', 
         });
 
         // Transform custom fields in the response data
