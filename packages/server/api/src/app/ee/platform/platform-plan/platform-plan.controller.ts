@@ -1,7 +1,7 @@
-import { ApSubscriptionStatus, BillingCycle, CreateSubscriptionParamsSchema, getPlanLimits, PlanName, SetAiCreditsOverageLimitParamsSchema, StartTrialParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
+import { BillingCycle, CreateSubscriptionParamsSchema, getPlanLimits, PlanName, SetAiCreditsOverageLimitParamsSchema, StartTrialParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, ListAICreditsUsageRequest, ListAICreditsUsageResponse, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-authorization'
@@ -9,30 +9,6 @@ import { platformUsageService } from '../platform-usage-service'
 import { PlatformPlanHelper } from './platform-plan-helper'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
-
-async function getNextBillingAmount(subscriptionStatus: ApSubscriptionStatus, log: FastifyBaseLogger, subscriptionId?: string): Promise<number> {
-    const stripe = stripeHelper(log).getStripe()
-    if (isNil(stripe)) {
-        return 0
-    }
-
-    try {
-        const upcomingInvoice = await stripe.invoices.createPreview({
-            subscription: subscriptionId,
-        })
-        return upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
-    }
-    catch {
-        switch (subscriptionStatus) {
-            case ApSubscriptionStatus.TRIALING: {
-                return 25
-            }
-            default: {
-                return 0
-            }
-        }
-    }
-}
 
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
@@ -47,7 +23,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const { stripeSubscriptionCancelDate: cancelDate } = platformPlan
         const { endDate: nextBillingDate } = await platformPlanService(request.log).getBillingDates(platformPlan)
 
-        const nextBillingAmount = await getNextBillingAmount(platformPlan.stripeSubscriptionStatus as ApSubscriptionStatus, request.log, platformPlan.stripeSubscriptionId)
+        const nextBillingAmount = await platformPlanService(request.log).getNextBillingAmount({ plan: platformPlan.plan!, subscriptionId: platformPlan.stripeSubscriptionId })
 
         const response: PlatformBillingInformation = {
             plan: platformPlan,
