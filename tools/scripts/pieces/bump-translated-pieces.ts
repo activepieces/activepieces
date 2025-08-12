@@ -146,40 +146,37 @@ function getPieceDirectories(piecesDir: string): string[] {
 function main(): void {
   console.log('Finding pieces with translation changes compared to main...');
   
-  const piecesWithChanges: string[] = [];
   const piecesDir = 'packages/pieces/community';
   
   // Get all piece directories
-  const pieceDirs = getPieceDirectories(piecesDir);
+  const piecesWithChanges = getPieceDirectories(piecesDir).slice(0, 75);
+  // console.log(`Checking ${pieceDirs.length} pieces for changes...`);
   
-  console.log(`Checking ${pieceDirs.length} pieces for changes...`);
-  
-  for (const piece of pieceDirs) {
-    const piecePath = path.join(piecesDir, piece);
-    
-    // Check if piece has changes compared to main
-    if (hasChangesComparedToMain(piecePath)) {
-      // Check if it has i18n directory (indicating translations were added)
-      if (hasI18nDirectory(piecePath)) {
-        // Check if the changes are translation-related
-        if (hasTranslationChanges(piecePath)) {
-          // Check if version has already been bumped
-          if (hasVersionBeenBumped(piecePath)) {
-            console.log(`  - ${piece} - has translation changes but version already bumped`);
-          } else {
-            piecesWithChanges.push(piece);
-            console.log(`  ✓ ${piece} - has translation changes and needs version bump`);
-          }
-        } else {
-          console.log(`  - ${piece} - has changes but not translation-related`);
-        }
-      } else {
-        console.log(`  - ${piece} - has changes but no i18n directory`);
-      }
-    } else {
-      console.log(`  - ${piece} - no changes`);
-    }
-  }
+  // for (const piece of pieceDirs) {
+  //   const piecePath = path.join(piecesDir, piece);
+  //   // Check if piece has changes compared to main
+  //   if (hasChangesComparedToMain(piecePath)) {
+  //     // Check if it has i18n directory (indicating translations were added)
+  //     if (hasI18nDirectory(piecePath)) {
+  //       // Check if the changes are translation-related
+  //       if (hasTranslationChanges(piecePath)) {
+  //         // Check if version has already been bumped
+  //         if (hasVersionBeenBumped(piecePath)) {
+  //           console.log(`  - ${piece} - has translation changes but version already bumped`);
+  //         } else {
+  //           piecesWithChanges.push(piece);
+  //           console.log(`  ✓ ${piece} - has translation changes and needs version bump`);
+  //         }
+  //       } else {
+  //         console.log(`  - ${piece} - has changes but not translation-related`);
+  //       }
+  //     } else {
+  //       console.log(`  - ${piece} - has changes but no i18n directory`);
+  //     }
+  //   } else {
+  //     console.log(`  - ${piece} - no changes`);
+  //   }
+  // }
   
   if (piecesWithChanges.length === 0) {
     console.log('\nNo pieces with translation changes found.');
