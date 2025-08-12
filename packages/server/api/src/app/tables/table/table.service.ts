@@ -30,7 +30,7 @@ import { TableEntity } from './table.entity'
 
 export const tableRepo = repoFactory(TableEntity)
 const recordRepo = repoFactory(RecordEntity)
-const tableWebhookRepo = repoFactory(TableWebhookEntity)
+export const tableWebhookRepo = repoFactory(TableWebhookEntity)
 
 export const tableService = {
     async create({
@@ -110,6 +110,13 @@ export const tableService = {
                 projectId,
             }),
         }
+    },
+
+    async getOneByAgentId({
+        projectId,
+        agentId,
+    }: GetOneByAgentIdParams): Promise<Table | null> {
+        return tableRepo().findOneBy({ projectId, agentId })
     },
 
     async delete({
@@ -290,4 +297,9 @@ type UpdateParams = {
 
 type CountParams = {
     projectId: string
+}
+
+type GetOneByAgentIdParams = {
+    projectId: string
+    agentId: string
 }

@@ -13,6 +13,7 @@ import {
     isNil,
     PopulatedRecord,
     SeekPage,
+    TableAutomationTrigger,
     TableWebhookEventType,
     UpdateRecordRequest,
 } from '@activepieces/shared'
@@ -28,6 +29,8 @@ import { fieldService } from '../field/field.service'
 import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
+import { tableAutomationService } from '../../ee/tables/table-automation-service'
+import { agentsService } from '../../agents/agents-service'
 
 const MAX_BATCH_SIZE = 50
 
@@ -283,7 +286,17 @@ export const recordService = {
         if (webhooks.length === 0) {
             return
         }
-        await Promise.all(webhooks.map((webhook) => {
+        await Promise.all(webhooks.map(async (webhook) => {
+            if (isNil(webhook.flowId)) {
+                const table = await tableService.getOneOrThrow({ projectId, id: tableId })
+                return tableAutomationService(logger).run({
+                    projectId,
+                    agentId: table.agentId,
+                    tableId,
+                    record: data['record'] as PopulatedRecord,
+                    trigger: TableAutomationTrigger.ON_DEMAND,
+                })
+            }
             return webhookService.handleWebhook({
                 async: true,
                 flowId: webhook.flowId,

@@ -1,4 +1,4 @@
-import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AgentSettings, AIUsageFeature, apId, createAIProvider, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, PopulatedAgent, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AgentSettings, AIUsageFeature, apId, createAIProvider, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, PopulatedAgent, SeekPage, spreadIfDefined, TableWebhookEventType } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -15,6 +15,7 @@ import { projectService } from '../project/project-service'
 import { tableService } from '../tables/table/table.service'
 import { AgentEntity } from './agent-entity'
 import { agentRunsService } from './agent-runs/agent-runs-service'
+import { agentSideEffects } from './agent-side-effects'
 
 export const agentRepo = repoFactory(AgentEntity)
 
@@ -131,6 +132,21 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('outputFields', params.outputFields),
             ...spreadIfDefined('settings', params.settings),
         })
+        
+        await applyWebhookSideEffects({
+            agentId: params.id,
+            projectId: params.projectId,
+            event: TableWebhookEventType.RECORD_CREATED,
+            isEnabled: params.settings?.triggerOnNewRow ?? false,
+        })
+        
+        await applyWebhookSideEffects({
+            agentId: params.id,
+            projectId: params.projectId,
+            event: TableWebhookEventType.RECORD_UPDATED,
+            isEnabled: params.settings?.triggerOnFieldUpdate ?? false,
+        })
+        
         return this.getOneOrThrow({ id: params.id, projectId: params.projectId })
     },
     async getOne(params: GetOneParams): Promise<PopulatedAgent | null> {
@@ -226,9 +242,34 @@ function getEnhancementPrompt(originalPrompt: string) {
     }
 }
 
+async function applyWebhookSideEffects(params: ApplyWebhookSideEffectsParams) {
+    console.log('HAHAHAHAHA params in applyWebhookSideEffects', params)
+    if (params.isEnabled) {
+        await agentSideEffects().upsertTableWebhook({ 
+            agentId: params.agentId, 
+            projectId: params.projectId, 
+            request: { 
+                events: [params.event], 
+                webhookUrl: 'tables-webhook-url',
+            } 
+        })
+    } else {
+        await agentSideEffects().deleteTableWebhook({ 
+            agentId: params.agentId, projectId: params.projectId, type: params.event
+        })
+    }
+}
+
 type GetOneByExternalIdParams = {
     externalId: string
     projectId: string
+}
+
+type ApplyWebhookSideEffectsParams = {
+    agentId: string
+    projectId: string
+    event: TableWebhookEventType
+    isEnabled: boolean
 }
 
 type ListParams = {

@@ -140,6 +140,7 @@ import { AddExternalIdToMCPSqlite1753786833156 } from './migration/sqlite/175378
 import { AddTriggerSqlite1754477404726 } from './migration/sqlite/1754477404726-AddTriggerSqlite'
 import { AddJobIdToTriggerRun1754510243053 } from './migration/sqlite/1754510243053-AddJobIdToTriggerRun'
 import { AddSettingsAndSummaryAgentRunSqlite1754922630313 } from './migration/sqlite/1754922630313-AddSettingsAndSummaryAgentRunSqlite'
+import { MakeFlowIdOptionalInTableWebhookSqlite1755011767281 } from './migration/sqlite/1755011767281-MakeFlowIdOptionalInTableWebhookSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -295,7 +296,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddExternalIdToMCPSqlite1753786833156,
         AddTriggerSqlite1754477404726,
         AddJobIdToTriggerRun1754510243053,
-        AddSettingsAndSummaryAgentRunSqlite1754922630313
+        AddSettingsAndSummaryAgentRunSqlite1754922630313,
+        MakeFlowIdOptionalInTableWebhookSqlite1755011767281
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

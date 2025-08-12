@@ -27,7 +27,7 @@ export type AutomateTableRequest = Static<typeof AutomateTableRequest>
 export const CreateTableWebhookRequest = Type.Object({
     events: Type.Array(Type.Enum(TableWebhookEventType)),
     webhookUrl: Type.String(),
-    flowId: Type.String(),
+    flowId: Type.Optional(Type.String()),
 })
 
 export type CreateTableWebhookRequest = Static<typeof CreateTableWebhookRequest>

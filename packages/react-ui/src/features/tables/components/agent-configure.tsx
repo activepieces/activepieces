@@ -239,7 +239,7 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
           <div onClick={(e) => e.preventDefault()}>{trigger}</div>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[500px] max-h-[85vh] overflow-y-auto p-0 z-[9999]"
+          className="w-[500px] max-h-[85vh] overflow-y-auto p-0"
           align="end"
           side="bottom"
           sideOffset={8}
@@ -363,7 +363,9 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
                       variant="ghost"
                       size="sm"
                       className="w-full"
-                      onClick={() => setShowAddPieceDialog(true)}
+                      onClick={() => {
+                        setShowAddPieceDialog(true)
+                      }}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add tool

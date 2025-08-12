@@ -206,7 +206,7 @@ export const McpPieceDialog = ({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden">
+      <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden z-50">
         <DialogHeader className={`${selectedPiece ? 'gap-2' : 'gap-0'}`}>
           <DialogTitle>
             {selectedPiece ? (
