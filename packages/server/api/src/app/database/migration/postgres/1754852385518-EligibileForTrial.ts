@@ -6,22 +6,34 @@ export class EligibileForTrial1754852385518 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
-            ALTER COLUMN "eligibleForTrial" TYPE varchar,
-            ALTER COLUMN "eligibleForTrial" SET DEFAULT NULL,
-            ALTER COLUMN "eligibleForTrial" DROP NOT NULL
+            DROP COLUMN "eligibleForTrial"
+        `)
+
+        await queryRunner.query(`
+            ALTER TABLE "platform_plan"
+            ADD "eligibleForTrial" varchar
+        `)
+
+        await queryRunner.query(`
+            UPDATE "platform_plan"
+            SET "eligibleForTrial" = NULL
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
-            ALTER COLUMN "eligibleForTrial" TYPE boolean USING CASE 
-                WHEN "eligibleForTrial" IS NULL THEN false
-                WHEN "eligibleForTrial" IS NOT NULL THEN true
-                ELSE false
-            END,
-            ALTER COLUMN "eligibleForTrial" SET DEFAULT false,
-            ALTER COLUMN "eligibleForTrial" SET NOT NULL
+            DROP COLUMN "eligibleForTrial"
+        `)
+
+        await queryRunner.query(`
+            ALTER TABLE "platform_plan"
+            ADD "eligibleForTrial" boolean
+        `)
+
+        await queryRunner.query(`
+            UPDATE "platform_plan"
+            SET "eligibleForTrial" = false
         `)
     }
 }
