@@ -47,7 +47,7 @@ export const createCustomer = createAction({
     }
 
     const response = await makeRequest(
-      auth,
+      auth.access_token,
       HttpMethod.POST,
       '/customers',
       customerData

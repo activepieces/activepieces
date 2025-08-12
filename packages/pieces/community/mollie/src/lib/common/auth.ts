@@ -1,38 +1,53 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from './client';
 
-export const MollieAuth = PieceAuth.SecretText({
-  displayName: 'Mollie API Key',
+export const MollieAuth = PieceAuth.OAuth2({
   description: `
-To obtain your Mollie API key:
-1. Log in to your Mollie Dashboard
-2. Go to Settings > Website profiles
-3. Select your website profile
-4. Copy the API key (starts with 'live_' for production or 'test_' for testing)
 
-More info: https://docs.mollie.com/reference/authentication
 `,
+  authUrl: 'https://www.mollie.com/oauth2/authorize',
+  tokenUrl: 'https://api.mollie.com/oauth2/tokens',
   required: true,
+  scope: [
+    'payments.read',
+    'payments.write',
+    'refunds.read',
+    'refunds.write',
+    'customers.read',
+    'customers.write',
+    'mandates.read',
+    'mandates.write',
+    'subscriptions.read',
+    'subscriptions.write',
+    'profiles.read',
+    'invoices.read',
+    'settlements.read',
+    'orders.read',
+    'orders.write',
+    'shipments.read',
+    'shipments.write',
+    'organizations.read',
+    'organizations.write',
+  ],
   validate: async ({ auth }) => {
-    if (auth) {
+    if (auth?.access_token) {
       try {
-        await makeRequest(auth as string, HttpMethod.GET, '/methods');
+        // Test the OAuth token by fetching organization info
+        await makeRequest(auth.access_token, HttpMethod.GET, '/me');
         return {
           valid: true,
         };
-      } catch (error) {
+      } catch (error: any) {
         return {
           valid: false,
-          error:
-            'Invalid Mollie API Key. Please check that your API key is correct and starts with "live_" or "test_".',
+          error: 'Invalid OAuth token. Please reconnect your Mollie account.',
         };
       }
     }
     return {
       valid: false,
-      error: 'Mollie API Key is required',
+      error: 'Mollie OAuth connection is required',
     };
   },
 });

@@ -39,7 +39,7 @@ const polling: Polling<
 
       try {
         const response = await makeRequest(
-          auth as string,
+          auth.access_token,
           HttpMethod.GET,
           endpoint
         );

@@ -59,7 +59,7 @@ export const paymentMethodDropdown = Property.Dropdown({
   description: 'Force a specific payment method',
   required: false,
   refreshers: ['auth'],
-  options: async ({ auth }) => {
+  options: async ({ auth }: { auth?: { access_token: string } }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -70,7 +70,7 @@ export const paymentMethodDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.access_token,
         HttpMethod.GET,
         '/methods'
       );
@@ -96,7 +96,7 @@ export const paymentIdDropdown = Property.Dropdown({
   description: 'Select a payment ',
   required: true,
   refreshers: ['auth'],
-  options: async ({ auth }) => {
+  options: async ({ auth }: { auth?: { access_token: string } }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -107,7 +107,7 @@ export const paymentIdDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.access_token,
         HttpMethod.GET,
         '/payments'
       );
@@ -133,7 +133,7 @@ export const customerIdDropdown = Property.Dropdown({
   description: 'Select a customer to associate with this payment',
   required: false,
   refreshers: ['auth'],
-  options: async ({ auth }) => {
+  options: async ({ auth }: { auth?: { access_token: string } }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -144,7 +144,7 @@ export const customerIdDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.access_token,
         HttpMethod.GET,
         '/customers'
       );
@@ -171,7 +171,13 @@ export const mandatesIdDropdown = Property.Dropdown({
   required: false,
 
   refreshers: ['auth', 'customerId'],
-  options: async ({ auth, customerId }) => {
+  options: async ({
+    auth,
+    customerId,
+  }: {
+    auth?: { access_token: string };
+    customerId?: string;
+  }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -189,7 +195,7 @@ export const mandatesIdDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.access_token,
         HttpMethod.GET,
         `/customers/${customerId}/mandates`
       );

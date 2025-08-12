@@ -613,7 +613,7 @@ export const createPayment = createAction({
     }
 
     const response = await makeRequest(
-      auth,
+      auth.access_token,
       HttpMethod.POST,
       '/payments',
       paymentData

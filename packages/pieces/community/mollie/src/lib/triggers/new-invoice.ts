@@ -62,7 +62,7 @@ export const newInvoice = createTrigger({
     };
 
     const response = await makeRequest(
-      context.auth,
+      context.auth.access_token,
       HttpMethod.POST,
       '/webhooks',
       webhookData
@@ -76,7 +76,7 @@ export const newInvoice = createTrigger({
     if (webhookId) {
       try {
         await makeRequest(
-          context.auth,
+          context.auth.access_token,
           HttpMethod.DELETE,
           `/webhooks/${webhookId}`
         );

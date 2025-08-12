@@ -42,7 +42,7 @@ export const searchCustomer = createAction({
       queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
     const endpoint = `/customers${queryString}`;
 
-    const response = await makeRequest(auth, HttpMethod.GET, endpoint);
+    const response = await makeRequest(auth.access_token, HttpMethod.GET, endpoint);
 
     return response._embedded.customers;
   },

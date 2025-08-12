@@ -452,7 +452,7 @@ export const createPaymentLink = createAction({
     }
 
     const response = await makeRequest(
-      auth,
+      auth.access_token,
       HttpMethod.POST,
       '/payment-links',
       paymentLinkData

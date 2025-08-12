@@ -56,7 +56,7 @@ export const searchPayment = createAction({
       queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
     const endpoint = `/payments${queryString}`;
 
-    const response = await makeRequest(auth, HttpMethod.GET, endpoint);
+    const response = await makeRequest(auth.access_token, HttpMethod.GET, endpoint);
     const payments = response._embedded?.payments || [];
     const paymentCount = payments.length;
     return {

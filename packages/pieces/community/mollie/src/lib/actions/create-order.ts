@@ -397,7 +397,7 @@ export const createOrder = createAction({
     }
 
     const response = await makeRequest(
-      auth,
+      auth.access_token,
       HttpMethod.POST,
       '/orders',
       orderData

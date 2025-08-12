@@ -69,7 +69,7 @@ export const searchOrder = createAction({
         : '';
 
     const response = await makeRequest(
-      auth,
+      auth.access_token,
       HttpMethod.GET,
       `/orders${queryString}`
     );
