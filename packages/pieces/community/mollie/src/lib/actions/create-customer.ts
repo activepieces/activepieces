@@ -39,7 +39,7 @@ export const createCustomerAction = createAction({
     }),
   },
   async run(context) {
-    const api = new MollieApi({ apiKey: context.auth });
+    const api = new MollieApi({ accessToken: context.auth.access_token });
     
     const customerData = {
       name: context.propsValue.name,

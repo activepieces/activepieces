@@ -13,9 +13,9 @@ export const createRefundAction = createAction({
       description: 'ID of the payment to refund',
       required: true,
     }),
-    amount: Property.Number({
+    amount: Property.ShortText({
       displayName: 'Refund Amount',
-      description: 'Amount to refund (leave empty for full refund)',
+      description: 'Amount to refund (exact amount string with 2 decimals, e.g. 10.00)',
       required: false,
     }),
     currency: Property.StaticDropdown({
@@ -41,7 +41,7 @@ export const createRefundAction = createAction({
     }),
   },
   async run(context) {
-    const api = new MollieApi({ apiKey: context.auth });
+    const api = new MollieApi({ accessToken: context.auth.access_token });
     
     const refundData: any = {
       description: context.propsValue.description,
@@ -51,7 +51,7 @@ export const createRefundAction = createAction({
     if (context.propsValue.amount && context.propsValue.currency) {
       refundData.amount = {
         currency: context.propsValue.currency,
-        value: context.propsValue.amount.toFixed(2),
+        value: context.propsValue.amount,
       };
     }
 

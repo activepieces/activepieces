@@ -8,7 +8,7 @@ export const createPaymentAction = createAction({
   displayName: 'Create Payment',
   description: 'Creates a new payment in Mollie',
   props: {
-    amount: Property.Number({
+    amount: Property.ShortText({
       displayName: 'Amount',
       description: 'Payment amount (e.g., 10.50)',
       required: true,
@@ -53,12 +53,12 @@ export const createPaymentAction = createAction({
     }),
   },
   async run(context) {
-    const api = new MollieApi({ apiKey: context.auth });
+    const api = new MollieApi({ accessToken: context.auth.access_token });
     
     const paymentData = {
       amount: {
         currency: context.propsValue.currency,
-        value: context.propsValue.amount.toFixed(2),
+        value: context.propsValue.amount,
       },
       description: context.propsValue.description,
       redirectUrl: context.propsValue.redirectUrl,

@@ -22,9 +22,9 @@ export const mollie = createPiece({
   description: 'Online payment service for businesses to process payments, orders, refunds, and manage customers',
   auth: mollieAuth,
   minimumSupportedRelease: '0.20.0',
-  logoUrl: 'https://cdn.cdnlogo.com/logos/m/69/mollie.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/mollie.png',
   categories: [PieceCategory.PAYMENT_PROCESSING],
-  authors: ['activepieces'],
+  authors: ['activepieces', 'Ani-4x'],
   triggers: [
     newCustomerTrigger,
     newOrderTrigger,

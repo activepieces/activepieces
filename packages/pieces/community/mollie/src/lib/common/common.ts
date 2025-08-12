@@ -1,7 +1,21 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
-export const mollieAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
+export const mollieAuth = PieceAuth.OAuth2({
+  tokenUrl: 'https://api.mollie.com/oauth2/tokens',
+  scope: [
+    'payments.read',
+    'payments.write',
+    'refunds.read',
+    'refunds.write',
+    'customers.read',
+    'customers.write',
+    'orders.read',
+    'orders.write',
+    'invoices.read',
+    'settlements.read',
+    'chargebacks.read'
+  ],
+  authUrl: 'https://www.mollie.com/oauth2/authorize',
   required: true,
   description: 'Enter your Mollie API key (starts with live_ or test_)',
 });
@@ -9,12 +23,12 @@ export const mollieAuth = PieceAuth.SecretText({
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 
 export interface MollieApiConfig {
-  apiKey: string;
+  accessToken: string;
 }
 
 export class MollieApi {
   private baseUrl = 'https://api.mollie.com/v2';
-  
+
   constructor(private config: MollieApiConfig) {}
 
   async makeRequest<T>(endpoint: string, method: HttpMethod = HttpMethod.GET, body?: any): Promise<T> {
@@ -23,7 +37,10 @@ export class MollieApi {
       url: `${this.baseUrl}${endpoint}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: this.config.apiKey,
+        token: this.config.accessToken,
+      },
+      headers:{
+        'Content-Type': 'appplication/json',
       },
       body,
     });

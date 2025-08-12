@@ -21,7 +21,7 @@ export const searchOrderAction = createAction({
     }),
   },
   async run(context) {
-    const api = new MollieApi({ apiKey: context.auth });
+    const api = new MollieApi({ accessToken: context.auth.access_token });
     
     const params: any = {};
     if (context.propsValue.limit) params.limit = context.propsValue.limit;
