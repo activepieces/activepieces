@@ -340,7 +340,7 @@ function ApSidebarMenuGroup(item: SidebarGroup) {
     <React.Fragment key={item.label}>
       <SidebarGroup key={item.name} className="py-0.5">
         {item.name && <SidebarGroupLabel>{item.name}</SidebarGroupLabel>}
-        <SidebarMenu >
+        <SidebarMenu>
           <Collapsible
             defaultOpen={item.defaultOpen || item.isActive?.(location.pathname)}
             className="group/collapsible"

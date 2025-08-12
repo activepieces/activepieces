@@ -1,4 +1,4 @@
-name: Generate Translation Files for All Pieces
+name: Generate Translation Files for Community Pieces and UI
 
 on:
   schedule:
@@ -26,6 +26,9 @@ jobs:
       
       - name: Generate translation files for all pieces
         run: npm run cli pieces generate-translation-file-for-all-pieces
+      
+      - name: Generate translation files for UI
+        run: npm run i18n:extract
       
       - name: Check for changes
         id: check-changes
