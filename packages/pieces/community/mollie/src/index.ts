@@ -5,6 +5,14 @@ import { mollieCreatePayment } from './lib/actions/create-payment';
 import { mollieCreatePaymentLink } from './lib/actions/create-payment-link';
 import { mollieCreateCustomer } from './lib/actions/create-customer';
 import { mollieCreateRefund } from './lib/actions/create-refund';
+import { mollieCreateOrder } from './lib/actions/create-order';
+import { mollieGetPayment } from './lib/actions/get-payment';
+import { mollieGetCustomer } from './lib/actions/get-customer';
+import { mollieGetOrder } from './lib/actions/get-order';
+import { mollieGetRefund } from './lib/actions/get-refund';
+import { mollieUpdateCustomer } from './lib/actions/update-customer';
+import { mollieCancelPayment } from './lib/actions/cancel-payment';
+import { mollieCancelOrder } from './lib/actions/cancel-order';
 import { mollieSearchOrder } from './lib/actions/search-order';
 import { mollieSearchPayment } from './lib/actions/search-payment';
 import { mollieSearchCustomer } from './lib/actions/search-customer';
@@ -35,6 +43,14 @@ export const mollie = createPiece({
     mollieCreatePaymentLink,
     mollieCreateCustomer,
     mollieCreateRefund,
+    mollieCreateOrder,
+    mollieGetPayment,
+    mollieGetCustomer,
+    mollieGetOrder,
+    mollieGetRefund,
+    mollieUpdateCustomer,
+    mollieCancelPayment,
+    mollieCancelOrder,
     mollieSearchOrder,
     mollieSearchPayment,
     mollieSearchCustomer,

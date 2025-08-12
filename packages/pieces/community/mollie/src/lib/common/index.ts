@@ -61,6 +61,32 @@ export const mollieCommon = {
       data
     );
   },
+
+  async updateResource<T = any>(
+    auth: string,
+    resource: string,
+    resourceId: string,
+    data: any
+  ): Promise<T> {
+    return await this.makeRequest<T>(
+      auth,
+      HttpMethod.PATCH,
+      `/${resource}/${resourceId}`,
+      data
+    );
+  },
+
+  async deleteResource<T = any>(
+    auth: string,
+    resource: string,
+    resourceId: string
+  ): Promise<T> {
+    return await this.makeRequest<T>(
+      auth,
+      HttpMethod.DELETE,
+      `/${resource}/${resourceId}`
+    );
+  },
 };
 
 export interface MolliePayment {
