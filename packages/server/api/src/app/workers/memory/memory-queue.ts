@@ -1,6 +1,6 @@
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import { AgentJobData, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
-import { DelayPauseMetadata, FlowRun, FlowRunStatus, FlowTriggerType, isNil, PauseType, PopulatedFlow, ProgressUpdateType, RunEnvironment, TriggerSourceScheduleType } from '@activepieces/shared'
+import { FlowRun, FlowRunStatus, FlowTriggerType, isNil, PauseType, PopulatedFlow, ProgressUpdateType, RunEnvironment, TriggerSourceScheduleType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
