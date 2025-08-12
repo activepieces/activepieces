@@ -4,31 +4,33 @@ import { createPropsResolver } from '../../src/lib/variables/props-resolver'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
     return new EngineConstants(
-        params?.flowId ?? 'flowId',
-        params?.flowVersionId ?? 'flowVersionId',
-        params?.flowVersionState ?? FlowVersionState.DRAFT,
-        params?.flowRunId ?? 'flowRunId',
-        params?.publicApiUrl ?? 'http://127.0.0.1:4200/api/',
-        params?.internalApiUrl ??  'http://127.0.0.1:3000/',
-        params?.retryConstants ?? {
-            maxAttempts: 2,
-            retryExponential: 1,
-            retryInterval: 1,
-        },
-        params?.engineToken ?? 'engineToken',
-        params?.projectId ?? 'projectId',
-        params?.propsResolver ?? createPropsResolver({
-            projectId: 'projectId',
-            engineToken: 'engineToken',
-            apiUrl: 'http://127.0.0.1:3000',
-        }),
-        params?.testSingleStepMode ?? false,
-        params?.progressUpdateType ?? ProgressUpdateType.NONE,
-        params?.serverHandlerId ?? null,
-        params?.httpRequestId ?? null,
-        params?.resumePayload,
-        params?.runEnvironment ?? RunEnvironment.TESTING,
-    )
+        {
+            flowId: params?.flowId ?? 'flowId',
+            flowVersionId: params?.flowVersionId ?? 'flowVersionId',
+            flowVersionState: params?.flowVersionState ?? FlowVersionState.DRAFT,
+            flowRunId: params?.flowRunId ?? 'flowRunId',
+            publicApiUrl: params?.publicApiUrl ?? 'http://127.0.0.1:4200/api/',
+            internalApiUrl: params?.internalApiUrl ?? 'http://127.0.0.1:3000/',
+            retryConstants: params?.retryConstants ?? {
+                maxAttempts: 2,
+                retryExponential: 1,
+                retryInterval: 1,
+            },
+            engineToken: params?.engineToken ?? 'engineToken',
+            projectId: params?.projectId ?? 'projectId',
+            propsResolver: params?.propsResolver ?? createPropsResolver({
+                projectId: 'projectId',
+                engineToken: 'engineToken',
+                apiUrl: 'http://127.0.0.1:3000',
+            }),
+            triggerPieceName: params?.triggerPieceName ?? 'mcp-trigger-piece-name',
+            progressUpdateType: params?.progressUpdateType ?? ProgressUpdateType.NONE,
+            serverHandlerId: params?.serverHandlerId ?? null,
+            httpRequestId: params?.httpRequestId ?? null,
+            resumePayload: params?.resumePayload,
+            runEnvironment: params?.runEnvironment ?? RunEnvironment.TESTING,
+            testSingleStepMode: params?.testSingleStepMode ?? false,
+        })
 }
 
 export function buildSimpleLoopAction({

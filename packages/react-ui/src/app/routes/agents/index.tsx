@@ -95,7 +95,7 @@ export const AgentsPage = () => {
 
       <div className="mt-4">
         {agents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-[400px] border-2 border-dashed rounded-lg bg-gradient-to-br from-background to-muted/20">
+          <div className="flex flex-col items-center justify-center h-[400px]  rounded-lg bg-gradient-to-br from-background to-muted/20">
             <img
               src={agentsGroupImage}
               alt="Agents"

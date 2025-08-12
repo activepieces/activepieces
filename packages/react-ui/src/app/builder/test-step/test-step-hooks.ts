@@ -292,7 +292,7 @@ export const testStepHooks = {
       },
       onSuccess: (testStepResponse: StepRunResponse) => {
         const { success, standardOutput, standardError } = testStepResponse;
-        const errorMessage = standardOutput ?? standardError;
+        const errorMessage = success ? standardOutput : standardError;
         setErrorMessage?.(undefined);
         setConsoleLogs?.(errorMessage ?? null);
         if (success) {
