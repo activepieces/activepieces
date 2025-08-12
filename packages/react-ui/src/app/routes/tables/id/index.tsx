@@ -8,7 +8,6 @@ import { useSocket } from '@/components/socket-provider';
 import { useTheme } from '@/components/theme-provider';
 import { Drawer, DrawerContent, DrawerHeader } from '@/components/ui/drawer';
 import { agentRunsApi } from '@/features/agents/lib/agents-api';
-import { AgentConfigure } from '@/features/tables/components/agent-configure';
 import { ApTableControl } from '@/features/tables/components/ap-table-control';
 import { ApTableFooter } from '@/features/tables/components/ap-table-footer';
 import { ApTableHeader } from '@/features/tables/components/ap-table-header';
@@ -32,7 +31,6 @@ import {
 } from '@activepieces/shared';
 
 import './react-data-grid.css';
-import { ApTableHistory } from '@/features/tables/components/ap-table-history';
 
 const ApTableEditorPage = () => {
   const navigate = useNavigate();
@@ -66,10 +64,7 @@ const ApTableEditorPage = () => {
     state.updateAgent,
     state.setRuns,
   ]);
-  const [isAgentConfigureOpen, setIsAgentConfigureOpen] = useState(
-    table.agent?.settings.aiMode ?? false,
-  );
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
   const gridRef = useRef<DataGridHandle>(null);
   const { theme } = useTheme();
   const { data: maxRecords } = flagsHooks.useFlag<number>(
@@ -179,8 +174,6 @@ const ApTableEditorPage = () => {
             <ApTableHeader
               onBack={handleBack}
               agent={table.agent!}
-              setIsAgentConfigureOpen={setIsAgentConfigureOpen}
-              setIsHistoryOpen={setIsHistoryOpen}
             />
           </div>
         </DrawerHeader>
@@ -212,20 +205,6 @@ const ApTableEditorPage = () => {
                 }
               />
             </div>
-            {table.agent?.created !== table.agent?.updated && (
-              <AgentConfigure
-                open={isAgentConfigureOpen}
-                setOpen={setIsAgentConfigureOpen}
-                fields={fields}
-                updateAgent={updateAgent}
-              />
-            )}
-            {table.agent?.id && isHistoryOpen && (
-              <ApTableHistory
-                open={isHistoryOpen}
-                onOpenChange={setIsHistoryOpen}
-              />
-            )}
           </div>
           <ApTableFooter
             fieldsCount={fields.length}

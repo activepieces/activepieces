@@ -26,23 +26,21 @@ import { isNil, Permission, PopulatedAgent } from '@activepieces/shared';
 
 import { AgentProfile } from './agent-profile';
 import { AgentSetupDialog } from './agent-setup-dialog';
+import { AgentConfigure } from './agent-configure';
+import { ApTableHistory } from './ap-table-history';
 import { useTableState } from './ap-table-state-provider';
 import { ImportCsvDialog } from './import-csv-dialog';
 
 interface ApTableHeaderProps {
   onBack: () => void;
   agent: PopulatedAgent;
-  setIsAgentConfigureOpen: (isOpen: boolean) => void;
-  setIsHistoryOpen: (isOpen: boolean) => void;
 }
 
 export const ApTableHeader = ({
   onBack,
   agent,
-  setIsAgentConfigureOpen,
-  setIsHistoryOpen,
 }: ApTableHeaderProps) => {
-  const [isSaving, table, renameTable, updateAgent, selectedAgentRunId, runs] =
+  const [isSaving, table, renameTable, updateAgent, selectedAgentRunId, runs, fields] =
     useTableState((state) => [
       state.isSaving,
       state.table,
@@ -50,6 +48,7 @@ export const ApTableHeader = ({
       state.updateAgent,
       state.selectedAgentRunId,
       state.runs,
+      state.fields,
     ]);
 
   const { mutate: updateAgentSettings } = agentHooks.useUpdate(
@@ -64,6 +63,10 @@ export const ApTableHeader = ({
   const [isAgentSetupDialogOpen, setIsAgentSetupDialogOpen] = useState(
     (agent?.settings?.aiMode && agent?.created === agent?.updated) ?? false,
   );
+  const [isAgentConfigureOpen, setIsAgentConfigureOpen] = useState(
+    agent?.settings?.aiMode ?? false,
+  );
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
@@ -157,32 +160,48 @@ export const ApTableHeader = ({
         {agent.created !== agent.updated && agent.settings?.aiMode && (
           <>
             <div className={cn("flex items-center gap-2", !isNil(selectedAgentRunId) && "gap-6")}>
-              {runs && runs.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-fit px-2"
-                  onClick={() => setIsHistoryOpen(true)}
-                >
-                  <div className="flex items-center gap-1">
-                    <History className="h-4 w-4" />
-                    <span>
-                      last run:{' '}
-                      {formatUtils.formatDate(
-                        new Date(runs[runs.length - 1]?.created),
-                      )}
-                    </span>
-                  </div>
-                </Button>
+              {runs && runs.length > 0 && agent.settings?.aiMode && (
+                <ApTableHistory
+                  open={isHistoryOpen}
+                  onOpenChange={setIsHistoryOpen}
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="w-fit px-2"
+                      onClick={() => {
+                        setIsHistoryOpen(true);
+                      }}
+                    >
+                      <div className="flex items-center gap-1">
+                        <History className="h-4 w-4" />
+                        <span>
+                          last run:{' '}
+                          {formatUtils.formatDate(
+                            new Date(runs[0]?.created),
+                          )}
+                        </span>
+                      </div>
+                    </Button>
+                  }
+                />
               )}
-              <AgentProfile
-                className="cursor-pointer"
-                size="lg"
-                imageUrl={agent?.profilePictureUrl}
-                isRunning={!isNil(selectedAgentRunId)}
-                onClick={() => {
-                  setIsAgentConfigureOpen(true);
-                }}
+              <AgentConfigure
+                open={isAgentConfigureOpen}
+                setOpen={setIsAgentConfigureOpen}
+                updateAgent={updateAgent}
+                fields={fields}
+                trigger={
+                  <AgentProfile
+                    className="cursor-pointer"
+                    size="lg"
+                    onClick={() => {
+                      setIsAgentConfigureOpen(true);
+                    }}
+                    imageUrl={agent?.profilePictureUrl}
+                    isRunning={!isNil(selectedAgentRunId)}
+                  />
+                }
               />
             </div>
             <Separator orientation="vertical" className="h-8" />

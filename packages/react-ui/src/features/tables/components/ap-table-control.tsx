@@ -54,7 +54,7 @@ export const ApTableControl = ({ table }: ApTableControlProps) => {
   );
   return (
     <div className="flex flex-row items-center my-2 rounded-lg w-fit">
-      {table.agent?.created !== table.agent?.updated && (
+      {table.agent?.settings?.aiMode && table.agent?.created !== table.agent?.updated && (
         <Button
           variant="ghost"
           className="flex gap-2 items-center"

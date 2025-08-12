@@ -3,10 +3,12 @@ import {
   AgentRun,
   AutomateTableRequest,
   CreateTableRequest,
+  CreateTableWebhookRequest,
   ExportTableResponse,
   ListTablesRequest,
   SeekPage,
   Table,
+  TableWebhook,
   UpdateTableRequest,
 } from '@activepieces/shared';
 

@@ -15,9 +15,13 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import { agentsApi } from '@/features/agents/lib/agents-api';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
@@ -34,6 +38,7 @@ import { McpPieceDialog } from '../../mcp/components/mcp-piece-tool-dialog';
 import { ClientField } from '../lib/store/ap-tables-client-state';
 
 import { AgentProfile } from './agent-profile';
+import { ConfirmChangesDialog } from './confirm-changes-dialog';
 import { useTableState } from './ap-table-state-provider';
 
 const BUILT_IN_TOOLS: string[] = ['@activepieces/piece-tables'];
@@ -43,6 +48,7 @@ type AgentConfigureProps = {
   setOpen: (open: boolean) => void;
   updateAgent: (agent: PopulatedAgent) => void;
   fields: ClientField[];
+  trigger?: React.ReactNode;
 };
 
 export const AgentConfigure: React.FC<AgentConfigureProps> = ({
@@ -50,9 +56,11 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
   setOpen,
   fields,
   updateAgent,
+  trigger,
 }) => {
   const { t } = useTranslation();
   const [showAddPieceDialog, setShowAddPieceDialog] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [table, serverRecords, selectedRecords, records] = useTableState(
     (state) => [
       state.table,
@@ -103,13 +111,13 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
 
   const isThereAnyChange = useMemo(() => {
     return (
-      systemPrompt === table.agent?.systemPrompt &&
-      triggerOnNewRow === table.agent?.settings?.triggerOnNewRow &&
-      triggerOnFieldUpdate === table.agent?.settings?.triggerOnFieldUpdate &&
-      allowAgentCreateColumns ===
-        table.agent?.settings?.allowAgentCreateColumns &&
-      limitColumnEditing === table.agent?.settings?.limitColumnEditing &&
-      JSON.stringify(Array.from(selectedColumns)) ===
+      systemPrompt !== table.agent?.systemPrompt ||
+      triggerOnNewRow !== table.agent?.settings?.triggerOnNewRow ||
+      triggerOnFieldUpdate !== table.agent?.settings?.triggerOnFieldUpdate ||
+      allowAgentCreateColumns !==
+        table.agent?.settings?.allowAgentCreateColumns ||
+      limitColumnEditing !== table.agent?.settings?.limitColumnEditing ||
+      JSON.stringify(Array.from(selectedColumns)) !==
         JSON.stringify(Array.from(table.agent?.settings?.editableColumns || []))
     );
   }, [
@@ -165,6 +173,47 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
     [updateAgentSettings, table.agent],
   );
 
+  const handleClose = useCallback(() => {
+    if (isThereAnyChange) {
+      setShowConfirmDialog(true);
+    }
+    setOpen(false);
+  }, [isThereAnyChange, setOpen]);
+
+  const handleDiscardChanges = useCallback(() => {
+    setSystemPrompt(table.agent?.systemPrompt || '');
+    setTriggerOnNewRow(table.agent?.settings?.triggerOnNewRow ?? true);
+    setTriggerOnFieldUpdate(table.agent?.settings?.triggerOnFieldUpdate ?? false);
+    setAllowAgentCreateColumns(table.agent?.settings?.allowAgentCreateColumns ?? true);
+    setLimitColumnEditing(table.agent?.settings?.limitColumnEditing ?? false);
+    setSelectedColumns(new Set(table.agent?.settings?.editableColumns || []));
+    
+    setShowConfirmDialog(false);
+    setOpen(false);
+  }, [table.agent, setOpen]);
+
+  const handleSaveChanges = useCallback(() => {
+    handleSave({
+      systemPrompt,
+      triggerOnNewRow,
+      triggerOnFieldUpdate,
+      allowAgentCreateColumns,
+      limitColumnEditing,
+      selectedColumns,
+    });
+    setShowConfirmDialog(false);
+    setOpen(false);
+  }, [
+    systemPrompt,
+    triggerOnNewRow,
+    triggerOnFieldUpdate,
+    allowAgentCreateColumns,
+    limitColumnEditing,
+    selectedColumns,
+    handleSave,
+    setOpen,
+  ]);
+
   const handleColumnToggle = (column: ClientField) => {
     const newSelected = new Set<EditableColumn>(selectedColumns);
     const existingColumn = Array.from(newSelected).find(
@@ -179,307 +228,310 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
     setSelectedColumns(newSelected);
   };
 
-  if (!table.agent?.mcpId || !table.agent?.id || !open) {
+  if (!table.agent?.mcpId || !table.agent?.id) {
     return null;
   }
 
   return (
-    <div className="absolute right-0 top-0">
-      <div className="flex bg-background flex-col h-[85vh] border items-center mt-4 mr-4 rounded-lg relative animate-in slide-in-from-right duration-100 ease-out ease-in">
-        <div className="flex w-full pt-6 px-4 mb-3 justify-between">
-          <h2 className="text-lg font-semibold">Configure your AI Agent</h2>
-          <div className="flex items-center gap-2">
-            {isSaving && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <LoadingSpinner className="h-4 w-4" />
-                <span className="text-sm">Saving...</span>
-              </div>
-            )}
+    <>
+      <Popover open={open} onOpenChange={handleClose}>
+        <PopoverTrigger asChild>
+          <div onClick={(e) => e.preventDefault()}>{trigger}</div>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-[500px] max-h-[85vh] overflow-y-auto p-0 z-[9999]"
+          align="end"
+          side="bottom"
+          sideOffset={8}
+        >
+          <div className="relative p-6">
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8 absolute right-2 top-1"
-              onClick={() => setOpen(false)}
+              size="sm"
+              className="absolute top-2 right-2 h-6 w-6 p-0"
+              onClick={handleClose}
             >
               <X className="h-4 w-4" />
             </Button>
-          </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto space-y-6 flex flex-col p-4 pb-10">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-muted-foreground" />
-              <h3 className="font-medium">Instructions</h3>
-            </div>
-            <Textarea
-              value={systemPrompt}
-              onChange={(e) => {
-                const newValue = e.target.value;
-                setSystemPrompt(newValue);
-              }}
-              placeholder="Write an SEO-friendly blog post using the keywords: {Keyword List}, based on the topic: {Content Idea}. Then write a LinkedIn post summarizing that blog post..."
-              className="min-h-[140px] border-primary/20"
-            />
-            <div className="flex items-center gap-3">
-              <AgentProfile
-                size="lg"
-                imageUrl={table.agent?.profilePictureUrl}
-              />
-              <span className="text-sm font-medium">
-                {table.agent?.displayName || 'Agent Name'}
-              </span>
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-primary "
-                >
-                  <RefreshCw className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-primary"
-                >
-                  <Upload className="h-3 w-3" />
-                </Button>
+            <div className="flex flex-col space-y-6">
+              <div className="text-center">
+                <h2 className="text-lg font-semibold">Configure your AI Agent</h2>
               </div>
-            </div>
-          </div>
 
-          <div className="border-t border-border pt-6 space-y-4">
-            <div className="flex items-center gap-2">
-              <Settings className="h-5 w-5 text-muted-foreground" />
-              <h3 className="font-medium">Tools</h3>
-            </div>
-            <div className="space-y-2">
-              {table.agent?.mcp.tools
-                .filter(
-                  (tool) =>
-                    tool.type === McpToolType.PIECE &&
-                    !BUILT_IN_TOOLS.includes(tool.pieceMetadata.pieceName),
-                )
-                .map((tool) => (
-                  <div
-                    key={tool.id}
-                    className="flex items-center gap-3 p-3 bg-muted rounded-sm"
-                  >
-                    <div className="flex items-center gap-2 flex-1">
-                      <div className="w-6 h-6 rounded flex items-center justify-center">
-                        <span className="text-xs font-medium text-black">
-                          {tool.type === McpToolType.PIECE && (
-                            <img
-                              src={tool.pieceMetadata.logoUrl}
-                              alt={tool.pieceMetadata.actionDisplayName}
-                              className="w-6 h-6"
-                            />
-                          )}
-                          {tool.type === McpToolType.FLOW && (
-                            <WorkflowIcon className="w-4 h-4" />
-                          )}
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium">
-                        {tool.type === McpToolType.PIECE
-                          ? tool.pieceMetadata.actionDisplayName
-                          : tool.flow?.version?.displayName}
-                      </span>
-                    </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="font-medium">Instructions</h3>
+                </div>
+                <Textarea
+                  value={systemPrompt}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    setSystemPrompt(newValue);
+                  }}
+                  placeholder="Write an SEO-friendly blog post using the keywords: {Keyword List}, based on the topic: {Content Idea}. Then write a LinkedIn post summarizing that blog post..."
+                  className="min-h-[140px] border-primary/20"
+                />
+                <div className="flex items-center gap-3">
+                  <AgentProfile
+                    size="lg"
+                    imageUrl={table.agent?.profilePictureUrl}
+                  />
+                  <span className="text-sm font-medium">
+                    {table.agent?.displayName || 'Agent Name'}
+                  </span>
+                  <div className="flex gap-1">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                      onClick={() => {
-                        updateTools(
-                          table.agent?.mcp.tools?.filter(
-                            (t) => t.id !== tool.id,
-                          ) || [],
-                        );
-                      }}
+                      className="h-6 w-6 text-muted-foreground hover:text-primary "
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <RefreshCw className="h-3 w-3" />
                     </Button>
                   </div>
-                ))}
-              <McpPieceDialog
-                open={showAddPieceDialog}
-                mcp={table.agent.mcp}
-                builtInPiecesTools={BUILT_IN_TOOLS}
-                onToolsUpdate={(tools) => {
-                  updateTools(tools);
-
-                  setShowAddPieceDialog(false);
-                }}
-                onClose={() => {
-                  setShowAddPieceDialog(false);
-                }}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => setShowAddPieceDialog(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add tool
-                </Button>
-              </McpPieceDialog>
-            </div>
-          </div>
-
-          <div className="border-t border-border pt-6 space-y-4">
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              <h3 className="font-medium">Triggers</h3>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              AI Agent will run every time
-            </p>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={triggerOnNewRow}
-                  onCheckedChange={(value) => {
-                    setTriggerOnNewRow(value);
-                  }}
-                />
-                <span className="text-sm">New row is added</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={triggerOnFieldUpdate}
-                  onCheckedChange={(value) => {
-                    setTriggerOnFieldUpdate(value);
-                  }}
-                />
-                <span className="text-sm">Any field is updated</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-border pt-6 space-y-4">
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-muted-foreground" />
-              <h3 className="font-medium">Permissions</h3>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={allowAgentCreateColumns}
-                  onCheckedChange={(value) => {
-                    setAllowAgentCreateColumns(value);
-                  }}
-                />
-                <span className="text-sm w-[250px]">
-                  Allow agent to create new columns if needed
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={limitColumnEditing}
-                  onCheckedChange={(value) => {
-                    setLimitColumnEditing(value);
-                  }}
-                />
-                <span className="text-sm w-[250px]">
-                  Limit editing to specific columns
-                </span>
-              </div>
-            </div>
-
-            {limitColumnEditing && (
-              <div className="space-y-2 border rounded-sm p-3">
-                <p className="text-sm text-muted-foreground w-[300px]">
-                  Select the columns you want the agent to be able to modify
-                </p>
-                <div className="flex gap-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      const newSelected = new Set(
-                        fields.map((col) => ({
-                          name: col.name,
-                          fieldId: col.uuid,
-                        })) || [],
-                      );
-                      setSelectedColumns(newSelected);
-                    }}
-                    className="text-xs p-0 hover:bg-transparent hover:text-primary"
-                  >
-                    Select all
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      const newSelected = new Set<EditableColumn>();
-                      setSelectedColumns(newSelected);
-                    }}
-                    className="text-xs p-0 hover:bg-transparent hover:text-primary"
-                  >
-                    Select none
-                  </Button>
                 </div>
-                <div className="space-y-2 max-h-32 overflow-y-auto">
-                  {fields.map((column) => (
-                    <div key={column.uuid} className="flex items-center gap-2">
-                      <Checkbox
-                        checked={Array.from(selectedColumns).some(
-                          (col) => col.fieldId === column.uuid,
-                        )}
-                        onCheckedChange={() => handleColumnToggle(column)}
-                      />
-                      <span
-                        className={cn(
-                          'text-sm font-light',
-                          Array.from(selectedColumns).some(
-                            (col) => col.fieldId === column.uuid,
-                          )
-                            ? 'text-primary'
-                            : '',
-                        )}
+              </div>
+
+              <div className="border-t border-border pt-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="font-medium">Tools</h3>
+                </div>
+                <div className="space-y-2">
+                  {table.agent?.mcp.tools
+                    .filter(
+                      (tool) =>
+                        tool.type === McpToolType.PIECE &&
+                        !BUILT_IN_TOOLS.includes(tool.pieceMetadata.pieceName),
+                    )
+                    .map((tool) => (
+                      <div
+                        key={tool.id}
+                        className="flex items-center gap-3 p-3 bg-muted rounded-sm"
                       >
-                        {column.name}
-                      </span>
-                    </div>
-                  ))}
+                        <div className="flex items-center gap-2 flex-1">
+                          <div className="w-6 h-6 rounded flex items-center justify-center">
+                            <span className="text-xs font-medium text-black">
+                              {tool.type === McpToolType.PIECE && (
+                                <img
+                                  src={tool.pieceMetadata.logoUrl}
+                                  alt={tool.pieceMetadata.actionDisplayName}
+                                  className="w-6 h-6"
+                                />
+                              )}
+                              {tool.type === McpToolType.FLOW && (
+                                <WorkflowIcon className="w-4 h-4" />
+                              )}
+                            </span>
+                          </div>
+                          <span className="text-sm font-medium">
+                            {tool.type === McpToolType.PIECE
+                              ? tool.pieceMetadata.actionDisplayName
+                              : tool.flow?.version?.displayName}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                          onClick={() => {
+                            updateTools(
+                              table.agent?.mcp.tools?.filter(
+                                (t) => t.id !== tool.id,
+                              ) || [],
+                            );
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  <McpPieceDialog
+                    open={showAddPieceDialog}
+                    mcp={table.agent.mcp}
+                    builtInPiecesTools={BUILT_IN_TOOLS}
+                    onToolsUpdate={(tools) => {
+                      updateTools(tools);
+                      setShowAddPieceDialog(false);
+                    }}
+                    onClose={() => {
+                      setShowAddPieceDialog(false);
+                    }}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setShowAddPieceDialog(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add tool
+                    </Button>
+                  </McpPieceDialog>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
 
-        <div className="flex flex-row gap-2 justify-center px-4 pb-4 relative before:absolute before:inset-x-3 before:-top-6 before:h-24 before:bg-gradient-to-b before:from-white/70 before:via-white before:to-transparent before:pointer-events-none before:blur-sm">
-          <Button
-            variant="outline"
-            className="z-10"
-            onClick={() => {
-              automateTableFirst5Rows();
-            }}
-          >
-            Test first 5 rows
-          </Button>
-          <Button
-            onClick={() => {
-              handleSave({
-                systemPrompt,
-                triggerOnNewRow,
-                triggerOnFieldUpdate,
-                allowAgentCreateColumns,
-                limitColumnEditing,
-                selectedColumns,
-              });
-            }}
-            loading={!isNil(selectedAgentRunId) || isSaving}
-            disabled={isThereAnyChange}
-            className="z-10"
-          >
-            {t('Save Changes')}
-          </Button>
-        </div>
-      </div>
-    </div>
+              <div className="border-t border-border pt-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="font-medium">Triggers</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  AI Agent will run every time
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={triggerOnNewRow}
+                      onCheckedChange={(value) => {
+                        setTriggerOnNewRow(value);
+                      }}
+                    />
+                    <span className="text-sm">New row is added</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={triggerOnFieldUpdate}
+                      onCheckedChange={(value) => {
+                        setTriggerOnFieldUpdate(value);
+                      }}
+                    />
+                    <span className="text-sm">Any field is updated</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-border pt-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="font-medium">Permissions</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={allowAgentCreateColumns}
+                      onCheckedChange={(value) => {
+                        setAllowAgentCreateColumns(value);
+                      }}
+                    />
+                    <span className="text-sm w-[250px]">
+                      Allow agent to create new columns if needed
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={limitColumnEditing}
+                      onCheckedChange={(value) => {
+                        setLimitColumnEditing(value);
+                      }}
+                    />
+                    <span className="text-sm w-[250px]">
+                      Limit editing to specific columns
+                    </span>
+                  </div>
+                </div>
+
+                {limitColumnEditing && (
+                  <div className="space-y-2 border rounded-sm p-3">
+                    <p className="text-sm text-muted-foreground w-[300px]">
+                      Select the columns you want the agent to be able to modify
+                    </p>
+                    <div className="flex gap-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const newSelected = new Set(
+                            fields.map((col) => ({
+                              name: col.name,
+                              fieldId: col.uuid,
+                            })) || [],
+                          );
+                          setSelectedColumns(newSelected);
+                        }}
+                        className="text-xs p-0 hover:bg-transparent hover:text-primary"
+                      >
+                        Select all
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const newSelected = new Set<EditableColumn>();
+                          setSelectedColumns(newSelected);
+                        }}
+                        className="text-xs p-0 hover:bg-transparent hover:text-primary"
+                      >
+                        Select none
+                      </Button>
+                    </div>
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {fields.map((column) => (
+                        <div key={column.uuid} className="flex items-center gap-2">
+                          <Checkbox
+                            checked={Array.from(selectedColumns).some(
+                              (col) => col.fieldId === column.uuid,
+                            )}
+                            onCheckedChange={() => handleColumnToggle(column)}
+                          />
+                          <span
+                            className={cn(
+                              'text-sm font-light',
+                              Array.from(selectedColumns).some(
+                                (col) => col.fieldId === column.uuid,
+                              )
+                                ? 'text-primary'
+                                : '',
+                            )}
+                          >
+                            {column.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-row gap-2 justify-center pt-4 border-t border-border">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    automateTableFirst5Rows();
+                  }}
+                >
+                  Test first 5 rows
+                </Button>
+                <Button
+                  onClick={() => {
+                    handleSave({
+                      systemPrompt,
+                      triggerOnNewRow,
+                      triggerOnFieldUpdate,
+                      allowAgentCreateColumns,
+                      limitColumnEditing,
+                      selectedColumns,
+                    });
+                  }}
+                  loading={!isNil(selectedAgentRunId) || isSaving}
+                  disabled={!isThereAnyChange}
+                >
+                  {t('Save Changes')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <ConfirmChangesDialog
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        onSave={handleSaveChanges}
+        onDiscard={handleDiscardChanges}
+        isSaving={isSaving}
+      />
+    </>
   );
 };

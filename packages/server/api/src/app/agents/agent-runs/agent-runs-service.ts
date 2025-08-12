@@ -18,7 +18,8 @@ export const agentRunsService = (log: FastifyBaseLogger) => ({
             entity: AgentRunEntity,
             query: {
                 limit: params.limit,
-                order: 'ASC',
+                order: 'DESC',
+                orderBy: 'finishTime',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
