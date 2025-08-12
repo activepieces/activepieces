@@ -19,9 +19,9 @@
   "Receive incoming HTTP/webhooks using any HTTP method such as GET, POST, PUT, DELETE, etc.": "使用 GET、POST、PUT、DELETE等任何HTTP 方法接收传入的 HTTP/webhooks 。",
   "Authentication": "认证",
   "Authentication Fields": "身份验证字段",
-  "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**實時URL：**\n```text\n{{webhookUrl}}\n```\n生成範例數據並觸發已發佈流程。\n\n",
-  "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL. \nIf it takes more than 30 seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n": "**同步請求：**\n\n如果您希望從此 Webhook 獲得回應，請在 URL 的末尾添加 `/sync`。 \n如果超過 30 秒，則會返回 408 請求超時回應。\n\n要返回數據，請在您的流程中添加一個 Webhook 步驟並使用返回回應操作。\n",
-  "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n": "\n**測試 URL：**\n\n如果您想生成範例數據而不觸發流程，請將 `/test` 附加到您的 Webhook URL。\n\n",
+  "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n",
+  "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL. \nIf it takes more than 30 seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n": "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL. \nIf it takes more than 30 seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n",
+  "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n": "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n",
   "None": "无",
   "Basic Auth": "基本认证",
   "Header Auth": "头部认证"
