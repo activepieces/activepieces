@@ -25,6 +25,9 @@ import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces
 export interface MollieApiConfig {
   accessToken: string;
 }
+export interface paymentId{
+  paymentId: string;
+}
 
 export class MollieApi {
   private baseUrl = 'https://api.mollie.com/v2';
