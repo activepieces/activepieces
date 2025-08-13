@@ -3,6 +3,7 @@ import { vtigerAuth } from '../..';
 import { instanceLogin } from '../common';
 import {
   AuthenticationType,
+  HttpHeaders,
   HttpMessageBody,
   HttpMethod,
   HttpRequest,
@@ -26,58 +27,133 @@ export const makeAPICall = createAction({
         options: [
           { label: 'GET', value: HttpMethod.GET },
           { label: 'POST', value: HttpMethod.POST },
+          { label: 'PUT', value: HttpMethod.PUT },
+          { label: 'PATCH', value: HttpMethod.PATCH },
+          { label: 'DELETE', value: HttpMethod.DELETE },
         ],
       },
     }),
-    urlPath: Property.ShortText({
+    url: Property.ShortText({
       displayName: 'URL',
-      description: 'API endpoint\'s URL path (example: /me, /listtypes, /describe)',
+      description:
+        'Absolute URL or path. If a relative path is provided (e.g., /me, /listtypes, /describe), it will be called against the REST base.',
+      required: false,
+    }),
+    urlPath: Property.ShortText({
+      displayName: 'URL Path (deprecated)',
+      description:
+        "Deprecated. Use 'URL' instead. API endpoint's URL path (example: /me, /listtypes, /describe)",
       required: false,
     }),
     headers: Property.Json({
       displayName: 'Headers',
       description: `Enter the desired request headers. Skip the authorization headers`,
-      required: true,
+      required: false,
       defaultValue: {},
     }),
     data: Property.Json({
       displayName: 'Data',
       description: `Enter the data to pass. if its POST, it will be sent as body data, and if GET, as query string`,
-      required: true,
+      required: false,
       defaultValue: {},
     }),
   },
   async run({ propsValue, auth }) {
+    const method = propsValue.method ?? HttpMethod.GET;
     const urlPath = propsValue.urlPath;
+    const url = propsValue.url;
 
-    if(urlPath && !urlPath.startsWith('/')){
+    if (urlPath && !urlPath.startsWith('/')) {
       return {
-        error: 'URL path must start with a slash, example: /me, /listtypes, /describe',
+        error:
+          'URL path must start with a slash, example: /me, /listtypes, /describe',
       };
     }
 
-    const httpRequest: HttpRequest<HttpMessageBody> = {
-      url: `${auth.instance_url}/webservice.php`,
-      method: propsValue.method ?? HttpMethod.GET,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        ...(propsValue.headers ?? {}),
-      },
+    let finalUrl = `${auth.instance_url}/webservice.php`;
+    let useRestAuth = false;
+
+    if (url) {
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        finalUrl = url;
+      } else if (url.startsWith('/')) {
+        finalUrl = `${auth.instance_url}/restapi/v1/vtiger/default${url}`;
+        useRestAuth = true;
+      } else {
+        finalUrl = `${auth.instance_url}/restapi/v1/vtiger/default/${url}`;
+        useRestAuth = true;
+      }
+    } else if (urlPath) {
+      finalUrl = `${auth.instance_url}/restapi/v1/vtiger/default${urlPath}`;
+      useRestAuth = true;
+    }
+
+    const normalizeHeaders = (h: unknown): HttpHeaders => {
+      const out: HttpHeaders = {};
+      if (h && typeof h === 'object' && !Array.isArray(h)) {
+        for (const [k, v] of Object.entries(h as Record<string, unknown>)) {
+          if (v === undefined || v === null) {
+            out[k] = undefined;
+          } else if (Array.isArray(v)) {
+            out[k] = (v as unknown[]).map((x) => String(x));
+          } else if (typeof v === 'string') {
+            out[k] = v;
+          } else {
+            out[k] = String(v);
+          }
+        }
+      }
+      return out;
     };
 
-    let data: Record<string, unknown> = {};
+    const headers: HttpHeaders = normalizeHeaders(propsValue.headers);
 
-    if(urlPath){
-      httpRequest.url = `${auth.instance_url}/restapi/v1/vtiger/default${urlPath}`;
-      data = propsValue.data;
+    if (useRestAuth) {
+      // Default JSON for REST when not GET and no explicit content-type provided
+      if (
+        method !== HttpMethod.GET &&
+        !Object.keys(headers).some(
+          (k) => k.toLowerCase() === 'content-type'
+        )
+      ) {
+        headers['Content-Type'] = 'application/json';
+      }
+    } else {
+      // webservice.php defaults to urlencoded for POST operations
+      if (
+        method !== HttpMethod.GET &&
+        !Object.keys(headers).some(
+          (k) => k.toLowerCase() === 'content-type'
+        )
+      ) {
+        headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      }
+    }
 
+    const httpRequest: HttpRequest<HttpMessageBody> = {
+      url: finalUrl,
+      method,
+      headers,
+    };
+
+    let data: Record<string, unknown> = propsValue.data ?? {};
+
+    const toQueryParams = (obj: Record<string, unknown>): Record<string, string> => {
+      const qp: Record<string, string> = {};
+      for (const [k, v] of Object.entries(obj ?? {})) {
+        if (v === undefined || v === null) continue;
+        qp[k] = typeof v === 'string' ? v : JSON.stringify(v);
+      }
+      return qp;
+    };
+
+    if (useRestAuth) {
       httpRequest.authentication = {
         type: AuthenticationType.BASIC,
         username: auth.username,
         password: auth.password,
       };
-    }
-    else {
+    } else {
       const vtigerInstance = await instanceLogin(
         auth.instance_url,
         auth.username,
@@ -91,8 +167,18 @@ export const makeAPICall = createAction({
       };
     }
 
-    httpRequest[propsValue.method === HttpMethod.GET ? 'queryParams' : 'body'] =
-      data;
+    if (method === HttpMethod.GET) {
+      httpRequest['queryParams'] = toQueryParams(data);
+    } else {
+      // For REST with JSON default, send raw object; else url-encode
+      const contentType = Object.entries(headers).find(([k]) => k.toLowerCase() === 'content-type')?.[1];
+      const ct = Array.isArray(contentType) ? contentType[0] : contentType;
+      if (useRestAuth && ct === 'application/json') {
+        httpRequest['body'] = data;
+      } else {
+        httpRequest['body'] = toQueryParams(data);
+      }
+    }
 
     const response = await httpClient.sendRequest<Record<string, unknown>[]>(
       httpRequest

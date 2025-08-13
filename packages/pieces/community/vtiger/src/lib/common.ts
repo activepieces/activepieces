@@ -55,7 +55,7 @@ export const instanceLogin = async (
     method: HttpMethod.POST,
     url: `${endpoint}`,
     headers: {
-      'Content-Type': 'multipart/form-data',
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: {
       operation: 'login',
@@ -209,16 +209,22 @@ export async function refreshModules(auth: VTigerAuthValue){
       if (!response.body.success) return '';
 
       const result = response.body.result;
-      labelFields = result.labelFields;
+      const lf = result.labelFields;
+      if (Array.isArray(lf)) {
+        labelFields = (lf[0] ?? '') as string;
+      } else if (typeof lf === 'string') {
+        labelFields = lf.includes(',') ? lf.split(',')[0] : lf;
+      } else {
+        labelFields = '';
+      }
 
-      if(labelFields.includes(',')) labelFields = labelFields.split(',')[0];
       if(labelFields === '') {
         if(!result.fields?.length){
           isModuleLabelUnknown = true;
           return '';
         }
 
-        labelFields = result.fields[0].label;
+        labelFields = result.fields[0].name;
       }
 
       return record[labelFields];
