@@ -8,6 +8,7 @@ import {
   Plus,
   WorkflowIcon,
   CircleUserRound,
+  ChevronDown,
 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +21,12 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
@@ -56,7 +63,6 @@ type AgentConfigureContentProps = {
   onConfigChange: (updates: Partial<AgentConfig>) => void;
   showAddPieceDialog: boolean;
   onAddPieceDialogChange: (show: boolean) => void;
-  isThereAnyChange: boolean;
   isSaving: boolean;
   selectedAgentRunId: string | null;
   onSave: () => void;
@@ -70,7 +76,6 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
   onConfigChange,
   showAddPieceDialog,
   onAddPieceDialogChange,
-  isThereAnyChange,
   isSaving,
   selectedAgentRunId,
   onSave,
@@ -94,6 +99,11 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
       0,
       3,
     ),
+  );
+
+  const { mutate: automateTableEntire } = agentHooks.useAutomate(
+    table.id,
+    getSelectedServerRecords(selectedRecords, records, serverRecords),
   );
 
   const { mutate: updateTools } = mcpHooks.useUpdateTools(
@@ -396,22 +406,50 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
           </AccordionItem>
         </Accordion>
 
-        <div className="flex flex-row gap-2 justify-center pt-2">
+        <div className="relative w-full">
           <Button
-            variant="outline"
-            onClick={() => {
-              automateTableFirst3Rows();
-            }}
-          >
-            Test first 5 rows
-          </Button>
-          <Button
-            onClick={onSave}
             loading={!isNil(selectedAgentRunId) || isSaving}
-            disabled={!isThereAnyChange}
+            onClick={onSave}
+            className="pr-9 w-full"
           >
             {t('Save Changes')}
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 absolute right-2 top-1/2 -translate-y-1/2 hover:bg-gray-100 text-white"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top">
+              <DropdownMenuItem
+                onClick={() => {
+                  onSave();
+                  automateTableFirst3Rows();
+                }}
+              >
+                Save & run 3 rows
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  onSave();
+                  automateTableEntire();
+                }}
+              >
+                Save & run entire table
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  onSave();
+                }}
+              >
+                Save and don't run
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>

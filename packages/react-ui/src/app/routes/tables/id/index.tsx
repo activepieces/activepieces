@@ -182,7 +182,7 @@ const ApTableEditorPage = () => {
       <DrawerContent fullscreen className="w-full overflow-auto">
         <DrawerHeader>
           <div className="flex items-center justify-between w-full pr-4">
-            <ApTableHeader onBack={handleBack} agent={table.agent} />
+            <ApTableHeader onBack={handleBack} agent={table.agent!} />
           </div>
         </DrawerHeader>
 

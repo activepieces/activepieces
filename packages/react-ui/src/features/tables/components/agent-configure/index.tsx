@@ -162,7 +162,7 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
           <div>{trigger}</div>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[500px] max-h-[85vh] overflow-y-auto p-0"
+          className="w-[400px] max-h-[85vh] overflow-y-auto p-0"
           align="end"
           side="bottom"
           sideOffset={8}
@@ -172,7 +172,6 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
             onConfigChange={handleConfigChange}
             showAddPieceDialog={showAddPieceDialog}
             onAddPieceDialogChange={setShowAddPieceDialog}
-            isThereAnyChange={isThereAnyChange}
             isSaving={isSaving}
             selectedAgentRunId={selectedAgentRunId}
             onSave={handleSave}
