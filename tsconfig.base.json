@@ -507,6 +507,9 @@
       "@activepieces/piece-kimai": [
         "packages/pieces/community/kimai/src/index.ts"
       ],
+      "@avalant/piece-kimi-k2": [
+        "packages/pieces/community/kimi-k2/src/index.ts"
+      ],
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
       ],
