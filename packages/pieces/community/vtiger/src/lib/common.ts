@@ -186,7 +186,7 @@ export async function refreshModules(auth: VTigerAuthValue){
     throw new Error('Failed to retrieve module types');
   }
 
-  let types = response.body.result.types;
+  const types = response.body.result.types;
   for (let i = 0; i < types.length; i++) {
     const element = types[i];
 
@@ -616,7 +616,7 @@ export const generateElementFields = async (
       }
     };
 
-    let skipFields = [
+    const skipFields = [
       'id',
       'modifiedtime',
       'createdtime',

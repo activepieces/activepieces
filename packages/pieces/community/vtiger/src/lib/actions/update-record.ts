@@ -235,7 +235,7 @@ export const updateRecord = createAction({
             }
           };
 
-          let skipFields = [
+          const skipFields = [
             'id',
           ];
 
