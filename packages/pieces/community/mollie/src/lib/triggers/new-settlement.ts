@@ -1,50 +1,91 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { mollieAuth } from '../common/common';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { MollieApi } from '../common/common';
 
 export const newSettlementTrigger = createTrigger({
   auth: mollieAuth,
   name: 'new_settlement',
   displayName: 'New Settlement',
-  description: 'Fires when a new settlement occurs in Mollie',
+  description: 'Fires upon a new settlement event (e.g. payout)',
   props: {},
   sampleData: {
-    id: 'stl_example123',
+    resource: 'settlement',
+    id: 'stl_jDk30akdN',
+    reference: '1234567.1804.03',
+    status: 'paidout',
     amount: {
-      value: '1000.00',
+      value: '39.75',
       currency: 'EUR'
     },
-    createdAt: '2024-01-01T12:00:00+00:00'
+    periods: {
+      '2018': {
+        '04': {
+          revenue: [
+            {
+              description: 'iDEAL',
+              method: 'ideal',
+              count: 6,
+              amountNet: {
+                value: '86.1000',
+                currency: 'EUR'
+              },
+              amountVat: null,
+              amountGross: {
+                value: '86.1000',
+                currency: 'EUR'
+              }
+            }
+          ]
+        }
+      }
+    },
+    createdAt: '2018-04-06T06:00:01.000Z',
+    settledAt: '2018-04-06T09:41:44.000Z'
   },
-  type: TriggerStrategy.WEBHOOK,
+  type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    const webhookUrl = context.webhookUrl;
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://api.mollie.com/v2/webhooks',
-      headers: {
-        Authorization: `Bearer ${context.auth.access_token}`,
-      },
-      body: {
-        url: webhookUrl,
-        events: ['settlements.*'],
-      },
-    });
-    await context.store.put('webhook_id', response.body.id);
+    await context.store?.put('lastChecked', new Date().toISOString());
   },
   async onDisable(context) {
-    const webhookId = await context.store.get('webhook_id');
-    if (webhookId) {
-      await httpClient.sendRequest({
-        method: HttpMethod.DELETE,
-        url: `https://api.mollie.com/v2/webhooks/${webhookId}`,
-        headers: {
-          Authorization: `Bearer ${context.auth.access_token}`,
-        },
-      });
-    }
+    await context.store?.delete('lastChecked');
   },
+
   async run(context) {
-    return [context.payload.body];
-  },
+    const api = new MollieApi({ accessToken: context.auth.access_token });
+
+    try {
+      const storedLastChecked = await context.store?.get('lastChecked');
+      const lastChecked = typeof storedLastChecked === 'string'
+        ? storedLastChecked
+        : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+      const response = await api.makeRequest('/settlements?limit=250');
+
+      const settlements = (
+        response &&
+        typeof response === 'object' &&
+        '_embedded' in response &&
+        response._embedded &&
+        typeof response._embedded === 'object' &&
+        'settlements' in response._embedded &&
+        Array.isArray(response._embedded.settlements)
+      ) ? response._embedded.settlements : [];
+
+      const newSettlements = settlements.filter((settlement: any) =>
+        settlement.createdAt && new Date(settlement.createdAt) > new Date(lastChecked)
+      );
+
+      if (settlements.length > 0) {
+        const latest = settlements.reduce((prev: any, current: any) =>
+          new Date(current.createdAt) > new Date(prev.createdAt) ? current : prev
+        );
+        await context.store?.put('lastChecked', latest.createdAt);
+      }
+
+      return newSettlements;
+    } catch (error) {
+      console.error('Error fetching settlements:', error);
+      return [];
+    }
+  }
 });
