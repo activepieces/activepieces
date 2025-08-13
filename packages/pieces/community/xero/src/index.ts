@@ -26,6 +26,18 @@ import { sendSalesInvoiceByEmail } from './lib/actions/send-sales-invoice-by-ema
 import { updatePurchaseOrder } from './lib/actions/update-purchase-order';
 import { updateSalesInvoice } from './lib/actions/update-sales-invoice';
 import { uploadAttachment } from './lib/actions/upload-attachment';
+import { newBankTransaction } from './lib/triggers/new-bank-transaction';
+import { newContact } from './lib/triggers/new-contact';
+import { newCreditNote } from './lib/triggers/new-credit-note';
+import { newOrUpdatedContact } from './lib/triggers/new-or-updated-contact';
+import { newPayment } from './lib/triggers/new-payment';
+import { newProject } from './lib/triggers/new-project';
+import { newPurchaseOrder } from './lib/triggers/new-purchase-order';
+import { newQuote } from './lib/triggers/new-quote';
+import { newReconciledPayment } from './lib/triggers/new-reconciled-payment';
+import { newSalesInvoice } from './lib/triggers/new-sales-invoice';
+import { updatedQuote } from './lib/triggers/updated-quote';
+import { updatedSalesInvoice } from './lib/triggers/updated-sales-invoice';
 
 export const xeroAuth = PieceAuth.OAuth2({
   description: `
@@ -114,5 +126,18 @@ export const xero = createPiece({
       }),
     }),
   ],
-  triggers: [],
+  triggers: [
+    newBankTransaction,
+    newContact,
+    newCreditNote,
+    newOrUpdatedContact,
+    newPayment,
+    newProject,
+    newPurchaseOrder,
+    newQuote,
+    newReconciledPayment,
+    newSalesInvoice,
+    updatedQuote,
+    updatedSalesInvoice,
+  ],
 });
