@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { assertNotNullOrUndefined, FileLocation, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { FileLocation, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -60,29 +60,11 @@ export const progressService = {
         const { engineConstants, flowExecutorContext, stepName, stepOutput } = params
         return {
             update: async (params: { data: unknown }) => {
-
-                if (engineConstants.testSingleStepMode) {
-                    assertNotNullOrUndefined(engineConstants.httpRequestId, 'httpRequestId is required when running in test single step mode')
-                    await notifyFrontend(engineConstants, {
-                        type: WebsocketClientEvent.TEST_STEP_PROGRESS,
-                        data: {
-                            id: engineConstants.httpRequestId,
-                            success: true,
-                            input: stepOutput.input,
-                            output: params.data,
-                            standardError: '',
-                            standardOutput: '',
-                            sampleDataFileId: undefined,
-                        },
-                    })
-                }
-                else {
-                    await sendUpdateRunRequest({
-                        engineConstants,
-                        flowExecutorContext: flowExecutorContext.upsertStep(stepName, stepOutput.setOutput(params.data)),
-                        updateImmediate: true,
-                    })
-                }
+                await sendUpdateRunRequest({
+                    engineConstants,
+                    flowExecutorContext: flowExecutorContext.upsertStep(stepName, stepOutput.setOutput(params.data)),
+                    updateImmediate: true,
+                })
             },
         }
     },
@@ -98,7 +80,7 @@ type CreateOutputContextParams = {
 const queueUpdates: UpdateStepProgressParams[] = []
 
 const sendUpdateRunRequest = async (_updateParams: UpdateStepProgressParams): Promise<void> => {
-    if (_updateParams.engineConstants.isRunningApTests || _updateParams.engineConstants.testSingleStepMode) {
+    if (_updateParams.engineConstants.isRunningApTests) {
         return
     }
     queueUpdates.push(_updateParams)
@@ -149,6 +131,7 @@ const sendUpdateRunRequest = async (_updateParams: UpdateStepProgressParams): Pr
             type: WebsocketClientEvent.FLOW_RUN_PROGRESS,
             data: {
                 runId: engineConstants.flowRunId,
+                testSingleStepMode: engineConstants.testSingleStepMode,
             },
         })
     })

@@ -3,6 +3,7 @@ import {
     AppConnection,
     Cell,
     Field,
+    File,
     Flow,
     Folder,
     Platform,
@@ -45,7 +46,7 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: TIMESTAMP_COLUMN_TYPE,
             deleteDate: true,
             nullable: true,
-        }, 
+        },
         ownerId: ApIdSchema,
         displayName: {
             type: String,

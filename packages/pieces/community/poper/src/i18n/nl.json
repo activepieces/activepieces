@@ -1,0 +1,8 @@
+{
+  "Poper": "Poper",
+  "AI Driven Pop-up Builder that can convert visitors into customers,increase subscriber count, and skyrocket sales.": "AI rijden Pop-up Builder die bezoekers kan omzetten in klanten, tellen abonnees en skyraket verkopen.",
+  "New Lead": "Nieuwe Lead",
+  "Triggers when a new lead is obtained from popup.": "Triggert wanneer een nieuwe lead wordt verkregen door popup.",
+  "Markdown": "Markdown",
+  "\n1. Log in to your [Poper Account](https://app.poper.ai/).\n2. Click on the popup for which you want to set up a trigger.\n3. On the left-side menu, click on Integrations and search for **Webhook**.\n4. Enter an appropriate webhook name and paste the following URL:\n  ```text\n  {{webhookUrl}}\n  ```\n": "\n1. Log in op uw [Poper Account](https://app.poper.ai/).\n2. Klik op de pop-up waarvoor je een trigger wilt instellen.\n3. Klik links in het menu op integraties en zoek naar **Webhook**.\n4. Voer een geschikte webhook naam in en plak de volgende URL:\n  ```text\n  {{webhookUrl}}\n  ```\n"
+}

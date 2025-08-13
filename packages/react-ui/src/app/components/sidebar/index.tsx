@@ -96,7 +96,7 @@ export const CustomTooltipLink = ({
         )}
       >
         <div
-          className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 ${
+          className={`w-full flex items-center justify-between gap-2 px-2 py-1 ${
             !Icon ? 'p-2' : ''
           }`}
         >
@@ -313,9 +313,9 @@ export function SidebarComponent({
 function ApSidebarMenuItem(item: SidebarLink, index: number) {
   return (
     <React.Fragment key={item.label}>
-      <SidebarGroup key={item.label} className="py-1">
+      <SidebarGroup key={item.label} className="py-0.5">
         {item.name && <SidebarGroupLabel>{item.name}</SidebarGroupLabel>}
-        <SidebarMenu className="gap-0 p-0">
+        <SidebarMenu>
           <SidebarMenuItem key={item.label}>
             <SidebarMenuButton asChild>
               <CustomTooltipLink
@@ -341,9 +341,9 @@ function ApSidebarMenuGroup(item: SidebarGroup) {
   const location = useLocation();
   return (
     <React.Fragment key={item.label}>
-      <SidebarGroup key={item.name} className="py-2">
+      <SidebarGroup key={item.name} className="py-0.5">
         {item.name && <SidebarGroupLabel>{item.name}</SidebarGroupLabel>}
-        <SidebarMenu className="py-0">
+        <SidebarMenu>
           <Collapsible
             defaultOpen={item.defaultOpen || item.isActive?.(location.pathname)}
             className="group/collapsible"

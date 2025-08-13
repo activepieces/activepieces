@@ -25,13 +25,12 @@ export type GetSampleDataRequest = Static<typeof GetSampleDataRequest>
 export const CreateStepRunRequestBody = Type.Object({
     flowVersionId: Type.String(),
     stepName: Type.String(),
-    id: Type.String(),
 })
 
 export type CreateStepRunRequestBody = Static<typeof CreateStepRunRequestBody>
 
 export const StepRunResponse = Type.Object({
-    id: Type.String(),
+    runId: Type.String(),
     success: Type.Boolean(),
     input: Type.Unknown(),
     output: Type.Unknown(),
@@ -72,3 +71,4 @@ export const DEFAULT_SAMPLE_DATA_SETTINGS: SampleDataSettings = {
 
 export const SaveSampleDataResponse = Pick(File, ['id', 'size', 'type'])
 export type SaveSampleDataResponse = Static<typeof SaveSampleDataResponse>
+
