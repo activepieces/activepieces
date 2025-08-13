@@ -2,7 +2,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { MollieAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
-import { currencyDropdown, localeDropdown } from '../common/props';
+import {
+  currencyDropdown,
+  customerIdDropdown,
+  localeDropdown,
+  mandatesIdDropdown,
+  paymentMethodDropdown,
+  profileIdDropdown,
+} from '../common/props';
 
 export const createOrder = createAction({
   auth: MollieAuth,
@@ -23,78 +30,19 @@ export const createOrder = createAction({
       description: 'Your unique order number/reference',
       required: true,
     }),
-
-    name: Property.ShortText({
-      displayName: 'Product Name',
-      description: 'Name of the product',
-      required: true,
-    }),
-    quantity: Property.Number({
-      displayName: 'Quantity',
-      description: 'Quantity of the product',
-      required: true,
-    }),
-    unitPrice_currency: currencyDropdown('Unit Price Currency'),
-    unitPrice_value: Property.ShortText({
-      displayName: 'Unit Price Value',
-      required: true,
-    }),
-    totalAmount_currency: currencyDropdown('Total Amount Currency'),
-    totalAmount_value: Property.ShortText({
-      displayName: 'Total Amount Value',
-      required: true,
-    }),
-    vatRate: Property.ShortText({
-      displayName: 'VAT Rate',
-      description: 'VAT rate as percentage (e.g. 21.00)',
-      required: true,
-    }),
-    vatAmount_currency: currencyDropdown('VAT Amount Currency'),
-    vatAmount_value: Property.ShortText({
-      displayName: 'VAT Amount Value',
-      required: true,
-    }),
-    sku: Property.ShortText({
-      displayName: 'SKU',
-      description: 'Product SKU or identifier',
+    redirectUrl: Property.ShortText({
+      displayName: 'Redirect URL',
+      description: 'URL to redirect customer after payment',
       required: false,
     }),
-    type: Property.StaticDropdown({
-      displayName: 'Line Type',
-      description: 'Type of order line',
-      required: false,
-      options: {
-        options: [
-          { label: 'Physical', value: 'physical' },
-          { label: 'Digital', value: 'digital' },
-          { label: 'Shipping Fee', value: 'shipping_fee' },
-          { label: 'Store Credit', value: 'store_credit' },
-          { label: 'Gift Card', value: 'gift_card' },
-          { label: 'Surcharge', value: 'surcharge' },
-          { label: 'Discount', value: 'discount' },
-        ],
-      },
-    }),
-    category: Property.StaticDropdown({
-      displayName: 'Product Category',
-      description: 'Product category for Klarna and other payment methods',
-      required: false,
-      options: {
-        options: [
-          { label: 'Meal', value: 'meal' },
-          { label: 'Eco', value: 'eco' },
-          { label: 'Gift', value: 'gift' },
-        ],
-      },
-    }),
-    productUrl: Property.ShortText({
-      displayName: 'Product URL',
-      description: 'URL to the product page',
+    cancelUrl: Property.ShortText({
+      displayName: 'Cancel URL',
+      description: 'URL to redirect customer if they cancel the payment',
       required: false,
     }),
-    imageUrl: Property.ShortText({
-      displayName: 'Image URL',
-      description: 'URL to product image',
+    webhookUrl: Property.ShortText({
+      displayName: 'Webhook URL',
+      description: 'URL for order status webhooks',
       required: false,
     }),
 
@@ -112,7 +60,7 @@ export const createOrder = createAction({
     }),
     billing_familyName: Property.ShortText({
       displayName: 'Family Name',
-      required: true,
+      required: false,
     }),
     billing_email: Property.ShortText({
       displayName: 'Email',
@@ -124,7 +72,7 @@ export const createOrder = createAction({
     }),
     billing_streetAndNumber: Property.ShortText({
       displayName: 'Street and Number',
-      required: true,
+      required: false,
     }),
     billing_streetAdditional: Property.ShortText({
       displayName: 'Additional Address',
@@ -132,11 +80,11 @@ export const createOrder = createAction({
     }),
     billing_postalCode: Property.ShortText({
       displayName: 'Postal Code',
-      required: true,
+      required: false,
     }),
     billing_city: Property.ShortText({
       displayName: 'City',
-      required: true,
+      required: false,
     }),
     billing_region: Property.ShortText({
       displayName: 'Region',
@@ -145,7 +93,7 @@ export const createOrder = createAction({
     billing_country: Property.ShortText({
       displayName: 'Country',
       description: 'Two-letter ISO country code',
-      required: true,
+      required: false,
     }),
 
     shippingAddress_organizationName: Property.ShortText({
@@ -197,38 +145,17 @@ export const createOrder = createAction({
       description: 'Two-letter ISO country code',
       required: false,
     }),
-    redirectUrl: Property.ShortText({
-      displayName: 'Redirect URL',
-      description: 'URL to redirect customer after payment',
-      required: true,
-    }),
-    webhookUrl: Property.ShortText({
-      displayName: 'Webhook URL',
-      description: 'URL for order status webhooks',
-      required: false,
-    }),
+
     locale: localeDropdown,
-    method: Property.StaticDropdown({
-      displayName: 'Payment Method',
-      description: 'Force a specific payment method (optional)',
-      required: false,
-      options: {
-        options: [
-          { label: 'Klarna Pay Later', value: 'klarnapaylater' },
-          { label: 'Klarna Pay Now', value: 'klarnapaynow' },
-          { label: 'Klarna Slice It', value: 'klarnasliceit' },
-          { label: 'Credit Card', value: 'creditcard' },
-          { label: 'PayPal', value: 'paypal' },
-          { label: 'Apple Pay', value: 'applepay' },
-          { label: 'Billie', value: 'billie' },
-          { label: 'in3', value: 'in3' },
-          { label: 'Riverty', value: 'riverty' },
-        ],
-      },
-    }),
+    method: paymentMethodDropdown,
     orderMetadata: Property.Object({
       displayName: 'Order Metadata',
       description: 'Custom metadata for the order',
+      required: false,
+    }),
+    shopperCountryMustMatchBillingCountry: Property.Checkbox({
+      displayName: 'Shopper Country Must Match Billing',
+      description: 'Require shopper country to match billing country',
       required: false,
     }),
     consumerDateOfBirth: Property.ShortText({
@@ -237,21 +164,9 @@ export const createOrder = createAction({
         'Consumer date of birth in YYYY-MM-DD format (required for some payment methods)',
       required: false,
     }),
-    shopperCountryMustMatchBillingCountry: Property.Checkbox({
-      displayName: 'Shopper Country Must Match Billing',
-      description: 'Require shopper country to match billing country',
-      required: false,
-    }),
-    customerId: Property.ShortText({
-      displayName: 'Customer ID',
-      description: 'Mollie customer ID for recurring payments',
-      required: false,
-    }),
-    mandateId: Property.ShortText({
-      displayName: 'Mandate ID',
-      description: 'Mollie mandate ID for recurring payments',
-      required: false,
-    }),
+
+    profileId: profileIdDropdown,
+    mandateId: mandatesIdDropdown,
     sequenceType: Property.StaticDropdown({
       displayName: 'Sequence Type',
       description: 'Type of recurring payment',
@@ -264,145 +179,321 @@ export const createOrder = createAction({
         ],
       },
     }),
+    lines: Property.Array({
+      displayName: 'Lines',
+      required: false,
+      properties: {
+        name: Property.ShortText({
+          displayName: 'Name',
+          required: true,
+        }),
+        type: Property.StaticDropdown({
+          displayName: 'Type',
+          required: false,
+          defaultValue: 'physical',
+          options: {
+            options: [
+              { label: 'physical', value: 'physical' },
+              { label: 'digital', value: 'digital' },
+              { label: 'shipping_fee', value: 'shipping_fee' },
+              { label: 'discount', value: 'discount' },
+              { label: 'store_credit', value: 'store_credit' },
+              { label: 'gift_card', value: 'gift_card' },
+              { label: 'surcharge', value: 'surcharge' },
+            ],
+          },
+        }),
+        description: Property.ShortText({
+          displayName: 'Description',
+          required: true,
+        }),
+        quantity: Property.Number({ displayName: 'Quantity', required: true }),
+        quantityUnit: Property.ShortText({
+          displayName: 'Quantity Unit',
+          required: false,
+        }),
+        unitPrice_currency: currencyDropdown('Unit Price Currency', true),
+        unitPrice_value: Property.ShortText({
+          displayName: 'Unit Price (value)',
+          description: 'String with 2 decimals (e.g. 89.00)',
+          required: true,
+        }),
+        discountAmount_currency: currencyDropdown(
+          'Discount Amount Currency',
+          false
+        ),
+        discountAmount_value: Property.ShortText({
+          displayName: 'Discount Amount (value)',
+          description: 'Positive amount; optional',
+          required: false,
+        }),
+        // totalAmount_currency: currencyDropdown('Total Amount Currency', false),
+        // totalAmount_value: Property.ShortText({
+        //   displayName: 'Total Amount (value)',
+        //   description: '(unitPrice × quantity) - discountAmount',
+        //   required: false,
+        // }),
+        vatRate: Property.ShortText({
+          displayName: 'VAT Rate',
+          required: false,
+        }),
+        vatAmount_value: Property.ShortText({
+          displayName: 'VAT Amount (value)',
+          description: 'String with 2 decimals; optional',
+          required: false,
+        }),
+        sku: Property.ShortText({
+          displayName: 'SKU/EAN/ISBN/UPC',
+          required: false,
+        }),
+        categories: Property.StaticMultiSelectDropdown({
+          displayName: 'Voucher Categories',
+          required: false,
+          options: {
+            options: [
+              { label: 'meal', value: 'meal' },
+              { label: 'eco', value: 'eco' },
+              { label: 'gift', value: 'gift' },
+              { label: 'sport_culture', value: 'sport_culture' },
+            ],
+          },
+        }),
+        imageUrl: Property.ShortText({
+          displayName: 'Image URL',
+          required: false,
+        }),
+        productUrl: Property.ShortText({
+          displayName: 'Product URL',
+          required: false,
+        }),
+      },
+    }),
   },
   async run({ auth, propsValue }) {
-    // Build the order line
-    const orderLine: any = {
-      name: propsValue.name,
-      quantity: propsValue.quantity,
-      unitPrice: {
-        currency: propsValue.unitPrice_currency,
-        value: propsValue.unitPrice_value,
-      },
-      totalAmount: {
-        currency: propsValue.totalAmount_currency,
-        value: propsValue.totalAmount_value,
-      },
-      vatRate: propsValue.vatRate,
-      vatAmount: {
-        currency: propsValue.vatAmount_currency,
-        value: propsValue.vatAmount_value,
-      },
-    };
+  const billingAddress: any = {
+    givenName: propsValue.billing_givenName,
+    familyName: propsValue.billing_familyName,
+    email: propsValue.billing_email,
+    streetAndNumber: propsValue.billing_streetAndNumber,
+    postalCode: propsValue.billing_postalCode,
+    city: propsValue.billing_city,
+    country: propsValue.billing_country,
+  };
+  if (propsValue.billing_organizationName)
+    billingAddress.organizationName = propsValue.billing_organizationName;
+  if (propsValue.billing_title)
+    billingAddress.title = propsValue.billing_title;
+  if (propsValue.billing_phone)
+    billingAddress.phone = propsValue.billing_phone;
+  if (propsValue.billing_streetAdditional)
+    billingAddress.streetAdditional = propsValue.billing_streetAdditional;
+  if (propsValue.billing_region)
+    billingAddress.region = propsValue.billing_region;
 
-    if (propsValue.sku) orderLine.sku = propsValue.sku;
-    if (propsValue.type) orderLine.type = propsValue.type;
-    if (propsValue.category) orderLine.category = propsValue.category;
-    if (propsValue.productUrl) orderLine.productUrl = propsValue.productUrl;
-    if (propsValue.imageUrl) orderLine.imageUrl = propsValue.imageUrl;
+  const orderData: any = {
+    amount: {
+      currency: propsValue.amount_currency,
+      value: propsValue.amount_value,
+    },
+    orderNumber: propsValue.orderNumber,
+    billingAddress: billingAddress,
+    redirectUrl: propsValue.redirectUrl,
+  };
 
-    const billingAddress: any = {
-      givenName: propsValue.billing_givenName,
-      familyName: propsValue.billing_familyName,
-      email: propsValue.billing_email,
-      streetAndNumber: propsValue.billing_streetAndNumber,
-      postalCode: propsValue.billing_postalCode,
-      city: propsValue.billing_city,
-      country: propsValue.billing_country,
-    };
-    if (propsValue.billing_organizationName)
-      billingAddress.organizationName = propsValue.billing_organizationName;
-    if (propsValue.billing_title)
-      billingAddress.title = propsValue.billing_title;
-    if (propsValue.billing_phone)
-      billingAddress.phone = propsValue.billing_phone;
-    if (propsValue.billing_streetAdditional)
-      billingAddress.streetAdditional = propsValue.billing_streetAdditional;
-    if (propsValue.billing_region)
-      billingAddress.region = propsValue.billing_region;
+  const hasShippingAddress =
+    propsValue.shippingAddress_givenName ||
+    propsValue.shippingAddress_familyName ||
+    propsValue.shippingAddress_streetAndNumber ||
+    propsValue.shippingAddress_postalCode ||
+    propsValue.shippingAddress_city ||
+    propsValue.shippingAddress_country;
 
-    const orderData: any = {
-      amount: {
-        currency: propsValue.amount_currency,
-        value: propsValue.amount_value,
-      },
-      orderNumber: propsValue.orderNumber,
-      lines: [orderLine],
-      billingAddress: billingAddress,
-      redirectUrl: propsValue.redirectUrl,
-    };
+  if (hasShippingAddress) {
+    const shippingAddress: any = {};
+    if (propsValue.shippingAddress_organizationName)
+      shippingAddress.organizationName =
+        propsValue.shippingAddress_organizationName;
+    if (propsValue.shippingAddress_title)
+      shippingAddress.title = propsValue.shippingAddress_title;
+    if (propsValue.shippingAddress_givenName)
+      shippingAddress.givenName = propsValue.shippingAddress_givenName;
+    if (propsValue.shippingAddress_familyName)
+      shippingAddress.familyName = propsValue.shippingAddress_familyName;
+    if (propsValue.shippingAddress_email)
+      shippingAddress.email = propsValue.shippingAddress_email;
+    if (propsValue.shippingAddress_phone)
+      shippingAddress.phone = propsValue.shippingAddress_phone;
+    if (propsValue.shippingAddress_streetAndNumber)
+      shippingAddress.streetAndNumber =
+        propsValue.shippingAddress_streetAndNumber;
+    if (propsValue.shippingAddress_streetAdditional)
+      shippingAddress.streetAdditional =
+        propsValue.shippingAddress_streetAdditional;
+    if (propsValue.shippingAddress_postalCode)
+      shippingAddress.postalCode = propsValue.shippingAddress_postalCode;
+    if (propsValue.shippingAddress_city)
+      shippingAddress.city = propsValue.shippingAddress_city;
+    if (propsValue.shippingAddress_region)
+      shippingAddress.region = propsValue.shippingAddress_region;
+    if (propsValue.shippingAddress_country)
+      shippingAddress.country = propsValue.shippingAddress_country;
 
-    const hasShippingAddress =
-      propsValue.shippingAddress_givenName ||
-      propsValue.shippingAddress_familyName ||
-      propsValue.shippingAddress_streetAndNumber ||
-      propsValue.shippingAddress_postalCode ||
-      propsValue.shippingAddress_city ||
-      propsValue.shippingAddress_country;
+    orderData.shippingAddress = shippingAddress;
+  }
 
-    if (hasShippingAddress) {
-      const shippingAddress: any = {};
-      if (propsValue.shippingAddress_organizationName)
-        shippingAddress.organizationName =
-          propsValue.shippingAddress_organizationName;
-      if (propsValue.shippingAddress_title)
-        shippingAddress.title = propsValue.shippingAddress_title;
-      if (propsValue.shippingAddress_givenName)
-        shippingAddress.givenName = propsValue.shippingAddress_givenName;
-      if (propsValue.shippingAddress_familyName)
-        shippingAddress.familyName = propsValue.shippingAddress_familyName;
-      if (propsValue.shippingAddress_email)
-        shippingAddress.email = propsValue.shippingAddress_email;
-      if (propsValue.shippingAddress_phone)
-        shippingAddress.phone = propsValue.shippingAddress_phone;
-      if (propsValue.shippingAddress_streetAndNumber)
-        shippingAddress.streetAndNumber =
-          propsValue.shippingAddress_streetAndNumber;
-      if (propsValue.shippingAddress_streetAdditional)
-        shippingAddress.streetAdditional =
-          propsValue.shippingAddress_streetAdditional;
-      if (propsValue.shippingAddress_postalCode)
-        shippingAddress.postalCode = propsValue.shippingAddress_postalCode;
-      if (propsValue.shippingAddress_city)
-        shippingAddress.city = propsValue.shippingAddress_city;
-      if (propsValue.shippingAddress_region)
-        shippingAddress.region = propsValue.shippingAddress_region;
-      if (propsValue.shippingAddress_country)
-        shippingAddress.country = propsValue.shippingAddress_country;
+  // Process lines with automatic totalAmount and vatAmount calculation
+  if (propsValue.lines && propsValue.lines.length > 0) {
+    let calculatedOrderTotal = 0;
+    
+    orderData.lines = propsValue.lines.map((line: any) => {
+      // Parse values as numbers for calculation
+      const unitPrice = parseFloat(line.unitPrice_value);
+      const quantity = Number(line.quantity);
+      const discountAmount = line.discountAmount_value ? parseFloat(line.discountAmount_value) : 0;
+      const vatRate = line.vatRate ? parseFloat(line.vatRate) : 0;
 
-      orderData.shippingAddress = shippingAddress;
+      // Validate numeric values
+      if (isNaN(unitPrice) || isNaN(quantity)) {
+        throw new Error(`Invalid numeric values in line item "${line.name}": unit price or quantity`);
+      }
+      if (line.discountAmount_value && isNaN(discountAmount)) {
+        throw new Error(`Invalid discount amount in line item "${line.name}"`);
+      }
+      if (line.vatRate && isNaN(vatRate)) {
+        throw new Error(`Invalid VAT rate in line item "${line.name}"`);
+      }
+
+      // Calculate total amount: (unitPrice × quantity) - discountAmount
+      const totalAmount = (unitPrice * quantity) - discountAmount;
+      
+      // Ensure total amount is not negative
+      if (totalAmount < 0) {
+        throw new Error(`Total amount cannot be negative for line item "${line.name}". Check unit price, quantity, and discount amount.`);
+      }
+
+      // Calculate VAT amount using Mollie's formula: totalAmount × (vatRate / (100 + vatRate))
+      let calculatedVatAmount = 0;
+      if (vatRate > 0) {
+        calculatedVatAmount = totalAmount * (vatRate / (100 + vatRate));
+      }
+
+      // Add to running order total for validation
+      calculatedOrderTotal += totalAmount;
+
+      const processedLine: any = {
+        name: line.name,
+        type: line.type || 'physical',
+        description: line.description,
+        quantity: quantity,
+        unitPrice: {
+          currency: line.unitPrice_currency,
+          value: unitPrice.toFixed(2),
+        },
+        totalAmount: {
+          currency: line.unitPrice_currency,
+          value: totalAmount.toFixed(2),
+        },
+      };
+
+      // Add optional fields
+      if (line.quantityUnit) processedLine.quantityUnit = line.quantityUnit;
+      
+      if (line.discountAmount_value) {
+        processedLine.discountAmount = {
+          currency: line.discountAmount_currency || line.unitPrice_currency,
+          value: discountAmount.toFixed(2),
+        };
+      }
+      
+      if (line.vatRate) {
+        processedLine.vatRate = vatRate.toFixed(2);
+        
+        // Add calculated VAT amount (not user-provided)
+        processedLine.vatAmount = {
+          currency: line.unitPrice_currency,
+          value: calculatedVatAmount.toFixed(2),
+        };
+
+        // Validate user-provided VAT amount if present (and warn about discrepancy)
+        if (line.vatAmount_value) {
+          const userVatAmount = parseFloat(line.vatAmount_value);
+          const tolerance = 0.01; // 1 cent tolerance for rounding
+          
+          if (Math.abs(userVatAmount - calculatedVatAmount) > tolerance) {
+            console.warn(
+              `VAT amount mismatch for line item "${line.name}": ` +
+              `User provided ${userVatAmount.toFixed(2)}, but calculated ${calculatedVatAmount.toFixed(2)} ` +
+              `using formula: totalAmount × (vatRate / (100 + vatRate)). Using calculated value.`
+            );
+          }
+        }
+      }
+      
+      if (line.sku) processedLine.sku = line.sku;
+      if (line.categories && line.categories.length > 0) processedLine.categories = line.categories;
+      if (line.imageUrl) processedLine.imageUrl = line.imageUrl;
+      if (line.productUrl) processedLine.productUrl = line.productUrl;
+
+      return processedLine;
+    });
+
+    // Validate that sum of line totals equals order amount
+    const orderAmount = parseFloat(propsValue.amount_value);
+    const tolerance = 0.01; // Allow 1 cent tolerance for rounding differences
+    
+    if (Math.abs(calculatedOrderTotal - orderAmount) > tolerance) {
+      throw new Error(
+        `Order amount mismatch: Order total is ${propsValue.amount_value} ${propsValue.amount_currency}, ` +
+        `but sum of line totals is ${calculatedOrderTotal.toFixed(2)} ${propsValue.amount_currency}. ` +
+        `Difference: ${Math.abs(calculatedOrderTotal - orderAmount).toFixed(2)}. ` +
+        `Please adjust line items or order amount.`
+      );
     }
+  }
 
-    if (propsValue.webhookUrl) {
-      orderData.webhookUrl = propsValue.webhookUrl;
-    }
-    if (propsValue.locale) {
-      orderData.locale = propsValue.locale;
-    }
-    if (propsValue.method) {
-      orderData.method = propsValue.method;
-    }
-    if (propsValue.orderMetadata) {
-      orderData.metadata = propsValue.orderMetadata;
-    }
-    if (propsValue.consumerDateOfBirth) {
-      orderData.consumerDateOfBirth = propsValue.consumerDateOfBirth;
-    }
-    if (propsValue.shopperCountryMustMatchBillingCountry !== undefined) {
-      orderData.shopperCountryMustMatchBillingCountry =
-        propsValue.shopperCountryMustMatchBillingCountry;
-    }
+  // Add optional order fields
+  if (propsValue.cancelUrl) {
+    orderData.cancelUrl = propsValue.cancelUrl;
+  }
+  if (propsValue.webhookUrl) {
+    orderData.webhookUrl = propsValue.webhookUrl;
+  }
+  if (propsValue.locale) {
+    orderData.locale = propsValue.locale;
+  }
+  if (propsValue.method) {
+    orderData.method = propsValue.method;
+  }
+  if (propsValue.orderMetadata) {
+    orderData.metadata = propsValue.orderMetadata;
+  }
+  if (propsValue.consumerDateOfBirth) {
+    orderData.consumerDateOfBirth = propsValue.consumerDateOfBirth;
+  }
+  if (propsValue.shopperCountryMustMatchBillingCountry !== undefined) {
+    orderData.shopperCountryMustMatchBillingCountry =
+      propsValue.shopperCountryMustMatchBillingCountry;
+  }
 
-    if (
-      propsValue.customerId ||
-      propsValue.mandateId ||
-      propsValue.sequenceType
-    ) {
-      const payment: any = {};
-      if (propsValue.customerId) payment.customerId = propsValue.customerId;
-      if (propsValue.mandateId) payment.mandateId = propsValue.mandateId;
-      if (propsValue.sequenceType)
-        payment.sequenceType = propsValue.sequenceType;
-      orderData.payment = payment;
-    }
+  // Handle payment-specific fields
+  if (propsValue.mandateId || propsValue.sequenceType) {
+    const payment: any = {};
+    if (propsValue.mandateId) payment.mandateId = propsValue.mandateId;
+    if (propsValue.sequenceType) payment.sequenceType = propsValue.sequenceType;
+    orderData.payment = payment;
+  }
+  
+  if (propsValue.profileId) {
+    orderData.profileId = propsValue.profileId;
+  }
 
-    const response = await makeRequest(
-      auth.access_token,
-      HttpMethod.POST,
-      '/orders',
-      orderData
-    );
+  const response = await makeRequest(
+    auth.access_token,
+    HttpMethod.POST,
+    '/orders',
+    orderData
+  );
 
-    return response;
-  },
+  return response;
+},
 });

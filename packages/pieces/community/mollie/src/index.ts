@@ -9,9 +9,12 @@ import { searchCustomer } from './lib/actions/search-customer';
 import { searchPayment } from './lib/actions/search-payment';
 import { newCustomer } from './lib/triggers/new-customer';
 import { newInvoice } from './lib/triggers/new-invoice';
-import { newPaymentChargeback } from './lib/triggers/new-payment-chargeback';
-import { newRefund } from './lib/triggers/new-refund';
+// import { newPaymentChargeback } from './lib/triggers/new-payment-chargeback';
+// import { newRefund } from './lib/triggers/new-refund';
 import { newSettlement } from './lib/triggers/new-settlement';
+import { newOrder } from './lib/triggers/new-order';
+import { newPayment } from './lib/triggers/new-payment';
+import { searchOrder } from './lib/actions/search-order';
 
 export const mollie = createPiece({
   displayName: 'Mollie',
@@ -26,13 +29,15 @@ export const mollie = createPiece({
     createPaymentRefund,
     createPayment,
     searchCustomer,
-    searchPayment,
+    searchOrder,
   ],
   triggers: [
     newCustomer,
     newInvoice,
-    newPaymentChargeback,
-    newRefund,
+    newOrder,
+    newPayment,
+    // newPaymentChargeback,
+    // newRefund,
     newSettlement,
   ],
 });

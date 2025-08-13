@@ -19,11 +19,7 @@ export const searchCustomer = createAction({
       description: 'Number of customers to return (max 250, default 10)',
       required: false,
     }),
-    profileId: Property.ShortText({
-      displayName: 'Profile ID',
-      description: 'Filter customers by profile ID',
-      required: false,
-    }),
+   
   },
   async run({ auth, propsValue }) {
     const queryParams: string[] = [];
@@ -35,9 +31,7 @@ export const searchCustomer = createAction({
     if (propsValue.limit) {
       queryParams.push(`limit=${propsValue.limit}`);
     }
-    if (propsValue.profileId) {
-      queryParams.push(`profileId=${encodeURIComponent(propsValue.profileId)}`);
-    }
+    
     const queryString =
       queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
     const endpoint = `/customers${queryString}`;

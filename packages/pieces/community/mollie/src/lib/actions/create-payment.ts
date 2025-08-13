@@ -8,6 +8,7 @@ import {
   localeDropdown,
   mandatesIdDropdown,
   paymentMethodDropdown,
+  profileIdDropdown,
 } from '../common/props';
 
 export const createPayment = createAction({
@@ -20,6 +21,27 @@ export const createPayment = createAction({
       displayName: 'Description',
       description: 'Description of the payment',
       required: true,
+    }),
+    include: Property.StaticMultiSelectDropdown({
+      displayName: 'Include Additional Details',
+      description: 'Include additional information in the response',
+      required: false,
+      options: {
+        options: [
+          {
+            label: 'QR Code (iDEAL, Bancontact, bank transfer)',
+            value: 'details.qrCode',
+          },
+          {
+            label: 'Settlement Details',
+            value: 'details.settlement',
+          },
+          {
+            label: 'Failure Reason',
+            value: 'details.failureReason',
+          },
+        ],
+      },
     }),
     amount_currency: currencyDropdown('Amount Currency'),
     amount_value: Property.ShortText({
@@ -332,6 +354,7 @@ export const createPayment = createAction({
         ],
       },
     }),
+    profileId: profileIdDropdown,
     customerId: customerIdDropdown,
     mandateId: mandatesIdDropdown,
     restrictPaymentMethodsToCountry: Property.ShortText({
@@ -346,11 +369,6 @@ export const createPayment = createAction({
       required: false,
     }),
 
-    profileId: Property.ShortText({
-      displayName: 'Profile ID',
-      description: 'Mollie profile ID to use for this payment',
-      required: false,
-    }),
     issuer: Property.ShortText({
       displayName: 'Issuer',
       description: 'Payment method specific issuer (e.g. for iDEAL)',
@@ -611,11 +629,28 @@ export const createPayment = createAction({
     if (!propsValue.redirectUrl && isRecurringPayment) {
       console.info('redirectUrl omitted for recurring payment');
     }
+    const queryParams: any = {};
+
+    // Handle include parameter
+    if (propsValue.include && propsValue.include.length > 0) {
+      queryParams.include = propsValue.include.join(',');
+    }
+
+    // Build query string
+    const queryString =
+      Object.keys(queryParams).length > 0
+        ? '?' + new URLSearchParams(queryParams).toString()
+        : '';
+
+    // Log include parameters for debugging
+    if (queryParams.include) {
+      console.info(`Including additional details: ${queryParams.include}`);
+    }
 
     const response = await makeRequest(
       auth.access_token,
       HttpMethod.POST,
-      '/payments',
+      `/payments?details.qrCode`,
       paymentData
     );
 

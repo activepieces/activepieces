@@ -30,24 +30,4 @@ export const MollieAuth = PieceAuth.OAuth2({
     'organizations.read',
     'organizations.write',
   ],
-  validate: async ({ auth }) => {
-    if (auth?.access_token) {
-      try {
-        // Test the OAuth token by fetching organization info
-        await makeRequest(auth.access_token, HttpMethod.GET, '/me');
-        return {
-          valid: true,
-        };
-      } catch (error: any) {
-        return {
-          valid: false,
-          error: 'Invalid OAuth token. Please reconnect your Mollie account.',
-        };
-      }
-    }
-    return {
-      valid: false,
-      error: 'Mollie OAuth connection is required',
-    };
-  },
 });

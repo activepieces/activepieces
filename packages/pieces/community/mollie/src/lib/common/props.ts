@@ -77,7 +77,7 @@ export const paymentMethodDropdown = Property.Dropdown({
       return {
         disabled: false,
         options: response._embedded.paymentMethods.map((method: any) => ({
-          label: method.name,
+          label: method.description,
           value: method.id,
         })),
       };
@@ -127,7 +127,42 @@ export const paymentIdDropdown = Property.Dropdown({
     }
   },
 });
+export const profileIdDropdown = Property.Dropdown({
+  displayName: 'Profile ID',
+  description: 'Select a profile to associate with this payment',
+  required: false,
+  refreshers: ['auth'],
+  options: async ({ auth }: { auth?: { access_token: string } }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
 
+    try {
+      const response = await makeRequest(
+        auth.access_token,
+        HttpMethod.GET,
+        '/profiles'
+      );
+      return {
+        disabled: false,
+        options: response._embedded.profiles.map((profile: any) => ({
+          label: profile.name || profile.id,
+          value: profile.id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading profiles',
+      };
+    }
+  },
+});
 export const customerIdDropdown = Property.Dropdown({
   displayName: 'Customer ID',
   description: 'Select a customer to associate with this payment',

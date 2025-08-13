@@ -6,6 +6,7 @@ import {
   customerIdDropdown,
   currencyDropdown,
   paymentMethodDropdown,
+  profileIdDropdown,
 } from '../common/props';
 
 export const createPaymentLink = createAction({
@@ -52,11 +53,7 @@ export const createPaymentLink = createAction({
       required: false,
     }),
     allowedMethods: paymentMethodDropdown,
-    profileId: Property.ShortText({
-      displayName: 'Profile ID',
-      description: 'Mollie profile ID to use for this payment link (optional)',
-      required: false,
-    }),
+   profileId: profileIdDropdown,
     billing_organizationName: Property.ShortText({
       displayName: 'Organization Name',
       required: false,
