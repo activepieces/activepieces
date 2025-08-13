@@ -53,6 +53,7 @@ import { gitRepoModule } from './ee/projects/project-release/git-sync/git-sync.m
 import { projectReleaseModule } from './ee/projects/project-release/project-release.module'
 import { projectRoleModule } from './ee/projects/project-role/project-role.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
+import { solutionsModule } from './ee/solutions/solutions.module'
 import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
@@ -235,6 +236,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(agentModule)
     await app.register(todoActivityModule)
     await app.register(agentRunsModule)
+    await app.register(solutionsModule)
     
     app.get(
         '/redirect',

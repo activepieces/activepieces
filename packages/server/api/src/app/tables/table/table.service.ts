@@ -37,7 +37,6 @@ export const tableService = {
         projectId,
         request,
     }: CreateParams): Promise<Table> {
-
         const platformId = await projectService.getPlatformId(projectId)
         await PlatformPlanHelper.checkQuotaOrThrow({
             platformId,
@@ -118,11 +117,29 @@ export const tableService = {
     }: GetOneByAgentIdParams): Promise<Table | null> {
         return tableRepo().findOneBy({ projectId, agentId })
     },
+    
+    async getOneByExternalIdOrThrow({
+        projectId,
+        externalId,
+    }: GetOneByExternalIdParams): Promise<Table> {
+        const table = await tableRepo().findOneBy({ projectId, externalId })
+        if (isNil(table)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'Table',
+                    entityId: externalId,
+                },
+            })
+        }
+        return table
+    },
 
     async delete({
         projectId,
         id,
     }: DeleteParams): Promise<void> {
+
         await tableRepo().delete({
             projectId,
             id,
@@ -259,6 +276,11 @@ type ListParams = {
 type GetByIdParams = {
     projectId: string
     id: string
+}
+
+type GetOneByExternalIdParams = {
+    projectId: string
+    externalId: string
 }
 
 type DeleteParams = {

@@ -1,11 +1,13 @@
 import { t } from 'i18next';
 import { Wand, Zap } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { toast } from '@/components/ui/use-toast';
 import { ActivateLicenseDialog } from '@/features/billing/components/activate-license-dialog';
 import { ActiveFlowAddon } from '@/features/billing/components/active-flow-addon';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
@@ -31,12 +33,15 @@ export default function Billing() {
     useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const openDialog = useManagePlanDialogStore((state) => state.openDialog);
+  const navigate = useNavigate();
 
   const {
     data: platformPlanInfo,
     isLoading: isPlatformSubscriptionLoading,
     isError,
   } = billingQueries.usePlatformSubscription(platform.id);
+  const { mutate: startBusinessTrial, isPending: startingBusinessTrial } =
+    billingMutations.useStartTrial();
 
   const { mutate: redirectToPortalSession } = billingMutations.usePortalLink();
 
@@ -46,10 +51,30 @@ export default function Billing() {
     status as ApSubscriptionStatus,
   );
   const isBusinessPlan = platformPlanInfo?.plan.plan === PlanName.BUSINESS;
-  const isFree = platformPlanInfo?.plan.plan === PlanName.FREE;
+  const isPlus = platformPlanInfo?.plan.plan === PlanName.PLUS;
+  const isTrial = status === ApSubscriptionStatus.TRIALING;
   const isEnterprise =
     !isNil(platformPlanInfo?.plan.licenseKey) ||
+    platformPlanInfo?.plan.plan === PlanName.ENTERPRISE ||
     edition === ApEdition.ENTERPRISE;
+
+  const handleStartBusinessTrial = () => {
+    startBusinessTrial(
+      { plan: PlanName.BUSINESS },
+      {
+        onSuccess: () => {
+          navigate('/platform/setup/billing/success');
+          toast({
+            title: t('Success'),
+            description: t('Business trial started successfully'),
+          });
+        },
+        onError: () => {
+          navigate(`/platform/setup/billing/error`);
+        },
+      },
+    );
+  };
 
   if (isPlatformSubscriptionLoading || isNil(platformPlanInfo)) {
     return (
@@ -74,40 +99,53 @@ export default function Billing() {
         description={t('Manage billing, usage and limits')}
         beta={true}
       >
-        {isEnterprise ? (
-          <Button
-            variant="default"
-            onClick={() => setIsActivateLicenseKeyDialogOpen(true)}
-          >
-            <Zap className="w-4 h-4" />
-            {platform.plan.licenseKey
-              ? t('Update License')
-              : t('Activate License')}
-          </Button>
-        ) : (
-          <div className="flex items-center gap-2">
-            {isSubscriptionActive && (
+        <div className="flex items-center gap-2">
+          {platformPlanInfo.plan.eligibleForTrial === PlanName.BUSINESS && (
+            <Button
+              variant="outline"
+              onClick={handleStartBusinessTrial}
+              disabled={startingBusinessTrial}
+            >
+              {startingBusinessTrial && <LoadingSpinner className="size-4" />}
+              {t('Start Business Trial')}
+            </Button>
+          )}
+
+          {isEnterprise ? (
+            <Button
+              variant="default"
+              onClick={() => setIsActivateLicenseKeyDialogOpen(true)}
+            >
+              <Zap className="w-4 h-4" />
+              {platform.plan.licenseKey
+                ? t('Update License')
+                : t('Activate License')}
+            </Button>
+          ) : (
+            isSubscriptionActive && (
               <Button
                 variant="outline"
                 onClick={() => redirectToPortalSession()}
               >
                 {t('Access Billing Portal')}
               </Button>
-            )}
-            <Button variant="default" onClick={() => openDialog()}>
-              {t('Upgrade Plan')}
-            </Button>
-          </div>
-        )}
+            )
+          )}
+          <Button variant="default" onClick={() => openDialog()}>
+            {t('Upgrade Plan')}
+          </Button>
+        </div>
       </DashboardPageHeader>
       <section className="flex flex-col w-full gap-6">
         {!isEnterprise && <SubscriptionInfo info={platformPlanInfo} />}
 
         <UsageCards platformSubscription={platformPlanInfo} />
 
-        {!isFree && <ActiveFlowAddon platformSubscription={platformPlanInfo} />}
+        {(isBusinessPlan || isPlus) && !isTrial && (
+          <ActiveFlowAddon platformSubscription={platformPlanInfo} />
+        )}
 
-        {isBusinessPlan && (
+        {isBusinessPlan && !isTrial && (
           <div className="grid grid-cols-2 gap-6">
             <ProjectAddon platformSubscription={platformPlanInfo} />
             <UserSeatAddon platformSubscription={platformPlanInfo} />
@@ -148,7 +186,6 @@ export default function Billing() {
                 </div>
               </div>
             </CardHeader>
-
             <CardContent className="space-y-6 p-6">
               <FeatureStatus platform={platform} />
             </CardContent>

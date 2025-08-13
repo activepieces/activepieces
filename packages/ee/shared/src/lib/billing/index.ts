@@ -1,12 +1,25 @@
-import { AiOverageState, isNil, PiecesFilterType, PlatformPlanLimits, PlatformUsageMetric } from '@activepieces/shared'
+import { AiOverageState, PiecesFilterType, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsageMetric } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-export * from './plan-limits'
-import Stripe from 'stripe'
-import { BUSINESS_CLOUD_PLAN, FREE_CLOUD_PLAN, PLUS_CLOUD_PLAN } from './plan-limits'
 
-export const PRICE_PER_EXTRA_USER = 20
-export const PRICE_PER_EXTRA_PROJECT = 10
-export const PRICE_PER_EXTRA_5_ACTIVE_FLOWS = 15
+export enum BillingCycle {
+    MONTHLY = 'monthly',
+    ANNUAL = 'annual',
+}
+
+export const PRICE_PER_EXTRA_USER_MAP = {
+    [BillingCycle.ANNUAL]: 11.4,
+    [BillingCycle.MONTHLY]: 15,
+}
+
+export const PRICE_PER_EXTRA_PROJECT_MAP = {
+    [BillingCycle.ANNUAL]: 7.6,
+    [BillingCycle.MONTHLY]: 10,
+}
+export const PRICE_PER_EXTRA_5_ACTIVE_FLOWS_MAP = {
+    [BillingCycle.ANNUAL]: 11.4,
+    [BillingCycle.MONTHLY]: 15,
+}
+
 export const AI_CREDITS_USAGE_THRESHOLD = 150000
 
 export type ProjectPlanLimits = {
@@ -60,6 +73,7 @@ export const RESOURCE_TO_MESSAGE_MAPPING = {
 
 export const CreateSubscriptionParamsSchema = Type.Object({
     plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
+    cycle: Type.Enum(BillingCycle),
 })
 export type CreateSubscriptionParams = Static<typeof CreateSubscriptionParamsSchema>
 
@@ -73,6 +87,12 @@ export const ToggleAiCreditsOverageEnabledParamsSchema = Type.Object({
 })
 export type ToggleAiCreditsOverageEnabledParams = Static<typeof ToggleAiCreditsOverageEnabledParamsSchema>
 
+export const StartTrialParamsSchema = Type.Object({
+    plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
+})
+export type StartTrialParams = Static<typeof StartTrialParamsSchema>
+
+
 const Addons = Type.Object({
     userSeats: Type.Optional(Type.Number()),
     activeFlows: Type.Optional(Type.Number()),
@@ -82,6 +102,7 @@ const Addons = Type.Object({
 export const UpdateSubscriptionParamsSchema = Type.Object({
     plan: Type.Union([Type.Literal(PlanName.FREE), Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
     addons: Addons,
+    cycle: Type.Enum(BillingCycle),
 })
 export type UpdateSubscriptionParams = Static<typeof UpdateSubscriptionParamsSchema>
 
@@ -92,26 +113,6 @@ export enum PRICE_NAMES {
     ACTIVE_FLOWS = 'active-flow',
     USER_SEAT = 'user-seat',
     PROJECT = 'project',
-}
-
-export const getPriceIdFor = (price: string, stripeKey?: string): string => {
-    const devEnv = stripeKey?.startsWith('sk_test')
-    switch (price) {
-        case PRICE_NAMES.PLUS_PLAN:
-            return devEnv ? 'price_1RTRd4QN93Aoq4f8E22qF5JU' : 'price_1RflgUKZ0dZRqLEK5COq9Kn8'
-        case PRICE_NAMES.BUSINESS_PLAN:
-            return devEnv ? 'price_1RTReBQN93Aoq4f8v9CnMTFT' : 'price_1RflgbKZ0dZRqLEKaW4Nlt0P'
-        case PRICE_NAMES.AI_CREDITS:
-            return devEnv ? 'price_1RnbNPQN93Aoq4f8GLiZbJFj' : 'price_1Rnj5bKZ0dZRqLEKQx2gwL7s'
-        case PRICE_NAMES.ACTIVE_FLOWS:
-            return devEnv ? 'price_1RsK9qQN93Aoq4f8nhN9xvvu' : 'price_1RsK79KZ0dZRqLEKRGbtT1Pn'
-        case PRICE_NAMES.USER_SEAT:
-            return devEnv ? 'price_1Rsn8nQN93Aoq4f8nNmwAA1I' : 'price_1RflgiKZ0dZRqLEKiDFoa17I'
-        case PRICE_NAMES.PROJECT:
-            return devEnv ? 'price_1RsoJ4QN93Aoq4f8JzLCO1BL' : 'price_1RsoHsKZ0dZRqLEKIQGB6RPe'
-        default:
-            throw new Error('No price with the given price name is available')
-    }
 }
 
 export const getPlanLimits = (planName: PlanName): Partial<PlatformPlanLimits> => {
@@ -127,77 +128,259 @@ export const getPlanLimits = (planName: PlanName): Partial<PlatformPlanLimits> =
     }
 }
 
-export function checkIsTrialSubscription(subscription: Stripe.Subscription): boolean {
-    return isNil(subscription.metadata['trialSubscription']) ? false : subscription.metadata['trialSubscription'] === 'true'
-}
-
-export function getPlanFromSubscription(subscription: Stripe.Subscription): PlanName {
-    if (subscription.status === ApSubscriptionStatus.TRIALING) {
-        return PlanName.PLUS
-    }
-
-    if (subscription.status !== ApSubscriptionStatus.ACTIVE) {
-        return PlanName.FREE
-    }
-
-    const priceId = subscription.items.data[0].price.id
-    switch (priceId) {
-        case 'price_1RTRd4QN93Aoq4f8E22qF5JU':
-        case 'price_1RflgUKZ0dZRqLEK5COq9Kn8':
-            return PlanName.PLUS
-        case 'price_1RTReBQN93Aoq4f8v9CnMTFT':
-        case 'price_1RflgbKZ0dZRqLEKaW4Nlt0P':
-            return PlanName.BUSINESS
-        default:
-            return PlanName.FREE
-    }
-}
-
-const PLAN_HIERARCHY = {
+export const PLAN_HIERARCHY = {
     [PlanName.FREE]: 0,
     [PlanName.PLUS]: 1,
     [PlanName.BUSINESS]: 2,
     [PlanName.ENTERPRISE]: 3,
 } as const
 
-export const isUpgradeExperience = (params: IsUpgradeEperienceParams): boolean => {
-    const {
-        currentActiveFlowsLimit,
-        currentPlan,
-        currentProjectsLimit,
-        currentUserSeatsLimit,
-        newActiveFlowsLimit,
-        newPlan,
-        newProjectsLimit,
-        newUserSeatsLimit,
-    } = params
+export const BILLING_CYCLE_HIERARCHY = {
+    [BillingCycle.MONTHLY]: 0,
+    [BillingCycle.ANNUAL]: 1,
+} as const
 
-    const currentTier = PLAN_HIERARCHY[currentPlan]
-    const newTier = PLAN_HIERARCHY[newPlan]
-
-    if (newTier > currentTier) {
-        return true
-    }
-
-    if (newTier < currentTier) {
-        return false
-    }
-
-    const isAddonUpgrade =
-        (!isNil(newActiveFlowsLimit) && newActiveFlowsLimit > currentActiveFlowsLimit) ||
-        (!isNil(newProjectsLimit) && newProjectsLimit > currentProjectsLimit) ||
-        (!isNil(newUserSeatsLimit) && newUserSeatsLimit > currentUserSeatsLimit)
-
-    return isAddonUpgrade
+export const PRICE_ID_MAP = {
+    [PRICE_NAMES.PLUS_PLAN]: {
+        [BillingCycle.MONTHLY]: {
+            dev: 'price_1RTRd4QN93Aoq4f8E22qF5JU',
+            prod: 'price_1RflgUKZ0dZRqLEK5COq9Kn8',
+        },
+        [BillingCycle.ANNUAL]: {
+            dev: 'price_1RtZrSQN93Aoq4f8KLZq4yif',
+            prod: 'price_1RtZwlKZ0dZRqLEKBiPradv4',
+        },
+    },
+    [PRICE_NAMES.BUSINESS_PLAN]: {
+        [BillingCycle.MONTHLY]: {
+            dev: 'price_1RTReBQN93Aoq4f8v9CnMTFT',
+            prod: 'price_1RflgbKZ0dZRqLEKaW4Nlt0P',
+        },
+        [BillingCycle.ANNUAL]: {
+            dev: 'price_1RtZpuQN93Aoq4f8mNgEjs0b',
+            prod: 'price_1RtZxNKZ0dZRqLEKqTYawR8q',
+        },
+    },
+    [PRICE_NAMES.AI_CREDITS]: {
+        [BillingCycle.MONTHLY]: {
+            dev: 'price_1RnbNPQN93Aoq4f8GLiZbJFj',
+            prod: 'price_1Rnj5bKZ0dZRqLEKQx2gwL7s',
+        },
+        [BillingCycle.ANNUAL]: {
+            dev: 'price_1RtPc0QN93Aoq4f8JAPe5HbG',
+            prod: 'price_1RtZziKZ0dZRqLEKiWU2iAz8',
+        },
+    },
+    [PRICE_NAMES.ACTIVE_FLOWS]: {
+        [BillingCycle.MONTHLY]: {
+            dev: 'price_1RsK9qQN93Aoq4f8nhN9xvvu',
+            prod: 'price_1RsK79KZ0dZRqLEKRGbtT1Pn',
+        },
+        [BillingCycle.ANNUAL]: {
+            dev: 'price_1RtZmHQN93Aoq4f8OqAfOl8R',
+            prod: 'price_1RtZvzKZ0dZRqLEKGHOXlfDP',
+        },
+    },
+    [PRICE_NAMES.USER_SEAT]: {
+        [BillingCycle.MONTHLY]: {
+            dev: 'price_1Rtzi4QN93Aoq4f8l2jMsk9W',
+            prod: 'price_1Rtzl2KZ0dZRqLEKdOr3G2YG',
+        },
+        [BillingCycle.ANNUAL]: {
+            dev: 'price_1RtzkCQN93Aoq4f8thLTUyNi',
+            prod: 'price_1RtzleKZ0dZRqLEKva8yji8k',
+        },
+    },
+    [PRICE_NAMES.PROJECT]: {
+        [BillingCycle.MONTHLY]: {
+            dev: 'price_1RsoJ4QN93Aoq4f8JzLCO1BL',
+            prod: 'price_1RsoHsKZ0dZRqLEKIQGB6RPe',
+        },
+        [BillingCycle.ANNUAL]: {
+            dev: 'price_1RtPeZQN93Aoq4f8Mw8H9nGa',
+            prod: 'price_1RtZv4KZ0dZRqLEKxR6uO7WQ',
+        },
+    },
 }
 
-type IsUpgradeEperienceParams = {
-    currentPlan: PlanName 
-    newPlan: PlanName
-    newUserSeatsLimit?: number
-    newProjectsLimit?: number
-    newActiveFlowsLimit?: number
-    currentUserSeatsLimit: number
-    currentProjectsLimit: number
-    currentActiveFlowsLimit: number
+export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
+    plan: 'free',
+    tasksLimit: 1000,
+    includedAiCredits: 200,
+    aiCreditsOverageLimit: undefined,
+    aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
+    activeFlowsLimit: 2,
+    eligibleForTrial: PlanName.PLUS,
+    userSeatsLimit: 1,
+    projectsLimit: 1,
+    tablesLimit: 1,
+    mcpLimit: 1,
+    agentsLimit: 0,
+
+    agentsEnabled: true,
+    tablesEnabled: true,
+    todosEnabled: true,
+    mcpsEnabled: true,
+
+    embeddingEnabled: false,
+    globalConnectionsEnabled: false,
+    customRolesEnabled: false,
+    environmentsEnabled: false,
+    analyticsEnabled: false,
+    showPoweredBy: false,
+    auditLogEnabled: false,
+    managePiecesEnabled: false,
+    manageTemplatesEnabled: false,
+    customAppearanceEnabled: false,
+    manageProjectsEnabled: false,
+    projectRolesEnabled: false,
+    customDomainsEnabled: false,
+    apiKeysEnabled: false,
+    ssoEnabled: false,
+}
+
+export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit, agentsLimit, tablesLimit, mcpLimit }: { planName: string, tasksLimit: number, userSeatsLimit: number, agentsLimit: number, tablesLimit: number, mcpLimit: number }): PlatformPlanWithOnlyLimits => {
+    return {
+        plan: planname,
+        tasksLimit,
+        userSeatsLimit,
+        includedAiCredits: 200,
+        aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
+        aiCreditsOverageLimit: undefined,
+        activeFlowsLimit: undefined,
+        projectsLimit: 1,
+        mcpLimit,
+        tablesLimit,
+        agentsLimit,
+        eligibleForTrial: undefined,
+
+        agentsEnabled: true,
+        tablesEnabled: true,
+        todosEnabled: true,
+        mcpsEnabled: true,
+
+        embeddingEnabled: false,
+        globalConnectionsEnabled: false,
+        customRolesEnabled: false,
+        environmentsEnabled: false,
+        analyticsEnabled: false,
+        showPoweredBy: false,
+        auditLogEnabled: false,
+        managePiecesEnabled: false,
+        manageTemplatesEnabled: false,
+        customAppearanceEnabled: false,
+        manageProjectsEnabled: false,
+        projectRolesEnabled: true,
+        customDomainsEnabled: false,
+        apiKeysEnabled: false,
+        ssoEnabled: false,
+
+    }
+}
+
+export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
+    plan: 'plus',
+    tasksLimit: undefined,
+    includedAiCredits: 500,
+    aiCreditsOverageLimit: undefined,
+    aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
+    eligibleForTrial: undefined,
+    activeFlowsLimit: 10,
+    userSeatsLimit: 1,
+    projectsLimit: 1,
+    mcpLimit: undefined,
+    tablesLimit: undefined,
+    agentsLimit: undefined,
+
+    agentsEnabled: true,
+    tablesEnabled: true,
+    todosEnabled: true,
+    mcpsEnabled: true,
+
+    embeddingEnabled: false,
+    globalConnectionsEnabled: false,
+    customRolesEnabled: false,
+    environmentsEnabled: false,
+    analyticsEnabled: false,
+    managePiecesEnabled: false,
+    manageTemplatesEnabled: false,
+    customAppearanceEnabled: false,
+    manageProjectsEnabled: false,
+    projectRolesEnabled: false,
+    customDomainsEnabled: false,
+    apiKeysEnabled: false,
+    ssoEnabled: false,
+    showPoweredBy: false,
+    auditLogEnabled: false,
+}
+
+export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
+    plan: 'business',
+    tasksLimit: undefined,
+    includedAiCredits: 1000,
+    aiCreditsOverageLimit: undefined,
+    aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
+    eligibleForTrial: undefined,
+    activeFlowsLimit: 50,
+    userSeatsLimit: 5,
+    projectsLimit: 10,
+    mcpLimit: undefined,
+    tablesLimit: undefined,
+    agentsLimit: undefined,
+
+    agentsEnabled: true,
+    tablesEnabled: true,
+    todosEnabled: true,
+    mcpsEnabled: true,
+
+    embeddingEnabled: false,
+    globalConnectionsEnabled: false,
+    customRolesEnabled: false,
+    environmentsEnabled: false,
+    analyticsEnabled: true,
+    managePiecesEnabled: false,
+    manageTemplatesEnabled: false,
+    customAppearanceEnabled: false,
+    manageProjectsEnabled: true,
+    projectRolesEnabled: true,
+    customDomainsEnabled: false,
+    apiKeysEnabled: true,
+    ssoEnabled: true,
+    showPoweredBy: false,
+    auditLogEnabled: false,
+
+}
+
+export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
+    eligibleForTrial: undefined,
+    embeddingEnabled: false,
+
+    globalConnectionsEnabled: false,
+    customRolesEnabled: false,
+    tasksLimit: undefined,
+
+    mcpsEnabled: true,
+    tablesEnabled: true,
+    todosEnabled: true,
+    agentsEnabled: true,
+    includedAiCredits: 0,
+    aiCreditsOverageLimit: undefined,
+    aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
+    environmentsEnabled: false,
+    agentsLimit: undefined,
+    analyticsEnabled: false,
+    showPoweredBy: false,
+
+    auditLogEnabled: false,
+    managePiecesEnabled: false,
+    manageTemplatesEnabled: false,
+    customAppearanceEnabled: false,
+    manageProjectsEnabled: false,
+    projectRolesEnabled: false,
+    customDomainsEnabled: false,
+    apiKeysEnabled: false,
+    ssoEnabled: false,
+    stripeCustomerId: undefined,
+    stripeSubscriptionId: undefined,
+    stripeSubscriptionStatus: undefined,
 }

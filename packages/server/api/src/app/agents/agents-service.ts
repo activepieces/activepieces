@@ -29,23 +29,29 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         const mcp = await mcpService(log).create({
             name: params.displayName,
             projectId: params.projectId,
+            externalId: params.mcpExternalId,
         })
         const id = apId()
-        const { description, displayName, systemPrompt } = await this.enhanceAgentPrompt({ platformId: params.platformId, projectId: params.projectId, systemPrompt: params.systemPrompt, agentId: id })
+        const { description, displayName, systemPrompt } = params.enhancePrompt ? await this.enhanceAgentPrompt({
+            platformId: params.platformId,
+            projectId: params.projectId,
+            systemPrompt: params.systemPrompt,
+            agentId: id,
+        }) : { ...params }
+
         const agentPayload: Omit<Agent, 'created' | 'updated' | 'taskCompleted' | 'runCompleted'> = {
             id,
             displayName,
             description,
             systemPrompt,
             platformId: params.platformId,
-            profilePictureUrl: getAgentProfilePictureUrl(),
-            testPrompt: '',
+            profilePictureUrl: params.profilePictureUrl ?? getAgentProfilePictureUrl(),
             maxSteps: 10,
             projectId: params.projectId,
-            externalId: apId(),
+            externalId: params.externalId ?? apId(),
             mcpId: mcp.id,
-            outputType: AgentOutputType.NO_OUTPUT,
-            outputFields: [],
+            outputType: params.outputType ?? AgentOutputType.NO_OUTPUT,
+            outputFields: params.outputFields ?? [],
         }
         const agentSettings: Omit<AgentSettings, 'created' | 'updated'> = {
             id: apId(),
@@ -94,14 +100,14 @@ export const agentsService = (log: FastifyBaseLogger) => ({
 
         const { object } = await generateObject({
             model,
-            system, 
+            system,
             prompt,
             mode: 'json',
-            schema: enhancePromptSchema, 
+            schema: enhancePromptSchema,
         })
         return object
     },
-    async getOneByExternalIdOrThrow(params: GetOneByExternalIdParams): Promise<Agent> {
+    async getOneByExternalIdOrThrow(params: GetOneByExternalIdParams): Promise<PopulatedAgent> {
         const agent = await agentRepo().findOneBy({ externalId: params.externalId, projectId: params.projectId })
         if (isNil(agent)) {
             throw new ActivepiecesError({
@@ -111,7 +117,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        return agent
+        return enrichAgent(agent, log)
     },
     async update(params: UpdateParams): Promise<PopulatedAgent> {
         const platformId = await projectService.getPlatformId(params.projectId)
@@ -127,7 +133,6 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('displayName', params.displayName),
             ...spreadIfDefined('systemPrompt', params.systemPrompt),
             ...spreadIfDefined('description', params.description),
-            ...spreadIfDefined('testPrompt', params.testPrompt),
             ...spreadIfDefined('outputType', params.outputType),
             ...spreadIfDefined('outputFields', params.outputFields),
             ...spreadIfDefined('settings', params.settings),
@@ -177,7 +182,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             id: agent.id,
         })
     },
-    async list(params: ListParams): Promise<SeekPage<Agent>> {
+    async list(params: ListParams): Promise<SeekPage<PopulatedAgent>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursorRequest)
 
         const paginator = buildPaginator({
@@ -275,6 +280,7 @@ type ListParams = {
     projectId: string
     limit: number
     cursorRequest: Cursor
+
 }
 
 type CreateParams = {
@@ -283,6 +289,12 @@ type CreateParams = {
     systemPrompt: string
     platformId: string
     projectId: string
+    profilePictureUrl?: string
+    outputType?: AgentOutputType
+    outputFields?: AgentOutputField[]
+    externalId?: string
+    mcpExternalId?: string
+    enhancePrompt?: boolean
 }
 
 type UpdateParams = {
@@ -291,7 +303,6 @@ type UpdateParams = {
     displayName?: string
     systemPrompt?: string
     description?: string
-    testPrompt?: string
     outputType?: string
     outputFields?: AgentOutputField[]
     settings?: AgentSettings

@@ -11,25 +11,39 @@ import {
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { CardContent, Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { PlanName } from '@activepieces/ee-shared';
-import { isNil, PlatformBillingInformation } from '@activepieces/shared';
+import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
+import {
+  ApEdition,
+  ApFlagId,
+  isNil,
+  PlatformBillingInformation,
+} from '@activepieces/shared';
 
 export const UsageCards = ({
   platformSubscription,
 }: {
   platformSubscription: PlatformBillingInformation;
 }) => {
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { usage, plan } = platformSubscription;
   const isBusinessPlan = plan.plan === PlanName.BUSINESS;
+  const isPlusPlan = plan.plan === PlanName.PLUS;
   const isFree = plan.plan === PlanName.FREE;
+  const isTrial =
+    plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
+  const isEnterprise =
+    !isNil(plan?.licenseKey) ||
+    plan?.plan === PlanName.ENTERPRISE ||
+    edition === ApEdition.ENTERPRISE;
 
   return (
     <div
       className={cn('grid gap-6', {
         'grid-cols-3': true,
         'grid-cols-4': isBusinessPlan,
-        '2xl:grid-cols-6': plan.plan === PlanName.PLUS,
+        '2xl:grid-cols-3': plan.plan === PlanName.PLUS,
         '2xl:grid-cols-7': isFree,
       })}
     >
@@ -40,7 +54,7 @@ export const UsageCards = ({
         total={plan.tasksLimit}
       />
 
-      {isFree && (
+      {(isFree || isTrial || isEnterprise) && (
         <UsageCard
           icon={<Workflow className="w-4 h-4" />}
           title={t('Active flows')}
@@ -49,7 +63,7 @@ export const UsageCards = ({
         />
       )}
 
-      {!isBusinessPlan && (
+      {(isFree || isPlusPlan || (isBusinessPlan && isTrial)) && (
         <UsageCard
           icon={<Users className="w-4 h-4" />}
           title={t('Users')}
@@ -58,7 +72,7 @@ export const UsageCards = ({
         />
       )}
 
-      {!isBusinessPlan && (
+      {(isFree || isPlusPlan || (isBusinessPlan && isTrial)) && (
         <UsageCard
           icon={<LayoutGrid className="w-4 h-4" />}
           title={t('Projects')}

@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { PartyPopper } from 'lucide-react';
 import { useState } from 'react';
@@ -7,38 +8,43 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { PlatformRole } from '@activepieces/shared';
+import { ApSubscriptionStatus, StripePlanName } from '@activepieces/ee-shared';
+import { isNil, PlatformRole } from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
 
 import { useManagePlanDialogStore } from './upgrade-dialog/store';
 
 export const WelcomeTrialDialog = () => {
-  const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
   const { data: user } = userHooks.useCurrentUser();
   const openDialog = useManagePlanDialogStore((state) => state.openDialog);
+  const trialPlan =
+    user?.platformRole === PlatformRole.ADMIN
+      ? (platform.plan.eligibleForTrial as StripePlanName)
+      : null;
 
-  const isEligibleForTrial =
-    platform.plan.eligibleForTrial && user?.platformRole === PlatformRole.ADMIN;
-
-  const [isOpen, setIsOpen] = useState(isEligibleForTrial);
-
+  const isTrial =
+    platform.plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
+  const [isOpen, setIsOpen] = useState(!isTrial && !!trialPlan);
   const { mutate: startTrial } = billingMutations.useStartTrial();
 
   const handleClose = () => {
     setIsOpen(false);
-    refetch();
+    queryClient.invalidateQueries({
+      predicate: (query) =>
+        ['platform-billing-subscription', 'platform'].includes(
+          query.queryKey[0] as string,
+        ) && query.queryKey[1] === platform.id,
+    });
   };
 
   useEffectOnce(() => {
-    if (isEligibleForTrial) {
-      startTrial();
+    if (!isTrial && !isNil(trialPlan)) {
+      startTrial({ plan: trialPlan });
     }
   });
-
-  const handleContinue = () => {
-    handleClose();
-  };
 
   const handleSeePlans = () => {
     openDialog();
@@ -65,23 +71,21 @@ export const WelcomeTrialDialog = () => {
                   onClick={handleSeePlans}
                   className="px-0"
                 >
-                  {t('Plus')}
+                  {t(trialPlan ?? '')}
                 </Button>{' '}
                 {t(
-                  'plan explore all features and make the most of your trial.',
+                  'plan — explore all features and make the most of your trial.',
                 )}
               </p>
             </div>
-            <div className="flex w-full items-stretch flex-col justify-between gap-3">
-              <Button onClick={handleContinue} className="flex-1">
-                {t('Continue on trial')}
+
+            <div className="flex w-full flex-col gap-3">
+              <Button onClick={handleClose} className="flex-1">
+                {t(`Continue on ${trialPlan?.toLowerCase()} Trial`)}
               </Button>
-              <Button
-                onClick={handleSeePlans}
-                variant="outline"
-                className="flex-1"
-              >
-                {t('View plans')}
+
+              <Button variant="outline" onClick={handleSeePlans}>
+                {t('See Plans')}
               </Button>
             </div>
           </div>

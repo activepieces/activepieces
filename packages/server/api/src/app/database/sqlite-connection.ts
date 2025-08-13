@@ -137,10 +137,13 @@ import { AddExternalAgentIdSqlite1753643287673 } from './migration/sqlite/175364
 import { AddParentRunIdToFlowRunSqlite1753719777841 } from './migration/sqlite/1753719777841-AddParentRunIdToFlowRunSqlite'
 import { AddCascadeOnAgentsSqlite1753727589109 } from './migration/sqlite/1753727589109-AddCascadeOnAgentsSqlite'
 import { AddExternalIdToMCPSqlite1753786833156 } from './migration/sqlite/1753786833156-AddExternalIdToMCPSqlite'
+import { AddExternalidToMCPToolSQLite1754220095236 } from './migration/sqlite/1754220095236-AddExternalidToMCPToolSQLite'
+import { AddStepNameToTestInFlowRunEntitySqlite1754355397885 } from './migration/sqlite/1754355397885-AddStepNameToTestInFlowRunEntitySqlite'
 import { AddTriggerSqlite1754477404726 } from './migration/sqlite/1754477404726-AddTriggerSqlite'
 import { AddJobIdToTriggerRun1754510243053 } from './migration/sqlite/1754510243053-AddJobIdToTriggerRun'
 import { AddSettingsAndSummaryAgentRunSqlite1754922630313 } from './migration/sqlite/1754922630313-AddSettingsAndSummaryAgentRunSqlite'
 import { MakeFlowIdOptionalInTableWebhookSqlite1755011767281 } from './migration/sqlite/1755011767281-MakeFlowIdOptionalInTableWebhookSqlite'
+import { RemoveAgentTestPromptSqlite1754863757450 } from './migration/sqlite/1754863757450-RemoveAgentTestPromptSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -294,8 +297,11 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddParentRunIdToFlowRunSqlite1753719777841,
         AddCascadeOnAgentsSqlite1753727589109,
         AddExternalIdToMCPSqlite1753786833156,
+        AddExternalidToMCPToolSQLite1754220095236,
         AddTriggerSqlite1754477404726,
+        AddStepNameToTestInFlowRunEntitySqlite1754355397885,
         AddJobIdToTriggerRun1754510243053,
+        RemoveAgentTestPromptSqlite1754863757450,
         AddSettingsAndSummaryAgentRunSqlite1754922630313,
         MakeFlowIdOptionalInTableWebhookSqlite1755011767281
     ]
