@@ -36,7 +36,8 @@ export const textSummarization = createAction({
     }),
   },
   async run(context) {
-    const { apiKey, baseUrl } = context.auth;
+    const apiKey = context.auth as string;
+    const baseUrl = 'https://api-inference.huggingface.co';
     const { model, text, maxLength, minLength } = context.propsValue;
 
     const response = await httpClient.sendRequest({

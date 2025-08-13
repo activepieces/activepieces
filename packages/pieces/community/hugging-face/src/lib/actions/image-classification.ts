@@ -30,7 +30,8 @@ export const imageClassification = createAction({
     }),
   },
   async run(context) {
-    const { apiKey, baseUrl } = context.auth;
+    const apiKey = context.auth as string;
+    const baseUrl = 'https://api-inference.huggingface.co';
     const { model, imageUrl, topK } = context.propsValue;
 
     const response = await httpClient.sendRequest({

@@ -1,6 +1,6 @@
 
-    import { createPiece } from "@activepieces/pieces-framework";
-    import { huggingFaceAuth } from "./lib/auth";
+    import { createPiece } from '@activepieces/pieces-framework';
+    import { huggingFaceAuth } from './lib/auth';
     import { chatCompletion } from "./lib/actions/chat-completion";
     import { createImage } from "./lib/actions/create-image";
     import { documentQuestionAnswering } from "./lib/actions/document-question-answering";
@@ -12,9 +12,8 @@
 
     export const huggingFace = createPiece({
       displayName: "Hugging Face",
-      auth: huggingFaceAuth,
-      minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/hugging-face.png",
+      auth: huggingFaceAuth,
       authors: [],
       actions: [
         chatCompletion,
