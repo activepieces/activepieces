@@ -1275,7 +1275,7 @@
   "fieldsCount": "количество полей",
   "Table Editor": "Редактор таблиц",
   "Edit Table Name": "Изменить имя таблицы",
-  "Delete Records": "Удалить записи",
+  "Delete records": "Удалить записи",
   "Are you sure you want to delete the selected records? This action cannot be undone.": "Вы уверены, что хотите удалить выбранные записи? Это действие нельзя отменить.",
   "record": "запись",
   "records": "записи",

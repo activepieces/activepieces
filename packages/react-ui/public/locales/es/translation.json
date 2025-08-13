@@ -1275,7 +1275,7 @@
   "fieldsCount": "contador de campos",
   "Table Editor": "Editor de Tablas",
   "Edit Table Name": "Editar nombre de tabla",
-  "Delete Records": "Borrar registros",
+  "Delete records": "Borrar registros",
   "Are you sure you want to delete the selected records? This action cannot be undone.": "¿Está seguro que desea eliminar los registros seleccionados? Esta acción no se puede deshacer.",
   "record": "grabar",
   "records": "registros",

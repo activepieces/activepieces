@@ -1275,7 +1275,7 @@
   "fieldsCount": "Nombre de champs",
   "Table Editor": "Éditeur de tableaux",
   "Edit Table Name": "Modifier le nom de la table",
-  "Delete Records": "Supprimer les enregistrements",
+  "Delete records": "Supprimer les enregistrements",
   "Are you sure you want to delete the selected records? This action cannot be undone.": "Êtes-vous sûr de vouloir supprimer les enregistrements sélectionnés ? Cette action ne peut pas être annulée.",
   "record": "enregistrement",
   "records": "enregistrements",
