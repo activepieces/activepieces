@@ -3,10 +3,10 @@ import { agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorRespons
 import { openai } from '@ai-sdk/openai'
 import { APICallError, generateObject, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 import { agentsApiService, tablesApiService } from '../api/server-api.service'
 import { agentTools } from '../utils/agent-tools'
 import { workerMachine } from '../utils/machine'
-import { z } from 'zod'
 
 export const agentJobExecutor = (log: FastifyBaseLogger) => ({
     async executeAgent(jobData: AgentJobData, engineToken: string, workerToken: string): Promise<void> {
@@ -241,7 +241,7 @@ async function constructSystemPrompt(agent: PopulatedAgent, fields: Field[] | un
         You CANNOT create new columns. Only work with existing columns.
         `
     }
-    else{
+    else {
         systemPrompt += `
         You can only create new columns if they are not already exist in the table.
         `

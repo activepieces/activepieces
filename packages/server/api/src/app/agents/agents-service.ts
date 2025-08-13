@@ -256,11 +256,12 @@ async function applyWebhookSideEffects(params: ApplyWebhookSideEffectsParams) {
             request: { 
                 events: [params.event], 
                 webhookUrl: 'tables-webhook-url',
-            } 
+            }, 
         })
-    } else {
+    }
+    else {
         await agentSideEffects().deleteTableWebhook({ 
-            agentId: params.agentId, projectId: params.projectId, type: params.event
+            agentId: params.agentId, projectId: params.projectId, type: params.event,
         })
     }
 }

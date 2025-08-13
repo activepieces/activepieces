@@ -12,14 +12,19 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { agentsApi } from '@/features/agents/lib/agents-api';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { getSelectedServerRecords } from '@/features/tables/lib/utils';
 import { cn } from '@/lib/utils';
 import {
@@ -32,10 +37,8 @@ import {
 
 import { McpPieceDialog } from '../../../mcp/components/mcp-piece-tool-dialog';
 import { ClientField } from '../../lib/store/ap-tables-client-state';
-
 import { AgentProfile } from '../agent-profile';
 import { useTableState } from '../ap-table-state-provider';
-import { Separator } from '@/components/ui/separator';
 
 const BUILT_IN_TOOLS: string[] = ['@activepieces/piece-tables'];
 
@@ -142,7 +145,11 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
           <h2 className="text-lg font-semibold">Configure your AI Agent</h2>
         </div>
 
-        <Accordion type="multiple" defaultValue={["instructions"]} className="w-full border-none">
+        <Accordion
+          type="multiple"
+          defaultValue={['instructions']}
+          className="w-full border-none"
+        >
           <AccordionItem value="avatar">
             <AccordionTrigger className="flex items-center gap-2 hover:no-underline px-0">
               <div className="flex items-center gap-2">
@@ -203,7 +210,12 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
             <AccordionTrigger className="flex items-center gap-2 hover:no-underline px-0">
               <div className="flex items-center gap-2">
                 <Settings className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium">Tools {table.agent?.mcp.tools.length > 0 ? `(${table.agent?.mcp.tools.length})` : ''}</span>
+                <span className="font-medium">
+                  Tools{' '}
+                  {table.agent?.mcp.tools.length > 0
+                    ? `(${table.agent?.mcp.tools.length})`
+                    : ''}
+                </span>
               </div>
             </AccordionTrigger>
             <AccordionContent>
@@ -273,7 +285,7 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
                     size="sm"
                     className="w-full"
                     onClick={() => {
-                      onAddPieceDialogChange(true)
+                      onAddPieceDialogChange(true);
                     }}
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -352,7 +364,10 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
                     </div>
                     <div className="space-y-2 max-h-32 overflow-y-auto">
                       {fields.map((column) => (
-                        <div key={column.uuid} className="flex items-center gap-2">
+                        <div
+                          key={column.uuid}
+                          className="flex items-center gap-2"
+                        >
                           <Checkbox
                             checked={Array.from(config.selectedColumns).some(
                               (col) => col.fieldId === column.uuid,

@@ -1,7 +1,7 @@
 
-import { tableService, tableWebhookRepo } from "../tables/table/table.service";
-import { ErrorCode, ActivepiecesError, isNil, CreateTableWebhookRequest, TableWebhookEventType } from "@activepieces/shared";
-import { APArrayContains } from "../database/database-connection";
+import { ActivepiecesError, CreateTableWebhookRequest, ErrorCode, isNil, TableWebhookEventType } from '@activepieces/shared'
+import { APArrayContains } from '../database/database-connection'
+import { tableService, tableWebhookRepo } from '../tables/table/table.service'
 
 export const agentSideEffects = () => ({
     async upsertTableWebhook(params: UpsertTableWebhookParams): Promise<void> {
@@ -16,7 +16,7 @@ export const agentSideEffects = () => ({
         
         const existingWebhook = await tableWebhookRepo().findOneBy({ 
             tableId: table.id, 
-            ...APArrayContains('events', request.events)
+            ...APArrayContains('events', request.events),
         })
         if (isNil(existingWebhook)) {
             await tableService.createWebhook({
@@ -48,7 +48,7 @@ export const agentSideEffects = () => ({
             id: table.id,
             webhookId: webhooks[0].id,
         })
-    }
+    },
 })
 
 type UpsertTableWebhookParams = {

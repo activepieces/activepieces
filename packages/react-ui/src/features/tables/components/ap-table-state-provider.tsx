@@ -54,7 +54,10 @@ export function ApTableStateProvider({
   } = useQuery({
     queryKey: ['table', tableId],
     queryFn: () => {
-      return tablesApi.getById(tableId!);
+      if (!tableId) {
+        throw new Error('Table ID not found');
+      }
+      return tablesApi.getById(tableId);
     },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
@@ -68,7 +71,12 @@ export function ApTableStateProvider({
     error: fieldsError,
   } = useQuery({
     queryKey: ['fields', tableId],
-    queryFn: () => fieldsApi.list(tableId!),
+    queryFn: () => {
+      if (!tableId) {
+        throw new Error('Table ID not found');
+      }
+      return fieldsApi.list(tableId);
+    },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0,
@@ -81,12 +89,16 @@ export function ApTableStateProvider({
     error: recordsError,
   } = useQuery({
     queryKey: ['records', tableId],
-    queryFn: () =>
-      recordsApi.list({
-        tableId: tableId!,
+    queryFn: () => {
+      if (!tableId) {
+        throw new Error('Table ID not found');
+      }
+      return recordsApi.list({
+        tableId: tableId,
         limit: 99999999, // TODO: we should implement pagination in ui.
         cursor: undefined,
-      }),
+      });
+    },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0,
@@ -99,7 +111,12 @@ export function ApTableStateProvider({
     error: runsError,
   } = useQuery({
     queryKey: ['runs', tableId],
-    queryFn: () => agentRunsApi.list({ agentId: table?.agent?.id! }),
+    queryFn: () => {
+      if (!table?.agent?.id) {
+        throw new Error('Agent ID not found');
+      }
+      return agentRunsApi.list({ agentId: table.agent.id });
+    },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0,

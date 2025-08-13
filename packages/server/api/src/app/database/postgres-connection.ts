@@ -260,12 +260,12 @@ import { AddExternalidToMCPToolPostgres1754214833292 } from './migration/postgre
 import { AddStepNameToTestInFlowRunEntity1754330492027 } from './migration/postgres/1754330492027-AddStepNameToTestInFlowRunEntity'
 import { AddTriggerSource1754478770608 } from './migration/postgres/1754478770608-AddTriggerSource'
 import { AddJobIdToTriggerRun1754510611628 } from './migration/postgres/1754510611628-AddJobIdToTriggerRun'
-import { AgentSettingsEntity1754595679670 } from './migration/postgres/1754595679670-AgentSettingsEntity'
-import { AddTitleAndSummaryAgentRun1754919239238 } from './migration/postgres/1754919239238-AddTitleAndSummaryAgentRun'
-import { MakeFlowIdOptionalInTableWebhook1755000823189 } from './migration/postgres/1755000823189-MakeFlowIdOptionalInTableWebhook'
 import { AddBillingCycle1754559781173 } from './migration/postgres/1754559781173-addBillingCycle'
+import { AgentSettingsEntity1754595679670 } from './migration/postgres/1754595679670-AgentSettingsEntity'
 import { EligibileForTrial1754852385518 } from './migration/postgres/1754852385518-EligibileForTrial'
 import { RemoveAgentTestPrompt1754863565929 } from './migration/postgres/1754863565929-RemoveAgentTestPrompt'
+import { AddTitleAndSummaryAgentRun1754919239238 } from './migration/postgres/1754919239238-AddTitleAndSummaryAgentRun'
+import { MakeFlowIdOptionalInTableWebhook1755000823189 } from './migration/postgres/1755000823189-MakeFlowIdOptionalInTableWebhook'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -452,7 +452,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveAgentTestPrompt1754863565929,
         AgentSettingsEntity1754595679670,
         AddTitleAndSummaryAgentRun1754919239238,
-        MakeFlowIdOptionalInTableWebhook1755000823189
+        MakeFlowIdOptionalInTableWebhook1755000823189,
     ]
 
     const edition = system.getEdition()

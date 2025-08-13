@@ -2,17 +2,21 @@ import { Play, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { formatUtils } from '@/lib/utils';
 
 import { RunDetailView } from './agent-run-details';
 import { useTableState } from './ap-table-state-provider';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type ApTableHistoryProps = {
   open: boolean;
@@ -20,7 +24,11 @@ type ApTableHistoryProps = {
   trigger?: React.ReactNode;
 };
 
-export function ApTableHistory({ open, onOpenChange, trigger }: ApTableHistoryProps) {
+export function ApTableHistory({
+  open,
+  onOpenChange,
+  trigger,
+}: ApTableHistoryProps) {
   const [runs, serverRecords] = useTableState((state) => [
     state.runs,
     state.serverRecords,
@@ -43,16 +51,17 @@ export function ApTableHistory({ open, onOpenChange, trigger }: ApTableHistoryPr
 
   const content = (
     <div>
-      <Popover open={open} onOpenChange={(newOpen) => {
-        onOpenChange(newOpen);
-        if (!newOpen) {
-          setSelectedRun(null);
-          setIsRunDetailOpen(false);
-        }
-      }}>
-        <PopoverTrigger asChild>
-          {trigger}
-        </PopoverTrigger>
+      <Popover
+        open={open}
+        onOpenChange={(newOpen) => {
+          onOpenChange(newOpen);
+          if (!newOpen) {
+            setSelectedRun(null);
+            setIsRunDetailOpen(false);
+          }
+        }}
+      >
+        <PopoverTrigger asChild>{trigger}</PopoverTrigger>
         <PopoverContent
           className="w-[500px] max-h-[85vh] overflow-y-auto p-0"
           align="end"
@@ -81,7 +90,9 @@ export function ApTableHistory({ open, onOpenChange, trigger }: ApTableHistoryPr
 
               <div className="flex flex-col space-y-6">
                 <div className="text-center">
-                  <h2 className="text-lg font-semibold">AI Agent Run History</h2>
+                  <h2 className="text-lg font-semibold">
+                    AI Agent Run History
+                  </h2>
                 </div>
 
                 <ScrollArea className=" w-full">
@@ -93,9 +104,10 @@ export function ApTableHistory({ open, onOpenChange, trigger }: ApTableHistoryPr
                         run.summary && run.summary.length > 200
                           ? run.summary?.substring(0, 200) + '...'
                           : run.summary;
-                      const recordIndex = serverRecords?.findIndex(
-                        (record) => record.id === run.metadata?.recordId,
-                      ) + 1;
+                      const recordIndex =
+                        serverRecords?.findIndex(
+                          (record) => record.id === run.metadata?.recordId,
+                        ) + 1;
 
                       return (
                         <div
@@ -113,7 +125,11 @@ export function ApTableHistory({ open, onOpenChange, trigger }: ApTableHistoryPr
                               <div className="flex gap-2 mb-1 flex-col">
                                 <span className="text-xs font-medium text-red-700">
                                   Agent error .{' '}
-                                  {run.finishTime ? formatUtils.formatDate(new Date(run.finishTime)) : 'In Progress'}
+                                  {run.finishTime
+                                    ? formatUtils.formatDate(
+                                        new Date(run.finishTime),
+                                      )
+                                    : 'In Progress'}
                                 </span>
                                 <div className="text-sm font-light line-clamp-2">
                                   {truncatedResponse}
@@ -130,7 +146,14 @@ export function ApTableHistory({ open, onOpenChange, trigger }: ApTableHistoryPr
                                   <span className="text-xs font-medium truncate flex-1">
                                     {responsePreview}
                                   </span>
-                                  <span className="text-xs text-muted-foreground"> {run.finishTime ? formatUtils.formatDate(new Date(run.finishTime)) : 'In Progress'} </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {' '}
+                                    {run.finishTime
+                                      ? formatUtils.formatDate(
+                                          new Date(run.finishTime),
+                                        )
+                                      : 'In Progress'}{' '}
+                                  </span>
                                 </div>
                                 <div className="text-sm font-light line-clamp-2">
                                   {truncatedResponse}
@@ -146,7 +169,8 @@ export function ApTableHistory({ open, onOpenChange, trigger }: ApTableHistoryPr
                       <Play className="h-12 w-12 mb-4 opacity-50" />
                       <p className="text-sm font-medium">No activity yet</p>
                       <p className="text-xs text-center font-light max-w-64">
-                        Your AI agent will show completed tasks here once you start using it
+                        Your AI agent will show completed tasks here once you
+                        start using it
                       </p>
                     </div>
                   )}
@@ -165,9 +189,7 @@ export function ApTableHistory({ open, onOpenChange, trigger }: ApTableHistoryPr
 
   return (
     <Tooltip delayDuration={50}>
-      <TooltipTrigger asChild>
-        {content}
-      </TooltipTrigger>
+      <TooltipTrigger asChild>{content}</TooltipTrigger>
       <TooltipContent>
         <p>Runs History</p>
       </TooltipContent>

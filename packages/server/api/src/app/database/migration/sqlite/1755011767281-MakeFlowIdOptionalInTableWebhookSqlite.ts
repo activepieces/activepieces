@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements MigrationInterface {
     name = 'MakeFlowIdOptionalInTableWebhookSqlite1755011767281'
@@ -17,7 +17,7 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 CONSTRAINT "fk_table_webhook_table_id" FOREIGN KEY ("tableId") REFERENCES "table" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_table_webhook_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_table_webhook"(
                     "id",
@@ -36,14 +36,14 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 "events",
                 "flowId"
             FROM "table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_table_webhook"
                 RENAME TO "table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_table_webhook" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -54,7 +54,7 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 "events" text NOT NULL,
                 "flowId" varchar(21) NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_table_webhook"(
                     "id",
@@ -73,14 +73,14 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 "events",
                 "flowId"
             FROM "table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_table_webhook"
                 RENAME TO "table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_table_webhook" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -91,7 +91,7 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 "events" text NOT NULL,
                 "flowId" varchar(21)
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_table_webhook"(
                     "id",
@@ -110,14 +110,14 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 "events",
                 "flowId"
             FROM "table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_table_webhook"
                 RENAME TO "table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_table_webhook" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -131,7 +131,7 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 CONSTRAINT "fk_table_webhook_table_id" FOREIGN KEY ("tableId") REFERENCES "table" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_table_webhook_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_table_webhook"(
                     "id",
@@ -150,21 +150,21 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 "events",
                 "flowId"
             FROM "table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_table_webhook"
                 RENAME TO "table_webhook"
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "table_webhook"
                 RENAME TO "temporary_table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "table_webhook" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -175,7 +175,7 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 "events" text NOT NULL,
                 "flowId" varchar(21)
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "table_webhook"(
                     "id",
@@ -194,14 +194,14 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 "events",
                 "flowId"
             FROM "temporary_table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "table_webhook"
                 RENAME TO "temporary_table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "table_webhook" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -212,7 +212,7 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 "events" text NOT NULL,
                 "flowId" varchar(21) NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "table_webhook"(
                     "id",
@@ -231,14 +231,14 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 "events",
                 "flowId"
             FROM "temporary_table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "table_webhook"
                 RENAME TO "temporary_table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "table_webhook" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -250,7 +250,7 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 "flowId" varchar(21) NOT NULL,
                 CONSTRAINT "fk_table_webhook_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "table_webhook"(
                     "id",
@@ -269,14 +269,14 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 "events",
                 "flowId"
             FROM "temporary_table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "table_webhook"
                 RENAME TO "temporary_table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "table_webhook" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -290,7 +290,7 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 CONSTRAINT "fk_table_webhook_table_id" FOREIGN KEY ("tableId") REFERENCES "table" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_table_webhook_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "table_webhook"(
                     "id",
@@ -309,10 +309,10 @@ export class MakeFlowIdOptionalInTableWebhookSqlite1755011767281 implements Migr
                 "events",
                 "flowId"
             FROM "temporary_table_webhook"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_table_webhook"
-        `);
+        `)
     }
 
 }

@@ -1,25 +1,23 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 
-
-import { agentHooks } from '@/features/agents/lib/agent-hooks';
-import {
-  isNil,
-  EditableColumn,
-  PopulatedAgent,
-} from '@activepieces/shared';
-
-import { ClientField } from '../../lib/store/ap-tables-client-state';
-
-import { ConfirmChangesDialog } from './confirm-changes-dialog';
-import { useTableState } from '../ap-table-state-provider';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { agentHooks } from '@/features/agents/lib/agent-hooks';
+import { EditableColumn, PopulatedAgent } from '@activepieces/shared';
+
+import { ClientField } from '../../lib/store/ap-tables-client-state';
+import { useTableState } from '../ap-table-state-provider';
+
 import { AgentConfigureContent } from './agent-configure-content';
+import { ConfirmChangesDialog } from './confirm-changes-dialog';
 
 type AgentConfig = {
   systemPrompt: string;
@@ -48,12 +46,13 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
   const [showAddPieceDialog, setShowAddPieceDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [table] = useTableState((state) => [state.table]);
-  
+
   const [config, setConfig] = useState<AgentConfig>({
     systemPrompt: table.agent?.systemPrompt || '',
     triggerOnNewRow: table.agent?.settings?.triggerOnNewRow ?? true,
     triggerOnFieldUpdate: table.agent?.settings?.triggerOnFieldUpdate ?? false,
-    allowAgentCreateColumns: table.agent?.settings?.allowAgentCreateColumns ?? true,
+    allowAgentCreateColumns:
+      table.agent?.settings?.allowAgentCreateColumns ?? true,
     limitColumnEditing: table.agent?.settings?.limitColumnEditing ?? false,
     selectedColumns: new Set(table.agent?.settings?.editableColumns || []),
   });
@@ -67,7 +66,8 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
     return (
       config.systemPrompt !== table.agent?.systemPrompt ||
       config.triggerOnNewRow !== table.agent?.settings?.triggerOnNewRow ||
-      config.triggerOnFieldUpdate !== table.agent?.settings?.triggerOnFieldUpdate ||
+      config.triggerOnFieldUpdate !==
+        table.agent?.settings?.triggerOnFieldUpdate ||
       config.allowAgentCreateColumns !==
         table.agent?.settings?.allowAgentCreateColumns ||
       config.limitColumnEditing !== table.agent?.settings?.limitColumnEditing ||
@@ -82,7 +82,7 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
   );
 
   const handleConfigChange = useCallback((updates: Partial<AgentConfig>) => {
-    setConfig(prev => ({ ...prev, ...updates }));
+    setConfig((prev) => ({ ...prev, ...updates }));
   }, []);
 
   const handleSave = useCallback(() => {
@@ -124,12 +124,14 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
     setConfig({
       systemPrompt: table.agent?.systemPrompt || '',
       triggerOnNewRow: table.agent?.settings?.triggerOnNewRow ?? true,
-      triggerOnFieldUpdate: table.agent?.settings?.triggerOnFieldUpdate ?? false,
-      allowAgentCreateColumns: table.agent?.settings?.allowAgentCreateColumns ?? true,
+      triggerOnFieldUpdate:
+        table.agent?.settings?.triggerOnFieldUpdate ?? false,
+      allowAgentCreateColumns:
+        table.agent?.settings?.allowAgentCreateColumns ?? true,
       limitColumnEditing: table.agent?.settings?.limitColumnEditing ?? false,
       selectedColumns: new Set(table.agent?.settings?.editableColumns || []),
     });
-    
+
     setShowConfirmDialog(false);
     setOpen(false);
   }, [table.agent, setOpen]);
@@ -146,13 +148,16 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
 
   const content = (
     <div>
-      <Popover open={open} onOpenChange={(newOpen) => {
-        if (!newOpen) {
-          handleClose();
-        } else {
-          setOpen(true);
-        }
-      }}>
+      <Popover
+        open={open}
+        onOpenChange={(newOpen) => {
+          if (!newOpen) {
+            handleClose();
+          } else {
+            setOpen(true);
+          }
+        }}
+      >
         <PopoverTrigger asChild>
           <div>{trigger}</div>
         </PopoverTrigger>
@@ -198,9 +203,7 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
   return (
     <>
       <Tooltip delayDuration={50}>
-        <TooltipTrigger asChild>
-          {content}
-        </TooltipTrigger>
+        <TooltipTrigger asChild>{content}</TooltipTrigger>
         <TooltipContent>
           <p>Agent Settings</p>
         </TooltipContent>

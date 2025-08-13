@@ -46,7 +46,6 @@ const ApTableEditorPage = () => {
     records,
     setSelectedAgentRunId,
     setRecords,
-    updateAgent,
     setRuns,
   ] = useTableState((state) => [
     state.table,
@@ -60,7 +59,6 @@ const ApTableEditorPage = () => {
     state.records,
     state.setSelectedAgentRunId,
     state.setRecords,
-    state.updateAgent,
     state.setRuns,
   ]);
 
@@ -115,12 +113,14 @@ const ApTableEditorPage = () => {
       WebsocketClientEvent.AGENT_RUN_PROGRESS,
       async (agentRun: AgentRun) => {
         if (agentRun.metadata?.tableId === table.id) {
-          setAgentRunId(
-            agentRun.metadata?.recordId!,
-            agentRun.status === AgentTaskStatus.IN_PROGRESS
-              ? agentRun.id
-              : null,
-          );
+          if (agentRun.metadata?.recordId) {
+            setAgentRunId(
+              agentRun.metadata.recordId,
+              agentRun.status === AgentTaskStatus.IN_PROGRESS
+                ? agentRun.id
+                : null,
+            );
+          }
 
           if (agentRun.status === AgentTaskStatus.IN_PROGRESS) {
             setSelectedAgentRunId(agentRun.id);
@@ -137,12 +137,14 @@ const ApTableEditorPage = () => {
               cursor: undefined,
             });
             setRecords(records.data);
-            const runs = await agentRunsApi.list({
-              agentId: table.agent?.id!,
-              limit: 999999,
-              cursor: undefined,
-            });
-            setRuns(runs.data);
+            if (table.agent?.id) {
+              const runs = await agentRunsApi.list({
+                agentId: table.agent.id,
+                limit: 999999,
+                cursor: undefined,
+              });
+              setRuns(runs.data);
+            }
           }
         }
       },
@@ -150,7 +152,17 @@ const ApTableEditorPage = () => {
     return () => {
       socket.off(WebsocketClientEvent.AGENT_RUN_PROGRESS);
     };
-  }, [table.id, setAgentRunId, setSelectedAgentRunId, socket]);
+  }, [
+    table.id,
+    table.agent?.id,
+    setAgentRunId,
+    setSelectedAgentRunId,
+    setRecords,
+    setRuns,
+    setSelectedRecords,
+    setSelectedCell,
+    socket,
+  ]);
 
   const columns = useTableColumns(createEmptyRecord);
   const rows = mapRecordsToRows(records, fields);
@@ -170,19 +182,13 @@ const ApTableEditorPage = () => {
       <DrawerContent fullscreen className="w-full overflow-auto">
         <DrawerHeader>
           <div className="flex items-center justify-between w-full pr-4">
-            <ApTableHeader
-              onBack={handleBack}
-              agent={table.agent!}
-            />
+            <ApTableHeader onBack={handleBack} agent={table.agent} />
           </div>
         </DrawerHeader>
 
         <div className="flex flex-col flex-1 h-full bg-muted/50">
           <div className="flex-1 flex flex-col relative ml-5">
-            <ApTableControl
-              table={table}
-              recordsCount={records.length}
-            />
+            <ApTableControl table={table} recordsCount={records.length} />
             <div className="flex-1 flex flex-row">
               <DataGrid
                 ref={gridRef}

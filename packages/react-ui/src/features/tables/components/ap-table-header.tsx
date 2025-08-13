@@ -30,33 +30,35 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { cn } from '@/lib/utils';
 import { isNil, Permission, PopulatedAgent } from '@activepieces/shared';
 
+import { AgentConfigure } from './agent-configure';
 import { AgentProfile } from './agent-profile';
 import { AgentSetupDialog } from './agent-setup-dialog';
 import { ApTableHistory } from './ap-table-history';
 import { useTableState } from './ap-table-state-provider';
-import { ImportCsvDialog } from './import-csv-dialog';
 import { ApTableTriggers } from './ap-table-triggers';
-import { AgentConfigure } from './agent-configure';
+import { ImportCsvDialog } from './import-csv-dialog';
 
 interface ApTableHeaderProps {
   onBack: () => void;
   agent: PopulatedAgent;
 }
 
-export const ApTableHeader = ({
-  onBack,
-  agent,
-}: ApTableHeaderProps) => {
-  const [isSaving, table, renameTable, updateAgent, selectedAgentRunId, runs, fields] =
-    useTableState((state) => [
-      state.isSaving,
-      state.table,
-      state.renameTable,
-      state.updateAgent,
-      state.selectedAgentRunId,
-      state.runs,
-      state.fields,
-    ]);
+export const ApTableHeader = ({ onBack, agent }: ApTableHeaderProps) => {
+  const [
+    isSaving,
+    table,
+    renameTable,
+    updateAgent,
+    selectedAgentRunId,
+    fields,
+  ] = useTableState((state) => [
+    state.isSaving,
+    state.table,
+    state.renameTable,
+    state.updateAgent,
+    state.selectedAgentRunId,
+    state.fields,
+  ]);
 
   const { mutate: updateAgentSettings } = agentHooks.useUpdate(
     agent.id,
@@ -167,31 +169,36 @@ export const ApTableHeader = ({
       <div className="flex items-center gap-4 w-full justify-end">
         {agent.created !== agent.updated && agent.settings?.aiMode && (
           <>
-            <div className={cn("flex items-center", !isNil(selectedAgentRunId) && "gap-4")}>
+            <div
+              className={cn(
+                'flex items-center',
+                !isNil(selectedAgentRunId) && 'gap-4',
+              )}
+            >
               <div className="flex items-center">
                 <ApTableHistory
                   open={isHistoryOpen}
                   onOpenChange={setIsHistoryOpen}
                   trigger={
-                      <History 
-                        className="p-2 h-9 w-9 cursor-pointer rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 hover:text-primary" 
-                        onClick={() => setIsHistoryOpen(true)}
-                      />
+                    <History
+                      className="p-2 h-9 w-9 cursor-pointer rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 hover:text-primary"
+                      onClick={() => setIsHistoryOpen(true)}
+                    />
                   }
                 />
                 <ApTableTriggers
                   open={isTriggersOpen}
                   onOpenChange={setIsTriggersOpen}
                   trigger={
-                      <Zap 
-                        className="p-2 h-9 w-9 mr-2  cursor-pointer rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 hover:text-primary" 
-                        onClick={() => setIsTriggersOpen(true)}
-                      />
+                    <Zap
+                      className="p-2 h-9 w-9 mr-2  cursor-pointer rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 hover:text-primary"
+                      onClick={() => setIsTriggersOpen(true)}
+                    />
                   }
                   updateAgent={updateAgent}
                 />
               </div>
-              
+
               <AgentConfigure
                 open={isAgentConfigureOpen}
                 setOpen={setIsAgentConfigureOpen}
@@ -246,7 +253,8 @@ export const ApTableHeader = ({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="max-w-xs text-xs">
-                    AI Agent Mode permanently modifies your data. Make sure to backup before using this feature.
+                    AI Agent Mode permanently modifies your data. Make sure to
+                    backup before using this feature.
                   </p>
                 </TooltipContent>
               </Tooltip>

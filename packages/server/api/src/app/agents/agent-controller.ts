@@ -1,9 +1,9 @@
+import { GitPushOperationType } from '@activepieces/ee-shared'
 import { CreateAgentRequest, EnhanceAgentPrompt, EnhancedAgentPrompt,  ListAgentsQueryParams,  PopulatedAgent,  PrincipalType, SeekPage, UpdateAgentRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { gitRepoService } from '../ee/projects/project-release/git-sync/git-sync.service'
 import { agentsService } from './agents-service'
-import { GitPushOperationType } from '@activepieces/ee-shared'
 
 const DEFAULT_LIMIT = 100
 

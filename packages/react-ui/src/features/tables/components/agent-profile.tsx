@@ -1,5 +1,6 @@
-import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { Settings } from 'lucide-react';
+
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
 interface AgentProfileProps {
@@ -74,7 +75,7 @@ const AgentProfile = ({
           className={cn(
             'w-full h-full object-cover transition-opacity duration-300',
             showSettingsOnHover && 'group-hover:opacity-50',
-            imageClassName
+            imageClassName,
           )}
         />
       </Avatar>
@@ -82,11 +83,16 @@ const AgentProfile = ({
         <div className="bg-radial-colorwheel w-7 h-7 rounded-full absolute right-7 top-0.5 border-2 border-white animate-spin"></div>
       )}
       {showSettingsOnHover && (
-        <div className={cn(
-          "absolute bg-black bg-opacity-30 rounded-full inset-0 backdrop-blur-0 group-hover:backdrop-blur-[1px] transition-all duration-300 flex items-center justify-center cursor-pointer",
-          isOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-        )}>
-          <Settings className={cn("text-white", settingsSizeClasses[size])} onClick={handleClick} />
+        <div
+          className={cn(
+            'absolute bg-black bg-opacity-30 rounded-full inset-0 backdrop-blur-0 group-hover:backdrop-blur-[1px] transition-all duration-300 flex items-center justify-center cursor-pointer',
+            isOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+          )}
+        >
+          <Settings
+            className={cn('text-white', settingsSizeClasses[size])}
+            onClick={handleClick}
+          />
         </div>
       )}
     </div>

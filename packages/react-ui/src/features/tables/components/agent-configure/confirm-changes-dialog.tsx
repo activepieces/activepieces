@@ -25,7 +25,6 @@ export const ConfirmChangesDialog = ({
   onDiscard,
   isSaving = false,
 }: ConfirmChangesDialogProps) => {
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">

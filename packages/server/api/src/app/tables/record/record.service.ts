@@ -19,8 +19,10 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
+import { agentsService } from '../../agents/agents-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
+import { tableAutomationService } from '../../ee/tables/table-automation-service'
 import { system } from '../../helper/system/system'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
@@ -29,8 +31,6 @@ import { fieldService } from '../field/field.service'
 import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
-import { tableAutomationService } from '../../ee/tables/table-automation-service'
-import { agentsService } from '../../agents/agents-service'
 
 const MAX_BATCH_SIZE = 50
 
