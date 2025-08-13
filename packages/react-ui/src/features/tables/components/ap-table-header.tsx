@@ -163,7 +163,7 @@ export const ApTableHeader = ({
         {agent.created !== agent.updated && agent.settings?.aiMode && (
           <>
             <div className={cn("flex items-center", !isNil(selectedAgentRunId) && "gap-6")}>
-              {runs && runs.length > 0 && (
+              {runs && (
                 <ApTableHistory
                   open={isHistoryOpen}
                   onOpenChange={setIsHistoryOpen}
@@ -190,7 +190,7 @@ export const ApTableHeader = ({
               <AgentConfigure
                 open={isAgentConfigureOpen}
                 setOpen={setIsAgentConfigureOpen}
-                updateAgent={updateAgent}
+                updateAgentInTable={updateAgent}
                 fields={fields}
                 trigger={
                   <AgentProfile
@@ -202,6 +202,7 @@ export const ApTableHeader = ({
                     imageUrl={agent?.profilePictureUrl}
                     isRunning={!isNil(selectedAgentRunId)}
                     showSettingsOnHover={true}
+                    isOpen={isAgentConfigureOpen}
                   />
                 }
               />

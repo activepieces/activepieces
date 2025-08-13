@@ -61,8 +61,9 @@ export const ApTableControl = ({
     Permission.WRITE_TABLE,
   );
   const [isImportCsvDialogOpen, setIsImportCsvDialogOpen] = useState(false);
+  console.log('isImportCsvDialogOpen', isImportCsvDialogOpen);
   return (
-    <div className="flex flex-row items-center my-2 rounded-lg w-fit justify-between">
+    <div className="flex flex-row items-center my-2 rounded-lg w-full justify-between">
         <div className="flex flex-row items-center">
         <span className="text-sm text-muted-foreground p-2">
           {!areAllRecordsSelected && (
@@ -122,15 +123,19 @@ export const ApTableControl = ({
       </div>
       <Button
         variant="ghost"
-        className="flex gap-2 px-2 items-center font-light text-muted-foreground hover:text-muted-foreground"
+        className="flex gap-2 mr-2 px-2 items-center justify-center font-light text-muted-foreground hover:text-muted-foreground"
         onClick={() => setIsImportCsvDialogOpen(true)}
       >
-        <ImportCsvDialog
+
+        <Import className="size-4 " />
+        <span className="text-sm">
+          {t('Import Data')}
+        </span>
+      </Button>
+      <ImportCsvDialog
           open={isImportCsvDialogOpen}
           setIsOpen={setIsImportCsvDialogOpen}
         />
-        <Import className="size-4 text-muted-foreground" />
-      </Button>
     </div>
   );
 };

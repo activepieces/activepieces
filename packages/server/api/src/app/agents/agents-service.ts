@@ -136,6 +136,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('outputType', params.outputType),
             ...spreadIfDefined('outputFields', params.outputFields),
             ...spreadIfDefined('settings', params.settings),
+            ...spreadIfDefined('profilePictureUrl', params.generateNewProfilePicture ? getAgentProfilePictureUrl() : agent.profilePictureUrl),
         })
         
         await applyWebhookSideEffects({
@@ -306,6 +307,7 @@ type UpdateParams = {
     outputType?: string
     outputFields?: AgentOutputField[]
     settings?: AgentSettings
+    generateNewProfilePicture?: boolean
 }
 
 type GetOneParams = {

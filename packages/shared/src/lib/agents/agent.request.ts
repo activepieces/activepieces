@@ -18,6 +18,7 @@ export const UpdateAgentRequestBody = Type.Object({
     outputType: Type.Optional(Type.Enum(AgentOutputType)),
     outputFields: Type.Optional(Type.Array(AgentOutputField)),
     settings: Type.Optional(AgentSettings),
+    generateNewProfilePicture: Type.Optional(Type.Boolean()),
 })
 
 export type UpdateAgentRequestBody = Static<typeof UpdateAgentRequestBody>

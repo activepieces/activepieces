@@ -13,6 +13,7 @@ interface AgentProfileProps {
   isRunning?: boolean;
   showSettingsOnHover?: boolean;
   onSettingsClick?: () => void;
+  isOpen?: boolean;
 }
 
 const AgentProfile = ({
@@ -24,6 +25,7 @@ const AgentProfile = ({
   imageClassName,
   isRunning = false,
   showSettingsOnHover = false,
+  isOpen = false,
 }: AgentProfileProps) => {
   const sizeClasses = {
     sm: 'w-6 h-6',
@@ -74,7 +76,10 @@ const AgentProfile = ({
         <div className="bg-radial-colorwheel w-7 h-7 rounded-full absolute right-7 top-0.5 border-2 border-white animate-spin"></div>
       )}
       {showSettingsOnHover && (
-        <div className="absolute bg-black bg-opacity-30 rounded-full inset-0 backdrop-blur-0 group-hover:backdrop-blur-[1px] transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer">
+        <div className={cn(
+          "absolute bg-black bg-opacity-30 rounded-full inset-0 backdrop-blur-0 group-hover:backdrop-blur-[1px] transition-all duration-300 flex items-center justify-center cursor-pointer",
+          isOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        )}>
           <Settings className={cn("text-white", settingsSizeClasses[size])} onClick={handleClick} />
         </div>
       )}

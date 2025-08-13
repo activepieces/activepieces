@@ -40,13 +40,14 @@ import { ClientField } from '../lib/store/ap-tables-client-state';
 import { AgentProfile } from './agent-profile';
 import { ConfirmChangesDialog } from './confirm-changes-dialog';
 import { useTableState } from './ap-table-state-provider';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const BUILT_IN_TOOLS: string[] = ['@activepieces/piece-tables'];
 
 type AgentConfigureProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
-  updateAgent: (agent: PopulatedAgent) => void;
+  updateAgentInTable: (agent: PopulatedAgent) => void;
   fields: ClientField[];
   trigger?: React.ReactNode;
 };
@@ -55,7 +56,7 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
   open,
   setOpen,
   fields,
-  updateAgent,
+  updateAgentInTable,
   trigger,
 }) => {
   const { t } = useTranslation();
@@ -104,7 +105,7 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
     async () => {
       if (table.agent?.id) {
         const updatedAgent = await agentsApi.get(table.agent.id);
-        updateAgent(updatedAgent);
+        updateAgentInTable(updatedAgent);
       }
     },
   );
@@ -130,9 +131,9 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
     selectedColumns,
   ]);
 
-  const { mutate: updateAgentSettings } = agentHooks.useUpdate(
+  const { mutate: updateAgent } = agentHooks.useUpdate(
     table.agent?.id ?? '',
-    updateAgent,
+    updateAgentInTable,
   );
 
   const handleSave = useCallback(
@@ -147,7 +148,7 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
       if (!table.agent) return;
 
       setIsSaving(true);
-      updateAgentSettings(
+      updateAgent(
         {
           ...table.agent,
           systemPrompt: values.systemPrompt,
@@ -170,7 +171,7 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
         },
       );
     },
-    [updateAgentSettings, table.agent],
+    [updateAgent, table.agent],
   );
 
   const handleClose = useCallback(() => {
@@ -232,11 +233,17 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
     return null;
   }
 
-  return (
-    <>
-      <Popover open={open} onOpenChange={handleClose}>
+  const content = (
+    <div>
+      <Popover open={open} onOpenChange={(newOpen) => {
+        if (!newOpen) {
+          handleClose();
+        } else {
+          setOpen(true);
+        }
+      }}>
         <PopoverTrigger asChild>
-          <div onClick={(e) => e.preventDefault()}>{trigger}</div>
+          <div>{trigger}</div>
         </PopoverTrigger>
         <PopoverContent
           className="w-[500px] max-h-[85vh] overflow-y-auto p-0"
@@ -286,6 +293,12 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 text-muted-foreground hover:text-primary "
+                      onClick={() => {
+                        updateAgent({
+                          ...table.agent,
+                          generateNewProfilePicture: true,
+                        });
+                      }}
                     >
                       <RefreshCw className="h-3 w-3" />
                     </Button>
@@ -496,6 +509,34 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
           </div>
         </PopoverContent>
       </Popover>
+    </div>
+  );
+
+  if (open) {
+    return (
+      <>
+        {content}
+        <ConfirmChangesDialog
+          open={showConfirmDialog}
+          onOpenChange={setShowConfirmDialog}
+          onSave={handleSaveChanges}
+          onDiscard={handleDiscardChanges}
+          isSaving={isSaving}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Tooltip delayDuration={50}>
+        <TooltipTrigger asChild>
+          {content}
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Agent Settings</p>
+        </TooltipContent>
+      </Tooltip>
 
       <ConfirmChangesDialog
         open={showConfirmDialog}
