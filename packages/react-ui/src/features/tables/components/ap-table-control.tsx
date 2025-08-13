@@ -61,7 +61,6 @@ export const ApTableControl = ({
     Permission.WRITE_TABLE,
   );
   const [isImportCsvDialogOpen, setIsImportCsvDialogOpen] = useState(false);
-  console.log('isImportCsvDialogOpen', isImportCsvDialogOpen);
   return (
     <div className="flex flex-row items-center my-2 rounded-lg w-full justify-between">
       <div className="flex flex-row items-center">
@@ -73,9 +72,9 @@ export const ApTableControl = ({
                   recordsCount,
                 })}`}{' '}
               {hasSelectedRows &&
-                `${t('selected')} ${t('recordsCount', {
+                `${t('recordsCount', {
                   recordsCount: selectedRecords.size,
-                })}`}
+                })} ${t('selected')}`}
             </>
           )}
           {areAllRecordsSelected && t('All records selected')}

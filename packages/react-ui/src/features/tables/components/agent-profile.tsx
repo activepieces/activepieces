@@ -14,7 +14,6 @@ interface AgentProfileProps {
   isRunning?: boolean;
   showSettingsOnHover?: boolean;
   onSettingsClick?: () => void;
-  isOpen?: boolean;
 }
 
 const AgentProfile = ({
@@ -26,7 +25,6 @@ const AgentProfile = ({
   imageClassName,
   isRunning = false,
   showSettingsOnHover = false,
-  isOpen = false,
 }: AgentProfileProps) => {
   const sizeClasses = {
     sm: 'w-6 h-6',
@@ -86,7 +84,7 @@ const AgentProfile = ({
         <div
           className={cn(
             'absolute bg-black bg-opacity-30 rounded-full inset-0 backdrop-blur-0 group-hover:backdrop-blur-[1px] transition-all duration-300 flex items-center justify-center cursor-pointer',
-            isOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+            'opacity-0 group-hover:opacity-100',
           )}
         >
           <Settings

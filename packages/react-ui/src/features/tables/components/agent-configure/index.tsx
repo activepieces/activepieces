@@ -34,6 +34,7 @@ type AgentConfigureProps = {
   updateAgentInTable: (agent: PopulatedAgent) => void;
   fields: ClientField[];
   trigger?: React.ReactNode;
+  defaultSettings: string;
 };
 
 export const AgentConfigure: React.FC<AgentConfigureProps> = ({
@@ -42,9 +43,11 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
   fields,
   updateAgentInTable,
   trigger,
+  defaultSettings,
 }) => {
   const [showAddPieceDialog, setShowAddPieceDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [table] = useTableState((state) => [state.table]);
 
   const [config, setConfig] = useState<AgentConfig>({
@@ -105,6 +108,11 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
       {
         onSuccess: () => {
           setIsSaving(false);
+          setIsClosing(true);
+          setTimeout(() => {
+            setOpen(false);
+            setIsClosing(false);
+          }, 300);
         },
         onError: () => {
           setIsSaving(false);
@@ -116,8 +124,13 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
   const handleClose = useCallback(() => {
     if (isThereAnyChange) {
       setShowConfirmDialog(true);
+    } else {
+      setIsClosing(true);
+      setTimeout(() => {
+        setOpen(false);
+        setIsClosing(false);
+      }, 300);
     }
-    setOpen(false);
   }, [isThereAnyChange, setOpen]);
 
   const handleDiscardChanges = useCallback(() => {
@@ -133,14 +146,17 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
     });
 
     setShowConfirmDialog(false);
-    setOpen(false);
+    setIsClosing(true);
+    setTimeout(() => {
+      setOpen(false);
+      setIsClosing(false);
+    }, 300);
   }, [table.agent, setOpen]);
 
   const handleSaveChanges = useCallback(() => {
     handleSave();
     setShowConfirmDialog(false);
-    setOpen(false);
-  }, [handleSave, setOpen]);
+  }, [handleSave]);
 
   if (!table.agent?.mcpId || !table.agent?.id) {
     return null;
@@ -162,7 +178,9 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
           <div>{trigger}</div>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[400px] max-h-[85vh] overflow-y-auto p-0"
+          className={`w-[400px] max-h-[85vh] overflow-y-auto p-0 transition-opacity duration-200 ${
+            isClosing ? 'opacity-0' : 'opacity-100'
+          }`}
           align="end"
           side="bottom"
           sideOffset={8}
@@ -178,6 +196,7 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
             onClose={handleClose}
             updateAgentInTable={updateAgentInTable}
             fields={fields}
+            defaultSettings={defaultSettings}
           />
         </PopoverContent>
       </Popover>

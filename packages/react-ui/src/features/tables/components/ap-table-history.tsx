@@ -38,10 +38,9 @@ export function ApTableHistory({
 
   const sortedRuns = runs
     ? [...runs].sort((a, b) => {
-        // Failed runs first, then by creation date (newest first)
         if (a.status === 'FAILED' && b.status !== 'FAILED') return -1;
         if (b.status === 'FAILED' && a.status !== 'FAILED') return 1;
-        return new Date(b.created).getTime() - new Date(a.created).getTime();
+        return new Date(b.updated).getTime() - new Date(a.updated).getTime();
       })
     : [];
 

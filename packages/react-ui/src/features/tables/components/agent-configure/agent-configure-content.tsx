@@ -9,6 +9,8 @@ import {
   WorkflowIcon,
   CircleUserRound,
   ChevronDown,
+  FilePlus,
+  RefreshCcw,
 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -46,6 +48,7 @@ import { McpPieceDialog } from '../../../mcp/components/mcp-piece-tool-dialog';
 import { ClientField } from '../../lib/store/ap-tables-client-state';
 import { AgentProfile } from '../agent-profile';
 import { useTableState } from '../ap-table-state-provider';
+import { Separator } from '@/components/ui/separator';
 
 const BUILT_IN_TOOLS: string[] = ['@activepieces/piece-tables'];
 
@@ -69,6 +72,7 @@ type AgentConfigureContentProps = {
   onClose: () => void;
   updateAgentInTable: (agent: PopulatedAgent) => void;
   fields: ClientField[];
+  defaultSettings: string;
 };
 
 export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
@@ -82,6 +86,7 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
   onClose,
   updateAgentInTable,
   fields,
+  defaultSettings,
 }) => {
   const { t } = useTranslation();
   const [table, serverRecords, selectedRecords, records] = useTableState(
@@ -157,7 +162,7 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
 
         <Accordion
           type="multiple"
-          defaultValue={['instructions']}
+          defaultValue={[defaultSettings]}
           className="w-full border-none"
         >
           <AccordionItem value="avatar">
@@ -167,7 +172,7 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
                 <span className="font-medium">Avatar</span>
               </div>
             </AccordionTrigger>
-            <AccordionContent>
+            <AccordionContent className="px-0">
               <div className="flex items-center gap-3 pt-2">
                 <AgentProfile
                   size="xxl"
@@ -202,7 +207,7 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
                 <span className="font-medium">Instructions</span>
               </div>
             </AccordionTrigger>
-            <AccordionContent>
+            <AccordionContent className="px-0">
               <div className="space-y-4 pt-2">
                 <Textarea
                   value={config.systemPrompt}
@@ -213,6 +218,43 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
                   className="min-h-[140px] border-primary/20"
                 />
               </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="triggers">
+            <AccordionTrigger className="flex items-center gap-2 hover:no-underline px-0">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-muted-foreground" />
+                <span className="font-medium">Triggers</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-0">
+            <div className="flex flex-col gap-4">
+              <span className="text-xs font-light bg-muted rounded-sm px-2 py-1">
+                AI Agent will run every time
+              </span>
+
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={config.triggerOnNewRow}
+                    onCheckedChange={(value) => {
+                      onConfigChange({ triggerOnNewRow: value });
+                    }}
+                  />
+                  <span className="text-sm font-light">New row is added</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={config.triggerOnFieldUpdate}
+                    onCheckedChange={(value) => {
+                      onConfigChange({ triggerOnFieldUpdate: value });
+                    }}
+                  />
+                  <span className="text-sm font-light">Any field is updated</span>
+                </div>
+              </div>
+            </div>
             </AccordionContent>
           </AccordionItem>
 
@@ -228,7 +270,7 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
                 </span>
               </div>
             </AccordionTrigger>
-            <AccordionContent>
+            <AccordionContent className="px-0">
               <div className="space-y-2 pt-2">
                 {table.agent?.mcp.tools
                   .filter(
@@ -313,7 +355,7 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
                 <span className="font-medium">Permissions</span>
               </div>
             </AccordionTrigger>
-            <AccordionContent>
+            <AccordionContent className="px-0">
               <div className="space-y-3 pt-2">
                 <div className="flex items-center gap-2">
                   <Switch
@@ -322,7 +364,7 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
                       onConfigChange({ allowAgentCreateColumns: value });
                     }}
                   />
-                  <span className="text-sm w-[250px]">
+                  <span className="text-sm">
                     Allow agent to create new columns if needed
                   </span>
                 </div>
@@ -406,51 +448,48 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
           </AccordionItem>
         </Accordion>
 
-        <div className="relative w-full">
-          <Button
-            loading={!isNil(selectedAgentRunId) || isSaving}
-            onClick={onSave}
-            className="pr-9 w-full"
-          >
-            {t('Save Changes')}
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 absolute right-2 top-1/2 -translate-y-1/2 hover:bg-gray-100 text-white"
-              >
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="top">
-              <DropdownMenuItem
-                onClick={() => {
-                  onSave();
-                  automateTableFirst3Rows();
-                }}
-              >
-                Save & run 3 rows
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="default"
+              className="w-full"
+              loading={isSaving}
+              disabled={!isNil(selectedAgentRunId)}
+            >
+              {t('Save Changes')}
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" className="w-full min-w-[var(--radix-dropdown-menu-trigger-width)]">
+            <DropdownMenuItem
+              onClick={() => {
+                onSave();
+                automateTableFirst3Rows();
+              }}
+              className="w-full"
+            >
+              Save & run 3 rows
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                onSave();
+                automateTableEntire();
+              }}
+              className="w-full"
+            >
+              Save & run entire table
+            </DropdownMenuItem>
+            <Separator />
+            <DropdownMenuItem
+              onClick={() => {
+                onSave();
+              }}
+              className="w-full"
+            >
+              Save and don't run
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  onSave();
-                  automateTableEntire();
-                }}
-              >
-                Save & run entire table
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  onSave();
-                }}
-              >
-                Save and don't run
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

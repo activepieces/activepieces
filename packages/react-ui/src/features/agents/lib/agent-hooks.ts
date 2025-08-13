@@ -10,9 +10,11 @@ import {
   EnhaceAgentPrompt,
   UpdateAgentRequestBody,
   PopulatedAgent,
-} from '@activepieces/shared';
+} from '@activepieces/shared';  
+import { toast } from '@/components/ui/use-toast';
 
 import { agentsApi, agentRunsApi } from './agents-api';
+import { useTranslation } from 'react-i18next';
 
 export const agentHooks = {
   useList: (params?: ListAgentsQueryParams) => {
@@ -58,12 +60,20 @@ export const agentHooks = {
   },
   useUpdate: (id: string, updateAgent: (agent: PopulatedAgent) => void) => {
     const queryClient = useQueryClient();
+    const { t } = useTranslation();
     return useMutation({
       mutationFn: (request: UpdateAgentRequestBody) =>
         agentsApi.update(id!, request),
       onSuccess: (agent) => {
         updateAgent(agent);
         queryClient.invalidateQueries({ queryKey: ['agents', id] });
+        toast({
+          title: t('Agent Saved'),
+          duration: 1000,
+          description: t(
+            'Successfully saved the agent settings',
+          ),
+        });
       },
     });
   },

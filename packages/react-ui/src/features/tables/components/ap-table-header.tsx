@@ -7,6 +7,7 @@ import {
   Download,
   History,
   Zap,
+  ZapOff,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -59,7 +60,7 @@ export const ApTableHeader = ({ onBack, agent }: ApTableHeaderProps) => {
     state.selectedAgentRunId,
     state.fields,
   ]);
-
+  const [defaultSettings, setDefaultSettings] = useState('instructions');
   const { mutate: updateAgentSettings } = agentHooks.useUpdate(
     agent.id,
     updateAgent,
@@ -190,12 +191,37 @@ export const ApTableHeader = ({ onBack, agent }: ApTableHeaderProps) => {
                   open={isTriggersOpen}
                   onOpenChange={setIsTriggersOpen}
                   trigger={
-                    <Zap
-                      className="p-2 h-9 w-9 mr-2  cursor-pointer rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 hover:text-primary"
-                      onClick={() => setIsTriggersOpen(true)}
-                    />
+                    !agent.settings?.triggerOnNewRow && !agent.settings?.triggerOnFieldUpdate ? (
+                      <ZapOff
+                        className="p-2 h-9 w-9 mr-2  cursor-pointer rounded-lg text-muted-foreground hover:text-muted-foreground transition-colors hover:bg-muted/50"
+                        onClick={() => {
+                          setDefaultSettings('triggers');
+                          setIsAgentConfigureOpen(true);
+                        }}
+                      />
+                    ) : (
+                      <Zap
+                        className={cn(
+                          "p-2 h-9 w-9 mr-2  cursor-pointer rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 hover:text-primary",
+                          (agent.settings?.triggerOnNewRow || agent.settings?.triggerOnFieldUpdate) && 'text-primary',
+                        )}
+                        onClick={() => {
+                          setDefaultSettings('triggers');
+                          setIsAgentConfigureOpen(true);
+                        }}
+                      />
+                    )
                   }
                   updateAgent={updateAgent}
+                  toolTipMessage={
+                    agent.settings?.triggerOnNewRow && agent.settings?.triggerOnFieldUpdate
+                      ? "Agent will run every time a new row is added or a field is updated"
+                      : agent.settings?.triggerOnNewRow
+                      ? "Agent will run every time a new row is added"
+                      : agent.settings?.triggerOnFieldUpdate
+                      ? "Agent will run every time a field is updated"
+                      : "Agent will not run automatically"
+                  }
                 />
               </div>
 
@@ -204,17 +230,18 @@ export const ApTableHeader = ({ onBack, agent }: ApTableHeaderProps) => {
                 setOpen={setIsAgentConfigureOpen}
                 updateAgentInTable={updateAgent}
                 fields={fields}
+                defaultSettings={defaultSettings}
                 trigger={
                   <AgentProfile
                     className="cursor-pointer hover:opacity-80 transition-opacity"
                     size="lg"
                     onClick={() => {
                       setIsAgentConfigureOpen(true);
+                      setDefaultSettings('instructions');
                     }}
                     imageUrl={agent?.profilePictureUrl}
                     isRunning={!isNil(selectedAgentRunId)}
                     showSettingsOnHover={true}
-                    isOpen={isAgentConfigureOpen}
                   />
                 }
               />
