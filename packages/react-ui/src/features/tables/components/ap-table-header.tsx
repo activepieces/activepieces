@@ -162,8 +162,8 @@ export const ApTableHeader = ({
       <div className="flex items-center gap-4 w-full justify-end">
         {agent.created !== agent.updated && agent.settings?.aiMode && (
           <>
-            <div className={cn("flex items-center", !isNil(selectedAgentRunId) && "gap-6")}>
-              {runs && (
+            <div className={cn("flex items-center", !isNil(selectedAgentRunId) && "gap-4")}>
+              <div className="flex items-center">
                 <ApTableHistory
                   open={isHistoryOpen}
                   onOpenChange={setIsHistoryOpen}
@@ -174,18 +174,18 @@ export const ApTableHeader = ({
                       />
                   }
                 />
-              )}
-              <ApTableTriggers
-                open={isTriggersOpen}
-                onOpenChange={setIsTriggersOpen}
-                trigger={
-                    <Zap 
-                      className="p-2 h-9 w-9 mr-2  cursor-pointer rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 hover:text-primary" 
-                      onClick={() => setIsTriggersOpen(true)}
-                    />
-                }
-                updateAgent={updateAgent}
-              />
+                <ApTableTriggers
+                  open={isTriggersOpen}
+                  onOpenChange={setIsTriggersOpen}
+                  trigger={
+                      <Zap 
+                        className="p-2 h-9 w-9 mr-2  cursor-pointer rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 hover:text-primary" 
+                        onClick={() => setIsTriggersOpen(true)}
+                      />
+                  }
+                  updateAgent={updateAgent}
+                />
+              </div>
               
               <AgentConfigure
                 open={isAgentConfigureOpen}
