@@ -29,6 +29,7 @@ export const UsageCards = ({
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { usage, plan } = platformSubscription;
   const isBusinessPlan = plan.plan === PlanName.BUSINESS;
+  const isPlusPlan = plan.plan === PlanName.PLUS;
   const isFree = plan.plan === PlanName.FREE;
   const isTrial =
     plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
@@ -53,18 +54,16 @@ export const UsageCards = ({
         total={plan.tasksLimit}
       />
 
-      {isFree ||
-        isTrial ||
-        (isEnterprise && (
-          <UsageCard
-            icon={<Workflow className="w-4 h-4" />}
-            title={t('Active flows')}
-            used={usage.activeFlows}
-            total={plan.activeFlowsLimit}
-          />
-        ))}
+      {(isFree || isTrial || isEnterprise) && (
+        <UsageCard
+          icon={<Workflow className="w-4 h-4" />}
+          title={t('Active flows')}
+          used={usage.activeFlows}
+          total={plan.activeFlowsLimit}
+        />
+      )}
 
-      {!isBusinessPlan && (
+      {(isFree || isPlusPlan || (isBusinessPlan && isTrial)) && (
         <UsageCard
           icon={<Users className="w-4 h-4" />}
           title={t('Users')}
@@ -73,7 +72,7 @@ export const UsageCards = ({
         />
       )}
 
-      {!isBusinessPlan && (
+      {(isFree || isPlusPlan || (isBusinessPlan && isTrial)) && (
         <UsageCard
           icon={<LayoutGrid className="w-4 h-4" />}
           title={t('Projects')}

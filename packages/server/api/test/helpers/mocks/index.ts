@@ -2,6 +2,7 @@
 //     ApiKey,
 //     ApplicationEvent,
 //     ApplicationEventName,
+//     BillingCycle,
 //     CustomDomain,
 //     CustomDomainStatus,
 //     GitBranchType,
@@ -60,8 +61,8 @@ import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
 import { AIProviderSchema } from '../../../src/app/ai/ai-provider-entity'
 import { databaseConnection } from '../../../src/app/database/database-connection'
-import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
-import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
+// import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
+// import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
 import { apDayjs } from '../../../src/app/helper/dayjs-helper'
 import { encryptUtils } from '../../../src/app/helper/encryption'
@@ -200,7 +201,11 @@ export const createMockProject = (project?: Partial<Project>): Project => {
 
 export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): PlatformPlan => {
     return {
-        eligibleForTrial: platformPlan?.eligibleForTrial ?? false,
+        // eligibleForPlusTrial: platformPlan?.eligibleForPlusTrial ?? false,
+        // stripeBillingCycle: platformPlan?.stripeBillingCycle ?? BillingCycle.MONTHLY,
+        // eligibleForBusinessTrial: platformPlan?.eligibleForBusinessTrial ?? false,
+        eligibleForTrial: 'false',
+        stripeBillingCycle: 'monthly',
         id: platformPlan?.id ?? apId(),
         created: platformPlan?.created ?? faker.date.recent().toISOString(),
         updated: platformPlan?.updated ?? faker.date.recent().toISOString(),
@@ -520,7 +525,7 @@ export const mockBasicUser = async ({ userIdentity, user }: { userIdentity?: Par
     const mockUserIdentity = createMockUserIdentity({
         verified: true,
         ...userIdentity,
-    })  
+    })
     await databaseConnection().getRepository('user_identity').save(mockUserIdentity)
     const mockUser = createMockUser({
         ...user,

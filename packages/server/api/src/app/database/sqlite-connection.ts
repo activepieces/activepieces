@@ -62,8 +62,11 @@ import { AddExternalAgentIdSqlite1753643287673 } from './migration/sqlite/175364
 import { AddParentRunIdToFlowRunSqlite1753719777841 } from './migration/sqlite/1753719777841-AddParentRunIdToFlowRunSqlite'
 import { AddCascadeOnAgentsSqlite1753727589109 } from './migration/sqlite/1753727589109-AddCascadeOnAgentsSqlite'
 import { AddExternalIdToMCPSqlite1753786833156 } from './migration/sqlite/1753786833156-AddExternalIdToMCPSqlite'
+import { AddExternalidToMCPToolSQLite1754220095236 } from './migration/sqlite/1754220095236-AddExternalidToMCPToolSQLite'
+import { AddStepNameToTestInFlowRunEntitySqlite1754355397885 } from './migration/sqlite/1754355397885-AddStepNameToTestInFlowRunEntitySqlite'
 import { AddTriggerSqlite1754477404726 } from './migration/sqlite/1754477404726-AddTriggerSqlite'
 import { AddJobIdToTriggerRun1754510243053 } from './migration/sqlite/1754510243053-AddJobIdToTriggerRun'
+import { RemoveAgentTestPromptSqlite1754863757450 } from './migration/sqlite/1754863757450-RemoveAgentTestPromptSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -86,6 +89,9 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        AddStepNameToTestInFlowRunEntitySqlite1754355397885,
+        RemoveAgentTestPromptSqlite1754863757450,
+        AddExternalidToMCPToolSQLite1754220095236,
         AddJobIdToTriggerRun1754510243053,
         AddTriggerSqlite1754477404726,
         AddExternalIdToMCPSqlite1753786833156,

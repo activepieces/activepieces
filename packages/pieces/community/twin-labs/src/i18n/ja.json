@@ -1,0 +1,10 @@
+{
+  "Twin Web Agent": "Twin Web Agent",
+  "Please use ***your-twin-labs-api-key*** as value for API Key": "API キーの値として ***your-twin-labs-api-key*** を使用してください",
+  "Browse": "検索",
+  "Browse the internet with an AI web navigation agent that can find information for you": "情報を見つけることができるAIウェブナビゲーションエージェントでインターネットを閲覧する",
+  "startUrl": "startUrl",
+  "Goal": "目標",
+  "The URL where the browsing task should begin": "ブラウジングタスクが開始されるURL",
+  "The goal or objective of the browsing task": "ブラウジングタスクの目標または目的"
+}

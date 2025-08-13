@@ -9,6 +9,7 @@ import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authoriza
 import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
+import { stepRunProgressHandler } from '../flows/flow-run/step-run-progress.handler'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { domainHelper } from '../helper/domain-helper'
 import { system } from '../helper/system/system'
@@ -75,6 +76,12 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/notify-frontend', NotifyFrontendParams, async (request) => {
         const { type, data } = request.body
+        if (data.testSingleStepMode) {
+            const response = await stepRunProgressHandler(request.log).extractStepResponse({
+                runId: data.runId,
+            })
+            app.io.to(request.principal.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
+        }
         app.io.to(request.principal.projectId).emit(type, data)
     })
 

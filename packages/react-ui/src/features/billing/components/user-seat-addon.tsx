@@ -11,6 +11,10 @@ import {
   Tooltip,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  BillingCycle,
+  PRICE_PER_EXTRA_USER_MAP,
+} from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
 
 import { ExtraSeatsDialog } from './extra-user-seats-dialog';
@@ -22,6 +26,10 @@ type BusinessUserSeatsProps = {
 export function UserSeatAddon({
   platformSubscription,
 }: BusinessUserSeatsProps) {
+  const PRICE_PER_EXTRA_USER =
+    PRICE_PER_EXTRA_USER_MAP[
+      platformSubscription.plan.stripeBillingCycle as BillingCycle
+    ];
   const [addUserSeatsOpen, setAddUserSeatsOpen] = useState(false);
   const { plan, usage } = platformSubscription;
   const currentSeats = usage.seats || 0;
@@ -67,7 +75,9 @@ export function UserSeatAddon({
                     <CircleHelp className="w-4 h-4 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    {t('Count of user seats 10$ for extra 1 user seat')}
+                    {t(
+                      `Count of user seats $${PRICE_PER_EXTRA_USER} for extra 1 user seat`,
+                    )}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

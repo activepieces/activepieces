@@ -1,0 +1,21 @@
+{
+  "Mailjet": "Mailjet",
+  "Email delivery service for sending transactional and marketing emails": "Serviço de entrega de e-mail para envio de e-mails de transacção e marketing",
+  "API Key": "Chave de API",
+  "Enter your API Key here": "Digite sua chave de API aqui",
+  "API Secret": "API Segredo",
+  "Enter your API Secret here": "Digite seu Segredo da API aqui",
+  "Enter your api credentials": "Insira suas credenciais de API",
+  "Send Email": "Enviar e-mail",
+  "Send a text, HTML or template email through Mailjet": "Enviar um texto, HTML ou modelo de e-mail através do Mailjet",
+  "From (Email)": "De (E-mail)",
+  "From (Name)": "De (Nome)",
+  "Emails of recipients": "E-mails de destinatários",
+  "Subject": "Cargo",
+  "Text part": "Parte de texto",
+  "HTML part": "Parte HTML",
+  "Template Id": "ID do modelo",
+  "Template variables": "Variáveis do template",
+  "Sender email, must be verified in Mailjet": "E-mail do remetente, deve ser verificado no Mailjet",
+  "Template Id (number) defined in Mailjet": "Id do modelo (número) definido no campo Mailjet"
+}

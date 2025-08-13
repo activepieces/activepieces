@@ -49,7 +49,7 @@ export const communityTemplates = {
                 'Content-Type': 'application/json',
             },
         })
-        const templates = await response.json()
+        const templates = await response.json() as Promise<SeekPage<FlowTemplate>>
         return templates
     },
 }
