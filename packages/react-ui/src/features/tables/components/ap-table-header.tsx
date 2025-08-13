@@ -20,6 +20,11 @@ import {
 import EditableText from '@/components/ui/editable-text';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { cn } from '@/lib/utils';
@@ -229,6 +234,22 @@ export const ApTableHeader = ({
               <span className="text-sm font-medium bg-gradient-to-r from-purple-600 to-red-600 bg-clip-text text-transparent">
                 AI Agent Mode
               </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="bg-gradient-to-r from-purple-600 to-red-600 p-[1px] rounded-xs flex items-center justify-center">
+                    <span className="bg-background text-[10px] font-medium px-1 rounded-xs font-semibold select-none cursor-help">
+                      <span className="bg-gradient-to-r from-purple-600 to-red-600 bg-clip-text text-transparent">
+                        BETA
+                      </span>
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs text-xs">
+                    AI Agent Mode permanently modifies your data. Make sure to backup before using this feature.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           }
         />
