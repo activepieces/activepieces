@@ -129,7 +129,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(params),
-                pause: createPauseHook(params, executionState.pauseRequestId),
+                pause: createPauseHook(params, executionState.pauseRequestId, constants.httpRequestId),
                 respond: createRespondHook(params),
             },
             project: {
@@ -147,7 +147,8 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const newExecutionContext = executionState.addTags(params.hookResponse.tags)
 
         const webhookResponse = getResponse(params.hookResponse)
-        if (!isNil(webhookResponse) && !isNil(constants.serverHandlerId) && !isNil(constants.httpRequestId)) {
+        const isSamePiece = constants.triggerPieceName === action.settings.pieceName
+        if (!isNil(webhookResponse) && !isNil(constants.serverHandlerId) && !isNil(constants.httpRequestId) && isSamePiece) {
             await progressService.sendFlowResponse(constants, {
                 workerHandlerId: constants.serverHandlerId,
                 httpRequestId: constants.httpRequestId,
@@ -254,7 +255,7 @@ type CreateRespondHookParams = {
     hookResponse: HookResponse
 }
 
-function createPauseHook(params: CreatePauseHookParams, pauseId: string): PauseHook {
+function createPauseHook(params: CreatePauseHookParams, pauseId: string, requestIdToReply: string | null): PauseHook {
     return (req) => {
         switch (req.pauseMetadata.type) {
             case PauseType.DELAY: {
@@ -266,7 +267,10 @@ function createPauseHook(params: CreatePauseHookParams, pauseId: string): PauseH
                     ...params.hookResponse,
                     type: 'paused',
                     response: {
-                        pauseMetadata: req.pauseMetadata,
+                        pauseMetadata: {
+                            ...req.pauseMetadata,
+                            requestIdToReply: requestIdToReply ?? undefined,
+                        },
                     },
                 }
                 break
@@ -279,6 +283,7 @@ function createPauseHook(params: CreatePauseHookParams, pauseId: string): PauseH
                         pauseMetadata: {
                             ...req.pauseMetadata,
                             requestId: pauseId,
+                            requestIdToReply: requestIdToReply ?? undefined,
                             response: req.pauseMetadata.response ?? {},
                         },
                     },
