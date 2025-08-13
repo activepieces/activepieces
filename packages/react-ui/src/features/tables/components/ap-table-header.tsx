@@ -27,11 +27,11 @@ import { isNil, Permission, PopulatedAgent } from '@activepieces/shared';
 
 import { AgentProfile } from './agent-profile';
 import { AgentSetupDialog } from './agent-setup-dialog';
-import { AgentConfigure } from './agent-configure';
 import { ApTableHistory } from './ap-table-history';
 import { useTableState } from './ap-table-state-provider';
 import { ImportCsvDialog } from './import-csv-dialog';
 import { ApTableTriggers } from './ap-table-triggers';
+import { AgentConfigure } from './agent-configure';
 
 interface ApTableHeaderProps {
   onBack: () => void;
