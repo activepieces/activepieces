@@ -9,8 +9,6 @@ import {
   WorkflowIcon,
   CircleUserRound,
   ChevronDown,
-  FilePlus,
-  RefreshCcw,
 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
@@ -48,7 +47,6 @@ import { McpPieceDialog } from '../../../mcp/components/mcp-piece-tool-dialog';
 import { ClientField } from '../../lib/store/ap-tables-client-state';
 import { AgentProfile } from '../agent-profile';
 import { useTableState } from '../ap-table-state-provider';
-import { Separator } from '@/components/ui/separator';
 
 const BUILT_IN_TOOLS: string[] = ['@activepieces/piece-tables'];
 
@@ -229,32 +227,34 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-0">
-            <div className="flex flex-col gap-4">
-              <span className="text-xs font-light bg-muted rounded-sm px-2 py-1">
-                AI Agent will run every time
-              </span>
+              <div className="flex flex-col gap-4">
+                <span className="text-xs font-light bg-muted rounded-sm px-2 py-1">
+                  AI Agent will run every time
+                </span>
 
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={config.triggerOnNewRow}
-                    onCheckedChange={(value) => {
-                      onConfigChange({ triggerOnNewRow: value });
-                    }}
-                  />
-                  <span className="text-sm font-light">New row is added</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={config.triggerOnFieldUpdate}
-                    onCheckedChange={(value) => {
-                      onConfigChange({ triggerOnFieldUpdate: value });
-                    }}
-                  />
-                  <span className="text-sm font-light">Any field is updated</span>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={config.triggerOnNewRow}
+                      onCheckedChange={(value) => {
+                        onConfigChange({ triggerOnNewRow: value });
+                      }}
+                    />
+                    <span className="text-sm font-light">New row is added</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={config.triggerOnFieldUpdate}
+                      onCheckedChange={(value) => {
+                        onConfigChange({ triggerOnFieldUpdate: value });
+                      }}
+                    />
+                    <span className="text-sm font-light">
+                      Any field is updated
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
             </AccordionContent>
           </AccordionItem>
 
@@ -460,7 +460,10 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" className="w-full min-w-[var(--radix-dropdown-menu-trigger-width)]">
+          <DropdownMenuContent
+            side="top"
+            className="w-full min-w-[var(--radix-dropdown-menu-trigger-width)]"
+          >
             <DropdownMenuItem
               onClick={() => {
                 onSave();
@@ -486,8 +489,8 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
               }}
               className="w-full"
             >
-              Save and don't run
-              </DropdownMenuItem>
+              Save and don&apos;t run
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

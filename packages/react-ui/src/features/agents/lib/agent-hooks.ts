@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
+import { toast } from '@/components/ui/use-toast';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import {
   ListAgentsQueryParams,
@@ -10,11 +12,9 @@ import {
   EnhaceAgentPrompt,
   UpdateAgentRequestBody,
   PopulatedAgent,
-} from '@activepieces/shared';  
-import { toast } from '@/components/ui/use-toast';
+} from '@activepieces/shared';
 
 import { agentsApi, agentRunsApi } from './agents-api';
-import { useTranslation } from 'react-i18next';
 
 export const agentHooks = {
   useList: (params?: ListAgentsQueryParams) => {
@@ -70,9 +70,7 @@ export const agentHooks = {
         toast({
           title: t('Agent Saved'),
           duration: 1000,
-          description: t(
-            'Successfully saved the agent settings',
-          ),
+          description: t('Successfully saved the agent settings'),
         });
       },
     });

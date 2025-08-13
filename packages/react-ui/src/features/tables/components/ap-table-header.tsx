@@ -77,7 +77,6 @@ export const ApTableHeader = ({ onBack, agent }: ApTableHeaderProps) => {
     agent?.settings?.aiMode ?? false,
   );
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isTriggersOpen, setIsTriggersOpen] = useState(false);
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
@@ -188,10 +187,9 @@ export const ApTableHeader = ({ onBack, agent }: ApTableHeaderProps) => {
                   }
                 />
                 <ApTableTriggers
-                  open={isTriggersOpen}
-                  onOpenChange={setIsTriggersOpen}
                   trigger={
-                    !agent.settings?.triggerOnNewRow && !agent.settings?.triggerOnFieldUpdate ? (
+                    !agent.settings?.triggerOnNewRow &&
+                    !agent.settings?.triggerOnFieldUpdate ? (
                       <ZapOff
                         className="p-2 h-9 w-9 mr-2  cursor-pointer rounded-lg text-muted-foreground hover:text-muted-foreground transition-colors hover:bg-muted/50"
                         onClick={() => {
@@ -202,8 +200,10 @@ export const ApTableHeader = ({ onBack, agent }: ApTableHeaderProps) => {
                     ) : (
                       <Zap
                         className={cn(
-                          "p-2 h-9 w-9 mr-2  cursor-pointer rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 hover:text-primary",
-                          (agent.settings?.triggerOnNewRow || agent.settings?.triggerOnFieldUpdate) && 'text-primary',
+                          'p-2 h-9 w-9 mr-2  cursor-pointer rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 hover:text-primary',
+                          (agent.settings?.triggerOnNewRow ||
+                            agent.settings?.triggerOnFieldUpdate) &&
+                            'text-primary',
                         )}
                         onClick={() => {
                           setDefaultSettings('triggers');
@@ -212,15 +212,15 @@ export const ApTableHeader = ({ onBack, agent }: ApTableHeaderProps) => {
                       />
                     )
                   }
-                  updateAgent={updateAgent}
                   toolTipMessage={
-                    agent.settings?.triggerOnNewRow && agent.settings?.triggerOnFieldUpdate
-                      ? "Agent will run every time a new row is added or a field is updated"
+                    agent.settings?.triggerOnNewRow &&
+                    agent.settings?.triggerOnFieldUpdate
+                      ? 'Agent will run every time a new row is added or a field is updated'
                       : agent.settings?.triggerOnNewRow
-                      ? "Agent will run every time a new row is added"
+                      ? 'Agent will run every time a new row is added'
                       : agent.settings?.triggerOnFieldUpdate
-                      ? "Agent will run every time a field is updated"
-                      : "Agent will not run automatically"
+                      ? 'Agent will run every time a field is updated'
+                      : 'Agent will not run automatically'
                   }
                 />
               </div>
