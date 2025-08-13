@@ -77,7 +77,6 @@ export const formatUtils = {
     const diffInMinutes = now.diff(inputDate, 'minute');
     const diffInHours = now.diff(inputDate, 'hour');
     const diffInDays = now.diff(inputDate, 'day');
-
     if (diffInSeconds < 60) {
       return `${diffInSeconds}s ago`;
     }
@@ -87,7 +86,7 @@ export const formatUtils = {
     if (diffInHours < 24) {
       return `${diffInHours}h ago`;
     }
-    if (diffInDays < 30) {
+    if (diffInDays < 7) {
       return `${diffInDays}d ago`;
     }
     return inputDate.format('MMM D, YYYY');
@@ -112,12 +111,10 @@ export const formatUtils = {
     if (minutes > 0) {
       const remainingSeconds = seconds % 60;
       return short
-        ? `${minutes} min ${
-            remainingSeconds > 0 ? `${remainingSeconds} s` : ''
-          }`
-        : `${minutes} minutes${
-            remainingSeconds > 0 ? ` ${remainingSeconds} seconds` : ''
-          }`;
+        ? `${minutes} min ${remainingSeconds > 0 ? `${remainingSeconds} s` : ''
+        }`
+        : `${minutes} minutes${remainingSeconds > 0 ? ` ${remainingSeconds} seconds` : ''
+        }`;
     }
     return short ? `${seconds} s` : `${seconds} seconds`;
   },
@@ -279,15 +276,15 @@ const getBlobType = (extension: 'json' | 'txt' | 'csv') => {
 
 type downloadFileProps =
   | {
-      obj: string;
-      fileName: string;
-      extension: 'json' | 'txt' | 'csv';
-    }
+    obj: string;
+    fileName: string;
+    extension: 'json' | 'txt' | 'csv';
+  }
   | {
-      obj: JSZip;
-      fileName: string;
-      extension: 'zip';
-    };
+    obj: JSZip;
+    fileName: string;
+    extension: 'zip';
+  };
 export const downloadFile = async ({
   obj,
   fileName,
@@ -297,9 +294,9 @@ export const downloadFile = async ({
     extension === 'zip'
       ? await obj.generateAsync({ type: 'blob' })
       : //utf-8 with bom
-        new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), obj], {
-          type: getBlobType(extension),
-        });
+      new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), obj], {
+        type: getBlobType(extension),
+      });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

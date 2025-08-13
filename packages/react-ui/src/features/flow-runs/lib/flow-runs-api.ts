@@ -48,6 +48,7 @@ export const flowRunsApi = {
 
     return new Promise<StepRunResponse>((resolve, reject) => {
       const handleStepFinished = (response: StepRunResponse) => {
+        console.log('handleStepFi1nished', response);
         if (response.runId === stepRun.id) {
           socket.off(
             WebsocketClientEvent.TEST_STEP_FINISHED,
@@ -59,7 +60,7 @@ export const flowRunsApi = {
           resolve(response);
         }
       };
-
+``
       const handleError = (error: any) => {
         socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
         socket.off('error', handleError);

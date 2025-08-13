@@ -331,7 +331,6 @@ function AppConnectionsPage() {
           <div className="text-left">
             {row.original.owner && (
               <ApAvatar
-                type="user"
                 includeName={true}
                 size="small"
                 userEmail={row.original.owner.email}

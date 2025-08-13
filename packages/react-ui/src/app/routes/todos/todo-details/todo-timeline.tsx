@@ -1,109 +1,73 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { ArrowUp, Loader2, MessageCircle } from 'lucide-react';
 
-import { useSocket } from '@/components/socket-provider';
-import { todoUtils } from '@/features/todos/lib/todo-utils';
+import { MessageBox } from '@/components/custom/message-box';
+import { Separator } from '@/components/ui/separator';
 import {
-  TodoChanged,
-  WebsocketClientEvent,
   TodoActivityWithUser,
-  TodoActivityChanged,
   PopulatedTodo,
 } from '@activepieces/shared';
 
 import { TodoComment, ActivityItem } from './todo-comment';
 import { TodoTimelineCommentSkeleton } from './todo-timeline-comment-skeleton';
-import { TodoTimelineStatus } from './todo-timeline-status';
+import { todoActivityApi } from '@/features/todos/lib/todos-activitiy-api';
+import { todoActivitiesHook } from '@/features/todos/lib/todos-activity-hook';
 
 interface TodoTimelineProps {
   todo: PopulatedTodo;
-  comments: TodoActivityWithUser[];
-  isLoading: boolean;
-  refetchComments: () => void;
 }
 
 export const TodoTimeline = ({
   todo,
-  comments,
-  isLoading,
-  refetchComments,
 }: TodoTimelineProps) => {
-  const socket = useSocket();
+  const [content, setContent] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { data: comments, isLoading, refetch } = todoActivitiesHook.useComments(todo.id);
 
   const formatComment = (activity: TodoActivityWithUser): ActivityItem => {
     const hash = encodeURIComponent(JSON.stringify(activity.content));
     return {
       type: 'comment' as const,
-      authorType: todoUtils.getAuthorType(activity),
       content: activity.content,
       timestamp: new Date(activity.created),
-      authorName: todoUtils.getAuthorName(activity),
+      authorName: activity.user?.firstName + ' ' + activity.user?.lastName,
       key: hash,
       id: activity.id,
     };
   };
 
-  const [activities, setActivities] = useState<ActivityItem[]>([
-    {
-      type: 'comment' as const,
-      content: todo.description ?? '',
-      timestamp: new Date(todo.created),
-      authorType: todoUtils.getAuthorType(todo),
-      authorName: todoUtils.getAuthorName(todo),
-      userEmail: todo.createdByUser?.email,
-      flowId: todo.flowId,
-    },
-    ...(comments ?? []).map(formatComment),
-  ]);
+  const activities = useMemo(() => {
+    return (comments?.data?.map(formatComment) ?? []);
+  }, [comments?.data]);
 
-  useEffect(() => {
-    const handleTodoChanged = (event: TodoChanged) => {
-      if (event.todoId === todo.id) {
-        refetchComments();
-      }
-    };
-    const handleTodoActivityChanged = (event: TodoActivityChanged) => {
-      setActivities((prev) => {
-        const newActivities = prev.map((activity) => {
-          if (activity.id === event.activityId) {
-            return { ...activity, content: event.content };
-          }
-          return activity;
-        });
-        return newActivities;
-      });
-    };
+  const handleSubmitComment = async (content: string) => {
+    if (todo.locked) return;
+    await todoActivityApi.create({
+      todoId: todo.id,
+      content: content,
+    });
+    refetch();
+  };
 
-    socket.on(WebsocketClientEvent.TODO_CHANGED, handleTodoChanged);
-    socket.on(
-      WebsocketClientEvent.TODO_ACTIVITY_CHANGED,
-      handleTodoActivityChanged,
-    );
+  const handleSubmit = async () => {
+    if (!content.trim() || todo.locked) return;
 
-    return () => {
-      socket.off(WebsocketClientEvent.TODO_CHANGED, handleTodoChanged);
-      socket.off(
-        WebsocketClientEvent.TODO_ACTIVITY_CHANGED,
-        handleTodoActivityChanged,
-      );
-    };
-  }, [socket, refetchComments]);
+    setIsSubmitting(true);
+    try {
+      await handleSubmitComment(content);
+      setContent('');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex flex-col mt-4">
+      <Separator className="mb-4" />
+      <h3 className="text-lg font-semibold mb-4">Comments</h3>
       {isLoading ? (
         <>
-          <TodoComment
-            comment={{
-              type: 'comment' as const,
-              content: todo.description ?? '',
-              timestamp: new Date(todo.created),
-              authorType: todoUtils.getAuthorType(todo),
-              authorName: todoUtils.getAuthorName(todo),
-              userEmail: todo.createdByUser?.email,
-              flowId: todo.flowId,
-            }}
-            showConnector={true}
-          />
           {/* Show skeleton for loading comments */}
           <TodoTimelineCommentSkeleton showConnector={true} />
           <TodoTimelineCommentSkeleton showConnector={true} />
@@ -111,15 +75,39 @@ export const TodoTimeline = ({
         </>
       ) : (
         <>
-          {activities.map((comment, index) => (
-            <TodoComment
-              key={comment.id}
-              comment={comment}
-              showConnector={index !== activities.length - 1}
-            />
-          ))}
-          <TodoTimelineStatus todo={todo} />
+          {activities.length > 0 ? (
+            activities.map((comment) => (
+              <TodoComment
+                key={comment.id}
+                comment={comment}
+              />
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <MessageCircle className="w-12 h-12 text-muted-foreground mb-3" />
+              <p className="text-muted-foreground text-sm">
+                No comments yet. Be the first to leave a comment!
+              </p>
+            </div>
+          )}
         </>
+      )}
+      {!todo.locked && !isLoading && (
+        <div className="mt-4 mb-8">
+          <MessageBox
+            placeholder="Leave a comment..."
+            actionName=""
+            value={content}
+            onChange={setContent}
+            onAction={handleSubmit}
+            loading={isSubmitting}
+            disabled={todo.locked}
+            rows={1}
+            actionIcon={<ArrowUp className="w-5 h-5" />}
+            loadingIcon={<Loader2 className="w-5 h-5 animate-spin" />}
+            loadingText=""
+          />
+        </div>
       )}
     </div>
   );

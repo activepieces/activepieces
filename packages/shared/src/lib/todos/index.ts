@@ -27,8 +27,8 @@ export const STATUS_COLORS: Record<STATUS_VARIANT, StatusColor> = {
         textColor: '#28813e',
     },
     [STATUS_VARIANT.NEGATIVE]: {
-        color: '#fbe2e3',
-        textColor: '#dd111b',
+        color: '#f3f4f6',
+        textColor: '#6b7280',
     },
     [STATUS_VARIANT.NEUTRAL]: {
         color: '#fef3c7',
