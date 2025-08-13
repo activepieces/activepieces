@@ -11,6 +11,10 @@ import {
   Tooltip,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  BillingCycle,
+  PRICE_PER_EXTRA_PROJECT_MAP,
+} from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
 
 import { ExtraProjectsDialog } from './extra-projects-dialog';
@@ -21,6 +25,10 @@ type BusinessProjectsProps = {
 
 export function ProjectAddon({ platformSubscription }: BusinessProjectsProps) {
   const [addProjectsOpen, setAddProjectsOpen] = useState(false);
+  const PRICE_PER_EXTRA_PROJECT =
+    PRICE_PER_EXTRA_PROJECT_MAP[
+      platformSubscription.plan.stripeBillingCycle as BillingCycle
+    ];
   const { plan, usage } = platformSubscription;
   const currentProjects = usage.projects || 0;
   const projectsLimit = plan.projectsLimit ?? 1;
@@ -44,7 +52,7 @@ export function ProjectAddon({ platformSubscription }: BusinessProjectsProps) {
               <div>
                 <h3 className="text-lg font-semibold">{t('Projects')}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Monitor your projects usage
+                  {t('Monitor your projects usage')}
                 </p>
               </div>
             </div>
@@ -63,7 +71,9 @@ export function ProjectAddon({ platformSubscription }: BusinessProjectsProps) {
                     <CircleHelp className="w-4 h-4 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    {t('Count of projects $15 for extra 1 project')}
+                    {t(
+                      `Count of projects $${PRICE_PER_EXTRA_PROJECT} for extra 1 project`,
+                    )}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -85,7 +95,7 @@ export function ProjectAddon({ platformSubscription }: BusinessProjectsProps) {
                 </span>
                 {usagePercentage > 80 && (
                   <span className="text-destructive font-medium">
-                    Approaching limit
+                    {t('Approaching limit')}
                   </span>
                 )}
               </div>

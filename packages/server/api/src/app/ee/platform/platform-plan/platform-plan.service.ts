@@ -1,6 +1,6 @@
-import { ApSubscriptionStatus, FREE_CLOUD_PLAN, OPEN_SOURCE_PLAN, PlatformPlanWithOnlyLimits } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, BillingCycle, FREE_CLOUD_PLAN, OPEN_SOURCE_PLAN, PlanName } from '@activepieces/ee-shared'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -49,7 +49,6 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         if ( isNil(startDate) || isNil(endDate)) {
             return { startDate: apDayjs().startOf('month').unix(), endDate: apDayjs().endOf('month').unix() }
         }
-
         return { startDate, endDate }
     },
 
@@ -86,13 +85,39 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             stripeSubscriptionCancelDate: cancelDate,
             stripePaymentMethod, 
         })
-
         return platformPlanRepo().findOneByOrFail({ stripeCustomerId: customerId })
+    },
+    async getNextBillingAmount(params: GetBillingAmountParams): Promise<number> {
+        const { plan, subscriptionId } = params
+        const stripe = stripeHelper(log).getStripe()
+        if (isNil(stripe)) {
+            return 0
+        }
+
+        try {
+            const upcomingInvoice = await stripe.invoices.createPreview({
+                subscription: subscriptionId,
+            })
+
+            return upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
+        }
+        catch {
+            switch (plan) {
+                case PlanName.PLUS: {
+                    return 25
+                }
+                case PlanName.BUSINESS: {
+                    return 150
+                }
+                default: {
+                    return 0
+                }
+            }
+        }
     },
 })
 
 async function createInitialBilling(platformId: string, log: FastifyBaseLogger): Promise<PlatformPlan> {
-
     const platform = await platformService.getOneOrThrow(platformId)
     const user = await userService.getMetaInformation({ id: platform.ownerId })
     const stripeCustomerId = await createInitialCustomer(user, platformId, log)
@@ -108,9 +133,9 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         stripeCustomerId,
         stripeSubscriptionStartDate: defaultStartDate,
         stripeSubscriptionEndDate: defaultEndDate,
+        stripeBillingCycle: BillingCycle.MONTHLY,
         ...plan,
     }
-
     return platformPlanRepo().save(platformPlan)
 }
 
@@ -144,4 +169,9 @@ type UpdateByCustomerId = {
     endDate: number
     cancelDate?: number
     stripePaymentMethod?: string
+}
+
+type GetBillingAmountParams = {
+    subscriptionId?: string
+    plan: string
 }

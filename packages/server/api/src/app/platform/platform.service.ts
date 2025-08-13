@@ -1,4 +1,4 @@
-import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
+import { BillingCycle, OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -26,8 +26,6 @@ import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 
 export const platformRepo = repoFactory<Platform>(PlatformEntity)
-
-
 
 export const platformService = {
     async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
@@ -76,7 +74,6 @@ export const platformService = {
         }
 
         const savedPlatform = await platformRepo().save(newPlatform)
-
         await userService.addOwnerToPlatform({
             id: ownerId,
             platformId: savedPlatform.id,
@@ -84,7 +81,6 @@ export const platformService = {
 
         return savedPlatform
     },
-
     async getAll(): Promise<Platform[]> {
         return platformRepo().find()
     },
@@ -135,7 +131,6 @@ export const platformService = {
         }
         return platformRepo().save(updatedPlatform)
     },
-
     async getOneOrThrow(id: PlatformId): Promise<Platform> {
         const platform = await platformRepo().findOneBy({
             id,
@@ -187,7 +182,6 @@ export const platformService = {
     },
 }
 
-
 async function getUsage(platform: Platform): Promise<PlatformUsage | undefined> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
@@ -203,6 +197,7 @@ async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
             ...OPEN_SOURCE_PLAN,
             stripeSubscriptionStartDate: 0,
             stripeSubscriptionEndDate: 0,
+            stripeBillingCycle: BillingCycle.MONTHLY,
         }
     }
     return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
@@ -223,7 +218,6 @@ type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
     plan?: Partial<PlatformPlanLimits>
 }
-
 
 type ListPlatformsForIdentityParams = {
     identityId: string

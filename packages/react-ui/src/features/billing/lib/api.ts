@@ -4,6 +4,7 @@ import {
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
   UpdateSubscriptionParams,
+  StartTrialParams,
 } from '@activepieces/ee-shared';
 import {
   PlatformPlan,
@@ -37,8 +38,11 @@ export const platformBillingApi = {
       params,
     );
   },
-  startTrial() {
-    return api.post<{ success: boolean }>('/v1/platform-billing/start-trial');
+  startTrial(params: StartTrialParams) {
+    return api.post<{ success: boolean }>(
+      '/v1/platform-billing/start-trial',
+      params,
+    );
   },
   listAiCreditsUsage(
     params: ListAICreditsUsageRequest,
