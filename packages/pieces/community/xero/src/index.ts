@@ -5,9 +5,27 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { xeroCreateContact } from './lib/actions/create-contact';
-import { xeroCreateInvoice } from './lib/actions/create-invoice';
+import { CreateContact } from './lib/actions/create-contact';
+import { createInvoice } from './lib/actions/create-invoice';
 import { allocateCreditNoteToInvoice } from './lib/actions/allocate-credit-note-to-invoice';
+import { addItemsToExistingSalesInvoice } from './lib/actions/add-items-to-existing-sales-invoice';
+import { createBankTransfer } from './lib/actions/create-bank-transfer';
+import { createBill } from './lib/actions/create-bill';
+import { createCreditNote } from './lib/actions/create-credit-note';
+import { createInventoryItem } from './lib/actions/create-inventory-item';
+import { createNewQuoteDraft } from './lib/actions/create-new-quote-draft';
+import { createPayment } from './lib/actions/create-payment';
+import { createProject } from './lib/actions/create-project';
+import { createPurchaseOrder } from './lib/actions/create-purchase-order';
+import { createRepeatingSalesInvoice } from './lib/actions/create-repeating-sales-invoice';
+import { findContact } from './lib/actions/find-contact';
+import { findInvoice } from './lib/actions/find-invoice';
+import { findItem } from './lib/actions/find-item';
+import { findPurchaseOrder } from './lib/actions/find-purchase-order';
+import { sendSalesInvoiceByEmail } from './lib/actions/send-sales-invoice-by-email';
+import { updatePurchaseOrder } from './lib/actions/update-purchase-order';
+import { updateSalesInvoice } from './lib/actions/update-sales-invoice';
+import { uploadAttachment } from './lib/actions/upload-attachment';
 
 export const xeroAuth = PieceAuth.OAuth2({
   description: `
@@ -67,9 +85,27 @@ export const xero = createPiece({
   categories: [PieceCategory.ACCOUNTING],
   auth: xeroAuth,
   actions: [
-    xeroCreateContact,
-    xeroCreateInvoice,
+    addItemsToExistingSalesInvoice,
     allocateCreditNoteToInvoice,
+    createBankTransfer,
+    createBill,
+    CreateContact,
+    createCreditNote,
+    createInventoryItem,
+    createInvoice,
+    createNewQuoteDraft,
+    createPayment,
+    createProject,
+    createPurchaseOrder,
+    createRepeatingSalesInvoice,
+    findContact,
+    findInvoice,
+    findItem,
+    findPurchaseOrder,
+    sendSalesInvoiceByEmail,
+    updatePurchaseOrder,
+    updateSalesInvoice,
+    uploadAttachment,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.xero.com/api.xro/2.0',
       auth: xeroAuth,

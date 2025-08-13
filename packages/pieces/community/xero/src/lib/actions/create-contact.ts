@@ -9,7 +9,7 @@ import { props } from '../common/props';
 import { xeroAuth } from '../..';
 import { makeRequest } from '../common/client';
 
-export const xeroCreateContact = createAction({
+export const CreateContact = createAction({
   auth: xeroAuth,
   name: 'xero_create_contact',
   description: 'Create Xero Contact',

@@ -11,7 +11,7 @@ import dayjs from 'dayjs';
 import { xeroAuth } from '../..';
 import { makeRequest } from '../common/client';
 
-export const xeroCreateInvoice = createAction({
+export const createInvoice = createAction({
   auth: xeroAuth,
   name: 'xero_create_invoice',
   description: 'Create Xero Invoice',
