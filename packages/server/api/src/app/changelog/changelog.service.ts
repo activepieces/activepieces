@@ -127,6 +127,6 @@ async function getChangelogActivepiecesRequest(): Promise<ListChangelogsResponse
             },
         })
     }
-    const data = await response.json()
+    const data = await response.json() as Promise<ListChangelogsResponse>
     return data
 }

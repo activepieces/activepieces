@@ -106,7 +106,7 @@ async function getOrThrow({ name, version }: { name: string, version: string }):
     const response = await fetch(
         `${CLOUD_API_URL}/${name}${version ? '?version=' + version : ''}`,
     )
-    return response.json()
+    return response.json() as Promise<PieceMetadataModel>
 }
 
 async function listPieces(): Promise<PieceMetadataModelSummary[]> {
@@ -121,5 +121,5 @@ async function listPieces(): Promise<PieceMetadataModelSummary[]> {
     if (response.status !== StatusCodes.OK.valueOf()) {
         throw new Error(await response.text())
     }
-    return response.json()
+    return response.json() as Promise<PieceMetadataModelSummary[]>
 }
