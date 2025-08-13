@@ -1,10 +1,10 @@
 {
-  "Stable Dffusion web UI": "稳定的恐龙web 界面",
-  "A web interface for Stable Diffusion": "稳定传播的网页界面",
-  "Stable Diffusion web UI API base URL": "稳定的扩散web UI API 基础 URL",
-  "Text to Image": "文本到图像",
+  "Stable Dffusion web UI": "Stable Dffusion web UI",
+  "A web interface for Stable Diffusion": "A web interface for Stable Diffusion",
+  "Stable Diffusion web UI API base URL": "Stable Diffusion web UI API base URL",
+  "Text to Image": "Text to Image",
   "Prompt": "Prompt",
-  "Model": "模型",
-  "Advanced parameters (key/value)": "高级参数 (键/值)",
-  "Refer to API documentation": "参考 API 文档"
+  "Model": "Model",
+  "Advanced parameters (key/value)": "Advanced parameters (key/value)",
+  "Refer to API documentation": "Refer to API documentation"
 }
