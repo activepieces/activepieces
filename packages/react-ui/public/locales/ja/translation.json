@@ -1269,7 +1269,7 @@
   "Update your project settings and configuration.": "プロジェクトの設定と構成を更新します。",
   "Used to identify the project based on your SaaS ID": "SaaS ID に基づいてプロジェクトを識別するために使用",
   "org-3412321": "org-3412321",
-  "recordsCount": "recordsCount",
+  "recordsCount": "{recordsCount, plural, =0 {0 Records} =1 {1 Record} other {# Records}}",
   "selected": "選択済み",
   "All records selected": "すべてのレコードが選択されました",
   "fieldsCount": "fieldsCount",
