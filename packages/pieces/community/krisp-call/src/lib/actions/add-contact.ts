@@ -37,7 +37,7 @@ export const addContact = createAction({
   async run({ auth, propsValue }) {
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
-      url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/add-contact',
+      url: 'https://app.krispcall.com/api/v3/platform/activepiece/add-contact',
       headers: {
         'X-API-KEY': auth.apiKey,
       },
