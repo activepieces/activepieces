@@ -8,10 +8,18 @@ import { PieceCategory } from '@activepieces/shared';
 import { createEvent } from './lib/actions/create-event';
 import { createQuickCalendarEvent } from './lib/actions/create-quick-event';
 import { deleteEventAction } from './lib/actions/delete-event.action';
+import { findBusyFreePeriods } from './lib/actions/find-busy-free-periods';
+import { getEventById } from './lib/actions/get-event-by-id';
 import { getEvents } from './lib/actions/get-events';
 import { updateEventAction } from './lib/actions/update-event.action';
 import { googleCalendarCommon } from './lib/common';
 import { calendarEventChanged } from './lib/triggers/calendar-event';
+import { newCalendarEvent } from './lib/triggers/new-event';
+import { eventEnds } from './lib/triggers/event-ends';
+import { eventStartReminder } from './lib/triggers/event-start-reminder';
+import { newEventMatchingSearch } from './lib/triggers/new-event-matching-search';
+import { eventCancelled } from './lib/triggers/event-cancelled';
+import { newCalendar } from './lib/triggers/new-calendar';
 import { addAttendeesToEventAction } from './lib/actions/add-attendees.action';
 
 export const googleCalendarAuth = PieceAuth.OAuth2({
@@ -23,6 +31,7 @@ export const googleCalendarAuth = PieceAuth.OAuth2({
   scope: [
     'https://www.googleapis.com/auth/calendar.events',
     'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/calendar.freebusy',
   ],
 });
 
@@ -49,6 +58,8 @@ export const googleCalendar = createPiece({
     addAttendeesToEventAction,
     createQuickCalendarEvent,
     createEvent,
+    findBusyFreePeriods,
+    getEventById,
     getEvents,
     updateEventAction,
     deleteEventAction,
@@ -64,5 +75,13 @@ export const googleCalendar = createPiece({
       },
     }),
   ],
-  triggers: [calendarEventChanged],
+  triggers: [
+    calendarEventChanged,
+    newCalendarEvent,
+    eventEnds,
+    eventStartReminder,
+    newEventMatchingSearch,
+    eventCancelled,
+    newCalendar,
+  ],
 });
