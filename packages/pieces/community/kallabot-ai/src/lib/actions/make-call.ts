@@ -87,7 +87,6 @@ export const makeCallAction = createAction({
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }: { auth?: string }) => {
-        console.log('Fetching phone numbers with auth:', auth ? 'provided' : 'missing');
         if (!auth) {
           return {
             disabled: true,
@@ -105,9 +104,7 @@ export const makeCallAction = createAction({
               'Content-Type': 'application/json'
             }
           });
-          
-          console.log('Phone numbers API response:', response.body);
-          
+                    
           let phoneNumbers = response.body;
           
           // Handle different response structures
@@ -189,8 +186,6 @@ export const makeCallAction = createAction({
       requestBody.webhook_url = webhook_url;
     }
 
-    console.log('Making call with request body:', JSON.stringify(requestBody, null, 2));
-
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
@@ -201,8 +196,6 @@ export const makeCallAction = createAction({
         },
         body: requestBody
       });
-
-      console.log('Call initiated successfully:', response.body);
 
       return {
         success: true,

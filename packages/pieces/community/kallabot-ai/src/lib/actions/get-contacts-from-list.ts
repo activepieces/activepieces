@@ -32,9 +32,7 @@ export const getContactsFromListAction = createAction({
                             'Content-Type': 'application/json'
                         }
                     });
-                    
-                    console.log('Contact lists API response:', response.body);
-                    
+                                        
                     // Handle different response structures
                     let lists: any[] = [];
                     if (Array.isArray(response.body)) {

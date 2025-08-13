@@ -24,7 +24,6 @@ export const createCampaignAction = createAction({
             required: true,
             refreshers: ['auth'],
             options: async ({ auth }: { auth?: string }) => {
-                console.log('Fetching agents with auth:', auth ? 'provided' : 'missing');
                 if (!auth) {
                     return {
                         disabled: true,
@@ -34,7 +33,6 @@ export const createCampaignAction = createAction({
                 }
                 
                 try {
-                    console.log('Making API call to fetch agents...');
                     const response = await httpClient.sendRequest({
                         method: HttpMethod.GET,
                         url: 'https://api.kallabot.com/agents',
@@ -44,8 +42,6 @@ export const createCampaignAction = createAction({
                         }
                     });
                     
-                    console.log('Agents API response status:', response.status);
-                    console.log('Agents API response:', response.body);
                     
                     let agents = response.body;
                     
@@ -124,9 +120,7 @@ export const createCampaignAction = createAction({
                             'Content-Type': 'application/json'
                         }
                     });
-                    
-                    console.log('Contact lists API response:', response.body);
-                    
+                                        
                     let lists: any[] = [];
                     if (Array.isArray(response.body)) {
                         lists = response.body;
@@ -198,9 +192,7 @@ export const createCampaignAction = createAction({
                             'Content-Type': 'application/json'
                         }
                     });
-                    
-                    console.log('Phone numbers API response:', response.body);
-                    
+                                        
                     let phoneNumbers: any[] = [];
                     if (Array.isArray(response.body)) {
                         phoneNumbers = response.body;
