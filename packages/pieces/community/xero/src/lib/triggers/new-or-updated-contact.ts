@@ -59,7 +59,7 @@ Notes:
   async onDisable() {
     // Manual webhook lifecycle
   },
-  async run(context) {
+  async run(context: any) {
     const { webhook_key, tenant_id, fetch_full_contact } = context.propsValue as any;
 
     const signatureHeader = context.payload.headers['x-xero-signature'] as string | undefined;

@@ -53,13 +53,13 @@ Notes:
     Name: 'Sample Contact',
     EmailAddress: 'sample@example.com',
   },
-  async onEnable(context) {
+  async onEnable(context: any) {
     // Nothing to register programmatically. User must configure webhook in Xero Developer portal.
   },
-  async onDisable(context) {
+  async onDisable(context: any) {
     // Nothing to clean up programmatically.
   },
-  async run(context) {
+  async run(context: any) {
     const { webhook_key, tenant_id, fetch_full_contact } = context.propsValue as any;
 
     const signatureHeader = context.payload.headers['x-xero-signature'] as string | undefined;

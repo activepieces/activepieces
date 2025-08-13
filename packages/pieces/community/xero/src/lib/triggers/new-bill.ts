@@ -134,24 +134,24 @@ export const xeroNewBill = createTrigger({
     page_size: Property.Number({ displayName: 'Page Size (1-1000)', required: false }),
   },
   type: TriggerStrategy.POLLING,
-  async onEnable(context) {
+  async onEnable(context: any) {
     await pollingHelper.onEnable(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
     });
   },
-  async onDisable(context) {
+  async onDisable(context: any) {
     await pollingHelper.onDisable(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
     });
   },
-  async test(context) {
+  async test(context: any) {
     return await pollingHelper.test(polling, context);
   },
-  async run(context) {
+  async run(context: any) {
     const items = (await pollingHelper.poll(polling, context)) as any[];
     const tenantId = context.propsValue['tenant_id'];
     const seenKey = `xero_bill_seen_ids_${tenantId}`;

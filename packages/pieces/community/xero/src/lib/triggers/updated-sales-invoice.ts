@@ -55,13 +55,13 @@ Notes:
     InvoiceNumber: 'INV-0001',
     Status: 'AUTHORISED',
   },
-  async onEnable() {
+  async onEnable(): Promise<void> {
         // The user has already enabled the trigger, so we don't need to do anything
   },
-  async onDisable() {
+  async onDisable(): Promise<void> {
         // The user has already disabled the trigger, so we don't need to do anything
   },
-  async run(context) {
+  async run(context: any) {
     const { webhook_key, tenant_id, fetch_full_invoice } = context.propsValue as any;
 
     const signatureHeader = context.payload.headers['x-xero-signature'] as string | undefined;
