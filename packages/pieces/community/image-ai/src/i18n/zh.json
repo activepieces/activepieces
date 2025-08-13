@@ -4,7 +4,5 @@
   "Provider": "供應商",
   "Model": "模型",
   "Prompt": "提示",
-  "Advanced Options": "高級選項",
-  "Resolution": "解析度",
-  "The resolution to generate the image in.": "生成圖像的解析度。"
+  "Advanced Options": "高級選項"
 }
