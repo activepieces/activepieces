@@ -7,6 +7,7 @@ import {
 import { PieceCategory } from '@activepieces/shared';
 import { xeroCreateContact } from './lib/actions/create-contact';
 import { xeroCreateInvoice } from './lib/actions/create-invoice';
+import { allocateCreditNoteToInvoice } from './lib/actions/allocate-credit-note-to-invoice';
 
 export const xeroAuth = PieceAuth.OAuth2({
   description: `
@@ -25,13 +26,34 @@ export const xeroAuth = PieceAuth.OAuth2({
     'profile',
     'email',
     'offline_access',
-    'accounting.contacts',
     'accounting.transactions',
+    'accounting.transactions.read',
     'accounting.reports.read',
-    'accounting.journals.read',
+    'accounting.reports.tenninetynine.read',
     'accounting.budgets.read',
-    'accounting.attachments',
+    'accounting.journals.read',
     'accounting.settings',
+    'accounting.settings.read',
+    'accounting.contacts',
+    'accounting.contacts.read',
+    'accounting.attachments',
+    'accounting.attachments.read',
+    'assets',
+    'assets.read',
+    'files',
+    'payroll.employees',
+    'files.read',
+    'payroll.payruns',
+    'payroll.employees.read',
+    'payroll.payruns.read',
+    'payroll.payslip',
+    'payroll.payslip.read',
+    'payroll.settings',
+    'payroll.settings.read',
+    'payroll.timesheets',
+    'payroll.timesheets.read',
+    'projects',
+    'projects.read',
   ],
 });
 
@@ -47,6 +69,7 @@ export const xero = createPiece({
   actions: [
     xeroCreateContact,
     xeroCreateInvoice,
+    allocateCreditNoteToInvoice,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.xero.com/api.xro/2.0',
       auth: xeroAuth,

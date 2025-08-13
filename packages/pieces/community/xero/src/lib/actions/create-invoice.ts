@@ -9,6 +9,7 @@ import {
 import { props } from '../common/props';
 import dayjs from 'dayjs';
 import { xeroAuth } from '../..';
+import { makeRequest } from '../common/client';
 
 export const xeroCreateInvoice = createAction({
   auth: xeroAuth,
@@ -87,27 +88,33 @@ export const xeroCreateInvoice = createAction({
       ],
     };
 
-    const url = 'https://api.xero.com/api.xro/2.0/Invoices';
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: invoice_id ? `${url}/${invoice_id}` : url,
+    // const url = 'https://api.xero.com/api.xro/2.0/Invoices';
+    // const request: HttpRequest = {
+    //   method: HttpMethod.POST,
+    //   url: invoice_id ? `${url}/${invoice_id}` : url,
+    //   body,
+    //   authentication: {
+    //     type: AuthenticationType.BEARER_TOKEN,
+    //     token: context.auth.access_token,
+    //   },
+    //   headers: {
+    //     'Xero-Tenant-Id': tenant_id,
+    //   },
+    // };
+
+    // const result = await httpClient.sendRequest(request);
+    // console.debug('Invoice creation response', result);
+    const result = await makeRequest(
+      context.auth.access_token,
+      HttpMethod.POST,
+      '/Invoices',
       body,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
-      },
-      headers: {
+      {
         'Xero-Tenant-Id': tenant_id,
-      },
-    };
+      }
+    );
 
-    const result = await httpClient.sendRequest(request);
-    console.debug('Invoice creation response', result);
-
-    if (result.status === 200) {
-      return result.body;
-    }
-
+   
     return result;
   },
 });

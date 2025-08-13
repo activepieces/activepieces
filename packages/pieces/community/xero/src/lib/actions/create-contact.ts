@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { props } from '../common/props';
 import { xeroAuth } from '../..';
+import { makeRequest } from '../common/client';
 
 export const xeroCreateContact = createAction({
   auth: xeroAuth,
@@ -29,27 +30,17 @@ export const xeroCreateContact = createAction({
         },
       ],
     };
-    const url = 'https://api.xero.com/api.xro/2.0/Contacts';
-
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: contact_id ? `${url}/${contact_id}` : url,
+  
+    const result = await makeRequest(
+      context.auth.access_token,
+      HttpMethod.POST,
+      '/Contacts',
       body,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
-      },
-      headers: {
+      {
         'Xero-Tenant-Id': tenant_id,
-      },
-    };
-
-    const result = await httpClient.sendRequest(request);
-    console.debug('Contact creation response', result);
-
-    if (result.status === 200) {
-      return result.body;
-    }
+      }
+    );
+    
 
     return result;
   },
