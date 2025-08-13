@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { makeRequest } from '../common/client';
+import { props } from '../common/props';
 
 export const uploadAttachment = createAction({
   auth: xeroAuth,
@@ -9,11 +10,7 @@ export const uploadAttachment = createAction({
   displayName: 'Upload Attachment',
   description: 'Uploads an attachment to a specific Xero resource',
   props: {
-    tenant_id: Property.ShortText({
-      displayName: 'Tenant ID',
-      description: 'The ID of the Xero tenant',
-      required: true,
-    }),
+    tenant_id: props.tenant_id,
     resourceType: Property.StaticDropdown({
       displayName: 'Resource Type',
       description:

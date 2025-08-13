@@ -13,18 +13,29 @@ export const createRepeatingSalesInvoice = createAction({
   props: {
     tenant_id: props.tenant_id,
     contact_id: props.contact_id(true),
+    type: Property.StaticDropdown({
+      displayName: 'Invoice Type',
+      description: 'The type of the repeating invoice (ACCREC or ACCPAY)',
+      required: true,
+      options: {
+        options: [
+          { label: 'Accounts Receivable (ACCREC)', value: 'ACCREC' },
+          { label: 'Accounts Payable (ACCPAY)', value: 'ACCPAY' },
+        ],
+      },
+    }),
     schedulePeriod: Property.StaticDropdown({
       displayName: 'Schedule Period',
       description: 'The frequency of the repeating invoice',
       required: true,
       options: {
         options: [
-          { label: 'Weekly', value: 'WEEKLY' },
-          { label: 'Monthly', value: 'MONTHLY' },
-          { label: 'Two Monthly', value: 'TWOMONTHLY' },
-          { label: 'Quarterly', value: 'QUARTERLY' },
-          { label: 'Six Monthly', value: 'SIXMONTHLY' },
-          { label: 'Annually', value: 'ANNUALLY' },
+          { label: 'Weekly', value: 1 },
+          { label: 'Monthly', value: 2 },
+          { label: 'Two Monthly', value: 3 },
+          { label: 'Quarterly', value: 4 },
+          { label: 'Six Monthly', value: 5 },
+          { label: 'Annually', value: 6 },
         ],
       },
     }),
@@ -95,8 +106,9 @@ export const createRepeatingSalesInvoice = createAction({
       Contact: {
         ContactID: propsValue.contact_id,
       },
+      Type: propsValue.type, // Add the Type field
       Schedule: {
-        Period: propsValue.schedulePeriod,
+        Period: propsValue.schedulePeriod, // Now mapped to an integer
         StartDate: propsValue.scheduleStartDate,
         ...(propsValue.scheduleEndDate && {
           EndDate: propsValue.scheduleEndDate,

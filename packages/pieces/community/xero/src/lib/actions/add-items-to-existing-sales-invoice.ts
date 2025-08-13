@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { makeRequest } from '../common/client';
-import { props } from '../common/props';
+import { invoiceIdDropdown, props } from '../common/props';
 
 export const addItemsToExistingSalesInvoice = createAction({
   auth: xeroAuth,
@@ -11,7 +11,7 @@ export const addItemsToExistingSalesInvoice = createAction({
   description: 'Adds line items to an existing sales invoice in Xero',
   props: {
     tenant_id: props.tenant_id,
-    invoice_id: props.invoice_id,
+    invoice_id: invoiceIdDropdown,
     lineItems: Property.Array({
       displayName: 'Line Items',
       description: 'The line items to add to the existing sales invoice',

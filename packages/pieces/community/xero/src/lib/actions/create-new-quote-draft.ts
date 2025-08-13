@@ -73,12 +73,14 @@ export const createNewQuoteDraft = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    // Build the quote data
+    const currentDate = new Date().toISOString().split('T')[0];
+    const quoteDate = propsValue.date || currentDate;
+
     const quoteData: any = {
       Contact: {
         ContactID: propsValue.contact_id,
       },
-      Date: propsValue.date,
+      Date: quoteDate,
       LineItems: propsValue.lineItems,
       Status: 'DRAFT',
     };

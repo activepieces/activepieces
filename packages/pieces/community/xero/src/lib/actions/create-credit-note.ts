@@ -10,8 +10,8 @@ export const createCreditNote = createAction({
   displayName: 'Create Credit Note',
   description: 'Creates a new credit note for a contact in Xero',
   props: {
-    tenant_id: props.tenant_id, // Tenant dropdown to select the organization
-    contact_id: props.contact_id(true), // Contact ID is required
+    tenant_id: props.tenant_id,
+    contact_id: props.contact_id(true),
     date: Property.ShortText({
       displayName: 'Date',
       description:

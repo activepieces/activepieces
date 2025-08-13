@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { makeRequest } from '../common/client';
+import { props } from '../common/props';
 
 export const findInvoice = createAction({
   auth: xeroAuth,
@@ -9,11 +10,7 @@ export const findInvoice = createAction({
   displayName: 'Find Invoice',
   description: 'Finds an invoice by number or reference in Xero',
   props: {
-    tenant_id: Property.ShortText({
-      displayName: 'Tenant ID',
-      description: 'The ID of the Xero tenant',
-      required: true,
-    }),
+    tenant_id: props.tenant_id,
     invoiceNumber: Property.ShortText({
       displayName: 'Invoice Number',
       description: 'The number of the invoice to search for. Optional.',

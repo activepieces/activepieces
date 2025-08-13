@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { makeRequest } from '../common/client';
+import { props } from '../common/props';
 
 export const findPurchaseOrder = createAction({
   auth: xeroAuth,
@@ -9,11 +10,7 @@ export const findPurchaseOrder = createAction({
   displayName: 'Find Purchase Order',
   description: 'Finds a purchase order by given parameters in Xero',
   props: {
-    tenant_id: Property.ShortText({
-      displayName: 'Tenant ID',
-      description: 'The ID of the Xero tenant',
-      required: true,
-    }),
+    tenant_id:  props.tenant_id,
     purchaseOrderNumber: Property.ShortText({
       displayName: 'Purchase Order Number',
       description: 'The number of the purchase order to search for. Optional.',
