@@ -24,5 +24,5 @@
   "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n": "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n",
   "None": "Aucun",
   "Basic Auth": "Authentification basique",
-  "Header Auth": "Auth de l'en-tête"
+  "Header Auth": "Authentification de l'en-tête"
 }
