@@ -170,6 +170,11 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         queryBuilder.andWhere({
             id: Not(In(agentsInTable)),
         })
+        if (!isNil(params.externalIds)) {
+            queryBuilder.andWhere({
+                externalId: In(params.externalIds),
+            })
+        }
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
         return paginationHelper.createPage<PopulatedAgent>(
@@ -217,6 +222,7 @@ type GetOneByExternalIdParams = {
 
 type ListParams = {
     projectId: string
+    externalIds?: string[]
     limit: number
     cursorRequest: Cursor
 

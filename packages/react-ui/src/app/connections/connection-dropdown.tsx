@@ -6,7 +6,10 @@ import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Label } from '@/components/ui/label';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import {
+  PieceMetadataModel,
+  PieceMetadataModelSummary,
+} from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 
 type ConnectionDropdownProps = {

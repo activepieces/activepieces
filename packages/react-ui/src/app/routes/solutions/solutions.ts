@@ -1,11 +1,11 @@
-import { Solution } from "@activepieces/shared";
-
+import { Solution } from '@activepieces/shared';
 
 export const solutions: Solution[] = [
-    {
-        thumbnail: 'https://content.activepieces.com/uploads/placeholder_blog_de8c9fa735.png',
-        name: 'Automate Blog Writing',
-        description: `
+  {
+    thumbnail:
+      'https://content.activepieces.com/uploads/placeholder_blog_de8c9fa735.png',
+    name: 'Automate Blog Writing',
+    description: `
 Transform your content creation process with this comprehensive blog writing automation solution. This powerful workflow streamlines every aspect of blog production, from initial research to final publication.
 
 ## Key Features
@@ -51,207 +51,206 @@ Transform your content creation process with this comprehensive blog writing aut
 - Anyone who needs consistent, quality content
 
 Get started today and transform your content creation process from hours of manual work to minutes of automated excellence!`,
-        "state": {
-            "flows": [
-                {
-                    "id": "j3EQL8OwBEhliYq2ekcu3",
-                    "created": "2025-08-12T12:23:16.988Z",
-                    "updated": "2025-08-12T12:30:25.047Z",
-                    "projectId": "BdtoyXT9TIfMDcG5vECz4",
-                    "folderId": null,
-                    "status": "DISABLED",
-                    "externalId": "LjGB5M7Tj1tMXVWermXmv",
-                    "publishedVersionId": null,
-                    "metadata": null,
-                    "version": {
-                        "id": "sGHFPuc19bYm2qj4IsbVb",
-                        "created": "2025-08-12T12:23:17.002Z",
-                        "updated": "2025-08-12T12:30:25.077Z",
-                        "flowId": "j3EQL8OwBEhliYq2ekcu3",
-                        "displayName": "Chat With Agent",
-                        "schemaVersion": "5",
-                        "trigger": {
-                            "name": "trigger",
-                            "type": "PIECE_TRIGGER",
-                            "valid": true,
-                            "settings": {
-                                "input": {
-                                    "botName": "AI Bot"
-                                },
-                                "pieceName": "@activepieces/piece-forms",
-                                "inputUiInfo": {
-                                    "customizedInputs": {}
-                                },
-                                "triggerName": "chat_submission",
-                                "pieceVersion": "~0.4.3"
-                            },
-                            "nextAction": {
-                                "name": "step_2",
-                                "type": "PIECE",
-                                "valid": true,
-                                "settings": {
-                                    "input": {
-                                        "prompt": "{{trigger['message']}}",
-                                        "agentId": "brwJTww5Gr1P0B99jUhhy"
-                                    },
-                                    "pieceName": "@activepieces/piece-agent",
-                                    "pieceType": "OFFICIAL",
-                                    "actionName": "run_agent",
-                                    "inputUiInfo": {
-                                        "customizedInputs": {}
-                                    },
-                                    "packageType": "REGISTRY",
-                                    "pieceVersion": "~0.2.4",
-                                    "errorHandlingOptions": {
-                                        "retryOnFailure": {
-                                            "value": false
-                                        },
-                                        "continueOnFailure": {
-                                            "value": false
-                                        }
-                                    }
-                                },
-                                "nextAction": {
-                                    "name": "step_3",
-                                    "skip": false,
-                                    "type": "PIECE",
-                                    "valid": true,
-                                    "settings": {
-                                        "input": {
-                                            "auth": "{{connections['MMb8MeVPMjwzuQKJKZgN6']}}",
-                                            "text": "Hello",
-                                            "userId": "USLACKBOT"
-                                        },
-                                        "pieceName": "@activepieces/piece-slack",
-                                        "actionName": "send_direct_message",
-                                        "inputUiInfo": {
-                                            "customizedInputs": {}
-                                        },
-                                        "pieceVersion": "~0.10.1",
-                                        "errorHandlingOptions": {
-                                            "retryOnFailure": {
-                                                "value": false
-                                            },
-                                            "continueOnFailure": {
-                                                "value": false
-                                            }
-                                        }
-                                    },
-                                    "nextAction": {
-                                        "name": "step_1",
-                                        "skip": false,
-                                        "type": "PIECE",
-                                        "valid": true,
-                                        "settings": {
-                                            "input": {
-                                                "markdown": "{{step_2['message']}}"
-                                            },
-                                            "pieceName": "@activepieces/piece-forms",
-                                            "pieceType": "OFFICIAL",
-                                            "actionName": "return_response",
-                                            "inputUiInfo": {
-                                                "customizedInputs": {}
-                                            },
-                                            "packageType": "REGISTRY",
-                                            "pieceVersion": "~0.4.3",
-                                            "errorHandlingOptions": {
-                                                "retryOnFailure": {
-                                                    "value": false
-                                                },
-                                                "continueOnFailure": {
-                                                    "value": false
-                                                }
-                                            }
-                                        },
-                                        "displayName": "Respond on UI"
-                                    },
-                                    "displayName": "Send Message To A User"
-                                },
-                                "displayName": "Fresh Agent"
-                            },
-                            "displayName": "Chat UI"
+    state: {
+      flows: [
+        {
+          id: 'j3EQL8OwBEhliYq2ekcu3',
+          created: '2025-08-12T12:23:16.988Z',
+          updated: '2025-08-12T12:30:25.047Z',
+          projectId: 'BdtoyXT9TIfMDcG5vECz4',
+          folderId: null,
+          status: 'DISABLED',
+          externalId: 'LjGB5M7Tj1tMXVWermXmv',
+          publishedVersionId: null,
+          metadata: null,
+          version: {
+            id: 'sGHFPuc19bYm2qj4IsbVb',
+            created: '2025-08-12T12:23:17.002Z',
+            updated: '2025-08-12T12:30:25.077Z',
+            flowId: 'j3EQL8OwBEhliYq2ekcu3',
+            displayName: 'Chat With Agent',
+            schemaVersion: '5',
+            trigger: {
+              name: 'trigger',
+              type: 'PIECE_TRIGGER',
+              valid: true,
+              settings: {
+                input: {
+                  botName: 'AI Bot',
+                },
+                pieceName: '@activepieces/piece-forms',
+                inputUiInfo: {
+                  customizedInputs: {},
+                },
+                triggerName: 'chat_submission',
+                pieceVersion: '~0.4.3',
+              },
+              nextAction: {
+                name: 'step_2',
+                type: 'PIECE',
+                valid: true,
+                settings: {
+                  input: {
+                    prompt: "{{trigger['message']}}",
+                    agentId: 'brwJTww5Gr1P0B99jUhhy',
+                  },
+                  pieceName: '@activepieces/piece-agent',
+                  pieceType: 'OFFICIAL',
+                  actionName: 'run_agent',
+                  inputUiInfo: {
+                    customizedInputs: {},
+                  },
+                  packageType: 'REGISTRY',
+                  pieceVersion: '~0.2.4',
+                  errorHandlingOptions: {
+                    retryOnFailure: {
+                      value: false,
+                    },
+                    continueOnFailure: {
+                      value: false,
+                    },
+                  },
+                },
+                nextAction: {
+                  name: 'step_3',
+                  skip: false,
+                  type: 'PIECE',
+                  valid: true,
+                  settings: {
+                    input: {
+                      auth: "{{connections['MMb8MeVPMjwzuQKJKZgN6']}}",
+                      text: 'Hello',
+                      userId: 'USLACKBOT',
+                    },
+                    pieceName: '@activepieces/piece-slack',
+                    actionName: 'send_direct_message',
+                    inputUiInfo: {
+                      customizedInputs: {},
+                    },
+                    pieceVersion: '~0.10.1',
+                    errorHandlingOptions: {
+                      retryOnFailure: {
+                        value: false,
+                      },
+                      continueOnFailure: {
+                        value: false,
+                      },
+                    },
+                  },
+                  nextAction: {
+                    name: 'step_1',
+                    skip: false,
+                    type: 'PIECE',
+                    valid: true,
+                    settings: {
+                      input: {
+                        markdown: "{{step_2['message']}}",
+                      },
+                      pieceName: '@activepieces/piece-forms',
+                      pieceType: 'OFFICIAL',
+                      actionName: 'return_response',
+                      inputUiInfo: {
+                        customizedInputs: {},
+                      },
+                      packageType: 'REGISTRY',
+                      pieceVersion: '~0.4.3',
+                      errorHandlingOptions: {
+                        retryOnFailure: {
+                          value: false,
                         },
-                        "connectionIds": [
-                            "MMb8MeVPMjwzuQKJKZgN6"
-                        ],
-                        "agentIds": [
-                            "brwJTww5Gr1P0B99jUhhy"
-                        ],
-                        "updatedBy": "MSKcInmyX3JRm3e6SaqOO",
-                        "valid": true,
-                        "state": "DRAFT"
-                    }
-                }
-            ],
-            "connections": [
-                {
-                    "externalId": "MMb8MeVPMjwzuQKJKZgN6",
-                    "pieceName": "@activepieces/piece-slack",
-                    "displayName": "Slack"
-                }
-            ],
-            "tables": [
-                {
-                    "id": "5tzUNoQpkTPsZ7i5lPzf6",
-                    "created": "2025-08-12T01:11:35.976Z",
-                    "updated": "2025-08-12T01:11:36.599Z",
-                    "name": "New Table",
-                    "externalId": "ZKqDcGjxvKUgiAftOVB3w",
-                    "agentId": "VGvSFGvvfLs38hgi90cGv",
-                    "trigger": null,
-                    "status": null,
-                    "projectId": "BdtoyXT9TIfMDcG5vECz4",
-                    "fields": [
-                        {
-                            "id": "ApAOumGy2fiSevRlXVqD4",
-                            "created": "2025-08-12T01:11:36.141Z",
-                            "updated": "2025-08-12T01:11:36.141Z",
-                            "name": "Name",
-                            "type": "TEXT",
-                            "tableId": "5tzUNoQpkTPsZ7i5lPzf6",
-                            "projectId": "BdtoyXT9TIfMDcG5vECz4",
-                            "externalId": "djjJ8NwkQJ3VeLEFHqymk",
-                            "data": null
-                        }
-                    ]
-                }
-            ],
-            "agents": [
-                {
-                    "id": "8ZHza9NVHIN60DJ86D34c",
-                    "created": "2025-08-12T12:23:04.783Z",
-                    "updated": "2025-08-12T12:23:04.783Z",
-                    "profilePictureUrl": "https://cdn.activepieces.com/quicknew/agents/robots/robot_8111.png",
-                    "displayName": "Blog Writer Agent",
-                    "description": "Creates engaging and informative blog posts.",
-                    "maxSteps": 10,
-                    "mcpId": "8ik9lRwXpqs9Hw7Dc1Moc",
-                    "systemPrompt": "# Blog Writer Agent\n\n## Goal\nThe primary goal of the Blog Writer Agent is to create engaging, informative, and well-structured blog posts tailored to the target audience.\n\n## Instructions\n1. Identify the topic and target audience for the blog post.\n2. Conduct thorough research to gather relevant information and insights.\n3. Draft the blog post, ensuring it has a clear introduction, body, and conclusion.\n4. Use headings and subheadings to enhance readability.\n5. Incorporate SEO best practices, including keywords and meta descriptions.\n6. Edit and proofread the content for grammar, style, and coherence.\n\n## Constraints or Style Guidelines\n- Maintain a professional tone while being approachable.\n- Aim for a word count of 800-1500 words.\n- Use bullet points and lists where appropriate to improve clarity.\n- Ensure all sources are credible and properly cited.",
-                    "projectId": "BdtoyXT9TIfMDcG5vECz4",
-                    "platformId": "bYjh7ANyhuBmXWdLPDT9T",
-                    "outputType": "no_output",
-                    "externalId": "brwJTww5Gr1P0B99jUhhy",
-                    "outputFields": [],
-                    "runCompleted": 0,
-                    "mcp": {
-                        "id": "8ik9lRwXpqs9Hw7Dc1Moc",
-                        "created": "2025-08-12T12:23:00.024Z",
-                        "updated": "2025-08-12T12:23:04.797Z",
-                        "name": "Fresh Agent",
-                        "agentId": "8ZHza9NVHIN60DJ86D34c",
-                        "projectId": "BdtoyXT9TIfMDcG5vECz4",
-                        "token": "RaxKmjZ7pf0zWJ8ql9Hl2",
-                        "externalId": "ZRFNjX76iX8SNIG3RfPtH",
-                        "tools": []
-                    }
-                }
-            ]
+                        continueOnFailure: {
+                          value: false,
+                        },
+                      },
+                    },
+                    displayName: 'Respond on UI',
+                  },
+                  displayName: 'Send Message To A User',
+                },
+                displayName: 'Fresh Agent',
+              },
+              displayName: 'Chat UI',
+            },
+            connectionIds: ['MMb8MeVPMjwzuQKJKZgN6'],
+            agentIds: ['brwJTww5Gr1P0B99jUhhy'],
+            updatedBy: 'MSKcInmyX3JRm3e6SaqOO',
+            valid: true,
+            state: 'DRAFT',
+          },
         },
-    } as any,
-    {
-        thumbnail: 'https://content.activepieces.com/uploads/img_h_P7f_Otacq_Xy_Cw_Jjlw2gl_Jryh_min_925f98d38b.png',
-        name: 'Customer Support Automation',
-        description: `
+      ],
+      connections: [
+        {
+          externalId: 'MMb8MeVPMjwzuQKJKZgN6',
+          pieceName: '@activepieces/piece-slack',
+          displayName: 'Slack',
+        },
+      ],
+      tables: [
+        {
+          id: '5tzUNoQpkTPsZ7i5lPzf6',
+          created: '2025-08-12T01:11:35.976Z',
+          updated: '2025-08-12T01:11:36.599Z',
+          name: 'New Table',
+          externalId: 'ZKqDcGjxvKUgiAftOVB3w',
+          agentId: 'VGvSFGvvfLs38hgi90cGv',
+          trigger: null,
+          status: null,
+          projectId: 'BdtoyXT9TIfMDcG5vECz4',
+          fields: [
+            {
+              id: 'ApAOumGy2fiSevRlXVqD4',
+              created: '2025-08-12T01:11:36.141Z',
+              updated: '2025-08-12T01:11:36.141Z',
+              name: 'Name',
+              type: 'TEXT',
+              tableId: '5tzUNoQpkTPsZ7i5lPzf6',
+              projectId: 'BdtoyXT9TIfMDcG5vECz4',
+              externalId: 'djjJ8NwkQJ3VeLEFHqymk',
+              data: null,
+            },
+          ],
+        },
+      ],
+      agents: [
+        {
+          id: '8ZHza9NVHIN60DJ86D34c',
+          created: '2025-08-12T12:23:04.783Z',
+          updated: '2025-08-12T12:23:04.783Z',
+          profilePictureUrl:
+            'https://cdn.activepieces.com/quicknew/agents/robots/robot_8111.png',
+          displayName: 'Blog Writer Agent',
+          description: 'Creates engaging and informative blog posts.',
+          maxSteps: 10,
+          mcpId: '8ik9lRwXpqs9Hw7Dc1Moc',
+          systemPrompt:
+            '# Blog Writer Agent\n\n## Goal\nThe primary goal of the Blog Writer Agent is to create engaging, informative, and well-structured blog posts tailored to the target audience.\n\n## Instructions\n1. Identify the topic and target audience for the blog post.\n2. Conduct thorough research to gather relevant information and insights.\n3. Draft the blog post, ensuring it has a clear introduction, body, and conclusion.\n4. Use headings and subheadings to enhance readability.\n5. Incorporate SEO best practices, including keywords and meta descriptions.\n6. Edit and proofread the content for grammar, style, and coherence.\n\n## Constraints or Style Guidelines\n- Maintain a professional tone while being approachable.\n- Aim for a word count of 800-1500 words.\n- Use bullet points and lists where appropriate to improve clarity.\n- Ensure all sources are credible and properly cited.',
+          projectId: 'BdtoyXT9TIfMDcG5vECz4',
+          platformId: 'bYjh7ANyhuBmXWdLPDT9T',
+          outputType: 'no_output',
+          externalId: 'brwJTww5Gr1P0B99jUhhy',
+          outputFields: [],
+          runCompleted: 0,
+          mcp: {
+            id: '8ik9lRwXpqs9Hw7Dc1Moc',
+            created: '2025-08-12T12:23:00.024Z',
+            updated: '2025-08-12T12:23:04.797Z',
+            name: 'Fresh Agent',
+            agentId: '8ZHza9NVHIN60DJ86D34c',
+            projectId: 'BdtoyXT9TIfMDcG5vECz4',
+            token: 'RaxKmjZ7pf0zWJ8ql9Hl2',
+            externalId: 'ZRFNjX76iX8SNIG3RfPtH',
+            tools: [],
+          },
+        },
+      ],
+    },
+  } as any,
+  {
+    thumbnail:
+      'https://content.activepieces.com/uploads/img_h_P7f_Otacq_Xy_Cw_Jjlw2gl_Jryh_min_925f98d38b.png',
+    name: 'Customer Support Automation',
+    description: `
 Revolutionize your customer service with intelligent automation that provides 24/7 support while reducing response times and improving customer satisfaction.
 
 ## Key Features
@@ -297,17 +296,18 @@ Revolutionize your customer service with intelligent automation that provides 24
 - Any business with high support volume
 
 Transform your customer support from reactive to proactive with intelligent automation!`,
-        state: {
-            connections: [],
-            tables: [],
-            agents: [],
-            flows: [],
-        },
+    state: {
+      connections: [],
+      tables: [],
+      agents: [],
+      flows: [],
     },
-    {
-        thumbnail: 'https://content.activepieces.com/uploads/How_To_Build_AI_Agents_on_Activepieces_1_cd55a5b17d.jpg',
-        name: 'Lead Generation & Nurturing',
-        description: `
+  },
+  {
+    thumbnail:
+      'https://content.activepieces.com/uploads/How_To_Build_AI_Agents_on_Activepieces_1_cd55a5b17d.jpg',
+    name: 'Lead Generation & Nurturing',
+    description: `
 Supercharge your sales pipeline with automated lead generation, qualification, and nurturing workflows that convert prospects into customers.
 
 ## Key Features
@@ -353,17 +353,18 @@ Supercharge your sales pipeline with automated lead generation, qualification, a
 - Any business focused on lead generation
 
 Turn your marketing efforts into a predictable revenue engine with automated lead generation!`,
-        state: {
-            connections: [],
-            tables: [],
-            agents: [],
-            flows: [],
-        },
+    state: {
+      connections: [],
+      tables: [],
+      agents: [],
+      flows: [],
     },
-    {
-        thumbnail: 'https://content.activepieces.com/uploads/placeholder_blog_de8c9fa735.png',
-        name: 'Social Media Management',
-        description: `
+  },
+  {
+    thumbnail:
+      'https://content.activepieces.com/uploads/placeholder_blog_de8c9fa735.png',
+    name: 'Social Media Management',
+    description: `
 Streamline your social media presence with comprehensive automation that handles content creation, scheduling, engagement, and analytics across all platforms.
 
 ## Key Features
@@ -409,11 +410,11 @@ Streamline your social media presence with comprehensive automation that handles
 - Any business building an online presence
 
 Transform your social media from time-consuming task to automated growth engine!`,
-        state: {
-            connections: [],
-            tables: [],
-            agents: [],
-            flows: [],
-        },
+    state: {
+      connections: [],
+      tables: [],
+      agents: [],
+      flows: [],
     },
+  },
 ];

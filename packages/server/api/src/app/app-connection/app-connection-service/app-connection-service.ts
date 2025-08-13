@@ -224,8 +224,8 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         })
 
         await appConnectionHandler(log).updateFlowsWithAppConnection(flows.data, {
-            appConnection: sourceAppConnection,
-            newAppConnection: targetAppConnection,
+            appConnectionExternalId: sourceAppConnection.externalId,
+            newAppConnectionExternalId: targetAppConnection.externalId,
             userId,
         })
 
