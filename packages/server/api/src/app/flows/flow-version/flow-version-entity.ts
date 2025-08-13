@@ -8,7 +8,7 @@ import {
     JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
 
-type FlowVersionSchema = {
+export type FlowVersionSchema = {
     flow: Flow
     updatedByUser: User
 } & FlowVersion
@@ -30,6 +30,11 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             nullable: true,
         },
         connectionIds: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
+            nullable: false,
+        },
+        agentIds: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
             nullable: false,

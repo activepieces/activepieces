@@ -1,7 +1,7 @@
 {
   "SendFox": "SendFox",
   "Email marketing made simple": "Простой маркетинг по электронной почте",
-  "To obtain your personal token, follow these steps:\n1. Log in to your SendFox account.\n2. Visit https://sendfox.com/account/oauth to create one\n3. From OAuth Apps click on Create New Token.\n4. Enter any name you want then click create.\n5. Copy and paste your token here.": "To obtain your personal token, follow these steps:\n1. Log in to your SendFox account.\n2. Visit https://sendfox.com/account/oauth to create one\n3. From OAuth Apps click on Create New Token.\n4. Enter any name you want then click create.\n5. Copy and paste your token here.",
+  "To obtain your personal token, follow these steps:\n1. Log in to your SendFox account.\n2. Visit https://sendfox.com/account/oauth to create one\n3. From OAuth Apps click on Create New Token.\n4. Enter any name you want then click create.\n5. Copy and paste your token here.": "Для получения вашего персонального токена выполните следующие шаги:\n1. Войдите в свой аккаунт SendFox.\n2. Перейдите на сайт https://sendfox.com/account/oauth, чтобы создать его.\n3. В разделе OAuth приложения нажмите на «Создать новый токен».\n4. Введите любое имя, затем нажмите создать.\n5. Скопируйте и вставьте ваш токен сюда.",
   "Create List": "Создать список",
   "Unsubscribe Contact": "Отписаться от контактов",
   "Create Contact": "Создать контакт",

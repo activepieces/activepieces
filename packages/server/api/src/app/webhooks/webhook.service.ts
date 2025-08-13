@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { flowService } from '../flows/flow/flow.service'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { handshakeHandler } from './handshake-handler'
 import { WebhookFlowVersionToRun, webhookHandler } from './webhook-handler'
@@ -19,6 +20,8 @@ export const webhookService = {
         payload,
         execute,
         onRunCreated,
+        parentRunId,
+        failParentOnFailure,
     }: HandleWebhookParams): Promise<EngineHttpResponse> {
         const webhookHeader = 'x-webhook-id'
         const webhookRequestId = apId()
@@ -46,9 +49,14 @@ export const webhookService = {
             })
         }
 
+        const trigger = await triggerSourceService(pinoLogger).getByFlowId({
+            flowId: flow.id,
+            projectId: flow.projectId,
+            simulate: saveSampleData,
+        })
         const response = await handshakeHandler.handleHandshakeRequest({
             payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
-            handshakeConfiguration: flow.handshakeConfiguration ?? null,
+            handshakeConfiguration: trigger?.handshakeConfiguration ?? null,
             log: pinoLogger,
             flowId: flow.id,
             flowVersionId: flowVersionIdToRun,
@@ -92,6 +100,8 @@ export const webhookService = {
                 runEnvironment: flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
                 webhookHeader,
                 execute: flow.status === FlowStatus.ENABLED && execute,
+                parentRunId,
+                failParentOnFailure,
             })
         }
 
@@ -108,6 +118,8 @@ export const webhookService = {
             saveSampleData,
             flowVersionToRun,
             onRunCreated,
+            parentRunId,
+            failParentOnFailure,
         })
         return {
             status: flowHttpResponse.status,
@@ -130,4 +142,6 @@ type HandleWebhookParams = {
     payload?: Record<string, unknown>
     execute: boolean
     onRunCreated?: (run: FlowRun) => void
+    parentRunId?: string
+    failParentOnFailure: boolean
 }

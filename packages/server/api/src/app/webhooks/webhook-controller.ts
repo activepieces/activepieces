@@ -2,7 +2,10 @@
 import {
     ALL_PRINCIPAL_TYPES,
     EventPayload,
+    FAIL_PARENT_ON_FAILURE_HEADER,
+    FlowRun,
     isMultipartFile,
+    PARENT_RUN_ID_HEADER,
     WebhookUrlParams,
     WebsocketClientEvent,
 } from '@activepieces/shared'
@@ -10,8 +13,8 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { projectService } from '../project/project-service'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun } from './webhook-handler'
-import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { webhookService } from './webhook.service'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
@@ -26,10 +29,13 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 flowId: request.params.flowId,
                 async: false,
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                saveSampleData: await webhookSimulationService(request.log).exists(
-                    request.params.flowId,
+                saveSampleData: await triggerSourceService(request.log).existsByFlowId({
+                    flowId: request.params.flowId,
+                    simulate: true,
+                },
                 ),
                 execute: true,
+                ...extractHeaderFromRequest(request),
             })
             await reply
                 .status(response.status)
@@ -47,11 +53,14 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 logger: request.log,
                 flowId: request.params.flowId,
                 async: true,
-                saveSampleData: await webhookSimulationService(request.log).exists(
-                    request.params.flowId,
+                saveSampleData: await triggerSourceService(request.log).existsByFlowId({
+                    flowId: request.params.flowId,
+                    simulate: true,
+                },
                 ),
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                 execute: true,
+                ...extractHeaderFromRequest(request),
             })
             await reply
                 .status(response.status)
@@ -72,6 +81,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             onRunCreated: (run) => {
                 app.io.to(run.projectId).emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, run)
             },
+            ...extractHeaderFromRequest(request),
         })
         await reply
             .status(response.status)
@@ -88,6 +98,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             saveSampleData: true,
             flowVersionToRun: WebhookFlowVersionToRun.LATEST,
             execute: true,
+            ...extractHeaderFromRequest(request),
         })
         await reply
             .status(response.status)
@@ -104,6 +115,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             saveSampleData: true,
             flowVersionToRun: WebhookFlowVersionToRun.LATEST,
             execute: false,
+            ...extractHeaderFromRequest(request),
         })
         await reply
             .status(response.status)
@@ -177,3 +189,10 @@ async function convertBody(
     return request.body
 }
 
+
+function extractHeaderFromRequest(request: FastifyRequest): Pick<FlowRun, 'parentRunId' | 'failParentOnFailure'> {
+    return {
+        parentRunId: request.headers[PARENT_RUN_ID_HEADER] as string,
+        failParentOnFailure: request.headers[FAIL_PARENT_ON_FAILURE_HEADER] === 'true',
+    }
+}

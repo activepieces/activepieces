@@ -10,6 +10,7 @@ import {
     SelectQueryBuilder,
 } from 'typeorm'
 import { AgentEntity } from '../agents/agent-entity'
+import { AgentRunEntity } from '../agents/agent-runs/agent-run.entity'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AIUsageEntity } from '../ai/ai-usage-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
@@ -40,7 +41,6 @@ import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { IssueEntity } from '../flows/issues/issues-entity'
-import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { DatabaseType, system } from '../helper/system/system'
 import { McpEntity } from '../mcp/mcp-entity'
 import { McpRunEntity } from '../mcp/mcp-run/mcp-run.entity'
@@ -58,9 +58,11 @@ import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
 import { TagEntity } from '../tags/tag-entity'
 import { TodoActivityEntity } from '../todos/activity/todos-activity.entity'
 import { TodoEntity } from '../todos/todo.entity'
+import { TriggerEventEntity } from '../trigger/trigger-events/trigger-event.entity'
+import { TriggerRunEntity } from '../trigger/trigger-run/trigger-run.entity'
+import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
-import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
@@ -82,7 +84,6 @@ function getEntities(): EntitySchema<unknown>[] {
         StoreEntryEntity,
         UserEntity,
         AppConnectionEntity,
-        WebhookSimulationEntity,
         FolderEntity,
         PieceMetadataEntity,
         PlatformEntity,
@@ -107,6 +108,9 @@ function getEntities(): EntitySchema<unknown>[] {
         McpToolEntity,
         McpRunEntity,
         AIUsageEntity,
+        AgentRunEntity,
+        TriggerSourceEntity,
+        TriggerRunEntity,
     ]
 
     switch (edition) {

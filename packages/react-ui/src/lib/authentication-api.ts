@@ -14,6 +14,7 @@ import {
   SwitchPlatformRequest,
   SwitchProjectRequest,
   ThirdPartyAuthnProviderEnum,
+  UserIdentity,
 } from '@activepieces/shared';
 
 export const authenticationApi = {
@@ -50,7 +51,7 @@ export const authenticationApi = {
     return api.post<void>('/v1/authn/local/reset-password', request);
   },
   verifyEmail(request: VerifyEmailRequestBody) {
-    return api.post<void>('/v1/authn/local/verify-email', request);
+    return api.post<UserIdentity>('/v1/authn/local/verify-email', request);
   },
   switchProject(request: SwitchProjectRequest) {
     return api.post<AuthenticationResponse>(

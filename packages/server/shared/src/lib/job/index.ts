@@ -12,6 +12,7 @@ export enum JobType {
     REPEATING = 'REPEATING',
     DELAYED = 'DELAYED',
     USERS_INTERACTION = 'USERS_INTERACTION',
+    AGENTS = 'AGENTS',
 }
 
 export enum JobStatus {
@@ -24,6 +25,7 @@ export enum QueueName {
     ONE_TIME = 'oneTimeJobs',
     SCHEDULED = 'repeatableJobs',
     USERS_INTERACTION = 'usersInteractionJobs',
+    AGENTS = 'agentsJobs',
 }
 
 export const PollJobRequest = Type.Object({
@@ -38,16 +40,6 @@ export const UpdateJobRequest = Type.Object({
     message: Type.Optional(Type.String()),
 })
 export type UpdateJobRequest = Static<typeof UpdateJobRequest>
-
-export const UpdateFailureCountRequest = Type.Object({
-    flowId: Type.String(),
-    projectId: Type.String(),
-    success: Type.Boolean(),
-})
-
-export type UpdateFailureCountRequest = Static<
-  typeof UpdateFailureCountRequest
->
 
 export const ApQueueJob = Type.Object({
     id: Type.String(),
@@ -80,6 +72,8 @@ export const SubmitPayloadsRequest = Type.Object({
     httpRequestId: Type.Optional(Type.String()),
     payloads: Type.Array(Type.Unknown()),
     environment: Type.Enum(RunEnvironment),
+    parentRunId: Type.Optional(Type.String()),
+    failParentOnFailure: Type.Optional(Type.Boolean()),
 })
 
 export type SubmitPayloadsRequest = Static<typeof SubmitPayloadsRequest>
@@ -95,7 +89,6 @@ export type ResumeRunRequest = Static<typeof ResumeRunRequest>
 
 export function getEngineTimeout(operationType: EngineOperationType, flowTimeoutSandbox: number, triggerTimeoutSandbox: number): number {
     switch (operationType) {
-        case EngineOperationType.EXECUTE_STEP:
         case EngineOperationType.EXECUTE_FLOW:
         case EngineOperationType.EXECUTE_TOOL:
             return flowTimeoutSandbox

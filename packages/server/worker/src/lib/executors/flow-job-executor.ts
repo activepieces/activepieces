@@ -1,6 +1,7 @@
 import { exceptionHandler, OneTimeJobData, pinoLogging } from '@activepieces/server-shared'
 import { ActivepiecesError, assertNotNullOrUndefined, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { flowWorkerCache } from '../api/flow-worker-cache'
 import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../runner'
 import { workerMachine } from '../utils/machine'
@@ -9,7 +10,6 @@ type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
 
 async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, attempsStarted: number, engineToken: string, log: FastifyBaseLogger): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {
-
     switch (jobData.executionType) {
         case ExecutionType.BEGIN:{
             const flowRun =  (jobData.executionType === ExecutionType.BEGIN && attempsStarted > 1) ? await engineApiService(engineToken, log).getRun({
@@ -25,11 +25,13 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 executionState: {
                     steps: !isNil(flowRun) ? flowRun.steps : {},
                 },
+                sampleData: jobData.sampleData,
                 tasks: flowRun?.tasks ?? 0,
                 executeTrigger: jobData.executeTrigger ?? false,
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,
                 progressUpdateType: jobData.progressUpdateType,
+                stepNameToTest: jobData.stepNameToTest ?? null,
             }
         }
         case ExecutionType.RESUME: {
@@ -51,6 +53,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 httpRequestId: jobData.httpRequestId ?? null,
                 resumePayload: jobData.payload as ResumePayload,
                 progressUpdateType: jobData.progressUpdateType,
+                stepNameToTest: jobData.stepNameToTest ?? null,
             }
         }
     }
@@ -75,8 +78,9 @@ async function handleMemoryIssueError(jobData: OneTimeJobData, engineToken: stri
 
 
 async function handleQuotaExceededError(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
-    const flow = await engineApiService(engineToken, log).getFlowWithExactPieces({
-        versionId: jobData.flowVersionId,
+    const flow = await flowWorkerCache(log).getFlow({
+        engineToken,
+        flowVersionId: jobData.flowVersionId,
     })
     assertNotNullOrUndefined(flow, 'Flow version not found')
     const payloadBuffer = JSON.stringify({
@@ -141,8 +145,9 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
     async executeFlow(jobData: OneTimeJobData, attempsStarted: number, engineToken: string): Promise<void> {
         try {
 
-            const flow = await engineApiService(engineToken, log).getFlowWithExactPieces({
-                versionId: jobData.flowVersionId,
+            const flow = await flowWorkerCache(log).getFlow({
+                engineToken,
+                flowVersionId: jobData.flowVersionId,
             })
             if (isNil(flow)) {
                 return

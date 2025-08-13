@@ -2,7 +2,7 @@ import { t } from 'i18next';
 import { useState } from 'react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { TableTitle } from '@/components/custom/table-title';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -62,34 +62,40 @@ export const AgentsPage = () => {
       )}
     >
       <div className="flex items-center justify-between">
-        <TableTitle
-          beta={true}
+        <DashboardPageHeader
+          title={t('Agents')}
           description={t('Build and manage your team of digital workers')}
+          beta={true}
+          tutorialTab="agents"
         >
-          {t('Agents')}
-        </TableTitle>
-        <AgentBuilder
-          isOpen={isOpen}
-          refetch={refetch}
-          onOpenChange={(open) => {
-            setIsOpen(open);
-            if (!open) {
-              setSelectedAgent(undefined);
-            }
-          }}
-          agent={selectedAgent}
-          trigger={
-            <CreateAgentButton
-              onAgentCreated={handleAgentCreated}
-              isAgentsConfigured={isisAgentsConfigured ?? false}
-            />
-          }
-        />
+          <CreateAgentButton
+            onAgentCreated={handleAgentCreated}
+            isAgentsConfigured={isisAgentsConfigured ?? false}
+          />
+        </DashboardPageHeader>
+
+        {selectedAgent && (
+          <AgentBuilder
+            isOpen={isOpen}
+            onOpenChange={(open) => {
+              setIsOpen(open);
+              if (!open) {
+                setSelectedAgent(undefined);
+              }
+            }}
+            onChange={() => {
+              refetch();
+            }}
+            agent={selectedAgent}
+            showUseInFlow={true}
+            trigger={<></>}
+          />
+        )}
       </div>
 
       <div className="mt-4">
         {agents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-[400px] border-2 border-dashed rounded-lg bg-gradient-to-br from-background to-muted/20">
+          <div className="flex flex-col items-center justify-center h-[400px]  rounded-lg bg-gradient-to-br from-background to-muted/20">
             <img
               src={agentsGroupImage}
               alt="Agents"
@@ -110,6 +116,7 @@ export const AgentsPage = () => {
                   description={agent.description || ''}
                   picture={agent.profilePictureUrl}
                   onDelete={() => handleDeleteAgent(agent.id)}
+                  runCompleted={agent.runCompleted}
                 />
               </div>
             ))}

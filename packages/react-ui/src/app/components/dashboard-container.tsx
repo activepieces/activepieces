@@ -3,10 +3,11 @@ import { Bot, ListTodo, Package, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
-import mcpDark from '@/assets/img/custom/mcp-dark.svg';
-import mcpLight from '@/assets/img/custom/mcp-light.svg';
+import { McpSvg } from '@/assets/img/custom/mcp';
 import { useEmbedding } from '@/components/embed-provider';
-import { useTheme } from '@/components/theme-provider';
+import { AiCreditsLimitAlert } from '@/features/billing/components/ai-credits-limit-alert';
+import { ProjectLockedAlert } from '@/features/billing/components/project-locked-alert';
+import { TaskLimitAlert } from '@/features/billing/components/task-limit-alert';
 import { WelcomeTrialDialog } from '@/features/billing/components/trial-dialog';
 import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -21,9 +22,6 @@ import { SidebarComponent, SidebarItem, SidebarLink } from './sidebar';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
-  hideHeader?: boolean;
-  removeGutters?: boolean;
-  removeBottomPadding?: boolean;
 };
 
 const ProjectChangedRedirector = ({
@@ -41,20 +39,13 @@ export const CloseTaskLimitAlertContext = createContext({
   setIsAlertClosed: (_isAlertClosed: boolean) => {},
 });
 
-export function DashboardContainer({
-  children,
-  removeGutters,
-  hideHeader,
-  removeBottomPadding,
-}: DashboardContainerProps) {
-  const { theme } = useTheme();
+export function DashboardContainer({ children }: DashboardContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { project } = projectHooks.useCurrentProject();
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-
   const { data: showBilling } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_BILLING,
   );
@@ -89,11 +80,13 @@ export function DashboardContainer({
     label: t('Flows'),
     hasPermission: checkAccess(Permission.READ_FLOW),
     isSubItem: false,
+    name: t('Products'),
     show: true,
     isActive: (pathname) =>
       pathname.includes('/flows') ||
       pathname.includes('/runs') ||
       pathname.includes('/issues'),
+    tutorialTab: 'flows',
   };
 
   const mcpLink: SidebarLink = {
@@ -101,15 +94,10 @@ export function DashboardContainer({
     to: authenticationSession.appendProjectRoutePrefix('/mcps'),
     label: t('MCP'),
     show: platform.plan.mcpsEnabled || !embedState.isEmbedded,
-    icon: (
-      <img
-        src={theme === 'dark' ? mcpDark : mcpLight}
-        alt="MCP"
-        className="color-foreground"
-      />
-    ),
+    icon: <McpSvg className="size-4" />,
     hasPermission: checkAccess(Permission.READ_MCP),
     isSubItem: false,
+    tutorialTab: 'mcpServers',
   };
 
   const agentsLink: SidebarLink = {
@@ -120,7 +108,7 @@ export function DashboardContainer({
     show: platform.plan.agentsEnabled || !embedState.isEmbedded,
     hasPermission: true,
     isSubItem: false,
-    name: t('Products'),
+    tutorialTab: 'agents',
   };
 
   const tablesLink: SidebarLink = {
@@ -131,6 +119,7 @@ export function DashboardContainer({
     icon: <Table2 />,
     hasPermission: checkAccess(Permission.READ_TABLE),
     isSubItem: false,
+    tutorialTab: 'tables',
   };
 
   const todosLink: SidebarLink = {
@@ -141,11 +130,12 @@ export function DashboardContainer({
     icon: <ListTodo />,
     hasPermission: checkAccess(Permission.READ_TODOS),
     isSubItem: false,
+    tutorialTab: 'todos',
   };
 
   const items: SidebarItem[] = [
-    agentsLink,
     flowsLink,
+    agentsLink,
     tablesLink,
     mcpLink,
     todosLink,
@@ -161,14 +151,18 @@ export function DashboardContainer({
         }}
       >
         <SidebarComponent
-          removeGutters={removeGutters}
           isHomeDashboard={true}
-          hideHeader={hideHeader}
           items={items}
           hideSideNav={embedState.hideSideNav}
-          removeBottomPadding={removeBottomPadding}
         >
-          {children}
+          <>
+            <>
+              <ProjectLockedAlert />
+              <TaskLimitAlert />
+              <AiCreditsLimitAlert />
+            </>
+            {children}
+          </>
         </SidebarComponent>
         {showBilling && <WelcomeTrialDialog />}
         {edition === ApEdition.CLOUD && <UpgradeDialog />}

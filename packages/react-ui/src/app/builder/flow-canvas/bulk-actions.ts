@@ -2,7 +2,7 @@ import { t } from 'i18next';
 
 import { toast } from '@/components/ui/use-toast';
 import {
-  Action,
+  FlowAction,
   flowOperations,
   FlowOperationType,
   flowStructureUtil,
@@ -15,7 +15,7 @@ import { BuilderState } from '../builder-hooks';
 
 type CopyActionsRequest = {
   type: 'COPY_ACTIONS';
-  actions: Action[];
+  actions: FlowAction[];
 };
 
 export function copySelectedNodes({
@@ -53,7 +53,7 @@ export function deleteSelectedNodes({
   }
 }
 
-export async function getActionsInClipboard(): Promise<Action[]> {
+export async function getActionsInClipboard(): Promise<FlowAction[]> {
   try {
     const clipboardText = await navigator.clipboard.readText();
     const request: CopyActionsRequest = JSON.parse(clipboardText);
@@ -113,7 +113,7 @@ export function toggleSkipSelectedNodes({
 }: Pick<BuilderState, 'selectedNodes' | 'flowVersion' | 'applyOperation'>) {
   const steps = selectedNodes.map((node) =>
     flowStructureUtil.getStepOrThrow(node, flowVersion.trigger),
-  ) as Action[];
+  ) as FlowAction[];
   const areAllStepsSkipped = steps.every((step) => !!step.skip);
   applyOperation({
     type: FlowOperationType.SET_SKIP_ACTION,

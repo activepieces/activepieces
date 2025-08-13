@@ -1,7 +1,8 @@
-import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
+import { AgentJobData, exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService, workerApiService } from './api/server-api.service'
+import { agentJobExecutor } from './executors/agent-job-executor'
 import { flowJobExecutor } from './executors/flow-job-executor'
 import { repeatingJobExecutor } from './executors/repeating-job-executor'
 import { userInteractionJobExecutor } from './executors/user-interaction-job-executor'
@@ -29,12 +30,15 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
 
         const FLOW_WORKER_CONCURRENCY = workerMachine.getSettings().FLOW_WORKER_CONCURRENCY
         const SCHEDULED_WORKER_CONCURRENCY = workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY
+        const AGENTS_WORKER_CONCURRENCY = workerMachine.getSettings().AGENTS_WORKER_CONCURRENCY
         log.info({
             FLOW_WORKER_CONCURRENCY,
             SCHEDULED_WORKER_CONCURRENCY,
+            AGENTS_WORKER_CONCURRENCY,
         }, 'Starting worker')
         for (const queueName of Object.values(QueueName)) {
-            const times = queueName === QueueName.SCHEDULED ? SCHEDULED_WORKER_CONCURRENCY : FLOW_WORKER_CONCURRENCY
+            const times = queueName === QueueName.SCHEDULED ?
+                SCHEDULED_WORKER_CONCURRENCY : queueName === QueueName.AGENTS ? AGENTS_WORKER_CONCURRENCY : FLOW_WORKER_CONCURRENCY
             log.info({
                 queueName,
                 times,
@@ -91,7 +95,7 @@ async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): P
             }
             const { data, engineToken: jobEngineToken, attempsStarted } = job
             engineToken = jobEngineToken
-            await consumeJob(queueName, data, attempsStarted, engineToken, log)
+            await consumeJob(job.id, queueName, data, attempsStarted, engineToken, log)
             await markJobAsCompleted(queueName, engineToken, log)
             log.debug({
                 job: {
@@ -116,7 +120,7 @@ async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): P
     }
 }
 
-async function consumeJob(queueName: QueueName, jobData: JobData, attempsStarted: number, engineToken: string, log: FastifyBaseLogger): Promise<void> {
+async function consumeJob(jobId: string, queueName: QueueName, jobData: JobData, attempsStarted: number, engineToken: string, log: FastifyBaseLogger): Promise<void> {
     switch (queueName) {
         case QueueName.USERS_INTERACTION:
             await userInteractionJobExecutor(log).execute(jobData as UserInteractionJobData, engineToken, workerToken)
@@ -126,13 +130,18 @@ async function consumeJob(queueName: QueueName, jobData: JobData, attempsStarted
             break
         case QueueName.SCHEDULED:
             await repeatingJobExecutor(log).executeRepeatingJob({
+                jobId,
                 data: jobData as RepeatingJobData,
                 engineToken,
                 workerToken,
             })
             break
         case QueueName.WEBHOOK: {
-            await webhookExecutor(log).consumeWebhook(jobData as WebhookJobData, engineToken, workerToken)
+            await webhookExecutor(log).consumeWebhook(jobId, jobData as WebhookJobData, engineToken, workerToken)
+            break
+        }
+        case QueueName.AGENTS: {
+            await agentJobExecutor(log).executeAgent(jobData as AgentJobData, engineToken, workerToken)
             break
         }
     }
@@ -144,6 +153,7 @@ async function markJobAsCompleted(queueName: QueueName, engineToken: string, log
             // This is will be marked as completed in update-run endpoint
             break
         }
+        case QueueName.AGENTS:
         case QueueName.USERS_INTERACTION:
         case QueueName.SCHEDULED:
         case QueueName.WEBHOOK: {

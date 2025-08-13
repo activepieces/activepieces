@@ -17,7 +17,7 @@ import {
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
+import { EntityManager, Equal, ILike, In } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -81,7 +81,6 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         return enrichProject(
             await projectRepo().findOneByOrFail({
                 id: projectId,
-                deleted: IsNull(),
             }),
             log,
         )
@@ -129,7 +128,6 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }, log
     const displayNameFilter = displayName ? ILike(`%${displayName}%`) : undefined
     const filters = {
         platformId: Equal(platformId),
-        deleted: IsNull(),
         ...spreadIfDefined('externalId', externalId),
         ...spreadIfDefined('displayName', displayNameFilter),
         ...(projectIds ? { id: In(projectIds) } : {}),
@@ -177,7 +175,10 @@ async function enrichProject(
         .createQueryBuilder('project_member')
         .leftJoin('user', 'user', 'user.id = project_member."userId"')
         .groupBy('user.id')
-        .where(`user.status = '${UserStatus.ACTIVE}' and project_member."projectId" = '${project.id}'`)
+        .where('user.status = :activeStatus and project_member."projectId" = :projectId', {
+            activeStatus: UserStatus.ACTIVE,
+            projectId: project.id,
+        })
         .getCount()
 
     const totalFlows = await flowService(log).count({
@@ -244,7 +245,6 @@ const softDeleteOrThrow = async ({
     const deleteResult = await projectRepo(entityManager).softDelete({
         id,
         platformId,
-        deleted: IsNull(),
     })
 
     if (deleteResult.affected !== 1) {

@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { AiOverageState, AIUsage, ApEdition, ApEnvironment, apId, Cursor, FlowStatus, PlatformUsage, SeekPage, UserStatus } from '@activepieces/shared'
+import { AiOverageState, AIUsage, AIUsageMetadata, ApEdition, ApEnvironment, apId, Cursor, FlowStatus, PlatformUsage, SeekPage, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull } from 'typeorm'
@@ -36,20 +36,28 @@ const getDailyUsageRedisKey = (
 
 export const platformUsageService = (_log?: FastifyBaseLogger) => ({
     async getAllPlatformUsage(platformId: string): Promise<PlatformUsage> {
-        
         const platformBilling = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
-
         const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
 
-        const platformTasksUsage = await this.getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate })
-        const platformAICreditUsage = await this.getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate })
-
-        const activeFlows = await getActiveFlows(platformId)
-        const mcps = await getMCPsCount(platformId)
-        const projects = await getProjectsCount(platformId)
-        const seats = await getActiveUsers(platformId)
-        const tables = await getTables(platformId)
-        const agents = await getAgentsCount(platformId)
+        const [
+            platformTasksUsage,
+            platformAICreditUsage,
+            activeFlows,
+            mcps,
+            projects,
+            seats,
+            tables,
+            agents,
+        ] = await Promise.all([
+            this.getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate }),
+            this.getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate }),
+            getActiveFlows(platformId),
+            getMCPsCount(platformId),
+            getProjectsCount(platformId),
+            getActiveUsers(platformId),
+            getTables(platformId),
+            getAgentsCount(platformId),
+        ])
 
         return { tasks: platformTasksUsage, aiCredits: platformAICreditUsage, activeFlows, mcps, projects, seats, tables, agents }
     },
@@ -63,17 +71,17 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
 
         const redisConnection = getRedisConnection()
         const today = dayjs()
-        const thirtyDays = 60 * 60 * 24 * 90
+        const fourteenMonth = 60 * 60 * 24 * 30 * 14
 
         const projectRedisKey = getDailyUsageRedisKey('tasks', 'project', projectId, today)
         const projectTasksUsageIncremented = await redisConnection.incrby(projectRedisKey, incrementBy)
 
-        await redisConnection.expire(projectRedisKey, thirtyDays)
+        await redisConnection.expire(projectRedisKey, fourteenMonth)
 
         const platformId = await projectService.getPlatformId(projectId)
         const platformRedisKey = getDailyUsageRedisKey('tasks', 'platform', platformId, today)
         const platformTasksUsageIncremented = await redisConnection.incrby(platformRedisKey, incrementBy)
-        await redisConnection.expire(platformRedisKey, thirtyDays)
+        await redisConnection.expire(platformRedisKey, fourteenMonth)
 
         return { projectTasksUsage: projectTasksUsageIncremented, platformTasksUsage: platformTasksUsageIncremented }
     },
@@ -98,7 +106,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
         }
     },
 
-    async increaseAiCreditUsage({ projectId, cost, platformId, provider, model }: IncreaseProjectAIUsageParams): Promise<{ projectAiCreditUsage: number, platformAiCreditUsage: number }> {
+    async increaseAiCreditUsage({ projectId, cost, platformId, provider, model, metadata }: IncreaseProjectAIUsageParams): Promise<{ projectAiCreditUsage: number, platformAiCreditUsage: number }> {
         const edition = system.getEdition()
 
         if (edition === ApEdition.COMMUNITY) {
@@ -109,15 +117,15 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
 
         const redisConnection = getRedisConnection()
         const today = dayjs()
-        const ninetyDays = 60 * 60 * 24 * 90
+        const fourteenMonth = 60 * 60 * 24 * 30 * 14
 
         const projectRedisKey = getDailyUsageRedisKey('ai_credits', 'project', projectId, today)
         const projectAiCreditUsageIncremented = parseFloat(await redisConnection.incrbyfloat(projectRedisKey, incrementBy))
-        await redisConnection.expire(projectRedisKey, ninetyDays)
+        await redisConnection.expire(projectRedisKey, fourteenMonth)
 
         const platformRedisKey = getDailyUsageRedisKey('ai_credits', 'platform', platformId, today)
         const platformAiCreditUsageIncremented = parseFloat(await redisConnection.incrbyfloat(platformRedisKey, incrementBy))
-        await redisConnection.expire(platformRedisKey, ninetyDays)
+        await redisConnection.expire(platformRedisKey, fourteenMonth)
 
         const platformPlan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
 
@@ -128,6 +136,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             provider,
             model,
             cost,
+            metadata,
         })
 
         const shouldReportUsage = platformPlan.aiCreditsOverageState === AiOverageState.ALLOWED_AND_ON
@@ -317,6 +326,7 @@ type IncreaseProjectAIUsageParams = {
     provider: string
     model: string
     cost: number
+    metadata: AIUsageMetadata
 }
 
 type GetProjectUsageParams = {

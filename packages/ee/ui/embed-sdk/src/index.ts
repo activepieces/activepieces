@@ -107,6 +107,7 @@ export interface ActivepiecesVendorInit {
     locale?: string;
     mode?: 'light' | 'dark';
     hideFlowsPageNavbar?: boolean;
+    hideProjectSettings?: boolean;
   };
 }
 
@@ -137,6 +138,7 @@ type EmbeddingParam = {
   dashboard?: {
     hideSidebar?: boolean;
     hideFlowsPageNavbar?: boolean;
+    hideSettings?: boolean;
   };
   hideExportAndImportFlow?: boolean;
   hideDuplicateFlow?: boolean;
@@ -154,7 +156,7 @@ type ConfigureParams = {
 
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.6.0";
+  readonly _sdkVersion = "0.7.0";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -258,6 +260,7 @@ class ActivepiecesEmbedded {
                 homeButtonIcon: this._embeddingState?.builder?.homeButtonIcon ?? 'logo',
                 hideDuplicateFlow: this._embeddingState?.hideDuplicateFlow ?? false,
                 mode: this._embeddingState?.styling?.mode,
+                hideProjectSettings: this._embeddingState?.dashboard?.hideSettings ?? false,
               },
             };
             targetWindow.postMessage(apEvent, '*');

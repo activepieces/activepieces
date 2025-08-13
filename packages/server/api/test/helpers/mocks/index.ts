@@ -2,6 +2,7 @@ import {
     ApiKey,
     ApplicationEvent,
     ApplicationEventName,
+    BillingCycle,
     CustomDomain,
     CustomDomainStatus,
     GitBranchType,
@@ -29,6 +30,7 @@ import {
     FlowRunStatus,
     FlowStatus,
     FlowTemplate,
+    FlowTriggerType,
     FlowVersion,
     FlowVersionState,
     InvitationStatus,
@@ -48,7 +50,6 @@ import {
     RoleType,
     RunEnvironment,
     TemplateType,
-    TriggerType,
     User,
     UserIdentity,
     UserIdentityProvider,
@@ -200,7 +201,9 @@ export const createMockGitRepo = (gitRepo?: Partial<GitRepo>): GitRepo => {
 
 export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): PlatformPlan => {
     return {
-        eligibleForTrial: platformPlan?.eligibleForTrial ?? false,
+        eligibleForPlusTrial: platformPlan?.eligibleForPlusTrial ?? false,
+        stripeBillingCycle: platformPlan?.stripeBillingCycle ?? BillingCycle.MONTHLY,
+        eligibleForBusinessTrial: platformPlan?.eligibleForBusinessTrial ?? false,
         id: platformPlan?.id ?? apId(),
         created: platformPlan?.created ?? faker.date.recent().toISOString(),
         updated: platformPlan?.updated ?? faker.date.recent().toISOString(),
@@ -463,6 +466,8 @@ export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
         flowId: flowRun?.flowId ?? apId(),
         tags: flowRun?.tags ?? [],
         steps: {},
+        failParentOnFailure: flowRun?.failParentOnFailure ?? false,
+        parentRunId: flowRun?.parentRunId ?? undefined,
         flowVersionId: flowRun?.flowVersionId ?? apId(),
         flowDisplayName: flowRun?.flowDisplayName ?? faker.lorem.word(),
         logsFileId: flowRun?.logsFileId ?? null,
@@ -483,7 +488,6 @@ export const createMockFlow = (flow?: Partial<Flow>): Flow => {
         projectId: flow?.projectId ?? apId(),
         status: flow?.status ?? faker.helpers.enumValue(FlowStatus),
         folderId: flow?.folderId ?? null,
-        schedule: flow?.schedule ?? null,
         publishedVersionId: flow?.publishedVersionId ?? null,
         externalId: flow?.externalId ?? apId(),
     }
@@ -493,7 +497,7 @@ export const createMockFlowVersion = (
     flowVersion?: Partial<FlowVersion>,
 ): FlowVersion => {
     const emptyTrigger = {
-        type: TriggerType.EMPTY,
+        type: FlowTriggerType.EMPTY,
         name: 'trigger',
         settings: {},
         valid: false,
@@ -506,6 +510,7 @@ export const createMockFlowVersion = (
         updated: flowVersion?.updated ?? faker.date.recent().toISOString(),
         displayName: flowVersion?.displayName ?? faker.word.words(),
         flowId: flowVersion?.flowId ?? apId(),
+        agentIds: flowVersion?.agentIds ?? [],
         trigger: flowVersion?.trigger ?? emptyTrigger,
         connectionIds: flowVersion?.connectionIds ?? [],
         state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),

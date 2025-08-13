@@ -267,6 +267,7 @@ async function listAllFlows(log: FastifyBaseLogger, platformId: PlatformId, proj
             state: row.version_state,
             created: row.version_created,
             updated: row.version_updated,
+            agentIds: row.version_agentIds,
         }, false, false),
     }))
 }

@@ -1,4 +1,3 @@
-import { nanoid } from 'nanoid';
 import { Socket } from 'socket.io-client';
 
 import { api } from '@/lib/api';
@@ -37,20 +36,19 @@ export const flowRunsApi = {
     const initialRun = await getInitialRun(socket, request.flowVersionId);
     onUpdate(initialRun);
   },
-  testStep(
+  async testStep(
     socket: Socket,
-    request: Omit<CreateStepRunRequestBody, 'id'>,
+    request: CreateStepRunRequestBody,
     onProgress?: (progress: StepRunResponse) => void,
   ): Promise<StepRunResponse> {
-    const id = nanoid();
-    socket.emit(WebsocketServerEvent.TEST_STEP_RUN, {
-      ...request,
-      id,
-    });
+    const stepRun = await api.post<FlowRun>(
+      '/v1/sample-data/test-step',
+      request,
+    );
 
     return new Promise<StepRunResponse>((resolve, reject) => {
       const handleStepFinished = (response: StepRunResponse) => {
-        if (response.id === id) {
+        if (response.runId === stepRun.id) {
           socket.off(
             WebsocketClientEvent.TEST_STEP_FINISHED,
             handleStepFinished,
@@ -62,20 +60,12 @@ export const flowRunsApi = {
         }
       };
 
-      const handleProgress = (progress: StepRunResponse) => {
-        if (progress.id === id) {
-          onProgress?.(progress);
-        }
-      };
-
       const handleError = (error: any) => {
         socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-        socket.off(WebsocketClientEvent.TEST_STEP_PROGRESS, handleProgress);
         socket.off('error', handleError);
         reject(error);
       };
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-      socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleProgress);
       socket.on('error', handleError);
     });
   },

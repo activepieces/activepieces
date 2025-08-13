@@ -1,6 +1,6 @@
 import { TlsOptions } from 'node:tls'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
@@ -246,8 +246,23 @@ import { AddFlowVersionToIssue1751927222122 } from './migration/postgres/1751927
 import { AddMcpsEnabled1751989232042 } from './migration/postgres/1751989232042-AddMcpsEnabled'
 import { AddIndexForSchemaVersionInFlowVersion1752151941009 } from './migration/postgres/1752151941009-AddIndexForSchemaVersionInFlowVersion'
 import { AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028 } from './migration/postgres/1752511716028-AddCreatedToFlowVersionFlowIdIdxPostgres'
+import { AddAgentRunsEntityPostgres1752583341290 } from './migration/postgres/1752583341290-AddAgentRunsEntityPostgres'
 import { AddPlatformAnalyticsReportEntity1753091760355 } from './migration/postgres/1753091760355-AddPlatformAnalyticsReportEntity'
-
+import { AddAgentIdToTable1753315220453 } from './migration/postgres/1753315220453-AddAgentIdToTable'
+import { MakeTriggerNullable1753366163403 } from './migration/postgres/1753366163403-MakeTriggerNullable'
+import { AddIndexForAgentTable1753400133786 } from './migration/postgres/1753400133786-AddIndexForAgentTable'
+import { AddAIUsageMetadatapostgres1753624069238 } from './migration/postgres/1753624069238-AddAIUsageMetadatapostgres'
+import { AddExternalIdToAgentId1753641361099 } from './migration/postgres/1753641361099-AddExternalIdToAgentId'
+import { AddParentRunIdToFlowRun1753699877817 } from './migration/postgres/1753699877817-AddParentRunIdToFlowRun'
+import { AddCascadeOnAgents1753727379513 } from './migration/postgres/1753727379513-AddCascadeOnAgents'
+import { AddExternalIdToMCPPostgres1753787093467 } from './migration/postgres/1753787093467-AddExternalIdToMCPPostgres'
+import { AddExternalidToMCPToolPostgres1754214833292 } from './migration/postgres/1754214833292-AddExternalidToMCPToolPostgres'
+import { AddStepNameToTestInFlowRunEntity1754330492027 } from './migration/postgres/1754330492027-AddStepNameToTestInFlowRunEntity'
+import { AddTriggerSource1754478770608 } from './migration/postgres/1754478770608-AddTriggerSource'
+import { AddJobIdToTriggerRun1754510611628 } from './migration/postgres/1754510611628-AddJobIdToTriggerRun'
+import { AddBillingCycle1754559781173 } from './migration/postgres/1754559781173-addBillingCycle'
+import { EligibileForTrial1754852385518 } from './migration/postgres/1754852385518-EligibileForTrial'
+import { RemoveAgentTestPrompt1754863565929 } from './migration/postgres/1754863565929-RemoveAgentTestPrompt'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -417,7 +432,21 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowVersionToIssue1751927222122,
         SplitUpPieceMetadataIntoTools1752004202722,
         AddIndexForSchemaVersionInFlowVersion1752151941009,
+        AddAgentRunsEntityPostgres1752583341290,
         AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028,
+        AddAgentIdToTable1753315220453,
+        MakeTriggerNullable1753366163403,
+        AddIndexForAgentTable1753400133786,
+        AddAIUsageMetadatapostgres1753624069238,
+        AddExternalIdToAgentId1753641361099,
+        AddParentRunIdToFlowRun1753699877817,
+        AddCascadeOnAgents1753727379513,
+        AddExternalIdToMCPPostgres1753787093467,
+        AddExternalidToMCPToolPostgres1754214833292,
+        AddTriggerSource1754478770608,
+        AddStepNameToTestInFlowRunEntity1754330492027,
+        AddJobIdToTriggerRun1754510611628,
+        RemoveAgentTestPrompt1754863565929,
     ]
 
     const edition = system.getEdition()
@@ -515,6 +544,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddLockedColumnToProjectPlan1751878623268,
                 AddMcpsEnabled1751989232042,
                 AddPlatformAnalyticsReportEntity1753091760355,
+                AddBillingCycle1754559781173,
+                EligibileForTrial1754852385518,
             )
             break
         case ApEdition.COMMUNITY:
@@ -571,6 +602,7 @@ export const createPostgresDataSource = (): DataSource => {
         password,
         database,
         ssl: getSslConfig(),
+        ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
         ...migrationConfig,
         ...commonProperties,
     })

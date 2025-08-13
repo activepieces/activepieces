@@ -1,0 +1,10 @@
+{
+  "Flow Helper": "Помощник Flow",
+  "Get Run Info": "Получить информацию о запуске",
+  "Fail Flow": "Сбой потока",
+  "Stop Flow": "Остановить поток",
+  "Fails the flow execution with a custom message.": "Ошибка выполнения потока с пользовательским сообщением.",
+  "Stops the flow immediately this step is reached.": "Немедленно останавливает поток, который достигается на этом шаге.",
+  "Error Message": "Сообщение об ошибке",
+  "The error message to show when the flow fails.": "Сообщение об ошибке при сбое процесса."
+}

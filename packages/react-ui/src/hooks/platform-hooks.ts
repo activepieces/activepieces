@@ -19,6 +19,8 @@ import {
 
 import { platformApi } from '../lib/platforms-api';
 
+import { flagsHooks } from './flags-hooks';
+
 export const platformHooks = {
   isCopilotEnabled: () => {
     const { platform } = platformHooks.useCurrentPlatform();
@@ -56,15 +58,18 @@ export const platformHooks = {
         queryClient.invalidateQueries({
           queryKey: ['platform', currentPlatformId],
         });
+        queryClient.invalidateQueries({
+          queryKey: flagsHooks.queryKey,
+        });
         toast({
           title: t('Success'),
           description: t('License activated successfully!'),
         });
       },
-      onError: (error: any) => {
+      onError: () => {
         toast({
           title: t('Error'),
-          description: t('Activation failed, invalid lisence key'),
+          description: t('Activation failed, invalid license key'),
           variant: 'destructive',
         });
       },

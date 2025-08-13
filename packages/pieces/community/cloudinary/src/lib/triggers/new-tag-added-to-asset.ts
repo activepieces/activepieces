@@ -41,7 +41,7 @@ const polling: Polling<PiecePropValueSchema<typeof cloudinaryAuth>, StaticPropsV
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue, lastFetchEpochMS }) => {
         const resourceType = propsValue.resource_type || 'image';
-        let endpoint = `/resources/${resourceType}`;
+        const endpoint = `/resources/${resourceType}`;
         
         const queryParams: Record<string, string> = {};
         if (propsValue.asset_folder && propsValue.asset_folder.trim()) {

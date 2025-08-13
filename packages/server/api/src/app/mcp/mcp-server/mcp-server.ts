@@ -1,6 +1,9 @@
 import { ActionBase } from '@activepieces/pieces-framework'
 import { rejectedPromiseHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
+    AI_USAGE_FEATURE_HEADER,
+    AI_USAGE_MCP_ID_HEADER,
+    AIUsageFeature,
     assertNotNullOrUndefined,
     EngineResponseStatus,
     ExecuteActionResponse,
@@ -28,8 +31,8 @@ import { flowService } from '../../flows/flow/flow.service'
 import { telemetry } from '../../helper/telemetry.utils'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
-import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
 import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
@@ -104,10 +107,8 @@ async function addPieceToServer(
                 projectId, 
                 platformId, 
                 {
-                    packageType: pieceMetadata.packageType,
                     pieceName: pieceMetadata.name,
                     pieceVersion: pieceMetadata.version,
-                    pieceType: pieceMetadata.pieceType,
                 },
             )
             try {
@@ -119,6 +120,7 @@ async function addPieceToServer(
                     platformId,
                     projectId,
                     logger,
+                    mcpId: mcpTool.mcpId,
                 })
 
                 const result = await userInteractionWatcher(logger)
@@ -260,9 +262,13 @@ async function addFlowToServer(
                 flowId: populatedFlow.id,
                 async: !returnsResponse,
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                saveSampleData: await webhookSimulationService(logger).exists(flowId),
+                saveSampleData: await triggerSourceService(logger).existsByFlowId({
+                    flowId,
+                    simulate: true,
+                }),
                 payload: originalParams,
                 execute: true,
+                failParentOnFailure: false,
             })
 
             trackToolCall({ mcpId, toolName, projectId, logger })
@@ -308,8 +314,9 @@ async function addFlowToServer(
 async function initializeOpenAIModel({
     platformId,
     projectId,
+    mcpId,
 }: InitializeOpenAIModelParams): Promise<LanguageModelV1> {
-    const model = 'gpt-4o'
+    const model = 'gpt-4.1-mini'
     const baseUrl = await domainHelper.getPublicApiUrl({
         path: '/v1/ai-providers/proxy/openai/v1/',
         platformId,
@@ -320,9 +327,13 @@ async function initializeOpenAIModel({
         projectId,
     })
 
-    return  createOpenAI({
+    return createOpenAI({
         baseURL: baseUrl,
         apiKey,
+        headers: {
+            [AI_USAGE_FEATURE_HEADER]: AIUsageFeature.MCP,
+            [AI_USAGE_MCP_ID_HEADER]: mcpId,
+        },
     }).chat(model)
 }
 
@@ -336,6 +347,7 @@ async function extractActionParametersFromUserInstructions({
     platformId,
     projectId,
     logger,
+    mcpId,
 }: ExtractActionParametersParams): Promise<Record<string, unknown>> {
     const connectionReference = `{{connections['${toolPieceMetadata.connectionExternalId}']}}`
     assertNotNullOrUndefined(connectionReference, 'Tool has no connection with the piece, please try to add a connection to the tool')
@@ -343,6 +355,7 @@ async function extractActionParametersFromUserInstructions({
     const aiModel = await initializeOpenAIModel({
         platformId,
         projectId,
+        mcpId,
     })
 
     const actionProperties = actionMetadata.props
@@ -373,7 +386,7 @@ async function extractActionParametersFromUserInstructions({
                 })
                 return { propertyName, ...result }
             }))).filter(({ schema }) => schema !== null)
-                        
+
             const schemaObject: ZodRawShape = Object.fromEntries(
                 propertySchemas
                     .map(({ propertyName, schema }) => [propertyName, schema!]),
@@ -409,7 +422,10 @@ async function extractActionParametersFromUserInstructions({
         Promise.resolve({ 'auth': connectionReference }),
     )
 
-    return extractedParameters
+    const nonNullExtractedParameters = Object.fromEntries(
+        Object.entries(extractedParameters).filter(([_, value]) => !isNil(value)),
+    )
+    return nonNullExtractedParameters
 }
 
 function isOkSuccess(status: number) {
@@ -434,12 +450,14 @@ type ExtractActionParametersParams = {
     platformId: string
     projectId: string
     logger: FastifyBaseLogger
+    mcpId: string
 }
 
 
 type InitializeOpenAIModelParams = {
     platformId: string
     projectId: string
+    mcpId: string
 }
 
 type TrackToolCallParams = {
