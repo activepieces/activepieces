@@ -83,14 +83,15 @@ function TodoTestingDialog({
     resolveTodo(status);
   };
 
-  const updateTodoStatus = async (todoId: string, status: PopulatedTodo['status']) => {
-    updateTodo({ todoId, status });
-  };
+  
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-3xl  p-3 overflow-hidden">
-        <TodoDetails todo={todo} onStatusChange={handleStatusChange} updateTodoStatus={updateTodoStatus} />
+      <DialogContent className="w-full max-w-3xl h-[60%] p-3 " withCloseButton={false}>
+        <TodoDetails todo={todo} onStatusChange={handleStatusChange} updateTodoStatus={async (todoId, status) => {
+          handleStatusChange(status)
+          updateTodo({ todoId, status });
+        }} onClose={() => onOpenChange(false)} hideComments />
       </DialogContent>
     </Dialog>
   );

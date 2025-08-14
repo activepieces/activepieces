@@ -18,8 +18,8 @@ type TodoDetailsProps = {
   onClose?: () => void;
   className?: string;
   todo: Todo;
-  simpleTitle?: boolean;
   updateTodoStatus: (todoId: string, status: Todo['status']) => Promise<void>;
+  hideComments?: boolean;
 };
 
 export const TodoDetails = ({
@@ -28,6 +28,7 @@ export const TodoDetails = ({
   onClose,
   className,
   updateTodoStatus,
+  hideComments = false,
 }: TodoDetailsProps) => {
 
   const previousStatus = useRef<Todo['status']>();
@@ -53,17 +54,17 @@ export const TodoDetails = ({
 
 
   return (
-    <ScrollArea className={cn('flex flex-col w-full h-full', className)}>
-      <>
-        <TodoHeaders
-          title={todo.title}
-          onClose={() => {
-            onClose?.();
-          }}
-          todo={todo}
-          updateTodoStatus={updateTodoStatus}
-        />
-        <div className="flex-1 px-4">
+    <div className={cn('flex flex-col w-full h-full', className)}>
+      <TodoHeaders
+        title={todo.title}
+        onClose={() => {
+          onClose?.();
+        }}
+        todo={todo}
+        updateTodoStatus={updateTodoStatus}
+      />
+      <ScrollArea className="flex-1">
+        <div className="px-4">
           <div className="flex flex-col gap-2">
             <div className="text-sm text-muted-foreground">
               <ApMarkdown
@@ -73,12 +74,17 @@ export const TodoDetails = ({
             </div>
 
           </div>
-          <div className="mb-10"></div>
-          <TodoTimeline
-            todo={todo}
-          />
+          {!hideComments && (
+            <div>
+              <TodoTimeline
+                todo={todo}
+              />
+              <div className="mb-10"></div>
+
+            </div>
+          )}
         </div>
-      </>
-    </ScrollArea>
+      </ScrollArea>
+    </div>
   );
 };
