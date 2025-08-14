@@ -75,7 +75,7 @@ export const callFlow = createAction({
               defaultValue: (castedFlowValue.exampleData as unknown as { sampleData: object }).sampleData,
             });
           }
-          else{
+          else {
             fields['payload'] = Property.Json({
               displayName: 'Payload',
               description:
@@ -107,7 +107,7 @@ export const callFlow = createAction({
         const mode = propsValue['mode'] as unknown as string;
 
         if (mode === 'simple') {
-            fields['data'] = Property.Object({
+          fields['data'] = Property.Object({
             displayName: 'Example Response (For Testing)',
             required: true,
             description: 'This data will be returned when testing this step, and is necessary to proceed with building the flow',
@@ -144,20 +144,28 @@ export const callFlow = createAction({
       }
     }
     const payload = context.propsValue.flowProps['payload'];
-    const externalIds = [context.propsValue.flow?.externalId].filter((id) => !isNil(id))
+    const flowExternalId = context.propsValue.flow?.externalId;
+    if (isNil(flowExternalId)) {
+      throw new Error(JSON.stringify({
+        message: 'Flow not found',
+        externalId: flowExternalId,
+      }));
+    }
+    const externalIds = [flowExternalId];
     const allFlows = await listEnabledFlowsWithSubflowTrigger({
       flowsContext: context.flows,
       params: {
         externalIds
       }
     });
-    if (allFlows.length === 0) {
+    const flow = allFlows.find((flow) => flow.externalId === flowExternalId);
+
+    if (isNil(flow)) {
       throw new Error(JSON.stringify({
         message: 'Flow not found',
-        externalId: context.propsValue.flow?.externalId,
+        externalId: flowExternalId,
       }));
     }
-    const flow = allFlows[0];
 
     const response = await httpClient.sendRequest<CallableFlowRequest>({
       method: HttpMethod.POST,
@@ -169,7 +177,7 @@ export const callFlow = createAction({
       },
       body: {
         data: payload,
-        callbackUrl: context.propsValue.waitForResponse ?  context.generateResumeUrl({
+        callbackUrl: context.propsValue.waitForResponse ? context.generateResumeUrl({
           queryParams: {}
         }) : undefined,
       },
@@ -186,12 +194,12 @@ export const callFlow = createAction({
   },
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue:false,
-      hide:false,
+      defaultValue: false,
+      hide: false,
     },
     retryOnFailure: {
-      defaultValue:false,
-      hide:false,
+      defaultValue: false,
+      hide: false,
     }
   }
 });
