@@ -8,6 +8,7 @@ tmp
 firebase-admin-sdk.json
 dev
 /cache
+logs/
 .env
 
 # SDK Build
