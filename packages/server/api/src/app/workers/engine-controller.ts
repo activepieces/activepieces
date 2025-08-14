@@ -117,7 +117,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             })
         }
         else {
-            app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, runId)
+            app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, { runId })
         }
 
         if (runDetails.status === FlowRunStatus.PAUSED) {
