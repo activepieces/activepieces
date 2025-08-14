@@ -118,6 +118,17 @@ export const createServerState = (
         });
       });
     },
+    swapIndexes: (activeIndex: number, overIndex: number) => {
+      addPromiseToQueue(async () => {
+        clonedFields[activeIndex] = _fields[overIndex];
+        clonedFields[overIndex] = _fields[activeIndex];
+        await fieldsApi.swapIndexes({
+            activeIndex: activeIndex,
+            overIndex: overIndex,
+            tableId: _fields[activeIndex].tableId
+        })
+      })
+    },
     update: async (request: UpdateTableRequest) => {
       addPromiseToQueue(async () => {
         const updatedTable = await tablesApi.update(clonedTable.id, request);

@@ -113,6 +113,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                   uuid: nanoid(),
                   name: data.name,
                   type: data.type,
+                  index: fields.length,
                   data: {
                     options: data.data.options
                       .filter((option) => option.length > 0)
@@ -126,6 +127,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                   uuid: nanoid(),
                   name: data.name,
                   type: data.type,
+                  index: fields.length,
                 });
               }
             })}

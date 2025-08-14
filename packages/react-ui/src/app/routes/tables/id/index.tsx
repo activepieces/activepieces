@@ -59,7 +59,7 @@ const ApTableEditorPage = () => {
     selectedAgentRunId,
     setSelectedAgentRunId,
     setRecords,
-    reorderFields
+    swapIndexes
   ] = useTableState((state) => [
     state.table,
     state.setAgentRunId,
@@ -73,7 +73,7 @@ const ApTableEditorPage = () => {
     state.selectedAgentRunId,
     state.setSelectedAgentRunId,
     state.setRecords,
-    state.reorderFields
+    state.swapIndexes
   ]);
 
   const gridRef = useRef<DataGridHandle>(null);
@@ -169,7 +169,7 @@ const ApTableEditorPage = () => {
       const activeIndex = columns.findIndex(c => c.key === active.id) - 1;
       const overIndex = columns.findIndex(c => c.key === over.id) - 1;
 
-      reorderFields(activeIndex, overIndex)
+      swapIndexes(activeIndex, overIndex)
     }
   };
 

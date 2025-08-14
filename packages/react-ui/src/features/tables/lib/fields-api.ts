@@ -3,6 +3,7 @@ import {
   CreateFieldRequest,
   Field,
   UpdateFieldRequest,
+  SwapFieldsIndexesRequest
 } from '@activepieces/shared';
 
 export const fieldsApi = {
@@ -24,5 +25,9 @@ export const fieldsApi = {
 
   update(id: string, request: UpdateFieldRequest): Promise<Field> {
     return api.post<Field>(`/v1/fields/${id}`, request);
+  },
+
+  swapIndexes(request: SwapFieldsIndexesRequest): Promise<Field[]> {
+    return api.patch<Field[]>(`/v1/fields/reorder`, request);
   },
 };

@@ -25,6 +25,7 @@ export type ClientRecordData = {
 export type ClientField = {
   uuid: string;
   name: string;
+  index: number;
 } & (
   | {
       type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT;
@@ -76,7 +77,7 @@ export type TableState = {
   deleteField: (fieldIndex: number) => void;
   renameTable: (newName: string) => void;
   renameField: (fieldIndex: number, newName: string) => void;
-  reorderFields: (activeIndex: number, overIndex: number) => void;
+  swapIndexes: (activeIndex: number, overIndex: number) => void;
   setRecords: (records: PopulatedRecord[]) => void;
   setAgentRunId: (recordId: string, agentRunId: string | null) => void;
   toggleStatus: () => void;
@@ -136,12 +137,14 @@ export const createApTableStore = (
             name: field.name,
             type: field.type,
             data: field.data,
+            index: field.index,
           };
         }
         return {
           uuid: field.id,
           name: field.name,
           type: field.type,
+          index: field.index,
         };
       }),
       records: mapRecorddToClientRecordsData(records, fields),
@@ -217,11 +220,11 @@ export const createApTableStore = (
           };
         });
       },
-      reorderFields: (activeIndex: number, overIndex: number) => {
+      swapIndexes: (activeIndex: number, overIndex: number) => {
         return set((state) => {
+          serverState.swapIndexes(activeIndex, overIndex);
           const updatedFields = [...state.fields];
-          updatedFields[activeIndex] = state.fields[overIndex];
-          updatedFields[overIndex] = state.fields[activeIndex];
+          [updatedFields[activeIndex], updatedFields[overIndex]] = [updatedFields[overIndex], updatedFields[activeIndex]];
 
           const updatedRecords: ClientRecordData[] = new Array(state.records.length);
           for(let i = 0; i < state.records.length; i++){

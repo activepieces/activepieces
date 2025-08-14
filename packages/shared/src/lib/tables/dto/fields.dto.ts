@@ -25,5 +25,12 @@ export const UpdateFieldRequest = Type.Object({
     name: Type.String(),
 })
 
+export const SwapFieldsIndexesRequest = Type.Object({
+    activeIndex: Type.Number(),
+    overIndex: Type.Number(),
+    tableId: Type.String(),
+})
+
+export type SwapFieldsIndexesRequest = Static<typeof SwapFieldsIndexesRequest>
 export type CreateFieldRequest = Static<typeof CreateFieldRequest>
 export type UpdateFieldRequest = Static<typeof UpdateFieldRequest>
