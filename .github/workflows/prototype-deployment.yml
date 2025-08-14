@@ -56,28 +56,10 @@ jobs:
         run: |
           ssh deploy 'mkdir -p /root/activeshit'
 
-      - name: Create docker-compose.yml
-        run: |
-          ssh deploy 'cat > /root/activeshit/docker-compose.yml << EOF
-          version: "3.8"
-          services:
-            activeshit:
-              image: ghcr.io/activepieces/activepieces:prototype
-              container_name: activeshit
-              restart: unless-stopped
-              ports:
-                - "3333:80"
-              environment:
-                - NODE_ENV=production
-              volumes:
-                - activeshit_data:/usr/src/app/data
-          volumes:
-            activeshit_data:
-          EOF'
 
       - name: Deploy with Docker Compose
         run: |
-          ssh deploy 'cd /root/activeshit && docker compose pull && docker compose up -d --force-recreate activeshit'
+          ssh deploy -t -t 'bash -ic "cd /root/activeshit && IMAGE_TAG=prototype docker compose pull && IMAGE_TAG=prototype docker compose up -d --force-recreate activeshit; exit"'
 
       - name: Cleanup old images
         run: |
