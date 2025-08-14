@@ -204,7 +204,7 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
                         logger,
                         input,
                         projectId,
-                        propertyName,
+                        propertyName: key,
                         actionMetadata,
                         piecePackage,
                     })).schema,
@@ -214,8 +214,7 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
             if (!property.required) {
                 arraySchema = arraySchema.nullish()
             }
-            const schema = z.object({ [propertyName]: arraySchema })
-            return { schema, value: property }
+            return { schema: arraySchema, value: property }
         }
         let arraySchema: z.ZodTypeAny = z.array(z.string())
         if (!property.required) {
@@ -228,7 +227,7 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
     if (!needsRuntimeResolution) {
         const propertySchema = piecePropertyToZod(property)
         return {
-            schema: propertySchema.optional() ? propertySchema.nullish() : propertySchema,
+            schema: propertySchema,
             value: property,
         }
     }
@@ -263,7 +262,7 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
                     logger,
                     input,
                     projectId,
-                    propertyName,
+                    propertyName: key,
                     actionMetadata,
                     piecePackage,
                 })).schema,
@@ -272,7 +271,7 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
         const optionsSchemaEntries = Object.fromEntries(optionsSchema)
         const dynamicSchema: z.ZodTypeAny = z.object(optionsSchemaEntries)
         return {
-            schema: z.object({ [propertyName]: dynamicSchema }),
+            schema: dynamicSchema,
             value: resolvedPropertyData.result,
         }
     }
