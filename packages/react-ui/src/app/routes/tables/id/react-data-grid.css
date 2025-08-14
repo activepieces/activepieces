@@ -56,22 +56,6 @@
     color: #374151;
     position: relative;
     overflow: hidden;
-
-    &::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, #9333EA, #EA33B3, #005FF9, #1C00BB);
-        transform: scaleX(0);
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    &:hover::after {
-        transform: scaleX(1);
-    }
 }
 
 .rdg-bottom-summary-row .rdg-cell {
@@ -135,32 +119,15 @@ div[role="gridcell"]:focus-within {
     position: relative;
     overflow: hidden;
     border-radius: 4px;
-
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 8px;
-        height: 100%;
-        background: linear-gradient(to right, 
-            conic-gradient(from 90deg at 50% 50%, #9333EA 0deg, #EA33B3 141.92deg, #005FF9 202.5deg, #1C00BB 342.69deg, #9333EA 360deg) 0%,
-            rgba(147, 51, 234, 0.8) 20%,
-            rgba(147, 51, 234, 0.4) 40%,
-            rgba(147, 51, 234, 0.1) 60%,
-            transparent 100%
-        );
-        backdrop-filter: blur(30px);
-        animation: gradientShift 3s ease-in-out infinite;
-        box-shadow: 0 0 20px rgba(147, 51, 234, 0.6);
-    }
-
-    .lock-icon {
-        color: #9333EA !important;
-        margin-right: 0.5rem;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-        animation: pulse 2s ease-in-out infinite;
-    }
+    position: absolute;
+    top: 12px;
+    left: -50px;
+    bottom: 12px;
+    width: 100px;
+    border-radius: 100%;
+    background: conic-gradient(from 90deg at 50% 50%, #9333ea 0deg, #ea33b3 141.92deg, #005ff9 202.5deg, #1c00bb 342.69deg, #9333ea 360deg);
+    opacity: 0.1;
+    filter: blur(15px);
 }
 
 @keyframes gradientShift {
@@ -187,6 +154,8 @@ div[role="gridcell"]:focus-within {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 4px;
     margin: 1px 0;
+    position: relative;
+    overflow: hidden;
 
     &:hover {
         background-color: rgba(249, 250, 251, 0.6);
@@ -207,4 +176,173 @@ div[role="gridcell"]:focus-within {
         transform: translateX(6px) scale(1.01);
         box-shadow: 0 4px 16px rgba(147, 51, 234, 0.25);
     }
+}
+
+.gradient-border-row {
+  --gradient-angle: 90deg;
+  position: relative;
+  border-image: conic-gradient(
+      from var(--gradient-angle) at 50% 50%,
+      #bb0fff -43.2deg,
+      rgba(187, 15, 255, 0.2) 3.43deg,
+      rgba(30, 1, 188, 0.2) 90deg,
+      #1e01bc 198deg,
+      #bb0fff 316.8deg,
+      rgba(187, 15, 255, 0.2) 363.43deg
+    )
+    1;
+  border-width: 1px;
+  z-index: 1;
+  position: relative;
+  animation: rotate-gradient 4s linear infinite;
+}
+
+.gradient-border-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  z-index: -1;
+}
+
+@property --gradient-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes rotate-gradient {
+  from {
+    --gradient-angle: 0deg;
+  }
+  to {
+    --gradient-angle: 359deg;
+  }
+}
+
+.side-gradient-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  z-index: 11;
+  overflow: hidden;
+}
+
+.side-gradient-big {
+  position: absolute;
+  top: 12px;
+  left: -50px;
+  bottom: 12px;
+  width: 100px;
+  border-radius: 100%;
+  background: conic-gradient(
+    from 90deg at 50% 50%,
+    #9333ea 0deg,
+    #ea33b3 141.92deg,
+    #005ff9 202.5deg,
+    #1c00bb 342.69deg,
+    #9333ea 360deg
+  );
+  opacity: 0.1;
+  filter: blur(15px);
+}
+
+.side-gradient-small {
+  position: absolute;
+  top: 12px;
+  left: -30px;
+  bottom: 12px;
+  width: 40px;
+  border-radius: 100%;
+  background: conic-gradient(
+    from 90deg at 50% 50%,
+    #9333ea 0deg,
+    #ea33b3 141.92deg,
+    #005ff9 202.5deg,
+    #1c00bb 342.69deg,
+    #9333ea 360deg
+  );
+  opacity: 0.6;
+  filter: blur(10px);
+}
+
+.tool-loading-indicator {
+  --tool-loading-indicator-angle: 0deg;
+  width: 14px;
+  height: 14px;
+  border-radius: 100%;
+  box-shadow: 0 0 0 2px white;
+  margin-top: -10px;
+  position: relative;
+  background: conic-gradient(
+    from var(--tool-loading-indicator-angle) at 50% 50%,
+    #1c00bb -22.5deg,
+    #9333ea 17.31deg,
+    #ea33b3 115.96deg,
+    #005ff9 242.31deg,
+    #1c00bb 337.5deg,
+    #9333ea 377.31deg
+  );
+  animation: rotate-tool-loading-indicator 3s cubic-bezier(0.65, 0.05, 0.36, 1)
+      infinite,
+    scale-tool-loading-indicator 3s cubic-bezier(0.65, 0.05, 0.36, 1) infinite;
+}
+
+.tool-loading-indicator::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  border-radius: 100%;
+  background: inherit;
+  filter: blur(2px);
+}
+
+@property --tool-loading-indicator-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes rotate-tool-loading-indicator {
+  from {
+    --tool-loading-indicator-angle: 0deg;
+  }
+  to {
+    --tool-loading-indicator-angle: 360deg;
+  }
+}
+
+@keyframes scale-tool-loading-indicator {
+  0%,
+  100% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.1;
+  }
+}
+
+@keyframes tool-pop-on-change {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-tool-pop {
+  animation: tool-pop-on-change 260ms ease-out;
+  will-change: transform;
 }

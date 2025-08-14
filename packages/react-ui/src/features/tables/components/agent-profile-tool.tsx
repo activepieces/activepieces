@@ -1,4 +1,3 @@
-import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { agentHooks, agentRunHooks } from '@/features/agents/lib/agent-hooks';
 import { AgentRun, ContentBlockType, isNil } from '@activepieces/shared';
 
@@ -26,21 +25,19 @@ const AgentProfileTool = ({ agentRunId }: AgentProfileToolProps) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <div className="flex flex-col items-center justify-center">
-        <ImageWithFallback
-          src={agent?.profilePictureUrl}
-          alt={agent?.displayName}
-          className="size-6 rounded-full"
-        ></ImageWithFallback>
+    <div className="w-full flex-shrink-0 p-1 flex flex-col items-center justify-center">
+      <div className="side-gradient-wrapper">
+        <div className="side-gradient-big sticky left-0"></div>
+        <div className="side-gradient-small sticky left-0"></div>
       </div>
-      {getLogoUrl(agentRun) && (
+      <div className="w-7 flex flex-col items-center justify-center p-0.5 ring ring-black/10 rounded-xs">
         <img
-          className="w-[16px] h-[16px]"
-          src={getLogoUrl(agentRun)}
+          src={getLogoUrl(agentRun) ?? agent?.profilePictureUrl}
           alt="Tool logo"
+          className="rounded-xs w-full h-full object-contain animate-tool-pop min-w-2 min-h-2"
         />
-      )}
+        <div className="tool-loading-indicator"></div>
+      </div>
     </div>
   );
 };

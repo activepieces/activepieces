@@ -129,7 +129,7 @@ export const ApTableControl = ({
         onClick={() => setIsImportCsvDialogOpen(true)}
       >
         <Import className="size-4 " />
-        <span className="text-sm">{t('Import Data')}</span>
+        <span className="text-sm">{t('Import data')}</span>
       </Button>
       <ImportCsvDialog
         open={isImportCsvDialogOpen}

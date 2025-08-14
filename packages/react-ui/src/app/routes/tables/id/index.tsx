@@ -187,7 +187,7 @@ const ApTableEditorPage = () => {
         </DrawerHeader>
 
         <div className="flex flex-col flex-1 h-full bg-muted/50">
-          <div className="flex-1 flex flex-col relative ml-5">
+          <div className="flex-1 flex flex-col relative">
             <ApTableControl table={table} recordsCount={records.length} />
             <div className="flex-1 flex flex-row">
               <DataGrid
