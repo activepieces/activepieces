@@ -383,7 +383,6 @@ async function extractActionParametersFromUserInstructions({
                     propertyName,
                     actionMetadata,
                     piecePackage,
-                    depth: 1, // Use depth: 1 to get unwrapped schemas for individual properties
                 })
                 return { propertyName, ...result }
             }))).filter(({ schema }) => schema !== null)
