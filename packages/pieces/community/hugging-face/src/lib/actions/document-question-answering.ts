@@ -1,27 +1,39 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const documentQuestionAnswering = createAction({
   name: "document_question_answering",
   displayName: "Document Question Answering",
-  description: "Answer questions from document images using Hugging Face models",
+  description: "Answer questions from text documents using Hugging Face models",
   props: {
-    model: Property.ShortText({
+    model: Property.StaticDropdown({
       displayName: "Model",
-      description: "Hugging Face model ID for document question answering",
+      description: "Hugging Face model ID for question answering",
       required: true,
-      defaultValue: "microsoft/layoutlm-base-uncased"
+      options: {
+        disabled: false,
+        options: [
+          { label: "deepset/roberta-base-squad2", value: "deepset/roberta-base-squad2" },
+          { label: "distilbert/distilbert-base-cased-distilled-squad", value: "distilbert/distilbert-base-cased-distilled-squad" },
+          { label: "google/tapas-base-finetuned-wtq", value: "google/tapas-base-finetuned-wtq" }
+        ]
+      }
     }),
-    image: Property.File({
-      displayName: "Document Image",
-      description: "Image file of the document to analyze",
+    context: Property.LongText({
+      displayName: "Context",
+      description: "The text context to search for answers in",
       required: true
     }),
     question: Property.LongText({
       displayName: "Question",
-      description: "Question to ask about the document",
+      description: "The question to be answered",
       required: true
+    }),
+    top_k: Property.Number({
+      displayName: "Top K Results",
+      description: "Number of top answers to return",
+      required: false,
+      defaultValue: 1
     }),
     use_cache: Property.Checkbox({
       displayName: "Use Cache",
@@ -37,22 +49,29 @@ export const documentQuestionAnswering = createAction({
     })
   },
   async run(context) {
-    const { model, image, question, use_cache, wait_for_model } = context.propsValue;
-    
-    const formData = new FormData();
-    formData.append('inputs', JSON.stringify({ question }));
-    
+    const { model, context: textContext, question, top_k, use_cache, wait_for_model } = context.propsValue;
+
+    const payload = {
+      inputs: {
+        context: textContext,
+        question: question
+      },
+      parameters: {
+        top_k: top_k
+      }
+    };
+
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `https://api-inference.huggingface.co/models/${model}`,
       headers: {
         'Authorization': `Bearer ${context.auth}`,
+        'Content-Type': 'application/json',
         'X-Use-Cache': use_cache ? 'true' : 'false',
         'X-Wait-For-Model': wait_for_model ? 'true' : 'false'
       },
-      body: formData
-    });
-
+      body: payload
+    })
     return response.body;
   }
 });

@@ -11,7 +11,7 @@ export const languageTranslation = createAction({
       displayName: "Model",
       description: "Hugging Face model ID for translation",
       required: true,
-      defaultValue: "Helsinki-NLP/opus-mt-en-de"
+      defaultValue: "google-t5/t5-base"
     }),
     text: Property.LongText({
       displayName: "Text to Translate",

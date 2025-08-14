@@ -38,9 +38,36 @@ export const objectDetection = createAction({
   },
   async run(context) {
     const { model, image, threshold, use_cache, wait_for_model } = context.propsValue;
-    
+
+    const getImageContentType = (filename:any) => {
+      const ext = filename?.toLowerCase().split('.').pop();
+      switch (ext) {
+        case 'jpg':
+        case 'jpeg':
+          return 'image/jpeg';
+        case 'png':
+          return 'image/png';
+        case 'gif':
+          return 'image/gif';
+        case 'webp':
+          return 'image/webp';
+        case 'tiff':
+        case 'tif':
+          return 'image/tiff';
+        case 'bmp':
+          return 'image/bmp';
+        default:
+          return 'image/jpeg'; 
+      }
+    };
+
     const formData = new FormData();
-    formData.append('parameters', JSON.stringify({ threshold }));
+    const uint8Array = new Uint8Array(image.data);
+    const imageBlob = new Blob([uint8Array], { type: 'application/octet-stream' });
+    formData.append('inputs', imageBlob, image.filename || 'image.jpg');
+    if (threshold !== undefined) {
+      formData.append('parameters', JSON.stringify({ threshold }));
+    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -48,9 +75,10 @@ export const objectDetection = createAction({
       headers: {
         'Authorization': `Bearer ${context.auth}`,
         'X-Use-Cache': use_cache ? 'true' : 'false',
-        'X-Wait-For-Model': wait_for_model ? 'true' : 'false'
+        'X-Wait-For-Model': wait_for_model ? 'true' : 'false',
+        'Content-Type': getImageContentType(image.filename) || 'application/octet-stream',
       },
-      body: formData
+      body: uint8Array.buffer
     });
 
     return response.body;

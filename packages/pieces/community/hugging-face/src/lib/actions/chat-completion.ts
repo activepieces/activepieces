@@ -6,11 +6,24 @@ export const chatCompletion = createAction({
   displayName: "Chat Completion",
   description: "Generate chat responses using Hugging Face LLM models",
   props: {
-    model: Property.ShortText({
+    model: Property.StaticDropdown({
       displayName: "Model",
       description: "Hugging Face model ID for chat completion",
       required: true,
-      defaultValue: "microsoft/DialoGPT-medium"
+      options: {
+        disabled: false,
+        options: [
+          { label: "microsoft/DialoGPT-medium", value: "microsoft/DialoGPT-medium" },
+          { label: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B", value: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B" },
+          { label: "meta-llama/Meta-Llama-3.1-8B-Instruct", value: "meta-llama/Meta-Llama-3.1-8B-Instruct" },
+          { label: "microsoft/phi-4", value: "microsoft/phi-4" },
+          { label: "simplescaling/s1.1-32B", value: "simplescaling/s1.1-32B" },
+          { label: "Qwen/Qwen2.5-7B-Instruct-1M", value: "Qwen/Qwen2.5-7B-Instruct-1M" },
+          { label: "Qwen/Qwen2.5-Coder-32B-Instruct", value: "Qwen/Qwen2.5-Coder-32B-Instruct" },
+          { label: "deepseek-ai/DeepSeek-R1", value: "deepseek-ai/DeepSeek-R1" },
+          { label: "Qwen/Qwen2.5-VL-7B-Instruct", value: "Qwen/Qwen2.5-VL-7B-Instruct" },
+        ]
+      }
     }),
     messages: Property.Array({
       displayName: "Messages",
@@ -69,16 +82,33 @@ export const chatCompletion = createAction({
   },
   async run(context) {
     const { model, messages, max_tokens, temperature, top_p, use_cache, wait_for_model } = context.propsValue;
-    
-    const inputs = {
-      inputs: messages.map((m:any) => `${m.role}: ${m.content}`).join('\n'),
+    let conversationText = '';
+    if (model.includes('Instruct') || model.includes('zephyr') || model.includes('Hermes')) {
+       for (const message of messages) {
+        const msg = message as { role: string; content: string };
+        if (msg.role === 'system') {
+          conversationText += `<|system|>\n${msg.content}\n`;
+        } else if (msg.role === 'user') {
+          conversationText += `<|user|>\n${msg.content}\n`;
+        } else if (msg.role === 'assistant') {
+          conversationText += `<|assistant|>\n${msg.content}\n`;
+        }
+      }
+      conversationText += `<|assistant|>\n`;
+    } else {
+      conversationText = messages.map((m: any) => `${m.role}: ${m.content}`).join('\n') + '\nassistant:';
+    }
+
+    const requestBody = {
+      inputs: conversationText,
       parameters: {
         max_new_tokens: max_tokens,
-        temperature,
-        top_p,
+        temperature: temperature,
+        top_p: top_p,
         return_full_text: false
       }
     };
+
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -89,7 +119,7 @@ export const chatCompletion = createAction({
         'X-Use-Cache': use_cache ? 'true' : 'false',
         'X-Wait-For-Model': wait_for_model ? 'true' : 'false'
       },
-      body: inputs
+      body: requestBody
     });
 
     return response.body;

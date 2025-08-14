@@ -6,11 +6,19 @@ export const createImage = createAction({
   displayName: "Create Image",
   description: "Generate images from text prompts using Hugging Face diffusion models",
   props: {
-    model: Property.ShortText({
+    model: Property.StaticDropdown({
       displayName: "Model",
       description: "Hugging Face model ID for image generation",
       required: true,
-      defaultValue: "runwayml/stable-diffusion-v1-5"
+      options: {
+        disabled: false,
+        options: [
+          { label: "black-forest-labs/FLUX.1-dev", value: "black-forest-labs/FLUX.1-dev" },
+          { label: "latent-consistency/lcm-lora-sdxl", value: "latent-consistency/lcm-lora-sdxl" },
+          { label: "Kwai-Kolors/Kolors", value: "Kwai-Kolors/Kolors" },
+          { label: "stabilityai/stable-diffusion-3-medium-diffusers", value: "stabilityai/stable-diffusion-3-medium-diffusers" },
+        ]
+      }
     }),
     prompt: Property.LongText({
       displayName: "Prompt",

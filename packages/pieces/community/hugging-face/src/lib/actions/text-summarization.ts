@@ -6,11 +6,17 @@ export const textSummarization = createAction({
   displayName: "Text Summarization",
   description: "Generate summaries of long text using Hugging Face models",
   props: {
-    model: Property.ShortText({
+    model: Property.StaticDropdown({
       displayName: "Model",
       description: "Hugging Face model ID for text summarization",
       required: true,
-      defaultValue: "facebook/bart-large-cnn"
+      options: {
+        disabled: false,
+        options: [
+          { label: "facebook/bart-large-cnn", value: "facebook/bart-large-cnn" },
+          { label: "Falconsai/medical_summarization", value: "Falconsai/medical_summarization" }
+        ]
+      }
     }),
     text: Property.LongText({
       displayName: "Text to Summarize",

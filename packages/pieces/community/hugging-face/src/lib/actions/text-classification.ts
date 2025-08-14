@@ -6,11 +6,17 @@ export const textClassification = createAction({
   displayName: "Text Classification",
   description: "Classify text into categories using Hugging Face models",
   props: {
-    model: Property.ShortText({
+    model: Property.StaticDropdown({
       displayName: "Model",
       description: "Hugging Face model ID for text classification",
       required: true,
-      defaultValue: "cardiffnlp/twitter-roberta-base-sentiment-latest"
+      options: {
+        disabled: false,
+        options: [
+          { label: "distilbert/distilbert-base-uncased-finetuned-sst-2-english", value: "distilbert/distilbert-base-uncased-finetuned-sst-2-english" },
+          { label: "ProsusAI/finbert", value: "ProsusAI/finbert" }
+        ]
+      }
     }),
     text: Property.LongText({
       displayName: "Text to Classify",

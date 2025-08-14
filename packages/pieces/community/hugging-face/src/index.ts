@@ -8,13 +8,12 @@ import { chatCompletion } from "./lib/actions/chat-completion";
 import { createImage } from "./lib/actions/create-image";
 import { objectDetection } from "./lib/actions/object-detection";
 import { imageClassification } from "./lib/actions/image-classification";
+import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
-export const huggingFaceAuth = PieceAuth.OAuth2({
-  description: "Authentication for Hugging Face Hub",
-  authUrl: "https://huggingface.co/oauth/authorize",
-  tokenUrl: "https://huggingface.co/oauth/token",
+const huggingFaceAuth = PieceAuth.SecretText({
+  displayName: "API Token",
+  description: "Your Hugging Face API token (get it from https://huggingface.co/settings/tokens)",
   required: true,
-  scope: []
 });
 
 export const huggingface = createPiece({
