@@ -77,7 +77,7 @@ function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
         schema = schema.describe(property.description)
     }
 
-    return property.required ? schema : schema.optional().nullish()
+    return property.required ? schema : schema.nullish()
 }
 
 function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
@@ -119,7 +119,7 @@ function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
             schema = z.string()
             break
         case PropertyType.MARKDOWN:
-            schema = z.unknown().optional()
+            schema = z.unknown().nullish()
             break
         case PropertyType.CUSTOM:
         case PropertyType.DYNAMIC:
@@ -135,7 +135,7 @@ function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
         schema = schema.describe(property.description)
     }
 
-    return property.required ? schema : schema.optional().nullish()
+    return property.required ? schema : schema.nullish()
 }
 
 
@@ -231,7 +231,7 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
         const propertySchema = piecePropertyToZod(property)
         let schema = depth === 0 ? z.object({ [propertyName]: propertySchema }) : propertySchema
         if (propertySchema.optional()) {
-            schema = schema.optional().nullish()
+            schema = schema.nullish()
         }
         return {
             schema,
