@@ -4,7 +4,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { customApiCall } from './lib/actions/custom-api-call';
 import { OOO } from './lib/actions/ooo';
 import { updateOOO } from './lib/actions/update-OOO';
-import { deleteOOO } from './lib/actions/delete-OOO';
+import { deleteOOO } from './lib/actions/delete-OOO'
 import { addShift } from './lib/actions/add-shift';
 import { scheduleUpdated } from './lib/triggers/schedule-updated';
 import { timeOffStatusChanged } from './lib/triggers/OOO-status-changed';
