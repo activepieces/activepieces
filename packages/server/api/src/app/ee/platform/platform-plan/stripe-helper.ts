@@ -74,8 +74,6 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             trial_settings: { end_behavior: { missing_payment_method: 'cancel' } },
             metadata: { platformId, trialSubscription: 'true' },
         })
-
-        return subscription.id
     },
     async giftTrialForCustomer(params: GiftTrialForCustomerParams) {
         const { email, trialPeriod, plan } = params

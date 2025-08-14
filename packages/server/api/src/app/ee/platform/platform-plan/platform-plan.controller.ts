@@ -219,13 +219,8 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const customerId = platformBilling.stripeCustomerId
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
-        const trialSubscriptionId = await stripeHelper(request.log).startTrial({ customerId, platformId: platformBilling.platformId, plan, existingSubscriptionId: platformBilling.stripeSubscriptionId })
+        await stripeHelper(request.log).startTrial({ customerId, platformId: platformBilling.platformId, plan, existingSubscriptionId: platformBilling.stripeSubscriptionId })
 
-        await platformPlanService(request.log).update({
-            platformId: platformBilling.platformId,
-            stripeSubscriptionId: trialSubscriptionId,
-            eligibleForTrial: plan === PlanName.PLUS ? PlanName.BUSINESS : undefined,
-        })
         return { success: true }
     })
 
