@@ -1,4 +1,5 @@
 import {
+  AuthenticationType,
   HttpHeaders,
   HttpMessageBody,
   HttpMethod,
@@ -54,7 +55,7 @@ export const instanceLogin = async (
     method: HttpMethod.POST,
     url: `${endpoint}`,
     headers: {
-      'Content-Type': 'multipart/form-data',
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: {
       operation: 'login',
@@ -155,88 +156,108 @@ interface BodyParams {
   headers?: HttpHeaders;
 }
 
-export const Modules: Record<string, CallableFunction> = {
-  Accounts: (record: Record<string, string>) => `${record['accountname']}`,
-  Assets: (record: Record<string, string>) => `${record['assetname']}`,
-  CompanyDetails: (record: Record<string, string>) =>
-    `${record['organizationname']}`,
-  Contacts: (record: Record<string, string>) => `${record['email']}`,
-  Currency: (record: Record<string, string>) => `${record['currency_name']}`,
-  DocumentFolders: (record: Record<string, string>) =>
-    `${record['foldername']}`,
-  Documents: (record: Record<string, string>) => `${record['notes_title']}`,
-  Emails: (record: Record<string, string>) => `${record['subject']}`,
-  Events: (record: Record<string, string>) => `${record['subject']}`,
-  Faq: (record: Record<string, string>) => `${record['faq_no']}`,
-  Groups: (record: Record<string, string>) => `${record['groupname']}`,
-  HelpDesk: (record: Record<string, string>) => `${record['ticket_no']}`,
-  Invoice: (record: Record<string, string>) => `${record['invoice_no']}`,
-  Leads: (record: Record<string, string>) =>
-    `${record['lead_no']}: ${record['firstname']} ${record['lastname']}`,
-  LineItem: (record: Record<string, string>) => `${record['productid']}`,
-  ModComments: (record: Record<string, string>) =>
-    `${record['commentcontent']}`,
-  Potentials: (record: Record<string, string>) => `${record['potentialname']}`,
-  PriceBooks: (record: Record<string, string>) => `${record['bookname']}`,
-  Products: (record: Record<string, string>) => `${record['productname']}`,
-  ProductTaxes: (record: Record<string, string>) =>
-    `#${record['taxid']} pid: ${record['productid']}`,
-  Project: (record: Record<string, string>) => `${record['projectname']}`,
-  ProjectMilestone: (record: Record<string, string>) =>
-    `${record['projectmilestonename']}`,
-  ProjectTask: (record: Record<string, string>) =>
-    `${record['projecttaskname']}`,
-  PurchaseOrder: (record: Record<string, string>) => `${record['subject']}`,
-  Quotes: (record: Record<string, string>) => `${record['subject']}`,
-  SalesOrder: (record: Record<string, string>) => `${record['salesorder_no']}`,
-  ServiceContracts: (record: Record<string, string>) => `${record['subject']}`,
-  Services: (record: Record<string, string>) => `${record['servicename']}`,
-  SLA: (record: Record<string, string>) => `${record['policy_name']}`,
-  Tax: (record: Record<string, string>) => `${record['taxname']}`,
-  Users: (record: Record<string, string>) => `${record['user_name']}`,
-  Vendors: (record: Record<string, string>) => `${record['vendorname']}`,
+export const Modules: Record<string, (record: Record<string, string>) => Promise<string>> = {
+  Contacts: async (record) => `${record['email']}`, // firstname,lastname
+  Documents: async (record) => `${record['notes_title']}`, // title
+  Faq: async (record) => `${record['faq_no']}`, // question
+  // HelpDesk: async (record) => `${record['ticket_no']}`, // this module not exist
+  Invoice: async (record) => `${record['invoice_no']}`, // subject
+  Leads: async (record) => `${record['lead_no']}: ${record['firstname']} ${record['lastname']}`, // firstname,lastname
+  LineItem: async (record) => `${record['productid']}`, // no label field
+  ProductTaxes: async (record) => `#${record['taxid']} pid: ${record['productid']}`, // no label field
+  // ProjectTask: async (record) => `${record['projecttaskname']}`,  // this module not exist
+  SalesOrder: async (record) => `${record['salesorder_no']}`, // subject
+  Tax: async (record) => `${record['taxname']}`, // taxlabel
+  Users: async (record) => `${record['user_name']}`, // first_name,last_name
 };
 
-export const elementTypeProperty = Property.StaticDropdown<string>({
+export async function refreshModules(auth: VTigerAuthValue){
+  const response = await httpClient.sendRequest({
+    method: HttpMethod.GET,
+    url: `${(auth as VTigerAuthValue)['instance_url']}/restapi/v1/vtiger/default/listtypes?fieldTypeList=null`,
+    authentication: {
+      type: AuthenticationType.BASIC,
+      username: auth.username,
+      password: auth.password,
+    },
+  });
+
+  if(response.body.success !== true){
+    throw new Error('Failed to retrieve module types');
+  }
+
+  const types = response.body.result.types;
+  for (let i = 0; i < types.length; i++) {
+    const element = types[i];
+
+    let labelFields = '';
+    let isModuleLabelUnknown = false;
+    Modules[element] ??= async (record) => {
+      if(labelFields !== '') return labelFields;
+      if(isModuleLabelUnknown) return '';
+
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `${(auth as VTigerAuthValue)['instance_url']}/restapi/v1/vtiger/default/describe?elementType=${element}`,
+        authentication: {
+			    type: AuthenticationType.BASIC,
+          username: auth.username,
+          password: auth.password,
+        },
+      });
+
+      if (!response.body.success) return '';
+
+      const result = response.body.result;
+      const lf = result.labelFields;
+      if (Array.isArray(lf)) {
+        labelFields = (lf[0] ?? '') as string;
+      } else if (typeof lf === 'string') {
+        labelFields = lf.includes(',') ? lf.split(',')[0] : lf;
+      } else {
+        labelFields = '';
+      }
+
+      if(labelFields === '') {
+        if(!result.fields?.length){
+          isModuleLabelUnknown = true;
+          return '';
+        }
+
+        labelFields = result.fields[0].name;
+      }
+
+      return record[labelFields];
+    };
+  }
+}
+
+export const elementTypeProperty = Property.Dropdown({
   displayName: 'Module Type',
   description: 'The module / element type',
   required: true,
-  options: {
-    options: [
-      { label: 'Accounts', value: 'Accounts' },
-      { label: 'Assets', value: 'Assets' },
-      { label: 'CompanyDetails', value: 'CompanyDetails' },
-      { label: 'Contacts', value: 'Contacts' },
-      { label: 'Currency', value: 'Currency' },
-      { label: 'DocumentFolders', value: 'DocumentFolders' },
-      { label: 'Documents', value: 'Documents' },
-      { label: 'Emails', value: 'Emails' },
-      { label: 'Events', value: 'Events' },
-      { label: 'Faq', value: 'Faq' },
-      { label: 'Groups', value: 'Groups' },
-      { label: 'HelpDesk', value: 'HelpDesk' },
-      { label: 'Invoice', value: 'Invoice' },
-      { label: 'Leads', value: 'Leads' },
-      { label: 'LineItem', value: 'LineItem' },
-      { label: 'ModComments', value: 'ModComments' },
-      { label: 'Potentials', value: 'Potentials' },
-      { label: 'PriceBooks', value: 'PriceBooks' },
-      { label: 'Products', value: 'Products' },
-      { label: 'ProductTaxes', value: 'ProductTaxes' },
-      { label: 'Project', value: 'Project' },
-      { label: 'ProjectMilestone', value: 'ProjectMilestone' },
-      { label: 'ProjectTask', value: 'ProjectTask' },
-      { label: 'PurchaseOrder', value: 'PurchaseOrder' },
-      { label: 'Quotes', value: 'Quotes' },
-      { label: 'SalesOrder', value: 'SalesOrder' },
-      { label: 'ServiceContracts', value: 'ServiceContracts' },
-      { label: 'Services', value: 'Services' },
-      { label: 'SLA', value: 'SLA' },
-      { label: 'Tax', value: 'Tax' },
-      { label: 'Users', value: 'Users' },
-      { label: 'Vendors', value: 'Vendors' },
-    ],
-  },
+  refreshers: [],
+  options: async (props: any) => {
+    const { auth } = props;
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please setup authentication to continue',
+      };
+    }
+
+    await refreshModules(auth);
+
+    const modules = Object.keys(Modules).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    return {
+      disabled: false,
+      options: modules.map((module) => ({
+        label: module,
+        value: module,
+      }))
+    };
+  }
 });
 
 export interface Field {
@@ -302,7 +323,7 @@ export const recordIdProperty = () =>
         required: true,
         options: {
           options: response.body.result.map((r) => ({
-            label: _module(r),
+            label: _module?.(r) || r['id'],
             value: r['id'],
           })),
         },
@@ -358,18 +379,18 @@ export async function getRecordReference(
 
   const response = await httpClient.sendRequest<{
     success: boolean;
-    result: Record<string, unknown>[];
+    result: Record<string, any>[];
   }>(httpRequest);
 
   if (response.body.success) {
     return {
       disabled: false,
-      options: response.body.result.map((record) => {
+      options: await Promise.all(response.body.result.map(async (record) => {
         return {
-          label: Modules[module](record),
+          label: await Modules[module]?.(record) || record['id'],
           value: record['id'] as string,
         };
-      }),
+      })),
     };
   }
 
@@ -384,18 +405,11 @@ export const recordProperty = (create = true) =>
     displayName: 'Record Fields',
     description: 'Add new fields to be created in the new record',
     required: true,
-    refreshers: ['id', 'elementType'],
+    refreshers: create ? ['elementType'] : ['id', 'elementType'],
     props: async ({ auth, id, elementType }) => {
       if (!auth || !elementType) {
         return {};
       }
-
-      const instance = await instanceLogin(
-        auth['instance_url'],
-        auth['username'],
-        auth['password']
-      );
-      if (!instance) return {};
 
       let defaultValue: Record<string, unknown>;
 
@@ -407,10 +421,13 @@ export const recordProperty = (create = true) =>
             Record<string, unknown>
           >({
             method: HttpMethod.GET,
-            url: `${auth['instance_url']}/webservice.php`,
+            url: `${(auth as VTigerAuthValue)['instance_url']}/restapi/v1/vtiger/default/retrieve`,
+            authentication: {
+              type: AuthenticationType.BASIC,
+              username: auth['username'],
+              password: auth['password'],
+            },
             queryParams: {
-              operation: 'retrieve',
-              sessionName: instance.sessionId ?? instance.sessionName,
               elementType: elementType as unknown as string,
               id: id['id'] as unknown as string,
             },
@@ -501,22 +518,18 @@ export const generateElementFields = async (
   defaultValue: Record<string, unknown>,
   skipMandatory = false
 ): Promise<DynamicPropsValue> => {
-  const instance = await instanceLogin(
-    auth['instance_url'],
-    auth['username'],
-    auth['password']
-  );
-  if (!instance) return {};
-
   const describe_response = await httpClient.sendRequest<{
     success: boolean;
     result: { fields: Field[] };
   }>({
     method: HttpMethod.GET,
-    url: `${auth['instance_url']}/webservice.php`,
+    url: `${auth['instance_url']}/restapi/v1/vtiger/default/describe`,
+    authentication: {
+      type: AuthenticationType.BASIC,
+      username: auth.username,
+      password: auth.password,
+    },
     queryParams: {
-      sessionName: instance.sessionId ?? instance.sessionName,
-      operation: 'describe',
       elementType: elementType,
     },
   });
@@ -524,6 +537,8 @@ export const generateElementFields = async (
   const fields: DynamicPropsValue = {};
 
   if (describe_response.body.success) {
+    let limit = 30; // Limit to show 30 input property, more than this will cause frontend unresponsive
+
     const generateField = async (field: Field) => {
       const params = {
         displayName: field.label,
@@ -583,7 +598,7 @@ export const generateElementFields = async (
           displayName: field.label,
           description: `The fields to fill in the object type ${elementType}`,
           required: !skipMandatory ? field.mandatory : false,
-          defaultValue: defaultValue?.[field.name] as boolean,
+          defaultValue: defaultValue?.[field.name] ? true : false,
         });
       } else if (['date', 'datetime', 'time'].includes(field.type.name)) {
         fields[field.name] = Property.DateTime({
@@ -592,25 +607,51 @@ export const generateElementFields = async (
           defaultValue: defaultValue?.[field.name] as string,
           required: !skipMandatory ? field.mandatory : false,
         });
+      } else if(params.required) {
+        // Add the mandatory field for unknown input type, but with text input
+        fields[field.name] = Property.ShortText({
+          ...params,
+          defaultValue: defaultValue?.[field.name] as string,
+        });
       }
     };
 
+    const skipFields = [
+      'id',
+      'modifiedtime',
+      'createdtime',
+      'modifiedby',
+      'created_user_id',
+    ];
+
+    // Prioritize mandatory fields
     for (const field of describe_response.body.result.fields) {
-      if (
-        [
-          'id',
-          'modifiedtime',
-          'createdtime',
-          'modifiedby',
-          'created_user_id',
-        ].includes(field.name)
-      ) {
+      if (skipFields.includes(field.name)) {
         continue;
       }
 
-      await generateField(field);
+      if (field.mandatory) {
+        await generateField(field);
+        limit--;
+      }
+    }
+
+    // Let's add the rest...
+    for (const field of describe_response.body.result.fields) {
+      if (skipFields.includes(field.name)) {
+        continue;
+      }
+
+      // Skip the rest of field to avoid unresponsive frontend
+      if (limit < 0) break;
+
+      if (!field.mandatory) {
+        await generateField(field);
+        limit--;
+      }
     }
   }
+  else throw new Error("Failed to get module description");
 
   return fields;
 };

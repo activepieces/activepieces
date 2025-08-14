@@ -190,7 +190,7 @@ export const CanvasContextMenuContent = ({
               ) : (
                 <RouteOff className="h-4 w-4"></RouteOff>
               )}
-              {t(areAllStepsSkipped ? 'Unskip' : 'Skip')}
+              {areAllStepsSkipped ? t('Unskip') : t('Skip')}
             </ShortcutWrapper>
           </ContextMenuItem>
         )}

@@ -71,17 +71,17 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
 
         const redisConnection = getRedisConnection()
         const today = dayjs()
-        const thirtyDays = 60 * 60 * 24 * 90
+        const fourteenMonth = 60 * 60 * 24 * 30 * 14
 
         const projectRedisKey = getDailyUsageRedisKey('tasks', 'project', projectId, today)
         const projectTasksUsageIncremented = await redisConnection.incrby(projectRedisKey, incrementBy)
 
-        await redisConnection.expire(projectRedisKey, thirtyDays)
+        await redisConnection.expire(projectRedisKey, fourteenMonth)
 
         const platformId = await projectService.getPlatformId(projectId)
         const platformRedisKey = getDailyUsageRedisKey('tasks', 'platform', platformId, today)
         const platformTasksUsageIncremented = await redisConnection.incrby(platformRedisKey, incrementBy)
-        await redisConnection.expire(platformRedisKey, thirtyDays)
+        await redisConnection.expire(platformRedisKey, fourteenMonth)
 
         return { projectTasksUsage: projectTasksUsageIncremented, platformTasksUsage: platformTasksUsageIncremented }
     },
@@ -117,15 +117,15 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
 
         const redisConnection = getRedisConnection()
         const today = dayjs()
-        const ninetyDays = 60 * 60 * 24 * 90
+        const fourteenMonth = 60 * 60 * 24 * 30 * 14
 
         const projectRedisKey = getDailyUsageRedisKey('ai_credits', 'project', projectId, today)
         const projectAiCreditUsageIncremented = parseFloat(await redisConnection.incrbyfloat(projectRedisKey, incrementBy))
-        await redisConnection.expire(projectRedisKey, ninetyDays)
+        await redisConnection.expire(projectRedisKey, fourteenMonth)
 
         const platformRedisKey = getDailyUsageRedisKey('ai_credits', 'platform', platformId, today)
         const platformAiCreditUsageIncremented = parseFloat(await redisConnection.incrbyfloat(platformRedisKey, incrementBy))
-        await redisConnection.expire(platformRedisKey, ninetyDays)
+        await redisConnection.expire(platformRedisKey, fourteenMonth)
 
         const platformPlan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
 

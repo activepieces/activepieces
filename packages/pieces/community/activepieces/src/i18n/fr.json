@@ -31,6 +31,6 @@
   "POST": "POSTER",
   "PATCH": "PATCH",
   "PUT": "EFFACER",
-  "DELETE": "SUPPRIMER",
+  "DELETE": "DELETE",
   "HEAD": "TÊTE"
 }

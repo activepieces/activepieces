@@ -11,6 +11,7 @@ type EngineConstantsParams = {
     flowId: string
     flowVersionId: string
     flowVersionState: FlowVersionState
+    triggerPieceName: string
     flowRunId: string
     publicApiUrl: string
     internalApiUrl: string
@@ -45,6 +46,7 @@ export class EngineConstants {
     public readonly flowId: string
     public readonly flowVersionId: string
     public readonly flowVersionState: FlowVersionState
+    public readonly triggerPieceName: string
     public readonly flowRunId: string
     public readonly publicApiUrl: string
     public readonly internalApiUrl: string
@@ -88,6 +90,7 @@ export class EngineConstants {
         this.publicApiUrl = params.publicApiUrl
         this.internalApiUrl = params.internalApiUrl
         this.retryConstants = params.retryConstants
+        this.triggerPieceName = params.triggerPieceName
         this.engineToken = params.engineToken
         this.projectId = params.projectId
         this.propsResolver = params.propsResolver
@@ -104,6 +107,7 @@ export class EngineConstants {
             flowId: input.flowVersion.flowId,
             flowVersionId: input.flowVersion.id,
             flowVersionState: input.flowVersion.state,
+            triggerPieceName: input.flowVersion.trigger.settings.pieceName,
             flowRunId: input.flowRunId,
             publicApiUrl: input.publicApiUrl,
             internalApiUrl: input.internalApiUrl,
@@ -129,6 +133,7 @@ export class EngineConstants {
             flowId: DEFAULT_MCP_DATA.flowId,
             flowVersionId: DEFAULT_MCP_DATA.flowVersionId,
             flowVersionState: DEFAULT_MCP_DATA.flowVersionState,
+            triggerPieceName: DEFAULT_MCP_DATA.triggerPieceName,
             flowRunId: DEFAULT_MCP_DATA.flowRunId,
             publicApiUrl: input.publicApiUrl,
             internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
@@ -154,6 +159,7 @@ export class EngineConstants {
             flowId: input.flowVersion?.flowId ?? DEFAULT_MCP_DATA.flowId,
             flowVersionId: input.flowVersion?.id ?? DEFAULT_MCP_DATA.flowVersionId,
             flowVersionState: input.flowVersion?.state ?? DEFAULT_MCP_DATA.flowVersionState,
+            triggerPieceName: input.flowVersion?.trigger?.settings.pieceName ?? DEFAULT_MCP_DATA.triggerPieceName,
             flowRunId: DEFAULT_EXECUTE_PROPERTY,
             publicApiUrl: input.publicApiUrl,
             internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
@@ -179,6 +185,7 @@ export class EngineConstants {
             flowId: input.flowVersion.flowId,
             flowVersionId: input.flowVersion.id,
             flowVersionState: input.flowVersion.state,
+            triggerPieceName: input.flowVersion.trigger.settings.pieceName,
             flowRunId: DEFAULT_TRIGGER_EXECUTION,
             publicApiUrl: input.publicApiUrl,
             internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),

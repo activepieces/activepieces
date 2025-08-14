@@ -8,7 +8,7 @@
   "Customer Updated": "Cliente actualizado",
   "New Appointment": "Nueva cita",
   "New Payment": "Nuevo pago",
-  "New Invoice": "New Invoice",
+  "New Invoice": "Nueva factura",
   "Triggered when a new order is created": "Activado cuando se crea un nuevo pedido",
   "Triggered when an order is updated": "Activado cuando se actualiza un pedido",
   "Triggered when a customer is created": "Se activa cuando se crea un cliente",
