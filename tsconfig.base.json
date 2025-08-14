@@ -93,6 +93,9 @@
       "@activepieces/piece-ashby": [
         "packages/pieces/community/ashby/src/index.ts"
       ],
+      "@activepieces/piece-assembled": [
+        "packages/pieces/community/assembled/src/index.ts"
+      ],
       "@activepieces/piece-assemblyai": [
         "packages/pieces/community/assemblyai/src/index.ts"
       ],
