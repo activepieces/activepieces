@@ -77,7 +77,7 @@ function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
         schema = schema.describe(property.description)
     }
 
-    return property.required ? schema : schema.optional()
+    return property.required ? schema : schema.optional().nullish()
 }
 
 function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
@@ -109,7 +109,7 @@ function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
             break
         case PropertyType.DROPDOWN:
         case PropertyType.STATIC_DROPDOWN:
-            schema = z.union([z.string(), z.record(z.string(), z.unknown())])
+            schema = z.union([z.string(), z.number(), z.record(z.string(), z.unknown())])
             break
         case PropertyType.COLOR:
         case PropertyType.SECRET_TEXT:
@@ -135,7 +135,7 @@ function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
         schema = schema.describe(property.description)
     }
 
-    return property.required ? schema : schema.optional()
+    return property.required ? schema : schema.optional().nullish()
 }
 
 
@@ -211,10 +211,18 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
                     })).schema,
                 ]),
             )
-            const schema = depth === 0 ? z.object({ [propertyName]: z.array(z.object(Object.fromEntries(entries))) }) : z.array(z.object(Object.fromEntries(entries)))
+            let arraySchema: z.ZodTypeAny = z.array(z.object(Object.fromEntries(entries)))
+            if (!property.required) {
+                arraySchema = arraySchema.nullish()
+            }
+            const schema = depth === 0 ? z.object({ [propertyName]: arraySchema }) : arraySchema
             return { schema, value: property }
         }
-        const schema = depth === 0 ? z.object({ [propertyName]: z.array(z.string()) }) : z.array(z.string())
+        let arraySchema: z.ZodTypeAny = z.array(z.string())
+        if (!property.required) {
+            arraySchema = arraySchema.nullish()
+        }
+        const schema = depth === 0 ? z.object({ [propertyName]: arraySchema }) : arraySchema
         return { schema, value: property }
     }
 
@@ -223,7 +231,7 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
         const propertySchema = piecePropertyToZod(property)
         let schema = depth === 0 ? z.object({ [propertyName]: propertySchema }) : propertySchema
         if (propertySchema.optional()) {
-            schema = schema.optional()
+            schema = schema.optional().nullish()
         }
         return {
             schema,
