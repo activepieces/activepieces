@@ -36,7 +36,7 @@ export class AddExternalIdToAgentId1753641361099 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_agent_projectId_externalId"
+            DROP INDEX "idx_agent_projectId_externalId"
         `)
         await queryRunner.query(`
             ALTER TABLE "agent" DROP COLUMN "externalId"

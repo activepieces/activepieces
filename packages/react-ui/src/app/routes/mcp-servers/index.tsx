@@ -212,7 +212,7 @@ const McpServersPage = () => {
         <DashboardPageHeader
           title={t('MCP Servers')}
           description={t('Create and manage your MCP servers')}
-          beta={true}
+          tutorialTab="mcpServers"
         >
           <PermissionNeededTooltip hasPermission={userHasMcpWritePermission}>
             <Button

@@ -7,16 +7,23 @@ import { billingMutations } from '@/features/billing/lib/billing-hooks';
 import { planData } from '@/features/billing/lib/data';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
-import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
+import {
+  ApSubscriptionStatus,
+  BillingCycle,
+  PlanName,
+  StripePlanName,
+} from '@activepieces/ee-shared';
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
 type PlanCardProps = {
+  cycle: BillingCycle;
   plan: (typeof planData.plans)[0];
   billingInformation?: PlatformBillingInformation;
   setDialogOpen: (open: boolean) => void;
 };
 
 export const PlanCard = ({
+  cycle,
   plan,
   billingInformation,
   setDialogOpen,
@@ -26,10 +33,11 @@ export const PlanCard = ({
   const isTrial =
     billingInformation?.plan.stripeSubscriptionStatus ===
     ApSubscriptionStatus.TRIALING;
+  const currentBillingCycle = billingInformation?.plan.stripeBillingCycle;
 
   const isSelected =
-    (currentPlan === plan.name && !isTrial) ||
-    (isTrial && plan.name === PlanName.FREE);
+    (isTrial && plan.name === PlanName.FREE) ||
+    (currentPlan === plan.name && currentBillingCycle === cycle && !isTrial);
   const isPopular = plan.name === PlanName.PLUS && !isSelected;
 
   const { mutate: updateSubscription, isPending: isUpdatingSubscription } =
@@ -78,15 +86,15 @@ export const PlanCard = ({
       </div>
 
       <div className="py-4">
-        {plan.price === 'Custom' ? (
+        {plan.price[cycle] === 'Custom' ? (
           <div className="text-3xl font-bold tracking-tight">{t('Custom')}</div>
         ) : (
           <div className="flex items-baseline gap-1">
             <span className="text-3xl font-bold tracking-tight">
-              ${plan.price}
+              ${plan.price[cycle]}
             </span>
             <span className="text-muted-foreground text-sm font-medium">
-              /month
+              {t('/month')}
             </span>
           </div>
         )}
@@ -102,13 +110,16 @@ export const PlanCard = ({
             if (hasActiveSubscription) {
               updateSubscription({
                 plan: plan.name as
-                  | PlanName.PLUS
                   | PlanName.BUSINESS
-                  | PlanName.FREE,
+                  | PlanName.FREE
+                  | PlanName.PLUS,
+                addons: {},
+                cycle,
               });
             } else {
               createSubscription({
-                plan: plan.name as PlanName.PLUS | PlanName.BUSINESS,
+                plan: plan.name as StripePlanName,
+                cycle,
               });
             }
           }

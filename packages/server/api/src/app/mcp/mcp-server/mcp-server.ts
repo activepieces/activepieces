@@ -31,8 +31,8 @@ import { flowService } from '../../flows/flow/flow.service'
 import { telemetry } from '../../helper/telemetry.utils'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
-import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
 import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
@@ -262,7 +262,10 @@ async function addFlowToServer(
                 flowId: populatedFlow.id,
                 async: !returnsResponse,
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                saveSampleData: await webhookSimulationService(logger).exists(flowId),
+                saveSampleData: await triggerSourceService(logger).existsByFlowId({
+                    flowId,
+                    simulate: true,
+                }),
                 payload: originalParams,
                 execute: true,
                 failParentOnFailure: false,
@@ -313,7 +316,7 @@ async function initializeOpenAIModel({
     projectId,
     mcpId,
 }: InitializeOpenAIModelParams): Promise<LanguageModelV1> {
-    const model = 'gpt-4.1-mini'
+    const model = 'gpt-4.1'
     const baseUrl = await domainHelper.getPublicApiUrl({
         path: '/v1/ai-providers/proxy/openai/v1/',
         platformId,

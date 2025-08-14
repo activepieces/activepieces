@@ -3,8 +3,8 @@ import { t } from 'i18next';
 import { Check, Copy, Info, AlertTriangle, Lightbulb } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import gfm from 'remark-gfm';
 import breaks from 'remark-breaks';
+import gfm from 'remark-gfm';
 
 import { cn } from '@/lib/utils';
 import { MarkdownVariant } from '@activepieces/shared';
@@ -102,7 +102,7 @@ const ApMarkdown = React.memo(
       return null;
     }
 
-    let markdownProcessed = applyVariables(markdown, variables ?? {});
+    const markdownProcessed = applyVariables(markdown, variables ?? {});
 
     return (
       <Container variant={variant}>
@@ -202,9 +202,7 @@ const ApMarkdown = React.memo(
             th: ({ node, ...props }) => (
               <th className="text-left p-2 font-medium" {...props} />
             ),
-            td: ({ node, ...props }) => (
-              <td className="p-2" {...props} />
-            ),
+            td: ({ node, ...props }) => <td className="p-2" {...props} />,
           }}
         >
           {markdownProcessed.trim()}

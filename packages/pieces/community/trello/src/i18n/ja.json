@@ -28,6 +28,14 @@
   "Bottom": "下揃え",
   "Card Moved to list": "カードがリストに移動しました",
   "New Card": "新しいカード",
+  "Card Deadline": "カードの期限",
   "Trigger when a card is moved to the list specified": "カードが指定されたリストに移動したときにトリガーします",
-  "Trigger when a new card is created": "新しいカードが作成されたときにトリガーする"
+  "Trigger when a new card is created": "新しいカードが作成されたときにトリガーする",
+  "Triggers at a specified time before a card deadline.": "カードの期限の前に指定した時間でトリガーします。",
+  "Time unit": "時間単位",
+  "Time before due": "予定より前の時間",
+  "Select unit for time before due": "期日前の単位を選択してください",
+  "How long before the due date the trigger should run (use with time unit)": "期日の前にトリガーを実行する時間（時間単位で使用）",
+  "Minutes": "分",
+  "Hours": "時間"
 }

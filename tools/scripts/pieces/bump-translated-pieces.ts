@@ -87,6 +87,52 @@ function hasTranslationChanges(piecePath: string): boolean {
   }
 }
 
+// Function to check if a piece version has already been bumped compared to main
+function hasVersionBeenBumped(piecePath: string): boolean {
+  try {
+    const packageJsonPath = path.join(piecePath, 'package.json');
+    if (!fs.existsSync(packageJsonPath)) {
+      return false;
+    }
+
+    // Get current version
+    const content = fs.readFileSync(packageJsonPath, 'utf8');
+    const packageJson: PackageJson = JSON.parse(content);
+    const currentVersion = packageJson.version;
+
+    if (!currentVersion) {
+      return false;
+    }
+
+    // Get version from main branch
+    const mainVersion = execSync(`git show origin/main:${packageJsonPath}`, { encoding: 'utf8' });
+    const mainPackageJson: PackageJson = JSON.parse(mainVersion);
+    const mainBranchVersion = mainPackageJson.version;
+
+    // Compare versions - if current version is higher than main, it's already been bumped
+    return compareVersions(currentVersion, mainBranchVersion) > 0;
+  } catch (error) {
+    // If we can't get the main version (e.g., file doesn't exist on main), assume not bumped
+    return false;
+  }
+}
+
+// Helper function to compare semantic versions
+function compareVersions(version1: string, version2: string): number {
+  const v1Parts = version1.split('.').map(Number);
+  const v2Parts = version2.split('.').map(Number);
+  
+  for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
+    const v1Part = v1Parts[i] || 0;
+    const v2Part = v2Parts[i] || 0;
+    
+    if (v1Part > v2Part) return 1;
+    if (v1Part < v2Part) return -1;
+  }
+  
+  return 0;
+}
+
 // Function to get all piece directories
 function getPieceDirectories(piecesDir: string): string[] {
   return fs.readdirSync(piecesDir)
@@ -110,15 +156,19 @@ function main(): void {
   
   for (const piece of pieceDirs) {
     const piecePath = path.join(piecesDir, piece);
-    
     // Check if piece has changes compared to main
     if (hasChangesComparedToMain(piecePath)) {
       // Check if it has i18n directory (indicating translations were added)
       if (hasI18nDirectory(piecePath)) {
         // Check if the changes are translation-related
         if (hasTranslationChanges(piecePath)) {
-          piecesWithChanges.push(piece);
-          console.log(`  ✓ ${piece} - has translation changes`);
+          // Check if version has already been bumped
+          if (hasVersionBeenBumped(piecePath)) {
+            console.log(`  - ${piece} - has translation changes but version already bumped`);
+          } else {
+            piecesWithChanges.push(piece);
+            console.log(`  ✓ ${piece} - has translation changes and needs version bump`);
+          }
         } else {
           console.log(`  - ${piece} - has changes but not translation-related`);
         }

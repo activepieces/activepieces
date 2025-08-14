@@ -1,5 +1,5 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, PackageType, PieceActionSettings, PieceTriggerSettings, TriggerHookType, TriggerType } from '@activepieces/shared'
+import { EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, isNil, PackageType, PieceActionSettings, PieceTriggerSettings, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceWorkerCache } from '../api/piece-worker-cache'
 import { executionFiles } from '../cache/execution-files'
@@ -100,57 +100,6 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         }
         return execute(log, input, EngineOperationType.EXECUTE_VALIDATE_AUTH)
     },
-    async executeAction(engineToken, operation) {
-        log.debug({
-            stepName: operation.stepName,
-            flowVersionId: operation.flowVersion.id,
-        }, '[threadEngineRunner#executeAction]')
-
-        const step = flowStructureUtil.getActionOrThrow(operation.stepName, operation.flowVersion.trigger)
-        switch (step.type) {
-            case ActionType.PIECE: {
-                const lockedPiece = await pieceEngineUtil(log).getExactPieceForStep(engineToken, step)
-                await executionFiles(log).provision({
-                    pieces: [lockedPiece],
-                    codeSteps: [],
-                    customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
-                })
-                break
-            }
-            case ActionType.CODE: {
-                const codes = pieceEngineUtil(log).getCodeSteps(operation.flowVersion).filter((code) => code.name === operation.stepName)
-                await executionFiles(log).provision({
-                    pieces: [],
-                    codeSteps: codes,
-                    customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
-                })
-                break
-            }
-            case ActionType.ROUTER:
-            case ActionType.LOOP_ON_ITEMS:
-                break
-        }
-
-        const lockedFlowVersion = await pieceEngineUtil(log).lockSingleStepPieceVersion({
-            engineToken,
-            flowVersion: operation.flowVersion,
-            stepName: operation.stepName,
-        })
-
-        const input: ExecuteStepOperation = {
-            requestId: operation.requestId,
-            flowVersion: lockedFlowVersion,
-            stepName: operation.stepName,
-            projectId: operation.projectId,
-            sampleData: operation.sampleData,
-            publicApiUrl: workerMachine.getPublicApiUrl(),
-            internalApiUrl: workerMachine.getInternalApiUrl(),
-            engineToken,
-            runEnvironment: operation.runEnvironment,
-        }
-
-        return execute(log, input, EngineOperationType.EXECUTE_STEP)
-    },
     async executeProp(engineToken, operation) {
         log.debug({
             piece: operation.piece,
@@ -201,7 +150,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
 
 async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion, projectId: string): Promise<void> {
     const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
-    const pieces = steps.filter((step) => step.type === TriggerType.PIECE || step.type === ActionType.PIECE).map(async (step) => {
+    const pieces = steps.filter((step) => step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE).map(async (step) => {
         const { pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
         const pieceMetadata = await pieceWorkerCache(log).getPiece({
             engineToken,

@@ -223,6 +223,7 @@ const ApTablesPage = () => {
             'Create and manage your tables to store your automation data',
           )}
           title={t('Tables')}
+          tutorialTab="tables"
         >
           <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
             <Button
