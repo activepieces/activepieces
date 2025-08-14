@@ -26,7 +26,7 @@ export const sendSms = createAction({
           const authVaue = auth as PiecePropValueSchema<typeof krispcallAuth>;
           const res = await httpClient.sendRequest<Item[]>({
             method: HttpMethod.GET,
-            url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/get-numbers',
+            url: 'https://app.krispcall.com/api/v3/platform/activepiece/get-numbers',
             headers: {
               'X-API-KEY': authVaue.apiKey,
             },
@@ -64,7 +64,7 @@ export const sendSms = createAction({
     console.log(auth.apiKey);
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
-      url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/send-sms',
+      url: 'https://app.krispcall.com/api/v3/platform/activepiece/send-sms',
       headers: {
         'X-API-KEY': auth.apiKey,
       },
