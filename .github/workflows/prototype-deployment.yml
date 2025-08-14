@@ -1,0 +1,84 @@
+name: Prototype Deployment
+
+## This is extreme protoype deployments of random wild ideas.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  Build-and-Deploy:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Set RELEASE env var from package.json
+        run: echo RELEASE=$(node --print "require('./package.json').version") >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/activepieces/activepieces:prototype
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/deploy.key
+          chmod 600 ~/.ssh/deploy.key
+          cat >>~/.ssh/config <<END
+          Host deploy
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/deploy.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEPLOY_USERNAME }}
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+
+      - name: Create deployment directory
+        run: |
+          ssh deploy 'mkdir -p /root/activeshit'
+
+      - name: Create docker-compose.yml
+        run: |
+          ssh deploy 'cat > /root/activeshit/docker-compose.yml << EOF
+          version: "3.8"
+          services:
+            activeshit:
+              image: ghcr.io/activepieces/activepieces:prototype
+              container_name: activeshit
+              restart: unless-stopped
+              ports:
+                - "3333:80"
+              environment:
+                - NODE_ENV=production
+              volumes:
+                - activeshit_data:/usr/src/app/data
+          volumes:
+            activeshit_data:
+          EOF'
+
+      - name: Deploy with Docker Compose
+        run: |
+          ssh deploy 'cd /root/activeshit && docker compose pull && docker compose up -d --force-recreate activeshit'
+
+      - name: Cleanup old images
+        run: |
+          ssh deploy 'docker system prune -a -f --volumes' 
