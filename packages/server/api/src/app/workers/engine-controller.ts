@@ -80,7 +80,9 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             const response = await stepRunProgressHandler(request.log).extractStepResponse({
                 runId: data.runId,
             })
-            app.io.to(request.principal.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
+            if (!isNil(response)) {
+                app.io.to(request.principal.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
+            }
         }
         app.io.to(request.principal.projectId).emit(type, data)
     })

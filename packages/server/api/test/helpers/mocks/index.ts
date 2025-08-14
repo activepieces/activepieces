@@ -201,11 +201,8 @@ export const createMockProject = (project?: Partial<Project>): Project => {
 
 export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): PlatformPlan => {
     return {
-        // eligibleForPlusTrial: platformPlan?.eligibleForPlusTrial ?? false,
-        // stripeBillingCycle: platformPlan?.stripeBillingCycle ?? BillingCycle.MONTHLY,
-        // eligibleForBusinessTrial: platformPlan?.eligibleForBusinessTrial ?? false,
-        eligibleForTrial: 'false',
-        stripeBillingCycle: 'monthly',
+        eligibleForTrial: platformPlan?.eligibleForTrial ?? null,
+        stripeBillingCycle: platformPlan?.stripeBillingCycle ?? 'monthly',
         id: platformPlan?.id ?? apId(),
         created: platformPlan?.created ?? faker.date.recent().toISOString(),
         updated: platformPlan?.updated ?? faker.date.recent().toISOString(),

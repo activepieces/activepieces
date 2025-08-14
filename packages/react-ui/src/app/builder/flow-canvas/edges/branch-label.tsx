@@ -118,7 +118,9 @@ const BranchLabel = (props: BaseBranchLabel) => {
             }
           }}
         >
-          <div className="truncate">{props.label}</div>
+          <div className="truncate">
+            {props.label === 'Otherwise' ? t('Otherwise') : props.label}
+          </div>
 
           {!isBranchNonInteractive &&
             !readonly &&
