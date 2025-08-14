@@ -14,12 +14,12 @@ import {
   ExecutePropsResult,
 } from '@activepieces/pieces-framework';
 import {
-  ActionType,
+  FlowActionType,
   flowPieceUtil,
   LocalesEnum,
   PieceOptionRequest,
   PlatformWithoutSensitiveData,
-  TriggerType,
+  FlowTriggerType,
 } from '@activepieces/shared';
 
 import { pieceSearchUtils } from './piece-search-utils';
@@ -302,17 +302,18 @@ const filterOutPiecesWithNoSuggestions = (
 ) => {
   return stepsMetadata.filter((metadata) => {
     const isActionWithSuggestions =
-      metadata.type === ActionType.PIECE &&
+      metadata.type === FlowActionType.PIECE &&
       metadata.suggestedActions &&
       metadata.suggestedActions.length > 0;
 
     const isTriggerWithSuggestions =
-      metadata.type === TriggerType.PIECE &&
+      metadata.type === FlowTriggerType.PIECE &&
       metadata.suggestedTriggers &&
       metadata.suggestedTriggers.length > 0;
 
     const isNotPieceType =
-      metadata.type !== ActionType.PIECE && metadata.type !== TriggerType.PIECE;
+      metadata.type !== FlowActionType.PIECE &&
+      metadata.type !== FlowTriggerType.PIECE;
     return (
       isActionWithSuggestions || isTriggerWithSuggestions || isNotPieceType
     );
@@ -347,12 +348,14 @@ const getExploreTabContent = (
     metadata: [],
   };
   const highlightedPieces = getHighlightedPieces(queryResult, type);
-  const codePiece = queryResult.find((piece) => piece.type === ActionType.CODE);
+  const codePiece = queryResult.find(
+    (piece) => piece.type === FlowActionType.CODE,
+  );
   const branchPiece = queryResult.find(
-    (piece) => piece.type === ActionType.ROUTER,
+    (piece) => piece.type === FlowActionType.ROUTER,
   );
   const loopPiece = queryResult.find(
-    (piece) => piece.type === ActionType.LOOP_ON_ITEMS,
+    (piece) => piece.type === FlowActionType.LOOP_ON_ITEMS,
   );
 
   if (highlightedPieces.length > 0) {

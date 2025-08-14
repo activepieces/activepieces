@@ -2,11 +2,11 @@ import { t } from 'i18next';
 import { useState } from 'react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { TableTitle } from '@/components/custom/table-title';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { Agent, ApFlagId, isNil } from '@activepieces/shared';
+import { Agent, ApFlagId } from '@activepieces/shared';
 
 import agentsGroupImage from '../../../assets/img/custom/agents-group.png';
 import { AgentCard } from '../../../features/agents/agent-card';
@@ -62,18 +62,18 @@ export const AgentsPage = () => {
       )}
     >
       <div className="flex items-center justify-between">
-        <TableTitle
-          beta={true}
+        <DashboardPageHeader
+          title={t('Agents')}
           description={t('Build and manage your team of digital workers')}
+          beta={true}
+          tutorialTab="agents"
         >
-          {t('Agents')}
-        </TableTitle>
-        {isNil(selectedAgent) && (
           <CreateAgentButton
             onAgentCreated={handleAgentCreated}
             isAgentsConfigured={isisAgentsConfigured ?? false}
           />
-        )}
+        </DashboardPageHeader>
+
         {selectedAgent && (
           <AgentBuilder
             isOpen={isOpen}
@@ -88,19 +88,14 @@ export const AgentsPage = () => {
             }}
             agent={selectedAgent}
             showUseInFlow={true}
-            trigger={
-              <CreateAgentButton
-                onAgentCreated={handleAgentCreated}
-                isAgentsConfigured={isisAgentsConfigured ?? false}
-              />
-            }
+            trigger={<></>}
           />
         )}
       </div>
 
       <div className="mt-4">
         {agents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-[400px] border-2 border-dashed rounded-lg bg-gradient-to-br from-background to-muted/20">
+          <div className="flex flex-col items-center justify-center h-[400px]  rounded-lg bg-gradient-to-br from-background to-muted/20">
             <img
               src={agentsGroupImage}
               alt="Agents"

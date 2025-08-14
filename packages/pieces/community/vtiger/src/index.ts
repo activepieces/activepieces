@@ -74,7 +74,7 @@ export const vtigerAuth = PieceAuth.CustomAuth({
         return {
           valid: false,
           error:
-            'Add the url without the endpoint. For example add https://<instance>.od2.vtiger.com/ instead of https://<instance>.od2.vtiger.com/restapi/v1/vtiger/default',
+            'Add the url without the endpoint. For example add https://<instance>.od2.vtiger.com instead of https://<instance>.od2.vtiger.com/restapi/v1/vtiger/default',
         };
       }
 
@@ -106,7 +106,7 @@ export const vtiger = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/vtiger.png',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ["kanarelo","kishanprmr","abuaboud"],
+  authors: ["kanarelo","kishanprmr","abuaboud", "privatestefans"],
   actions: [
     createRecord,
     getRecord,

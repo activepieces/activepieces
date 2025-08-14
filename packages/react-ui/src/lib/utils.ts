@@ -5,7 +5,7 @@ import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-import { LocalesEnum } from '@activepieces/shared';
+import { LocalesEnum, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from './authentication-session';
 
@@ -152,20 +152,16 @@ export function useForwardedRef<T>(ref: React.ForwardedRef<T>) {
 }
 
 export const localesMap = {
-  [LocalesEnum.BULGARIAN]: 'Български',
   [LocalesEnum.CHINESE_SIMPLIFIED]: '简体中文',
-  [LocalesEnum.INDONESIAN]: 'Bahasa Indonesia',
   [LocalesEnum.GERMAN]: 'Deutsch',
   [LocalesEnum.ENGLISH]: 'English',
   [LocalesEnum.SPANISH]: 'Español',
   [LocalesEnum.FRENCH]: 'Français',
-  [LocalesEnum.ITALIAN]: 'Italiano',
   [LocalesEnum.JAPANESE]: '日本語',
-  [LocalesEnum.HUNGARIAN]: 'Magyar',
   [LocalesEnum.DUTCH]: 'Nederlands',
-  [LocalesEnum.PORTUGUESE]: 'Português (Brasil)',
-  [LocalesEnum.UKRAINIAN]: 'Українська',
-  [LocalesEnum.VIETNAMESE]: 'Tiếng Việt',
+  [LocalesEnum.PORTUGUESE]: 'Português',
+  [LocalesEnum.RUSSIAN]: 'Русский',
+  [LocalesEnum.CHINESE_TRADITIONAL]: '繁體中文',
 };
 
 export const useElementSize = (ref: RefObject<HTMLElement>) => {
@@ -231,13 +227,20 @@ export const useTimeAgo = (date: Date) => {
   return timeAgo;
 };
 
-export const determineDefaultRoute = (isEmbedded: boolean) => {
-  if (isEmbedded) {
+export const determineDefaultRoute = (
+  checkAccess: (permission: Permission) => boolean,
+) => {
+  if (checkAccess(Permission.READ_FLOW)) {
     return authenticationSession.appendProjectRoutePrefix('/flows');
   }
-  return authenticationSession.appendProjectRoutePrefix('/agents');
+  if (checkAccess(Permission.READ_RUN)) {
+    return authenticationSession.appendProjectRoutePrefix('/runs');
+  }
+  if (checkAccess(Permission.READ_ISSUES)) {
+    return authenticationSession.appendProjectRoutePrefix('/issues');
+  }
+  return authenticationSession.appendProjectRoutePrefix('/settings');
 };
-
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
 export const NEW_TABLE_QUERY_PARAM = 'newTable';
 export const NEW_MCP_QUERY_PARAM = 'newMcp';

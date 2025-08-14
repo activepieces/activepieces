@@ -4,11 +4,14 @@ import {
   ChevronUpIcon,
   Link2,
   LockKeyhole,
+  VideoIcon,
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
+import TutorialsDialog, { TabType } from '@/components/custom/tutorials-dialog';
+import { Button } from '@/components/ui/button';
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -63,6 +66,7 @@ type CustomTooltipLinkProps = {
   newWindow?: boolean;
   isActive?: (pathname: string) => boolean;
   isSubItem: boolean;
+  tutorialTab?: TabType;
 };
 export const CustomTooltipLink = ({
   to,
@@ -73,9 +77,9 @@ export const CustomTooltipLink = ({
   locked,
   newWindow,
   isActive,
+  tutorialTab,
 }: CustomTooltipLinkProps) => {
   const location = useLocation();
-
   const isLinkActive =
     location.pathname.startsWith(to) || isActive?.(location.pathname);
   return (
@@ -86,17 +90,17 @@ export const CustomTooltipLink = ({
     >
       <div
         className={cn(
-          'relative flex items-center gap-1 justify-between hover:bg-sidebar-accent rounded-sm transition-colors',
+          'relative flex group/link items-center gap-1 justify-between hover:bg-sidebar-accent rounded-sm transition-colors',
           extraClasses,
           isLinkActive && '!bg-primary/10 !text-primary',
         )}
       >
         <div
-          className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 ${
+          className={`w-full flex items-center justify-between gap-2 px-2 py-1 ${
             !Icon ? 'p-2' : ''
           }`}
         >
-          <div className="flex items-center gap-2 justify-between w-full">
+          <div className="flex items-center gap-2  w-full">
             <div className="flex items-center gap-2">
               {Icon && React.isValidElement(Icon)
                 ? React.cloneElement(
@@ -108,6 +112,21 @@ export const CustomTooltipLink = ({
                 : null}
               <span className="text-sm">{label}</span>
             </div>
+            <div className="grow"></div>
+            {tutorialTab && (
+              <TutorialsDialog
+                location="small-button-inside-sidebar-item"
+                initialTab={tutorialTab}
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="p-1 size-6 group-hover/link:opacity-100 opacity-0 transition-all duration-150 ease-in-out"
+                >
+                  <VideoIcon className="size-4"></VideoIcon>
+                </Button>
+              </TutorialsDialog>
+            )}
             {label === 'Agents' && <BetaBadge showTooltip={false} />}
           </div>
           {locked && (
@@ -154,6 +173,7 @@ export type SidebarLink = {
   isActive?: (pathname: string) => boolean;
   separatorBefore?: boolean;
   separatorAfter?: boolean;
+  tutorialTab?: TabType;
 };
 
 export type SidebarItem = SidebarLink | SidebarGroup;
@@ -181,7 +201,7 @@ export function SidebarComponent({
   const showConnectionsLink =
     location.pathname.startsWith('/project') &&
     checkAccess(Permission.READ_APP_CONNECTION);
-
+  const showTutorials = location.pathname.startsWith('/project');
   return (
     <div className="flex h-screen w-full overflow-hidden">
       <div className="flex h-screen w-full">
@@ -224,6 +244,21 @@ export function SidebarComponent({
                             </SidebarMenuButton>
                           </SidebarMenuItem>
                         )}
+                        {showTutorials && (
+                          <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                              <TutorialsDialog
+                                location="tutorials-sidebar-item"
+                                showTooltip={false}
+                              >
+                                <div className="flex items-center gap-2 text-sm px-2 py-1.5 cursor-pointer hover:bg-sidebar-accent rounded-sm transition-colors">
+                                  <VideoIcon className="size-4"></VideoIcon>
+                                  <span>{t('Tutorials')}</span>
+                                </div>
+                              </TutorialsDialog>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        )}
                       </SidebarMenu>
                     </SidebarGroup>
                   </div>
@@ -252,7 +287,7 @@ export function SidebarComponent({
           })}
         >
           <ScrollArea
-            className={cn('px-6 py-6 w-full h-full bg-background', {
+            className={cn('w-full pb-6 pt-28 px-6 h-full bg-background', {
               'rounded-lg border-b-0 border': !hideSideNav,
             })}
             style={{
@@ -275,9 +310,9 @@ export function SidebarComponent({
 function ApSidebarMenuItem(item: SidebarLink, index: number) {
   return (
     <React.Fragment key={item.label}>
-      <SidebarGroup key={item.label} className="py-1">
+      <SidebarGroup key={item.label} className="py-0.5">
         {item.name && <SidebarGroupLabel>{item.name}</SidebarGroupLabel>}
-        <SidebarMenu className="gap-0 p-0">
+        <SidebarMenu>
           <SidebarMenuItem key={item.label}>
             <SidebarMenuButton asChild>
               <CustomTooltipLink
@@ -289,6 +324,7 @@ function ApSidebarMenuItem(item: SidebarLink, index: number) {
                 locked={item.locked}
                 isActive={item.isActive}
                 isSubItem={item.isSubItem}
+                tutorialTab={item.tutorialTab}
               />
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -302,9 +338,9 @@ function ApSidebarMenuGroup(item: SidebarGroup) {
   const location = useLocation();
   return (
     <React.Fragment key={item.label}>
-      <SidebarGroup key={item.name} className="py-2">
+      <SidebarGroup key={item.name} className="py-0.5 pl-4">
         {item.name && <SidebarGroupLabel>{item.name}</SidebarGroupLabel>}
-        <SidebarMenu className="py-0">
+        <SidebarMenu>
           <Collapsible
             defaultOpen={item.defaultOpen || item.isActive?.(location.pathname)}
             className="group/collapsible"

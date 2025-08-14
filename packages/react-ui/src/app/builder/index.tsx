@@ -26,12 +26,12 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
-  ActionType,
+  FlowActionType,
   ApEdition,
   ApFlagId,
+  FlowTriggerType,
   FlowVersionState,
   PieceTrigger,
-  TriggerType,
   WebsocketClientEvent,
   flowStructureUtil,
   isNil,
@@ -121,7 +121,7 @@ const BuilderPage = () => {
         flowVersion.trigger,
       );
       const triggerOrActionName =
-        step?.type === TriggerType.PIECE
+        step?.type === FlowTriggerType.PIECE
           ? (step as PieceTrigger).settings.triggerName
           : step?.settings.actionName;
       return {
@@ -149,8 +149,8 @@ const BuilderPage = () => {
       name: memorizedSelectedStep?.settings.pieceName,
       version: memorizedSelectedStep?.settings.pieceVersion,
       enabled:
-        memorizedSelectedStep?.type === ActionType.PIECE ||
-        memorizedSelectedStep?.type === TriggerType.PIECE,
+        memorizedSelectedStep?.type === FlowActionType.PIECE ||
+        memorizedSelectedStep?.type === FlowTriggerType.PIECE,
       getExactVersion: flowVersion.state === FlowVersionState.LOCKED,
     });
 
