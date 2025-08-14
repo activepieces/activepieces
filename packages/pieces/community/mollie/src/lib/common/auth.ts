@@ -12,6 +12,7 @@ export const MollieAuth = PieceAuth.OAuth2({
   scope: [
     'payments.read',
     'payments.write',
+    'payment-links.write',
     'refunds.read',
     'refunds.write',
     'customers.read',

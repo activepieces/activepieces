@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { MollieAuth } from './lib/common/auth';
 import { createCustomer } from './lib/actions/create-customer';
 import { createOrder } from './lib/actions/create-order';
@@ -29,6 +29,7 @@ export const mollie = createPiece({
     createPaymentRefund,
     createPayment,
     searchCustomer,
+    searchPayment,
     searchOrder,
   ],
   triggers: [

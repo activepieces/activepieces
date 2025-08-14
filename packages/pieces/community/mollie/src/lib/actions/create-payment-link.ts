@@ -52,8 +52,9 @@ export const createPaymentLink = createAction({
         'Payment link expiration date (ISO 8601 format, e.g. 2024-12-31T23:59:59Z)',
       required: false,
     }),
+     profileId: profileIdDropdown,
     allowedMethods: paymentMethodDropdown,
-   profileId: profileIdDropdown,
+   
     billing_organizationName: Property.ShortText({
       displayName: 'Organization Name',
       required: false,
@@ -310,14 +311,14 @@ export const createPaymentLink = createAction({
       country: propsValue.billing_country,
     };
 
-    const billing = Object.fromEntries(
+    const billingAddress = Object.fromEntries(
       Object.entries(billingFields).filter(
         ([key, value]) => value !== undefined && value !== null && value !== ''
       )
     );
 
-    if (Object.keys(billing).length > 0) {
-      paymentLinkData.billing = billing;
+    if (Object.keys(billingAddress).length > 0) {
+      paymentLinkData.billingAddress = billingAddress;
     }
 
     const shippingFields = {

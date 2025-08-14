@@ -2,6 +2,42 @@ import { Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
+interface MollieMethod {
+  id: string;
+  description: string;
+}
+
+interface MolliePayment {
+  id: string;
+  description: string;
+}
+
+interface MollieProfile {
+  id: string;
+  name?: string;
+}
+
+interface MollieCustomer {
+  id: string;
+  name?: string;
+}
+
+interface MollieMandate {
+  id: string;
+  description?: string;
+}
+
+interface MollieApiResponse<T> {
+  count: number;
+  _embedded: {
+    methods?: T[];
+    payments?: T[];
+    profiles?: T[];
+    customers?: T[];
+    mandates?: T[];
+  };
+}
+
 export const localeDropdown = Property.StaticDropdown({
   displayName: 'Locale',
   description:
@@ -54,40 +90,48 @@ export const currencyDropdown = (name: string, required = false) =>
     },
   });
 
-export const paymentMethodDropdown = Property.Dropdown({
-  displayName: 'Payment Method',
-  description: 'Force a specific payment method',
+export const paymentMethodDropdown = Property.StaticMultiSelectDropdown({
+  displayName: 'Allowed Payment Methods',
+  description: 'Select which payment methods are allowed for this payment link. Leave empty to allow all enabled methods.',
   required: false,
-  refreshers: ['auth'],
-  options: async ({ auth }: { auth?: { access_token: string } }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Please connect your account first',
-      };
-    }
-
-    try {
-      const response = await makeRequest(
-        auth.access_token,
-        HttpMethod.GET,
-        '/methods'
-      );
-      return {
-        disabled: false,
-        options: response._embedded.paymentMethods.map((method: any) => ({
-          label: method.description,
-          value: method.id,
-        })),
-      };
-    } catch (error) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Error loading payment methods',
-      };
-    }
+  options: {
+    options: [
+      { label: 'Apple Pay', value: 'applepay' },
+      { label: 'BACS Direct Debit', value: 'bacs' },
+      { label: 'Bancomat Pay', value: 'bancomatpay' },
+      { label: 'Bancontact', value: 'bancontact' },
+      { label: 'Bank Transfer', value: 'banktransfer' },
+      { label: 'Belfius Pay Button', value: 'belfius' },
+      { label: 'Billie', value: 'billie' },
+      { label: 'Bizum', value: 'bizum' },
+      { label: 'Blik', value: 'blik' },
+      { label: 'Credit/Debit Card', value: 'creditcard' },
+      { label: 'Direct Debit', value: 'directdebit' },
+      { label: 'EPS', value: 'eps' },
+      { label: 'Gift Card', value: 'giftcard' },
+      { label: 'iDEAL', value: 'ideal' },
+      { label: 'in3', value: 'in3' },
+      { label: 'KBC Payment Button', value: 'kbc' },
+      { label: 'Klarna', value: 'klarna' },
+      { label: 'Klarna Pay Later', value: 'klarnapaylater' },
+      { label: 'Klarna Pay Now', value: 'klarnapaynow' },
+      { label: 'Klarna Slice It', value: 'klarnasliceit' },
+      { label: 'MB WAY', value: 'mbway' },
+      { label: 'Multibanco', value: 'multibanco' },
+      { label: 'MyBank', value: 'mybank' },
+      { label: 'Pay by Bank', value: 'paybybank' },
+      { label: 'Payconiq', value: 'payconiq' },
+      { label: 'PayPal', value: 'paypal' },
+      { label: 'Paysafecard', value: 'paysafecard' },
+      { label: 'Point of Sale', value: 'pointofsale' },
+      { label: 'Przelewy24', value: 'przelewy24' },
+      { label: 'Riverty', value: 'riverty' },
+      { label: 'Satispay', value: 'satispay' },
+      { label: 'Swish', value: 'swish' },
+      { label: 'Trustly', value: 'trustly' },
+      { label: 'Twint', value: 'twint' },
+      { label: 'Voucher', value: 'voucher' },
+    ],
   },
 });
 
@@ -110,13 +154,13 @@ export const paymentIdDropdown = Property.Dropdown({
         auth.access_token,
         HttpMethod.GET,
         '/payments'
-      );
+      ) as MollieApiResponse<MolliePayment>;
       return {
         disabled: false,
-        options: response._embedded.payments.map((payment: any) => ({
+        options: response._embedded.payments?.map((payment: MolliePayment) => ({
           label: payment.description,
           value: payment.id,
-        })),
+        })) || [],
       };
     } catch (error) {
       return {
@@ -146,13 +190,13 @@ export const profileIdDropdown = Property.Dropdown({
         auth.access_token,
         HttpMethod.GET,
         '/profiles'
-      );
+      ) as MollieApiResponse<MollieProfile>;
       return {
         disabled: false,
-        options: response._embedded.profiles.map((profile: any) => ({
+        options: response._embedded.profiles?.map((profile: MollieProfile) => ({
           label: profile.name || profile.id,
           value: profile.id,
-        })),
+        })) || [],
       };
     } catch (error) {
       return {
@@ -182,13 +226,13 @@ export const customerIdDropdown = Property.Dropdown({
         auth.access_token,
         HttpMethod.GET,
         '/customers'
-      );
+      ) as MollieApiResponse<MollieCustomer>;
       return {
         disabled: false,
-        options: response._embedded.customers.map((customer: any) => ({
+        options: response._embedded.customers?.map((customer: MollieCustomer) => ({
           label: customer.name || customer.id,
           value: customer.id,
-        })),
+        })) || [],
       };
     } catch (error) {
       return {
@@ -233,13 +277,13 @@ export const mandatesIdDropdown = Property.Dropdown({
         auth.access_token,
         HttpMethod.GET,
         `/customers/${customerId}/mandates`
-      );
+      ) as MollieApiResponse<MollieMandate>;
       return {
         disabled: false,
-        options: response._embedded.mandates.map((mandate: any) => ({
+        options: response._embedded.mandates?.map((mandate: MollieMandate) => ({
           label: mandate.description || mandate.id,
           value: mandate.id,
-        })),
+        })) || [],
       };
     } catch (error) {
       return {
