@@ -174,6 +174,7 @@ function AddRecordButton({ handleClick, icon }: AddRecordButtonProps) {
     </Tooltip>
   ) : (
     <div
+      id="table-add-record-button"
       className="w-full h-full border-t border-border  flex items-center justify-start cursor-pointer pl-4"
       onClick={handleClick}
     >

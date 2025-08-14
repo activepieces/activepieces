@@ -9,6 +9,7 @@ import {
   Table,
   TableAutomationStatus,
   AgentRun,
+  isNil,
 } from '@activepieces/shared';
 
 import { createServerState } from './ap-tables-server-state';
@@ -22,6 +23,7 @@ export type ClientRecordData = {
   uuid: string;
   agentRunId: string | null;
   values: ClientCellData[];
+  isTemporary?: boolean;
 };
 
 export type ClientField = {
@@ -62,9 +64,10 @@ export type TableState = {
   selectedCell: {
     rowIdx: number;
     columnIdx: number;
+    recordId: string;
   } | null;
   setSelectedCell: (
-    selectedCell: { rowIdx: number; columnIdx: number } | null,
+    selectedCell: { rowIdx: number; columnIdx: number; recordId: string } | null,
   ) => void;
   selectedAgentRunId: string | null;
   setSelectedAgentRunId: (agentRunId: string | null) => void;
@@ -86,6 +89,7 @@ export type TableState = {
   updateAgent: (agent: PopulatedAgent) => void;
   runs: AgentRun[];
   setRuns: (runs: AgentRun[]) => void;
+  createTemporaryRecord: (recordData: ClientRecordData) => void;
 };
 
 export const createApTableStore = (
@@ -94,7 +98,7 @@ export const createApTableStore = (
   records: PopulatedRecord[],
   runs: AgentRun[],
 ) => {
-  return create<TableState>((set) => {
+  return create<TableState>((set, get) => {
     const serverState = createServerState(
       table,
       fields,
@@ -106,6 +110,7 @@ export const createApTableStore = (
         ? {
             rowIdx: 0,
             columnIdx: 1,
+            recordId: nanoid(),
           }
         : null;
 
@@ -132,8 +137,38 @@ export const createApTableStore = (
           };
         }),
       setSelectedCell: (
-        selectedCell: { rowIdx: number; columnIdx: number } | null,
-      ) => set({ selectedCell }),
+        selectedCell: { rowIdx: number; columnIdx: number; recordId: string } | null,
+      ) => {
+        const state = get();
+        const previousRowIdx = state.selectedCell?.rowIdx;
+        const previousRecordId = state.selectedCell?.recordId;
+
+        const hasRowChanged = !isNil(previousRowIdx) && previousRowIdx !== selectedCell?.rowIdx;
+        
+        if (hasRowChanged) {
+          const previousRecord = state.records.find(r => r.uuid === previousRecordId);
+          if (previousRecord?.isTemporary) {
+            setTimeout(() => {
+              const currentState = get();
+              const recordIndex = currentState.records.findIndex(r => r.uuid === previousRecordId);
+              if (recordIndex === -1) return;
+
+              const record = currentState.records[recordIndex];
+              if (!record.isTemporary) return;
+
+              const permanentRecord = { ...record, isTemporary: false };
+              serverState.createRecord(permanentRecord);
+              
+              set((state) => ({
+                records: state.records.map((r, index) =>
+                  index === recordIndex ? permanentRecord : r
+                ),
+              }));
+            }, 0);
+          }
+        }
+        return set({ selectedCell });
+      },
       fields: fields.map((field) => {
         if (field.type === FieldType.STATIC_DROPDOWN) {
           return {
@@ -273,6 +308,14 @@ export const createApTableStore = (
       serverFields: serverState.fields,
       serverRecords: serverState.records,
       runs: runs,
+      createTemporaryRecord: (recordData: ClientRecordData) => {
+        const tempRecord = { ...recordData, isTemporary: true };
+        return set((state) => {
+          return {
+            records: [...state.records, tempRecord],
+          };
+        });
+      },
     };
   });
 };

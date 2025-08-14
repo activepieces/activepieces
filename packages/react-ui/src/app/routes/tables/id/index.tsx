@@ -41,12 +41,12 @@ const ApTableEditorPage = () => {
     setSelectedRecords,
     selectedCell,
     setSelectedCell,
-    createRecord,
     fields,
     records,
     setSelectedAgentRunId,
     setRecords,
     setRuns,
+    createTemporaryRecord,
   ] = useTableState((state) => [
     state.table,
     state.setAgentRunId,
@@ -54,12 +54,12 @@ const ApTableEditorPage = () => {
     state.setSelectedRecords,
     state.selectedCell,
     state.setSelectedCell,
-    state.createRecord,
     state.fields,
     state.records,
     state.setSelectedAgentRunId,
     state.setRecords,
     state.setRuns,
+    state.createTemporaryRecord,
   ]);
 
   const gridRef = useRef<DataGridHandle>(null);
@@ -75,17 +75,21 @@ const ApTableEditorPage = () => {
     userHasTableWritePermission && maxRecords && records.length < maxRecords;
 
   const createEmptyRecord = () => {
-    createRecord({
+    const tempRecord = {
       uuid: nanoid(),
       agentRunId: null,
       values: [],
-    });
+    };
+    
+    createTemporaryRecord(tempRecord);
+    
     requestAnimationFrame(() => {
       gridRef.current?.scrollToCell({
         rowIdx: records.length,
-        idx: 0,
+        idx: 1,
       });
       setSelectedCell({
+        recordId: tempRecord.uuid,
         rowIdx: records.length,
         columnIdx: 1,
       });
@@ -94,12 +98,19 @@ const ApTableEditorPage = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        selectedCell &&
-        !(event.target as HTMLElement).closest(
-          `#editable-cell-${selectedCell.rowIdx}-${selectedCell.columnIdx}`,
-        )
-      ) {
+      if (!selectedCell) return;
+      
+      const target = event.target as HTMLElement;
+      const addRecordButtonId = 'table-add-record-button';
+      const isClickInsideAddRecordButton = target.closest(`#${addRecordButtonId}`);
+
+      if (isClickInsideAddRecordButton) 
+        return;
+      
+      const cellId = `editable-cell-${selectedCell.rowIdx}-${selectedCell.columnIdx}`;
+      const isClickInside = target.closest(`#${cellId}`);
+      
+      if (!isClickInside) {
         setSelectedCell(null);
       }
     };

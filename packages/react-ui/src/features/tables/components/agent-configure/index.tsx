@@ -178,7 +178,7 @@ export const AgentConfigure: React.FC<AgentConfigureProps> = ({
           <div>{trigger}</div>
         </PopoverTrigger>
         <PopoverContent
-          className={`w-[400px] max-h-[85vh] overflow-y-auto p-0 transition-opacity duration-200 ${
+          className={`w-[380px] max-h-[85vh] overflow-y-auto p-0 transition-opacity duration-200 ${
             isClosing ? 'opacity-0' : 'opacity-100'
           }`}
           align="end"
