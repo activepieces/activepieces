@@ -1,8 +1,9 @@
 import { anthropic } from '@ai-sdk/anthropic'
 import { google } from '@ai-sdk/google'
 import { openai } from '@ai-sdk/openai'
+import { LanguageModelV2 } from '@ai-sdk/provider'
 import { createReplicate } from '@ai-sdk/replicate'
-import { ImageModel, LanguageModel } from 'ai'
+import { ImageModel } from 'ai'
 
 export type SupportedAIProvider = {
     provider: string
@@ -17,7 +18,7 @@ export type SupportedAIProvider = {
     }
     languageModels: {
         displayName: string
-        instance: LanguageModel
+        instance: LanguageModelV2
         functionCalling: boolean
         pricing: LanguageModelPricing
     }[]
@@ -298,8 +299,8 @@ It is strongly recommended that you add your credit card information to your Ope
         streaming: false,
         languageModels: [
             {
-                displayName: 'Claude 3.5 Sonnet',
-                instance: anthropic('claude-3-5-sonnet-latest'),
+                displayName: 'Claude 4 Sonnet',
+                instance: anthropic('claude-sonnet-4-20250514'),
                 functionCalling: true,
                 pricing: {
                     input: 3.00,
@@ -313,6 +314,33 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 0.80,
                     output: 4.00,
+                },
+            },
+            {
+                displayName: 'Claude 4.1 Opus',
+                instance: anthropic('claude-opus-4-1-20250805'),
+                functionCalling: true,
+                pricing: {
+                    input: 15.00,
+                    output: 75.00,
+                },
+            },
+            {
+                displayName: 'Claude 3.7 Sonnet',
+                instance: anthropic('claude-3-7-sonnet-20250219'),
+                functionCalling: true,
+                pricing: {
+                    input: 3.00,
+                    output: 15.00,
+                },
+            },
+            {
+                displayName: 'Claude 3.5 Sonnet',
+                instance: anthropic('claude-3-5-sonnet-latest'),
+                functionCalling: true,
+                pricing: {
+                    input: 3.00,
+                    output: 15.00,
                 },
             },
             {
@@ -340,15 +368,6 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 0.25,
                     output: 1.25,
-                },
-            },
-            {
-                displayName: 'Claude 3.7 Sonnet',
-                instance: anthropic('claude-3-7-sonnet-latest'),
-                functionCalling: true,
-                pricing: {
-                    input: 3.00,
-                    output: 15.00,
                 },
             },
         ],

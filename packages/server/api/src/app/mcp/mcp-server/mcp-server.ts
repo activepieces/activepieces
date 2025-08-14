@@ -19,8 +19,9 @@ import {
     TelemetryEventName,
 } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
+import { LanguageModelV2 } from '@ai-sdk/provider'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { generateObject, LanguageModelV1 } from 'ai'
+import { generateObject } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { EngineHelperResponse } from 'server-worker'
@@ -315,7 +316,7 @@ async function initializeOpenAIModel({
     platformId,
     projectId,
     mcpId,
-}: InitializeOpenAIModelParams): Promise<LanguageModelV1> {
+}: InitializeOpenAIModelParams): Promise<LanguageModelV2> {
     const model = 'gpt-4.1'
     const baseUrl = await domainHelper.getPublicApiUrl({
         path: '/v1/ai-providers/proxy/openai/v1/',
@@ -382,7 +383,6 @@ async function extractActionParametersFromUserInstructions({
                     propertyName,
                     actionMetadata,
                     piecePackage,
-                    depth: 0,
                 })
                 return { propertyName, ...result }
             }))).filter(({ schema }) => schema !== null)
@@ -395,7 +395,7 @@ async function extractActionParametersFromUserInstructions({
             const propertySchemaValues = propertySchemas.map(({ value }) => value).filter(value => value !== null)
 
             try {
-                const { object: extractedValue } = await generateObject({
+                const { object: extractedParameters } = await generateObject({
                     model: aiModel,
                     schema: z.object(schemaObject),
                     prompt: mcpUtils.buildFinalExtractionPrompt({
@@ -404,10 +404,6 @@ async function extractActionParametersFromUserInstructions({
                     }),
                 })
 
-                const extractedParameters = Object.fromEntries(
-                    Object.entries(extractedValue).map(([key, value]) => [key, value[key]]),
-                )
-    
                 return {
                     ...accumulatedParameters,
                     ...extractedParameters,
