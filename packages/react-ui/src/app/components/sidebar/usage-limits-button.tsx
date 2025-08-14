@@ -1,11 +1,11 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { ClipboardCheck, Sparkles, Clock, Rocket } from 'lucide-react';
+import { Clock, Rocket } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress-circle';
+import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
@@ -122,13 +122,13 @@ const UsageLimitsButton = React.memo(() => {
             name={t('Tasks')}
             value={project.usage.tasks}
             max={project.plan.tasks}
-            icon={<ClipboardCheck className="w-4 h-4 mr-1" />}
+            variant={'primary'}
           />
           <UsageProgress
             name={t('AI Credits')}
-            value={Math.round(project.usage.aiCredits)}
+            value={project.usage.aiCredits}
             max={project.plan.aiCredits}
-            icon={<Sparkles className="w-4 h-4  mr-1" />}
+            variant={'success'}
           />
           {isTrial &&
             platform.plan.stripeSubscriptionEndDate &&
@@ -201,7 +201,11 @@ const TrialProgress = ({
           </span>
         </div>
       </div>
-      <Progress value={progressPercentage} className="w-full h-[6px]" />
+      <Progress
+        variant="primary"
+        value={progressPercentage}
+        className="w-full h-[6px]"
+      />
     </div>
   );
 };
@@ -210,10 +214,10 @@ type UsageProgressProps = {
   value: number;
   max: number | undefined | null;
   name: string;
-  icon: React.ReactNode;
+  variant: 'success' | 'primary';
 };
 
-const UsageProgress = ({ value, max, name, icon }: UsageProgressProps) => {
+const UsageProgress = ({ value, max, name, variant }: UsageProgressProps) => {
   const isUnlimited = isNil(max);
   const usagePercentage = isUnlimited ? 0 : (value / max) * 100;
 
@@ -221,7 +225,6 @@ const UsageProgress = ({ value, max, name, icon }: UsageProgressProps) => {
     <div className="flex items-center flex-col justify-between gap-3  w-full">
       <div className="w-full flex text-xs justify-between">
         <span className="text-muted-foreground flex items-center gap-1">
-          {icon}
           {name}
         </span>
         <div className="text-xs">
@@ -237,7 +240,10 @@ const UsageProgress = ({ value, max, name, icon }: UsageProgressProps) => {
 
       <Progress
         value={usagePercentage}
-        className={cn('w-full h-[6px]', isUnlimited && 'bg-primary/40')}
+        className={cn('w-full h-[6px]', {
+          'bg-primary/40': isUnlimited,
+        })}
+        variant={variant}
       />
     </div>
   );

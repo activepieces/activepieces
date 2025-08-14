@@ -94,7 +94,11 @@ export function ActiveFlowAddon({
                   {t('Plan Limit')}
                 </span>
               </div>
-              <Progress value={usagePercentage} className="w-full" />
+              <Progress
+                variant="primary"
+                value={usagePercentage}
+                className="w-full"
+              />
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
                   {`${usagePercentage}% of plan allocation used`}
