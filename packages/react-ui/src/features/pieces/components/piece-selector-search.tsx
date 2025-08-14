@@ -7,6 +7,7 @@ import {
 } from '@/features/pieces/lib/piece-selector-tabs-provider';
 
 import { SearchInput } from '../../../components/ui/search-input';
+import { t } from 'i18next';
 
 type PiecesSearchInputProps = {
   searchQuery: string;
@@ -42,7 +43,7 @@ const PiecesSearchInput = ({
         </Button>
       )}
       <SearchInput
-        placeholder="Search"
+        placeholder={t('Search')}
         value={searchQuery}
         ref={searchInputRef}
         onChange={(e) => {
