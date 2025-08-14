@@ -19,6 +19,12 @@ export const domainHelper = {
     async getInternalApiUrl({ path, platformId }: InternalUrlParams): Promise<string> {
         return this.getInternalUrl({ path: `/api/${cleanLeadingSlash(path ?? '')}`, platformId })
     },
+    async getZeroPublicUrl({ path }: PublicUrlParams): Promise<string> {
+        return networkUtils.combineUrl(system.getOrThrow(AppSystemProp.ZERO_PUBLIC_URL), path ?? '')
+    },
+    async getZeroApiUrl({ path }: InternalUrlParams): Promise<string> {
+        return networkUtils.combineUrl(system.getOrThrow(AppSystemProp.ZERO_SERVICE_URL), path ?? '')
+    },
 }
 
 

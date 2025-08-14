@@ -57,12 +57,12 @@ const systemPropValidators: {
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.PIECES_SOURCE]: enumValidator(Object.values(PiecesSource)),
     [AppSystemProp.SENTRY_DSN]: urlValidator,
-    
+
     [AppSystemProp.LOKI_PASSWORD]: stringValidator,
     [AppSystemProp.LOKI_URL]: urlValidator,
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
-    
-    [AppSystemProp.OTEL_ENABLED]: booleanValidator,    
+
+    [AppSystemProp.OTEL_ENABLED]: booleanValidator,
     [AppSystemProp.HYPERDX_TOKEN]: stringValidator,
     [WorkerSystemProp.FRONTEND_URL]: urlValidator,
     [WorkerSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
@@ -158,9 +158,9 @@ const systemPropValidators: {
     [AppSystemProp.SECRET_MANAGER_API_KEY]: stringValidator,
 
     // Custom
-    [AppSystemProp.LOGIN_URL]: urlValidator,
-    [AppSystemProp.ZERO_SERVICE_URL]: urlValidator,
     [AppSystemProp.BOTX_URL]: urlValidator,
+    [AppSystemProp.ZERO_SERVICE_URL]: urlValidator,
+    [AppSystemProp.ZERO_PUBLIC_URL]: urlValidator,
 
     // Tables
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,

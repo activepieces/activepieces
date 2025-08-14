@@ -239,7 +239,9 @@ export const flagService = {
             },
             {
                 id: ApFlagId.LOGIN_URL,
-                value: system.get(AppSystemProp.LOGIN_URL),
+                value: system.isStandaloneVersion() ? null : await domainHelper.getZeroPublicUrl({
+                    path: 'login',
+                }),
                 created,
                 updated,
             },

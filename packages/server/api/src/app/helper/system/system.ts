@@ -189,9 +189,9 @@ export const system = {
         )
     },
     isStandaloneVersion(): boolean {
-        const zeroUrl = this.get(AppSystemProp.ZERO_SERVICE_URL)
-        const loginUrl = this.get(AppSystemProp.LOGIN_URL)
-        return !(zeroUrl || loginUrl)
+        const zeroPublicUrl = this.get(AppSystemProp.ZERO_PUBLIC_URL)
+        const zeroServiceUrl = this.get(AppSystemProp.ZERO_SERVICE_URL)
+        return !zeroPublicUrl || !zeroServiceUrl
     }
 }
 
