@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { aiProps } from '@activepieces/pieces-common';
-import { generateText, LanguageModel } from 'ai';
+import { LanguageModelV2 } from '@ai-sdk/provider';
+import { generateText } from 'ai';
 import { AIUsageFeature, createAIProvider, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
 
 export const classifyText = createAction({
@@ -24,7 +25,7 @@ export const classifyText = createAction({
     const categories = (context.propsValue.categories as string[]) ?? [];
 
     const providerName = context.propsValue.provider as string;
-    const modelInstance = context.propsValue.model as LanguageModel;
+    const modelInstance = context.propsValue.model as LanguageModelV2;
 
     const providerConfig = SUPPORTED_AI_PROVIDERS.find(p => p.provider === providerName);
     if (!providerConfig) {

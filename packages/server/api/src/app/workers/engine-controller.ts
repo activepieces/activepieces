@@ -78,7 +78,9 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             const response = await stepRunProgressHandler(request.log).extractStepResponse({
                 runId: data.runId,
             })
-            app.io.to(request.principal.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
+            if (!isNil(response)) {
+                app.io.to(request.principal.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
+            }
         }
         app.io.to(request.principal.projectId).emit(type, data)
     })
@@ -118,7 +120,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             })
         }
         else {
-            app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, runId)
+            app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, { runId })
         }
 
         if (runDetails.status === FlowRunStatus.PAUSED) {
