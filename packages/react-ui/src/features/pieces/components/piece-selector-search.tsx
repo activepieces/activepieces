@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { ArrowLeftIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,6 @@ import {
 } from '@/features/pieces/lib/piece-selector-tabs-provider';
 
 import { SearchInput } from '../../../components/ui/search-input';
-import { t } from 'i18next';
 
 type PiecesSearchInputProps = {
   searchQuery: string;
