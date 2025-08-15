@@ -1,0 +1,32 @@
+{
+  "name": "pieces-mollie",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/mollie/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/mollie",
+        "tsConfig": "packages/pieces/community/mollie/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/mollie/package.json",
+        "main": "packages/pieces/community/mollie/src/index.ts",
+        "assets": [
+          "packages/pieces/community/mollie/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  },
+  "tags": []
+}
