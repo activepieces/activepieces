@@ -1,6 +1,9 @@
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, GripVertical } from 'lucide-react';
 import { useState } from 'react';
 
+import {
+  useSortable,
+} from "@dnd-kit/sortable";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +20,7 @@ import { Permission } from '@activepieces/shared';
 
 import { ClientField } from '../lib/store/ap-tables-client-state';
 import { FieldHeaderContext, tablesUtils } from '../lib/utils';
+
 
 import ApFieldActionMenuItemRenderer, {
   FieldActionType,
@@ -36,48 +40,64 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
     ? [FieldActionType.RENAME, FieldActionType.DELETE]
     : [];
 
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+  useSortable({ id: field.uuid });
+
   return (
     <FieldHeaderContext.Provider
       value={{
+        field,
         setIsPopoverOpen,
         setPopoverContent,
-        field,
         userHasTableWritePermission,
       }}
     >
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <div
-            className={cn(
-              'h-full w-full flex items-center justify-between gap-2 py-2.5 px-3 bg-muted/50  font-normal',
-              'hover:bg-muted cursor-pointer',
-              'data-[state=open]:bg-muted',
-            )}
-          >
-            <div className="flex items-center gap-2">
-              {tablesUtils.getColumnIcon(field.type)}
-              <span className="text-sm">{field.name}</span>
-            </div>
-            {actions && actions.length > 0 && (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </div>
-        </DropdownMenuTrigger>
-        {actions && actions.length > 0 && (
-          <DropdownMenuContent
-            noAnimationOnOut={true}
-            onCloseAutoFocus={(e) => e.preventDefault()}
-            align="start"
-            className="w-56 rounded-sm"
-          >
-            {actions.map((action, index) => (
-              <div key={index}>
-                {<ApFieldActionMenuItemRenderer action={action} />}
-              </div>
-            ))}
-          </DropdownMenuContent>
+      <div
+        className={cn(
+          'h-full w-full flex items-center justify-between gap-2 pl-2 bg-muted/50 font-normal',
+          'data-[state=open]:bg-muted',
+          isDragging ? 'opacity-50' : 'opacity-100'
         )}
-      </DropdownMenu>
+      >
+        <DropdownMenu>
+          <div ref={setNodeRef} {...attributes} {...listeners}
+            className={cn("transition-all cursor-grab h-full flex items-center")}
+          >
+            <GripVertical size={12} />
+          </div>
+            <DropdownMenuTrigger asChild>
+              <div
+                className={cn(
+                  'h-full w-full flex items-center justify-between gap-2 px-3',
+                  'hover:bg-muted',
+                  'cursor-pointer',
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  {tablesUtils.getColumnIcon(field.type)}
+                  <span className="text-sm">{field.name}</span>
+                </div>
+                {actions && actions.length > 0 && (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </div>
+            </DropdownMenuTrigger>
+            {actions && actions.length > 0 && (
+              <DropdownMenuContent
+                noAnimationOnOut={true}
+                onCloseAutoFocus={(e) => e.preventDefault()}
+                align="start"
+                className="w-56 rounded-sm"
+              >
+                {actions.map((action, index) => (
+                  <div key={index}>
+                    {<ApFieldActionMenuItemRenderer action={action} />}
+                  </div>
+                ))}
+              </DropdownMenuContent>
+            )}
+        </DropdownMenu>
+      </div>
       <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
         <PopoverTrigger asChild>
           <div className="w-full h-full -mt-[40px] pointer-events-none"></div>
