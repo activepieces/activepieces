@@ -67,7 +67,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             await stripe.subscriptions.cancel(existingSubscriptionId)
         }
 
-        const subscription = await stripe.subscriptions.create({
+        await stripe.subscriptions.create({
             customer: customerId,
             trial_end: trialPeriod,
             items: [{ price: priceId, quantity: 1 }],
@@ -137,7 +137,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-        const { plan, cycle } = params
+        const { plan, cycle, addons } = params
 
         const basePriceId = plan === PlanName.PLUS ? PLUS_PLAN_PRICE_ID[cycle] : BUSINESS_PLAN_PRICE_ID[cycle]
         const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
@@ -149,6 +149,27 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                 price: AI_CREDIT_PRICE_ID[cycle],
             },
         ]
+
+        if (!isNil(addons.activeFlows) && addons.activeFlows > 0) {
+            lineItems.push({
+                price: ACTIVE_FLOW_PRICE_ID[cycle],
+                quantity: addons.activeFlows,
+            })
+        }
+
+        if (!isNil(addons.projects) && addons.projects > 0) {
+            lineItems.push({
+                price: PROJECT_PRICE_ID[cycle],
+                quantity: addons.projects,
+            })
+        }
+
+        if (!isNil(addons.userSeats) && addons.userSeats > 0) {
+            lineItems.push({
+                price: USER_SEAT_PRICE_ID[cycle],
+                quantity: addons.userSeats,
+            })
+        }
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],

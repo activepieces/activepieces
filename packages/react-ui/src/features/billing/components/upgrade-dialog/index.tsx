@@ -130,16 +130,11 @@ export const UpgradeDialog: FC = () => {
   const [dialogState, setDialogState] = useState<DialogState>({
     selectedPlan: PlanName.FREE,
     selectedCycle: BillingCycle.MONTHLY,
-    selectedSeats: [DEFAULT_SEATS],
-    selectedActiveFlows: [10],
-    selectedProjects: [DEFAULT_PROJECTS],
+    selectedSeats: [0],
+    selectedActiveFlows: [0],
+    selectedProjects: [0],
     currentStep: 1,
   });
-
-  console.log(currentPlanInfo.plan);
-
-  console.log(dialogState.selectedPlan);
-  console.log(DEFAULT_ACTIVE_FLOWS[dialogState.selectedPlan as StripePlanName]);
 
   useEffect(() => {
     if (dialog.isOpen) {
@@ -197,14 +192,10 @@ export const UpgradeDialog: FC = () => {
   };
 
   const handlePlanSelect = (plan: string) => {
-    const isFree = plan === PlanName.FREE;
-
     updateDialogState({
-      selectedActiveFlows: [
-        isFree ? 0 : DEFAULT_ACTIVE_FLOWS[plan as StripePlanName],
-      ],
-      selectedProjects: [isFree ? 0 : DEFAULT_PROJECTS],
-      selectedSeats: [isFree ? 0 : DEFAULT_SEATS],
+      selectedActiveFlows: [0],
+      selectedProjects: [0],
+      selectedSeats: [0],
     });
 
     updateDialogState({ selectedPlan: plan });
@@ -254,6 +245,11 @@ export const UpgradeDialog: FC = () => {
         createSubscription({
           plan: selectedPlanEnum as StripePlanName,
           cycle: dialogState.selectedCycle,
+          addons: {
+            userSeats: dialogState.selectedSeats[0],
+            activeFlows: dialogState.selectedActiveFlows[0],
+            projects: dialogState.selectedProjects[0],
+          },
         });
         break;
 
