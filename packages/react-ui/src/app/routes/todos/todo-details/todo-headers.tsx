@@ -52,17 +52,18 @@ export const TodoHeaders = ({
   return (
     <div className={`flex flex-col w-full ${className}`}>
       <div className="flex items-center justify-between w-full">
-        <h2 className="text-lg font-semibold">{title}</h2>
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="h-8 w-8"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-8 w-8"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+          <h2 className="text-lg font-semibold">{title}</h2>
+        </div>
       </div>
 
       <div className="flex items-center justify-between w-full mt-2">
