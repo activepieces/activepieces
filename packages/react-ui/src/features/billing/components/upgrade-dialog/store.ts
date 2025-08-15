@@ -6,11 +6,13 @@ interface ManagePlanDialogState {
   isOpen: boolean;
   metric?: PlatformUsageMetric;
   title?: string;
+  step?: number;
 }
 
 interface ManagePlanDialogStore {
   dialog: ManagePlanDialogState;
   openDialog: (params?: {
+    step?: number;
     metric?: PlatformUsageMetric;
     title?: string;
   }) => void;
@@ -23,6 +25,7 @@ export const useManagePlanDialogStore = create<ManagePlanDialogStore>(
       isOpen: false,
       metric: undefined,
       title: undefined,
+      step: undefined,
     },
     openDialog: (params = {}) =>
       set((state) => ({
@@ -30,6 +33,7 @@ export const useManagePlanDialogStore = create<ManagePlanDialogStore>(
           isOpen: true,
           metric: params.metric,
           title: params.title,
+          step: params.step,
         },
       })),
     closeDialog: () =>
