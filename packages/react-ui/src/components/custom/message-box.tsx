@@ -34,7 +34,9 @@ export const MessageBox = ({
   loading = false,
 }: MessageBoxProps) => {
   return (
-    <div className={`flex flex-col gap-2 border rounded-lg p-2 bg-background ${className}`}>
+    <div
+      className={`flex flex-col gap-2 border rounded-lg p-2 bg-background ${className}`}
+    >
       <Textarea
         className="flex-1 resize-none border-none focus:ring-0 focus:border-none shadow-none"
         placeholder={placeholder}
@@ -56,4 +58,4 @@ export const MessageBox = ({
       </div>
     </div>
   );
-}; 
+};

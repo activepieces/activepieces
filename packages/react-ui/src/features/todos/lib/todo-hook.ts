@@ -1,18 +1,17 @@
 import { QueryClient, useQuery, useMutation } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
-import { PopulatedTodo, Todo, UNRESOLVED_STATUS } from '@activepieces/shared';
+import { PopulatedTodo, Todo } from '@activepieces/shared';
 
 import { todosApi } from './todos-api';
 
 const todoKeys = {
   single: (id: string) => ['todo', id],
-  list: (
-    projectId: string,
-    activeTab: string,
-    searchParams: URLSearchParams,
-  ) => ['todos', projectId, activeTab, searchParams.toString()],
+  list: (projectId: string, searchParams: URLSearchParams) => [
+    'todos',
+    projectId,
+    searchParams.toString(),
+  ],
 };
 export const todosHooks = {
   useTodo: (todoId: string | null) => {
@@ -42,37 +41,29 @@ export const todosHooks = {
   },
   useUpdateStatus: () => {
     return useMutation({
-      mutationFn: async ({ todoId, status }: { todoId: string; status: Todo['status'] }) => {
+      mutationFn: async ({
+        todoId,
+        status,
+      }: {
+        todoId: string;
+        status: Todo['status'];
+      }) => {
         return todosApi.update(todoId, { status });
       },
     });
   },
 
-  useTodosList: (activeTab: 'all' | 'needs-action' = 'all') => {
+  useTodosList: () => {
     const projectId = authenticationSession.getProjectId()!;
     const platformId = authenticationSession.getPlatformId()!;
-    const [searchParams] = useSearchParams();
 
     return useQuery({
-      queryKey: todoKeys.list(projectId, activeTab, searchParams),
+      queryKey: todoKeys.list(projectId, new URLSearchParams()),
       queryFn: () => {
-        const cursor = searchParams.get('cursor');
-        const limit = searchParams.get('limit')
-          ? parseInt(searchParams.get('limit')!)
-          : 10;
-        const assigneeId = searchParams.get('assigneeId') ?? undefined;
-        const title = searchParams.get('title') ?? undefined;
-        const statusOptions =
-          activeTab === 'needs-action' ? [UNRESOLVED_STATUS.name] : undefined;
-
         return todosApi.list({
           projectId,
-          cursor: cursor ?? undefined,
-          limit,
+          limit: 100,
           platformId,
-          assigneeId,
-          statusOptions,
-          title,
         });
       },
     });

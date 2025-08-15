@@ -60,7 +60,7 @@ export const flowRunsApi = {
           resolve(response);
         }
       };
-``
+
       const handleError = (error: any) => {
         socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
         socket.off('error', handleError);

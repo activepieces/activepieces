@@ -158,10 +158,7 @@ const ApMarkdown = React.memo(
               />
             ),
             p: ({ node, ...props }) => (
-              <p
-                className="leading-7 mb-4 w-full"
-                {...props}
-              />
+              <p className="leading-7 mb-4 w-full" {...props} />
             ),
             ul: ({ node, ...props }) => (
               <ul className="mb-4 ml-6 list-disc [&>li]:mt-1" {...props} />

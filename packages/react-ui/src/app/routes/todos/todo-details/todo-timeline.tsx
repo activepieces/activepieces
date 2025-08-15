@@ -1,29 +1,28 @@
-import { useMemo, useState } from 'react';
 import { ArrowUp, Loader2, MessageCircle } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 import { MessageBox } from '@/components/custom/message-box';
 import { Separator } from '@/components/ui/separator';
-import {
-  TodoActivityWithUser,
-  PopulatedTodo,
-} from '@activepieces/shared';
+import { todoActivityApi } from '@/features/todos/lib/todos-activitiy-api';
+import { todoActivitiesHook } from '@/features/todos/lib/todos-activity-hook';
+import { TodoActivityWithUser, PopulatedTodo } from '@activepieces/shared';
 
 import { TodoComment, ActivityItem } from './todo-comment';
 import { TodoTimelineCommentSkeleton } from './todo-timeline-comment-skeleton';
-import { todoActivityApi } from '@/features/todos/lib/todos-activitiy-api';
-import { todoActivitiesHook } from '@/features/todos/lib/todos-activity-hook';
 
 interface TodoTimelineProps {
   todo: PopulatedTodo;
 }
 
-export const TodoTimeline = ({
-  todo,
-}: TodoTimelineProps) => {
+export const TodoTimeline = ({ todo }: TodoTimelineProps) => {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: comments, isLoading, refetch } = todoActivitiesHook.useComments(todo.id);
+  const {
+    data: comments,
+    isLoading,
+    refetch,
+  } = todoActivitiesHook.useComments(todo.id);
 
   const formatComment = (activity: TodoActivityWithUser): ActivityItem => {
     const hash = encodeURIComponent(JSON.stringify(activity.content));
@@ -38,7 +37,7 @@ export const TodoTimeline = ({
   };
 
   const activities = useMemo(() => {
-    return (comments?.data?.map(formatComment) ?? []);
+    return comments?.data?.map(formatComment) ?? [];
   }, [comments?.data]);
 
   const handleSubmitComment = async (content: string) => {
@@ -77,10 +76,7 @@ export const TodoTimeline = ({
         <>
           {activities.length > 0 ? (
             activities.map((comment) => (
-              <TodoComment
-                key={comment.id}
-                comment={comment}
-              />
+              <TodoComment key={comment.id} comment={comment} />
             ))
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">

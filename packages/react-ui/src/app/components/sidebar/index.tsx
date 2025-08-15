@@ -96,18 +96,19 @@ export const CustomTooltipLink = ({
         )}
       >
         <div
-          className={`w-full flex items-center justify-between gap-2 px-2 py-1 ${!Icon ? 'p-2' : ''
-            }`}
+          className={`w-full flex items-center justify-between gap-2 px-2 py-1 ${
+            !Icon ? 'p-2' : ''
+          }`}
         >
           <div className="flex items-center gap-2  w-full">
             <div className="flex items-center gap-2">
               {Icon && React.isValidElement(Icon)
                 ? React.cloneElement(
-                  Icon as React.ReactElement<{ className?: string }>,
-                  {
-                    className: cn(Icon.props.className, 'size-4'),
-                  },
-                )
+                    Icon as React.ReactElement<{ className?: string }>,
+                    {
+                      className: cn(Icon.props.className, 'size-4'),
+                    },
+                  )
                 : null}
               <span className="text-sm">{label}</span>
             </div>
@@ -211,7 +212,7 @@ export function SidebarComponent({
             <SidebarContent className="h-full flex flex-col">
               <ApDashboardSidebarHeader isHomeDashboard={isHomeDashboard} />
               <div className="flex-1 overflow-hidden">
-                <ScrollArea className="h-full flex-1" >
+                <ScrollArea className="h-full flex-1">
                   <div className="space-y-0">
                     {items.map((item, index) => (
                       <React.Fragment key={item.label}>

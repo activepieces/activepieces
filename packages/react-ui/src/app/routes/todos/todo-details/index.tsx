@@ -1,16 +1,11 @@
-
 import { useEffect, useRef } from 'react';
 
+import { TodoHeaders } from '@/app/routes/todos/todo-details/todo-headers';
+import { ApMarkdown } from '@/components/custom/markdown';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import {
-  Todo,
-  UNRESOLVED_STATUS,
-  MarkdownVariant,
-} from '@activepieces/shared';
+import { Todo, UNRESOLVED_STATUS, MarkdownVariant } from '@activepieces/shared';
 
-import { ApMarkdown } from '@/components/custom/markdown';
-import { TodoHeaders } from '@/app/routes/todos/todo-details/todo-headers';
 import { TodoTimeline } from './todo-timeline';
 
 type TodoDetailsProps = {
@@ -30,7 +25,6 @@ export const TodoDetails = ({
   updateTodoStatus,
   hideComments = false,
 }: TodoDetailsProps) => {
-
   const previousStatus = useRef<Todo['status']>();
 
   function detectStatusChange(updatedTodo: Todo) {
@@ -52,7 +46,6 @@ export const TodoDetails = ({
     }
   }, [todo]);
 
-
   return (
     <div className={cn('flex flex-col w-full h-full p-4', className)}>
       <TodoHeaders
@@ -64,26 +57,20 @@ export const TodoDetails = ({
         updateTodoStatus={updateTodoStatus}
       />
       <ScrollArea className="flex-1">
-        <div className="px-4">
-          <div className="flex flex-col gap-2">
-            <div className="text-sm text-muted-foreground">
-              <ApMarkdown
-                markdown={todo.description}
-                variant={MarkdownVariant.BORDERLESS}
-              />
-            </div>
-
+        <div className="flex flex-col gap-2">
+          <div className="text-sm text-muted-foreground mt-4">
+            <ApMarkdown
+              markdown={todo.description}
+              variant={MarkdownVariant.BORDERLESS}
+            />
           </div>
-          {!hideComments && (
-            <div>
-              <TodoTimeline
-                todo={todo}
-              />
-              <div className="mb-10"></div>
-
-            </div>
-          )}
         </div>
+        {!hideComments && (
+          <div>
+            <TodoTimeline todo={todo} />
+            <div className="mb-10"></div>
+          </div>
+        )}
       </ScrollArea>
     </div>
   );
