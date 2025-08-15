@@ -50,7 +50,7 @@ export const TodoHeaders = ({
 
  
     return (
-        <div className={`flex flex-col w-full py-3 px-4  ${className}`}>
+        <div className={`flex flex-col w-full  ${className}`}>
             <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8" aria-label="Close">

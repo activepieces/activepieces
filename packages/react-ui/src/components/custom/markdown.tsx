@@ -107,7 +107,7 @@ const ApMarkdown = React.memo(
     return (
       <Container variant={variant}>
         <ReactMarkdown
-          className={cn('flex-grow w-full ', className)}
+          className={cn('flex-grow w-full', className)}
           remarkPlugins={[gfm, breaks]}
           components={{
             code(props) {
@@ -141,33 +141,33 @@ const ApMarkdown = React.memo(
             },
             h1: ({ node, ...props }) => (
               <h1
-                className="scroll-m-20 text-xl font-extrabold tracking-tight lg:text-3xl"
+                className="scroll-m-20 text-xl font-extrabold tracking-tight lg:text-3xl mb-4"
                 {...props}
               />
             ),
             h2: ({ node, ...props }) => (
               <h2
-                className="scroll-m-20 text-lg text-xl font-semibold tracking-tight first:mt-0"
+                className="scroll-m-20 text-lg text-xl font-semibold tracking-tight first:mt-0 mb-3 mt-6"
                 {...props}
               />
             ),
             h3: ({ node, ...props }) => (
               <h3
-                className="scroll-m-20 text-lg font-semibold tracking-tight"
+                className="scroll-m-20 text-lg font-semibold tracking-tight mb-2 mt-4"
                 {...props}
               />
             ),
             p: ({ node, ...props }) => (
               <p
-                className="leading-7 [&:not(:first-child)]:mt-2 w-full"
+                className="leading-7 mb-4 w-full"
                 {...props}
               />
             ),
             ul: ({ node, ...props }) => (
-              <ul className="mt-4 ml-6 list-disc [&>li]:mt-2" {...props} />
+              <ul className="mb-4 ml-6 list-disc [&>li]:mt-1" {...props} />
             ),
             ol: ({ node, ...props }) => (
-              <ol className="mt-4 ml-6 list-decimal [&>li]:mt-2" {...props} />
+              <ol className="mb-4 ml-6 list-decimal [&>li]:mt-1" {...props} />
             ),
             li: ({ node, ...props }) => <li {...props} />,
             a: ({ node, ...props }) => (
@@ -180,7 +180,7 @@ const ApMarkdown = React.memo(
             ),
             blockquote: ({ node, ...props }) => (
               <blockquote
-                className="mt-4 first:mt-0 border-l-2 pl-6 italic"
+                className="mb-4 first:mt-0 border-l-2 pl-6 italic"
                 {...props}
               />
             ),

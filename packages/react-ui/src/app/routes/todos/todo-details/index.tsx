@@ -54,7 +54,7 @@ export const TodoDetails = ({
 
 
   return (
-    <div className={cn('flex flex-col w-full h-full', className)}>
+    <div className={cn('flex flex-col w-full h-full p-4', className)}>
       <TodoHeaders
         title={todo.title}
         onClose={() => {
