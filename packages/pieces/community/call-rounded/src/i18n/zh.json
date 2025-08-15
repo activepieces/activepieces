@@ -1,6 +1,6 @@
 {
-  "Call-rounded": "四舍五入了",
-  "Please enter the API Key obtained from Call Rounded.": "请输入从通话计数中获得的 API 密钥。",
+  "Call-rounded": "Call-rounded",
+  "Please enter the API Key obtained from Call Rounded.": "Please enter the API Key obtained from Call Rounded.",
   "Custom API Call": "自定义 API 呼叫",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
   "Method": "方法",
