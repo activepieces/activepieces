@@ -118,33 +118,22 @@ function TodoList() {
             filteredTodos.map((todo) => (
               <div
                 key={todo.id}
-                className={`rounded-lg py-4 px-4 hover:bg-accent cursor-pointer transition-colors ${
-                  selectedTodo?.id === todo.id ? 'bg-accent' : ''
-                }`}
+                className={`rounded-lg py-4 px-4 hover:bg-accent cursor-pointer transition-colors ${selectedTodo?.id === todo.id ? 'bg-accent' : ''
+                  }`}
                 onClick={() => handleTodoSelect(todo)}
               >
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
-                    {todo.assignee ? (
-                      <ApAvatar
-                        fullName={
-                          todo.assignee.firstName + ' ' + todo.assignee.lastName
-                        }
-                        userEmail={todo.assignee.email}
-                        size="small"
-                      />
-                    ) : (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                            <Workflow className="w-4 h-4 text-muted-forseground" />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{todo.flow?.version.displayName || 'Workflow'}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                          <Workflow className="w-4 h-4 text-muted-forseground" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{todo.flow?.version.displayName || 'Workflow'}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                   <div className="flex flex-col space-y-2 flex-1 min-w-0">
                     <div className="flex items-center justify-between">
