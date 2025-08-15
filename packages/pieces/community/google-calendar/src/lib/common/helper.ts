@@ -84,6 +84,31 @@ export async function getCalendars(
   return response.body.items;
 }
 
+export async function getCalendarsWithTimestamp(
+  authProp: OAuth2PropertyValue,
+  minAccessRole?: 'writer'
+): Promise<CalendarObject[]> {
+  // docs: https://developers.google.com/calendar/api/v3/reference/calendarList/list
+  const queryParams: Record<string, string> = {
+    showDeleted: 'false',
+    showHidden: 'false',
+  };
+  if (minAccessRole) {
+    queryParams['minAccessRole'] = minAccessRole;
+  }
+  const request: HttpRequest = {
+    method: HttpMethod.GET,
+    url: `${googleCalendarCommon.baseUrl}/users/me/calendarList`,
+    queryParams: queryParams,
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: authProp.access_token,
+    },
+  };
+  const response = await httpClient.sendRequest<CalendarList>(request);
+  return response.body.items;
+}
+
 export async function getColors(
   authProp: OAuth2PropertyValue
 ): Promise<GetColorsResponse> {
@@ -149,6 +174,9 @@ export async function getLatestEvent(
   authProp: OAuth2PropertyValue
 ): Promise<GoogleCalendarEvent> {
   const eventList = await getEvents(calendarId, false, authProp);
-  const lastUpdatedEvent = eventList.pop()!; // You can retrieve the last updated event.
+  const lastUpdatedEvent = eventList.pop(); // You can retrieve the last updated event.
+  if (!lastUpdatedEvent) {
+    throw new Error('No events found in calendar');
+  }
   return lastUpdatedEvent;
 }
