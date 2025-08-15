@@ -1,13 +1,13 @@
 {
-  "Zoho Invoice": "Zoho Invoice",
-  "Online invoicing software for businesses": "Online invoicing software for businesses",
-  "Region": "Region",
-  "Select your account region": "Select your account region",
+  "Zoho Invoice": "Zoho 发票",
+  "Online invoicing software for businesses": "企业在线发票软件",
+  "Region": "地区",
+  "Select your account region": "选择您的帐户区域",
   "US (.com)": "US (.com)",
-  "Europe (.eu)": "Europe (.eu)",
-  "India (.in)": "India (.in)",
-  "Australia (.com.au)": "Australia (.com.au)",
-  "Japan (.jp)": "Japan (.jp)",
+  "Europe (.eu)": "欧洲 (.eu)",
+  "India (.in)": "印度 (.in)",
+  "Australia (.com.au)": "澳大利亚 (.com.au)",
+  "Japan (.jp)": "日本 (.jp)",
   "Custom API Call": "自定义 API 呼叫",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
   "Method": "方法",
@@ -23,6 +23,6 @@
   "PUT": "弹出",
   "DELETE": "删除",
   "HEAD": "黑色",
-  "New Invoice": "New Invoice",
-  "Trigger when a new invoice is received.": "Trigger when a new invoice is received."
+  "New Invoice": "新发票",
+  "Trigger when a new invoice is received.": "收到新发票时触发点。"
 }
