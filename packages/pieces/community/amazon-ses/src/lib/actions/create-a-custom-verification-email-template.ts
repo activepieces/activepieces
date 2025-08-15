@@ -51,20 +51,6 @@ export const createACustomVerificationEmailTemplate = createAction({
       failureRedirectionURL,
     } = propsValue;
 
-    // Validate that the template content includes the verification link placeholder
-    if (!templateContent.includes('{{verificationLink}}')) {
-      throw new Error(
-        'Template content must include {{verificationLink}} placeholder for the verification link'
-      );
-    }
-
-    // Validate URLs
-    try {
-      new URL(successRedirectionURL);
-      new URL(failureRedirectionURL);
-    } catch (error) {
-      throw new Error('Both success and failure redirection URLs must be valid URLs');
-    }
 
     const sesClient = createSES(auth);
 
