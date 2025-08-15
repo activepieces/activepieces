@@ -29,7 +29,7 @@ export const CloseTaskLimitAlertContext = createContext({
   setIsAlertClosed: (_isAlertClosed: boolean) => { },
 });
 
-export function DashboardContainer({ children }: DashboardContainerProps) {
+export function DashboardContainer({ children, hidePadding = false }: DashboardContainerProps) {
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -54,6 +54,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
           isHomeDashboard={true}
           sidebar={<DashboardSidebar />}
           hideSideNav={embedState.hideSideNav}
+          hidePadding={hidePadding}
         >
           <>
             <>

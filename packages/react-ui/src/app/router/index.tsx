@@ -255,7 +255,7 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/todos',
     element: (
-      <DashboardContainer hidePadding>
+      <DashboardContainer hidePadding={true}>
         <PageTitle title="Todos">
           <TodosPage />
         </PageTitle>
