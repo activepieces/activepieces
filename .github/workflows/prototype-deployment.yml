@@ -54,13 +54,12 @@ jobs:
 
       - name: Create deployment directory
         run: |
-          ssh deploy 'mkdir -p /root/activeshit'
-
+          ssh pre-prod 'mkdir -p /root/activeshit'
 
       - name: Deploy with Docker Compose
         run: |
-          ssh deploy -t -t 'bash -ic "cd /root/activeshit && IMAGE_TAG=prototype docker compose pull && IMAGE_TAG=prototype docker compose up -d --force-recreate activeshit; exit"'
+          ssh pre-prod -t -t 'bash -ic "cd /root/activeshit && IMAGE_TAG=prototype docker compose pull && IMAGE_TAG=prototype docker compose up -d --force-recreate activeshit; exit"'
 
       - name: Cleanup old images
         run: |
-          ssh deploy 'docker system prune -a -f --volumes' 
+          ssh pre-prod 'docker system prune -a -f --volumes'
