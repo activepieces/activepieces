@@ -45,6 +45,7 @@ export enum FlowOperationType {
     UPDATE_METADATA = 'UPDATE_METADATA',
     MOVE_BRANCH = 'MOVE_BRANCH',
     SAVE_SAMPLE_DATA = 'SAVE_SAMPLE_DATA',
+    SET_FLOW_VERSION = 'SET_FLOW_VERSION'
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -175,6 +176,11 @@ export const UpdateMetadataRequest = Type.Object({
     metadata: Nullable(Metadata),
 })
 export type UpdateMetadataRequest = Static<typeof UpdateMetadataRequest>
+
+export const SetFlowVersionRequest = Type.Object({
+    flowVersion: FlowVersion,
+})
+export type SetFlowVersionRequest = Static<typeof SetFlowVersionRequest>
 
 export const FlowOperationRequest = Type.Union([
     Type.Object(
@@ -351,6 +357,12 @@ export const FlowOperationRequest = Type.Union([
             request: SaveSampleDataRequest,
         },
     ),
+    Type.Object(
+        {
+          type: Type.Literal(FlowOperationType.SET_FLOW_VERSION),
+          request: SetFlowVersionRequest,
+        },
+      )
 ])
 
 export type FlowOperationRequest = Static<typeof FlowOperationRequest>

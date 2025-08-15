@@ -373,5 +373,7 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             } in flow "${event.data.flowVersion.displayName}" for the step "${
                 event.data.request.request.stepName
             }".`
+        case FlowOperationType.SET_FLOW_VERSION:
+            return `Updated version for flow ${event.data.flowVersion.displayName}`
     }
 }
