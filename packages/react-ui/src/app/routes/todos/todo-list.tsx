@@ -122,8 +122,8 @@ function TodoList() {
                   }`}
                 onClick={() => handleTodoSelect(todo)}
               >
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-8">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
@@ -135,25 +135,18 @@ function TodoList() {
                       </TooltipContent>
                     </Tooltip>
                   </div>
-                  <div className="flex flex-col space-y-2 flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-medium truncate flex-1 mr-2">
-                        {todo.title}
-                      </h3>
-                      <p className="text-xs text-accent-foreground flex-shrink-0">
-                        {formatUtils.formatDateToAgo(new Date(todo.created))}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground truncate flex-1 mr-2">
-                        {todo.description === ''
-                          ? t('No description')
-                          : todo.description}
-                      </p>
-                      <div className="flex-shrink-0">
-                        {todoUtils.getStatusIconComponent(todo.status.variant)}
-                      </div>
-                    </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-medium truncate text-left">
+                      {todo.title}
+                    </h3>
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center space-y-2 flex-shrink-0">
+                    {todoUtils.getStatusIconComponent(todo.status.variant)}
+                    <p className="text-xs text-accent-foreground text-center">
+                      {formatUtils.formatDateToAgo(new Date(todo.created))}
+                    </p>
                   </div>
                 </div>
               </div>
