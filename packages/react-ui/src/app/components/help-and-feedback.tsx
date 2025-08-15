@@ -23,13 +23,15 @@ export const HelpAndFeedback = () => {
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <SidebarMenuButton>
-          <div className="flex items-center gap-2">
-            <QuestionMarkCircledIcon className="size-4" />
-            <span>Help & Feedback</span>
-          </div>
-          <ChevronRight className="size-4" />
-        </SidebarMenuButton>
+        <div>
+          <SidebarMenuButton asChild>
+            <div className="flex items-center gap-2 w-full">
+              <QuestionMarkCircledIcon className="size-4" />
+              <span className="grow">{t('Help & Feedback')}</span>
+              <ChevronRight className="size-4" />
+            </div>
+          </SidebarMenuButton>
+        </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="right" className="w-[220px]">
         <DropdownMenuItem asChild>

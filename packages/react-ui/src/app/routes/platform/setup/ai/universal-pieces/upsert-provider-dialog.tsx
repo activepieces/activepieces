@@ -23,8 +23,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { aiProviderApi } from '@/lib/ai-provider-api';
 import {
   SupportedAIProvider,
   CreateAIProviderRequest,

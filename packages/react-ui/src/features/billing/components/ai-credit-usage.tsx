@@ -181,7 +181,7 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
             </div>
             <Progress
               value={creditMetrics.planUsagePercentage}
-              className="w-full"
+              className="w-full h-2"
             />
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">

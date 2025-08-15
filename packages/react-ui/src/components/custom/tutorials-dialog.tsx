@@ -98,7 +98,13 @@ const TutorialsDialog = ({
   if (!showTutorials) return null;
 
   return (
-    <Dialog>
+    <Dialog
+      onOpenChange={(open) => {
+        if (!open) {
+          setSelectedTab(initialTab ?? 'gettingStarted');
+        }
+      }}
+    >
       <Tooltip>
         <TooltipTrigger asChild>
           <DialogTrigger asChild>
@@ -113,8 +119,12 @@ const TutorialsDialog = ({
               {children ? (
                 children
               ) : (
-                <Button variant="outline-primary" size="icon">
-                  <VideoIcon className="size-4"></VideoIcon>
+                <Button
+                  variant="outline-primary"
+                  className="absolute left-2 top-2"
+                  size="icon"
+                >
+                  <VideoIcon className=" size-4"></VideoIcon>
                 </Button>
               )}
             </div>

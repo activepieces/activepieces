@@ -24,28 +24,44 @@ import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { projectHooks } from '../../../hooks/project-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 function ProjectSwitcher() {
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { data: allProjects } = projectHooks.useProjectsForPlatforms();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { data: allProjects } = projectHooks.useProjectsForPlatforms(edition || ApEdition.COMMUNITY);
   const [open, setOpen] = React.useState(false);
-  const { data: currentProject, setCurrentProject } =
-    projectHooks.useCurrentProject();
+  const { data: currentProject, setCurrentProject } = projectHooks.useCurrentProject();
+
   const filterProjects = React.useCallback(
     (value: string, search: string) => {
+      if (!allProjects) {
+        return 0;
+      }
       const project = allProjects
         ?.flatMap((p) => p.projects)
-        .find((p) => p.id.toLowerCase() === value.toLowerCase());
+        .find((p) => p.id === value);
 
       if (!project) return 0;
 
-      return project.displayName.toLowerCase().includes(search.toLowerCase())
-        ? 1
-        : 0;
+      return project.displayName.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
     },
     [allProjects],
   );
+
+  if (edition === ApEdition.COMMUNITY) {
+    return (
+      <div className="gap-2 w-full justify-start px-2">
+        <div className="flex grow flex-col justify-start items-start">
+          <span className="flex-grow truncate overflow-hidden text-sm max-w-[100px]">
+            {currentProject?.displayName}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -71,14 +87,14 @@ function ProjectSwitcher() {
           <CommandList>
             <CommandInput placeholder="Search project..." />
             <CommandEmpty>{t('No projects found')}</CommandEmpty>
-            {allProjects &&
+            {allProjects && Array.isArray(allProjects) &&
               allProjects.map((platform) => (
                 <CommandGroup
                   key={platform.platformName}
                   heading={platform.platformName}
                 >
                   <ScrollArea viewPortClassName="max-h-[200px]">
-                    {platform.projects &&
+                    {platform.projects && Array.isArray(platform.projects) &&
                       platform.projects.map((project) => (
                         <CommandItem
                           key={project.id}

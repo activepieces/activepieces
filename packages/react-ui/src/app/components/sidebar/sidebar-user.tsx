@@ -24,40 +24,38 @@ export function SidebarUser() {
     return null;
   }
   return (
-    <SidebarMenu>
-      <SidebarMenuItem className="flex items-center justify-between w-full">
-        <div className="flex items-center">
-          <UserAvatar
-            name={user.firstName + ' ' + user.lastName}
-            email={user.email}
-            size={32}
-            disableTooltip={true}
-          />
-          <div className="grid flex-1 text-left text-sm leading-tight ml-2">
-            <span className="truncate font-semibold">{user.firstName}</span>
-            <span className="truncate text-xs">{user.email}</span>
-          </div>
+    <SidebarMenuItem className="flex items-center justify-between w-full mt-4 ">
+      <div className="flex items-center">
+        <UserAvatar
+          name={user.firstName + ' ' + user.lastName}
+          email={user.email}
+          size={32}
+          disableTooltip={true}
+        />
+        <div className="grid flex-1 text-left text-sm leading-tight ml-2">
+          <span className="truncate font-semibold">{user.firstName}</span>
+          <span className="truncate text-xs">{user.email}</span>
         </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              className="flex items-center ml-2"
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                userHooks.invalidateCurrentUser(queryClient);
-                authenticationSession.logOut();
-                reset();
-              }}
-            >
-              <LogOut className="size-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <span>{t('Logout')}</span>
-          </TooltipContent>
-        </Tooltip>
-      </SidebarMenuItem>
-    </SidebarMenu>
+      </div>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            className="flex items-center ml-2"
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              userHooks.invalidateCurrentUser(queryClient);
+              authenticationSession.logOut();
+              reset();
+            }}
+          >
+            <LogOut className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <span>{t('Logout')}</span>
+        </TooltipContent>
+      </Tooltip>
+    </SidebarMenuItem>
   );
 }
