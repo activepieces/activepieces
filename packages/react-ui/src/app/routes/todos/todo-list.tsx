@@ -65,7 +65,7 @@ function TodoList() {
   });
 
   return (
-    <div className="w-[400px] flex flex-col border-r">
+    <div className="min-w-[400px] w-[400px] flex flex-col border-r">
       {/* Filter Bar */}
       <div className="border-b px-4 py-3 flex items-center gap-2">
         <DropdownMenu>
