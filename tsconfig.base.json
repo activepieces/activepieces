@@ -60,6 +60,9 @@
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/community/amazon-s3/src/index.ts"
       ],
+      "@activepieces/piece-amazon-ses": [
+        "packages/pieces/community/amazon-ses/src/index.ts"
+      ],
       "@activepieces/piece-amazon-sns": [
         "packages/pieces/community/amazon-sns/src/index.ts"
       ],
@@ -602,6 +605,9 @@
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-onenote": [
+        "packages/pieces/community/microsoft-onenote/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-outlook": [
         "packages/pieces/community/microsoft-outlook/src/index.ts"
       ],
@@ -616,9 +622,6 @@
       ],
       "@activepieces/piece-microsoft-todo": [
         "packages/pieces/community/microsoft-todo/src/index.ts"
-      ],
-      "@activepieces/piece-microsoft-onenote": [
-        "packages/pieces/community/microsoft-onenote/src/index.ts"
       ],
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
