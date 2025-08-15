@@ -1,7 +1,7 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
 import { ChevronLeft, Search } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,7 @@ type McpPieceDialogProps = {
   children: React.ReactNode;
   mcp: McpWithTools;
   open: boolean;
+  builtInPiecesTools?: string[];
   onToolsUpdate: (tools: McpToolRequest[]) => void;
   onClose: () => void;
 };
@@ -45,13 +46,14 @@ export type ActionInfo = {
   actionDisplayName: string;
 };
 
-export function McpPieceDialog({
+export const McpPieceDialog = ({
   mcp,
   open,
+  builtInPiecesTools,
   onToolsUpdate,
   children,
   onClose,
-}: McpPieceDialogProps) {
+}: McpPieceDialogProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedConnectionExternalId, setSelectedConnectionExternalId] =
     useState<string | null>(null);
@@ -62,6 +64,19 @@ export function McpPieceDialog({
       searchQuery: debouncedQuery,
       type: 'action',
     });
+  const [allMetadata, setAllMetadata] = useState<
+    PieceStepMetadataWithSuggestions[]
+  >([]);
+
+  useEffect(() => {
+    if (debouncedQuery === '' && !isPiecesLoading) {
+      setAllMetadata(
+        metadata?.filter(
+          (m): m is PieceStepMetadataWithSuggestions => 'suggestedActions' in m,
+        ) ?? [],
+      );
+    }
+  }, [metadata, isPiecesLoading]);
 
   const [selectedPiece, setSelectedPiece] =
     useState<PieceStepMetadataWithSuggestions | null>(null);
@@ -145,7 +160,31 @@ export function McpPieceDialog({
       },
     }));
     const oldTools = mcp.tools;
-    onToolsUpdate([...oldTools, ...newTools]);
+    const builtInTools =
+      builtInPiecesTools?.flatMap((pieceName) => {
+        const pieces =
+          allMetadata?.filter(
+            (m): m is PieceStepMetadataWithSuggestions =>
+              'suggestedActions' in m && m.pieceName === pieceName,
+          ) ?? [];
+        if (pieces.length === 0) {
+          return [];
+        }
+        const pieceTools: McpToolRequest[] =
+          pieces[0].suggestedActions?.map((action) => ({
+            type: McpToolType.PIECE,
+            pieceMetadata: {
+              pieceName: pieces[0].pieceName,
+              actionName: action.name,
+              actionDisplayName: action.displayName,
+              pieceVersion: pieces[0].pieceVersion,
+              logoUrl: pieces[0].logoUrl,
+            },
+          })) ?? [];
+
+        return pieceTools;
+      }) ?? [];
+    onToolsUpdate([...builtInTools, ...oldTools, ...newTools]);
     handleClose();
   };
 
@@ -167,7 +206,7 @@ export function McpPieceDialog({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden">
+      <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden z-50">
         <DialogHeader className={`${selectedPiece ? 'gap-2' : 'gap-0'}`}>
           <DialogTitle>
             {selectedPiece ? (
@@ -239,4 +278,4 @@ export function McpPieceDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};

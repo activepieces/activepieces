@@ -1,6 +1,6 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, Agent, AgentRun, CreateTriggerRunRequestBody, ErrorCode, Field, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PlatformUsageMetric, PopulatedFlow, Record, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRecordRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { ActivepiecesError, AgentRun, CreateTriggerRunRequestBody, ErrorCode, Field, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PlatformUsageMetric, PopulatedAgent, PopulatedFlow, Record, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRecordRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
@@ -158,8 +158,8 @@ export const agentsApiService = (workerToken: string, _log: FastifyBaseLogger) =
     const client = new ApAxiosClient(apiUrl, workerToken)
 
     return {
-        async getAgent(agentId: string): Promise<Agent> {
-            return client.get<Agent>(`/v1/agents/${agentId}`, {})
+        async getAgent(agentId: string): Promise<PopulatedAgent> {
+            return client.get<PopulatedAgent>(`/v1/agents/${agentId}`, {})
         },
 
         async getMcp(mcpId: string): Promise<McpWithTools> {

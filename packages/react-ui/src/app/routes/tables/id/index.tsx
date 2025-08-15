@@ -7,8 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { useSocket } from '@/components/socket-provider';
 import { useTheme } from '@/components/theme-provider';
 import { Drawer, DrawerContent, DrawerHeader } from '@/components/ui/drawer';
-import { AgentRunDialog } from '@/features/agents/agent-run-dialog';
-import { ApTableFooter } from '@/features/tables/components/ap-table-footer';
+import { agentRunsApi } from '@/features/agents/lib/agents-api';
+import { ApTableControl } from '@/features/tables/components/ap-table-control';
 import { ApTableHeader } from '@/features/tables/components/ap-table-header';
 import { useTableState } from '@/features/tables/components/ap-table-state-provider';
 import {
@@ -41,12 +41,12 @@ const ApTableEditorPage = () => {
     setSelectedRecords,
     selectedCell,
     setSelectedCell,
-    createRecord,
     fields,
     records,
-    selectedAgentRunId,
     setSelectedAgentRunId,
     setRecords,
+    setRuns,
+    createTemporaryRecord,
   ] = useTableState((state) => [
     state.table,
     state.setAgentRunId,
@@ -54,12 +54,12 @@ const ApTableEditorPage = () => {
     state.setSelectedRecords,
     state.selectedCell,
     state.setSelectedCell,
-    state.createRecord,
     state.fields,
     state.records,
-    state.selectedAgentRunId,
     state.setSelectedAgentRunId,
     state.setRecords,
+    state.setRuns,
+    state.createTemporaryRecord,
   ]);
 
   const gridRef = useRef<DataGridHandle>(null);
@@ -75,17 +75,21 @@ const ApTableEditorPage = () => {
     userHasTableWritePermission && maxRecords && records.length < maxRecords;
 
   const createEmptyRecord = () => {
-    createRecord({
+    const tempRecord = {
       uuid: nanoid(),
       agentRunId: null,
       values: [],
-    });
+    };
+    
+    createTemporaryRecord(tempRecord);
+    
     requestAnimationFrame(() => {
       gridRef.current?.scrollToCell({
         rowIdx: records.length,
-        idx: 0,
+        idx: 1,
       });
       setSelectedCell({
+        recordId: tempRecord.uuid,
         rowIdx: records.length,
         columnIdx: 1,
       });
@@ -94,12 +98,19 @@ const ApTableEditorPage = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        selectedCell &&
-        !(event.target as HTMLElement).closest(
-          `#editable-cell-${selectedCell.rowIdx}-${selectedCell.columnIdx}`,
-        )
-      ) {
+      if (!selectedCell) return;
+      
+      const target = event.target as HTMLElement;
+      const addRecordButtonId = 'table-add-record-button';
+      const isClickInsideAddRecordButton = target.closest(`#${addRecordButtonId}`);
+
+      if (isClickInsideAddRecordButton) 
+        return;
+      
+      const cellId = `editable-cell-${selectedCell.rowIdx}-${selectedCell.columnIdx}`;
+      const isClickInside = target.closest(`#${cellId}`);
+      
+      if (!isClickInside) {
         setSelectedCell(null);
       }
     };
@@ -113,22 +124,38 @@ const ApTableEditorPage = () => {
       WebsocketClientEvent.AGENT_RUN_PROGRESS,
       async (agentRun: AgentRun) => {
         if (agentRun.metadata?.tableId === table.id) {
-          setAgentRunId(
-            agentRun.metadata.recordId!,
-            agentRun.status === AgentTaskStatus.IN_PROGRESS
-              ? agentRun.id
-              : null,
-          );
-          if (
+          if (agentRun.metadata?.recordId) {
+            setAgentRunId(
+              agentRun.metadata.recordId,
+              agentRun.status === AgentTaskStatus.IN_PROGRESS
+                ? agentRun.id
+                : null,
+            );
+          }
+
+          if (agentRun.status === AgentTaskStatus.IN_PROGRESS) {
+            setSelectedAgentRunId(agentRun.id);
+          } else if (
             agentRun.status === AgentTaskStatus.COMPLETED ||
             agentRun.status === AgentTaskStatus.FAILED
           ) {
+            setSelectedAgentRunId(null);
+            setSelectedRecords(new Set());
+            setSelectedCell(null);
             const records = await recordsApi.list({
               tableId: table.id,
               limit: 999999,
               cursor: undefined,
             });
             setRecords(records.data);
+            if (table.agent?.id) {
+              const runs = await agentRunsApi.list({
+                agentId: table.agent.id,
+                limit: 999999,
+                cursor: undefined,
+              });
+              setRuns(runs.data);
+            }
           }
         }
       },
@@ -136,7 +163,17 @@ const ApTableEditorPage = () => {
     return () => {
       socket.off(WebsocketClientEvent.AGENT_RUN_PROGRESS);
     };
-  }, [table.id, setAgentRunId, socket]);
+  }, [
+    table.id,
+    table.agent?.id,
+    setAgentRunId,
+    setSelectedAgentRunId,
+    setRecords,
+    setRuns,
+    setSelectedRecords,
+    setSelectedCell,
+    socket,
+  ]);
 
   const columns = useTableColumns(createEmptyRecord);
   const rows = mapRecordsToRows(records, fields);
@@ -156,13 +193,14 @@ const ApTableEditorPage = () => {
       <DrawerContent fullscreen className="w-full overflow-auto">
         <DrawerHeader>
           <div className="flex items-center justify-between w-full pr-4">
-            <ApTableHeader onBack={handleBack} />
+            <ApTableHeader onBack={handleBack} agent={table.agent!} />
           </div>
         </DrawerHeader>
 
-        <div className="flex flex-col flex-1 h-full">
-          <div className="flex-1 flex flex-col">
-            <div className="flex-1">
+        <div className="flex flex-col flex-1 h-full bg-muted/50">
+          <div className="flex-1 flex flex-col relative">
+            <ApTableControl table={table} recordsCount={records.length} />
+            <div className="flex-1 flex flex-row">
               <DataGrid
                 ref={gridRef}
                 columns={columns}
@@ -186,23 +224,9 @@ const ApTableEditorPage = () => {
                 }
               />
             </div>
-            <ApTableFooter
-              fieldsCount={fields.length}
-              recordsCount={records.length}
-            />
           </div>
         </div>
       </DrawerContent>
-
-      <AgentRunDialog
-        agentRunId={selectedAgentRunId}
-        open={!!selectedAgentRunId}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedAgentRunId(null);
-          }
-        }}
-      />
     </Drawer>
   );
 };

@@ -90,7 +90,8 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
         })))
         const runs = await Promise.all(records.map((record) => tableAutomationService(request.log).run({
             projectId: request.principal.projectId,
-            table,
+            tableId: table.id,
+            agentId: table.agentId,
             record,
             trigger: TableAutomationTrigger.ON_DEMAND,
         })))

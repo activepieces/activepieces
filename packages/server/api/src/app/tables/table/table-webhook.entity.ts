@@ -26,7 +26,7 @@ export const TableWebhookEntity = new EntitySchema<TableWebhookSchema>({
         },
         flowId: {
             ...ApIdSchema,
-            nullable: false,
+            nullable: true,
         },
     },
     relations: {

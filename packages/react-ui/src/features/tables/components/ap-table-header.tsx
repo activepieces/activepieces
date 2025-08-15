@@ -3,14 +3,14 @@ import {
   ArrowLeft,
   ChevronDown,
   RefreshCw,
-  Trash2,
   Import,
   Download,
+  History,
+  Zap,
+  ZapOff,
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -19,45 +19,95 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import EditableText from '@/components/ui/editable-text';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Permission } from '@activepieces/shared';
+import { cn } from '@/lib/utils';
+import { isNil, Permission, PopulatedAgent } from '@activepieces/shared';
 
+import { AgentConfigure } from './agent-configure';
+import { AgentProfile } from './agent-profile';
+import { AgentSetupDialog } from './agent-setup-dialog';
+import { ApTableHistory } from './ap-table-history';
 import { useTableState } from './ap-table-state-provider';
+import { ApTableTriggers } from './ap-table-triggers';
 import { ImportCsvDialog } from './import-csv-dialog';
 
 interface ApTableHeaderProps {
   onBack: () => void;
+  agent: PopulatedAgent;
 }
 
-export function ApTableHeader({ onBack }: ApTableHeaderProps) {
+export const ApTableHeader = ({ onBack, agent }: ApTableHeaderProps) => {
   const [
-    selectedRecords,
-    setSelectedRecords,
     isSaving,
-    records,
     table,
     renameTable,
-    deleteRecords,
+    updateAgent,
+    selectedAgentRunId,
+    fields,
   ] = useTableState((state) => [
-    state.selectedRecords,
-    state.setSelectedRecords,
     state.isSaving,
-    state.records,
     state.table,
     state.renameTable,
-    state.deleteRecords,
+    state.updateAgent,
+    state.selectedAgentRunId,
+    state.fields,
   ]);
+  const [defaultSettings, setDefaultSettings] = useState('instructions');
+  const { mutate: updateAgentSettings } = agentHooks.useUpdate(
+    agent.id,
+    updateAgent,
+  );
   const [isImportCsvDialogOpen, setIsImportCsvDialogOpen] = useState(false);
   const [isEditingTableName, setIsEditingTableName] = useState(false);
+  const [isAiAgentMode, setIsAiAgentMode] = useState(
+    agent?.settings?.aiMode ?? false,
+  );
+  const [isAgentSetupDialogOpen, setIsAgentSetupDialogOpen] = useState(
+    (agent?.settings?.aiMode && agent?.created === agent?.updated) ?? false,
+  );
+  const [isAgentConfigureOpen, setIsAgentConfigureOpen] = useState(
+    agent?.settings?.aiMode ?? false,
+  );
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
+
+  if (!agent?.id) {
+    return null;
+  }
 
   const exportTable = async () => {
     const { tablesApi } = await import('../lib/tables-api');
     const { tablesUtils } = await import('../lib/utils');
     const exportedTable = await tablesApi.export(table.id);
     tablesUtils.exportTables([exportedTable]);
+  };
+
+  const showAgentSetupDialog = (checked: boolean) => {
+    if (checked && !isNil(agent) && agent.created === agent.updated) {
+      setIsAgentSetupDialogOpen(true);
+    } else {
+      setIsAgentSetupDialogOpen(false);
+    }
+    setIsAiAgentMode(checked);
+    if (agent) {
+      updateAgentSettings({
+        ...agent,
+        settings: {
+          ...agent.settings,
+          aiMode: checked,
+        },
+      });
+    }
   };
 
   return (
@@ -114,46 +164,135 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
               <span className="text-sm">{t('Saving...')}</span>
             </div>
           )}
-          {selectedRecords.size > 0 && (
-            <PermissionNeededTooltip
-              hasPermission={userHasTableWritePermission}
-            >
-              <ConfirmationDeleteDialog
-                title={t('Delete Records')}
-                message={t(
-                  'Are you sure you want to delete the selected records? This action cannot be undone.',
-                )}
-                entityName={
-                  selectedRecords.size === 1 ? t('record') : t('records')
-                }
-                mutationFn={async () => {
-                  const indices = Array.from(selectedRecords).map((row) =>
-                    records.findIndex((r) => r.uuid === row),
-                  );
-                  deleteRecords(indices.map((index) => index.toString()));
-                  setSelectedRecords(new Set());
-                }}
-              >
-                <Button
-                  variant="destructive"
-                  className="flex gap-2 items-center"
-                  disabled={!userHasTableWritePermission}
-                >
-                  <Trash2 className="size-4" />
-                  {t('Delete Records')}{' '}
-                  {selectedRecords.size > 0 ? `(${selectedRecords.size})` : ''}
-                </Button>
-              </ConfirmationDeleteDialog>
-            </PermissionNeededTooltip>
-          )}
         </div>
       </div>
-      <div>
-        <ImportCsvDialog
-          open={isImportCsvDialogOpen}
-          setIsOpen={setIsImportCsvDialogOpen}
+      <div className="flex items-center gap-4 w-full justify-end">
+        {agent.created !== agent.updated && agent.settings?.aiMode && (
+          <>
+            <div
+              className={cn(
+                'flex items-center',
+                !isNil(selectedAgentRunId) && 'gap-4',
+              )}
+            >
+              <div className="flex items-center">
+                <ApTableHistory
+                  open={isHistoryOpen}
+                  onOpenChange={setIsHistoryOpen}
+                  trigger={
+                    <History
+                      className="p-2 h-9 w-9 cursor-pointer rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 hover:text-primary"
+                      onClick={() => setIsHistoryOpen(true)}
+                    />
+                  }
+                />
+                <ApTableTriggers
+                  trigger={
+                    !agent.settings?.triggerOnNewRow &&
+                    !agent.settings?.triggerOnFieldUpdate ? (
+                      <ZapOff
+                        className="p-2 h-9 w-9 mr-2  cursor-pointer rounded-lg text-muted-foreground hover:text-muted-foreground transition-colors hover:bg-muted/50"
+                        onClick={() => {
+                          setDefaultSettings('triggers');
+                          setIsAgentConfigureOpen(true);
+                        }}
+                      />
+                    ) : (
+                      <Zap
+                        className={cn(
+                          'p-2 h-9 w-9 mr-2  cursor-pointer rounded-lg text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 hover:text-primary',
+                          (agent.settings?.triggerOnNewRow ||
+                            agent.settings?.triggerOnFieldUpdate) &&
+                            'text-primary',
+                        )}
+                        onClick={() => {
+                          setDefaultSettings('triggers');
+                          setIsAgentConfigureOpen(true);
+                        }}
+                      />
+                    )
+                  }
+                  toolTipMessage={
+                    agent.settings?.triggerOnNewRow &&
+                    agent.settings?.triggerOnFieldUpdate
+                      ? 'Agent will run every time a new row is added or a field is updated'
+                      : agent.settings?.triggerOnNewRow
+                      ? 'Agent will run every time a new row is added'
+                      : agent.settings?.triggerOnFieldUpdate
+                      ? 'Agent will run every time a field is updated'
+                      : 'Agent will not run automatically'
+                  }
+                />
+              </div>
+
+              <AgentConfigure
+                open={isAgentConfigureOpen}
+                setOpen={setIsAgentConfigureOpen}
+                updateAgentInTable={updateAgent}
+                fields={fields}
+                defaultSettings={defaultSettings}
+                trigger={
+                  <AgentProfile
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    size="lg"
+                    onClick={() => {
+                      setIsAgentConfigureOpen(true);
+                      setDefaultSettings('instructions');
+                    }}
+                    imageUrl={agent?.profilePictureUrl}
+                    isRunning={!isNil(selectedAgentRunId)}
+                    showSettingsOnHover={true}
+                  />
+                }
+              />
+            </div>
+            <Separator orientation="vertical" className="h-8" />
+          </>
+        )}
+        <AgentSetupDialog
+          open={isAgentSetupDialogOpen}
+          setOpen={setIsAgentSetupDialogOpen}
+          agent={agent}
+          updateAgent={updateAgent}
+          setAgentConfigureOpen={setIsAgentConfigureOpen}
+          setAiAgentMode={setIsAiAgentMode}
+          trigger={
+            <div className="flex items-center gap-3  py-2">
+              <Switch
+                checked={isAiAgentMode}
+                colorWheel={true}
+                onCheckedChange={(checked) => {
+                  showAgentSetupDialog(checked);
+                }}
+              />
+              <span className="text-sm font-medium bg-gradient-to-r from-purple-600 to-red-600 bg-clip-text text-transparent">
+                AI Agent Mode
+              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="bg-gradient-to-r from-purple-600 to-red-600 p-[1px] rounded-xs flex items-center justify-center">
+                    <span className="bg-background text-[10px] font-medium px-1 rounded-xs font-semibold select-none cursor-help">
+                      <span className="bg-gradient-to-r from-purple-600 to-red-600 bg-clip-text text-transparent">
+                        BETA
+                      </span>
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs text-xs">
+                    AI Agent Mode permanently modifies your data. Make sure to
+                    backup before using this feature.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          }
         />
       </div>
+      <ImportCsvDialog
+        open={isImportCsvDialogOpen}
+        setIsOpen={setIsImportCsvDialogOpen}
+      />
     </>
   );
-}
+};

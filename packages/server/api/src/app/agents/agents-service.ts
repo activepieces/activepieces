@@ -1,4 +1,4 @@
-import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AIUsageFeature, apId, createAIProvider, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, PopulatedAgent, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AgentSettings, AIUsageFeature, apId, createAIProvider, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, PopulatedAgent, SeekPage, spreadIfDefined, TableWebhookEventType } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -15,6 +15,7 @@ import { projectService } from '../project/project-service'
 import { tableService } from '../tables/table/table.service'
 import { AgentEntity } from './agent-entity'
 import { agentRunsService } from './agent-runs/agent-runs-service'
+import { agentSideEffects } from './agent-side-effects'
 
 export const agentRepo = repoFactory(AgentEntity)
 
@@ -52,7 +53,20 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             outputType: params.outputType ?? AgentOutputType.NO_OUTPUT,
             outputFields: params.outputFields ?? [],
         }
-        const agent = await agentRepo().save(agentPayload)
+        const agentSettings: Omit<AgentSettings, 'created' | 'updated'> = {
+            id: apId(),
+            agentId: id,
+            aiMode: false,
+            triggerOnNewRow: false,
+            triggerOnFieldUpdate: false,
+            allowAgentCreateColumns: true,
+            limitColumnEditing: false,
+            editableColumns: [],
+        }
+        const agent = await agentRepo().save({
+            ...agentPayload,
+            settings: agentSettings,
+        })
         await mcpService(log).update({
             mcpId: mcp.id,
             agentId: agent.id,
@@ -108,21 +122,44 @@ export const agentsService = (log: FastifyBaseLogger) => ({
     async update(params: UpdateParams): Promise<PopulatedAgent> {
         const platformId = await projectService.getPlatformId(params.projectId)
         await PlatformPlanHelper.checkResourceLocked({ platformId, resource: PlatformUsageMetric.AGENTS })
+        
+        const agent = await agentRepo().findOneOrFail({
+            where: { id: params.id },
+            relations: { settings: true },
+        })
 
-        await agentRepo().update({
-            id: params.id,
-            projectId: params.projectId,
-        }, {
+        await agentRepo().save({
+            ...agent,
             ...spreadIfDefined('displayName', params.displayName),
             ...spreadIfDefined('systemPrompt', params.systemPrompt),
             ...spreadIfDefined('description', params.description),
             ...spreadIfDefined('outputType', params.outputType),
             ...spreadIfDefined('outputFields', params.outputFields),
+            ...spreadIfDefined('settings', params.settings),
+            ...spreadIfDefined('profilePictureUrl', params.generateNewProfilePicture ? getAgentProfilePictureUrl() : agent.profilePictureUrl),
         })
+        
+        await applyWebhookSideEffects({
+            agentId: params.id,
+            projectId: params.projectId,
+            event: TableWebhookEventType.RECORD_CREATED,
+            isEnabled: params.settings?.triggerOnNewRow ?? false,
+        })
+        
+        await applyWebhookSideEffects({
+            agentId: params.id,
+            projectId: params.projectId,
+            event: TableWebhookEventType.RECORD_UPDATED,
+            isEnabled: params.settings?.triggerOnFieldUpdate ?? false,
+        })
+        
         return this.getOneOrThrow({ id: params.id, projectId: params.projectId })
     },
     async getOne(params: GetOneParams): Promise<PopulatedAgent | null> {
-        const agent = await agentRepo().findOneBy({ id: params.id })
+        const agent = await agentRepo().findOne({
+            where: { id: params.id },
+            relations: { settings: true },
+        })
         if (isNil(agent)) {
             return null
         }
@@ -164,6 +201,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         }
         const queryBuilder = agentRepo()
             .createQueryBuilder('agent')
+            .leftJoinAndSelect('agent.settings', 'settings')
             .where(querySelector)
 
         const agentsInTable = await tableService.getAllAgentIds({ projectId: params.projectId })
@@ -179,7 +217,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function enrichAgent(agent: Omit<Agent, 'runCompleted'>, log: FastifyBaseLogger): Promise<PopulatedAgent> {
+async function enrichAgent(agent: Omit<PopulatedAgent, 'runCompleted' | 'mcp'>, log: FastifyBaseLogger): Promise<PopulatedAgent> {
     const mcp = await mcpService(log).getOrThrow({ mcpId: agent.mcpId, projectId: agent.projectId })
     return {
         ...agent,
@@ -210,9 +248,34 @@ function getEnhancementPrompt(originalPrompt: string) {
     }
 }
 
+async function applyWebhookSideEffects(params: ApplyWebhookSideEffectsParams) {
+    if (params.isEnabled) {
+        await agentSideEffects().upsertTableWebhook({ 
+            agentId: params.agentId, 
+            projectId: params.projectId, 
+            request: { 
+                events: [params.event], 
+                webhookUrl: 'tables-webhook-url',
+            }, 
+        })
+    }
+    else {
+        await agentSideEffects().deleteTableWebhook({ 
+            agentId: params.agentId, projectId: params.projectId, type: params.event,
+        })
+    }
+}
+
 type GetOneByExternalIdParams = {
     externalId: string
     projectId: string
+}
+
+type ApplyWebhookSideEffectsParams = {
+    agentId: string
+    projectId: string
+    event: TableWebhookEventType
+    isEnabled: boolean
 }
 
 type ListParams = {
@@ -244,6 +307,8 @@ type UpdateParams = {
     description?: string
     outputType?: string
     outputFields?: AgentOutputField[]
+    settings?: AgentSettings
+    generateNewProfilePicture?: boolean
 }
 
 type GetOneParams = {

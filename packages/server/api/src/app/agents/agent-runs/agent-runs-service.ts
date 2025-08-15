@@ -18,7 +18,8 @@ export const agentRunsService = (log: FastifyBaseLogger) => ({
             entity: AgentRunEntity,
             query: {
                 limit: params.limit,
-                order: 'ASC',
+                order: 'DESC',
+                orderBy: 'finishTime',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -103,6 +104,8 @@ export const agentRunsService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('output', params.agentRun.output),
             ...spreadIfDefined('startTime', params.agentRun.startTime),
             ...spreadIfDefined('finishTime', params.agentRun.finishTime),
+            ...spreadIfDefined('title', params.agentRun.title),
+            ...spreadIfDefined('summary', params.agentRun.summary),
         })
 
         return this.getOneOrThrow({ id: params.id, projectId: params.projectId })

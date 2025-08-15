@@ -1,6 +1,5 @@
 import { api } from '@/lib/api';
 import {
-  Agent,
   CreateAgentRequest,
   UpdateAgentRequestBody,
   ListAgentsQueryParams,
@@ -10,17 +9,20 @@ import {
   RunAgentRequestBody,
   EnhancedAgentPrompt,
   EnhaceAgentPrompt,
+  PopulatedAgent,
 } from '@activepieces/shared';
 
 export const agentsApi = {
-  async list(params?: ListAgentsQueryParams): Promise<SeekPage<Agent>> {
-    return await api.get<SeekPage<Agent>>(`/v1/agents`, params);
+  async list(
+    params?: ListAgentsQueryParams,
+  ): Promise<SeekPage<PopulatedAgent>> {
+    return await api.get<SeekPage<PopulatedAgent>>(`/v1/agents`, params);
   },
 
-  async get(id: string): Promise<Agent> {
-    return await api.get<Agent>(`/v1/agents/${id}`);
+  async get(id: string): Promise<PopulatedAgent> {
+    return await api.get<PopulatedAgent>(`/v1/agents/${id}`);
   },
-  async findByExteranlId(externalId: string): Promise<Agent | null> {
+  async findByExteranlId(externalId: string): Promise<PopulatedAgent | null> {
     const seekPage = await agentsApi.list({
       externalIds: [externalId],
     });
@@ -36,12 +38,15 @@ export const agentsApi = {
     );
   },
 
-  async create(request: CreateAgentRequest): Promise<Agent> {
-    return await api.post<Agent>(`/v1/agents`, request);
+  async create(request: CreateAgentRequest): Promise<PopulatedAgent> {
+    return await api.post<PopulatedAgent>(`/v1/agents`, request);
   },
 
-  async update(id: string, request: UpdateAgentRequestBody): Promise<Agent> {
-    return await api.post<Agent>(`/v1/agents/${id}`, request);
+  async update(
+    id: string,
+    request: UpdateAgentRequestBody,
+  ): Promise<PopulatedAgent> {
+    return await api.post<PopulatedAgent>(`/v1/agents/${id}`, request);
   },
 
   async delete(id: string): Promise<void> {
