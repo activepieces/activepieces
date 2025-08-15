@@ -16,7 +16,7 @@ import {
   PlanName,
   StripePlanName,
 } from '@activepieces/ee-shared';
-import { isNil, PlatformUsageMetric } from '@activepieces/shared';
+import { ApEdition, ApFlagId, isNil, PlatformUsageMetric } from '@activepieces/shared';
 
 import { billingMutations, billingQueries } from '../../lib/billing-hooks';
 
@@ -31,6 +31,7 @@ import { PlanSelectionStep } from './plan-selection-step';
 import { useManagePlanDialogStore } from './store';
 import { SubscriptionSummary } from './summary';
 import { calculatePrice, getActionConfig, getCurrentPlanInfo } from './utils';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 export enum ActionType {
   CONFIGURE_ADDONS = 'configure-addons',
@@ -121,6 +122,14 @@ export const UpgradeDialog: FC = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: platformBillingInformation } =
     billingQueries.usePlatformSubscription(platform.id);
+
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isEnterprise =
+    !isNil(platformBillingInformation?.plan.licenseKey) ||
+    platformBillingInformation?.plan.plan === PlanName.ENTERPRISE ||
+    edition === ApEdition.ENTERPRISE;
+  
+  if (isEnterprise) return null
 
   const currentPlanInfo = useMemo(
     () => getCurrentPlanInfo(platformBillingInformation),
