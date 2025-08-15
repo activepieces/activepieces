@@ -50,29 +50,23 @@ export const TodoHeaders = ({
   };
 
   return (
-    <div className={`flex flex-col w-full  ${className}`}>
+    <div className={`flex flex-col w-full ${className}`}>
       <div className="flex items-center justify-between w-full">
+        <h2 className="text-lg font-semibold">{title}</h2>
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="h-8 w-8"
+          aria-label="Close"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="flex items-center justify-between w-full mt-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">{title}</h2>
-
-          {status && STATUS_COLORS && (
-            <StatusIconWithText
-              icon={todoUtils.getStatusIcon(status.variant)}
-              text={status.name}
-              color={STATUS_COLORS[status.variant].color}
-              textColor={STATUS_COLORS[status.variant].textColor}
-            />
-          )}
-
-          {todo.assignee && (
-            <ApAvatar
-              fullName={todo.assignee.firstName + ' ' + todo.assignee.lastName}
-              userEmail={todo.assignee.email}
-              size="small"
-              includeName={true}
-            />
-          )}
-
           {todo.flow && (
             <Button
               variant="ghost"
@@ -84,6 +78,24 @@ export const TodoHeaders = ({
               <span>{todo.flow.version.displayName}</span>
               <ExternalLink className="h-3 w-3" />
             </Button>
+          )}
+
+          {todo.assignee && (
+            <ApAvatar
+              fullName={todo.assignee.firstName + ' ' + todo.assignee.lastName}
+              userEmail={todo.assignee.email}
+              size="small"
+              includeName={true}
+            />
+          )}
+
+          {status && STATUS_COLORS && (
+            <StatusIconWithText
+              icon={todoUtils.getStatusIcon(status.variant)}
+              text={status.name}
+              color={STATUS_COLORS[status.variant].color}
+              textColor={STATUS_COLORS[status.variant].textColor}
+            />
           )}
         </div>
 
@@ -113,16 +125,6 @@ export const TodoHeaders = ({
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-8 w-8"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </div>
       </div>
     </div>
