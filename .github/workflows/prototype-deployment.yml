@@ -38,19 +38,19 @@ jobs:
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/deploy.key
-          chmod 600 ~/.ssh/deploy.key
+          echo "$SSH_KEY" > ~/.ssh/pre-prod.key
+          chmod 600 ~/.ssh/pre-prod.key
           cat >>~/.ssh/config <<END
-          Host deploy
+          Host pre-prod
             HostName $SSH_HOST
             User $SSH_USER
-            IdentityFile ~/.ssh/deploy.key
+            IdentityFile ~/.ssh/pre-prod.key
             StrictHostKeyChecking no
           END
         env:
-          SSH_USER: ${{ secrets.DEPLOY_USERNAME }}
-          SSH_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+          SSH_USER: ${{ secrets.PRE_PROD_USERNAME }}
+          SSH_KEY: ${{ secrets.PRE_PROD_SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.PRE_PROD_HOST }}
 
       - name: Create deployment directory
         run: |
