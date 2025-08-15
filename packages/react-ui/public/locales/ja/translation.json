@@ -226,7 +226,7 @@
   "Use Mock Data": "モックデータを使用",
   "Test Tool": "テストツール",
   "Load Sample Data": "サンプルデータを読み込む",
-  "testPieceWebhookTriggerNote": "Please go to {pieceName} and trigger {triggerName}.",
+  "testPieceWebhookTriggerNote": "{pieceName} に行き、 {triggerName} をトリガーしてください。",
   "Send Data to the webhook URL to generate sample data to use in the next steps": "次のステップで使用するサンプルデータを生成するために、WebhookのURLにデータを送信します",
   "Testing Trigger": "テストトリガー",
   "Action Required": "アクションが必要です",
