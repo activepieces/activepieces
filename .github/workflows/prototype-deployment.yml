@@ -51,10 +51,6 @@ jobs:
           SSH_USER: ${{ secrets.PRE_PROD_USERNAME }}
           SSH_KEY: ${{ secrets.PRE_PROD_SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.PRE_PROD_HOST }}
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main
 
       - name: Create deployment directory
         run: |
