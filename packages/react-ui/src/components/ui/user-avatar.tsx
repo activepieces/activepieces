@@ -15,7 +15,7 @@ export function UserAvatar({
   size,
   disableTooltip = false,
 }: UserAvatarProps) {
-  const tooltip = `${name} (${email})`;
+  const tooltip = `${name}`;
 
   const avatarElement = (
     <Avatar

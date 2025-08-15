@@ -34,6 +34,21 @@ function TodoTestingDialog({
     currentStep.name,
   );
 
+  const { mutate: updateTodo } = useMutation({
+    mutationFn: async ({
+      todoId,
+      status,
+    }: {
+      todoId: string;
+      status: PopulatedTodo['status'];
+    }) => {
+      return await todosApi.update(todoId, {
+        status: status,
+        isTest: true,
+      });
+    },
+  });
+
   const formatTodoResult = (
     response: PopulatedTodo,
   ): CreateTodoResult | CreateAndWaitTodoResult => {
@@ -76,8 +91,20 @@ function TodoTestingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-3xl  p-3 overflow-hidden">
-        <TodoDetails todoId={todo.id} onStatusChange={handleStatusChange} />
+      <DialogContent
+        className="w-full max-w-3xl h-[60%] p-3 "
+        withCloseButton={false}
+      >
+        <TodoDetails
+          todo={todo}
+          onStatusChange={handleStatusChange}
+          updateTodoStatus={async (todoId, status) => {
+            handleStatusChange(status);
+            updateTodo({ todoId, status });
+          }}
+          onClose={() => onOpenChange(false)}
+          hideComments
+        />
       </DialogContent>
     </Dialog>
   );

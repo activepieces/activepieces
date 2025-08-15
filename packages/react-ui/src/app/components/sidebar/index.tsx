@@ -183,12 +183,14 @@ type SidebarProps = {
   items: SidebarItem[];
   isHomeDashboard?: boolean;
   hideSideNav?: boolean;
+  hidePadding?: boolean;
 };
 export function SidebarComponent({
   children,
   items,
   isHomeDashboard = false,
   hideSideNav = false,
+  hidePadding = false,
 }: SidebarProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -210,7 +212,7 @@ export function SidebarComponent({
             <SidebarContent className="h-full flex flex-col">
               <ApDashboardSidebarHeader isHomeDashboard={isHomeDashboard} />
               <div className="flex-1 overflow-hidden">
-                <ScrollArea className="h-full">
+                <ScrollArea className="h-full flex-1">
                   <div className="space-y-0">
                     {items.map((item, index) => (
                       <React.Fragment key={item.label}>
@@ -287,8 +289,9 @@ export function SidebarComponent({
           })}
         >
           <ScrollArea
-            className={cn('w-full pb-6 pt-28 px-6 h-full bg-background', {
+            className={cn('w-full h-full flex-1 bg-background', {
               'rounded-lg border-b-0 border': !hideSideNav,
+              'pt-28 px-6 pb-6': !hidePadding,
             })}
             style={{
               boxShadow: hideSideNav

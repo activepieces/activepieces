@@ -77,7 +77,6 @@ export const formatUtils = {
     const diffInMinutes = now.diff(inputDate, 'minute');
     const diffInHours = now.diff(inputDate, 'hour');
     const diffInDays = now.diff(inputDate, 'day');
-
     if (diffInSeconds < 60) {
       return `${diffInSeconds}s ago`;
     }
@@ -87,7 +86,7 @@ export const formatUtils = {
     if (diffInHours < 24) {
       return `${diffInHours}h ago`;
     }
-    if (diffInDays < 30) {
+    if (diffInDays < 7) {
       return `${diffInDays}d ago`;
     }
     return inputDate.format('MMM D, YYYY');

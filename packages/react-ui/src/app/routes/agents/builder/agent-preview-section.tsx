@@ -1,10 +1,9 @@
 import { t } from 'i18next';
-import { Loader2, MessageSquare, ChevronsRight, Play } from 'lucide-react';
+import { MessageSquare, ChevronsRight, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { MessageBox } from '@/components/custom/message-box';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
 import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { agentRunHooks } from '@/features/agents/lib/agent-hooks';
 import { useBuilderAgentState } from '@/features/agents/lib/store/builder-agent-state-provider';
@@ -71,31 +70,18 @@ export const AgentPreviewSection = () => {
           </div>
         )}
       </ScrollArea>
-      <div className="flex flex-col gap-2 mt-auto border rounded-lg p-2 bg-background">
-        <Textarea
-          className="flex-1 resize-none border-none focus:ring-0 focus:border-none shadow-none"
-          placeholder="Describe what would you like to agent"
-          value={testInput}
-          onChange={(e) => setTestInput(e.target.value)}
-          rows={2}
-          disabled={isRunning}
-        />
-        <div className="flex justify-end">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleTestAgent}
-            disabled={!testInput.trim() || isRunning || !agent?.id}
-          >
-            {isRunning ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Play className="w-5 h-5" />
-            )}
-            {isRunning ? 'Running...' : 'Run'}
-          </Button>
-        </div>
-      </div>
+      <MessageBox
+        placeholder="Describe what would you like to agent"
+        actionName="Run"
+        value={testInput}
+        onChange={setTestInput}
+        onAction={handleTestAgent}
+        loading={isRunning}
+        loadingIcon={<Loader2 className="w-5 h-5 animate-spin" />}
+        loadingText="Running..."
+        disabled={!agent?.id}
+        className="mt-auto"
+      />
     </div>
   );
 };

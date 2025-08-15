@@ -22,6 +22,7 @@ import { SidebarComponent, SidebarItem, SidebarLink } from './sidebar';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
+  hidePadding?: boolean;
 };
 
 const ProjectChangedRedirector = ({
@@ -39,7 +40,10 @@ export const CloseTaskLimitAlertContext = createContext({
   setIsAlertClosed: (_isAlertClosed: boolean) => {},
 });
 
-export function DashboardContainer({ children }: DashboardContainerProps) {
+export function DashboardContainer({
+  children,
+  hidePadding,
+}: DashboardContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { project } = projectHooks.useCurrentProject();
   const { embedState } = useEmbedding();
@@ -154,6 +158,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
           isHomeDashboard={true}
           items={items}
           hideSideNav={embedState.hideSideNav}
+          hidePadding={hidePadding}
         >
           <>
             <>
