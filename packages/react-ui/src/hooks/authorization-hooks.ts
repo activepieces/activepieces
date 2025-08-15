@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { notificationHooks } from '@/hooks/notifications-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -44,5 +45,9 @@ export const useAuthorization = () => {
 
 export const useShowPlatformAdminDashboard = () => {
   const platformRole = userHooks.getCurrentUserPlatformRole();
-  return platformRole === PlatformRole.ADMIN;
+  const messages = notificationHooks.useNotifications();
+  return {
+    show: platformRole === PlatformRole.ADMIN,
+    notificationDot: messages.length > 0,
+  };
 };

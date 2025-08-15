@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import semver from 'semver';
 
 import { useSocket } from '@/components/socket-provider';
-import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { aiProviderApi } from '@/lib/ai-provider-api';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 export interface Message {

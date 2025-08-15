@@ -1,6 +1,7 @@
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
+import { t } from 'i18next';
 import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
@@ -27,7 +28,18 @@ export const formatUtils = {
       .join(' ');
   },
   formatNumber(number: number) {
-    return new Intl.NumberFormat('en-US').format(number);
+    const roundedNumber = Math.round(number);
+    const numberGreaterThanMillion = roundedNumber >= 1000000;
+    const numberGreaterThanThousand = roundedNumber >= 1000;
+    const formatter = (number: number) =>
+      new Intl.NumberFormat('en-US').format(Number(number.toFixed(1)));
+    if (numberGreaterThanMillion) {
+      return `${formatter(roundedNumber / 1000000)}${t('M')}`;
+    }
+    if (numberGreaterThanThousand) {
+      return `${formatter(roundedNumber / 1000)}${t('K')}`;
+    }
+    return formatter(roundedNumber);
   },
   formatDateOnlyOrFail(date: Date, fallback: string) {
     try {

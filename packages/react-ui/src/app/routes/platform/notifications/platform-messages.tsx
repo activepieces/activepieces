@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-
-import { notificationHooks } from './hooks/notifications-hooks';
+import { notificationHooks } from '@/hooks/notifications-hooks';
 
 export const PlatformMessages = () => {
   const messages = notificationHooks.useNotifications();
