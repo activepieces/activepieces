@@ -14,7 +14,7 @@ export const findDealAction = createAction({
     auth: pipedriveAuth,
     name: 'find-deal',
     displayName: 'Find Deal',
-    description: 'Finds a deal by any field.',
+    description: 'Finds a deal by any field using Pipedrive API v2.', 
     props: {
         searchField: searchFieldProp('deal'),
         searchFieldValue: searchFieldValueProp('deal'),
@@ -27,14 +27,15 @@ export const findDealAction = createAction({
             throw new Error('Please enter a value for the field');
         }
 
-        // create Filter
+        // Create Filter using Pipedrive API v2 endpoint
+        // The structure of the filter conditions remains largely compatible in v2.
         const filter = await pipedriveApiCall<{ data: { id: number } }>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.POST,
-            resourceUri: '/filters',
+            resourceUri: '/v1/filters', 
             body: {
-                name: 'Activepieces Find Deal Filter',
+                name: `Activepieces Find Deal Filter - ${Date.now()}`, // Added timestamp to name to ensure uniqueness
                 type: 'deals',
                 conditions: {
                     glue: 'and',
@@ -66,25 +67,27 @@ export const findDealAction = createAction({
             },
         });
 
-        // search for deals using the filter
+        // Search for deals using the created filter
+        
         const deals = await pipedriveApiCall<{ data: { id: number }[] }>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/deals',
+            resourceUri: '/v2/deals', 
             query: {
                 filter_id: filter.data.id,
                 limit: 1,
-                sort: 'update_time DESC',
+                sort_by: 'update_time',     
+                sort_direction: 'desc',     
             },
         });
 
-        // delete the filter
+        // Delete the temporary filter
         await pipedriveApiCall({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.DELETE,
-            resourceUri: `/filters/${filter.data.id}`,
+            resourceUri: `/v1/filters/${filter.data.id}`, 
         });
 
         if (isNil(deals.data) || deals.data.length === 0) {
@@ -94,13 +97,15 @@ export const findDealAction = createAction({
             };
         }
 
+        // Fetch custom field definitions from v2
         const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/dealFields',
+            resourceUri: '/v1/dealFields', 
         });
 
+        // Transform custom fields in the response data
         const updatedDealProperties = pipedriveTransformCustomFields(
             customFieldsResponse,
             deals.data[0],

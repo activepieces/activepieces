@@ -32,7 +32,7 @@ export const findPersonAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.POST,
-			resourceUri: '/filters',
+			resourceUri: '/v1/filters',
 			body: {
 				name: 'Activepieces Find Person Filter',
 				type: 'people',
@@ -71,11 +71,10 @@ export const findPersonAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/persons',
+			resourceUri: '/v2/persons',
 			query: {
 				filter_id: filter.data.id,
 				limit: 1,
-				sort: 'update_time DESC',
 			},
 		});
 
@@ -84,7 +83,7 @@ export const findPersonAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.DELETE,
-			resourceUri: `/filters/${filter.data.id}`,
+			resourceUri: `/v1/filters/${filter.data.id}`,
 		});
 
 		if (isNil(persons.data) || persons.data.length === 0) {
@@ -98,7 +97,7 @@ export const findPersonAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/personFields',
+			resourceUri: '/v1/personFields',
 		});
 
 		const updatedPersonProperties = pipedriveTransformCustomFields(

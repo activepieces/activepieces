@@ -56,11 +56,10 @@ export const dealMatchingFilterTrigger = createTrigger({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/deals:(id)',
+			resourceUri: '/v2/deals',
 			query: {
-				sort: 'update_time DESC',
 				filter_id: context.propsValue.filterId,
-				status: context.propsValue.status,
+                status: context.propsValue.status,
 			},
 		});
 
@@ -82,10 +81,9 @@ export const dealMatchingFilterTrigger = createTrigger({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/deals',
+			resourceUri: '/v2/deals',
 			query: {
 				limit: 10,
-				sort: 'update_time DESC',
 				filter_id: context.propsValue.filterId,
 				status: context.propsValue.status,
 			},
@@ -103,7 +101,7 @@ export const dealMatchingFilterTrigger = createTrigger({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/dealFields',
+			resourceUri: '/v1/dealFields',
 		});
 
 		const result = [];
@@ -123,9 +121,8 @@ export const dealMatchingFilterTrigger = createTrigger({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/deals',
+			resourceUri: '/v2/deals',
 			query: {
-				sort: 'update_time DESC',
 				filter_id: context.propsValue.filterId,
 				status: context.propsValue.status,
 			},
@@ -151,7 +148,7 @@ export const dealMatchingFilterTrigger = createTrigger({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/dealFields',
+			resourceUri: '/v1/dealFields',
 		});
 
 		const result = [];

@@ -22,8 +22,8 @@ export const activityMatchingFilterTrigger = createTrigger({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/activities:(id)',
-			query: { sort: 'update_time DESC', filter_id: context.propsValue.filterId, user_id: 0 },
+			resourceUri: '/v2/activities:(id)',
+			query: { filter_id: context.propsValue.filterId, user_id: 0 },
 		});
 
 		if (!isNil(response)) {
@@ -44,12 +44,10 @@ export const activityMatchingFilterTrigger = createTrigger({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/activities',
+			resourceUri: '/v2/activities',
 			query: {
 				limit: 10,
-				sort: 'update_time DESC',
 				filter_id: context.propsValue.filterId,
-				user_id: 0,
 			},
 		});
 
@@ -71,8 +69,8 @@ export const activityMatchingFilterTrigger = createTrigger({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/activities',
-			query: { sort: 'update_time DESC', filter_id: context.propsValue.filterId, user_id: 0 },
+			resourceUri: '/v2/activities',
+			query: {  filter_id: context.propsValue.filterId, user_id: 0 },
 		});
 
 		if (isNil(response) || response.length === 0) {

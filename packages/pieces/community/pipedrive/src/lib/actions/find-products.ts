@@ -46,14 +46,14 @@ export const findProductsAction = createAction({
 			const qs = {
 				term: context.propsValue.fieldValue,
 				fields: context.propsValue.field,
-				limit: 500,
+				limit: 100,
 				start: 0,
 				exact_match: 'true',
 			};
 			const response = await pipedriveApiCall<{
 				success: boolean;
 				data: { items: Array<{ item: { id: number } }> };
-				additional_data: {
+				additional_data?: {
 					pagination: {
 						start: number;
 						limit: number;
@@ -65,7 +65,7 @@ export const findProductsAction = createAction({
 				accessToken: context.auth.access_token,
 				apiDomain: context.auth.data['api_domain'],
 				method: HttpMethod.GET,
-				resourceUri: '/products/search',
+				resourceUri: '/v2/products/search',
 				query: qs,
 			});
 
@@ -75,9 +75,13 @@ export const findProductsAction = createAction({
 			{
 				products.push(product.item);
 			}
+            if (response.additional_data?.pagination?.more_items_in_collection) {
+                hasMoreItems = true;
+                qs.start = response.additional_data.pagination.next_start;
+            } else {
+                hasMoreItems = false;
+            }
             
-			hasMoreItems = response.additional_data.pagination.more_items_in_collection;
-			qs.start = response.additional_data.pagination.next_start;
 		} while (hasMoreItems);
 
 		return {

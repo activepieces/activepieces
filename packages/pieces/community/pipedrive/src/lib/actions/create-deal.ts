@@ -1,103 +1,128 @@
 import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { dealCommonProps } from '../common/props';
+import { dealCommonProps, customFieldsProp } from '../common/props';
 import {
-	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
-	pipedriveTransformCustomFields,
+    pipedriveApiCall,
+    pipedrivePaginatedApiCall,
+    pipedriveTransformCustomFields,
 } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { GetField, OrganizationCreateResponse } from '../common/types';
+import { GetField, GetDealResponse } from '../common/types';
 import dayjs from 'dayjs';
 
 export const createDealAction = createAction({
-	auth: pipedriveAuth,
-	name: 'create-deal',
-	displayName: 'Create Deal',
-	description: 'Creates a new deal.',
-	props: {
-		title: Property.ShortText({
-			displayName: 'Title',
-			required: true,
-		}),
-		...dealCommonProps,
-	},
-	async run(context) {
-		const {
-			title,
-			dealValue,
-			dealValueCurrency,
-			expectedCloseDate,
-			visibleTo,
-			probability,
-			stageId,
-			status,
-			pipelineId,
-			ownerId,
-			organizationId,
-			personId,
-			creationTime,
-		} = context.propsValue;
+    auth: pipedriveAuth,
+    name: 'create-deal',
+    displayName: 'Create Deal',
+    description: 'Creates a new deal using Pipedrive API v2.',
+    props: {
+        title: Property.ShortText({
+            displayName: 'Title',
+            required: true,
+        }),
+        ...dealCommonProps,  
+    },
+    async run(context) {
+        const {
+            title,
+            dealValue,
+            dealValueCurrency,
+            expectedCloseDate,
+            visibleTo,
+            probability,
+            stageId,
+            status,
+            pipelineId,
+            ownerId,
+            organizationId,
+            personId,
+            creationTime,
+        } = context.propsValue;
 
-		const labelIds = (context.propsValue.labelIds as number[]) ?? [];
-		const customFields = context.propsValue.customfields ?? {};
+        const labelIds = (context.propsValue.labelIds as number[]) ?? [];
 
-		const dealDefaultFields: Record<string, any> = {
-			title,
-			pipeline_id: pipelineId,
-			stage_id: stageId,
-			status,
-			add_time: creationTime,
-			probability,
-			visible_to: visibleTo,
-			user_id: ownerId,
-			org_id: organizationId,
-			person_id: personId,
-			value: dealValue,
-			currency: dealValueCurrency,
-		};
+        const standardPropKeys = new Set([
+            'title',
+            'dealValue',
+            'dealValueCurrency',
+            'expectedCloseDate',
+            'visibleTo',
+            'probability',
+            'stageId',
+            'status',
+            'pipelineId',
+            'ownerId',
+            'organizationId',
+            'personId',
+            'creationTime',
+            'labelIds', 
+        ]);
 
-		if (labelIds.length > 0) {
-			dealDefaultFields.label = labelIds;
-		}
+        
+        const customFields: Record<string, unknown> = {};
+        
+        const allProps = context.propsValue as Record<string, any>;
+        for (const key in allProps) {
+            if (key==='auth' || key ==='customfields'){
+                continue; // Skip auth and customfields properties
+            }
+            if (Object.prototype.hasOwnProperty.call(allProps, key) && !standardPropKeys.has(key)) {
+                customFields[key] = allProps[key];
+            }
+        }
 
-		if (expectedCloseDate) {
-			dealDefaultFields.expected_close_date = dayjs(expectedCloseDate).format('YYYY-MM-DD');
-		}
+        const dealPayload: Record<string, any> = {
+            title,
+            pipeline_id: pipelineId,
+            stage_id: stageId,
+            status,
+            add_time: creationTime ? dayjs(creationTime).format('YYYY-MM-DDTHH:mm:ss[Z]') : undefined,
+            probability,
+            visible_to: visibleTo,
+            owner_id: ownerId,
+            org_id: organizationId,
+            person_id: personId,
+            value: dealValue,
+            currency: dealValueCurrency,
+        };
 
-		const dealCustomFields: Record<string, any> = {};
+        if (labelIds.length > 0) {
+            dealPayload.label_ids = labelIds;
+        }
 
-		Object.entries(customFields).forEach(([key, value]) => {
-			// Format values if they are arrays
-			dealCustomFields[key] = Array.isArray(value) ? value.join(',') : value;
-		});
+        if (expectedCloseDate) {
+            dealPayload.expected_close_date = dayjs(expectedCloseDate).format('YYYY-MM-DD');
+        }
 
-		const createdDealResponse = await pipedriveApiCall<OrganizationCreateResponse>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.POST,
-			resourceUri: '/deals',
-			body: {
-				...dealDefaultFields,
-				...dealCustomFields,
-			},
-		});
 
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.GET,
-			resourceUri: '/dealFields',
-		});
+        // Assign the collected custom fields to the 'custom_fields' object in the payload
+        if (Object.keys(customFields).length > 0) {
+            dealPayload.custom_fields = customFields;
+        }
 
-		const updatedLeadProperties = pipedriveTransformCustomFields(
-			customFieldsResponse,
-			createdDealResponse.data,
-		);
+        const createdDealResponse = await pipedriveApiCall<GetDealResponse>({
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.POST,
+            resourceUri: '/v2/deals',
+            body: dealPayload,
+        });
 
-		return {
-			...createdDealResponse,
-			data: updatedLeadProperties,
-		};
-	},
+        const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.GET,
+            resourceUri: '/v1/dealFields',
+        });
+
+        const updatedDealProperties = pipedriveTransformCustomFields(
+            customFieldsResponse,
+            createdDealResponse.data,
+        );
+
+        return {
+            ...createdDealResponse,
+            data: updatedDealProperties,
+        };
+    },
 });

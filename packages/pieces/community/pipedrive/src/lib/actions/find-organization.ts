@@ -32,7 +32,7 @@ export const findOrganizationAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.POST,
-			resourceUri: '/filters',
+			resourceUri: '/v1/filters',
 			body: {
 				name: 'Activepieces Find Organization Filter',
 				type: 'org',
@@ -71,11 +71,10 @@ export const findOrganizationAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/organizations',
+			resourceUri: '/v2/organizations',
 			query: {
 				filter_id: filter.data.id,
 				limit: 1,
-				sort: 'update_time DESC',
 			},
 		});
 
@@ -84,7 +83,7 @@ export const findOrganizationAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.DELETE,
-			resourceUri: `/filters/${filter.data.id}`,
+			resourceUri: `/v1/filters/${filter.data.id}`,
 		});
 
 		if (isNil(organizations.data) || organizations.data.length === 0) {
@@ -98,7 +97,7 @@ export const findOrganizationAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/organizationFields',
+			resourceUri: '/v1/organizationFields',
 		});
 
 		const updatedOrganizationProperties = pipedriveTransformCustomFields(
