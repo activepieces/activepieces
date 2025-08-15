@@ -6,7 +6,7 @@ export const deleteAContact = createAction({
   auth: microsoft365PeopleAuth,
   name: 'delete-a-contact',
   displayName: 'Delete Contact',
-  description: 'Permanently remove a contact from Microsoft 365 People',
+  description: 'Delete a contact from Microsoft 365 People. Choose between soft delete (moves to deleted items) or permanent delete (moves to purges folder in dumpster).',
   props: {
     contactId: Property.ShortText({
       displayName: 'Contact ID',
@@ -23,9 +23,15 @@ export const deleteAContact = createAction({
       description: 'Optional: User ID or principal name if deleting contact for another user. Leave empty to delete contact for current user.',
       required: false,
     }),
+    permanentDelete: Property.Checkbox({
+      displayName: 'Permanent Delete',
+      description: 'Check this box to permanently delete the contact (moves to purges folder in dumpster). Uncheck for soft delete (moves to deleted items).',
+      required: false,
+      defaultValue: false,
+    }),
     confirmDeletion: Property.Checkbox({
       displayName: 'Confirm Deletion',
-      description: 'Check this box to confirm you want to permanently delete this contact. This action cannot be undone.',
+      description: 'Check this box to confirm you want to delete this contact. This action cannot be undone.',
       required: true,
       defaultValue: false,
     }),
@@ -60,15 +66,47 @@ export const deleteAContact = createAction({
         endpoint = `/me/contactFolders/${propsValue.contactFolderId}/contacts/${propsValue.contactId}`;
       }
 
-      // Delete the contact using DELETE method
-      await client.api(endpoint).delete();
+      if (propsValue.permanentDelete) {
+        // For permanent delete, we need to use the permanentDelete endpoint
+        // Note: permanentDelete is only available for specific user endpoints, not /me endpoints
+        if (!propsValue.userId) {
+          return {
+            success: false,
+            error: 'Permanent delete requires a specific user ID. Please provide a User ID or Principal Name for permanent deletion.',
+          };
+        }
 
-      return {
-        success: true,
-        message: 'Contact deleted successfully',
-        deletedContactId: propsValue.contactId,
-        endpoint: endpoint,
-      };
+        // Build the permanent delete endpoint
+        let permanentDeleteEndpoint = `/users/${propsValue.userId}/contacts/${propsValue.contactId}/permanentDelete`;
+        
+        if (propsValue.contactFolderId) {
+          permanentDeleteEndpoint = `/users/${propsValue.userId}/contactFolders/${propsValue.contactFolderId}/contacts/${propsValue.contactId}/permanentDelete`;
+        }
+
+        // Perform permanent delete using POST method
+        await client.api(permanentDeleteEndpoint).post({});
+
+        return {
+          success: true,
+          message: 'Contact permanently deleted successfully',
+          deletedContactId: propsValue.contactId,
+          deletionType: 'permanent',
+          endpoint: permanentDeleteEndpoint,
+          note: 'Contact has been moved to the purges folder in the dumpster and cannot be recovered by email clients.',
+        };
+      } else {
+        // For soft delete, use the regular DELETE method
+        await client.api(endpoint).delete();
+
+        return {
+          success: true,
+          message: 'Contact deleted successfully (moved to deleted items)',
+          deletedContactId: propsValue.contactId,
+          deletionType: 'soft',
+          endpoint: endpoint,
+          note: 'Contact has been moved to deleted items and can be recovered from the deleted items folder.',
+        };
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to delete contact';
       return {
@@ -76,6 +114,9 @@ export const deleteAContact = createAction({
         error: errorMessage,
         details: error,
         contactId: propsValue.contactId,
+        deletionType: propsValue.permanentDelete ? 'permanent' : 'soft',
+        userId: propsValue.userId,
+        contactFolderId: propsValue.contactFolderId,
       };
     }
   },

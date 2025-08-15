@@ -5,7 +5,7 @@
     import { createAContact } from "./lib/actions/create-a-contact";
     import { updateAContact } from "./lib/actions/update-a-contact";
     import { deleteAContact } from "./lib/actions/delete-a-contact";
-    import { searchContacts } from "./lib/actions/search-contacts";
+    import { getContact } from "./lib/actions/search-contacts";
     import { createAContactFolder } from "./lib/actions/create-a-contact-folder";
     import { deleteAContactFolder } from "./lib/actions/delete-a-contact-folder";
     import { getAContactFolder } from "./lib/actions/get-a-contact-folder";
@@ -20,7 +20,7 @@
         createAContact,
         updateAContact,
         deleteAContact,
-        searchContacts,
+        getContact,
         createAContactFolder,
         deleteAContactFolder,
         getAContactFolder,
