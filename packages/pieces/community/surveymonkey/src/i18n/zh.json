@@ -1,6 +1,6 @@
 {
   "SurveyMonkey": "SurveyMonkey",
-  "Receive survey responses from SurveyMonkey": "从 SurveyMonkey 接收调查回复",
+  "Receive survey responses from SurveyMonkey": "Receive survey responses from SurveyMonkey",
   "Custom API Call": "自定义 API 呼叫",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
   "Method": "方法",
@@ -16,7 +16,7 @@
   "PUT": "弹出",
   "DELETE": "删除",
   "HEAD": "黑色",
-  "New Response": "新回复",
-  "Triggers when a new response is submitted": "提交新响应时触发",
-  "Survey": "调查"
+  "New Response": "New Response",
+  "Triggers when a new response is submitted": "Triggers when a new response is submitted",
+  "Survey": "Survey"
 }
