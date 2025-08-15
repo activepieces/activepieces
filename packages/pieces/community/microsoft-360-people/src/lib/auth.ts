@@ -1,0 +1,32 @@
+import { OAuth2PropertyValue, PieceAuth } from '@activepieces/pieces-framework';
+import { Client } from '@microsoft/microsoft-graph-client';
+
+export const microsoft365PeopleAuth = PieceAuth.OAuth2({
+    authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+    tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+    required: true,
+    scope: [
+        'Contacts.ReadWrite', 
+        'Contacts.Read', 
+        'User.Read', 
+        'offline_access',
+        'https://graph.microsoft.com/Contacts.ReadWrite',
+        'https://graph.microsoft.com/Contacts.Read'
+    ],
+    prompt: 'omit',
+    validate: async ({ auth }) => {
+        try {
+            const authValue = auth as OAuth2PropertyValue;
+            const client = Client.initWithMiddleware({
+                authProvider: {
+                    getAccessToken: () => Promise.resolve(authValue.access_token),
+                },
+            });
+            // Test the authentication by trying to access user's contacts
+            await client.api('/me/contacts').top(1).get();
+            return { valid: true };
+        } catch (error) {
+            return { valid: false, error: 'Invalid Credentials or insufficient permissions.' };
+        }
+    },
+}); 
