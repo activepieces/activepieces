@@ -58,7 +58,7 @@ jobs:
 
       - name: Deploy with Docker Compose
         run: |
-          ssh pre-prod -t -t 'bash -ic "cd /root/activeshit && IMAGE_TAG=prototype docker compose pull && IMAGE_TAG=prototype docker compose up -d --force-recreate activeshit; exit"'
+          ssh pre-prod -t -t 'bash -ic "cd /root/activeshit && IMAGE_TAG=prototype docker compose pull && IMAGE_TAG=prototype docker compose up -d --force-recreate; exit"'
 
       - name: Cleanup old images
         run: |
