@@ -14,8 +14,8 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import ProjectSettingsDropdownMenu from '../project-settings-dropdown-menu';
 
-import ProjectSettingsDropdownMenu from './project-settings-dropdown-menu';
 
 const ApDashboardSidebarHeader = ({
   isHomeDashboard,
@@ -63,7 +63,7 @@ const ApDashboardSidebarHeader = ({
                       alt={t('home')}
                       width={160}
                       height={51}
-                      className="max-h-[51px] max-w-[160px] object-contain"
+                      className="max-h-[51px] max-w-[160px] p-2 object-contain"
                     />
                   )}
                 </>

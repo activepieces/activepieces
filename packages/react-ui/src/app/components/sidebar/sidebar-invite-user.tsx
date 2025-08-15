@@ -16,12 +16,10 @@ export function SidebarInviteUserButton() {
 
   return (
     <InviteUserDialog>
-      <SidebarMenuItem>
-        <SidebarMenuButton asChild>
-          <UserPlus className="size-4  stroke-[2px]" />
-          <span>{t('Invite User')}</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
+      <SidebarMenuButton>
+        <UserPlus className="size-4  stroke-[2px]" />
+        <span>{t('Invite User')}</span>
+      </SidebarMenuButton>
     </InviteUserDialog>
   );
 }

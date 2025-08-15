@@ -36,6 +36,7 @@ import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
 import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
 import { FlowsPage } from '../routes/flows';
+import { RunsPage } from '../routes/runs';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
@@ -166,8 +167,8 @@ const routes = [
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_RUN}>
-          <PageTitle title="Runs">
-            <FlowsPage />
+          <PageTitle title="History">
+            <RunsPage />
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
@@ -177,9 +178,9 @@ const routes = [
     path: '/issues',
     element: (
       <DashboardContainer>
-        <RoutePermissionGuard permission={Permission.READ_RUN}>
+        <RoutePermissionGuard permission={Permission.READ_ISSUES}>
           <PageTitle title="Issues">
-            <FlowsPage />
+            <RunsPage />
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>

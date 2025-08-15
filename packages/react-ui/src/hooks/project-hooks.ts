@@ -47,10 +47,13 @@ export const projectHooks = {
       },
     });
   },
-  useProjectsForPlatforms: () => {
+  useProjectsForPlatforms: (edition: ApEdition) => {
     return useQuery<ProjectWithLimitsWithPlatform[], Error>({
-      queryKey: ['projects-for-platforms'],
+      queryKey: ['projects-for-platforms', edition],
       queryFn: async () => {
+        if (edition === ApEdition.COMMUNITY) {
+          return [];
+        }
         return projectApi.listForPlatforms();
       },
     });

@@ -116,7 +116,12 @@ export const flagService = {
                 created,
                 updated,
             },
-     
+            {
+                id: ApFlagId.SHOW_PROJECT_USAGE,
+                value: system.getEdition() !== ApEdition.COMMUNITY,
+                created,
+                updated,
+            },
             {
                 id: ApFlagId.SHOW_BILLING,
                 value: system.getEdition() === ApEdition.CLOUD,

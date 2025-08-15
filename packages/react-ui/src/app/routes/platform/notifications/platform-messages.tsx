@@ -4,10 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { notificationHooks } from '@/hooks/notifications-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 export const PlatformMessages = () => {
   const messages = notificationHooks.useNotifications();
   const navigate = useNavigate();
+  const { platform } = platformHooks.useCurrentPlatform();
+
+  if (!platform.plan.analyticsEnabled) {
+    return null;
+  }
 
   return (
     <div className="space-y-4">
