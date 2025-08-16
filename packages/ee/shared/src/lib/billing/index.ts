@@ -71,9 +71,16 @@ export const RESOURCE_TO_MESSAGE_MAPPING = {
     [PlatformUsageMetric.AGENTS]: 'Agent limit reached. Remove agents or upgrade your plan to restore functionality.',
 }
 
+const Addons = Type.Object({
+    userSeats: Type.Optional(Type.Number()),
+    activeFlows: Type.Optional(Type.Number()),
+    projects: Type.Optional(Type.Number()),
+})
+
 export const CreateSubscriptionParamsSchema = Type.Object({
     plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
     cycle: Type.Enum(BillingCycle),
+    addons: Addons,
 })
 export type CreateSubscriptionParams = Static<typeof CreateSubscriptionParamsSchema>
 
@@ -91,13 +98,6 @@ export const StartTrialParamsSchema = Type.Object({
     plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
 })
 export type StartTrialParams = Static<typeof StartTrialParamsSchema>
-
-
-const Addons = Type.Object({
-    userSeats: Type.Optional(Type.Number()),
-    activeFlows: Type.Optional(Type.Number()),
-    projects: Type.Optional(Type.Number()),
-})
 
 export const UpdateSubscriptionParamsSchema = Type.Object({
     plan: Type.Union([Type.Literal(PlanName.FREE), Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
