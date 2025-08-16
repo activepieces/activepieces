@@ -513,49 +513,14 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         }));
       },
       saveCurrentVersion: () => {
-        const state = get();
-        if (state.readonly) {
-            console.warn('Cannot apply operation while readonly');
-            return state;
-        };
-
-        const updateRequest = async () => {
-          console.log(state.flowVersion);
-
-          set({ saving: true });
-          try {
-            const operation: FlowOperationRequest = {
-              type: FlowOperationType.IMPORT_FLOW,
-              request: {
-                displayName: state.flowVersion.displayName,
-                trigger: state.flowVersion.trigger,
-              },
-            };
-
-            const updatedFlowVersion = await flowsApi.update(
-              state.flow.id,
-              operation,
-              true
-            );
-
-            set((state) => {
-              return {
-                flowVersion: {
-                  ...state.flowVersion,
-                  id: updatedFlowVersion.version.id,
-                  state: updatedFlowVersion.version.state,
-                },
-
-                saving: flowUpdatesQueue.size() !== 0,
-              };
-            });
-          } catch (e) {
-            console.error(e);
-            flowUpdatesQueue.halt();
+        const { applyOperation, flowVersion } = get();
+        applyOperation({
+          type: FlowOperationType.IMPORT_FLOW,
+          request: {
+            displayName: flowVersion.displayName,
+            trigger: flowVersion.trigger,
           }
-        };
-
-        flowUpdatesQueue.add(updateRequest);
+        });
       },
       insertMention: null,
       setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
