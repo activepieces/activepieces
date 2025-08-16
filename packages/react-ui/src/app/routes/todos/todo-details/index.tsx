@@ -58,7 +58,7 @@ export const TodoDetails = ({
       />
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-2">
-          <div className="text-sm text-muted-foreground mt-8">
+          <div className="text-sm text-muted-foreground mt-4">
             <ApMarkdown
               markdown={todo.description}
               variant={MarkdownVariant.BORDERLESS}

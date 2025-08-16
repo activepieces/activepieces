@@ -1,8 +1,6 @@
 import { t } from 'i18next';
 import { Filter, Check, Workflow } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
-
-import { ApAvatar } from '@/components/custom/ap-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -118,8 +116,9 @@ function TodoList() {
             filteredTodos.map((todo) => (
               <div
                 key={todo.id}
-                className={`rounded-lg py-4 px-4 hover:bg-accent cursor-pointer transition-colors ${selectedTodo?.id === todo.id ? 'bg-accent' : ''
-                  }`}
+                className={`rounded-lg py-4 px-4 hover:bg-accent cursor-pointer transition-colors ${
+                  selectedTodo?.id === todo.id ? 'bg-accent' : ''
+                }`}
                 onClick={() => handleTodoSelect(todo)}
               >
                 <div className="flex items-center gap-3">
