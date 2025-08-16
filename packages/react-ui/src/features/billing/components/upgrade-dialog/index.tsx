@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 import {
@@ -16,7 +17,12 @@ import {
   PlanName,
   StripePlanName,
 } from '@activepieces/ee-shared';
-import { ApEdition, ApFlagId, isNil, PlatformUsageMetric } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  isNil,
+  PlatformUsageMetric,
+} from '@activepieces/shared';
 
 import { billingMutations, billingQueries } from '../../lib/billing-hooks';
 
@@ -31,7 +37,6 @@ import { PlanSelectionStep } from './plan-selection-step';
 import { useManagePlanDialogStore } from './store';
 import { SubscriptionSummary } from './summary';
 import { calculatePrice, getActionConfig, getCurrentPlanInfo } from './utils';
-import { flagsHooks } from '@/hooks/flags-hooks';
 
 export enum ActionType {
   CONFIGURE_ADDONS = 'configure-addons',
@@ -128,8 +133,6 @@ export const UpgradeDialog: FC = () => {
     !isNil(platformBillingInformation?.plan.licenseKey) ||
     platformBillingInformation?.plan.plan === PlanName.ENTERPRISE ||
     edition === ApEdition.ENTERPRISE;
-  
-  if (isEnterprise) return null
 
   const currentPlanInfo = useMemo(
     () => getCurrentPlanInfo(platformBillingInformation),
@@ -267,6 +270,8 @@ export const UpgradeDialog: FC = () => {
         break;
     }
   };
+
+  if (isEnterprise) return null;
 
   const messages: Record<string, string> = {
     [PlatformUsageMetric.ACTIVE_FLOWS]: t(

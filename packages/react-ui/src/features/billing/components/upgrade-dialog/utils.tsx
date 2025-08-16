@@ -106,7 +106,10 @@ export const calculatePrice = (
   const monthlyPrice = basePlanPrice + totalAddonCost;
   const annualPrice = monthlyPrice * 12;
 
-  const annualSavings = annualPrice * ANNUAL_DISCOUNT_PERCENTAGE;
+  const annualSavings =
+    selectedCycle === BillingCycle.ANNUAL
+      ? annualPrice / (1 - ANNUAL_DISCOUNT_PERCENTAGE) - annualPrice
+      : annualPrice * ANNUAL_DISCOUNT_PERCENTAGE;
 
   return {
     basePlanPrice,

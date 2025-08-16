@@ -23,6 +23,12 @@ import {
   PricingCalculation,
 } from '.';
 
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(price);
+
 export const SubscriptionSummary: FC<{
   dialogState: DialogState;
   currentPlanInfo: CurrentPlanInfo;
@@ -105,7 +111,7 @@ export const SubscriptionSummary: FC<{
                 </div>
                 <div className="text-right">
                   <div className="text-lg font-semibold">
-                    ${pricing.basePlanPrice}
+                    {formatPrice(pricing.basePlanPrice)}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     /{t('month')}
@@ -125,7 +131,9 @@ export const SubscriptionSummary: FC<{
                       <span>
                         Extra User Seats ({selectedSeats[0] - DEFAULT_SEATS})
                       </span>
-                      <span>${pricing.addonCosts.seats.toFixed(2)} /month</span>
+                      <span>
+                        {formatPrice(pricing.addonCosts.seats)} /month
+                      </span>
                     </div>
                   )}
 
@@ -139,7 +147,9 @@ export const SubscriptionSummary: FC<{
                           ] ?? 10)}
                         )
                       </span>
-                      <span>${pricing.addonCosts.flows.toFixed(2)} /month</span>
+                      <span>
+                        {formatPrice(pricing.addonCosts.flows)} /month
+                      </span>
                     </div>
                   )}
 
@@ -150,7 +160,7 @@ export const SubscriptionSummary: FC<{
                         )
                       </span>
                       <span>
-                        ${pricing.addonCosts.projects.toFixed(2)} /month
+                        {formatPrice(pricing.addonCosts.projects)} /month
                       </span>
                     </div>
                   )}
@@ -171,7 +181,7 @@ export const SubscriptionSummary: FC<{
                     } Total`,
                   )}
                 </p>
-                <p>${pricing.totalPrice.toFixed(2)}</p>
+                <p>{formatPrice(pricing.totalPrice)}</p>
               </div>
 
               <div className="flex items-center gap-2 text-sm text-left whitespace-nowrap flex-nowrap">
@@ -182,7 +192,7 @@ export const SubscriptionSummary: FC<{
                 <span>
                   {selectedCycle === BillingCycle.ANNUAL ? 'You saved' : 'Save'}{' '}
                   <span className="inline font-semibold">
-                    ${pricing.annualSavings.toFixed(0)}
+                    {formatPrice(pricing.annualSavings)}
                   </span>{' '}
                   with{' '}
                   {selectedCycle === BillingCycle.ANNUAL ? (
@@ -191,7 +201,7 @@ export const SubscriptionSummary: FC<{
                     <Button
                       variant="link"
                       onClick={() => onCycleChange(BillingCycle.ANNUAL)}
-                      className="px-0"
+                      className="p-0"
                     >
                       {t('Annual Billing')}
                     </Button>
