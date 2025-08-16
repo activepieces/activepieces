@@ -64,6 +64,14 @@ export const TodoHeaders = ({
             <X className="h-4 w-4" />
           </Button>
           <h2 className="text-lg font-semibold">{title}</h2>
+          {status && STATUS_COLORS && (
+            <StatusIconWithText
+              icon={todoUtils.getStatusIcon(status.variant)}
+              text={status.name}
+              color={STATUS_COLORS[status.variant].color}
+              textColor={STATUS_COLORS[status.variant].textColor}
+            />
+          )}
           {todo.assignee && (
             <ApAvatar
               fullName={todo.assignee.firstName + ' ' + todo.assignee.lastName}
@@ -73,14 +81,7 @@ export const TodoHeaders = ({
             />
           )}
 
-          {status && STATUS_COLORS && (
-            <StatusIconWithText
-              icon={todoUtils.getStatusIcon(status.variant)}
-              text={status.name}
-              color={STATUS_COLORS[status.variant].color}
-              textColor={STATUS_COLORS[status.variant].textColor}
-            />
-          )}
+
         </div>
 
         <div className="flex items-center gap-2">
