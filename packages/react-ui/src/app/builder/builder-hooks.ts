@@ -520,12 +520,15 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         };
 
         const updateRequest = async () => {
+          console.log(state.flowVersion);
+
           set({ saving: true });
           try {
             const operation: FlowOperationRequest = {
-              type: FlowOperationType.SET_FLOW_VERSION,
+              type: FlowOperationType.IMPORT_FLOW,
               request: {
-                flowVersion: state.flowVersion,
+                displayName: state.flowVersion.displayName,
+                trigger: state.flowVersion.trigger,
               },
             };
 
@@ -782,8 +785,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
   {
     partialize: ({ flowVersion }) => ({ flowVersion }),
     equality: (past, current) =>
-        flowCanvasUtils.createGraphKey(past.flowVersion) ===
-        flowCanvasUtils.createGraphKey(current.flowVersion),
+        (flowCanvasUtils.createGraphKey(past.flowVersion) ===
+        flowCanvasUtils.createGraphKey(current.flowVersion)) &&
+        (past.flowVersion.displayName === current.flowVersion.displayName)
   }
 ));
 

@@ -337,24 +337,6 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             return clonedStep
         })
     },
-    async setFlowVersion({
-        flowVersion,
-        userId,
-        entityManager,
-    }: SetFlowVersionParams): Promise<FlowVersion> {
-        const newFlowVersion = {
-            ...flowVersion,
-            updated: dayjs().toISOString(),
-        };
-
-        if (userId) {
-            newFlowVersion.updatedBy = userId;
-        }
-
-        return flowVersionRepo(entityManager).save(
-        sanitizeObjectForPostgresql(newFlowVersion)
-        );
-  },
 })
 
 
@@ -445,9 +427,3 @@ type LockPieceVersionsParams = {
     flowVersion: FlowVersion
     entityManager?: EntityManager
 }
-
-export type SetFlowVersionParams = {
-    flowVersion: FlowVersion;
-    userId: UserId | null;
-    entityManager?: EntityManager;
-};
