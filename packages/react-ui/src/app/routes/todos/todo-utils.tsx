@@ -1,15 +1,15 @@
-import { CheckCircle, CheckCircle2, CircleDot, XCircle } from 'lucide-react';
 import { t } from 'i18next';
+import { CheckCircle, CheckCircle2, CircleDot, XCircle } from 'lucide-react';
 
-import {
-  Todo,
-  STATUS_VARIANT as TodoStatusVariant,
-} from '@activepieces/shared';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Todo,
+  STATUS_VARIANT as TodoStatusVariant,
+} from '@activepieces/shared';
 
 export const todoUtils = {
   getStatusIcon: (status: Todo['status']['variant']) => {
@@ -23,13 +23,10 @@ export const todoUtils = {
     }
   },
   getStatusIconComponent: (status: Todo['status']['variant']) => {
-
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="cursor-help">
-            {getIcon(status)}
-          </div>
+          <div className="cursor-help">{getIcon(status)}</div>
         </TooltipTrigger>
         <TooltipContent>
           <p>{getTooltipText(status)}</p>
@@ -38,7 +35,6 @@ export const todoUtils = {
     );
   },
 };
-
 
 const getTooltipText = (status: Todo['status']['variant']) => {
   switch (status) {

@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { X, ChevronDown, ExternalLink, Workflow } from 'lucide-react';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
@@ -63,24 +64,6 @@ export const TodoHeaders = ({
             <X className="h-4 w-4" />
           </Button>
           <h2 className="text-lg font-semibold">{title}</h2>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between w-full mt-2">
-        <div className="flex items-center gap-2">
-          {todo.flow && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex items-center gap-2 h-8"
-              onClick={handleFlowClick}
-            >
-              <Workflow className="h-4 w-4" />
-              <span>{todo.flow.version.displayName}</span>
-              <ExternalLink className="h-3 w-3" />
-            </Button>
-          )}
-
           {todo.assignee && (
             <ApAvatar
               fullName={todo.assignee.firstName + ' ' + todo.assignee.lastName}
@@ -105,7 +88,7 @@ export const TodoHeaders = ({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="sm" className="h-8 w-28">
-                  Mark as
+                  {t('Mark as')}
                   <ChevronDown className="ml-1 h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
@@ -128,6 +111,25 @@ export const TodoHeaders = ({
           )}
         </div>
       </div>
+
+      {todo.flow && (
+        <div className="w-full bg-primary/10 text-primary py-2 px-4 mt-2">
+          <div
+            className="flex items-center gap-2 h-6 w-full justify-start cursor-pointer  rounded transition-colors"
+            onClick={handleFlowClick}
+          >
+            <Workflow className="h-4 w-4" />
+            <span className="text-sm">{todo.flow.version.displayName}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 ml-auto hover:text-primary-300"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
