@@ -21,7 +21,7 @@ export const ProjectLockedAlert = () => {
   const { checkAccess } = useAuthorization();
   const openDialog = useManagePlanDialogStore((state) => state.openDialog);
   const currentUser = userHooks.useCurrentUser();
-  // CE doesn't have a plan
+  // // CE doesn't have a plan
   if (!project.plan?.locked || !location.pathname.startsWith('/project')) {
     return null;
   }
@@ -42,6 +42,7 @@ export const ProjectLockedAlert = () => {
               {t(
                 'This project has been locked because your platform has reached the maximum number of allowed projects.',
               )}{' '}
+              <br />
               <strong>
                 {t(
                   'You will not be able to access paid features untill limits are increased.',
@@ -64,7 +65,7 @@ export const ProjectLockedAlert = () => {
             </div>
           </AlertDescription>
         </div>
-        <div className="flex flex-col gap-2 relative">
+        <div className="flex flex-col gap-2 relative ml-2">
           {showBilling && (
             <Button
               variant="outline"

@@ -67,12 +67,14 @@ type SidebarProps = {
   items: SidebarItem[];
   isHomeDashboard?: boolean;
   hideSideNav?: boolean;
+  noContainment?: boolean;
 };
 export function SidebarComponent({
   children,
   items,
   isHomeDashboard = false,
   hideSideNav = false,
+  noContainment = false,
 }: SidebarProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -137,7 +139,8 @@ export function SidebarComponent({
             </SidebarContent>
           </Sidebar>
         )}
-        <div
+       {
+        !noContainment && ( <div
           className={cn('bg-gray-50 dark:bg-zinc-950  w-full h-full overflow-hidden', {
             'pt-2 pr-2 pb-2': !hideSideNav,
           })}
@@ -154,7 +157,15 @@ export function SidebarComponent({
           >
             {children}
           </ScrollArea>
-        </div>
+        </div>)
+       }
+       {
+        noContainment && (
+          <div className="w-full h-full px-6 py-8 bg-gray-100/25 dark:bg-zinc-950/70 border-l border-border">
+            {children}
+          </div>
+        )
+       }
       </div>
       <ShowPoweredBy
         show={platform?.plan.showPoweredBy && isHomeDashboard}

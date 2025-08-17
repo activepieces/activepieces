@@ -38,9 +38,9 @@ const HorizontalSeparatorWithText = React.forwardRef<
   HorizontalSeparatorWithTextProps
 >(({ className, ...props }, ref) => (
   <div className={cn('flex w-full flex-row items-center', className)}>
-    <div className="w-1/2 border" />
-    <span className="mx-2 text-sm">{props.children}</span>
-    <div className="w-1/2 border" />
+    <div className="grow border" />
+    <span className="mx-2 text-sm shrink-0">{props.children}</span>
+    <div className="grow border" />
   </div>
 ));
 

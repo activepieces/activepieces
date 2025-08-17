@@ -75,6 +75,7 @@ import {
   projectSettingsRoutes,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import { HomePage } from '../routes/home';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -99,6 +100,18 @@ const routes = [
     path: '/authenticate',
     element: <AuthenticatePage />,
   },
+  ...ProjectRouterWrapper({
+    path: '/home',
+    element: (
+      <DashboardContainer noContainment={true}>
+        <RoutePermissionGuard permission={Permission.READ_FLOW}>
+          <PageTitle title="Home">
+            <HomePage />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </DashboardContainer>
+    ),
+  }),
   ...ProjectRouterWrapper({
     path: '/flows',
     element: (

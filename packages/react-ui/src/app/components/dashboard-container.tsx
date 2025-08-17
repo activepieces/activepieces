@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import {
   Bot,
+  Home,
   Link2,
   ListTodo,
   Package,
@@ -10,7 +11,6 @@ import {
 } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { useEmbedding } from '@/components/embed-provider';
 import { AiCreditsLimitAlert } from '@/features/billing/components/ai-credits-limit-alert';
@@ -26,13 +26,12 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { ApEdition, ApFlagId, isNil, Permission } from '@activepieces/shared';
-
 import { authenticationSession } from '../../lib/authentication-session';
-
 import { SidebarComponent, SidebarItem } from './sidebar';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
+  noContainment?: boolean;
 };
 
 const ProjectChangedRedirector = ({
@@ -50,7 +49,7 @@ export const CloseTaskLimitAlertContext = createContext({
   setIsAlertClosed: (_isAlertClosed: boolean) => {},
 });
 
-export function DashboardContainer({ children }: DashboardContainerProps) {
+export function DashboardContainer({ children, noContainment = false }: DashboardContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { project } = projectHooks.useCurrentProject();
   const { embedState } = useEmbedding();
@@ -67,6 +66,14 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     return <Navigate to="/sign-in" replace />;
   }
 
+  const homeLink: SidebarItem = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/home'),
+    label: t('Home'),
+    Icon: <Home />,
+    isSubItem: false,
+    show: !embedState.isEmbedded
+  };
   const todosLink: SidebarItem = {
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/todos'),
@@ -167,6 +174,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     label: t('AI Automation'),
   };
   const items: SidebarItem[] = [
+    homeLink,
     todosLink,
     aiAutomationTitle,
     flowsLink,
@@ -194,6 +202,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
           isHomeDashboard={true}
           items={items}
           hideSideNav={embedState.hideSideNav}
+          noContainment={noContainment}
         >
           <>
             <>
