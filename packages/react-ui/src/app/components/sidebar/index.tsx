@@ -22,7 +22,6 @@ import {
   SidebarMenuSub,
   SidebarMenuItem,
   SidebarMenuAction,
-  SidebarSeparator,
   SidebarLinkProps,
 } from '@/components/ui/sidebar-shadcn';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -48,10 +47,7 @@ export type SidebarItem = (
       show: boolean;
     })
   | SidebarGroup
-) & {
-  separatorBefore?: boolean;
-  separatorAfter?: boolean;
-};
+);
 
 export type SidebarGroup = {
   name?: string;
@@ -96,7 +92,6 @@ export function SidebarComponent({
                 <ScrollArea className="h-full  px-2">
                   {items.map((item, index) => (
                     <React.Fragment key={item.label + index}>
-                      {item.separatorBefore && <SidebarSeparator />}
                       {item.type === 'group' && (
                         <ApSidebarMenuGroup item={item} />
                       )}
@@ -106,7 +101,6 @@ export function SidebarComponent({
                       {item.type === 'link' && (
                         <ApSidebarMenuItem item={item} />
                       )}
-                      {item.separatorAfter && <SidebarSeparator />}
                     </React.Fragment>
                   ))}
                   <SidebarMenu>
@@ -121,7 +115,7 @@ export function SidebarComponent({
                         <SidebarMenuItem>
                           <div>
                             <SidebarMenuButton asChild>
-                              <div className="flex items-center gap-2  cursor-pointer hover:bg-sidebar-accent rounded-sm transition-colors">
+                              <div className="flex items-center gap-2  cursor-pointer hover:bg-accent rounded-sm transition-colors">
                                 <VideoIcon></VideoIcon>
                                 <span>{t('Tutorials')}</span>
                               </div>
@@ -144,7 +138,7 @@ export function SidebarComponent({
           </Sidebar>
         )}
         <div
-          className={cn('bg-sidebar w-full h-full overflow-hidden', {
+          className={cn('bg-gray-50 dark:bg-zinc-950  w-full h-full overflow-hidden', {
             'pt-2 pr-2 pb-2': !hideSideNav,
           })}
         >
