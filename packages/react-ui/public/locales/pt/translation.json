@@ -226,7 +226,7 @@
   "Use Mock Data": "Usar dados fictícios",
   "Test Tool": "Ferramenta de teste",
   "Load Sample Data": "Carregar dados de exemplo",
-  "testPieceWebhookTriggerNote": "Please go to {pieceName} and trigger {triggerName}.",
+  "testPieceWebhookTriggerNote": "Por favor, vá para {pieceName} e gatilho {triggerName}.",
   "Send Data to the webhook URL to generate sample data to use in the next steps": "Enviar dados para o URL do webhook para gerar dados de exemplo a serem usados nos próximos passos",
   "Testing Trigger": "Testando Gatilho",
   "Action Required": "Ação necessária",
