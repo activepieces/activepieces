@@ -1,11 +1,5 @@
 import { t } from 'i18next';
-import { CheckCircle2 } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
-
-import {
-  Card,
-  CardContent,
-} from '@/components/ui/card';
 import {
   FormControl,
   FormField,
@@ -13,12 +7,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
-import { solutions } from '../solutions';
 import { ConnectionSelectFromName } from '../../../connections/connection-select-from-name';
 import { SolutionConnectionFormData } from '.';
+import { SolutionWithMetadata } from '../solutions';
 
 interface ConfigureScreenProps {
-  solution: (typeof solutions)[0];
+  solution: SolutionWithMetadata;
 }
 
 const ConfigureScreen = ({ solution }: ConfigureScreenProps) => {
@@ -84,23 +78,7 @@ const ConfigureScreen = ({ solution }: ConfigureScreenProps) => {
         })}
       </form>
 
-      {connections.length === 0 && (
-        <div className="px-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center text-muted-foreground">
-                <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-600" />
-                <p className="font-medium">{t('No connections required')}</p>
-                <p className="text-sm">
-                  {t(
-                    'This solution is ready to use without any additional setup.',
-                  )}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+
     </div>
   );
 };

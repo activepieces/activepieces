@@ -59,7 +59,7 @@ async function migrateConnections(connectionsMap: Record<string, string>, projec
     }
 }
 
-async function getTables(externalIds: string[], projectId: string, log: FastifyBaseLogger) {
+async function getTables(externalIds: string[], projectId: string) {
     return tableService.list({
         projectId,
         externalIds,

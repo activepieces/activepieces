@@ -1,0 +1,13 @@
+{
+  "thumbnail": "https://cdn.activepieces.com/quicknew/agents/robots/robot_3628.png",
+  "name": "Lead Generation & Nurturing",
+  "greeting": "Hi! I can help you generate leads and nurture them.",
+  "location": "Logic Labs",
+  "description": "Supercharge your sales pipeline with automated lead generation, qualification, and nurturing workflows that convert prospects into customers.\n\n## Key Features\n\n### 🎯 **Multi-Channel Lead Capture**\n- Capture leads from websites, social media, and events\n- Create dynamic landing pages with conversion optimization\n- Integrate with CRM systems for seamless data flow\n- Track lead sources and attribution automatically\n\n### 🔍 **Intelligent Lead Scoring**\n- Score leads based on behavior, demographics, and engagement\n- Automatically qualify prospects using predefined criteria\n- Prioritize hot leads for immediate sales follow-up\n- Update scores in real-time based on new interactions\n\n### 📧 **Personalized Email Campaigns**\n- Create targeted drip campaigns based on lead segments\n- Send personalized content based on interests and behavior\n- A/B test subject lines and content for optimization\n- Track opens, clicks, and conversions automatically\n\n### 🤝 **Sales Team Integration**\n- Automatically assign qualified leads to sales reps\n- Send real-time notifications for high-priority prospects\n- Sync lead data with CRM and sales tools\n- Generate sales-ready lead summaries and insights\n\n## Benefits\n\n- **Increase lead conversion by 300%** with targeted nurturing\n- **Reduce sales cycle time** with qualified, warm leads\n- **Improve ROI on marketing spend** with better targeting\n- **Scale lead generation** without additional manual effort\n- **Align marketing and sales** with shared lead intelligence\n\n## Perfect For\n\n- B2B companies and agencies\n- Real estate professionals\n- Professional services firms\n- Technology companies\n- Any business focused on lead generation\n\nTurn your marketing efforts into a predictable revenue engine with automated lead generation!",
+  "state": {
+    "connections": [],
+    "tables": [],
+    "agents": [],
+    "flows": []
+  }
+} 

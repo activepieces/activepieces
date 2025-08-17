@@ -5,10 +5,10 @@ import ImageWithFallback from '@/components/ui/image-with-fallback';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { ImportSolutionResponse, isNil } from '@activepieces/shared';
 
-import { solutions } from '../solutions';
+import { SolutionWithMetadata } from '../solutions';
 
 interface SolutionOverviewProps {
-  solution: (typeof solutions)[0];
+  solution: SolutionWithMetadata;
   onAction: () => void;
   actionLabel: string;
   actionIcon?: React.ReactNode;

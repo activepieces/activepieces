@@ -183,12 +183,14 @@ type SidebarProps = {
   items: SidebarItem[];
   isHomeDashboard?: boolean;
   hideSideNav?: boolean;
+  hidePadding?: boolean;
 };
 export function SidebarComponent({
   children,
   items,
   isHomeDashboard = false,
   hideSideNav = false,
+  hidePadding = false,
 }: SidebarProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -287,8 +289,9 @@ export function SidebarComponent({
           })}
         >
           <ScrollArea
-            className={cn('w-full pb-6 pt-28 px-6 h-full bg-background', {
+            className={cn('w-full h-full bg-background', {
               'rounded-lg border-b-0 border': !hideSideNav,
+              'pb-6 pt-28 px-6': !hidePadding,
             })}
             style={{
               boxShadow: hideSideNav

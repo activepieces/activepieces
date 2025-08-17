@@ -61,7 +61,7 @@ import { EnvironmentPage } from '../routes/settings/environment';
 import ProjectMembersPage from '../routes/settings/project-members';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
-import { SolutionsPage } from '../routes/solutions';
+import { OnboardingPage } from '../routes/onboarding';
 import { ApTablesPage } from '../routes/tables';
 import { ApTableEditorPage } from '../routes/tables/id';
 import { ShareTemplatePage } from '../routes/templates/share-template';
@@ -271,11 +271,11 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/solutions',
+    path: '/onboarding',
     element: (
-      <DashboardContainer>
-        <PageTitle title="Solutions">
-          <SolutionsPage />
+      <DashboardContainer hidePadding={true}>
+        <PageTitle title="Onboarding">
+          <OnboardingPage />
         </PageTitle>
       </DashboardContainer>
     ),

@@ -1,6 +1,6 @@
 import { GearIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { ArrowLeft, Check, Copy } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -17,14 +17,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { ImportSolutionResponse, MarkdownVariant } from '@activepieces/shared';
 
 import { solutionsHooks } from '../../../../features/solutions/lib/solutions-hooks';
-import { solutions } from '../solutions';
+import { SolutionWithMetadata } from '../solutions';
 
 import { ConfigureScreen } from './configure-screen';
 import { SolutionOverview } from './solution-overview';
 import { SuccessScreen } from './success-screen';
 
 interface SolutionDialogProps {
-  solution: (typeof solutions)[0];
+  solution: SolutionWithMetadata;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -68,7 +68,11 @@ const SolutionDialog = ({
   };
 
   const handleConfigure = () => {
-    setScreen('configure');
+    if (connections.length > 0) {
+      setScreen('configure');
+    } else {
+      setScreen('success');
+    }
   };
 
   const handleBackToOverview = () => {
@@ -136,7 +140,7 @@ const SolutionDialog = ({
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               )}
-              <DialogTitle>{t('Import Solution')}</DialogTitle>
+              <DialogTitle>{t('Agent Onboarding')}</DialogTitle>
             </div>
           </div>
         </DialogHeader>
@@ -188,8 +192,8 @@ const SolutionDialog = ({
               <SolutionOverview
                 solution={solution}
                 onAction={handleConfigure}
-                actionLabel={'Setup'}
-                actionIcon={<GearIcon className="h-4 w-4" />}
+                actionLabel={'Onboard'}
+                actionIcon={<Settings2 className="h-4 w-4" />}
                 isLoading={isImporting}
                 importResponse={importedAssets}
               />
