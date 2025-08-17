@@ -1,5 +1,5 @@
-import { exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { Principal, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { ActivepiecesError, ErrorCode, Principal, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
@@ -7,12 +7,12 @@ import { accessTokenManager } from '../authentication/lib/access-token-manager'
 export type WebsocketListener<T> = (socket: Socket) => (data: T, principal: Principal) => Promise<void>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ListenerMap = Partial<Record<WebsocketServerEvent, WebsocketListener<any>>>;
+type ListenerMap = Partial<Record<WebsocketServerEvent, WebsocketListener<any>>>
 
 const listener: Record<PrincipalType.USER | PrincipalType.WORKER, ListenerMap> = {
     [PrincipalType.USER]: {},
     [PrincipalType.WORKER]: {},
-};
+}
 
 
 export const websocketService = {
@@ -31,6 +31,14 @@ export const websocketService = {
             case PrincipalType.WORKER: {
                 await socket.join(principal.id)
                 break
+            }
+            default: {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHENTICATION,
+                    params: {
+                        message: 'Invalid principal type',
+                    },
+                })
             }
         }
         for (const [event, handler] of Object.entries(listener[castedType])) {
