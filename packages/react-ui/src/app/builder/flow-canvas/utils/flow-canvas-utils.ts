@@ -395,8 +395,10 @@ const buildRouterChildGraph = (step: RouterAction) => {
   };
 };
 
-const isRoundedNode = (type: ActionType | TriggerType) => {
-  return type === ActionType.LOOP_ON_ITEMS || type === ActionType.ROUTER;
+const isRoundedNode = (type: FlowActionType | FlowTriggerType) => {
+  return (
+    type === FlowActionType.LOOP_ON_ITEMS || type === FlowActionType.ROUTER
+  );
 };
 
 const isNodeWithGradientBorder = (categories: PieceCategory[]) => {

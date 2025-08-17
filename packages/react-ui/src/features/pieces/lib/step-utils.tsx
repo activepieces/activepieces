@@ -37,28 +37,24 @@ export const CORE_STEP_METADATA: Record<
     displayName: t('Code'),
     logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
     description: t('Powerful Node.js & TypeScript code with npm'),
-    categories: [],
     type: FlowActionType.CODE as const,
   },
   [FlowActionType.LOOP_ON_ITEMS]: {
     displayName: t('Loop on Items'),
     logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
     description: 'Iterate over a list of items',
-    categories: [PieceCategory.FLOW_CONTROL],
     type: FlowActionType.LOOP_ON_ITEMS as const,
   },
   [FlowActionType.ROUTER]: {
     displayName: t('Router'),
     logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
     description: t('Split your flow into branches depending on condition(s)'),
-    categories: [PieceCategory.FLOW_CONTROL],
     type: FlowActionType.ROUTER as const,
   },
   [FlowTriggerType.EMPTY]: {
     displayName: t('Empty Trigger'),
     logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
     description: t('Empty Trigger'),
-    categories: [],
     type: FlowTriggerType.EMPTY as const,
   },
 } as const;
@@ -113,6 +109,7 @@ export const stepUtils = {
           ...CORE_STEP_METADATA[step.type],
           ...spreadIfDefined('logoUrl', customLogoUrl),
           actionOrTriggerOrAgentDisplayName: '',
+          categories: [],
         };
       case FlowActionType.PIECE:
       case FlowTriggerType.PIECE: {

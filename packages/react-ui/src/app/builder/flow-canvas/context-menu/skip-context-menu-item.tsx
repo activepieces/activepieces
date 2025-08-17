@@ -2,7 +2,7 @@ import { t } from 'i18next';
 import { Route, RouteOff } from 'lucide-react';
 
 import { ContextMenuItem } from '@/components/ui/context-menu';
-import { Action, flowStructureUtil } from '@activepieces/shared';
+import { FlowAction, flowStructureUtil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { toggleSkipSelectedNodes } from '../bulk-actions';
@@ -20,7 +20,8 @@ export const SkipContextMenuItem = () => {
     ]);
   const areAllStepsSkipped = selectedNodes.every(
     (node) =>
-      !!(flowStructureUtil.getStep(node, flowVersion.trigger) as Action)?.skip,
+      !!(flowStructureUtil.getStep(node, flowVersion.trigger) as FlowAction)
+        ?.skip,
   );
   const doSelectedNodesIncludeTrigger = selectedNodes.some(
     (node) => node === flowVersion.trigger.name,

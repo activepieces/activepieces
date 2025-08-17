@@ -8,6 +8,7 @@ import {
   ContextMenuItem,
 } from '@/components/ui/context-menu';
 import {
+  FlowActionType,
   FlowOperationType,
   flowStructureUtil,
   StepLocationRelativeToParent,
@@ -25,7 +26,7 @@ export const PasteInBranchSubMenu = () => {
     flowVersion.trigger,
   );
 
-  if (firstSelectedStep?.type !== ActionType.ROUTER) return null;
+  if (firstSelectedStep?.type !== FlowActionType.ROUTER) return null;
 
   return (
     <ContextMenuSub>
