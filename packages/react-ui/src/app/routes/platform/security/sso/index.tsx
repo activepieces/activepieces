@@ -7,6 +7,7 @@ import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
 import { NewOAuth2Dialog } from '@/app/routes/platform/security/sso/oauth2-dialog';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -100,15 +101,10 @@ const SSOPage = () => {
       )}
     >
       <div className="flex-col w-full">
-        <div className="mb-4 flex">
-          <div className="flex justify-between flex-row w-full">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-bold w-full">
-                {t('Single Sign On')}
-              </h1>
-            </div>
-          </div>
-        </div>
+        <DashboardPageHeader
+          title={t('Single Sign On')}
+          description={t('Manage signle sign on providers')}
+        ></DashboardPageHeader>
         <div className="flex flex-col gap-4">
           <ProviderCard
             providerName={t('Allowed Domains')}

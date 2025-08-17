@@ -14,7 +14,7 @@ import {
   FlowOperationType,
   Step,
   TRIGGER_NODE_TEST_ID,
-  TriggerType,
+  FlowTriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
 
@@ -68,7 +68,7 @@ const ApStepCanvasNode = React.memo(
     ) => {
       selectStepByName(step.name);
       setSelectedBranchIndex(null);
-      if (step.type === TriggerType.EMPTY) {
+      if (step.type === FlowTriggerType.EMPTY) {
         setOpenedPieceSelectorStepNameOrAddButtonId(step.name);
       }
       e.preventDefault();

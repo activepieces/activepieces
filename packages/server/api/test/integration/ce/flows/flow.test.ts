@@ -1,8 +1,14 @@
+import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import {
     FlowOperationType,
     FlowStatus,
-    FlowVersionState,
+    FlowTriggerType,
+    PackageType,
+    PieceType,
     PrincipalType,
+    TriggerStrategy,
+    TriggerTestStrategy,
+    WebhookHandshakeStrategy,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -13,6 +19,7 @@ import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockFlow,
     createMockFlowVersion,
+    createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
 
@@ -63,7 +70,7 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(12)
+            expect(Object.keys(responseBody)).toHaveLength(10)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -71,9 +78,7 @@ describe('Flow API', () => {
             expect(responseBody?.folderId).toBeNull()
             expect(responseBody?.status).toBe('DISABLED')
             expect(responseBody?.publishedVersionId).toBeNull()
-            expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toMatchObject({ foo: 'bar' })
-            expect(responseBody?.handshakeConfiguration).toBeNull()
 
             expect(Object.keys(responseBody?.version)).toHaveLength(12)
             expect(responseBody?.version?.id).toHaveLength(21)
@@ -96,7 +101,39 @@ describe('Flow API', () => {
     describe('Update status endpoint', () => {
         it('Enables a disabled Flow', async () => {
             // arrange
-            const { mockProject, mockOwner } = await mockAndSaveBasicSetup()
+            const { mockProject, mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const mockPieceMetadata1 = createMockPieceMetadata({
+                name: '@activepieces/piece-schedule',
+                version: '0.1.5',
+                triggers: {
+                    'every_hour': {
+                        'name': 'every_hour',
+                        'displayName': 'Every Hour',
+                        'description': 'Triggers the current flow every hour',
+                        'requireAuth': true,
+                        'props': {
+
+                        },
+                        'type': TriggerStrategy.WEBHOOK,
+                        'handshakeConfiguration': {
+                            'strategy': WebhookHandshakeStrategy.NONE,
+                        },
+                        'renewConfiguration': {
+                            'strategy': WebhookRenewStrategy.NONE,
+                        },
+                        'sampleData': {
+
+                        },
+                        'testStrategy': TriggerTestStrategy.TEST_FUNCTION,
+                    },
+                },
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+            })
+            await databaseConnection()
+                .getRepository('piece_metadata')
+                .save([mockPieceMetadata1])
 
             const mockFlow = createMockFlow({
                 projectId: mockProject.id,
@@ -107,6 +144,21 @@ describe('Flow API', () => {
             const mockFlowVersion = createMockFlowVersion({
                 flowId: mockFlow.id,
                 updatedBy: mockOwner.id,
+                trigger: {
+                    type: FlowTriggerType.PIECE,
+                    settings: {
+                        pieceName: '@activepieces/piece-schedule',
+                        pieceVersion: '0.1.5',
+                        input: {
+                            run_on_weekends: false,
+                        },
+                        triggerName: 'every_hour',
+                        inputUiInfo: {},
+                    },
+                    valid: true,
+                    name: 'webhook',
+                    displayName: 'Webhook',
+                },
             })
             await databaseConnection()
                 .getRepository('flow_version')
@@ -118,6 +170,9 @@ describe('Flow API', () => {
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
                 projectId: mockProject.id,
                 id: mockOwner.id,
             })
@@ -138,12 +193,12 @@ describe('Flow API', () => {
                 },
                 body: mockUpdateFlowStatusRequest,
             })
+            const responseBody = response?.json()
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(12)
+            expect(Object.keys(responseBody)).toHaveLength(10)
             expect(responseBody?.id).toBe(mockFlow.id)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -151,9 +206,7 @@ describe('Flow API', () => {
             expect(responseBody?.folderId).toBeNull()
             expect(responseBody?.status).toBe('ENABLED')
             expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
-            expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toBeNull()
-            expect(responseBody?.handshakeConfiguration).toBeNull()
 
             expect(Object.keys(responseBody?.version)).toHaveLength(12)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
@@ -161,7 +214,7 @@ describe('Flow API', () => {
 
         it('Disables an enabled Flow', async () => {
             // arrange
-            const { mockProject, mockOwner } = await mockAndSaveBasicSetup()
+            const { mockProject, mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const mockFlow = createMockFlow({
                 projectId: mockProject.id,
@@ -183,6 +236,9 @@ describe('Flow API', () => {
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
                 projectId: mockProject.id,
                 id: mockOwner.id,
             })
@@ -208,7 +264,7 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(12)
+            expect(Object.keys(responseBody)).toHaveLength(10)
             expect(responseBody?.id).toBe(mockFlow.id)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -216,9 +272,7 @@ describe('Flow API', () => {
             expect(responseBody?.folderId).toBeNull()
             expect(responseBody?.status).toBe('DISABLED')
             expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
-            expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toBeNull()
-            expect(responseBody?.handshakeConfiguration).toBeNull()
 
             expect(Object.keys(responseBody?.version)).toHaveLength(12)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
@@ -228,7 +282,39 @@ describe('Flow API', () => {
     describe('Update published version id endpoint', () => {
         it('Publishes latest draft version', async () => {
             // arrange
-            const { mockProject, mockOwner } = await mockAndSaveBasicSetup()
+            const { mockProject, mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const mockPieceMetadata1 = createMockPieceMetadata({
+                name: '@activepieces/piece-schedule',
+                version: '0.1.5',
+                triggers: {
+                    'every_hour': {
+                        'name': 'every_hour',
+                        'displayName': 'Every Hour',
+                        'description': 'Triggers the current flow every hour',
+                        'requireAuth': true,
+                        'props': {
+
+                        },
+                        'type': TriggerStrategy.WEBHOOK,
+                        'handshakeConfiguration': {
+                            'strategy': WebhookHandshakeStrategy.NONE,
+                        },
+                        'renewConfiguration': {
+                            'strategy': WebhookRenewStrategy.NONE,
+                        },
+                        'sampleData': {
+
+                        },
+                        'testStrategy': TriggerTestStrategy.TEST_FUNCTION,
+                    },
+                },
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+            })
+            await databaseConnection()
+                .getRepository('piece_metadata')
+                .save([mockPieceMetadata1])
 
             const mockFlow = createMockFlow({
                 projectId: mockProject.id,
@@ -239,7 +325,21 @@ describe('Flow API', () => {
             const mockFlowVersion = createMockFlowVersion({
                 flowId: mockFlow.id,
                 updatedBy: mockOwner.id,
-                state: FlowVersionState.DRAFT,
+                trigger: {
+                    type: FlowTriggerType.PIECE,
+                    settings: {
+                        pieceName: '@activepieces/piece-schedule',
+                        pieceVersion: '0.1.5',
+                        input: {
+                            run_on_weekends: false,
+                        },
+                        triggerName: 'every_hour',
+                        inputUiInfo: {},
+                    },
+                    valid: true,
+                    name: 'webhook',
+                    displayName: 'Webhook',
+                },
             })
             await databaseConnection()
                 .getRepository('flow_version')
@@ -249,6 +349,9 @@ describe('Flow API', () => {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
             })
 
             // act
@@ -268,7 +371,7 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(12)
+            expect(Object.keys(responseBody)).toHaveLength(10)
             expect(responseBody?.id).toBe(mockFlow.id)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -276,9 +379,7 @@ describe('Flow API', () => {
             expect(responseBody?.folderId).toBeNull()
             expect(responseBody?.status).toBe('ENABLED')
             expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
-            expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toBeNull()
-            expect(responseBody?.handshakeConfiguration).toBeNull()
 
             expect(Object.keys(responseBody?.version)).toHaveLength(12)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
@@ -289,7 +390,7 @@ describe('Flow API', () => {
     describe('List Flows endpoint', () => {
         it('Filters Flows by status', async () => {
             // arrange
-            const { mockProject, mockOwner } = await mockAndSaveBasicSetup()
+            const { mockProject, mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const mockEnabledFlow = createMockFlow({
                 projectId: mockProject.id,
@@ -317,6 +418,9 @@ describe('Flow API', () => {
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
                 id: mockOwner.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
             })
 
             // act
@@ -342,7 +446,7 @@ describe('Flow API', () => {
 
         it('Populates Flow version', async () => {
             // arrange
-            const { mockProject, mockOwner } = await mockAndSaveBasicSetup()
+            const { mockProject, mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const mockFlow = createMockFlow({ projectId: mockProject.id })
             await databaseConnection().getRepository('flow').save([mockFlow])
@@ -356,6 +460,9 @@ describe('Flow API', () => {
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
                 id: mockOwner.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
             })
 
             // act
@@ -381,8 +488,8 @@ describe('Flow API', () => {
 
         it('Fails if a flow with no version exists', async () => {
             // arrange
-            const { mockProject, mockOwner } = await mockAndSaveBasicSetup()
-            
+            const { mockProject, mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+
             const mockFlow = createMockFlow({ projectId: mockProject.id })
             await databaseConnection().getRepository('flow').save([mockFlow])
 
@@ -390,6 +497,9 @@ describe('Flow API', () => {
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
                 id: mockOwner.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
             })
 
             // act
@@ -417,7 +527,7 @@ describe('Flow API', () => {
     describe('Update Metadata endpoint', () => {
         it('Updates flow metadata', async () => {
             // arrange
-            const { mockProject, mockOwner } = await mockAndSaveBasicSetup()
+            const { mockProject, mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             // create a flow with no metadata
             const mockFlow = createMockFlow({ projectId: mockProject.id })
@@ -432,6 +542,9 @@ describe('Flow API', () => {
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
                 id: mockOwner.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
             })
 
             const updatedMetadata = { foo: 'bar' }
@@ -470,7 +583,7 @@ describe('Flow API', () => {
     describe('Export Flow Template endpoint', () => {
         it('Exports a flow template using an API key', async () => {
             // arrange
-            const { mockProject, mockOwner } = await mockAndSaveBasicSetup()
+            const { mockProject, mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const mockFlow = createMockFlow({
                 projectId: mockProject.id,
@@ -491,6 +604,9 @@ describe('Flow API', () => {
                 type: PrincipalType.SERVICE,
                 projectId: mockProject.id,
                 id: mockApiKey,
+                platform: {
+                    id: mockPlatform.id,
+                },
             })
 
             // act

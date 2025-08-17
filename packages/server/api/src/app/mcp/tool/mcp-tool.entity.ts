@@ -28,6 +28,10 @@ export const McpToolEntity = new EntitySchema<McpToolSchema>({
             type: String,
             nullable: true,
         },
+        externalId: {
+            ...ApIdSchema,
+            nullable: false,
+        },
     },
     indices: [
         {

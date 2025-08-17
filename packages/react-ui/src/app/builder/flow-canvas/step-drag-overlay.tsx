@@ -1,18 +1,18 @@
 import { t } from 'i18next';
 
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { cn } from '@/lib/utils';
-import { Action, Trigger } from '@activepieces/shared';
+import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
 import { flowUtilConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
+import { cn } from '@/lib/utils';
 
 const StepDragOverlay = ({
   step,
   lefSideBarContainerWidth,
   cursorPosition,
 }: {
-  step: Action | Trigger;
+  step: FlowAction | FlowTrigger;
   lefSideBarContainerWidth: number;
   cursorPosition: { x: number; y: number };
 }) => {

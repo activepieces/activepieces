@@ -1,3 +1,4 @@
+import { StripePlanName } from '@activepieces/ee-shared'
 import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, GiftTrialByEmailRequestBody, isNil, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -25,7 +26,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
     app.post('/gift-trials', GiftTrialByEmailRequest, async (req, res) => {
         const { gifts } = req.body
         const results = await Promise.all(
-            gifts.map(gift => stripeHelper(req.log).giftTrialForCustomer(gift.email, gift.trialPeriod)),
+            gifts.map(gift => stripeHelper(req.log).giftTrialForCustomer({ email: gift.email, trialPeriod: gift.trialPeriod, plan: gift.trialPlan as StripePlanName })),
         )
         
         const errors = results.filter(result => !isNil(result))

@@ -2,8 +2,8 @@ import { t } from 'i18next';
 
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import {
-  Action,
-  ActionType,
+  FlowAction,
+  FlowActionType,
   FlowOperationType,
   FlowRun,
   flowStructureUtil,
@@ -13,8 +13,8 @@ import {
   PieceCategory,
   RouterAction,
   StepLocationRelativeToParent,
-  Trigger,
-  TriggerType,
+  FlowTrigger,
+  FlowTriggerType,
 } from '@activepieces/shared';
 
 import { flowUtilConsts } from './consts';
@@ -76,7 +76,7 @@ const createBigAddButtonGraph: (
 };
 
 const createStepGraph: (
-  step: Action | Trigger,
+  step: FlowAction | FlowTrigger,
   graphHeight: number,
 ) => ApGraph = (step, graphHeight) => {
   const stepNode: ApStepNode = {
@@ -117,13 +117,16 @@ const createStepGraph: (
   return {
     nodes: [stepNode, graphEndNode],
     edges:
-      step.type !== ActionType.LOOP_ON_ITEMS && step.type !== ActionType.ROUTER
+      step.type !== FlowActionType.LOOP_ON_ITEMS &&
+      step.type !== FlowActionType.ROUTER
         ? [straightLineEdge]
         : [],
   };
 };
 
-const buildGraph: (step: Action | Trigger | undefined) => ApGraph = (step) => {
+const buildGraph: (step: FlowAction | FlowTrigger | undefined) => ApGraph = (
+  step,
+) => {
   if (isNil(step)) {
     return {
       nodes: [],
@@ -137,9 +140,9 @@ const buildGraph: (step: Action | Trigger | undefined) => ApGraph = (step) => {
       flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS,
   );
   const childGraph =
-    step.type === ActionType.LOOP_ON_ITEMS
+    step.type === FlowActionType.LOOP_ON_ITEMS
       ? buildLoopChildGraph(step)
-      : step.type === ActionType.ROUTER
+      : step.type === FlowActionType.ROUTER
       ? buildRouterChildGraph(step)
       : null;
 
@@ -456,12 +459,12 @@ const createAddOperationFromAddButtonData = (data: ApButtonData) => {
   } as const;
 };
 
-const isSkipped = (stepName: string, trigger: Trigger) => {
+const isSkipped = (stepName: string, trigger: FlowTrigger) => {
   const step = flowStructureUtil.getStep(stepName, trigger);
   if (
     isNil(step) ||
-    step.type === TriggerType.EMPTY ||
-    step.type === TriggerType.PIECE
+    step.type === FlowTriggerType.EMPTY ||
+    step.type === FlowTriggerType.PIECE
   ) {
     return false;
   }
@@ -469,8 +472,8 @@ const isSkipped = (stepName: string, trigger: Trigger) => {
     .findPathToStep(trigger, stepName)
     .filter(
       (stepInPath) =>
-        stepInPath.type === ActionType.LOOP_ON_ITEMS ||
-        stepInPath.type === ActionType.ROUTER,
+        stepInPath.type === FlowActionType.LOOP_ON_ITEMS ||
+        stepInPath.type === FlowActionType.ROUTER,
     )
     .filter((routerOrLoop) =>
       flowStructureUtil.isChildOf(routerOrLoop, stepName),

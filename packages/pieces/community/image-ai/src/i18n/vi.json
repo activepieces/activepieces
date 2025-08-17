@@ -4,7 +4,5 @@
   "Provider": "Provider",
   "Model": "Model",
   "Prompt": "Prompt",
-  "Advanced Options": "Advanced Options",
-  "Resolution": "Resolution",
-  "The resolution to generate the image in.": "The resolution to generate the image in."
+  "Advanced Options": "Advanced Options"
 }

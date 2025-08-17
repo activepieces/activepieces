@@ -213,7 +213,7 @@ const CanvasControls = ({
               className="relative focus:outline-0"
             >
               <PanningModeIndicator toggled={!isInGrabMode} />
-              <MousePointer className="size-5 z-10"></MousePointer>
+              <MousePointer className="size-5"></MousePointer>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">{t('Select Mode')}</TooltipContent>
@@ -233,7 +233,7 @@ const CanvasControls = ({
             >
               <PanningModeIndicator toggled={isInGrabMode} />
 
-              <Hand className="size-5 z-10"></Hand>
+              <Hand className="size-5"></Hand>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">{t('Move Mode')}</TooltipContent>

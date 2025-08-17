@@ -2,7 +2,7 @@ import {
   ContextMenuContent,
   ContextMenuSeparator,
 } from '@/components/ui/context-menu';
-import { ActionType, flowStructureUtil } from '@activepieces/shared';
+import { FlowActionType, flowStructureUtil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
@@ -33,12 +33,12 @@ export const CanvasContextMenuContent = ({
     !readonly && contextMenuType === ContextMenuType.CANVAS;
   const showPasteAsFirstLoopAction =
     selectedNodes.length === 1 &&
-    firstSelectedStep?.type === ActionType.LOOP_ON_ITEMS &&
+    firstSelectedStep?.type === FlowActionType.LOOP_ON_ITEMS &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
   const showPasteAsBranchChild =
     selectedNodes.length === 1 &&
-    firstSelectedStep?.type === ActionType.ROUTER &&
+    firstSelectedStep?.type === FlowActionType.ROUTER &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
   const showPasteAfterCurrentStep =

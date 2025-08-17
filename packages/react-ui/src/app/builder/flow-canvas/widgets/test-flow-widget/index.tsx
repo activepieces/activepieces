@@ -6,7 +6,7 @@ import {
 } from '@/app/builder/builder-hooks';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import { isNil, TriggerType } from '@activepieces/shared';
+import { isNil, FlowTriggerType } from '@activepieces/shared';
 
 import ViewOnlyWidget from '../view-only-widget';
 
@@ -22,7 +22,7 @@ const TestFlowWidget = () => {
     ]);
 
   const triggerHasSampleData =
-    flowVersion.trigger.type === TriggerType.PIECE &&
+    flowVersion.trigger.type === FlowTriggerType.PIECE &&
     !isNil(flowVersion.trigger.settings.inputUiInfo?.lastTestDate);
 
   const isChatTrigger = pieceSelectorUtils.isChatTrigger(

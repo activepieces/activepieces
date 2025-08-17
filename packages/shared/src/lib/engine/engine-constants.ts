@@ -5,4 +5,5 @@ export const DEFAULT_MCP_DATA = {
     flowVersionId: 'mcp-flow-version-id',
     flowVersionState: FlowVersionState.LOCKED,
     flowRunId: 'mcp-flow-run-id',
+    triggerPieceName: 'mcp-trigger-piece-name',
 }

@@ -225,6 +225,7 @@
                 "icon": "user",
                 "pages": [
                   "endpoints/users/schema",
+                  "endpoints/users/update",
                   "endpoints/users/list"
                 ]
               },

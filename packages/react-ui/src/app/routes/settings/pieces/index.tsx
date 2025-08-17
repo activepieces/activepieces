@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { RequestTrial } from '@/app/components/request-trial';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,8 +21,6 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { isNil, PieceType } from '@activepieces/shared';
-
-import { TableTitle } from '../../../../components/custom/table-title';
 
 import { ManagePiecesDialog } from './manage-pieces-dialog';
 
@@ -126,49 +125,50 @@ const ProjectPiecesPage = () => {
   );
 
   return (
-    <div className="flex w-full flex-col items-center justify-center gap-4">
-      <div className="mx-auto w-full flex-col">
-        {!platform.plan.managePiecesEnabled && (
-          <LockedAlert
-            title={t('Control Pieces')}
-            description={t(
-              "Show the pieces that matter most to your users and hide the ones you don't like.",
-            )}
-            button={
-              <RequestTrial
-                featureKey="ENTERPRISE_PIECES"
-                buttonVariant="outline-primary"
-              />
-            }
-          />
-        )}
-        <TableTitle>{t('Pieces')}</TableTitle>
-        <DataTable
-          emptyStateTextTitle={t('No pieces found')}
-          emptyStateTextDescription={t(
-            'Add a piece to your project that you want to use in your automations',
+    <div className="w-fullj flex-col">
+      <DashboardPageHeader
+        title={t('Pieces')}
+        description={'Manage project pieces'}
+      />
+      {!platform.plan.managePiecesEnabled && (
+        <LockedAlert
+          title={t('Control Pieces')}
+          description={t(
+            "Show the pieces that matter most to your users and hide the ones you don't like.",
           )}
-          emptyStateIcon={<Package className="size-14" />}
-          columns={columns}
-          filters={[
-            {
-              type: 'input',
-              title: t('Piece Name'),
-              accessorKey: 'name',
-              options: [],
-              icon: CheckIcon,
-            } as const,
-          ]}
-          page={{
-            data: pieces ?? [],
-            next: null,
-            previous: null,
-          }}
-          isLoading={isLoading}
-          hidePagination={true}
-          bulkActions={platform.plan.managePiecesEnabled ? bulkActions : []}
+          button={
+            <RequestTrial
+              featureKey="ENTERPRISE_PIECES"
+              buttonVariant="outline-primary"
+            />
+          }
         />
-      </div>
+      )}
+      <DataTable
+        emptyStateTextTitle={t('No pieces found')}
+        emptyStateTextDescription={t(
+          'Add a piece to your project that you want to use in your automations',
+        )}
+        emptyStateIcon={<Package className="size-14" />}
+        columns={columns}
+        filters={[
+          {
+            type: 'input',
+            title: t('Piece Name'),
+            accessorKey: 'name',
+            options: [],
+            icon: CheckIcon,
+          } as const,
+        ]}
+        page={{
+          data: pieces ?? [],
+          next: null,
+          previous: null,
+        }}
+        isLoading={isLoading}
+        hidePagination={true}
+        bulkActions={platform.plan.managePiecesEnabled ? bulkActions : []}
+      />
     </div>
   );
 };

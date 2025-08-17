@@ -3,8 +3,8 @@ import { JSONContent } from '@tiptap/react';
 
 import { StepMetadata } from '@/lib/types';
 import {
-  Action,
-  Trigger,
+  FlowAction,
+  FlowTrigger,
   assertNotNullOrUndefined,
   isNil,
 } from '@activepieces/shared';
@@ -64,7 +64,7 @@ type StepMetadataWithDisplayName = StepMetadata & { stepDisplayName: string };
 
 function convertTextToTipTapJsonContent(
   userInputText: string,
-  steps: (Action | Trigger)[],
+  steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ): {
   type: TipTapNodeTypes.paragraph;
@@ -163,7 +163,7 @@ function parseStepAndNameFromMention(mention: string) {
 
 function parseLabelFromMention(
   mention: string,
-  steps: (Action | Trigger)[],
+  steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ) {
   const { stepName, path } = parseStepAndNameFromMention(mention);
@@ -187,7 +187,7 @@ function parseLabelFromMention(
 
 function createMentionNodeFromText(
   mention: string,
-  steps: (Action | Trigger)[],
+  steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ) {
   return {

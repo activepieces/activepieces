@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -29,8 +30,6 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 import { isNil, ProjectWithLimits } from '@activepieces/shared';
-
-import { TableTitle } from '../../../../components/custom/table-title';
 
 import { NewProjectDialog } from './new-project-dialog';
 
@@ -335,21 +334,6 @@ export default function ProjectsPage() {
           );
         },
       },
-      {
-        render: () => {
-          return (
-            <NewProjectDialog onCreate={() => refetch()}>
-              <Button
-                size="sm"
-                className="flex items-center justify-center gap-2"
-              >
-                <Plus className="size-4" />
-                {t('New Project')}
-              </Button>
-            </NewProjectDialog>
-          );
-        },
-      },
     ],
     [selectedRows, currentProject, bulkDeleteMutation],
   );
@@ -411,11 +395,20 @@ export default function ProjectsPage() {
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/projects.mp4"
     >
       <div className="flex flex-col w-full">
-        <div className="flex items-center justify-between flex-row">
-          <TableTitle description={t('Manage your automation projects')}>
-            {t('Projects')}
-          </TableTitle>
-        </div>
+        <DashboardPageHeader
+          title={t('Projects')}
+          description={t('Manage your automation projects')}
+        >
+          <NewProjectDialog onCreate={() => refetch()}>
+            <Button
+              size="sm"
+              className="flex items-center justify-center gap-2"
+            >
+              <Plus className="size-4" />
+              {t('New Project')}
+            </Button>
+          </NewProjectDialog>
+        </DashboardPageHeader>
         <DataTable
           emptyStateTextTitle={t('No projects found')}
           emptyStateTextDescription={t(

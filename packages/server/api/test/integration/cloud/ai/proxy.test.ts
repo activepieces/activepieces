@@ -1,4 +1,4 @@
-import { CategorizedLanguageModelPricing, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, PrincipalType, TieredLanguageModelPricing } from '@activepieces/shared'
+import { CategorizedLanguageModelPricing, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, GPTImage1PricingPerImage, PrincipalType, TieredLanguageModelPricing } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
 import { AIUsageEntity, AIUsageSchema } from '../../../../src/app/ai/ai-usage-entity'
@@ -210,6 +210,64 @@ describe('AI Providers Proxy', () => {
                 const pricing = model?.pricing as DALLE3PricingPerImage
                 const imageCost = pricing[quality][size as keyof typeof pricing[typeof quality]]
                 const totalCost = imageCost * imageCount
+
+                const aiUsage = await pollForAIUsage(mockProject.id, 'openai')
+                expect(aiUsage?.cost).toBe(totalCost)
+            })
+
+            it('should record the usage cost of a GPT-Image-1 image generation request', async () => {
+                // arrange
+                const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                    platform: {
+                        id: CLOUD_PLATFORM_ID,
+                    },
+                    plan: {
+                        includedAiCredits: 10,
+                    },
+                })
+                await mockAndSaveAIProvider({
+                    platformId: mockPlatform.id,
+                    provider: 'openai',
+                    config: {
+                        apiKey: openaiKey,
+                    },
+                })
+
+                const mockToken = await generateMockToken({
+                    type: PrincipalType.USER,
+                    projectId: mockProject.id,
+                    id: mockOwner.id,
+                    platform: {
+                        id: mockPlatform.id,
+                    },
+                })
+
+                const model = getProviderConfig('openai')?.imageModels.find(model => model.instance.modelId === 'gpt-image-1')
+                const size = '1024x1024'
+                const quality = 'low'
+
+                // act
+                const response = await app?.inject({
+                    method: 'POST',
+                    url: '/v1/ai-providers/proxy/openai/v1/images/generations',
+                    headers: {
+                        authorization: `Bearer ${mockToken}`,
+                    },
+                    body: {
+                        model: model?.instance.modelId,
+                        prompt: 'A beautiful sunset over mountains',
+                        size,
+                        quality,
+                    },
+                })
+
+                // assert
+                const pricing = model?.pricing as GPTImage1PricingPerImage
+                const imageCost = pricing.input.image
+                const textCost = pricing.input.text
+                const outputCost = pricing.output
+                const { usage } = response?.json() as { usage: { input_tokens_details: { image_tokens: number, text_tokens: number }, output_tokens: number } }
+                const totalCost = calculateTokensCost(usage.input_tokens_details.image_tokens, imageCost) + calculateTokensCost(usage.input_tokens_details.text_tokens, textCost) + calculateTokensCost(usage.output_tokens, outputCost)
 
                 const aiUsage = await pollForAIUsage(mockProject.id, 'openai')
                 expect(aiUsage?.cost).toBe(totalCost)

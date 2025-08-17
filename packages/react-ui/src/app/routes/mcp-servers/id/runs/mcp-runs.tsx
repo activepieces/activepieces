@@ -52,7 +52,7 @@ export const McpHistoryPage = () => {
   return (
     <div className="w-full ">
       <div className="flex items-center justify-between">
-        <div className="space-y-0">
+        <div className="space-y-0 mb-4">
           <h1 className="text-xl font-semibold tracking-tight">
             {t('Tool Usage History')}
           </h1>

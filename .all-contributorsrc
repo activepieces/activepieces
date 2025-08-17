@@ -2003,6 +2003,33 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Zebi15",
+      "name": "Apostol Eusebiu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/80625145?v=4",
+      "profile": "https://github.com/Zebi15",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "fortunamide",
+      "name": "Fortunate",
+      "avatar_url": "https://avatars.githubusercontent.com/u/122938302?v=4",
+      "profile": "https://github.com/fortunamide",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "thejaachi",
+      "name": "Jaachịmmá Anyatọnwụ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/173014495?v=4",
+      "profile": "https://jaachiwrites.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
