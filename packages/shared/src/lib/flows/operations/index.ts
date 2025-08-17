@@ -44,8 +44,8 @@ export enum FlowOperationType {
     SET_SKIP_ACTION = 'SET_SKIP_ACTION',
     UPDATE_METADATA = 'UPDATE_METADATA',
     MOVE_BRANCH = 'MOVE_BRANCH',
-    SAVE_SAMPLE_DATA = 'SAVE_SAMPLE_DATA'
-  }
+    SAVE_SAMPLE_DATA = 'SAVE_SAMPLE_DATA',
+}
 
 export const DeleteBranchRequest = Type.Object({
     branchIndex: Type.Number(),
