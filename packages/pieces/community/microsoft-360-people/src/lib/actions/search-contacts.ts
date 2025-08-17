@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { Client } from '@microsoft/microsoft-graph-client';
-import { microsoft365PeopleAuth } from '../auth';
+import { microsoft365PeopleAuth, microsoft365PeopleCommon } from '../common';
 
 interface ContactResponse {
   id: string;
@@ -32,32 +32,11 @@ export const getContact = createAction({
   displayName: 'Search Contacts',
   description: 'Retrieve the properties and relationships of a contact object by ID',
   props: {
-    contactId: Property.ShortText({
-      displayName: 'Contact ID',
-      description: 'The unique identifier of the contact to retrieve',
-      required: true,
-    }),
-    userId: Property.ShortText({
-      displayName: 'User ID or Principal Name',
-      description: 'Optional: User ID or principal name if retrieving contact from another user. Leave empty to get contact from current user.',
-      required: false,
-    }),
-    contactFolderId: Property.ShortText({
-      displayName: 'Contact Folder ID',
-      description: 'Optional: Contact folder ID if the contact is in a specific folder. Leave empty to search in default contacts.',
-      required: false,
-    }),
-    expandRelationships: Property.Checkbox({
-      displayName: 'Expand Relationships',
-      description: 'Optional: Expand relationships in the response for additional contact information',
-      required: false,
-      defaultValue: false,
-    }),
-    selectProperties: Property.ShortText({
-      displayName: 'Select Properties',
-      description: 'Optional: Comma-separated list of properties to include in the response (e.g., "id,displayName,emailAddresses")',
-      required: false,
-    }),
+    contactId: microsoft365PeopleCommon.contactId,
+    userId: microsoft365PeopleCommon.userId,
+    contactFolderId: microsoft365PeopleCommon.contactFolderId,
+    expandRelationships: microsoft365PeopleCommon.expandRelationships,
+    selectProperties: microsoft365PeopleCommon.selectProperties,
   },
   async run({ auth, propsValue }) {
     try {

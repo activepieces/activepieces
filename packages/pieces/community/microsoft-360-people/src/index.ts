@@ -1,6 +1,6 @@
 
     import { createPiece } from "@activepieces/pieces-framework";
-    import { microsoft365PeopleAuth } from "./lib/auth";
+    import { microsoft365PeopleAuth } from "./lib/common";
     import { newOrUpdatedContact } from "./lib/triggers/new-or-updated-contact";
     import { createAContact } from "./lib/actions/create-a-contact";
     import { updateAContact } from "./lib/actions/update-a-contact";

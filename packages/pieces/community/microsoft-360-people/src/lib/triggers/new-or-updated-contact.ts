@@ -1,6 +1,6 @@
 
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { microsoft365PeopleAuth } from '../../lib/auth';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { microsoft365PeopleAuth, microsoft365PeopleCommon } from '../../lib/common';
 
 interface ContactData {
     id: string;
@@ -34,32 +34,9 @@ export const newOrUpdatedContact = createTrigger({
     displayName: 'New or Updated Contact',
     description: 'Fires when a contact is created or updated in Microsoft 365 People',
     props: {
-        changeType: Property.StaticDropdown({
-            displayName: 'Change Type',
-            description: 'Select which types of changes to listen for',
-            required: true,
-            defaultValue: 'all',
-            options: {
-                disabled: false,
-                options: [
-                    { label: 'All Changes', value: 'all' },
-                    { label: 'Created Only', value: 'created' },
-                    { label: 'Updated Only', value: 'updated' },
-                    { label: 'Deleted Only', value: 'deleted' }
-                ]
-            }
-        }),
-        folderId: Property.ShortText({
-            displayName: 'Folder ID',
-            description: 'The ID of the contacts folder to monitor (leave empty for default contacts)',
-            required: false
-        }),
-        includeDeleted: Property.Checkbox({
-            displayName: 'Include Deleted Contacts',
-            description: 'Whether to include deleted contacts in the response',
-            required: false,
-            defaultValue: false
-        })
+        changeType: microsoft365PeopleCommon.changeType,
+        folderId: microsoft365PeopleCommon.contactFolderId,
+        includeDeleted: microsoft365PeopleCommon.includeDeleted,
     },
     sampleData: {
         "id": "AAMkAGVmMDEzMTM4LTZmYWUtNDdkNC1hMDZiLTU1OGY5OTZhYmY4OABGAAAAAAAiQ8W967B7TKBjgx9rVEURBwAiIsqMbYjsT5G-TvrKxZwDAAAAAAEMAABiIsqMbYjsT5G-TvrKxZwDAAABXfCAAA=",

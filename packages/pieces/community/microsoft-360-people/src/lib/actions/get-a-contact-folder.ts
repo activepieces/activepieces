@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@microsoft/microsoft-graph-client';
-import { microsoft365PeopleAuth } from '../auth';
+import { microsoft365PeopleAuth } from '../common';
 
 interface ContactFolderResponse {
   displayName: string;

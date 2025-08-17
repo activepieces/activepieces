@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@microsoft/microsoft-graph-client';
-import { microsoft365PeopleAuth } from '../auth';
+import { microsoft365PeopleAuth, microsoft365PeopleCommon } from '../common';
 
 interface ContactEmail {
   address: string;
@@ -21,8 +21,8 @@ interface ContactIMAddress {
 }
 
 interface MicrosoftContact {
-  givenName: string;
-  surname: string;
+  givenName?: string;
+  surname?: string;
   displayName?: string;
   emailAddresses?: ContactEmail[];
   businessPhones?: string[];
@@ -46,61 +46,17 @@ export const createAContact = createAction({
   displayName: 'Create Contact',
   description: 'Create a new contact in Microsoft 365 People with detailed attributes',
   props: {
-    givenName: Property.ShortText({
-      displayName: 'Given Name',
-      description: 'The first name of the contact',
-      required: true,
-    }),
-    surname: Property.ShortText({
-      displayName: 'Surname',
-      description: 'The last name of the contact',
-      required: true,
-    }),
-    displayName: Property.ShortText({
-      displayName: 'Display Name',
-      description: 'The display name of the contact (if not provided, will be auto-generated)',
-      required: false,
-    }),
-    emailAddresses: Property.Array({
-      displayName: 'Email Addresses',
-      description: 'List of email addresses for the contact',
-      required: false,
-    }),
-    businessPhones: Property.Array({
-      displayName: 'Business Phone Numbers',
-      description: 'List of business phone numbers',
-      required: false,
-    }),
-    mobilePhone: Property.ShortText({
-      displayName: 'Mobile Phone',
-      description: 'Mobile phone number',
-      required: false,
-    }),
-    homePhones: Property.Array({
-      displayName: 'Home Phone Numbers',
-      description: 'List of home phone numbers',
-      required: false,
-    }),
-    jobTitle: Property.ShortText({
-      displayName: 'Job Title',
-      description: 'The job title of the contact',
-      required: false,
-    }),
-    companyName: Property.ShortText({
-      displayName: 'Company Name',
-      description: 'The company name of the contact',
-      required: false,
-    }),
-    department: Property.ShortText({
-      displayName: 'Department',
-      description: 'The department of the contact',
-      required: false,
-    }),
-    officeLocation: Property.ShortText({
-      displayName: 'Office Location',
-      description: 'The office location of the contact',
-      required: false,
-    }),
+    givenName: microsoft365PeopleCommon.givenName,
+    surname: microsoft365PeopleCommon.surname,
+    displayName: microsoft365PeopleCommon.displayName,
+    emailAddresses: microsoft365PeopleCommon.emailAddresses,
+    businessPhones: microsoft365PeopleCommon.businessPhones,
+    mobilePhone: microsoft365PeopleCommon.mobilePhone,
+    homePhones: microsoft365PeopleCommon.homePhones,
+    jobTitle: microsoft365PeopleCommon.jobTitle,
+    companyName: microsoft365PeopleCommon.companyName,
+    department: microsoft365PeopleCommon.department,
+    officeLocation: microsoft365PeopleCommon.officeLocation,
     businessAddress: Property.Object({
       displayName: 'Business Address',
       description: 'Business address information',
@@ -111,16 +67,8 @@ export const createAContact = createAction({
       description: 'Home address information',
       required: false,
     }),
-    birthday: Property.DateTime({
-      displayName: 'Birthday',
-      description: 'The birthday of the contact',
-      required: false,
-    }),
-    notes: Property.LongText({
-      displayName: 'Notes',
-      description: 'Additional notes about the contact',
-      required: false,
-    }),
+    birthday: microsoft365PeopleCommon.birthday,
+    notes: microsoft365PeopleCommon.notes,
     website: Property.ShortText({
       displayName: 'Website',
       description: 'Personal website URL',
@@ -131,19 +79,19 @@ export const createAContact = createAction({
       description: 'List of instant message addresses',
       required: false,
     }),
-    contactFolderId: Property.ShortText({
-      displayName: 'Contact Folder ID',
-      description: 'Optional: ID of the contact folder to create the contact in. Leave empty to create in root contacts folder.',
-      required: false,
-    }),
-    userId: Property.ShortText({
-      displayName: 'User ID or Principal Name',
-      description: 'Optional: User ID or principal name to create contact for. Leave empty to create for current user.',
-      required: false,
-    }),
+    contactFolderId: microsoft365PeopleCommon.contactFolderId,
+    userId: microsoft365PeopleCommon.userId,
   },
   async run({ auth, propsValue }) {
     try {
+      // Validate that at least one name field is provided
+      if (!propsValue.givenName && !propsValue.surname && !propsValue.displayName) {
+        return {
+          success: false,
+          error: 'At least one of the following fields must be provided: Given Name, Surname, or Display Name',
+        };
+      }
+
       const authValue = auth as { access_token: string };
       const client = Client.initWithMiddleware({
         authProvider: {
@@ -152,10 +100,16 @@ export const createAContact = createAction({
       });
 
       // Build the contact object
-      const contact: MicrosoftContact = {
-        givenName: propsValue.givenName,
-        surname: propsValue.surname,
-      };
+      const contact: MicrosoftContact = {};
+      
+      // Add required properties if provided
+      if (propsValue.givenName) {
+        contact.givenName = propsValue.givenName;
+      }
+      
+      if (propsValue.surname) {
+        contact.surname = propsValue.surname;
+      }
 
       // Add optional properties if provided
       if (propsValue.displayName) {
