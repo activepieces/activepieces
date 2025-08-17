@@ -36,7 +36,7 @@ export const solutionService = (log: FastifyBaseLogger) => ({
         const flows = await getFlows(params.solution.state.flows.map((flow) => flow.externalId), params.projectId, log)
         const connections = await getConnections(params.solution.state.connections?.map((connection) => connection.externalId) ?? [], params.platformId, params.projectId, log)
         const agents = await getAgents(params.solution.state.agents?.map((agent) => agent.externalId) ?? [], params.projectId, log)
-        const tables = await getTables(params.solution.state.tables?.map((table) => table.externalId) ?? [], params.projectId, log)
+        const tables = await getTables(params.solution.state.tables?.map((table) => table.externalId) ?? [], params.projectId)
 
 
         return {
