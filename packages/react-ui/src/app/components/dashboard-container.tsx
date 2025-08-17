@@ -7,9 +7,6 @@ import { ProjectLockedAlert } from '@/features/billing/components/project-locked
 import { TaskLimitAlert } from '@/features/billing/components/task-limit-alert';
 import { WelcomeTrialDialog } from '@/features/billing/components/trial-dialog';
 import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
-import {
-  useShowPlatformAdminDashboard,
-} from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
@@ -30,6 +27,7 @@ export const CloseTaskLimitAlertContext = createContext({
 });
 
 export function DashboardContainer({ children, hidePadding = false }: DashboardContainerProps) {
+
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);

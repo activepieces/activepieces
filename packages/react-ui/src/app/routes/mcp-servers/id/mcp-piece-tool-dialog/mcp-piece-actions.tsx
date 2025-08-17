@@ -7,7 +7,7 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import { isNil } from '@activepieces/shared';
 
-import { ConnectionDropdown } from './connection-dropdown';
+import { ConnectionDropdown } from '../../../../connections/connection-dropdown';
 
 import { ActionInfo } from '.';
 

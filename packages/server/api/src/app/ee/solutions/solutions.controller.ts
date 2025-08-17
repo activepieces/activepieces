@@ -1,4 +1,4 @@
-import { ExportRequestBody, PrincipalType, Solution } from '@activepieces/shared'
+import { ExportSolutionRequestBody, ImportSolutionRequestBody, PrincipalType, Solution } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { solutionService } from './solution.service'
@@ -15,9 +15,11 @@ export const solutionsController: FastifyPluginAsyncTypebox = async (fastify) =>
 
     fastify.post('/import', ImportRequest, async (request) => {
         return solutionService(fastify.log).import({
-            solution: request.body as Solution,
+            solution: request.body.solution,
             projectId: request.principal.projectId,
             platformId: request.principal.platform.id,
+            connectionsMap: request.body.connectionsMap,
+            userId: request.principal.id,
         })
     })
 }
@@ -28,7 +30,7 @@ const ExportRequest = {
         allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
-        body: ExportRequestBody,
+        body: ExportSolutionRequestBody,
         response: {
             [StatusCodes.CREATED]: Solution,
         },
@@ -40,6 +42,6 @@ const ImportRequest = {
         allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
-        body: Solution,
+        body: ImportSolutionRequestBody,
     },
 }

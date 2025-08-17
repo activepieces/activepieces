@@ -1,0 +1,13 @@
+{
+  "thumbnail": "https://cdn.activepieces.com/quicknew/agents/robots/robot_2412.png",
+  "name": "Customer Support Automation",
+  "greeting": "Hi! I can help you resolve customer inquiries automatically.",
+  "location": "Data Center Alpha",
+  "description": "Revolutionize your customer service with intelligent automation that provides 24/7 support while reducing response times and improving customer satisfaction.\n\n## Key Features\n\n### 🤖 **AI-Powered Ticket Routing**\n- Automatically categorize and prioritize incoming tickets\n- Route requests to the most qualified team members\n- Escalate urgent issues based on predefined criteria\n- Maintain SLA compliance with automated tracking\n\n### 💬 **Intelligent Chatbot Integration**\n- Deploy smart chatbots for instant first-line support\n- Handle common queries with natural language processing\n- Seamlessly transfer complex issues to human agents\n- Learn from interactions to improve responses over time\n\n### 📧 **Automated Response Management**\n- Send personalized acknowledgment emails instantly\n- Provide status updates throughout the resolution process\n- Generate follow-up surveys for feedback collection\n- Create knowledge base articles from resolved tickets\n\n### 📊 **Performance Analytics & Reporting**\n- Track response times and resolution rates\n- Monitor customer satisfaction scores\n- Identify trending issues and bottlenecks\n- Generate comprehensive performance reports\n\n## Benefits\n\n- **Reduce response time by 90%** with instant automated replies\n- **Increase customer satisfaction** with consistent, quality support\n- **Lower operational costs** by automating routine tasks\n- **Scale support operations** without proportional staff increases\n- **Improve agent productivity** by handling repetitive queries\n\n## Perfect For\n\n- E-commerce businesses\n- SaaS companies\n- Service-based organizations\n- Growing startups\n- Any business with high support volume\n\nTransform your customer support from reactive to proactive with intelligent automation!",
+  "state": {
+    "connections": [],
+    "tables": [],
+    "agents": [],
+    "flows": []
+  }
+} 
