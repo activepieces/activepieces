@@ -1,5 +1,5 @@
 import { aiProps } from '@activepieces/pieces-common';
-import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, createAIProvider } from '@activepieces/shared';
+import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, createAIProvider, createWebSearchTool } from '@activepieces/shared';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { LanguageModelV2 } from '@ai-sdk/provider';
 import { ModelMessage, generateText } from 'ai';
@@ -31,6 +31,14 @@ export const askAI = createAction({
       required: false,
       defaultValue: 2000,
     }),
+    webSearch: aiProps({ modelType: 'language' }).webSearch,
+    webSearchOptions: aiProps({ modelType: 'language' }).webSearchOptions,
+    includeSources: Property.Checkbox({
+      displayName: 'Include Sources',
+      description: 'Whether to include the sources in the response. Useful for getting web search details (e.g. search queries, searched URLs, etc).',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run(context) {
     const providerName = context.propsValue.provider as string;
@@ -52,6 +60,7 @@ export const askAI = createAction({
       metadata: {
         feature: AIUsageFeature.TEXT_AI,
       },
+      openaiResponsesModel: true,
     });
 
     const conversationKey = context.propsValue.conversationKey
@@ -77,13 +86,9 @@ export const askAI = createAction({
           content: context.propsValue.prompt,
         },
       ],
-      maxOutputTokens: providerName !== 'openai' ? context.propsValue.maxOutputTokens : undefined,
+      maxOutputTokens: context.propsValue.maxOutputTokens,
       temperature: (context.propsValue.creativity ?? 100) / 100,
-      providerOptions: {
-        [providerName]: {
-          ...(providerName === 'openai' && context.propsValue.maxOutputTokens ? { max_completion_tokens: context.propsValue.maxOutputTokens } : {}),
-        }
-      }
+      tools: context.propsValue.webSearch ? createWebSearchTool(providerName, context.propsValue.webSearchOptions) : undefined,
     });
 
     conversation?.push({
@@ -100,6 +105,6 @@ export const askAI = createAction({
       await storage.put(conversationKey, conversation);
     }
 
-    return response.text ?? '';
+    return context.propsValue.includeSources ? { text: response.text, sources: response.sources } : response.text;
   },
 });
