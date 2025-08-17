@@ -375,4 +375,3 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             }".`
     }
 }
-
