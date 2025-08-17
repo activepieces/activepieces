@@ -8,7 +8,6 @@ import {
   ContextMenuItem,
 } from '@/components/ui/context-menu';
 import {
-  ActionType,
   FlowOperationType,
   flowStructureUtil,
   StepLocationRelativeToParent,
