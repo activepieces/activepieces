@@ -350,7 +350,7 @@ export const FlowOperationRequest = Type.Union([
             type: Type.Literal(FlowOperationType.SAVE_SAMPLE_DATA),
             request: SaveSampleDataRequest,
         },
-    )
+    ),
 ])
 
 export type FlowOperationRequest = Static<typeof FlowOperationRequest>
