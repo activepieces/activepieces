@@ -29,6 +29,7 @@ const buttonVariants = cva(
         transparent: 'text-primary enabled:hover:bg-transparent',
         'outline-primary':
           'text-primary font-medium enabled:hover:bg-primary/10 enabled:hover:border-primary enabled:hover:font-semibold',
+        orange: 'text-background dark:text-white bg-gradient-to-r from-orange-500 to-amber-500   hover:from-orange-600 hover:to-amber-600 '
       },
       size: {
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',

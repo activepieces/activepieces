@@ -1337,5 +1337,6 @@
   "License activated successfully!": "Lizenz erfolgreich aktiviert!",
   "Activation failed, invalid license key": "Aktivierung fehlgeschlagen, ungültiger Lizenzschlüssel",
   "Invalid Access": "Ungültiger Zugriff",
-  "Either the project does not exist or you do not have access to it.": "Entweder existiert das Projekt nicht oder Sie haben keinen Zugriff darauf."
+  "Either the project does not exist or you do not have access to it.": "Entweder existiert das Projekt nicht oder Sie haben keinen Zugriff darauf.",
+  "automationsWaitingForApprovalNote": "Sie haben {count} Automatisierungen, die auf Ihre Genehmigung warten."
 }

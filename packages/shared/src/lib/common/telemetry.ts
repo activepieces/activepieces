@@ -44,7 +44,7 @@ export type ClickedTutorialTelemetryParams = {
     | 'agents'
     | 'todos'
     | 'gettingStarted'
-    location: 'tutorials-sidebar-item' | 'table-title' | 'small-button-inside-sidebar-item'
+    location: 'tutorials-sidebar-item' | 'table-title' | 'small-button-inside-sidebar-item' | 'home'
 }
 type QuotaAlert = {
     percentageUsed: number

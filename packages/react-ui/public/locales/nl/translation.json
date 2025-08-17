@@ -1337,5 +1337,6 @@
   "License activated successfully!": "Licentie succesvol geactiveerd!",
   "Activation failed, invalid license key": "Activering mislukt, ongeldige licentiesleutel",
   "Invalid Access": "Ongeldige toegang",
-  "Either the project does not exist or you do not have access to it.": "Het project bestaat niet of je hebt er geen toegang toe."
+  "Either the project does not exist or you do not have access to it.": "Het project bestaat niet of je hebt er geen toegang toe.",
+  "automationsWaitingForApprovalNote": "Je hebt {count} automatiseringen die wachten op je goedkeuring."
 }

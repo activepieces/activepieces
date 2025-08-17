@@ -1337,5 +1337,6 @@
   "License activated successfully!": "ライセンスが正常にアクティベートされました！",
   "Activation failed, invalid license key": "アクティベーションに失敗しました。無効なライセンスキーです。",
   "Invalid Access": "不正なアクセス",
-  "Either the project does not exist or you do not have access to it.": "プロジェクトが存在しないか、アクセスできません。"
+  "Either the project does not exist or you do not have access to it.": "プロジェクトが存在しないか、アクセスできません。",
+  "automationsWaitingForApprovalNote": "あなたの承認待ちの自動化が {count} 件あります。"
 }

@@ -1337,5 +1337,6 @@
   "License activated successfully!": "",
   "Activation failed, invalid license key": "",
   "Invalid Access": "",
-  "Either the project does not exist or you do not have access to it.": ""
+  "Either the project does not exist or you do not have access to it.": "",
+  "automationsWaitingForApprovalNote": "您有 {count} 個自動化等待您的批准。"
 }
