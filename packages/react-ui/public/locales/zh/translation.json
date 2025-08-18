@@ -226,7 +226,7 @@
   "Use Mock Data": "使用模拟数据",
   "Test Tool": "测试工具",
   "Load Sample Data": "加载示例数据",
-  "testPieceWebhookTriggerNote": "Please go to {pieceName} and trigger {triggerName}.",
+  "testPieceWebhookTriggerNote": "请到 {pieceName} 并触发 {triggerName}。",
   "Send Data to the webhook URL to generate sample data to use in the next steps": "发送数据到 webhook URL 来生成样本数据以供下一步使用",
   "Testing Trigger": "测试触发器",
   "Action Required": "需要操作",

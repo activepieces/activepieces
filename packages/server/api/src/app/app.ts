@@ -158,28 +158,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     await app.register(rateLimitModule)
 
-    await app.register(fastifySocketIO, {
-        cors: {
-            origin: '*',
-        },
-        ...spreadIfDefined('adapter', await getAdapter()),
-        transports: ['websocket'],
-    })
-
-    app.io.use((socket: Socket, next: (err?: Error) => void) => {
-        websocketService
-            .verifyPrincipal(socket)
-            .then(() => {
-                next()
-            })
-            .catch(() => {
-                next(new Error('Authentication error'))
-            })
-    })
-
-    app.io.on('connection', (socket: Socket) => {
-        rejectedPromiseHandler(websocketService.init(socket, app.log), app.log)
-    })
 
     app.addHook('onResponse', async (request, reply) => {
         // eslint-disable-next-line
@@ -261,6 +239,22 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             }
         },
     )
+    await app.register(fastifySocketIO, {
+        cors: {
+            origin: '*',
+        },
+        ...spreadIfDefined('adapter', await getAdapter()),
+        transports: ['websocket'],
+    })
+    app.io.use((socket: Socket, next: (err?: Error) => void) => {
+        websocketService
+            .verifyPrincipal(socket)
+            .then(() => next())
+            .catch(() => next(new Error('Authentication error')))
+    })
+
+    app.io.on('connection', (socket: Socket) => rejectedPromiseHandler(websocketService.init(socket, app.log), app.log))
+    app.io.on('disconnect', (socket: Socket) => rejectedPromiseHandler(websocketService.onDisconnect(socket), app.log))
 
     await validateEnvPropsOnStartup(app.log)
 
