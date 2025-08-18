@@ -23,6 +23,7 @@ import { FolderEntity } from '../../../flows/folder/folder.entity'
 import { projectService } from '../../../project/project-service'
 import { requestUtils } from '../../request/request-utils'
 import { BaseSecurityHandler } from '../security-handler'
+import { FlowRunEntity } from '../../../flows/flow-run/flow-run-entity'
 
 export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
     private static readonly HEADER_NAME = 'authorization'
@@ -180,6 +181,8 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             return undefined
         }
         switch (resource) {
+            case 'flow-runs':
+                return FlowRunEntity.options.name
             case 'flows':
                 return FlowEntity.options.name
             case 'app-connections':
