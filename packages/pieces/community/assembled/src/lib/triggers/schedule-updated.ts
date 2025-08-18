@@ -17,7 +17,7 @@ export const scheduleUpdated = createTrigger({
   async onEnable(context) {
     await context.store.put('lastScheduleCheck', new Date().toISOString());
   },
-  async onDisable(context) {
+  async onDisable() {
     // Cleanup if needed
   },
   async run(context) {

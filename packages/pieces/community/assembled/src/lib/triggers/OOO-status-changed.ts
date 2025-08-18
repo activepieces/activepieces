@@ -18,8 +18,8 @@ export const timeOffStatusChanged = createTrigger({
   async onEnable(context) {
     await context.store.put('lastStatusCheck', new Date().toISOString());
   },
-  async onDisable(context) {
-
+  async onDisable() {
+    // No cleanup needed
   },
   async run(context) {
     const lastCheck = await context.store.get('lastStatusCheck') || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();

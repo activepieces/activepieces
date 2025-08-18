@@ -7,7 +7,7 @@ export const assembledCommon = {
     auth: string, 
     method: HttpMethod, 
     endpoint: string, 
-    body?: any,
+    body?: unknown,
     headers?: Record<string, string>
   ) {
     const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint}`;
@@ -34,7 +34,7 @@ export const assembledCommon = {
 
   makeClient(auth: string) {
     return {
-      rawRequest: async (query: string, variables?: any) => {
+      rawRequest: async (query: string, variables?: Record<string, unknown>) => {
         const response = await this.makeRequest(
           auth,
           HttpMethod.POST,

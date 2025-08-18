@@ -1,6 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { assembledCommon } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { assembledAuth } from '../..';
 
 export const customGraphql = createAction({
