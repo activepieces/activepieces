@@ -190,6 +190,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         'application/xml',                    // XML responses
         'text/plain',                         // Plain text responses
         'text/html',                          // HTML responses
+        'text/json',                          // JSON responses
         'application/x-www-form-urlencoded',  // Form submissions
       ];
 
