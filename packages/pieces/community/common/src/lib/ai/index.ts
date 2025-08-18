@@ -212,7 +212,7 @@ export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCal
                     displayName: 'Max Web Search Uses',
                     required: false,
                     defaultValue: 5,
-                    description: 'Maximum number of searches to use.',
+                    description: 'Maximum number of searches to use. Default is 5.',
                 }),
             };
 

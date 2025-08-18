@@ -99,14 +99,16 @@ export function createAIProvider<T extends LanguageModelV2 | ImageModel>({
 }
 
 export function createWebSearchTool(provider: string, options: WebSearchOptions = {}): Record<string, Tool> {
+    const defaultMaxUses = 5
+
     switch (provider) {
         case 'anthropic': {
             const anthropicOptions = options as AnthropicWebSearchOptions
             const anthropicProvider = createAnthropic({})
 
-            const toolOptions: Record<string, unknown> = {}
-
-            toolOptions['maxUses'] = anthropicOptions.maxUses
+            const toolOptions: Record<string, unknown> = {
+                maxUses: anthropicOptions.maxUses ?? defaultMaxUses,
+            }
 
             if (anthropicOptions.allowedDomains && anthropicOptions.allowedDomains.length > 0) {
                 toolOptions['allowedDomains'] = anthropicOptions.allowedDomains.map(({ domain }) => domain)
@@ -130,9 +132,9 @@ export function createWebSearchTool(provider: string, options: WebSearchOptions 
             const openaiOptions = options as OpenAIWebSearchOptions
             const openaiProvider = createOpenAI({})
 
-            const toolOptions: Record<string, unknown> = {}
-
-            toolOptions['maxUses'] = openaiOptions.maxUses
+            const toolOptions: Record<string, unknown> = {
+                maxUses: openaiOptions.maxUses ?? defaultMaxUses,
+            }
 
             if (openaiOptions.searchContextSize) {
                 toolOptions['search_context_size'] = openaiOptions.searchContextSize
@@ -152,9 +154,9 @@ export function createWebSearchTool(provider: string, options: WebSearchOptions 
             const googleOptions = options as GoogleWebSearchOptions
             const googleProvider = createGoogleGenerativeAI({})
 
-            const toolOptions: Record<string, unknown> = {}
-
-            toolOptions['maxUses'] = googleOptions.maxUses
+            const toolOptions: Record<string, unknown> = {
+                maxUses: googleOptions.maxUses ?? defaultMaxUses,
+            }
 
             return {
                 google_search: googleProvider.tools.googleSearch(toolOptions),
