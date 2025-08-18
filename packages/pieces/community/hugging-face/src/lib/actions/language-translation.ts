@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { InferenceClient } from "@huggingface/inference";
 
 
 export const languageTranslation = createAction({
@@ -21,18 +21,18 @@ export const languageTranslation = createAction({
     source_language: Property.ShortText({
       displayName: "Source Language",
       description: "Source language code (e.g., 'en' for English)",
-      required: false
+      required: true
     }),
     target_language: Property.ShortText({
       displayName: "Target Language", 
       description: "Target language code (e.g., 'de' for German)",
-      required: false
+      required: true
     }),
     use_cache: Property.Checkbox({
       displayName: "Use Cache",
       description: "Use cached results if available",
       required: false,
-      defaultValue: true
+      defaultValue: false
     }),
     wait_for_model: Property.Checkbox({
       displayName: "Wait for Model",
@@ -44,26 +44,22 @@ export const languageTranslation = createAction({
   async run(context) {
     const { model, text, source_language, target_language, use_cache, wait_for_model } = context.propsValue;
     
-    const inputs = {
-      inputs: text,
-      parameters: {
-        ...(source_language && { src_lang: source_language }),
-        ...(target_language && { tgt_lang: target_language })
-      }
-    };
+    const hf = new InferenceClient(context.auth as string);
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api-inference.huggingface.co/models/${model}`,
-      headers: {
-        'Authorization': `Bearer ${context.auth}`,
-        'Content-Type': 'application/json',
-        'X-Use-Cache': use_cache ? 'true' : 'false',
-        'X-Wait-For-Model': wait_for_model ? 'true' : 'false'
-      },
-      body: inputs
-    });
+        const translationResult = await hf.translation({
+            model: model,
+            inputs: text,
+            parameters: {
+                src_lang: source_language,
+                tgt_lang: target_language
+            },
+            options: {
+                use_cache: use_cache ?? false,
+                wait_for_model: wait_for_model ?? false
+            }
+        });
 
-    return response.body;
+        return translationResult;
+
   }
 });

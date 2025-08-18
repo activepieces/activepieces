@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { InferenceClient } from "@huggingface/inference";
 
 export const documentQuestionAnswering = createAction({
   name: "document_question_answering",
@@ -50,28 +50,26 @@ export const documentQuestionAnswering = createAction({
   },
   async run(context) {
     const { model, context: textContext, question, top_k, use_cache, wait_for_model } = context.propsValue;
+    const hf = new InferenceClient(context.auth as string);
 
-    const payload = {
+    const result = await hf.questionAnswering({
+      model: model,
       inputs: {
+        question: question,
         context: textContext,
-        question: question
       },
       parameters: {
-        top_k: top_k
-      }
-    };
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api-inference.huggingface.co/models/${model}`,
-      headers: {
-        'Authorization': `Bearer ${context.auth}`,
-        'Content-Type': 'application/json',
-        'X-Use-Cache': use_cache ? 'true' : 'false',
-        'X-Wait-For-Model': wait_for_model ? 'true' : 'false'
+        top_k: top_k,
       },
-      body: payload
-    })
-    return response.body;
+      options: {
+        use_cache: use_cache ?? true,
+        wait_for_model: wait_for_model ?? false,
+      }
+    });
+
+
+    return {
+      result
+    };
   }
 });

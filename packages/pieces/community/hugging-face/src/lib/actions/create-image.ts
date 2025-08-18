@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { InferenceClient } from "@huggingface/inference";
 
 export const createImage = createAction({
   name: "create_image",
@@ -68,38 +68,37 @@ export const createImage = createAction({
     })
   },
   async run(context) {
-    const { 
-      model, prompt, negative_prompt, guidance_scale, 
-      num_inference_steps, width, height, use_cache, wait_for_model 
+    const {
+      model, prompt, negative_prompt, guidance_scale,
+      num_inference_steps, width, height, use_cache, wait_for_model
     } = context.propsValue;
-    
-    const inputs = {
+    const hf = new InferenceClient(context.auth as string);
+
+    const apiResponse: any = await hf.textToImage({
+      model,
       inputs: prompt,
       parameters: {
         negative_prompt,
         guidance_scale,
         num_inference_steps,
         width,
-        height
-      }
-    };
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api-inference.huggingface.co/models/${model}`,
-      headers: {
-        'Authorization': `Bearer ${context.auth}`,
-        'Content-Type': 'application/json',
-        'X-Use-Cache': use_cache ? 'true' : 'false',
-        'X-Wait-For-Model': wait_for_model ? 'true' : 'false'
+        height,
       },
-      body: inputs
+      options: {
+        use_cache: use_cache ?? true,
+        wait_for_model: wait_for_model ?? false
+      }
     });
 
-    return {
-      image: response.body,
-      format: 'image/png',
-      base64: Buffer.from(response.body).toString('base64')
-    };
+    if (apiResponse instanceof Blob) {
+      const imageBuffer = Buffer.from(await apiResponse.arrayBuffer());
+
+      return {
+        image: imageBuffer.toString('base64'),
+        format: 'image/png',  
+      }
+    } else {
+      throw new Error(`Hugging Face API did not return an image. Response: ${JSON.stringify(apiResponse)}`);
+    }
   }
 });

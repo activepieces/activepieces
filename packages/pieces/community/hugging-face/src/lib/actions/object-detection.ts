@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { InferenceClient, ObjectDetectionArgs } from "@huggingface/inference";
 
 export const objectDetection = createAction({
   name: "object_detection",
@@ -38,49 +38,46 @@ export const objectDetection = createAction({
   },
   async run(context) {
     const { model, image, threshold, use_cache, wait_for_model } = context.propsValue;
-
-    const getImageContentType = (filename:any) => {
-      const ext = filename?.toLowerCase().split('.').pop();
-      switch (ext) {
+    const getMimeType = (filename: string): string => {
+    const extension = filename.split('.').pop()?.toLowerCase() ?? '';
+    switch (extension) {
         case 'jpg':
         case 'jpeg':
-          return 'image/jpeg';
+            return 'image/jpeg';
         case 'png':
-          return 'image/png';
+            return 'image/png';
         case 'gif':
-          return 'image/gif';
+            return 'image/gif';
         case 'webp':
-          return 'image/webp';
-        case 'tiff':
-        case 'tif':
-          return 'image/tiff';
-        case 'bmp':
-          return 'image/bmp';
+            return 'image/webp';
         default:
-          return 'image/jpeg'; 
+            return 'application/octet-stream';
+    }
+};
+
+
+    const hf = new InferenceClient(context.auth as string);
+    const mimeType = getMimeType(image.filename);
+
+    const imageBlob = new Blob([new Uint8Array(image.data)], {type: mimeType});
+
+    const args: ObjectDetectionArgs = {
+      model: model,
+      inputs: imageBlob,
+      options: {
+        use_cache: use_cache ?? true,
+        wait_for_model: wait_for_model ?? false,
       }
     };
-
-    const formData = new FormData();
-    const uint8Array = new Uint8Array(image.data);
-    const imageBlob = new Blob([uint8Array], { type: 'application/octet-stream' });
-    formData.append('inputs', imageBlob, image.filename || 'image.jpg');
-    if (threshold !== undefined) {
-      formData.append('parameters', JSON.stringify({ threshold }));
+    if (threshold) {
+      args.parameters = {
+        threshold: threshold,
+      };
     }
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api-inference.huggingface.co/models/${model}`,
-      headers: {
-        'Authorization': `Bearer ${context.auth}`,
-        'X-Use-Cache': use_cache ? 'true' : 'false',
-        'X-Wait-For-Model': wait_for_model ? 'true' : 'false',
-        'Content-Type': getImageContentType(image.filename) || 'application/octet-stream',
-      },
-      body: uint8Array.buffer
-    });
+    const detectedObjects = await hf.objectDetection(args);
 
-    return response.body;
+
+    return detectedObjects;
   }
 });

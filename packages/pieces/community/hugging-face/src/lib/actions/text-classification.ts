@@ -1,5 +1,5 @@
 import { createAction, Property} from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { InferenceClient, TextClassificationArgs } from "@huggingface/inference";
 
 export const textClassification = createAction({
   name: "text_classification",
@@ -45,25 +45,22 @@ export const textClassification = createAction({
   async run(context) {
     const { model, text, top_k, use_cache, wait_for_model } = context.propsValue;
     
-    const inputs = {
-      inputs: text,
-      parameters: {
-        top_k
-      }
-    };
+    const hf = new InferenceClient(context.auth as string);
+        const args: TextClassificationArgs = {
+            model: model,
+            inputs: text,
+            options: {
+                use_cache: use_cache ?? true,
+                wait_for_model: wait_for_model ?? false
+            }
+        };
+        if (top_k) {
+            args.parameters = {
+                top_k: top_k
+            };
+        }
+        const classificationResult = await hf.textClassification(args);
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api-inference.huggingface.co/models/${model}`,
-      headers: {
-        'Authorization': `Bearer ${context.auth}`,
-        'Content-Type': 'application/json',
-        'X-Use-Cache': use_cache ? 'true' : 'false',
-        'X-Wait-For-Model': wait_for_model ? 'true' : 'false'
-      },
-      body: inputs
-    });
-
-    return response.body;
+        return classificationResult;
   }
 });

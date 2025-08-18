@@ -1,7 +1,6 @@
-
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../../index';
+import { InferenceClient} from "@huggingface/inference";
 
 export const chatCompletion = createAction({
   name: 'chat_completion',
@@ -61,25 +60,18 @@ export const chatCompletion = createAction({
   async run(context) {
     const { model, messages, maxTokens, temperature, topP, stream } = context.propsValue;
 
-    const requestBody = {
-      model,
-      messages,
-      max_tokens: maxTokens,
-      temperature,
-      top_p: topP,
-      stream,
-    };
+     const hf = new InferenceClient(context.auth);
+        type ChatArgs = Parameters<typeof hf.chatCompletion>[0];
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://router.huggingface.co/v1/chat/completions',
-      headers: {
-        'Authorization': `Bearer ${context.auth}`,
-        'Content-Type': 'application/json',
-      },
-      body: requestBody,
-    });
+        const chatResult = await hf.chatCompletion({
+            model: model,
+            messages: messages as ChatArgs["messages"],
+            max_tokens: maxTokens,
+            temperature: temperature,
+            top_p: topP,
+            stream: stream,
+        });
 
-    return response.body;
+        return chatResult;
   },
 });

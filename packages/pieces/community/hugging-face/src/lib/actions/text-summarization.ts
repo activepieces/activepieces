@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { InferenceClient } from "@huggingface/inference";
 
 export const textSummarization = createAction({
   name: "text_summarization",
@@ -57,27 +57,21 @@ export const textSummarization = createAction({
   async run(context) {
     const { model, text, max_length, min_length, do_sample, use_cache, wait_for_model } = context.propsValue;
     
-    const inputs = {
-      inputs: text,
-      parameters: {
-        max_length,
-        min_length,
-        do_sample
-      }
-    };
+    const hf = new InferenceClient(context.auth as string);
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api-inference.huggingface.co/models/${model}`,
-      headers: {
-        'Authorization': `Bearer ${context.auth}`,
-        'Content-Type': 'application/json',
-        'X-Use-Cache': use_cache ? 'true' : 'false',
-        'X-Wait-For-Model': wait_for_model ? 'true' : 'false'
-      },
-      body: inputs
-    });
-
-    return response.body;
+        const summarizationResult = await hf.summarization({
+            model: model,
+            inputs: text,
+            parameters: {
+                max_length: max_length,
+                min_length: min_length,
+                do_sample: do_sample
+            },
+            options: {
+                use_cache: use_cache ?? true,
+                wait_for_model: wait_for_model ?? false
+            }
+        });
+        return summarizationResult;
   }
 });
