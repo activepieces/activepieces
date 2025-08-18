@@ -54,7 +54,6 @@ export const Agent = Type.Object({
     description: Type.String(),
     systemPrompt: Type.String(),
     profilePictureUrl: Type.String(),
-    testPrompt: Type.Optional(Type.String()),
     projectId: Type.String(),
     maxSteps: Type.Number(),
     mcpId: Type.String(),

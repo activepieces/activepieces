@@ -19,7 +19,6 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
-import { agentsService } from '../../agents/agents-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { tableAutomationService } from '../../ee/tables/table-automation-service'

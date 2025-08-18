@@ -47,7 +47,7 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', UpdateAgentRequest, async (request) => {
         const { id } = request.params
-        const { displayName, systemPrompt, description, testPrompt, outputType, outputFields, settings, generateNewProfilePicture } = request.body
+        const { displayName, systemPrompt, description, outputType, outputFields, settings, generateNewProfilePicture } = request.body
         return agentsService(request.log).update({
             id,
             displayName,
