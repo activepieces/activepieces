@@ -73,7 +73,9 @@ export function McpPieceDialog({
     return (
       metadata?.filter(
         (m): m is PieceStepMetadataWithSuggestions =>
-          'suggestedActions' in m && 'suggestedTriggers' in m && !piecesToolsToHide?.includes(m.pieceName),
+          'suggestedActions' in m &&
+          'suggestedTriggers' in m &&
+          !piecesToolsToHide?.includes(m.pieceName),
       ) ?? []
     );
   }, [metadata]);

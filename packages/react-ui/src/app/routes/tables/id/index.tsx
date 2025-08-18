@@ -80,9 +80,9 @@ const ApTableEditorPage = () => {
       agentRunId: null,
       values: [],
     };
-    
+
     createTemporaryRecord(tempRecord);
-    
+
     requestAnimationFrame(() => {
       gridRef.current?.scrollToCell({
         rowIdx: records.length,
@@ -99,17 +99,18 @@ const ApTableEditorPage = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (!selectedCell) return;
-      
+
       const target = event.target as HTMLElement;
       const addRecordButtonId = 'table-add-record-button';
-      const isClickInsideAddRecordButton = target.closest(`#${addRecordButtonId}`);
+      const isClickInsideAddRecordButton = target.closest(
+        `#${addRecordButtonId}`,
+      );
 
-      if (isClickInsideAddRecordButton) 
-        return;
-      
+      if (isClickInsideAddRecordButton) return;
+
       const cellId = `editable-cell-${selectedCell.rowIdx}-${selectedCell.columnIdx}`;
       const isClickInside = target.closest(`#${cellId}`);
-      
+
       if (!isClickInside) {
         setSelectedCell(null);
       }

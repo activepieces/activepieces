@@ -50,12 +50,12 @@ async function buildInternalTools<T extends AgentJobSource>(params: AgentToolsPa
                         FieldType.DATE,
                     ]),
                     data: z.object({
-                        options: z.array(z.object({ value: z.string() }))
+                        options: z.array(z.object({ value: z.string() })),
                     }).optional(),
                 }),
                 execute: async (column) => {
                     if (column.type === FieldType.STATIC_DROPDOWN && !column.data?.options?.length) {
-                        throw new Error('data.options is required for STATIC_DROPDOWN type');
+                        throw new Error('data.options is required for STATIC_DROPDOWN type')
                     }
                     
                     if (column.type === FieldType.STATIC_DROPDOWN) {
@@ -64,14 +64,14 @@ async function buildInternalTools<T extends AgentJobSource>(params: AgentToolsPa
                             type: FieldType.STATIC_DROPDOWN,
                             data: column.data!,
                             tableId: params.metadata!.tableId,
-                        });
+                        })
                     }
                     
                     return tablesApiService(params.token).createColumn({
                         name: column.name,
                         type: column.type,
                         tableId: params.metadata!.tableId,
-                    });
+                    })
                 },
             }),
             [agentbuiltInToolsNames.markAsComplete]: tool({

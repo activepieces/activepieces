@@ -67,7 +67,11 @@ export type TableState = {
     recordId: string;
   } | null;
   setSelectedCell: (
-    selectedCell: { rowIdx: number; columnIdx: number; recordId: string } | null,
+    selectedCell: {
+      rowIdx: number;
+      columnIdx: number;
+      recordId: string;
+    } | null,
   ) => void;
   selectedAgentRunId: string | null;
   setSelectedAgentRunId: (agentRunId: string | null) => void;
@@ -137,20 +141,29 @@ export const createApTableStore = (
           };
         }),
       setSelectedCell: (
-        selectedCell: { rowIdx: number; columnIdx: number; recordId: string } | null,
+        selectedCell: {
+          rowIdx: number;
+          columnIdx: number;
+          recordId: string;
+        } | null,
       ) => {
         const state = get();
         const previousRowIdx = state.selectedCell?.rowIdx;
         const previousRecordId = state.selectedCell?.recordId;
 
-        const hasRowChanged = !isNil(previousRowIdx) && previousRowIdx !== selectedCell?.rowIdx;
-        
+        const hasRowChanged =
+          !isNil(previousRowIdx) && previousRowIdx !== selectedCell?.rowIdx;
+
         if (hasRowChanged) {
-          const previousRecord = state.records.find(r => r.uuid === previousRecordId);
+          const previousRecord = state.records.find(
+            (r) => r.uuid === previousRecordId,
+          );
           if (previousRecord?.isTemporary) {
             setTimeout(() => {
               const currentState = get();
-              const recordIndex = currentState.records.findIndex(r => r.uuid === previousRecordId);
+              const recordIndex = currentState.records.findIndex(
+                (r) => r.uuid === previousRecordId,
+              );
               if (recordIndex === -1) return;
 
               const record = currentState.records[recordIndex];
@@ -158,10 +171,10 @@ export const createApTableStore = (
 
               const permanentRecord = { ...record, isTemporary: false };
               serverState.createRecord(permanentRecord);
-              
+
               set((state) => ({
                 records: state.records.map((r, index) =>
-                  index === recordIndex ? permanentRecord : r
+                  index === recordIndex ? permanentRecord : r,
                 ),
               }));
             }, 0);

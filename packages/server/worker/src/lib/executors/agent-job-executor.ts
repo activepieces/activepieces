@@ -1,7 +1,7 @@
 import { AgentJobData, AgentJobSource } from '@activepieces/server-shared'
 import { agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, AIUsageFeature, assertNotNullOrUndefined, ContentBlockType, createAIProvider, Field, isNil, McpToolType, McpWithTools, PopulatedAgent, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
-import { APICallError, generateObject, streamText, stepCountIs } from 'ai'
+import { APICallError, generateObject, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { agentsApiService, tablesApiService } from '../api/server-api.service'
@@ -225,7 +225,8 @@ function parseInputStreamText(input: unknown) {
     if (typeof input === 'string') {
         try {
             return JSON.parse(input)
-        } catch {
+        }
+        catch {
             return input
         }
     }

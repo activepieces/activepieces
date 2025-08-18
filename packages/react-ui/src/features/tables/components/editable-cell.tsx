@@ -76,7 +76,11 @@ export function EditableCell({
     const isTypingKey = e.key.length === 1 || e.key === 'Enter';
     if (isTypingKey && !disabled && !isEditing) {
       setIsEditing(true);
-      setSelectedCell({ rowIdx, columnIdx: column.idx, recordId: records[rowIdx].uuid });
+      setSelectedCell({
+        rowIdx,
+        columnIdx: column.idx,
+        recordId: records[rowIdx].uuid,
+      });
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         e.stopPropagation();
@@ -133,10 +137,18 @@ export function EditableCell({
       tabIndex={0}
       onClick={() => {
         onClick?.();
-        setSelectedCell({ rowIdx, columnIdx: column.idx, recordId: records[rowIdx].uuid });
+        setSelectedCell({
+          rowIdx,
+          columnIdx: column.idx,
+          recordId: records[rowIdx].uuid,
+        });
       }}
       onFocus={() => {
-        setSelectedCell({ rowIdx, columnIdx: column.idx, recordId: records[rowIdx].uuid });
+        setSelectedCell({
+          rowIdx,
+          columnIdx: column.idx,
+          recordId: records[rowIdx].uuid,
+        });
       }}
       onDoubleClick={() => {
         if (!disabled) {

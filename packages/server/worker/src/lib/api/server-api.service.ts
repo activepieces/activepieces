@@ -193,7 +193,7 @@ export const tablesApiService = (workerToken: string) => {
             return client.post<Record>(`/v1/records/${recordId}`, { ...record, agentUpdate: true })
         },
         async createColumn(column: CreateFieldRequest): Promise<Field> {
-            return client.post<Field>(`/v1/fields`, column)
+            return client.post<Field>('/v1/fields', column)
         },
     }
 }

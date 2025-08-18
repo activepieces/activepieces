@@ -276,49 +276,48 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
             </AccordionTrigger>
             <AccordionContent className="px-0">
               <div className="space-y-2 pt-2">
-                {table.agent?.mcp.tools
-                  .map((tool) => (
-                    <div
-                      key={tool.id}
-                      className="flex items-center gap-3 p-3 bg-muted rounded-sm"
-                    >
-                      <div className="flex items-center gap-2 flex-1">
-                        <div className="w-6 h-6 rounded flex items-center justify-center">
-                          <span className="text-xs font-medium text-black">
-                            {tool.type === McpToolType.PIECE && (
-                              <img
-                                src={tool.pieceMetadata.logoUrl}
-                                alt={tool.pieceMetadata.actionDisplayName}
-                                className="w-6 h-6"
-                              />
-                            )}
-                            {tool.type === McpToolType.FLOW && (
-                              <WorkflowIcon className="w-4 h-4" />
-                            )}
-                          </span>
-                        </div>
-                        <span className="text-sm font-medium">
-                          {tool.type === McpToolType.PIECE
-                            ? tool.pieceMetadata.actionDisplayName
-                            : tool.flow?.version?.displayName}
+                {table.agent?.mcp.tools.map((tool) => (
+                  <div
+                    key={tool.id}
+                    className="flex items-center gap-3 p-3 bg-muted rounded-sm"
+                  >
+                    <div className="flex items-center gap-2 flex-1">
+                      <div className="w-6 h-6 rounded flex items-center justify-center">
+                        <span className="text-xs font-medium text-black">
+                          {tool.type === McpToolType.PIECE && (
+                            <img
+                              src={tool.pieceMetadata.logoUrl}
+                              alt={tool.pieceMetadata.actionDisplayName}
+                              className="w-6 h-6"
+                            />
+                          )}
+                          {tool.type === McpToolType.FLOW && (
+                            <WorkflowIcon className="w-4 h-4" />
+                          )}
                         </span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                        onClick={() => {
-                          updateTools(
-                            table.agent?.mcp.tools?.filter(
-                              (t) => t.id !== tool.id,
-                            ) || [],
-                          );
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      <span className="text-sm font-medium">
+                        {tool.type === McpToolType.PIECE
+                          ? tool.pieceMetadata.actionDisplayName
+                          : tool.flow?.version?.displayName}
+                      </span>
                     </div>
-                  ))}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                      onClick={() => {
+                        updateTools(
+                          table.agent?.mcp.tools?.filter(
+                            (t) => t.id !== tool.id,
+                          ) || [],
+                        );
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
                 <McpPieceDialog
                   open={showAddPieceDialog}
                   mcp={table.agent.mcp}
