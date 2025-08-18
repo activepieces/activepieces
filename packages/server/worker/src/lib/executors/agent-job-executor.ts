@@ -1,7 +1,7 @@
 import { AgentJobData, AgentJobSource } from '@activepieces/server-shared'
 import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, AIUsageFeature, assertNotNullOrUndefined, ContentBlockType, createAIProvider, Field, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
-import { APICallError, streamText } from 'ai'
+import { APICallError, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentsApiService, tablesApiService } from '../api/server-api.service'
 import { agentTools } from '../utils/agent-tools'
@@ -59,16 +59,16 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                 model,
                 system: systemPrompt,
                 prompt: jobData.prompt,
-                maxSteps: agent.maxSteps,
+                stopWhen: stepCountIs(agent.maxSteps),
                 tools: await agentToolInstance.tools(),
             })
             let currentText = ''
     
             for await (const chunk of fullStream) {
                 if (chunk.type === 'text-delta') {
-                    currentText += chunk.textDelta
+                    currentText += chunk.text
                 }
-                else if (chunk.type === 'tool-call') {
+                else if (chunk.type === 'tool-call') { 
                     if (currentText.length > 0) {
                         agentResult.steps.push({
                             type: ContentBlockType.MARKDOWN,
@@ -81,7 +81,7 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                         toolCallId: chunk.toolCallId,
                         type: ContentBlockType.TOOL_CALL,
                         status: ToolCallStatus.IN_PROGRESS,
-                        input: chunk.args as Record<string, unknown>,
+                        input: chunk.input as Record<string, unknown>,
                         output: undefined,
                         startTime: new Date().toISOString(),
                     })
@@ -95,7 +95,7 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                         ...lastBlock,
                         status: ToolCallStatus.COMPLETED,
                         endTime: new Date().toISOString(),
-                        output: chunk.result,
+                        output: chunk.output,
                     }
                 }
                 else if (chunk.type === 'error') {
