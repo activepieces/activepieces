@@ -30,7 +30,7 @@ export const googleCalendarCommon = {
       },
     });
   },
-  eventDropdown: (required: boolean = false) => {
+  eventDropdown: (required = false) => {
     return Property.Dropdown<string>({
       displayName: 'Event',
       refreshers: ['calendar_id'],

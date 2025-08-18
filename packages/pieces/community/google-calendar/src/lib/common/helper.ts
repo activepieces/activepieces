@@ -156,7 +156,7 @@ export async function getLatestEvent(
 export async function getEventsForDropdown(
   authProp: OAuth2PropertyValue,
   calendarId?: string,
-  maxResults: number = 50
+  maxResults = 50
 ): Promise<{ label: string; value: string }[]> {
   if (!calendarId) {
     return [];
