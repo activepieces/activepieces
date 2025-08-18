@@ -4,7 +4,6 @@ import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
   SheetContent,
@@ -291,8 +290,6 @@ const SidebarFooter = React.forwardRef<
 });
 SidebarFooter.displayName = 'SidebarFooter';
 
-
-
 const SidebarContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<'div'>
@@ -401,13 +398,14 @@ const SidebarLink = (props: SidebarMenuButtonProps) => {
       data-active={isActive}
       className={cn(
         `px-3 py-2.5 hover:bg-accent hover:text-accent-foreground 
+        group/link
         peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-sm 
         text-left text-sm outline-none  transition-[width,height,padding] 
         hover:bg-accent  focus-visible:ring-2 
         disabled:pointer-events-none disabled:opacity-50
         group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 
         data-[state=open]:hover:bg-accent  group-data-[collapsible=icon]:!size-4 
-        group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&_svg]:size-[18px] [&_svg]:shrink-0`,
+        group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&_svg]:size-[16px] [&_svg]:shrink-0`,
         {
           'bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary':
             isActive,
@@ -420,15 +418,15 @@ const SidebarLink = (props: SidebarMenuButtonProps) => {
       ) : (
         <div
           className={cn(
-            'flex w-full group/link items-center  gap-1 justify-between rounded-sm transition-colors',
+            'flex w-full  items-center  gap-1 justify-between rounded-sm transition-colors',
             props.extraClasses,
           )}
         >
           <div
             className={`w-full flex items-center justify-between gap-2 relative`}
           >
-            <div className="flex items-center gap-2  w-full">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3  w-full">
+              <div className="flex items-center gap-3">
                 {props.Icon}
                 <span className="text-sm">{props.label}</span>
               </div>
@@ -484,6 +482,7 @@ const SidebarMenuButton = (props: SidebarMenuButtonProps) => {
       to={props.to}
       target={props.newWindow ? '_blank' : ''}
       rel={props.newWindow ? 'noopener noreferrer' : ''}
+      className=""
     >
       <SidebarLink {...props} />
     </Link>

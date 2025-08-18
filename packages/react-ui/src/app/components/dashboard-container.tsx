@@ -93,16 +93,6 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     tutorialTab: 'flows',
   };
 
-  const releasesLink: SidebarItem = {
-    type: 'link',
-    to: authenticationSession.appendProjectRoutePrefix('/releases'),
-    Icon: <Package />,
-    label: t('Releases'),
-    show:
-      project.releasesEnabled && checkAccess(Permission.READ_PROJECT_RELEASE),
-    isSubItem: false,
-  };
-
   const tablesLink: SidebarItem = {
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/tables'),
@@ -145,41 +135,47 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     tutorialTab: 'mcpServers',
   };
 
-  const platformAdminLink: SidebarItem = {
+  const platformAdminLink: SidebarItem[] = showPlatformAdminDashboard
+    ? [
+        {
+          type: 'separator',
+        },
+        {
+          type: 'link',
+          to: '/platform',
+          label: t('Platform Admin'),
+          Icon: <Shield />,
+          isSubItem: false,
+          showNotificationDot: notificationDot,
+          show: showPlatformAdminDashboard,
+        },
+      ]
+    : [];
+
+  const releasesLink: SidebarItem = {
     type: 'link',
-    to: '/platform',
-    label: t('Platform Admin'),
-    Icon: <Shield />,
+    to: authenticationSession.appendProjectRoutePrefix('/releases'),
+    Icon: <Package />,
+    label: t('Releases'),
+    show:
+      project.releasesEnabled && checkAccess(Permission.READ_PROJECT_RELEASE),
     isSubItem: false,
-    showNotificationDot: notificationDot,
-    show: showPlatformAdminDashboard,
   };
-  const miscTitle: SidebarItem = {
-    type: 'title',
-    label: t('Misc'),
-  };
-  const extensionsTitle: SidebarItem = {
-    type: 'title',
-    label: t('Extensions'),
-  };
-  const aiAutomationTitle: SidebarItem = {
-    type: 'title',
-    label: t('AI Automation'),
-  };
+
   const items: SidebarItem[] = [
-    todosLink,
-    aiAutomationTitle,
     flowsLink,
     tablesLink,
-    extensionsTitle,
+    todosLink,
+    {
+      type: 'separator',
+    } as const,
     agentsLink,
-    connectionsLink,
     mcpLink,
-    miscTitle,
-    platformAdminLink,
+    connectionsLink,
     releasesLink,
+    ...platformAdminLink,
   ].filter(
-    (link) => link.type === 'title' || (link.type === 'link' && link.show),
+    (link) => link.type === 'separator' || (link.type === 'link' && link.show),
   );
 
   return (

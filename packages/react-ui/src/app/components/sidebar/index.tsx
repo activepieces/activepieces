@@ -1,15 +1,14 @@
-import { t } from 'i18next';
-import { ChevronDownIcon, ChevronUpIcon, VideoIcon } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-import TutorialsDialog from '@/components/custom/tutorials-dialog';
 import {
   Collapsible,
   CollapsibleTrigger,
   CollapsibleContent,
 } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import {
   Sidebar,
   SidebarContent,
@@ -37,17 +36,15 @@ import { SidebarInviteUserButton } from './sidebar-invite-user';
 import { SidebarUser } from './sidebar-user';
 import UsageLimitsButton from './usage-limits-button';
 
-export type SidebarItem = (
+export type SidebarItem =
   | {
-      label: string;
-      type: 'title';
+      type: 'separator';
     }
   | (SidebarLinkProps & {
       type: 'link';
       show: boolean;
     })
-  | SidebarGroup
-);
+  | SidebarGroup;
 
 export type SidebarGroup = {
   name?: string;
@@ -80,7 +77,6 @@ export function SidebarComponent({
   const location = useLocation();
   const showProjectUsage =
     location.pathname.startsWith('/project') && edition !== ApEdition.COMMUNITY;
-  const showTutorials = location.pathname.startsWith('/project');
   return (
     <div className="flex h-screen w-full overflow-hidden">
       <div className="flex h-screen w-full">
@@ -91,46 +87,28 @@ export function SidebarComponent({
               <div className="flex-1 overflow-hidden">
                 <ScrollArea className="h-full  px-2">
                   {items.map((item, index) => (
-                    <React.Fragment key={item.label + index}>
+                    <React.Fragment key={item.type + index}>
                       {item.type === 'group' && (
                         <ApSidebarMenuGroup item={item} />
                       )}
-                      {item.type === 'title' && (
-                        <SidebarGroupLabel>{item.label}</SidebarGroupLabel>
+                      {item.type === 'separator' && (
+                        <Separator className="my-1.5" />
                       )}
                       {item.type === 'link' && (
                         <ApSidebarMenuItem item={item} />
                       )}
                     </React.Fragment>
                   ))}
-                  <SidebarMenu>
-                    <SidebarInviteUserButton />
-                  </SidebarMenu>
-                  {showTutorials && (
-                    <TutorialsDialog
-                      location="tutorials-sidebar-item"
-                      showTooltip={false}
-                    >
-                      <SidebarMenu>
-                        <SidebarMenuItem>
-                          <div>
-                            <SidebarMenuButton asChild>
-                              <div className="flex items-center gap-2  cursor-pointer hover:bg-accent rounded-sm transition-colors">
-                                <VideoIcon></VideoIcon>
-                                <span>{t('Tutorials')}</span>
-                              </div>
-                            </SidebarMenuButton>
-                          </div>
-                        </SidebarMenuItem>
-                      </SidebarMenu>
-                    </TutorialsDialog>
-                  )}
-                  <SidebarMenu>
-                    <HelpAndFeedback />
-                  </SidebarMenu>
                 </ScrollArea>
               </div>
               <SidebarFooter className="pb-4 flex-shrink-0">
+                <SidebarMenu>
+                  <SidebarInviteUserButton />
+                </SidebarMenu>
+
+                <SidebarMenu>
+                  <HelpAndFeedback />
+                </SidebarMenu>
                 {showProjectUsage && <UsageLimitsButton />}
                 <SidebarUser />
               </SidebarFooter>
@@ -138,9 +116,12 @@ export function SidebarComponent({
           </Sidebar>
         )}
         <div
-          className={cn('bg-gray-50 dark:bg-zinc-950  w-full h-full overflow-hidden', {
-            'pt-2 pr-2 pb-2': !hideSideNav,
-          })}
+          className={cn(
+            'bg-gray-50 dark:bg-zinc-950  w-full h-full overflow-hidden',
+            {
+              'pt-2 pr-2 pb-2': !hideSideNav,
+            },
+          )}
         >
           <ScrollArea
             className={cn('w-full pb-6 pt-28 px-6 h-full bg-background', {
