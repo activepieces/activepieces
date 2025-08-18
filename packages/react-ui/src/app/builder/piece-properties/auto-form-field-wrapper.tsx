@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
-import { Action, Trigger } from '@activepieces/shared';
+import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
 import { TextInputWithMentions } from './text-input-with-mentions';
@@ -48,7 +48,7 @@ const AutoFormFieldWrapper = ({
   disabled,
   field,
 }: AutoFormFieldWrapperProps) => {
-  const form = useFormContext<Action | Trigger>();
+  const form = useFormContext<FlowAction | FlowTrigger>();
   const dynamicInputModeToggled =
     form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyName] ===
     true;

@@ -1,0 +1,21 @@
+{
+  "Devin AI": "Devin AI",
+  "AI-powered engineering assistant for automating development tasks, code generation, and technical conversations.": "Assistant d'ingénierie propulsé par l'IA pour automatiser les tâches de développement, la génération de code et les conversations techniques.",
+  "Your Devin API key (used in the Authorization header).": "Votre clé API Devin (utilisée dans l'en-tête Authorization header).",
+  "Create Session": "Créer une session",
+  "Get Session Details": "Obtenir les détails de la session",
+  "Send Message": "Envoyer un message",
+  "Creates a new Devin session": "Crée une nouvelle session Devin",
+  "Retrieves details of a specific Devin session": "Récupère les détails d'une session Devin spécifique",
+  "Sends a message to a Devin session": "Envoie un message à une session Devin",
+  "Prompt": "Prompt",
+  "Snapshot ID": "ID de la capture instantanée",
+  "Playbook ID": "ID du Playbook",
+  "Unlisted": "Non listé",
+  "Idempotent": "Idempotent",
+  "Session ID": "ID de session",
+  "Message": "Message",
+  "The ID of the session to retrieve details for": "L'ID de la session pour récupérer les détails pour",
+  "The ID of the session to send the message to": "L'ID de la session à laquelle envoyer le message",
+  "The message to send to the session": "Le message à envoyer à la session"
+}

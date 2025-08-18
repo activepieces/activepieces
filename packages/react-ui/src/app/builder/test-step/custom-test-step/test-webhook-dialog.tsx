@@ -18,12 +18,10 @@ import {
 import { Form, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
-import { wait } from '@/lib/utils';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { Action, ApFlagId, apId, Trigger } from '@activepieces/shared';
+import { FlowAction, ApFlagId, apId, FlowTrigger } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
@@ -67,14 +65,14 @@ const WebhookRequest = z.object({
 });
 
 type TestWaitForNextWebhookDialogProps = {
-  currentStep: Action;
+  currentStep: FlowAction;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   testingMode: 'returnResponseAndWaitForNextWebhook';
 };
 
 type TestTriggerWebhookDialogProps = {
-  currentStep: Trigger;
+  currentStep: FlowTrigger;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   testingMode: 'trigger';
@@ -99,20 +97,7 @@ const TestTriggerWebhookDialog = ({
   >({
     mutationFn: async (data: z.infer<typeof WebhookRequest>) => {
       setIsLoading(true);
-      let counter = 0;
-      while (counter < 10) {
-        const webhookSimulation = await triggerEventsApi.getWebhookSimulation(
-          flowId,
-        );
-        if (webhookSimulation) {
-          break;
-        }
-        counter++;
-        await wait(1000);
-      }
-      if (counter >= 10) {
-        console.error('Webhook simulation not found');
-      }
+
       await api.any(`${webhookPrefixUrl}/${flowId}/test`, {
         method: data.method,
         data: data.body,
@@ -168,7 +153,7 @@ const TestWaitForNextWebhookDialog = ({
           onSubmit={(data) => {
             onSubmit({
               preExistingSampleData: {
-                id: apId(),
+                runId: apId(),
                 success: true,
                 output: {
                   body: data.body,

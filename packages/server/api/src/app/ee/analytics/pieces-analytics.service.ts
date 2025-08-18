@@ -1,4 +1,4 @@
-import { ActionType, FlowStatus, flowStructureUtil, isNil, PieceAction, PieceTrigger, TriggerType } from '@activepieces/shared'
+import { FlowActionType, FlowStatus, flowStructureUtil, FlowTriggerType, isNil, PieceAction, PieceTrigger } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { FlowEntity } from '../../flows/flow/flow.entity'
@@ -33,7 +33,7 @@ export const piecesAnalyticsService = (log: FastifyBaseLogger) => ({
                 }
                 const pieces = flowStructureUtil.getAllSteps(flowVersion.trigger).filter(
                     (step) =>
-                        step.type === ActionType.PIECE || step.type === TriggerType.PIECE,
+                        step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE,
                 ).map((step) => {
                     const clonedStep = step as (PieceTrigger | PieceAction)
                     return {

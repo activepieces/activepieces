@@ -45,6 +45,9 @@
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],
+      "@activepieces/piece-aircall": [
+        "packages/pieces/community/aircall/src/index.ts"
+      ],
       "@activepieces/piece-airparser": [
         "packages/pieces/community/airparser/src/index.ts"
       ],
@@ -99,6 +102,9 @@
       "@activepieces/piece-attio": [
         "packages/pieces/community/attio/src/index.ts"
       ],
+      "@activepieces/piece-autocalls": [
+        "packages/pieces/community/autocalls/src/index.ts"
+      ],
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
       ],
@@ -125,6 +131,9 @@
       ],
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
+      ],
+      "@activepieces/piece-bigin-by-zoho": [
+        "packages/pieces/community/bigin-by-zoho/src/index.ts"
       ],
       "@activepieces/piece-binance": [
         "packages/pieces/community/binance/src/index.ts"
@@ -450,6 +459,9 @@
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
       ],
+      "@activepieces/piece-help-scout": [
+        "packages/pieces/community/help-scout/src/index.ts"
+      ],
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],
@@ -605,6 +617,9 @@
       "@activepieces/piece-microsoft-todo": [
         "packages/pieces/community/microsoft-todo/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-onenote": [
+        "packages/pieces/community/microsoft-onenote/src/index.ts"
+      ],
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
       ],
@@ -755,6 +770,9 @@
       ],
       "@activepieces/piece-respaid": [
         "packages/pieces/community/respaid/src/index.ts"
+      ],
+      "@activepieces/piece-respond-io": [
+        "packages/pieces/community/respond-io/src/index.ts"
       ],
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"

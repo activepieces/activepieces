@@ -3,14 +3,12 @@ import {
     rejectedPromiseHandler,
 } from '@activepieces/server-shared'
 import {
-    EventPayload,
     FlowId,
     FlowVersion,
-    TriggerType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
-import { triggerHooks } from '../executors/trigger/hooks/trigger-consumer'
+
 export const webhookUtils = (log: FastifyBaseLogger) => ({
 
     async getAppWebhookUrl({
@@ -29,35 +27,6 @@ export const webhookUtils = (log: FastifyBaseLogger) => ({
     }: GetWebhookUrlParams): Promise<string> {
         const suffix: WebhookUrlSuffix = simulate ? '/test' : ''
         return networkUtils.combineUrl(publicApiUrl, `v1/webhooks/${flowId}${suffix}`)
-    },
-    async extractPayload({
-        flowVersion,
-        payload,
-        projectId,
-        engineToken,
-        simulate,
-    }: ExtractPayloadParams): Promise<unknown[]> {
-        if (flowVersion.trigger.type === TriggerType.EMPTY) {
-            log.warn({
-                flowVersionId: flowVersion.id,
-            }, '[WebhookUtils#extractPayload] empty trigger, skipping')
-            return []
-        }
-        log.info({
-            flowVersionId: flowVersion.id,
-            simulate,
-        }, '[WebhookUtils#extractPayload] extracting payloads')
-        return triggerHooks.extractPayloads(
-            engineToken,
-            log,
-            {
-                projectId,
-                flowVersion,
-                payload,
-                simulate,
-                throwErrorOnFailure: true,
-            },
-        )
     },
     savePayloadsAsSampleData({
         flowVersion,
@@ -86,13 +55,6 @@ type GetWebhookUrlParams = {
     publicApiUrl: string
 }
 
-type ExtractPayloadParams = {
-    engineToken: string
-    projectId: string
-    flowVersion: FlowVersion
-    payload: EventPayload
-    simulate: boolean
-}
 
 type SaveSampleDataParams = {
     flowVersion: FlowVersion

@@ -1,15 +1,15 @@
 import { fileCompressor } from '@activepieces/server-shared'
 import {
-    ActionType,
     ExecutionType,
+    FlowActionType,
     FlowRunStatus,
     FlowStatus,
+    FlowTriggerType,
     FlowVersionState,
     PackageType,
     PieceType,
     ProgressUpdateType,
     RunEnvironment,
-    TriggerType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { flowJobExecutor, flowWorker } from 'server-worker'
@@ -80,7 +80,7 @@ describe('flow execution', () => {
             updatedBy: mockOwner.id,
             state: FlowVersionState.LOCKED,
             trigger: {
-                type: TriggerType.PIECE,
+                type: FlowTriggerType.PIECE,
                 settings: {
                     pieceName: '@activepieces/piece-schedule',
                     pieceVersion: '0.1.5',
@@ -96,7 +96,7 @@ describe('flow execution', () => {
                 nextAction: {
                     name: 'echo_step',
                     displayName: 'Echo Step',
-                    type: ActionType.CODE,
+                    type: FlowActionType.CODE,
                     settings: {
                         inputUiInfo: {},
                         input: {
@@ -114,7 +114,7 @@ describe('flow execution', () => {
                     nextAction: {
                         name: 'datamapper',
                         displayName: 'Datamapper',
-                        type: ActionType.PIECE,
+                        type: FlowActionType.PIECE,
                         settings: {
                             inputUiInfo: {},
                             pieceName: '@activepieces/piece-data-mapper',

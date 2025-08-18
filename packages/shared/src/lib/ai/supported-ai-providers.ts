@@ -1,8 +1,9 @@
 import { anthropic } from '@ai-sdk/anthropic'
 import { google } from '@ai-sdk/google'
 import { openai } from '@ai-sdk/openai'
+import { LanguageModelV2 } from '@ai-sdk/provider'
 import { createReplicate } from '@ai-sdk/replicate'
-import { ImageModel, LanguageModel } from 'ai'
+import { ImageModel } from 'ai'
 
 export type SupportedAIProvider = {
     provider: string
@@ -17,7 +18,7 @@ export type SupportedAIProvider = {
     }
     languageModels: {
         displayName: string
-        instance: LanguageModel
+        instance: LanguageModelV2
         functionCalling: boolean
         pricing: LanguageModelPricing
     }[]
@@ -50,7 +51,15 @@ export type DALLE2PricingPerImage = TableData<
 number
 >
 
-type ImageModelPricing = DALLE3PricingPerImage | DALLE2PricingPerImage | number
+export type GPTImage1PricingPerImage = {
+    input: {
+        image: number
+        text: number
+    }
+    output: number
+}
+
+type ImageModelPricing = DALLE3PricingPerImage | DALLE2PricingPerImage | GPTImage1PricingPerImage | number
 
 // $ per million tokens
 export type FlatLanguageModelPricing = {
@@ -105,6 +114,42 @@ It is strongly recommended that you add your credit card information to your Ope
         },
         streaming: true,
         languageModels: [
+            {
+                displayName: 'GPT-5',
+                instance: openai('gpt-5'),
+                functionCalling: true,
+                pricing: {
+                    input: 1.25,
+                    output: 10.00,
+                },
+            },
+            {
+                displayName: 'GPT-5 Chat',
+                instance: openai('gpt-5-chat-latest'),
+                functionCalling: false,
+                pricing: {
+                    input: 1.25,
+                    output: 10.00,
+                },
+            },
+            {
+                displayName: 'GPT-5 Mini',
+                instance: openai('gpt-5-mini'),
+                functionCalling: true,
+                pricing: {
+                    input: 0.25,
+                    output: 2.00,
+                },
+            },
+            {
+                displayName: 'GPT-5 Nano',
+                instance: openai('gpt-5-nano'),
+                functionCalling: true,
+                pricing: {
+                    input: 0.05,
+                    output: 0.40,
+                },
+            },
             {
                 displayName: 'GPT-4o',
                 instance: openai('gpt-4o'),
@@ -198,6 +243,17 @@ It is strongly recommended that you add your credit card information to your Ope
         ],
         imageModels: [
             {
+                displayName: 'GPT-Image-1',
+                instance: openai.image('gpt-image-1'),
+                pricing: {
+                    input: {
+                        image: 10.00,
+                        text: 5.00,
+                    },
+                    output: 40.00,
+                },
+            },
+            {
                 displayName: 'DALL-E 3',
                 instance: openai.image('dall-e-3'),
                 pricing: {
@@ -243,8 +299,8 @@ It is strongly recommended that you add your credit card information to your Ope
         streaming: false,
         languageModels: [
             {
-                displayName: 'Claude 3.5 Sonnet',
-                instance: anthropic('claude-3-5-sonnet-latest'),
+                displayName: 'Claude 4 Sonnet',
+                instance: anthropic('claude-sonnet-4-20250514'),
                 functionCalling: true,
                 pricing: {
                     input: 3.00,
@@ -258,6 +314,33 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 0.80,
                     output: 4.00,
+                },
+            },
+            {
+                displayName: 'Claude 4.1 Opus',
+                instance: anthropic('claude-opus-4-1-20250805'),
+                functionCalling: true,
+                pricing: {
+                    input: 15.00,
+                    output: 75.00,
+                },
+            },
+            {
+                displayName: 'Claude 3.7 Sonnet',
+                instance: anthropic('claude-3-7-sonnet-20250219'),
+                functionCalling: true,
+                pricing: {
+                    input: 3.00,
+                    output: 15.00,
+                },
+            },
+            {
+                displayName: 'Claude 3.5 Sonnet',
+                instance: anthropic('claude-3-5-sonnet-latest'),
+                functionCalling: true,
+                pricing: {
+                    input: 3.00,
+                    output: 15.00,
                 },
             },
             {
@@ -285,15 +368,6 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 0.25,
                     output: 1.25,
-                },
-            },
-            {
-                displayName: 'Claude 3.7 Sonnet',
-                instance: anthropic('claude-3-7-sonnet-latest'),
-                functionCalling: true,
-                pricing: {
-                    input: 3.00,
-                    output: 15.00,
                 },
             },
         ],

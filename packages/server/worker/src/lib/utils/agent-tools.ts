@@ -29,7 +29,7 @@ async function buildInternalTools<T extends AgentJobSource>(params: AgentToolsPa
         return {
             [agentbuiltInToolsNames.updateTableRecord]: tool({
                 description: 'Update the table record',
-                parameters: z.object({
+                inputSchema: z.object({
                     cells: createCellsZodSchema(fields),
                 }),
                 execute: async ({ cells }) => {
@@ -41,7 +41,7 @@ async function buildInternalTools<T extends AgentJobSource>(params: AgentToolsPa
             }),
             [agentbuiltInToolsNames.markAsComplete]: tool({
                 description: 'Mark the todo as complete',
-                parameters: params.agent.outputType === AgentOutputType.STRUCTURED_OUTPUT ? z.object({
+                inputSchema: params.agent.outputType === AgentOutputType.STRUCTURED_OUTPUT ? z.object({
                     output: await getStructuredOutput(params.agent),
                 }) : z.object({}),
                 execute: async () => {
@@ -54,7 +54,7 @@ async function buildInternalTools<T extends AgentJobSource>(params: AgentToolsPa
     return {
         [agentbuiltInToolsNames.markAsComplete]: tool({
             description: 'Mark the todo as complete',
-            parameters: params.agent.outputType === AgentOutputType.STRUCTURED_OUTPUT ? z.object({
+            inputSchema: params.agent.outputType === AgentOutputType.STRUCTURED_OUTPUT ? z.object({
                 output: await getStructuredOutput(params.agent),
             }) : z.object({}),
             execute: async () => {
@@ -132,7 +132,6 @@ async function getMcpClient<T extends AgentJobSource>(params: AgentToolsParams<T
         return null
     }
     const mcpServerUrl = `${params.publicUrl}v1/mcp/${params.mcp.token}/sse`
-    // console.log('MCP SERVER URL', mcpServerUrl)
     return experimental_createMCPClient({
         transport: {
             type: 'sse',

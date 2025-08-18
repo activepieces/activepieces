@@ -11,6 +11,7 @@ import {
     FlowStatus,
     flowStructureUtil,
     FlowTemplateWithoutProjectInformation,
+    FlowTrigger,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
     isNil,
@@ -21,7 +22,6 @@ import {
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    Trigger,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -182,7 +182,7 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
                     },
                 },
             }
-        }) as Trigger
+        }) as FlowTrigger
         return {
             ...operation,
             request: {

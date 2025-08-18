@@ -9,6 +9,7 @@ import {
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
   UpdateSubscriptionParams,
+  StartTrialParams,
 } from '@activepieces/ee-shared';
 import {
   ApErrorParams,
@@ -114,7 +115,8 @@ export const billingMutations = {
   },
   useStartTrial: () => {
     return useMutation({
-      mutationFn: () => platformBillingApi.startTrial(),
+      mutationFn: (params: StartTrialParams) =>
+        platformBillingApi.startTrial(params),
       onError: (error) => {
         if (api.isError(error)) {
           const apError = error.response?.data as ApErrorParams;

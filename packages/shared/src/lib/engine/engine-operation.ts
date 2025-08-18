@@ -6,10 +6,10 @@ import { FlowVersion } from '../flows/flow-version'
 import { PiecePackage } from '../pieces'
 import { PlatformId } from '../platform'
 import { ProjectId } from '../project/project'
+import { ScheduleOptions } from '../trigger'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
-    EXECUTE_STEP = 'EXECUTE_STEP',
     EXECUTE_TOOL = 'EXECUTE_TOOL',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
@@ -27,7 +27,6 @@ export enum TriggerHookType {
 }
 
 export type EngineOperation =
-    | ExecuteStepOperation
     | ExecuteToolOperation
     | ExecuteFlowOperation
     | ExecutePropsOptions
@@ -82,14 +81,6 @@ export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'
 
 export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }
 
-export type ExecuteStepOperation = BaseEngineOperation & {
-    stepName: string
-    flowVersion: FlowVersion
-    sampleData: Record<string, unknown>
-    runEnvironment: RunEnvironment
-    requestId: string
-}
-
 export type ExecuteToolOperation = BaseEngineOperation & {
     actionName: string
     pieceName: string
@@ -117,6 +108,9 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     serverHandlerId: string | null
     httpRequestId: string | null
     progressUpdateType: ProgressUpdateType
+    stepNameToTest: string | null
+    sampleData?: Record<string, unknown>
+
 }
 
 export enum ProgressUpdateType {
@@ -241,11 +235,6 @@ export type ExecuteValidateAuthResponse =
     | ValidExecuteValidateAuthResponseOutput
     | InvalidExecuteValidateAuthResponseOutput
 
-export type ScheduleOptions = {
-    cronExpression: string
-    timezone: string
-    failureCount: number
-}
 
 export type EngineResponse<T> = {
     status: EngineResponseStatus

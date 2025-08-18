@@ -1,0 +1,10 @@
+{
+  "Binance": "Binance",
+  "Fetch the price of a crypto pair from Binance": "Obtener el precio de un par de criptomonedas de Binance",
+  "Fetch Pair Price": "Obtener precio de par",
+  "Fetch the current price of a pair (e.g. BTC/USDT)": "Obtener el precio actual de un par (ej. BTC/USDT)",
+  "First Coin Symbol": "Primer símbolo de moneda",
+  "Second Coin Symbol": "Segundo símbolo de moneda",
+  "The currency to fetch the price for (e.g. 'BTC' in 'BTC/USDT')": "La moneda para obtener el precio (por ejemplo, 'BTC' en 'BTC/USDT')",
+  "The currency to fetch the price in (e.g. 'USDT' in 'BTC/USDT')": "La moneda en la que obtener el precio (por ejemplo, 'USDT' en 'BTC/USDT')"
+}

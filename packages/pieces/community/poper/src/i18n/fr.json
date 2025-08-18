@@ -1,0 +1,8 @@
+{
+  "Poper": "Poper",
+  "AI Driven Pop-up Builder that can convert visitors into customers,increase subscriber count, and skyrocket sales.": "Le constructeur de fenêtres pop-up AI Driven permet de convertir les visiteurs en clients, d'augmenter le nombre d'abonnés et les ventes de fusées.",
+  "New Lead": "Nouveau prospect",
+  "Triggers when a new lead is obtained from popup.": "Déclenche lorsqu'un nouveau plomb est obtenu à partir d'un popup.",
+  "Markdown": "Markdown",
+  "\n1. Log in to your [Poper Account](https://app.poper.ai/).\n2. Click on the popup for which you want to set up a trigger.\n3. On the left-side menu, click on Integrations and search for **Webhook**.\n4. Enter an appropriate webhook name and paste the following URL:\n  ```text\n  {{webhookUrl}}\n  ```\n": "\n1. Log in to your [Poper Account](https://app.poper.ai/).\n2. Click on the popup for which you want to set up a trigger.\n3. On the left-side menu, click on Integrations and search for **Webhook**.\n4. Enter an appropriate webhook name and paste the following URL:\n  ```text\n  {{webhookUrl}}\n  ```\n"
+}

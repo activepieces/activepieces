@@ -7,7 +7,7 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
-import { Action, isNil, Trigger } from '@activepieces/shared';
+import { FlowAction, isNil, FlowTrigger } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
@@ -30,7 +30,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       state.flowVersion,
       state.readonly,
     ]);
-    const form = useFormContext<Action | Trigger>();
+    const form = useFormContext<FlowAction | FlowTrigger>();
     const isFirstRender = useRef(true);
     const previousValues = useRef<undefined | unknown[]>(undefined);
     const firstDropdownState = useRef<DropdownState<unknown> | undefined>(

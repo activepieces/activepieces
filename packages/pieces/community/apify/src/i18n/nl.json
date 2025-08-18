@@ -1,0 +1,23 @@
+{
+  "Apify": "Apify",
+  "Your full‑stack platform for web scraping": "Uw fullDailstack platform voor webscraping",
+  "API Key": "API Sleutel",
+  "Find your API key on Apify in the settings, API & Integrations section.": "Vind je API-sleutel op Apify in de sectie instellingen, API & Integraties.",
+  "Enter API key authentication details": "Voer authenticatiegegevens van de API-sleutel in",
+  "Get Dataset Items": "Dataset items ophalen",
+  "Get user's Actors": "Gebruiker Actors ophalen",
+  "Get last run details": "Krijg details van de laatste uitvoering",
+  "Start an Apify Actor": "Start een Apify Actor",
+  "Gets the data from an Actors run.": "Haalt de gegevens op van een actor.",
+  "Gets the list of Actors available to the user.": "Haalt de lijst van actors op die de gebruiker.",
+  "Gets last run details for a given Actor.": "Haalt de laatst uitgevoerde details op voor een bepaalde actor.",
+  "Starts an Apify Actor web scraper": "Start een Apify Actor web scraper",
+  "The runid of the Actor (alphanumeric)": "Het runid van de Actor (alfanumeriek)",
+  "The id of the Actor (alphanumeric)": "Het id van de Actor (alfanumeriek)",
+  "The id or name of the Actor (alphanumeric)": "Het ID of de naam van de Actor (alfanumeriek)",
+  "JSON input": "JSON input",
+  "The runid of the completed Actors run [defaultDatasetId] (compulsory)": "De runid van de voltooide Actors run [defaultDatasetId] (compulsory)",
+  "The id [defaultDatasetId] of the Actor to get run information [you can also use the username then ~ then the name] (compulsory)": "Het id [defaultDatasetId] van de Actor om informatie te krijgen [je kan ook de gebruikersnaam gebruiken ~ dan de naam] (compulbaar)",
+  "The id of the Actor to run [Use either id, or the username then ~ then the name] (compulsory)": "Het id van de Actor om [Gebruik id, of de gebruikersnaam dan ~ de naam] (verplicht.",
+  "The JSON input to pass to the Actor [you can get the JSON from a run in your Apify account]. If left blank will use defaults. (optional)": "De JSON invoer om door te geven aan de Actor [u kunt de JSON krijgen via een run in uw Apify account]. Indien leeg worden de standaardwaarden gebruikt. (optioneel)"
+}
