@@ -82,7 +82,7 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                         toolCallId: chunk.toolCallId,
                         type: ContentBlockType.TOOL_CALL,
                         status: ToolCallStatus.IN_PROGRESS,
-                        input: chunk.input as Record<string, unknown>,
+                        input: parseInputStreamText(chunk.input),
                         output: undefined,
                         startTime: new Date().toISOString(),
                     })
@@ -187,13 +187,11 @@ function isMarkAsComplete(block: AgentStepBlock): boolean {
 
 
 function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCallContentBlock, 'startTime' | 'endTime' | 'input' | 'output' | 'status' | 'toolName' | 'toolCallId' | 'type'>): ToolCallContentBlock {
-    if (toolName === agentbuiltInToolsNames.markAsComplete || toolName === agentbuiltInToolsNames.updateTableRecord) {
-        return {
-            ...baseTool,
-            toolCallType: ToolCallType.INTERNAL,
-            displayName: toolName === agentbuiltInToolsNames.markAsComplete ? 'Mark as Complete' : 'Update Table Record',
-        }
+    const internalTool = getInternalTool(toolName, baseTool)
+    if (internalTool) {
+        return internalTool
     }
+
     const tool = mcp.tools.find((tool) => tool.toolName === toolName)
     if (!tool) {
         throw new Error(`Tool ${toolName} not found`)
@@ -223,6 +221,41 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
     }
 }
 
+function parseInputStreamText(input: unknown) {
+    if (typeof input === 'string') {
+        try {
+            return JSON.parse(input)
+        } catch {
+            return input
+        }
+    }
+    return input
+}
+
+function getInternalTool(toolName: string, baseTool: Pick<ToolCallContentBlock, 'startTime' | 'endTime' | 'input' | 'output' | 'status' | 'toolName' | 'toolCallId' | 'type'>): ToolCallContentBlock | null {
+    switch (toolName) {
+        case agentbuiltInToolsNames.markAsComplete:
+            return {
+                ...baseTool,
+                toolCallType: ToolCallType.INTERNAL,
+                displayName: 'Mark as Complete',
+            }
+        case agentbuiltInToolsNames.updateTableRecord:
+            return {
+                ...baseTool,
+                toolCallType: ToolCallType.INTERNAL,
+                displayName: 'Update Table Record',
+            }
+        case agentbuiltInToolsNames.newTableColumn:
+            return {
+                ...baseTool,
+                toolCallType: ToolCallType.INTERNAL,
+                displayName: 'New Table Column',
+            }
+    }
+    return null
+}
+
 async function constructSystemPrompt(agent: PopulatedAgent, fields: Field[] | undefined, record: Record<string, unknown> | undefined) {
     let systemPrompt = `
     You are an autonomous assistant designed to efficiently achieve the user's goal.
@@ -250,11 +283,6 @@ async function constructSystemPrompt(agent: PopulatedAgent, fields: Field[] | un
         const editableColumns = agent.settings.editableColumns.map((column) => column.name).join(', ')
         systemPrompt += `
         YOU CAN ONLY EDIT THE FOLLOWING COLUMNS: ${editableColumns}
-        `
-    }
-    else {
-        systemPrompt += `
-        You can edit any existing columns in the table.
         `
     }
 

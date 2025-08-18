@@ -39,6 +39,41 @@ async function buildInternalTools<T extends AgentJobSource>(params: AgentToolsPa
                     })
                 },
             }),
+            [agentbuiltInToolsNames.newTableColumn]: tool({
+                description: 'Create a new table column',
+                inputSchema: z.object({
+                    name: z.string(),
+                    type: z.enum([
+                        FieldType.STATIC_DROPDOWN,
+                        FieldType.TEXT,
+                        FieldType.NUMBER,
+                        FieldType.DATE,
+                    ]),
+                    data: z.object({
+                        options: z.array(z.object({ value: z.string() }))
+                    }).optional(),
+                }),
+                execute: async (column) => {
+                    if (column.type === FieldType.STATIC_DROPDOWN && !column.data?.options?.length) {
+                        throw new Error('data.options is required for STATIC_DROPDOWN type');
+                    }
+                    
+                    if (column.type === FieldType.STATIC_DROPDOWN) {
+                        return tablesApiService(params.token).createColumn({
+                            name: column.name,
+                            type: FieldType.STATIC_DROPDOWN,
+                            data: column.data!,
+                            tableId: params.metadata!.tableId,
+                        });
+                    }
+                    
+                    return tablesApiService(params.token).createColumn({
+                        name: column.name,
+                        type: column.type,
+                        tableId: params.metadata!.tableId,
+                    });
+                },
+            }),
             [agentbuiltInToolsNames.markAsComplete]: tool({
                 description: 'Mark the todo as complete',
                 inputSchema: params.agent.outputType === AgentOutputType.STRUCTURED_OUTPUT ? z.object({
@@ -117,11 +152,9 @@ function createCellsZodSchema(fields: Field[]): z.ZodSchema {
             value: valueSchema,
         })
     })
-    
     if (cellSchemas.length === 1) {
         return z.array(cellSchemas[0])
     }
-    
     return z.array(z.union([cellSchemas[0], cellSchemas[1], ...cellSchemas.slice(2)]))
 }
 

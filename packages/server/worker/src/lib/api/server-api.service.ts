@@ -1,6 +1,6 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, AgentRun, CreateTriggerRunRequestBody, ErrorCode, Field, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PlatformUsageMetric, PopulatedAgent, PopulatedFlow, Record, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRecordRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { ActivepiecesError, AgentRun, CreateFieldRequest, CreateTriggerRunRequestBody, ErrorCode, Field, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PlatformUsageMetric, PopulatedAgent, PopulatedFlow, Record, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRecordRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
@@ -191,6 +191,9 @@ export const tablesApiService = (workerToken: string) => {
         },
         async updateRecord(recordId: string, record: UpdateRecordRequest): Promise<Record> {
             return client.post<Record>(`/v1/records/${recordId}`, { ...record, agentUpdate: true })
+        },
+        async createColumn(column: CreateFieldRequest): Promise<Field> {
+            return client.post<Field>(`/v1/fields`, column)
         },
     }
 }

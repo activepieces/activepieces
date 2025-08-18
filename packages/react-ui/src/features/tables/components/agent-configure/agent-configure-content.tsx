@@ -48,7 +48,7 @@ import { ClientField } from '../../lib/store/ap-tables-client-state';
 import { AgentProfile } from '../agent-profile';
 import { useTableState } from '../ap-table-state-provider';
 
-const BUILT_IN_TOOLS: string[] = ['@activepieces/piece-tables'];
+const TOOLS_TO_HIDE: string[] = ['@activepieces/piece-tables'];
 
 type AgentConfig = {
   systemPrompt: string;
@@ -144,6 +144,10 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
 
   return (
     <div className="relative p-6">
+      {/* <div className="top-gradient-wrapper">
+        <div className="top-gradient-big"></div>
+        <div className="top-gradient-small"></div>
+      </div> */}
       <Button
         variant="ghost"
         size="sm"
@@ -273,11 +277,6 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
             <AccordionContent className="px-0">
               <div className="space-y-2 pt-2">
                 {table.agent?.mcp.tools
-                  .filter(
-                    (tool) =>
-                      tool.type === McpToolType.PIECE &&
-                      !BUILT_IN_TOOLS.includes(tool.pieceMetadata.pieceName),
-                  )
                   .map((tool) => (
                     <div
                       key={tool.id}
@@ -323,7 +322,7 @@ export const AgentConfigureContent: React.FC<AgentConfigureContentProps> = ({
                 <McpPieceDialog
                   open={showAddPieceDialog}
                   mcp={table.agent.mcp}
-                  builtInPiecesTools={BUILT_IN_TOOLS}
+                  piecesToolsToHide={TOOLS_TO_HIDE}
                   onToolsUpdate={(tools: McpToolRequest[]) => {
                     updateTools(tools);
                     onAddPieceDialogChange(false);

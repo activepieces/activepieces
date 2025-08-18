@@ -11,6 +11,7 @@ export enum AgentOutputType {
 export const agentbuiltInToolsNames = {
     markAsComplete: 'markAsComplete',
     updateTableRecord: 'updateTableRecord',
+    newTableColumn: 'newTableColumn',
 }
 
 export enum AgentOutputFieldType {
