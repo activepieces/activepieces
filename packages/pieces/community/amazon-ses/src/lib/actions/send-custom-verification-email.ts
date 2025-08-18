@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { SESv2Client, SendCustomVerificationEmailCommand } from '@aws-sdk/client-sesv2';
+import { SESClient, SendCustomVerificationEmailCommand } from '@aws-sdk/client-ses';
 import { amazonSesAuth } from '../../index';
 
 export const sendCustomVerificationEmail = createAction({
@@ -40,7 +40,7 @@ export const sendCustomVerificationEmail = createAction({
     }
 
     // Create SES client
-    const sesClient = new SESv2Client({
+    const sesClient = new SESClient({
       credentials: {
         accessKeyId,
         secretAccessKey,
@@ -48,21 +48,15 @@ export const sendCustomVerificationEmail = createAction({
       region,
     });
 
-    // Prepare send custom verification email command input
-    const sendVerificationInput: any = {
+    // Send custom verification email command following AWS SDK pattern
+    const sendCustomVerificationEmailCommand = new SendCustomVerificationEmailCommand({
       EmailAddress: emailAddress,
       TemplateName: templateName,
-    };
-
-    // Add optional configuration set
-    if (configurationSetName) {
-      sendVerificationInput.ConfigurationSetName = configurationSetName;
-    }
+      ...(configurationSetName ? { ConfigurationSetName: configurationSetName } : {})
+    });
 
     try {
-      // Send the custom verification email
-      const command = new SendCustomVerificationEmailCommand(sendVerificationInput);
-      const response = await sesClient.send(command);
+      const response = await sesClient.send(sendCustomVerificationEmailCommand);
 
       return {
         success: true,
@@ -72,27 +66,9 @@ export const sendCustomVerificationEmail = createAction({
         configurationSetName: configurationSetName || 'None',
         message: 'Custom verification email sent successfully',
       };
-    } catch (error) {
-      const errorMessage = (error as Error).message;
-      
-      // Handle specific SES errors
-      if (errorMessage.includes('NotFoundException')) {
-        throw new Error(`Template "${templateName}" not found. Please ensure the custom verification email template exists.`);
-      } else if (errorMessage.includes('BadRequestException')) {
-        throw new Error(`Invalid request data: ${errorMessage}`);
-      } else if (errorMessage.includes('LimitExceededException')) {
-        throw new Error('You have reached the limit for verification emails. Please wait before sending more.');
-      } else if (errorMessage.includes('MailFromDomainNotVerifiedException')) {
-        throw new Error('The sending domain is not verified. Please verify your domain in SES.');
-      } else if (errorMessage.includes('MessageRejected')) {
-        throw new Error(`Verification email was rejected: ${errorMessage}`);
-      } else if (errorMessage.includes('SendingPausedException')) {
-        throw new Error('Your account\'s ability to send email is currently paused. Please contact AWS support.');
-      } else if (errorMessage.includes('TooManyRequestsException')) {
-        throw new Error('Too many requests. Please wait before trying again.');
-      }
-      
-      throw new Error(`Failed to send custom verification email: ${errorMessage}`);
+    } catch (caught) {
+      console.log('Failed to send custom verification email.', caught);
+      return caught;
     }
   },
 });

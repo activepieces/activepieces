@@ -1,134 +1,81 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { SESv2Client, CreateEmailTemplateCommand } from '@aws-sdk/client-sesv2';
+import { SESClient, CreateTemplateCommand } from '@aws-sdk/client-ses';
 import { amazonSesAuth } from '../../index';
 
 export const createEmailTemplate = createAction({
   auth: amazonSesAuth,
   name: 'create_email_template',
   displayName: 'Create Email Template',
-  description: 'Create a HTML or a plain text email template for personalized emails.',
+  description:
+    'Create a HTML or a plain text email template for personalized emails.',
   props: {
     templateName: Property.ShortText({
       displayName: 'Template Name',
       description: 'The name of the template (must be unique)',
-      required: true,
+      required: true
     }),
-    subject: Property.ShortText({
-      displayName: 'Subject',
-      description: 'The subject line of the email template (can include template variables like {{name}})',
-      required: false,
+    subjectPart: Property.ShortText({
+      displayName: 'Subject Part',
+      description:
+        'The subject line of the email template (can include template variables like {{contact.firstName}})',
+      required: true
     }),
-    templateType: Property.StaticDropdown({
-      displayName: 'Template Type',
-      description: 'Choose the type of template to create',
-      required: true,
-      options: {
-        options: [
-          {
-            label: 'HTML Template',
-            value: 'html',
-          },
-          {
-            label: 'Text Template',
-            value: 'text',
-          },
-          {
-            label: 'Both HTML and Text',
-            value: 'both',
-          },
-        ],
-      },
-      defaultValue: 'html',
+    htmlPart: Property.LongText({
+      displayName: 'HTML Part',
+      description:
+        'The HTML content of the email template (can include template variables like {{contact.firstName}})',
+      required: false
     }),
-    htmlContent: Property.LongText({
-      displayName: 'HTML Content',
-      description: 'The HTML content of the email template (can include template variables like {{name}})',
-      required: false,
-    }),
-    textContent: Property.LongText({
-      displayName: 'Text Content',
-      description: 'The plain text content of the email template (can include template variables like {{name}})',
-      required: false,
-    }),
+    textPart: Property.LongText({
+      displayName: 'Text Part',
+      description:
+        'The plain text content of the email template (can include template variables like {{contact.firstName}})',
+      required: false
+    })
   },
   async run(context) {
-    const {
-      templateName,
-      subject,
-      templateType,
-      htmlContent,
-      textContent,
-    } = context.propsValue;
+    const { templateName, subjectPart, htmlPart, textPart } =
+      context.propsValue;
 
     const { accessKeyId, secretAccessKey, region } = context.auth;
 
-    // Validate content based on template type
-    if (templateType === 'html' && !htmlContent) {
-      throw new Error('HTML content is required when template type is HTML');
-    }
-    if (templateType === 'text' && !textContent) {
-      throw new Error('Text content is required when template type is text');
-    }
-    if (templateType === 'both' && (!htmlContent || !textContent)) {
-      throw new Error('Both HTML and text content are required when template type is both');
+    // Validate that at least one content type is provided
+    if (!htmlPart && !textPart) {
+      throw new Error(
+        'At least one of HTML Part or Text Part must be provided'
+      );
     }
 
     // Create SES client
-    const sesClient = new SESv2Client({
+    const sesClient = new SESClient({
       credentials: {
         accessKeyId,
-        secretAccessKey,
+        secretAccessKey
       },
-      region,
+      region
     });
 
-    // Prepare template content
-    const templateContent: any = {};
-
-    if (subject) {
-      templateContent.Subject = subject;
-    }
-
-    if (templateType === 'html' || templateType === 'both') {
-      templateContent.Html = htmlContent;
-    }
-
-    if (templateType === 'text' || templateType === 'both') {
-      templateContent.Text = textContent;
-    }
-
-    // Prepare create template command input
-    const createTemplateInput = {
-      TemplateName: templateName,
-      TemplateContent: templateContent,
-    };
+    // Create template command following AWS SDK example structure
+    const createTemplateCommand = new CreateTemplateCommand({
+      Template: {
+        TemplateName: templateName,
+        SubjectPart: subjectPart,
+        ...(htmlPart ? { HtmlPart: htmlPart } : {}),
+        ...(textPart ? { TextPart: textPart } : {})
+      }
+    });
 
     try {
-      // Create the email template
-      const command = new CreateEmailTemplateCommand(createTemplateInput);
-      const response = await sesClient.send(command);
+      const response = await sesClient.send(createTemplateCommand);
 
       return {
         success: true,
         templateName: templateName,
-        message: 'Email template created successfully',
-        templateContent: templateContent,
+        message: 'Email template created successfully'
       };
-    } catch (error) {
-      const errorMessage = (error as Error).message;
-      
-      // Handle specific SES errors
-      if (errorMessage.includes('AlreadyExistsException')) {
-        throw new Error(`Template with name "${templateName}" already exists. Please choose a different name.`);
-      } else if (errorMessage.includes('LimitExceededException')) {
-        throw new Error('You have reached the maximum number of email templates allowed.');
-      } else if (errorMessage.includes('BadRequestException')) {
-        throw new Error(`Invalid template data: ${errorMessage}`);
-      } else if (errorMessage.includes('TooManyRequestsException')) {
-        throw new Error('Too many requests. Please wait a moment and try again.');
-      }
-      
-      throw new Error(`Failed to create email template: ${errorMessage}`);
+    } catch (caught) {
+      console.log('Failed to create template.', caught);
+      return caught;
     }
-  },
+  }
 });

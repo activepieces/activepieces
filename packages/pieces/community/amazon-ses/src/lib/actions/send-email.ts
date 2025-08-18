@@ -1,37 +1,43 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
+import {
+  SESClient,
+  SendEmailCommand,
+  SendEmailCommandInput
+} from '@aws-sdk/client-ses';
 import { amazonSesAuth } from '../../index';
 
 export const sendEmail = createAction({
   auth: amazonSesAuth,
   name: 'send_email',
   displayName: 'Send Email',
-  description: 'Send a fully customizable email via Amazon SES—including sender, subject, body, to/cc/bcc, format, reply-to, and return-path.',
+  description:
+    'Send a fully customizable email via Amazon SES—including sender, subject, body, to/cc/bcc, format, reply-to, and return-path.',
   props: {
     fromEmailAddress: Property.ShortText({
       displayName: 'From Email Address',
-      description: 'The email address to use as the "From" address for the email. The address must be verified in SES.',
-      required: true,
+      description:
+        'The email address to use as the "From" address for the email. The address must be verified in SES.',
+      required: true
     }),
     toAddresses: Property.Array({
       displayName: 'To Addresses',
       description: 'Email addresses to send the message to',
-      required: true,
+      required: true
     }),
     ccAddresses: Property.Array({
       displayName: 'CC Addresses',
       description: 'Email addresses to carbon copy',
-      required: false,
+      required: false
     }),
     bccAddresses: Property.Array({
       displayName: 'BCC Addresses',
       description: 'Email addresses to blind carbon copy',
-      required: false,
+      required: false
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
       description: 'The subject line of the email',
-      required: true,
+      required: true
     }),
     bodyType: Property.StaticDropdown({
       displayName: 'Body Type',
@@ -41,50 +47,46 @@ export const sendEmail = createAction({
         options: [
           {
             label: 'HTML',
-            value: 'html',
+            value: 'html'
           },
           {
             label: 'Plain Text',
-            value: 'text',
+            value: 'text'
           },
           {
             label: 'Both HTML and Text',
-            value: 'both',
-          },
-        ],
+            value: 'both'
+          }
+        ]
       },
-      defaultValue: 'html',
+      defaultValue: 'html'
     }),
     htmlBody: Property.LongText({
       displayName: 'HTML Body',
       description: 'The HTML content of the email body',
-      required: false,
+      required: false
     }),
     textBody: Property.LongText({
       displayName: 'Text Body',
       description: 'The plain text content of the email body',
-      required: false,
+      required: false
     }),
     replyToAddresses: Property.Array({
       displayName: 'Reply-To Addresses',
       description: 'Email addresses for replies',
-      required: false,
+      required: false
     }),
     configurationSetName: Property.ShortText({
       displayName: 'Configuration Set Name',
-      description: 'The name of the configuration set to use when sending the email',
-      required: false,
+      description:
+        'The name of the configuration set to use when sending the email',
+      required: false
     }),
     emailTags: Property.Array({
       displayName: 'Email Tags',
       description: 'Tags to apply to the email in the format "key=value"',
-      required: false,
-    }),
-    feedbackForwardingEmailAddress: Property.ShortText({
-      displayName: 'Feedback Forwarding Email Address',
-      description: 'The address that you want bounce and complaint notifications to be sent to',
-      required: false,
-    }),
+      required: false
+    })
   },
   async run(context) {
     const {
@@ -98,8 +100,7 @@ export const sendEmail = createAction({
       textBody,
       replyToAddresses,
       configurationSetName,
-      emailTags,
-      feedbackForwardingEmailAddress,
+      emailTags
     } = context.propsValue;
 
     const { accessKeyId, secretAccessKey, region } = context.auth;
@@ -112,102 +113,103 @@ export const sendEmail = createAction({
       throw new Error('Text body is required when body type is plain text');
     }
     if (bodyType === 'both' && (!htmlBody || !textBody)) {
-      throw new Error('Both HTML and text bodies are required when body type is both');
+      throw new Error(
+        'Both HTML and text bodies are required when body type is both'
+      );
     }
 
     // Create SES client
-    const sesClient = new SESv2Client({
+    const sesClient = new SESClient({
       credentials: {
         accessKeyId,
-        secretAccessKey,
+        secretAccessKey
       },
-      region,
+      region
     });
 
-    // Prepare email content
-    const emailContent: any = {
-      Simple: {
-        Subject: {
-          Data: subject,
-          Charset: 'UTF-8',
-        },
-        Body: {},
-      },
-    };
-
-    // Add body content based on type
-    if (bodyType === 'html' || bodyType === 'both') {
-      emailContent.Simple.Body.Html = {
-        Data: htmlBody,
-        Charset: 'UTF-8',
-      };
-    }
-
-    if (bodyType === 'text' || bodyType === 'both') {
-      emailContent.Simple.Body.Text = {
-        Data: textBody,
-        Charset: 'UTF-8',
-      };
-    }
-
-    // Prepare destination
-    const destination: any = {
-      ToAddresses: Array.isArray(toAddresses) ? toAddresses : [toAddresses],
+    // Prepare destination addresses with proper typing
+    const destination: SendEmailCommandInput['Destination'] = {
+      ToAddresses: Array.isArray(toAddresses)
+        ? (toAddresses as string[])
+        : [toAddresses as string]
     };
 
     if (ccAddresses && ccAddresses.length > 0) {
-      destination.CcAddresses = Array.isArray(ccAddresses) ? ccAddresses : [ccAddresses];
+      destination.CcAddresses = Array.isArray(ccAddresses)
+        ? (ccAddresses as string[])
+        : [ccAddresses as string];
     }
 
     if (bccAddresses && bccAddresses.length > 0) {
-      destination.BccAddresses = Array.isArray(bccAddresses) ? bccAddresses : [bccAddresses];
+      destination.BccAddresses = Array.isArray(bccAddresses)
+        ? (bccAddresses as string[])
+        : [bccAddresses as string];
     }
 
-    // Prepare email tags
-    let messageTags: any[] | undefined;
-    if (emailTags && emailTags.length > 0) {
-      messageTags = emailTags.map((tag: string) => {
-        const [name, value] = tag.split('=');
-        return { Name: name?.trim(), Value: value?.trim() || '' };
-      });
-    }
-
-    // Prepare send email command input
-    const sendEmailInput: any = {
-      FromEmailAddress: fromEmailAddress,
+    // Create send email command following AWS SDK example structure exactly
+    const sendEmailCommand = new SendEmailCommand({
       Destination: destination,
-      Content: emailContent,
-    };
-
-    // Add optional parameters
-    if (replyToAddresses && replyToAddresses.length > 0) {
-      sendEmailInput.ReplyToAddresses = Array.isArray(replyToAddresses) ? replyToAddresses : [replyToAddresses];
-    }
-
-    if (configurationSetName) {
-      sendEmailInput.ConfigurationSetName = configurationSetName;
-    }
-
-    if (messageTags && messageTags.length > 0) {
-      sendEmailInput.EmailTags = messageTags;
-    }
-
-    if (feedbackForwardingEmailAddress) {
-      sendEmailInput.FeedbackForwardingEmailAddress = feedbackForwardingEmailAddress;
-    }
+      Message: {
+        Body: {
+          ...(bodyType === 'html' || bodyType === 'both'
+            ? {
+                Html: {
+                  Charset: 'UTF-8',
+                  Data: htmlBody as string
+                }
+              }
+            : {}),
+          ...(bodyType === 'text' || bodyType === 'both'
+            ? {
+                Text: {
+                  Charset: 'UTF-8',
+                  Data: textBody as string
+                }
+              }
+            : {})
+        },
+        Subject: {
+          Charset: 'UTF-8',
+          Data: subject
+        }
+      },
+      Source: fromEmailAddress,
+      ...(replyToAddresses && replyToAddresses.length > 0
+        ? {
+            ReplyToAddresses: Array.isArray(replyToAddresses)
+              ? (replyToAddresses as string[])
+              : [replyToAddresses as string]
+          }
+        : {}),
+      ...(configurationSetName
+        ? {
+            ConfigurationSetName: configurationSetName
+          }
+        : {}),
+      ...(emailTags && emailTags.length > 0
+        ? {
+            Tags: (emailTags as string[]).map((tag: string) => {
+              const [name, value] = tag.split('=');
+              return { Name: name?.trim(), Value: value?.trim() || '' };
+            })
+          }
+        : {})
+    });
 
     try {
-      // Send the email
-      const command = new SendEmailCommand(sendEmailInput);
-      const response = await sesClient.send(command);
+      const response = await sesClient.send(sendEmailCommand);
 
       return {
         success: true,
         messageId: response.MessageId,
-        message: 'Email sent successfully',
+        message: 'Email sent successfully'
       };
-    } catch (error) {
-      throw new Error(`Failed to send email: ${(error as Error).message}`);
+    } catch (caught) {
+      if (caught instanceof Error && caught.name === 'MessageRejected') {
+        // Following the example pattern for MessageRejected errors
+        return caught;
+      }
+      throw caught;
     }
-  },
+  }
 });
