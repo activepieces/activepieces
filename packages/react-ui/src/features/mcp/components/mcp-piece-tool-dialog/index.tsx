@@ -38,6 +38,7 @@ type McpPieceDialogProps = {
   open: boolean;
   onToolsUpdate: (tools: McpToolRequest[]) => void;
   onClose: () => void;
+  piecesToolsToHide?: string[];
 };
 
 export type ActionInfo = {
@@ -51,6 +52,7 @@ export function McpPieceDialog({
   onToolsUpdate,
   children,
   onClose,
+  piecesToolsToHide,
 }: McpPieceDialogProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedConnectionExternalId, setSelectedConnectionExternalId] =
@@ -71,7 +73,9 @@ export function McpPieceDialog({
     return (
       metadata?.filter(
         (m): m is PieceStepMetadataWithSuggestions =>
-          'suggestedActions' in m && 'suggestedTriggers' in m,
+          'suggestedActions' in m &&
+          'suggestedTriggers' in m &&
+          !piecesToolsToHide?.includes(m.pieceName),
       ) ?? []
     );
   }, [metadata]);

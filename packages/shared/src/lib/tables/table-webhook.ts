@@ -12,7 +12,7 @@ export const TableWebhook = Type.Object({
     projectId: Type.String(),
     tableId: Type.String(),
     events: Type.Array(Type.Enum(TableWebhookEventType)),
-    flowId: Type.String(),
+    flowId: Type.Optional(Type.String()),
 })
 
 export type TableWebhook = Static<typeof TableWebhook>

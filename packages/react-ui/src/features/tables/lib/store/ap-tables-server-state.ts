@@ -129,5 +129,12 @@ export const createServerState = (
     },
     fields: clonedFields,
     records: clonedRecords,
+    setFields: (fields: Field[]) => {
+      clonedFields.splice(
+        0,
+        clonedFields.length,
+        ...JSON.parse(JSON.stringify(fields)),
+      );
+    },
   };
 };

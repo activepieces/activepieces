@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import React, { useState } from 'react';
 
+// eslint-disable-next-line import/no-restricted-paths
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Label } from '@/components/ui/label';

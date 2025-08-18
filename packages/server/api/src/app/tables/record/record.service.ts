@@ -13,6 +13,7 @@ import {
     isNil,
     PopulatedRecord,
     SeekPage,
+    TableAutomationTrigger,
     TableWebhookEventType,
     UpdateRecordRequest,
 } from '@activepieces/shared'
@@ -20,6 +21,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
+import { tableAutomationService } from '../../ee/tables/table-automation-service'
 import { system } from '../../helper/system/system'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
@@ -283,8 +285,22 @@ export const recordService = {
         if (webhooks.length === 0) {
             return
         }
-        await Promise.all(webhooks.map((webhook) => {
-            return webhookService.handleWebhook({
+        await Promise.all(webhooks.map(async (webhook) => {
+            if (isNil(webhook.flowId)) {
+                const table = await tableService.getOneOrThrow({ projectId, id: tableId })
+                if (!table.agent?.settings?.aiMode) {
+                    return
+                }
+                await tableAutomationService(logger).run({
+                    projectId,
+                    agentId: table.agentId,
+                    tableId,
+                    record: data['record'] as PopulatedRecord,
+                    trigger: TableAutomationTrigger.ON_DEMAND,
+                })
+                return
+            }
+            await webhookService.handleWebhook({
                 async: true,
                 flowId: webhook.flowId,
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,

@@ -4,12 +4,13 @@ import { Navigate, useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
 import { LoadingScreen } from '@/components/ui/loading-screen';
+import { agentRunsApi } from '@/features/agents/lib/agents-api';
 import {
   TableState,
   ApTableStore,
   createApTableStore,
 } from '@/features/tables/lib/store/ap-tables-client-state';
-import { Field, Table, PopulatedRecord } from '@activepieces/shared';
+import { Field, Table, PopulatedRecord, AgentRun } from '@activepieces/shared';
 
 import { fieldsApi } from '../lib/fields-api';
 import { recordsApi } from '../lib/records-api';
@@ -22,14 +23,16 @@ export const TableStateProviderWithTable = ({
   table,
   fields,
   records,
+  runs,
 }: {
   children: React.ReactNode;
   table: Table;
   fields: Field[];
   records: PopulatedRecord[];
+  runs: AgentRun[];
 }) => {
   const tableStoreRef = useRef<ApTableStore>(
-    createApTableStore(table, fields, records),
+    createApTableStore(table, fields, records, runs),
   );
   return (
     <TableContext.Provider value={tableStoreRef.current}>
@@ -51,7 +54,10 @@ export function ApTableStateProvider({
   } = useQuery({
     queryKey: ['table', tableId],
     queryFn: () => {
-      return tablesApi.getById(tableId!);
+      if (!tableId) {
+        throw new Error('Table ID not found');
+      }
+      return tablesApi.getById(tableId);
     },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
@@ -65,7 +71,12 @@ export function ApTableStateProvider({
     error: fieldsError,
   } = useQuery({
     queryKey: ['fields', tableId],
-    queryFn: () => fieldsApi.list(tableId!),
+    queryFn: () => {
+      if (!tableId) {
+        throw new Error('Table ID not found');
+      }
+      return fieldsApi.list(tableId);
+    },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0,
@@ -78,28 +89,51 @@ export function ApTableStateProvider({
     error: recordsError,
   } = useQuery({
     queryKey: ['records', tableId],
-    queryFn: () =>
-      recordsApi.list({
-        tableId: tableId!,
+    queryFn: () => {
+      if (!tableId) {
+        throw new Error('Table ID not found');
+      }
+      return recordsApi.list({
+        tableId: tableId,
         limit: 99999999, // TODO: we should implement pagination in ui.
         cursor: undefined,
-      }),
+      });
+    },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0,
     gcTime: 0,
   });
-  if (tableError || fieldsError || recordsError) {
+
+  const {
+    data: runs,
+    isLoading: isRunsLoading,
+    error: runsError,
+  } = useQuery({
+    queryKey: ['runs', tableId],
+    queryFn: () => {
+      if (!table?.agent?.id) {
+        throw new Error('Agent ID not found');
+      }
+      return agentRunsApi.list({ agentId: table.agent.id });
+    },
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 0,
+    gcTime: 0,
+    enabled: !!table?.agent?.id,
+  });
+  if (tableError || fieldsError || recordsError || runsError) {
     return <Navigate to="/tables" />;
   }
-  if (isTableLoading || isFieldsLoading || isRecordsLoading) {
+  if (isTableLoading || isFieldsLoading || isRecordsLoading || isRunsLoading) {
     return (
       <div className="flex justify-center items-center h-full w-full pb-6">
         <LoadingScreen mode="container" />
       </div>
     );
   }
-  if (!table || !fields || !records) {
+  if (!table || !fields || !records || !runs) {
     return <Navigate to="/tables" />;
   }
   return (
@@ -107,6 +141,7 @@ export function ApTableStateProvider({
       table={table}
       fields={fields}
       records={records.data}
+      runs={runs.data}
     >
       {children}
     </TableStateProviderWithTable>

@@ -4,7 +4,6 @@ import {
     AI_USAGE_FEATURE_HEADER,
     AI_USAGE_MCP_ID_HEADER,
     AIUsageFeature,
-    assertNotNullOrUndefined,
     EngineResponseStatus,
     ExecuteActionResponse,
     isNil,
@@ -350,8 +349,7 @@ async function extractActionParametersFromUserInstructions({
     logger,
     mcpId,
 }: ExtractActionParametersParams): Promise<Record<string, unknown>> {
-    const connectionReference = `{{connections['${toolPieceMetadata.connectionExternalId}']}}`
-    assertNotNullOrUndefined(connectionReference, 'Tool has no connection with the piece, please try to add a connection to the tool')
+    const connectionReference = toolPieceMetadata.connectionExternalId ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
 
     const aiModel = await initializeOpenAIModel({
         platformId,
@@ -366,7 +364,7 @@ async function extractActionParametersFromUserInstructions({
         async (accumulatedParametersPromise, [_, propertyNames]) => {
             const accumulatedParameters = {
                 ...(await accumulatedParametersPromise),
-                'auth': connectionReference,
+                ...(connectionReference ? { auth: connectionReference } : {}),
             }
 
             const parameterExtractionPrompt = mcpUtils.buildParameterExtractionPrompt({
@@ -407,7 +405,7 @@ async function extractActionParametersFromUserInstructions({
                 return {
                     ...accumulatedParameters,
                     ...extractedParameters,
-                    'auth': connectionReference,
+                    ...(connectionReference ? { auth: connectionReference } : {}),
                 }
             }
             catch (error) {
@@ -415,7 +413,7 @@ async function extractActionParametersFromUserInstructions({
                 throw error
             }
         }, 
-        Promise.resolve({ 'auth': connectionReference }),
+        Promise.resolve(connectionReference ? { auth: connectionReference } : {}),
     )
 
     const nonNullExtractedParameters = Object.fromEntries(

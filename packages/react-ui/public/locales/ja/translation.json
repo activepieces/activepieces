@@ -1275,7 +1275,7 @@
   "fieldsCount": "{fieldsCount, plural, =0 {0 フィールド} =1 {1 フィールド} other {# フィールド}}",
   "Table Editor": "テーブルエディター",
   "Edit Table Name": "テーブル名の編集",
-  "Delete Records": "レコードを削除",
+  "Delete records": "レコードを削除",
   "Are you sure you want to delete the selected records? This action cannot be undone.": "選択したレコードを削除してもよろしいですか？この操作は元に戻せません。",
   "record": "レコード",
   "records": "レコード",

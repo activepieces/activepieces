@@ -1,8 +1,9 @@
 import { AgentJobData, AgentJobSource } from '@activepieces/server-shared'
-import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, AIUsageFeature, assertNotNullOrUndefined, ContentBlockType, createAIProvider, Field, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
+import { agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, AIUsageFeature, assertNotNullOrUndefined, ContentBlockType, createAIProvider, Field, isNil, McpToolType, McpWithTools, PopulatedAgent, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
-import { APICallError, stepCountIs, streamText } from 'ai'
+import { APICallError, generateObject, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 import { agentsApiService, tablesApiService } from '../api/server-api.service'
 import { agentTools } from '../utils/agent-tools'
 import { workerMachine } from '../utils/machine'
@@ -81,7 +82,7 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                         toolCallId: chunk.toolCallId,
                         type: ContentBlockType.TOOL_CALL,
                         status: ToolCallStatus.IN_PROGRESS,
-                        input: chunk.input as Record<string, unknown>,
+                        input: parseInputStreamText(chunk.input),
                         output: undefined,
                         startTime: new Date().toISOString(),
                     })
@@ -123,10 +124,36 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                 })
             }
 
+            const summarySchema = z.object({
+                title: z.string(),
+            })
+            const { object: runSummary } = await generateObject({
+                model,
+                schema: summarySchema,
+                prompt: `
+                You are an AI assistant tasked with summarizing agent run results.
+
+                CONTEXT:
+                - Original user prompt: ${jobData.prompt}
+                - Agent execution result: ${JSON.stringify(agentResult, null, 2)}
+
+                TASK:
+                Create a title with two parts:
+                1. TITLE: Write a concise, descriptive sentence summarizing the user's intended action and the agent's result.
+
+                REQUIREMENTS:
+                - Keep the title concise and action-oriented
+                - Focus on the key results or action items that the user should take
+                - Use clear, simple language
+                - The title should be a single sentence of 3-4 words maximum
+                `,
+            })
+            
             const markAsComplete = agentResult.steps.find(isMarkAsComplete) as ToolCallContentBlock | undefined
             await agentsApiService(workerToken, log).updateAgentRun(jobData.agentRunId, {
                 ...agentResult,
                 output: markAsComplete?.input,
+                title: runSummary.title,
                 status: !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED,
                 message: concatMarkdown(agentResult.steps),
                 finishTime: new Date().toISOString(),
@@ -157,13 +184,11 @@ function isMarkAsComplete(block: AgentStepBlock): boolean {
 
 
 function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCallContentBlock, 'startTime' | 'endTime' | 'input' | 'output' | 'status' | 'toolName' | 'toolCallId' | 'type'>): ToolCallContentBlock {
-    if (toolName === agentbuiltInToolsNames.markAsComplete || toolName === agentbuiltInToolsNames.updateTableRecord) {
-        return {
-            ...baseTool,
-            toolCallType: ToolCallType.INTERNAL,
-            displayName: toolName === agentbuiltInToolsNames.markAsComplete ? 'Mark as Complete' : 'Update Table Record',
-        }
+    const internalTool = getInternalTool(toolName, baseTool)
+    if (internalTool) {
+        return internalTool
     }
+
     const tool = mcp.tools.find((tool) => tool.toolName === toolName)
     if (!tool) {
         throw new Error(`Tool ${toolName} not found`)
@@ -178,6 +203,7 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
                 pieceName: pieceMetadata.pieceName,
                 pieceVersion: pieceMetadata.pieceVersion,
                 actionName: tool.pieceMetadata.actionName,
+                logoUrl: tool.pieceMetadata.logoUrl,
             }
         }
         case McpToolType.FLOW: {
@@ -192,7 +218,49 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
     }
 }
 
-async function constructSystemPrompt(agent: Agent, fields: Field[] | undefined, record: Record<string, unknown> | undefined) {
+function parseInputStreamText(input: unknown) {
+    if (typeof input === 'string') {
+        try {
+            return JSON.parse(input)
+        }
+        catch {
+            return input
+        }
+    }
+    return input
+}
+
+function getInternalTool(toolName: string, baseTool: Pick<ToolCallContentBlock, 'startTime' | 'endTime' | 'input' | 'output' | 'status' | 'toolName' | 'toolCallId' | 'type'>): ToolCallContentBlock | null {
+    switch (toolName) {
+        case agentbuiltInToolsNames.markAsComplete:
+            return {
+                ...baseTool,
+                toolCallType: ToolCallType.INTERNAL,
+                displayName: 'Mark as Complete',
+            }
+        case agentbuiltInToolsNames.updateTableRecord:
+            return {
+                ...baseTool,
+                toolCallType: ToolCallType.INTERNAL,
+                displayName: 'Update Table Record',
+            }
+        case agentbuiltInToolsNames.newTableColumn:
+            return {
+                ...baseTool,
+                toolCallType: ToolCallType.INTERNAL,
+                displayName: 'New Table Column',
+            }
+        case agentbuiltInToolsNames.findTableColumn:
+            return {
+                ...baseTool,
+                toolCallType: ToolCallType.INTERNAL,
+                displayName: 'Find Table Column',
+            }
+    }
+    return null
+}
+
+async function constructSystemPrompt(agent: PopulatedAgent, fields: Field[] | undefined, record: Record<string, unknown> | undefined) {
     let systemPrompt = `
     You are an autonomous assistant designed to efficiently achieve the user's goal.
     YOU MUST ALWAYS call the mark as complete tool with the output or message wether you have successfully completed the task or not.
@@ -204,6 +272,24 @@ async function constructSystemPrompt(agent: Agent, fields: Field[] | undefined, 
     ---
     ${agent.systemPrompt}
     `
+
+    if (!agent.settings.allowAgentCreateColumns) {
+        systemPrompt += `
+        DON'T CREATE NEW COLUMNS EVEN IF THE USER ASKS YOU TO.
+        `
+    }
+    else {
+        systemPrompt += `
+        If you are asked to create a new column, you MUST CHECK IF THE COLUMN ALREADY EXISTS. If it does, you MUST NOT CREATE A NEW COLUMN. 
+        IMPORTANT: After creating a new column, you MUST use the findTableColumn tool to verify the column was created and get its updated information before proceeding with any operations that depend on it.
+        `
+    }
+    if (agent.settings.limitColumnEditing) {
+        const editableColumns = agent.settings.editableColumns.map((column) => column.name).join(', ')
+        systemPrompt += `
+        YOU CAN ONLY EDIT THE FOLLOWING COLUMNS: ${editableColumns}
+        `
+    }
 
     if (fields && record) {
         systemPrompt += `
