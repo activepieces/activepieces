@@ -40,10 +40,10 @@ export const updateOOO = createAction({
     const { OOO_id, start_date, end_date, status, reason } = context.propsValue;
     
     const updateData: Record<string, unknown> = {};
-    if (start_date) updateData.start_date = assembledCommon.formatDateTime(start_date);
-    if (end_date) updateData.end_date = assembledCommon.formatDateTime(end_date);
-    if (status) updateData.status = status;
-    if (reason) updateData.reason = reason;
+    if (start_date) updateData['start_date'] = assembledCommon.formatDateTime(start_date);
+    if (end_date) updateData['end_date'] = assembledCommon.formatDateTime(end_date);
+    if (status) updateData['status'] = status;
+    if (reason) updateData['reason'] = reason;
 
     const response = await assembledCommon.makeRequest(
       context.auth as string,
