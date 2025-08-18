@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button"
 import { HorizontalSeparatorWithText } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
-export const HomePage = () => {
-
+export const EmptyHomePage = () => {
     return (
         <ScrollArea className="w-full h-full pt-10">
             <div className="mb-16">
@@ -40,7 +39,8 @@ export const QuickStartSection = () => {
             {t('OR BUILD FROM SCRATCH')}
             </div>
             </HorizontalSeparatorWithText>
-            <StartFromScratchSection /></>)
+            <StartFromScratchSection />
+            </>)
 }
 type QuickStartTemplate = {
     type: 'table' | 'flow';
@@ -82,13 +82,13 @@ const QuickStartTemplateCard = ({ template }: { template: QuickStartTemplate }) 
                 template.type === 'flow' && (<Workflow className="text-blue-500 w-6 h-6"></Workflow>)
             }
             </div>
-            <h3 className="text-xl font-semibold mb-2">
+            <h3 className="text-2xl font-semibold mb-2">
                 {template.title}
             </h3>
             <p className="text-accent-foreground leading-relaxed mb-6 flex-1 text-left">{template.description}</p>
             <div>
             <Button variant="outline-primary" >
-                {t('Use Template')} <ArrowRight className="w-4 h-4" />
+                {t('Use Agent')} <ArrowRight className="w-4 h-4" />
             </Button>
             </div>
            
@@ -125,7 +125,12 @@ const StartFromScratchCard = ({type}: {type: 'table' | 'flow'}) => {
          </p>
 
          <Button className="mt-10" variant="secondary">
-            {t('Start with Tables')}
+          {
+            type === 'table' && t('Start with Tables')
+          }
+          {
+            type === 'flow' && t('Start with Flows')
+          }
          </Button>
 
     </div>)

@@ -4,7 +4,7 @@ import { userHooks } from "@/hooks/user-hooks";
 import { cn } from "@/lib/utils";
 import { t } from "i18next"
 import { Bot, CheckSquare, Table2, TrendingUp, Workflow } from "lucide-react";
-import { QuickStartSection } from "./empty-home";
+import { EmptyHomePage, QuickStartSection } from "./empty-home";
 import TutorialsDialog from "@/components/custom/tutorials-dialog";
 import { McpSvg } from "@/assets/img/custom/mcp";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,11 @@ import { PartyPopper } from "@/assets/img/custom/party-popper";
 
 export const HomePage = () => {
     const { data: currentUser } = userHooks.useCurrentUser();
+    const x = true;
+    if(x)
+    {
+        return <EmptyHomePage />
+    }
     return (
         <ScrollArea className="w-full h-full pt-10 ">
             <div className="max-w-7xl mx-auto">
@@ -63,7 +68,7 @@ const TodosCard = () => {
 			</div>
 			<p className="text-orange-800 dark:text-orange-200 mb-4">{t('automationsWaitingForApprovalNote', {count: todosCount})}</p>
 			<Button variant="orange" className="w-full px-4 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl">
-                {t('Review Tasks')}
+                {t('Review Todos')}
                 </Button>
 		</div>)}
 
