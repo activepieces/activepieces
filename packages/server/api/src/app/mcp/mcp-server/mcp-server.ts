@@ -4,7 +4,6 @@ import {
     AI_USAGE_FEATURE_HEADER,
     AI_USAGE_MCP_ID_HEADER,
     AIUsageFeature,
-    assertNotNullOrUndefined,
     EngineResponseStatus,
     ExecuteActionResponse,
     isNil,
@@ -16,6 +15,7 @@ import {
     McpToolType,
     McpTrigger,
     PiecePackage,
+    spreadIfDefined,
     TelemetryEventName,
 } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
@@ -350,8 +350,7 @@ async function extractActionParametersFromUserInstructions({
     logger,
     mcpId,
 }: ExtractActionParametersParams): Promise<Record<string, unknown>> {
-    const connectionReference = `{{connections['${toolPieceMetadata.connectionExternalId}']}}`
-    assertNotNullOrUndefined(connectionReference, 'Tool has no connection with the piece, please try to add a connection to the tool')
+    const connectionReference = !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
 
     const aiModel = await initializeOpenAIModel({
         platformId,
@@ -366,7 +365,7 @@ async function extractActionParametersFromUserInstructions({
         async (accumulatedParametersPromise, [_, propertyNames]) => {
             const accumulatedParameters = {
                 ...(await accumulatedParametersPromise),
-                'auth': connectionReference,
+                ...spreadIfDefined('auth', connectionReference),
             }
 
             const parameterExtractionPrompt = mcpUtils.buildParameterExtractionPrompt({
