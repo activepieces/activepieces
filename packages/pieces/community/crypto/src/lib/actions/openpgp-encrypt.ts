@@ -35,6 +35,7 @@ export const openpgpEncrypt = createAction({
 
       return {
         success: true,
+        filename: context.propsValue.file.filename + '.pgp',
         file: await context.files.write({
           fileName: context.propsValue.file.filename + '.pgp',
           data: Buffer.from(encrypted)
