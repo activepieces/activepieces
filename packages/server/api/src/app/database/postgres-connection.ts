@@ -264,7 +264,7 @@ import { AddBillingCycle1754559781173 } from './migration/postgres/1754559781173
 import { AgentSettingsEntity1754595679670 } from './migration/postgres/1754595679670-AgentSettingsEntity'
 import { EligibileForTrial1754852385518 } from './migration/postgres/1754852385518-EligibileForTrial'
 import { RemoveAgentTestPrompt1754863565929 } from './migration/postgres/1754863565929-RemoveAgentTestPrompt'
-import { AddTitleAndSummaryAgentRun1754919239238 } from './migration/postgres/1754919239238-AddTitleAndSummaryAgentRun'
+import { AddTitleAgentRun1754919239238 } from './migration/postgres/1754919239238-AddTitleAgentRun'
 import { MakeFlowIdOptionalInTableWebhook1755000823189 } from './migration/postgres/1755000823189-MakeFlowIdOptionalInTableWebhook'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -451,7 +451,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddJobIdToTriggerRun1754510611628,
         RemoveAgentTestPrompt1754863565929,
         AgentSettingsEntity1754595679670,
-        AddTitleAndSummaryAgentRun1754919239238,
+        AddTitleAgentRun1754919239238,
         MakeFlowIdOptionalInTableWebhook1755000823189,
     ]
 

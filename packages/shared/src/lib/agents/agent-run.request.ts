@@ -26,7 +26,6 @@ export const UpdateAgentRunRequestBody = Type.Object({
     output: Type.Optional(Type.Unknown()),
     finishTime: Type.Optional(Type.String()),
     title: Type.Optional(Type.String()),
-    summary: Type.Optional(Type.String()),
 })
 
 export type UpdateAgentRunRequestBody = Static<typeof UpdateAgentRunRequestBody>

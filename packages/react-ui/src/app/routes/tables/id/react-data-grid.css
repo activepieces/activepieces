@@ -115,19 +115,10 @@ div[role="gridcell"]:focus-within {
 }
 
 .locked-row {
-    background: #f8fafc;
     position: relative;
     overflow: hidden;
-    border-radius: 4px;
-    position: absolute;
-    top: 12px;
-    left: -50px;
-    bottom: 12px;
-    width: 100px;
-    border-radius: 100%;
-    background: conic-gradient(from 90deg at 50% 50%, #9333ea 0deg, #ea33b3 141.92deg, #005ff9 202.5deg, #1c00bb 342.69deg, #9333ea 360deg);
-    opacity: 0.1;
-    filter: blur(15px);
+    background-color: rgba(250, 245, 255, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes gradientShift {

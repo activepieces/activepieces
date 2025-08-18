@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddSettingsAndSummaryAgentRunSqlite1754922630313 implements MigrationInterface {
-    name = 'AddSettingsAndSummaryAgentRunSqlite1754922630313'
+export class AddSettingsAndTitleAgentRunSqlite1754922630313 implements MigrationInterface {
+    name = 'AddSettingsAndTitleAgentRunSqlite1754922630313'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -172,7 +172,6 @@ export class AddSettingsAndSummaryAgentRunSqlite1754922630313 implements Migrati
                 "prompt" varchar NOT NULL,
                 "metadata" text,
                 "title" varchar,
-                "summary" varchar,
                 CONSTRAINT "FK_fd5968f224bbef0787a26563dd5" FOREIGN KEY ("agentId") REFERENCES "agent" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "FK_a2642efaec1c09ebf098411314f" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
@@ -191,7 +190,8 @@ export class AddSettingsAndSummaryAgentRunSqlite1754922630313 implements Migrati
                     "startTime",
                     "finishTime",
                     "prompt",
-                    "metadata"
+                    "metadata",
+                    "title"
                 )
             SELECT "id",
                 "created",
@@ -205,7 +205,8 @@ export class AddSettingsAndSummaryAgentRunSqlite1754922630313 implements Migrati
                 "startTime",
                 "finishTime",
                 "prompt",
-                "metadata"
+                "metadata",
+                "title"
             FROM "agent_run"
         `)
         await queryRunner.query(`
@@ -350,6 +351,7 @@ export class AddSettingsAndSummaryAgentRunSqlite1754922630313 implements Migrati
                 "finishTime" datetime,
                 "prompt" varchar NOT NULL,
                 "metadata" text,
+                "title" varchar,
                 CONSTRAINT "FK_fd5968f224bbef0787a26563dd5" FOREIGN KEY ("agentId") REFERENCES "agent" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "FK_a2642efaec1c09ebf098411314f" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
@@ -368,7 +370,8 @@ export class AddSettingsAndSummaryAgentRunSqlite1754922630313 implements Migrati
                     "startTime",
                     "finishTime",
                     "prompt",
-                    "metadata"
+                    "metadata",
+                    "title"
                 )
             SELECT "id",
                 "created",
@@ -382,7 +385,8 @@ export class AddSettingsAndSummaryAgentRunSqlite1754922630313 implements Migrati
                 "startTime",
                 "finishTime",
                 "prompt",
-                "metadata"
+                "metadata",
+                "title"
             FROM "temporary_agent_run"
         `)
         await queryRunner.query(`

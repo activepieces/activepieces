@@ -74,6 +74,16 @@ async function buildInternalTools<T extends AgentJobSource>(params: AgentToolsPa
                     })
                 },
             }),
+            [agentbuiltInToolsNames.findTableColumn]: tool({
+                description: 'Find a table column',
+                inputSchema: z.object({
+                    name: z.string(),
+                }),
+                execute: async ({ name }) => {
+                    const fields = await tablesApiService(params.token).getFields(params.metadata!.tableId)
+                    return fields.find(field => field.name === name)
+                },
+            }),
             [agentbuiltInToolsNames.markAsComplete]: tool({
                 description: 'Mark the todo as complete',
                 inputSchema: params.agent.outputType === AgentOutputType.STRUCTURED_OUTPUT ? z.object({

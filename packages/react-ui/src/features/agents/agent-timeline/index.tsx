@@ -58,6 +58,9 @@ const AgentTimeline = ({ agentRunId, className = '' }: AgentTimelineProps) => {
             );
           })}
           {showSkeleton && <AgentStepSkeleton />}
+          {agentRun.status === AgentTaskStatus.FAILED && agentRun.message && (
+            <span className="text-sm">{agentRun.message}</span>
+          )}
         </div>
       </ScrollArea>
     </div>

@@ -288,15 +288,19 @@ export const recordService = {
         await Promise.all(webhooks.map(async (webhook) => {
             if (isNil(webhook.flowId)) {
                 const table = await tableService.getOneOrThrow({ projectId, id: tableId })
-                return tableAutomationService(logger).run({
+                if (!table.agent?.settings?.aiMode) {
+                    return
+                }
+                await tableAutomationService(logger).run({
                     projectId,
                     agentId: table.agentId,
                     tableId,
                     record: data['record'] as PopulatedRecord,
                     trigger: TableAutomationTrigger.ON_DEMAND,
                 })
+                return
             }
-            return webhookService.handleWebhook({
+            await webhookService.handleWebhook({
                 async: true,
                 flowId: webhook.flowId,
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,

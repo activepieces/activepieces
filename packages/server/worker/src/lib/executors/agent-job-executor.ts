@@ -126,7 +126,6 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
 
             const summarySchema = z.object({
                 title: z.string(),
-                summary: z.string(),
             })
             const { object: runSummary } = await generateObject({
                 model,
@@ -139,15 +138,14 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                 - Agent execution result: ${JSON.stringify(agentResult, null, 2)}
 
                 TASK:
-                Create a summary with two parts:
-                1. TITLE: A single, descriptive sentence that captures the main action or outcome of the agent run
-                2. SUMMARY: A brief, clear explanation of what the agent accomplished or what happened during execution
+                Create a title with two parts:
+                1. TITLE: Write a concise, descriptive sentence summarizing the user's intended action and the agent's result.
 
                 REQUIREMENTS:
                 - Keep the title concise and action-oriented
-                - Make the description informative but brief (1-2 sentences maximum)
                 - Focus on the key results or action items that the user should take
                 - Use clear, simple language
+                - The title should be a single sentence of 3-4 words maximum
                 `,
             })
             
@@ -156,7 +154,6 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                 ...agentResult,
                 output: markAsComplete?.input,
                 title: runSummary.title,
-                summary: runSummary.summary,
                 status: !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED,
                 message: concatMarkdown(agentResult.steps),
                 finishTime: new Date().toISOString(),
@@ -253,6 +250,12 @@ function getInternalTool(toolName: string, baseTool: Pick<ToolCallContentBlock, 
                 toolCallType: ToolCallType.INTERNAL,
                 displayName: 'New Table Column',
             }
+        case agentbuiltInToolsNames.findTableColumn:
+            return {
+                ...baseTool,
+                toolCallType: ToolCallType.INTERNAL,
+                displayName: 'Find Table Column',
+            }
     }
     return null
 }
@@ -272,12 +275,13 @@ async function constructSystemPrompt(agent: PopulatedAgent, fields: Field[] | un
 
     if (!agent.settings.allowAgentCreateColumns) {
         systemPrompt += `
-        You CANNOT create new columns. Only work with existing columns.
+        DON'T CREATE NEW COLUMNS EVEN IF THE USER ASKS YOU TO.
         `
     }
     else {
         systemPrompt += `
-        You can only create new columns if they are not already exist in the table.
+        If you are asked to create a new column, you MUST CHECK IF THE COLUMN ALREADY EXISTS. If it does, you MUST NOT CREATE A NEW COLUMN. 
+        IMPORTANT: After creating a new column, you MUST use the findTableColumn tool to verify the column was created and get its updated information before proceeding with any operations that depend on it.
         `
     }
     if (agent.settings.limitColumnEditing) {

@@ -156,14 +156,14 @@ export const ApTableHeader = ({ onBack, agent }: ApTableHeaderProps) => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {isSaving && (
-            <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
-              <RefreshCw className="h-4 w-4 animate-spin" />
-              <span className="text-sm">{t('Saving...')}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {isSaving && (
+              <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                <span className="text-sm">{t('Saving...')}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div className="flex items-center gap-4 w-full justify-end">

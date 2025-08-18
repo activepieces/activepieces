@@ -12,6 +12,7 @@ export const agentbuiltInToolsNames = {
     markAsComplete: 'markAsComplete',
     updateTableRecord: 'updateTableRecord',
     newTableColumn: 'newTableColumn',
+    findTableColumn: 'findTableColumn',
 }
 
 export enum AgentOutputFieldType {

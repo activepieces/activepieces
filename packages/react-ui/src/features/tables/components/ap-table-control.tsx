@@ -125,7 +125,7 @@ export const ApTableControl = ({
       </div>
       <Button
         variant="ghost"
-        className="flex gap-2 mr-2 px-2 items-center justify-center font-light text-muted-foreground hover:text-muted-foreground"
+        className="flex gap-2 mr-2 px-2 items-center justify-center font-light text-secondary hover:text-secondary"
         onClick={() => setIsImportCsvDialogOpen(true)}
       >
         <Import className="size-4 " />

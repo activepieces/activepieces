@@ -49,9 +49,7 @@ export const RunDetailView = ({
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h2 className="text-md font-semibold truncate flex-1 min-w-0">
-            {String(
-              run.title ?? `Run ${run.id.slice(0, 8)}. Row ${recordIndex}`,
-            )}
+            {String(run.title ?? `Run on row ${recordIndex}`)}
           </h2>
           <span className="text-xs text-muted-foreground flex-shrink-0">
             {run.finishTime
@@ -59,15 +57,7 @@ export const RunDetailView = ({
               : 'In Progress'}
           </span>
         </div>
-
-        <div className="space-y-3 flex flex-col">
-          <span className="font-medium">Summary:</span>
-          <span className="text-sm">{run.summary}</span>
-        </div>
-
-        <div className="border-t border-border pt-4">
-          <AgentTimeline agentRunId={run.id} />
-        </div>
+        <AgentTimeline agentRunId={run.id} />
       </div>
     </div>
   );

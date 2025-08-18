@@ -94,6 +94,7 @@ export type TableState = {
   runs: AgentRun[];
   setRuns: (runs: AgentRun[]) => void;
   createTemporaryRecord: (recordData: ClientRecordData) => void;
+  setFields: (fields: Field[]) => void;
 };
 
 export const createApTableStore = (
@@ -326,6 +327,30 @@ export const createApTableStore = (
         return set((state) => {
           return {
             records: [...state.records, tempRecord],
+          };
+        });
+      },
+      setFields: (fields: Field[]) => {
+        serverState.setFields(fields);
+        return set((state) => {
+          const clientFields = fields.map((field) => {
+            if (field.type === FieldType.STATIC_DROPDOWN) {
+              return {
+                uuid: field.id,
+                name: field.name,
+                type: field.type,
+                data: field.data,
+              };
+            }
+            return {
+              uuid: field.id,
+              name: field.name,
+              type: field.type,
+            };
+          });
+
+          return {
+            fields: clientFields,
           };
         });
       },

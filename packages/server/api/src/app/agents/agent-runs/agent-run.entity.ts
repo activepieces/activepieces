@@ -34,10 +34,6 @@ export const AgentRunEntity = new EntitySchema<AgentRunSchema>({
             type: String,
             nullable: true,
         },
-        summary: {
-            type: String,
-            nullable: true,
-        },
         metadata: {
             type: JSONB_COLUMN_TYPE,
             nullable: true,

@@ -142,7 +142,7 @@ import { AddStepNameToTestInFlowRunEntitySqlite1754355397885 } from './migration
 import { AddTriggerSqlite1754477404726 } from './migration/sqlite/1754477404726-AddTriggerSqlite'
 import { AddJobIdToTriggerRun1754510243053 } from './migration/sqlite/1754510243053-AddJobIdToTriggerRun'
 import { RemoveAgentTestPromptSqlite1754863757450 } from './migration/sqlite/1754863757450-RemoveAgentTestPromptSqlite'
-import { AddSettingsAndSummaryAgentRunSqlite1754922630313 } from './migration/sqlite/1754922630313-AddSettingsAndSummaryAgentRunSqlite'
+import { AddSettingsAndTitleAgentRunSqlite1754922630313 } from './migration/sqlite/1754922630313-AddSettingsAndTitleAgentRunSqlite'
 import { MakeFlowIdOptionalInTableWebhookSqlite1755011767281 } from './migration/sqlite/1755011767281-MakeFlowIdOptionalInTableWebhookSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
@@ -302,7 +302,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddStepNameToTestInFlowRunEntitySqlite1754355397885,
         AddJobIdToTriggerRun1754510243053,
         RemoveAgentTestPromptSqlite1754863757450,
-        AddSettingsAndSummaryAgentRunSqlite1754922630313,
+        AddSettingsAndTitleAgentRunSqlite1754922630313,
         MakeFlowIdOptionalInTableWebhookSqlite1755011767281,
     ]
     const edition = system.getEdition()

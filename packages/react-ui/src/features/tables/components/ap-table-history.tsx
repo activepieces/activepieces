@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatUtils } from '@/lib/utils';
+import { ContentBlockType } from '@activepieces/shared';
 
 import { RunDetailView } from './agent-run-details';
 import { useTableState } from './ap-table-state-provider';
@@ -100,9 +101,12 @@ export function ApTableHistory({
                       const isFailed = run.status === 'FAILED';
                       const responsePreview = run.title ?? '';
                       const truncatedResponse =
-                        run.summary && run.summary.length > 200
-                          ? run.summary?.substring(0, 200) + '...'
-                          : run.summary;
+                        run.steps.find(
+                          (step) => step.type === ContentBlockType.MARKDOWN,
+                        )?.markdown ??
+                        run.message ??
+                        run.output ??
+                        'Failed to execute agent';
                       const recordIndex =
                         serverRecords?.findIndex(
                           (record) => record.id === run.metadata?.recordId,
@@ -122,14 +126,18 @@ export function ApTableHistory({
                           <div className="flex-1 min-w-0">
                             {isFailed ? (
                               <div className="flex gap-2 mb-1 flex-col">
-                                <span className="text-xs font-medium text-red-700">
-                                  Agent error .{' '}
-                                  {run.finishTime
-                                    ? formatUtils.formatDate(
-                                        new Date(run.finishTime),
-                                      )
-                                    : 'In Progress'}
-                                </span>
+                                <div className="flex items-center justify-between gap-2 mb-1 w-full">
+                                  <span className="text-xs font-medium text-red-700">
+                                    Agent error
+                                  </span>
+                                  <span className="text-xs whitespace-nowrap text-red-700">
+                                    {run.finishTime
+                                      ? formatUtils.formatDate(
+                                          new Date(run.finishTime),
+                                        )
+                                      : 'In Progress'}
+                                  </span>
+                                </div>
                                 <div className="text-sm font-light line-clamp-2">
                                   {truncatedResponse}
                                 </div>

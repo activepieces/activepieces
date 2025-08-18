@@ -105,7 +105,6 @@ export const agentRunsService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('startTime', params.agentRun.startTime),
             ...spreadIfDefined('finishTime', params.agentRun.finishTime),
             ...spreadIfDefined('title', params.agentRun.title),
-            ...spreadIfDefined('summary', params.agentRun.summary),
         })
 
         return this.getOneOrThrow({ id: params.id, projectId: params.projectId })

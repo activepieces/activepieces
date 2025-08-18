@@ -15,6 +15,7 @@ import {
   useTableColumns,
   mapRecordsToRows,
 } from '@/features/tables/components/table-columns';
+import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/lib/types';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -47,6 +48,7 @@ const ApTableEditorPage = () => {
     setRecords,
     setRuns,
     createTemporaryRecord,
+    setFields,
   ] = useTableState((state) => [
     state.table,
     state.setAgentRunId,
@@ -60,6 +62,7 @@ const ApTableEditorPage = () => {
     state.setRecords,
     state.setRuns,
     state.createTemporaryRecord,
+    state.setFields,
   ]);
 
   const gridRef = useRef<DataGridHandle>(null);
@@ -149,6 +152,8 @@ const ApTableEditorPage = () => {
               cursor: undefined,
             });
             setRecords(records.data);
+            const fields = await fieldsApi.list(table.id);
+            setFields(fields);
             if (table.agent?.id) {
               const runs = await agentRunsApi.list({
                 agentId: table.agent.id,
@@ -174,6 +179,7 @@ const ApTableEditorPage = () => {
     setSelectedRecords,
     setSelectedCell,
     socket,
+    setFields,
   ]);
 
   const columns = useTableColumns(createEmptyRecord);
