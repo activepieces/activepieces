@@ -19,46 +19,87 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 
-
 interface GoogleCalendarEventList {
   items: GoogleCalendarEvent[];
 }
 
 const polling: Polling<
   PiecePropValueSchema<typeof googleCalendarAuth>,
-  { calendar_id: string | undefined }
+  {
+    calendar_id: string | undefined;
+    specific_event: boolean | undefined;
+    event_id: string | undefined;
+  }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     if (lastFetchEpochMS === 0) {
       return [];
     }
-    
-    const calendarId = propsValue.calendar_id;
-    
+
+    const { calendar_id: calendarId, specific_event, event_id } = propsValue;
+
     if (!calendarId) {
       return [];
     }
 
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.access_token,
-      },
-      queryParams: {
-        singleEvents: 'true',
-        orderBy: 'startTime',
-        timeMin: new Date(lastFetchEpochMS).toISOString(),
-      },
-    };
+    if (specific_event && !event_id) {
+      return [];
+    }
 
-    const response = await httpClient.sendRequest<GoogleCalendarEventList>(
-      request
-    );
-    const events = response.body.items;
-    const endedEvents: { epochMilliSeconds: number; data: GoogleCalendarEvent }[] = [];
+    let events: GoogleCalendarEvent[] = [];
+
+    if (specific_event && event_id) {
+      const eventRequest: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events/${event_id}`,
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: auth.access_token,
+        },
+      };
+
+      try {
+        const eventResponse = await httpClient.sendRequest<GoogleCalendarEvent>(
+          eventRequest
+        );
+        const event = eventResponse.body;
+
+        const endTimeString = event.end?.dateTime ?? event.end?.date;
+        if (endTimeString) {
+          const endTime = new Date(endTimeString).getTime();
+          if (endTime > lastFetchEpochMS) {
+            events = [event];
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching specific event:', error);
+        return [];
+      }
+    } else {
+      const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`,
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: auth.access_token,
+        },
+        queryParams: {
+          singleEvents: 'true',
+          orderBy: 'startTime',
+          timeMin: new Date(lastFetchEpochMS).toISOString(),
+        },
+      };
+
+      const response = await httpClient.sendRequest<GoogleCalendarEventList>(
+        request
+      );
+      events = response.body.items;
+    }
+    const endedEvents: {
+      epochMilliSeconds: number;
+      data: GoogleCalendarEvent;
+    }[] = [];
     const now = Date.now();
 
     for (const event of events) {
@@ -86,6 +127,14 @@ export const eventEnds = createTrigger({
   description: 'Fires when an event ends.',
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
+    specific_event: Property.Checkbox({
+      displayName: 'Target Specific Event',
+      description:
+        'Enable to monitor a specific event instead of all events in the calendar.',
+      required: false,
+      defaultValue: false,
+    }),
+    event_id: googleCalendarCommon.eventDropdown(false),
   },
   type: TriggerStrategy.POLLING,
   sampleData: {
