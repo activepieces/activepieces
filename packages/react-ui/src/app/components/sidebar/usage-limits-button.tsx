@@ -78,8 +78,7 @@ const UsageLimitsButton = React.memo(() => {
 
   if (isPending || isNil(project)) {
     return (
-      <div className="flex flex-col gap-2 w-full px-2">
-        <Separator className="my-1.5" />
+      <div className="flex flex-col gap-2 w-full px-2  broder border-border rounded-md bg-background">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4">
             {[1, 2].map((i) => (
@@ -114,8 +113,7 @@ const UsageLimitsButton = React.memo(() => {
   }
 
   return (
-    <div className="flex flex-col gap-2 w-full px-2">
-      <Separator className="my-1.5" />
+    <div className="flex flex-col gap-2 w-full p-3  border border-border rounded-md bg-background ">
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-4">
           <UsageProgress
@@ -174,7 +172,6 @@ const UsageLimitsButton = React.memo(() => {
           </div>
         )}
       </div>
-      <Separator className="my-1.5" />
     </div>
   );
 });
