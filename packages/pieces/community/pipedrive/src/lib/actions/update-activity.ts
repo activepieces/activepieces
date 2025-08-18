@@ -9,7 +9,7 @@ export const updateActivityAction = createAction({
     auth: pipedriveAuth,
     name: 'update-activity',
     displayName: 'Update Activity',
-    description: 'Updates an existing activity using Pipedrive API v2.', 
+    description: 'Updates an existing activity.', 
     props: {
         activityId: Property.Number({
             displayName: 'Activity ID', 
@@ -52,13 +52,16 @@ export const updateActivityAction = createAction({
             due_time: dueTime,
             duration,
             done: isDone, 
-            busy: busy, 
         };
 
         
         if (personId) {
             activityPayload.participants = [{ person_id: personId, primary: true }];
         }
+
+         if (busy) {
+			activityPayload.busy = busy === 'busy' ? true : false;
+		}
 
         if (dueDate) {
             

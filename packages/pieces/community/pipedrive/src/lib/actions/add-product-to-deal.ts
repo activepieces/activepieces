@@ -8,7 +8,7 @@ export const addProductToDealAction = createAction({
     auth: pipedriveAuth,
     name: 'add-product-to-deal',
     displayName: 'Add Product to Deal',
-    description: 'Adds a product to a deal using Pipedrive API v2.', 
+    description: 'Adds a product to a deal.', 
     props: {
         dealId: dealIdProp(true),
         productId: productIdProp(true),

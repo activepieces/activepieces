@@ -9,7 +9,7 @@ export const createActivityAction = createAction({
     auth: pipedriveAuth,
     name: 'create-activity',
     displayName: 'Create Activity',
-    description: 'Creates a new activity using Pipedrive API v2.', 
+    description: 'Creates a new activity.', 
     props: {
         subject: Property.ShortText({
             displayName: 'Subject',
@@ -39,20 +39,23 @@ export const createActivityAction = createAction({
             subject,
             org_id: organizationId, 
             deal_id: dealId,       
-            lead_id: leadId,      
+            lead_id: leadId,  
             public_description: publicDescription,
             type,
             owner_id: assignTo, 
             due_time: dueTime,
             duration,
             done: isDone, 
-            busy: busy, 
+            note
         };
 
-        
-        if (personId) {
+         if (personId) {
             activityPayload.participants = [{ person_id: personId, primary: true }];
         }
+
+        if (busy) {
+			activityPayload.busy = busy === 'busy' ? true : false;
+		}
 
         if (dueDate) {
             activityPayload.due_date = dayjs(dueDate).format('YYYY-MM-DD');

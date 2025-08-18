@@ -1,130 +1,106 @@
 import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { personCommonProps, customFieldsProp } from '../common/props'; 
+import { personCommonProps } from '../common/props';
 import {
-    pipedriveApiCall,
-    pipedrivePaginatedApiCall,
-    pipedriveTransformCustomFields,
+	pipedriveApiCall,
+	pipedrivePaginatedV1ApiCall,
+	pipedriveParseCustomFields,
+	pipedriveTransformCustomFields,
 } from '../common';
-import { GetField, GetPersonResponse } from '../common/types'; 
+import { GetField, GetPersonResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { isEmpty } from '@activepieces/shared';
 
 export const createPersonAction = createAction({
-    auth: pipedriveAuth,
-    name: 'create-person',
-    displayName: 'Create Person',
-    description: 'Creates a new person using Pipedrive API v2.',
-    props: {
-        name: Property.ShortText({
-            displayName: 'Name',
-            required: true,
-        }),
-        ...personCommonProps, 
-        customfields: customFieldsProp('person'), 
-    },
-    async run(context) {
-        const { name, ownerId, organizationId, marketing_status, visibleTo, firstName, lastName } =
-            context.propsValue;
+	auth: pipedriveAuth,
+	name: 'create-person',
+	displayName: 'Create Person',
+	description: 'Creates a new person.',
+	props: {
+		name: Property.ShortText({
+			displayName: 'Name',
+			required: false,
+		}),
+		...personCommonProps,
+	},
+	async run(context) {
+		const { name, ownerId, organizationId, marketing_status, visibleTo, firstName, lastName } =
+			context.propsValue;
 
-        
-        const rawPhones = (context.propsValue.phone as string[]) ?? [];
-        const rawEmails = (context.propsValue.email as string[]) ?? [];
-        const labelIds = (context.propsValue.labelIds as number[]) ?? [];
+		const rawPhones = (context.propsValue.phone as string[]) ?? [];
+		const rawEmails = (context.propsValue.email as string[]) ?? [];
+		const labelIds = (context.propsValue.labelIds as number[]) ?? [];
+		const customFields = context.propsValue.customfields ?? {};
 
-        
-        const standardPropKeys = new Set([
-            'name',
-            'ownerId',
-            'organizationId',
-            'marketing_status',
-            'visibleTo',
-            'firstName',
-            'lastName',
-            'phone', // Include phone as a standard prop
-            'email', // Include email as a standard prop
-            'labelIds', // Include labelIds as a standard prop
-        ]);
+		// https://pipedrive.readme.io/docs/pipedrive-api-v2-migration-guide#post-apiv1persons-to-post-apiv2persons
+		if (name && (firstName || lastName)) {
+			throw new Error('Provide either Name OR First Name/Last Name, not both.');
+		}
 
-        
-        const customFields: Record<string, unknown> = {};
-       
-        const allProps = context.propsValue as Record<string, any>;
-        for (const key in allProps) {
-            if (key==='auth' || key ==='customfields'){
-                continue; // Skip auth and customfields properties
-            }
-            if (Object.prototype.hasOwnProperty.call(allProps, key) && !standardPropKeys.has(key)) {
-                customFields[key] = allProps[key];
-            }
-        }
+		if (!name && !firstName && !lastName) {
+			throw new Error('Provide Name or at least one of First Name / Last Name.');
+		}
 
-        
-        const phones = rawPhones.map((value, index) => ({
-            value,
-            label: 'work', 
-            primary: index === 0, 
-        }));
+		if (!name && ((firstName && !lastName) || (!firstName && lastName))) {
+			throw new Error('If First Name is provided, Last Name must be provided as well.');
+		}
 
-        const emails = rawEmails.map((value, index) => ({
-            value,
-            label: 'work', 
-            primary: index === 0, 
-        }));
+		const phones = rawPhones.map((value, index) => ({
+			value,
+			label: 'work',
+			primary: index === 0,
+		}));
 
-        const personPayload: Record<string, any> = {
-            name,
-            owner_id: ownerId,
-            org_id: organizationId,
-            visible_to: visibleTo,
-            first_name: firstName,
-            last_name: lastName,
-        };
+		const emails = rawEmails.map((value, index) => ({
+			value,
+			label: 'work',
+			primary: index === 0,
+		}));
 
-        // Phones and emails
-        if (phones.length) personPayload.phone = phones;
-        if (emails.length) personPayload.email = emails;
-        if (labelIds.length) personPayload.label_ids = labelIds;
+		const personPayload: Record<string, any> = {
+			name,
+			owner_id: ownerId,
+			org_id: organizationId,
+			visible_to: visibleTo,
+			first_name: firstName,
+			last_name: lastName,
+			marketing_status: marketing_status,
+		};
 
-        // Flatten custom fields into top-level keys
-        for (const [key, value] of Object.entries(allProps)) {
-            if (!standardPropKeys.has(key) && key !== 'auth' && key !== 'customfields') {
-                personPayload[key] = value;
-            }
-        }
+		// Phones and emails
+		if (phones.length) personPayload.phones = phones;
+		if (emails.length) personPayload.emails = emails;
+		if (labelIds.length) personPayload.label_ids = labelIds;
 
+		const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
+			accessToken: context.auth.access_token,
+			apiDomain: context.auth.data['api_domain'],
+			method: HttpMethod.GET,
+			resourceUri: '/v1/personFields',
+		});
 
+		const personCustomFields = pipedriveParseCustomFields(customFieldsResponse, customFields);
 
-        
-        if (Object.keys(customFields).length > 0) {
-            personPayload.custom_fields = customFields;
-        }
+		if (!isEmpty(personCustomFields)) {
+			personPayload.custom_fields = personCustomFields;
+		}
 
-        
-        const createdPersonResponse = await pipedriveApiCall<GetPersonResponse>({
-            accessToken: context.auth.access_token,
-            apiDomain: context.auth.data['api_domain'],
-            method: HttpMethod.POST,
-            resourceUri: '/v2/persons',
-            body: personPayload,
-        });
+		const createdPersonResponse = await pipedriveApiCall<GetPersonResponse>({
+			accessToken: context.auth.access_token,
+			apiDomain: context.auth.data['api_domain'],
+			method: HttpMethod.POST,
+			resourceUri: '/v2/persons',
+			body: personPayload,
+		});
 
-        
-        const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
-            accessToken: context.auth.access_token,
-            apiDomain: context.auth.data['api_domain'],
-            method: HttpMethod.GET,
-            resourceUri: '/v1/personFields',
-        });
+		const transformedPersonProperties = pipedriveTransformCustomFields(
+			customFieldsResponse,
+			createdPersonResponse.data,
+		);
 
-        
-        const updatedPersonProperties = pipedriveTransformCustomFields(
-            customFieldsResponse,
-            createdPersonResponse.data,
-        );
-
-        return {
-            ...createdPersonResponse,
-            data: updatedPersonProperties,
-        };
-    },
+		return {
+			...createdPersonResponse,
+			data: transformedPersonProperties,
+		};
+	},
 });

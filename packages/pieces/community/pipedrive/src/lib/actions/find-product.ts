@@ -2,7 +2,7 @@ import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     pipedriveApiCall,
-    pipedrivePaginatedApiCall,
+    pipedrivePaginatedV1ApiCall,
     pipedriveTransformCustomFields,
 } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -20,14 +20,9 @@ export const findProductAction = createAction({
             required: true,
         }),
         
-        exactMatch: Property.Checkbox({
-            displayName: 'Exact Match',
-            required: false,
-            defaultValue: true,
-        }),
     },
     async run(context) {
-        const { searchTerm, exactMatch } = context.propsValue;
+        const { searchTerm } = context.propsValue;
 
         
         const searchResponse = await pipedriveApiCall<{
@@ -41,7 +36,8 @@ export const findProductAction = createAction({
             query: {
                 term: searchTerm,
                 fields: 'name',
-                limit: 100,
+                limit: 1,
+                include_fields:'product.price'
             },
         });
 
@@ -52,35 +48,14 @@ export const findProductAction = createAction({
             };
         }
 
-        const filteredItems = [];
-        for (const itemWrapper of searchResponse.data.items) {
-            const productItem = itemWrapper.item;
-            if (productItem && productItem.name) {
-                if (exactMatch && productItem.name === searchTerm) {
-                    filteredItems.push(productItem);
-                } else if (!exactMatch && productItem.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-                    filteredItems.push(productItem);
-                }
-            }
-        }
-
-        if (filteredItems.length === 0) {
-            return {
-                found: false,
-                data: [],
-            };
-        }
-
-        // Fetch full product details for the first found item (or iterate if multiple are needed)
-        const productDetailsResponse = await pipedriveApiCall<Record<string, any>>({ // Using generic type for flexibility
+        const productDetailsResponse = await pipedriveApiCall<Record<string, any>>({ 
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: `/v2/products/${filteredItems[0].id}`, 
+            resourceUri: `/v2/products/${searchResponse.data.items[0].item.id}`, 
         });
 
-        // Fetch custom field definitions from v2
-        const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+        const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
@@ -95,7 +70,7 @@ export const findProductAction = createAction({
 
         return {
             found: true,
-            data: [updatedProductProperties], // Return the first found and transformed product
+            data: [updatedProductProperties], 
         };
     },
 });

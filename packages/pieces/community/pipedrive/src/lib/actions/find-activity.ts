@@ -1,96 +1,102 @@
 import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { activityTypeIdProp, filterIdProp, ownerIdProp } from '../common/props';
-import { pipedrivePaginatedApiCall } from '../common';
+import { pipedrivePaginatedV2ApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
 
 export const findActivityAction = createAction({
-    auth: pipedriveAuth,
-    name: 'find-activity',
-    displayName: 'Find Activity',
-    description: 'Finds an activity by subject using Pipedrive API v2. Note: Subject filtering is performed client-side after fetching activities.', // ✅ Updated description for v2 and clarified client-side filtering
-    props: {
-        subject: Property.ShortText({
-            displayName: 'Subject',
-            required: true,
-        }),
-        exactMatch: Property.Checkbox({
-            displayName: 'Exact Match',
-            required: false,
-            defaultValue: true,
-        }),
-        assignTo: ownerIdProp('Assign To', false), // This prop returns the numeric owner ID
-        type: activityTypeIdProp(false),
-        filterId: filterIdProp('activity', false),
-        status: Property.StaticDropdown({
-            displayName: 'Status',
-            required: false,
-            options: {
-                disabled: false,
-                options: [
-                    {
-                        label: 'Done',
-                        value: true, 
-                    },
-                    {
-                        label: 'Not Done',
-                        value: false, 
-                    },
-                ],
-            },
-        }),
-    },
-    async run(context) {
-        const { subject, assignTo, type, filterId, status, exactMatch } = context.propsValue;
+	auth: pipedriveAuth,
+	name: 'find-activity',
+	displayName: 'Find Activity',
+	description: 'Finds an activity by subject.',
+	props: {
+		subject: Property.ShortText({
+			displayName: 'Subject',
+			required: true,
+		}),
+		exactMatch: Property.Checkbox({
+			displayName: 'Exact Match',
+			required: false,
+			defaultValue: true,
+		}),
+		assignTo: ownerIdProp('Assign To', false),
+		type: activityTypeIdProp(false),
+		filterId: filterIdProp('activity', false),
+		status: Property.StaticDropdown({
+			displayName: 'Status',
+			required: false,
+			options: {
+				disabled: false,
+				options: [
+					{
+						label: 'Done',
+						value: 1,
+					},
+					{
+						label: 'Not Done',
+						value: 0,
+					},
+				],
+			},
+		}),
+	},
+	async run(context) {
+		const { subject, assignTo, type, filterId, status, exactMatch } = context.propsValue;
 
-        
-        const queryParams: Record<string, any> = {
-            
-            owner_id: assignTo,
-            type: type,
-            done: status,
-            sort_by: 'update_time',
-            sort_direction: 'desc',
-        };
+		const response = await pipedrivePaginatedV2ApiCall<{
+			id: number;
+			subject: string;
+			type: string;
+		}>({
+			accessToken: context.auth.access_token,
+			apiDomain: context.auth.data['api_domain'],
+			method: HttpMethod.GET,
+			resourceUri: '/v2/activities',
+			query: {
+				owner_id: assignTo,
+				done: status != null ? status === 1 : undefined,
+				sort_by: 'update_time',
+				sort_direction: 'desc',
+				filter_id: filterId,
+			},
+		});
 
-        
-        if (!isNil(filterId)) {
-            queryParams.filter_id = filterId;
-        }
+		if (isNil(response) || response.length === 0) {
+			return {
+				found: false,
+				data: [],
+			};
+		}
 
-        
-        const response = await pipedrivePaginatedApiCall<{ id: number; subject: string }>({
-            accessToken: context.auth.access_token,
-            apiDomain: context.auth.data['api_domain'],
-            method: HttpMethod.GET,
-            resourceUri: '/v2/activities', 
-            query: queryParams,
-        });
+		const result = [];
 
-        if (isNil(response) || response.length === 0) {
-            return {
-                found: false,
-                data: [],
-            };
-        }
+		for (const activity of response) {
+			let matched = false;
 
-        const result = [];
+			if (activity.subject) {
+				if (exactMatch && activity.subject === subject) {
+					matched = true;
+				} else if (!exactMatch && activity.subject.toLowerCase().includes(subject.toLowerCase())) {
+					matched = true;
+				}
+			}
 
-        
-        for (const activity of response) {
-            if (activity.subject) { // Ensure subject exists before attempting comparison
-                if (exactMatch && activity.subject === subject) {
-                    result.push(activity);
-                } else if (!exactMatch && activity.subject.toLowerCase().includes(subject.toLowerCase())) {
-                    result.push(activity);
-                }
-            }
-        }
+			// If type is provided, require both subject & type match
+			if (type) {
+				if (matched && activity.type === type) {
+					result.push(activity);
+				}
+			} else {
+				if (matched) {
+					result.push(activity);
+				}
+			}
+		}
 
-        return {
-            found: result.length > 0,
-            data: result,
-        };
-    },
+		return {
+			found: result.length > 0,
+			data: result,
+		};
+	},
 });

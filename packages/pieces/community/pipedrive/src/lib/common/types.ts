@@ -269,6 +269,8 @@ export type GetField = {
     name: string;
     key: string; // Field key is a string (e.g., hash for custom fields)
     edit_flag: boolean;
+    is_subfield:boolean,
+    id_suffix:string,
     field_type: "varchar" | "text" | "enum" | "set" | "varchar_auto" | "double" | "monetary" | "user" | "org" | "people" | "phone" | "time" | "int" | "timerange" | "date" | "daterange" | "address" | "lead_label"; // Added lead_label
     options?: Array<{ id: number, label: string }>; // Option IDs are numbers
 };
@@ -286,12 +288,28 @@ type AdditionalDataV2 = {
     pagination?: PaginationInfoV2;
 };
 
-export type PaginatedResponse<T> = {
+export type PaginatedV2Response<T> = {
     success: boolean;
     data: T[];
-    additional_data?: AdditionalDataV2; // Make optional as not all responses have it
+    additional_data?: {
+        next_cursor?:string
+    }; 
     
 };
+
+export type PaginatedV1Response<T> =
+{
+	success: boolean;
+	data: T[];
+	additional_data: {
+		pagination: {
+			start: number;
+			limit: number;
+			more_items_in_collection: boolean;
+			next_start: number;
+		};
+	};
+}
 
 
 
