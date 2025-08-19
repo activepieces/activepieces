@@ -19,6 +19,7 @@ import { databaseConnection } from '../../../database/database-connection'
 import { apiKeyService } from '../../../ee/api-keys/api-key-service'
 import { ProjectMemberEntity } from '../../../ee/projects/project-members/project-member.entity'
 import { FlowEntity } from '../../../flows/flow/flow.entity'
+import { FlowRunEntity } from '../../../flows/flow-run/flow-run-entity'
 import { FolderEntity } from '../../../flows/folder/folder.entity'
 import { projectService } from '../../../project/project-service'
 import { requestUtils } from '../../request/request-utils'
@@ -180,6 +181,8 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             return undefined
         }
         switch (resource) {
+            case 'flow-runs':
+                return FlowRunEntity.options.name
             case 'flows':
                 return FlowEntity.options.name
             case 'app-connections':

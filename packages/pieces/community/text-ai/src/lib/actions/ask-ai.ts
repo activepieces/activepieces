@@ -1,7 +1,8 @@
 import { aiProps } from '@activepieces/pieces-common';
 import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, createAIProvider } from '@activepieces/shared';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { CoreMessage, LanguageModel, generateText } from 'ai';
+import { LanguageModelV2 } from '@ai-sdk/provider';
+import { ModelMessage, generateText } from 'ai';
 
 export const askAI = createAction({
   name: 'askAi',
@@ -25,7 +26,7 @@ export const askAI = createAction({
       description:
         'Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.',
     }),
-    maxTokens: Property.Number({
+    maxOutputTokens: Property.Number({
       displayName: 'Max Tokens',
       required: false,
       defaultValue: 2000,
@@ -33,7 +34,7 @@ export const askAI = createAction({
   },
   async run(context) {
     const providerName = context.propsValue.provider as string;
-    const modelInstance = context.propsValue.model as LanguageModel;
+    const modelInstance = context.propsValue.model as LanguageModelV2;
     const storage = context.store;
 
     const providerConfig = SUPPORTED_AI_PROVIDERS.find(p => p.provider === providerName);
@@ -59,7 +60,7 @@ export const askAI = createAction({
 
     let conversation = null;
     if (conversationKey) {
-      conversation = (await storage.get<CoreMessage[]>(
+      conversation = (await storage.get<ModelMessage[]>(
         conversationKey
       )) ?? [];
       if (!conversation) {
@@ -76,11 +77,11 @@ export const askAI = createAction({
           content: context.propsValue.prompt,
         },
       ],
-      maxTokens: providerName !== 'openai' ? context.propsValue.maxTokens : undefined,
+      maxOutputTokens: providerName !== 'openai' ? context.propsValue.maxOutputTokens : undefined,
       temperature: (context.propsValue.creativity ?? 100) / 100,
       providerOptions: {
         [providerName]: {
-          ...(providerName === 'openai' && context.propsValue.maxTokens ? { max_completion_tokens: context.propsValue.maxTokens } : {}),
+          ...(providerName === 'openai' && context.propsValue.maxOutputTokens ? { max_completion_tokens: context.propsValue.maxOutputTokens } : {}),
         }
       }
     });
