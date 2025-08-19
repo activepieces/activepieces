@@ -76,9 +76,7 @@ const RunDetailsBar = React.memo(
     }
 
     return (
-      <div
-        className="fixed bottom-4 p-4 left-1/2 transform -translate-x-1/2 w-[480px] bg-background shadow-lg border rounded-lg z-[9999]"
-      >
+      <div className="fixed bottom-4 p-4 left-1/2 transform -translate-x-1/2 w-[480px] bg-background shadow-lg border rounded-lg z-[9999]">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Icon
@@ -92,7 +90,11 @@ const RunDetailsBar = React.memo(
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-sm font-medium text-foreground truncate">
-                    {getStatusText(run.status, timeoutSeconds ?? -1, memoryLimit ?? -1)}
+                    {getStatusText(
+                      run.status,
+                      timeoutSeconds ?? -1,
+                      memoryLimit ?? -1,
+                    )}
                   </span>
                   <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-md font-medium flex-shrink-0">
                     {run.tasks} tasks
