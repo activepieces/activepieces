@@ -12,7 +12,7 @@ import { AgentToolBlock } from '../agent-tool-block';
 import { agentHooks, agentRunHooks } from '../lib/agent-hooks';
 
 import { AgentPromptBlock } from './agent-prompt-block';
-import { AgentStepSkeleton } from './agent-step-skeleton';
+import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 
 type AgentTimelineProps = {
   className?: string;
@@ -23,11 +23,21 @@ const AgentTimeline = ({ agentRunId, className = '' }: AgentTimelineProps) => {
   const { data: agentRun } = agentRunHooks.useGet(agentRunId);
 
   const { data: agent } = agentHooks.useGet(agentRun?.agentId);
-  const showSkeleton =
-    isNil(agentRun) || agentRun.status === AgentTaskStatus.IN_PROGRESS;
+  const showSkeleton = isNil(agentRun) || isNil(agent) ||  agentRun.status === AgentTaskStatus.IN_PROGRESS;
 
-  if (isNil(agentRun) || isNil(agent)) {
-    return <></>;
+  if (showSkeleton) {
+      return <div>
+
+<div className="flex items-center gap-3 mt-6 mb-3">
+        <ImageWithFallback
+          src={agent?.profilePictureUrl}
+          alt={agent?.displayName}
+          className="size-8 rounded-full"
+        ></ImageWithFallback>
+        <Skeleton className='h-4 w-24'></Skeleton>
+      </div>
+      <SkeletonList numberOfItems={6} className='h-8'></SkeletonList>
+      </div>
   }
   return (
     <div className={`h-full ${className}`}>
@@ -57,7 +67,7 @@ const AgentTimeline = ({ agentRunId, className = '' }: AgentTimelineProps) => {
               </div>
             );
           })}
-          {showSkeleton && <AgentStepSkeleton />}
+
         </div>
       </ScrollArea>
     </div>
