@@ -9,6 +9,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { drupalCallToolAction } from './lib/actions/tools';
+import { drupalCreateContentAction } from './lib/actions/create_content';
 import { drupalPolling } from './lib/triggers/polling';
 import { drupalWebhook } from './lib/triggers/webhook';
 
@@ -86,6 +87,6 @@ export const drupal = createPiece({
     PieceCategory.MARKETING,
   ],
   authors: ['jurgenhaas'],
-  actions: [drupalCallToolAction],
+  actions: [drupalCallToolAction, drupalCreateContentAction],
   triggers: [drupalPolling, drupalWebhook],
 });
