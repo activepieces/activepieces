@@ -33,11 +33,8 @@ export function LanguageSwitcher() {
   const { data: showCommunity } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
-  const languageWithoutLocale = i18n.language?.includes('-')
-    ? i18n.language.split('-')[0]
-    : i18n.language;
   const [selectedLanguage, setSelectedLanguage] = useState<string | undefined>(
-    languageWithoutLocale ?? 'en',
+    i18n.language ?? 'en',
   );
 
   const { mutate, isPending } = useMutation({
