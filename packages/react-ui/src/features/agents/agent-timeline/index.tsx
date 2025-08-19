@@ -1,6 +1,7 @@
 import { ApMarkdown } from '@/components/custom/markdown';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 import {
   AgentTaskStatus,
   ContentBlockType,
@@ -12,7 +13,6 @@ import { AgentToolBlock } from '../agent-tool-block';
 import { agentHooks, agentRunHooks } from '../lib/agent-hooks';
 
 import { AgentPromptBlock } from './agent-prompt-block';
-import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 
 type AgentTimelineProps = {
   className?: string;
@@ -23,21 +23,25 @@ const AgentTimeline = ({ agentRunId, className = '' }: AgentTimelineProps) => {
   const { data: agentRun } = agentRunHooks.useGet(agentRunId);
 
   const { data: agent } = agentHooks.useGet(agentRun?.agentId);
-  const showSkeleton = isNil(agentRun) || isNil(agent) ||  agentRun.status === AgentTaskStatus.IN_PROGRESS;
+  const showSkeleton =
+    isNil(agentRun) ||
+    isNil(agent) ||
+    agentRun.status === AgentTaskStatus.IN_PROGRESS;
 
   if (showSkeleton) {
-      return <div>
-
-<div className="flex items-center gap-3 mt-6 mb-3">
-        <ImageWithFallback
-          src={agent?.profilePictureUrl}
-          alt={agent?.displayName}
-          className="size-8 rounded-full"
-        ></ImageWithFallback>
-        <Skeleton className='h-4 w-24'></Skeleton>
+    return (
+      <div>
+        <div className="flex items-center gap-3 mt-6 mb-3">
+          <ImageWithFallback
+            src={agent?.profilePictureUrl}
+            alt={agent?.displayName}
+            className="size-8 rounded-full"
+          ></ImageWithFallback>
+          <Skeleton className="h-4 w-24"></Skeleton>
+        </div>
+        <SkeletonList numberOfItems={6} className="h-8"></SkeletonList>
       </div>
-      <SkeletonList numberOfItems={6} className='h-8'></SkeletonList>
-      </div>
+    );
   }
   return (
     <div className={`h-full ${className}`}>
@@ -67,7 +71,6 @@ const AgentTimeline = ({ agentRunId, className = '' }: AgentTimelineProps) => {
               </div>
             );
           })}
-
         </div>
       </ScrollArea>
     </div>

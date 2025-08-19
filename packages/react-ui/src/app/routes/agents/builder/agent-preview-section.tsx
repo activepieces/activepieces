@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Loader2, MessageSquare, ChevronsRight, Play } from 'lucide-react';
+import { Loader2, MessageSquare, Play, ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,6 @@ export const AgentPreviewSection = () => {
   const handleClosePreview = () => {
     setTestSectionIsOpen(false);
   };
-
   return (
     <div className="flex flex-col h-full px-6 py-4 gap-4 w-full bg-background overflow-hidden">
       <div
@@ -56,8 +55,8 @@ export const AgentPreviewSection = () => {
           }
         }}
       >
-        <ChevronsRight className="w-5 h-5 text-muted-foreground" />
-        <h2 className="text-lg font-semibold m-0">Agent Preview</h2>
+        <ChevronLeft className="w-5 h-5 text-muted-foreground" />
+        <h2 className="text-lg font-semibold m-0">{t('Agent Preview')}</h2>
       </div>
       <ScrollArea className="flex-1 min-h-0 overflow-hidden">
         {currentRunId ? (

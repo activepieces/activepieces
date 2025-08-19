@@ -155,7 +155,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
                 limit: params.limit,
                 order: 'ASC',
                 afterCursor: decodedCursor.nextCursor,
-                beforeCursor: decodedCursor.previousCursor
+                beforeCursor: decodedCursor.previousCursor,
             },
         })
 
@@ -166,10 +166,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             .createQueryBuilder('agent')
             .where(querySelector)
 
-        if(params.externalIds) {
-            log.info({
-                externalIds: params.externalIds
-            }, 'filtering agents by external ids')
+        if (params.externalIds) {
             queryBuilder.andWhere({
                 externalId: In(params.externalIds),
             })
@@ -179,10 +176,6 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             id: Not(In(agentsInTable)),
         })
         const { data, cursor } = await paginator.paginate(queryBuilder)
-        log.info({
-            data,
-            cursor
-        }, 'agents list')
         return paginationHelper.createPage<PopulatedAgent>(
             await Promise.all(data.map(agent => enrichAgent(agent, log))),
             cursor,

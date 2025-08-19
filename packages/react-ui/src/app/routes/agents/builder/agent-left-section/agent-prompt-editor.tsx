@@ -129,10 +129,8 @@ export const AgentPromptEditor = () => {
     },
   });
 
-
   return (
     <div className="flex-1 rounded-md min-h-0 w-full relative bg-background">
-      
       {isPending && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-md flex items-center justify-center z-20">
           <div className="flex flex-col items-center gap-3 text-center">
@@ -147,30 +145,29 @@ export const AgentPromptEditor = () => {
         </div>
       )}
       <div className="h-full overflow-auto flex">
-        <div className='grow'>
-        <EditorContent editor={editor} />
+        <div className="grow">
+          <EditorContent editor={editor} />
         </div>
         <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="text-primary-300 hover:text-primary  "
-            onClick={handleEnhancePrompt}
-            disabled={isPending || isNil(agent)}
-            tabIndex={-1}
-            type="button"
-          >
-            {isPending ? (
-              <Sparkles className="w-4 h-4 animate-pulse" />
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{t('Enhance prompt')}</TooltipContent>
-      </Tooltip>
-
+          <TooltipTrigger asChild>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="text-primary-300 hover:text-primary  "
+              onClick={handleEnhancePrompt}
+              disabled={isPending || isNil(agent)}
+              tabIndex={-1}
+              type="button"
+            >
+              {isPending ? (
+                <Sparkles className="w-4 h-4 animate-pulse" />
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t('Enhance prompt')}</TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );

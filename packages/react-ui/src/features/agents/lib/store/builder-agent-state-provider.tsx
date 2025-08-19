@@ -26,7 +26,7 @@ export function AgentBuilderProvider({
   agent,
 }: AgentBuilderProviderProps) {
   const store = React.useMemo(() => createBuilderAgentStore(agent), [agent]);
-  
+
   return (
     <BuilderAgentContext.Provider value={{ store }}>
       {children}
