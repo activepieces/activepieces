@@ -14,8 +14,6 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
         return machineService.list()
     })
 
-
-
     app.post('/heartbeat', HeartbeatParams, async (request) => {
         const { cpuUsagePercentage, ramUsagePercentage, totalAvailableRamInBytes, diskInfo, ip, workerProps, workerId } = request.body
         const workerPrincipal = request.principal as unknown as WorkerPrincipal
