@@ -152,3 +152,77 @@ export async function getLatestEvent(
   const lastUpdatedEvent = eventList.pop()!; // You can retrieve the last updated event.
   return lastUpdatedEvent;
 }
+
+export async function getEventsForDropdown(
+  authProp: OAuth2PropertyValue,
+  calendarId?: string,
+  maxResults = 50
+): Promise<{ label: string; value: string }[]> {
+  if (!calendarId) {
+    return [];
+  }
+
+  try {
+    const now = new Date();
+    const futureDate = new Date();
+    futureDate.setDate(now.getDate() + 30);
+
+    const queryParams: Record<string, string> = {
+      singleEvents: 'true',
+      orderBy: 'startTime',
+      timeMin: now.toISOString(),
+      timeMax: futureDate.toISOString(),
+      maxResults: maxResults.toString(),
+      showDeleted: 'false',
+    };
+
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(
+        calendarId
+      )}/events`,
+      queryParams: queryParams,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: authProp.access_token,
+      },
+    };
+
+    const response = await httpClient.sendRequest<GoogleCalendarEventList>(
+      request
+    );
+
+    if (!response.body.items || response.body.items.length === 0) {
+      return [];
+    }
+
+    return response.body.items
+      .map((event) => {
+        const startTime = event.start?.dateTime || event.start?.date || '';
+        const startDate = startTime
+          ? new Date(startTime).toLocaleDateString()
+          : '';
+        const startTimeFormatted = startTime
+          ? new Date(startTime).toLocaleTimeString()
+          : '';
+
+        let label = event.summary || 'Untitled Event';
+        if (startDate) {
+          label += ` (${startDate}`;
+          if (event.start?.dateTime) {
+            label += ` at ${startTimeFormatted}`;
+          }
+          label += ')';
+        }
+
+        return {
+          label: label,
+          value: event.id || '',
+        };
+      })
+      .filter((item) => item.value !== '');
+  } catch (error) {
+    console.error('Error fetching events for dropdown:', error);
+    return [];
+  }
+}
