@@ -1,9 +1,6 @@
 name: Release Pieces
 
 on:
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
   push:
     branches:
@@ -14,7 +11,7 @@ on:
 
 jobs:
   Release-Pieces:
-    if: false
+    if: github.repository == 'activepieces/activepieces'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -67,10 +64,8 @@ jobs:
           AP_CLOUD_API_KEY: ${{ secrets.AP_CLOUD_API_KEY }}
           NODE_OPTIONS: "--max-old-space-size=8192"
 
-  Test-Discord-Notification:
-    runs-on: ubuntu-latest
-    steps:
       - name: Notify Discord on failure
+        if: failure()
         run: |
           curl -H "Content-Type: application/json" \
             -X POST \
