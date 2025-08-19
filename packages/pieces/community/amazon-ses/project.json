@@ -3,16 +3,6 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/amazon-ses/src",
   "projectType": "library",
-  "release": {
-    "version": {
-      "manifestRootsToUpdate": [
-        "dist/{projectRoot}"
-      ],
-      "currentVersionResolver": "git-tag",
-      "fallbackCurrentVersionResolver": "disk"
-    }
-  },
-  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -34,11 +24,32 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
+      },
+      "dependsOn": ["prebuild", "^build"]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/amazon-ses",
+        "command": "npm ci"
       }
     },
-    "nx-release-publish": {
+    "build-with-deps": {
+      "executor": "nx:run-commands",
       "options": {
-        "packageRoot": "dist/{projectRoot}"
+        "commands": [
+          "nx run pieces-amazon-ses:prebuild",
+          "nx run pieces-amazon-ses:build",
+          "nx run pieces-amazon-ses:postbuild"
+        ],
+        "parallel": false
+      }
+    },
+    "postbuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "dist/packages/pieces/community/amazon-ses",
+        "command": "npm install"
       }
     },
     "lint": {
@@ -47,5 +58,6 @@
         "{options.outputFile}"
       ]
     }
-  }
+  },
+  "tags": []
 }
