@@ -165,7 +165,6 @@ const ApSidebarMenuGroup = ({ item }: { item: SidebarGroup }) => {
             className="group/collapsible"
             onOpenChange={(open) => {
               item.setOpen(open);
-              console.log(`${item.label}`, open);
             }}
           >
             <SidebarMenuItem>

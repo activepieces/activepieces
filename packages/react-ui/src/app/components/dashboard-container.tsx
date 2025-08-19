@@ -135,22 +135,15 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     tutorialTab: 'mcpServers',
   };
 
-  const platformAdminLink: SidebarItem[] = showPlatformAdminDashboard
-    ? [
-        {
-          type: 'separator',
-        },
-        {
-          type: 'link',
-          to: '/platform',
-          label: t('Platform Admin'),
-          Icon: <Shield />,
-          isSubItem: false,
-          showNotificationDot: notificationDot,
-          show: showPlatformAdminDashboard,
-        },
-      ]
-    : [];
+  const platformAdminLink: SidebarItem = {
+    type: 'link',
+    to: '/platform',
+    label: t('Platform Admin'),
+    Icon: <Shield />,
+    isSubItem: false,
+    showNotificationDot: notificationDot,
+    show: showPlatformAdminDashboard,
+  };
 
   const releasesLink: SidebarItem = {
     type: 'link',
@@ -164,16 +157,19 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
 
   const items: SidebarItem[] = [
     flowsLink,
+    agentsLink,
     tablesLink,
     todosLink,
     {
       type: 'separator',
     } as const,
-    agentsLink,
     mcpLink,
     connectionsLink,
     releasesLink,
-    ...platformAdminLink,
+    {
+      type: 'separator',
+    } as const,
+    platformAdminLink,
   ].filter(
     (link) => link.type === 'separator' || (link.type === 'link' && link.show),
   );
