@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/razorpay/package.json",
         "main": "packages/pieces/community/razorpay/src/index.ts",
         "assets": [
-          "packages/pieces/community/razorpay/*.md"
+          "packages/pieces/community/razorpay/*.md",
+          {
+            "input": "packages/pieces/community/razorpay/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
@@ -41,6 +46,5 @@
         "{options.outputFile}"
       ]
     }
-  },
-  "tags": []
+  }
 }

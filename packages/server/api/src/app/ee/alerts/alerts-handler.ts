@@ -87,7 +87,7 @@ async function sendAlertOnFlowRun(params: IssueParams, log: FastifyBaseLogger): 
         return
     }
 
-    const flowRunsUrl = await domainHelper.getPublicUrl({
+    const flowRunsUrl = await domainHelper.getInternalUrl({
         platformId,
         path: `runs/${flowRunId}`,
     })

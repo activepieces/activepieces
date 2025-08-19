@@ -2,6 +2,7 @@ import { FileId } from '../file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
 import { FlowVersionId } from '../flows/flow-version'
+import { PlatformUsageMetric } from '../platform'
 import { ProjectId } from '../project'
 import { ProjectRole } from '../project-role/project-role'
 import { UserId } from '../user'
@@ -46,6 +47,7 @@ export type ApErrorParams =
     | PieceNotFoundErrorParams
     | PieceTriggerNotFoundErrorParams
     | QuotaExceededParams
+    | ResourceLockedParams
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
     | StepNotFoundErrorParams
@@ -63,7 +65,9 @@ export type ApErrorParams =
     | ExistingAlertChannelErrorParams
     | EmailAlreadyHasActivationKey
     | ProviderProxyConfigNotFoundParams
-    | AITokenLimitExceededParams
+    | AIProviderModelNotSupportedParams
+    | AIRequestNotSupportedParams
+    | AICreditLimitExceededParams
     | SessionExpiredParams
     | InvalidLicenseKeyParams
     | NoChatResponseParams
@@ -76,6 +80,16 @@ export type ApErrorParams =
     | InvalidCustomDomainErrorParams
     | McpPieceRequiresConnectionParams
     | McpPieceConnectionMismatchParams
+    | ErrorUpdatingSubscriptionParams
+    | TriggerExecutionFailedParams
+    | SubflowFailedParams
+    
+export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
+    flowId: FlowId
+    message?: string
+    pieceName: string
+    pieceVersion: string
+}>
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -93,7 +107,7 @@ ErrorCode.INVITATION_ONLY_SIGN_UP,
 }
 >
 
-export type InvalidClaimParams = BaseErrorParams<ErrorCode.INVALID_CLAIM, { redirectUrl: string, tokenUrl: string, clientId: string }>
+export type InvalidClaimParams = BaseErrorParams<ErrorCode.INVALID_CLAIM, { redirectUrl: string, tokenUrl: string, clientId: string, message: string }>
 export type InvalidCloudClaimParams = BaseErrorParams<ErrorCode.INVALID_CLOUD_CLAIM, { pieceName: string }>
 
 export type InvalidBearerTokenParams = BaseErrorParams<ErrorCode.INVALID_BEARER_TOKEN, {
@@ -118,7 +132,7 @@ Record<string, string> &
 }
 >
 
-export type AITokenLimitExceededParams = BaseErrorParams<ErrorCode.AI_TOKEN_LIMIT_EXCEEDED, {
+export type AICreditLimitExceededParams = BaseErrorParams<ErrorCode.AI_CREDIT_LIMIT_EXCEEDED, {
     usage: number
     limit: number
 }> 
@@ -322,6 +336,9 @@ export type TriggerEnableErrorParams = BaseErrorParams<
 ErrorCode.TRIGGER_ENABLE,
 {
     flowVersionId?: FlowVersionId
+    message?: string
+    standardOutput?: string
+    standardError?: string
 }
 >
 
@@ -360,15 +377,35 @@ ErrorCode.INVALID_APP_CONNECTION,
 export type QuotaExceededParams = BaseErrorParams<
 ErrorCode.QUOTA_EXCEEDED,
 {
-    metric: 'tasks' | 'team-members' | 'ai-tokens'
-    quota?: number
+    metric: PlatformUsageMetric
 }
 >
+
+export type ResourceLockedParams = BaseErrorParams<
+ErrorCode.RESOURCE_LOCKED,
+{
+    message: string
+}>
+
+export type ErrorUpdatingSubscriptionParams = BaseErrorParams<
+ErrorCode.ERROR_UPDATING_SUBSCRIPTION,
+{
+    message: string
+}>
 
 export type ProviderProxyConfigNotFoundParams = BaseErrorParams<
 ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
 {
     provider: string
+}>
+
+export type AIProviderModelNotSupportedParams = BaseErrorParams<ErrorCode.AI_MODEL_NOT_SUPPORTED, {
+    provider: string
+    model: string
+}>
+
+export type AIRequestNotSupportedParams = BaseErrorParams<ErrorCode.AI_REQUEST_NOT_SUPPORTED, {
+    message: string
 }>
 
 export type FeatureDisabledErrorParams = BaseErrorParams<
@@ -386,22 +423,19 @@ export type AuthenticationParams = BaseErrorParams<
 ErrorCode.AUTHENTICATION,
 {
     message: string
-}
->
+}>
 
 export type InvalidSAMLResponseParams = BaseErrorParams<
 ErrorCode.INVALID_SAML_RESPONSE,
 {
     message: string
-}
->
+}>
 
 export type ExistingAlertChannelErrorParams = BaseErrorParams<
 ErrorCode.EXISTING_ALERT_CHANNEL,
 {
     email: string
-}
->
+}>
 
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
 
@@ -433,8 +467,6 @@ export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PRO
     externalId: string
 }>
 
-
-
 export type McpPieceRequiresConnectionParams = BaseErrorParams<ErrorCode.MCP_PIECE_REQUIRES_CONNECTION, {
     pieceName: string
 }>
@@ -445,12 +477,19 @@ export type McpPieceConnectionMismatchParams = BaseErrorParams<ErrorCode.MCP_PIE
     connectionId: string
 }>
 
+export type SubflowFailedParams = BaseErrorParams<ErrorCode.SUBFLOW_FAILED, {
+    message: string
+}>
+
 export enum ErrorCode {
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
+    ERROR_UPDATING_SUBSCRIPTION = 'ERROR_UPDATING_SUBSCRIPTION',
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
     PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER = 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER',
+    AI_MODEL_NOT_SUPPORTED = 'AI_MODEL_NOT_SUPPORTED',
+    AI_REQUEST_NOT_SUPPORTED = 'AI_REQUEST_NOT_SUPPORTED',
     CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
     DOMAIN_NOT_ALLOWED = 'DOMAIN_NOT_ALLOWED',
     EMAIL_IS_NOT_VERIFIED = 'EMAIL_IS_NOT_VERIFIED',
@@ -458,6 +497,7 @@ export enum ErrorCode {
     ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',
     EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
     MEMORY_ISSUE = 'MEMORY_ISSUE',
+    TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
@@ -487,8 +527,9 @@ export enum ErrorCode {
     PIECE_NOT_FOUND = 'PIECE_NOT_FOUND',
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
+    RESOURCE_LOCKED = 'RESOURCE_LOCKED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
-    AI_TOKEN_LIMIT_EXCEEDED = 'AI_TOKEN_LIMIT_EXCEEDED',
+    AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
     STEP_NOT_FOUND = 'STEP_NOT_FOUND',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
@@ -507,4 +548,5 @@ export enum ErrorCode {
     COPILOT_FAILED = 'COPILOT_FAILED',
     MCP_PIECE_REQUIRES_CONNECTION = 'MCP_PIECE_REQUIRES_CONNECTION',
     MCP_PIECE_CONNECTION_MISMATCH = 'MCP_PIECE_CONNECTION_MISMATCH',
+    SUBFLOW_FAILED = 'SUBFLOW_FAILED',
 }

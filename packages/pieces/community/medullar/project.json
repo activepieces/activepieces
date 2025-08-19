@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/medullar/package.json",
         "main": "packages/pieces/community/medullar/src/index.ts",
         "assets": [
-          "packages/pieces/community/medullar/*.md"
+          "packages/pieces/community/medullar/*.md",
+          {
+            "input": "packages/pieces/community/medullar/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

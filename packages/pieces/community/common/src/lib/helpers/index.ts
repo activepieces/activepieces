@@ -15,8 +15,9 @@ import {
   QueryParams,
   httpClient,
 } from '../http';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
 import fs from 'fs';
+import mime from 'mime-types';
 
 export const getAccessTokenOrThrow = (
   auth: OAuth2PropertyValue | undefined
@@ -33,10 +34,10 @@ const joinBaseUrlWithRelativePath = ({ baseUrl, relativePath }: { baseUrl: strin
   const baseUrlWithSlash = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
   const relativePathWithoutSlash = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath
   return `${baseUrlWithSlash}${relativePathWithoutSlash}`
- }
- 
+}
 
-const getBaseUrlForDescription = (baseUrl: (auth?: unknown) => string,auth?: unknown) => {
+
+const getBaseUrlForDescription = (baseUrl: (auth?: unknown) => string, auth?: unknown) => {
   const exampleBaseUrl = `https://api.example.com`
   try {
     const baseUrlValue = auth ? baseUrl(auth) : undefined;
@@ -45,10 +46,10 @@ const getBaseUrlForDescription = (baseUrl: (auth?: unknown) => string,auth?: unk
   }
   //If baseUrl fails we stil want to return a valid baseUrl for description
   catch (error) {
-  {
-    return exampleBaseUrl
+    {
+      return exampleBaseUrl
+    }
   }
-}
 }
 export function createCustomApiCallAction({
   auth,
@@ -59,13 +60,14 @@ export function createCustomApiCallAction({
   name,
   props,
   extraProps,
+  authLocation = 'headers',
 }: {
   auth?: PieceAuthProperty;
   baseUrl: (auth?: unknown) => string;
   authMapping?: (
     auth: unknown,
-    propsValue: StaticPropsValue<any>
-  ) => Promise<HttpHeaders>;
+    propsValue: StaticPropsValue<any>,
+  ) => Promise<HttpHeaders | QueryParams>;
   //   add description as a parameter that can be null
   description?: string | null;
   displayName?: string | null;
@@ -80,8 +82,9 @@ export function createCustomApiCallAction({
     timeout?: Partial<ReturnType<typeof Property.Number>>;
   };
   extraProps?: InputPropertyMap;
+  authLocation?: 'headers' | 'queryParams';
 }) {
- 
+
   return createAction({
     name: name ? name : 'custom_api_call',
     displayName: displayName ? displayName : 'Custom API Call',
@@ -99,8 +102,8 @@ export function createCustomApiCallAction({
           return {
             url: Property.ShortText({
               displayName: 'URL',
-              description: `You can either use the full URL or the relative path to the base URL 
-i.e ${getBaseUrlForDescription(baseUrl,auth)}/resource or /resource`,
+              description: `You can either use the full URL or the relative path to the base URL
+i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
               required: true,
               defaultValue: baseUrl(auth),
               ...(props?.url ?? {}),
@@ -158,38 +161,81 @@ i.e ${getBaseUrlForDescription(baseUrl,auth)}/resource or /resource`,
       assertNotNullOrUndefined(method, 'Method');
       assertNotNullOrUndefined(url, 'URL');
 
-      let headersValue = headers as HttpHeaders;
-      if (authMapping) {
-        const headers = await authMapping(context.auth, context.propsValue);
-        if (headers) {
-          headersValue = {
-            ...headersValue,
-            ...headers,
-          };
-        }
-      }
+      const authValue = !isNil(authMapping) ? await authMapping(context.auth, context.propsValue) : {};
+
       const urlValue = url['url'] as string;
       const fullUrl = urlValue.startsWith('http://') || urlValue.startsWith('https://') ? urlValue :
-                     joinBaseUrlWithRelativePath({ baseUrl: baseUrl(context.auth), relativePath: urlValue})
+        joinBaseUrlWithRelativePath({ baseUrl: baseUrl(context.auth), relativePath: urlValue })
       const request: HttpRequest<Record<string, unknown>> = {
         method,
         url: fullUrl,
-        headers: headersValue,
-        queryParams: queryParams as QueryParams,
+        headers: {
+          ...(headers ?? {}) as HttpHeaders,
+          ...((authLocation === 'headers' || !isNil(authLocation)) ? authValue : {}),
+        },
+        queryParams: {
+          ...(authLocation === 'queryParams' ? authValue as QueryParams : {}),
+          ...((queryParams as QueryParams) ?? {}),
+        },
         timeout: timeout ? timeout * 1000 : 0,
+        responseType: 'arraybuffer'
       };
 
       if (body) {
         request.body = body;
       }
 
+      const objectContentTypes = [
+        'application/json',                   // JSON responses
+        'application/xml',                    // XML responses
+        'text/plain',                         // Plain text responses
+        'text/html',                          // HTML responses
+        'application/x-www-form-urlencoded',  // Form submissions
+      ];
+
+      const objectContentTypeSuffixes = ['+json', '+xml'];
+
+      let response;
       try {
-        return await httpClient.sendRequest(request);
+        response = await httpClient.sendRequest(request);
       } catch (error) {
         if (failsafe) {
           return (error as HttpError).errorMessage();
         }
         throw error;
+      }
+
+      // Capture content type from header
+      const contentTypeValue = Array.isArray(response.headers?.['content-type'])
+        ? response.headers['content-type'][0]
+        : response.headers?.['content-type']
+
+      // Return unaltered response if content type is associated with objects or strings
+      const isObjectContentType = objectContentTypes.some(type => (contentTypeValue ?? '').includes(type)) ||
+        objectContentTypeSuffixes.some(suffix => (contentTypeValue ?? '').endsWith(suffix));
+
+      if (isObjectContentType) {
+        try {
+          // Parse JSON responses if valid
+          response.body = JSON.parse(response.body || '{}');
+        } catch (err) {
+          // Fall back to returning plain text if JSON parsing fails
+          response.body = response.body?.toString() || '';
+        }
+
+        return response
+      }
+
+      // Get file extension from content type
+      const fileExtension: string = mime.extension(contentTypeValue ?? '') || 'txt'
+
+      // Return response as file
+      return {
+        ...response,
+        body: await context.files.write({
+          fileName: `output.${fileExtension}`,
+          data: Buffer.from(response.body)
+        })
       }
     },
   });

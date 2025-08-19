@@ -1,32 +1,41 @@
 import React, { createContext, useContext, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { cn } from '@/lib/utils';
 
 type EmbeddingState = {
   isEmbedded: boolean;
   hideSideNav: boolean;
-  prefix: string;
-  hideLogoInBuilder: boolean;
+  hideFlowsPageNavbar: boolean;
   disableNavigationInBuilder: boolean;
   hideFolders: boolean;
   hideFlowNameInBuilder: boolean;
+  hideExportAndImportFlow: boolean;
   sdkVersion?: string;
   predefinedConnectionName?: string;
   fontUrl?: string;
   fontFamily?: string;
   useDarkBackground: boolean;
+  hideHomeButtonInBuilder: boolean;
+  emitHomeButtonClickedEvent: boolean;
+  homeButtonIcon: 'back' | 'logo';
+  hideDuplicateFlow: boolean;
+  hideProjectSettings: boolean;
 };
 
 const defaultState: EmbeddingState = {
   isEmbedded: false,
   hideSideNav: false,
-  hideLogoInBuilder: false,
-  prefix: '',
+  hideFlowsPageNavbar: false,
   disableNavigationInBuilder: false,
   hideFolders: false,
   hideFlowNameInBuilder: false,
+  hideExportAndImportFlow: false,
   useDarkBackground: window.opener !== null,
+  hideHomeButtonInBuilder: false,
+  emitHomeButtonClickedEvent: false,
+  homeButtonIcon: 'logo',
+  hideDuplicateFlow: false,
+  hideProjectSettings: false,
 };
 
 const EmbeddingContext = createContext<{
@@ -38,24 +47,7 @@ const EmbeddingContext = createContext<{
 });
 
 export const useEmbedding = () => useContext(EmbeddingContext);
-export const useNewWindow = () => {
-  const { embedState } = useEmbedding();
-  const navigate = useNavigate();
-  if (embedState.isEmbedded) {
-    return (route: string, searchParams?: string) =>
-      navigate({
-        pathname: route,
-        search: searchParams,
-      });
-  } else {
-    return (route: string, searchParams?: string) =>
-      window.open(
-        `${route}${searchParams ? '?' + searchParams : ''}`,
-        '_blank',
-        'noopener noreferrer',
-      );
-  }
-};
+
 type EmbeddingProviderProps = {
   children: React.ReactNode;
 };
@@ -69,7 +61,8 @@ const EmbeddingProvider = ({ children }: EmbeddingProviderProps) => {
     >
       <div
         className={cn({
-          'bg-black/80 h-screen w-screen': state.useDarkBackground,
+          'bg-black/80 h-screen w-screen':
+            state.useDarkBackground && state.isEmbedded,
         })}
       >
         {children}

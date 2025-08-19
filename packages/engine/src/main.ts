@@ -1,68 +1,105 @@
-import { argv } from 'process'
 import {
+    assertNotNullOrUndefined,
+    EngineError,
     EngineOperation,
     EngineOperationType,
-} from '@activepieces/shared'
-import { EngineConstants } from './lib/handler/context/engine-constants'
+    EngineResult,
+    EngineSocketEvent,
+    EngineStderr,
+    EngineStdout,
+    isNil } from '@activepieces/shared'
+import WebSocket from 'ws'
 import { execute } from './lib/operations'
-import { utils } from './lib/utils'
 
-async function executeFromFile(operationType: string): Promise<void> {
-    const input: EngineOperation = await utils.parseJsonFile(EngineConstants.INPUT_FILE)
-    const operationTypeCasted = operationType as EngineOperationType
-    const result = await execute(operationTypeCasted, input)
-    await utils.writeToJsonFile(EngineConstants.OUTPUT_FILE, result)
-}
+const WORKER_ID = process.env.WORKER_ID
+const WS_URL = 'ws://127.0.0.1:12345/worker/ws'
 
-async function executeFromWorkerData(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
+process.title = `engine-${WORKER_ID}`
+let socket: WebSocket | undefined
+
+async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
     try {
         const result = await execute(operationType, operation)
         const resultParsed = JSON.parse(JSON.stringify(result))
-        process.send?.({
-            type: 'result',
-            message: resultParsed,
-        })
+        const engineResult: EngineResult = {
+            result: resultParsed,
+        }
+        socket?.send(JSON.stringify({
+            type: EngineSocketEvent.ENGINE_RESULT,
+            data: engineResult,
+        }))
     }
     catch (error) {
-        process.send?.({
-            type: 'error',
-            message: error,
-        })
+        const engineError: EngineError = {
+            error: error instanceof Error ? error.message : error,
+        }
+        socket?.send(JSON.stringify({
+            type: EngineSocketEvent.ENGINE_ERROR,
+            data: engineError,
+        }))
     }
 }
 
-const operationType = argv[2]
+function setupSocket() {
+    assertNotNullOrUndefined(WORKER_ID, 'WORKER_ID')
 
-if (operationType) {
-    executeFromFile(operationType).catch(e => console.error(e))
-}
-else {
-    if (process.send) {
-        const originalLog = console.log
-        console.log = function (...args) {
-            process.send?.({
-                type: 'stdout',
-                message: args.join(' ') + '\n',
-            })
-            originalLog.apply(console, args)
-        }
+    socket = new WebSocket(WS_URL, {
+        headers: {
+            'worker-id': WORKER_ID,
+        },
+    })
 
-        const originalError = console.error
-        console.error = function (...args) {
-            process.send?.({
-                type: 'stderr',
-                message: args.join(' ') + '\n',
-            })
-            originalError.apply(console, args)
+    // Redirect console.log/error to socket
+    const originalLog = console.log
+    console.log = function (...args) {
+        const engineStdout: EngineStdout = {
+            message: args.join(' ') + '\n',
         }
-        
-        process.on('message', (m: { operation: EngineOperation, operationType: EngineOperationType }) => {
-            executeFromWorkerData(m.operation, m.operationType).catch(e => {
-                process.send?.({
-                    type: 'error',
-                    message: e,
+        socket?.send(JSON.stringify({
+            type: EngineSocketEvent.ENGINE_STDOUT,
+            data: engineStdout,
+        }))
+        originalLog.apply(console, args)
+    }
+
+    const originalError = console.error
+    console.error = function (...args) {
+        const engineStderr: EngineStderr = {
+            message: args.join(' ') + '\n',
+        }
+        socket?.send(JSON.stringify({
+            type: EngineSocketEvent.ENGINE_STDERR,
+            data: engineStderr,
+        }))
+        originalError.apply(console, args)
+    }
+
+    socket.on('message', (data: string) => {
+        try {
+            const message = JSON.parse(data)
+            if (message.type === EngineSocketEvent.ENGINE_OPERATION) {
+                executeFromSocket(message.data.operation, message.data.operationType).catch(e => {
+                    const engineError: EngineError = {
+                        error: e instanceof Error ? e.message : e,
+                    }
+                    socket?.send(JSON.stringify({
+                        type: EngineSocketEvent.ENGINE_ERROR,
+                        data: engineError,
+                    }))
                 })
-            })
-        })
-    }
+            }
+        }
+        catch (error) {
+            console.error('Error handling operation:', error)
+        }
+    })
+
+    socket.on('close', () => {
+        console.log('Socket disconnected, exiting process')
+        process.exit(0)
+    })
+}
+
+if (!isNil(WORKER_ID)) {
+    setupSocket()
 }

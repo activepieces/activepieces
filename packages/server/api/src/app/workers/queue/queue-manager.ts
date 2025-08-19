@@ -1,4 +1,5 @@
 import {
+    AgentJobData,
     DelayedJobData, JobData,
     JobType,
     OneTimeJobData,
@@ -13,12 +14,13 @@ export const JOB_PRIORITY = {
     high: 2,
     medium: 3,
     low: 4,
+    ultraLow: 5,
 }
 
-export const ENTERPRISE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'high'
 export const TEST_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'low'
 export const SYNC_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'medium'
 export const DEFAULT_PRIORITY: keyof typeof JOB_PRIORITY = 'low'
+export const RATE_LIMIT_PRIORITY: keyof typeof JOB_PRIORITY = 'ultraLow'
 
 export async function getJobPriority(synchronousHandlerId: string | null | undefined): Promise<keyof typeof JOB_PRIORITY> {
     if (!isNil(synchronousHandlerId)) {
@@ -65,6 +67,10 @@ type OneTimeJobAddParams<JT extends JobType.ONE_TIME> = BaseAddParams<JT, OneTim
 
 type UserInteractionJobAddParams<JT extends JobType.USERS_INTERACTION> = BaseAddParams<JT, UserInteractionJobData>
 
+type AgentJobAddParams<JT extends JobType.AGENTS> = BaseAddParams<JT, AgentJobData> & {
+    priority: keyof typeof JOB_PRIORITY
+}
+
 export type AddParams<JT extends JobType> = JT extends JobType.ONE_TIME
     ? OneTimeJobAddParams<JT>
     : JT extends JobType.REPEATING
@@ -75,4 +81,6 @@ export type AddParams<JT extends JobType> = JT extends JobType.ONE_TIME
                 ? WebhookJobAddParams<JT>
                 : JT extends JobType.USERS_INTERACTION
                     ? UserInteractionJobAddParams<JT>
-                    : never
+                    : JT extends JobType.AGENTS
+                        ? AgentJobAddParams<JT>
+                        : never

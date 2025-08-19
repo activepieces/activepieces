@@ -8,18 +8,20 @@ import {
     ErrorCode,
     FlowOperationRequest,
     FlowOperationType,
+    FlowStatus,
     flowStructureUtil,
     FlowTemplateWithoutProjectInformation,
+    FlowTrigger,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
     isNil,
     ListFlowsRequest,
     Permission,
+    PlatformUsageMetric,
     PopulatedFlow,
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    Trigger,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -30,7 +32,8 @@ import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
-import { gitRepoService } from '../../ee/project-release/git-sync/git-sync.service'
+import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
+import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
 import { flowService } from './flow.service'
 
@@ -56,6 +59,8 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id', UpdateFlowRequestOptions, async (request) => {
+
+
         const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
         await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
 
@@ -63,6 +68,16 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
         })
+
+        const turnOnFlow = request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED
+        const publishDisabledFlow = request.body.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.DISABLED
+        if (turnOnFlow || publishDisabledFlow) {
+            await PlatformPlanHelper.checkQuotaOrThrow({
+                platformId: request.principal.platform.id,
+                projectId: request.principal.projectId,
+                metric: PlatformUsageMetric.ACTIVE_FLOWS,
+            })
+        }
         await assertThatFlowIsNotBeingUsed(flow, userId)
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.FLOW_UPDATED,
@@ -78,6 +93,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
             operation: cleanOperation(request.body),
         })
+
         return updatedFlow
     })
 
@@ -90,7 +106,9 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             status: request.query.status,
             name: request.query.name,
             versionState: request.query.versionState,
+            externalIds: request.query.externalIds,
             connectionExternalIds: request.query.connectionExternalIds,
+            agentExternalIds: request.query.agentExternalIds,
         })
     })
 
@@ -131,9 +149,10 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         })
         await gitRepoService(request.log).onDeleted({
             type: GitPushOperationType.DELETE_FLOW,
-            id: request.params.id,
+            idOrExternalId: request.params.id,
             userId: request.principal.id,
             projectId: request.principal.projectId,
+            platformId: request.principal.platform.id,
             log: request.log,
         })
         await flowService(request.log).delete({
@@ -163,7 +182,7 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
                     },
                 },
             }
-        }) as Trigger
+        }) as FlowTrigger
         return {
             ...operation,
             request: {
@@ -191,15 +210,15 @@ async function assertThatFlowIsNotBeingUsed(
     const currentTime = dayjs()
     if (
         !isNil(flow.version.updatedBy) &&
-    flow.version.updatedBy !== userId &&
-    currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
+        flow.version.updatedBy !== userId &&
+        currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
     ) {
         throw new ActivepiecesError({
             code: ErrorCode.FLOW_IN_USE,
             params: {
                 flowVersionId: flow.version.id,
                 message:
-          'Flow is being used by another user in the last minute. Please try again later.',
+                    'Flow is being used by another user in the last minute. Please try again later.',
             },
         })
     }

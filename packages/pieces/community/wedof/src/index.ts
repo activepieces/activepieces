@@ -71,6 +71,8 @@ import { certificationPartnerActive } from './lib/triggers/certification-partner
 import { certificationPartnerRefused } from './lib/triggers/certification-partner/certificationPartner-refused';
 import { certificationPartnerRevoked } from './lib/triggers/certification-partner/certificationPartner-revoked';
 import { certificationPartnerSuspended } from './lib/triggers/certification-partner/certificationPartner-suspended';
+import { addExecutionTag } from './lib/actions/add-execution-tag';
+import { listPartnerStats } from './lib/actions/certification/certification-partner-stats';
 
 
 export const wedofAuth = PieceAuth.SecretText({
@@ -111,6 +113,8 @@ export const wedof = createPiece({
   ],
   authors: ['vbarrier','obenazouz'],
   actions: [
+    /////////////// certification /////////////////
+    listPartnerStats,
     ////////////// registrationFolders ////////////
     getRegistrationFolder,
     searchRegistrationFolder,
@@ -145,6 +149,7 @@ export const wedof = createPiece({
     sendFile,
     me,
     myOrganism,
+    addExecutionTag,
     ///////////// certificationFoldersSurvey ///////
     getCertificationFolderSurvey,
     listCertificationFolderSurveys,

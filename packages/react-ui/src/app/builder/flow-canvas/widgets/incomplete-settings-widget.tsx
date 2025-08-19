@@ -5,7 +5,7 @@ import React, { useMemo } from 'react';
 import { BuilderState } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import {
-  Action,
+  FlowAction,
   FlowVersion,
   Step,
   flowStructureUtil,
@@ -20,7 +20,7 @@ type IncompleteSettingsButtonProps = {
 const filterValidOrSkippedSteps = (step: Step) =>
   (flowStructureUtil.isTrigger(step.type) && !step.valid) ||
   (flowStructureUtil.isAction(step.type) &&
-    !(step as Action).skip &&
+    !(step as FlowAction).skip &&
     !step.valid);
 const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
   flowVersion,

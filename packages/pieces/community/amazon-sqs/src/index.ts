@@ -1,6 +1,6 @@
 
 import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { SQS } from 'aws-sdk';
+import { ListQueuesCommand, SQS } from '@aws-sdk/client-sqs';
 import { sendMessage } from "./lib/actions/send-message";
 
 export const amazonSqsAuth = PieceAuth.CustomAuth({
@@ -145,11 +145,13 @@ export const amazonSqsAuth = PieceAuth.CustomAuth({
   validate: async ({ auth }) => {
     try {
       const sqs = new SQS({
-        accessKeyId: auth.accessKeyId,
-        secretAccessKey: auth.secretAccessKey,
+        credentials: {
+          accessKeyId: auth.accessKeyId,
+          secretAccessKey: auth.secretAccessKey,
+        },
         region: auth.region,
       });
-      await sqs.listQueues().promise();
+      await sqs.send(new ListQueuesCommand({}));
       return {
         valid: true,
       }

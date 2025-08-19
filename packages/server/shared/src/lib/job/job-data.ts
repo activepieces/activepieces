@@ -1,15 +1,15 @@
 import {
+    DiscriminatedUnion,
     ExecutionType,
+    FlowTriggerType,
     FlowVersion,
-    GetFlowVersionForWorkerRequestType,
-    Nullable,
     PackageType,
     PiecePackage,
     PieceType,
     ProgressUpdateType,
     RunEnvironment,
     TriggerHookType,
-    TriggerType,
+    TriggerPayload,
 } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
@@ -38,7 +38,7 @@ export const RepeatingJobData = Type.Object({
     schemaVersion: Type.Number(),
     flowVersionId: Type.String(),
     flowId: Type.String(),
-    triggerType: Type.Enum(TriggerType),
+    triggerType: Type.Enum(FlowTriggerType),
     jobType: Type.Literal(RepeatableJobType.EXECUTE_TRIGGER),
 })
 export type RepeatingJobData = Static<typeof RepeatingJobData>
@@ -49,6 +49,7 @@ export const DelayedJobData = Type.Object({
     environment: Type.Enum(RunEnvironment),
     schemaVersion: Type.Number(),
     flowVersionId: Type.String(),
+    flowId: Type.String(),
     runId: Type.String(),
     httpRequestId: Type.Optional(Type.String()),
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
@@ -72,33 +73,59 @@ export const OneTimeJobData = Type.Object({
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     httpRequestId: Type.Optional(Type.String()),
     payload: Type.Any(),
+    executeTrigger: Type.Optional(Type.Boolean()),
     executionType: Type.Enum(ExecutionType),
-    retryPayload: Type.Optional(Type.Any()),
     progressUpdateType: Type.Enum(ProgressUpdateType),
+    stepNameToTest: Type.Optional(Type.String()),
+    sampleData: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
 })
 export type OneTimeJobData = Static<typeof OneTimeJobData>
+
+
+export enum AgentJobSource {
+    DIRECT = 'direct',
+    TABLE = 'table',
+}
+
+const BaseAgentJobData = Type.Object({
+    agentId: Type.String(),
+    projectId: Type.String(),
+    agentRunId: Type.String(),
+    prompt: Type.String(),
+})
+
+export const AgentJobData = DiscriminatedUnion('source', [
+    Type.Object({
+        source: Type.Literal(AgentJobSource.DIRECT),
+        ...BaseAgentJobData.properties,
+    }),
+    Type.Object({
+        source: Type.Literal(AgentJobSource.TABLE),
+        ...BaseAgentJobData.properties,
+        recordId: Type.String(),
+        tableId: Type.String(),
+    }),
+])
+export type AgentJobData = Static<typeof AgentJobData>
 
 export const WebhookJobData = Type.Object({
     projectId: Type.String(),
     schemaVersion: Type.Number(),
     requestId: Type.String(),
-    synchronousHandlerId: Type.Union([Type.String(), Type.Null()]),
     payload: Type.Any(),
+    runEnvironment: Type.Enum(RunEnvironment),
     flowId: Type.String(),
     saveSampleData: Type.Boolean(),
-    flowVersionToRun: Type.Optional(Type.Union([
-        Type.Literal(GetFlowVersionForWorkerRequestType.LOCKED),
-        Type.Literal(GetFlowVersionForWorkerRequestType.LATEST),
-    ])),
-    flowVersionIdToRun: Nullable(Type.String()),
+    flowVersionIdToRun: Type.String(),
     execute: Type.Boolean(),
+    parentRunId: Type.Optional(Type.String()),
+    failParentOnFailure: Type.Optional(Type.Boolean()),
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
 
 
 export enum UserInteractionJobType {
     EXECUTE_VALIDATION = 'EXECUTE_VALIDATION',
-    EXECUTE_ACTION = 'EXECUTE_ACTION',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
@@ -115,17 +142,6 @@ export const ExecuteValidateAuthJobData = Type.Object({
     connectionValue: Type.Unknown(),
 })
 export type ExecuteValidateAuthJobData = Static<typeof ExecuteValidateAuthJobData>
-
-export const ExecuteActionJobData = Type.Object({
-    requestId: Type.String(),
-    jobType: Type.Literal(UserInteractionJobType.EXECUTE_ACTION),
-    projectId: Type.String(),
-    flowVersion: FlowVersion,
-    stepName: Type.String(),
-    webserverId: Type.String(),
-    sampleData: Type.Record(Type.String(), Type.Unknown()),
-})
-export type ExecuteActionJobData = Static<typeof ExecuteActionJobData>
 
 export const ExecuteToolJobData = Type.Object({
     requestId: Type.String(),
@@ -149,6 +165,7 @@ export const ExecuteTriggerHookJobData = Type.Object({
     test: Type.Boolean(),
     webserverId: Type.String(),
     hookType: Type.Enum(TriggerHookType),
+    triggerPayload: Type.Optional(TriggerPayload),
 })
 export type ExecuteTriggerHookJobData = Static<typeof ExecuteTriggerHookJobData>
 
@@ -156,7 +173,7 @@ export const ExecutePropertyJobData = Type.Object({
     requestId: Type.String(),
     jobType: Type.Literal(UserInteractionJobType.EXECUTE_PROPERTY),
     projectId: Type.String(),
-    flowVersion: FlowVersion,
+    flowVersion: Type.Optional(FlowVersion),
     propertyName: Type.String(),
     piece: PiecePackage,
     actionOrTriggerName: Type.String(),
@@ -179,7 +196,6 @@ export type ExecuteExtractPieceMetadataJobData = Static<typeof ExecuteExtractPie
 
 export const UserInteractionJobData = Type.Union([
     ExecuteValidateAuthJobData,
-    ExecuteActionJobData,
     ExecuteTriggerHookJobData,
     ExecuteToolJobData,
     ExecutePropertyJobData,
@@ -189,7 +205,6 @@ export type UserInteractionJobData = Static<typeof UserInteractionJobData>
 
 export const UserInteractionJobDataWithoutWatchingInformation = Type.Union([
     Type.Omit(ExecuteValidateAuthJobData, ['webserverId', 'requestId']),
-    Type.Omit(ExecuteActionJobData, ['webserverId', 'requestId']),
     Type.Omit(ExecuteToolJobData, ['webserverId', 'requestId']),
     Type.Omit(ExecuteTriggerHookJobData, ['webserverId', 'requestId']),
     Type.Omit(ExecutePropertyJobData, ['webserverId', 'requestId']),
@@ -202,5 +217,6 @@ export const JobData = Type.Union([
     OneTimeJobData,
     WebhookJobData,
     UserInteractionJobData,
+    AgentJobData,
 ])
 export type JobData = Static<typeof JobData>

@@ -15,7 +15,12 @@
         "packageJson": "packages/pieces/community/poper/package.json",
         "main": "packages/pieces/community/poper/src/index.ts",
         "assets": [
-          "packages/pieces/community/poper/*.md"
+          "packages/pieces/community/poper/*.md",
+          {
+            "input": "packages/pieces/community/poper/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

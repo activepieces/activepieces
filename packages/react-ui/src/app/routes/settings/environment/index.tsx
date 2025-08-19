@@ -2,10 +2,11 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { ConnectGitDialog } from '@/features/git-sync/components/connect-git-dialog';
 import { gitSyncApi } from '@/features/git-sync/lib/git-sync-api';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
@@ -20,7 +21,7 @@ const EnvironmentPage = () => {
 
   const { gitSync, isLoading, refetch } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.environmentsEnabled,
+    platform.plan.environmentsEnabled,
   );
 
   const { mutate } = useMutation({
@@ -38,37 +39,36 @@ const EnvironmentPage = () => {
         duration: 3000,
       });
     },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
   });
 
   return (
     <LockedFeatureGuard
       featureKey="ENVIRONMENT"
-      locked={!platform.environmentsEnabled}
+      locked={!platform.plan.environmentsEnabled}
       lockTitle={t('Enable Environments')}
       lockDescription={t(
         'Deploy flows across development, staging and production environments with version control and team collaboration',
       )}
     >
       <div className="flex w-full flex-col items-start justify-center gap-4">
-        <div className="flex flex-col justify-start items-start w-full">
-          <h1 className="text-2xl font-bold flex-grow">{t('Environments')}</h1>
-          <span className="text-muted-foreground text-md">
-            {t(
-              'Connect to Git to enable version control, backup your flows, and manage multiple environments. ',
-            )}
-            <a
-              href="https://www.activepieces.com/docs/operations/git-sync"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              {t('Environments & Releases')}
-            </a>
-          </span>
-        </div>
+        <DashboardPageHeader
+          title={t('Environments')}
+          description={
+            <span className="text-muted-foreground text-md">
+              {t(
+                'Connect to Git to enable version control, backup your flows, and manage multiple environments. ',
+              )}
+              <a
+                href="https://www.activepieces.com/docs/operations/git-sync"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                {t('Environments & Releases')}
+              </a>
+            </span>
+          }
+        />
         <Card className="w-full p-4">
           <div className="flex w-full">
             {!isLoading && (
@@ -106,7 +106,7 @@ const EnvironmentPage = () => {
             )}
             {isLoading && (
               <div className="flex flex-grow justify-center items-center">
-                <LoadingSpinner className="w-5 h-5"></LoadingSpinner>
+                <LoadingSpinner className="size-5"></LoadingSpinner>
               </div>
             )}
           </div>

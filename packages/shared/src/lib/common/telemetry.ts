@@ -1,5 +1,6 @@
 import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
+import { McpId } from '../mcp/mcp'
 import { ProjectId } from '../project/project'
 import { UserId } from '../user/user'
 
@@ -36,6 +37,15 @@ type SignedUp = {
     projectId: ProjectId
 }
 
+export type ClickedTutorialTelemetryParams = {
+    tab: 'flows'
+    | 'mcpServers'
+    | 'tables'
+    | 'agents'
+    | 'todos'
+    | 'gettingStarted'
+    location: 'tutorials-sidebar-item' | 'table-title' | 'small-button-inside-sidebar-item'
+}
 type QuotaAlert = {
     percentageUsed: number
 }
@@ -138,6 +148,12 @@ type AiProviderConfiguredOrUsed = {
     projectId: string
     platformId: string
 }
+
+type McpToolCalled = {
+    mcpId: McpId
+    toolName: string
+}
+
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
     QUOTA_ALERT = 'quota.alert',
@@ -146,9 +162,7 @@ export enum TelemetryEventName {
     KEY_ACTIVATED = 'key.activated',
     FLOW_ISSUE_CLICKED = 'flow.issue.clicked',
     FLOW_ISSUE_RESOLVED = 'flow.issue.resolved',
-    UPGRADE_CLICKED = 'upgrade.clicked',
     USER_INVITED = 'user.invited',
-    OPENED_PRICING_FROM_DASHBOARD = 'pricing.viewed',
     UPGRADE_POPUP = 'upgrade.popup',
     CREATED_FLOW = 'flow.created',
     DEMO_IMPORTED = 'demo.imported',
@@ -171,6 +185,12 @@ export enum TelemetryEventName {
     TRIGGER_FAILURES_EXCEEDED = 'trigger.failures.exceeded',
     AI_PROVIDER_USED = 'ai.provider.used',
     AI_PROVIDER_CONFIGURED = 'ai.provider.configured',
+    MCP_TOOL_CALLED = 'mcp.tool.called',
+
+    UPGRADE_POPUP_OPENED = 'upgrade.popup.opened',
+    UPGRADE_CLICKED = 'upgrade.clicked',
+    OPENED_PRICING_FROM_DASHBOARD = 'opened.pricing.from.dashboard',
+    CLICKED_TUTORIAL = 'clicked.tutorial',
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -242,3 +262,5 @@ export type TelemetryEvent =
   TelemetryEventName.AI_PROVIDER_CONFIGURED,
   AiProviderConfiguredOrUsed
   >
+  | BaseTelemetryEvent<TelemetryEventName.MCP_TOOL_CALLED, McpToolCalled>
+  | BaseTelemetryEvent<TelemetryEventName.CLICKED_TUTORIAL, ClickedTutorialTelemetryParams>

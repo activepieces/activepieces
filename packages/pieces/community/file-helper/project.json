@@ -6,24 +6,37 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/pieces/community/file-helper",
         "tsConfig": "packages/pieces/community/file-helper/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/file-helper/package.json",
         "main": "packages/pieces/community/file-helper/src/index.ts",
-        "assets": ["packages/pieces/community/file-helper/*.md"],
+        "assets": [
+          "packages/pieces/community/file-helper/*.md",
+          {
+            "input": "packages/pieces/community/file-helper/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-filesHelper {args.ver} {args.tag}",
-      "dependsOn": ["build"]
+      "dependsOn": [
+        "build"
+      ]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     }
   },
   "tags": []

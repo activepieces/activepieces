@@ -1,0 +1,19 @@
+{
+  "Square": "Cuadrado",
+  "Payment solutions for every business": "Soluciones de pago para cada negocio",
+  "Authentication": "Autenticación",
+  "New Order": "Nuevo pedido",
+  "Order Updated": "Pedido actualizado",
+  "New Customer": "Nuevo cliente",
+  "Customer Updated": "Cliente actualizado",
+  "New Appointment": "Nueva cita",
+  "New Payment": "Nuevo pago",
+  "New Invoice": "Nueva factura",
+  "Triggered when a new order is created": "Activado cuando se crea un nuevo pedido",
+  "Triggered when an order is updated": "Activado cuando se actualiza un pedido",
+  "Triggered when a customer is created": "Se activa cuando se crea un cliente",
+  "Triggered when a customer is updated": "Se activa cuando un cliente es actualizado",
+  "Triggered when a new appointment is created": "Se activa cuando se crea una nueva cita",
+  "Triggered when a new payment is created": "Se activa cuando se crea un nuevo pago",
+  "Triggered when a new invoice is created": "Activado cuando se crea una nueva factura"
+}

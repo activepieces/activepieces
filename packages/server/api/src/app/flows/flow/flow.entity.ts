@@ -43,10 +43,6 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             nullable: false,
             default: FlowStatus.DISABLED,
         },
-        schedule: {
-            type: JSONB_COLUMN_TYPE,
-            nullable: true,
-        },
         externalId: {
             type: String,
             nullable: false,

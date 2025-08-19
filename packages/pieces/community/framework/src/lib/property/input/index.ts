@@ -19,7 +19,7 @@ import { NumberProperty } from './number-property';
 import { ObjectProperty } from './object-property';
 import { PropertyType } from './property-type';
 import { LongTextProperty, ShortTextProperty } from './text-property';
-import { CustomProperty } from './custom-property';
+import { CustomProperty, CustomPropertyCodeFunctionParams } from './custom-property';
 import { ColorProperty } from './color-property';
 
 export const InputProperty = Type.Union([
@@ -59,6 +59,7 @@ export type InputProperty =
   | FileProperty<boolean>
   | CustomProperty<boolean>
   | ColorProperty<boolean>;
+
 
 type Properties<T> = Omit<
   T,
@@ -235,10 +236,21 @@ export const Property = {
     } as unknown as R extends true ? FileProperty<true> : FileProperty<false>;
   },
   Custom<R extends boolean>(
-    request: Properties<CustomProperty<R>>
+    request: Omit<Properties<CustomProperty<R>>, 'code'> & {
+      /** 
+       * This is designed to be self-contained and operates independently of any
+       * external libraries or imported dependencies. All necessary logic and
+       * functionality are implemented within this function itself.
+       * 
+       * You can return a cleanup function that will be called when the component is unmounted in the frontend.
+       * */
+      code: ((ctx: CustomPropertyCodeFunctionParams) => (()=>void) | void)
+    }
   ): R extends true ? CustomProperty<true> : CustomProperty<false> {
+    const code = request.code.toString();
     return {
       ...request,
+      code,
       valueSchema: undefined,
       type: PropertyType.CUSTOM,
     } as unknown as R extends true ? CustomProperty<true> : CustomProperty<false>;
@@ -255,3 +267,4 @@ export const Property = {
       : ColorProperty<false>;
   },
 };
+

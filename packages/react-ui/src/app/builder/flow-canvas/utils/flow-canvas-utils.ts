@@ -1,19 +1,25 @@
 import { t } from 'i18next';
 
+import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import {
-  Action,
-  ActionType,
+  FlowAction,
+  FlowActionType,
+  FlowOperationType,
+  FlowRun,
+  flowStructureUtil,
   FlowVersion,
   isNil,
   LoopOnItemsAction,
   RouterAction,
   StepLocationRelativeToParent,
-  Trigger,
+  FlowTrigger,
+  FlowTriggerType,
 } from '@activepieces/shared';
 
 import { flowUtilConsts } from './consts';
 import {
   ApBigAddButtonNode,
+  ApButtonData,
   ApEdge,
   ApEdgeType,
   ApGraph,
@@ -69,7 +75,7 @@ const createBigAddButtonGraph: (
 };
 
 const createStepGraph: (
-  step: Action | Trigger,
+  step: FlowAction | FlowTrigger,
   graphHeight: number,
 ) => ApGraph = (step, graphHeight) => {
   const stepNode: ApStepNode = {
@@ -110,13 +116,16 @@ const createStepGraph: (
   return {
     nodes: [stepNode, graphEndNode],
     edges:
-      step.type !== ActionType.LOOP_ON_ITEMS && step.type !== ActionType.ROUTER
+      step.type !== FlowActionType.LOOP_ON_ITEMS &&
+      step.type !== FlowActionType.ROUTER
         ? [straightLineEdge]
         : [],
   };
 };
 
-const buildGraph: (step: Action | Trigger | undefined) => ApGraph = (step) => {
+const buildGraph: (step: FlowAction | FlowTrigger | undefined) => ApGraph = (
+  step,
+) => {
   if (isNil(step)) {
     return {
       nodes: [],
@@ -130,9 +139,9 @@ const buildGraph: (step: Action | Trigger | undefined) => ApGraph = (step) => {
       flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS,
   );
   const childGraph =
-    step.type === ActionType.LOOP_ON_ITEMS
+    step.type === FlowActionType.LOOP_ON_ITEMS
       ? buildLoopChildGraph(step)
-      : step.type === ActionType.ROUTER
+      : step.type === FlowActionType.ROUTER
       ? buildRouterChildGraph(step)
       : null;
 
@@ -415,6 +424,71 @@ const offsetRouterChildSteps = (childGraphs: ApGraph[]) => {
   });
 };
 
+const createAddOperationFromAddButtonData = (data: ApButtonData) => {
+  if (
+    data.stepLocationRelativeToParent ===
+    StepLocationRelativeToParent.INSIDE_BRANCH
+  ) {
+    return {
+      type: FlowOperationType.ADD_ACTION,
+      actionLocation: {
+        parentStep: data.parentStepName,
+        stepLocationRelativeToParent: data.stepLocationRelativeToParent,
+        branchIndex: data.branchIndex,
+      },
+    } as const;
+  }
+  return {
+    type: FlowOperationType.ADD_ACTION,
+    actionLocation: {
+      parentStep: data.parentStepName,
+      stepLocationRelativeToParent: data.stepLocationRelativeToParent,
+    },
+  } as const;
+};
+
+const isSkipped = (stepName: string, trigger: FlowTrigger) => {
+  const step = flowStructureUtil.getStep(stepName, trigger);
+  if (
+    isNil(step) ||
+    step.type === FlowTriggerType.EMPTY ||
+    step.type === FlowTriggerType.PIECE
+  ) {
+    return false;
+  }
+  const skippedParents = flowStructureUtil
+    .findPathToStep(trigger, stepName)
+    .filter(
+      (stepInPath) =>
+        stepInPath.type === FlowActionType.LOOP_ON_ITEMS ||
+        stepInPath.type === FlowActionType.ROUTER,
+    )
+    .filter((routerOrLoop) =>
+      flowStructureUtil.isChildOf(routerOrLoop, stepName),
+    )
+    .filter((parent) => parent.skip);
+
+  return skippedParents.length > 0 || !!step.skip;
+};
+
+const getStepStatus = (
+  stepName: string | undefined,
+  run: FlowRun | null,
+  loopIndexes: Record<string, number>,
+  flowVersion: FlowVersion,
+) => {
+  if (isNil(run) || isNil(stepName) || isNil(run.steps)) {
+    return undefined;
+  }
+  const stepOutput = flowRunUtils.extractStepOutput(
+    stepName,
+    loopIndexes,
+    run.steps,
+    flowVersion.trigger,
+  );
+  return stepOutput?.status;
+};
+
 export const flowCanvasUtils = {
   convertFlowVersionToGraph(version: FlowVersion): ApGraph {
     const graph = buildGraph(version.trigger);
@@ -430,4 +504,7 @@ export const flowCanvasUtils = {
   },
   createFocusStepInGraphParams,
   calculateGraphBoundingBox,
+  createAddOperationFromAddButtonData,
+  isSkipped,
+  getStepStatus,
 };

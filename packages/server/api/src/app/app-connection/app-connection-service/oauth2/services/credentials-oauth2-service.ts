@@ -1,14 +1,15 @@
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
+import { apAxios } from '@activepieces/server-shared'
+import { ActivepiecesError,
     AppConnectionType,
     BaseOAuth2ConnectionValue,
     ErrorCode,
     isNil,
     OAuth2ConnectionValueWithApp,
     OAuth2GrantType,
+    resolveValueFromProps,
 } from '@activepieces/shared'
-import axios, { AxiosError } from 'axios'
+import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import {
     ClaimOAuth2Request,
@@ -16,6 +17,7 @@ import {
     RefreshOAuth2Request,
 } from '../oauth2-service'
 import { oauth2Util } from '../oauth2-util'
+
 
 export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<OAuth2ConnectionValueWithApp> => ({
     async claim({
@@ -33,16 +35,20 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                     break
                 }
                 case OAuth2GrantType.CLIENT_CREDENTIALS:
+                    if (request.scope) {
+                        body.scope = resolveValueFromProps(request.props, request.scope)
+                    }
+                    if (request.props) {
+                        Object.entries(request.props).forEach(([key, value]) => {
+                            body[key] = value
+                        })
+                    }
                     break
             }
             if (request.codeVerifier) {
                 body.code_verifier = request.codeVerifier
             }
-            if (request.props && grantType === OAuth2GrantType.CLIENT_CREDENTIALS) {
-                Object.entries(request.props).forEach(([key, value]) => {
-                    body[key] = value
-                })
-            }
+           
             const headers: Record<string, string> = {
                 'content-type': 'application/x-www-form-urlencoded',
                 accept: 'application/json',
@@ -63,7 +69,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                     throw new Error(`Unknown authorization method: ${authorizationMethod}`)
             }
             const response = (
-                await axios.post(request.tokenUrl, new URLSearchParams(body), {
+                await apAxios.post(request.tokenUrl, new URLSearchParams(body), {
                     headers,
                 })
             ).data
@@ -98,6 +104,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                     clientId: request.clientId,
                     tokenUrl: request.tokenUrl,
                     redirectUrl: request.redirectUrl ?? '',
+                    message: e instanceof AxiosError ? e.response?.data.error_description : 'unknown error',
                 },
             })
         }
@@ -120,7 +127,15 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 break
             }
             case OAuth2GrantType.CLIENT_CREDENTIALS: {
-                body.grant_type = grantType
+                body.grant_type = OAuth2GrantType.CLIENT_CREDENTIALS
+                if (appConnection.scope) {
+                    body.scope = resolveValueFromProps(appConnection.props, appConnection.scope)
+                }
+                if (appConnection.props) {
+                    Object.entries(appConnection.props).forEach(([key, value]) => {
+                        body[key] = value
+                    })
+                }
                 break
             }
             default:
@@ -147,7 +162,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 throw new Error(`Unknown authorization method: ${authorizationMethod}`)
         }
         const response = (
-            await axios.post(appConnection.token_url, new URLSearchParams(body), {
+            await apAxios.post(appConnection.token_url, new URLSearchParams(body), {
                 headers,
                 timeout: 10000,
             })

@@ -6,23 +6,19 @@ import { repoFactory } from '../core/db/repo-factory'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../ee/helper/email/email-service'
-import { projectMemberService } from '../ee/project-members/project-member.service'
-import { projectRoleService } from '../ee/project-role/project-role.service'
+import { projectMemberService } from '../ee/projects/project-members/project-member.service'
+import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { platformService } from '../platform/platform.service'
+import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
 
 const repo = repoFactory(UserInvitationEntity)
 
 export const userInvitationsService = (log: FastifyBaseLogger) => ({
-    async countByProjectId(projectId: string): Promise<number> {
-        return repo().countBy({
-            projectId,
-        })
-    },
     async getOneByInvitationTokenOrThrow(invitationToken: string): Promise<UserInvitation> {
         const decodedToken = await jwtUtils.decodeAndVerify<UserInvitationToken>({
             jwt: invitationToken,
@@ -72,18 +68,24 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     const { projectId, projectRoleId } = invitation
                     assertNotNullOrUndefined(projectId, 'projectId')
                     assertNotNullOrUndefined(projectRoleId, 'projectRoleId')
-                    const platform = await platformService.getOneOrThrow(invitation.platformId)
-                    assertEqual(platform.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
+                    const platform = await platformService.getOneWithPlanOrThrow(invitation.platformId)
+                    assertEqual(platform.plan.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
 
                     const projectRole = await projectRoleService.getOneOrThrowById({
                         id: projectRoleId,
                     })
 
-                    await projectMemberService(log).upsert({
+                    const project = await projectService.exists({
                         projectId,
-                        userId: user.id,
-                        projectRoleName: projectRole.name,
+                        isSoftDeleted: false,
                     })
+                    if (!isNil(project)) {
+                        await projectMemberService(log).upsert({
+                            projectId,
+                            userId: user.id,
+                            projectRoleName: projectRole.name,
+                        })
+                    }
                     break
                 }
             }

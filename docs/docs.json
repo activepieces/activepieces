@@ -1,0 +1,570 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Activepieces",
+  "colors": {
+    "primary": "#6e41e2",
+    "light": "#c5b3f3",
+    "dark": "#6838e0"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "getting-started/introduction",
+              "getting-started/principles"
+            ]
+          },
+          {
+            "group": "AI",
+            "pages": [
+              "ai/mcp"
+            ]
+          },
+          {
+            "group": "Flows",
+            "pages": [
+              "flows/building-flows",
+              "flows/passing-data",
+              "flows/publishing-flows",
+              "flows/debugging-runs",
+              "flows/versioning",
+              "flows/known-limits"
+            ]
+          },
+          {
+            "group": "Platform Admin",
+            "pages": [
+              "admin-console/overview",
+              "admin-console/appearance",
+              "admin-console/manage-projects",
+              "admin-console/custom-domain",
+              "admin-console/manage-templates",
+              "admin-console/manage-pieces",
+              "admin-console/manage-oauth2",
+              "admin-console/customize-emails",
+              "admin-console/manage-ai-providers"
+            ]
+          },
+          {
+            "group": "Operations",
+            "pages": [
+              "operations/git-sync",
+              {
+                "group": "Audit Logs",
+                "icon": "book",
+                "pages": [
+                  "operations/audit-logs/overview",
+                  "operations/audit-logs/flow-created",
+                  "operations/audit-logs/flow-updated",
+                  "operations/audit-logs/flow-deleted",
+                  "operations/audit-logs/connection-upserted",
+                  "operations/audit-logs/connection-deleted",
+                  "operations/audit-logs/flow-run-started",
+                  "operations/audit-logs/flow-run-finished",
+                  "operations/audit-logs/folder-created",
+                  "operations/audit-logs/folder-updated",
+                  "operations/audit-logs/folder-deleted",
+                  "operations/audit-logs/user-signed-in",
+                  "operations/audit-logs/user-signed-up",
+                  "operations/audit-logs/user-email-verified",
+                  "operations/audit-logs/user-password-reset",
+                  "operations/audit-logs/signing-key-created"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Security",
+            "pages": [
+              "security/practices",
+              "security/permissions",
+              "security/sso"
+            ]
+          },
+          {
+            "group": "About",
+            "pages": [
+              "about/i18n",
+              "about/editions",
+              "about/breaking-changes",
+              "about/changelog",
+              "about/telemetry",
+              "about/license"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Develop Pieces",
+        "groups": [
+          {
+            "group": "Build a Piece",
+            "pages": [
+              "developers/building-pieces/overview",
+              "developers/building-pieces/start-building",
+              "developers/building-pieces/setup-fork",
+              {
+                "group": "Development Environment",
+                "icon": "circle-2",
+                "pages": [
+                  "developers/development-setup/getting-started",
+                  "developers/development-setup/local",
+                  "developers/development-setup/dev-container",
+                  "developers/development-setup/codespaces"
+                ]
+              },
+              "developers/building-pieces/piece-definition",
+              "developers/building-pieces/piece-authentication",
+              "developers/building-pieces/create-action",
+              "developers/building-pieces/create-trigger",
+              {
+                "group": "Sharing Pieces",
+                "icon": "circle-7",
+                "pages": [
+                  "developers/sharing-pieces/overview",
+                  "developers/sharing-pieces/contribute",
+                  "developers/sharing-pieces/community",
+                  "developers/sharing-pieces/private"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Piece Reference",
+            "pages": [
+              "developers/piece-reference/authentication",
+              {
+                "group": "Triggers",
+                "icon": "bolt",
+                "pages": [
+                  "developers/piece-reference/triggers/overview",
+                  "developers/piece-reference/triggers/polling-trigger",
+                  "developers/piece-reference/triggers/webhook-trigger"
+                ]
+              },
+              "developers/piece-reference/properties",
+              "developers/piece-reference/properties-validation",
+              "developers/piece-reference/flow-control",
+              "developers/piece-reference/persistent-storage",
+              "developers/piece-reference/files",
+              "developers/piece-reference/external-libraries",
+              "developers/piece-reference/piece-versioning",
+              "developers/piece-reference/examples",
+              "developers/piece-reference/custom-api-calls",
+              "developers/piece-reference/i18n",
+              "developers/piece-reference/ai-providers"
+            ]
+          },
+          {
+            "group": "Misc",
+            "pages": [
+              "developers/misc/build-piece",
+              "developers/misc/publish-piece",
+              "developers/misc/pieces-ci-cd",
+              "developers/misc/create-new-ai-provider",
+              "developers/misc/private-fork"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Embedding",
+        "groups": [
+          {
+            "group": "Essentials",
+            "pages": [
+              "embedding/overview",
+              "embedding/provision-users",
+              "embedding/embed-builder"
+            ]
+          },
+          {
+            "group": "Misc",
+            "pages": [
+              "embedding/customize-pieces",
+              "embedding/embed-connections",
+              "embedding/navigation",
+              "embedding/predefined-connection",
+              "embedding/sdk-changelog",
+              "embedding/sdk-server-requests"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "endpoints/overview"
+            ]
+          },
+          {
+            "group": "Endpoints",
+            "pages": [
+              {
+                "group": "Projects",
+                "icon": "building",
+                "pages": [
+                  "endpoints/projects/schema",
+                  "endpoints/projects/create",
+                  "endpoints/projects/update",
+                  "endpoints/projects/list",
+                  "endpoints/projects/delete"
+                ]
+              },
+              {
+                "group": "Users",
+                "icon": "user",
+                "pages": [
+                  "endpoints/users/schema",
+                  "endpoints/users/update",
+                  "endpoints/users/list"
+                ]
+              },
+              {
+                "group": "User Invitations",
+                "icon": "paper-plane",
+                "pages": [
+                  "endpoints/user-invitations/schema",
+                  "endpoints/user-invitations/upsert",
+                  "endpoints/user-invitations/list",
+                  "endpoints/user-invitations/delete"
+                ]
+              },
+              {
+                "group": "Project Members",
+                "icon": "user",
+                "pages": [
+                  "endpoints/project-members/schema",
+                  "endpoints/project-members/list",
+                  "endpoints/project-members/delete"
+                ]
+              },
+              {
+                "group": "Connections",
+                "icon": "link",
+                "pages": [
+                  "endpoints/connections/schema",
+                  "endpoints/connections/upsert",
+                  "endpoints/connections/list",
+                  "endpoints/connections/delete"
+                ]
+              },
+              {
+                "group": "Flows",
+                "icon": "bolt",
+                "pages": [
+                  "endpoints/flows/schema",
+                  "endpoints/flows/create",
+                  "endpoints/flows/update",
+                  "endpoints/flows/get",
+                  "endpoints/flows/list",
+                  "endpoints/flows/delete"
+                ]
+              },
+              {
+                "group": "Flow Runs",
+                "icon": "play",
+                "pages": [
+                  "endpoints/flow-runs/schema",
+                  "endpoints/flow-runs/get",
+                  "endpoints/flow-runs/list"
+                ]
+              },
+              {
+                "group": "Sample Data",
+                "icon": "database",
+                "pages": [
+                  "endpoints/sample-data/get"
+                ]
+              },
+              {
+                "group": "Pieces",
+                "icon": "plug",
+                "pages": [
+                  "endpoints/pieces/schema",
+                  "endpoints/pieces/install"
+                ]
+              },
+              {
+                "group": "Project Releases",
+                "icon": "cube",
+                "pages": [
+                  "endpoints/project-releases/schema",
+                  "endpoints/project-releases/create"
+                ]
+              },
+              {
+                "group": "Global Connections",
+                "icon": "globe",
+                "pages": [
+                  "endpoints/global-connections/schema",
+                  "endpoints/global-connections/upsert",
+                  "endpoints/global-connections/update",
+                  "endpoints/global-connections/list",
+                  "endpoints/global-connections/delete"
+                ]
+              },
+              {
+                "group": "Git Sync",
+                "icon": "git",
+                "pages": [
+                  "endpoints/git-repos/schema",
+                  "endpoints/git-repos/configure"
+                ]
+              },
+              {
+                "group": "Folders",
+                "icon": "folder",
+                "pages": [
+                  "endpoints/folders/schema",
+                  "endpoints/folders/create",
+                  "endpoints/folders/update",
+                  "endpoints/folders/get",
+                  "endpoints/folders/list",
+                  "endpoints/folders/delete"
+                ]
+              },
+              {
+                "group": "Flow Templates",
+                "icon": "copy",
+                "pages": [
+                  "endpoints/flow-templates/schema",
+                  "endpoints/flow-templates/create",
+                  "endpoints/flow-templates/delete",
+                  "endpoints/flow-templates/get",
+                  "endpoints/flow-templates/list"
+                ]
+              },
+              {
+                "group": "MCP Servers",
+                "icon": "server",
+                "pages": [
+                  "endpoints/mcp-servers/schema",
+                  "endpoints/mcp-servers/list",
+                  "endpoints/mcp-servers/rotate",
+                  "endpoints/mcp-servers/update"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Deploy",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "install/overview",
+              "install/options/docker",
+              "install/options/docker-compose",
+              {
+                "group": "Others Options",
+                "pages": [
+                  "install/options/helm",
+                  "install/options/easypanel",
+                  "install/options/aws",
+                  "install/options/gcp",
+                  "install/options/elestio"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "install/configuration/overview",
+              "install/configuration/environment-variables",
+              "install/configuration/separate-workers",
+              "install/configuration/setup-app-webhooks",
+              "install/configuration/hardware",
+              "install/configuration/setup-ssl",
+              "install/configuration/troubleshooting"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "install/architecture/overview",
+              "install/architecture/workers",
+              "install/architecture/engine",
+              "install/architecture/stack",
+              "install/architecture/performance"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Handbook",
+        "groups": [
+          {
+            "group": "Handbook",
+            "pages": [
+              "handbook/overview"
+            ]
+          },
+          {
+            "group": "Teams",
+            "icon": "users",
+            "pages": [
+              "handbook/teams/overview",
+              "handbook/teams/ai",
+              "handbook/teams/content",
+              "handbook/teams/developer-experience",
+              "handbook/teams/embed-sdk",
+              "handbook/teams/flow-builder",
+              "handbook/teams/management-features",
+              "handbook/teams/human-in-loop",
+              "handbook/teams/pieces",
+              "handbook/teams/sales",
+              "handbook/teams/tables"
+            ]
+          },
+          {
+            "group": "Hiring",
+            "icon": "user",
+            "pages": [
+              "handbook/hiring/hiring",
+              "handbook/hiring/levels",
+              "handbook/hiring/team",
+              "handbook/hiring/compensation"
+            ]
+          },
+          {
+            "group": "Customer Support",
+            "icon": "hero",
+            "pages": [
+              "handbook/customer-support/overview",
+              "handbook/customer-support/tone",
+              "handbook/customer-support/pylon",
+              "handbook/customer-support/handle-requests",
+              "handbook/customer-support/trial"
+            ]
+          },
+          {
+            "group": "Engineering Onboarding",
+            "icon": "code",
+            "pages": [
+              "handbook/engineering/overview",
+              "handbook/engineering/onboarding/onboarding-check-list",
+              "handbook/engineering/onboarding/how-we-work",
+              "handbook/engineering/onboarding/on-call",
+              "handbook/engineering/onboarding/downtime-incident"
+            ]
+          },
+          {
+            "group": "Engineering Playbooks",
+            "icon": "code",
+            "pages": [
+              "handbook/engineering/playbooks/run-ee",
+              "handbook/engineering/playbooks/setup-incident-io",
+              "handbook/engineering/playbooks/releases",
+              "handbook/engineering/playbooks/infrastructure",
+              "handbook/engineering/playbooks/bullboard",
+              "handbook/engineering/playbooks/database-migration",
+              "handbook/engineering/playbooks/product-announcement",
+              "handbook/engineering/playbooks/frontend-best-practices",
+              "handbook/engineering/playbooks/e2e-tests"
+            ]
+          },
+          {
+            "group": "Product",
+            "icon": "tool",
+            "pages": [
+              "handbook/product/interface-design"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "logo": {
+    "light": "./resources/logo/light.svg",
+    "dark": "./resources/logo/dark.svg",
+    "href": "https://www.activepieces.com"
+  },
+  "api": {
+    "openapi": [
+      "openapi.json"
+    ]
+  },
+  "background": {
+    "color": {
+      "dark": "#121212"
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/activepieces/activepieces"
+      },
+      {
+        "label": "Pieces",
+        "href": "https://www.activepieces.com/pieces"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get Started",
+      "href": "https://www.activepieces.com/plans"
+    }
+  },
+  "seo": {
+    "metatags": {
+      "description": "Open source no-code business automation· Zapier open source alternative"
+    },
+    "indexing": "navigable"
+  },
+  "footer": {
+    "socials": {
+      "website": "https://www.activepieces.com",
+      "github": "https://github.com/activepieces/activepieces",
+      "discord": "https://discord.gg/2jUXBKDdP8"
+    }
+  },
+  "integrations": {
+    "posthog": {
+      "apiKey": "phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/embedding/connection-cards/overview",
+      "destination": "/embedding/connections/create-connection"
+    },
+    {
+      "source": "/embedding/connection-cards/user-authentication",
+      "destination": "/embedding/configuration/generate-jwt"
+    },
+    {
+      "source": "/embedding/connection-cards/frontend-sdk",
+      "destination": "/embedding/configuration/initialize-embed"
+    },
+    {
+      "source": "/embedding/connection-cards/user-flows",
+      "destination": "/embedding/configuration/generate-jwt"
+    },
+    {
+      "source": "/embedding/embed-builder/generate-jwt",
+      "destination": "/embedding/configuration/generate-jwt"
+    },
+    {
+      "source": "/embedding/embed-builder/embed-iframe",
+      "destination": "/embedding/configuration/initialize-embed"
+    },
+    {
+      "source": "/embedding/predefined-connection/overview",
+      "destination": "/embedding/predefined-connection"
+    }
+  ]
+}

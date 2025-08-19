@@ -21,10 +21,13 @@ type StartParams = {
     flowRun: FlowRun
     executionType: ExecutionType
     payload: unknown
+    stepNameToTest: string | undefined
+    executeTrigger: boolean
     priority: keyof typeof JOB_PRIORITY
     synchronousHandlerId: string | undefined
     progressUpdateType: ProgressUpdateType
     httpRequestId: string | undefined
+    sampleData: Record<string, unknown> | undefined
 }
 
 type PauseParams = {
@@ -51,7 +54,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         if (!isFlowUserTerminalState(flowRun.status)) {
             return
         }
-        await flowRunHooks.get(log).onFinish(flowRun)
+        await flowRunHooks(log).onFinish(flowRun)
         eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
             action: ApplicationEventName.FLOW_RUN_FINISHED,
             data: {
@@ -67,10 +70,14 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         httpRequestId,
         priority,
         progressUpdateType,
+        executeTrigger,
+        stepNameToTest,
+        sampleData,
     }: StartParams): Promise<void> {
-        log.info(
-            `[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`,
-        )
+        log.info({
+            flowRunId: flowRun.id,
+            executionType,
+        }, '[FlowRunSideEffects#start]')
 
         await jobQueue(log).add({
             id: flowRun.id,
@@ -83,9 +90,12 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                 runId: flowRun.id,
                 flowVersionId: flowRun.flowVersionId,
                 payload,
+                executeTrigger,
                 httpRequestId,
                 executionType,
                 progressUpdateType,
+                stepNameToTest,
+                sampleData,
             },
         })
         eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
@@ -120,6 +130,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                     data: {
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         runId: flowRun.id,
+                        flowId: flowRun.flowId,
                         synchronousHandlerId: flowRun.pauseMetadata?.handlerId ?? null,
                         progressUpdateType: flowRun.pauseMetadata?.progressUpdateType ?? ProgressUpdateType.NONE,
                         projectId: flowRun.projectId,

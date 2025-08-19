@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/dappier/package.json",
         "main": "packages/pieces/community/dappier/src/index.ts",
         "assets": [
-          "packages/pieces/community/dappier/*.md"
+          "packages/pieces/community/dappier/*.md",
+          {
+            "input": "packages/pieces/community/dappier/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

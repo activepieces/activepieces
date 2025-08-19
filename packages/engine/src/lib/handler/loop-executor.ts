@@ -13,6 +13,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         executionState,
         constants,
     }) {
+        const stepStartTime = performance.now()
         const { resolvedInput, censoredInput } = await constants.propsResolver.resolve<LoopOnActionResolvedSettings>({
             unresolvedInput: {
                 items: action.settings.items,
@@ -31,6 +32,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
                 .setErrorMessage(JSON.stringify({
                     message: 'The items you have selected must be a list.',
                 }))
+                .setDuration( performance.now() - stepStartTime)
             return newExecutionContext.upsertStep(action.name, failedStepOutput).setVerdict(ExecutionVerdict.FAILED)
         }
 
@@ -57,13 +59,13 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             newExecutionContext = newExecutionContext.setCurrentPath(newExecutionContext.currentPath.removeLast())
 
             if (newExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
-                return newExecutionContext
+                return newExecutionContext.upsertStep(action.name, stepOutput.setDuration(performance.now() - stepStartTime))
             }
 
             if (constants.testSingleStepMode) {
                 break
             }
         }
-        return newExecutionContext
+        return newExecutionContext.upsertStep(action.name, stepOutput.setDuration(performance.now() - stepStartTime))
     },
 }

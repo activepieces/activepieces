@@ -199,11 +199,11 @@ const CanvasControls = ({
 
   return (
     <>
-      <div className="bg-secondary absolute left-[10px] bottom-[60px] z-50 flex flex-col gap-2 shadow-md">
+      <div className="bg-accent absolute left-[10px] bottom-[60px] z-50 flex flex-col gap-2 shadow-md">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="secondary"
+              variant="accent"
               size="sm"
               onClick={() => {
                 if (!spacePressed) {
@@ -213,7 +213,7 @@ const CanvasControls = ({
               className="relative focus:outline-0"
             >
               <PanningModeIndicator toggled={!isInGrabMode} />
-              <MousePointer className="w-5 h-5"></MousePointer>
+              <MousePointer className="size-5"></MousePointer>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">{t('Select Mode')}</TooltipContent>
@@ -222,7 +222,7 @@ const CanvasControls = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="secondary"
+              variant="accent"
               size="sm"
               onClick={() => {
                 if (!spacePressed) {
@@ -233,17 +233,17 @@ const CanvasControls = ({
             >
               <PanningModeIndicator toggled={isInGrabMode} />
 
-              <Hand className="w-5 h-5"></Hand>
+              <Hand className="size-5"></Hand>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">{t('Move Mode')}</TooltipContent>
         </Tooltip>
       </div>
-      <div className="bg-secondary absolute left-[10px] bottom-[10px] z-50 flex flex-row shadow-md">
+      <div className="bg-accent absolute left-[10px] bottom-[10px] z-50 flex flex-row shadow-md">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="secondary" size="sm" onClick={handleZoomReset}>
-              <RotateCw className="w-5 h-5" />
+            <Button variant="accent" size="sm" onClick={handleZoomReset}>
+              <RotateCw className="size-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">{t('Reset Zoom')}</TooltipContent>
@@ -251,8 +251,8 @@ const CanvasControls = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="secondary" size="sm" onClick={handleZoomIn}>
-              <Plus className="w-5 h-5" />
+            <Button variant="accent" size="sm" onClick={handleZoomIn}>
+              <Plus className="size-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">{t('Zoom In')}</TooltipContent>
@@ -260,8 +260,8 @@ const CanvasControls = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="secondary" size="sm" onClick={handleZoomOut}>
-              <Minus className="w-5 h-5" />
+            <Button variant="accent" size="sm" onClick={handleZoomOut}>
+              <Minus className="size-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">{t('Zoom Out')}</TooltipContent>
@@ -270,11 +270,11 @@ const CanvasControls = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="secondary"
+              variant="accent"
               size="sm"
               onClick={() => handleFitToView(false)}
             >
-              <Fullscreen className="w-5 h-5" />
+              <Fullscreen className="size-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">{t('Fit to View')}</TooltipContent>

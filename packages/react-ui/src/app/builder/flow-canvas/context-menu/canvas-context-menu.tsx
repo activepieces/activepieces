@@ -4,9 +4,6 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { ShortcutProps } from '@/components/ui/shortcut';
-import { Action } from '@activepieces/shared';
-
-import { BuilderState } from '../../builder-hooks';
 
 import { CanvasContextMenuContent } from './canvas-context-menu-content';
 
@@ -41,45 +38,19 @@ export enum ContextMenuType {
   CANVAS = 'CANVAS',
   STEP = 'STEP',
 }
-export type CanvasContextMenuProps = Pick<
-  BuilderState,
-  | 'applyOperation'
-  | 'selectedStep'
-  | 'flowVersion'
-  | 'exitStepSettings'
-  | 'readonly'
-  | 'selectedNodes'
-  | 'setPieceSelectorStep'
-> & {
+export type CanvasContextMenuProps = {
   children?: React.ReactNode;
-  actionsToPaste: Action[];
   contextMenuType: ContextMenuType;
 };
 export const CanvasContextMenu = ({
-  selectedNodes,
-  applyOperation,
-  selectedStep,
-  flowVersion,
-  children,
-  exitStepSettings,
-  readonly,
-  setPieceSelectorStep,
-  actionsToPaste,
   contextMenuType,
+  children,
 }: CanvasContextMenuProps) => {
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <ContextMenuContent>
         <CanvasContextMenuContent
-          selectedNodes={selectedNodes}
-          applyOperation={applyOperation}
-          selectedStep={selectedStep}
-          flowVersion={flowVersion}
-          exitStepSettings={exitStepSettings}
-          readonly={readonly}
-          actionsToPaste={actionsToPaste}
-          setPieceSelectorStep={setPieceSelectorStep}
           contextMenuType={contextMenuType}
         ></CanvasContextMenuContent>
       </ContextMenuContent>

@@ -1,15 +1,15 @@
-import { Static, Type } from "@sinclair/typebox";
-import { AppCredentialType } from "./app-credentials";
+import { Static, Type } from '@sinclair/typebox'
+import { AppCredentialType } from './app-credentials'
 
 export const ListAppCredentialsRequest = Type.Object({
     projectId: Type.String(),
     appName: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Number()),
     cursor: Type.Optional(Type.String({})),
-});
+})
 
 
-export type ListAppCredentialsRequest = Static<typeof ListAppCredentialsRequest>;
+export type ListAppCredentialsRequest = Static<typeof ListAppCredentialsRequest>
 
 export const UpsertApiKeyCredentialRequest = Type.Object({
     id: Type.Optional(Type.String()),
@@ -17,7 +17,7 @@ export const UpsertApiKeyCredentialRequest = Type.Object({
     settings: Type.Object({
         type: Type.Literal(AppCredentialType.API_KEY),
     }),
-});
+})
 
 
 export const UpsertOAuth2CredentialRequest = Type.Object({
@@ -29,10 +29,10 @@ export const UpsertOAuth2CredentialRequest = Type.Object({
         scope: Type.String(),
         tokenUrl: Type.String({}),
         clientId: Type.String({}),
-        clientSecret: Type.String({})
-    })
-});
+        clientSecret: Type.String({}),
+    }),
+})
 
-export const UpsertAppCredentialRequest = Type.Union([UpsertOAuth2CredentialRequest, UpsertApiKeyCredentialRequest]);
+export const UpsertAppCredentialRequest = Type.Union([UpsertOAuth2CredentialRequest, UpsertApiKeyCredentialRequest])
 
-export type UpsertAppCredentialRequest = Static<typeof UpsertAppCredentialRequest>;
+export type UpsertAppCredentialRequest = Static<typeof UpsertAppCredentialRequest>

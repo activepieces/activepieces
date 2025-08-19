@@ -15,7 +15,12 @@
         "packageJson": "packages/pieces/community/customer-io/package.json",
         "main": "packages/pieces/community/customer-io/src/index.ts",
         "assets": [
-          "packages/pieces/community/customer-io/*.md"
+          "packages/pieces/community/customer-io/*.md",
+          {
+            "input": "packages/pieces/community/customer-io/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

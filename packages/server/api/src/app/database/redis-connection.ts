@@ -63,6 +63,7 @@ const createSentinelClient = (config: Partial<RedisOptions>): Redis => {
     const sentinelList = system.getOrThrow(AppSystemProp.REDIS_SENTINEL_HOSTS)
     const sentinelName = system.getOrThrow(AppSystemProp.REDIS_SENTINEL_NAME)
     const sentinelrole = system.get<'master' | 'slave'>(AppSystemProp.REDIS_SENTINEL_ROLE)
+    const username = system.get(AppSystemProp.REDIS_USER)
 
     const sentinels = sentinelList.split(',').map((sentinel) => {
         const [host, port] = sentinel.split(':')
@@ -73,6 +74,7 @@ const createSentinelClient = (config: Partial<RedisOptions>): Redis => {
         ...config,
         ...({ sentinels }),
         name: sentinelName,
+        username,
         password,
         role: sentinelrole,
         ...getTlsOptionsForSentinel(useSsl, tlsCa),

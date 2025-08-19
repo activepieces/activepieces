@@ -15,7 +15,12 @@
         "packageJson": "packages/pieces/community/microsoft-teams/package.json",
         "main": "packages/pieces/community/microsoft-teams/src/index.ts",
         "assets": [
-          "packages/pieces/community/microsoft-teams/*.md"
+          "packages/pieces/community/microsoft-teams/*.md",
+          {
+            "input": "packages/pieces/community/microsoft-teams/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

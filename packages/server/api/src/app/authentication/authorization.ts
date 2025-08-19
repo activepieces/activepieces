@@ -23,7 +23,7 @@ export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<
 Payload | null
 > = (request, _response, payload, done) => {
     request.log.trace(
-        { payload, principal: request.principal, route: request.routeConfig },
+        { payload, principal: request.principal, route: request.routeOptions.config },
         'entitiesMustBeOwnedByCurrentProject',
     )
     const principalProjectId = request.principal?.projectId

@@ -2,6 +2,7 @@ import {
     ActivepiecesError,
     ApEdition,
     apId,
+    Cursor,
     ErrorCode,
     isNil,
     PlatformId,
@@ -12,13 +13,14 @@ import {
     User,
     UserId,
     UserStatus,
-    UserWithMetaInformation,
-} from '@activepieces/shared'
+    UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { In } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
-import { projectMemberRepo } from '../ee/project-role/project-role.service'
+import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
+import { buildPaginator } from '../helper/pagination/build-paginator'
+import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { UserEntity, UserSchema } from './user-entity'
@@ -71,16 +73,23 @@ export const userService = {
         }
         return this.getMetaInformation({ id })
     },
-    async list({ platformId }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
-        const users = await userRepo().findBy({
-            platformId,
+    async list({ platformId, externalId, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+        const paginator = buildPaginator({
+            entity: UserEntity,
+            query: {
+                limit,
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
         })
+        const { data, cursor } = await paginator.paginate(userRepo().createQueryBuilder('user').where({
+            platformId,
+            ...spreadIfDefined('externalId', externalId),
+        }))
 
-        return {
-            data: await Promise.all(users.map(this.getMetaInformation)),
-            next: null,
-            previous: null,
-        }
+        const usersWithMetaInformation = await Promise.all(data.map(this.getMetaInformation))
+        return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation, cursor)
     },
     async getOneByIdentityIdOnly({ identityId }: GetOneByIdentityIdOnlyParams): Promise<User | null> {
         return userRepo().findOneBy({ identityId })
@@ -185,6 +194,9 @@ type DeleteParams = {
 
 type ListParams = {
     platformId: PlatformId
+    externalId?: string
+    cursorRequest: Cursor
+    limit?: number
 }
 
 type GetOneByIdentityIdOnlyParams = {

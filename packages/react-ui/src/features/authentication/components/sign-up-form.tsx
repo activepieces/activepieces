@@ -106,7 +106,7 @@ const SignUpForm = ({
     mutationFn: authenticationApi.signUp,
     onSuccess: (data) => {
       if (data.verified) {
-        authenticationSession.saveResponse(data);
+        authenticationSession.saveResponse(data, false);
         redirectAfterLogin();
       } else {
         setShowCheckYourEmailNote(true);

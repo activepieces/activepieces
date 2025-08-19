@@ -5,8 +5,10 @@ import {
   ParseEventResponse,
   PieceCategory,
 } from '@activepieces/shared';
-import { PieceBase, PieceMetadata } from './piece-metadata';
+import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
+import { ServerContext } from './context';
+
 
 export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
   implements Omit<PieceBase, 'version' | 'name'>
@@ -31,6 +33,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
     triggers.forEach((trigger) => (this._triggers[trigger.name] = trigger));
   }
 
+
   metadata(): BackwardCompatiblePieceMetadata {
     return {
       displayName: this.displayName,
@@ -42,7 +45,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
       authors: this.authors,
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
-      maximumSupportedRelease: this.maximumSupportedRelease,
+      maximumSupportedRelease: this.maximumSupportedRelease
     };
   }
 
@@ -98,7 +101,7 @@ type CreatePieceParams<
 };
 
 type PieceEventProcessors = {
-  parseAndReply: (ctx: { payload: EventPayload }) => ParseEventResponse;
+  parseAndReply: (ctx: { payload: EventPayload, server: Omit<ServerContext, 'token' | 'apiUrl'> }) => ParseEventResponse;
   verify: (ctx: {
     webhookSecret: string | Record<string, string>;
     payload: EventPayload;
@@ -106,6 +109,8 @@ type PieceEventProcessors = {
   }) => boolean;
 };
 
-type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors'> & {
+type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors' | 'i18n'> & {
   authors?: PieceMetadata['authors']
+  i18n?: PieceMetadata['i18n']
 }
+

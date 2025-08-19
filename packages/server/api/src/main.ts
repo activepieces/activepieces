@@ -1,3 +1,4 @@
+import './instrumentation'
 
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
@@ -61,12 +62,12 @@ const main = async (): Promise<void> => {
     }
     const app = await setupServer()
 
-    process.on('SIGINT', () => {
-        stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
+    process.on('SIGINT', async () => {
+        await stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
     })
 
-    process.on('SIGTERM', () => {
-        stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
+    process.on('SIGTERM', async () => {
+        await stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
     })
 
     await start(app)

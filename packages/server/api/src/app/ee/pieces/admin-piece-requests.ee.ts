@@ -1,7 +1,6 @@
 import {
     ErrorHandlingOptionsParam,
     TriggerStrategy,
-    WebhookHandshakeConfiguration,
     WebhookRenewConfiguration,
 } from '@activepieces/pieces-framework'
 import {
@@ -9,6 +8,7 @@ import {
     PieceCategory,
     PrincipalType,
     TriggerTestStrategy,
+    WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
 import { Type } from '@fastify/type-provider-typebox'
 
@@ -47,6 +47,7 @@ export const CreatePieceRequest = {
             maximumSupportedRelease: ExactVersionType,
             actions: Type.Record(Type.String(), Action),
             triggers: Type.Record(Type.String(), Trigger),
+            i18n: Type.Optional(Type.Record(Type.String(), Type.Record(Type.String(), Type.String()))),
         }),
     },
     config: {

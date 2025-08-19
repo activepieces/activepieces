@@ -14,19 +14,19 @@ import {
 import { Link, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import {
   CURSOR_QUERY_PARAM,
   DataTable,
   LIMIT_QUERY_PARAM,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { TableTitle } from '@/components/ui/table-title';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { auditEventsApi } from '@/features/platform-admin-panel/lib/audit-events-api';
+import { auditEventsApi } from '@/features/platform-admin/lib/audit-events-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -116,7 +116,7 @@ export default function AuditLogsPage() {
     },
   });
 
-  const isEnabled = platform.auditLogEnabled;
+  const isEnabled = platform.plan.auditLogEnabled;
   return (
     <LockedFeatureGuard
       featureKey="AUDIT_LOGS"
@@ -127,11 +127,10 @@ export default function AuditLogsPage() {
       )}
     >
       <div className="flex flex-col  w-full">
-        <TableTitle
+        <DashboardPageHeader
           description={t('Track activities done within your platform')}
-        >
-          {t('Audit Logs')}
-        </TableTitle>
+          title={t('Audit Logs')}
+        />
         <DataTable
           emptyStateTextTitle={t('No audit logs found')}
           emptyStateTextDescription={t(

@@ -29,7 +29,6 @@ export const formatUtils = {
   formatNumber(number: number) {
     return new Intl.NumberFormat('en-US').format(number);
   },
-
   formatDateOnlyOrFail(date: Date, fallback: string) {
     try {
       return this.formatDateOnly(date);
@@ -61,15 +60,15 @@ export const formatUtils = {
       return `Today at ${timeFormat.format(date)}`;
     } else if (isYesterday) {
       return `Yesterday at ${timeFormat.format(date)}`;
-    } else {
-      return Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true,
-      }).format(date);
     }
+    return Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    }).format(date);
   },
   formatDateToAgo(date: Date) {
     const now = dayjs();
@@ -153,20 +152,16 @@ export function useForwardedRef<T>(ref: React.ForwardedRef<T>) {
 }
 
 export const localesMap = {
-  [LocalesEnum.BULGARIAN]: 'Български',
   [LocalesEnum.CHINESE_SIMPLIFIED]: '简体中文',
-  [LocalesEnum.INDONESIAN]: 'Bahasa Indonesia',
   [LocalesEnum.GERMAN]: 'Deutsch',
   [LocalesEnum.ENGLISH]: 'English',
   [LocalesEnum.SPANISH]: 'Español',
   [LocalesEnum.FRENCH]: 'Français',
-  [LocalesEnum.ITALIAN]: 'Italiano',
   [LocalesEnum.JAPANESE]: '日本語',
-  [LocalesEnum.HUNGARIAN]: 'Magyar',
   [LocalesEnum.DUTCH]: 'Nederlands',
-  [LocalesEnum.PORTUGUESE]: 'Português (Brasil)',
-  [LocalesEnum.UKRAINIAN]: 'Українська',
-  [LocalesEnum.VIETNAMESE]: 'Tiếng Việt',
+  [LocalesEnum.PORTUGUESE]: 'Português',
+  [LocalesEnum.RUSSIAN]: 'Русский',
+  [LocalesEnum.CHINESE_TRADITIONAL]: '繁體中文',
 };
 
 export const useElementSize = (ref: RefObject<HTMLElement>) => {
@@ -246,10 +241,10 @@ export const determineDefaultRoute = (
   }
   return authenticationSession.appendProjectRoutePrefix('/settings');
 };
-
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
 export const NEW_TABLE_QUERY_PARAM = 'newTable';
-export const parentWindow = window.opener ?? window.parent;
+export const NEW_MCP_QUERY_PARAM = 'newMcp';
+export const parentWindow: Window = window.opener ?? window.parent;
 export const cleanLeadingSlash = (url: string) => {
   return url.startsWith('/') ? url.slice(1) : url;
 };
@@ -313,4 +308,17 @@ export const downloadFile = async ({
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+};
+
+export const wait = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+export const scrollToElementAndClickIt = (elementId: string) => {
+  const element = document.getElementById(elementId);
+  element?.scrollIntoView({
+    behavior: 'instant',
+    block: 'start',
+  });
+  element?.click();
 };

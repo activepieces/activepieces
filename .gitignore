@@ -7,7 +7,8 @@ tmp
 /out-tsc
 firebase-admin-sdk.json
 dev
-cache
+/cache
+logs/
 .env
 
 # SDK Build
@@ -24,7 +25,7 @@ node_modules
 *.launch
 .settings/
 *.sublime-workspace
-cache
+/cache
 # IDE - VSCode
 .vscode/*
 !.vscode/settings.json
@@ -62,3 +63,12 @@ scratch.md
 
 # environment variables
 .env
+
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

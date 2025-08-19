@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/tavily/package.json",
         "main": "packages/pieces/community/tavily/src/index.ts",
         "assets": [
-          "packages/pieces/community/tavily/*.md"
+          "packages/pieces/community/tavily/*.md",
+          {
+            "input": "packages/pieces/community/tavily/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

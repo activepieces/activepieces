@@ -1,4 +1,9 @@
-import { ActivepiecesError, ErrorCode, PrincipalType } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    assertNotNullOrUndefined,
+    ErrorCode,
+    PrincipalType,
+} from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { requestUtils } from '../../request/request-utils'
 import { BaseSecurityHandler } from '../security-handler'
@@ -20,8 +25,10 @@ export class ProjectAuthzHandler extends BaseSecurityHandler {
     ]
 
     protected canHandle(request: FastifyRequest): Promise<boolean> {
+        const routerPath = request.routeOptions.url
+        assertNotNullOrUndefined(routerPath, 'routerPath is undefined'  )    
         const requestMatches = !ProjectAuthzHandler.IGNORED_ROUTES.includes(
-            request.routerPath,
+            routerPath,
         )
         return Promise.resolve(requestMatches)
     }

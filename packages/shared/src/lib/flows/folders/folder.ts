@@ -8,6 +8,7 @@ export const Folder = Type.Object({
     id: Type.String(),
     projectId: Type.String(),
     displayName: Type.String(),
+    displayOrder: Type.Number(),
 })
 
 export const UncategorizedFolderId = 'UNCATEGORIZED'

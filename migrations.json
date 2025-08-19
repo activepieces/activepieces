@@ -1,66 +1,126 @@
 {
   "migrations": [
     {
-      "version": "20.0.0-beta.7",
-      "description": "Migration for v20.0.0-beta.7",
-      "implementation": "./src/migrations/update-20-0-0/move-use-daemon-process",
+      "version": "21.0.0-beta.8",
+      "description": "Removes the legacy cache configuration from nx.json",
+      "implementation": "./src/migrations/update-21-0-0/remove-legacy-cache",
       "package": "nx",
-      "name": "move-use-daemon-process"
+      "name": "remove-legacy-cache"
     },
     {
-      "version": "20.0.1",
-      "description": "Set `useLegacyCache` to true for migrating workspaces",
-      "implementation": "./src/migrations/update-20-0-1/use-legacy-cache",
-      "x-repair-skip": true,
+      "version": "21.0.0-beta.8",
+      "description": "Removes the legacy cache configuration from nx.json",
+      "implementation": "./src/migrations/update-21-0-0/remove-custom-tasks-runner",
       "package": "nx",
-      "name": "use-legacy-cache"
+      "name": "remove-custom-tasks-runner"
+    },
+    {
+      "version": "21.0.0-beta.11",
+      "description": "Updates release version config based on the breaking changes in Nx v21",
+      "implementation": "./src/migrations/update-21-0-0/release-version-config-changes",
+      "package": "nx",
+      "name": "release-version-config-changes"
+    },
+    {
+      "version": "21.0.0-beta.11",
+      "description": "Updates release changelog config based on the breaking changes in Nx v21",
+      "implementation": "./src/migrations/update-21-0-0/release-changelog-config-changes",
+      "package": "nx",
+      "name": "release-changelog-config-changes"
+    },
+    {
+      "version": "21.1.0-beta.2",
+      "description": "Adds **/nx-rules.mdc and **/nx.instructions.md to .gitignore if not present",
+      "implementation": "./src/migrations/update-21-1-0/add-gitignore-entry",
+      "package": "nx",
+      "name": "21-1-0-add-ignore-entries-for-nx-rule-files"
+    },
+    {
+      "version": "20.2.0-beta.5",
+      "description": "Update TypeScript ESLint packages to v8.13.0 if they are already on v8",
+      "implementation": "./src/migrations/update-20-2-0/update-typescript-eslint-v8-13-0",
+      "package": "@nx/eslint",
+      "name": "update-typescript-eslint-v8.13.0"
+    },
+    {
+      "version": "20.3.0-beta.1",
+      "description": "Update ESLint flat config to include .cjs, .mjs, .cts, and .mts files in overrides (if needed)",
+      "implementation": "./src/migrations/update-20-3-0/add-file-extensions-to-overrides",
+      "package": "@nx/eslint",
+      "name": "add-file-extensions-to-overrides"
     },
     {
       "cli": "nx",
-      "version": "20.0.0-beta.5",
-      "description": "replace getJestProjects with getJestProjectsAsync",
-      "implementation": "./src/migrations/update-20-0-0/replace-getJestProjects-with-getJestProjectsAsync",
+      "version": "21.0.0-beta.9",
+      "description": "Replace usage of `getJestProjects` with `getJestProjectsAsync`.",
+      "implementation": "./src/migrations/update-21-0-0/replace-getJestProjects-with-getJestProjectsAsync",
       "package": "@nx/jest",
-      "name": "replace-getJestProjects-with-getJestProjectsAsync"
+      "name": "replace-getJestProjects-with-getJestProjectsAsync-v21"
     },
     {
-      "version": "19.6.0-beta.0",
-      "description": "Add dependsOn: [build] to preview targets using preview-server",
-      "implementation": "./src/migrations/update-19-6-0/add-depends-on-for-preview",
+      "version": "21.0.0-beta.10",
+      "description": "Remove the previously deprecated and unused `tsConfig` option from the `@nx/jest:jest` executor.",
+      "implementation": "./src/migrations/update-21-0-0/remove-tsconfig-option-from-jest-executor",
+      "package": "@nx/jest",
+      "name": "remove-tsconfig-option-from-jest-executor"
+    },
+    {
+      "version": "20.0.4-beta.0",
+      "description": "Add gitignore entry for temporary vite config files.",
+      "implementation": "./src/migrations/update-20-0-4/add-vite-temp-files-to-git-ignore",
       "package": "@nx/vite",
-      "name": "update-19-6-0-add-depends-on-for-preview-server"
+      "name": "update-20-0-4"
+    },
+    {
+      "version": "20.0.6-beta.0",
+      "description": "Add gitignore entry for temporary vite config files and remove previous incorrect glob.",
+      "implementation": "./src/migrations/update-20-0-4/add-vite-temp-files-to-git-ignore",
+      "package": "@nx/vite",
+      "name": "update-20-0-6"
+    },
+    {
+      "version": "20.3.0-beta.2",
+      "description": "Add gitignore entry for temporary vitest config files.",
+      "implementation": "./src/migrations/update-20-3-0/add-vitest-temp-files-to-git-ignore",
+      "package": "@nx/vite",
+      "name": "update-20-3-0"
+    },
+    {
+      "version": "20.5.0-beta.2",
+      "description": "Install jiti as a devDependency to allow vite to parse TS postcss files.",
+      "implementation": "./src/migrations/update-20-5-0/install-jiti",
+      "package": "@nx/vite",
+      "name": "update-20-5-0-install-jiti"
+    },
+    {
+      "version": "20.5.0-beta.3",
+      "description": "Update resolve.conditions to include defaults that are no longer provided by Vite.",
+      "implementation": "./src/migrations/update-20-5-0/update-resolve-conditions",
+      "package": "@nx/vite",
+      "name": "update-20-5-0-update-resolve-conditions"
+    },
+    {
+      "version": "20.5.0-beta.3",
+      "description": "Add vite config temporary files to the ESLint configuration ignore patterns if ESLint is used.",
+      "implementation": "./src/migrations/update-20-5-0/eslint-ignore-vite-temp-files",
+      "package": "@nx/vite",
+      "name": "eslint-ignore-vite-temp-files"
     },
     {
       "cli": "nx",
-      "version": "19.6.3-beta.0",
-      "description": "Migrate proxy config files to match new format from webpack-dev-server v5.",
-      "implementation": "./src/migrations/update-19-6-3/proxy-config",
+      "version": "21.0.0-beta.11",
+      "description": "Replaces `classProperties.loose` option with `loose`.",
+      "factory": "./src/migrations/update-21-0-0/update-babel-loose",
+      "package": "@nx/react",
+      "name": "update-21-0-0-update-babel-loose"
+    },
+    {
+      "cli": "nx",
+      "version": "21.0.0-beta.11",
+      "description": "Remove isolatedConfig option for @nx/webpack:webpack",
+      "implementation": "./src/migrations/update-21-0-0/remove-isolated-config",
       "package": "@nx/webpack",
-      "name": "update-19-6-3-proxy-config"
-    },
-    {
-      "cli": "nx",
-      "version": "19.6.0-beta.4",
-      "description": "Ensure Module Federation DTS is turned off by default.",
-      "factory": "./src/migrations/update-19-6-0/turn-off-dts-by-default",
-      "package": "@nx/react",
-      "name": "update-19-6-0-turn-module-federation-dts-off"
-    },
-    {
-      "cli": "nx",
-      "version": "19.6.0-beta.4",
-      "description": "Update the server file for Module Federation SSR port value to be the same as the 'serve' target port value.",
-      "factory": "./src/migrations/update-19-6-0/update-ssr-server-port",
-      "package": "@nx/react",
-      "name": "update-module-federation-ssr-server-file"
-    },
-    {
-      "cli": "nx",
-      "version": "19.6.1-beta.0",
-      "description": "Ensure Target Defaults are set correctly for Module Federation.",
-      "factory": "./src/migrations/update-19-6-1/ensure-depends-on-for-mf",
-      "package": "@nx/react",
-      "name": "update-19-6-1-ensure-module-federation-target-defaults"
+      "name": "update-21-0-0-remove-isolated-config"
     }
   ]
 }

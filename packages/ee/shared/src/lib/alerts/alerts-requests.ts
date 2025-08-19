@@ -1,5 +1,5 @@
-import { Type, Static } from '@sinclair/typebox'
 import { ApId } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
 import { AlertChannel } from './alerts-dto'
 
 export const ListAlertsParams = Type.Object({
@@ -12,7 +12,7 @@ export type ListAlertsParams = Static<typeof ListAlertsParams>
 export const CreateAlertParams = Type.Object({
     projectId: ApId,
     channel: Type.Enum(AlertChannel),
-    receiver: Type.String({})
+    receiver: Type.String({}),
 })
 
 export type CreateAlertParams = Static<typeof CreateAlertParams>

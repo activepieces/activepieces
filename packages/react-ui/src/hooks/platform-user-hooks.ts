@@ -8,7 +8,9 @@ export const platformUserHooks = {
     return useQuery<SeekPage<UserWithMetaInformation>, Error>({
       queryKey: ['users'],
       queryFn: async () => {
-        const results = await platformUserApi.list();
+        const results = await platformUserApi.list({
+          limit: 2000,
+        });
         return results;
       },
     });

@@ -1,15 +1,15 @@
 import { fileCompressor } from '@activepieces/server-shared'
 import {
-    ActionType,
     ExecutionType,
+    FlowActionType,
     FlowRunStatus,
     FlowStatus,
+    FlowTriggerType,
     FlowVersionState,
     PackageType,
     PieceType,
     ProgressUpdateType,
     RunEnvironment,
-    TriggerType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { flowJobExecutor, flowWorker } from 'server-worker'
@@ -21,6 +21,7 @@ import {
     createMockFlow,
     createMockFlowRun,
     createMockFlowVersion,
+    createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../../helpers/mocks'
 
@@ -46,7 +47,11 @@ afterAll(async () => {
 
 describe('flow execution', () => {
     it('should execute simple flow with code and data mapper', async () => {
-        const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup()
+        const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup({
+            plan: {
+                tasksLimit: 1000,
+            },
+        })
 
         const mockFlow = createMockFlow({
             projectId: mockProject.id,
@@ -54,12 +59,28 @@ describe('flow execution', () => {
         })
         await databaseConnection().getRepository('flow').save([mockFlow])
 
+        const mockPieceMetadata1 = createMockPieceMetadata({
+            name: '@activepieces/piece-schedule',
+            version: '0.1.5',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+        })
+        const mockPieceMetadata2 = createMockPieceMetadata({
+            name: '@activepieces/piece-data-mapper',
+            version: '0.3.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+        })
+        await databaseConnection()
+            .getRepository('piece_metadata')
+            .save([mockPieceMetadata1, mockPieceMetadata2])
+
         const mockFlowVersion = createMockFlowVersion({
             flowId: mockFlow.id,
             updatedBy: mockOwner.id,
             state: FlowVersionState.LOCKED,
             trigger: {
-                type: TriggerType.PIECE,
+                type: FlowTriggerType.PIECE,
                 settings: {
                     pieceName: '@activepieces/piece-schedule',
                     pieceVersion: '0.1.5',
@@ -67,8 +88,6 @@ describe('flow execution', () => {
                         run_on_weekends: false,
                     },
                     triggerName: 'every_hour',
-                    'pieceType': PieceType.OFFICIAL,
-                    'packageType': PackageType.REGISTRY,
                     inputUiInfo: {},
                 },
                 valid: true,
@@ -77,7 +96,7 @@ describe('flow execution', () => {
                 nextAction: {
                     name: 'echo_step',
                     displayName: 'Echo Step',
-                    type: ActionType.CODE,
+                    type: FlowActionType.CODE,
                     settings: {
                         inputUiInfo: {},
                         input: {
@@ -95,13 +114,11 @@ describe('flow execution', () => {
                     nextAction: {
                         name: 'datamapper',
                         displayName: 'Datamapper',
-                        type: ActionType.PIECE,
+                        type: FlowActionType.PIECE,
                         settings: {
                             inputUiInfo: {},
                             pieceName: '@activepieces/piece-data-mapper',
                             pieceVersion: '0.3.0',
-                            packageType: 'REGISTRY',
-                            pieceType: 'OFFICIAL',
                             actionName: 'advanced_mapping',
                             input: {
                                 mapping: {
@@ -144,13 +161,14 @@ describe('flow execution', () => {
             synchronousHandlerId: null,
             progressUpdateType: ProgressUpdateType.NONE,
             executionType: ExecutionType.BEGIN,
-        }, engineToken)
+        }, 1, engineToken)
 
         const flowRun = await databaseConnection()
             .getRepository('flow_run')
             .findOneByOrFail({
                 id: mockFlowRun.id,
             })
+      
         expect(flowRun.status).toEqual(FlowRunStatus.SUCCEEDED)
 
         const file = await databaseConnection()
@@ -158,6 +176,7 @@ describe('flow execution', () => {
             .findOneByOrFail({
                 id: flowRun.logsFileId,
             })
+
         const decompressedData = await fileCompressor.decompress({
             data: file.data,
             compression: file.compression,

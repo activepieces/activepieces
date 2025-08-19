@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/google-slides/package.json",
         "main": "packages/pieces/community/google-slides/src/index.ts",
         "assets": [
-          "packages/pieces/community/google-slides/*.md"
+          "packages/pieces/community/google-slides/*.md",
+          {
+            "input": "packages/pieces/community/google-slides/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

@@ -1,4 +1,3 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
@@ -16,55 +15,28 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { alertsApi } from '@/features/alerts/lib/alerts-api';
+import {
+  alertQueries,
+  alertMutations,
+} from '@/features/alerts/lib/alert-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import { Alert } from '@activepieces/ee-shared';
 import { Permission } from '@activepieces/shared';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';
 
-const fetchData = async () => {
-  const page = await alertsApi.list({
-    projectId: authenticationSession.getProjectId()!,
-    limit: 100,
-  });
-  return page.data;
-};
-
 export default function AlertsEmailsCard() {
-  const { toast } = useToast();
-  const { data, isLoading, isError, isSuccess, refetch } = useQuery<
-    Alert[],
-    Error,
-    Alert[]
-  >({
-    queryKey: ['alerts-email-list'],
-    queryFn: fetchData,
-  });
+  const { data, isLoading, isError, isSuccess } =
+    alertQueries.useAlertsEmailList();
+  const { mutate: deleteAlert } = alertMutations.useDeleteAlert();
+
   const { checkAccess } = useAuthorization();
   const writeAlertPermission = checkAccess(Permission.WRITE_ALERT);
-  const deleteMutation = useMutation<void, Error, Alert>({
-    mutationFn: (alert) => alertsApi.delete(alert.id),
-    onSuccess: () => {
-      refetch();
-      toast({
-        title: t('Success'),
-        description: t('Your changes have been saved.'),
-        duration: 3000,
-      });
-    },
-    onError: (error) => {
-      toast(INTERNAL_ERROR_TOAST);
-      console.log(error);
-    },
-  });
 
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>{t('Emails')}</CardTitle>
+        <CardTitle className="text-xl">{t('Emails')}</CardTitle>
         <CardDescription>
           {t('Add email addresses to receive alerts.')}
         </CardDescription>
@@ -99,7 +71,7 @@ export default function AlertsEmailsCard() {
                       <Button
                         variant="ghost"
                         className="size-8 p-0"
-                        onClick={() => deleteMutation.mutate(alert)}
+                        onClick={() => deleteAlert(alert)}
                         disabled={writeAlertPermission === false}
                       >
                         <Trash className="size-4 text-destructive" />
@@ -115,7 +87,7 @@ export default function AlertsEmailsCard() {
               </div>
             ))}
         </div>
-        <AddAlertEmailDialog onAdd={() => refetch()} />
+        <AddAlertEmailDialog />
       </CardContent>
     </Card>
   );

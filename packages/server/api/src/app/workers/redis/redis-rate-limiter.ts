@@ -8,7 +8,7 @@ import { Redis } from 'ioredis'
 import { createRedisClient, getRedisConnection } from '../../database/redis-connection'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
-import { AddParams } from '../queue/queue-manager'
+import { AddParams, RATE_LIMIT_PRIORITY } from '../queue/queue-manager'
 import { redisQueue } from './redis-queue'
 
 
@@ -50,7 +50,7 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
             },
         )
         await queue.waitUntilReady()
-        
+
         cleanupQueue = new Queue(
             CLEANUP_QUEUE_NAME,
             {
@@ -61,9 +61,12 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
             },
         )
         await cleanupQueue.waitUntilReady()
-        
+
         worker = new Worker<AddParams<JobType.ONE_TIME | JobType.WEBHOOK>>(RATE_LIMIT_QUEUE_NAME,
-            async (job) => redisQueue(log).add(job.data)
+            async (job) => redisQueue(log).add({
+                ...job.data,
+                priority: RATE_LIMIT_PRIORITY,
+            })
             , {
                 connection: createRedisClient(),
                 maxStalledCount: 5,
@@ -74,13 +77,13 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
                 },
             })
         await worker.waitUntilReady()
-        
-        cleanupWorker = new Worker(CLEANUP_QUEUE_NAME, 
+
+        cleanupWorker = new Worker(CLEANUP_QUEUE_NAME,
             async (job) => {
                 const { projectId, jobId } = job.data
                 const setKey = projectSetKey(projectId)
                 await redis.srem(setKey, jobId)
-            }, 
+            },
             {
                 connection: createRedisClient(),
             },
@@ -126,13 +129,13 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
 
         const setKey = projectSetKey(projectId)
         const activeJobsCount = await redis.scard(setKey)
-        
+
         if (activeJobsCount >= MAX_CONCURRENT_JOBS_PER_PROJECT) {
             return {
                 shouldRateLimit: true,
             }
         }
-        
+
         // Schedule cleanup after 10 minutes as a fallback
         assertNotNullOrUndefined(cleanupQueue, 'Cleanup Queue is not initialized')
         await cleanupQueue.add(cleanupJobId(projectId, jobId), { projectId, jobId }, {
@@ -141,7 +144,7 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
 
         // Add job to the set
         await redis.sadd(setKey, jobId)
-        
+
         // Make the set expire after the flow timeout
         await redis.expire(setKey, Math.ceil(FLOW_TIMEOUT_IN_MILLISECONDS / 1000))
 

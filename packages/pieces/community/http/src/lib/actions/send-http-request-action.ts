@@ -4,6 +4,7 @@ import {
   HttpHeaders,
   HttpRequest,
   QueryParams,
+  AuthenticationType,
 } from '@activepieces/pieces-common';
 import {
   createAction,
@@ -15,6 +16,12 @@ import FormData from 'form-data';
 import { httpMethodDropdown } from '../common/props';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import axios from 'axios';
+
+enum AuthType {
+  NONE = 'NONE',
+  BASIC = AuthenticationType.BASIC,
+  BEARER_TOKEN = AuthenticationType.BEARER_TOKEN,
+}
 
 export const httpSendRequestAction = createAction({
   name: 'send_request',
@@ -33,6 +40,62 @@ export const httpSendRequestAction = createAction({
     queryParams: Property.Object({
       displayName: 'Query params',
       required: true,
+    }),
+    authType: Property.StaticDropdown<AuthType>({
+      displayName: 'Authentication',
+      required: true,
+      defaultValue: AuthType.NONE,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'None', value: AuthType.NONE },
+          { label: 'Basic Auth', value: AuthType.BASIC },
+          { label: 'Bearer Token', value: AuthType.BEARER_TOKEN },
+        ],
+      },
+    }),
+    authFields: Property.DynamicProperties({
+      displayName: 'Authentication Fields',
+      required: false,
+      refreshers: ['authType'],
+      props: async ({ authType }) => {
+        if (!authType) {
+          return {};
+        }
+        const authTypeEnum = authType.toString() as AuthType;
+        let fields: DynamicPropsValue = {};
+        switch (authTypeEnum) {
+          case AuthType.NONE:
+            fields = {};
+            break;
+          case AuthType.BASIC:
+            fields = {
+              username: Property.ShortText({
+                displayName: 'Username',
+                description: 'The username to use for authentication.',
+                required: true,
+              }),
+              password: Property.ShortText({
+                displayName: 'Password',
+                description: 'The password to use for authentication.',
+                required: true,
+              }),
+            };
+            break;
+          case AuthType.BEARER_TOKEN:
+            fields = {
+              token: Property.ShortText({
+                displayName: 'Token',
+                description: 'The Bearer token to use for authentication.',
+                required: true,
+              }),
+            };
+            break;
+          default:
+            throw new Error('Invalid authentication type');
+        }
+        return fields;
+      },
     }),
     body_type: Property.StaticDropdown({
       displayName: 'Body Type',
@@ -96,6 +159,12 @@ export const httpSendRequestAction = createAction({
         return fields;
       },
     }),
+    response_is_binary: Property.Checkbox({
+      displayName: 'Response is Binary',
+      description: 'Enable for files like PDFs, images, etc. A base64 body will be returned.',
+      required: false,
+      defaultValue: false,
+    }),
     use_proxy: Property.Checkbox({
       displayName: 'Use Proxy',
       defaultValue: false,
@@ -138,9 +207,17 @@ export const httpSendRequestAction = createAction({
       displayName: 'Timeout(in seconds)',
       required: false,
     }),
-    failsafe: Property.Checkbox({
-      displayName: 'No Error on Failure',
+    failureMode: Property.StaticDropdown({
+      displayName: 'On Failure',
       required: false,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Retry on all errors (4xx, 5xx)', value: 'all' },
+          { label: 'Continue flow', value: 'continue' },
+          { label: 'Retry on internal errors (5xx)', value: '5xx' },
+        ],
+      },
     }),
   },
   errorHandlingOptions: {
@@ -155,9 +232,12 @@ export const httpSendRequestAction = createAction({
       queryParams,
       body,
       body_type,
+      response_is_binary,
       timeout,
-      failsafe,
+      failureMode,
       use_proxy,
+      authType,
+      authFields,
     } = context.propsValue;
 
     assertNotNullOrUndefined(method, 'Method');
@@ -170,6 +250,32 @@ export const httpSendRequestAction = createAction({
       queryParams: queryParams as QueryParams,
       timeout: timeout ? timeout * 1000 : 0,
     };
+
+    switch (authType) {
+      case AuthType.BASIC:
+        if (authFields) {
+          request.authentication = {
+            username: authFields['username'],
+            password: authFields['password'],
+            type: AuthenticationType.BASIC,
+          };
+        }
+        break;
+      case AuthType.BEARER_TOKEN:
+        if (authFields) {
+          request.authentication = {
+            token: authFields['token'],
+            type: AuthenticationType.BEARER_TOKEN,
+          };
+        }
+        break;
+    }
+
+    // Set response type to arraybuffer if binary response is expected
+    if (response_is_binary) {
+      request.responseType = 'arraybuffer';
+    }
+
     if (body) {
       const bodyInput = body['data'];
       if (body_type === 'form_data') {
@@ -197,22 +303,62 @@ export const httpSendRequestAction = createAction({
         } else {
           proxyUrl = `http://${proxySettings.proxy_host}:${proxySettings.proxy_port}`;
         }
-  
-        const httpsAgent = new HttpsProxyAgent(proxyUrl)
+
+        const httpsAgent = new HttpsProxyAgent(proxyUrl);
         const axiosClient = axios.create({
           httpsAgent,
         });
 
-        const proxied_response = await axiosClient.request(request);
-        return proxied_response.data;
+        const proxied_response = await httpClient.sendRequest(request, axiosClient);
+        return handleBinaryResponse(
+          proxied_response.body,
+          proxied_response.status,
+          proxied_response.headers as HttpHeaders,
+          response_is_binary
+        );
       }
-      return await httpClient.sendRequest(request);
+      const response = await httpClient.sendRequest(request);
+      return handleBinaryResponse(
+        response.body,
+        response.status,
+        response.headers,
+        response_is_binary,
+      );
     } catch (error) {
-      if (failsafe) {
-        return (error as HttpError).errorMessage();
+      switch (failureMode) {
+        case 'all': {
+          throw error;
+        } case '5xx':
+          if ((error as HttpError).response.status >= 500 && (error as HttpError).response.status < 600) {
+            throw error;
+          }
+          return (error as HttpError).errorMessage();
+        case 'continue':
+          return (error as HttpError).errorMessage();
+        default:
+          throw error;
       }
-
-      throw error;
     }
   },
 });
+
+const handleBinaryResponse = (
+  bodyContent: string | ArrayBuffer | Buffer,
+  status: number,
+  headers?: HttpHeaders,
+  isBinary?: boolean
+) => {
+  let body;
+
+  if (isBinary && isBinaryBody(bodyContent)) {
+    body = Buffer.from(bodyContent).toString('base64');
+  } else {
+    body = bodyContent;
+  }
+
+  return { status, headers, body };
+};
+
+const isBinaryBody = (body: string | ArrayBuffer | Buffer) => {
+  return body instanceof ArrayBuffer || Buffer.isBuffer(body);
+};

@@ -49,7 +49,7 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
         <DropdownMenuTrigger asChild>
           <div
             className={cn(
-              'h-full w-full flex items-center justify-between gap-2 py-2.5 px-3 bg-muted/50 text-muted-foreground font-normal',
+              'h-full w-full flex items-center justify-between gap-2 py-2.5 px-3 bg-muted/50  font-normal',
               'hover:bg-muted cursor-pointer',
               'data-[state=open]:bg-muted',
             )}
@@ -59,7 +59,7 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
               <span className="text-sm">{field.name}</span>
             </div>
             {actions && actions.length > 0 && (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <ChevronDown className="h-4 w-4" />
             )}
           </div>
         </DropdownMenuTrigger>

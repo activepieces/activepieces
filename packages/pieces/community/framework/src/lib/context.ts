@@ -8,8 +8,8 @@ import {
   ResumePayload,
   SeekPage,
   TriggerPayload,
+  TriggerStrategy,
 } from '@activepieces/shared';
-import { TriggerStrategy } from './trigger/trigger';
 import {
   InputPropertyMap,
   PiecePropValueSchema,
@@ -103,11 +103,11 @@ export type PauseHookParams = {
 };
 
 export type PauseHook = (params: {
-  pauseMetadata: DelayPauseMetadata | Omit<WebhookPauseMetadata, 'requestId'>
+  pauseMetadata: Omit<DelayPauseMetadata, 'requestIdToReply'> | Omit<WebhookPauseMetadata, 'requestId' | 'requestIdToReply'>
 }) => void;
 
 export type FlowsContext = {
-  list(): Promise<SeekPage<PopulatedFlow>>
+  list(params?: ListFlowsContextParams): Promise<SeekPage<PopulatedFlow>>
   current: {
     id: string;
     version: {
@@ -116,6 +116,9 @@ export type FlowsContext = {
   };
 }
 
+export type ListFlowsContextParams = {
+  externalIds?: string[]
+}
 
 
 export type PropertyContext = {
@@ -126,6 +129,7 @@ export type PropertyContext = {
   };
   searchValue?: string;
   flows: FlowsContext;
+  connections: ConnectionsManager;
 };
 
 export type ServerContext = {
@@ -149,6 +153,15 @@ export type OnStartContext<
    payload: unknown;
 }
 
+
+export type OutputContext = {
+  update: (params: {
+    data: {
+      [key: string]: unknown;
+    };
+  }) => Promise<void>;
+}
+
 export type BaseActionContext<
   ET extends ExecutionType,
   PieceAuth extends PieceAuthProperty,
@@ -158,6 +171,7 @@ export type BaseActionContext<
   tags: TagsManager;
   server: ServerContext;
   files: FilesService;
+  output: OutputContext;
   serverUrl: string;
   run: RunContext;
   generateResumeUrl: (params: {

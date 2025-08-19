@@ -26,7 +26,7 @@ export function BetaBadge({
       )}
       {...props}
     >
-      {t('Beta')}
+      {t('New')}
     </span>
   );
 

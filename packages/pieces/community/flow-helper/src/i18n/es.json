@@ -1,0 +1,10 @@
+{
+  "Flow Helper": "Ayudante de flujo",
+  "Get Run Info": "Obtener información",
+  "Fail Flow": "Flujo fallido",
+  "Stop Flow": "Detener flujo",
+  "Fails the flow execution with a custom message.": "Falla en la ejecución del flujo con un mensaje personalizado.",
+  "Stops the flow immediately this step is reached.": "Detiene el flujo inmediatamente que se alcanza este paso.",
+  "Error Message": "Mensaje de error",
+  "The error message to show when the flow fails.": "El mensaje de error a mostrar cuando el flujo falla."
+}

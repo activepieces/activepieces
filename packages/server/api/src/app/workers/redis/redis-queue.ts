@@ -1,6 +1,7 @@
 import { AppSystemProp, exceptionHandler, JobType, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
+import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
@@ -31,9 +32,14 @@ const jobTypeToDefaultJobOptions: Record<QueueName, DefaultJobOptions> = {
     [QueueName.ONE_TIME]: defaultJobOptions,
     [QueueName.USERS_INTERACTION]: {
         ...defaultJobOptions,
+        removeOnFail: true,
         attempts: 1,
     },
-    [QueueName.WEBHOOK]: defaultJobOptions,
+    [QueueName.WEBHOOK]: {
+        ...defaultJobOptions,
+        attempts: 3,
+    },
+    [QueueName.AGENTS]: defaultJobOptions,
 }
 
 export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
@@ -79,6 +85,11 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
                 await addJobWithPriority(queue, params)
                 break
             }
+            case JobType.AGENTS: {
+                const queue = await ensureQueueExists(QueueName.AGENTS)
+                await addJobWithPriority(queue, params)
+                break
+            }
         }
     },
     async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
@@ -86,6 +97,10 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
         log.info({
             flowVersionId,
         }, '[redisQueue#removeRepeatingJob] removing the jobs')
+        const hasScheduledJob = await queue.getJobScheduler(flowVersionId)
+        if (isNil(hasScheduledJob)) {
+            return
+        }
         const result = await queue.removeJobScheduler(flowVersionId)
         if (!result) {
             exceptionHandler.handle(new ActivepiecesError({
@@ -103,9 +118,11 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
     if (!isNil(bullMqGroups[queueName])) {
         return bullMqGroups[queueName]
     }
+    const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
     bullMqGroups[queueName] = new Queue(
         queueName,
         {
+            telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
             connection: createRedisClient(),
             defaultJobOptions: jobTypeToDefaultJobOptions[queueName],
         },
@@ -114,7 +131,7 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
     return bullMqGroups[queueName]
 }
 
-async function addJobWithPriority(queue: Queue, params: AddParams<JobType.WEBHOOK | JobType.ONE_TIME>): Promise<void> {
+async function addJobWithPriority(queue: Queue, params: AddParams<JobType.WEBHOOK | JobType.ONE_TIME | JobType.AGENTS>): Promise<void> {
     const { id, data, priority } = params
     await queue.add(id, data, {
         jobId: id,

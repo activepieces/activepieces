@@ -18,7 +18,7 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { platformApi } from '@/lib/platforms-api';
 import {
   PlatformWithoutSensitiveData,
@@ -67,10 +67,6 @@ export const NewOAuth2Dialog = ({
         duration: 3000,
       });
       setOpen(false);
-    },
-    onError: (error) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 

@@ -1,13 +1,17 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TableTitle } from '@/components/ui/table-title';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
+import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { AI_PROVIDERS } from '@activepieces/pieces-common';
-import { PlatformRole } from '@activepieces/shared';
+import {
+  SUPPORTED_AI_PROVIDERS,
+  PlatformRole,
+  ApFlagId,
+  ApEdition,
+} from '@activepieces/shared';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
@@ -24,14 +28,14 @@ export default function AIProvidersPage() {
     queryFn: () => aiProviderApi.list(),
   });
   const { data: currentUser } = userHooks.useCurrentUser();
+  const { data: flags } = flagsHooks.useFlags();
+  const allowWrite = flags?.[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] === true;
+  const edition = flags?.[ApFlagId.EDITION];
 
   const { mutate: deleteProvider, isPending: isDeleting } = useMutation({
     mutationFn: (provider: string) => aiProviderApi.delete(provider),
     onSuccess: () => {
       refetch();
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 
@@ -45,51 +49,45 @@ export default function AIProvidersPage() {
       )}
     >
       <div className="flex flex-col w-full gap-4">
-        <div>
-          <div className="flex justify-between flex-row w-full">
-            <TableTitle
-              description={t(
-                'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
-              )}
-            >
-              {t('AI Providers')}
-            </TableTitle>
-          </div>
-        </div>
+        <DashboardPageHeader
+          title={t('AI Providers')}
+          description={
+            allowWrite
+              ? t(
+                  'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
+                )
+              : t(
+                  'Available AI providers that will be used by universal AI pieces, i.e Text AI.',
+                )
+          }
+        ></DashboardPageHeader>
         <div className="flex flex-col gap-4">
-          {AI_PROVIDERS.map((metadata) => {
-            const provider = providers?.data.find(
-              (c) => c.provider === metadata.value,
-            );
+          {SUPPORTED_AI_PROVIDERS.map((metadata) => {
+            const isConfigured =
+              providers?.data.some((p) => p.provider === metadata.provider) ??
+              false;
+            const showAzureOpenAI =
+              metadata.provider === 'openai' &&
+              edition === ApEdition.ENTERPRISE;
+
             return isLoading ? (
-              <Skeleton className="h-24 w-full" />
+              <Skeleton key={metadata.provider} className="h-24 w-full" />
             ) : (
               <AIProviderCard
+                key={metadata.provider}
                 providerMetadata={metadata}
-                defaultBaseUrl={provider?.baseUrl ?? metadata.defaultBaseUrl}
-                provider={
-                  provider
-                    ? { ...provider, config: { defaultHeaders: {} } }
-                    : undefined
-                }
+                isConfigured={isConfigured}
                 isDeleting={isDeleting}
-                onDelete={() => deleteProvider(metadata.value)}
+                onDelete={() => deleteProvider(metadata.provider)}
                 onSave={() => refetch()}
+                allowWrite={allowWrite}
+                showAzureOpenAI={showAzureOpenAI}
               />
             );
           })}
         </div>
 
-        <div>
-          <div className="mb-4 flex">
-            <div className="flex justify-between flex-row w-full">
-              <div className="flex flex-col gap-2">
-                <TableTitle>{t('Copilot')}</TableTitle>
-              </div>
-            </div>
-          </div>
-          <CopilotSetup />
-        </div>
+        <CopilotSetup />
       </div>
     </LockedFeatureGuard>
   );

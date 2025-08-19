@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/datocms/package.json",
         "main": "packages/pieces/community/datocms/src/index.ts",
         "assets": [
-          "packages/pieces/community/datocms/*.md"
+          "packages/pieces/community/datocms/*.md",
+          {
+            "input": "packages/pieces/community/datocms/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

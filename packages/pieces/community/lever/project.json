@@ -15,7 +15,12 @@
         "packageJson": "packages/pieces/community/lever/package.json",
         "main": "packages/pieces/community/lever/src/index.ts",
         "assets": [
-          "packages/pieces/community/lever/*.md"
+          "packages/pieces/community/lever/*.md",
+          {
+            "input": "packages/pieces/community/lever/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

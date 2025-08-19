@@ -1,5 +1,6 @@
 import crypto from 'crypto'
-import { FileLocation, isNil, logSerializer, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, UpdateRunProgressRequest, UpdateRunProgressResponse } from '@activepieces/shared'
+import { OutputContext } from '@activepieces/pieces-framework'
+import { DEFAULT_MCP_DATA, FileLocation, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -12,11 +13,20 @@ const USE_SIGNED_URL = (process.env.AP_S3_USE_SIGNED_URLS === 'true') && FILE_ST
 let lastScheduledUpdateId: NodeJS.Timeout | null = null
 let lastActionExecutionTime: number | undefined = undefined
 let lastRequestHash: string | undefined = undefined
+let isGraceShutdownSignalReceived = false
 const MAXIMUM_UPDATE_THRESHOLD = 15000
 const DEBOUNCE_THRESHOLD = 5000
 const lock = new Mutex()
 const updateLock = new Mutex()
 const fetchWithRetry = fetchRetry(global.fetch)
+
+process.on('SIGTERM', () => {
+    isGraceShutdownSignalReceived = true
+})
+
+process.on('SIGINT', () => {
+    isGraceShutdownSignalReceived = true
+})
 
 export const progressService = {
     sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
@@ -25,7 +35,7 @@ export const progressService = {
                 clearTimeout(lastScheduledUpdateId)
             }
 
-            const shouldUpdateNow = isNil(lastActionExecutionTime) || (Date.now() - lastActionExecutionTime > MAXIMUM_UPDATE_THRESHOLD)
+            const shouldUpdateNow = isNil(lastActionExecutionTime) || (Date.now() - lastActionExecutionTime > MAXIMUM_UPDATE_THRESHOLD) || isGraceShutdownSignalReceived
             if (shouldUpdateNow || params.updateImmediate) {
                 await sendUpdateRunRequest(params)
                 return
@@ -46,13 +56,43 @@ export const progressService = {
             body: JSON.stringify(request),
         })
     },
+    createOutputContext: (params: CreateOutputContextParams): OutputContext => {
+        const { engineConstants, flowExecutorContext, stepName, stepOutput } = params
+        return {
+            update: async (params: { data: unknown }) => {
+                await sendUpdateRunRequest({
+                    engineConstants,
+                    flowExecutorContext: flowExecutorContext.upsertStep(stepName, stepOutput.setOutput(params.data)),
+                    updateImmediate: true,
+                })
+            },
+        }
+    },
 }
 
-const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<void> => {
-    if (params.engineConstants.isRunningApTests) {
+type CreateOutputContextParams = {
+    engineConstants: EngineConstants
+    flowExecutorContext: FlowExecutorContext
+    stepName: string
+    stepOutput: GenericStepOutput<FlowActionType.PIECE, unknown>
+}
+
+const queueUpdates: UpdateStepProgressParams[] = []
+
+const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Promise<void> => {
+    const isRunningMcp = updateParams.engineConstants.flowRunId === DEFAULT_MCP_DATA.flowRunId
+    if (updateParams.engineConstants.isRunningApTests || isRunningMcp) {
         return
     }
+    queueUpdates.push(updateParams)
     await lock.runExclusive(async () => {
+        const params = queueUpdates.pop()
+        while (queueUpdates.length > 0) {
+            queueUpdates.pop()
+        }
+        if (isNil(params)) {
+            return
+        }
         lastActionExecutionTime = Date.now()
         const { flowExecutorContext, engineConstants } = params
         const runDetails = await flowExecutorContext.toResponse()
@@ -70,6 +110,7 @@ const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<v
             executionStateBuffer: USE_SIGNED_URL ? undefined : executionState.toString(),
             executionStateContentLength: executionState.byteLength,
             progressUpdateType: engineConstants.progressUpdateType,
+            failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
         }
         const requestHash = crypto.createHash('sha256').update(JSON.stringify(request)).digest('hex')
         if (requestHash === lastRequestHash) {
@@ -87,7 +128,13 @@ const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<v
             }
             await uploadExecutionState(responseBody.uploadUrl, executionState)
         }
-        await notifyFrontend(engineConstants, engineConstants.flowRunId)
+        await notifyFrontend(engineConstants, {
+            type: WebsocketClientEvent.FLOW_RUN_PROGRESS,
+            data: {
+                runId: engineConstants.flowRunId,
+                testSingleStepMode: engineConstants.testSingleStepMode,
+            },
+        })
     })
 }
 
@@ -116,10 +163,7 @@ const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): 
     })
 }
 
-const notifyFrontend = async (engineConstants: EngineConstants, runId: string): Promise<void> => {
-    const request: NotifyFrontendRequest = {
-        runId,
-    }
+const notifyFrontend = async (engineConstants: EngineConstants, request: NotifyFrontendRequest): Promise<void> => {
     await fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/notify-frontend`).toString(), {
         method: 'POST',
         headers: {
@@ -134,4 +178,25 @@ type UpdateStepProgressParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
     updateImmediate?: boolean
+}
+
+export const extractFailedStepName = (steps: Record<string, StepOutput>): string | undefined => {
+    if (!steps) {
+        return undefined
+    }
+
+    const failedStep = Object.entries(steps).find(([_, step]) => {
+        const stepOutput = step as StepOutput
+        if (stepOutput.type === FlowActionType.LOOP_ON_ITEMS) {
+            const loopOutput = stepOutput as LoopStepOutput
+            return loopOutput.output?.iterations.some(iteration =>
+                Object.values(iteration).some(iterationStep =>
+                    (iterationStep as StepOutput).status === StepOutputStatus.FAILED,
+                ),
+            )
+        }
+        return stepOutput.status === StepOutputStatus.FAILED
+    })
+
+    return failedStep?.[0]
 }

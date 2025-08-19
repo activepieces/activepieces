@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/kallabot-ai/package.json",
         "main": "packages/pieces/community/kallabot-ai/src/index.ts",
         "assets": [
-          "packages/pieces/community/kallabot-ai/*.md"
+          "packages/pieces/community/kallabot-ai/*.md",
+          {
+            "input": "packages/pieces/community/kallabot-ai/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

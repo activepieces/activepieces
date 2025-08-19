@@ -19,3 +19,14 @@ export type CustomProperty<R extends boolean> = BasePropertySchema &
   TPropertyValue<unknown, PropertyType.CUSTOM, R> & {
     code:string;
   }
+
+export type CustomPropertyCodeFunctionParams = 
+  { 
+    containerId:string,
+    value: unknown,
+    onChange: (value: unknown) => void,
+    isEmbeded: boolean,
+    projectId:string,
+    property: Pick<CustomProperty<boolean>, 'displayName' | 'description' | 'required'>,
+    disabled: boolean
+  }

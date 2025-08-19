@@ -37,7 +37,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
     private nextBeforeCursor: string | null = null
 
-    private alias: string = this.entity.options.name
+    private alias: string
 
     private limit = 100
 
@@ -45,7 +45,9 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
     private orderBy: string = PAGINATION_KEY
 
-    public constructor(private readonly entity: EntitySchema) { }
+    public constructor(private readonly entity: EntitySchema) {
+        this.alias = this.entity.options.name
+    }
 
     public setAlias(alias: string): void {
         this.alias = alias

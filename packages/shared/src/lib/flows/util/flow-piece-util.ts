@@ -1,7 +1,7 @@
 import semver from 'semver'
-import { ActionType } from '../actions/action'
+import { FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
-import { Trigger, TriggerType } from '../triggers/trigger'
+import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 import { flowStructureUtil, Step } from '../util/flow-structure-util'
 
 export const flowPieceUtil = {
@@ -12,10 +12,10 @@ export const flowPieceUtil = {
             }
             const clonedStep: Step = JSON.parse(JSON.stringify(step))
             switch (step.type) {
-                case ActionType.PIECE:
-                case TriggerType.PIECE: {
+                case FlowActionType.PIECE:
+                case FlowTriggerType.PIECE: {
                     const { pieceVersion } = step.settings
-                    clonedStep.settings.pieceVersion = flowPieceUtil.getNextVersion(pieceVersion)
+                    clonedStep.settings.pieceVersion = flowPieceUtil.getMostRecentPatchVersion(pieceVersion)
                     break
                 }
                 default:
@@ -30,12 +30,12 @@ export const flowPieceUtil = {
         }
         return pieceVersion
     },
-    getUsedPieces(trigger: Trigger): string[] {
+    getUsedPieces(trigger: FlowTrigger): string[] {
         return flowStructureUtil.getAllSteps(trigger)
-            .filter((step) => step.type === ActionType.PIECE || step.type === TriggerType.PIECE)
+            .filter((step) => step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE)
             .map((step) => step.settings.pieceName)
     },
-    getNextVersion(pieceVersion: string): string {
+    getMostRecentPatchVersion(pieceVersion: string): string {
         if (pieceVersion.startsWith('^') || pieceVersion.startsWith('~')) {
             return pieceVersion
         }

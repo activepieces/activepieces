@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/http-oauth2/package.json",
         "main": "packages/pieces/community/http-oauth2/src/index.ts",
         "assets": [
-          "packages/pieces/community/http-oauth2/*.md"
+          "packages/pieces/community/http-oauth2/*.md",
+          {
+            "input": "packages/pieces/community/http-oauth2/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

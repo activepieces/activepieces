@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
 
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import {
   Card,
   CardContent,
@@ -10,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -49,10 +50,6 @@ const AlertFrequencyCard = React.memo(() => {
         duration: 3000,
       });
     },
-    onError: (error) => {
-      toast(INTERNAL_ERROR_TOAST);
-      console.log(error);
-    },
   });
 
   const onChangeStatus = (status: NotificationStatus) => {
@@ -63,8 +60,13 @@ const AlertFrequencyCard = React.memo(() => {
 
   return (
     <Card className="w-full">
+      <DashboardPageHeader
+        title={t('Alerts')}
+        description={t('Manage alerts settings')}
+      />
+
       <CardHeader className="pb-3">
-        <CardTitle>{t('Alerts')}</CardTitle>
+        <CardTitle className="text-xl">{t('Alerts')}</CardTitle>
         <CardDescription>
           {t('Choose what you want to be notified about.')}
         </CardDescription>

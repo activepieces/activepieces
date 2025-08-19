@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/respaid/package.json",
         "main": "packages/pieces/community/respaid/src/index.ts",
         "assets": [
-          "packages/pieces/community/respaid/*.md"
+          "packages/pieces/community/respaid/*.md",
+          {
+            "input": "packages/pieces/community/respaid/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

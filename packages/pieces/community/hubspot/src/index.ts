@@ -87,6 +87,8 @@ export const hubspotAuth = PieceAuth.OAuth2({
 		'crm.objects.deals.write',
 		'crm.objects.line_items.read',
 		'crm.objects.owners.read',
+		'crm.objects.leads.read',
+		'crm.objects.leads.write',
 		'crm.schemas.companies.read',
 		'crm.schemas.contacts.read',
 		'crm.schemas.custom.read',
@@ -100,7 +102,8 @@ export const hubspotAuth = PieceAuth.OAuth2({
 		'settings.users.read',
 		'settings.users.teams.read',
 		'files',
-		'forms'
+		'forms',
+		'scheduler.meetings.meeting-link.read'
 		// 'business_units_view.read'
 	],
 });

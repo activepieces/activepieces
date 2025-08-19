@@ -1,4 +1,4 @@
-import { ActionType, assertEqual, FlowError, FlowRunResponse, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, RespondResponse, spreadIfDefined, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertEqual, FlowActionType, FlowError, FlowRunResponse, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, RespondResponse, spreadIfDefined, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
@@ -14,7 +14,7 @@ export type VerdictResponse = {
     reason: FlowRunStatus.PAUSED
     pauseMetadata: PauseMetadata
 } | {
-    reason: FlowRunStatus.STOPPED
+    reason: FlowRunStatus.SUCCEEDED
     stopResponse: RespondResponse
 } | {
     reason: FlowRunStatus.INTERNAL_ERROR
@@ -29,6 +29,7 @@ export class FlowExecutorContext {
     verdictResponse: VerdictResponse | undefined
     currentPath: StepExecutionPath
     error?: FlowError
+    testSingleStepMode?: boolean
 
     /**
      * Execution time in milliseconds
@@ -45,6 +46,7 @@ export class FlowExecutorContext {
         this.verdictResponse = copyFrom?.verdictResponse ?? undefined
         this.error = copyFrom?.error ?? undefined
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
+        this.testSingleStepMode = copyFrom?.testSingleStepMode ?? false
     }
 
     static empty(): FlowExecutorContext {
@@ -64,9 +66,9 @@ export class FlowExecutorContext {
         if (isNil(stepOutput)) {
             return undefined
         }
-        assertEqual(stepOutput.type, ActionType.LOOP_ON_ITEMS, 'stepOutput.type', 'LOOP_ON_ITEMS')
+        assertEqual(stepOutput.type, FlowActionType.LOOP_ON_ITEMS, 'stepOutput.type', 'LOOP_ON_ITEMS')
         // The new LoopStepOutput is needed as casting directly to LoopClassOutput will just cast the data but the class methods will not be available
-        return new LoopStepOutput(stepOutput as GenericStepOutput<ActionType.LOOP_ON_ITEMS, LoopStepResult>)
+        return new LoopStepOutput(stepOutput as GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>)
     }
 
     public isCompleted({ stepName }: { stepName: string }): boolean {
@@ -136,30 +138,7 @@ export class FlowExecutorContext {
         return stateAtPath[stepName]
     }
 
-    public setStepDuration({ stepName, duration }: SetStepDurationParams): FlowExecutorContext {
-        const steps = {
-            ...this.steps,
-        }
 
-        const targetMap = getStateAtPath({
-            steps,
-            currentPath: this.currentPath,
-        })
-
-        const stepOutput = targetMap[stepName]
-
-        if (isNil(stepOutput)) {
-            console.error(`[FlowExecutorContext#setStepDuration] Step ${stepName} not found in current path`)
-            return this
-        }
-
-        targetMap[stepName].duration = duration
-
-        return new FlowExecutorContext({
-            ...this,
-            steps,
-        })
-    }
 
     public setCurrentPath(currentStatePath: StepExecutionPath): FlowExecutorContext {
         return new FlowExecutorContext({
@@ -225,16 +204,11 @@ export class FlowExecutorContext {
             }
             case ExecutionVerdict.SUCCEEDED: {
                 const verdictResponse = this.verdictResponse
-                if (verdictResponse?.reason === FlowRunStatus.STOPPED) {
-                    return {
-                        ...baseExecutionOutput,
-                        status: FlowRunStatus.STOPPED,
-                        response: verdictResponse.stopResponse,
-                    }
-                }
+
                 return {
                     ...baseExecutionOutput,
                     status: FlowRunStatus.SUCCEEDED,
+                    response: !isNil(verdictResponse) && 'stopResponse' in verdictResponse ? verdictResponse.stopResponse : undefined,
                 }
             }
         }
@@ -244,7 +218,7 @@ export class FlowExecutorContext {
         let targetMap = this.steps
         this.currentPath.path.forEach(([stepName, iteration]) => {
             const stepOutput = targetMap[stepName]
-            if (!stepOutput.output || stepOutput.type !== ActionType.LOOP_ON_ITEMS) {
+            if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
                 throw new Error('[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
             }
             targetMap = stepOutput.output.iterations[iteration]
@@ -270,7 +244,7 @@ function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath
     let targetMap = steps
     currentPath.path.forEach(([stepName, iteration]) => {
         const stepOutput = targetMap[stepName]
-        if (!stepOutput.output || stepOutput.type !== ActionType.LOOP_ON_ITEMS) {
+        if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
             throw new Error('[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
         }
         targetMap = stepOutput.output.iterations[iteration]
@@ -278,7 +252,4 @@ function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath
     return targetMap
 }
 
-type SetStepDurationParams = {
-    stepName: string
-    duration: number
-}
+

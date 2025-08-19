@@ -1,0 +1,440 @@
+---
+title: "E2E Tests"
+icon: 'clipboard-list'
+---
+
+## Overview
+
+Our e2e test suite uses Playwright to ensure critical user workflows function correctly across the application. The tests are organized using the Page Object Model pattern to maintain clean, reusable, and maintainable test code. This playbook outlines the structure, conventions, and best practices for writing e2e tests.
+
+## Project Structure
+
+```
+packages/tests-e2e/
+├── scenarios/           # Test files (*.spec.ts)
+├── pages/              # Page Object Models
+│   ├── base.ts         # Base page class
+│   ├── index.ts        # Page exports
+│   ├── authentication.page.ts
+│   ├── builder.page.ts
+│   ├── flows.page.ts
+│   └── agent.page.ts
+├── helper/             # Utilities and configuration
+│   └── config.ts       # Environment configuration
+├── playwright.config.ts # Playwright configuration
+└── project.json        # Nx project configuration
+```
+
+This playbook provides a comprehensive guide for writing e2e tests following the established patterns in your codebase. It covers the Page Object Model structure, test organization, configuration management, and best practices for maintaining reliable e2e tests.
+
+## Page Object Model Pattern
+
+### Base Page Structure
+
+All page objects extend the `BasePage` class and follow a consistent structure:
+
+```typescript
+export class YourPage extends BasePage {
+  url = `${configUtils.getConfig().instanceUrl}/your-path`;
+
+  getters = {
+    // Locator functions that return page elements
+    elementName: (page: Page) => page.getByRole('button', { name: 'Button Text' }),
+  };
+
+  actions = {
+    // Action functions that perform user interactions
+    performAction: async (page: Page, params: { param1: string }) => {
+      // Implementation
+    },
+  };
+}
+```
+
+### Page Object Guidelines
+
+#### ❌ Don't do
+```typescript
+// Direct element selection in test files
+test('should create flow', async ({ page }) => {
+  await page.getByRole('button', { name: 'Create Flow' }).click();
+  await page.getByText('From scratch').click();
+  // Test logic mixed with element selection
+});
+```
+
+#### ✅ Do
+```typescript
+// flows.page.ts
+export class FlowsPage extends BasePage {
+  getters = {
+    createFlowButton: (page: Page) => page.getByRole('button', { name: 'Create Flow' }),
+    fromScratchButton: (page: Page) => page.getByText('From scratch'),
+  };
+
+  actions = {
+    newFlowFromScratch: async (page: Page) => {
+      await this.getters.createFlowButton(page).click();
+      await this.getters.fromScratchButton(page).click();
+    },
+  };
+}
+
+// integration.spec.ts
+test('should create flow', async ({ page }) => {
+  await flowsPage.actions.newFlowFromScratch(page);
+  // Clean test logic focused on behavior
+});
+```
+
+## Test Organization
+
+### Test File Structure
+
+Test files should be organized by feature or workflow:
+
+```typescript
+import { test, expect } from '@playwright/test';
+import { 
+  AuthenticationPage, 
+  FlowsPage, 
+  BuilderPage 
+} from '../pages';
+import { configUtils } from '../helper/config';
+
+test.describe('Feature Name', () => {
+  let authenticationPage: AuthenticationPage;
+  let flowsPage: FlowsPage;
+  let builderPage: BuilderPage;
+
+  test.beforeEach(async () => {
+    // Initialize page objects
+    authenticationPage = new AuthenticationPage();
+    flowsPage = new FlowsPage();
+    builderPage = new BuilderPage();
+  });
+
+  test('should perform specific workflow', async ({ page }) => {
+    // Test implementation
+  });
+});
+```
+
+### Test Naming Conventions
+
+- Use descriptive test names that explain the expected behavior
+- Follow the pattern: `should [action] [expected result]`
+- Include context when relevant
+
+```typescript
+// Good test names
+test('should send Slack message via flow', async ({ page }) => {});
+test('should handle webhook with dynamic parameters', async ({ page }) => {});
+test('should authenticate user with valid credentials', async ({ page }) => {});
+
+// Avoid vague names
+test('should work', async ({ page }) => {});
+test('test flow', async ({ page }) => {});
+```
+
+## Configuration Management
+
+### Environment Configuration
+
+Use the centralized config utility to handle different environments:
+
+```typescript
+// helper/config.ts
+export const configUtils = {
+  getConfig: (): Config => {
+    return process.env.E2E_INSTANCE_URL ? prodConfig : localConfig;
+  },
+};
+
+// Usage in pages
+export class AuthenticationPage extends BasePage {
+  url = `${configUtils.getConfig().instanceUrl}/sign-in`;
+}
+```
+
+### Environment Variables
+
+Required environment variables for CI/CD:
+- `E2E_INSTANCE_URL`: Target application URL
+- `E2E_EMAIL`: Test user email
+- `E2E_PASSWORD`: Test user password
+
+## Writing Effective Tests
+
+### Test Structure
+
+Follow this pattern for comprehensive tests:
+
+```typescript
+test('should complete user workflow', async ({ page }) => {
+  // 1. Set up test data and timeouts
+  test.setTimeout(120000);
+  const config = configUtils.getConfig();
+
+  // 2. Authentication (if required)
+  await authenticationPage.actions.signIn(page, {
+    email: config.email,
+    password: config.password
+  });
+
+  // 3. Navigate to relevant page
+  await flowsPage.actions.navigate(page);
+
+  // 4. Clean up existing data (if needed)
+  await flowsPage.actions.cleanupExistingFlows(page);
+
+  // 5. Perform the main workflow
+  await flowsPage.actions.newFlowFromScratch(page);
+  await builderPage.actions.waitFor(page);
+  await builderPage.actions.selectInitialTrigger(page, {
+    piece: 'Schedule',
+    trigger: 'Every Hour'
+  });
+
+  // 6. Add assertions and validations
+  await builderPage.actions.testFlowAndWaitForSuccess(page);
+  
+  // 7. Clean up (if needed)
+  await builderPage.actions.exitRun(page);
+});
+```
+
+### Wait Strategies
+
+Use appropriate wait strategies instead of fixed timeouts:
+
+```typescript
+// Good - Wait for specific conditions
+await page.waitForURL('**/flows/**');
+await page.waitForSelector('.react-flow__nodes', { state: 'visible' });
+await page.waitForFunction(() => {
+  const element = document.querySelector('.target-element');
+  return element && element.textContent?.includes('Expected Text');
+}, { timeout: 10000 });
+
+// Avoid - Fixed timeouts
+await page.waitForTimeout(5000);
+```
+
+### Error Handling
+
+Implement proper error handling and cleanup:
+
+```typescript
+test('should handle errors gracefully', async ({ page }) => {
+  try {
+    await flowsPage.actions.navigate(page);
+    // Test logic
+  } catch (error) {
+    // Log error details
+    console.error('Test failed:', error);
+    // Take screenshot for debugging
+    await page.screenshot({ path: 'error-screenshot.png' });
+    throw error;
+  } finally {
+    // Clean up resources
+    await flowsPage.actions.cleanupExistingFlows(page);
+  }
+});
+```
+
+## Best Practices
+
+### Element Selection
+
+Prefer semantic selectors over CSS selectors:
+
+```typescript
+// Good - Semantic selectors
+getters = {
+  createButton: (page: Page) => page.getByRole('button', { name: 'Create Flow' }),
+  emailField: (page: Page) => page.getByPlaceholder('email@example.com'),
+  searchInput: (page: Page) => page.getByRole('textbox', { name: 'Search' }),
+};
+
+// Avoid - Fragile CSS selectors
+getters = {
+  createButton: (page: Page) => page.locator('button.btn-primary'),
+  emailField: (page: Page) => page.locator('input[type="email"]'),
+};
+```
+
+### Test Data Management
+
+Use dynamic test data to avoid conflicts:
+
+```typescript
+// Good - Dynamic test data
+const runVersion = Math.floor(Math.random() * 100000);
+const uniqueFlowName = `Test Flow ${Date.now()}`;
+
+// Avoid - Static test data
+const flowName = 'Test Flow';
+```
+
+### Assertions
+
+Use meaningful assertions that verify business logic:
+
+```typescript
+// Good - Business logic assertions
+await builderPage.actions.testFlowAndWaitForSuccess(page);
+const response = await apiRequest.get(urlWithParams);
+const body = await response.json();
+expect(body.targetRunVersion).toBe(runVersion.toString());
+
+// Avoid - Implementation details
+expect(await page.locator('.success-message').isVisible()).toBe(true);
+```
+
+## Running Tests
+
+### Local Development & Debugging with Checkly
+
+We use [Checkly](https://checklyhq.com/) to run and debug E2E tests. Checkly provides video recordings for each test run, making it easy to debug failures.
+
+```bash
+# Run tests with Checkly (includes video reporting)
+npx nx run tests-e2e:test-checkly
+```
+
+- Test results, including video recordings, are available in the Checkly dashboard.
+- You can debug failed tests by reviewing the video and logs provided by Checkly.
+
+### Deploying Tests
+
+Manual deployment is rarely needed, but you can trigger it with:
+
+```bash
+npx nx run tests-e2e:deploy-checkly
+```
+
+<Info>
+Tests are deployed to Checkly automatically after successful test runs in the CI pipeline. 
+</Info>
+
+## Debugging Tests
+
+### 1. Checkly Videos and Reports
+
+When running tests with Checkly, each test execution is recorded and detailed reports are generated. This is the fastest way to debug failures:
+
+- **Video recordings**: Watch the exact browser session for any test run.
+- **Step-by-step logs**: Review detailed logs and screenshots for each test step.
+- **Access**: Open the Checkly dashboard and navigate to the relevant test run to view videos and reports.
+
+### 2. VSCode Extension
+
+For the best local debugging experience, install the **Playwright Test for VSCode** extension:
+
+1. Open VSCode Extensions (Ctrl+Shift+X)
+2. Search for "Playwright Test for VSCode"
+3. Install the extension by Microsoft
+
+**Benefits:**
+- Debug tests directly in VSCode with breakpoints
+- Step-through test execution
+- View test results and traces in the Test Explorer
+- Auto-completion for Playwright APIs
+- Integrated test runner
+
+### 3. Debugging Tips
+
+1. **Use Checkly dashboard**: Review videos and logs for failed tests.
+2. **Use VSCode Extension**: Set breakpoints directly in your test files.
+3. **Step Through**: Use F10 (step over) and F11 (step into) in debug mode.
+4. **Inspect Elements**: Use `await page.pause()` to pause execution and inspect the page.
+5. **Console Logs**: Add `console.log()` statements to track execution flow.
+6. **Manual Screenshots**: Take screenshots at critical points for visual debugging.
+
+```typescript
+test('should debug workflow', async ({ page }) => {
+  await page.goto('/flows');
+  
+  // Pause execution for manual inspection
+  await page.pause();
+  
+  // Take screenshot for debugging
+  await page.screenshot({ path: 'debug-screenshot.png' });
+  
+  // Continue with test logic
+  await flowsPage.actions.newFlowFromScratch(page);
+});
+```
+
+## Common Patterns
+
+### Authentication Flow
+
+```typescript
+test('should authenticate user', async ({ page }) => {
+  const config = configUtils.getConfig();
+  
+  await authenticationPage.actions.signIn(page, {
+    email: config.email,
+    password: config.password
+  });
+
+  await agentPage.actions.waitFor(page);
+});
+```
+
+### Flow Creation and Testing
+
+```typescript
+test('should create and test flow', async ({ page }) => {
+  await flowsPage.actions.navigate(page);
+  await flowsPage.actions.cleanupExistingFlows(page);
+  await flowsPage.actions.newFlowFromScratch(page);
+  
+  await builderPage.actions.waitFor(page);
+  await builderPage.actions.selectInitialTrigger(page, {
+    piece: 'Schedule',
+    trigger: 'Every Hour'
+  });
+  
+  await builderPage.actions.testFlowAndWaitForSuccess(page);
+});
+```
+
+### API Integration Testing
+
+```typescript
+test('should handle webhook integration', async ({ page }) => {
+  const apiRequest = await page.context().request;
+  const response = await apiRequest.get(urlWithParams);
+  const body = await response.json();
+  
+  expect(body.targetRunVersion).toBe(expectedValue);
+});
+```
+
+## Maintenance Guidelines
+
+### Updating Selectors
+
+When UI changes occur:
+1. Update page object getters with new selectors
+2. Test the changes locally
+3. Update related tests if necessary
+4. Ensure all tests pass before merging
+
+### Adding New Tests
+
+1. Create or update relevant page objects
+2. Write test scenarios in appropriate spec files
+3. Follow the established patterns and conventions
+4. Add proper error handling and cleanup
+5. Test locally before submitting
+
+### Performance Considerations
+
+- Keep tests focused and avoid unnecessary steps
+- Use appropriate timeouts (not too short, not too long)
+- Clean up test data to avoid conflicts
+- Group related tests in the same describe block

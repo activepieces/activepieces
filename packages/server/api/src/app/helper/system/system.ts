@@ -50,10 +50,10 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
-    [AppSystemProp.TRIGGER_FAILURES_THRESHOLD]: '576',
     [AppSystemProp.ENVIRONMENT]: 'prod',
     [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
     [WorkerSystemProp.FLOW_WORKER_CONCURRENCY]: '10',
+    [WorkerSystemProp.AGENTS_WORKER_CONCURRENCY]: '20',
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
     [WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY]: '10',
     [AppSystemProp.LOG_LEVEL]: 'info',
@@ -65,9 +65,10 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
+    [AppSystemProp.AGENT_TIMEOUT_SECONDS]: '600',
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS]: '30',
-    [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: '2000',
+    [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: '100000',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.REDIS_TYPE]: RedisType.DEFAULT,
     [AppSystemProp.TEMPLATES_SOURCE_URL]:
@@ -76,9 +77,10 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: '1500',
-    [AppSystemProp.MAX_TABLES_PER_PROJECT]: '20',
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: '15',
     [AppSystemProp.SHOW_CHANGELOG]: 'true',
+    [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: 'true',
+    [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
 }
 
 let globalLogger: FastifyBaseLogger
@@ -90,10 +92,13 @@ export const system = {
             const lokiUrl = this.get(AppSystemProp.LOKI_URL)
             const lokiPassword = this.get(AppSystemProp.LOKI_PASSWORD)
             const lokiUsername = this.get(AppSystemProp.LOKI_USERNAME)
+            const hyperdxToken = this.get(AppSystemProp.HYPERDX_TOKEN)
             globalLogger = pinoLogging.initLogger(logLevel, logPretty, {
                 url: lokiUrl,
                 password: lokiPassword,
                 username: lokiUsername,
+            }, {
+                token: hyperdxToken,
             })
         }
         return globalLogger

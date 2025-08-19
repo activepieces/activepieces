@@ -1,5 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { sendTodoApproval, createTodoProps, constructTodoUrl } from '../utils/utils';
+import { CreateTodoResult } from '@activepieces/shared';
 
 export const createTodo = createAction({
   name: 'createTodo',
@@ -32,10 +33,11 @@ export const createTodo = createAction({
       name: option.name,
       url: constructTodoUrl(context.server.publicUrl, response.body.id, option.name, false),
     }));
-    return {
+    const result: CreateTodoResult = {
       id: response.body.id,
       links,
-    };
+    }
+    return result;
   },
 });
 

@@ -9,27 +9,34 @@ import { ApplyTags } from '@/app/routes/platform/setup/pieces/apply-tags';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LockedAlert } from '@/components/ui/locked-alert';
-import { oauth2AppsHooks } from '@/features/connections/lib/oauth2-apps-hooks';
+import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
 import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   PieceMetadataModelSummary,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { ApEdition, ApFlagId, PieceScope } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
+  isNil,
+  OAuth2GrantType,
+  PieceScope,
+} from '@activepieces/shared';
 
-import { TableTitle } from '../../../../../components/ui/table-title';
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const isEnabled = platform.managePiecesEnabled;
+  const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('name') ?? '';
   const {
@@ -42,8 +49,10 @@ const PlatformPiecesPage = () => {
     includeHidden: true,
   });
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+
   const { refetch: refetchPiecesClientIdsMap } =
-    oauth2AppsHooks.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
+    oauthAppsQueries.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
+
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(
       () => [
@@ -55,6 +64,7 @@ const PlatformPiecesPage = () => {
                 table.getIsAllPageRowsSelected() ||
                 (table.getIsSomePageRowsSelected() && 'indeterminate')
               }
+              variant="secondary"
               onCheckedChange={(value) =>
                 table.toggleAllPageRowsSelected(!!value)
               }
@@ -62,6 +72,7 @@ const PlatformPiecesPage = () => {
           ),
           cell: ({ row }) => (
             <Checkbox
+              variant="secondary"
               checked={row.getIsSelected()}
               onCheckedChange={(value) => {
                 row.toggleSelected(!!value);
@@ -136,19 +147,26 @@ const PlatformPiecesPage = () => {
         {
           id: 'actions',
           cell: ({ row }) => {
+            const isOAuth2Enabled =
+              row.original.auth &&
+              row.original.auth.type === PropertyType.OAUTH2 &&
+              (row.original.auth.grantType ===
+                BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE ||
+                row.original.auth.grantType ===
+                  OAuth2GrantType.AUTHORIZATION_CODE ||
+                isNil(row.original.auth.grantType));
             return (
               <div className="flex justify-end">
-                {row.original.auth &&
-                  row.original.auth.type === PropertyType.OAUTH2 && (
-                    <ConfigurePieceOAuth2Dialog
-                      pieceName={row.original.name}
-                      onConfigurationDone={() => {
-                        refetchPieces();
-                        refetchPiecesClientIdsMap();
-                      }}
-                      isEnabled={isEnabled}
-                    />
-                  )}
+                {isOAuth2Enabled && (
+                  <ConfigurePieceOAuth2Dialog
+                    pieceName={row.original.name}
+                    onConfigurationDone={() => {
+                      refetchPieces();
+                      refetchPiecesClientIdsMap();
+                    }}
+                    isEnabled={isEnabled}
+                  />
+                )}
                 <PieceActions
                   pieceName={row.original.name}
                   isEnabled={isEnabled}
@@ -167,6 +185,24 @@ const PlatformPiecesPage = () => {
 
   return (
     <div className="flex w-full flex-col items-center justify-center gap-4">
+      <DashboardPageHeader
+        description={t('Manage the pieces that are available to your users')}
+        title={t('Pieces')}
+      >
+        <div className="flex gap-3">
+          <ApplyTags
+            selectedPieces={selectedPieces}
+            onApplyTags={() => {
+              refetchPieces();
+            }}
+          ></ApplyTags>
+          <SyncPiecesButton />
+          <InstallPieceDialog
+            onInstallPiece={() => refetchPieces()}
+            scope={PieceScope.PLATFORM}
+          />
+        </div>
+      </DashboardPageHeader>
       <div className="mx-auto w-full flex-col">
         {!isEnabled && (
           <LockedAlert
@@ -182,30 +218,6 @@ const PlatformPiecesPage = () => {
             }
           />
         )}
-        <div className="mb-4 flex">
-          <TableTitle
-            description={t(
-              'Manage the pieces that are available to your users',
-            )}
-          >
-            {t('Pieces')}
-          </TableTitle>
-          <div className="ml-auto">
-            <div className="flex gap-3">
-              <ApplyTags
-                selectedPieces={selectedPieces}
-                onApplyTags={() => {
-                  refetchPieces();
-                }}
-              ></ApplyTags>
-              <SyncPiecesButton />
-              <InstallPieceDialog
-                onInstallPiece={() => refetchPieces()}
-                scope={PieceScope.PLATFORM}
-              />
-            </div>
-          </div>
-        </div>
         <DataTable
           emptyStateTextTitle={t('No pieces found')}
           emptyStateTextDescription={t(

@@ -1,13 +1,12 @@
-import { AvatarFallback } from '@radix-ui/react-avatar';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission, UserInvitation } from '@activepieces/shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
-import { Avatar, AvatarImage } from '../../../components/ui/avatar';
 import { Button } from '../../../components/ui/button';
 import { userInvitationApi } from '../lib/user-invitation';
 import { userInvitationsHooks } from '../lib/user-invitations-hooks';
@@ -28,14 +27,12 @@ export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
       key={invitation.id}
     >
       <div className="flex items-center space-x-4">
-        <Avatar className="hidden size-9 sm:flex">
-          <AvatarImage src="/avatars/05.png" alt={t('Avatar')} />
-          <AvatarFallback className="justify-center items-center flex">
-            <span className="p-2">
-              {invitation.email.charAt(0).toLocaleUpperCase()}
-            </span>
-          </AvatarFallback>
-        </Avatar>
+        <UserAvatar
+          name={invitation.email}
+          email={invitation.email}
+          size={32}
+          disableTooltip={true}
+        ></UserAvatar>
         <div>
           <p className="text-sm font-medium leading-none">
             {invitation.email} ({invitation.projectRole?.name})

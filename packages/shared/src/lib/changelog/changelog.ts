@@ -8,9 +8,3 @@ export const Changelog = Type.Object({
 })
 
 export type Changelog = Static<typeof Changelog>
-
-export const ListChangelogsResponse = Type.Object({
-    data: Type.Array(Changelog),
-})
-
-export type ListChangelogsResponse = Static<typeof ListChangelogsResponse>

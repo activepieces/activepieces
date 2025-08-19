@@ -9,6 +9,7 @@ import { stripeNewCustomer } from './lib/trigger/new-customer';
 import { stripeNewPayment } from './lib/trigger/new-payment';
 import { stripeNewSubscription } from './lib/trigger/new-subscription';
 import { stripePaymentFailed } from './lib/trigger/payment-failed';
+import { stripeSearchSubscriptions } from './lib/actions/search-subscriptions';
 
 export const stripeAuth = PieceAuth.SecretText({
   displayName: 'Secret API Key',
@@ -29,6 +30,7 @@ export const stripe = createPiece({
     stripeCreateCustomer,
     stripeCreateInvoice,
     stripeSearchCustomer,
+    stripeSearchSubscriptions,
     stripeRetrieveCustomer,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.stripe.com/v1',

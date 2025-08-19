@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { useToast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -26,7 +27,6 @@ export const projectHooks = {
     const query = useSuspenseQuery<ProjectWithLimits, Error>({
       queryKey: ['current-project', currentProjectId],
       queryFn: projectApi.current,
-      staleTime: Infinity,
     });
     return {
       ...query,
@@ -56,14 +56,15 @@ export const projectHooks = {
     });
   },
   useReloadPageIfProjectIdChanged: (projectId: string) => {
+    const { embedState } = useEmbedding();
     useEffect(() => {
       const handleVisibilityChange = () => {
         const currentProjectId = authenticationSession.getProjectId();
         if (
           currentProjectId !== projectId &&
-          document.visibilityState === 'visible'
+          document.visibilityState === 'visible' &&
+          !embedState.isEmbedded
         ) {
-          console.log('Project changed', currentProjectId, projectId);
           window.location.reload();
         }
       };
@@ -74,7 +75,7 @@ export const projectHooks = {
           handleVisibilityChange,
         );
       };
-    }, [projectId]);
+    }, [projectId, embedState.isEmbedded]);
   },
   useSwitchToProjectInParams: () => {
     const { projectId: projectIdFromParams } = useParams<{
@@ -95,7 +96,7 @@ export const projectHooks = {
           return false;
         }
         try {
-          await authenticationSession.switchToSession(projectIdFromParams);
+          await authenticationSession.switchToProject(projectIdFromParams);
           return true;
         } catch (error) {
           if (
@@ -142,7 +143,7 @@ const setCurrentProject = async (
   project: ProjectWithLimits,
   pathName?: string,
 ) => {
-  await authenticationSession.switchToSession(project.id);
+  await authenticationSession.switchToProject(project.id);
   queryClient.setQueryData(['current-project'], project);
   if (pathName) {
     const pathNameWithNewProjectId = pathName.replace(

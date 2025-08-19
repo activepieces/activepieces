@@ -1,18 +1,14 @@
-import { WebhookResponse } from '@activepieces/pieces-framework'
 import {
     networkUtils,
     rejectedPromiseHandler,
 } from '@activepieces/server-shared'
 import {
-    EventPayload,
     FlowId,
     FlowVersion,
-    PopulatedFlow,
-    TriggerType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
-import { triggerConsumer } from '../trigger/hooks/trigger-consumer'
+
 export const webhookUtils = (log: FastifyBaseLogger) => ({
 
     async getAppWebhookUrl({
@@ -32,34 +28,6 @@ export const webhookUtils = (log: FastifyBaseLogger) => ({
         const suffix: WebhookUrlSuffix = simulate ? '/test' : ''
         return networkUtils.combineUrl(publicApiUrl, `v1/webhooks/${flowId}${suffix}`)
     },
-    async extractPayload({
-        flowVersion,
-        payload,
-        projectId,
-        engineToken,
-        simulate,
-    }: ExtractPayloadParams): Promise<unknown[]> {
-        if (flowVersion.trigger.type === TriggerType.EMPTY) {
-            log.warn({
-                flowVersionId: flowVersion.id,
-            }, '[WebhookUtils#extractPayload] empty trigger, skipping')
-            return []
-        }
-        log.info({
-            flowVersionId: flowVersion.id,
-            simulate,
-        }, '[WebhookUtils#extractPayload] extracting payloads')
-        return triggerConsumer.extractPayloads(
-            engineToken,
-            log,
-            {
-                projectId,
-                flowVersion,
-                payload,
-                simulate,
-            },
-        )
-    },
     savePayloadsAsSampleData({
         flowVersion,
         projectId,
@@ -76,33 +44,8 @@ export const webhookUtils = (log: FastifyBaseLogger) => ({
         )
     },
 
-    async handshake({
-        populatedFlow,
-        payload,
-        engineToken,
-    }: HandshakeParams): Promise<WebhookResponse | null> {
-        log.info(`[WebhookService#handshake] flowId=${populatedFlow.id}`)
-        const { projectId } = populatedFlow
-        const response = await triggerConsumer.tryHandshake(engineToken, {
-            engineToken,
-            projectId,
-            flowVersion: populatedFlow.version,
-            payload,
-        }, log)
-        if (response !== null) {
-            log.info(`[WebhookService#handshake] condition met, handshake executed, response:
-            ${JSON.stringify(response, null, 2)}`)
-        }
-        return response
-    },
 })
 
-
-type HandshakeParams = {
-    populatedFlow: PopulatedFlow
-    payload: EventPayload
-    engineToken: string
-}
 
 type WebhookUrlSuffix = '' | '/test'
 
@@ -112,13 +55,6 @@ type GetWebhookUrlParams = {
     publicApiUrl: string
 }
 
-type ExtractPayloadParams = {
-    engineToken: string
-    projectId: string
-    flowVersion: FlowVersion
-    payload: EventPayload
-    simulate: boolean
-}
 
 type SaveSampleDataParams = {
     flowVersion: FlowVersion

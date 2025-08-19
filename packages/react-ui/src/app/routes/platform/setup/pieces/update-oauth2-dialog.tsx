@@ -1,6 +1,5 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Lock, Unlock } from 'lucide-react';
 import { useState, forwardRef } from 'react';
@@ -23,10 +22,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { oauthAppsApi } from '@/features/connections/lib/oauth2-apps-api';
-import { oauth2AppsHooks } from '@/features/connections/lib/oauth2-apps-hooks';
-import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared';
+import {
+  oauthAppsMutations,
+  oauthAppsQueries,
+} from '@/features/connections/lib/oauth-apps-hooks';
 import { isNil } from '@activepieces/shared';
 
 type ConfigurePieceOAuth2DialogProps = {
@@ -55,46 +54,11 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
   });
 
   const { oauth2App, refetch } =
-    oauth2AppsHooks.useOAuth2AppConfigured(pieceName);
-
-  const { mutate: deleteOAuth2App, isPending: isDeleting } = useMutation({
-    mutationFn: async (credentialId: string) => {
-      await oauthAppsApi.delete(credentialId);
-      await refetch();
-    },
-    onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('OAuth2 Credentials Deleted'),
-        duration: 3000,
-      });
-      setOpen(false);
-    },
-    onError: (error) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
-    },
-  });
-
-  const { mutate: upsert, isPending: isUpserting } = useMutation({
-    mutationFn: async (request: UpsertOAuth2AppRequest) => {
-      await oauthAppsApi.upsert(request);
-      await refetch();
-    },
-    onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('OAuth2 Credentials Updated'),
-        duration: 3000,
-      });
-      onConfigurationDone();
-      setOpen(false);
-    },
-    onError: (error) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
-    },
-  });
+    oauthAppsQueries.useOAuthAppConfigured(pieceName);
+  const { mutate: deleteOAuth2App, isPending: isDeleting } =
+    oauthAppsMutations.useDeleteOAuthApp(refetch, setOpen);
+  const { mutate: upsert, isPending: isUpserting } =
+    oauthAppsMutations.useUpsertOAuthApp(refetch, setOpen, onConfigurationDone);
 
   return (
     <Dialog
@@ -139,14 +103,14 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
           </TooltipTrigger>
           <TooltipContent>
             {isNil(oauth2App)
-              ? t('Configure OAuth2 APP')
-              : t('Delete OAuth2 APP')}
+              ? t('Configure OAuth2 App')
+              : t('Delete OAuth2 App')}
           </TooltipContent>
         </Tooltip>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Configure OAuth2 APP')}</DialogTitle>
+          <DialogTitle>{t('Configure OAuth2 App')}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>

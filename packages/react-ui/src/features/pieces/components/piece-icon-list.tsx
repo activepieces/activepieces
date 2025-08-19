@@ -1,20 +1,20 @@
 import { cva } from 'class-variance-authority';
 import { t } from 'i18next';
 
-import { Trigger, flowStructureUtil } from '@activepieces/shared';
+import { FlowTrigger, flowStructureUtil } from '@activepieces/shared';
 
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
-import { piecesHooks } from '../lib/pieces-hook';
-import { StepMetadata } from '../lib/types';
+import { StepMetadata } from '../../../lib/types';
+import { stepsHooks } from '../lib/steps-hooks';
 
 import { PieceIcon } from './piece-icon';
 
 const extraIconVariants = cva(
-  'flex items-center justify-center bg-accent/35 text-accent-foreground  p-2 rounded-full border border-solid dark:bg-accent-foreground/25 dark:text-foreground select-none',
+  'flex items-center justify-center p-2 rounded-full border border-solid  select-none',
   {
     variants: {
       size: {
@@ -34,12 +34,12 @@ export function PieceIconList({
   trigger,
   size,
 }: {
-  trigger: Trigger;
+  trigger: FlowTrigger;
   maxNumberOfIconsToShow: number;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 }) {
   const steps = flowStructureUtil.getAllSteps(trigger);
-  const stepsMetadata: StepMetadata[] = piecesHooks
+  const stepsMetadata: StepMetadata[] = stepsHooks
     .useStepsMetadata(steps)
     .map((data) => data.data)
     .filter((data) => !!data) as StepMetadata[];

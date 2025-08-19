@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/confluence/package.json",
         "main": "packages/pieces/community/confluence/src/index.ts",
         "assets": [
-          "packages/pieces/community/confluence/*.md"
+          "packages/pieces/community/confluence/*.md",
+          {
+            "input": "packages/pieces/community/confluence/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

@@ -1,14 +1,8 @@
 import {
-    ApSubscriptionStatus,
-    DEFAULT_FREE_PLAN_LIMIT,
-    MAXIMUM_ALLOWED_TASKS,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ApEdition,
-    ApEnvironment,
     assertNotNullOrUndefined,
     Cursor,
     ErrorCode,
@@ -23,23 +17,23 @@ import {
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
+import { EntityManager, Equal, ILike, In } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
-import { flagService } from '../../flags/flag.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
+import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { platformBillingService } from '../platform-billing/platform-billing.service'
-import { BillingEntityType, usageService } from '../platform-billing/usage/usage-service'
-import { ProjectMemberEntity } from '../project-members/project-member.entity'
-import { projectLimitsService } from '../project-plan/project-plan.service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
+import { platformUsageService } from '../platform/platform-usage-service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
+import { ProjectMemberEntity } from './project-members/project-member.entity'
+import { projectLimitsService } from './project-plan/project-plan.service'
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
@@ -65,17 +59,15 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     }: UpdateParams): Promise<ProjectWithLimits> {
         await projectService.update(projectId, request)
         if (!isNil(request.plan)) {
-            const isSubscribed = await isSubscribedInStripe(projectId, log)
             const project = await projectService.getOneOrThrow(projectId)
-            const isCustomerProject = isCustomerPlatform(project.platformId)
-            if (isSubscribed || isCustomerProject) {
-                const newTasks = getTasksLimit(isCustomerProject, request.plan.tasks)
-                await projectLimitsService.upsert(
+            const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
+            if (platform.plan.manageProjectsEnabled) {
+                await projectLimitsService(log).upsert(
                     {
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
-                        ...spreadIfDefined('tasks', newTasks),
-                        ...spreadIfDefined('aiTokens', request.plan.aiTokens),
+                        tasks: request.plan.tasks ?? null,
+                        aiCredits: request.plan.aiCredits ?? null,
                     },
                     projectId,
                 )
@@ -89,7 +81,6 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         return enrichProject(
             await projectRepo().findOneByOrFail({
                 id: projectId,
-                deleted: IsNull(),
             }),
             log,
         )
@@ -137,7 +128,6 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }, log
     const displayNameFilter = displayName ? ILike(`%${displayName}%`) : undefined
     const filters = {
         platformId: Equal(platformId),
-        deleted: IsNull(),
         ...spreadIfDefined('externalId', externalId),
         ...spreadIfDefined('displayName', displayNameFilter),
         ...(projectIds ? { id: In(projectIds) } : {}),
@@ -174,30 +164,6 @@ type GetAllParams = {
     limit: number
 }
 
-function getTasksLimit(isCustomerPlatform: boolean, limit: number | undefined) {
-    return isCustomerPlatform ? limit : Math.min(limit ?? MAXIMUM_ALLOWED_TASKS, MAXIMUM_ALLOWED_TASKS)
-}
-
-async function isSubscribedInStripe(projectId: ProjectId, log: FastifyBaseLogger): Promise<boolean> {
-    const isCloud = system.getEdition() === ApEdition.CLOUD
-    if (!isCloud) {
-        return false
-    }
-    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
-    if (environment === ApEnvironment.TESTING) {
-        return false
-    }
-    const project = await projectService.getOneOrThrow(projectId)
-    const status = await platformBillingService(log).getOrCreateForPlatform(project.platformId)
-    return status.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE
-}
-function isCustomerPlatform(platformId: string | undefined): boolean {
-    if (isNil(platformId)) {
-        return true
-    }
-    return !flagService.isCloudPlatform(platformId)
-}
-
 async function enrichProject(
     project: Project,
     log: FastifyBaseLogger,
@@ -209,7 +175,10 @@ async function enrichProject(
         .createQueryBuilder('project_member')
         .leftJoin('user', 'user', 'user.id = project_member."userId"')
         .groupBy('user.id')
-        .where(`user.status = '${UserStatus.ACTIVE}' and project_member."projectId" = '${project.id}'`)
+        .where('user.status = :activeStatus and project_member."projectId" = :projectId', {
+            activeStatus: UserStatus.ACTIVE,
+            projectId: project.id,
+        })
         .getCount()
 
     const totalFlows = await flowService(log).count({
@@ -222,16 +191,21 @@ async function enrichProject(
     })
 
 
+    const platformBilling = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
+
+    const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
+    const projectTasksUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'tasks', startDate, endDate })
+    const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'ai_credits', startDate, endDate })
     return {
         ...project,
-        plan: await projectLimitsService.getOrCreateDefaultPlan(
+        plan: await projectLimitsService(log).getPlanWithPlatformLimits(
             project.id,
-            DEFAULT_FREE_PLAN_LIMIT,
         ),
-        usage: await usageService(log).getUsageForBillingPeriod(
-            project.id,
-            BillingEntityType.PROJECT,
-        ),
+        usage: {
+            aiCredits: projectAICreditUsage,
+            tasks: projectTasksUsage,
+            nextLimitResetDate: endDate,
+        },
         analytics: {
             activeFlows,
             totalFlows,
@@ -271,7 +245,6 @@ const softDeleteOrThrow = async ({
     const deleteResult = await projectRepo(entityManager).softDelete({
         id,
         platformId,
-        deleted: IsNull(),
     })
 
     if (deleteResult.affected !== 1) {

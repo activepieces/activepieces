@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/scrapegrapghai/package.json",
         "main": "packages/pieces/community/scrapegrapghai/src/index.ts",
         "assets": [
-          "packages/pieces/community/scrapegrapghai/*.md"
+          "packages/pieces/community/scrapegrapghai/*.md",
+          {
+            "input": "packages/pieces/community/scrapegrapghai/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

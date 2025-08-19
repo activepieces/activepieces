@@ -15,13 +15,22 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/pieces/community/todos",
         "tsConfig": "packages/pieces/community/todos/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/todos/package.json",
         "main": "packages/pieces/community/todos/src/index.ts",
-        "assets": ["packages/pieces/community/todos/*.md"],
+        "assets": [
+          "packages/pieces/community/todos/*.md",
+          {
+            "input": "packages/pieces/community/todos/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
@@ -33,7 +42,9 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     }
   }
 }

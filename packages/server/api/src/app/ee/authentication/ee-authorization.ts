@@ -2,8 +2,8 @@ import {
     ActivepiecesError,
     ErrorCode,
     isNil,
-    Platform,
     PlatformRole,
+    PlatformWithoutSensitiveData,
     PrincipalType,
 } from '@activepieces/shared'
 import { onRequestAsyncHookHandler } from 'fastify'
@@ -15,7 +15,7 @@ const USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR = new ActivepiecesError({
     params: {},
 })
 
-export const platformMustHaveFeatureEnabled = (handler: (platform: Platform) => boolean): onRequestAsyncHookHandler =>
+export const platformMustHaveFeatureEnabled = (handler: (platform: PlatformWithoutSensitiveData) => boolean): onRequestAsyncHookHandler =>
     async (request, _res) => {
         const platformId = request.principal.platform.id
 
@@ -23,7 +23,7 @@ export const platformMustHaveFeatureEnabled = (handler: (platform: Platform) => 
             throw USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR
         }
 
-        const platform = await platformService.getOneOrThrow(platformId)
+        const platform = await platformService.getOneWithPlanOrThrow(platformId)
         const enabled = handler(platform)
 
         if (!enabled) {

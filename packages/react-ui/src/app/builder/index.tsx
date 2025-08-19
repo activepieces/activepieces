@@ -11,6 +11,7 @@ import {
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-context';
+import { ChatDrawer } from '@/app/routes/chat/chat-drawer';
 import { ShowPoweredBy } from '@/components/show-powered-by';
 import { useSocket } from '@/components/socket-provider';
 import {
@@ -18,14 +19,19 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
+import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
-  ActionType,
+  FlowActionType,
+  ApEdition,
+  ApFlagId,
+  FlowTriggerType,
+  FlowVersionState,
   PieceTrigger,
-  TriggerType,
   WebsocketClientEvent,
   flowStructureUtil,
   isNil,
@@ -33,7 +39,7 @@ import {
 
 import { cn, useElementSize } from '../../lib/utils';
 
-import { BuilderHeader } from './builder-header';
+import { BuilderHeader } from './builder-header/builder-header';
 import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
@@ -62,12 +68,23 @@ const useAnimateSidebar = (
   return handleRef;
 };
 
-const constructContainerKey = (
-  flowId: string,
-  stepName: string,
-  triggerOrActionName?: string,
-) => {
-  return flowId + stepName + (triggerOrActionName ?? '');
+const constructContainerKey = ({
+  flowId,
+  stepName,
+  lastRerenderPieceSettingsTimeStamp,
+  triggerOrActionName,
+}: {
+  flowId: string;
+  stepName: string;
+  lastRerenderPieceSettingsTimeStamp: number | null;
+  triggerOrActionName?: string;
+}) => {
+  return (
+    flowId +
+    stepName +
+    (triggerOrActionName ?? '') +
+    (lastRerenderPieceSettingsTimeStamp ?? '')
+  );
 };
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -88,6 +105,7 @@ const BuilderPage = () => {
     state.canExitRun,
     state.selectedStep,
   ]);
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
@@ -103,16 +121,18 @@ const BuilderPage = () => {
         flowVersion.trigger,
       );
       const triggerOrActionName =
-        step?.type === TriggerType.PIECE
+        step?.type === FlowTriggerType.PIECE
           ? (step as PieceTrigger).settings.triggerName
           : step?.settings.actionName;
       return {
         memorizedSelectedStep: step,
-        containerKey: constructContainerKey(
-          state.flow.id,
-          state.selectedStep,
+        containerKey: constructContainerKey({
+          flowId: state.flow.id,
+          stepName: state.selectedStep,
           triggerOrActionName,
-        ),
+          lastRerenderPieceSettingsTimeStamp:
+            state.lastRerenderPieceSettingsTimeStamp,
+        }),
       };
     },
   );
@@ -124,18 +144,16 @@ const BuilderPage = () => {
   const leftSidePanelRef = useRef<HTMLDivElement>(null);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
 
-  const { versions, refetch: refetchPiece } =
-    piecesHooks.useMostRecentAndExactPieceVersion({
+  const { pieceModel, refetch: refetchPiece } =
+    piecesHooks.usePieceModelForStepSettings({
       name: memorizedSelectedStep?.settings.pieceName,
       version: memorizedSelectedStep?.settings.pieceVersion,
       enabled:
-        memorizedSelectedStep?.type === ActionType.PIECE ||
-        memorizedSelectedStep?.type === TriggerType.PIECE,
+        memorizedSelectedStep?.type === FlowActionType.PIECE ||
+        memorizedSelectedStep?.type === FlowTriggerType.PIECE,
+      getExactVersion: flowVersion.state === FlowVersionState.LOCKED,
     });
 
-  const pieceModel = versions
-    ? versions[memorizedSelectedStep?.settings.pieceVersion || '']
-    : undefined;
   const socket = useSocket();
 
   const { mutate: fetchAndUpdateRun } = useMutation({
@@ -145,7 +163,8 @@ const BuilderPage = () => {
     socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
       refetchPiece();
     });
-    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (runId) => {
+    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (data) => {
+      const runId = data?.runId;
       if (run && run?.id === runId) {
         fetchAndUpdateRun(runId, {
           onSuccess: (run) => {
@@ -226,7 +245,10 @@ const BuilderPage = () => {
                 ></CanvasControls>
               )}
 
-            <ShowPoweredBy position="absolute" show={platform?.showPoweredBy} />
+            <ShowPoweredBy
+              position="absolute"
+              show={platform?.plan.showPoweredBy}
+            />
             <DataSelector
               parentHeight={middlePanelSize.height}
               parentWidth={middlePanelSize.width}
@@ -273,6 +295,8 @@ const BuilderPage = () => {
           </ResizablePanel>
         </>
       </ResizablePanelGroup>
+      {edition === ApEdition.CLOUD && <UpgradeDialog />}
+      <ChatDrawer />
     </div>
   );
 };

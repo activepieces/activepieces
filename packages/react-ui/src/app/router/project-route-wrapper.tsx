@@ -4,8 +4,8 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import {
-  DEFAULT_REDIRECT_PATH,
   FROM_QUERY_PARAM,
+  useDefaultRedirectPath,
 } from '@/lib/navigation-utils';
 import { determineDefaultRoute } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
@@ -25,7 +25,9 @@ export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
     isLoading,
     isFetching,
   } = projectHooks.useSwitchToProjectInParams();
+
   const { checkAccess } = useAuthorization();
+
   if (isNil(projectIdFromParams) || isNil(projectIdFromParams)) {
     return <Navigate to="/sign-in" replace />;
   }
@@ -56,7 +58,8 @@ const RedirectToCurrentProjectRoute: React.FC<
   const currentProjectId = authenticationSession.getProjectId();
   const params = useParams();
   const [searchParams] = useSearchParams();
-  const from = searchParams.get(FROM_QUERY_PARAM) ?? DEFAULT_REDIRECT_PATH;
+  const defaultRedirectPath = useDefaultRedirectPath();
+  const from = searchParams.get(FROM_QUERY_PARAM) ?? defaultRedirectPath;
   if (isNil(currentProjectId)) {
     return (
       <Navigate
@@ -112,3 +115,11 @@ export const ProjectRouterWrapper = ({
     ),
   },
 ];
+
+export const projectSettingsRoutes = {
+  general: '/settings/general',
+  team: '/settings/team',
+  pieces: '/settings/pieces',
+  environments: '/settings/environments',
+  alerts: '/settings/alerts',
+} as const;

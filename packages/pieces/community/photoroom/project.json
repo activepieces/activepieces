@@ -15,7 +15,12 @@
         "packageJson": "packages/pieces/community/photoroom/package.json",
         "main": "packages/pieces/community/photoroom/src/index.ts",
         "assets": [
-          "packages/pieces/community/photoroom/*.md"
+          "packages/pieces/community/photoroom/*.md",
+          {
+            "input": "packages/pieces/community/photoroom/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

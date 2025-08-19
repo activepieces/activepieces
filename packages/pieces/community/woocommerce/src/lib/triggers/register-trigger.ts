@@ -1,11 +1,11 @@
 import {
   PiecePropValueSchema,
   TriggerStrategy,
-  WebhookHandshakeStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { wooAuth } from '../../';
 import { WebhookInformation, wooCommon } from '../common';
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 export const woocommerceRegisterTrigger = ({
   name,
   topic,

@@ -1,6 +1,6 @@
 import { URL } from 'url'
 import { ActionContext, InputPropertyMap, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { ActionType, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { PausedFlowTimeoutError } from '../helper/execution-errors'
@@ -13,9 +13,6 @@ import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
-
-
-
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -34,10 +31,11 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
 }
 
 const executeAction: ActionHandler<PieceAction> = async ({ action, executionState, constants }) => {
+    const stepStartTime = performance.now()
     const stepOutput = GenericStepOutput.create({
         input: {},
-        type: ActionType.PIECE,
-        status: StepOutputStatus.SUCCEEDED,
+        type: FlowActionType.PIECE,
+        status: StepOutputStatus.RUNNING,
     })
 
     try {
@@ -61,6 +59,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             throw new Error(JSON.stringify(errors, null, 2))
         }
 
+
         const params: {
             hookResponse: HookResponse
         } = {
@@ -69,7 +68,23 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 tags: [],
             },
         }
+        const outputContext = progressService.createOutputContext({
+            engineConstants: constants,
+            flowExecutorContext: executionState,
+            stepName: action.name,
+            stepOutput,
+        })
+
         const isPaused = executionState.isPaused({ stepName: action.name })
+        if (!isPaused) {
+            progressService.sendUpdate({
+                engineConstants: constants,
+                flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
+                updateImmediate: true,
+            }).catch((e) => {
+                console.error('error sending update', e)
+            })
+        }
         const context: ActionContext = {
             executionType: isPaused ? ExecutionType.RESUME : ExecutionType.BEGIN,
             resumePayload: constants.resumePayload!,
@@ -79,6 +94,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 flowId: constants.flowId,
                 engineToken: constants.engineToken,
             }),
+            output: outputContext,
             flows: createFlowsContext({
                 engineToken: constants.engineToken,
                 internalApiUrl: constants.internalApiUrl,
@@ -113,7 +129,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(params),
-                pause: createPauseHook(params, executionState.pauseRequestId),
+                pause: createPauseHook(params, executionState.pauseRequestId, constants.httpRequestId),
                 respond: createRespondHook(params),
             },
             project: {
@@ -131,34 +147,36 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const newExecutionContext = executionState.addTags(params.hookResponse.tags)
 
         const webhookResponse = getResponse(params.hookResponse)
-        if (!isNil(webhookResponse) && !isNil(constants.serverHandlerId) && !isNil(constants.httpRequestId)) {
+        const isSamePiece = constants.triggerPieceName === action.settings.pieceName
+        if (!isNil(webhookResponse) && !isNil(constants.serverHandlerId) && !isNil(constants.httpRequestId) && isSamePiece) {
             await progressService.sendFlowResponse(constants, {
                 workerHandlerId: constants.serverHandlerId,
                 httpRequestId: constants.httpRequestId,
                 runResponse: {
                     status: webhookResponse.status ?? 200,
-                    body: webhookResponse.body,
+                    body: webhookResponse.body ?? {},
                     headers: webhookResponse.headers ?? {},
                 },
             })
         }
 
+        const stepEndTime = performance.now()
         if (params.hookResponse.type === 'stopped') {
             assertNotNullOrUndefined(params.hookResponse.response, 'stopResponse')
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
-                reason: FlowRunStatus.STOPPED,
+            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).setVerdict(ExecutionVerdict.SUCCEEDED, {
+                reason: FlowRunStatus.SUCCEEDED,
                 stopResponse: (params.hookResponse.response as StopHookParams).response,
             }).increaseTask()
         }
         if (params.hookResponse.type === 'paused') {
             assertNotNullOrUndefined(params.hookResponse.response, 'pauseResponse')
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED))
+            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime))
                 .setVerdict(ExecutionVerdict.PAUSED, {
                     reason: FlowRunStatus.PAUSED,
                     pauseMetadata: (params.hookResponse.response as PauseHookParams).pauseMetadata,
                 })
         }
-        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
+        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
     }
     catch (e) {
         const handledError = handleExecutionError(e)
@@ -166,6 +184,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const failedStepOutput = stepOutput
             .setStatus(StepOutputStatus.FAILED)
             .setErrorMessage(handledError.message)
+            .setDuration(performance.now() - stepStartTime)
 
         return executionState
             .upsertStep(action.name, failedStepOutput)
@@ -177,7 +196,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 function getResponse(hookResponse: HookResponse): RespondResponse | undefined {
     switch (hookResponse.type) {
         case 'stopped':
-            return hookResponse.response.response
         case 'respond':
             return hookResponse.response.response
         case 'paused':
@@ -237,7 +255,7 @@ type CreateRespondHookParams = {
     hookResponse: HookResponse
 }
 
-function createPauseHook(params: CreatePauseHookParams, pauseId: string): PauseHook {
+function createPauseHook(params: CreatePauseHookParams, pauseId: string, requestIdToReply: string | null): PauseHook {
     return (req) => {
         switch (req.pauseMetadata.type) {
             case PauseType.DELAY: {
@@ -249,7 +267,10 @@ function createPauseHook(params: CreatePauseHookParams, pauseId: string): PauseH
                     ...params.hookResponse,
                     type: 'paused',
                     response: {
-                        pauseMetadata: req.pauseMetadata,
+                        pauseMetadata: {
+                            ...req.pauseMetadata,
+                            requestIdToReply: requestIdToReply ?? undefined,
+                        },
                     },
                 }
                 break
@@ -262,6 +283,7 @@ function createPauseHook(params: CreatePauseHookParams, pauseId: string): PauseH
                         pauseMetadata: {
                             ...req.pauseMetadata,
                             requestId: pauseId,
+                            requestIdToReply: requestIdToReply ?? undefined,
                             response: req.pauseMetadata.response ?? {},
                         },
                     },

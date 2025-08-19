@@ -1,14 +1,14 @@
 import { exceptionHandler } from '@activepieces/server-shared'
 import {
-    Action,
-    ActionType,
     ActivepiecesError,
     AskCopilotCodeResponse,
     AskCopilotRequest,
     ErrorCode,
+    FlowAction,
+    FlowActionType,
     flowStructureUtil,
+    FlowTrigger,
     isNil,
-    Trigger,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../../flows/flow/flow.service'
@@ -30,8 +30,8 @@ function createErrorResponse(error: string, isConfigError = false): AskCopilotCo
 
 function mergeInputs(
     copilotInputs: Record<string, string>,
-    selectedStep: Action | Trigger | undefined,
-): Record<string, string> {
+    selectedStep: FlowAction | FlowTrigger | undefined,
+): Record<string, string> { 
     const mergedInputs: Record<string, string> = {}
 
     Object.entries(copilotInputs).forEach(([name, suggestedValue]) => {
@@ -40,7 +40,7 @@ function mergeInputs(
         }
     })
 
-    if (selectedStep?.type === ActionType.CODE) {
+    if (selectedStep?.type === FlowActionType.CODE) {
         Object.entries(selectedStep.settings.input).forEach(([key, value]) => {
             if (!isNil(value) && !isNil(mergedInputs[key])) {
                 mergedInputs[key] = value

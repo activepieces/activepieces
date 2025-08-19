@@ -6,14 +6,14 @@ import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { NewSigningKeyDialog } from '@/app/routes/platform/security/signing-keys/new-signing-key-dialog';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { signingKeyApi } from '@/features/platform-admin-panel/lib/signing-key-api'; // Update to the correct API endpoint
+import { NewSigningKeyDialog } from '@/features/platform-admin/components/new-signing-key-dialog';
+import { signingKeyApi } from '@/features/platform-admin/lib/signing-key-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 import { SigningKey } from '@activepieces/ee-shared';
@@ -37,7 +37,7 @@ const SigningKeysPage = () => {
     {
       accessorKey: 'displayName',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Display Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.displayName}</div>;
@@ -62,41 +62,37 @@ const SigningKeysPage = () => {
   return (
     <LockedFeatureGuard
       featureKey="SIGNING_KEYS"
-      locked={!platform.embeddingEnabled}
+      locked={!platform.plan.embeddingEnabled}
       lockTitle={t('Unlock Embedding Through JS SDK')}
       lockDescription={t(
         'Enable signing keys to access embedding functionalities.',
       )}
     >
       <div className="flex-col w-full">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex flex-col gap-2">
-            <TableTitle
-              description={
-                <Trans>
-                  Use our embedding{' '}
-                  <Link
-                    rel="noopener noreferrer"
-                    target="_blank"
-                    className="font-medium text-primary underline underline-offset-4"
-                    to="https://www.activepieces.com/docs/embedding/provision-users"
-                  >
-                    JavaScript SDK
-                  </Link>{' '}
-                  to authenticate users with signing keys.
-                </Trans>
-              }
-            >
-              {t('Signing Keys')}
-            </TableTitle>
-          </div>
+        <DashboardPageHeader
+          title={t('Signing Keys')}
+          description={
+            <Trans>
+              Use our embedding{' '}
+              <Link
+                rel="noopener noreferrer"
+                target="_blank"
+                className="font-medium text-primary underline underline-offset-4"
+                to="https://www.activepieces.com/docs/embedding/provision-users"
+              >
+                JavaScript SDK
+              </Link>{' '}
+              to authenticate users with signing keys.
+            </Trans>
+          }
+        >
           <NewSigningKeyDialog onCreate={() => refetch()}>
             <Button size="sm" className="flex items-center gap-2">
               <Plus className="size-4" />
               {t('New Signing Key')}
             </Button>
           </NewSigningKeyDialog>
-        </div>
+        </DashboardPageHeader>
         <DataTable
           emptyStateTextTitle={t('No signing keys found')}
           emptyStateTextDescription={t(

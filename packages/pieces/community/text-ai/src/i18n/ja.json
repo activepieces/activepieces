@@ -1,0 +1,13 @@
+{
+  "Text AI": "AIにSMS",
+  "Ask AI": "AIに聞く",
+  "Summarize Text": "テキストの要約",
+  "Provider": "プロバイダー",
+  "Model": "モデル",
+  "Prompt": "Prompt",
+  "Conversation Key": "会話キー",
+  "Creativity": "クリエイティブ度",
+  "Max Tokens": "最大トークン",
+  "Text": "テキスト",
+  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "AIレスポンスの創造性をコントロールする 価値が高いほど、AIはより創造的になり、価値が低いほどより決定的になります。"
+}

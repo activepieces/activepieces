@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/mongodb/package.json",
         "main": "packages/pieces/community/mongodb/src/index.ts",
         "assets": [
-          "packages/pieces/community/mongodb/*.md"
+          "packages/pieces/community/mongodb/*.md",
+          {
+            "input": "packages/pieces/community/mongodb/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

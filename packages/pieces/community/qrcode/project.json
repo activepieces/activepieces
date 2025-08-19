@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/qrcode/package.json",
         "main": "packages/pieces/community/qrcode/src/index.ts",
         "assets": [
-          "packages/pieces/community/qrcode/*.md"
+          "packages/pieces/community/qrcode/*.md",
+          {
+            "input": "packages/pieces/community/qrcode/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

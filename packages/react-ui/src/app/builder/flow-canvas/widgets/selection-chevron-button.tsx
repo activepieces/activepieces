@@ -15,7 +15,7 @@ const showChevronNextToSelection = (targetDiv: HTMLElement) => {
     <Button
       variant="outline"
       size="icon"
-      className="absolute top-0 -left-9 z-50"
+      className="absolute top-0 -left-10 z-50"
       {...{ [`data-${SELECTION_RECT_CHEVRON_ATTRIBUTE}`]: true }}
       onClick={(e) => {
         const rightClickEvent = new MouseEvent('contextmenu', {

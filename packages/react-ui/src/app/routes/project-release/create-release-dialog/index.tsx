@@ -20,12 +20,12 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
+  AgentOperationType,
   ConnectionOperationType,
   DiffReleaseRequest,
   ProjectReleaseType,
@@ -70,12 +70,13 @@ const CreateReleaseDialogContent = ({
   refetch,
 }: CreateReleaseDialogContentProps) => {
   const isThereAnyChanges =
-    (plan?.operations && plan?.operations.length > 0) ||
-    (plan?.tables && plan?.tables.length > 0);
+    (plan?.flows && plan?.flows.length > 0) ||
+    (plan?.tables && plan?.tables.length > 0) ||
+    (plan?.agents && plan?.agents.length > 0);
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.environmentsEnabled,
+    platform.plan.environmentsEnabled,
   );
 
   const { mutate: applyChanges, isPending } = useMutation({
@@ -122,20 +123,16 @@ const CreateReleaseDialogContent = ({
       refetch();
       setOpen(false);
     },
-    onError: (error) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
-    },
   });
   const [selectedChanges, setSelectedChanges] = useState<Set<string>>(
-    new Set(plan?.operations.map((op) => op.flow.id) || []),
+    new Set(plan?.flows.map((op) => op.flow.id) || []),
   );
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleSelectAll = (checked: boolean) => {
     if (!plan) return;
     setSelectedChanges(
-      new Set(checked ? plan.operations.map((op) => op.flow.id) : []),
+      new Set(checked ? plan.flows.map((op) => op.flow.id) : []),
     );
   };
 
@@ -184,22 +181,22 @@ const CreateReleaseDialogContent = ({
               </p>
             )}
           </div>
-          {plan?.operations && plan?.operations.length > 0 && (
+          {plan?.flows && plan?.flows.length > 0 && (
             <div className="space-y-2 ">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 py-2 border-b">
                   <Checkbox
-                    checked={selectedChanges.size === plan?.operations.length}
+                    checked={selectedChanges.size === plan?.flows.length}
                     onCheckedChange={handleSelectAll}
                   />
                   <Label className="text-sm font-medium">
                     {t('Flows Changes')} ({selectedChanges.size}/
-                    {plan?.operations.length || 0})
+                    {plan?.flows.length || 0})
                   </Label>
                 </div>
               </div>
               <ScrollArea viewPortClassName="max-h-[15vh]">
-                {plan?.operations.map((operation) => (
+                {plan?.flows.map((operation) => (
                   <OperationChange
                     key={operation.flow.id}
                     change={operation}
@@ -235,7 +232,7 @@ const CreateReleaseDialogContent = ({
                     </span>
                   </div>
                 </div>
-                <ScrollArea viewPortClassName="max-h-[16vh]">
+                <ScrollArea viewPortClassName="max-h-[10vh]">
                   {plan?.connections.map((connection, index) => (
                     <div
                       key={connection.connectionState.externalId}
@@ -280,10 +277,10 @@ const CreateReleaseDialogContent = ({
                     {t('Tables Changes')} ({plan?.tables?.length || 0})
                   </Label>
                 </div>
-                <ScrollArea viewPortClassName="max-h-[16vh]">
+                <ScrollArea viewPortClassName="max-h-[10vh]">
                   {plan?.tables.map((table, index) => (
                     <div
-                      key={table.tableState.id}
+                      key={table.tableState.externalId}
                       className="flex items-center gap-2 text-sm py-1"
                     >
                       {table.type === TableOperationType.UPDATE_TABLE && (
@@ -308,6 +305,44 @@ const CreateReleaseDialogContent = ({
               </div>
             </div>
           )}
+
+          {plan?.agents && plan?.agents.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-col justify -center gap-1 py-2 border-b">
+                  <Label className="text-sm font-medium">
+                    {t('Agents Changes')} ({plan?.agents?.length || 0})
+                  </Label>
+                </div>
+                <ScrollArea viewPortClassName="max-h-[10vh]">
+                  {plan?.agents.map((agent, index) => (
+                    <div
+                      key={agent.agentState.externalId}
+                      className="flex items-center gap-2 text-sm py-1"
+                    >
+                      {agent.type === AgentOperationType.UPDATE_AGENT && (
+                        <div className="flex items-center gap-2">
+                          <PencilIcon className="w-4 h-4 shrink-0" />
+                          <div className="flex items-center gap-1">
+                            <span>{agent.agentState.displayName}</span>
+                          </div>
+                        </div>
+                      )}
+                      {agent.type === AgentOperationType.CREATE_AGENT && (
+                        <div className="flex items-center gap-2">
+                          <Plus className="w-4 h-4 shrink-0 text-success" />
+                          <span className="text-success">
+                            {agent.agentState.displayName}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </ScrollArea>
+              </div>
+            </div>
+          )}
+
           {errorMessage && (
             <p className="text-sm text-destructive">{errorMessage}</p>
           )}
@@ -338,7 +373,11 @@ const CreateReleaseDialogContent = ({
                 form.setError('name', { message: 'Release name is required' });
                 error = true;
               }
-              if (selectedChanges.size === 0 && plan.tables.length === 0) {
+              if (
+                selectedChanges.size === 0 &&
+                plan.tables.length === 0 &&
+                plan.agents.length === 0
+              ) {
                 setErrorMessage(
                   'Please select at least one change to include in the release',
                 );
@@ -389,7 +428,7 @@ const CreateReleaseDialog = ({
         setOpen(newOpenState);
       }}
     >
-      <DialogContent className="min-h-[100px] max-h-[720px] flex flex-col">
+      <DialogContent className="min-h-[100px] max-h-[850px] flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {diffRequest.type === ProjectReleaseType.GIT

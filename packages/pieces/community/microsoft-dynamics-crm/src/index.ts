@@ -34,6 +34,7 @@ export const dynamicsCRMAuth = PieceAuth.OAuth2({
   },
   required: true,
   scope: ['{hostUrl}/.default', 'openid', 'email', 'profile', 'offline_access'],
+  prompt: 'omit',
   authUrl: 'https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/authorize',
   tokenUrl: 'https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token',
 });

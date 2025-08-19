@@ -148,7 +148,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     },
     async switchProject(params: SwitchProjectParams): Promise<AuthenticationResponse> {
         const project = await projectService.getOneOrThrow(params.projectId)
-        const projectPlatform = await platformService.getOneOrThrow(project.platformId)
+        const projectPlatform = await platformService.getOneWithPlanOrThrow(project.platformId)
         await assertUserCanSwitchToPlatform(params.currentPlatformId, projectPlatform)
         const user = await getUserForPlatform(params.identityId, projectPlatform)
         return authenticationUtils.getProjectAndToken({
@@ -169,7 +169,7 @@ async function assertUserCanSwitchToPlatform(currentPlatformId: string | null, p
         })
     }
     const samePlatform = currentPlatformId === platform.id
-    const allowToSwitch = !platformUtils.isEnterpriseCustomerOnCloud(platform) || samePlatform
+    const allowToSwitch = !platformUtils.isCustomerOnDedicatedDomain(platform) || samePlatform
     if (!allowToSwitch) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHENTICATION,
@@ -262,7 +262,7 @@ async function getPersonalPlatformIdForIdentity(identityId: string): Promise<str
     const edition = system.getEdition()
     if (edition === ApEdition.CLOUD) {
         const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId })
-        const platform = platforms.find((platform) => !platformUtils.isEnterpriseCustomerOnCloud(platform))
+        const platform = platforms.find((platform) => !platformUtils.isCustomerOnDedicatedDomain(platform))
         return platform?.id ?? null
     }
     return null

@@ -14,15 +14,17 @@ import {
     apId,
     assertNotNullOrUndefined,
     ErrorCode,
-    GetFlowVersionForWorkerRequestType,
+    FlowStatus,
     isNil,
+    RunEnvironment,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { flowService } from '../flows/flow/flow.service'
-import { webhookHandler } from '../webhooks/webhook-handler'
-import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
+import { WebhookFlowVersionToRun, webhookHandler } from '../webhooks/webhook-handler'
 import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
@@ -87,6 +89,9 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             assertNotNullOrUndefined(piece.events, 'Event is possible in this piece')
             const { reply, event, identifierValue } = piece.events.parseAndReply({
                 payload,
+                server: {
+                    publicUrl: await domainHelper.getPublicUrl({ path: '' }),
+                },
             })
             if (!isNil(reply)) {
                 request.log.info(
@@ -119,7 +124,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             const eventsQueue = listeners.map(async (listener) => {
                 const requestId = apId()
                 const flow = await flowService(request.log).getOneOrThrow({ id: listener.flowId, projectId: listener.projectId })
-                const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(GetFlowVersionForWorkerRequestType.LOCKED, flow)
+                const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
 
                 return jobQueue(request.log).add({
                     id: requestId,
@@ -128,13 +133,16 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         projectId: listener.projectId,
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         requestId,
-                        synchronousHandlerId: null,
                         payload,
                         flowId: listener.flowId,
-                        saveSampleData: await webhookSimulationService(request.log).exists(listener.flowId),
-                        flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                        runEnvironment: RunEnvironment.PRODUCTION,
+                        saveSampleData: await triggerSourceService(request.log).existsByFlowId({
+                            flowId: listener.flowId,
+                            simulate: true,
+                        },
+                        ),
                         flowVersionIdToRun,
-                        execute: true,
+                        execute: flow.status === FlowStatus.ENABLED,
                     },
                     priority: DEFAULT_PRIORITY,
                 })

@@ -10,6 +10,21 @@ export function deleteProperties(obj: Record<string, unknown>, props: string[]) 
     return copy
 }
 
+export function omit<T extends object, K extends keyof T>(obj: T, keysToOmit: K[]): Omit<T, K> {
+    return Object.fromEntries(
+        Object.entries(obj).filter(([key]) => !keysToOmit.includes(key as K)),
+    ) as Omit<T, K>
+}
+
+
+export const spreadIfNotUndefined = <T>(key: string, value: T | undefined): Record<string, T> => {
+    if (value === undefined) {
+        return {}
+    }
+    return {
+        [key]: value,
+    }
+}
 
 export const spreadIfDefined = <T>(key: string, value: T | undefined | null): Record<string, T> => {
     if (isNil(value)) {

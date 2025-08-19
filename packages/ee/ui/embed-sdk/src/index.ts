@@ -1,3 +1,5 @@
+//Client ==> Activepieces
+//Vendor ==> Customers using our embed sdk
 export enum ActivepiecesClientEventName {
   CLIENT_INIT = 'CLIENT_INIT',
   CLIENT_ROUTE_CHANGED = 'CLIENT_ROUTE_CHANGED',
@@ -8,6 +10,7 @@ export enum ActivepiecesClientEventName {
   CLIENT_AUTHENTICATION_FAILED = 'CLIENT_AUTHENTICATION_FAILED',
   CLIENT_CONFIGURATION_FINISHED = 'CLIENT_CONFIGURATION_FINISHED',
   CLIENT_CONNECTION_PIECE_NOT_FOUND = 'CLIENT_CONNECTION_PIECE_NOT_FOUND',
+  CLIENT_BUILDER_HOME_BUTTON_CLICKED = 'CLIENT_BUILDER_HOME_BUTTON_CLICKED',
 }
 export interface ActivepiecesClientInit {
   type: ActivepiecesClientEventName.CLIENT_INIT;
@@ -54,6 +57,12 @@ export interface ActivepiecesNewConnectionDialogClosed {
   type: ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED;
   data: { connection?: { id: string; name: string } };
 }
+export interface ActivepiecesBuilderHomeButtonClicked {
+  type: ActivepiecesClientEventName.CLIENT_BUILDER_HOME_BUTTON_CLICKED;
+  data: {
+    route: string;
+  };
+}
 
 type IframeWithWindow = HTMLIFrameElement & { contentWindow: Window };
 
@@ -82,34 +91,26 @@ export interface ActivepiecesVendorRouteChanged {
 export interface ActivepiecesVendorInit {
   type: ActivepiecesVendorEventName.VENDOR_INIT;
   data: {
-    prefix: string;
     hideSidebar: boolean;
-    hideLogoInBuilder?: boolean;
     hideFlowNameInBuilder?: boolean;
-    disableNavigationInBuilder: boolean;
+    disableNavigationInBuilder: boolean | 'keep_home_button_only';
     hideFolders?: boolean;
     sdkVersion?: string;
-    jwtToken?: string; // Added jwtToken here
-    initialRoute?: string       //previously initialRoute was optional
+    jwtToken: string;
+    initialRoute?: string 
     fontUrl?: string;
     fontFamily?: string;
+    hideExportAndImportFlow?: boolean;
+    hideDuplicateFlow?: boolean;
+    homeButtonIcon?: 'back' | 'logo';
+    emitHomeButtonClickedEvent?: boolean;
+    locale?: string;
+    mode?: 'light' | 'dark';
+    hideFlowsPageNavbar?: boolean;
+    hideProjectSettings?: boolean;
   };
 }
-// We used to send JWT in query params, now we send it in local storage
-export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
 
-enum McpPieceStatus {
-  ENABLED = 'ENABLED',
-  DISABLED = 'DISABLED',
-}
-
-type McpPiece = {
-  pieceName:string,
-  connectionId?:string,
-  mcpId:string,
-  status:McpPieceStatus
-  id:string
-}
 
 
 type newWindowFeatures = {
@@ -118,24 +119,51 @@ type newWindowFeatures = {
   top?: number,
   left?: number,
 }
+type EmbeddingParam = {
+  containerId?: string;
+  styling?: {
+    fontUrl?: string;
+    fontFamily?: string;
+    mode?: 'light' | 'dark';
+  };
+  locale?:string;
+  builder?: {
+    disableNavigation?: boolean;
+    hideFlowName?: boolean;
+    homeButtonIcon: 'back' | 'logo';
+    homeButtonClickedHandler?: (data: {
+      route: string;
+    }) => void;
+  };
+  dashboard?: {
+    hideSidebar?: boolean;
+    hideFlowsPageNavbar?: boolean;
+    hideSettings?: boolean;
+  };
+  hideExportAndImportFlow?: boolean;
+  hideDuplicateFlow?: boolean;
+  hideFolders?: boolean;
+  navigation?: {
+    handler?: (data: { route: string }) => void;
+  }
+}
+type ConfigureParams = {
+  instanceUrl: string;
+  jwtToken: string;
+  prefix?: string;
+  embedding?: EmbeddingParam;
+}
+
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
-export const _AP_MANAGED_TOKEN_LOCAL_STORAGE_KEY = "ap_managed_token"
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.3.6";
-  _prefix = '';
+  readonly _sdkVersion = "0.7.0";
+  //used for  Automatically Sync URL feature i.e /org/1234
+  _prefix = '/';
   _instanceUrl = '';
-  _hideSidebar = false;
-  _hideFolders = false;
-  _hideLogoInBuilder = false;
-  _hideFlowNameInBuilder = false;
   //this is used to authenticate embedding for the first time
   _jwtToken = '';
-  _disableNavigationInBuilder = true;
-  _fontUrl?: string;
-  _fontFamily?: string;
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
   _dashboardAndBuilderIframeWindow?: Window;
-  _navigationHandler?: (data: { route: string }) => void;
   _rejectNewConnectionDialogClosed?: (error: unknown) => void;
   _handleVendorNavigation?: (data: { route: string }) => void;
   _handleClientNavigation?: (data: { route: string }) => void;
@@ -148,48 +176,17 @@ class ActivepiecesEmbedded {
     platformId:string,
     projectId:string
   };
+  _embeddingState?: EmbeddingParam;
   configure({
-    prefix,
     jwtToken,
     instanceUrl,
     embedding,
-  }: {
-    prefix?: string;
-    instanceUrl: string;
-    jwtToken: string;
-    embedding?: {
-      containerId?: string;
-      styling?: {
-        fontUrl?: string;
-        fontFamily?: string;
-      };
-      builder?: {
-        disableNavigation?: boolean;
-        hideLogo?: boolean;
-        hideFlowName?: boolean;
-      };
-      dashboard?: {
-        hideSidebar?: boolean;
-      };
-      hideFolders?: boolean;
-      navigation?: {
-        handler?: (data: { route: string }) => void;
-      }
-    };
-  }) {
-    this._prefix = prefix || '/';
-    this._hideSidebar = embedding?.dashboard?.hideSidebar || false;
+    prefix,
+  }: ConfigureParams) {
     this._instanceUrl = this._removeTrailingSlashes(instanceUrl);
-    this._disableNavigationInBuilder =
-      embedding?.builder?.disableNavigation ?? false;
-    this._hideFolders = embedding?.hideFolders ?? false;
-    this._hideLogoInBuilder = embedding?.builder?.hideLogo ?? false;
-    this._hideFlowNameInBuilder = embedding?.builder?.hideFlowName ?? false;
     this._jwtToken = jwtToken;
-    this._fontUrl = embedding?.styling?.fontUrl;
-    this._fontFamily = embedding?.styling?.fontFamily;
-    this._navigationHandler = embedding?.navigation?.handler;
-    this.getEmbeddingAuth({jwtToken});
+    this._prefix = this._removeTrailingSlashes(this._prependForwardSlashToRoute(prefix ?? '/'));
+    this._embeddingState = embedding;
     if (embedding?.containerId) {
       return this._initializeBuilderAndDashboardIframe({
         containerSelector: `#${embedding.containerId}`
@@ -221,6 +218,7 @@ class ActivepiecesEmbedded {
             }).contentWindow;
             this._dashboardAndBuilderIframeWindow = iframeWindow;
             this._checkForClientRouteChanges(iframeWindow);
+            this._checkForBuilderHomeButtonClicked(iframeWindow);
           }
           else {
             reject({
@@ -240,22 +238,29 @@ class ActivepiecesEmbedded {
 
   private _setupInitialMessageHandler(targetWindow: Window, initialRoute: string, callbackAfterConfigurationFinished?: () => void) {
     const initialMessageHandler = (event: MessageEvent<ActivepiecesClientEvent>) => {
-      if (event.source === targetWindow) {
+      if (event.source === targetWindow && event.origin === new URL(this._instanceUrl).origin) {
         switch (event.data.type) {
           case ActivepiecesClientEventName.CLIENT_INIT: {
             const apEvent: ActivepiecesVendorInit = {
               type: ActivepiecesVendorEventName.VENDOR_INIT,
               data: {
-                prefix: this._prefix,
-                hideSidebar: this._hideSidebar,
-                disableNavigationInBuilder: this._disableNavigationInBuilder,
-                hideFolders: this._hideFolders,
-                hideLogoInBuilder: this._hideLogoInBuilder,
-                hideFlowNameInBuilder: this._hideFlowNameInBuilder,
+                hideSidebar: this._embeddingState?.dashboard?.hideSidebar ?? false,
+                hideFlowsPageNavbar: this._embeddingState?.dashboard?.hideFlowsPageNavbar ?? false,
+                disableNavigationInBuilder: this._embeddingState?.builder?.disableNavigation ?? false,
+                hideFolders: this._embeddingState?.hideFolders ?? false,
+                hideFlowNameInBuilder: this._embeddingState?.builder?.hideFlowName ?? false,
                 jwtToken: this._jwtToken,
                 initialRoute,
-                fontUrl: this._fontUrl,
-                fontFamily: this._fontFamily,
+                fontUrl: this._embeddingState?.styling?.fontUrl,
+                fontFamily: this._embeddingState?.styling?.fontFamily,
+                hideExportAndImportFlow: this._embeddingState?.hideExportAndImportFlow ?? false,
+                emitHomeButtonClickedEvent: this._embeddingState?.builder?.homeButtonClickedHandler !== undefined,
+                locale: this._embeddingState?.locale ?? 'en',
+                sdkVersion: this._sdkVersion,
+                homeButtonIcon: this._embeddingState?.builder?.homeButtonIcon ?? 'logo',
+                hideDuplicateFlow: this._embeddingState?.hideDuplicateFlow ?? false,
+                mode: this._embeddingState?.styling?.mode,
+                hideProjectSettings: this._embeddingState?.dashboard?.hideSettings ?? false,
               },
             };
             targetWindow.postMessage(apEvent, '*');
@@ -275,7 +280,7 @@ class ActivepiecesEmbedded {
     initialRoute: string,
     callbackAfterConfigurationFinished?: () => void
   }): IframeWithWindow {
-    const iframe = this._createIframe({ src: `${this._instanceUrl}/embed` });
+    const iframe = this._createIframe({ src: `${this._instanceUrl}/embed?currentDate=${Date.now()}` });
     iframeContainer.appendChild(iframe);
     if (!this._doesFrameHaveWindow(iframe)) {
       this._errorCreator('iframe window not accessible');
@@ -407,6 +412,9 @@ class ActivepiecesEmbedded {
     this._dashboardAndBuilderIframeWindow.postMessage(event, '*');
   }
 
+  private _prependForwardSlashToRoute(route: string) {
+    return route.startsWith('/') ? route : `/${route}`;
+  }
   private _checkForClientRouteChanges = (source: Window) => {
     window.addEventListener(
       'message',
@@ -414,34 +422,35 @@ class ActivepiecesEmbedded {
         if (
           event.data.type ===
           ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED &&
-          event.source === source
+          event.source === source && 
+          this._embeddingState?.navigation?.handler         
         ) {
-          let prefixStartsWithSlash = this._prefix.startsWith('/')
-            ? this._prefix
-            : `/${this._prefix}`;
-          if (prefixStartsWithSlash === '/') {
-            prefixStartsWithSlash = '';
-          }
-          let routeWithPrefix = prefixStartsWithSlash + event.data.data.route;
-          if (!routeWithPrefix.startsWith('/')) {
-            routeWithPrefix = '/' + routeWithPrefix;
-          }
-
-          if (this._navigationHandler) {
-
-            this._navigationHandler({ route: routeWithPrefix });
-          }
-
+          const routeWithPrefix =  this._prefix + this._prependForwardSlashToRoute(event.data.data.route);
+          this._embeddingState.navigation.handler({ route: routeWithPrefix });
+          return;
         }
       }
     );
   };
 
-
-
-  private _extractRouteAfterPrefix(href: string, prefix: string) {
-    return href.split(prefix)[1];
+  private _checkForBuilderHomeButtonClicked = (source: Window) => {
+    window.addEventListener('message', (event: MessageEvent<ActivepiecesBuilderHomeButtonClicked>) => {
+      if (event.data.type === ActivepiecesClientEventName.CLIENT_BUILDER_HOME_BUTTON_CLICKED && event.source === source) {
+        this._embeddingState?.builder?.homeButtonClickedHandler?.(event.data.data);
+      }
+    });
   }
+
+  private _extractRouteAfterPrefix(vendorUrl: string, parentOriginWithPrefix: string) {
+    return vendorUrl.split(parentOriginWithPrefix)[1];
+  }
+
+  //used for  Automatically Sync URL feature 
+  extractActivepiecesRouteFromUrl({ vendorUrl }: { vendorUrl: string }) {
+    return this._extractRouteAfterPrefix(vendorUrl, this._removeTrailingSlashes(this._parentOrigin) + this._prefix);
+  }
+
+
   private _doesFrameHaveWindow(
     frame: HTMLIFrameElement
   ): frame is IframeWithWindow {
@@ -532,12 +541,6 @@ class ActivepiecesEmbedded {
     },);
   }
 
-  extractActivepiecesRouteFromUrl({ vendorUrl }: { vendorUrl: string }) {
-    const prefixStartsWithSlash = this._prefix.startsWith('/');
-    return this._extractRouteAfterPrefix(vendorUrl, prefixStartsWithSlash
-      ? this._parentOrigin + this._prefix
-      : `${this._parentOrigin}/${this._prefix}`);
-  }
   
   private _errorCreator(message: string,...args:any[]): never {
     this._logger().error(message,...args)
@@ -568,7 +571,7 @@ class ActivepiecesEmbedded {
       }
     }
   }
-  private async getEmbeddingAuth(params:{jwtToken:string} | undefined) {
+  private async fetchEmbeddingAuth(params:{jwtToken:string} | undefined) {
     if(this._embeddingAuth) {
       return this._embeddingAuth;
     }
@@ -578,7 +581,7 @@ class ActivepiecesEmbedded {
     }
     const response = await this.request({path: '/managed-authn/external-token', method: 'POST', body: {
       externalAccessToken: jwtToken,
-    }})
+    }}, false)
     this._embeddingAuth = {
       userJwtToken: response.token,
       platformId: response.platformId,
@@ -589,58 +592,16 @@ class ActivepiecesEmbedded {
 
 
 
-  async getMcpInfo() {
-    return this.request({path: '/mcp-servers', method: 'GET'}).then(res => res.data[0]);
-  }
 
-  async getMcpTools():Promise<{pieces:McpPiece[]}> {
-    return this.request({path: '/mcp-pieces', method: 'GET'})
-  }
-
-  async addMcpTool(params:{pieceName:string, connectionId?:string, status?:McpPieceStatus}) {
-    const status = params.status ?? McpPieceStatus.ENABLED;
-    const mcp = await this.getMcpInfo();
-    return this.request({path: '/mcp-pieces', method: 'POST', body: {
-      pieceName: params.pieceName,
-      connectionId: params.connectionId,
-      status,
-      mcpId: mcp.id,
-    }})
-  }
-
-  async updateMcpTool({pieceName, status, connectionId}:{pieceName:string, status?:McpPieceStatus, connectionId?:string}) {
-    const pieces = await this.getMcpTools();
-    const pieceToUpdate = pieces.pieces.find((piece:McpPiece) => piece.pieceName === pieceName);
-    if(!pieceToUpdate)
-    {
-      return this.getMcpInfo();
-    }
-    return this.request({path: `/mcp-pieces/${pieceToUpdate.id}`, method: 'POST', body: {
-      pieceName,
-      status: status ?? pieceToUpdate.status,
-      connectionId: connectionId ?? pieceToUpdate.connectionId,
-    }})
-  }
-
-
-  async removeMcpTool({pieceName}:{pieceName:string}) {
-    const pieces = await this.getMcpTools();
-    const pieceToRemove = pieces.pieces.find((piece:McpPiece) => piece.pieceName === pieceName);
-    if(!pieceToRemove) {
-      return this.getMcpInfo();
-    }
-    return this.request({path: `/mcp-pieces/${pieceToRemove.id}`, method: 'DELETE'})
-  }
-
-
-  request({path, method, body, queryParams}:{path:string, method: RequestMethod, body?:Record<string, unknown>, queryParams?:Record<string, string>}) {
+ async request({path, method, body, queryParams}:{path:string, method: RequestMethod, body?:Record<string, unknown>, queryParams?:Record<string, string>}, useJwtToken = true) {
     const headers:Record<string, string> = {
     }
     if(body) {
       headers['Content-Type'] = 'application/json'
     }
-    if(this._embeddingAuth) {
-      headers['Authorization'] = `Bearer ${this._embeddingAuth.userJwtToken}`
+    if(useJwtToken) {
+      const embeddingAuth = await this.fetchEmbeddingAuth({jwtToken: this._jwtToken});
+      headers['Authorization'] = `Bearer ${embeddingAuth.userJwtToken}`
     }
     const queryParamsString = queryParams ? `?${new URLSearchParams(queryParams).toString()}` : '';
      return fetch(`${this._removeTrailingSlashes(this._instanceUrl)}/api/v1/${this._removeStartingSlashes(path)}${queryParamsString}`, {

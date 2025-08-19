@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/use-toast';
-import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
+import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { Permission, ProjectRole, RoleType } from '@activepieces/shared';
 
 const initialPermissions = [
@@ -90,14 +90,12 @@ const initialPermissions = [
     description: 'Read and write tables',
     read: [Permission.READ_TABLE],
     write: [Permission.READ_TABLE, Permission.WRITE_TABLE],
-    disableNone: true,
   },
   {
     name: 'Todos',
     description: 'Read and write todos',
     read: [Permission.READ_TODOS],
     write: [Permission.READ_TODOS, Permission.WRITE_TODOS],
-    disableNone: true,
   },
   {
     name: 'MCP',
@@ -244,7 +242,7 @@ export const ProjectRoleDialog = ({
         </DialogTitle>
         <div className="grid space-y-4 mt-4">
           <div>
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-foreground">
               {t('Name')}
             </span>
             <Input
@@ -259,7 +257,7 @@ export const ProjectRoleDialog = ({
             />
           </div>
           <div>
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-foreground">
               {t('Permissions')}
             </span>
             <div className="overflow-y-auto p-2 rounded-md">
@@ -272,10 +270,10 @@ export const ProjectRoleDialog = ({
                     }`}
                   >
                     <div className="w-full flex flex-row justify-between">
-                      <span className="font-bold text-gray-700">
+                      <span className="font-bold text-foreground">
                         {permission.name}
                       </span>
-                      <div className="flex bg-gray-100 rounded-sm space-x-2">
+                      <div className="flex bg-accent rounded-sm space-x-2">
                         {!permission.disableNone && (
                           <Button
                             className="h-9 px-4"
@@ -312,7 +310,7 @@ export const ProjectRoleDialog = ({
                         </Button>
                       </div>
                     </div>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-accent-foreground">
                       {permission.description}
                     </span>
                   </div>

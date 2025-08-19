@@ -47,6 +47,7 @@ export const runsTableColumns = ({
       <div className="flex items-center">
         <Checkbox
           checked={selectedAll || table.getIsAllPageRowsSelected()}
+          variant="secondary"
           onCheckedChange={(value) => {
             const isChecked = !!value;
             table.toggleAllPageRowsSelected(isChecked);
@@ -131,6 +132,7 @@ export const runsTableColumns = ({
 
       return (
         <Checkbox
+          variant="secondary"
           checked={isSelected}
           onCheckedChange={(value) => {
             const isChecked = !!value;

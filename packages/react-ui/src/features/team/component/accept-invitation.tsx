@@ -58,7 +58,7 @@ const AcceptInvitation = () => {
 
   return isPending ? (
     <div className="w-screen h-screen flex justify-center items-center">
-      <LoadingSpinner size={50}></LoadingSpinner>
+      <LoadingSpinner isLarge={true}></LoadingSpinner>
     </div>
   ) : (
     <div className="container mx-auto mt-10 max-w-md">

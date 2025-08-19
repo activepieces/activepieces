@@ -8,32 +8,34 @@ import { Shortcut } from './shortcut';
 import { LoadingSpinner } from './spinner';
 
 const buttonVariants = cva(
-  'ring-offset-background inline-flex items-center justify-center whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   {
     variants: {
       variant: {
         default:
           'bg-primary stroke-background text-primary-foreground enabled:hover:bg-primary/90',
-        basic: 'text-primary underline-offset-4 enabled:hover:bg-accent',
+        basic:
+          'text-primary font-medium underline-offset-4 enabled:hover:bg-accent',
+        secondary:
+          'text-secondary-foreground bg-secondary enabled:hover:bg-secondary/80 enabled:hover:text-secondary-foreground',
         destructive:
           'bg-destructive text-background enabled:hover:bg-destructive/90',
         outline:
           'border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground border',
-        secondary:
-          'bg-secondary text-secondary-foreground enabled:hover:bg-secondary/80',
+        accent: 'bg-accent text-accent-foreground enabled:hover:bg-accent/80',
         ghost:
-          'enabled:hover:bg-accent enabled:hover:text-accent-foreground focus-visible:ring-0',
-        link: 'text-primary underline-offset-4 enabled:hover:underline',
+          'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
+        link: 'text-primary underline-offset-4 hover:underline',
         transparent: 'text-primary enabled:hover:bg-transparent',
         'outline-primary':
           'text-primary font-medium enabled:hover:bg-primary/10 enabled:hover:border-primary enabled:hover:font-semibold',
       },
       size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-9 rounded-sm px-3',
-        lg: 'h-11 rounded-sm px-8',
-        xs: 'h-6 p-2',
-        icon: 'size-8',
+        default: 'h-9 px-4 py-2 has-[>svg]:px-3',
+        sm: 'h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5',
+        lg: 'h-10 rounded-md px-6 has-[>svg]:px-4',
+        icon: 'size-9',
+        xs: 'h-6 px-2 text-xs py-2',
       },
     },
     defaultVariants: {
@@ -109,9 +111,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading ? (
           <LoadingSpinner
-            className={
-              variant === 'default' ? 'stroke-background' : 'stroke-foreground'
-            }
+            className={cn('size-5', {
+              'stroke-background':
+                variant === 'default' || variant === 'secondary',
+              'stroke-foreground':
+                variant !== 'default' && variant !== 'secondary',
+            })}
           />
         ) : (
           <>

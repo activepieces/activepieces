@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/grist/package.json",
         "main": "packages/pieces/community/grist/src/index.ts",
         "assets": [
-          "packages/pieces/community/grist/*.md"
+          "packages/pieces/community/grist/*.md",
+          {
+            "input": "packages/pieces/community/grist/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

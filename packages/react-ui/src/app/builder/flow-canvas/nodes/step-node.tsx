@@ -1,135 +1,64 @@
 import { useDraggable } from '@dnd-kit/core';
 import { Handle, NodeProps, Position } from '@xyflow/react';
-import { t } from 'i18next';
-import { ChevronDown, RouteOff } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
-import { InvalidStepIcon } from '@/components/custom/alert-icon';
 import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import ImageWithFallback from '@/components/ui/image-with-fallback';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn } from '@/lib/utils';
 import {
-  Action,
-  ActionType,
   FlowOperationType,
-  FlowRun,
-  FlowRunStatus,
-  FlowVersion,
-  Trigger,
-  TriggerType,
+  Step,
+  FlowTriggerType,
   flowStructureUtil,
-  isNil,
 } from '@activepieces/shared';
 
-import { StepStatusIcon } from '../../../../features/flow-runs/components/step-status-icon';
 import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../utils/consts';
+import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApStepNode } from '../utils/types';
 
-function hasSkippedParent(stepName: string, trigger: Trigger): boolean {
-  const step = flowStructureUtil.getStep(stepName, trigger);
-  if (!step) {
-    return false;
+import { ApStepNodeStatus } from './step-node-status';
+
+const getPieceSelectorOperationType = (step: Step) => {
+  if (flowStructureUtil.isTrigger(step.type)) {
+    return FlowOperationType.UPDATE_TRIGGER;
   }
+  return FlowOperationType.UPDATE_ACTION;
+};
 
-  const skippedParents = flowStructureUtil
-    .findPathToStep(trigger, stepName)
-    .filter(
-      (p) =>
-        (p.type === ActionType.LOOP_ON_ITEMS || p.type === ActionType.ROUTER) &&
-        flowStructureUtil.isChildOf(p, stepName) &&
-        p.skip,
-    );
-  return skippedParents.length > 0;
-}
-
-function getStepStatus(
-  stepName: string | undefined,
-  run: FlowRun | null,
-  loopIndexes: Record<string, number>,
-  flowVersion: FlowVersion,
-) {
-  if (!run || !stepName || !run.steps) {
-    return undefined;
-  }
-  const stepOutput = flowRunUtils.extractStepOutput(
-    stepName,
-    loopIndexes,
-    run.steps,
-    flowVersion.trigger,
-  );
-  return stepOutput?.status;
-}
-
-const StepActionWrapper = React.memo(
-  ({ children }: { children: React.ReactNode }) => {
-    return (
-      <div className="flex items-center gap-2 cursor-pointer">{children}</div>
-    );
-  },
-);
-
-StepActionWrapper.displayName = 'StepActionWrapper';
 const ApStepCanvasNode = React.memo(
-  ({ data }: NodeProps & Omit<ApStepNode, 'position'>) => {
+  ({ data: { step } }: NodeProps & Omit<ApStepNode, 'position'>) => {
     const [
       selectStepByName,
       isSelected,
       isDragging,
-      selectedStep,
-      run,
       readonly,
-      exitStepSettings,
       flowVersion,
-      loopIndexes,
       setSelectedBranchIndex,
-      setPieceSelectorStep,
-      pieceSelectorStep,
+      isPieceSelectorOpened,
+      setOpenedPieceSelectorStepNameOrAddButtonId,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
-      !isNil(state.selectedStep) && state.selectedStep === data.step?.name,
-      state.activeDraggingStep === data.step?.name,
-      state.selectedStep,
-      state.run,
+      state.selectedStep === step.name,
+      state.activeDraggingStep === step.name,
       state.readonly,
-      state.exitStepSettings,
       state.flowVersion,
-      state.loopsIndexes,
       state.setSelectedBranchIndex,
-      state.setPieceSelectorStep,
-      state.pieceSelectorStep,
+      state.openedPieceSelectorStepNameOrAddButtonId === step.name,
+      state.setOpenedPieceSelectorStepNameOrAddButtonId,
     ]);
-    const openPieceSelector = pieceSelectorStep === data.step!.name;
-    const step =
-      flowStructureUtil.getStep(data.step!.name, flowVersion.trigger) ||
-      data.step!;
-    const { stepMetadata } = piecesHooks.useStepMetadata({
+    const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
-
     const stepIndex = useMemo(() => {
       const steps = flowStructureUtil.getAllSteps(flowVersion.trigger);
       return steps.findIndex((s) => s.name === step.name) + 1;
-    }, [data, flowVersion]);
-
+    }, [step, flowVersion]);
     const isTrigger = flowStructureUtil.isTrigger(step.type);
-    const isAction = flowStructureUtil.isAction(step.type);
-
-    const pieceSelectorOperation = isAction
-      ? FlowOperationType.UPDATE_ACTION
-      : FlowOperationType.UPDATE_TRIGGER;
-    const isEmptyTriggerSelected =
-      selectedStep === 'trigger' && step.type === TriggerType.EMPTY;
-    const isSkipped = (step as Action).skip;
+    const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
 
     const { attributes, listeners, setNodeRef } = useDraggable({
       id: step.name,
@@ -139,25 +68,19 @@ const ApStepCanvasNode = React.memo(
       },
     });
 
-    const stepOutputStatus = useMemo(() => {
-      return getStepStatus(step.name, run, loopIndexes, flowVersion);
-    }, [step.name, run, loopIndexes, flowVersion]);
-
-    const showRunningIcon =
-      isNil(stepOutputStatus) &&
-      run?.status === FlowRunStatus.RUNNING &&
-      !hasSkippedParent(step.name, flowVersion.trigger) &&
-      !isSkipped;
-
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
-      const { name } = data.step!;
-      selectStepByName(name);
+      selectStepByName(step.name);
       setSelectedBranchIndex(null);
+      if (step.type === FlowTriggerType.EMPTY) {
+        setOpenedPieceSelectorStepNameOrAddButtonId(step.name);
+      }
       e.preventDefault();
       e.stopPropagation();
     };
+    const stepNodeDivAttributes = isPieceSelectorOpened ? {} : attributes;
+    const stepNodeDivListeners = isPieceSelectorOpened ? {} : listeners;
     return (
       <div
         {...{ [`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name }}
@@ -167,10 +90,9 @@ const ApStepCanvasNode = React.memo(
           maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
         }}
         className={cn(
-          'transition-all border-box rounded-sm border border-solid border-border relative hover:border-primary group',
+          'transition-all border-box rounded-sm border border-solid border-border relative hover:border-primary/70 group',
           {
-            'shadow-step-container': !isDragging,
-            'border-primary': isSelected,
+            'border-primary/70': isSelected,
             'bg-background': !isDragging,
             'border-none': isDragging,
             'shadow-none': isDragging,
@@ -179,9 +101,9 @@ const ApStepCanvasNode = React.memo(
         )}
         onClick={(e) => handleStepClick(e)}
         key={step.name}
-        ref={openPieceSelector ? null : setNodeRef}
-        {...(!openPieceSelector ? attributes : {})}
-        {...(!openPieceSelector ? listeners : {})}
+        ref={isPieceSelectorOpened ? null : setNodeRef}
+        {...stepNodeDivAttributes}
+        {...stepNodeDivListeners}
       >
         <div
           className="absolute left-full pl-3 text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
@@ -195,137 +117,85 @@ const ApStepCanvasNode = React.memo(
           className={cn(
             'absolute left-0 top-0 pointer-events-none  rounded-sm w-full h-full',
             {
-              'border-t-[3px] border-primary border-solid':
+              'border-t-[2px] border-primary/70 border-solid':
                 isSelected && !isDragging,
             },
           )}
         ></div>
-        <div className="px-3 h-full w-full  overflow-hidden">
+        <div className="px-3 h-full w-full overflow-hidden">
           {!isDragging && (
             <PieceSelector
-              initialSelectedPiece={
-                step.type === TriggerType.EMPTY
-                  ? undefined
-                  : stepMetadata?.displayName
-              }
               operation={{
-                type: isEmptyTriggerSelected
-                  ? FlowOperationType.UPDATE_TRIGGER
-                  : pieceSelectorOperation,
+                type: getPieceSelectorOperationType(step),
                 stepName: step.name,
               }}
-              open={openPieceSelector || isEmptyTriggerSelected}
-              onOpenChange={(open) => {
-                setPieceSelectorStep(open ? step.name : null);
-                if (!open && step.type === TriggerType.EMPTY) {
-                  exitStepSettings();
-                }
-              }}
-              asChild={true}
+              id={step.name}
+              openSelectorOnClick={false}
+              stepToReplacePieceDisplayName={stepMetadata?.displayName}
             >
               <div
-                className="flex h-full w-full"
+                className="flex items-center justify-center h-full w-full gap-3"
                 onClick={(e) => {
-                  if (!openPieceSelector) {
+                  if (!isPieceSelectorOpened) {
                     handleStepClick(e);
                   }
                 }}
               >
-                <div className="flex h-full items-center justify-between gap-3 w-full">
-                  <div className="flex items-center justify-center min-w-[46px] h-full">
-                    <div className={isSkipped ? 'opacity-80' : ''}>
-                      <PieceIcon
-                        logoUrl={
-                          step.settings?.inputUiInfo?.customizedInputs
-                            ?.logoUrl ?? stepMetadata?.logoUrl
-                        }
-                        displayName={stepMetadata?.displayName}
-                        showTooltip={false}
-                        size={'lg'}
-                      ></PieceIcon>
+                <div
+                  className={cn('flex items-center justify-center h-full ', {
+                    'opacity-80': isSkipped,
+                  })}
+                >
+                  <ImageWithFallback
+                    src={stepMetadata?.logoUrl}
+                    alt={stepMetadata?.displayName}
+                    className="w-12 h-12"
+                  />
+                </div>
+                <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
+                  <div className=" flex items-center justify-between min-w-0 w-full">
+                    <div
+                      className={cn('text-sm truncate grow shrink ', {
+                        'text-accent-foreground/70': isSkipped,
+                      })}
+                    >
+                      {stepIndex}. {step.displayName}
                     </div>
-                  </div>
-                  <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
-                    <div className=" flex items-center justify-between min-w-0 w-full">
-                      <div
-                        className={cn('text-sm truncate grow shrink ', {
-                          'text-accent-foreground/70': isSkipped,
-                        })}
+
+                    {(!readonly || !isTrigger) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 size-7 "
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          if (e.target) {
+                            const rightClickEvent = new MouseEvent(
+                              'contextmenu',
+                              {
+                                bubbles: true,
+                                cancelable: true,
+                                view: window,
+                                button: 2,
+                                clientX: e.clientX,
+                                clientY: e.clientY,
+                              },
+                            );
+                            e.target.dispatchEvent(rightClickEvent);
+                          }
+                        }}
                       >
-                        {stepIndex}. {step.displayName}
-                      </div>
+                        <ChevronDown className="w-4 h-4 stroke-muted-foreground" />
+                      </Button>
+                    )}
+                  </div>
 
-                      {(!readonly || !isTrigger) && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="p-1 size-7 "
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            if (e.target) {
-                              const rightClickEvent = new MouseEvent(
-                                'contextmenu',
-                                {
-                                  bubbles: true,
-                                  cancelable: true,
-                                  view: window,
-                                  button: 2,
-                                  clientX: e.clientX,
-                                  clientY: e.clientY,
-                                },
-                              );
-                              e.target.dispatchEvent(rightClickEvent);
-                            }
-                          }}
-                        >
-                          <ChevronDown className="w-4 h-4 stroke-muted-foreground" />
-                        </Button>
-                      )}
+                  <div className="flex justify-between w-full items-center">
+                    <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
+                      {stepMetadata?.displayName}
                     </div>
-
-                    <div className="flex justify-between w-full items-center">
-                      <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
-                        {stepMetadata?.displayName}
-                      </div>
-                      <div className="w-4 flex mt-0.5 items-center justify-center h-[20px]">
-                        {stepOutputStatus && (
-                          <StepStatusIcon
-                            status={stepOutputStatus}
-                            size="4"
-                          ></StepStatusIcon>
-                        )}
-                        {showRunningIcon && (
-                          <LoadingSpinner className="w-4 h-4 "></LoadingSpinner>
-                        )}
-                        {isSkipped && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <RouteOff className="w-4 h-4"> </RouteOff>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                              {t('Skipped')}
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                        {!step.valid && !isSkipped && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="mr-3">
-                                <InvalidStepIcon
-                                  size={16}
-                                  viewBox="0 0 16 15"
-                                  className="stroke-0 animate-fade"
-                                ></InvalidStepIcon>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                              {t('Incomplete settings')}
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                      </div>
-                    </div>
+                    <ApStepNodeStatus stepName={step.name} />
                   </div>
                 </div>
               </div>

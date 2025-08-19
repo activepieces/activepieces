@@ -3,7 +3,7 @@ import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/shared';
 import { z } from 'zod';
-
+import qs from 'qs';
 type FieldInfo = {
   id: string;
   type: FieldType;
@@ -39,11 +39,12 @@ export const findRecords = createAction({
           };
         }
 
+        const convertedTableId = await tablesCommon.convertTableExternalIdToId(table_id, context);
         const fields = await tablesCommon.getTableFields({
-          tableId: table_id,
+          tableId: convertedTableId,
           context,
         });
-
+ 
         return {
           filters: Property.Array({
             displayName: 'Filters',
@@ -85,7 +86,8 @@ export const findRecords = createAction({
     }),
   },
   async run(context) {
-    const { table_id: tableId, limit, filters } = context.propsValue;
+    const { table_id: tableExternalId, limit, filters } = context.propsValue;
+    const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
     const filtersArray: { field: FieldInfo; operator: FilterOperator; value: unknown }[] = filters?.['filters'] ?? [];
 
     for (const filter of filtersArray) {
@@ -134,10 +136,10 @@ export const findRecords = createAction({
       filters: parsedFilters,
     };
 
+
     const response = await httpClient.sendRequest<SeekPage<PopulatedRecord>>({
-      method: HttpMethod.POST,
-      url: `${context.server.apiUrl}v1/records/list`,
-      body: request,
+      method: HttpMethod.GET,
+      url: `${context.server.apiUrl}v1/records?${qs.stringify(request)}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,

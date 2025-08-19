@@ -1,18 +1,20 @@
-import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { apVersionUtil, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
-    FileType,
+    EndpointScope,
     GetPieceRequestParams,
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
     ListPiecesRequestQuery,
     ListVersionRequestQuery,
     ListVersionsResponse,
+    LocalesEnum,
     PieceCategory,
     PieceOptionRequest,
     PrincipalType,
+    SampleDataFileType,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -54,13 +56,13 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get(
         '/',
         ListPiecesRequest,
-        async (req): Promise<PieceMetadataModelSummary[]> => {
+        async (req) => {
             const latestRelease = await apVersionUtil.getCurrentRelease()
             const includeTags = req.query.includeTags ?? false
             const release = req.query.release ?? latestRelease
             const edition = req.query.edition ?? ApEdition.COMMUNITY
             const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
-            const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
+            const projectId = [PrincipalType.UNKNOWN, PrincipalType.SERVICE].includes(req.principal.type) ? undefined : req.principal.projectId
             const pieceMetadataSummary = await pieceMetadataService(req.log).list({
                 release,
                 includeHidden: req.query.includeHidden ?? false,
@@ -73,15 +75,21 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 sortBy: req.query.sortBy,
                 orderBy: req.query.orderBy,
                 suggestionType: req.query.suggestionType,
+                locale: req.query.locale as LocalesEnum | undefined,
             })
-            return pieceMetadataSummary
+            return pieceMetadataSummary.map((piece) => {
+                return {
+                    ...piece,
+                    i18n: undefined,
+                }
+            })
         },
     )
 
     app.get(
         '/:scope/:name',
         GetPieceParamsWithScopeRequest,
-        async (req): Promise<PieceMetadata> => {
+        async (req) => {
             const { name, scope } = req.params
             const { version } = req.query
 
@@ -94,6 +102,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 platformId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
+                locale: req.query.locale as LocalesEnum | undefined,
             })
         },
     )
@@ -104,7 +113,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         async (req): Promise<PieceMetadataModel> => {
             const { name } = req.params
             const { version } = req.query
-
             const decodedName = decodeURIComponent(name)
             const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
             const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
@@ -113,6 +121,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 platformId,
                 name: decodedName,
                 version,
+                locale: req.query.locale as LocalesEnum | undefined,
             })
         },
     )
@@ -129,7 +138,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 id: req.body.flowId,
                 versionId: req.body.flowVersionId,
             })
-            const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, FileType.SAMPLE_DATA)
+            const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
             const { result } = await userInteractionWatcher(req.log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
                 jobType: UserInteractionJobType.EXECUTE_PROPERTY,
                 projectId,
@@ -138,6 +147,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 actionOrTriggerName: req.body.actionOrTriggerName,
                 input: req.body.input,
                 sampleData,
+                searchValue: req.body.searchValue,
                 piece: await getPiecePackageWithoutArchive(req.log, projectId, platform.id, req.body),
             })
             return result
@@ -149,11 +159,13 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 const ListPiecesRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         querystring: ListPiecesRequestQuery,
 
     },
+
 }
 const GetPieceParamsRequest = {
     config: {
@@ -162,7 +174,9 @@ const GetPieceParamsRequest = {
     schema: {
         params: GetPieceRequestParams,
         querystring: GetPieceRequestQuery,
+
     },
+
 }
 
 const GetPieceParamsWithScopeRequest = {

@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -20,8 +22,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { TableTitle } from '@/components/ui/table-title';
 import {
   Tooltip,
   TooltipContent,
@@ -38,12 +38,13 @@ import {
 } from '@activepieces/shared';
 
 import { ApplyButton } from './apply-plan';
+import { PushEverythingDialog } from './push-everything-dialog';
 import { SelectionButton } from './selection-dialog';
 
 const ProjectReleasesPage = () => {
   const navigate = useNavigate();
   const { checkAccess } = useAuthorization();
-  const doesUserHavePermissionToWriteFlow = checkAccess(
+  const doesUserHavePermissionToWriteRelease = checkAccess(
     Permission.WRITE_PROJECT_RELEASE,
   );
   const { data, isLoading, refetch } = useQuery({
@@ -151,36 +152,42 @@ const ProjectReleasesPage = () => {
 
   return (
     <div className="flex-col w-full gap-4">
-      <div className="mb-8 flex items-center justify-between">
-        <TableTitle
-          description={
-            <>
-              {t(
-                'Track and manage your project version history and deployments. ',
-              )}
-              <a
-                href="https://www.activepieces.com/docs/operations/git-sync"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                {t('Environments & Releases')}
-              </a>
-            </>
-          }
-        >
-          {t('Project Releases')}
-        </TableTitle>
-
+      <DashboardPageHeader
+        title={t('Project Releases')}
+        description={
+          <>
+            {t(
+              'Track and manage your project version history and deployments. ',
+            )}
+            <a
+              href="https://www.activepieces.com/docs/operations/git-sync"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              {t('Environments & Releases')}
+            </a>
+          </>
+        }
+      >
         <div className="flex items-center gap-2">
+          <PushEverythingDialog>
+            <Button
+              className="h-9"
+              variant="outline"
+              disabled={!doesUserHavePermissionToWriteRelease}
+            >
+              {t('Push Everything')}
+            </Button>
+          </PushEverythingDialog>
           <PermissionNeededTooltip
-            hasPermission={doesUserHavePermissionToWriteFlow}
+            hasPermission={doesUserHavePermissionToWriteRelease}
           >
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button
                   className="h-9 w-full"
-                  disabled={!doesUserHavePermissionToWriteFlow}
+                  disabled={!doesUserHavePermissionToWriteRelease}
                 >
                   {t('Create Release')}
                   <ChevronDown className="h-3 w-4 ml-2" />
@@ -217,7 +224,7 @@ const ProjectReleasesPage = () => {
             </DropdownMenu>
           </PermissionNeededTooltip>
         </div>
-      </div>
+      </DashboardPageHeader>
       <DataTable
         emptyStateTextTitle={t('No project releases found')}
         emptyStateTextDescription={t('Create a project release to get started')}

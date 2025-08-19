@@ -17,6 +17,7 @@ import { dropboxMoveFile } from './lib/actions/move-file';
 import { dropboxMoveFolder } from './lib/actions/move-folder';
 import { dropboxSearch } from './lib/actions/search';
 import { dropboxUploadFile } from './lib/actions/upload-file';
+import { dropboxDownloadFile } from './lib/actions/download-file';
 
 export const dropboxAuth = PieceAuth.OAuth2({
   description: '',
@@ -40,6 +41,7 @@ export const dropbox = createPiece({
     dropboxSearch,
     dropboxCreateNewTextFile,
     dropboxUploadFile,
+    dropboxDownloadFile,
     dropboxGetFileLink,
     dropboxDeleteFile,
     dropboxMoveFile,

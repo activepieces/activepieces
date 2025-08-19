@@ -23,7 +23,7 @@ type DataTableSelectPopoverProps = {
   options: readonly {
     label: string;
     value: string;
-    icon?: React.ComponentType<{ className?: string }>;
+    icon?: React.ComponentType<{ className?: string }> | string;
   }[];
   facets?: Map<any, number>;
   handleFilterChange: (filterValue: string[]) => void;
@@ -46,7 +46,7 @@ const DataTableSelectPopover = ({
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
               <Badge
-                variant="secondary"
+                variant="accent"
                 className="rounded-sm px-1 font-normal lg:hidden"
               >
                 {selectedValues.size}
@@ -54,7 +54,7 @@ const DataTableSelectPopover = ({
               <div className="hidden space-x-1 lg:flex">
                 {selectedValues.size > 2 ? (
                   <Badge
-                    variant="secondary"
+                    variant="accent"
                     className="rounded-sm px-1 font-normal"
                   >
                     {selectedValues.size} selected
@@ -64,7 +64,7 @@ const DataTableSelectPopover = ({
                     .filter((option) => selectedValues.has(option.value))
                     .map((option) => (
                       <Badge
-                        variant="secondary"
+                        variant="accent"
                         key={option.value}
                         className="rounded-sm px-1 font-normal"
                       >
@@ -113,8 +113,16 @@ const DataTableSelectPopover = ({
                       >
                         <CheckIcon className={cn('h-4 w-4')} />
                       </div>
-                      {option.icon && (
-                        <option.icon className="mr-2 size-4 text-muted-foreground" />
+                      {typeof option.icon === 'string' ? (
+                        <img
+                          src={option.icon}
+                          alt={option.label}
+                          className="mr-2 size-4 object-contain"
+                        />
+                      ) : (
+                        option.icon && (
+                          <option.icon className="mr-2 size-4 text-muted-foreground" />
+                        )
                       )}
                       <div>
                         <span>{option.label}</span>

@@ -18,7 +18,7 @@ import {
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
-import { AskAiButton } from '../../pieces-selector/ask-ai';
+import { AskAiButton } from '../ask-ai';
 
 import { CodeEditor } from './code-editor';
 

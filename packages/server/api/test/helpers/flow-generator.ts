@@ -9,7 +9,7 @@ export const flowGenerator = {
     randomizeMetadata(externalId: string | undefined, version: Omit<FlowVersion, 'flowId'>): PopulatedFlow {
         const flowId = apId()
         const result = {
-            externalId,
+            externalId: externalId ?? flowId,
             version: {
                 ...version,
                 trigger: randomizeTriggerMetadata(version.trigger),
@@ -41,6 +41,7 @@ const flowVersionGenerator = {
                 nextAction: generateAction(),
             },
             state: FlowVersionState.DRAFT,
+            connectionIds: [],
         }
     },
 }

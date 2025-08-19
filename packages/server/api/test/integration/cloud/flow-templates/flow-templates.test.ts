@@ -1,5 +1,6 @@
 import {
     apId,
+    PlatformPlan,
     PlatformRole,
     PrincipalType,
     TemplateType,
@@ -34,7 +35,7 @@ describe('Flow Templates', () => {
         it('should list platform templates only', async () => {
             // arrange
             const { mockPlatform, mockUser, mockPlatformTemplate } =
-                await createMockPlatformTemplate({ platformId: apId() })
+                await createMockPlatformTemplate({ platformId: apId(), plan: { manageTemplatesEnabled: true } })
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -51,8 +52,9 @@ describe('Flow Templates', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody.data).toHaveLength(1)
             expect(responseBody.data[0].id).toBe(mockPlatformTemplate.id)
         })
@@ -84,6 +86,8 @@ describe('Flow Templates', () => {
             // arrange
             const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup({
                 platform: {
+                },
+                plan: {
                     manageTemplatesEnabled: true,
                 },
             })
@@ -191,11 +195,14 @@ describe('Flow Templates', () => {
     })
 })
 
-async function createMockPlatformTemplate({ platformId }: { platformId: string }) {
+async function createMockPlatformTemplate({ platformId, plan }: { platformId: string, plan?: Partial<PlatformPlan> }) {
     const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
         platform: {
             id: platformId,
+        },
+        plan: {
             manageTemplatesEnabled: true,
+            ...plan,
         },
     })
 

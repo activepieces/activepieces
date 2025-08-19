@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/image-ai/package.json",
         "main": "packages/pieces/community/image-ai/src/index.ts",
         "assets": [
-          "packages/pieces/community/image-ai/*.md"
+          "packages/pieces/community/image-ai/*.md",
+          {
+            "input": "packages/pieces/community/image-ai/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

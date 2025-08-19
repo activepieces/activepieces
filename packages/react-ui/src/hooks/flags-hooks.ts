@@ -19,11 +19,12 @@ type WebsiteBrand = {
     };
   };
 };
-
+const queryKey = ['flags'];
 export const flagsHooks = {
+  queryKey,
   useFlags: () => {
     return useSuspenseQuery<FlagsMap, Error>({
-      queryKey: ['flags'],
+      queryKey,
       queryFn: flagsApi.getAll,
       staleTime: Infinity,
     });

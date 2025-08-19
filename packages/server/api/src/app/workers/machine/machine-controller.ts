@@ -13,8 +13,6 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
         return machineService.list()
     })
 
-
-
     app.post('/heartbeat', HeartbeatParams, async (request) => {
         const { cpuUsagePercentage, ramUsagePercentage, totalAvailableRamInBytes, diskInfo, ip, workerProps, workerId } = request.body
         const workerPrincipal = request.principal as unknown as WorkerPrincipal
@@ -35,6 +33,7 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
             FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
             FLOW_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.FLOW_WORKER_CONCURRENCY),
             SCHEDULED_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY),
+            AGENTS_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.AGENTS_WORKER_CONCURRENCY),
             LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
             LOG_PRETTY: system.getOrThrow(AppSystemProp.LOG_PRETTY),
             ENVIRONMENT: system.getOrThrow(AppSystemProp.ENVIRONMENT),
@@ -48,6 +47,7 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
             LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
             LOKI_URL: system.get(AppSystemProp.LOKI_URL),
             LOKI_USERNAME: system.get(AppSystemProp.LOKI_USERNAME),
+            OTEL_ENABLED: system.get(AppSystemProp.OTEL_ENABLED) === 'true',
             PUBLIC_URL: await domainHelper.getPublicUrl({
                 path: '',
             }),

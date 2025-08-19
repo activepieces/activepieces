@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { pipedriveApiCall, pipedrivePaginatedApiCall } from '.';
+import { pipedriveApiCall, pipedrivePaginatedV1ApiCall, pipedrivePaginatedV2ApiCall } from '.';
 import { pipedriveAuth } from '../../index';
 import {
 	DropdownOption,
@@ -9,7 +9,14 @@ import {
 } from '@activepieces/pieces-framework';
 import { GetField, StageWithPipelineInfo } from './types';
 import { isNil } from '@activepieces/shared';
+import { context } from '@opentelemetry/api';
 
+/**
+ * Fetches options for Pipedrive filters.
+ * @param auth Pipedrive authentication.
+ * @param type The type of object for the filter (e.g., 'deals', 'people', 'org').
+ * @returns Dropdown options for filters.
+ */
 export async function fetchFiltersOptions(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 	type: string,
@@ -18,7 +25,7 @@ export async function fetchFiltersOptions(
 		accessToken: auth.access_token,
 		apiDomain: auth.data['api_domain'],
 		method: HttpMethod.GET,
-		resourceUri: '/filters',
+		resourceUri: '/v1/filters',
 		query: {
 			type: type,
 		},
@@ -35,78 +42,11 @@ export async function fetchFiltersOptions(
 	return options;
 }
 
-export async function fetchProductsOptions(
-	auth: PiecePropValueSchema<typeof pipedriveAuth>,
-): Promise<DropdownOption<number>[]> {
-	const products = await pipedrivePaginatedApiCall<{ id: number; name: string }>({
-		accessToken: auth.access_token,
-		apiDomain: auth.data['api_domain'],
-		method: HttpMethod.GET,
-		resourceUri: '/products',
-		query: {
-			sort: 'update_time DESC',
-		},
-	});
-
-	const options: DropdownOption<number>[] = [];
-	for (const product of products) {
-		options.push({
-			label: product.name,
-			value: product.id,
-		});
-	}
-
-	return options;
-}
-
-export async function fetchDealsOptions(
-	auth: PiecePropValueSchema<typeof pipedriveAuth>,
-): Promise<DropdownOption<number>[]> {
-	const deals = await pipedrivePaginatedApiCall<{ id: number; title: string }>({
-		accessToken: auth.access_token,
-		apiDomain: auth.data['api_domain'],
-		method: HttpMethod.GET,
-		resourceUri: '/deals',
-		query: {
-			sort: 'update_time DESC',
-		},
-	});
-
-	const options: DropdownOption<number>[] = [];
-	for (const deal of deals) {
-		options.push({
-			label: deal.title,
-			value: deal.id,
-		});
-	}
-
-	return options;
-}
-
-export async function fetchLeadsOptions(
-	auth: PiecePropValueSchema<typeof pipedriveAuth>,
-): Promise<DropdownOption<number>[]> {
-	const leads = await pipedrivePaginatedApiCall<{ id: number; title: string }>({
-		accessToken: auth.access_token,
-		apiDomain: auth.data['api_domain'],
-		method: HttpMethod.GET,
-		resourceUri: '/leads',
-		query: {
-			sort: 'update_time DESC',
-		},
-	});
-
-	const options: DropdownOption<number>[] = [];
-	for (const lead of leads) {
-		options.push({
-			label: lead.title,
-			value: lead.id,
-		});
-	}
-
-	return options;
-}
-
+/**
+ * Fetches options for Pipedrive activity types.
+ * @param auth Pipedrive authentication.
+ * @returns Dropdown options for activity types.
+ */
 export async function fetchActivityTypesOptions(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 ): Promise<DropdownOption<string>[]> {
@@ -116,7 +56,7 @@ export async function fetchActivityTypesOptions(
 		accessToken: auth.access_token,
 		apiDomain: auth.data['api_domain'],
 		method: HttpMethod.GET,
-		resourceUri: '/activityTypes:(key_string,name)',
+		resourceUri: '/v1/activityTypes',
 	});
 
 	const options: DropdownOption<string>[] = [];
@@ -130,27 +70,36 @@ export async function fetchActivityTypesOptions(
 	return options;
 }
 
+/**
+ * Fetches options for Pipedrive pipelines.
+ * @param auth Pipedrive authentication.
+ * @returns Dropdown options for pipelines.
+ */
 export async function fetchPipelinesOptions(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 ): Promise<DropdownOption<number>[]> {
-	const pipelines = await pipedriveApiCall<{ data: Array<{ id: number; name: string }> }>({
+	const pipelines = await pipedrivePaginatedV2ApiCall<{ id: number; name: string }>({
 		accessToken: auth.access_token,
 		apiDomain: auth.data['api_domain'],
 		method: HttpMethod.GET,
-		resourceUri: '/pipelines:(id,name)',
+		resourceUri: '/v2/pipelines',
 	});
 
 	const options: DropdownOption<number>[] = [];
-	for (const pipeline of pipelines.data) {
+	for (const pipeline of pipelines) {
 		options.push({
 			label: pipeline.name,
 			value: pipeline.id,
 		});
 	}
-
 	return options;
 }
 
+/**
+ * Fetches options for Pipedrive persons.
+ * @param auth Pipedrive authentication.
+ * @returns Dropdown options for persons.
+ */
 export async function fetchPersonsOptions(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 ): Promise<DropdownOption<number>[]> {
@@ -158,9 +107,10 @@ export async function fetchPersonsOptions(
 		accessToken: auth.access_token,
 		apiDomain: auth.data['api_domain'],
 		method: HttpMethod.GET,
-		resourceUri: '/persons:(id,name)',
+		resourceUri: '/v1/persons',
 		query: {
-			sort: 'update_time DESC',
+			sort_by: 'update_time',
+			sort_direction: 'desc',
 		},
 	});
 
@@ -175,6 +125,11 @@ export async function fetchPersonsOptions(
 	return options;
 }
 
+/**
+ * Fetches options for Pipedrive users (owners).
+ * @param auth Pipedrive authentication.
+ * @returns Dropdown options for owners.
+ */
 export async function fetchOwnersOptions(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 ): Promise<DropdownOption<number>[]> {
@@ -182,10 +137,7 @@ export async function fetchOwnersOptions(
 		accessToken: auth.access_token,
 		apiDomain: auth.data['api_domain'],
 		method: HttpMethod.GET,
-		resourceUri: '/users:(id,email)',
-		query: {
-			sort: 'update_time DESC',
-		},
+		resourceUri: '/v1/users:(id,email)',
 	});
 
 	const options: DropdownOption<number>[] = [];
@@ -199,34 +151,16 @@ export async function fetchOwnersOptions(
 	return options;
 }
 
-export async function fetchOrganizationsOptions(
-	auth: PiecePropValueSchema<typeof pipedriveAuth>,
-): Promise<DropdownOption<number>[]> {
-	const organizations = await pipedrivePaginatedApiCall<{ id: number; name: string }>({
-		accessToken: auth.access_token,
-		apiDomain: auth.data['api_domain'],
-		method: HttpMethod.GET,
-		resourceUri: '/organizations:(id,name)',
-		query: {
-			sort: 'update_time DESC',
-		},
-	});
-
-	const options: DropdownOption<number>[] = [];
-	for (const org of organizations) {
-		options.push({
-			label: org.name,
-			value: org.id,
-		});
-	}
-
-	return options;
-}
-
+/**
+ * Creates a property definition for a custom field based on its Pipedrive field type.
+ * @param property The Pipedrive custom field definition.
+ * @returns A Property.ShortText, Property.LongText, Property.StaticDropdown, Property.StaticMultiSelectDropdown, or Property.Number.
+ */
 export function createPropertyDefinition(property: GetField) {
 	switch (property.field_type) {
 		case 'varchar':
 		case 'varchar_auto':
+		case 'phone':
 			return Property.ShortText({
 				displayName: property.name,
 				required: false,
@@ -247,7 +181,7 @@ export function createPropertyDefinition(property: GetField) {
 						? property.options.map((option) => {
 								return {
 									label: option.label,
-									value: option.id.toString(),
+									value: option.id,
 								};
 						  })
 						: [],
@@ -263,7 +197,7 @@ export function createPropertyDefinition(property: GetField) {
 						? property.options.map((option) => {
 								return {
 									label: option.label,
-									value: option.id.toString(),
+									value: option.id,
 								};
 						  })
 						: [],
@@ -300,6 +234,12 @@ export function createPropertyDefinition(property: GetField) {
 	}
 }
 
+/**
+ * Retrieves custom properties for a given Pipedrive object type.
+ * @param auth Pipedrive authentication.
+ * @param objectType The type of object (e.g., 'person', 'deal', 'organization', 'product', 'lead').
+ * @returns Dynamic properties for custom fields.
+ */
 export async function retrieveObjectCustomProperties(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 	objectType: string,
@@ -308,21 +248,21 @@ export async function retrieveObjectCustomProperties(
 
 	switch (objectType) {
 		case 'person':
-			endpoint = '/personFields';
+			endpoint = '/v1/personFields';
 			break;
 		case 'deal':
 		case 'lead':
-			endpoint = '/dealFields';
+			endpoint = '/v1/dealFields';
 			break;
 		case 'organization':
-			endpoint = '/organizationFields';
+			endpoint = '/v1/organizationFields';
 			break;
 		case 'product':
-			endpoint = '/productFields';
+			endpoint = '/v1/productFields';
 			break;
 	}
 
-	const customFields = await pipedrivePaginatedApiCall<GetField>({
+	const customFields = await pipedrivePaginatedV1ApiCall<GetField>({
 		accessToken: auth.access_token,
 		apiDomain: auth.data['api_domain'],
 		method: HttpMethod.GET,
@@ -343,6 +283,10 @@ export async function retrieveObjectCustomProperties(
 	return props;
 }
 
+/**
+ * Property definition for selecting a search field for an object type.
+ * @param objectType The type of object (e.g., 'deal', 'person').
+ */
 export const searchFieldProp = (objectType: string) =>
 	Property.Dropdown({
 		displayName: 'Field to search by',
@@ -362,21 +306,21 @@ export const searchFieldProp = (objectType: string) =>
 
 			switch (objectType) {
 				case 'person':
-					endpoint = '/personFields';
+					endpoint = '/v1/personFields';
 					break;
 				case 'deal':
 				case 'lead':
-					endpoint = '/dealFields';
+					endpoint = '/v1/dealFields';
 					break;
 				case 'organization':
-					endpoint = '/organizationFields';
+					endpoint = '/v1/organizationFields';
 					break;
 				case 'product':
-					endpoint = '/productFields';
+					endpoint = '/v1/productFields';
 					break;
 			}
 
-			const response = await pipedrivePaginatedApiCall<GetField>({
+			const response = await pipedrivePaginatedV1ApiCall<GetField>({
 				accessToken: authValue.access_token,
 				apiDomain: authValue.data['api_domain'],
 				method: HttpMethod.GET,
@@ -389,7 +333,7 @@ export const searchFieldProp = (objectType: string) =>
 				if (!isNil(field.id)) {
 					options.push({
 						label: field.name,
-						value: field.id,
+						value: field.id.toString(),
 					});
 				}
 			}
@@ -401,6 +345,11 @@ export const searchFieldProp = (objectType: string) =>
 		},
 	});
 
+/**
+ * Property definition for the value of a search field.
+ * Dynamically renders based on the selected searchField's type.
+ * @param objectType The type of object (e.g., 'deal', 'person').
+ */
 export const searchFieldValueProp = (objectType: string) =>
 	Property.DynamicProperties({
 		displayName: 'Field Value',
@@ -416,17 +365,17 @@ export const searchFieldValueProp = (objectType: string) =>
 
 			switch (objectType) {
 				case 'person':
-					endpoint = '/personFields';
+					endpoint = '/v1/personFields';
 					break;
 				case 'deal':
 				case 'lead':
-					endpoint = '/dealFields';
+					endpoint = '/v1/dealFields';
 					break;
 				case 'organization':
-					endpoint = '/organizationFields';
+					endpoint = '/v1/organizationFields';
 					break;
 				case 'product':
-					endpoint = '/productFields';
+					endpoint = '/v1/productFields';
 					break;
 			}
 
@@ -465,19 +414,6 @@ export const searchFieldValueProp = (objectType: string) =>
 				});
 			}
 			return props;
-		},
-	});
-
-export const customFieldsProp = (objectType: string) =>
-	Property.DynamicProperties({
-		displayName: 'Custom Fields',
-		refreshers: [],
-		required: false,
-		props: async ({ auth }) => {
-			if (!auth) return {};
-
-			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			return await retrieveObjectCustomProperties(authValue, objectType);
 		},
 	});
 
@@ -528,26 +464,10 @@ export const filterIdProp = (type: string, required = false) =>
 	});
 
 export const organizationIdProp = (required = false) =>
-	Property.Dropdown({
-		displayName: 'Organization',
-		refreshers: [],
+	Property.Number({
+		displayName: 'Organization ID',
+		description: 'You can use Find Organization action to retrieve org ID.',
 		required,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account.',
-				};
-			}
-			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			const options = await fetchOrganizationsOptions(authValue);
-
-			return {
-				disabled: false,
-				options,
-			};
-		},
 	});
 
 export const dealPipelineIdProp = (required = false) =>
@@ -589,17 +509,18 @@ export const dealStageIdProp = (required = false) =>
 			}
 
 			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			const response = await pipedrivePaginatedApiCall<StageWithPipelineInfo>({
+
+			const response = await pipedrivePaginatedV2ApiCall<StageWithPipelineInfo>({
 				accessToken: authValue.access_token,
 				apiDomain: authValue.data['api_domain'],
 				method: HttpMethod.GET,
-				resourceUri: '/stages',
+				resourceUri: '/v2/stages',
 			});
 
 			const options: DropdownOption<number>[] = [];
 			for (const stage of response) {
 				options.push({
-					label: `${stage.name} (${stage.pipeline_name})`,
+					label: `${stage.name}`,
 					value: stage.id,
 				});
 			}
@@ -612,26 +533,10 @@ export const dealStageIdProp = (required = false) =>
 	});
 
 export const personIdProp = (required = false) =>
-	Property.Dropdown({
-		displayName: 'Person',
-		refreshers: [],
+	Property.Number({
+		displayName: 'Person ID',
+		description: 'You can use Find Person action to retrieve person ID.',
 		required,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account.',
-				};
-			}
-			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			const options = await fetchPersonsOptions(authValue);
-
-			return {
-				disabled: false,
-				options,
-			};
-		},
 	});
 
 export const labelIdsProp = (objectType: string, labelFieldName: string, required = false) =>
@@ -653,27 +558,29 @@ export const labelIdsProp = (objectType: string, labelFieldName: string, require
 
 			switch (objectType) {
 				case 'person':
-					endpoint = '/personFields:(key,name,options)';
+					endpoint = '/v1/personFields';
 					break;
 				case 'deal':
-					endpoint = '/dealFields:(key,name,options)';
+					endpoint = '/v1/dealFields';
 					break;
 				case 'organization':
-					endpoint = '/organizationFields:(key,name,options)';
+					endpoint = '/v1/organizationFields';
 					break;
 			}
 
-			const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+			const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 				accessToken: authValue.access_token,
 				apiDomain: authValue.data['api_domain'],
 				method: HttpMethod.GET,
 				resourceUri: endpoint,
 			});
 
+			// Find the specific label field within the custom fields response
 			const labelField = customFieldsResponse.find((field) => field.key === labelFieldName);
 			const options: DropdownOption<number>[] = [];
-			if (labelField) {
-				for (const option of labelField.options ?? []) {
+
+			if (labelField && labelField.options) {
+				for (const option of labelField.options) {
 					options.push({
 						label: option.label,
 						value: option.id,
@@ -688,7 +595,7 @@ export const labelIdsProp = (objectType: string, labelFieldName: string, require
 		},
 	});
 
-export const leadlabeIdsProp = (required = false) =>
+export const leadLabelIdsProp = (required = false) =>
 	Property.MultiSelectDropdown({
 		displayName: 'Label',
 		required,
@@ -702,17 +609,18 @@ export const leadlabeIdsProp = (required = false) =>
 				};
 			}
 			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			const customFieldsResponse = await pipedriveApiCall<{
+
+			const leadLabelsResponse = await pipedriveApiCall<{
 				data: Array<{ id: string; name: string; color: string }>;
 			}>({
 				accessToken: authValue.access_token,
 				apiDomain: authValue.data['api_domain'],
 				method: HttpMethod.GET,
-				resourceUri: '/leadLabels',
+				resourceUri: '/v1/leadLabels',
 			});
 
 			const options: DropdownOption<string>[] = [];
-			for (const option of customFieldsResponse.data) {
+			for (const option of leadLabelsResponse.data) {
 				options.push({
 					label: `${option.name} (${option.color})`,
 					value: option.id,
@@ -726,52 +634,16 @@ export const leadlabeIdsProp = (required = false) =>
 		},
 	});
 
-export const dealIdProp = (required = false) =>
-	Property.Dropdown({
-		displayName: 'Deal',
-		refreshers: [],
-		required,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account.',
-				};
-			}
-			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			const options = await fetchDealsOptions(authValue);
-
-			return {
-				disabled: false,
-				options,
-			};
-		},
-	});
-
 export const productIdProp = (required = false) =>
-	Property.Dropdown({
-		displayName: 'Product',
-		refreshers: [],
+	Property.Number({
+		displayName: 'Product ID',
+		description: 'You can use Find Product action to retrieve product ID.',
 		required,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account.',
-				};
-			}
-			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			const options = await fetchProductsOptions(authValue);
-
-			return {
-				disabled: false,
-				options,
-			};
-		},
 	});
 
+/**
+ * Property definition for 'Visible To' setting.
+ */
 export const visibleToProp = Property.StaticDropdown({
 	displayName: 'Visible To',
 	required: false,
@@ -779,11 +651,11 @@ export const visibleToProp = Property.StaticDropdown({
 		disabled: false,
 		options: [
 			{
-				label: 'Item Owner',
+				label: 'Owner & followers',
 				value: 1,
 			},
 			{
-				label: 'All Users',
+				label: 'Entire company',
 				value: 3,
 			},
 		],
@@ -791,26 +663,9 @@ export const visibleToProp = Property.StaticDropdown({
 });
 
 export const leadIdProp = (required = false) =>
-	Property.Dropdown({
-		displayName: 'Lead',
-		refreshers: [],
+	Property.ShortText({
+		displayName: 'Lead ID',
 		required,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account.',
-				};
-			}
-			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			const options = await fetchLeadsOptions(authValue);
-
-			return {
-				disabled: false,
-				options,
-			};
-		},
 	});
 
 export const activityTypeIdProp = (required = false) =>
@@ -834,6 +689,13 @@ export const activityTypeIdProp = (required = false) =>
 				options,
 			};
 		},
+	});
+
+export const dealIdProp = (required = false) =>
+	Property.Number({
+		displayName: 'Deal ID',
+		description: 'You can use Find Deal action to retrieve deal ID.',
+		required,
 	});
 
 export const dealCommonProps = {
@@ -888,24 +750,27 @@ export const dealCommonProps = {
 	dealValueCurrency: Property.ShortText({
 		displayName: 'Currency',
 		required: false,
-		description: 'Please enter currency code.',
+		description: 'Please enter currency code (e.g., "USD", "EUR").',
 	}),
 	visibleTo: visibleToProp,
 	customfields: customFieldsProp('deal'),
 };
 
+/**
+ * Common properties for Lead actions.
+ */
 export const leadCommonProps = {
 	ownerId: ownerIdProp('Owner', false),
 	organizationId: organizationIdProp(false),
 	personId: personIdProp(false),
-	labelIds: leadlabeIdsProp(false),
+	labelIds: leadLabelIdsProp(false),
 	expectedCloseDate: Property.DateTime({
 		displayName: 'Expected Close Date',
 		required: false,
 		description: 'Please enter date in YYYY-MM-DD format.',
 	}),
 	visibleTo: visibleToProp,
-	channel: Property.MultiSelectDropdown({
+	channel: Property.Dropdown({
 		displayName: 'Channel',
 		required: false,
 		refreshers: [],
@@ -918,11 +783,11 @@ export const leadCommonProps = {
 				};
 			}
 			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+			const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 				accessToken: authValue.access_token,
 				apiDomain: authValue.data['api_domain'],
 				method: HttpMethod.GET,
-				resourceUri: '/dealFields:(key,name,options)',
+				resourceUri: '/v1/dealFields:(key,name,options)',
 			});
 
 			const channelField = customFieldsResponse.find((field) => field.key === 'channel');
@@ -943,17 +808,20 @@ export const leadCommonProps = {
 		},
 	}),
 	leadValue: Property.Number({
-		displayName: 'Lead Value',
+		displayName: 'Lead Value Amount',
 		required: false,
 	}),
 	leadValueCurrency: Property.ShortText({
 		displayName: 'Lead Value Currency',
 		required: false,
-		description: 'Please enter currency code.',
+		description: 'The currency of the lead value (e.g., "USD", "EUR").',
 	}),
 	customfields: customFieldsProp('lead'),
 };
 
+/**
+ * Common properties for Organization actions.
+ */
 export const organizationCommonProps = {
 	ownerId: ownerIdProp('Owner', false),
 	visibleTo: visibleToProp,
@@ -1035,14 +903,14 @@ export const activityCommonProps = {
 	duration: Property.ShortText({
 		displayName: 'Duration',
 		required: false,
-		description: 'Please enter time in HH:MM format.',
+		description: 'Please enter time in HH:MM format (e.g., "01:30" for 1 hour 30 minutes).',
 	}),
-	idDone: Property.Checkbox({
+	isDone: Property.Checkbox({
 		displayName: 'Mark as Done?',
 		required: false,
 		defaultValue: false,
 	}),
-	isBusy: Property.StaticDropdown({
+	busy: Property.StaticDropdown({
 		displayName: 'Free or Busy',
 		required: false,
 		options: {
@@ -1068,3 +936,17 @@ export const activityCommonProps = {
 		required: false,
 	}),
 };
+
+// Helper function for custom fields property definition
+export function customFieldsProp(objectType: string) {
+	return Property.DynamicProperties({
+		displayName: 'Custom Fields',
+		required: false,
+		refreshers: [],
+		props: async ({ auth }) => {
+			if (!auth) return {};
+			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
+			return await retrieveObjectCustomProperties(authValue, objectType);
+		},
+	});
+}

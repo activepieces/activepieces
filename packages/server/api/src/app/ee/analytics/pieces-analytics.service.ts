@@ -1,8 +1,8 @@
-import { ActionType, FlowStatus, flowStructureUtil, isNil, PieceAction, PieceTrigger, TriggerType } from '@activepieces/shared'
+import { FlowActionType, FlowStatus, flowStructureUtil, FlowTriggerType, isNil, PieceAction, PieceTrigger } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { FlowEntity } from '../../flows/flow/flow.entity'
-import { FlowVersionEntity } from '../../flows/flow-version/flow-version-entity'
+import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
@@ -10,7 +10,6 @@ import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 
 const flowRepo = repoFactory(FlowEntity)
-const flowVersionRepo = repoFactory(FlowVersionEntity)
 
 export const piecesAnalyticsService = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
@@ -28,15 +27,13 @@ export const piecesAnalyticsService = (log: FastifyBaseLogger) => ({
                 if (isNil(flow) || isNil(publishedVersionId)) {
                     continue
                 }
-                const flowVersion = await flowVersionRepo().findOneBy({
-                    id: publishedVersionId,
-                })
+                const flowVersion = await flowVersionService(log).getOne(publishedVersionId)
                 if (isNil(flowVersion)) {
                     continue
                 }
                 const pieces = flowStructureUtil.getAllSteps(flowVersion.trigger).filter(
                     (step) =>
-                        step.type === ActionType.PIECE || step.type === TriggerType.PIECE,
+                        step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE,
                 ).map((step) => {
                     const clonedStep = step as (PieceTrigger | PieceAction)
                     return {

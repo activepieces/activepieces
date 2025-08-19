@@ -27,13 +27,16 @@ describe('Audit Event API', () => {
     describe('List Audit event API', () => {
         it('should list audit events', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
-            const { mockOwner: mockUserTwo, mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup()
-
-
-            await databaseConnection().getRepository('platform').update(mockPlatformOne.id, {
-                auditLogEnabled: true,
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup({
+                plan: {
+                    auditLogEnabled: true,
+                },
             })
+            const { mockOwner: mockUserTwo, mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup({
+               
+            })
+
+
             const testToken1 = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,

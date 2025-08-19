@@ -23,6 +23,7 @@ import { lookupTableColumnAction } from './lib/actions/lookup-table-column';
 import { updateRowAction } from './lib/actions/update-row';
 import { excelCommon } from './lib/common/common';
 import { readNewRows } from './lib/trigger/new-row-added';
+import { createWorkbook } from './lib/actions/create-workbook';
 
 export const excelAuth = PieceAuth.OAuth2({
   description: 'Authentication for Microsoft Excel 365',
@@ -30,6 +31,7 @@ export const excelAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
   required: true,
   scope: ['Files.ReadWrite', 'offline_access'],
+  prompt: 'omit'
 });
 
 export const microsoftExcel = createPiece({
@@ -58,6 +60,7 @@ export const microsoftExcel = createPiece({
     lookupTableColumnAction,
     appendTableRowsAction,
     convertToRangeAction,
+    createWorkbook,
     createCustomApiCallAction({
       baseUrl: () => excelCommon.baseUrl,
       auth: excelAuth,

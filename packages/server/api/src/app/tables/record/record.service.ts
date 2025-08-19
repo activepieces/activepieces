@@ -10,8 +10,6 @@ import {
     Field,
     Filter,
     FilterOperator,
-    GetFlowVersionForWorkerRequestType,
-
     isNil,
     PopulatedRecord,
     SeekPage,
@@ -23,6 +21,7 @@ import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { system } from '../../helper/system/system'
+import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
 import { fieldService } from '../field/field.service'
@@ -30,86 +29,64 @@ import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
 
+const MAX_BATCH_SIZE = 50
+
 const recordRepo = repoFactory(RecordEntity)
 const cellsRepo = repoFactory(CellEntity)
+
 export const recordService = {
     async create({
         request,
         projectId,
     }: CreateParams): Promise<PopulatedRecord[]> {
         await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
-        return transaction(async (entityManager: EntityManager) => {
-            const existingFields = await entityManager
-                .getRepository(FieldEntity)
-                .find({
-                    where: { tableId: request.tableId, projectId },
-                })
+        const existingFields = await fieldService.getAll({
+            tableId: request.tableId,
+            projectId,
+        })
 
-            const validRecords = request.records.map((recordData) =>
-                recordData.filter((cellData) =>
-                    existingFields.some((field) => field.id === cellData.fieldId),
-                ),
-            )
-            // to avoid sql query text limit
-            const batches = chunk(validRecords, 50)
+        const validRecords = request.records.map((recordData) =>
+            recordData.filter((cellData) =>
+                existingFields.some((field) => field.id === cellData.fieldId),
+            ),
+        )
+
+        let insertedRecordIds: string[] = []
+        insertedRecordIds = await transaction(async (entityManager: EntityManager) => {
+            const batches = chunk(validRecords, MAX_BATCH_SIZE)
             const records: RecordSchema[] = []
+            const insertedRecordIds: string[] = []
+
             for (const batch of batches) {
                 const now = new Date(new Date().getTime() + records.length)
-                const recordInsertions = batch.map((_, index) => {
-                    const created = new Date(now.getTime() + index).toISOString()
-                    return {
-                        tableId: request.tableId,
-                        projectId,
-                        created,
-                        id: apId(),
-                    }
-                })
+                const recordInsertions = prepareRecordInsertions(batch, request.tableId, projectId, now)
                 await entityManager.getRepository(RecordEntity).insert(recordInsertions)
 
-                // Prepare cells for insertion
-                const cellInsertions = batch.flatMap((recordData, index) =>
-                    recordData.map((cellData) => {
-                        return {
-                            recordId: recordInsertions[index].id,
-                            fieldId: cellData.fieldId,
-                            projectId,
-                            value: cellData.value,
-                            id: apId(),
-                        }
-                    }),
-                )
-
+                const cellInsertions = prepareCellInsertions(batch, recordInsertions, projectId)
                 await entityManager.getRepository(CellEntity).insert(cellInsertions)
 
-                // Fetch and return fully populated records
-                const insertedRecordIds = recordInsertions.map((r) => r.id)
-                const result = await entityManager
-                    .getRepository(RecordEntity)
-                    .find({
-                        where: {
-                            id: In(insertedRecordIds),
-                            tableId: request.tableId,
-                            projectId,
-                        },
-                        relations: ['cells'],
-                        order: {
-                            created: 'ASC',
-                        },
-                    })
-                records.push(...result)
+                insertedRecordIds.push(...recordInsertions.map((r) => r.id))
             }
-            return formatRecordsAndFetchField({ records, tableId: request.tableId, projectId })
-          
-        
+
+            return insertedRecordIds
         })
+
+        const insertedRecords = await recordRepo().find({
+            where: { id: In(insertedRecordIds), tableId: request.tableId, projectId },
+            relations: ['cells'],
+            order: {
+                created: 'ASC',
+            },
+        })
+        return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId })
     },
 
     async list({
         tableId,
         projectId,
         filters,
+        limit,
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-       
         const fields = await fieldService.getAll({
             tableId,
             projectId,
@@ -135,13 +112,24 @@ export const recordService = {
             record.cells = cells.filter((cell) => cell.recordId === record.id)
         })
         const filteredOutRecords = records.filter((record) => {
-            return record.cells.every((cell) => doesCellValueMatchFilters(cell, filters ?? []))
+            if (!filters || filters.length === 0) {
+                return true
+            }
+
+            const relevantCells = record.cells.filter(cell => 
+                filters.some(filter => filter.fieldId === cell.fieldId),
+            )
+
+            if (relevantCells.length === 0) {
+                return false
+            }
+            return relevantCells.every((cell) => doesCellValueMatchFilters(cell, filters))
         })
-       
+
         const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId })
-    
+
         return {
-            data: populatedRecords,
+            data: populatedRecords.slice(0, limit),
             next: null,
             previous: null,
         }
@@ -264,17 +252,17 @@ export const recordService = {
             where: { id: In(ids), projectId, tableId: firstRecord.tableId },
             relations: ['cells'],
         })
-        
+
         await recordRepo().delete({
             id: In(ids),
             projectId,
             tableId: firstRecord.tableId,
         })
-     
+
         if (records.length === 0) {
             return []
         }
-       
+
         return formatRecordsAndFetchField({ records, tableId: firstRecord.tableId, projectId })
     },
 
@@ -299,7 +287,7 @@ export const recordService = {
             return webhookService.handleWebhook({
                 async: true,
                 flowId: webhook.flowId,
-                flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                 saveSampleData: false,
                 data: async (_projectId: string) => ({
                     method: 'POST',
@@ -311,6 +299,7 @@ export const recordService = {
                 }),
                 execute: true,
                 logger,
+                failParentOnFailure: true,
             })
         }))
     },
@@ -325,7 +314,8 @@ export const recordService = {
         if (countRes + insertCount > system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
-                params: { message: `Max records per table reached: ${system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)}`,
+                params: {
+                    message: `Max records per table reached: ${system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)}`,
                 },
             })
         }
@@ -335,6 +325,7 @@ export const recordService = {
 type CreateParams = {
     request: CreateRecordsRequest
     projectId: string
+    logger: FastifyBaseLogger
 }
 
 type ListParams = {
@@ -374,8 +365,55 @@ type CountParams = {
     tableId: string
 }
 
+type RecordInsertion = {
+    id: string
+    tableId: string
+    projectId: string
+    created: string
+}
 
+type CellInsertion = {
+    id: string
+    recordId: string
+    fieldId: string
+    projectId: string
+    value: string
+}
 
+function prepareRecordInsertions(
+    records: Array<Array<{ fieldId: string, value: string }>>,
+    tableId: string,
+    projectId: string,
+    baseDate: Date,
+): RecordInsertion[] {
+    return records.map((_, index) => {
+        const created = new Date(baseDate.getTime() + index).toISOString()
+        return {
+            tableId,
+            projectId,
+            created,
+            id: apId(),
+        }
+    })
+}
+
+function prepareCellInsertions(
+    records: Array<Array<{ fieldId: string, value: string }>>,
+    recordInsertions: RecordInsertion[],
+    projectId: string,
+): CellInsertion[] {
+    return records.flatMap((recordData, index) =>
+        recordData.map((cellData) => {
+            return {
+                recordId: recordInsertions[index].id,
+                fieldId: cellData.fieldId,
+                projectId,
+                value: cellData.value,
+                id: apId(),
+            }
+        }),
+    )
+}
 
 async function formatRecordsAndFetchField({ records, tableId, projectId }: { records: RecordSchema[], tableId: string, projectId: string }): Promise<PopulatedRecord[]> {
     const fields = await fieldService.getAll({
@@ -400,56 +438,53 @@ function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecor
                     updated: cell.updated,
                     created: cell.created,
                 }
-                return acc  
+                return acc
             }, {}),
         }
     })
 }
 
-
 function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
     if (filters.length === 0) {
         return true
     }
-    const filtersForCellFields = filters.filter((filter) => filter.fieldId === cell.fieldId)
-    if (filtersForCellFields.length === 0) {
-        return true
-    }
-    return filtersForCellFields.every((filter) => {
+    return filters.every((filter) => {
+        if (filter.fieldId !== cell.fieldId) {
+            return true
+        }
         if (filter.operator === undefined) {
             return true
         }
         switch (filter.operator) {
-            case FilterOperator.EQ:{
+            case FilterOperator.EQ: {
                 return cell.value === filter.value
             }
-            case FilterOperator.NEQ:{
+            case FilterOperator.NEQ: {
                 return cell.value !== filter.value
             }
-            case FilterOperator.GT:{
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue })=> cellValue > filterValue })
+            case FilterOperator.GT: {
+                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue > filterValue })
             }
-            case FilterOperator.GTE:{
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue })=> cellValue >= filterValue })
+            case FilterOperator.GTE: {
+                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue >= filterValue })
             }
-            case FilterOperator.LT:{
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue })=> cellValue < filterValue })          
+            case FilterOperator.LT: {
+                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue < filterValue })
             }
-            case FilterOperator.LTE:{
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue })=> cellValue <= filterValue })
+            case FilterOperator.LTE: {
+                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue <= filterValue })
             }
-            case FilterOperator.CO:{
+            case FilterOperator.CO: {
                 if (typeof cell.value === 'string') {
                     return cell.value.toLowerCase().includes(filter.value.toLowerCase())
                 }
                 return false
             }
-        
+
         }
     })
-   
-}
 
+}
 
 const numberFilterValidator = ({ cellValue, filterValue, cb }: { cellValue: unknown, filterValue: string, cb: ({ cellValue, filterValue }: { cellValue: number, filterValue: number }) => boolean }) => {
     if (typeof cellValue === 'string' || typeof cellValue === 'number') {
@@ -462,3 +497,5 @@ const numberFilterValidator = ({ cellValue, filterValue, cb }: { cellValue: unkn
     }
     return false
 }
+
+

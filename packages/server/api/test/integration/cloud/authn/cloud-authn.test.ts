@@ -7,6 +7,7 @@ import {
     InvitationStatus,
     InvitationType,
     Platform,
+    PlatformPlan,
     PlatformRole,
     Project,
     ProjectRole,
@@ -26,6 +27,7 @@ import {
     CLOUD_PLATFORM_ID,
     createMockCustomDomain,
     createMockPlatform,
+    createMockPlatformPlan,
     createMockProject,
     createMockUserInvitation,
     mockAndSaveBasicSetup,
@@ -52,6 +54,7 @@ beforeEach(async () => {
         sendIssueCreatedNotification: jest.fn(),
         sendQuotaAlert: jest.fn(),
         sendReminderJobHandler: jest.fn(),
+        sendTrialReminder: jest.fn(),
         sendExceedFailureThresholdAlert: jest.fn(),
     }))
 
@@ -78,6 +81,8 @@ describe('Authentication API', () => {
                     platform: {
                         id: CLOUD_PLATFORM_ID,
                         emailAuthEnabled: true,
+                    },
+                    plan: {
                         ssoEnabled: false,
                     },
                 })
@@ -122,21 +127,18 @@ describe('Authentication API', () => {
         })
         it('Fails If the domain is not allowed', async () => {
             // arrange
-            const { mockPlatform, mockCustomDomain } =
+            const { mockCustomDomain } =
                 await createMockPlatformAndDomain({
                     platform: {
-                        id: CLOUD_PLATFORM_ID,
                         emailAuthEnabled: true,
-                        ssoEnabled: false,
+                        enforceAllowedAuthDomains: true,
+
+                        allowedAuthDomains: [],
+
                     },
-                })
-            await databaseConnection()
-                .getRepository('platform')
-                .update(mockPlatform.id, {
-                    enforceAllowedAuthDomains: true,
-                    emailAuthEnabled: true,
-                    allowedAuthDomains: [],
-                    ssoEnabled: true,
+                    plan: {
+                        ssoEnabled: true,
+                    },
                 })
             const mockSignUpRequest = createMockSignUpRequest()
 
@@ -160,6 +162,8 @@ describe('Authentication API', () => {
                 platform: {
                     id: CLOUD_PLATFORM_ID,
                     emailAuthEnabled: true,
+                },
+                plan: {
                     ssoEnabled: false,
                 },
             })
@@ -194,8 +198,10 @@ describe('Authentication API', () => {
                 platform: {
                     id: CLOUD_PLATFORM_ID,
                     emailAuthEnabled: true,
-                    ssoEnabled: false,
                     enforceAllowedAuthDomains: false,
+                },
+                plan: {
+                    ssoEnabled: false,
                 },
             })
 
@@ -237,13 +243,13 @@ describe('Authentication API', () => {
                 mockCustomDomain,
             } = await createMockPlatformAndDomain({
                 platform: {
+                },
+                plan: {
                     ssoEnabled: false,
+                    projectRolesEnabled: true,
                 },
             })
 
-            await databaseConnection().getRepository('platform').update(mockPlatform.id, {
-                projectRolesEnabled: true,
-            })
             const mockProject = createMockProject({
                 ownerId: mockPlatformOwner.id,
                 platformId: mockPlatform.id,
@@ -297,6 +303,8 @@ describe('Authentication API', () => {
                 platform: {
                     emailAuthEnabled: true,
                     enforceAllowedAuthDomains: false,
+                },
+                plan: {
                     ssoEnabled: false,
                 },
             })
@@ -321,7 +329,7 @@ describe('Authentication API', () => {
 
             expect(responseBody?.code).toBe('INVITATION_ONLY_SIGN_UP')
         })
- 
+
     })
 
     describe('Sign in Endpoint', () => {
@@ -332,8 +340,10 @@ describe('Authentication API', () => {
 
             const { mockPlatform, mockCustomDomain } = await createMockPlatformAndDomain({
                 platform: {
-                    ssoEnabled: true,
                     emailAuthEnabled: false,
+                },
+                plan: {
+                    ssoEnabled: true,
                 },
             })
 
@@ -383,6 +393,8 @@ describe('Authentication API', () => {
                     allowedAuthDomains: [mockPlatformDomain],
                     enforceAllowedAuthDomains: true,
                     emailAuthEnabled: true,
+                },
+                plan: {
                     ssoEnabled: true,
                 },
                 domain: {
@@ -430,10 +442,12 @@ describe('Authentication API', () => {
             const mockPassword = 'password'
             const { mockPlatform, mockProject } = await createMockPlatformAndDomain({
                 platform: {
-                    ssoEnabled: false,
-                    embeddingEnabled: false,
                     emailAuthEnabled: true,
                     enforceAllowedAuthDomains: false,
+                },
+                plan: {
+                    embeddingEnabled: false,
+                    ssoEnabled: false,
                 },
             })
             const { mockUser, mockUserIdentity } = await mockBasicUser({
@@ -494,8 +508,10 @@ describe('Authentication API', () => {
                 platform: {
                     id: mockPlatformId,
                     emailAuthEnabled: true,
-                    ssoEnabled: false,
                     enforceAllowedAuthDomains: false,
+                },
+                plan: {
+                    ssoEnabled: false,
                 },
                 domain: {
                     domain: mockPlatformDomain,
@@ -554,9 +570,11 @@ describe('Authentication API', () => {
 
             const { mockPlatform, mockCustomDomain } = await createMockPlatformAndDomain({
                 platform: {
-                    ssoEnabled: true,
                     emailAuthEnabled: true,
                     enforceAllowedAuthDomains: false,
+                },
+                plan: {
+                    ssoEnabled: true,
                 },
             })
             const mockPassword = 'password'
@@ -663,12 +681,17 @@ describe('Authentication API', () => {
 
             const mockPlatform = createMockPlatform({
                 ownerId: mockUser.id,
-                ssoEnabled: false,
-                embeddingEnabled: false,
                 emailAuthEnabled: true,
                 enforceAllowedAuthDomains: false,
             })
             await databaseConnection().getRepository('platform').save(mockPlatform)
+
+            const mockPlatformPlan = createMockPlatformPlan({
+                platformId: mockPlatform.id,
+                ssoEnabled: false,
+            })
+            await databaseConnection().getRepository('platform_plan').save(mockPlatformPlan)
+
             await databaseConnection().getRepository('user').update(mockUser.id, {
                 platformId: mockPlatform.id,
             })
@@ -702,7 +725,7 @@ describe('Authentication API', () => {
     })
 })
 
-async function createMockPlatformAndDomain({ platform, domain }: { platform: Partial<Platform>, domain?: Partial<CustomDomain> }): Promise<{
+async function createMockPlatformAndDomain({ platform, domain, plan }: { platform: Partial<Platform>, domain?: Partial<CustomDomain>, plan?: Partial<PlatformPlan> }): Promise<{
     mockUser: User
     mockPlatform: Platform
     mockCustomDomain: CustomDomain
@@ -718,5 +741,10 @@ async function createMockPlatformAndDomain({ platform, domain }: { platform: Par
     await databaseConnection()
         .getRepository('custom_domain')
         .save(mockCustomDomain)
+    const mockPlatformPlan = createMockPlatformPlan({
+        platformId: mockPlatform.id,
+        ...plan,
+    })
+    await databaseConnection().getRepository('platform_plan').upsert(mockPlatformPlan, ['platformId'])
     return { mockUser: mockOwner, mockPlatform, mockCustomDomain, mockProject }
 }

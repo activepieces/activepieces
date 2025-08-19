@@ -19,6 +19,7 @@ it will produce these values. </Tip>
 | `AP_EXECUTION_MODE`                | You can choose between 'SANDBOXED', 'UNSANDBOXED', 'SANDBOX_CODE_ONLY' as possible values. If you decide to change this, make sure to carefully read https://www.activepieces.com/docs/install/architecture/workers                                                                | `UNSANDBOXED`                                                                  |                                                                        |
 | `AP_FLOW_WORKER_CONCURRENCY`       | The number of different flows can be processed in same time                                                                                                                                                          | `10`                                                                           |
 | `AP_SCHEDULED_WORKER_CONCURRENCY`  | The number of different scheduled flows can be processed in same time                                                                                                                                                | `10`                                                                           |
+| `AP_AGENTS_WORKER_CONCURRENCY`     | The number of different agents can be processed in same time                                                                                                                                                         | `10`                                                                           |
 | `AP_ENCRYPTION_KEY`                | ❗️ Encryption key used for connections is a 32-character (16 bytes) hexadecimal key. You can generate one using the following command: `openssl rand -hex 16`.                                                                                                                                                                              | `None`                                                                         |
 | `AP_EXECUTION_DATA_RETENTION_DAYS` | The number of days to retain execution data, logs and events.                                                                                                                                                        | `30`                                                                         |                                                                        |
 | `AP_FRONTEND_URL`                  | ❗️ Url that will be used to specify redirect url and webhook url. 
@@ -55,6 +56,7 @@ it will produce these values. </Tip>
 | `AP_REDIS_SENTINEL_ROLE`          | The role to connect to, either `master` or `slave`.                                                                                                                                                             | `None` | `master` |
 | `AP_TRIGGER_TIMEOUT_SECONDS`       | Maximum allowed runtime for a trigger to perform polling in seconds                                                                                                                                                                     | `60`                                                                         |                                                                        |
 | `AP_FLOW_TIMEOUT_SECONDS`          | Maximum allowed runtime for a flow to run in seconds                                                                                                                                                                        | `600`                                                                         |                                                                        |
+| `AP_AGENT_TIMEOUT_SECONDS`         | Maximum allowed runtime for an agent to run in seconds                                                                                                                                                                        | `600`                                                                         |                                                                        |
 | `AP_SANDBOX_MEMORY_LIMIT`          | The maximum amount of memory (in kilobytes) that a single sandboxed worker process can use. This helps prevent runaway memory usage in custom code or pieces. If not set, the default is 524288 KB (512 MB).                    | `524288`                                                                         | `1048576`                                                                 |
 | `AP_SANDBOX_PROPAGATED_ENV_VARS`   | Environment variables that will be propagated to the sandboxed code. If you are using it for pieces, we strongly suggests keeping everything in the authentication object to make sure it works across AP instances. | `None`                                                                         |                                                                        |
 | `AP_TELEMETRY_ENABLED`             | Collect telemetry information.                                                                                                                                                                                       | `true`                                                                         |                                                                        |
@@ -76,7 +78,26 @@ it will produce these values. </Tip>
 | `AP_MAX_RECORDS_PER_TABLE`         | The maximum allowed number of records per table                                                                | `1500` | `1500`
 | `AP_MAX_FIELDS_PER_TABLE` |  The maximum allowed number of fields per table  | `15` | `15`
 | `AP_MAX_TABLES_PER_PROJECT` | The maximum allowed number of tables per project | `20` | `20`
-  
+| `AP_MAX_MCPS_PER_PROJECT` | The maximum allowed number of mcp per project | `20` | `20`
+| `AP_ENABLE_FLOW_ON_PUBLISH` | Whether publishing a new flow version should automatically enable the flow | `true` | `false`  
+| `AP_ISSUE_ARCHIVE_DAYS`            | Controls the automatic archival of issues in the system. Issues that have not been updated for this many days will be automatically moved to an archived state.| `14`  | `1`
+| `AP_APP_TITLE` | Initial title shown in the browser tab while loading the app | `Activepieces`  | `Activepieces`
+| `AP_FAVICON_URL` | Initial favicon shown in the browser tab while loading the app | `https://cdn.activepieces.com/brand/favicon.ico` | `https://cdn.activepieces.com/brand/favicon.ico`
+
+### OpenTelemetry Configuration
+
+Activepieces supports both standard OpenTelemetry environment variables and vendor-specific configuration for observability and tracing.
+
+#### OpenTelemetry Environment Variables
+
+| Variable | Description | Default Value | Example |
+|----------|-------------|---------------|---------|
+| `AP_OTEL_ENABLED` | Enable OpenTelemetry tracing | `false` | `true` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP exporter endpoint URL | `None` | `https://your-collector:4317/v1/traces` |
+| `OTEL_EXPORTER_OTLP_HEADERS` | Headers for OTLP exporter (comma-separated key=value pairs) | `None` | `Authorization=Bearer token` |
+
+**Note**: Both `AP_OTEL_ENABLED` and `OTEL_EXPORTER_OTLP_ENDPOINT` must be set for OpenTelemetry to be enabled.
+
 
 <Warning>
   The frontend URL is essential for webhooks and app triggers to work. It must
