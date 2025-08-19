@@ -1,166 +1,243 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { SESClient, SendTemplatedEmailCommand } from '@aws-sdk/client-ses';
 import { amazonSesAuth } from '../../index';
+import {
+  getVerifiedIdentities,
+  getConfigurationSets,
+  getEmailTemplates,
+  createSESClient,
+  validateEmailAddresses,
+  validateRecipientLimits,
+  formatEmailTags,
+  getSESErrorMessage,
+  createIdentityDropdownOptions,
+  createConfigSetDropdownOptions,
+} from '../common/ses-utils';
 
 export const sendTemplatedEmail = createAction({
   auth: amazonSesAuth,
   name: 'send_templated_email',
   displayName: 'Send Templated Email',
-  description:
-    'Send an email replacing the template tags with values using Amazon SES.',
+  description: 'Send personalized emails using pre-created templates',
   props: {
-    fromEmailAddress: Property.ShortText({
-      displayName: 'From Email Address',
+    fromEmailAddress: Property.Dropdown({
+      displayName: 'From Email',
+      description: 'Verified sender email address',
+      required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        const verifiedIdentities = await getVerifiedIdentities(auth as any);
+        return createIdentityDropdownOptions(verifiedIdentities);
+      },
+    }),
+    templateName: Property.Dropdown({
+      displayName: 'Email Template',
+      description: 'Select template to use for this email',
+      required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        const templates = await getEmailTemplates(auth as any);
+
+        if (templates.length === 0) {
+          return {
+            disabled: false,
+            placeholder: 'No templates found. Create a template first.',
+            options: [],
+          };
+        }
+
+        return {
+          disabled: false,
+          options: templates.map((template) => ({
+            label: template,
+            value: template,
+          })),
+        };
+      },
+    }),
+    templateData: Property.Object({
+      displayName: 'Template Variables',
       description:
-        'The email address to use as the "From" address for the email. The address must be verified in SES.',
-      required: true
+        'Data to replace template variables (e.g., {"firstName": "John", "company": "Acme"})',
+      required: true,
     }),
     toAddresses: Property.Array({
-      displayName: 'To Addresses',
-      description: 'Email addresses to send the message to',
-      required: true
+      displayName: 'To',
+      description: 'Recipient email addresses',
+      required: true,
     }),
     ccAddresses: Property.Array({
-      displayName: 'CC Addresses',
-      description: 'Email addresses to carbon copy',
-      required: false
+      displayName: 'CC',
+      description: 'Carbon copy recipients',
+      required: false,
     }),
     bccAddresses: Property.Array({
-      displayName: 'BCC Addresses',
-      description: 'Email addresses to blind carbon copy',
-      required: false
-    }),
-    templateName: Property.ShortText({
-      displayName: 'Template Name',
-      description: 'The name of the email template to use',
-      required: true
-    }),
-    templateData: Property.Json({
-      displayName: 'Template Data',
-      description:
-        'JSON object containing the template variables and their values (e.g., {"name": "John", "company": "Acme Corp"})',
-      required: true
+      displayName: 'BCC',
+      description: 'Blind carbon copy recipients',
+      required: false,
     }),
     replyToAddresses: Property.Array({
-      displayName: 'Reply-To Addresses',
-      description: 'Email addresses for replies',
-      required: false
+      displayName: 'Reply To',
+      description: 'Reply-to email addresses',
+      required: false,
     }),
-    configurationSetName: Property.ShortText({
-      displayName: 'Configuration Set Name',
-      description:
-        'The name of the configuration set to use when sending the email',
-      required: false
+    returnPath: Property.ShortText({
+      displayName: 'Return Path',
+      description: 'Email address for bounce notifications',
+      required: false,
     }),
-    emailTags: Property.Array({
+    configurationSetName: Property.Dropdown({
+      displayName: 'Configuration Set',
+      description: 'SES configuration set for tracking',
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        const configSets = await getConfigurationSets(auth as any);
+        return createConfigSetDropdownOptions(configSets);
+      },
+    }),
+    emailTags: Property.Object({
       displayName: 'Email Tags',
-      description: 'Tags to apply to the email in the format "key=value"',
-      required: false
-    })
+      description: 'Key-value pairs for email tracking and analytics',
+      required: false,
+    }),
+    sourceArn: Property.ShortText({
+      displayName: 'Source ARN',
+      description: 'ARN for sending authorization (advanced)',
+      required: false,
+    }),
+    returnPathArn: Property.ShortText({
+      displayName: 'Return Path ARN',
+      description: 'ARN for return path authorization (advanced)',
+      required: false,
+    }),
   },
   async run(context) {
     const {
       fromEmailAddress,
+      templateName,
+      templateData,
       toAddresses,
       ccAddresses,
       bccAddresses,
-      templateName,
-      templateData,
       replyToAddresses,
+      returnPath,
       configurationSetName,
-      emailTags
+      emailTags,
+      sourceArn,
+      returnPathArn,
     } = context.propsValue;
 
     const { accessKeyId, secretAccessKey, region } = context.auth;
 
-    // Create SES client
-    const sesClient = new SESClient({
-      credentials: {
-        accessKeyId,
-        secretAccessKey
-      },
-      region
-    });
-
-    // Prepare destination addresses
-    const destination = {
-      ToAddresses: Array.isArray(toAddresses)
-        ? (toAddresses as string[])
-        : [toAddresses as string],
-      ...(ccAddresses && ccAddresses.length > 0
-        ? {
-            CcAddresses: Array.isArray(ccAddresses)
-              ? (ccAddresses as string[])
-              : [ccAddresses as string]
-          }
-        : {}),
-      ...(bccAddresses && bccAddresses.length > 0
-        ? {
-            BccAddresses: Array.isArray(bccAddresses)
-              ? (bccAddresses as string[])
-              : [bccAddresses as string]
-          }
-        : {})
-    };
-
-    // Prepare template data as JSON string
-    let templateDataString: string;
-    try {
-      if (typeof templateData === 'string') {
-        // Validate that it's valid JSON
-        JSON.parse(templateData);
-        templateDataString = templateData;
-      } else {
-        templateDataString = JSON.stringify(templateData);
-      }
-    } catch (error) {
-      throw new Error('Template data must be valid JSON format');
+    if (
+      !templateData ||
+      Object.keys(templateData as Record<string, any>).length === 0
+    ) {
+      throw new Error(
+        'Template variables are required. Provide at least one key-value pair.'
+      );
     }
 
-    // Create send templated email command following AWS SDK example structure
+    const validatedToAddresses = validateEmailAddresses(
+      toAddresses as string[],
+      'To addresses'
+    );
+    const validatedCcAddresses = validateEmailAddresses(
+      ccAddresses as string[],
+      'CC addresses'
+    );
+    const validatedBccAddresses = validateEmailAddresses(
+      bccAddresses as string[],
+      'BCC addresses'
+    );
+    const validatedReplyToAddresses = validateEmailAddresses(
+      replyToAddresses as string[],
+      'Reply-to addresses'
+    );
+
+    validateRecipientLimits(
+      validatedToAddresses,
+      validatedCcAddresses,
+      validatedBccAddresses
+    );
+
+    if (
+      returnPath &&
+      !validateEmailAddresses([returnPath], 'Return path').length
+    ) {
+      throw new Error(`Invalid return path email: ${returnPath}`);
+    }
+
+    const sesClient = createSESClient({ accessKeyId, secretAccessKey, region });
+
+    let templateDataString: string;
+    try {
+      templateDataString = JSON.stringify(templateData);
+      JSON.parse(templateDataString);
+    } catch (error) {
+      throw new Error(
+        'Template data must be a valid object with key-value pairs'
+      );
+    }
+
+    const messageTags = formatEmailTags(emailTags as Record<string, string>);
+
     const sendTemplatedEmailCommand = new SendTemplatedEmailCommand({
-      Destination: destination,
-      TemplateData: templateDataString,
       Source: fromEmailAddress,
       Template: templateName,
-      ...(replyToAddresses && replyToAddresses.length > 0
-        ? {
-            ReplyToAddresses: Array.isArray(replyToAddresses)
-              ? (replyToAddresses as string[])
-              : [replyToAddresses as string]
-          }
-        : {}),
-      ...(configurationSetName
-        ? {
-            ConfigurationSetName: configurationSetName
-          }
-        : {}),
-      ...(emailTags && emailTags.length > 0
-        ? {
-            Tags: (emailTags as string[]).map((tag: string) => {
-              const [name, value] = tag.split('=');
-              return { Name: name?.trim(), Value: value?.trim() || '' };
-            })
-          }
-        : {})
+      TemplateData: templateDataString,
+      Destination: {
+        ToAddresses: validatedToAddresses,
+        ...(validatedCcAddresses.length > 0 && {
+          CcAddresses: validatedCcAddresses,
+        }),
+        ...(validatedBccAddresses.length > 0 && {
+          BccAddresses: validatedBccAddresses,
+        }),
+      },
+      ...(validatedReplyToAddresses.length > 0 && {
+        ReplyToAddresses: validatedReplyToAddresses,
+      }),
+      ...(returnPath && { ReturnPath: returnPath }),
+      ...(configurationSetName &&
+        configurationSetName.trim() && {
+          ConfigurationSetName: configurationSetName,
+        }),
+      ...(messageTags && { Tags: messageTags }),
+      ...(sourceArn && { SourceArn: sourceArn }),
+      ...(returnPathArn && { ReturnPathArn: returnPathArn }),
     });
 
     try {
       const response = await sesClient.send(sendTemplatedEmailCommand);
 
+      const totalRecipients =
+        validatedToAddresses.length +
+        validatedCcAddresses.length +
+        validatedBccAddresses.length;
+
       return {
         success: true,
         messageId: response.MessageId,
-        templateName: templateName,
+        message: 'Templated email sent successfully',
+        templateName,
         templateData: JSON.parse(templateDataString),
-        message: 'Templated email sent successfully'
+        recipientCount: totalRecipients,
+        toAddresses: validatedToAddresses,
+        ccAddresses: validatedCcAddresses,
+        bccAddresses: validatedBccAddresses,
+        variablesUsed: Object.keys(templateData as Record<string, any>),
       };
-    } catch (caught) {
-      if (caught instanceof Error && caught.name === 'MessageRejected') {
-        // Following the example pattern for MessageRejected errors
-        return caught;
+    } catch (error: any) {
+      if (error.name === 'TemplateDoesNotExistException') {
+        throw new Error(
+          `Template "${templateName}" does not exist. Please create it first or select a different template.`
+        );
       }
-      throw caught;
+
+      const errorMessage = getSESErrorMessage(error, configurationSetName);
+      throw new Error(errorMessage);
     }
-  }
+  },
 });

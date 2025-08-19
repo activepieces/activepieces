@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.67.2",
+  "version": "0.67.1",
   "rcVersion": "0.67.0-rc.0",
   "scripts": {
     "prepare": "husky install",
@@ -38,7 +38,6 @@
     "@atproto/api": "0.16.0",
     "@authenio/samlify-node-xmllint": "2.0.0",
     "@aws-sdk/client-s3": "3.637.0",
-    "@aws-sdk/client-ses": "3.864.0",
     "@aws-sdk/s3-request-presigner": "3.658.1",
     "@azure/communication-email": "1.0.0",
     "@azure/openai": "1.0.0-beta.11",

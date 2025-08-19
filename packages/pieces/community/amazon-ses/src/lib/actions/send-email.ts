@@ -1,92 +1,114 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  SESClient,
-  SendEmailCommand,
-  SendEmailCommandInput
-} from '@aws-sdk/client-ses';
+import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { amazonSesAuth } from '../../index';
+import {
+  getVerifiedIdentities,
+  getConfigurationSets,
+  createSESClient,
+  validateEmailAddresses,
+  validateRecipientLimits,
+  htmlToText,
+  formatEmailTags,
+  getSESErrorMessage,
+  createIdentityDropdownOptions,
+  createConfigSetDropdownOptions,
+  isValidEmail,
+} from '../common/ses-utils';
 
 export const sendEmail = createAction({
   auth: amazonSesAuth,
   name: 'send_email',
   displayName: 'Send Email',
   description:
-    'Send a fully customizable email via Amazon SES—including sender, subject, body, to/cc/bcc, format, reply-to, and return-path.',
+    'Send a customizable email via Amazon SES with verified sender addresses',
   props: {
-    fromEmailAddress: Property.ShortText({
-      displayName: 'From Email Address',
-      description:
-        'The email address to use as the "From" address for the email. The address must be verified in SES.',
-      required: true
+    fromEmailAddress: Property.Dropdown({
+      displayName: 'From Email',
+      description: 'Verified sender email address',
+      required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        const verifiedIdentities = await getVerifiedIdentities(auth as any);
+        return createIdentityDropdownOptions(verifiedIdentities);
+      },
     }),
     toAddresses: Property.Array({
-      displayName: 'To Addresses',
-      description: 'Email addresses to send the message to',
-      required: true
+      displayName: 'To',
+      description: 'Recipient email addresses',
+      required: true,
     }),
     ccAddresses: Property.Array({
-      displayName: 'CC Addresses',
-      description: 'Email addresses to carbon copy',
-      required: false
+      displayName: 'CC',
+      description: 'Carbon copy recipients',
+      required: false,
     }),
     bccAddresses: Property.Array({
-      displayName: 'BCC Addresses',
-      description: 'Email addresses to blind carbon copy',
-      required: false
+      displayName: 'BCC',
+      description: 'Blind carbon copy recipients',
+      required: false,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
-      description: 'The subject line of the email',
-      required: true
-    }),
-    bodyType: Property.StaticDropdown({
-      displayName: 'Body Type',
-      description: 'Choose whether to send HTML or plain text email',
+      description: 'Email subject line',
       required: true,
+    }),
+    bodyFormat: Property.StaticDropdown({
+      displayName: 'Email Format',
+      description: 'Choose email format',
+      required: true,
+      defaultValue: 'html',
       options: {
         options: [
-          {
-            label: 'HTML',
-            value: 'html'
-          },
-          {
-            label: 'Plain Text',
-            value: 'text'
-          },
-          {
-            label: 'Both HTML and Text',
-            value: 'both'
-          }
-        ]
+          { label: 'HTML', value: 'html' },
+          { label: 'Plain Text', value: 'text' },
+        ],
       },
-      defaultValue: 'html'
     }),
     htmlBody: Property.LongText({
-      displayName: 'HTML Body',
-      description: 'The HTML content of the email body',
-      required: false
+      displayName: 'HTML Content',
+      description: 'HTML email content (auto-generates text version)',
+      required: false,
     }),
     textBody: Property.LongText({
-      displayName: 'Text Body',
-      description: 'The plain text content of the email body',
-      required: false
+      displayName: 'Text Content',
+      description: 'Plain text email content',
+      required: false,
     }),
     replyToAddresses: Property.Array({
-      displayName: 'Reply-To Addresses',
-      description: 'Email addresses for replies',
-      required: false
+      displayName: 'Reply To',
+      description: 'Reply-to email addresses',
+      required: false,
     }),
-    configurationSetName: Property.ShortText({
-      displayName: 'Configuration Set Name',
-      description:
-        'The name of the configuration set to use when sending the email',
-      required: false
+    returnPath: Property.ShortText({
+      displayName: 'Return Path',
+      description: 'Email address for bounce notifications',
+      required: false,
     }),
-    emailTags: Property.Array({
+    configurationSetName: Property.Dropdown({
+      displayName: 'Configuration Set',
+      description: 'SES configuration set for tracking',
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        const configSets = await getConfigurationSets(auth as any);
+        return createConfigSetDropdownOptions(configSets);
+      },
+    }),
+    emailTags: Property.Object({
       displayName: 'Email Tags',
-      description: 'Tags to apply to the email in the format "key=value"',
-      required: false
-    })
+      description: 'Key-value pairs for email tracking and analytics',
+      required: false,
+    }),
+    sourceArn: Property.ShortText({
+      displayName: 'Source ARN',
+      description: 'ARN for sending authorization (advanced)',
+      required: false,
+    }),
+    returnPathArn: Property.ShortText({
+      displayName: 'Return Path ARN',
+      description: 'ARN for return path authorization (advanced)',
+      required: false,
+    }),
   },
   async run(context) {
     const {
@@ -95,121 +117,127 @@ export const sendEmail = createAction({
       ccAddresses,
       bccAddresses,
       subject,
-      bodyType,
+      bodyFormat,
       htmlBody,
       textBody,
       replyToAddresses,
+      returnPath,
       configurationSetName,
-      emailTags
+      emailTags,
+      sourceArn,
+      returnPathArn,
     } = context.propsValue;
 
     const { accessKeyId, secretAccessKey, region } = context.auth;
 
-    // Validate body content based on type
-    if (bodyType === 'html' && !htmlBody) {
-      throw new Error('HTML body is required when body type is HTML');
+    if (bodyFormat === 'html' && !htmlBody) {
+      throw new Error('HTML content is required when using HTML format');
     }
-    if (bodyType === 'text' && !textBody) {
-      throw new Error('Text body is required when body type is plain text');
-    }
-    if (bodyType === 'both' && (!htmlBody || !textBody)) {
-      throw new Error(
-        'Both HTML and text bodies are required when body type is both'
-      );
+    if (bodyFormat === 'text' && !textBody) {
+      throw new Error('Text content is required when using plain text format');
     }
 
-    // Create SES client
-    const sesClient = new SESClient({
-      credentials: {
-        accessKeyId,
-        secretAccessKey
-      },
-      region
-    });
+    const validatedToAddresses = validateEmailAddresses(
+      toAddresses as string[],
+      'To addresses'
+    );
+    const validatedCcAddresses = validateEmailAddresses(
+      ccAddresses as string[],
+      'CC addresses'
+    );
+    const validatedBccAddresses = validateEmailAddresses(
+      bccAddresses as string[],
+      'BCC addresses'
+    );
+    const validatedReplyToAddresses = validateEmailAddresses(
+      replyToAddresses as string[],
+      'Reply-to addresses'
+    );
 
-    // Prepare destination addresses with proper typing
-    const destination: SendEmailCommandInput['Destination'] = {
-      ToAddresses: Array.isArray(toAddresses)
-        ? (toAddresses as string[])
-        : [toAddresses as string]
-    };
+    validateRecipientLimits(
+      validatedToAddresses,
+      validatedCcAddresses,
+      validatedBccAddresses
+    );
 
-    if (ccAddresses && ccAddresses.length > 0) {
-      destination.CcAddresses = Array.isArray(ccAddresses)
-        ? (ccAddresses as string[])
-        : [ccAddresses as string];
+    if (returnPath && !isValidEmail(returnPath)) {
+      throw new Error(`Invalid return path email: ${returnPath}`);
     }
 
-    if (bccAddresses && bccAddresses.length > 0) {
-      destination.BccAddresses = Array.isArray(bccAddresses)
-        ? (bccAddresses as string[])
-        : [bccAddresses as string];
+    const sesClient = createSESClient({ accessKeyId, secretAccessKey, region });
+
+    const emailBody: any = {};
+
+    if (bodyFormat === 'html') {
+      emailBody.Html = {
+        Charset: 'UTF-8',
+        Data: htmlBody,
+      };
+      emailBody.Text = {
+        Charset: 'UTF-8',
+        Data: htmlToText(htmlBody as string),
+      };
+    } else {
+      emailBody.Text = {
+        Charset: 'UTF-8',
+        Data: textBody,
+      };
     }
 
-    // Create send email command following AWS SDK example structure exactly
+    const messageTags = formatEmailTags(emailTags as Record<string, string>);
+
     const sendEmailCommand = new SendEmailCommand({
-      Destination: destination,
+      Source: fromEmailAddress,
+      Destination: {
+        ToAddresses: validatedToAddresses,
+        ...(validatedCcAddresses.length > 0 && {
+          CcAddresses: validatedCcAddresses,
+        }),
+        ...(validatedBccAddresses.length > 0 && {
+          BccAddresses: validatedBccAddresses,
+        }),
+      },
       Message: {
-        Body: {
-          ...(bodyType === 'html' || bodyType === 'both'
-            ? {
-                Html: {
-                  Charset: 'UTF-8',
-                  Data: htmlBody as string
-                }
-              }
-            : {}),
-          ...(bodyType === 'text' || bodyType === 'both'
-            ? {
-                Text: {
-                  Charset: 'UTF-8',
-                  Data: textBody as string
-                }
-              }
-            : {})
-        },
         Subject: {
           Charset: 'UTF-8',
-          Data: subject
-        }
+          Data: subject,
+        },
+        Body: emailBody,
       },
-      Source: fromEmailAddress,
-      ...(replyToAddresses && replyToAddresses.length > 0
-        ? {
-            ReplyToAddresses: Array.isArray(replyToAddresses)
-              ? (replyToAddresses as string[])
-              : [replyToAddresses as string]
-          }
-        : {}),
-      ...(configurationSetName
-        ? {
-            ConfigurationSetName: configurationSetName
-          }
-        : {}),
-      ...(emailTags && emailTags.length > 0
-        ? {
-            Tags: (emailTags as string[]).map((tag: string) => {
-              const [name, value] = tag.split('=');
-              return { Name: name?.trim(), Value: value?.trim() || '' };
-            })
-          }
-        : {})
+      ...(validatedReplyToAddresses.length > 0 && {
+        ReplyToAddresses: validatedReplyToAddresses,
+      }),
+      ...(returnPath && { ReturnPath: returnPath }),
+      ...(configurationSetName &&
+        configurationSetName.trim() && {
+          ConfigurationSetName: configurationSetName,
+        }),
+      ...(messageTags && { Tags: messageTags }),
+      ...(sourceArn && { SourceArn: sourceArn }),
+      ...(returnPathArn && { ReturnPathArn: returnPathArn }),
     });
 
     try {
       const response = await sesClient.send(sendEmailCommand);
 
+      const totalRecipients =
+        validatedToAddresses.length +
+        validatedCcAddresses.length +
+        validatedBccAddresses.length;
+
       return {
         success: true,
         messageId: response.MessageId,
-        message: 'Email sent successfully'
+        message: 'Email sent successfully',
+        recipientCount: totalRecipients,
+        format: bodyFormat,
+        toAddresses: validatedToAddresses,
+        ccAddresses: validatedCcAddresses,
+        bccAddresses: validatedBccAddresses,
       };
-    } catch (caught) {
-      if (caught instanceof Error && caught.name === 'MessageRejected') {
-        // Following the example pattern for MessageRejected errors
-        return caught;
-      }
-      throw caught;
+    } catch (error: any) {
+      const errorMessage = getSESErrorMessage(error, configurationSetName);
+      throw new Error(errorMessage);
     }
-  }
+  },
 });

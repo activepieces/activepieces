@@ -1,50 +1,77 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   SESClient,
-  CreateCustomVerificationEmailTemplateCommand
+  CreateCustomVerificationEmailTemplateCommand,
 } from '@aws-sdk/client-ses';
 import { amazonSesAuth } from '../../index';
+import {
+  getVerifiedIdentities,
+  getCustomVerificationTemplates,
+  createSESClient,
+  validateCustomVerificationTemplateName,
+  validateURL,
+  validateCustomVerificationContent,
+  getCustomVerificationErrorMessage,
+  formatContentSize,
+  createIdentityDropdownOptions,
+  isValidEmail,
+} from '../common/ses-utils';
 
 export const createCustomVerificationEmailTemplate = createAction({
   auth: amazonSesAuth,
   name: 'create_custom_verification_email_template',
   displayName: 'Create Custom Verification Email Template',
-  description: 'Create a new custom verification email template in Amazon SES.',
+  description: 'Create custom email template for identity verification',
   props: {
     templateName: Property.ShortText({
       displayName: 'Template Name',
-      description: 'The name of the custom verification email template',
-      required: true
-    }),
-    fromEmailAddress: Property.ShortText({
-      displayName: 'From Email Address',
       description:
-        'The email address that the custom verification email is sent from. Must be verified in SES.',
-      required: true
+        'Unique template name (letters, numbers, underscores, hyphens only)',
+      required: true,
+    }),
+    fromEmailAddress: Property.Dropdown({
+      displayName: 'From Email',
+      description: 'Verified sender email address',
+      required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        const verifiedIdentities = await getVerifiedIdentities(auth as any);
+        return createIdentityDropdownOptions(verifiedIdentities);
+      },
     }),
     templateSubject: Property.ShortText({
-      displayName: 'Template Subject',
-      description: 'The subject line of the custom verification email',
-      required: true
+      displayName: 'Subject',
+      description: 'Email subject for verification messages',
+      required: true,
     }),
     templateContent: Property.LongText({
-      displayName: 'Template Content',
+      displayName: 'Email Content',
       description:
-        'The content of the custom verification email. May contain HTML with some limitations. Total size must be less than 10 MB.',
-      required: true
+        'HTML content for verification email (must include verification link)',
+      required: true,
     }),
     successRedirectionURL: Property.ShortText({
-      displayName: 'Success Redirection URL',
-      description:
-        'The URL that the recipient is sent to if their address is successfully verified',
-      required: true
+      displayName: 'Success Redirect URL',
+      description: 'URL to redirect users after successful verification',
+      required: true,
     }),
     failureRedirectionURL: Property.ShortText({
-      displayName: 'Failure Redirection URL',
-      description:
-        'The URL that the recipient is sent to if their address is not successfully verified',
-      required: true
-    })
+      displayName: 'Failure Redirect URL',
+      description: 'URL to redirect users if verification fails',
+      required: true,
+    }),
+    checkExisting: Property.Checkbox({
+      displayName: 'Check if Template Exists',
+      description: 'Verify template name is unique before creating',
+      required: false,
+      defaultValue: true,
+    }),
+    validateUrls: Property.Checkbox({
+      displayName: 'Validate URLs',
+      description: 'Check that redirect URLs are properly formatted',
+      required: false,
+      defaultValue: true,
+    }),
   },
   async run(context) {
     const {
@@ -53,73 +80,115 @@ export const createCustomVerificationEmailTemplate = createAction({
       templateSubject,
       templateContent,
       successRedirectionURL,
-      failureRedirectionURL
+      failureRedirectionURL,
+      checkExisting,
+      validateUrls,
     } = context.propsValue;
 
     const { accessKeyId, secretAccessKey, region } = context.auth;
 
-    // Validate URLs
-    try {
-      new URL(successRedirectionURL);
-      new URL(failureRedirectionURL);
-    } catch (error) {
-      throw new Error(
-        'Success and failure redirection URLs must be valid URLs'
+    validateCustomVerificationTemplateName(templateName);
+
+    if (!isValidEmail(fromEmailAddress)) {
+      throw new Error(`Invalid sender email address: ${fromEmailAddress}`);
+    }
+
+    if (validateUrls) {
+      validateURL(successRedirectionURL, 'Success redirect URL');
+      validateURL(failureRedirectionURL, 'Failure redirect URL');
+    }
+
+    validateCustomVerificationContent(templateContent);
+
+    const contentSize = formatContentSize(templateContent);
+
+    const sesClient = createSESClient({ accessKeyId, secretAccessKey, region });
+
+    if (checkExisting) {
+      try {
+        const existingTemplates = await getCustomVerificationTemplates({
+          accessKeyId,
+          secretAccessKey,
+          region,
+        });
+        if (existingTemplates.includes(templateName)) {
+          throw new Error(
+            `Custom verification template "${templateName}" already exists. Please choose a different name.`
+          );
+        }
+      } catch (error: any) {
+        if (error.message.includes('already exists')) {
+          throw error;
+        }
+        console.warn('Could not check existing templates:', error);
+      }
+    }
+
+    const contentLower = templateContent.toLowerCase();
+    const hasLink =
+      contentLower.includes('href') || contentLower.includes('link');
+    const hasVerificationText =
+      contentLower.includes('verify') ||
+      contentLower.includes('confirm') ||
+      contentLower.includes('activate');
+
+    if (!hasLink) {
+      console.warn(
+        'Template content may be missing verification link - ensure you include proper verification URL in your template'
       );
     }
 
-    // Validate content size (10 MB limit)
-    const contentSizeBytes = new TextEncoder().encode(templateContent).length;
-    const maxSizeBytes = 10 * 1024 * 1024; // 10 MB
-    if (contentSizeBytes > maxSizeBytes) {
-      throw new Error(
-        `Template content size (${Math.round(
-          contentSizeBytes / 1024 / 1024
-        )}MB) exceeds the 10MB limit`
+    if (!hasVerificationText) {
+      console.warn(
+        'Template content may be missing verification instructions - consider adding clear verification language'
       );
     }
 
-    // Create SES client
-    const sesClient = new SESClient({
-      credentials: {
-        accessKeyId,
-        secretAccessKey
-      },
-      region
+    const createCommand = new CreateCustomVerificationEmailTemplateCommand({
+      TemplateName: templateName.trim(),
+      FromEmailAddress: fromEmailAddress,
+      TemplateSubject: templateSubject,
+      TemplateContent: templateContent,
+      SuccessRedirectionURL: successRedirectionURL.trim(),
+      FailureRedirectionURL: failureRedirectionURL.trim(),
     });
 
-    // Create custom verification email template command following AWS SDK pattern
-    const createCustomVerificationEmailTemplateCommand =
-      new CreateCustomVerificationEmailTemplateCommand({
-        TemplateName: templateName,
-        FromEmailAddress: fromEmailAddress,
-        TemplateSubject: templateSubject,
-        TemplateContent: templateContent,
-        SuccessRedirectionURL: successRedirectionURL,
-        FailureRedirectionURL: failureRedirectionURL
-      });
-
     try {
-      const response = await sesClient.send(
-        createCustomVerificationEmailTemplateCommand
-      );
+      await sesClient.send(createCommand);
 
       return {
         success: true,
-        templateName: templateName,
-        fromEmailAddress: fromEmailAddress,
-        templateSubject: templateSubject,
-        successRedirectionURL: successRedirectionURL,
-        failureRedirectionURL: failureRedirectionURL,
-        contentSize: `${Math.round(contentSizeBytes / 1024)}KB`,
-        message: 'Custom verification email template created successfully'
+        templateName: templateName.trim(),
+        message: 'Custom verification email template created successfully',
+        fromEmailAddress,
+        templateSubject,
+        successRedirectionURL: successRedirectionURL.trim(),
+        failureRedirectionURL: failureRedirectionURL.trim(),
+        contentSize: contentSize.formatted,
+        details: {
+          contentSizeBytes: contentSize.bytes,
+          subjectLength: templateSubject.length,
+          contentLength: templateContent.length,
+          hasVerificationLanguage: hasVerificationText,
+          hasLinks: hasLink,
+        },
+        recommendations: [
+          ...(hasLink
+            ? []
+            : ['Consider adding verification link in template content']),
+          ...(hasVerificationText
+            ? []
+            : ['Consider adding clear verification instructions']),
+          'Test the template with a sample email address',
+          'Ensure redirect URLs are accessible and provide good user experience',
+        ],
       };
-    } catch (caught) {
-      console.log(
-        'Failed to create custom verification email template.',
-        caught
+    } catch (error: any) {
+      const errorMessage = getCustomVerificationErrorMessage(
+        error,
+        templateName
       );
-      return caught;
+      throw new Error(errorMessage);
     }
-  }
+  },
 });
