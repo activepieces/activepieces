@@ -20,8 +20,8 @@ const polling: Polling<
   items: async ({ auth, lastFetchEpochMS }) => {
     const contacts = await microsoft365PeopleCommon.listContacts({
       auth,
-      queryParams: {
-        $filter: `lastModifiedDateTime ge ${dayjs(lastFetchEpochMS).toISOString()}`,
+      queryParams:lastFetchEpochMS ===0?{$top:'10'} :{
+        $filter: `lastModifiedDateTime gt ${dayjs(lastFetchEpochMS).toISOString()}`,
         $orderby: 'lastModifiedDateTime desc',
       },
     });
@@ -37,7 +37,7 @@ export const newOrUpdatedContact = createTrigger({
   name: 'newOrUpdatedContact',
   displayName: 'New or Updated Contact',
   description:
-    'Fires when a contact is created or updated in Microsoft 365 People.',
+    'Triggers when a contact is created or updated in Microsoft 365 People.',
   props: {},
   sampleData: {},
   type: TriggerStrategy.POLLING,

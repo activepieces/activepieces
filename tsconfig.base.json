@@ -599,9 +599,6 @@
       "@activepieces/piece-microsoft-365-people": [
         "packages/pieces/community/microsoft-365-people/src/index.ts"
       ],
-      "@activepieces/piece-microsoft-365-personal": [
-        "packages/pieces/community/microsoft-365-personal/src/index.ts"
-      ],
       "@activepieces/piece-microsoft-excel-365": [
         "packages/pieces/community/microsoft-excel-365/src/index.ts"
       ],

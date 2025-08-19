@@ -7,8 +7,7 @@ export const createContact = createAction({
   auth: microsoft365PeopleAuth,
   name: 'createContact',
   displayName: 'Create a Contact',
-  description:
-    'Create a new contact in People with detailed attributes (email, phone, address, etc.).',
+  description:'Create a new contact in People with detailed attributes (email, phone, address, etc.).',
   props: microsoft365PeopleCommon.contactProperties(),
   async run({ auth, propsValue }) {
     const childrenNames: string[] =
