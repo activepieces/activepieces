@@ -1,8 +1,8 @@
 import { aiProps } from '@activepieces/pieces-common';
-import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, createAIProvider, createWebSearchTool } from '@activepieces/shared';
+import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, WebSearchOptions, createAIProvider, createWebSearchTool } from '@activepieces/shared';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { LanguageModelV2 } from '@ai-sdk/provider';
-import { ModelMessage, generateText } from 'ai';
+import { ModelMessage, generateText, stepCountIs } from 'ai';
 
 export const askAI = createAction({
   name: 'askAi',
@@ -44,6 +44,7 @@ export const askAI = createAction({
     const providerName = context.propsValue.provider as string;
     const modelInstance = context.propsValue.model as LanguageModelV2;
     const storage = context.store;
+    const webSearchOptions = context.propsValue.webSearchOptions as WebSearchOptions;
 
     const providerConfig = SUPPORTED_AI_PROVIDERS.find(p => p.provider === providerName);
     if (!providerConfig) {
@@ -88,7 +89,8 @@ export const askAI = createAction({
       ],
       maxOutputTokens: context.propsValue.maxOutputTokens,
       temperature: (context.propsValue.creativity ?? 100) / 100,
-      tools: context.propsValue.webSearch ? createWebSearchTool(providerName, context.propsValue.webSearchOptions) : undefined,
+      tools: context.propsValue.webSearch ? createWebSearchTool(providerName, webSearchOptions) : undefined,
+      stopWhen: stepCountIs(webSearchOptions?.maxUses ?? 5),
     });
 
     conversation?.push({

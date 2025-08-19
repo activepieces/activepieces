@@ -203,7 +203,6 @@ It is strongly recommended that you add your credit card information to your Ope
                     input: 0.10,
                     output: 0.40,
                 },
-                webSearchCost: 0.025,
             },
             {
                 displayName: 'O4 Mini',

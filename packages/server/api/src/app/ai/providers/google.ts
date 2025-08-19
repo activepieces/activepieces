@@ -63,7 +63,7 @@ export const googleProvider: AIProviderStrategy = {
         }
 
         const webSearchCost = languageModelConfig.webSearchCost ?? 0
-        const webSearchCalls = apiResponse.candidates.map((candidate) => candidate.groundingMetadata?.webSearchQueries.length ?? 0).reduce((a, b) => a + b, 0)
+        const webSearchCalls = apiResponse.candidates.some(candidate => candidate.groundingMetadata?.webSearchQueries?.length ?? 0 > 0) ? 1 : 0
         cost += calculateWebSearchCost(webSearchCalls, webSearchCost)
 
         return {
