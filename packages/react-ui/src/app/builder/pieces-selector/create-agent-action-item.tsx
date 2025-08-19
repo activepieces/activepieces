@@ -8,7 +8,7 @@ import { toast } from '@/components/ui/use-toast';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceSelectorOperation, PieceSelectorPieceItem } from '@/lib/types';
-import { Agent, ApFlagId, isNil } from '@activepieces/shared';
+import { Agent, ApFlagId } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
@@ -44,12 +44,12 @@ const CreateAgentActionItem = ({
   );
   const navigate = useNavigate();
 
-  if (isNil(agent)) {
-    return null;
-  }
 
   return (
-    <AgentBuilder
+    <div onClick={() => {
+      setIsAgentBuilderOpen(true);
+    }}>
+   <AgentBuilder
       isOpen={isAgentBuilderOpen}
       onChange={(agent) => {
         setAgent(agent);
@@ -107,7 +107,9 @@ const CreateAgentActionItem = ({
               {
                 onSuccess: (agent) => {
                   setAgent(agent);
-                  setIsAgentBuilderOpen(true);
+                },
+                onError: () => {
+                  setIsAgentBuilderOpen(false);
                 },
               },
             );
@@ -115,6 +117,7 @@ const CreateAgentActionItem = ({
         />
       }
     />
+    </div>
   );
 };
 

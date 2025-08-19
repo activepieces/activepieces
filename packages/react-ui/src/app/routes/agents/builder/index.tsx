@@ -11,11 +11,10 @@ import {
 } from '@/components/ui/drawer';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  BuilderAgentProvider,
+  AgentBuilderProvider,
   useBuilderAgentState,
 } from '@/features/agents/lib/store/builder-agent-state-provider';
-import { Agent } from '@activepieces/shared';
-
+import { Agent, isNil } from '@activepieces/shared';
 import { AgentLeftSection } from './agent-left-section';
 import { AgentPreviewSection } from './agent-preview-section';
 import { AgentRunsTable } from './agent-runs-table';
@@ -23,22 +22,23 @@ import { AgentSavingIndicator } from './agent-saving-indicator';
 import { AgentStructuredOutput } from './agent-structured-output';
 import { AgentToolSection } from './agent-tool-section';
 import { LinkedFlowsSection } from './linked-flows-section';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 
-interface AgentBuilderProps {
+type AgentBuilderProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   trigger: ReactNode;
-  agent: Agent;
   showUseInFlow?: boolean;
   onChange?: (agent: Agent) => void;
-}
+  agent?: Agent;
+} 
 
 enum AgentBuilderTabs {
   CONFIGURE = 'configure',
   RUNS = 'runs',
 }
 
-const AgentBuilderContent = ({
+export const AgentBuilder = ({
   isOpen,
   onOpenChange,
   trigger,
@@ -46,46 +46,76 @@ const AgentBuilderContent = ({
   showUseInFlow = false,
   onChange,
 }: AgentBuilderProps) => {
-  const [isSaving, testSectionIsOpen, currentAgent] = useBuilderAgentState(
-    (state) => [state.isSaving, state.testSectionIsOpen, state.agent],
-  );
-  const [activeTab, setActiveTab] = useState<AgentBuilderTabs>(
-    AgentBuilderTabs.CONFIGURE,
-  );
-
-  const handleOpenChange = (open: boolean) => {
-    if (!open && onChange) {
-      onChange(currentAgent);
-    }
-    onOpenChange(open);
-  };
-
+  
   return (
     <Drawer
       open={isOpen}
-      onOpenChange={handleOpenChange}
+      onOpenChange={onOpenChange}
       dismissible={false}
       direction="right"
       closeOnEscape={false}
     >
       {trigger}
-      <DrawerContent className="w-full overflow-hidden">
-        <DrawerHeader>
+      <DrawerContent className="w-full overflow-hidden h-full">
+        {
+          isNil(agent) && (
+             <LoadingScreen mode='container'>
+             </LoadingScreen>
+          )
+        }
+        {
+          !isNil(agent) && (
+            <AgentBuilderProvider agent={agent}>
+              <AgentBuilderContent
+              agent={agent}
+              showUseInFlow={showUseInFlow}
+              openChange={onOpenChange}
+              agentUpdated={onChange}
+            />
+            </AgentBuilderProvider>
+          )
+        }
+      </DrawerContent>
+    </Drawer>)
+};
+
+const AgentBuilderContent = ({ 
+  showUseInFlow = false,
+  agent: initialAgent,
+  openChange: openChange,
+  agentUpdated,
+  }: {
+    showUseInFlow: boolean;
+    agent: Agent;
+    openChange: (open: boolean) => void;
+    agentUpdated?: (agent: Agent) => void;
+  })=>{
+  const [isSaving, testSectionIsOpen,agent] = useBuilderAgentState(
+    (state) => [state.isSaving, state.testSectionIsOpen, state.agent],
+  );
+
+  const [activeTab, setActiveTab] = useState<AgentBuilderTabs>(
+    AgentBuilderTabs.CONFIGURE,
+  );
+
+  return (<>
+  <DrawerHeader>
           <div className="flex items-center justify-between py-2 px-4 w-full relative">
             <div className="flex items-center gap-1 min-w-0">
               <Button
                 variant="basic"
                 size={'icon'}
                 className="text-foreground"
-                onClick={() => handleOpenChange(false)}
+                onClick={() => {
+                  agentUpdated?.(agent)
+                  openChange(false)
+                }}
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="flex items-center gap-4 min-w-0">
                 <DrawerTitle className="truncate">
-                  {agent
-                    ? `${t('Edit')} ${agent?.displayName}`
-                    : `${t('Creating Agent')}...`}
+                  {`${t('Edit')} ${initialAgent?.displayName}`}
                 </DrawerTitle>
                 <AgentSavingIndicator
                   isSaving={isSaving}
@@ -124,16 +154,15 @@ const AgentBuilderContent = ({
             </div>
           </div>
         </DrawerHeader>
-
         {activeTab === AgentBuilderTabs.CONFIGURE && (
           <div className="flex flex-1 h-full justify-center bg-accent overflow-hidden">
-            <AgentLeftSection agent={agent} />
+            <AgentLeftSection agent={initialAgent} />
             <div className="hidden md:block w-0 md:w-1/3 bg-background border-l h-full overflow-hidden">
               {testSectionIsOpen && <AgentPreviewSection />}
               {!testSectionIsOpen && (
                 <div className="flex flex-col h-full p-4 gap-8 w-full bg-background overflow-hidden">
                   <AgentToolSection />
-                  {showUseInFlow && <LinkedFlowsSection agent={agent} />}
+                  {showUseInFlow && <LinkedFlowsSection agent={initialAgent} />}
                   <AgentStructuredOutput />
                 </div>
               )}
@@ -142,30 +171,7 @@ const AgentBuilderContent = ({
         )}
         {activeTab === AgentBuilderTabs.RUNS && (
           <div className="flex flex-1 h-full justify-center">
-            <AgentRunsTable agentId={agent.id} />
+            <AgentRunsTable agentId={initialAgent.id} />
           </div>
-        )}
-      </DrawerContent>
-    </Drawer>
-  );
-};
-
-export const AgentBuilder = ({
-  isOpen,
-  onOpenChange,
-  trigger,
-  agent,
-  showUseInFlow = false,
-  onChange,
-}: AgentBuilderProps) => (
-  <BuilderAgentProvider agent={agent}>
-    <AgentBuilderContent
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      trigger={trigger}
-      agent={agent}
-      showUseInFlow={showUseInFlow}
-      onChange={onChange}
-    />
-  </BuilderAgentProvider>
-);
+        )}</>)
+}
