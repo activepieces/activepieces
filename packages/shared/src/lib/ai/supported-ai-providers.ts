@@ -27,6 +27,11 @@ export type SupportedAIProvider = {
         instance: ImageModel
         pricing: ImageModelPricing
     }[]
+    videoModels: {
+        displayName: string
+        instance: { modelId: string }
+        pricing: number // $ per second
+    }[]
 }
 
 type TableData<
@@ -281,6 +286,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 } as DALLE2PricingPerImage,
             },
         ],
+        videoModels: [],
     },
     {
         provider: 'anthropic',
@@ -372,6 +378,7 @@ It is strongly recommended that you add your credit card information to your Ope
             },
         ],
         imageModels: [],
+        videoModels: [],
     },
     {
         provider: 'replicate',
@@ -406,6 +413,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: 0.003,
             },
         ],
+        videoModels: [],
     },
     {
         provider: 'google',
@@ -473,5 +481,22 @@ It is strongly recommended that you add your credit card information to your Ope
             },
         ],
         imageModels: [],
+        videoModels: [
+            {
+                displayName: 'VEO 3 Preview',
+                instance: { modelId: 'veo-3.0-generate-preview' },
+                pricing: 0.75,
+            },
+            {
+                displayName: 'VEO 3 Fast Preview',
+                instance: { modelId: 'veo-3.0-fast-generate-preview' },
+                pricing: 0.40,
+            },
+            {
+                displayName: 'VEO 2',
+                instance: { modelId: 'veo-2.0-generate-001' },
+                pricing: 0.35,
+            },
+        ],
     },
 ]

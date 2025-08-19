@@ -832,7 +832,7 @@
       "@activepieces/piece-serp-api": [
         "packages/pieces/community/serp-api/src/index.ts"
       ],
-      "@activepieces/piece-serpstat":[
+      "@activepieces/piece-serpstat": [
         "packages/pieces/community/serpstat/src/index.ts"
       ],
       "@activepieces/piece-sessions-us": [
@@ -999,6 +999,9 @@
       ],
       "@activepieces/piece-vbout": [
         "packages/pieces/community/vbout/src/index.ts"
+      ],
+      "@activepieces/piece-video-ai": [
+        "packages/pieces/community/video-ai/src/index.ts"
       ],
       "@activepieces/piece-village": [
         "packages/pieces/community/village/src/index.ts"
