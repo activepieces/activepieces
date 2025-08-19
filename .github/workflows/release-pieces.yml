@@ -11,7 +11,7 @@ on:
 
 jobs:
   Release-Pieces:
-    if: github.repository == 'activepieces/activepieces'
+    if: false
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -64,10 +64,12 @@ jobs:
           AP_CLOUD_API_KEY: ${{ secrets.AP_CLOUD_API_KEY }}
           NODE_OPTIONS: "--max-old-space-size=8192"
 
+  Test-Discord-Notification:
+    runs-on: ubuntu-latest
+    steps:
       - name: Notify Discord on failure
-        if: failure()
         run: |
           curl -H "Content-Type: application/json" \
             -X POST \
             -d "{\"content\": \"🚨 **Release Pieces Workflow Failed** 🚨\\n\\n**Repository:** ${{ github.repository }}\\n**Branch:** ${{ github.ref_name }}\\n**Commit:** ${{ github.sha }}\\n**Action URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n\\nThe release pieces workflow has failed. Please check the logs for more details.\"}" \
-            https://discord.com/api/webhooks/1395424898276659242/0xVN1gvPBYeYPA7eIydi8jE0jZpAR_L6KHZLN2cJRQlKLMDWQiSIAZa3F0dKsQRShj8G
+            ${{ secrets.DISCORD_TECH_OPS_CHANNEL_WEBHOOK }}
