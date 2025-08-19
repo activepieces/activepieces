@@ -124,7 +124,7 @@ const installDependencies = async ({
         },
         {
             alias: 'typescript',
-            spec: '4.8.4',
+            spec: '4.9.4',
         },
     ]
 
