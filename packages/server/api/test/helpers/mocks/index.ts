@@ -201,9 +201,8 @@ export const createMockGitRepo = (gitRepo?: Partial<GitRepo>): GitRepo => {
 
 export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): PlatformPlan => {
     return {
-        eligibleForPlusTrial: platformPlan?.eligibleForPlusTrial ?? false,
+        eligibleForTrial: platformPlan?.eligibleForTrial ?? null,
         stripeBillingCycle: platformPlan?.stripeBillingCycle ?? BillingCycle.MONTHLY,
-        eligibleForBusinessTrial: platformPlan?.eligibleForBusinessTrial ?? false,
         id: platformPlan?.id ?? apId(),
         created: platformPlan?.created ?? faker.date.recent().toISOString(),
         updated: platformPlan?.updated ?? faker.date.recent().toISOString(),
