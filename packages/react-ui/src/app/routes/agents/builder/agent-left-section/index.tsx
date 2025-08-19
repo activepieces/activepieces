@@ -9,6 +9,7 @@ import { useBuilderAgentState } from '@/features/agents/lib/store/builder-agent-
 import { Agent, debounce, isNil } from '@activepieces/shared';
 
 import { AgentPromptEditor } from './agent-prompt-editor';
+import { t } from 'i18next';
 
 interface AgentLeftSectionProps {
   agent?: Agent;
@@ -89,7 +90,7 @@ export const AgentLeftSection = ({ agent }: AgentLeftSectionProps) => {
                 type="button"
               >
                 <FlaskConical className="w-4 h-4" />
-                Test Agent
+                {t('Test Agent')}
               </Button>
             </div>
           </div>
