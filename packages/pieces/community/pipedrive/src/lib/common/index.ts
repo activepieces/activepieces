@@ -25,7 +25,7 @@ export const pipedriveCommon = {
 	) => {
 		const request: HttpRequest = {
 			method: HttpMethod.POST,
-			url: `${apiDomain}/api/v2/webhooks`,
+			url: `${apiDomain}/api/v1/webhooks`,
 			body: {
 				event_object: object,
 				event_action: action,
@@ -48,7 +48,7 @@ export const pipedriveCommon = {
 	unsubscribeWebhook: async (webhookId: string, apiDomain: string, accessToken: string) => {
 		const request: HttpRequest = {
 			method: HttpMethod.DELETE,
-			url: `${apiDomain}/api/v2/webhooks/${webhookId}`,
+			url: `${apiDomain}/api/v1/webhooks/${webhookId}`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: accessToken,
@@ -188,8 +188,6 @@ export async function pipedrivePaginatedV2ApiCall<T extends HttpMessageBody>({
 			query: currentQuery as RequestParams,
 			body,
 		});
-
-		console.log(JSON.stringify(response,null,2))
 
 
 		if (isNil(response.data)) {

@@ -4,7 +4,6 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import {
     pipedriveApiCall,
     pipedriveCommon,
-    pipedrivePaginatedApiCall,
 } from '../common';
 import { isNil } from '@activepieces/shared';
 
@@ -48,7 +47,7 @@ export const newNoteTrigger = createTrigger({
     async onEnable(context) {
         const webhook = await pipedriveCommon.subscribeWebhook(
             'note',
-            'added',
+            'create',
             context.webhookUrl!,
             context.auth.data['api_domain'],
             context.auth.access_token,
@@ -76,11 +75,10 @@ export const newNoteTrigger = createTrigger({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: '/v2/notes',
+            resourceUri: '/v1/notes',
             query: {
                 limit: 10,
-                sort_by: 'update_time',
-                sort_direction: 'desc',
+                sort: 'update_time DESC',
             },
         });
 
@@ -91,16 +89,19 @@ export const newNoteTrigger = createTrigger({
     },
     async run(context) {
         const payloadBody = context.payload.body as {
-            current: PipedriveNoteV2;
+            data: PipedriveNoteV2;
             previous: PipedriveNoteV2;
-            event: string;
+            meta: {
+				action: string;
+				entity: string;
+			};
         };
 
         const noteResponse = await pipedriveApiCall<GetNoteResponseV2>({
             accessToken: context.auth.access_token,
             apiDomain: context.auth.data['api_domain'],
             method: HttpMethod.GET,
-            resourceUri: `/v2/notes/${payloadBody.current.id}`,
+            resourceUri: `/v1/notes/${payloadBody.data.id}`,
         });
 
         return [noteResponse.data];
