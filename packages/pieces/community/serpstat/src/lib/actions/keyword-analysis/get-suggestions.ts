@@ -7,16 +7,16 @@ import { serpstatApiCall } from '../../common/client';
 export const getSuggestions = createAction({
   name: 'get_suggestions',
   displayName: 'Get Suggestions',
-  description: 'Get keyword suggestions from Serpstat > Keyword Analysis',
+  description: 'Get keyword suggestions from Serpstat > Keyword Analysis.',
   props: {
     keyword: Property.ShortText({
       displayName: 'Keyword',
-      description: 'The keyword to get suggestions for',
+      description: 'The keyword to get suggestions for.',
       required: true,
     }),
     se: Property.StaticDropdown({
       displayName: 'Search Engine',
-      description: 'Search engine to use for suggestions',
+      description: 'Search engine to use for suggestions.',
       required: true,
       defaultValue: 'g_us',
       options: {
@@ -30,13 +30,13 @@ export const getSuggestions = createAction({
     }),
     page: Property.Number({
       displayName: 'Page',
-      description: 'Page number in response',
+      description: 'Page number in response.',
       required: false,
       defaultValue: 1,
     }),
     size: Property.Number({
       displayName: 'Size',
-      description: 'Number of results per page in response',
+      description: 'Number of results per page in response.',
       required: false,
       defaultValue: 100,
     }),

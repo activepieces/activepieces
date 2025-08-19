@@ -7,7 +7,7 @@ import { serpstatApiCall } from '../../common/client';
 export const getKeywords = createAction({
   name: 'get_keywords',
   displayName: 'Get Keywords',
-  description: 'Get keywords data from Serpstat > Keyword Analysis',
+  description: 'Get keywords data from Serpstat > Keyword Analysis.',
   props: {
     query: Property.ShortText({
       displayName: 'Query',
