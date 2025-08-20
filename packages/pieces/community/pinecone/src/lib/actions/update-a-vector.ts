@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { pineconeAuth } from '../..';
+import { pineconeAuth } from '../common';
+import { PineconeClient } from '../common/client';
+import { commonProps, vectorProps } from '../common/props';
 
 export const updateAVector = createAction({
   name: 'update-a-vector',
@@ -8,21 +9,9 @@ export const updateAVector = createAction({
   description: 'Update a vector in a namespace. If a value is included, it will overwrite the previous value. If a set_metadata is included, the values of the fields specified in it will be added or overwrite the previous value.',
   auth: pineconeAuth,
   props: {
-    indexName: Property.ShortText({
-      displayName: 'Index Name',
-      description: 'The name of the Pinecone index',
-      required: true,
-    }),
-    vectorId: Property.ShortText({
-      displayName: 'Vector ID',
-      description: 'Vector\'s unique ID (1-512 characters)',
-      required: true,
-    }),
-    namespace: Property.ShortText({
-      displayName: 'Namespace',
-      description: 'The namespace containing the vector to update (optional)',
-      required: false,
-    }),
+    indexName: commonProps.indexName,
+    vectorId: vectorProps.vectorId,
+    namespace: commonProps.namespace,
     // Vector data options
     updateType: Property.Dropdown({
       displayName: 'Update Type',
@@ -41,21 +30,8 @@ export const updateAVector = createAction({
         };
       }
     }),
-    vectorValues: Property.Json({
-      displayName: 'Vector Values',
-      description: 'Vector data as an array of numbers (required if updating values)',
-      required: false,
-      defaultValue: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-    }),
-    sparseValues: Property.Json({
-      displayName: 'Sparse Values',
-      description: 'Vector sparse data with indices and values arrays (optional)',
-      required: false,
-      defaultValue: {
-        indices: [0, 1, 2],
-        values: [0.1, 0.2, 0.3]
-      }
-    }),
+    vectorValues: vectorProps.values,
+    sparseValues: vectorProps.sparseValues,
     setMetadata: Property.Json({
       displayName: 'Set Metadata',
       description: 'Metadata to set for the vector (will add or overwrite existing metadata)',
@@ -131,21 +107,10 @@ export const updateAVector = createAction({
     }
 
     try {
+      const client = new PineconeClient(auth);
+      
       // First, get the index host to construct the correct URL
-      const indexResponse = await httpClient.sendRequest({
-        url: `https://api.pinecone.io/indexes/${indexName}`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
-        },
-      });
-
-      if (indexResponse.status !== 200) {
-        throw new Error(`Failed to get index information: ${indexResponse.status}`);
-      }
-
-      const indexInfo = indexResponse.body as any;
+      const indexInfo = await client.getIndex(indexName);
       const host = indexInfo.host;
 
       if (!host) {
@@ -178,19 +143,7 @@ export const updateAVector = createAction({
       }
 
       // Update the vector
-      const updateResponse = await httpClient.sendRequest({
-        url: `https://${host}/vectors/update`,
-        method: HttpMethod.POST,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
-        },
-        body: requestBody,
-      });
-
-      if (updateResponse.status !== 200) {
-        throw new Error(`Failed to update vector: ${updateResponse.status} - ${JSON.stringify(updateResponse.body)}`);
-      }
+      const updateResult = await client.updateVector(host, requestBody);
 
       return {
         success: true,
@@ -205,7 +158,7 @@ export const updateAVector = createAction({
           sparseValues: !!sparseValues
         },
         requestBody,
-        response: updateResponse.body
+        response: updateResult
       };
 
     } catch (error: any) {

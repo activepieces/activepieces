@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { pineconeAuth } from '../..';
+import { pineconeAuth } from '../common';
+import { PineconeClient } from '../common/client';
+import { commonProps } from '../common/props';
 
 export const upsertVector = createAction({
   name: 'upsert-vector',
@@ -8,16 +9,8 @@ export const upsertVector = createAction({
   description: 'Upsert vectors into a Pinecone index namespace. If a new value is upserted for an existing vector ID, it will overwrite the previous value.',
   auth: pineconeAuth,
   props: {
-    indexName: Property.ShortText({
-      displayName: 'Index Name',
-      description: 'The name of the Pinecone index',
-      required: true,
-    }),
-    namespace: Property.ShortText({
-      displayName: 'Namespace',
-      description: 'The namespace where you want to upsert vectors (optional)',
-      required: false,
-    }),
+    indexName: commonProps.indexName,
+    namespace: commonProps.namespace,
     vectors: Property.Json({
       displayName: 'Vectors',
       description: 'Array of vectors to upsert. Each vector should have: id, values (array of numbers), and optional metadata object. Recommended batch limit is up to 1000 vectors.',
@@ -74,21 +67,10 @@ export const upsertVector = createAction({
     }
 
     try {
+      const client = new PineconeClient(auth);
+      
       // First, get the index host to construct the correct URL
-      const indexResponse = await httpClient.sendRequest({
-        url: `https://api.pinecone.io/indexes/${indexName}`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
-        },
-      });
-
-      if (indexResponse.status !== 200) {
-        throw new Error(`Failed to get index information: ${indexResponse.status}`);
-      }
-
-      const indexInfo = indexResponse.body as any;
+      const indexInfo = await client.getIndex(indexName);
       const host = indexInfo.host;
 
       if (!host) {
@@ -115,21 +97,7 @@ export const upsertVector = createAction({
           requestBody.namespace = namespace;
         }
 
-        const upsertResponse = await httpClient.sendRequest({
-          url: `https://${host}/vectors/upsert`,
-          method: HttpMethod.POST,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: auth as string,
-          },
-          body: requestBody,
-        });
-
-        if (upsertResponse.status !== 200) {
-          throw new Error(`Failed to upsert batch ${batchIndex + 1}: ${upsertResponse.status} - ${JSON.stringify(upsertResponse.body)}`);
-        }
-
-        const batchResult = upsertResponse.body as any;
+        const batchResult = await client.upsertVectors(host, requestBody);
         totalUpserted += batchResult.upsertedCount || batch.length;
         
         results.push({

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { pineconeAuth } from '../..';
+import { pineconeAuth } from '../common';
+import { PineconeClient } from '../common/client';
+import { commonProps, searchProps } from '../common/props';
 
 export const getAVector = createAction({
   name: 'get-a-vector',
@@ -8,34 +9,16 @@ export const getAVector = createAction({
   description: 'Look up and return vectors by ID from a single namespace. The returned vectors include the vector data and/or metadata.',
   auth: pineconeAuth,
   props: {
-    indexName: Property.ShortText({
-      displayName: 'Index Name',
-      description: 'The name of the Pinecone index',
-      required: true,
-    }),
+    indexName: commonProps.indexName,
     vectorIds: Property.Json({
       displayName: 'Vector IDs',
       description: 'Array of vector IDs to fetch. Does not accept values containing spaces.',
       required: true,
       defaultValue: ['id-1', 'id-2']
     }),
-    namespace: Property.ShortText({
-      displayName: 'Namespace',
-      description: 'The namespace where the vectors are stored (optional)',
-      required: false,
-    }),
-    includeValues: Property.Checkbox({
-      displayName: 'Include Vector Values',
-      description: 'Whether to include the actual vector values in the response',
-      required: false,
-      defaultValue: true,
-    }),
-    includeMetadata: Property.Checkbox({
-      displayName: 'Include Metadata',
-      description: 'Whether to include metadata in the response',
-      required: false,
-      defaultValue: true,
-    }),
+    namespace: commonProps.namespace,
+    includeValues: searchProps.includeValues,
+    includeMetadata: searchProps.includeMetadata,
   },
   async run({ auth, propsValue }) {
     const { indexName, vectorIds, namespace, includeValues = true, includeMetadata = true } = propsValue;
@@ -65,21 +48,10 @@ export const getAVector = createAction({
     }
 
     try {
+      const client = new PineconeClient(auth);
+      
       // First, get the index host to construct the correct URL
-      const indexResponse = await httpClient.sendRequest({
-        url: `https://api.pinecone.io/indexes/${indexName}`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
-        },
-      });
-
-      if (indexResponse.status !== 200) {
-        throw new Error(`Failed to get index information: ${indexResponse.status}`);
-      }
-
-      const indexInfo = indexResponse.body as any;
+      const indexInfo = await client.getIndex(indexName);
       const host = indexInfo.host;
 
       if (!host) {
@@ -87,41 +59,25 @@ export const getAVector = createAction({
       }
 
       // Construct query parameters
-      const queryParams = new URLSearchParams();
-      
-      // Add vector IDs
-      vectorIds.forEach(id => {
-        queryParams.append('ids', id);
-      });
+      const queryParams: any = {
+        ids: vectorIds
+      };
 
       // Add namespace if provided
       if (namespace) {
-        queryParams.append('namespace', namespace);
+        queryParams.namespace = namespace;
       }
 
       // Add include options
       if (!includeValues) {
-        queryParams.append('includeValues', 'false');
+        queryParams.includeValues = 'false';
       }
       if (!includeMetadata) {
-        queryParams.append('includeMetadata', 'false');
+        queryParams.includeMetadata = 'false';
       }
 
       // Fetch vectors
-      const fetchResponse = await httpClient.sendRequest({
-        url: `https://${host}/vectors/fetch?${queryParams.toString()}`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
-        },
-      });
-
-      if (fetchResponse.status !== 200) {
-        throw new Error(`Failed to fetch vectors: ${fetchResponse.status} - ${JSON.stringify(fetchResponse.body)}`);
-      }
-
-      const fetchResult = fetchResponse.body as any;
+      const fetchResult = await client.fetchVector(host, queryParams);
 
       // Process the response
       const vectors = fetchResult.vectors || {};

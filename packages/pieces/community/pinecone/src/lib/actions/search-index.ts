@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { pineconeAuth } from '../..';
+import { pineconeAuth } from '../common';
 
 export const searchIndex = createAction({
   name: 'search-index',

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { pineconeAuth } from '../..';
+import { pineconeAuth } from '../common';
+import { PineconeClient } from '../common/client';
+import { commonProps, searchProps } from '../common/props';
 
 export const searchVectors = createAction({
   name: 'search-vectors',
@@ -8,16 +9,8 @@ export const searchVectors = createAction({
   description: 'Queries a Pinecone index with a vector to find similar records. Retrieves the IDs of the most similar items along with their similarity scores.',
   auth: pineconeAuth,
   props: {
-    indexName: Property.ShortText({
-      displayName: 'Index Name',
-      description: 'The name of the Pinecone index to search',
-      required: true,
-    }),
-    namespace: Property.ShortText({
-      displayName: 'Namespace',
-      description: 'The namespace to query (optional)',
-      required: false,
-    }),
+    indexName: commonProps.indexName,
+    namespace: commonProps.namespace,
     // Query method selection
     queryMethod: Property.Dropdown({
       displayName: 'Query Method',
@@ -59,35 +52,12 @@ export const searchVectors = createAction({
       }
     }),
     // Search parameters
-    topK: Property.Number({
-      displayName: 'Top K Results',
-      description: 'The number of results to return (1-10000)',
-      required: true,
-      defaultValue: 10,
-    }),
+    topK: searchProps.topK,
     // Response options
-    includeValues: Property.Checkbox({
-      displayName: 'Include Vector Values',
-      description: 'Whether to include vector values in the response',
-      required: false,
-      defaultValue: false,
-    }),
-    includeMetadata: Property.Checkbox({
-      displayName: 'Include Metadata',
-      description: 'Whether to include metadata in the response',
-      required: false,
-      defaultValue: true,
-    }),
+    includeValues: searchProps.includeValues,
+    includeMetadata: searchProps.includeMetadata,
     // Metadata filter
-    metadataFilter: Property.Json({
-      displayName: 'Metadata Filter',
-      description: 'Filter to apply using vector metadata (optional). See Pinecone documentation for filter syntax.',
-      required: false,
-      defaultValue: {
-        genre: { "$in": ["comedy", "documentary", "drama"] },
-        year: { "$eq": 2019 }
-      }
-    }),
+    metadataFilter: searchProps.filter,
   },
   async run({ auth, propsValue }) {
     const { 
@@ -156,21 +126,10 @@ export const searchVectors = createAction({
     }
 
     try {
+      const client = new PineconeClient(auth);
+      
       // First, get the index host to construct the correct URL
-      const indexResponse = await httpClient.sendRequest({
-        url: `https://api.pinecone.io/indexes/${indexName}`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
-        },
-      });
-
-      if (indexResponse.status !== 200) {
-        throw new Error(`Failed to get index information: ${indexResponse.status}`);
-      }
-
-      const indexInfo = indexResponse.body as any;
+      const indexInfo = await client.getIndex(indexName);
       const host = indexInfo.host;
 
       if (!host) {
@@ -207,21 +166,7 @@ export const searchVectors = createAction({
       }
 
       // Search vectors
-      const searchResponse = await httpClient.sendRequest({
-        url: `https://${host}/query`,
-        method: HttpMethod.POST,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
-        },
-        body: requestBody,
-      });
-
-      if (searchResponse.status !== 200) {
-        throw new Error(`Failed to search vectors: ${searchResponse.status} - ${JSON.stringify(searchResponse.body)}`);
-      }
-
-      const searchResult = searchResponse.body as any;
+      const searchResult = await client.queryVectors(host, requestBody);
 
       // Process the response
       const matches = searchResult.matches || [];

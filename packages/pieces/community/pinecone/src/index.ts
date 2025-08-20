@@ -1,5 +1,5 @@
 
-    import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+    import { createPiece } from "@activepieces/pieces-framework";
     import { createIndex } from "./lib/actions/create-index";
     import { searchIndex } from "./lib/actions/search-index";
     import { upsertVector } from "./lib/actions/upsert-vector";
@@ -7,12 +7,9 @@
     import { updateAVector } from "./lib/actions/update-a-vector";
     import { deleteAVector } from "./lib/actions/delete-a-vector";
     import { searchVectors } from "./lib/actions/search-vectors";
+    import { pineconeAuth } from "./lib/common";
 
-    export const pineconeAuth = PieceAuth.SecretText({
-      displayName: 'API Key',
-      description: 'Your Pinecone API key from the console',
-      required: true,
-    });
+    export { pineconeAuth } from "./lib/common";
 
     export const pinecone = createPiece({
       displayName: "Pinecone",

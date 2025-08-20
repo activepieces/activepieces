@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { pineconeAuth } from '../..';
+import { pineconeAuth } from '../common';
+import { PineconeClient } from '../common/client';
+import { commonProps } from '../common/props';
 
 export const deleteAVector = createAction({
   name: 'delete-a-vector',
@@ -8,16 +9,8 @@ export const deleteAVector = createAction({
   description: 'Delete vectors by ID from a single namespace. Supports deleting specific vectors, all vectors, or vectors matching metadata filters.',
   auth: pineconeAuth,
   props: {
-    indexName: Property.ShortText({
-      displayName: 'Index Name',
-      description: 'The name of the Pinecone index',
-      required: true,
-    }),
-    namespace: Property.ShortText({
-      displayName: 'Namespace',
-      description: 'The namespace to delete vectors from (optional)',
-      required: false,
-    }),
+    indexName: commonProps.indexName,
+    namespace: commonProps.namespace,
     // Delete method selection
     deleteMethod: Property.Dropdown({
       displayName: 'Delete Method',
@@ -105,21 +98,10 @@ export const deleteAVector = createAction({
     }
 
     try {
+      const client = new PineconeClient(auth);
+      
       // First, get the index host to construct the correct URL
-      const indexResponse = await httpClient.sendRequest({
-        url: `https://api.pinecone.io/indexes/${indexName}`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
-        },
-      });
-
-      if (indexResponse.status !== 200) {
-        throw new Error(`Failed to get index information: ${indexResponse.status}`);
-      }
-
-      const indexInfo = indexResponse.body as any;
+      const indexInfo = await client.getIndex(indexName);
       const host = indexInfo.host;
 
       if (!host) {
@@ -144,26 +126,12 @@ export const deleteAVector = createAction({
       }
 
       // Delete vectors
-      const deleteResponse = await httpClient.sendRequest({
-        url: `https://${host}/vectors/delete`,
-        method: HttpMethod.POST,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
-        },
-        body: requestBody,
-      });
-
-      if (deleteResponse.status !== 200) {
-        throw new Error(`Failed to delete vectors: ${deleteResponse.status} - ${JSON.stringify(deleteResponse.body)}`);
-      }
-
-      const deleteResult = deleteResponse.body as any;
+      const deleteResult = await client.deleteVectors(host, requestBody);
 
       // Build response message based on delete method
       let message = '';
       if (deleteMethod === 'specific_ids') {
-        message = `Successfully deleted ${vectorIds?.['length'] || 0} vector(s) from index "${indexName}"`;
+        message = `Successfully deleted ${Array.isArray(vectorIds) ? vectorIds.length : 0} vector(s) from index "${indexName}"`;
       } else if (deleteMethod === 'delete_all') {
         message = `Successfully deleted ALL vectors from index "${indexName}"`;
       } else if (deleteMethod === 'filter') {

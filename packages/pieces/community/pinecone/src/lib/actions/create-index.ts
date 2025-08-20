@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { pineconeAuth } from '../..';
+import { pineconeAuth } from '../common';
+import { PineconeClient } from '../common/client';
+import { commonProps } from '../common/props';
 
 export const createIndex = createAction({
   name: 'create-index',
@@ -15,63 +16,13 @@ export const createIndex = createAction({
     }),
     dimension: Property.Number({
       displayName: 'Vector Dimension',
-      description: 'The dimensions of the vectors to be inserted (1-20000)',
-      required: true,
-    }),
-    metric: Property.Dropdown({
-      displayName: 'Distance Metric',
-      description: 'The distance metric for similarity search',
-      required: true,
-      refreshers: [],
-      options: async () => {
-        return {
-          disabled: false,
-          options: [
-            { label: 'Cosine', value: 'cosine' },
-            { label: 'Euclidean', value: 'euclidean' },
-            { label: 'Dot Product', value: 'dotproduct' }
-          ]
-        };
-      }
-    }),
-    vectorType: Property.Dropdown({
-      displayName: 'Vector Type',
-      description: 'The index vector type',
+      description: 'The dimensions of the vectors to be inserted (1-20000). Required for dense vectors, not needed for sparse vectors.',
       required: false,
-      defaultValue: 'dense',
-      refreshers: [],
-      options: async () => {
-        return {
-          disabled: false,
-          options: [
-            { label: 'Dense', value: 'dense' },
-            { label: 'Sparse', value: 'sparse' }
-          ]
-        };
-      }
     }),
-    deletionProtection: Property.Dropdown({
-      displayName: 'Deletion Protection',
-      description: 'Whether deletion protection is enabled',
-      required: false,
-      defaultValue: 'disabled',
-      refreshers: [],
-      options: async () => {
-        return {
-          disabled: false,
-          options: [
-            { label: 'Disabled', value: 'disabled' },
-            { label: 'Enabled', value: 'enabled' }
-          ]
-        };
-      }
-    }),
-    tags: Property.Json({
-      displayName: 'Tags',
-      description: 'Custom user tags for the index (optional)',
-      required: false,
-      defaultValue: {}
-    }),
+    metric: commonProps.metric,
+    vectorType: commonProps.vectorType,
+    deletionProtection: commonProps.deletionProtection,
+    tags: commonProps.tags,
     // Pod-based index configuration
     environment: Property.ShortText({
       displayName: 'Environment',
@@ -102,34 +53,14 @@ export const createIndex = createAction({
       defaultValue: 1
     }),
     // Serverless configuration
-    cloud: Property.Dropdown({
-      displayName: 'Cloud Provider',
-      description: 'The cloud provider for serverless indexes',
-      required: false,
-      refreshers: [],
-      options: async () => {
-        return {
-          disabled: false,
-          options: [
-            { label: 'AWS', value: 'aws' },
-            { label: 'GCP', value: 'gcp' },
-            { label: 'Azure', value: 'azure' }
-          ]
-        };
-      }
-    }),
+    cloud: commonProps.cloud,
     region: Property.ShortText({
       displayName: 'Region',
       description: 'The region for serverless indexes (e.g., us-west-1)',
       required: false
     }),
     // Metadata configuration
-    indexedMetadata: Property.Json({
-      displayName: 'Indexed Metadata',
-      description: 'Metadata fields to be indexed (optional)',
-      required: false,
-      defaultValue: []
-    })
+    indexedMetadata: commonProps.indexedMetadata
   },
   async run({ auth, propsValue }) {
     const { name, dimension, metric, vectorType = 'dense', deletionProtection = 'disabled', tags = {} } = propsValue;
@@ -157,7 +88,7 @@ export const createIndex = createAction({
     };
 
     // Add dimension for dense vectors
-    if (vectorType === 'dense') {
+    if (vectorType === 'dense' && dimension) {
       requestBody.dimension = dimension;
     }
 
@@ -198,25 +129,14 @@ export const createIndex = createAction({
     }
 
     try {
-      const response = await httpClient.sendRequest({
-        url: 'https://api.pinecone.io/indexes',
-        method: HttpMethod.POST,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
-        },
-        body: requestBody,
-      });
+      const client = new PineconeClient(auth);
+      const result = await client.createIndex(requestBody);
 
-      if (response.status === 201) {
-        return {
-          success: true,
-          index: response.body,
-          message: `Index "${name}" created successfully`
-        };
-      } else {
-        throw new Error(`Failed to create index: ${response.status}`);
-      }
+      return {
+        success: true,
+        index: result,
+        message: `Index "${name}" created successfully`
+      };
     } catch (error: any) {
       throw new Error(`Failed to create index: ${error.message || error}`);
     }
