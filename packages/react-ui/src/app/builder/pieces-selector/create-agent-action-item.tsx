@@ -52,10 +52,7 @@ const CreateAgentActionItem = ({
     >
       <AgentBuilder
         isOpen={isAgentBuilderOpen}
-        onChange={(agent) => {
-          setAgent(agent);
-        }}
-        onOpenChange={(open) => {
+        onOpenChange={(open, agent) => {
           setIsAgentBuilderOpen(open);
           if (!open) {
             if (agent) {

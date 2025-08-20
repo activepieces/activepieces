@@ -27,10 +27,9 @@ import { LinkedFlowsSection } from './linked-flows-section';
 
 type AgentBuilderProps = {
   isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (open: boolean, agent: Agent) => void;
   trigger: ReactNode;
   showUseInFlow?: boolean;
-  onChange?: (agent: Agent) => void;
   agent?: Agent;
 };
 
@@ -45,12 +44,10 @@ export const AgentBuilder = ({
   trigger,
   agent,
   showUseInFlow = false,
-  onChange,
 }: AgentBuilderProps) => {
   return (
     <Drawer
       open={isOpen}
-      onOpenChange={onOpenChange}
       dismissible={false}
       direction="right"
       closeOnEscape={false}
@@ -64,7 +61,6 @@ export const AgentBuilder = ({
               agent={agent}
               showUseInFlow={showUseInFlow}
               openChange={onOpenChange}
-              agentUpdated={onChange}
             />
           </AgentBuilderProvider>
         )}
@@ -77,12 +73,10 @@ const AgentBuilderContent = ({
   showUseInFlow = false,
   agent: initialAgent,
   openChange,
-  agentUpdated,
 }: {
   showUseInFlow: boolean;
   agent: Agent;
-  openChange: (open: boolean) => void;
-  agentUpdated?: (agent: Agent) => void;
+  openChange: (open: boolean, agent: Agent) => void;
 }) => {
   const [isSaving, testSectionIsOpen, agent] = useBuilderAgentState((state) => [
     state.isSaving,
@@ -104,8 +98,7 @@ const AgentBuilderContent = ({
               size={'icon'}
               className="text-foreground"
               onClick={() => {
-                agentUpdated?.(agent);
-                openChange(false);
+                openChange(false, agent);
               }}
             >
               <ArrowLeft className="h-5 w-5" />
