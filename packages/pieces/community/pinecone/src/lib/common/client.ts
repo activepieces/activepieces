@@ -11,8 +11,14 @@ export class PineconeClient {
   private getAuth() {
     return {
       type: AuthenticationType.BEARER_TOKEN,
-      token: this.auth,
+      token: this.auth.apiKey,
     } as const;
+  }
+
+  private getHeaders() {
+    return {
+      'x-project-id': this.auth.projectId,
+    };
   }
 
   /**
@@ -23,6 +29,7 @@ export class PineconeClient {
       url: `https://api.pinecone.io/indexes/${indexName}`,
       method: HttpMethod.GET,
       authentication: this.getAuth(),
+      headers: this.getHeaders(),
     });
 
     if (response.status !== 200) {
@@ -40,6 +47,7 @@ export class PineconeClient {
       url: 'https://api.pinecone.io/indexes',
       method: HttpMethod.POST,
       authentication: this.getAuth(),
+      headers: this.getHeaders(),
       body: requestBody,
     });
 
@@ -58,6 +66,7 @@ export class PineconeClient {
       url: `https://${host}/vectors/delete`,
       method: HttpMethod.POST,
       authentication: this.getAuth(),
+      headers: this.getHeaders(),
       body: requestBody,
     });
 
@@ -76,6 +85,7 @@ export class PineconeClient {
       url: `https://${host}/vectors/upsert`,
       method: HttpMethod.POST,
       authentication: this.getAuth(),
+      headers: this.getHeaders(),
       body: requestBody,
     });
 
@@ -94,6 +104,7 @@ export class PineconeClient {
       url: `https://${host}/query`,
       method: HttpMethod.POST,
       authentication: this.getAuth(),
+      headers: this.getHeaders(),
       body: requestBody,
     });
 
@@ -112,6 +123,7 @@ export class PineconeClient {
       url: `https://${host}/vectors/fetch`,
       method: HttpMethod.GET,
       authentication: this.getAuth(),
+      headers: this.getHeaders(),
       queryParams: requestBody,
     });
 
@@ -130,6 +142,7 @@ export class PineconeClient {
       url: `https://${host}/vectors/update`,
       method: HttpMethod.POST,
       authentication: this.getAuth(),
+      headers: this.getHeaders(),
       body: requestBody,
     });
 
@@ -148,6 +161,7 @@ export class PineconeClient {
       url: `https://${host}/describe_index_stats`,
       method: HttpMethod.POST,
       authentication: this.getAuth(),
+      headers: this.getHeaders(),
       body: requestBody || {},
     });
 
