@@ -24,7 +24,7 @@ export const retellAiAuth = PieceAuth.CustomAuth({
     try {
       await retellAiApiCall({
         method: HttpMethod.GET,
-        url: '/v2/list-calls',
+        url: '/list-chat',
         auth: auth,
       });
       return { valid: true };
