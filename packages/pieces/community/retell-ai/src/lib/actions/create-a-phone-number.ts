@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { RetllAiAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { agentIdDropdown } from '../common/props';
 
 export const createAPhoneNumber = createAction({
   auth: RetllAiAuth,
@@ -14,16 +15,8 @@ export const createAPhoneNumber = createAction({
       description: 'The area code for the phone number (e.g., 415, 212)',
       required: true,
     }),
-    inboundAgentId: Property.ShortText({
-      displayName: 'Inbound Agent ID',
-      description: 'The ID of the Retell AI agent to handle inbound calls',
-      required: false,
-    }),
-    outboundAgentId: Property.ShortText({
-      displayName: 'Outbound Agent ID',
-      description: 'The ID of the Retell AI agent to handle outbound calls',
-      required: false,
-    }),
+    inboundAgentId: agentIdDropdown,
+    outboundAgentId: agentIdDropdown,
     inboundAgentVersion: Property.Number({
       displayName: 'Inbound Agent Version',
       description: 'Version of the inbound agent to use',
