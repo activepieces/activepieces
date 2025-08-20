@@ -170,18 +170,63 @@ export class PineconeClient {
    * Fetch a specific vector by ID
    */
   async fetchVector(host: string, requestBody: any) {
-    const response = await httpClient.sendRequest({
-      url: `https://${host}/vectors/fetch`,
-      method: HttpMethod.GET,
-      headers: this.getVectorHeaders(),
-      queryParams: requestBody,
-    });
-
-    if (response.status !== 200) {
-      throw new Error(`Failed to fetch vector: ${response.status} - ${JSON.stringify(response.body)}`);
+    // Convert request body to query parameters for GET request
+    const queryParams = new URLSearchParams();
+    
+    // Add vector IDs as comma-separated string
+    if (requestBody.ids && Array.isArray(requestBody.ids)) {
+      queryParams.append('ids', requestBody.ids.join(','));
+    }
+    
+    // Add namespace if provided
+    if (requestBody.namespace) {
+      queryParams.append('namespace', requestBody.namespace);
+    }
+    
+    // Add include options
+    if (requestBody.includeValues !== undefined) {
+      queryParams.append('includeValues', requestBody.includeValues.toString());
+    }
+    
+    if (requestBody.includeMetadata !== undefined) {
+      queryParams.append('includeMetadata', requestBody.includeMetadata.toString());
     }
 
-    return response.body as any;
+    const url = `https://${host}/vectors/fetch?${queryParams.toString()}`;
+    
+    try {
+      const response = await httpClient.sendRequest({
+        url,
+        method: HttpMethod.GET,
+        headers: this.getVectorHeaders(),
+      });
+
+      if (response.status !== 200) {
+        throw new Error(`Failed to fetch vector: ${response.status} - ${JSON.stringify(response.body)}`);
+      }
+
+      return response.body as any;
+    } catch (error: any) {
+      // Enhanced error handling for fetch operations
+      if (error.response) {
+        const { status, body } = error.response;
+        
+        // Provide more specific error messages for common issues
+        if (status === 400) {
+          throw new Error(`Invalid fetch request: ${body?.message || body?.error || JSON.stringify(body)}`);
+        } else if (status === 401) {
+          throw new Error('Authentication failed. Please check your API key.');
+        } else if (status === 404) {
+          throw new Error('Index not found or vectors not found.');
+        } else if (status === 429) {
+          throw new Error('Rate limit exceeded. Please try again later.');
+        } else {
+          throw new Error(`Fetch operation failed with status ${status}: ${JSON.stringify(body)}`);
+        }
+      }
+      
+      throw error;
+    }
   }
 
   /**

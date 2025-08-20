@@ -122,11 +122,10 @@ export const deleteAVector = createAction({
           });
           
           if (fetchResponse.vectors && Object.keys(fetchResponse.vectors).length === 0) {
-            console.warn('Warning: No vectors found with the provided IDs. The delete operation may not affect any vectors.');
+            // Warning: No vectors found with the provided IDs. The delete operation may not affect any vectors.
           }
         } catch (fetchError: any) {
-          console.warn('Warning: Could not verify vector existence before deletion:', fetchError.message || fetchError);
-          // Continue with deletion even if verification fails
+          // Warning: Could not verify vector existence before deletion. Continue with deletion even if verification fails.
         }
       }
 
@@ -147,26 +146,15 @@ export const deleteAVector = createAction({
         requestBody.namespace = namespace;
       }
 
-      // Debug logging
-      console.log('Delete request details:', {
-        indexName,
-        namespace: namespace || 'default',
-        deleteMethod,
-        requestBody,
-        host
-      });
+
 
       // Delete vectors
       const deleteResult = await client.deleteVectors(host, requestBody);
 
-      // Debug logging for response
-      console.log('Delete response:', deleteResult);
+
 
       // Validate the delete operation actually succeeded
       // Note: Some delete operations might return empty responses but still succeed
-      if (deleteResult === undefined || deleteResult === null) {
-        console.warn('Delete operation returned empty response, but this may indicate success');
-      }
 
       // Build response message based on delete method
       let message = '';
@@ -223,16 +211,7 @@ export const deleteAVector = createAction({
         errorMessage += `: ${error.message}`;
       }
       
-      console.error('Delete vector error details:', {
-        error,
-        requestDetails: {
-          indexName,
-          namespace,
-          deleteMethod,
-          vectorIds: deleteMethod === 'specific_ids' ? vectorIds : null,
-          metadataFilter: deleteMethod === 'filter' ? metadataFilter : null
-        }
-      });
+
       
       throw new Error(errorMessage);
     }

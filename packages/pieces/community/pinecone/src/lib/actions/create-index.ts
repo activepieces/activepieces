@@ -23,7 +23,6 @@ export const createIndex = createAction({
     vectorType: commonProps.vectorType,
     deletionProtection: commonProps.deletionProtection,
     tags: commonProps.tags,
-    // Pod-based index configuration
     environment: Property.ShortText({
       displayName: 'Environment',
       description: 'The environment where the index should be hosted (e.g., us-east-1-aws)',
@@ -52,7 +51,7 @@ export const createIndex = createAction({
       required: false,
       defaultValue: 1
     }),
-    // Serverless configuration
+
     cloud: commonProps.cloud,
     region: Property.ShortText({
       displayName: 'Region',
@@ -99,7 +98,6 @@ export const createIndex = createAction({
 
     // Build spec object based on provided configuration
     if (propsValue.environment && propsValue.podType) {
-      // Pod-based index
       requestBody.spec = {
         pod: {
           environment: propsValue.environment,
@@ -138,12 +136,9 @@ export const createIndex = createAction({
         message: `Index "${name}" created successfully`
       };
     } catch (error: any) {
-      // Check for specific pod quota error
       if (error.message && error.message.includes('no pod quota available')) {
         throw new Error(`Failed to create index: ${error.message}. This usually means your project has reached its pod quota limit. Try using a serverless index instead by providing 'cloud' and 'region' instead of 'environment' and 'podType'.`);
       }
-      
-      // Check for forbidden/403 errors
       if (error.message && (error.message.includes('403') || error.message.includes('FORBIDDEN'))) {
         throw new Error(`Failed to create index: ${error.message}. This might be due to insufficient permissions, account verification issues, or pod quota limits. For new accounts, try using serverless indexes with 'cloud' and 'region' parameters.`);
       }

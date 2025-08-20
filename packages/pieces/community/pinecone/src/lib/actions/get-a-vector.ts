@@ -69,20 +69,34 @@ export const getAVector = createAction({
       }
 
       // Add include options
-      if (!includeValues) {
-        queryParams.includeValues = 'false';
+      if (includeValues === false) {
+        queryParams.includeValues = false;
       }
-      if (!includeMetadata) {
-        queryParams.includeMetadata = 'false';
+      if (includeMetadata === false) {
+        queryParams.includeMetadata = false;
       }
 
       // Fetch vectors
       const fetchResult = await client.fetchVector(host, queryParams);
 
       // Process the response
-      const vectors = fetchResult.vectors || {};
-      const fetchedIds = Object.keys(vectors);
-      const missingIds = vectorIds.filter(id => !fetchedIds.includes(id));
+      let vectors = fetchResult.vectors || {};
+      let fetchedIds = Object.keys(vectors);
+      let missingIds = vectorIds.filter(id => !fetchedIds.includes(id));
+
+      // Additional response validation
+      if (!fetchResult.vectors || Object.keys(fetchResult.vectors).length === 0) {
+        // Check if the response has a different structure
+        if (fetchResult.data && fetchResult.data.vectors) {
+          vectors = fetchResult.data.vectors;
+          fetchedIds = Object.keys(vectors);
+          missingIds = vectorIds.filter(id => !fetchedIds.includes(id));
+        } else if (fetchResult.results && fetchResult.results.vectors) {
+          vectors = fetchResult.results.vectors;
+          fetchedIds = Object.keys(vectors);
+          missingIds = vectorIds.filter(id => !fetchedIds.includes(id));
+        }
+      }
 
       return {
         success: true,
@@ -104,6 +118,15 @@ export const getAVector = createAction({
       };
 
     } catch (error: any) {
+      // Handle specific Pinecone API errors
+      if (error.response && error.response.body) {
+        const errorBody = error.response.body;
+        
+        if (errorBody.code && errorBody.message) {
+          throw new Error(`Pinecone API Error (${errorBody.code}): ${errorBody.message}`);
+        }
+      }
+      
       throw new Error(`Failed to fetch vectors: ${error.message || error}`);
     }
   },

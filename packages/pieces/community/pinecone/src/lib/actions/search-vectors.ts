@@ -159,7 +159,6 @@ export const searchVectors = createAction({
                              (indexInfo.configuration && indexInfo.configuration.sparse);
         
         if (!isSparseIndex) {
-          console.warn(`Warning: Sparse vector provided but index "${indexName}" does not support sparse values. Only dense vector will be used.`);
           // Don't add sparseVector to requestBody for non-sparse indexes
         } else {
           requestBody.sparseVector = sparseVector;
