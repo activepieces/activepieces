@@ -40,8 +40,10 @@ export const getMessage = createAction({
                 token: context.auth.access_token,
             },
         });
-
+        const message=response.body.text;
         // Return the response body, which contains the message details
-        return response.body;
+        return {
+            message,
+        };
     },
 });
