@@ -41,7 +41,7 @@ export const summarizeText: Action = createAction({
     const provider = createAIProvider({
       providerName,
       modelInstance,
-      apiKey: engineToken,
+      engineToken,
       baseURL,
       metadata: {
         feature: AIUsageFeature.TEXT_AI,

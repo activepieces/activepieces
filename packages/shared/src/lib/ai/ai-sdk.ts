@@ -10,7 +10,7 @@ import { AI_USAGE_AGENT_ID_HEADER, AI_USAGE_FEATURE_HEADER, AI_USAGE_MCP_ID_HEAD
 export function createAIProvider<T extends LanguageModelV2 | ImageModel>({
     providerName,
     modelInstance,
-    apiKey,
+    engineToken,
     baseURL,
     metadata,
 }: CreateAIProviderParams<T>): T {
@@ -32,7 +32,7 @@ export function createAIProvider<T extends LanguageModelV2 | ImageModel>({
 
     const createHeaders = (): Record<string, string> => {
         const baseHeaders: Record<string, string> = {
-            'Authorization': `Bearer ${apiKey}`,
+            'Authorization': `Bearer ${engineToken}`,
             [AI_USAGE_FEATURE_HEADER]: metadata.feature,
         }
         const id = getMetadataId()
@@ -47,7 +47,7 @@ export function createAIProvider<T extends LanguageModelV2 | ImageModel>({
         case 'openai': {
             const openaiVersion = 'v1'
             const provider = createOpenAI({
-                apiKey,
+                apiKey: engineToken,
                 baseURL: `${baseURL}/${openaiVersion}`,
                 headers: createHeaders(),
             })
@@ -59,7 +59,7 @@ export function createAIProvider<T extends LanguageModelV2 | ImageModel>({
         case 'anthropic': {
             const anthropicVersion = 'v1'
             const provider = createAnthropic({
-                apiKey,
+                apiKey: engineToken,
                 baseURL: `${baseURL}/${anthropicVersion}`,
                 headers: createHeaders(),
             })
@@ -71,7 +71,7 @@ export function createAIProvider<T extends LanguageModelV2 | ImageModel>({
         case 'replicate': {
             const replicateVersion = 'v1'
             const provider = createReplicate({
-                apiToken: apiKey,
+                apiToken: engineToken,
                 baseURL: `${baseURL}/${replicateVersion}`,
                 headers: createHeaders(),
             })
@@ -83,7 +83,7 @@ export function createAIProvider<T extends LanguageModelV2 | ImageModel>({
         case 'google': {
             const googleVersion = 'v1beta'
             const provider = createGoogleGenerativeAI({
-                apiKey,
+                apiKey: engineToken,
                 baseURL: `${baseURL}/${googleVersion}`,
                 headers: createHeaders(),
             })
@@ -100,7 +100,10 @@ export function createAIProvider<T extends LanguageModelV2 | ImageModel>({
 type CreateAIProviderParams<T extends LanguageModelV2 | ImageModel> = {
     providerName: string
     modelInstance: T
-    apiKey: string
+    /**
+     * This is the engine token that will be replaced by the proxy with the api key
+     */
+    engineToken: string
     baseURL: string
     metadata: AIUsageMetadata
 }

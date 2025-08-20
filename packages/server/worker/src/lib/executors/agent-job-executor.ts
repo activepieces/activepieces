@@ -8,7 +8,7 @@ import { agentTools } from '../utils/agent-tools'
 import { workerMachine } from '../utils/machine'
 
 export const agentJobExecutor = (log: FastifyBaseLogger) => ({
-    async executeAgent(jobData: AgentJobData, engineToken: string, workerToken: string): Promise<void> {
+    async executeAgent({ jobData, engineToken, workerToken }: ExecuteAgentParams): Promise<void> {
         let agentToolInstance: Awaited<ReturnType<typeof agentTools>> | undefined
         try {
             const agentResult: UpdateAgentRunRequestBody & { steps: AgentStepBlock[] } = {
@@ -47,7 +47,7 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
             const model = createAIProvider({
                 providerName: 'openai',
                 modelInstance: openai('gpt-4.1'),
-                apiKey: engineToken,
+                engineToken,
                 baseURL,
                 metadata: {
                     feature: AIUsageFeature.AGENTS,
@@ -221,4 +221,10 @@ async function constructSystemPrompt(agent: Agent, fields: Field[] | undefined, 
 
 function concatMarkdown(blocks: AgentStepBlock[]): string {
     return blocks.filter((block) => block.type === ContentBlockType.MARKDOWN).map((block) => block.markdown).join('\n')
+}
+
+type ExecuteAgentParams = {
+    jobData: AgentJobData
+    engineToken: string
+    workerToken: string
 }

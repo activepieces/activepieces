@@ -31,7 +31,7 @@ export const generateImageAction = createAction({
     const provider = createAIProvider({
       providerName,
       modelInstance,
-      apiKey: engineToken,
+      engineToken,
       baseURL,
       metadata: {
         feature: AIUsageFeature.IMAGE_AI,

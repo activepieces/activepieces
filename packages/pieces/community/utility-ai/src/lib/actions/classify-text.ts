@@ -37,7 +37,7 @@ export const classifyText = createAction({
     const provider = createAIProvider({
       providerName,
       modelInstance,
-      apiKey: engineToken,
+      engineToken,
       baseURL,
       metadata: {
         feature: AIUsageFeature.UTILITY_AI,
