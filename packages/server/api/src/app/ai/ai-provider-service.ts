@@ -1,8 +1,12 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
+    AI_USAGE_AGENT_ID_HEADER,
+    AI_USAGE_FEATURE_HEADER,
+    AI_USAGE_MCP_ID_HEADER,
     AIProvider,
     AIProviderWithoutSensitiveData,
+    AIUsageFeature,
     ApEdition,
     apId,
     CreateAIProviderRequest,
@@ -192,6 +196,8 @@ export const aiProviderService = {
     },
 
     validateRequest(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): void {
+        validateAIUsageHeaders(request.headers)
+
         if (this.isStreaming(provider, request) && !this.providerSupportsStreaming(provider)) {
             throw new ActivepiecesError({
                 code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
@@ -240,4 +246,40 @@ function getProviderConfig(provider: string | undefined): SupportedAIProvider | 
         return undefined
     }
     return SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
+}
+
+
+function validateAIUsageHeaders(headers: Record<string, string | string[] | undefined>): void {
+    const feature = headers[AI_USAGE_FEATURE_HEADER] as AIUsageFeature
+    const agentId = headers[AI_USAGE_AGENT_ID_HEADER] as string | undefined
+    const mcpId = headers[AI_USAGE_MCP_ID_HEADER] as string | undefined
+
+    // Validate feature header
+    const supportedFeatures = Object.values(AIUsageFeature).filter(f => f !== AIUsageFeature.UNKNOWN) as AIUsageFeature[]
+    if (feature && !supportedFeatures.includes(feature)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `${AI_USAGE_FEATURE_HEADER} header must be one of the following: ${supportedFeatures.join(', ')}`,
+            },
+        })
+    }
+
+    if (feature === AIUsageFeature.AGENTS && !agentId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `${AI_USAGE_AGENT_ID_HEADER} header is required when feature is ${AIUsageFeature.AGENTS}`,
+            },
+        })
+    }
+    
+    if (feature === AIUsageFeature.MCP && !mcpId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `${AI_USAGE_MCP_ID_HEADER} header is required when feature is ${AIUsageFeature.MCP}`,
+            },
+        })
+    }
 }

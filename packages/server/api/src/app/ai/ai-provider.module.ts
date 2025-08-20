@@ -137,8 +137,6 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 })
             }
 
-            validateAIUsageHeaders(request.headers)
-
             const provider = (request.params as { provider: string }).provider
             aiProviderService.validateRequest(provider, request)
 
@@ -193,41 +191,6 @@ function getProviderConfigOrThrow(provider: string | undefined): SupportedAIProv
         })
     }
     return providerConfig
-}
-
-function validateAIUsageHeaders(headers: Record<string, string | string[] | undefined>): void {
-    const feature = headers[AI_USAGE_FEATURE_HEADER] as AIUsageFeature
-    const agentId = headers[AI_USAGE_AGENT_ID_HEADER] as string | undefined
-    const mcpId = headers[AI_USAGE_MCP_ID_HEADER] as string | undefined
-
-    // Validate feature header
-    const supportedFeatures = Object.values(AIUsageFeature).filter(f => f !== AIUsageFeature.UNKNOWN) as AIUsageFeature[]
-    if (feature && !supportedFeatures.includes(feature)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: `${AI_USAGE_FEATURE_HEADER} header must be one of the following: ${supportedFeatures.join(', ')}`,
-            },
-        })
-    }
-
-    if (feature === AIUsageFeature.AGENTS && !agentId) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: `${AI_USAGE_AGENT_ID_HEADER} header is required when feature is ${AIUsageFeature.AGENTS}`,
-            },
-        })
-    }
-    
-    if (feature === AIUsageFeature.MCP && !mcpId) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: `${AI_USAGE_MCP_ID_HEADER} header is required when feature is ${AIUsageFeature.MCP}`,
-            },
-        })
-    }
 }
 
 function buildAIUsageMetadata(headers: Record<string, string | string[] | undefined>): AIUsageMetadata {
