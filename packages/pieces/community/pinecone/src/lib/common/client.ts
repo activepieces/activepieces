@@ -1,4 +1,4 @@
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PineconeAuth } from './auth';
 
 export class PineconeClient {
@@ -8,15 +8,9 @@ export class PineconeClient {
     this.auth = auth;
   }
 
-  private getAuth() {
-    return {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: this.auth.apiKey,
-    } as const;
-  }
-
   private getHeaders() {
     return {
+      'Api-Key': this.auth.apiKey,
       'x-project-id': this.auth.projectId,
     };
   }
@@ -28,7 +22,6 @@ export class PineconeClient {
     const response = await httpClient.sendRequest({
       url: `https://api.pinecone.io/indexes/${indexName}`,
       method: HttpMethod.GET,
-      authentication: this.getAuth(),
       headers: this.getHeaders(),
     });
 
@@ -46,13 +39,12 @@ export class PineconeClient {
     const response = await httpClient.sendRequest({
       url: 'https://api.pinecone.io/indexes',
       method: HttpMethod.POST,
-      authentication: this.getAuth(),
       headers: this.getHeaders(),
       body: requestBody,
     });
 
     if (response.status !== 201) {
-      throw new Error(`Failed to create index: ${response.status}`);
+      throw new Error(`Failed to create index: ${JSON.stringify(response)}`);
     }
 
     return response.body as any;
@@ -65,7 +57,6 @@ export class PineconeClient {
     const response = await httpClient.sendRequest({
       url: `https://${host}/vectors/delete`,
       method: HttpMethod.POST,
-      authentication: this.getAuth(),
       headers: this.getHeaders(),
       body: requestBody,
     });
@@ -84,7 +75,6 @@ export class PineconeClient {
     const response = await httpClient.sendRequest({
       url: `https://${host}/vectors/upsert`,
       method: HttpMethod.POST,
-      authentication: this.getAuth(),
       headers: this.getHeaders(),
       body: requestBody,
     });
@@ -103,7 +93,6 @@ export class PineconeClient {
     const response = await httpClient.sendRequest({
       url: `https://${host}/query`,
       method: HttpMethod.POST,
-      authentication: this.getAuth(),
       headers: this.getHeaders(),
       body: requestBody,
     });
@@ -122,7 +111,6 @@ export class PineconeClient {
     const response = await httpClient.sendRequest({
       url: `https://${host}/vectors/fetch`,
       method: HttpMethod.GET,
-      authentication: this.getAuth(),
       headers: this.getHeaders(),
       queryParams: requestBody,
     });
@@ -141,7 +129,6 @@ export class PineconeClient {
     const response = await httpClient.sendRequest({
       url: `https://${host}/vectors/update`,
       method: HttpMethod.POST,
-      authentication: this.getAuth(),
       headers: this.getHeaders(),
       body: requestBody,
     });
@@ -160,7 +147,6 @@ export class PineconeClient {
     const response = await httpClient.sendRequest({
       url: `https://${host}/describe_index_stats`,
       method: HttpMethod.POST,
-      authentication: this.getAuth(),
       headers: this.getHeaders(),
       body: requestBody || {},
     });
