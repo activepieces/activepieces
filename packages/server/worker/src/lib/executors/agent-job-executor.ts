@@ -1,5 +1,5 @@
 import { AgentJobData, AgentJobSource } from '@activepieces/server-shared'
-import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, AIUsageFeature, assertNotNullOrUndefined, ContentBlockType, createAIProvider, Field, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
+import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, AIUsageFeature, assertNotNullOrUndefined, ContentBlockType, createAIModel, Field, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { APICallError, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,7 +8,7 @@ import { agentTools } from '../utils/agent-tools'
 import { workerMachine } from '../utils/machine'
 
 export const agentJobExecutor = (log: FastifyBaseLogger) => ({
-    async executeAgent(jobData: AgentJobData, engineToken: string, workerToken: string): Promise<void> {
+    async executeAgent({ jobData, engineToken, workerToken }: ExecuteAgentParams): Promise<void> {
         let agentToolInstance: Awaited<ReturnType<typeof agentTools>> | undefined
         try {
             const agentResult: UpdateAgentRunRequestBody & { steps: AgentStepBlock[] } = {
@@ -44,10 +44,10 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
             })
 
             const baseURL = `${workerMachine.getPublicApiUrl()}v1/ai-providers/proxy/openai`
-            const model = createAIProvider({
+            const model = createAIModel({
                 providerName: 'openai',
                 modelInstance: openai('gpt-4.1'),
-                apiKey: engineToken,
+                engineToken,
                 baseURL,
                 metadata: {
                     feature: AIUsageFeature.AGENTS,
@@ -221,4 +221,10 @@ async function constructSystemPrompt(agent: Agent, fields: Field[] | undefined, 
 
 function concatMarkdown(blocks: AgentStepBlock[]): string {
     return blocks.filter((block) => block.type === ContentBlockType.MARKDOWN).map((block) => block.markdown).join('\n')
+}
+
+type ExecuteAgentParams = {
+    jobData: AgentJobData
+    engineToken: string
+    workerToken: string
 }

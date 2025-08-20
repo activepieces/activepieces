@@ -1,5 +1,5 @@
 import { aiProps } from '@activepieces/pieces-common';
-import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, createAIProvider } from '@activepieces/shared';
+import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, createAIModel } from '@activepieces/shared';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { LanguageModelV2 } from '@ai-sdk/provider';
 import { ModelMessage, generateText } from 'ai';
@@ -44,10 +44,10 @@ export const askAI = createAction({
 
     const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
     const engineToken = context.server.token;
-    const provider = createAIProvider({
+    const model = createAIModel({
       providerName,
       modelInstance,
-      apiKey: engineToken,
+      engineToken,
       baseURL,
       metadata: {
         feature: AIUsageFeature.TEXT_AI,
@@ -69,7 +69,7 @@ export const askAI = createAction({
     }
 
     const response = await generateText({
-      model: provider,
+      model,
       messages: [
         ...(conversation ?? []),
         {
