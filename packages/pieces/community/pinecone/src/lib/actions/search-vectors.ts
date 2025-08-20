@@ -44,7 +44,7 @@ export const searchVectors = createAction({
     // Sparse vector support
     sparseVector: Property.Json({
       displayName: 'Sparse Vector',
-      description: 'Vector sparse data with indices and values arrays (optional). Use for sparse vector queries.',
+      description: 'Vector sparse data with indices and values arrays (optional). Use for sparse vector queries. Note: Only supported by sparse indexes or indexes using dotproduct similarity metric.',
       required: false,
       defaultValue: {
         indices: [0, 1, 2],
@@ -150,9 +150,20 @@ export const searchVectors = createAction({
         requestBody.id = queryVectorId;
       }
 
-      // Add sparse vector if provided
+      // Add sparse vector only if provided AND if the index supports it
+      // Note: Sparse vectors are only supported by sparse indexes or indexes using dotproduct similarity
       if (sparseVector) {
-        requestBody.sparseVector = sparseVector;
+        // Check if this is a sparse index by examining the index info
+        const indexConfig = indexInfo.dimension || {};
+        const isSparseIndex = indexInfo.metric === 'dotproduct' || 
+                             (indexInfo.configuration && indexInfo.configuration.sparse);
+        
+        if (!isSparseIndex) {
+          console.warn(`Warning: Sparse vector provided but index "${indexName}" does not support sparse values. Only dense vector will be used.`);
+          // Don't add sparseVector to requestBody for non-sparse indexes
+        } else {
+          requestBody.sparseVector = sparseVector;
+        }
       }
 
       // Add namespace if provided
@@ -193,12 +204,25 @@ export const searchVectors = createAction({
           includeValues,
           includeMetadata,
           hasFilter: !!metadataFilter,
-          hasSparseVector: !!sparseVector
+          hasSparseVector: !!sparseVector && requestBody.sparseVector !== undefined
         },
         requestBody
       };
 
     } catch (error: any) {
+      // Handle specific Pinecone API errors
+      if (error.response && error.response.body) {
+        const errorBody = error.response.body;
+        
+        if (errorBody.code === 3 && errorBody.message && errorBody.message.includes('sparse values')) {
+          throw new Error(`Sparse vector search not supported by this index. This index only supports dense vectors. Please remove the sparse vector parameter or use a different index that supports sparse vectors.`);
+        }
+        
+        if (errorBody.code && errorBody.message) {
+          throw new Error(`Pinecone API Error (${errorBody.code}): ${errorBody.message}`);
+        }
+      }
+      
       throw new Error(`Failed to search vectors: ${error.message || error}`);
     }
   },

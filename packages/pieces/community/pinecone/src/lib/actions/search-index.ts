@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { pineconeAuth, PineconeAuth } from '../common';
+import { PineconeClient } from '../common/client';
 
 export const searchIndex = createAction({
   name: 'search-index',
@@ -24,22 +24,48 @@ export const searchIndex = createAction({
     const { indexName, includeStats = false } = propsValue;
     const { apiKey, projectId } = auth as PineconeAuth;
 
+    // Validate required auth parameters
+    if (!apiKey || !projectId) {
+      throw new Error('API Key and Project ID are required for authentication');
+    }
+
     try {
+      const client = new PineconeClient(auth);
+      
       // First, get all indexes to search through them
-      const response = await httpClient.sendRequest({
-        url: 'https://api.pinecone.io/indexes',
-        method: HttpMethod.GET,
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'x-project-id': projectId,
-        },
+      const response = await client.getAllIndexes();
+      
+      // Debug: Log the response structure to understand the format
+      console.log('Pinecone API Response:', {
+        status: '200', // Client handles status internally
+        bodyType: typeof response,
+        bodyKeys: response && typeof response === 'object' ? Object.keys(response) : 'N/A',
+        bodyPreview: response ? JSON.stringify(response).substring(0, 200) + '...' : 'N/A'
       });
 
-      if (response.status !== 200) {
-        throw new Error(`Failed to fetch indexes: ${response.status}`);
+      // Ensure response is an array and handle different response formats
+      let allIndexes: any[] = [];
+      
+      if (Array.isArray(response)) {
+        allIndexes = response;
+      } else if (response && typeof response === 'object') {
+        // Handle case where response might be wrapped in an object
+        if (Array.isArray(response.indexes)) {
+          allIndexes = response.indexes;
+        } else if (Array.isArray(response.data)) {
+          allIndexes = response.data;
+        } else if (Array.isArray(response.results)) {
+          allIndexes = response.results;
+        } else {
+          // Log the actual response structure for debugging
+          console.log('Unexpected response structure:', JSON.stringify(response, null, 2));
+          throw new Error(`Unexpected response structure from Pinecone API. Expected array of indexes. Response keys: ${Object.keys(response).join(', ')}`);
+        }
+      } else {
+        throw new Error(`Invalid response format from Pinecone API. Expected array, got: ${typeof response}`);
       }
-
-      const allIndexes = response.body as any[];
+      
+      console.log(`Found ${allIndexes.length} total indexes from API`);
       
       // Filter indexes by name (case-insensitive partial match)
       const matchingIndexes = allIndexes.filter(index => 
@@ -61,33 +87,28 @@ export const searchIndex = createAction({
       if (includeStats) {
         const detailedPromises = matchingIndexes.map(async (index) => {
           try {
-            const statsResponse = await httpClient.sendRequest({
-              url: `https://api.pinecone.io/indexes/${index.name}/describe_index_stats`,
-              method: HttpMethod.POST,
-              headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'x-project-id': projectId,
-              },
-              body: {},
-            });
-
-            if (statsResponse.status === 200) {
+            // Use the client to get index stats
+            const indexInfo = await client.getIndex(index.name);
+            const host = indexInfo.host;
+            
+            if (host) {
+              const statsResponse = await client.describeIndexStats(host);
               return {
                 ...index,
-                stats: statsResponse.body
+                stats: statsResponse
               };
             } else {
               return {
                 ...index,
                 stats: null,
-                statsError: `Failed to fetch stats: ${statsResponse.status}`
+                statsError: 'Index host not found'
               };
             }
           } catch (error: any) {
             return {
               ...index,
               stats: null,
-              statsError: `Error fetching stats: ${error.message}`
+              statsError: `Error fetching stats: ${error.message || error}`
             };
           }
         });
@@ -104,7 +125,16 @@ export const searchIndex = createAction({
       };
 
     } catch (error: any) {
-      throw new Error(`Failed to search indexes: ${error.message || error}`);
+      // Provide more specific error information
+      if (error.message.includes('Authentication failed')) {
+        throw error;
+      }
+      
+      const errorMessage = error.response 
+        ? `API Error: ${error.response.status} - ${JSON.stringify(error.response.body)}`
+        : error.message || 'Unknown error occurred';
+        
+      throw new Error(`Failed to search indexes: ${errorMessage}`);
     }
   },
 });

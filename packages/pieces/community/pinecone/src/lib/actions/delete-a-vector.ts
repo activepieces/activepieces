@@ -82,6 +82,9 @@ export const deleteAVector = createAction({
         if (!id || typeof id !== 'string') {
           throw new Error(`Vector ID at index ${i} must be a valid string`);
         }
+        if (id.trim().length === 0) {
+          throw new Error(`Vector ID at index ${i} cannot be empty or whitespace`);
+        }
       }
     }
 
@@ -108,6 +111,25 @@ export const deleteAVector = createAction({
         throw new Error('Index host not found in response');
       }
 
+      // For specific IDs deletion, optionally verify vectors exist first
+      if (deleteMethod === 'specific_ids' && vectorIds && Array.isArray(vectorIds) && vectorIds.length > 0) {
+        try {
+          // Check if at least some vectors exist before deletion
+          const idsToCheck = Array.isArray(vectorIds) ? vectorIds.slice(0, Math.min(10, vectorIds.length)) : [];
+          const fetchResponse = await client.fetchVector(host, { 
+            ids: idsToCheck,
+            namespace 
+          });
+          
+          if (fetchResponse.vectors && Object.keys(fetchResponse.vectors).length === 0) {
+            console.warn('Warning: No vectors found with the provided IDs. The delete operation may not affect any vectors.');
+          }
+        } catch (fetchError: any) {
+          console.warn('Warning: Could not verify vector existence before deletion:', fetchError.message || fetchError);
+          // Continue with deletion even if verification fails
+        }
+      }
+
       // Build the request body
       const requestBody: any = {};
 
@@ -125,8 +147,26 @@ export const deleteAVector = createAction({
         requestBody.namespace = namespace;
       }
 
+      // Debug logging
+      console.log('Delete request details:', {
+        indexName,
+        namespace: namespace || 'default',
+        deleteMethod,
+        requestBody,
+        host
+      });
+
       // Delete vectors
       const deleteResult = await client.deleteVectors(host, requestBody);
+
+      // Debug logging for response
+      console.log('Delete response:', deleteResult);
+
+      // Validate the delete operation actually succeeded
+      // Note: Some delete operations might return empty responses but still succeed
+      if (deleteResult === undefined || deleteResult === null) {
+        console.warn('Delete operation returned empty response, but this may indicate success');
+      }
 
       // Build response message based on delete method
       let message = '';
@@ -159,7 +199,42 @@ export const deleteAVector = createAction({
       };
 
     } catch (error: any) {
-      throw new Error(`Failed to delete vectors: ${error.message || error}`);
+      // Enhanced error handling with more details
+      let errorMessage = 'Failed to delete vectors';
+      
+      if (error.response) {
+        const { status, body } = error.response;
+        errorMessage += `: HTTP ${status}`;
+        
+        if (body) {
+          if (typeof body === 'object') {
+            if (body.message) {
+              errorMessage += ` - ${body.message}`;
+            } else if (body.error) {
+              errorMessage += ` - ${body.error}`;
+            } else {
+              errorMessage += ` - ${JSON.stringify(body)}`;
+            }
+          } else {
+            errorMessage += ` - ${body}`;
+          }
+        }
+      } else if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+      
+      console.error('Delete vector error details:', {
+        error,
+        requestDetails: {
+          indexName,
+          namespace,
+          deleteMethod,
+          vectorIds: deleteMethod === 'specific_ids' ? vectorIds : null,
+          metadataFilter: deleteMethod === 'filter' ? metadataFilter : null
+        }
+      });
+      
+      throw new Error(errorMessage);
     }
   },
 });

@@ -5,7 +5,7 @@ import { commonProps, searchProps } from '../common/props';
 
 export const getAVector = createAction({
   name: 'get-a-vector',
-  displayName: 'Fetch Vectors',
+  displayName: 'Get a Vector',
   description: 'Look up and return vectors by ID from a single namespace. The returned vectors include the vector data and/or metadata.',
   auth: pineconeAuth,
   props: {
