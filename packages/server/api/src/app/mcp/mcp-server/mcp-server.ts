@@ -31,7 +31,7 @@ import { webhookService } from '../../webhooks/webhook.service'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
 import { mcpService } from '../mcp-service'
 import { mcpUtils } from '../mcp-utils'
-import { ToolExecution } from '../tool/tool-execution'
+import { toolExecutor } from '../tool/tool-execution'
 
 
 export async function createMcpServer({
@@ -132,15 +132,17 @@ async function addPieceToServer(
                     mcpId: mcpTool.mcpId,
                 })
                 
-                const toolExecution = new ToolExecution({ projectId, platformId, aiModel })
                 const auth = !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
                 
-                const { result, parsedInputs } = await toolExecution.execute({
+                const { result, parsedInputs } = await toolExecutor.execute({
                     auth,
                     userInstructions: params.instructions,
                     actionName: toolPieceMetadata.actionName,
                     pieceName: toolPieceMetadata.pieceName,
                     pieceVersion: toolPieceMetadata.pieceVersion,
+                    aiModel,
+                    projectId,
+                    platformId,
                 })
 
                 trackToolCall({ mcpId: mcpTool.mcpId, toolName: toolActionName, projectId, logger })
