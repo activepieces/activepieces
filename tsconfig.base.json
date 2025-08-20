@@ -45,6 +45,9 @@
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],
+      "@activepieces/piece-aircall": [
+        "packages/pieces/community/aircall/src/index.ts"
+      ],
       "@activepieces/piece-airparser": [
         "packages/pieces/community/airparser/src/index.ts"
       ],
@@ -128,6 +131,9 @@
       ],
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
+      ],
+      "@activepieces/piece-bigin-by-zoho": [
+        "packages/pieces/community/bigin-by-zoho/src/index.ts"
       ],
       "@activepieces/piece-binance": [
         "packages/pieces/community/binance/src/index.ts"
@@ -453,6 +459,9 @@
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
       ],
+      "@activepieces/piece-help-scout": [
+        "packages/pieces/community/help-scout/src/index.ts"
+      ],
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],
@@ -590,11 +599,17 @@
       "@activepieces/piece-messagebird": [
         "packages/pieces/community/messagebird/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-365-people": [
+        "packages/pieces/community/microsoft-365-people/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-excel-365": [
         "packages/pieces/community/microsoft-excel-365/src/index.ts"
       ],
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-onenote": [
+        "packages/pieces/community/microsoft-onenote/src/index.ts"
       ],
       "@activepieces/piece-microsoft-outlook": [
         "packages/pieces/community/microsoft-outlook/src/index.ts"
@@ -819,6 +834,9 @@
       ],
       "@activepieces/piece-serp-api": [
         "packages/pieces/community/serp-api/src/index.ts"
+      ],
+      "@activepieces/piece-serpstat":[
+        "packages/pieces/community/serpstat/src/index.ts"
       ],
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"

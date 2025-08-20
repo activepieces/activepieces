@@ -1,0 +1,16 @@
+{
+  "Data Summarizer": "Sumário de Dados",
+  "Calculate Average": "Calcular média",
+  "Calculate Sum": "Calcular Soma",
+  "Count Uniques": "Count Uniques",
+  "Find Min and Max": "Encontre Min e Max",
+  "Calculates the average of a list of values.": "Calcula a média de uma lista de valores.",
+  "Calculates the sum of a list of values.": "Calcula a soma de uma lista de valores.",
+  "Counts the number of unique values for multiple fields": "Conta o número de valores exclusivos para vários campos",
+  "Get the smallest and greatest values from a list of numeric values.": "Obtenha o menor e o maior valor a partir de uma lista de valores numéricos.",
+  "Markdown": "Markdown",
+  "Values": "Valores",
+  "Fields": "campos",
+  "If you'd like to use the values with a previous step, click the (X) first, and then select the step you want to use.": "Se você deseja usar os valores com um passo anterior, clique primeiro no (X) e depois selecione o passo que você deseja usar.",
+  "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave fields empty.": "Se os dados que você está passando forem um objeto, você pode especificar certos campos para filtrar. O objeto será descartado se os campos não existirem. Caso contrário, deixe os campos vazios."
+}

@@ -153,7 +153,7 @@ const TestWaitForNextWebhookDialog = ({
           onSubmit={(data) => {
             onSubmit({
               preExistingSampleData: {
-                id: apId(),
+                runId: apId(),
                 success: true,
                 output: {
                   body: data.body,

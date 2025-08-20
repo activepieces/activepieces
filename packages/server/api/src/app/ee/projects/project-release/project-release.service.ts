@@ -1,5 +1,5 @@
 import { memoryLock } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, apId, CreateProjectReleaseRequestBody, DiffReleaseRequest, DiffState, ErrorCode, isNil, ListProjectReleasesRequest, PlatformId, ProjectId, ProjectOperationType, ProjectRelease, ProjectReleaseType, ProjectState, ProjectSyncError, ProjectSyncPlan, ProjectSyncPlanOperation, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, DiffState, ErrorCode, FlowProjectOperation, FlowProjectOperationType, FlowSyncError, isNil, ListProjectReleasesRequest, PlatformId, ProjectId, ProjectRelease, ProjectReleaseType, ProjectState, ProjectSyncPlan, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
@@ -18,10 +18,10 @@ export const projectReleaseService = {
         const lock = await memoryLock.acquire(lockKey)
         try {
             const diffs = await findDiffStates(projectId, ownerId, params, log)
+            const filteredDiffs = await projectDiffService.filterFlows(params.selectedFlowsIds ?? [], diffs)
             await projectStateService(log).apply({
                 projectId,
-                diffs,
-                selectedFlowsIds: params.selectedFlowsIds ?? null,
+                diffs: filteredDiffs,
                 log,
                 platformId,
             })
@@ -108,10 +108,10 @@ async function findDiffStates(projectId: ProjectId, ownerId: ApId, params: DiffR
 
 async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
     const { diffs, errors } = params
-    const { operations, connections, tables } = diffs
-    const responsePlans: ProjectSyncPlanOperation[] = operations.map((operation) => {
+    const { flows, connections, tables, agents } = diffs
+    const responsePlans: FlowProjectOperation[] = flows.map((operation) => {
         switch (operation.type) {
-            case ProjectOperationType.DELETE_FLOW:
+            case FlowProjectOperationType.DELETE_FLOW:
                 return {
                     type: operation.type,
                     flow: {
@@ -119,7 +119,7 @@ async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
                         displayName: operation.flowState.version.displayName,
                     },
                 }
-            case ProjectOperationType.CREATE_FLOW:
+            case FlowProjectOperationType.CREATE_FLOW:
                 return {
                     type: operation.type,
                     flow: {
@@ -127,7 +127,7 @@ async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
                         displayName: operation.flowState.version.displayName,
                     },
                 }
-            case ProjectOperationType.UPDATE_FLOW:
+            case FlowProjectOperationType.UPDATE_FLOW:
                 return {
                     type: operation.type,
                     flow: {
@@ -143,9 +143,10 @@ async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
     })
     return {
         errors,
-        operations: responsePlans,
+        flows: responsePlans,
         connections,
         tables,
+        agents,
     }
 }
 async function getStateFromCreateRequest(projectId: string, ownerId: ApId, request: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectState> {
@@ -177,7 +178,7 @@ type CreateProjectReleaseParams = {
 
 type toResponseParams = {
     diffs: DiffState
-    errors: ProjectSyncError[]
+    errors: FlowSyncError[]
 }
 
 type ListParams = {

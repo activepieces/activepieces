@@ -1,0 +1,20 @@
+{
+  "Azure Communication Services": "Azure コミュニケーション サービス",
+  "Communication services from Microsoft Azure": "Microsoft Azureからの通信サービス",
+  "Send Email": "メール送信",
+  "Send a text or HTML email": "テキストまたはHTMLメールを送信",
+  "Sender Email (From)": "送信者メール (From)",
+  "To": "終了日",
+  "Cc": "Cc",
+  "Bcc": "Bcc",
+  "Reply To": "返信先",
+  "Subject": "件名",
+  "Content Type": "コンテンツタイプ",
+  "Content": "コンテンツ",
+  "Sender email": "送信者のメールアドレス",
+  "Emails of the recipients": "受信者のメール",
+  "List of emails in cc": "Cc内のメール一覧",
+  "List of emails in bcc": "bcc 内のメール一覧",
+  "Email to receive replies on (defaults to sender)": "返信を受信する電子メール（既定の送信者）",
+  "HTML is only allowed if you selected HTML as type": "HTMLはあなたがタイプとしてHTMLを選択した場合にのみ許可されます"
+}

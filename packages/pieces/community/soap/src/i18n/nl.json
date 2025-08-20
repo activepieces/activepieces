@@ -1,0 +1,22 @@
+{
+  "SOAP": "SOAP",
+  "Simple Object Access Protocol for communication between applications": "Simpele Object Access Protocol voor communicatie tussen toepassingen",
+  "Authentication Type": "Authenticatie type",
+  "Username": "Gebruikersnaam",
+  "Password": "Wachtwoord",
+  "Custom Header": "Aangepaste koptekst",
+  "The WS Security username": "De WS Security gebruikersnaam",
+  "The WS Security password": "Het WS Security wachtwoord",
+  "Custom Header Content": "Aangepaste header inhoud",
+  "None": "geen",
+  "WS Security": "WS Beveiliging",
+  "Basic Auth": "Basis authenticatie",
+  "Call SOAP Method": "Bel SOAP methode",
+  "Call a SOAP from a given wsdl specification": "Bel een SOAP aan van een gegeven wsdl specificatie",
+  "WSDL URL": "WSDL URL",
+  "Method": "Methode",
+  "Parameters": "Parameters",
+  "Parsed": "Parsed",
+  "The SOAP Method": "De SOAP Methode",
+  "Arguments for the SOAP method": "Argumenten voor de SOAP methode"
+}

@@ -7,7 +7,7 @@ import { workerApiService } from '../api/server-api.service'
 import { triggerHooks } from '../utils/trigger-utils'
 
 export const repeatingJobExecutor = (log: FastifyBaseLogger) => ({
-    async executeRepeatingJob({ data, engineToken, workerToken }: Params): Promise<void> {
+    async executeRepeatingJob({ jobId, data, engineToken, workerToken }: Params): Promise<void> {
         const { flowVersionId, jobType } = data
 
         const populatedFlow = await flowWorkerCache(log).getFlow({
@@ -18,7 +18,7 @@ export const repeatingJobExecutor = (log: FastifyBaseLogger) => ({
         assertNotNullOrUndefined(flowVersion, 'flowVersion')
         switch (jobType) {
             case RepeatableJobType.EXECUTE_TRIGGER:
-                await consumePieceTrigger(data, flowVersion, engineToken, workerToken, log)
+                await consumePieceTrigger(jobId, data, flowVersion, engineToken, workerToken, log)
                 break
             case RepeatableJobType.DELAYED_FLOW:
                 await consumeDelayedJob(data, workerToken, log)
@@ -31,12 +31,13 @@ export const repeatingJobExecutor = (log: FastifyBaseLogger) => ({
 })
 
 
-const consumePieceTrigger = async (data: RepeatingJobData, flowVersion: FlowVersion, engineToken: string, workerToken: string, log: FastifyBaseLogger): Promise<void> => {
+const consumePieceTrigger = async (jobId: string, data: RepeatingJobData, flowVersion: FlowVersion, engineToken: string, workerToken: string, log: FastifyBaseLogger): Promise<void> => {
     const payloads: unknown[] = await triggerHooks(log).extractPayloads(engineToken, {
         projectId: data.projectId,
         flowVersion,
         payload: {} as TriggerPayload,
         simulate: false,
+        jobId,
     })
     await workerApiService(workerToken).startRuns({
         flowVersionId: data.flowVersionId,
@@ -68,7 +69,8 @@ const consumeDelayedJob = async (data: DelayedJobData, workerToken: string, log:
 }
 
 
-type Params = {
+type Params = { 
+    jobId: string
     data: ScheduledJobData
     engineToken: string
     workerToken: string

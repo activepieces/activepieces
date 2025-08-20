@@ -10,6 +10,7 @@ import {
 } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
+    ApEnvironment,
     EngineResponseStatus,
     ErrorCode,
     FlowTriggerType,
@@ -31,9 +32,17 @@ import { system } from '../../helper/system/system'
 import { jobQueue } from '../../workers/queue'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 
+const environment = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
+
 export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
     return {
         async enable(params: EnableFlowTriggerParams): Promise<ActiveTriggerReturn> {
+            if (environment === ApEnvironment.TESTING) {
+                return {
+                    scheduleOptions: undefined,
+                    webhookHandshakeConfiguration: undefined,
+                }
+            }
             const { flowVersion, projectId, simulate, pieceTrigger } = params
 
             const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>>>({

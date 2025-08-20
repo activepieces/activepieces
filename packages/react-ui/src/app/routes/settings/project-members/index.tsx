@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { LoaderIcon } from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import {
   Card,
   CardContent,
@@ -39,6 +40,10 @@ export default function ProjectMembersPage() {
       )}
     >
       <div className="w-full flex flex-col items-center justify-center gap-4">
+        <DashboardPageHeader
+          title={t('Project Members')}
+          description={t('Invite your team members to collaborate.')}
+        />
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-xl">{t('Project Members')}</CardTitle>

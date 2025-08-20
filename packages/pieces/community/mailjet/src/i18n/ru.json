@@ -1,0 +1,21 @@
+{
+  "Mailjet": "Mailjet",
+  "Email delivery service for sending transactional and marketing emails": "Служба доставки электронной почты для отправки транзакций и маркетинговых писем",
+  "API Key": "Ключ API",
+  "Enter your API Key here": "Введите ваш API ключ здесь",
+  "API Secret": "Секрет API",
+  "Enter your API Secret here": "Введите ваш API Секрет здесь",
+  "Enter your api credentials": "Введите ваши данные api",
+  "Send Email": "Отправить письмо",
+  "Send a text, HTML or template email through Mailjet": "Отправить текст, HTML или шаблон письма через Mailjet",
+  "From (Email)": "От (Email)",
+  "From (Name)": "От (имя)",
+  "Emails of recipients": "E-mail получателей",
+  "Subject": "Тема",
+  "Text part": "Текстовая часть",
+  "HTML part": "Часть HTML",
+  "Template Id": "Id шаблона",
+  "Template variables": "Переменные шаблона",
+  "Sender email, must be verified in Mailjet": "E-mail отправителя, должен быть проверен в Mailjet",
+  "Template Id (number) defined in Mailjet": "Идентификатор шаблона (число) определен в Mailjet"
+}

@@ -1,0 +1,20 @@
+{
+  "Airparser": "Airparser",
+  "Extract structured data from emails, PDFs, or documents with Airparser.": "Extract structured data from emails, PDFs, or documents with Airparser.",
+  "You can find your API key in the Airparser dashboard under Account Settings.": "You can find your API key in the Airparser dashboard under Account Settings.",
+  "Get Data from Document": "Get Data from Document",
+  "Upload Document": "Upload Document",
+  "Retrieves parsed JSON data from a specific document.": "Retrieves parsed JSON data from a specific document.",
+  "Upload a document to an Airparser inbox for parsing.": "Upload a document to an Airparser inbox for parsing.",
+  "Inbox": "Inbox",
+  "Document": "Document",
+  "File": "文件",
+  "File Name": "File Name",
+  "Metadata": "Metadata",
+  "The document file to upload for parsing.": "The document file to upload for parsing.",
+  "Optional metadata to associate with the document.": "Optional metadata to associate with the document.",
+  "Document Parsed": "Document Parsed",
+  "Triggers when a new document is parsed in a specific inbox.": "Triggers when a new document is parsed in a specific inbox.",
+  "Markdown": "Markdown",
+  "## Airparser Webhook Setup\n\t\t\tTo use this trigger, you need to manually set up a webhook in your Airparser account:\n\n\t\t\t1. Login to your Airparser account.\n\t\t\t2. Navigate to **Integrations** > **Webhooks** in the left sidebar.\n\t\t\t3. Enter the following URL in the webhooks field and select **Document Parsed** as webhook trigger:\n\t\t\t```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n\t\t\t4. Click Save to register the webhook.\n\t\t\t": "## Airparser Webhook Setup\n\t\t\tTo use this trigger, you need to manually set up a webhook in your Airparser account:\n\n\t\t\t1. Login to your Airparser account.\n\t\t\t2. Navigate to **Integrations** > **Webhooks** in the left sidebar.\n\t\t\t3. Enter the following URL in the webhooks field and select **Document Parsed** as webhook trigger:\n\t\t\t```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n\t\t\t4. Click Save to register the webhook.\n\t\t\t"
+}
