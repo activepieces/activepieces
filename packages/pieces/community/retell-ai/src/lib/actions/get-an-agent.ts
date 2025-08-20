@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { RetllAiAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { agentIdDropdown } from '../common/props';
 
 export const getAnAgent = createAction({
   auth: RetllAiAuth,
@@ -9,11 +10,7 @@ export const getAnAgent = createAction({
   displayName: 'Get an Agent',
   description: 'Fetch details of a Retell AI agent by Agent ID',
   props: {
-    agentId: Property.ShortText({
-      displayName: 'Agent ID',
-      description: 'The unique identifier of the agent to retrieve',
-      required: true,
-    }),
+    agentId: agentIdDropdown,
   },
   async run({ auth, propsValue }) {
     const response = await makeRequest(

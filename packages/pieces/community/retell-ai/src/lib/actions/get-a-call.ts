@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { RetllAiAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { callIdDropdown } from '../common/props';
 
 export const getACall = createAction({
   auth: RetllAiAuth,
@@ -10,11 +11,7 @@ export const getACall = createAction({
   description:
     'Retrieve detailed data of a specific call (e.g., transcript), given a Call ID',
   props: {
-    callId: Property.ShortText({
-      displayName: 'Call ID',
-      description: 'The unique identifier of the call to retrieve',
-      required: true,
-    }),
+    callId: callIdDropdown,
   },
   async run({ auth, propsValue }) {
     const response = await makeRequest(

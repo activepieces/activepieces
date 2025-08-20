@@ -39,52 +39,50 @@ export const agentIdDropdown = Property.Dropdown({
   },
 });
 
+export const agentVersionDropdown = (agent_id: string) =>
+  Property.Dropdown({
+    displayName: 'Agent Version',
+    description: 'Select the version of the agent to use',
+    required: true,
+    refreshers: ['auth', 'agent_id'],
+    options: async ({ auth, inbouagent_idndAgentId }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your account first',
+        };
+      }
+      if (!agent_id) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select an agent first',
+        };
+      }
 
-//  export const agentVersionDropdown = Property.Dropdown({
-
-//   displayName: 'Agent Version',
-//   description: 'Select the version of the agent to use',
-//   required: true,
-//   refreshers: ['auth', 'inboundAgentId'],
-//   options: async ({ auth ,inboundAgentId}) => {
-//     if (!auth) {
-//       return {
-//         disabled: true,
-//         options: [],
-//         placeholder: 'Please connect your account first',
-//       };
-//     }
-//     if(!inboundAgentId) {
-//       return {
-//         disabled: true,
-//         options: [],
-//         placeholder: 'Please select an inbound agent first',
-//       };
-//     }
-
-//     try {
-//       const agents = await makeRequest(
-//         auth as string,
-//         HttpMethod.GET,
-//         `/get-agent-versions/${inboundAgentId}`
-//       );
-//       return {
-//         disabled: false,
-//         options: agents.map((agent: any) => ({
-//           label: `Version ${agent.version}`,
-//           value: agent.version,
-//         })),
-//       };
-//     } catch (error) {
-//       return {
-//         disabled: true,
-//         options: [],
-//         placeholder: 'Error loading agent versions',
-//       };
-//     }
-//   },
-// });
-
+      try {
+        const agents = await makeRequest(
+          auth as string,
+          HttpMethod.GET,
+          `/get-agent-versions/${agent_id}`
+        );
+        return {
+          disabled: false,
+          options: agents.map((agent: any) => ({
+            label: `Version ${agent.version}`,
+            value: agent.version,
+          })),
+        };
+      } catch (error) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Error loading agent versions',
+        };
+      }
+    },
+  });
 
 export const callIdDropdown = Property.Dropdown({
   displayName: 'Call ID',
@@ -121,4 +119,79 @@ export const callIdDropdown = Property.Dropdown({
       };
     }
   },
-}); 
+});
+
+
+export const phoneNumberIdDropdown = Property.Dropdown({
+  displayName: 'Phone Number ID',
+  description: 'Select the phone number ID to use',
+  required: true,
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+    try {
+      const phoneNumbers = await makeRequest(
+        auth as string,
+        HttpMethod.GET,
+        '/list-phone-numbers'
+      );
+      return {
+        disabled: false,
+        options: phoneNumbers.map((phoneNumber: any) => ({
+          label: `Phone Number ${phoneNumber.id}`,
+          value: phoneNumber.id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading phone numbers',
+      };
+    }
+  },
+});
+
+export const voiceIdDropdown = Property.Dropdown({
+  displayName: 'Voice ID',
+  description: 'Select the voice ID to use',
+  required: true,
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+    try {
+      const voices = await makeRequest(
+        auth as string,
+        HttpMethod.GET,
+        '/list-voices'
+      );
+      return {
+        disabled: false,
+        options: voices.map((voice: any) => ({
+          label: `Voice ${voice.id}`,
+          value: voice.id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading voices',
+      };
+    }
+  },
+});
