@@ -28,7 +28,18 @@ export const formatUtils = {
       .join(' ');
   },
   formatNumber(number: number) {
-    return new Intl.NumberFormat(i18next.language).format(number);
+    const roundedNumber = Math.round(number);
+    const numberGreaterThanMillion = roundedNumber >= 1000000;
+    const numberGreaterThanThousand = roundedNumber >= 1000;
+    const formatter = (number: number) =>
+      new Intl.NumberFormat(i18next.language).format(Number(number.toFixed(1)));
+    if (numberGreaterThanMillion) {
+      return `${formatter(roundedNumber / 1000000)}${t('M')}`;
+    }
+    if (numberGreaterThanThousand) {
+      return `${formatter(roundedNumber / 1000)}${t('K')}`;
+    }
+    return formatter(roundedNumber);
   },
   formatDateOnlyOrFail(date: Date, fallback: string) {
     try {
