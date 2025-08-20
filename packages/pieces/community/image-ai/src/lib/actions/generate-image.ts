@@ -39,7 +39,7 @@ export const generateImageAction = createAction({
     });
 
     const response = await generateImage({
-      model: provider,
+      model,
       prompt: context.propsValue.prompt,
       providerOptions: {
         [providerName]: {
