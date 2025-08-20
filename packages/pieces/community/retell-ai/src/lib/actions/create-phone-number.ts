@@ -2,7 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { retellAiApiCall } from '../common/client';
 import { retellAiAuth } from '../common/auth';
-import { agentIdDropdown, countryCodeDropdown, numberProviderDropdown } from '../common/props';
+import { agentIdDropdown, numberProviderDropdown } from '../common/props';
 
 export const createPhoneNumber = createAction({
   auth: retellAiAuth,
@@ -42,7 +42,18 @@ export const createPhoneNumber = createAction({
       required: false,
     }),
     numberProvider: numberProviderDropdown,
-    countryCode: countryCodeDropdown,
+    countryCode: Property.StaticDropdown({
+      displayName: 'Country Code',
+      description: 'The country code for the phone number',
+      required: false,
+      defaultValue: 'US',
+      options: {
+        options: [
+          { label: 'United States', value: 'US' },
+          { label: 'Canada', value: 'CA' },
+        ],
+      },
+    }),
     tollFree: Property.Checkbox({
       displayName: 'Toll Free',
       description: 'Whether to purchase a toll-free number. Toll-free numbers incur higher costs.',

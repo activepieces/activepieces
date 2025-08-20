@@ -4,20 +4,82 @@ import { retellAiApiCall } from './client';
 import { PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { retellAiAuth } from './auth';
 
-// --- Interfaces for Agent Dropdown ---
 interface RetellAiAgent {
   agent_id: string;
   version: number;
   is_published: boolean;
   agent_name: string;
   voice_id: string;
+  voice_model?: string;
+  fallback_voice_ids?: string[];
+  voice_temperature?: number;
+  voice_speed?: number;
+  volume?: number;
+  responsiveness?: number;
+  interruption_sensitivity?: number;
+  enable_backchannel?: boolean;
+  backchannel_frequency?: number;
+  backchannel_words?: string[];
+  reminder_trigger_ms?: number;
+  reminder_max_count?: number;
+  ambient_sound?: string;
+  ambient_sound_volume?: number;
+  language?: string;
+  webhook_url?: string;
+  boosted_keywords?: string[];
+  opt_out_sensitive_data_storage?: boolean;
+  opt_in_signed_url?: boolean;
+  pronunciation_dictionary?: Array<{
+    word: string;
+    alphabet: string;
+    phoneme: string;
+  }>;
+  normalize_for_speech?: boolean;
+  end_call_after_silence_ms?: number;
+  max_call_duration_ms?: number;
+  voicemail_option?: {
+    action: {
+      type: string;
+      text: string;
+    };
+  };
+  post_call_analysis_data?: Array<{
+    type: string;
+    name: string;
+    description: string;
+    examples: string[];
+  }>;
+  post_call_analysis_model?: string;
+  begin_message_delay_ms?: number;
+  ring_duration_ms?: number;
+  stt_mode?: string;
+  vocab_specialization?: string;
+  allow_user_dtmf?: boolean;
+  user_dtmf_options?: {
+    digit_limit: number;
+    termination_key: string;
+    timeout_ms: number;
+  };
+  denoising_mode?: string;
+  last_modification_timestamp?: number;
+  response_engine?: {
+    type: string;
+    llm_id: string;
+    version: number;
+  };
 }
 
-interface RetellAiAgentListResponse {
-  items: RetellAiAgent[];
+type RetellAiAgentListResponse = RetellAiAgent[];
+
+interface RetellAiCall {
+  call_id: string;
+  agent_id: string;
+  call_status: string;
+  call_type: string;
+  start_timestamp?: number;
+  end_timestamp?: number;
 }
 
-// --- Interfaces for Voice Dropdown ---
 interface RetellAiVoice {
   voice_id: string;
   voice_name: string;
@@ -42,13 +104,16 @@ export const agentIdDropdown = Property.Dropdown({
       };
     }
     try {
-      const response = await retellAiApiCall<RetellAiAgentListResponse>({
+      const agents = await retellAiApiCall<RetellAiAgentListResponse>({
         auth: auth as PiecePropValueSchema<typeof retellAiAuth>,
         method: HttpMethod.GET,
         url: '/list-agents',
+        body: {
+          limit: 100,
+        }
       });
-      const agents = response.items;
-      if (agents.length === 0) {
+      const agentList = Array.isArray(agents) ? agents : [];
+      if (agentList.length === 0) {
         return {
           disabled: true,
           options: [],
@@ -57,7 +122,7 @@ export const agentIdDropdown = Property.Dropdown({
       }
       return {
         disabled: false,
-        options: agents.map((agent) => ({
+        options: agentList.map((agent) => ({
           label: `${agent.agent_name || 'Unnamed Agent'} (${agent.agent_id})`,
           value: agent.agent_id,
         })),
@@ -69,6 +134,58 @@ export const agentIdDropdown = Property.Dropdown({
         disabled: true,
         options: [],
         placeholder: `Error loading agents: ${errorMessage}`,
+      };
+    }
+  },
+});
+
+// --- Call ID Dropdown ---
+export const callIdDropdown = Property.Dropdown({
+  displayName: 'Call ID',
+  description: 'Select a call from your Retell AI account.',
+  required: true,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Connect your Retell AI account first',
+      };
+    }
+    try {
+      const response = await retellAiApiCall<RetellAiCall[]>({
+        auth: auth as PiecePropValueSchema<typeof retellAiAuth>,
+        method: HttpMethod.POST,
+        url: '/v2/list-calls',
+        body: {
+          limit: 50,
+          sort_order: 'descending'
+        }
+      });
+      
+      if (!response || response.length === 0) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'No calls found in your workspace.',
+        };
+      }
+      
+      return {
+        disabled: false,
+        options: response.map((call) => ({
+          label: `${call.call_id} (${call.call_status} - ${call.call_type})`,
+          value: call.call_id,
+        })),
+      };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
+      return {
+        disabled: true,
+        options: [],
+        placeholder: `Error loading calls: ${errorMessage}`,
       };
     }
   },
@@ -136,21 +253,6 @@ export const numberProviderDropdown = Property.StaticDropdown({
     ],
   },
   defaultValue: 'twilio',
-});
-
-// --- Country Code Dropdown ---
-export const countryCodeDropdown = Property.StaticDropdown({
-  displayName: 'Country Code',
-  description:
-    'The ISO 3166-1 alpha-2 country code of the number you are trying to purchase.',
-  required: false,
-  options: {
-    options: [
-      { label: 'United States', value: 'US' },
-      { label: 'Canada', value: 'CA' },
-    ],
-  },
-  defaultValue: 'US',
 });
 
 // --- Language Dropdown ---

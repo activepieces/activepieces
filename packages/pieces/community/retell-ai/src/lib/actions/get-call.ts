@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { retellAiApiCall } from '../common/client';
 import { retellAiAuth } from '../common/auth';
+import { callIdDropdown } from '../common/props';
 
 export const getCall = createAction({
   auth: retellAiAuth,
@@ -9,11 +10,7 @@ export const getCall = createAction({
   displayName: 'Get Call',
   description: 'Retrieve detailed data of a specific call (e.g., transcript), given a Call ID.',
   props: {
-    callId: Property.ShortText({
-      displayName: 'Call ID',
-      description: 'The call id to retrieve call history for. Example: "119c3f8e47135a29e65947eeb34cf12d"',
-      required: true,
-    }),
+    callId: callIdDropdown,
   },
   async run({ propsValue, auth }) {
     const { callId } = propsValue;

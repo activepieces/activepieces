@@ -25,8 +25,7 @@ export const getAgent = createAction({
     }
 
     let url = `/get-agent/${encodeURIComponent(agentId)}`;
-    
-    // Add version as query parameter if provided
+ 
     if (version !== undefined) {
       url += `?version=${version}`;
     }
