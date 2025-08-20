@@ -55,5 +55,5 @@ jobs:
             curl -H "Content-Type: application/json" \
               -X POST \
               -d "{\"content\": $SUMMARY}" \
-              https://discordapp.com/api/webhooks/1395411907413807184/yfzZsR0wDYvk3fgDXeyVz0yAheja9peyxqTlOl6uI8KfOjlzCGR-Thdso9L5fHrZiTmO
+              ${{ secrets.DISCORD_TECH_OPS_CHANNEL_WEBHOOK }}
           fi
