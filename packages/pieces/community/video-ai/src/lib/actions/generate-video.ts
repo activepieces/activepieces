@@ -1,4 +1,4 @@
-import { aiProps } from "@activepieces/pieces-common";
+import { aiProps, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { createAction, Property } from "@activepieces/pieces-framework"
 import { AI_USAGE_FEATURE_HEADER, AIUsageFeature, spreadIfDefined, SUPPORTED_AI_PROVIDERS } from "@activepieces/shared";
 import { GoogleGenAI } from "@google/genai";
@@ -65,6 +65,7 @@ export const generateVideo = createAction({
             model: modelInstance.modelId,
             prompt,
             config: {
+                numberOfVideos: 1,
                 negativePrompt,
                 ...advancedOptions,
             },
@@ -74,15 +75,27 @@ export const generateVideo = createAction({
             await new Promise((resolve) => setTimeout(resolve, 10000));
             operation = await ai.operations.getVideosOperation({
                 operation,
-            });
+            })
         }
 
-        const generatedVideo = operation.response?.generatedVideos?.[0];
-        if (generatedVideo?.video?.videoBytes) {
-            return context.files.write({
-                data: Buffer.from(generatedVideo.video.videoBytes, 'base64'),
-                fileName: 'video.mp4',
-            });
+        const videoFileId = operation.response?.generatedVideos?.[0]?.video?.uri?.split('/').pop()
+        if (!videoFileId) {
+            throw new Error('No video file IDs found');
         }
+
+        const proxyUrl = `${baseUrl}/download/v1beta/files/${videoFileId}`;
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: proxyUrl,
+            responseType: 'arraybuffer',
+            headers: {
+                'Authorization': `Bearer ${context.server.token}`,
+            },
+        });
+
+        return context.files.write({
+            data: Buffer.from(response.body),
+            fileName: 'video.mp4',
+        });
     }
 })

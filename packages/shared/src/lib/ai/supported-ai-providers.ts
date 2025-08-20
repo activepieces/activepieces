@@ -30,7 +30,9 @@ export type SupportedAIProvider = {
     videoModels: {
         displayName: string
         instance: { modelId: string }
-        pricing: number // $ per second
+        pricing: {
+            costPerSecond: number
+        }
     }[]
 }
 
@@ -485,17 +487,23 @@ It is strongly recommended that you add your credit card information to your Ope
             {
                 displayName: 'VEO 3 Preview',
                 instance: { modelId: 'veo-3.0-generate-preview' },
-                pricing: 0.75,
+                pricing: {
+                    costPerSecond: 0.75,
+                },
             },
             {
                 displayName: 'VEO 3 Fast Preview',
                 instance: { modelId: 'veo-3.0-fast-generate-preview' },
-                pricing: 0.40,
+                pricing: {
+                    costPerSecond: 0.40,
+                },
             },
             {
                 displayName: 'VEO 2',
                 instance: { modelId: 'veo-2.0-generate-001' },
-                pricing: 0.35,
+                pricing: {
+                    costPerSecond: 0.35,
+                },
             },
         ],
     },

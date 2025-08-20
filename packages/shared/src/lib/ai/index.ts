@@ -52,6 +52,11 @@ const mcpMetadata = Type.Object({
     mcpid: Type.String(),
 })
 
+const videoMetadata = Type.Object({
+    feature: Type.Literal(AIUsageFeature.VIDEO_AI),
+    videoOperationId: Type.String(),
+})
+
 const simpleFeatures = [AIUsageFeature.TEXT_AI, AIUsageFeature.IMAGE_AI, AIUsageFeature.UTILITY_AI, AIUsageFeature.VIDEO_AI, AIUsageFeature.UNKNOWN] as const
 const simpleMetadataVariants = simpleFeatures.map(feature => 
     Type.Object({
@@ -62,6 +67,7 @@ const simpleMetadataVariants = simpleFeatures.map(feature =>
 export const AIUsageMetadata = DiscriminatedUnion('feature', [
     agentMetadata,
     mcpMetadata,
+    videoMetadata,
     ...simpleMetadataVariants,
 ])
 

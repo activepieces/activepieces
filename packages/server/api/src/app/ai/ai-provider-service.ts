@@ -124,15 +124,15 @@ export const aiProviderService = {
         return providerConfig.baseUrl
     },
 
-    isModerationRequest(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
+    isNonUsageRequest(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
         const providerStrategy = aiProvidersStrategies[provider]
-        if (providerStrategy?.isModerationRequest) {
-            return providerStrategy.isModerationRequest(request)
+        if (providerStrategy?.isNonUsageRequest) {
+            return providerStrategy.isNonUsageRequest(request)
         }
         return false
     },
 
-    calculateUsage(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage {
+    calculateUsage(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage | null {
         const providerStrategy = aiProvidersStrategies[provider]
         return providerStrategy.calculateUsage(request, response)
     },
@@ -143,12 +143,16 @@ export const aiProviderService = {
         return providerStrategy.extractModelId(request)
     },
 
-    isModelSupported(provider: string, model: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
+    isModelSupported(provider: string, model: string | null, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
         const providerConfig = getProviderConfig(provider)!
+        if (this.isNonUsageRequest(provider, request)) {
+            return true
+        }
         return (
+            !isNil(model) &&
             !isNil(providerConfig.languageModels.find((m) => m.instance.modelId === model)) ||
             !isNil(providerConfig.imageModels.find((m) => m.instance.modelId === model)) ||
-            this.isModerationRequest(provider, request)
+            !isNil(providerConfig.videoModels.find((m) => m.instance.modelId === model))
         )
     },
 
@@ -184,6 +188,33 @@ export const aiProviderService = {
         const providerConfig = getProviderConfig(provider)!
         return {
             [providerConfig.auth.headerName]: providerConfig.auth.bearer ? `Bearer ${config.apiKey}` : config.apiKey,
+        }
+    },
+
+    validateRequest(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): void {
+        if (this.isStreaming(provider, request) && !this.providerSupportsStreaming(provider)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
+                params: {
+                    message: 'Streaming is not supported for this provider',
+                },
+            })
+        }
+        
+        const model = this.extractModelId(provider, request)
+        if (!this.isModelSupported(provider, model, request)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
+                params: {
+                    provider,
+                    model: model ?? 'unknown',
+                },
+            })
+        }
+
+        const providerStrategy = aiProvidersStrategies[provider]
+        if (providerStrategy.validateRequest) {
+            providerStrategy.validateRequest(request)
         }
     },
 }

@@ -1,5 +1,5 @@
 import { isNil, SeekPage, AIProviderWithoutSensitiveData, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared';
-import { Property, InputPropertyMap } from "@activepieces/pieces-framework";
+import { Property, InputPropertyMap, ApFile } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from '../http';
 import { ImageModel } from 'ai';
 
@@ -188,6 +188,7 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
                             aspectRatio: Property.StaticDropdown({
                                 displayName: 'Aspect Ratio',
                                 required: false,
+                                defaultValue: '16:9',
                                 options: {
                                     options: [
                                         { label: '16:9', value: '16:9' },
@@ -195,22 +196,15 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
                                     ],
                                 },
                             }),
-                            personGeneration: Property.Dropdown({
+                            personGeneration: Property.StaticDropdown({
                                 displayName: 'Person Generation',
                                 required: false,
-                                refreshers: ['model', 'image'],
-                                options: async (propsValue) => {
-                                    const image = propsValue['image'];
-                                    const options = [
-                                        { label: 'Don\'t Allow', value: 'dont_allow' },
+                                options: {
+                                    options: [
                                         { label: 'Allow Adult', value: 'allow_adult' },
-                                    ];
-
-                                    if (!image) {
-                                        options.push({ label: 'Allow All', value: 'allow_all' });
-                                    }
-
-                                    return { options };
+                                        { label: 'Don\'t Allow', value: 'dont_allow' },
+                                        { label: 'Allow All', value: 'allow_all' },
+                                    ],
                                 },
                             }),
                         }
