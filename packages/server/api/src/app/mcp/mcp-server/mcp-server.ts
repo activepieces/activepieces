@@ -1,8 +1,7 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
-    AI_USAGE_FEATURE_HEADER,
-    AI_USAGE_MCP_ID_HEADER,
     AIUsageFeature,
+    createAIProvider,
     EngineResponseStatus,
     isNil,
     McpFlowTool,
@@ -13,7 +12,7 @@ import {
     McpTrigger,
     TelemetryEventName,
 } from '@activepieces/shared'
-import { createOpenAI } from '@ai-sdk/openai'
+import { openai } from '@ai-sdk/openai'
 import { LanguageModelV2 } from '@ai-sdk/provider'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
@@ -70,24 +69,26 @@ async function initializeOpenAIModel({
     mcpId: string
 }): Promise<LanguageModelV2> {
     const model = 'gpt-4.1'
-    const baseUrl = await domainHelper.getPublicApiUrl({
-        path: '/v1/ai-providers/proxy/openai/v1/',
+    const baseURL = await domainHelper.getPublicApiUrl({
+        path: '/v1/ai-providers/proxy/openai',
         platformId,
     })
 
-    const apiKey = await accessTokenManager.generateEngineToken({
+    const engineToken = await accessTokenManager.generateEngineToken({
         platformId,
         projectId,
     })
 
-    return createOpenAI({
-        baseURL: baseUrl,
-        apiKey,
-        headers: {
-            [AI_USAGE_FEATURE_HEADER]: AIUsageFeature.MCP,
-            [AI_USAGE_MCP_ID_HEADER]: mcpId,
+    return createAIProvider({
+        providerName: 'openai',
+        modelInstance: openai(model),
+        engineToken,
+        baseURL,
+        metadata: {
+            feature: AIUsageFeature.MCP,
+            mcpid: mcpId,
         },
-    }).chat(model)
+    })
 }
 
 async function addPieceToServer(
