@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { pineconeAuth, PineconeAuth } from '../common';
 
 export const searchIndex = createAction({
@@ -29,11 +29,8 @@ export const searchIndex = createAction({
       const response = await httpClient.sendRequest({
         url: 'https://api.pinecone.io/indexes',
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: apiKey,
-        },
         headers: {
+          'Authorization': `Bearer ${apiKey}`,
           'x-project-id': projectId,
         },
       });
@@ -67,11 +64,8 @@ export const searchIndex = createAction({
             const statsResponse = await httpClient.sendRequest({
               url: `https://api.pinecone.io/indexes/${index.name}/describe_index_stats`,
               method: HttpMethod.POST,
-              authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: apiKey,
-              },
               headers: {
+                'Authorization': `Bearer ${apiKey}`,
                 'x-project-id': projectId,
               },
               body: {},
