@@ -2,15 +2,17 @@ import {
   createTrigger,
   TriggerStrategy,
   PiecePropValueSchema,
+  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
+  HttpMethod,
+  getAccessTokenOrThrow,
 } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
-import { HttpMethod } from '@activepieces/pieces-common';
 
 const polling: Polling<
   PiecePropValueSchema<typeof pinterestAuth>,
@@ -39,7 +41,7 @@ const polling: Polling<
 
       try {
         const response = await makeRequest(
-          auth.access_token as string,
+          getAccessTokenOrThrow(auth as OAuth2PropertyValue),
           HttpMethod.GET,
           path
         );

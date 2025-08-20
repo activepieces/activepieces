@@ -1,7 +1,11 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  Property,
+  OAuth2PropertyValue,
+} from '@activepieces/pieces-framework';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { adAccountIdDropdown } from '../common/props';
 
 export const findBoardByName = createAction({
@@ -41,7 +45,7 @@ export const findBoardByName = createAction({
 
     try {
       const response = await makeRequest(
-        auth.access_token as string,
+        getAccessTokenOrThrow(auth),
         HttpMethod.GET,
         path
       );

@@ -1,7 +1,11 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  Property,
+  OAuth2PropertyValue,
+} from '@activepieces/pieces-framework';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import {
   adAccountIdDropdown,
   boardIdDropdown,
@@ -185,7 +189,7 @@ export const createPin = createAction({
     }
 
     return await makeRequest(
-      auth.access_token as string,
+      getAccessTokenOrThrow(auth),
       HttpMethod.POST,
       path,
       body

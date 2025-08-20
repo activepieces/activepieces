@@ -1,26 +1,32 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  Property,
+  OAuth2PropertyValue,
+} from '@activepieces/pieces-framework';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { adAccountIdDropdown, boardIdDropdown } from '../common/props';
 
 export const updateBoard = createAction({
   auth: pinterestAuth,
   name: 'updateBoard',
   displayName: 'Update Board',
-  description: 'Update a board\'s name, description, or privacy settings.',
+  description: "Update a board's name, description, or privacy settings.",
   props: {
     board_id: boardIdDropdown,
     ad_account_id: adAccountIdDropdown,
     name: Property.ShortText({
       displayName: 'Board Name',
       required: false,
-      description: 'The new name of the board (max 180 characters). Leave empty to keep current name.',
+      description:
+        'The new name of the board (max 180 characters). Leave empty to keep current name.',
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: false,
-      description: 'The new description of the board (max 500 characters). Leave empty to keep current description.',
+      description:
+        'The new description of the board (max 500 characters). Leave empty to keep current description.',
     }),
     privacy: Property.StaticDropdown({
       displayName: 'Privacy',
@@ -32,12 +38,13 @@ export const updateBoard = createAction({
           { label: 'Secret', value: 'SECRET' },
         ],
       },
-      description: 'Update board privacy setting. Leave empty to keep current setting.',
+      description:
+        'Update board privacy setting. Leave empty to keep current setting.',
     }),
   },
   async run({ auth, propsValue }) {
     const { board_id, name, description, privacy, ad_account_id } = propsValue;
-    
+
     // Validation - at least one field must be provided for update
     if (!name && description === undefined && !privacy) {
       throw new Error(
@@ -69,18 +76,24 @@ export const updateBoard = createAction({
     // Build path with query parameter if ad_account_id is provided
     let path = `/boards/${board_id}`;
     if (ad_account_id) {
-      path = `/boards/${board_id}?ad_account_id=${encodeURIComponent(ad_account_id)}`;
+      path = `/boards/${board_id}?ad_account_id=${encodeURIComponent(
+        ad_account_id
+      )}`;
     }
 
     try {
       return await makeRequest(
-        auth.access_token as string,
+        getAccessTokenOrThrow(auth),
         HttpMethod.PATCH,
         path,
         body
       );
     } catch (error) {
-      throw new Error(`Failed to update board: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to update board: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
     }
   },
 });

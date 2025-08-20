@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { pinterestAuth } from './lib/common/auth';
 import { createPin } from './lib/actions/create-pin';
 import { createBoard } from './lib/actions/create-board';

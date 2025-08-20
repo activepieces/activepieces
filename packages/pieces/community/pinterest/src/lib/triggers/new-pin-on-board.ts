@@ -3,16 +3,18 @@ import {
   TriggerStrategy,
   PiecePropValueSchema,
   Property,
+  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
+  HttpMethod,
+  getAccessTokenOrThrow,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { adAccountIdDropdown, boardIdDropdown } from '../common/props';
 
 const polling: Polling<
@@ -54,7 +56,7 @@ const polling: Polling<
       }`;
       try {
         const response = await makeRequest(
-          auth.access_token as string,
+          getAccessTokenOrThrow(auth as OAuth2PropertyValue),
           HttpMethod.GET,
           path
         );

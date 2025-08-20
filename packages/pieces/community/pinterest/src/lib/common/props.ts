@@ -1,6 +1,10 @@
-import { DropdownOption, Property } from '@activepieces/pieces-framework';
+import {
+  DropdownOption,
+  Property,
+  OAuth2PropertyValue,
+} from '@activepieces/pieces-framework';
 import { makeRequest } from '.';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 
 export const boardIdDropdown = Property.Dropdown({
   displayName: 'Board Id',
@@ -21,9 +25,9 @@ export const boardIdDropdown = Property.Dropdown({
         url.searchParams.append('ad_account_id', ad_account_id as string);
       }
 
-      const apiKey = auth as string;
+      const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
       const boards = await makeRequest(
-        apiKey,
+        accessToken,
         HttpMethod.GET,
         url.pathname + url.search
       );
@@ -63,8 +67,8 @@ export const pinIdDropdown = Property.Dropdown({
     }
 
     try {
-      const apiKey = auth as string;
-      const pins = await makeRequest(apiKey, HttpMethod.GET, '/pins');
+      const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
+      const pins = await makeRequest(accessToken, HttpMethod.GET, '/pins');
 
       const options: DropdownOption<string>[] = pins.items.map((pin: any) => ({
         label: pin.title,
@@ -99,9 +103,9 @@ export const adAccountIdDropdown = Property.Dropdown({
     }
 
     try {
-      const apiKey = auth as string;
+      const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
       const adAccounts = await makeRequest(
-        apiKey,
+        accessToken,
         HttpMethod.GET,
         '/ad_accounts'
       );
@@ -149,9 +153,9 @@ export const boardSectionIdDropdown = Property.Dropdown({
     }
 
     try {
-      const apiKey = auth as string;
+      const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
       const boardsections = await makeRequest(
-        apiKey,
+        accessToken,
         HttpMethod.GET,
         `/boards/${board_id}/sections`
       );
@@ -192,8 +196,8 @@ export const pinIdMultiSelectDropdown = Property.MultiSelectDropdown({
     }
 
     try {
-      const apiKey = auth as string;
-      const pins = await makeRequest(apiKey, HttpMethod.GET, '/pins');
+      const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
+      const pins = await makeRequest(accessToken, HttpMethod.GET, '/pins');
 
       const options: DropdownOption<string>[] = pins.items.map((pin: any) => ({
         label: pin.title,

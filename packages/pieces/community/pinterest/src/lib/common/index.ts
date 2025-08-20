@@ -28,44 +28,77 @@ export async function makeRequest(
 
       switch (status) {
         case 400:
-          throw new Error(`Bad Request: ${errorData?.message || 'Invalid request parameters. Please check your input and try again.'}`);
+          throw new Error(
+            `Bad Request: ${
+              errorData?.message ||
+              'Invalid request parameters. Please check your input and try again.'
+            }`
+          );
 
         case 401:
-          throw new Error('Authentication Failed: Your Pinterest access token is invalid or expired. Please reconnect your Pinterest account.');
+          throw new Error(
+            'Authentication Failed: Your Pinterest access token is invalid or expired. Please reconnect your Pinterest account.'
+          );
 
         case 403:
-          throw new Error('Access Denied: You don\'t have permission to access this resource. Please check your Pinterest account permissions.');
+          throw new Error(
+            "Access Denied: You don't have permission to access this resource. Please check your Pinterest account permissions."
+          );
 
         case 404:
-          throw new Error('Resource Not Found: The requested Pinterest resource (board, pin, etc.) could not be found. Please verify the resource exists.');
+          throw new Error(
+            'Resource Not Found: The requested Pinterest resource (board, pin, etc.) could not be found. Please verify the resource exists.'
+          );
 
         case 429:
-          throw new Error('Rate Limit Exceeded: You\'ve exceeded Pinterest\'s API rate limits. Please wait a moment and try again.');
+          throw new Error(
+            "Rate Limit Exceeded: You've exceeded Pinterest's API rate limits. Please wait a moment and try again."
+          );
 
         case 500:
-          throw new Error('Pinterest Server Error: Pinterest\'s servers are experiencing issues. Please try again later.');
+          throw new Error(
+            "Pinterest Server Error: Pinterest's servers are experiencing issues. Please try again later."
+          );
 
         case 502:
-          throw new Error('Bad Gateway: Pinterest\'s servers are temporarily unavailable. Please try again later.');
+          throw new Error(
+            "Bad Gateway: Pinterest's servers are temporarily unavailable. Please try again later."
+          );
 
         case 503:
-          throw new Error('Service Unavailable: Pinterest\'s API service is temporarily down. Please try again later.');
+          throw new Error(
+            "Service Unavailable: Pinterest's API service is temporarily down. Please try again later."
+          );
 
         default:
-          throw new Error(`Pinterest API Error (${status}): ${errorData?.message || 'An unexpected error occurred while communicating with Pinterest.'}`);
+          throw new Error(
+            `Pinterest API Error (${status}): ${
+              errorData?.message ||
+              'An unexpected error occurred while communicating with Pinterest.'
+            }`
+          );
       }
     }
 
     // Handle network or other errors
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-      throw new Error('Network Error: Unable to connect to Pinterest API. Please check your internet connection and try again.');
+      throw new Error(
+        'Network Error: Unable to connect to Pinterest API. Please check your internet connection and try again.'
+      );
     }
 
     if (error.code === 'ETIMEDOUT') {
-      throw new Error('Request Timeout: The request to Pinterest API timed out. Please try again.');
+      throw new Error(
+        'Request Timeout: The request to Pinterest API timed out. Please try again.'
+      );
     }
 
     // Generic error fallback
-    throw new Error(`Unexpected Error: ${error.message || 'An unexpected error occurred while processing your request.'}`);
+    throw new Error(
+      `Unexpected Error: ${
+        error.message ||
+        'An unexpected error occurred while processing your request.'
+      }`
+    );
   }
 }
