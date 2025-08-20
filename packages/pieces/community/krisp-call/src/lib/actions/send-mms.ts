@@ -49,7 +49,7 @@ export const sendMms = createAction({
         }
       },
     }),
-    to_number: Property.Number({
+    to_number: Property.ShortText({
       displayName: 'To Number',
       description: 'Enter the number to which you want to send sms.',
       required: true,

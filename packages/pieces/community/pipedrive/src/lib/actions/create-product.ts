@@ -3,11 +3,13 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { customFieldsProp, ownerIdProp, visibleToProp } from '../common/props';
 import {
 	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
+	pipedrivePaginatedV1ApiCall,
+	pipedriveParseCustomFields,
 	pipedriveTransformCustomFields,
 } from '../common';
-import { GetField, OrganizationCreateResponse } from '../common/types';
+import { GetField, GetProductResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { isEmpty } from '@activepieces/shared';
 
 export const createProductAction = createAction({
 	auth: pipedriveAuth,
@@ -38,12 +40,13 @@ export const createProductAction = createAction({
 		isActive: Property.Checkbox({
 			displayName: 'Is Active ?',
 			required: false,
+			defaultValue: true,
 		}),
-		ownerId: ownerIdProp('Owner',false),
+		ownerId: ownerIdProp('Owner', false),
 		currency: Property.ShortText({
 			displayName: 'Currency',
 			required: false,
-			description: 'Please enter currency code.',
+			description: 'Please enter currency code (e.g., "USD", "EUR").',
 		}),
 		price: Property.Number({
 			displayName: 'Price',
@@ -78,51 +81,47 @@ export const createProductAction = createAction({
 
 		const customFields = context.propsValue.customfields ?? {};
 
-		const productDefaultFields: Record<string, any> = {
+		const productPayload: Record<string, any> = {
 			name,
 			code,
 			description,
 			unit,
 			tax,
-			active_flag: isActive,
+			is_deleted: !isActive,
 			prices: [
 				{
 					price: price ?? 0,
 					currency: currency ?? 'USD',
 					cost: cost ?? 0,
-					overhead_cost: overheadCost ?? 0,
+					direct_cost: overheadCost ?? 0,
 				},
 			],
 			visible_to: visibleTo,
 		};
 
 		if (ownerId) {
-			productDefaultFields.owner_id = ownerId;
+			productPayload.owner_id = ownerId;
 		}
 
-		const productCustomFields: Record<string, any> = {};
-
-		Object.entries(customFields).forEach(([key, value]) => {
-			// Format values if they are arrays
-			productCustomFields[key] = Array.isArray(value) ? value.join(',') : value;
-		});
-
-		const createdProductResponse = await pipedriveApiCall<OrganizationCreateResponse>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.POST,
-			resourceUri: '/products',
-			body: {
-				...productDefaultFields,
-				...productCustomFields,
-			},
-		});
-
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+		const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/productFields',
+			resourceUri: '/v1/productFields',
+		});
+
+		const productCustomFields = pipedriveParseCustomFields(customFieldsResponse, customFields);
+
+		if (!isEmpty(productCustomFields)) {
+			productPayload.custom_fields = productCustomFields;
+		}
+
+		const createdProductResponse = await pipedriveApiCall<GetProductResponse>({
+			accessToken: context.auth.access_token,
+			apiDomain: context.auth.data['api_domain'],
+			method: HttpMethod.POST,
+			resourceUri: '/v2/products',
+			body: productPayload,
 		});
 
 		const updatedProductProperties = pipedriveTransformCustomFields(
