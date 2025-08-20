@@ -30,7 +30,7 @@ export const searchIndex = createAction({
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
+          token: auth as unknown as string,
         },
       });
 
@@ -65,7 +65,7 @@ export const searchIndex = createAction({
               method: HttpMethod.POST,
               authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: auth as string,
+                token: auth as unknown as string,
               },
               body: {},
             });
