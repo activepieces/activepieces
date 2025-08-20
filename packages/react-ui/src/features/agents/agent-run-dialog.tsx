@@ -25,7 +25,7 @@ function AgentRunDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-[60rem] min-h-[65vh] max-h-[65vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{t('Agent Goal')}</DialogTitle>
+          <DialogTitle>{t('Agent Result')}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
           <AgentTimeline
