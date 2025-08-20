@@ -61,7 +61,11 @@ interface EvernoteListNotebooksResponse {
 const polling: Polling<PiecePropValueSchema<typeof evernoteAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const { access_token } = auth as { access_token: string };
+    const { apiKey, accessToken, noteStoreUrl } = auth as { 
+      apiKey: string; 
+      accessToken: string; 
+      noteStoreUrl: string; 
+    };
     
     try {
       // Convert lastFetchEpochMS to Evernote timestamp (seconds since epoch)
@@ -70,10 +74,10 @@ const polling: Polling<PiecePropValueSchema<typeof evernoteAuth>, Record<string,
       // Call Evernote's listNotebooks API to get all notebooks
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://www.evernote.com/shard/s1/notestore',
+        url: noteStoreUrl,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`,
+          'Authorization': `OAuth oauth_consumer_key="${apiKey}", oauth_token="${accessToken}"`,
           'User-Agent': 'ActivePieces-Evernote-Integration/1.0',
         },
         body: JSON.stringify({
@@ -98,10 +102,16 @@ const polling: Polling<PiecePropValueSchema<typeof evernoteAuth>, Record<string,
             updated: new Date(notebook.updated * 1000).toISOString(),
             stack: notebook.stack || null,
             published: notebook.published,
+            publishing: notebook.publishing,
             sharedNotebookIds: notebook.sharedNotebookIds || [],
             businessNotebook: notebook.businessNotebook,
             contact: notebook.contact,
             restrictions: notebook.restrictions,
+            // Additional computed fields
+            isShared: notebook.sharedNotebookIds && notebook.sharedNotebookIds.length > 0,
+            isBusiness: !!notebook.businessNotebook,
+            hasPublishing: !!notebook.publishing,
+            hasRestrictions: !!notebook.restrictions,
           },
         }));
       } else {
@@ -118,19 +128,24 @@ export const newNotebook = createTrigger({
   auth: evernoteAuth,
   name: 'new-notebook',
   displayName: 'New Notebook',
-  description: 'Triggers when a new notebook is created in Evernote.',
+  description: 'Triggers when a new notebook is created in Evernote. Useful for organizing workflows by notebook creation.',
   props: {},
   sampleData: {
-    guid: '12345678-1234-1234-1234-123456789012',
+    guid: '87654321-4321-4321-4321-210987654321',
     name: 'Sample Notebook',
     created: '2024-01-01T00:00:00.000Z',
     updated: '2024-01-01T00:00:00.000Z',
     stack: 'Work',
     published: false,
+    publishing: null,
     sharedNotebookIds: [],
     businessNotebook: null,
     contact: null,
     restrictions: null,
+    isShared: false,
+    isBusiness: false,
+    hasPublishing: false,
+    hasRestrictions: false,
   },
   type: TriggerStrategy.POLLING,
   

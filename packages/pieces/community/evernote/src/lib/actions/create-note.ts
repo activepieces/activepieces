@@ -40,7 +40,11 @@ export const createNote = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { access_token } = auth as { access_token: string };
+    const { apiKey, accessToken, noteStoreUrl } = auth as { 
+      apiKey: string; 
+      accessToken: string; 
+      noteStoreUrl: string; 
+    };
     
     // Prepare the note object according to Evernote's API structure
     const noteData: any = {
@@ -75,13 +79,13 @@ export const createNote = createAction({
     }
 
     try {
-      // Evernote uses a custom API structure, so we'll use a more generic approach
+      // Use the user's personal note store URL
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://www.evernote.com/shard/s1/notestore',
+        url: noteStoreUrl,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`,
+          'Authorization': `OAuth oauth_consumer_key="${apiKey}", oauth_token="${accessToken}"`,
           'User-Agent': 'ActivePieces-Evernote-Integration/1.0',
         },
         body: JSON.stringify({

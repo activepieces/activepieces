@@ -6,7 +6,7 @@ export const appendToNote = createAction({
   auth: evernoteAuth,
   name: 'append-to-note',
   displayName: 'Append to Note',
-  description: 'Continuously append content to an existing note (perfect for daily standups, logs, or ongoing documentation)',
+  description: 'Append content to an existing note in Evernote',
   props: {
     noteGuid: Property.ShortText({
       displayName: 'Note GUID',
@@ -15,42 +15,45 @@ export const appendToNote = createAction({
     }),
     content: Property.LongText({
       displayName: 'Content to Append',
-      description: 'The content to append to the note in ENML format (required)',
+      description: 'The content to append to the note in ENML format (HTML-like markup)',
       required: true,
     }),
-    addTimestamp: Property.Checkbox({
-      displayName: 'Add Timestamp',
-      description: 'Whether to automatically add a timestamp before the appended content (default: true)',
+    appendAtEnd: Property.Checkbox({
+      displayName: 'Append at End',
+      description: 'Whether to append content at the end of the note (default: true)',
       required: false,
       defaultValue: true,
     }),
     separator: Property.ShortText({
       displayName: 'Separator',
-      description: 'Text to use as separator between appended content (default: "---")',
+      description: 'Text to insert between existing content and new content (optional)',
       required: false,
-      defaultValue: '---',
-    }),
-    source: Property.ShortText({
-      displayName: 'Source',
-      description: 'The source application that appended the content (optional)',
-      required: false,
+      defaultValue: '<br/>',
     }),
   },
   async run({ auth, propsValue }) {
-    const { access_token } = auth as { access_token: string };
+    const { apiKey, accessToken, noteStoreUrl } = auth as { 
+      apiKey: string; 
+      accessToken: string; 
+      noteStoreUrl: string; 
+    };
     
+    if (!propsValue.noteGuid || propsValue.noteGuid.trim() === '') {
+      throw new Error('Note GUID cannot be empty');
+    }
+
     if (!propsValue.content || propsValue.content.trim() === '') {
       throw new Error('Content to append cannot be empty');
     }
 
     try {
-      // First, get the current note to retrieve existing content
+      // First, get the existing note to retrieve current content
       const getNoteResponse = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://www.evernote.com/shard/s1/notestore',
+        url: noteStoreUrl,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`,
+          'Authorization': `OAuth oauth_consumer_key="${apiKey}", oauth_token="${accessToken}"`,
           'User-Agent': 'ActivePieces-Evernote-Integration/1.0',
         },
         body: JSON.stringify({
@@ -59,61 +62,55 @@ export const appendToNote = createAction({
         }),
       });
 
-      if (getNoteResponse.status !== 200 || !getNoteResponse.body) {
-        throw new Error('Failed to retrieve the note for appending content');
+      if (getNoteResponse.status !== 200) {
+        throw new Error(`Failed to retrieve existing note: ${getNoteResponse.status}`);
       }
 
-      const currentNote = getNoteResponse.body;
-      const currentContent = currentNote.content || '';
+      const existingNote = getNoteResponse.body;
+      const currentContent = existingNote.content || '';
       
-      // Prepare the content to append
-      let contentToAppend = propsValue.content;
+      // Prepare the new content
+      let newContent: string;
+      const separator = propsValue.separator || '<br/>';
       
-      // Add timestamp if requested
-      if (propsValue.addTimestamp) {
-        const timestamp = new Date().toISOString();
-        const formattedTimestamp = new Date(timestamp).toLocaleString();
-        contentToAppend = `<p><strong>${formattedTimestamp}</strong></p>${contentToAppend}`;
+      if (propsValue.appendAtEnd !== false) {
+        // Append at the end
+        if (currentContent && currentContent.trim() !== '') {
+          newContent = currentContent + separator + propsValue.content;
+        } else {
+          newContent = propsValue.content;
+        }
+      } else {
+        // Append at the beginning
+        if (currentContent && currentContent.trim() !== '') {
+          newContent = propsValue.content + separator + currentContent;
+        } else {
+          newContent = propsValue.content;
+        }
       }
-      
-      // Add separator if there's existing content
-      if (currentContent && currentContent.trim() !== '') {
-        contentToAppend = `<p>${propsValue.separator || '---'}</p>${contentToAppend}`;
-      }
-      
-      // Combine existing content with new content
-      const newContent = currentContent + contentToAppend;
-      
-      // Prepare the note update object
-      const noteUpdateData: any = {
+
+      // Prepare the updated note object
+      const updatedNote = {
         guid: propsValue.noteGuid,
         content: newContent,
         contentLength: newContent.length,
         contentHash: Buffer.from(newContent).toString('base64'),
-        updateSequenceNum: 0,
+        updated: Math.floor(Date.now() / 1000),
+        updateSequenceNum: existingNote.updateSequenceNum + 1,
       };
 
-      // Add source information if provided
-      if (propsValue.source) {
-        noteUpdateData.attributes = {
-          ...(currentNote.attributes || {}),
-          source: propsValue.source,
-          lastAppended: new Date().toISOString(),
-        };
-      }
-
-      // Update the note with appended content
+      // Call Evernote's updateNote API
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://www.evernote.com/shard/s1/notestore',
+        url: noteStoreUrl,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`,
+          'Authorization': `OAuth oauth_consumer_key="${apiKey}", oauth_token="${accessToken}"`,
           'User-Agent': 'ActivePieces-Evernote-Integration/1.0',
         },
         body: JSON.stringify({
           method: 'updateNote',
-          params: [noteUpdateData],
+          params: [updatedNote],
         }),
       });
 
@@ -121,18 +118,20 @@ export const appendToNote = createAction({
         return {
           success: true,
           note: response.body,
-          message: 'Content appended successfully',
-          appendedContent: propsValue.content,
-          totalContentLength: newContent.length,
-          timestampAdded: propsValue.addTimestamp,
-          separator: propsValue.separator || '---',
-          source: propsValue.source || 'ActivePieces',
+          message: 'Content appended to note successfully',
+          appendDetails: {
+            originalContentLength: currentContent.length,
+            newContentLength: newContent.length,
+            appendedContent: propsValue.content,
+            appendedAt: propsValue.appendAtEnd !== false ? 'end' : 'beginning',
+            separator: separator,
+          },
         };
       } else {
-        throw new Error(`Failed to append to note: ${response.status}`);
+        throw new Error(`Failed to append content to note: ${response.status}`);
       }
     } catch (error) {
-      throw new Error(`Error appending to note: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Error appending content to note: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
 });

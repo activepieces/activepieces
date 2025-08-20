@@ -28,7 +28,11 @@ interface EvernoteFindNotesResponse {
 const polling: Polling<PiecePropValueSchema<typeof evernoteAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const { access_token } = auth as { access_token: string };
+    const { apiKey, accessToken, noteStoreUrl } = auth as { 
+      apiKey: string; 
+      accessToken: string; 
+      noteStoreUrl: string; 
+    };
     
     try {
       // Convert lastFetchEpochMS to Evernote timestamp (seconds since epoch)
@@ -37,10 +41,10 @@ const polling: Polling<PiecePropValueSchema<typeof evernoteAuth>, Record<string,
       // Call Evernote's findNotes API to search for notes created after the last fetch
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://www.evernote.com/shard/s1/notestore',
+        url: noteStoreUrl,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`,
+          'Authorization': `OAuth oauth_consumer_key="${apiKey}", oauth_token="${accessToken}"`,
           'User-Agent': 'ActivePieces-Evernote-Integration/1.0',
         },
         body: JSON.stringify({

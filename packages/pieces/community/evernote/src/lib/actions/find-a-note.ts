@@ -39,7 +39,11 @@ export const findANote = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { access_token } = auth as { access_token: string };
+    const { apiKey, accessToken, noteStoreUrl } = auth as { 
+      apiKey: string; 
+      accessToken: string; 
+      noteStoreUrl: string; 
+    };
     
     if (!propsValue.noteGuid || propsValue.noteGuid.trim() === '') {
       throw new Error('Note GUID cannot be empty');
@@ -49,10 +53,10 @@ export const findANote = createAction({
       // Call Evernote's getNote API to retrieve the note
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://www.evernote.com/shard/s1/notestore',
+        url: noteStoreUrl,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`,
+          'Authorization': `OAuth oauth_consumer_key="${apiKey}", oauth_token="${accessToken}"`,
           'User-Agent': 'ActivePieces-Evernote-Integration/1.0',
         },
         body: JSON.stringify({
@@ -104,17 +108,6 @@ export const findANote = createAction({
         throw new Error(`Failed to retrieve note: ${response.status}`);
       }
     } catch (error) {
-      // Handle specific Evernote API errors
-      if (error instanceof Error) {
-        if (error.message.includes('not found') || error.message.includes('404')) {
-          throw new Error(`Note not found with GUID: ${propsValue.noteGuid}`);
-        } else if (error.message.includes('permission') || error.message.includes('403')) {
-          throw new Error(`Permission denied: You don't have access to this note`);
-        } else if (error.message.includes('bad data') || error.message.includes('400')) {
-          throw new Error(`Invalid note GUID format: ${propsValue.noteGuid}`);
-        }
-      }
-      
       throw new Error(`Error retrieving note: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },

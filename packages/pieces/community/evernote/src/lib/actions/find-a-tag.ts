@@ -6,69 +6,91 @@ export const findATag = createAction({
   auth: evernoteAuth,
   name: 'find-a-tag',
   displayName: 'Find a Tag',
-  description: 'Retrieve a tag by its GUID to get current state and information',
+  description: 'Find a tag by name in Evernote',
   props: {
-    tagGuid: Property.ShortText({
-      displayName: 'Tag GUID',
-      description: 'The GUID of the tag to retrieve (required)',
+    tagName: Property.ShortText({
+      displayName: 'Tag Name',
+      description: 'The name of the tag to find (required)',
       required: true,
+    }),
+    includeInactive: Property.Checkbox({
+      displayName: 'Include Inactive Tags',
+      description: 'Whether to include inactive tags in the search (default: false)',
+      required: false,
+      defaultValue: false,
     }),
   },
   async run({ auth, propsValue }) {
-    const { access_token } = auth as { access_token: string };
+    const { apiKey, accessToken, noteStoreUrl } = auth as { 
+      apiKey: string; 
+      accessToken: string; 
+      noteStoreUrl: string; 
+    };
     
-    if (!propsValue.tagGuid || propsValue.tagGuid.trim() === '') {
-      throw new Error('Tag GUID cannot be empty');
+    if (!propsValue.tagName || propsValue.tagName.trim() === '') {
+      throw new Error('Tag name cannot be empty');
     }
 
     try {
-      // Call Evernote's getTag API to retrieve the tag
+      // Call Evernote's findTags API to search for the tag
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://www.evernote.com/shard/s1/notestore',
+        url: noteStoreUrl,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`,
+          'Authorization': `OAuth oauth_consumer_key="${apiKey}", oauth_token="${accessToken}"`,
           'User-Agent': 'ActivePieces-Evernote-Integration/1.0',
         },
         body: JSON.stringify({
-          method: 'getTag',
-          params: [propsValue.tagGuid],
+          method: 'findTags',
+          params: [propsValue.tagName, propsValue.includeInactive || false],
         }),
       });
 
       if (response.status === 200) {
-        const tag = response.body;
+        const tags = response.body || [];
         
+        // Filter tags by name (case-insensitive)
+        const matchingTags = tags.filter((tag: any) => 
+          tag.name && tag.name.toLowerCase().includes(propsValue.tagName.toLowerCase())
+        );
+
+        if (matchingTags.length === 0) {
+          return {
+            success: true,
+            found: false,
+            message: `No tags found matching "${propsValue.tagName}"`,
+            searchTerm: propsValue.tagName,
+            totalTagsSearched: tags.length,
+          };
+        }
+
+        // Return the first matching tag with detailed information
+        const foundTag = matchingTags[0];
+        const tagInfo = {
+          guid: foundTag.guid,
+          name: foundTag.name,
+          parentGuid: foundTag.parentGuid || null,
+          updateSequenceNum: foundTag.updateSequenceNum || 0,
+          isActive: foundTag.active !== false,
+          hasParent: !!foundTag.parentGuid,
+        };
+
         return {
           success: true,
-          tag: tag,
-          message: 'Tag retrieved successfully',
-          tagInfo: {
-            guid: tag.guid,
-            name: tag.name,
-            parentGuid: tag.parentGuid || null,
-            updateSequenceNum: tag.updateSequenceNum,
-            isActive: tag.active !== false,
-            hasParent: !!tag.parentGuid,
-          },
+          found: true,
+          tag: foundTag,
+          tagInfo: tagInfo,
+          message: `Tag "${foundTag.name}" found successfully`,
+          searchTerm: propsValue.tagName,
+          totalMatches: matchingTags.length,
+          totalTagsSearched: tags.length,
         };
       } else {
-        throw new Error(`Failed to retrieve tag: ${response.status}`);
+        throw new Error(`Failed to search for tags: ${response.status}`);
       }
     } catch (error) {
-      // Handle specific Evernote API errors
-      if (error instanceof Error) {
-        if (error.message.includes('not found') || error.message.includes('404')) {
-          throw new Error(`Tag not found with GUID: ${propsValue.tagGuid}`);
-        } else if (error.message.includes('permission') || error.message.includes('403')) {
-          throw new Error(`Permission denied: You don't have access to this tag`);
-        } else if (error.message.includes('bad data') || error.message.includes('400')) {
-          throw new Error(`Invalid tag GUID format: ${propsValue.tagGuid}`);
-        }
-      }
-      
-      throw new Error(`Error retrieving tag: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Error searching for tag: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
 });

@@ -22,7 +22,11 @@ interface EvernoteFindNotesResponse {
 const polling: Polling<PiecePropValueSchema<typeof evernoteAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const { access_token } = auth as { access_token: string };
+    const { apiKey, accessToken, noteStoreUrl } = auth as { 
+      apiKey: string; 
+      accessToken: string; 
+      noteStoreUrl: string; 
+    };
     
     try {
       // Convert lastFetchEpochMS to Evernote timestamp (seconds since epoch)
@@ -31,10 +35,10 @@ const polling: Polling<PiecePropValueSchema<typeof evernoteAuth>, Record<string,
       // Call Evernote's findNotes API to search for notes with tags
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://www.evernote.com/shard/s1/notestore',
+        url: noteStoreUrl,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`,
+          'Authorization': `OAuth oauth_consumer_key="${apiKey}", oauth_token="${accessToken}"`,
           'User-Agent': 'ActivePieces-Evernote-Integration/1.0',
         },
         body: JSON.stringify({
@@ -76,6 +80,10 @@ const polling: Polling<PiecePropValueSchema<typeof evernoteAuth>, Record<string,
             latestTag: note.tagNames[note.tagNames.length - 1],
             latestTagGuid: note.tagGuids[note.tagGuids.length - 1],
             totalTags: note.tagNames.length,
+            // Additional computed fields
+            hasMultipleTags: note.tagNames.length > 1,
+            tagList: note.tagNames.join(', '),
+            tagCount: note.tagNames.length,
           },
         }));
       } else {
@@ -92,17 +100,20 @@ export const newTagAddedToNote = createTrigger({
   auth: evernoteAuth,
   name: 'new-tag-added-to-note',
   displayName: 'New Tag Added to Note',
-  description: 'Triggers when a new tag is added to an existing note in Evernote.',
+  description: 'Triggers when a new tag is added to an existing note in Evernote. Useful for workflow automation based on note categorization.',
   props: {},
   sampleData: {
     noteGuid: '12345678-1234-1234-1234-123456789012',
     title: 'Sample Note with Tags',
     tagNames: ['work', 'important', 'new-tag'],
-    tagGuids: ['tag1-1234-1234-1234-123456789012', 'tag2-5678-5678-5678-567856785678', 'tag3-9012-9012-9012-901290129012'],
+    tagGuids: ['tag1-1234-1234-1234-123456789012', 'tag2-5678-5678-5678-567856785678', 'tag3-9999-9999-9999-999999999999'],
     updated: '2024-01-01T00:00:00.000Z',
     latestTag: 'new-tag',
-    latestTagGuid: 'tag3-9012-9012-9012-901290129012',
+    latestTagGuid: 'tag3-9999-9999-9999-999999999999',
     totalTags: 3,
+    hasMultipleTags: true,
+    tagList: 'work, important, new-tag',
+    tagCount: 3,
   },
   type: TriggerStrategy.POLLING,
   

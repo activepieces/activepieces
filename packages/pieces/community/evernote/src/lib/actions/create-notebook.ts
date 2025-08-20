@@ -26,7 +26,7 @@ export const createNotebook = createAction({
     }),
     defaultNotebook: Property.Checkbox({
       displayName: 'Default Notebook',
-      description: 'Whether this should be the default notebook (optional)',
+      description: 'Whether this should be the default notebook (default: false)',
       required: false,
       defaultValue: false,
     }),
@@ -42,14 +42,21 @@ export const createNotebook = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { access_token } = auth as { access_token: string };
+    const { apiKey, accessToken, noteStoreUrl } = auth as { 
+      apiKey: string; 
+      accessToken: string; 
+      noteStoreUrl: string; 
+    };
     
+    if (!propsValue.name || propsValue.name.trim() === '') {
+      throw new Error('Notebook name cannot be empty');
+    }
+
     // Prepare the notebook object according to Evernote's API structure
     const notebookData: any = {
       name: propsValue.name,
-      guid: '', // Will be assigned by the server
-      updateSequenceNum: 0,
       active: propsValue.active !== undefined ? propsValue.active : true,
+      updateSequenceNum: 0,
     };
 
     if (propsValue.stack) {
@@ -60,7 +67,6 @@ export const createNotebook = createAction({
       notebookData.defaultNotebook = propsValue.defaultNotebook;
     }
 
-    // Handle publishing properties if provided
     if (propsValue.publishingUri || propsValue.publicDescription) {
       notebookData.publishing = {};
       
@@ -69,18 +75,17 @@ export const createNotebook = createAction({
       }
       
       if (propsValue.publicDescription) {
-        notebookData.publishing.publicDescription = propsValue.publicDescription;
+        notebookData.publishing.description = propsValue.publicDescription;
       }
     }
 
     try {
-      // Evernote uses a custom API structure for creating notebooks
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://www.evernote.com/shard/s1/notestore',
+        url: noteStoreUrl,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`,
+          'Authorization': `OAuth oauth_consumer_key="${apiKey}", oauth_token="${accessToken}"`,
           'User-Agent': 'ActivePieces-Evernote-Integration/1.0',
         },
         body: JSON.stringify({

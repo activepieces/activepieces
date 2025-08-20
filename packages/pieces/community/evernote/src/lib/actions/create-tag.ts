@@ -15,17 +15,24 @@ export const createTag = createAction({
     }),
     parentGuid: Property.ShortText({
       displayName: 'Parent Tag GUID',
-      description: 'The GUID of the parent tag (optional)',
+      description: 'The GUID of the parent tag for hierarchical organization (optional)',
       required: false,
     }),
   },
   async run({ auth, propsValue }) {
-    const { access_token } = auth as { access_token: string };
+    const { apiKey, accessToken, noteStoreUrl } = auth as { 
+      apiKey: string; 
+      accessToken: string; 
+      noteStoreUrl: string; 
+    };
     
+    if (!propsValue.name || propsValue.name.trim() === '') {
+      throw new Error('Tag name cannot be empty');
+    }
+
     // Prepare the tag object according to Evernote's API structure
     const tagData: any = {
       name: propsValue.name,
-      guid: '', // Will be assigned by the server
       updateSequenceNum: 0,
     };
 
@@ -34,13 +41,12 @@ export const createTag = createAction({
     }
 
     try {
-      // Evernote uses a custom API structure for creating tags
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://www.evernote.com/shard/s1/notestore',
+        url: noteStoreUrl,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`,
+          'Authorization': `OAuth oauth_consumer_key="${apiKey}", oauth_token="${accessToken}"`,
           'User-Agent': 'ActivePieces-Evernote-Integration/1.0',
         },
         body: JSON.stringify({

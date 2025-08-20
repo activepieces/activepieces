@@ -6,7 +6,7 @@ export const updateNote = createAction({
   auth: evernoteAuth,
   name: 'update-note',
   displayName: 'Update Note',
-  description: 'Update an existing note in Evernote with new content and metadata',
+  description: 'Updates an existing note in Evernote',
   props: {
     noteGuid: Property.ShortText({
       displayName: 'Note GUID',
@@ -45,68 +45,96 @@ export const updateNote = createAction({
     }),
     active: Property.Checkbox({
       displayName: 'Active',
-      description: 'Whether the note should be active (optional)',
+      description: 'Whether the note should be active (default: true)',
       required: false,
+      defaultValue: true,
     }),
   },
   async run({ auth, propsValue }) {
-    const { access_token } = auth as { access_token: string };
-    
-    // Prepare the note update object according to Evernote's API structure
-    const noteUpdateData: any = {
-      guid: propsValue.noteGuid,
-      title: propsValue.title,
-      updateSequenceNum: 0,
+    const { apiKey, accessToken, noteStoreUrl } = auth as { 
+      apiKey: string; 
+      accessToken: string; 
+      noteStoreUrl: string; 
     };
-
-    // Only include content if it's being modified
-    if (propsValue.content) {
-      noteUpdateData.content = propsValue.content;
-      noteUpdateData.contentLength = propsValue.content.length;
-      noteUpdateData.contentHash = Buffer.from(propsValue.content).toString('base64');
-    }
-
-    // Only include notebook GUID if it's being changed
-    if (propsValue.notebookGuid) {
-      noteUpdateData.notebookGuid = propsValue.notebookGuid;
-    }
-
-    // Only include tag names if they're being modified
-    if (propsValue.tagNames && propsValue.tagNames.length > 0) {
-      noteUpdateData.tagNames = propsValue.tagNames;
-    }
-
-    // Only include attributes if they're being modified
-    if (propsValue.source || propsValue.sourceURL) {
-      noteUpdateData.attributes = {};
-      
-      if (propsValue.source) {
-        noteUpdateData.attributes.source = propsValue.source;
-      }
-      
-      if (propsValue.sourceURL) {
-        noteUpdateData.attributes.sourceURL = propsValue.sourceURL;
-      }
-    }
-
-    // Only include active status if it's being modified
-    if (propsValue.active !== undefined) {
-      noteUpdateData.active = propsValue.active;
+    
+    if (!propsValue.noteGuid || propsValue.noteGuid.trim() === '') {
+      throw new Error('Note GUID cannot be empty');
     }
 
     try {
-      // Evernote uses a custom API structure for updating notes
-      const response = await httpClient.sendRequest({
+      // First, get the existing note to preserve unchanged fields
+      const getNoteResponse = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://www.evernote.com/shard/s1/notestore',
+        url: noteStoreUrl,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`,
+          'Authorization': `OAuth oauth_consumer_key="${apiKey}", oauth_token="${accessToken}"`,
+          'User-Agent': 'ActivePieces-Evernote-Integration/1.0',
+        },
+        body: JSON.stringify({
+          method: 'getNote',
+          params: [propsValue.noteGuid, true, false, false, false],
+        }),
+      });
+
+      if (getNoteResponse.status !== 200) {
+        throw new Error(`Failed to retrieve existing note: ${getNoteResponse.status}`);
+      }
+
+      const existingNote = getNoteResponse.body;
+      
+      // Prepare the updated note object
+      const updatedNote: any = {
+        guid: propsValue.noteGuid,
+        title: propsValue.title,
+        content: propsValue.content || existingNote.content,
+        contentLength: propsValue.content ? propsValue.content.length : existingNote.contentLength,
+        contentHash: propsValue.content ? Buffer.from(propsValue.content).toString('base64') : existingNote.contentHash,
+        updated: Math.floor(Date.now() / 1000),
+        active: propsValue.active !== undefined ? propsValue.active : existingNote.active,
+        updateSequenceNum: existingNote.updateSequenceNum + 1,
+      };
+
+      // Only update fields that are provided
+      if (propsValue.notebookGuid) {
+        updatedNote.notebookGuid = propsValue.notebookGuid;
+      } else {
+        updatedNote.notebookGuid = existingNote.notebookGuid;
+      }
+
+      if (propsValue.tagNames && propsValue.tagNames.length > 0) {
+        updatedNote.tagNames = propsValue.tagNames;
+      } else {
+        updatedNote.tagNames = existingNote.tagNames || [];
+      }
+
+      // Handle attributes
+      if (propsValue.source || propsValue.sourceURL) {
+        updatedNote.attributes = existingNote.attributes || {};
+        
+        if (propsValue.source) {
+          updatedNote.attributes.source = propsValue.source;
+        }
+        
+        if (propsValue.sourceURL) {
+          updatedNote.attributes.sourceURL = propsValue.sourceURL;
+        }
+      } else {
+        updatedNote.attributes = existingNote.attributes;
+      }
+
+      // Call Evernote's updateNote API
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: noteStoreUrl,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `OAuth oauth_consumer_key="${apiKey}", oauth_token="${accessToken}"`,
           'User-Agent': 'ActivePieces-Evernote-Integration/1.0',
         },
         body: JSON.stringify({
           method: 'updateNote',
-          params: [noteUpdateData],
+          params: [updatedNote],
         }),
       });
 
@@ -115,7 +143,15 @@ export const updateNote = createAction({
           success: true,
           note: response.body,
           message: 'Note updated successfully',
-          updatedFields: Object.keys(noteUpdateData).filter(key => key !== 'guid'),
+          updatedFields: {
+            title: propsValue.title,
+            content: !!propsValue.content,
+            notebookGuid: !!propsValue.notebookGuid,
+            tagNames: !!propsValue.tagNames,
+            source: !!propsValue.source,
+            sourceURL: !!propsValue.sourceURL,
+            active: propsValue.active !== undefined,
+          },
         };
       } else {
         throw new Error(`Failed to update note: ${response.status}`);
