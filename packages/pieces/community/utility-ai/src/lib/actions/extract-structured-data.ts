@@ -1,5 +1,5 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { AIUsageFeature, createAIProvider } from '@activepieces/shared';
+import { AIUsageFeature, createAIModel } from '@activepieces/shared';
 import { aiProps } from '@activepieces/pieces-common';
 import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from 'ai';
 import { LanguageModelV2 } from '@ai-sdk/provider';
@@ -138,7 +138,7 @@ export const extractStructuredData = createAction({
 
 		const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
 		const engineToken = context.server.token;
-		const provider = createAIProvider({
+		const model = createAIModel({
 			providerName,
 			modelInstance,
 			engineToken,
@@ -252,7 +252,7 @@ export const extractStructuredData = createAction({
 
 		try {
 			const result = await generateText({
-				model: provider,
+				model,
 				maxOutputTokens,
 				tools: {
 					extractData: extractionTool,

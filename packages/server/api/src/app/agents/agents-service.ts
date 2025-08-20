@@ -1,4 +1,4 @@
-import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AIUsageFeature, apId, createAIProvider, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, PopulatedAgent, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AIUsageFeature, apId, createAIModel, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, PopulatedAgent, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { Schema as AiSchema, generateObject } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -73,7 +73,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             projectId,
         })
         const { system, prompt } = getEnhancementPrompt(systemPrompt)
-        const model = createAIProvider({
+        const model = createAIModel({
             providerName: 'openai',
             modelInstance: openai('gpt-4o-mini'),
             engineToken,

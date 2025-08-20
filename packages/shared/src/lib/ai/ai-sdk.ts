@@ -7,13 +7,13 @@ import { ImageModel } from 'ai'
 import { SUPPORTED_AI_PROVIDERS } from './supported-ai-providers'
 import { AI_USAGE_AGENT_ID_HEADER, AI_USAGE_FEATURE_HEADER, AI_USAGE_MCP_ID_HEADER, AIUsageFeature, AIUsageMetadata } from './index'
 
-export function createAIProvider<T extends LanguageModelV2 | ImageModel>({
+export function createAIModel<T extends LanguageModelV2 | ImageModel>({
     providerName,
     modelInstance,
     engineToken,
     baseURL,
     metadata,
-}: CreateAIProviderParams<T>): T {
+}: CreateAIModelParams<T>): T {
     const modelId = modelInstance.modelId
     const isImageModel = SUPPORTED_AI_PROVIDERS
         .flatMap(provider => provider.imageModels)
@@ -46,19 +46,19 @@ export function createAIProvider<T extends LanguageModelV2 | ImageModel>({
     switch (providerName) {
         case 'openai': {
             const openaiVersion = 'v1'
-            const provider = createOpenAI({
+            const model = createOpenAI({
                 apiKey: engineToken,
                 baseURL: `${baseURL}/${openaiVersion}`,
                 headers: createHeaders(),
             })
             if (isImageModel) {
-                return provider.imageModel(modelId) as T
+                return model.imageModel(modelId) as T
             }
-            return provider.chat(modelId) as T
+            return model.chat(modelId) as T
         }
         case 'anthropic': {
             const anthropicVersion = 'v1'
-            const provider = createAnthropic({
+            const model = createAnthropic({
                 apiKey: engineToken,
                 baseURL: `${baseURL}/${anthropicVersion}`,
                 headers: createHeaders(),
@@ -66,11 +66,11 @@ export function createAIProvider<T extends LanguageModelV2 | ImageModel>({
             if (isImageModel) {
                 throw new Error(`Provider ${providerName} does not support image models`)
             }
-            return provider(modelId) as T
+            return model(modelId) as T
         }
         case 'replicate': {
             const replicateVersion = 'v1'
-            const provider = createReplicate({
+            const model = createReplicate({
                 apiToken: engineToken,
                 baseURL: `${baseURL}/${replicateVersion}`,
                 headers: createHeaders(),
@@ -78,11 +78,11 @@ export function createAIProvider<T extends LanguageModelV2 | ImageModel>({
             if (!isImageModel) {
                 throw new Error(`Provider ${providerName} does not support language models`)
             }
-            return provider.imageModel(modelId) as unknown as T
+            return model.imageModel(modelId) as unknown as T
         }
         case 'google': {
             const googleVersion = 'v1beta'
-            const provider = createGoogleGenerativeAI({
+            const model = createGoogleGenerativeAI({
                 apiKey: engineToken,
                 baseURL: `${baseURL}/${googleVersion}`,
                 headers: createHeaders(),
@@ -90,14 +90,14 @@ export function createAIProvider<T extends LanguageModelV2 | ImageModel>({
             if (isImageModel) {
                 throw new Error(`Provider ${providerName} does not support image models`)
             }
-            return provider(modelId) as T
+            return model(modelId) as T
         }
         default:
             throw new Error(`Provider ${providerName} is not supported`)
     }
 }
 
-type CreateAIProviderParams<T extends LanguageModelV2 | ImageModel> = {
+type CreateAIModelParams<T extends LanguageModelV2 | ImageModel> = {
     providerName: string
     modelInstance: T
     /**

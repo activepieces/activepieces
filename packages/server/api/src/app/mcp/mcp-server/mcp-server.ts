@@ -1,7 +1,7 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     AIUsageFeature,
-    createAIProvider,
+    createAIModel,
     EngineResponseStatus,
     isNil,
     McpFlowTool,
@@ -79,7 +79,7 @@ async function initializeOpenAIModel({
         projectId,
     })
 
-    return createAIProvider({
+    return createAIModel({
         providerName: 'openai',
         modelInstance: openai(model),
         engineToken,

@@ -1,5 +1,5 @@
 import { aiProps } from '@activepieces/pieces-common';
-import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, createAIProvider } from '@activepieces/shared';
+import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, createAIModel } from '@activepieces/shared';
 import { createAction, Property, Action } from '@activepieces/pieces-framework';
 import { LanguageModelV2 } from '@ai-sdk/provider';
 import { generateText } from 'ai';
@@ -38,7 +38,7 @@ export const summarizeText: Action = createAction({
 
     const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
     const engineToken = context.server.token;
-    const provider = createAIProvider({
+    const model = createAIModel({
       providerName,
       modelInstance,
       engineToken,
@@ -49,7 +49,7 @@ export const summarizeText: Action = createAction({
     });
 
     const response = await generateText({
-      model: provider,
+      model,
       messages: [
         {
           role: 'user',
