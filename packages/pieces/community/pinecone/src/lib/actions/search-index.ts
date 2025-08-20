@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { pineconeAuth } from '../common';
+import { pineconeAuth, PineconeAuth } from '../common';
 
 export const searchIndex = createAction({
   name: 'search-index',
@@ -22,6 +22,7 @@ export const searchIndex = createAction({
   },
   async run({ auth, propsValue }) {
     const { indexName, includeStats = false } = propsValue;
+    const { apiKey, projectId } = auth as PineconeAuth;
 
     try {
       // First, get all indexes to search through them
@@ -30,7 +31,10 @@ export const searchIndex = createAction({
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth as unknown as string,
+          token: apiKey,
+        },
+        headers: {
+          'x-project-id': projectId,
         },
       });
 
@@ -65,7 +69,10 @@ export const searchIndex = createAction({
               method: HttpMethod.POST,
               authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: auth as unknown as string,
+                token: apiKey,
+              },
+              headers: {
+                'x-project-id': projectId,
               },
               body: {},
             });
