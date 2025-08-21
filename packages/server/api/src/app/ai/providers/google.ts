@@ -23,7 +23,7 @@ export const googleProvider: AIProviderStrategy = {
                 }[]
             }
         }
-        | { response: { name: string }, error?: Record<string, unknown> }
+        | { name: string, error?: Record<string, unknown> }
 
         const { provider } = request.params as { provider: string }
         const model = googleProvider.extractModelId(request)!
@@ -67,9 +67,9 @@ export const googleProvider: AIProviderStrategy = {
         }
 
         let videoOperationId
-        if (videoModelConfig && request.url.includes(':predictLongRunning') && 'response' in apiResponse) {
+        if (videoModelConfig && request.url.includes(':predictLongRunning') && 'name' in apiResponse) {
             const VEO_VIDEO_DURATION_SECONDS = 8
-            const { response: { name } } = apiResponse // models/veo-2.0-generate-001/operations/hnp64qpr7tj2\
+            const { name } = apiResponse // models/veo-2.0-generate-001/operations/hnp64qpr7tj2\
             cost = videoModelConfig.pricing.costPerSecond * VEO_VIDEO_DURATION_SECONDS   
             videoOperationId = name.split('/').pop()
         }
