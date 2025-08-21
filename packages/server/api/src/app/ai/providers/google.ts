@@ -12,10 +12,6 @@ export const googleProvider: AIProviderStrategy = {
     },
 
     calculateUsage: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage | null => {
-        if (googleProvider.isNonUsageRequest?.(request)) {
-            return null
-        }
-
         const apiResponse = response as {
             usageMetadata: {
                 promptTokenCount: number
@@ -98,12 +94,12 @@ export const googleProvider: AIProviderStrategy = {
 
     validateRequest: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): void => {
         if (request.url.includes(':predictLongRunning')) {
-            const sampleCount = (request.body as { sampleCount?: number }).sampleCount
+            const sampleCount = (request.body as { parameters?: { sampleCount?: number } }).parameters?.sampleCount
             if (!sampleCount || sampleCount > 1) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
                     params: {
-                        message: 'Only one video can be generated at a time',
+                        message: 'Only one video can be generated at a time, make sure to set sampleCount to 1.',
                     },
                 })
             }

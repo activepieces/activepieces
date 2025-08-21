@@ -52,7 +52,7 @@ export const generateVideo = createAction({
         let imageBytes: string | undefined;
         const fileType = image?.extension ? mime.lookup(image.extension) : 'image/jpeg';
         if (image && fileType && fileType.startsWith('image')) {
-            imageBytes = `data:${fileType};base64,${image.base64}`;
+            imageBytes = image.base64;
         }
 
         const imageConfig = imageBytes ? {
