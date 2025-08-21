@@ -1,7 +1,41 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { pineconeAuth } from '../common';
+import { pineconeAuth } from '../common/auth';
 import { PineconeClient } from '../common/client';
 import { commonProps, searchProps } from '../common/props';
+
+interface SparseVector {
+  indices: number[];
+  values: number[];
+}
+
+interface SearchRequestBody {
+  topK: number;
+  includeValues?: boolean;
+  includeMetadata?: boolean;
+  vector?: number[];
+  id?: string;
+  sparseVector?: SparseVector;
+  namespace?: string;
+  filter?: Record<string, unknown>;
+}
+
+interface SearchMatch {
+  id: string;
+  score: number;
+  values?: number[] | null;
+  sparseValues?: SparseVector | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+interface ErrorResponse {
+  response?: {
+    body: {
+      code?: number;
+      message?: string;
+    };
+  };
+  message?: string;
+}
 
 export const searchVectors = createAction({
   name: 'search-vectors',
@@ -11,7 +45,6 @@ export const searchVectors = createAction({
   props: {
     indexName: commonProps.indexName,
     namespace: commonProps.namespace,
-    // Query method selection
     queryMethod: Property.Dropdown({
       displayName: 'Query Method',
       description: 'Choose how to provide the query vector',
@@ -28,20 +61,20 @@ export const searchVectors = createAction({
         };
       }
     }),
-    // Vector values for direct query
+    
     queryVector: Property.Json({
       displayName: 'Query Vector',
       description: 'The query vector as an array of numbers (required when using vector method). Should match the dimension of the index.',
       required: false,
       defaultValue: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
     }),
-    // Vector ID for reference query
+    
     queryVectorId: Property.ShortText({
       displayName: 'Query Vector ID',
       description: 'The unique ID of the vector to use as a query vector (required when using id method). Maximum length: 512 characters.',
       required: false,
     }),
-    // Sparse vector support
+    
     sparseVector: Property.Json({
       displayName: 'Sparse Vector',
       description: 'Vector sparse data with indices and values arrays (optional). Use for sparse vector queries. Note: Only supported by sparse indexes or indexes using dotproduct similarity metric.',
@@ -51,12 +84,10 @@ export const searchVectors = createAction({
         values: [0.1, 0.2, 0.3]
       }
     }),
-    // Search parameters
+    
     topK: searchProps.topK,
-    // Response options
     includeValues: searchProps.includeValues,
     includeMetadata: searchProps.includeMetadata,
-    // Metadata filter
     metadataFilter: searchProps.filter,
   },
   async run({ auth, propsValue }) {
@@ -73,15 +104,12 @@ export const searchVectors = createAction({
       metadataFilter 
     } = propsValue;
 
-    // Validate topK
     if (!topK || typeof topK !== 'number') {
       throw new Error('Top K must be a valid number');
     }
     if (topK < 1 || topK > 10000) {
       throw new Error('Top K must be between 1 and 10000');
     }
-
-    // Validate query method requirements
     if (queryMethod === 'vector') {
       if (!queryVector || !Array.isArray(queryVector)) {
         throw new Error('Query vector is required when using vector method');
@@ -89,7 +117,7 @@ export const searchVectors = createAction({
       if (queryVector.length === 0) {
         throw new Error('Query vector array cannot be empty');
       }
-      if (!queryVector.every((val: any) => typeof val === 'number')) {
+      if (!queryVector.every((val: number) => typeof val === 'number')) {
         throw new Error('All query vector values must be numbers');
       }
     } else if (queryMethod === 'id') {
@@ -100,14 +128,12 @@ export const searchVectors = createAction({
         throw new Error('Query vector ID must be between 1 and 512 characters');
       }
     }
-
-    // Validate sparse vector if provided
     if (sparseVector) {
       if (typeof sparseVector !== 'object' || sparseVector === null) {
         throw new Error('Sparse vector must be an object');
       }
       
-      const { indices, values } = sparseVector as any;
+      const { indices, values } = sparseVector as unknown as SparseVector;
       if (!Array.isArray(indices) || !Array.isArray(values)) {
         throw new Error('Sparse vector must have indices and values arrays');
       }
@@ -116,11 +142,11 @@ export const searchVectors = createAction({
         throw new Error('Sparse vector indices and values arrays must have the same length');
       }
       
-      if (!indices.every((idx: any) => typeof idx === 'number' && Number.isInteger(idx) && idx >= 0)) {
+      if (!indices.every((idx: number) => typeof idx === 'number' && Number.isInteger(idx) && idx >= 0)) {
         throw new Error('Sparse vector indices must be non-negative integers');
       }
       
-      if (!values.every((val: any) => typeof val === 'number')) {
+      if (!values.every((val: number) => typeof val === 'number')) {
         throw new Error('Sparse vector values must be numbers');
       }
     }
@@ -128,7 +154,6 @@ export const searchVectors = createAction({
     try {
       const client = new PineconeClient(auth);
       
-      // First, get the index host to construct the correct URL
       const indexInfo = await client.getIndex(indexName);
       const host = indexInfo.host;
 
@@ -136,32 +161,26 @@ export const searchVectors = createAction({
         throw new Error('Index host not found in response');
       }
 
-      // Build the request body
-      const requestBody: any = {
+      const requestBody: SearchRequestBody = {
         topK,
         includeValues,
         includeMetadata
       };
 
-      // Add query method specific data
       if (queryMethod === 'vector') {
-        requestBody.vector = queryVector;
+        requestBody.vector = queryVector as unknown as number[];
       } else if (queryMethod === 'id') {
         requestBody.id = queryVectorId;
       }
 
-      // Add sparse vector only if provided AND if the index supports it
-      // Note: Sparse vectors are only supported by sparse indexes or indexes using dotproduct similarity
       if (sparseVector) {
-        // Check if this is a sparse index by examining the index info
-        const indexConfig = indexInfo.dimension || {};
         const isSparseIndex = indexInfo.metric === 'dotproduct' || 
                              (indexInfo.configuration && indexInfo.configuration.sparse);
         
         if (!isSparseIndex) {
           // Don't add sparseVector to requestBody for non-sparse indexes
         } else {
-          requestBody.sparseVector = sparseVector;
+          requestBody.sparseVector = sparseVector as unknown as SparseVector;
         }
       }
 
@@ -190,7 +209,7 @@ export const searchVectors = createAction({
         queryMethod,
         topK,
         totalResults: matches.length,
-        matches: matches.map((match: any) => ({
+        matches: matches.map((match: SearchMatch) => ({
           id: match.id,
           score: match.score,
           values: match.values || null,
@@ -208,21 +227,25 @@ export const searchVectors = createAction({
         requestBody
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle specific Pinecone API errors
-      if (error.response && error.response.body) {
-        const errorBody = error.response.body;
-        
-        if (errorBody.code === 3 && errorBody.message && errorBody.message.includes('sparse values')) {
-          throw new Error(`Sparse vector search not supported by this index. This index only supports dense vectors. Please remove the sparse vector parameter or use a different index that supports sparse vectors.`);
-        }
-        
-        if (errorBody.code && errorBody.message) {
-          throw new Error(`Pinecone API Error (${errorBody.code}): ${errorBody.message}`);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const errorResponse = error as ErrorResponse;
+        if (errorResponse.response?.body) {
+          const errorBody = errorResponse.response.body;
+          
+          if (errorBody.code === 3 && errorBody.message && errorBody.message.includes('sparse values')) {
+            throw new Error(`Sparse vector search not supported by this index. This index only supports dense vectors. Please remove the sparse vector parameter or use a different index that supports sparse vectors.`);
+          }
+          
+          if (errorBody.code && errorBody.message) {
+            throw new Error(`Pinecone API Error (${errorBody.code}): ${errorBody.message}`);
+          }
         }
       }
       
-      throw new Error(`Failed to search vectors: ${error.message || error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to search vectors: ${errorMessage}`);
     }
   },
 });

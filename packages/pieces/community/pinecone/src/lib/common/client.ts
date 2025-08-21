@@ -170,35 +170,15 @@ export class PineconeClient {
    * Fetch a specific vector by ID
    */
   async fetchVector(host: string, requestBody: any) {
-    // Convert request body to query parameters for GET request
-    const queryParams = new URLSearchParams();
-    
-    // Add vector IDs as comma-separated string
-    if (requestBody.ids && Array.isArray(requestBody.ids)) {
-      queryParams.append('ids', requestBody.ids.join(','));
-    }
-    
-    // Add namespace if provided
-    if (requestBody.namespace) {
-      queryParams.append('namespace', requestBody.namespace);
-    }
-    
-    // Add include options
-    if (requestBody.includeValues !== undefined) {
-      queryParams.append('includeValues', requestBody.includeValues.toString());
-    }
-    
-    if (requestBody.includeMetadata !== undefined) {
-      queryParams.append('includeMetadata', requestBody.includeMetadata.toString());
-    }
-
-    const url = `https://${host}/vectors/fetch?${queryParams.toString()}`;
+    // Pinecone fetch API expects a POST request with JSON body
+    const url = `https://${host}/vectors/fetch`;
     
     try {
       const response = await httpClient.sendRequest({
         url,
-        method: HttpMethod.GET,
+        method: HttpMethod.POST,
         headers: this.getVectorHeaders(),
+        body: requestBody,
       });
 
       if (response.status !== 200) {

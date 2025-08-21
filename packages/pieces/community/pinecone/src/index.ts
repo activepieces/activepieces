@@ -7,9 +7,12 @@
     import { updateAVector } from "./lib/actions/update-a-vector";
     import { deleteAVector } from "./lib/actions/delete-a-vector";
     import { searchVectors } from "./lib/actions/search-vectors";
-    import { pineconeAuth } from "./lib/common";
+    import { pineconeAuth } from "./lib/common/auth";
 
-    export { pineconeAuth } from "./lib/common";
+    // Export common utilities directly
+    export { pineconeAuth, PineconeAuth } from "./lib/common/auth";
+    export { PineconeClient } from "./lib/common/client";
+    export { commonProps, vectorProps, searchProps } from "./lib/common/props";
 
     export const pinecone = createPiece({
       displayName: "Pinecone",

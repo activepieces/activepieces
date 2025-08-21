@@ -1,7 +1,20 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { pineconeAuth } from '../common';
+import { pineconeAuth } from '../common/auth';
 import { PineconeClient } from '../common/client';
 import { commonProps, vectorProps } from '../common/props';
+
+interface SparseValues {
+  indices: number[];
+  values: number[];
+}
+
+interface UpdateVectorRequestBody {
+  id: string;
+  values?: number[];
+  sparseValues?: SparseValues;
+  setMetadata?: Record<string, unknown>;
+  namespace?: string;
+}
 
 export const updateAVector = createAction({
   name: 'update-a-vector',
@@ -71,7 +84,7 @@ export const updateAVector = createAction({
       if (vectorValues.length === 0) {
         throw new Error('Vector values array cannot be empty');
       }
-      if (!vectorValues.every((val: any) => typeof val === 'number')) {
+      if (!vectorValues.every((val: number) => typeof val === 'number')) {
         throw new Error('All vector values must be numbers');
       }
     }
@@ -88,7 +101,7 @@ export const updateAVector = createAction({
         throw new Error('Sparse values must be an object');
       }
       
-      const { indices, values } = sparseValues as any;
+      const { indices, values } = sparseValues as unknown as SparseValues;
       if (!Array.isArray(indices) || !Array.isArray(values)) {
         throw new Error('Sparse values must have indices and values arrays');
       }
@@ -97,12 +110,12 @@ export const updateAVector = createAction({
         throw new Error('Sparse values indices and values arrays must have the same length');
       }
       
-      if (!indices.every((idx: any) => typeof idx === 'number' && Number.isInteger(idx) && idx >= 0)) {
+      if (!indices.every((idx: number) => typeof idx === 'number' && Number.isInteger(idx) && idx >= 0)) {
         throw new Error('Sparse values indices must be non-negative integers');
       }
       
-      if (!values.every((val: any) => typeof val === 'number')) {
-        throw new Error('Sparse values must be numbers');
+      if (!values.every((val: number) => typeof val === 'number')) {
+        throw new Error('Sparse values values must be numbers');
       }
     }
 
@@ -118,23 +131,23 @@ export const updateAVector = createAction({
       }
 
       // Build the request body
-      const requestBody: any = {
+      const requestBody: UpdateVectorRequestBody = {
         id: vectorId
       };
 
       // Add vector values if updating values
       if (updateType === 'values' || updateType === 'both') {
-        requestBody.values = vectorValues;
+        requestBody.values = vectorValues as unknown as number[];
       }
 
       // Add sparse values if provided
       if (sparseValues) {
-        requestBody.sparseValues = sparseValues;
+        requestBody.sparseValues = sparseValues as unknown as SparseValues;
       }
 
       // Add metadata if updating metadata
       if (updateType === 'metadata' || updateType === 'both') {
-        requestBody.setMetadata = setMetadata;
+        requestBody.setMetadata = setMetadata as Record<string, unknown>;
       }
 
       // Add namespace if provided
@@ -161,8 +174,9 @@ export const updateAVector = createAction({
         response: updateResult
       };
 
-    } catch (error: any) {
-      throw new Error(`Failed to update vector: ${error.message || error}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to update vector: ${errorMessage}`);
     }
   },
 });

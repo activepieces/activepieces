@@ -1,7 +1,24 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { pineconeAuth } from '../common';
+import { pineconeAuth } from '../common/auth';
 import { PineconeClient } from '../common/client';
 import { commonProps, searchProps } from '../common/props';
+
+interface FetchVectorParams {
+  ids: string[];
+  namespace?: string;
+  includeValues?: boolean;
+  includeMetadata?: boolean;
+}
+
+interface ErrorResponse {
+  response?: {
+    body: {
+      code?: string;
+      message?: string;
+    };
+  };
+  message?: string;
+}
 
 export const getAVector = createAction({
   name: 'get-a-vector',
@@ -23,7 +40,6 @@ export const getAVector = createAction({
   async run({ auth, propsValue }) {
     const { indexName, vectorIds, namespace, includeValues = true, includeMetadata = true } = propsValue;
 
-    // Validate vector IDs input
     if (!Array.isArray(vectorIds)) {
       throw new Error('Vector IDs must be an array');
     }
@@ -36,7 +52,6 @@ export const getAVector = createAction({
       throw new Error('Maximum 1000 vector IDs allowed per fetch operation');
     }
 
-    // Validate each vector ID
     for (let i = 0; i < vectorIds.length; i++) {
       const id = vectorIds[i];
       if (!id || typeof id !== 'string') {
@@ -45,12 +60,17 @@ export const getAVector = createAction({
       if (id.includes(' ')) {
         throw new Error(`Vector ID at index ${i} cannot contain spaces: "${id}"`);
       }
+      if (id.trim() === '') {
+        throw new Error(`Vector ID at index ${i} cannot be empty or whitespace`);
+      }
+      if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+        throw new Error(`Vector ID at index ${i} contains invalid characters: "${id}". Only alphanumeric characters, hyphens, and underscores are allowed.`);
+      }
     }
 
     try {
       const client = new PineconeClient(auth);
       
-      // First, get the index host to construct the correct URL
       const indexInfo = await client.getIndex(indexName);
       const host = indexInfo.host;
 
@@ -58,17 +78,14 @@ export const getAVector = createAction({
         throw new Error('Index host not found in response');
       }
 
-      // Construct query parameters
-      const queryParams: any = {
+      const queryParams: FetchVectorParams = {
         ids: vectorIds
       };
 
-      // Add namespace if provided
       if (namespace) {
         queryParams.namespace = namespace;
       }
 
-      // Add include options
       if (includeValues === false) {
         queryParams.includeValues = false;
       }
@@ -76,26 +93,20 @@ export const getAVector = createAction({
         queryParams.includeMetadata = false;
       }
 
-      // Fetch vectors
       const fetchResult = await client.fetchVector(host, queryParams);
 
-      // Process the response
-      let vectors = fetchResult.vectors || {};
-      let fetchedIds = Object.keys(vectors);
-      let missingIds = vectorIds.filter(id => !fetchedIds.includes(id));
+      const vectors = fetchResult.vectors || {};
+      const fetchedIds = Object.keys(vectors);
+      const missingIds = vectorIds.filter(id => !fetchedIds.includes(id));
+      console.log('Pinecone fetch response:', JSON.stringify(fetchResult, null, 2));
 
-      // Additional response validation
-      if (!fetchResult.vectors || Object.keys(fetchResult.vectors).length === 0) {
-        // Check if the response has a different structure
-        if (fetchResult.data && fetchResult.data.vectors) {
-          vectors = fetchResult.data.vectors;
-          fetchedIds = Object.keys(vectors);
-          missingIds = vectorIds.filter(id => !fetchedIds.includes(id));
-        } else if (fetchResult.results && fetchResult.results.vectors) {
-          vectors = fetchResult.results.vectors;
-          fetchedIds = Object.keys(vectors);
-          missingIds = vectorIds.filter(id => !fetchedIds.includes(id));
-        }
+
+      if (!fetchResult.vectors || typeof fetchResult.vectors !== 'object') {
+        throw new Error(`Unexpected response format from Pinecone API. Expected 'vectors' field, got: ${JSON.stringify(fetchResult)}`);
+      }
+
+      if (fetchedIds.length === 0) {
+        throw new Error(`No vectors found for the provided IDs: ${vectorIds.join(', ')}. Please verify that these vector IDs exist in the index.`);
       }
 
       return {
@@ -117,17 +128,29 @@ export const getAVector = createAction({
         }
       };
 
-    } catch (error: any) {
-      // Handle specific Pinecone API errors
-      if (error.response && error.response.body) {
-        const errorBody = error.response.body;
-        
-        if (errorBody.code && errorBody.message) {
-          throw new Error(`Pinecone API Error (${errorBody.code}): ${errorBody.message}`);
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const errorResponse = error as ErrorResponse;
+        if (errorResponse.response?.body) {
+          const errorBody = errorResponse.response.body;
+          
+          if (errorBody.code && errorBody.message) {
+            throw new Error(`Pinecone API Error (${errorBody.code}): ${errorBody.message}`);
+          }
         }
       }
       
-      throw new Error(`Failed to fetch vectors: ${error.message || error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      if (errorMessage.includes('No vectors found')) {
+        throw error;
+      }
+      
+      if (errorMessage.includes('Unexpected response format')) {
+        throw error;
+      }
+      
+      throw new Error(`Failed to fetch vectors: ${errorMessage}`);
     }
   },
 });

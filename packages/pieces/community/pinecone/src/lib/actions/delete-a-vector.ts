@@ -1,7 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { pineconeAuth } from '../common';
+import { pineconeAuth } from '../common/auth';
 import { PineconeClient } from '../common/client';
 import { commonProps } from '../common/props';
+
+interface DeleteVectorRequestBody {
+  ids?: string[];
+  deleteAll?: boolean;
+  filter?: Record<string, unknown>;
+  namespace?: string;
+}
+
+interface ErrorResponse {
+  response?: {
+    status: number;
+    body: unknown;
+  };
+  message?: string;
+}
 
 export const deleteAVector = createAction({
   name: 'delete-a-vector',
@@ -11,7 +26,6 @@ export const deleteAVector = createAction({
   props: {
     indexName: commonProps.indexName,
     namespace: commonProps.namespace,
-    // Delete method selection
     deleteMethod: Property.Dropdown({
       displayName: 'Delete Method',
       description: 'Choose how to delete vectors',
@@ -29,14 +43,13 @@ export const deleteAVector = createAction({
         };
       }
     }),
-    // Vector IDs for specific deletion
     vectorIds: Property.Json({
       displayName: 'Vector IDs',
       description: 'Array of vector IDs to delete (required when deleting specific IDs)',
       required: false,
       defaultValue: ['id-0', 'id-1']
     }),
-    // Metadata filter for conditional deletion
+
     metadataFilter: Property.Json({
       displayName: 'Metadata Filter',
       description: 'Metadata filter to select vectors for deletion (required when using filter method). See Pinecone documentation for filter syntax.',
@@ -46,7 +59,7 @@ export const deleteAVector = createAction({
         year: { $gte: 2020 }
       }
     }),
-    // Confirmation for delete all
+    
     confirmDeleteAll: Property.Checkbox({
       displayName: 'Confirm Delete All',
       description: 'Check this to confirm you want to delete ALL vectors (required when using delete all method)',
@@ -64,7 +77,7 @@ export const deleteAVector = createAction({
       confirmDeleteAll 
     } = propsValue;
 
-    // Validate delete method requirements
+  
     if (deleteMethod === 'specific_ids') {
       if (!vectorIds || !Array.isArray(vectorIds)) {
         throw new Error('Vector IDs array is required when deleting specific vectors');
@@ -76,7 +89,7 @@ export const deleteAVector = createAction({
         throw new Error('Maximum 1000 vector IDs allowed per delete operation');
       }
       
-      // Validate each vector ID
+     
       for (let i = 0; i < vectorIds.length; i++) {
         const id = vectorIds[i];
         if (!id || typeof id !== 'string') {
@@ -103,7 +116,7 @@ export const deleteAVector = createAction({
     try {
       const client = new PineconeClient(auth);
       
-      // First, get the index host to construct the correct URL
+     
       const indexInfo = await client.getIndex(indexName);
       const host = indexInfo.host;
 
@@ -111,10 +124,10 @@ export const deleteAVector = createAction({
         throw new Error('Index host not found in response');
       }
 
-      // For specific IDs deletion, optionally verify vectors exist first
+    
       if (deleteMethod === 'specific_ids' && vectorIds && Array.isArray(vectorIds) && vectorIds.length > 0) {
         try {
-          // Check if at least some vectors exist before deletion
+          
           const idsToCheck = Array.isArray(vectorIds) ? vectorIds.slice(0, Math.min(10, vectorIds.length)) : [];
           const fetchResponse = await client.fetchVector(host, { 
             ids: idsToCheck,
@@ -124,21 +137,22 @@ export const deleteAVector = createAction({
           if (fetchResponse.vectors && Object.keys(fetchResponse.vectors).length === 0) {
             // Warning: No vectors found with the provided IDs. The delete operation may not affect any vectors.
           }
-        } catch (fetchError: any) {
+        } catch (fetchError: unknown) {
           // Warning: Could not verify vector existence before deletion. Continue with deletion even if verification fails.
         }
       }
 
       // Build the request body
-      const requestBody: any = {};
+      const requestBody: DeleteVectorRequestBody = {};
 
-      // Add delete method specific data
       if (deleteMethod === 'specific_ids') {
-        requestBody.ids = vectorIds;
+        requestBody.ids = vectorIds as unknown as string[];
       } else if (deleteMethod === 'delete_all') {
         requestBody.deleteAll = true;
       } else if (deleteMethod === 'filter') {
-        requestBody.filter = metadataFilter;
+        if (metadataFilter && typeof metadataFilter === 'object' && metadataFilter !== null) {
+          requestBody.filter = metadataFilter as Record<string, unknown>;
+        }
       }
 
       // Add namespace if provided
@@ -146,17 +160,9 @@ export const deleteAVector = createAction({
         requestBody.namespace = namespace;
       }
 
-
-
-      // Delete vectors
       const deleteResult = await client.deleteVectors(host, requestBody);
 
 
-
-      // Validate the delete operation actually succeeded
-      // Note: Some delete operations might return empty responses but still succeed
-
-      // Build response message based on delete method
       let message = '';
       if (deleteMethod === 'specific_ids') {
         message = `Successfully deleted ${Array.isArray(vectorIds) ? vectorIds.length : 0} vector(s) from index "${indexName}"`;
@@ -186,33 +192,35 @@ export const deleteAVector = createAction({
         }
       };
 
-    } catch (error: any) {
-      // Enhanced error handling with more details
+    } catch (error: unknown) {
+      // Handle error response
       let errorMessage = 'Failed to delete vectors';
       
-      if (error.response) {
-        const { status, body } = error.response;
-        errorMessage += `: HTTP ${status}`;
-        
-        if (body) {
-          if (typeof body === 'object') {
-            if (body.message) {
-              errorMessage += ` - ${body.message}`;
-            } else if (body.error) {
-              errorMessage += ` - ${body.error}`;
+      if (error && typeof error === 'object' && 'response' in error) {
+        const errorResponse = error as ErrorResponse;
+        if (errorResponse.response) {
+          const { status, body } = errorResponse.response;
+          errorMessage += `: HTTP ${status}`;
+          
+          if (body) {
+            if (typeof body === 'object' && body !== null) {
+              if ('message' in body && typeof body.message === 'string') {
+                errorMessage += ` - ${body.message}`;
+              } else if ('error' in body && typeof body.error === 'string') {
+                errorMessage += ` - ${body.error}`;
+              } else {
+                errorMessage += ` - ${JSON.stringify(body)}`;
+              }
             } else {
-              errorMessage += ` - ${JSON.stringify(body)}`;
+              errorMessage += ` - ${String(body)}`;
             }
-          } else {
-            errorMessage += ` - ${body}`;
           }
         }
-      } else if (error.message) {
+      } else if (error instanceof Error) {
         errorMessage += `: ${error.message}`;
       }
       
-
-      
+      // Re-throw with enhanced error message
       throw new Error(errorMessage);
     }
   },

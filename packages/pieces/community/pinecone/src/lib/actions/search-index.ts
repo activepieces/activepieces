@@ -1,6 +1,24 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { pineconeAuth, PineconeAuth } from '../common';
+import { pineconeAuth, PineconeAuth } from '../common/auth';
 import { PineconeClient } from '../common/client';
+
+interface PineconeIndex {
+  name: string;
+  [key: string]: unknown;
+}
+
+interface IndexWithStats extends PineconeIndex {
+  stats?: unknown;
+  statsError?: string;
+}
+
+interface ErrorResponse {
+  response?: {
+    status: number;
+    body: unknown;
+  };
+  message?: string;
+}
 
 export const searchIndex = createAction({
   name: 'search-index',
@@ -32,13 +50,9 @@ export const searchIndex = createAction({
     try {
       const client = new PineconeClient(auth);
       
-      // First, get all indexes to search through them
       const response = await client.getAllIndexes();
       
-
-
-      // Ensure response is an array and handle different response formats
-      let allIndexes: any[] = [];
+      let allIndexes: PineconeIndex[] = [];
       
       if (Array.isArray(response)) {
         allIndexes = response;
@@ -57,9 +71,6 @@ export const searchIndex = createAction({
         throw new Error(`Invalid response format from Pinecone API. Expected array, got: ${typeof response}`);
       }
       
-
-      
-      // Filter indexes by name (case-insensitive partial match)
       const matchingIndexes = allIndexes.filter(index => 
         index.name && index.name.toLowerCase().includes(indexName.toLowerCase())
       );
@@ -72,9 +83,7 @@ export const searchIndex = createAction({
           count: 0
         };
       }
-
-      // If includeStats is true, fetch detailed information for each matching index
-      let detailedIndexes = matchingIndexes;
+      let detailedIndexes: IndexWithStats[] = matchingIndexes;
       
       if (includeStats) {
         const detailedPromises = matchingIndexes.map(async (index) => {
@@ -96,11 +105,12 @@ export const searchIndex = createAction({
                 statsError: 'Index host not found'
               };
             }
-          } catch (error: any) {
+          } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             return {
               ...index,
               stats: null,
-              statsError: `Error fetching stats: ${error.message || error}`
+              statsError: `Error fetching stats: ${errorMessage}`
             };
           }
         });
@@ -116,17 +126,26 @@ export const searchIndex = createAction({
         searchTerm: indexName
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Provide more specific error information
-      if (error.message.includes('Authentication failed')) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      if (errorMessage.includes('Authentication failed')) {
         throw error;
       }
       
-      const errorMessage = error.response 
-        ? `API Error: ${error.response.status} - ${JSON.stringify(error.response.body)}`
-        : error.message || 'Unknown error occurred';
+      let finalErrorMessage = 'Unknown error occurred';
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const errorResponse = error as ErrorResponse;
+        if (errorResponse.response) {
+          finalErrorMessage = `API Error: ${errorResponse.response.status} - ${JSON.stringify(errorResponse.response.body)}`;
+        }
+      } else if (errorMessage) {
+        finalErrorMessage = errorMessage;
+      }
         
-      throw new Error(`Failed to search indexes: ${errorMessage}`);
+      throw new Error(`Failed to search indexes: ${finalErrorMessage}`);
     }
   },
 });

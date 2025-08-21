@@ -1,7 +1,25 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { pineconeAuth } from '../common';
+import { pineconeAuth } from '../common/auth';
 import { PineconeClient } from '../common/client';
 import { commonProps } from '../common/props';
+
+interface Vector {
+  id: string;
+  values: number[];
+  metadata?: Record<string, unknown>;
+}
+
+interface UpsertRequestBody {
+  vectors: Vector[];
+  namespace?: string;
+}
+
+interface BatchResult {
+  batchIndex: number;
+  batchSize: number;
+  upsertedCount: number;
+  status: string;
+}
 
 export const upsertVector = createAction({
   name: 'upsert-vector',
@@ -61,7 +79,7 @@ export const upsertVector = createAction({
       if (!Array.isArray(vector.values) || vector.values.length === 0) {
         throw new Error(`Vector at index ${i} must have a non-empty 'values' array`);
       }
-      if (!vector.values.every((val: any) => typeof val === 'number')) {
+      if (!vector.values.every((val: number) => typeof val === 'number')) {
         throw new Error(`Vector at index ${i} must have numeric values only`);
       }
     }
@@ -89,8 +107,8 @@ export const upsertVector = createAction({
       for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
         const batch = batches[batchIndex];
         
-        const requestBody: any = {
-          vectors: batch
+        const requestBody: UpsertRequestBody = {
+          vectors: batch as Vector[]
         };
 
         if (namespace) {
@@ -105,7 +123,7 @@ export const upsertVector = createAction({
           batchSize: batch.length,
           upsertedCount: batchResult.upsertedCount || batch.length,
           status: 'success'
-        });
+        } as BatchResult);
       }
 
       return {
@@ -119,8 +137,9 @@ export const upsertVector = createAction({
         namespace: namespace || null
       };
 
-    } catch (error: any) {
-      throw new Error(`Failed to upsert vectors: ${error.message || error}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to upsert vectors: ${errorMessage}`);
     }
   },
 });

@@ -1,7 +1,32 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { pineconeAuth } from '../common';
+import { pineconeAuth } from '../common/auth';
 import { PineconeClient } from '../common/client';
 import { commonProps } from '../common/props';
+
+interface CreateIndexRequestBody {
+  name: string;
+  metric: string;
+  vector_type: string;
+  deletion_protection: string;
+  dimension?: number;
+  tags?: Record<string, unknown>;
+  spec?: {
+    pod?: {
+      environment: string;
+      pod_type: string;
+      pods: number;
+      replicas: number;
+      shards: number;
+      metadata_config?: {
+        indexed: string[];
+      };
+    };
+    serverless?: {
+      cloud: string;
+      region: string;
+    };
+  };
+}
 
 export const createIndex = createAction({
   name: 'create-index',
@@ -58,13 +83,11 @@ export const createIndex = createAction({
       description: 'The region for serverless indexes (e.g., us-west-1)',
       required: false
     }),
-    // Metadata configuration
     indexedMetadata: commonProps.indexedMetadata
   },
   async run({ auth, propsValue }) {
     const { name, dimension, metric, vectorType = 'dense', deletionProtection = 'disabled', tags = {} } = propsValue;
     
-    // Validate vector type and dimension combination
     if (vectorType === 'sparse' && dimension) {
       throw new Error('Dimension should not be specified for sparse vector types');
     }
@@ -72,31 +95,26 @@ export const createIndex = createAction({
     if (vectorType === 'dense' && !dimension) {
       throw new Error('Dimension must be specified for dense vector types');
     }
-    
-    // Validate metric for sparse vectors
+
     if (vectorType === 'sparse' && metric !== 'dotproduct') {
       throw new Error('Metric must be "dotproduct" for sparse vector types');
     }
 
-    // Build the request body
-    const requestBody: any = {
+    const requestBody: CreateIndexRequestBody = {
       name,
       metric,
       vector_type: vectorType,
       deletion_protection: deletionProtection
     };
 
-    // Add dimension for dense vectors
     if (vectorType === 'dense' && dimension) {
       requestBody.dimension = dimension;
     }
 
-    // Add tags if provided
     if (Object.keys(tags).length > 0) {
       requestBody.tags = tags;
     }
 
-    // Build spec object based on provided configuration
     if (propsValue.environment && propsValue.podType) {
       requestBody.spec = {
         pod: {
@@ -107,15 +125,15 @@ export const createIndex = createAction({
           shards: propsValue.shards || 1
         }
       };
-      
-      // Add metadata config if provided
+
       if (propsValue.indexedMetadata && Array.isArray(propsValue.indexedMetadata) && propsValue.indexedMetadata.length > 0) {
-        requestBody.spec.pod.metadata_config = {
-          indexed: propsValue.indexedMetadata
-        };
+        if (requestBody.spec?.pod) {
+          requestBody.spec.pod.metadata_config = {
+            indexed: propsValue.indexedMetadata
+          };
+        }
       }
     } else if (propsValue.cloud && propsValue.region) {
-      // Serverless index
       requestBody.spec = {
         serverless: {
           cloud: propsValue.cloud,
@@ -135,15 +153,16 @@ export const createIndex = createAction({
         index: result,
         message: `Index "${name}" created successfully`
       };
-    } catch (error: any) {
-      if (error.message && error.message.includes('no pod quota available')) {
-        throw new Error(`Failed to create index: ${error.message}. This usually means your project has reached its pod quota limit. Try using a serverless index instead by providing 'cloud' and 'region' instead of 'environment' and 'podType'.`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('no pod quota available')) {
+        throw new Error(`Failed to create index: ${errorMessage}. This usually means your project has reached its pod quota limit. Try using a serverless index instead by providing 'cloud' and 'region' instead of 'environment' and 'podType'.`);
       }
-      if (error.message && (error.message.includes('403') || error.message.includes('FORBIDDEN'))) {
-        throw new Error(`Failed to create index: ${error.message}. This might be due to insufficient permissions, account verification issues, or pod quota limits. For new accounts, try using serverless indexes with 'cloud' and 'region' parameters.`);
+      if (errorMessage.includes('403') || errorMessage.includes('FORBIDDEN')) {
+        throw new Error(`Failed to create index: ${errorMessage}. This might be due to insufficient permissions, account verification issues, or pod quota limits. For new accounts, try using serverless indexes with 'cloud' and 'region' parameters.`);
       }
       
-      throw new Error(`Failed to create index: ${error.message || error}`);
+      throw new Error(`Failed to create index: ${errorMessage}`);
     }
   },
 });
