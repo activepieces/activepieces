@@ -51,7 +51,7 @@ export const createPhoneCallAction = createAction({
   async run(context) {
     const { auth, propsValue } = context;
 
-    // Construct the request body, removing any undefined optional properties
+    
     const body = {
         from_number: propsValue.from_number,
         to_number: propsValue.to_number,
