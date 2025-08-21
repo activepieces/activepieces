@@ -166,12 +166,16 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             .createQueryBuilder('agent')
             .where(querySelector)
 
+        if (params.externalIds) {
+            queryBuilder.andWhere({
+                externalId: In(params.externalIds),
+            })
+        }
         const agentsInTable = await tableService.getAllAgentIds({ projectId: params.projectId })
         queryBuilder.andWhere({
             id: Not(In(agentsInTable)),
         })
         const { data, cursor } = await paginator.paginate(queryBuilder)
-
         return paginationHelper.createPage<PopulatedAgent>(
             await Promise.all(data.map(agent => enrichAgent(agent, log))),
             cursor,
@@ -219,7 +223,7 @@ type ListParams = {
     projectId: string
     limit: number
     cursorRequest: Cursor
-
+    externalIds?: string[]
 }
 
 type CreateParams = {

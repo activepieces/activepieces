@@ -56,14 +56,11 @@ export const summarizeText: Action = createAction({
           content: `${context.propsValue.prompt} Summarize the following text : ${context.propsValue.text}`
         },
       ],
-      maxOutputTokens: providerName !== 'openai' ? context.propsValue.maxOutputTokens : undefined,
+      maxOutputTokens: context.propsValue.maxOutputTokens,
       temperature: 1,
       providerOptions: {
         [providerName]: {
-          ...(providerName === 'openai' ? {
-            ...(context.propsValue.maxOutputTokens ? { max_completion_tokens: context.propsValue.maxOutputTokens } : {}),
-            reasoning_effort: 'minimal',
-          } : {}),
+          ...(providerName === 'openai' ? { reasoning_effort: 'minimal' } : {}),
         }
       }
     });

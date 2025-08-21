@@ -3,7 +3,8 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { LanguageModelV2 } from '@ai-sdk/provider'
 import { createReplicate } from '@ai-sdk/replicate'
-import { ImageModel } from 'ai'
+import { ImageModel, Tool } from 'ai'
+import { spreadIfDefined } from '../common'
 import { SUPPORTED_AI_PROVIDERS } from './supported-ai-providers'
 import { AI_USAGE_AGENT_ID_HEADER, AI_USAGE_FEATURE_HEADER, AI_USAGE_MCP_ID_HEADER, AIUsageFeature, AIUsageMetadata } from './index'
 
@@ -13,6 +14,7 @@ export function createAIModel<T extends LanguageModelV2 | ImageModel>({
     engineToken,
     baseURL,
     metadata,
+    openaiResponsesModel = false,
 }: CreateAIModelParams<T>): T {
     const modelId = modelInstance.modelId
     const isImageModel = SUPPORTED_AI_PROVIDERS
@@ -54,7 +56,7 @@ export function createAIModel<T extends LanguageModelV2 | ImageModel>({
             if (isImageModel) {
                 return provider.imageModel(modelId) as T
             }
-            return provider.chat(modelId) as T
+            return openaiResponsesModel ? provider.responses(modelId) as T : provider.chat(modelId) as T
         }
         case 'anthropic': {
             const anthropicVersion = 'v1'
@@ -97,6 +99,74 @@ export function createAIModel<T extends LanguageModelV2 | ImageModel>({
     }
 }
 
+export function buildUserLocation(options: UserLocationOptions): (UserLocationOptions & { type: 'approximate' }) | undefined {
+    if (!options.userLocationCity && !options.userLocationRegion && 
+        !options.userLocationCountry && !options.userLocationTimezone) {
+        return undefined
+    }
+
+    return {
+        type: 'approximate' as const,
+        ...spreadIfDefined('city', options.userLocationCity),
+        ...spreadIfDefined('region', options.userLocationRegion),
+        ...spreadIfDefined('country', options.userLocationCountry),
+        ...spreadIfDefined('timezone', options.userLocationTimezone),
+    }
+}
+
+export function createWebSearchTool(provider: string, options: WebSearchOptions = {}): Record<string, Tool> {
+    const defaultMaxUses = 5
+
+    switch (provider) {
+        case 'anthropic': {
+            const anthropicOptions = options as AnthropicWebSearchOptions
+            const anthropicProvider = createAnthropic({})
+            let allowedDomains: string[] | undefined
+            let blockedDomains: string[] | undefined
+
+            if (anthropicOptions.allowedDomains && anthropicOptions.allowedDomains.length > 0) {
+                allowedDomains = anthropicOptions.allowedDomains.map(({ domain }) => domain)
+            }
+
+            if (anthropicOptions.blockedDomains && anthropicOptions.blockedDomains.length > 0 && (!anthropicOptions.allowedDomains || anthropicOptions.allowedDomains.length === 0)) {
+                blockedDomains = anthropicOptions.blockedDomains.map(({ domain }) => domain)
+            }
+
+            return {
+                web_search: anthropicProvider.tools.webSearch_20250305({
+                    maxUses: anthropicOptions.maxUses ?? defaultMaxUses,
+                    ...spreadIfDefined('userLocation', buildUserLocation(anthropicOptions)),
+                    ...spreadIfDefined('allowedDomains', allowedDomains),
+                    ...spreadIfDefined('blockedDomains', blockedDomains),
+                }),
+            }
+        }
+
+        case 'openai': {
+            const openaiOptions = options as OpenAIWebSearchOptions
+            const openaiProvider = createOpenAI({})
+
+            return {
+                web_search_preview: openaiProvider.tools.webSearchPreview({
+                    ...spreadIfDefined('searchContextSize', openaiOptions.searchContextSize),
+                    ...spreadIfDefined('userLocation', buildUserLocation(openaiOptions)),
+                }),
+            }
+        }
+
+        case 'google': {
+            const googleProvider = createGoogleGenerativeAI({})
+
+            return {
+                google_search: googleProvider.tools.googleSearch({}),
+            }
+        }
+
+        default:
+            throw new Error(`Provider ${provider} is not supported for web search`)
+    }
+}
+
 type CreateAIModelParams<T extends LanguageModelV2 | ImageModel> = {
     providerName: string
     modelInstance: T
@@ -106,4 +176,27 @@ type CreateAIModelParams<T extends LanguageModelV2 | ImageModel> = {
     engineToken: string
     baseURL: string
     metadata: AIUsageMetadata
+    openaiResponsesModel?: boolean
 }
+
+export type BaseWebSearchOptions = {
+    maxUses?: number
+}
+
+export type UserLocationOptions = {
+    userLocationCity?: string
+    userLocationRegion?: string
+    userLocationCountry?: string
+    userLocationTimezone?: string
+}
+
+export type AnthropicWebSearchOptions = BaseWebSearchOptions & UserLocationOptions & {
+    allowedDomains?: { domain: string }[]
+    blockedDomains?: { domain: string }[]
+}
+
+export type OpenAIWebSearchOptions = BaseWebSearchOptions & UserLocationOptions & {
+    searchContextSize?: 'low' | 'medium' | 'high'
+}
+
+export type WebSearchOptions = AnthropicWebSearchOptions | OpenAIWebSearchOptions
