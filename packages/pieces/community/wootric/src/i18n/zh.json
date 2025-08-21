@@ -1,10 +1,10 @@
 {
-  "Wootric": "木头",
-  "Measure and boost customer happiness": "测量和提升客户快乐度",
-  "Trigger Wootric Survey": "触发木质调查",
-  "Trigger a survey from Wootric": "从Wootric 触发调查",
+  "Wootric": "Wootric",
+  "Measure and boost customer happiness": "Measure and boost customer happiness",
+  "Trigger Wootric Survey": "Trigger Wootric Survey",
+  "Trigger a survey from Wootric": "Trigger a survey from Wootric",
   "Emails": "电子邮件",
-  "Survey Immediately": "立即调查",
-  "End user emails, where you want the survey to be received": "最终用户电子邮件，您想要接收调查",
-  "Enter \"true\" to survey immediately to bypass checks, otherwise \"false\"": "输入\"true\"以立即调查以绕过检查，否则\"false\""
+  "Survey Immediately": "Survey Immediately",
+  "End user emails, where you want the survey to be received": "End user emails, where you want the survey to be received",
+  "Enter \"true\" to survey immediately to bypass checks, otherwise \"false\"": "Enter \"true\" to survey immediately to bypass checks, otherwise \"false\""
 }
