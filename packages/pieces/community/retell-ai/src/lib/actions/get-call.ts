@@ -1,5 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { retellAiAuth, retellAiApi, retellAiCommon } from '../common';
+import { retellAiAuth } from '../common/auth';
+import { retellAiApi } from '../common/api';
+import { retellAiCommon } from '../common/props';
 
 export const getCall = createAction({
   auth: retellAiAuth,

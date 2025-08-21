@@ -1,5 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { retellAiAuth, retellAiApi, retellAiCommon } from '../common';
+import { retellAiAuth } from '../common/auth';
+import { retellAiApi } from '../common/api';
+import { retellAiCommon } from '../common/props';
 
 export const makePhoneCall = createAction({
   auth: retellAiAuth,
@@ -10,6 +12,11 @@ export const makePhoneCall = createAction({
     from_number: retellAiCommon.from_number,
     to_number: retellAiCommon.to_number,
     agent_id: retellAiCommon.agent_id,
+    agent_version: Property.Number({
+      displayName: 'Agent Version',
+      description: 'The version of the agent to use (optional)',
+      required: false,
+    }),
     metadata: Property.Object({
       displayName: 'Metadata',
       description: 'Additional metadata to attach to the call',
@@ -43,6 +50,7 @@ export const makePhoneCall = createAction({
       from_number,
       to_number,
       agent_id,
+      agent_version,
       metadata,
       retell_llm_dynamic_variables,
       custom_sip_headers,
@@ -54,6 +62,7 @@ export const makePhoneCall = createAction({
       from_number,
       to_number,
       agent_id,
+      ...(agent_version && { agent_version }),
       ...(metadata && { metadata }),
       ...(retell_llm_dynamic_variables && { retell_llm_dynamic_variables }),
       ...(custom_sip_headers && { custom_sip_headers }),
