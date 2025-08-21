@@ -38,7 +38,7 @@ const polling: Polling<string, TriggerProps> = {
         }
         const tagName = tagResponse.body.name;
         
-        // Now, search for all notes with that tag, sorted by most recently updated.
+        
         const notesResponse = await httpClient.sendRequest<
             { updated: number; [key: string]: unknown }[]
         >({
