@@ -3,21 +3,11 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/hugging-face/src",
   "projectType": "library",
-  "release": {
-    "version": {
-      "generatorOptions": {
-        "packageRoot": "dist/{projectRoot}",
-        "currentVersionResolver": "git-tag"
-      }
-    }
-  },
   "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/community/hugging-face",
         "tsConfig": "packages/pieces/community/hugging-face/tsconfig.lib.json",
@@ -33,18 +23,37 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
+      },
+      "dependsOn": ["prebuild", "^build"]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/hugging-face",
+        "command": "npm ci"
       }
     },
-    "nx-release-publish": {
+    "build-with-deps": {
+      "executor": "nx:run-commands",
       "options": {
-        "packageRoot": "dist/{projectRoot}"
+        "commands": [
+          "nx run pieces-hugging-face:prebuild",
+          "nx run pieces-hugging-face:build",
+          "nx run pieces-hugging-face:postbuild"
+        ]
+      },
+      "parallel": false
+    },
+    "postbuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "dist/packages/pieces/community/hugging-face",
+        "command": "npm install"
       }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
+      "outputs": ["{options.outputFile}"]
     }
   }
 }
