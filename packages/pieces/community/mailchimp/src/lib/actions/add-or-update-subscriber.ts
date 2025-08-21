@@ -73,7 +73,7 @@ export const addOrUpdateSubscriber = createAction({
             }),
         };
 
-        // The SDK types are incomplete, so we cast to 'any'.
+        
         return await (mailchimp as any).lists.batchListMembers(list_id, {
             members: [member],
             update_existing: update_existing,
