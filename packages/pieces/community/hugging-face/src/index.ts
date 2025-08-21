@@ -21,6 +21,7 @@ export const huggingface = createPiece({
   description:
     'Run inference on 100,000+ open ML models for NLP, vision, and audio tasks',
   auth: huggingFaceAuth,
+  minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/huggingface.svg',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['Ani-4x'],
