@@ -40,9 +40,9 @@
           "nx run pieces-hugging-face:prebuild",
           "nx run pieces-hugging-face:build",
           "nx run pieces-hugging-face:postbuild"
-        ]
-      },
-      "parallel": false
+        ],
+        "parallel": false
+      }
     },
     "postbuild": {
       "executor": "nx:run-commands",
