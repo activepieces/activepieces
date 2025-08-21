@@ -65,3 +65,16 @@ jobs:
     with:
       branch_name: auto/translation-files-${{ github.run_id }}
     secrets: inherit
+
+  notify-failure:
+    # Only run when any of the shards failed; still evaluate even if they failed
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    needs: [shard-0, shard-1, shard-2, shard-3, shard-4, shard-5]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord on shard failure
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"🚨 **Generate Translations Workflow Failed** 🚨\\n\\n**Repository:** ${{ github.repository }}\\n**Branch:** ${{ github.ref_name }}\\n**Commit:** ${{ github.sha }}\\n**Action URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n\\nOne or more shards failed. Please check the logs for details.\"}" \
+            ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
