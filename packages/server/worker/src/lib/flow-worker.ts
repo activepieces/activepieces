@@ -141,7 +141,11 @@ async function consumeJob(jobId: string, queueName: QueueName, jobData: JobData,
             break
         }
         case QueueName.AGENTS: {
-            await agentJobExecutor(log).executeAgent(jobData as AgentJobData, engineToken, workerToken)
+            await agentJobExecutor(log).executeAgent({
+                jobData: jobData as AgentJobData,
+                engineToken,
+                workerToken,
+            })
             break
         }
     }

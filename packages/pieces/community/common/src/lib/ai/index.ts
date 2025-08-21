@@ -183,7 +183,114 @@ export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCal
 
             return options;
         },
-    })
+    }),
+    webSearch: Property.Checkbox({
+        displayName: 'Web Search',
+        required: false,
+        defaultValue: false,
+        description: 'Whether to use web search to find information for the AI to use in its response.',
+    }),
+    webSearchOptions: Property.DynamicProperties({
+        displayName: 'Web Search Options',
+        required: false,
+        refreshers: ['webSearch', 'provider', 'model'],
+        props: async (propsValue) => {
+            const webSearchEnabled = propsValue['webSearch'] as unknown as boolean;
+            const provider = propsValue['provider'] as unknown as string;
+
+            if (!webSearchEnabled) {
+                return {};
+            }
+
+            const providerMetadata = SUPPORTED_AI_PROVIDERS.find(p => p.provider === provider);
+            if (isNil(providerMetadata)) {
+                return {};
+            }
+
+            let options: InputPropertyMap = {
+                maxUses: Property.Number({
+                    displayName: 'Max Web Search Uses',
+                    required: false,
+                    defaultValue: 5,
+                    description: 'Maximum number of searches to use. Default is 5.',
+                }),
+            };
+
+            const userLocationOptions = {
+                userLocationCity: Property.ShortText({
+                    displayName: 'User Location - City',
+                    required: false,
+                    description: 'The city name for localizing search results (e.g., San Francisco).',
+                }),
+                userLocationRegion: Property.ShortText({
+                    displayName: 'User Location - Region',
+                    required: false,
+                    description: 'The region or state for localizing search results (e.g., California).',
+                }),
+                userLocationCountry: Property.ShortText({
+                    displayName: 'User Location - Country',
+                    required: false,
+                    description: 'The country code for localizing search results (e.g., US).',
+                }),
+                userLocationTimezone: Property.ShortText({
+                    displayName: 'User Location - Timezone',
+                    required: false,
+                    description: 'The IANA timezone ID for localizing search results (e.g., America/Los_Angeles).',
+                }),
+            };
+
+            if (provider === 'anthropic') {
+                options = {
+                    ...options,
+                    allowedDomains: Property.Array({
+                        displayName: 'Allowed Domains',
+                        required: false,
+                        description: 'List of domains to search (e.g., example.com, docs.example.com/blog). Domains should not include HTTP/HTTPS scheme. Subdomains are automatically included unless more specific subpaths are provided. Overrides Blocked Domains if both are provided.',
+                        properties: {
+                            domain: Property.ShortText({
+                                displayName: 'Domain',
+                                required: true,
+                            }),
+                        },
+                    }),
+                    blockedDomains: Property.Array({
+                        displayName: 'Blocked Domains',
+                        required: false,
+                        description: 'List of domains to exclude from search (e.g., example.com, docs.example.com/blog). Domains should not include HTTP/HTTPS scheme. Subdomains are automatically included unless more specific subpaths are provided. Overrided by Allowed Domains if both are provided.',
+                        properties: {
+                            domain: Property.ShortText({
+                                displayName: 'Domain',
+                                required: true,
+                            }),
+                        },
+                    }),
+                    ...userLocationOptions,
+                };
+            }
+
+            if (provider === 'openai') {
+                options = {
+                    ...options,
+                    searchContextSize: Property.StaticDropdown({
+                        displayName: 'Search Context Size',
+                        required: false,
+                        defaultValue: 'medium',
+                        options: {
+                            options: [
+                                { label: 'Low', value: 'low' },
+                                { label: 'Medium', value: 'medium' },
+                                { label: 'High', value: 'high' },
+                            ],
+                        },
+                        description: 'High level guidance for the amount of context window space to use for the search.',
+                    }),
+                    ...userLocationOptions,
+                };
+            }
+
+            return options;
+        },
+    }),
 })
 
 
@@ -196,4 +303,6 @@ type AIPropsReturn = {
     provider: ReturnType<typeof Property.Dropdown<string, true>>;
     model: ReturnType<typeof Property.Dropdown>;
     advancedOptions: ReturnType<typeof Property.DynamicProperties>;
+    webSearch: ReturnType<typeof Property.Checkbox>;
+    webSearchOptions: ReturnType<typeof Property.DynamicProperties>;
 }

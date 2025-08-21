@@ -562,6 +562,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
             customRolesEnabled: true,
             manageProjectsEnabled: true,
             customDomainsEnabled: true,
+            includedAiCredits: 1000,
             ...params?.plan,
         })
         await databaseConnection().getRepository('platform_plan').upsert(mockPlatformPlan, ['platformId'])

@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { FileLocation, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, FileLocation, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -79,11 +79,12 @@ type CreateOutputContextParams = {
 
 const queueUpdates: UpdateStepProgressParams[] = []
 
-const sendUpdateRunRequest = async (_updateParams: UpdateStepProgressParams): Promise<void> => {
-    if (_updateParams.engineConstants.isRunningApTests) {
+const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Promise<void> => {
+    const isRunningMcp = updateParams.engineConstants.flowRunId === DEFAULT_MCP_DATA.flowRunId
+    if (updateParams.engineConstants.isRunningApTests || isRunningMcp) {
         return
     }
-    queueUpdates.push(_updateParams)
+    queueUpdates.push(updateParams)
     await lock.runExclusive(async () => {
         const params = queueUpdates.pop()
         while (queueUpdates.length > 0) {
