@@ -1,7 +1,6 @@
 
     import { createCustomApiCallAction } from '@activepieces/pieces-common';
     import {
-      OAuth2AuthorizationMethod,
       OAuth2PropertyValue,
       PieceAuth,
       createPiece,
@@ -18,26 +17,34 @@
     import { newNotebook } from './lib/triggers/new-notebook';
     import { newTagAdded } from './lib/triggers/new-tag-added';
 
-    export const evernoteAuth = PieceAuth.OAuth2({
-      authUrl: 'https://www.evernote.com/OAuth.action',
-      tokenUrl: 'https://www.evernote.com/oauth',
-      scope: ['basic'],
-      extra: {
-        owner: 'user',
-      },
-      authorizationMethod: OAuth2AuthorizationMethod.HEADER,
-      required: true,
+    export const evernoteAuth = PieceAuth.SecretText({
+      displayName: 'Developer Token',
       description: `
-        To obtain your OAuth2 credentials:
+        To obtain your developer token:
         
         1. Go to the Evernote Developer Portal (https://dev.evernote.com/)
         2. Log in or create an account
-        3. Create a new application
-        4. Configure the OAuth settings:
-           - Add https://cloud.activepieces.com/redirect to the allowed redirect URIs
-           - Select the required scopes for your integration
-        5. Copy the Consumer Key and Consumer Secret
+        3. Go to "Get an API Key" section
+        4. Request a developer token for your application
+        5. Copy the token and paste it here
+        
+        Note: Developer tokens are long-lived and don't expire unless revoked.
       `,
+      required: true,
+      validate: async (auth) => {
+        try {
+          const { Client } = require('evernote');
+          const client = new Client({ token: auth, sandbox: false });
+          const userStore = client.getUserStore();
+          await userStore.getUser();
+          return { valid: true };
+        } catch (error) {
+          return {
+            valid: false,
+            error: 'Invalid developer token. Please check your token and try again.',
+          };
+        }
+      },
     });
 
     export const evernote = createPiece({
@@ -60,7 +67,7 @@
           baseUrl: () => 'https://www.evernote.com/edam',
           auth: evernoteAuth,
           authMapping: async (auth) => ({
-            Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+            Authorization: `Bearer ${auth}`,
           }),
         }),
       ],

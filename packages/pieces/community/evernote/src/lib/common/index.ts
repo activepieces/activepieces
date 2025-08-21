@@ -1,5 +1,4 @@
 import {
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
 
@@ -19,29 +18,10 @@ export const evernoteCommon = {
       }
 
       try {
-        const response = await fetch('https://www.evernote.com/edam/user', {
-          headers: {
-            'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const notebooksResponse = await fetch('https://www.evernote.com/edam/notebook', {
-          headers: {
-            'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!notebooksResponse.ok) {
-          throw new Error(`HTTP error! status: ${notebooksResponse.status}`);
-        }
-
-        const notebooks = await notebooksResponse.json();
+        const { Client } = require('evernote');
+        const client = new Client({ token: auth, sandbox: false });
+        const noteStore = client.getNoteStore();
+        const notebooks = await noteStore.listNotebooks();
         
         return {
           disabled: false,
@@ -77,18 +57,10 @@ export const evernoteCommon = {
       }
 
       try {
-        const response = await fetch('https://www.evernote.com/edam/tag', {
-          headers: {
-            'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const tags = await response.json();
+        const { Client } = require('evernote');
+        const client = new Client({ token: auth, sandbox: false });
+        const noteStore = client.getNoteStore();
+        const tags = await noteStore.listTags();
         
         return {
           disabled: false,
@@ -124,26 +96,22 @@ export const evernoteCommon = {
       }
 
       try {
-        const response = await fetch(`https://www.evernote.com/edam/note?notebookGuid=${notebook}&maxNotes=100`, {
-          headers: {
-            'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const notes = await response.json();
+        const { Client } = require('evernote');
+        const client = new Client({ token: auth, sandbox: false });
+        const noteStore = client.getNoteStore();
+        
+        const filter = new noteStore.constructor.NoteFilter();
+        filter.notebookGuid = notebook as string;
+        
+        const notes = await noteStore.findNotes(filter, 0, 100);
         
         return {
           disabled: false,
           placeholder: 'Select a note',
-          options: notes.notes?.map((note: any) => ({
+          options: (notes.notes || []).map((note: any) => ({
             label: note.title || 'Untitled',
             value: note.guid,
-          })) || [],
+          })),
         };
       } catch (error) {
         console.error('Error loading notes:', error);

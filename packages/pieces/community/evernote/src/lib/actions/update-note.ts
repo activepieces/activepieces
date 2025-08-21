@@ -1,6 +1,5 @@
 import {
   createAction,
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
 import { evernoteAuth } from '../..';
@@ -15,17 +14,17 @@ export const updateNote = createAction({
     note: evernoteCommon.note,
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The new title of the note',
+      description: 'The new title of the note (max 255 characters)',
       required: false,
     }),
     content: Property.LongText({
       displayName: 'Content',
-      description: 'The new content of the note (HTML format)',
+      description: 'The new content of the note in ENML format',
       required: false,
     }),
     tags: Property.LongText({
       displayName: 'Tags',
-      description: 'Comma-separated tags to apply to the note',
+      description: 'Comma-separated tag names to apply to the note',
       required: false,
     }),
   },
@@ -34,28 +33,24 @@ export const updateNote = createAction({
     const { note, title, content, tags } = context.propsValue;
 
     try {
-      const noteGuid = note as string;
-      const tagArray = tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : [];
+      const { Client } = require('evernote');
+      const client = new Client({ token: context.auth, sandbox: false });
+      const noteStore = client.getNoteStore();
       
-      const response = await fetch(`https://www.evernote.com/edam/note/${noteGuid}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${(context.auth as OAuth2PropertyValue).access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: title,
-          content: content,
-          tagGuids: tagArray,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to update note: ${response.status} ${response.statusText} - ${errorText}`);
+      const noteGuid = note as string;
+      const existingNote = await noteStore.getNote(noteGuid, true, false, false, false);
+      
+      if (title) existingNote.title = title;
+      if (content) existingNote.content = content;
+      
+      if (tags) {
+        const tagArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+        if (tagArray.length > 0) {
+          existingNote.tagNames = tagArray;
+        }
       }
 
-      const updatedNote = await response.json();
+      const updatedNote = await noteStore.updateNote(existingNote);
       return updatedNote;
     } catch (error) {
       console.error('Error updating note:', error);

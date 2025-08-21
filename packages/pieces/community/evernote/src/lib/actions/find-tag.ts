@@ -1,6 +1,5 @@
 import {
   createAction,
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
 import { evernoteAuth } from '../..';
@@ -22,20 +21,11 @@ export const findTag = createAction({
     const { name } = context.propsValue;
 
     try {
-      const response = await fetch('https://www.evernote.com/edam/tag', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${(context.auth as OAuth2PropertyValue).access_token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch tags: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-
-      const tags = await response.json();
+      const { Client } = require('evernote');
+      const client = new Client({ token: context.auth, sandbox: false });
+      const noteStore = client.getNoteStore();
+      
+      const tags = await noteStore.listTags();
       const matchingTags = tags.filter((tag: any) => 
         tag.name && tag.name.toLowerCase().includes(name.toLowerCase())
       );

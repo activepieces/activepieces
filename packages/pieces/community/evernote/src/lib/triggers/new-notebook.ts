@@ -6,7 +6,6 @@ import {
 import {
   TriggerStrategy,
   createTrigger,
-  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { evernoteAuth } from '../..';
 
@@ -14,18 +13,10 @@ const polling: Polling<string, {}> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
     try {
-      const response = await fetch('https://www.evernote.com/edam/notebook', {
-        headers: {
-          'Authorization': `Bearer ${auth}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const notebooks = await response.json();
+      const { Client } = require('evernote');
+      const client = new Client({ token: auth, sandbox: false });
+      const noteStore = client.getNoteStore();
+      const notebooks = await noteStore.listNotebooks();
       
       return (notebooks || []).map((notebook: any) => ({
         epochMilliSeconds: notebook.serviceCreated || Date.now(),
@@ -48,18 +39,18 @@ export const newNotebook = createTrigger({
   type: TriggerStrategy.POLLING,
   async test(context) {
     const { store, auth, propsValue, files } = context;
-    return await pollingHelper.test(polling, { store, auth: (auth as OAuth2PropertyValue).access_token, propsValue, files });
+    return await pollingHelper.test(polling, { store, auth, propsValue, files });
   },
   async onEnable(context) {
     const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth: (auth as OAuth2PropertyValue).access_token, propsValue });
+    await pollingHelper.onEnable(polling, { store, auth, propsValue });
   },
   async onDisable(context) {
     const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth: (auth as OAuth2PropertyValue).access_token, propsValue });
+    await pollingHelper.onDisable(polling, { store, auth, propsValue });
   },
   async run(context) {
     const { store, auth, propsValue, files } = context;
-    return await pollingHelper.poll(polling, { store, auth: (auth as OAuth2PropertyValue).access_token, propsValue, files });
+    return await pollingHelper.poll(polling, { store, auth, propsValue, files });
   },
 });

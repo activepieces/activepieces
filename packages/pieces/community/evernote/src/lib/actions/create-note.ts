@@ -1,6 +1,5 @@
 import {
   createAction,
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
 import { evernoteAuth } from '../..';
@@ -15,17 +14,17 @@ export const createNote = createAction({
     notebook: evernoteCommon.notebook,
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The title of the note',
+      description: 'The title of the note (max 255 characters)',
       required: true,
     }),
     content: Property.LongText({
       displayName: 'Content',
-      description: 'The content of the note (HTML format)',
+      description: 'The content of the note in ENML format (HTML-like)',
       required: true,
     }),
     tags: Property.LongText({
       displayName: 'Tags',
-      description: 'Comma-separated tags to apply to the note',
+      description: 'Comma-separated tag names to apply to the note',
       required: false,
     }),
   },
@@ -34,30 +33,22 @@ export const createNote = createAction({
     const { notebook, title, content, tags } = context.propsValue;
 
     try {
+      const { Client } = require('evernote');
+      const client = new Client({ token: context.auth, sandbox: false });
+      const noteStore = client.getNoteStore();
+      
       const tagArray = tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : [];
       
-      const noteData = {
-        title: title,
-        content: content,
-        notebookGuid: notebook as string,
-        tagGuids: tagArray,
-      };
-
-      const response = await fetch('https://www.evernote.com/edam/note', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${(context.auth as OAuth2PropertyValue).access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(noteData),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to create note: ${response.status} ${response.statusText} - ${errorText}`);
+      const note = new noteStore.constructor.Note();
+      note.title = title;
+      note.content = content;
+      note.notebookGuid = notebook as string;
+      
+      if (tagArray.length > 0) {
+        note.tagNames = tagArray;
       }
 
-      const createdNote = await response.json();
+      const createdNote = await noteStore.createNote(note);
       return createdNote;
     } catch (error) {
       console.error('Error creating note:', error);

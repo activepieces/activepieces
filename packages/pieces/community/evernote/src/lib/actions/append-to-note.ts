@@ -1,6 +1,5 @@
 import {
   createAction,
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
 import { evernoteAuth } from '../..';
@@ -24,25 +23,19 @@ export const appendToNote = createAction({
     const { note, content } = context.propsValue;
 
     try {
-      const noteGuid = note as string;
+      const { Client } = require('evernote');
+      const client = new Client({ token: context.auth, sandbox: false });
+      const noteStore = client.getNoteStore();
       
-      const response = await fetch(`https://www.evernote.com/edam/note/${noteGuid}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${(context.auth as OAuth2PropertyValue).access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: content,
-        }),
-      });
+      const noteGuid = note as string;
+      const existingNote = await noteStore.getNote(noteGuid, true, false, false, false);
+      
+      const currentContent = existingNote.content || '';
+      const newContent = currentContent + content;
+      
+      existingNote.content = newContent;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to append to note: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-
-      const updatedNote = await response.json();
+      const updatedNote = await noteStore.updateNote(existingNote);
       return updatedNote;
     } catch (error) {
       console.error('Error appending to note:', error);

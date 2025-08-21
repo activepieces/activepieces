@@ -1,6 +1,5 @@
 import {
   createAction,
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
 import { evernoteAuth } from '../..';
@@ -31,32 +30,22 @@ export const findNote = createAction({
     const { query, notebook, tag, maxResults } = context.propsValue;
 
     try {
-      const params = new URLSearchParams({
-        query: query,
-        maxNotes: (maxResults || 20).toString(),
-      });
-
+      const { Client } = require('evernote');
+      const client = new Client({ token: context.auth, sandbox: false });
+      const noteStore = client.getNoteStore();
+      
+      const filter = new noteStore.constructor.NoteFilter();
+      filter.words = query;
+      filter.maxNotes = maxResults || 20;
+      
       if (notebook) {
-        params.append('notebookGuid', notebook as string);
+        filter.notebookGuid = notebook as string;
       }
       if (tag) {
-        params.append('tagGuid', tag as string);
+        filter.tagGuids = [tag as string];
       }
 
-      const response = await fetch(`https://www.evernote.com/edam/note/search?${params.toString()}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${(context.auth as OAuth2PropertyValue).access_token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to search notes: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-
-      const searchResults = await response.json();
+      const searchResults = await noteStore.findNotes(filter, 0, maxResults || 20);
       return searchResults;
     } catch (error) {
       console.error('Error searching notes:', error);

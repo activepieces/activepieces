@@ -1,6 +1,5 @@
 import {
   createAction,
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
 import { evernoteAuth } from '../..';
@@ -27,29 +26,17 @@ export const createTag = createAction({
     const { name, parentGuid } = context.propsValue;
 
     try {
-      const tagData: any = {
-        name: name,
-      };
+      const { Client } = require('evernote');
+      const client = new Client({ token: context.auth, sandbox: false });
+      const noteStore = client.getNoteStore();
       
+      const tag = new noteStore.constructor.Tag();
+      tag.name = name;
       if (parentGuid) {
-        tagData.parentGuid = parentGuid;
+        tag.parentGuid = parentGuid;
       }
 
-      const response = await fetch('https://www.evernote.com/edam/tag', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${(context.auth as OAuth2PropertyValue).access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(tagData),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to create tag: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-
-      const createdTag = await response.json();
+      const createdTag = await noteStore.createTag(tag);
       return createdTag;
     } catch (error) {
       console.error('Error creating tag:', error);

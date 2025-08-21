@@ -1,6 +1,5 @@
 import {
   createAction,
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
 import { evernoteAuth } from '../..';
@@ -27,26 +26,17 @@ export const createNotebook = createAction({
     const { name, stack } = context.propsValue;
 
     try {
-      const notebookData = {
-        name: name,
-        stack: stack,
-      };
-
-      const response = await fetch('https://www.evernote.com/edam/notebook', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${(context.auth as OAuth2PropertyValue).access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(notebookData),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to create notebook: ${response.status} ${response.statusText} - ${errorText}`);
+      const { Client } = require('evernote');
+      const client = new Client({ token: context.auth, sandbox: false });
+      const noteStore = client.getNoteStore();
+      
+      const notebook = new noteStore.constructor.Notebook();
+      notebook.name = name;
+      if (stack) {
+        notebook.stack = stack;
       }
 
-      const createdNotebook = await response.json();
+      const createdNotebook = await noteStore.createNotebook(notebook);
       return createdNotebook;
     } catch (error) {
       console.error('Error creating notebook:', error);
