@@ -10,3 +10,10 @@ export function calculateTokensCost(
 ): number {
     return (tokens / 1000000) * costPerMillionTokens
 }
+
+export function calculateWebSearchCost(
+    webSearchCalls: number,
+    costPerWebSearch: number,
+): number {
+    return webSearchCalls * costPerWebSearch
+}

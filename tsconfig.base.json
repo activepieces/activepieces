@@ -474,6 +474,12 @@
       "@activepieces/piece-http-oauth2": [
         "packages/pieces/community/http-oauth2/src/index.ts"
       ],
+      "@activepieces/piece-hubspot": [
+        "packages/pieces/community/hubspot/src/index.ts"
+      ],
+      "@activepieces/piece-hugging-face": [
+        "packages/pieces/community/hugging-face/src/index.ts"
+      ],
       "@activepieces/piece-hunter": [
         "packages/pieces/community/hunter/src/index.ts"
       ],
@@ -595,6 +601,9 @@
       ],
       "@activepieces/piece-messagebird": [
         "packages/pieces/community/messagebird/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-365-people": [
+        "packages/pieces/community/microsoft-365-people/src/index.ts"
       ],
       "@activepieces/piece-microsoft-excel-365": [
         "packages/pieces/community/microsoft-excel-365/src/index.ts"
@@ -828,6 +837,9 @@
       ],
       "@activepieces/piece-serp-api": [
         "packages/pieces/community/serp-api/src/index.ts"
+      ],
+      "@activepieces/piece-serpstat":[
+        "packages/pieces/community/serpstat/src/index.ts"
       ],
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"
