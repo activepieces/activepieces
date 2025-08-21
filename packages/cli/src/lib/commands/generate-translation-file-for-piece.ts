@@ -103,7 +103,7 @@ export const generateTranslationFileForPieceCommand = new Command('generate-tran
         continue
       }
       const time= performance.now()
-      await generateTranslationFile(piece as string);
+      await generateTranslationFile(piece);
       console.log(chalk.yellow('✨'), `Translation file for piece ${piece} created in ${(performance.now() - time)/1000}s`)
       totalTime += (performance.now() - time)/1000
       indexAcrossAllPieces++
