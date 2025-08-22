@@ -21,6 +21,7 @@ export type SupportedAIProvider = {
         instance: LanguageModelV2
         functionCalling: boolean
         pricing: LanguageModelPricing
+        webSearchCost?: number
     }[]
     imageModels: {
         displayName: string
@@ -122,6 +123,7 @@ It is strongly recommended that you add your credit card information to your Ope
                     input: 1.25,
                     output: 10.00,
                 },
+                webSearchCost: 0.01,
             },
             {
                 displayName: 'GPT-5 Chat',
@@ -131,6 +133,7 @@ It is strongly recommended that you add your credit card information to your Ope
                     input: 1.25,
                     output: 10.00,
                 },
+                webSearchCost: 0.01,
             },
             {
                 displayName: 'GPT-5 Mini',
@@ -140,6 +143,7 @@ It is strongly recommended that you add your credit card information to your Ope
                     input: 0.25,
                     output: 2.00,
                 },
+                webSearchCost: 0.01,
             },
             {
                 displayName: 'GPT-5 Nano',
@@ -149,6 +153,7 @@ It is strongly recommended that you add your credit card information to your Ope
                     input: 0.05,
                     output: 0.40,
                 },
+                webSearchCost: 0.01,
             },
             {
                 displayName: 'GPT-4o',
@@ -158,6 +163,7 @@ It is strongly recommended that you add your credit card information to your Ope
                     input: 2.50,
                     output: 10.00,
                 },
+                webSearchCost: 0.025,
             },
             {
                 displayName: 'GPT-4o Mini',
@@ -167,6 +173,66 @@ It is strongly recommended that you add your credit card information to your Ope
                     input: 0.40,
                     output: 1.60,
                 },
+                webSearchCost: 0.025,
+            },
+            {
+                displayName: 'GPT-4.1',
+                instance: openai('gpt-4.1'),
+                functionCalling: true,
+                pricing: {
+                    input: 2.00,
+                    output: 8.00,
+                },
+                webSearchCost: 0.025,
+            },
+            {
+                displayName: 'GPT-4.1 Mini',
+                instance: openai('gpt-4.1-mini'),
+                functionCalling: true,
+                pricing: {
+                    input: 0.40,
+                    output: 1.60,
+                },
+                webSearchCost: 0.025,
+            },
+            {
+                displayName: 'GPT-4.1 Nano',
+                instance: openai('gpt-4.1-nano'),
+                functionCalling: true,
+                pricing: {
+                    input: 0.10,
+                    output: 0.40,
+                },
+            },
+            {
+                displayName: 'O4 Mini',
+                instance: openai('o4-mini'),
+                functionCalling: true,
+                pricing: {
+                    input: 1.10,
+                    output: 4.40,
+                },
+                webSearchCost: 0.01,
+            },
+            {
+                displayName: 'O3',
+                instance: openai('o3'),
+                functionCalling: true,
+                pricing: {
+                    input: 2.00,
+                    output: 8.00,
+                },
+                webSearchCost: 0.01,
+            },
+            {
+                displayName: 'O3 Mini',
+                instance: openai('o3-mini'),
+                functionCalling: true,
+                pricing: {
+                    input: 1.10,
+                    output: 4.40,
+                },
+                webSearchCost: 0.01,
             },
             {
                 displayName: 'GPT-4 Turbo',
@@ -184,60 +250,6 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 0.50,
                     output: 1.50,
-                },
-            },
-            {
-                displayName: 'GPT-4.1',
-                instance: openai('gpt-4.1'),
-                functionCalling: true,
-                pricing: {
-                    input: 2.00,
-                    output: 8.00,
-                },
-            },
-            {
-                displayName: 'GPT-4.1 Mini',
-                instance: openai('gpt-4.1-mini'),
-                functionCalling: true,
-                pricing: {
-                    input: 0.40,
-                    output: 1.60,
-                },
-            },
-            {
-                displayName: 'GPT-4.1 Nano',
-                instance: openai('gpt-4.1-nano'),
-                functionCalling: true,
-                pricing: {
-                    input: 0.10,
-                    output: 0.40,
-                },
-            },
-            {
-                displayName: 'O3',
-                instance: openai('o3'),
-                functionCalling: true,
-                pricing: {
-                    input: 2.00,
-                    output: 8.00,
-                },
-            },
-            {
-                displayName: 'O3 Mini',
-                instance: openai('o3-mini'),
-                functionCalling: true,
-                pricing: {
-                    input: 1.10,
-                    output: 4.40,
-                },
-            },
-            {
-                displayName: 'O4 Mini',
-                instance: openai('o4-mini'),
-                functionCalling: true,
-                pricing: {
-                    input: 1.10,
-                    output: 4.40,
                 },
             },
         ],
@@ -302,6 +314,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 displayName: 'Claude 4 Sonnet',
                 instance: anthropic('claude-sonnet-4-20250514'),
                 functionCalling: true,
+                webSearchCost: 0.01,
                 pricing: {
                     input: 3.00,
                     output: 15.00,
@@ -311,6 +324,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 displayName: 'Claude 3.5 Haiku',
                 instance: anthropic('claude-3-5-haiku-20241022'),
                 functionCalling: true,
+                webSearchCost: 0.01,
                 pricing: {
                     input: 0.80,
                     output: 4.00,
@@ -320,6 +334,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 displayName: 'Claude 4.1 Opus',
                 instance: anthropic('claude-opus-4-1-20250805'),
                 functionCalling: true,
+                webSearchCost: 0.01,
                 pricing: {
                     input: 15.00,
                     output: 75.00,
@@ -329,6 +344,17 @@ It is strongly recommended that you add your credit card information to your Ope
                 displayName: 'Claude 3.7 Sonnet',
                 instance: anthropic('claude-3-7-sonnet-20250219'),
                 functionCalling: true,
+                webSearchCost: 0.01,
+                pricing: {
+                    input: 3.00,
+                    output: 15.00,
+                },
+            },
+            {
+                displayName: 'Claude 3.5 Sonnet',
+                instance: anthropic('claude-3-5-sonnet-latest'),
+                functionCalling: true,
+                webSearchCost: 0.01,
                 pricing: {
                     input: 3.00,
                     output: 15.00,
@@ -426,6 +452,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 displayName: 'Gemini 2.5 Pro',
                 instance: google('gemini-2.5-pro'),
                 functionCalling: true,
+                webSearchCost: 0.035,
                 pricing: {
                     promptThreshold: 200_000,
                     input: {
@@ -442,6 +469,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 displayName: 'Gemini 2.5 Flash',
                 instance: google('gemini-2.5-flash'),
                 functionCalling: true,
+                webSearchCost: 0.035,
                 pricing: {
                     input: {
                         default: 0.30,
@@ -454,6 +482,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 displayName: 'Gemini 2.5 Flash-Lite Preview',
                 instance: google('gemini-2.5-flash-lite-preview-06-17'),
                 functionCalling: true,
+                webSearchCost: 0.035,
                 pricing: {
                     input: {
                         default: 0.10,
@@ -466,6 +495,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 displayName: 'Gemini 2.0 Flash-Lite',
                 instance: google('gemini-2.0-flash-lite'),
                 functionCalling: true,
+                webSearchCost: 0.035,
                 pricing: {
                     input: 0.075,
                     output: 0.30,
