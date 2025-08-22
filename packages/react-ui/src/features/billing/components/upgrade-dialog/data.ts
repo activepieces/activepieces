@@ -1,6 +1,36 @@
 import { t } from 'i18next';
+import { BillingCycle, PlanName } from './enums';
 
-import { BillingCycle, PlanName } from '@activepieces/ee-shared';
+// import { BillingCycle, PlanName } from '@activepieces/ee-shared';
+
+export const ANNUAL_DISCOUNT_PERCENTAGE = 0.24;
+export const MAX_SEATS = 20;
+export const DEFAULT_SEATS = 5;
+export const MAX_ACTIVE_FLOWS = {
+  [PlanName.BUSINESS]: 100,
+  [PlanName.PLUS]: 40,
+};
+export const DEFAULT_ACTIVE_FLOWS = {
+  [PlanName.BUSINESS]: 50,
+  [PlanName.PLUS]: 10,
+};
+export const MAX_PROJECTS = 30;
+export const DEFAULT_PROJECTS = 10;
+
+export const ADDON_PRICES = {
+  USER_SEAT: {
+    [BillingCycle.MONTHLY]: 15,
+    [BillingCycle.ANNUAL]: 11.4,
+  },
+  ACTIVE_FLOWS: {
+    [BillingCycle.MONTHLY]: 15,
+    [BillingCycle.ANNUAL]: 11.4,
+  },
+  PROJECT: {
+    [BillingCycle.MONTHLY]: 10,
+    [BillingCycle.ANNUAL]: 7.6,
+  },
+};
 
 export const planData = {
   plans: [
@@ -31,15 +61,6 @@ export const planData = {
         [BillingCycle.ANNUAL]: 114,
       },
     },
-    {
-      name: PlanName.ENTERPRISE,
-      description: t('Cloud or Self-Hosted'),
-      featuresTitle: t('Maximum Capabilities'),
-      price: {
-        [BillingCycle.MONTHLY]: 'Custom',
-        [BillingCycle.ANNUAL]: 'Custom',
-      },
-    },
   ],
 
   features: [
@@ -50,7 +71,6 @@ export const planData = {
         free: '1,000/mo',
         plus: 'Unlimited',
         business: 'Unlimited',
-        enterprise: 'Custom',
       },
     },
     {
@@ -60,7 +80,6 @@ export const planData = {
         free: '2',
         plus: '10',
         business: '50',
-        enterprise: 'Custom',
       },
     },
     {
@@ -70,7 +89,6 @@ export const planData = {
         free: null,
         plus: 'Unlimited',
         business: 'Unlimited',
-        enterprise: 'Custom',
       },
     },
     {
@@ -80,7 +98,6 @@ export const planData = {
         free: null,
         plus: null,
         business: '5+',
-        enterprise: 'Custom',
       },
     },
     {
@@ -90,7 +107,6 @@ export const planData = {
         free: null,
         plus: null,
         business: '10',
-        enterprise: 'Custom',
       },
     },
     {
@@ -100,7 +116,6 @@ export const planData = {
         free: '200',
         plus: '500+',
         business: '1,000+',
-        enterprise: 'Custom',
       },
     },
     {
@@ -110,7 +125,6 @@ export const planData = {
         free: '1',
         plus: 'Unlimited',
         business: null,
-        enterprise: 'Custom',
       },
     },
     {
@@ -120,7 +134,6 @@ export const planData = {
         free: '1',
         plus: 'Unlimited',
         business: null,
-        enterprise: 'Custom',
       },
     },
     {
@@ -130,7 +143,6 @@ export const planData = {
         free: null,
         plus: true,
         business: true,
-        enterprise: true,
       },
     },
     {
@@ -140,7 +152,6 @@ export const planData = {
         free: null,
         plus: null,
         business: true,
-        enterprise: true,
       },
     },
     {
@@ -150,7 +161,6 @@ export const planData = {
         free: null,
         plus: null,
         business: true,
-        enterprise: true,
       },
     },
     {
@@ -160,7 +170,6 @@ export const planData = {
         free: null,
         plus: null,
         business: true,
-        enterprise: true,
       },
     },
   ],
