@@ -13,10 +13,10 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { QueueMode, system } from '../../helper/system/system'
 import { app } from '../../server'
-import { redisQueue } from '../redis/redis-queue'
 import { WorkerMachineEntity } from './machine-entity'
 import { distributedRouting } from './routing/distributed-routing'
 import { simpleRouting } from './routing/simple-routing'
+import { jobQueue } from '../queue'
 
 const machineRouting = system.getOrThrow(AppSystemProp.QUEUE_MODE) === QueueMode.MEMORY ? simpleRouting : distributedRouting
 const workerRepo = repoFactory(WorkerMachineEntity)
@@ -66,7 +66,7 @@ export const machineService = (log: FastifyBaseLogger) => {
         },
         async updateConcurrency(): Promise<void> {
             const concurrency = await machineService(log).getConcurrency()
-            await Promise.all(Object.entries(concurrency).map(([queueName, concurrency]) => redisQueue(log).setConcurrency(queueName as QueueName, concurrency)))
+            await Promise.all(Object.entries(concurrency).map(([queueName, concurrency]) => jobQueue(log).setConcurrency(queueName as QueueName, concurrency)))
         },
         async onHeartbeat({
             workerId,
