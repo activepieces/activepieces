@@ -1,4 +1,11 @@
-import { CreateFieldRequest, Field, PlatformUsageMetric, PrincipalType, UpdateFieldRequest } from '@activepieces/shared'
+import {
+    CreateFieldRequest,
+    Field,
+    PlatformUsageMetric,
+    PrincipalType,
+    UpdateFieldRequest,
+    SwapFieldsIndexesRequest
+} from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
@@ -46,6 +53,15 @@ export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
         })
     },
     )
+
+    fastify.patch('/reorder', swapIndexesRequest, async (request) => {
+        return fieldService.swapIndexes({
+            activeIndex: request.body.activeIndex,
+            overIndex: request.body.overIndex,
+            tableId: request.body.tableId,
+            projectId: request.principal.projectId,
+        })
+    })
 }
 const CreateRequest = {
     config: {
@@ -102,4 +118,13 @@ const UpdateRequest = {
         }),
         body: UpdateFieldRequest,
     },
+}
+
+const swapIndexesRequest =  {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER]
+    },
+    schema: {
+        body: SwapFieldsIndexesRequest
+    }
 }

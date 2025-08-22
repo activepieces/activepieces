@@ -25,6 +25,7 @@ export type ClientRecordData = {
 export type ClientField = {
   uuid: string;
   name: string;
+  index: number;
 } & (
   | {
       type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT;
@@ -76,6 +77,7 @@ export type TableState = {
   deleteField: (fieldIndex: number) => void;
   renameTable: (newName: string) => void;
   renameField: (fieldIndex: number, newName: string) => void;
+  swapIndexes: (activeIndex: number, overIndex: number) => void;
   setRecords: (records: PopulatedRecord[]) => void;
   setAgentRunId: (recordId: string, agentRunId: string | null) => void;
   toggleStatus: () => void;
@@ -135,12 +137,14 @@ export const createApTableStore = (
             name: field.name,
             type: field.type,
             data: field.data,
+            index: field.index,
           };
         }
         return {
           uuid: field.id,
           name: field.name,
           type: field.type,
+          index: field.index,
         };
       }),
       records: mapRecorddToClientRecordsData(records, fields),
@@ -215,6 +219,37 @@ export const createApTableStore = (
             ),
           };
         });
+      },
+      swapIndexes: (activeIndex: number, overIndex: number) => {
+        return set((state) => {
+          serverState.swapIndexes(activeIndex, overIndex);
+          const updatedFields = [...state.fields];
+          [updatedFields[activeIndex], updatedFields[overIndex]] = [updatedFields[overIndex], updatedFields[activeIndex]];
+
+          const updatedRecords: ClientRecordData[] = new Array(state.records.length);
+          for(let i = 0; i < state.records.length; i++){
+            const rec = state.records[i];
+            let swapCount = 0;
+
+            for(let j = 0; j < rec.values.length && swapCount < 2; j++){
+              const val = rec.values[j];
+              if(val.fieldIndex === activeIndex){
+                val.fieldIndex = overIndex;
+                swapCount++;
+              }else if(val.fieldIndex === overIndex){
+                val.fieldIndex = activeIndex;
+                swapCount++;
+              }
+            }
+
+            updatedRecords[i] = rec;
+          }
+
+         return {
+          fields: updatedFields,
+          records: updatedRecords
+         }
+        })
       },
       setRecords: (records: PopulatedRecord[]) => {
         serverState.setRecords(records);
