@@ -5,13 +5,13 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { projectService } from '../project/project-service'
 import { ProjectMemberEntity } from './project-member.entity'
 
-const repo = repoFactory(ProjectMemberEntity)
+export const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
 export const projectMemberService = {
     async upsert({ userId, projectId, projectRoleId }: UpsertParams): Promise<ProjectMember> {
         const { platformId } = await projectService.getOneOrThrow(projectId)
 
-        const existingMember = await repo().findOneBy({
+        const existingMember = await projectMemberRepo().findOneBy({
             userId,
             projectId,
             platformId,
@@ -27,20 +27,20 @@ export const projectMemberService = {
             projectRoleId,
         }
 
-        await repo().upsert(member, [
+        await projectMemberRepo().upsert(member, [
             'projectId',
             'userId',
             'platformId',
         ])
 
-        return repo().findOneOrFail({
+        return projectMemberRepo().findOneOrFail({
             where: {
                 id: memberId,
             },
         })
     },
     async delete({ projectId, projectMemberId }: DeleteParams): Promise<void> {
-        await repo().delete({ projectId, id: projectMemberId })
+        await projectMemberRepo().delete({ projectId, id: projectMemberId })
     },
     async list(
         {
@@ -61,7 +61,7 @@ export const projectMemberService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = repo()
+        const queryBuilder = projectMemberRepo()
             .createQueryBuilder('project_member')
             .where({ platformId })
 
@@ -78,7 +78,7 @@ export const projectMemberService = {
         return paginationHelper.createPage<ProjectMember>(data, cursor)
     },
     async getAuthorizedProjectIds(params: { platformId: string, userId: string }): Promise<string[]> {
-        const projectMembers = await repo().findBy({
+        const projectMembers = await projectMemberRepo().findBy({
             userId: params.userId,
             platformId: params.platformId,
         })

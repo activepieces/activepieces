@@ -23,6 +23,7 @@ import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
+import { projectMemberRepo } from '../project-member/project-member.service'
 import { UserEntity, UserSchema } from './user-entity'
 
 
@@ -174,13 +175,16 @@ export const userService = {
 
 async function getUsersForProject(platformId: PlatformId, projectId: string) {
     const platformAdmins = await userRepo().find({ where: { platformId, platformRole: PlatformRole.ADMIN } }).then((users) => users.map((user) => user.id))
-    const edition = system.getEdition()
-    if (edition === ApEdition.COMMUNITY) {
-        return platformAdmins
-    }
+    // const edition = system.getEdition()
+    // if (edition === ApEdition.COMMUNITY) {
+    //     return platformAdmins
+    // }
     // const projectMembers = await projectMemberRepo().find({ where: { projectId, platformId } }).then((members) => members.map((member) => member.userId))
     // return [...platformAdmins, ...projectMembers]
-    return platformAdmins
+    // return platformAdmins
+
+    const projectMembers = await projectMemberRepo().find({ where: { projectId, platformId } }).then((members) => members.map((member) => member.userId))
+    return [...platformAdmins, ...projectMembers]
 }
 
 type ListUsersForProjectParams = {
