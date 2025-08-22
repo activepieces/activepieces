@@ -12,33 +12,40 @@ import { machineService } from '../machine/machine-service'
 export const jobConsumer = (log: FastifyBaseLogger) => {
     return {
         consume: async (jobId: string, queueName: QueueName, jobData: JobData, attempsStarted: number) => {
-            const { projectId, platformId } = await getProjectIdAndPlatformId(queueName, jobData)
-            const engineToken = await accessTokenManager.generateEngineToken({
-                jobId,
-                projectId,
-                platformId,
-            })
+            let workerId: string | undefined
+            try {
+                const { projectId, platformId } = await getProjectIdAndPlatformId(queueName, jobData)
+                const engineToken = await accessTokenManager.generateEngineToken({
+                    jobId,
+                    projectId,
+                    platformId,
+                })
 
-            const workerId = await machineService(log).acquire()
-            log.info({
-                message: 'Acquired worker id',
-                workerId,
-            })
-            const lockTimeout = dayjs.duration(jobConsumer(log).getLockDurationInMs(queueName), 'milliseconds').add(1, 'minutes').asMilliseconds()
-            const request: ConsumeJobRequest = {
-                jobId,
-                queueName,
-                jobData,
-                attempsStarted,
-                engineToken,
-            }
-            const response: ConsumeJobResponse[] | undefined = await app!.io.to(workerId).timeout(lockTimeout).emitWithAck(WebsocketClientEvent.CONSUME_JOB_REQUEST, request)
-            log.info({
-                message: 'Consume job response',
-                response,
-            })
-            if (!response?.[0]?.success) {
-                throw new Error(response?.[0]?.message ?? 'Unknown error')
+                workerId = await machineService(log).acquire()
+                log.info({
+                    message: 'Acquired worker id',
+                    workerId,
+                })
+                const lockTimeout = dayjs.duration(jobConsumer(log).getLockDurationInMs(queueName), 'milliseconds').add(1, 'minutes').asMilliseconds()
+                const request: ConsumeJobRequest = {
+                    jobId,
+                    queueName,
+                    jobData,
+                    attempsStarted,
+                    engineToken,
+                }
+                const response: ConsumeJobResponse[] | undefined = await app!.io.to(workerId).timeout(lockTimeout).emitWithAck(WebsocketClientEvent.CONSUME_JOB_REQUEST, request)
+                log.info({
+                    message: 'Consume job response',
+                    response,
+                })
+                if (!response?.[0]?.success) {
+                    throw new Error(response?.[0]?.message ?? 'Unknown error')
+                }
+            } finally {
+                if (workerId) {
+                    await machineService(log).release(workerId)
+                }
             }
         },
         getLockDurationInMs(queueName: QueueName): number {
