@@ -1,6 +1,6 @@
-import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AIUsageFeature, apId, createAIProvider, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, PopulatedAgent, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AIUsageFeature, apId, createAIModel, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, PopulatedAgent, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
-import { generateObject } from 'ai'
+import { Schema as AiSchema, generateObject } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, FindOperator, In, Not } from 'typeorm'
 import { z } from 'zod'
@@ -69,15 +69,15 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             description: z.string().describe('A brief description of what the agent does, derived from the system prompt.'),
         })
 
-        const apiKey = await accessTokenManager.generateEngineToken({
+        const engineToken = await accessTokenManager.generateEngineToken({
             platformId,
             projectId,
         })
         const { system, prompt } = getEnhancementPrompt(systemPrompt)
-        const model = createAIProvider({
+        const model = createAIModel({
             providerName: 'openai',
             modelInstance: openai('gpt-4o-mini'),
-            apiKey,
+            engineToken,
             baseURL,
             metadata: {
                 feature: AIUsageFeature.AGENTS,
@@ -90,9 +90,9 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             system,
             prompt,
             mode: 'json',
-            schema: enhancePromptSchema,
+            schema: enhancePromptSchema as unknown as AiSchema,
         })
-        return object
+        return object as EnhancedAgentPrompt
     },
     async getOneByExternalIdOrThrow(params: GetOneByExternalIdParams): Promise<PopulatedAgent> {
         const agent = await agentRepo().findOneBy({ externalId: params.externalId, projectId: params.projectId })
@@ -167,12 +167,16 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             .createQueryBuilder('agent')
             .where(querySelector)
 
+        if (params.externalIds) {
+            queryBuilder.andWhere({
+                externalId: In(params.externalIds),
+            })
+        }
         const agentsInTable = await tableService.getAllAgentIds({ projectId: params.projectId })
         queryBuilder.andWhere({
             id: Not(In(agentsInTable)),
         })
         const { data, cursor } = await paginator.paginate(queryBuilder)
-
         return paginationHelper.createPage<PopulatedAgent>(
             await Promise.all(data.map(agent => enrichAgent(agent, log))),
             cursor,
@@ -220,7 +224,7 @@ type ListParams = {
     projectId: string
     limit: number
     cursorRequest: Cursor
-
+    externalIds?: string[]
 }
 
 type CreateParams = {

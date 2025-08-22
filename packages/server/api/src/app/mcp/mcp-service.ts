@@ -21,7 +21,7 @@ import { flowService } from '../flows/flow/flow.service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
-import { McpEntity } from './mcp-entity'
+import { McpEntity } from './mcp-server/mcp-entity'
 import { McpToolEntity } from './tool/mcp-tool.entity'
 
 export const mcpRepo = repoFactory(McpEntity)
