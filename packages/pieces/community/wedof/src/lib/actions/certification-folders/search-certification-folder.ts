@@ -42,11 +42,11 @@ export const searchCertificationFolder = createAction({
                         } else if (_period) {
                                     props['filterOnStateDate'] = wedofCommon.filterOnStateDateCf;
                                     }        
-                                    return props;      
+                                    return props;
                                 },    
                             }),
         state: Property.StaticMultiSelectDropdown({
-            displayName: 'État de certification',
+            displayName: 'Etat du dossier de certification',
             description: 'Permet de n\'obtenir que les dossiers dans l\'état d\'obtention de la certification considéré. Plusieurs états peuvent être sélectionnés.',
             required: false,
             options: {
@@ -235,8 +235,8 @@ export const searchCertificationFolder = createAction({
             required: false
         }),
         registrationFolderCompletionRate: Property.StaticDropdown({
-            displayName: 'Taux de complétion du dossier d\'inscription',
-            description: 'Filtre par taux de complétion du dossier d\'inscription',
+            displayName: "Taux d'avancement",
+            description: "Permet de n'obtenir que les dossiers dont le taux d'avancement choisi",
             required: false,
             options: {
                 options: [
