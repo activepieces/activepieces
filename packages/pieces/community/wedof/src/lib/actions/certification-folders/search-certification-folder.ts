@@ -65,7 +65,7 @@ export const searchCertificationFolder = createAction({
             }
         }),
         registrationFolderState: Property.StaticMultiSelectDropdown({
-            displayName: 'État du dossier d\'inscription',
+            displayName: 'État du dossier de formation',
             description: 'Permet de n\'obtenir que les dossiers dans l\'état considéré. Plusieurs états peuvent être sélectionnés.',
             required: false,
             options: {
