@@ -1,0 +1,34 @@
+{
+  "displayName": "Pinecone",
+  "description": "Vector database for machine learning applications",
+  "actions": {
+    "pinecone_create_index": {
+      "displayName": "Create Index",
+      "description": "Create a new Pinecone index"
+    },
+    "pinecone_upsert_vector": {
+      "displayName": "Upsert Vector",
+      "description": "Insert or update vectors in a Pinecone index"
+    },
+    "pinecone_get_vector": {
+      "displayName": "Get Vector",
+      "description": "Retrieve a specific vector by ID from a Pinecone index"
+    },
+    "pinecone_update_vector": {
+      "displayName": "Update Vector",
+      "description": "Update an existing vector in a Pinecone index"
+    },
+    "pinecone_delete_vector": {
+      "displayName": "Delete Vector",
+      "description": "Delete vectors from a Pinecone index"
+    },
+    "pinecone_search_vectors": {
+      "displayName": "Search Vectors",
+      "description": "Search for similar vectors in a Pinecone index"
+    },
+    "pinecone_search_index": {
+      "displayName": "Get Index Statistics",
+      "description": "Get statistics and information about a Pinecone index"
+    }
+  }
+}
