@@ -16,7 +16,8 @@ export const updateAVector = createAction({
     }),
     id: Property.ShortText({
       displayName: 'Vector ID',
-      description: 'Unique identifier for the vector to update',
+      description:
+        'Unique identifier for the vector to update (1-512 characters)',
       required: true,
     }),
     values: Property.Array({
@@ -31,24 +32,40 @@ export const updateAVector = createAction({
         }),
       },
     }),
-    sparseValues: Property.Object({
-      displayName: 'Sparse Values',
-      description: 'New sparse vector values (optional)',
-      required: false,
+
+    sparseValues_indices: Property.Array({
+      displayName: 'Indices',
+      description: 'The indices of the sparse data',
+      required: true,
+      properties: {
+        index: Property.Number({
+          displayName: 'Index',
+          description: 'Sparse vector index',
+          required: true,
+        }),
+      },
     }),
-    metadata: Property.Object({
-      displayName: 'Metadata',
-      description: 'New metadata to associate with the vector (optional)',
+    sparseValues_values: Property.Array({
+      displayName: 'Values',
+      description: 'The corresponding values of the sparse data',
+      required: true,
+      properties: {
+        value: Property.Number({
+          displayName: 'Value',
+          description: 'Sparse vector value',
+          required: true,
+        }),
+      },
+    }),
+
+    setMetadata: Property.Object({
+      displayName: 'Set Metadata',
+      description: 'Metadata fields to set (replaces existing fields)',
       required: false,
     }),
     namespace: Property.ShortText({
       displayName: 'Namespace',
       description: 'The namespace containing the vector to update (optional)',
-      required: false,
-    }),
-    setMetadata: Property.Object({
-      displayName: 'Set Metadata',
-      description: 'Metadata fields to set (replaces existing fields)',
       required: false,
     }),
   },
@@ -63,20 +80,19 @@ export const updateAVector = createAction({
       requestBody.values = propsValue.values.map((v: any) => v.value);
     }
 
-    if (propsValue.sparseValues) {
-      requestBody.sparseValues = propsValue.sparseValues;
-    }
-
-    if (propsValue.metadata) {
-      requestBody.metadata = propsValue.metadata;
-    }
-
-    if (propsValue.namespace) {
-      requestBody.namespace = propsValue.namespace;
+    if (propsValue.sparseValues_indices && propsValue.sparseValues_values) {
+      requestBody.sparseValues = {
+        indices: propsValue.sparseValues_indices.map((item: any) => item.index),
+        values: propsValue.sparseValues_values.map((item: any) => item.value),
+      };
     }
 
     if (propsValue.setMetadata) {
       requestBody.setMetadata = propsValue.setMetadata;
+    }
+
+    if (propsValue.namespace) {
+      requestBody.namespace = propsValue.namespace;
     }
 
     const response = await makeDataPlaneRequest(

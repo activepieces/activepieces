@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { PineconeAuth } from '../common/auth';
 import { makeDataPlaneRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { vectorsIds } from '../common/props';
 
 export const deleteAVector = createAction({
   auth: PineconeAuth,
@@ -15,25 +16,8 @@ export const deleteAVector = createAction({
       description: 'The name of the index to delete vectors from',
       required: true,
     }),
-    deleteAll: Property.Checkbox({
-      displayName: 'Delete All Vectors',
-      description: 'Delete all vectors in the index/namespace',
-      required: false,
-      defaultValue: false,
-    }),
-    ids: Property.Array({
-      displayName: 'Vector IDs',
-      description:
-        'Array of vector IDs to delete (ignored if Delete All is checked)',
-      required: false,
-      properties: {
-        id: Property.ShortText({
-          displayName: 'Vector ID',
-          description: 'Unique identifier for the vector to delete',
-          required: true,
-        }),
-      },
-    }),
+
+    ids: vectorsIds,
     namespace: Property.ShortText({
       displayName: 'Namespace',
       description: 'The namespace to delete vectors from (optional)',
@@ -51,16 +35,8 @@ export const deleteAVector = createAction({
 
     const requestBody: any = {};
 
-    // If deleteAll is true, delete all vectors
-    if (propsValue.deleteAll) {
-      requestBody.deleteAll = true;
-    } else if (propsValue.ids && propsValue.ids.length > 0) {
-      // Delete specific vectors by IDs
-      requestBody.ids = propsValue.ids.map((item: any) => item.id);
-    } else {
-      throw new Error(
-        'Either provide vector IDs to delete or check "Delete All Vectors"'
-      );
+    if (propsValue.ids && propsValue.ids.length > 0) {
+      requestBody.ids = propsValue.ids;
     }
 
     if (propsValue.namespace) {
