@@ -181,6 +181,7 @@ type CreateAIModelParams<T extends LanguageModelV2 | ImageModel> = {
 
 export type BaseWebSearchOptions = {
     maxUses?: number
+    includeSources?: boolean
 }
 
 export type UserLocationOptions = {
