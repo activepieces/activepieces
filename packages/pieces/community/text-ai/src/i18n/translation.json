@@ -10,9 +10,7 @@
   "Max Tokens": "Max Tokens",
   "Web Search": "Web Search",
   "Web Search Options": "Web Search Options",
-  "Include Sources": "Include Sources",
   "Text": "Text",
   "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.",
-  "Whether to use web search to find information for the AI to use in its response.": "Whether to use web search to find information for the AI to use in its response.",
-  "Whether to include the sources in the response. Useful for getting web search details (e.g. search queries, searched URLs, etc).": "Whether to include the sources in the response. Useful for getting web search details (e.g. search queries, searched URLs, etc)."
+  "Whether to use web search to find information for the AI to use in its response.": "Whether to use web search to find information for the AI to use in its response."
 }
