@@ -1189,6 +1189,7 @@
   "Flow Is In Use": "Fluxo está em uso",
   "Flow is being used by another user, please try again later.": "Fluxo está sendo usado por outro usuário. Por favor, tente novamente mais tarde.",
   "Flow has been published.": "O Fluxo foi publicado.",
+  "Failed to publish flow, please contact support.": "",
   "Flows have been exported.": "Flores foram exportados.",
   "Real time flow": "Fluxo em tempo real",
   "Flow can't be published with empty trigger {name}": "O fluxo não pode ser publicado com o disparador vazio {name}",
