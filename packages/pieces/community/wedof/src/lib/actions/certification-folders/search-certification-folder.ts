@@ -90,7 +90,7 @@ export const searchCertificationFolder = createAction({
             }
         }),
         sort: Property.StaticDropdown({
-            displayName: 'Tri',
+            displayName: 'Tri sur critère',
             description: 'Trie les résultats sur un critère',
             required: false,
             options: {
@@ -119,10 +119,10 @@ export const searchCertificationFolder = createAction({
             options: {
                 options: [
                     { value: 'all', label: 'Tous' },
-                    { value: 'notExported', label: 'Non exporté' },
-                    { value: 'exported', label: 'Exporté' },
-                    { value: 'processedOk', label: 'Traité avec succès' },
-                    { value: 'processedKo', label: 'Traité en erreur' }
+                    { value: 'notExported', label: 'Jamais accroché' },
+                    { value: 'exported', label: "Envoyé et en attente de l'accusé" },
+                    { value: 'processedOk', label: 'Accrochage réussi' },
+                    { value: 'processedKo', label: 'Accrochage en erreur' }
                 ]
             }
         }),
@@ -149,8 +149,8 @@ export const searchCertificationFolder = createAction({
             }
         }),
         cdcToExport: Property.StaticDropdown({
-            displayName: 'Inclus dans les exports',
-            description: 'Permet de filtrer les dossiers de certification qui devront être inclus dans les prochains exports pour l\'accrochage',
+            displayName: 'Inclus dans les prochains accrochages',
+            description: "Permet de filtrer les dossiers de certification qui devront être inclus dans les prochains exports pour l'accrochage",
             required: false,
             options: {
                 options: [
@@ -160,8 +160,8 @@ export const searchCertificationFolder = createAction({
             }
         }),
         certifInfo: Property.Array({
-            displayName: 'Information de certification',
-            description: 'Permet de n\'obtenir que les dossiers liés à la certification considérée. Il est possible de filtrer sur plusieurs certifications.',
+            displayName: 'ID certification',
+            description: 'Permet de n\'obtenir que les dossiers liés à la certification considérée',
             required: false
         }),
         dataProvider: Property.StaticMultiSelectDropdown({
@@ -189,13 +189,14 @@ export const searchCertificationFolder = createAction({
         }),
         tags: Property.Array({
             displayName: 'Tags',
-            description: 'Permet d\'effectuer une recherche sur le champ \'tags\'',
+            description: "Recherche libre sur les tags",
             required: false
         }),
         format: Property.StaticDropdown({
-            displayName: 'Format',
+            displayName: 'Format de sortie',
             description: 'Permet d\'obtenir une liste des dossiers de certification au format json ou csv',
             required: false,
+            defaultValue: 'json',
             options: {
                 options: [
                     { value: 'json', label: 'JSON' },
@@ -205,12 +206,14 @@ export const searchCertificationFolder = createAction({
         }),
         limit: Property.Number({
             displayName: 'Limite',
-            description: 'Nombre d\'éléments retourné par requête',
+            description: 'Nombre de dossiers de certification',
+            defaultValue: 100,
             required: false
         }),
         page: Property.Number({
             displayName: 'Page',
             description: 'Numéro de page de la requête',
+            defaultValue: 1,
             required: false
         }),
         cdcFile: Property.ShortText({
@@ -231,7 +234,7 @@ export const searchCertificationFolder = createAction({
         }),
         columnId: Property.ShortText({
             displayName: 'ID de colonne',
-            description: 'Identifiant de colonne',
+            description: 'Identifiant pour affichage personnalisé',
             required: false
         }),
         registrationFolderCompletionRate: Property.StaticDropdown({
@@ -251,7 +254,7 @@ export const searchCertificationFolder = createAction({
             required: false
         }),
         survey: Property.StaticDropdown({
-            displayName: 'Questionnaire',
+            displayName: "Questionnaire de suivi d'insertion professionnelle",
             description: 'Permet de n\'obtenir que les dossiers pour lesquels un questionnaire doit être répondu ou a été répondu',
             required: false,
             options: {
@@ -276,18 +279,18 @@ export const searchCertificationFolder = createAction({
             required: false,
             options: {
                 options: [
-                    { value: 'sent', label: 'Envoyé' },
-                    { value: 'notSent', label: 'Non envoyé' },
-                    { value: 'notSentUnauthorized', label: 'Non envoyé non autorisé' },
-                    { value: 'notSentEnforcedConditions', label: 'Non envoyé conditions appliquées' },
-                    { value: 'failed', label: 'Échoué' },
-                    { value: 'scheduled', label: 'Programmé' }
+                    { value: 'sent', label: 'Message envoyé' },
+                    { value: 'notSent', label: 'Message non envoyé' },
+                    { value: 'notSentUnauthorized', label: 'Message non envoyé (non autorisé)' },
+                    { value: 'notSentEnforcedConditions', label: 'Message non envoyé (conditions renforcées)' },
+                    { value: 'failed', label: "Échec de l'envoi" },
+                    { value: 'scheduled', label: 'Envoi programmé' }
                 ]
             }
         }),
         messageTemplate: Property.ShortText({
             displayName: 'Modèle de message',
-            description: 'Permet de n\'obtenir que les dossiers qui ont un message issu des modèles choisis',
+            description: "Permet de n'obtenir que les dossiers pour lequels un message issue du modèle considéré a été créé - par défaut aucun filtre",
             required: false
         })
     },
