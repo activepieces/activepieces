@@ -1,5 +1,8 @@
 {
   "name": "@activepieces/shared",
   "version": "0.18.5",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "@ai-sdk/provider": "^2.0.0"
+  }
 }
