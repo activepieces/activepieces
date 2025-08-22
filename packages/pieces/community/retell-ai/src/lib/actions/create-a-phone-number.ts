@@ -15,8 +15,8 @@ export const createAPhoneNumber = createAction({
       description: 'The area code for the phone number (e.g., 415, 212)',
       required: true,
     }),
-    inboundAgentId: agentIdDropdown,
-    outboundAgentId: agentIdDropdown,
+    inboundAgentId: agentIdDropdown('Inbound Agent ID'),
+    outboundAgentId: agentIdDropdown('Outbound Agent ID'),
     inboundAgentVersion: Property.Number({
       displayName: 'Inbound Agent Version',
       description: 'Version of the inbound agent to use',
@@ -77,15 +77,9 @@ export const createAPhoneNumber = createAction({
   async run({ auth, propsValue }) {
     const body: any = {
       area_code: propsValue.areaCode,
+      inbound_agent_id: propsValue.inboundAgentId,
+      outbound_agent_id: propsValue.outboundAgentId,
     };
-
-    if (propsValue.inboundAgentId) {
-      body.inbound_agent_id = propsValue.inboundAgentId;
-    }
-
-    if (propsValue.outboundAgentId) {
-      body.outbound_agent_id = propsValue.outboundAgentId;
-    }
 
     if (propsValue.inboundAgentVersion) {
       body.inbound_agent_version = propsValue.inboundAgentVersion;

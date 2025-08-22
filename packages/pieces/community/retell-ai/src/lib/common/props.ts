@@ -2,8 +2,8 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from './client';
 import { Property } from '@activepieces/pieces-framework';
 
-export const agentIdDropdown = Property.Dropdown({
-  displayName: 'Agent ID',
+export const agentIdDropdown = (displayName : string) => Property.Dropdown({
+  displayName: displayName || 'Agent ID',
   description: 'Select the agent to use',
   required: true,
   refreshers: [],
@@ -102,7 +102,7 @@ export const callIdDropdown = Property.Dropdown({
       const calls = await makeRequest(
         auth as string,
         HttpMethod.POST,
-        '/list-calls'
+        '/v2/list-calls'
       );
       return {
         disabled: false,

@@ -10,7 +10,7 @@ export const getAnAgent = createAction({
   displayName: 'Get an Agent',
   description: 'Fetch details of a Retell AI agent by Agent ID',
   props: {
-    agentId: agentIdDropdown,
+    agentId: agentIdDropdown('Agent ID'),
   },
   async run({ auth, propsValue }) {
     const response = await makeRequest(
