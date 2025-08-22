@@ -165,7 +165,7 @@ export const searchCertificationFolder = createAction({
             required: false
         }),
         dataProvider: Property.StaticMultiSelectDropdown({
-            displayName: 'Type de dossier',
+            displayName: 'Type de financement',
             description: 'Permet de n\'obtenir que les dossiers dans le type considéré. Plusieurs types peuvent être sélectionnés.',
             required: false,
             options: {
