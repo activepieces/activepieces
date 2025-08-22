@@ -29,7 +29,7 @@ export async function makeRequest(
 
 export async function makeDataPlaneRequest(
   api_key: string,
-  indexName: string,
+  host: string,
   method: HttpMethod,
   path: string,
   body?: unknown
@@ -37,7 +37,7 @@ export async function makeDataPlaneRequest(
   try {
     const response = await httpClient.sendRequest({
       method,
-      url: `https://${indexName}-${api_key.split('-')[0]}.svc.pinecone.io${path}`,
+      url: `https://${host}${path}`,
       headers: {
         'Api-Key': api_key,
         Accept: 'application/json',

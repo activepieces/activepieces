@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { PineconeAuth } from '../common/auth';
 import { makeDataPlaneRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { hostDropdown } from '../common/props';
 
 export const updateAVector = createAction({
   auth: PineconeAuth,
@@ -9,11 +10,7 @@ export const updateAVector = createAction({
   displayName: 'Update a Vector',
   description: 'Update an existing vector in a Pinecone index',
   props: {
-    indexName: Property.ShortText({
-      displayName: 'Index Name',
-      description: 'The name of the index containing the vector to update',
-      required: true,
-    }),
+    host: hostDropdown,
     id: Property.ShortText({
       displayName: 'Vector ID',
       description:
@@ -97,7 +94,7 @@ export const updateAVector = createAction({
 
     const response = await makeDataPlaneRequest(
       auth as string,
-      propsValue.indexName,
+      propsValue.host as string,
       HttpMethod.POST,
       '/vectors/update',
       requestBody

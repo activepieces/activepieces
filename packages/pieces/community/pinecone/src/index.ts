@@ -6,10 +6,11 @@ import { searchIndex } from './lib/actions/search-index';
 import { searchVectors } from './lib/actions/search-vectors';
 import { updateAVector } from './lib/actions/update-a-vector';
 import { upsertVector } from './lib/actions/upsert-vector';
+import { PineconeAuth } from './lib/common/auth';
 
 export const pinecone = createPiece({
   displayName: 'Pinecone',
-  auth: PieceAuth.None(),
+  auth: PineconeAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/pinecone.png',
   authors: ['Sanket6652'],

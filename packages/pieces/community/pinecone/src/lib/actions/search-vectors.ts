@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { PineconeAuth } from '../common/auth';
 import { makeDataPlaneRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { hostDropdown, vectorIdDropdown } from '../common/props';
 
 export const searchVectors = createAction({
   auth: PineconeAuth,
@@ -9,11 +10,7 @@ export const searchVectors = createAction({
   displayName: 'Search Vectors',
   description: 'Queries a Pinecone index with a vector to find similar records',
   props: {
-    indexName: Property.ShortText({
-      displayName: 'Index Name',
-      description: 'The name of the index to search',
-      required: true,
-    }),
+    host: hostDropdown,
     vector: Property.Array({
       displayName: 'Query Vector',
       description: 'The query vector values as an array of numbers',
@@ -59,12 +56,7 @@ export const searchVectors = createAction({
       required: false,
       defaultValue: true,
     }),
-    id: Property.ShortText({
-      displayName: 'Vector ID',
-      description:
-        'The unique ID of the vector to be used as a query vector (alternative to providing vector values)',
-      required: false,
-    }),
+    id: vectorIdDropdown,
   },
   async run(context) {
     const { auth, propsValue } = context;
@@ -100,7 +92,7 @@ export const searchVectors = createAction({
 
     const response = await makeDataPlaneRequest(
       auth as string,
-      propsValue.indexName,
+      propsValue.host as string,
       HttpMethod.POST,
       '/query',
       requestBody

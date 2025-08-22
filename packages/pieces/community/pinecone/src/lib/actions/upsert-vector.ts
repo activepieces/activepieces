@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { PineconeAuth } from '../common/auth';
 import { makeDataPlaneRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { vectorsIds } from '../common/props';
+import { hostDropdown, vectorsIds } from '../common/props';
 
 export const upsertVector = createAction({
   auth: PineconeAuth,
@@ -10,16 +10,8 @@ export const upsertVector = createAction({
   displayName: 'Upsert Vector',
   description: 'Insert or update vectors in a Pinecone index',
   props: {
-    indexName: Property.ShortText({
-      displayName: 'Index Name',
-      description: 'The name of the index to upsert vectors into',
-      required: true,
-    }),
-    // vectors: Property.Array({
-    //   displayName: 'Vectors',
-    //   description: 'Array of vectors to upsert',
-    //   required: true,
-    //   properties: {
+    host: hostDropdown,
+
     id: vectorsIds,
     vectors_values: Property.Array({
       displayName: 'Vector Values',
@@ -111,7 +103,7 @@ export const upsertVector = createAction({
 
     const response = await makeDataPlaneRequest(
       auth as string,
-      propsValue.indexName,
+      propsValue.host as string,
       HttpMethod.POST,
       '/vectors/upsert',
       requestBody
