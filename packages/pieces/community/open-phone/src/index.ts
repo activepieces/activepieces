@@ -18,7 +18,7 @@ import {
 
 export const openphone = createPiece({
   displayName: 'OpenPhone',
-  description: 'Modern business phone system with voice calls, SMS/MMS messaging, and CRM features',
+  description: 'Modern business phone system with voice calls, SMS/MMS messaging, and CRM features.',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/openphone.png',
   categories: [PieceCategory.COMMUNICATION],
