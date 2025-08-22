@@ -13,6 +13,14 @@ export class ActivepiecesError extends Error {
     constructor(public error: ApErrorParams, message?: string) {
         super(error.code + (message ? `: ${message}` : ''))
     }
+
+    override toString(): string {
+        return JSON.stringify({
+            code: this.error.code,
+            message: this.message,
+            params: this.error.params,
+        })
+    }
 }
 
 export type ApErrorParams =
@@ -84,7 +92,7 @@ export type ApErrorParams =
     | TriggerExecutionFailedParams
     | SubflowFailedParams
     | MachineNotAvailableParams
-    
+    | MachineNotConnectedParams
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
     message?: string
@@ -486,7 +494,12 @@ export type MachineNotAvailableParams = BaseErrorParams<ErrorCode.MACHINE_NOT_AV
     resourceType: string
 }>
 
+export type MachineNotConnectedParams = BaseErrorParams<ErrorCode.MACHINE_NOT_CONNECTED, {
+    message: string
+}>
+
 export enum ErrorCode {
+    MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
     MACHINE_NOT_AVAILABLE = 'MACHINE_NOT_AVAILABLE',
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',

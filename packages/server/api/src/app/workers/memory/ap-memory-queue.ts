@@ -17,7 +17,7 @@ export type ApJob<T> = {
 export class ApMemoryQueue<T extends JobData> {
     private queue: ApJob<T>[]
     private lock: ApSemaphore
-    private isConsuming: boolean = false
+    private isConsuming = false
     private log: FastifyBaseLogger
     private queueName: QueueName
     private consumer: ReturnType<typeof jobConsumer>
@@ -37,7 +37,12 @@ export class ApMemoryQueue<T extends JobData> {
         else {
             this.queue.push(job)
         }
-        this.startConsuming()
+        this.startConsuming().catch((error) => {
+            this.log.error({
+                message: 'Error starting consuming',
+                error,
+            })
+        })
     }
 
     async remove(id: string): Promise<void> {
@@ -84,7 +89,7 @@ export class ApMemoryQueue<T extends JobData> {
                     currentJob.id,
                     this.queueName,
                     currentJob.data,
-                    0
+                    0,
                 )
 
                 this.log.info({
@@ -92,7 +97,8 @@ export class ApMemoryQueue<T extends JobData> {
                     jobId: currentJob.id,
                     queueName: this.queueName,
                 })
-            } catch (error) {
+            }
+            catch (error) {
                 this.log.error({
                     message: 'Error consuming job from memory queue',
                     jobId: currentJob?.id,

@@ -42,6 +42,8 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
       ramUsagePercentage: 52.699635773121855,
       totalAvailableRamInBytes: 33364979712,
       ip: '172.16.254.1',
+      totalSandboxes: 8,
+      freeSandboxes: 8,
     },
     status: WorkerMachineStatus.ONLINE,
   },
@@ -66,6 +68,8 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
       ramUsagePercentage: 45.2,
       totalAvailableRamInBytes: 42949672960,
       ip: '192.168.1.100',
+      totalSandboxes: 8,
+      freeSandboxes: 8,
     },
     status: WorkerMachineStatus.ONLINE,
   },
@@ -206,6 +210,27 @@ export default function WorkersPage() {
               return (
                 <div className="flex items-center">
                   {formattedUsedRam} / {formattedTotalRam}
+                </div>
+              );
+            },
+          },
+          {
+            accessorKey: 'information.sandboxes',
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('Sandboxes Free')}
+              />
+            ),
+            cell: ({ row }) => {
+              const freeSandboxes = row.original.information.freeSandboxes ?? 0;
+              const totalSandboxes =
+                row.original.information.totalSandboxes ?? 0;
+              return (
+                <div className="flex items-center">
+                  <span>
+                    {freeSandboxes} / {totalSandboxes}
+                  </span>
                 </div>
               );
             },

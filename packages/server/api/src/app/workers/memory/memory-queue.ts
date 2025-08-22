@@ -24,6 +24,7 @@ export const memoryQueue = (log: FastifyBaseLogger): QueueManager => {
 
     return {
         async setConcurrency(): Promise<void> {
+            // no-op
         },
         async removeRepeatingJob({ flowVersionId }) {
             await queues[QueueName.SCHEDULED].remove(flowVersionId)
@@ -82,7 +83,7 @@ export const memoryQueue = (log: FastifyBaseLogger): QueueManager => {
                     break
                 }
             }
-        }
+        },
     }
 }
 
@@ -177,7 +178,7 @@ async function renewWebhooks(log: FastifyBaseLogger): Promise<void> {
                         trigger,
                         flowId: flow.id,
                     },
-                        'Piece not found for trigger',
+                    'Piece not found for trigger',
                     )
                     return null
                 }

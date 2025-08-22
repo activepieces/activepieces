@@ -6,8 +6,8 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
 import { system } from '../../helper/system/system'
-import { ConsumerManager } from '../consumer/types'
 import { jobConsumer } from '../consumer/job-consumer'
+import { ConsumerManager } from '../consumer/types'
 
 const consumer: Record<string, Worker> = {}
 
@@ -29,10 +29,10 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
         return consumer[queueName]
     }
     const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
-    const lockDuration = getLockDurationInMs(queueName)
+    const lockDuration = jobConsumer(log).getLockDurationInMs(queueName)
     consumer[queueName] = new Worker(queueName, (job) => jobConsumer(log).consume(job.id!, queueName, job.data, job.attemptsStarted), {
         connection: createRedisClient(),
-        lockDuration,
+        lockDuration: dayjs.duration(lockDuration, 'milliseconds').add(3, 'minutes').asMilliseconds(),
         telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
     })
 
@@ -41,20 +41,3 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
     return consumer[queueName]
 }
 
-function getLockDurationInMs(queueName: QueueName): number {
-    const triggerTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS)
-    const flowTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS)
-    const agentTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.AGENT_TIMEOUT_SECONDS)
-    switch (queueName) {
-        case QueueName.WEBHOOK:
-            return dayjs.duration(triggerTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
-        case QueueName.USERS_INTERACTION:
-            return dayjs.duration(flowTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
-        case QueueName.ONE_TIME:
-            return dayjs.duration(flowTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
-        case QueueName.SCHEDULED:
-            return dayjs.duration(triggerTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
-        case QueueName.AGENTS:
-            return dayjs.duration(agentTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
-    }
-}

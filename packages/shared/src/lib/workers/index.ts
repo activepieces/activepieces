@@ -20,6 +20,8 @@ export const MachineInformation = Type.Object({
     ramUsagePercentage: Type.Number(),
     totalAvailableRamInBytes: Type.Number(),
     ip: Type.String(),
+    totalSandboxes: Type.Number(),
+    freeSandboxes: Type.Number(),
 })
 
 export type MachineInformation = Static<typeof MachineInformation>
@@ -47,9 +49,14 @@ export const ConsumeJobRequest = Type.Object({
 
 export type ConsumeJobRequest = Static<typeof ConsumeJobRequest>
 
-export const WorkerMachineHealthcheckRequest = Type.Composite([MachineInformation, Type.Object({
-    sandboxUsed: Type.Number(),
-})])
+export const ConsumeJobResponse = Type.Object({
+    success: Type.Boolean(),
+    message: Type.Optional(Type.String()),
+})
+
+export type ConsumeJobResponse = Static<typeof ConsumeJobResponse>
+
+export const WorkerMachineHealthcheckRequest = MachineInformation
 
 export type WorkerMachineHealthcheckRequest = Static<typeof WorkerMachineHealthcheckRequest>
 export const WorkerMachineHealthcheckResponse = Type.Object({

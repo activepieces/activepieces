@@ -1,7 +1,7 @@
+import { QueueName } from '@activepieces/server-shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ConsumerManager } from '../consumer/types'
 import { memoryQueues } from './memory-queue'
-import { QueueName } from '@activepieces/server-shared'
 
 export const memoryConsumer = (log: FastifyBaseLogger): ConsumerManager => {
     const queues = memoryQueues(log)

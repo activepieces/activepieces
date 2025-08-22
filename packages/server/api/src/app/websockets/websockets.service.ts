@@ -17,6 +17,7 @@ const listener: Record<PrincipalType.USER | PrincipalType.WORKER, ListenerMap> =
 
 
 export const websocketService = {
+    to: (workerId: string) => app!.io.to(workerId),
     async init(socket: Socket, log: FastifyBaseLogger): Promise<void> {
         const principal = await websocketService.verifyPrincipal(socket)
         const type = principal.type
@@ -58,9 +59,6 @@ export const websocketService = {
         for (const handler of Object.values(listener[castedType][WebsocketServerEvent.CONNECT] ?? {})) {
             handler(socket)
         }
-    },
-    to(workerId: string): Socket {
-        return app!.io.to(workerId)
     },
     async onDisconnect(socket: Socket): Promise<void> {
         const principal = await websocketService.verifyPrincipal(socket)

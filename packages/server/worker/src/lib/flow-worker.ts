@@ -1,5 +1,5 @@
-import { AgentJobData, JobData, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
-import { apId, ConsumeJobRequest, isNil, WebsocketClientEvent, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { AgentJobData, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
+import { ConsumeJobRequest, ConsumeJobResponse, WebsocketClientEvent, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { io, Socket } from 'socket.io-client'
 import { agentJobExecutor } from './executors/agent-job-executor'
@@ -58,23 +58,38 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
                 error: error.message,
             })
         })
-        
+
         socket.on(WebsocketClientEvent.CONSUME_JOB_REQUEST, async (request: ConsumeJobRequest, callback: (data: unknown) => void) => {
             log.info({
                 message: 'Received consume job request',
                 jobId: request.jobId,
                 queueName: request.queueName,
                 attempsStarted: request.attempsStarted,
-                workerId: workerMachine.getWorkerId()
             })
-            rejectedPromiseHandler(consumeJob(request, log, callback), log)
-            callback(null)
+            try {
+                await consumeJob(request, log)
+                const response: ConsumeJobResponse = {
+                    success: true,
+                }
+                callback(response)
+            } catch (error) {
+                log.info({
+                    message: 'Failed to consume job',
+                    error,
+                })
+                const errorMessage = error instanceof Error ? error.message : String(error)
+                const response: ConsumeJobResponse = {
+                    success: false,
+                    message: errorMessage,
+                }
+                callback(response)
+            }
         })
 
         socket.connect()
 
 
-        heartbeatInterval = setTimeout(async () => {
+        heartbeatInterval = setInterval(async () => {
             if (!socket.connected) {
                 log.error({
                     message: 'Not connected to server, retrying...',
@@ -84,14 +99,14 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
             try {
                 const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
                 const response = await socket.timeout(10000).emitWithAck(WebsocketServerEvent.MACHINE_HEARTBEAT, request)
-                workerMachine.init(response)
+                workerMachine.init(response, log)
             } catch (error) {
                 log.error({
                     message: 'Failed to send heartbeat, retrying...',
                     error,
                 })
             }
-        }, 25000)
+        }, 15000)
 
     },
 
@@ -107,13 +122,10 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
             await engineRunner(log).shutdownAllWorkers()
         }
     },
-    async consumeJob(request: ConsumeJobRequest, callback: (data: unknown) => void): Promise<void> {
-        rejectedPromiseHandler(consumeJob(request, log, callback), log)
-    }
 })
 
 
-async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger, callback: (data: unknown) => void): Promise<void> {
+async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): Promise<void> {
     const { jobId, queueName, jobData, attempsStarted, engineToken } = request
     switch (queueName) {
         case QueueName.USERS_INTERACTION:
@@ -143,5 +155,4 @@ async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger, ca
             break
         }
     }
-    callback(true)
 }

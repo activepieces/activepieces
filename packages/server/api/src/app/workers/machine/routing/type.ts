@@ -10,7 +10,8 @@ export type MachineRouting = {
 
 type OnHeartbeatParams = {
     workerId: string
-    sandboxUsed: number
+    totalSandboxes: number
+    freeSandboxes: number
 }
 
 type OnDisconnectParams = {

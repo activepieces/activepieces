@@ -6,6 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
+import { machineService } from '../machine/machine-service'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
 import { redisRateLimiter } from './redis-rate-limiter'
@@ -51,6 +52,8 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
         await redisRateLimiter(log).init()
         const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName))
         await Promise.all(queues)
+        await machineService(log).updateConcurrency()
+
         await redisMigrations(log).run()
         log.info('[redisQueueManager#init] Redis queues initialized')
     },
@@ -129,6 +132,7 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
             telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
             connection: createRedisClient(),
             defaultJobOptions: jobTypeToDefaultJobOptions[queueName],
+
         },
     )
     await bullMqGroups[queueName].waitUntilReady()

@@ -1,5 +1,5 @@
-import { ActivepiecesError, ErrorCode } from "@activepieces/shared"
-import { MachineRouting } from "./type"
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { MachineRouting } from './type'
 
 const machines = new Set<string>()
 
@@ -27,5 +27,5 @@ export const simpleRouting: MachineRouting = {
     },
     onDisconnect: async (request) => {
         machines.delete(request.workerId)
-    }
+    },
 }

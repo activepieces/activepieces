@@ -1,21 +1,22 @@
+import { AppSystemProp, QueueName, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     MachineInformation,
-    WebsocketClientEvent,
     WorkerMachineHealthcheckResponse,
     WorkerMachineStatus,
     WorkerMachineWithStatus,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { repoFactory } from '../../core/db/repo-factory'
-import { WorkerMachineEntity } from './machine-entity'
-import { Socket } from 'socket.io'
-import { AppSystemProp, QueueName, WorkerSystemProp } from '@activepieces/server-shared'
-import { QueueMode, system } from '../../helper/system/system'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
-import { simpleRouting } from './routing/simple-routing'
-import { distributedRouting } from './routing/distributed-routing'
-import { redisQueue } from '../redis/redis-queue'
 import { FastifyBaseLogger } from 'fastify'
+import { Socket } from 'socket.io'
+import { LessThanOrEqual, MoreThan } from 'typeorm'
+import { repoFactory } from '../../core/db/repo-factory'
+import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { QueueMode, system } from '../../helper/system/system'
+import { app } from '../../server'
+import { redisQueue } from '../redis/redis-queue'
+import { WorkerMachineEntity } from './machine-entity'
+import { distributedRouting } from './routing/distributed-routing'
+import { simpleRouting } from './routing/simple-routing'
 
 const machineRouting = system.getOrThrow(AppSystemProp.QUEUE_MODE) === QueueMode.MEMORY ? simpleRouting : distributedRouting
 const workerRepo = repoFactory(WorkerMachineEntity)
@@ -24,31 +25,64 @@ const OFFLINE_THRESHOLD = dayjs.duration(60, 's').asMilliseconds()
 export const machineService = (log: FastifyBaseLogger) => {
     return {
         async onDisconnect(request: OnDisconnectParams): Promise<void> {
+            system.globalLogger().info({
+                message: 'Worker disconnected',
+                workerId: request.workerId,
+            })
             await workerRepo().delete({ id: request.workerId })
             await machineRouting.onDisconnect({
                 workerId: request.workerId,
             })
-            await updateConcurrency(log)
+            await machineService(log).updateConcurrency()
         },
         async acquire(): Promise<string> {
-            return machineRouting.acquire()
+            const workerId = await machineRouting.acquire()
+            const sockets = await app?.io.to(workerId).fetchSockets()
+            if (sockets && sockets.length > 0) {
+                return workerId
+            }
+            else {
+                await machineService(log).onDisconnect({
+                    workerId,
+                })
+                return machineService(log).acquire()
+            }
         },
         async release(workerId: string): Promise<void> {
             await machineRouting.release(workerId)
         },
+        async getConcurrency(): Promise<Record<QueueName, number>> {
+            const machines = await machineService(log).list()
+            const flowWorkerConcurrency = machines.reduce((acc, machine) => acc + (parseInt(machine.information.workerProps[WorkerSystemProp.FLOW_WORKER_CONCURRENCY]) || 0), 0)
+            const scheduledWorkerConcurrency = machines.reduce((acc, machine) => acc + (parseInt(machine.information.workerProps[WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY]) || 0), 0)
+            const agentsWorkerConcurrency = machines.reduce((acc, machine) => acc + (parseInt(machine.information.workerProps[WorkerSystemProp.AGENTS_WORKER_CONCURRENCY]) || 0), 0)
+            return {
+                [QueueName.ONE_TIME]: flowWorkerConcurrency,
+                [QueueName.SCHEDULED]: scheduledWorkerConcurrency,
+                [QueueName.WEBHOOK]: flowWorkerConcurrency,
+                [QueueName.USERS_INTERACTION]: flowWorkerConcurrency,
+                [QueueName.AGENTS]: agentsWorkerConcurrency,
+            }
+        },
+        async updateConcurrency(): Promise<void> {
+            const concurrency = await machineService(log).getConcurrency()
+            await Promise.all(Object.entries(concurrency).map(([queueName, concurrency]) => redisQueue(log).setConcurrency(queueName as QueueName, concurrency)))
+        },
         async onHeartbeat({
             workerId,
-            sandboxUsed,
+            totalSandboxes,
             diskInfo,
             cpuUsagePercentage,
             ramUsagePercentage,
             totalAvailableRamInBytes,
             workerProps,
             ip,
+            freeSandboxes,
         }: OnHeartbeatParams): Promise<WorkerMachineHealthcheckResponse> {
             await machineRouting.onHeartbeat({
                 workerId,
-                sandboxUsed,
+                totalSandboxes,
+                freeSandboxes,
             })
             await workerRepo().upsert({
                 information: {
@@ -58,6 +92,8 @@ export const machineService = (log: FastifyBaseLogger) => {
                     totalAvailableRamInBytes,
                     workerProps,
                     ip,
+                    totalSandboxes,
+                    freeSandboxes,
                 },
                 updated: dayjs().toISOString(),
                 id: workerId,
@@ -92,32 +128,30 @@ export const machineService = (log: FastifyBaseLogger) => {
                 S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
             }
 
-            await updateConcurrency(log)
+            await machineService(log).updateConcurrency()
 
             return response
         },
         async list(): Promise<WorkerMachineWithStatus[]> {
-            const workers = await workerRepo().createQueryBuilder('machine').where('machine.updated > :updated', { updated: new Date(dayjs().subtract(OFFLINE_THRESHOLD, 'ms').toISOString()) }).getMany()
-            return workers.map(worker => {
-                const isOnline = dayjs(worker.updated).isAfter(dayjs().subtract(OFFLINE_THRESHOLD, 'ms').toISOString())
-                return { ...worker, status: isOnline ? WorkerMachineStatus.ONLINE : WorkerMachineStatus.OFFLINE }
+            await workerRepo().delete({
+                updated: LessThanOrEqual(dayjs().subtract(OFFLINE_THRESHOLD, 'ms').toISOString()),
             })
-        }
+
+            const workers = await workerRepo().find({
+                where: {
+                    updated: MoreThan(dayjs().subtract(OFFLINE_THRESHOLD, 'ms').toISOString()),
+                },
+            })
+
+            return workers.map(worker => ({
+                ...worker,
+                status: WorkerMachineStatus.ONLINE,
+            }))
+        },
     }
-}
-async function updateConcurrency(log: FastifyBaseLogger): Promise<void> {
-    const machines = await machineService(log).list()
-    const flowWorkerConcurrency = machines.reduce((acc, machine) => acc + (parseInt(machine.information.workerProps[WorkerSystemProp.FLOW_WORKER_CONCURRENCY]) || 0), 0)
-    const scheduledWorkerConcurrency = machines.reduce((acc, machine) => acc + (parseInt(machine.information.workerProps[WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY]) || 0), 0)
-    const agentsWorkerConcurrency = machines.reduce((acc, machine) => acc + (parseInt(machine.information.workerProps[WorkerSystemProp.AGENTS_WORKER_CONCURRENCY]) || 0), 0)
-    await redisQueue(log).setConcurrency(QueueName.ONE_TIME, flowWorkerConcurrency)
-    await redisQueue(log).setConcurrency(QueueName.SCHEDULED, scheduledWorkerConcurrency)
-    await redisQueue(log).setConcurrency(QueueName.AGENTS, agentsWorkerConcurrency)
-    await redisQueue(log).setConcurrency(QueueName.WEBHOOK, flowWorkerConcurrency)
 }
 
 type OnDisconnectParams = {
-    socket: Socket
     workerId: string
 }
 
@@ -129,6 +163,7 @@ type OnHeartbeatParams = {
     ramUsagePercentage: number
     totalAvailableRamInBytes: number
     ip: string
-    sandboxUsed: number
+    totalSandboxes: number
+    freeSandboxes: number
     workerProps: Record<string, string>
 }
