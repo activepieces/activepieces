@@ -243,6 +243,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         cors: {
             origin: '*',
         },
+        maxHttpBufferSize: 1e8,
         ...spreadIfDefined('adapter', await getAdapter()),
         transports: ['websocket'],
     })

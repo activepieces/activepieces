@@ -1,5 +1,5 @@
-import { apAxios, AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { apAxios, GetRunForWorkerRequest } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -14,7 +14,6 @@ import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
 import { triggerRunService } from '../trigger/trigger-run/trigger-run.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
-import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
@@ -49,26 +48,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             agentExternalIds: request.query.agentExternalIds,
             externalIds: request.query.externalIds,
         })
-    })
-
-    app.post('/update-job', {
-        config: {
-            allowedPrincipals: [PrincipalType.ENGINE],
-        },
-        schema: {
-            body: UpdateJobRequest,
-        },
-    }, async (request) => {
-        const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
-        if (environment === ApEnvironment.TESTING) {
-            return {}
-        }
-        const enginePrincipal = request.principal as unknown as EnginePrincipal
-        assertNotNullOrUndefined(enginePrincipal.queueToken, 'queueToken')
-        const { id } = request.principal
-        const { queueName, status, message } = request.body
-        await flowConsumer(request.log).update({ jobId: id, queueName, status, message: message ?? 'NO_MESSAGE_AVAILABLE', token: enginePrincipal.queueToken })
-        return {}
     })
 
 
@@ -133,7 +112,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        await markJobAsCompleted(runWithoutSteps.status, runWithoutSteps.id, request.principal as unknown as EnginePrincipal, runDetails.error, request.log)
         const shouldMarkParentAsFailed = runWithoutSteps.failParentOnFailure && !isNil(runWithoutSteps.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(runWithoutSteps.status)
         if (shouldMarkParentAsFailed) {
             await markParentRunAsFailed({
@@ -278,23 +256,6 @@ async function getFlow(projectId: string, request: GetFlowVersionForWorkerReques
     })
 }
 
-async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePrincipal: EnginePrincipal, error: unknown, log: FastifyBaseLogger): Promise<void> {
-    switch (status) {
-        case FlowRunStatus.FAILED:
-        case FlowRunStatus.TIMEOUT:
-        case FlowRunStatus.PAUSED:
-        case FlowRunStatus.QUOTA_EXCEEDED:
-        case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
-        case FlowRunStatus.SUCCEEDED:
-            await flowConsumer(log).update({ jobId, queueName: QueueName.ONE_TIME, status: JobStatus.COMPLETED, token: enginePrincipal.queueToken!, message: 'Flow succeeded' })
-            break
-        case FlowRunStatus.QUEUED:
-        case FlowRunStatus.RUNNING:
-            break
-        case FlowRunStatus.INTERNAL_ERROR:
-            await flowConsumer(log).update({ jobId, queueName: QueueName.ONE_TIME, status: JobStatus.FAILED, token: enginePrincipal.queueToken!, message: `Internal error reported by engine: ${JSON.stringify(error)}` })
-    }
-}
 
 async function markParentRunAsFailed({
     parentRunId,

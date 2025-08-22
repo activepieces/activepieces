@@ -11,74 +11,80 @@ import { triggerUtils } from '../../trigger/trigger-source/trigger-utils'
 import { QueueManager } from '../queue/queue-manager'
 import { ApMemoryQueue } from './ap-memory-queue'
 
-export const memoryQueues = {
-    [QueueName.ONE_TIME]: new ApMemoryQueue<OneTimeJobData>(),
-    [QueueName.SCHEDULED]: new ApMemoryQueue<ScheduledJobData>(),
-    [QueueName.WEBHOOK]: new ApMemoryQueue<WebhookJobData>(),
-    [QueueName.USERS_INTERACTION]: new ApMemoryQueue<UserInteractionJobData>(),
-    [QueueName.AGENTS]: new ApMemoryQueue<AgentJobData>(),
-}
+export const memoryQueues = (log: FastifyBaseLogger) => ({
+    [QueueName.ONE_TIME]: new ApMemoryQueue<OneTimeJobData>(log, QueueName.ONE_TIME),
+    [QueueName.SCHEDULED]: new ApMemoryQueue<ScheduledJobData>(log, QueueName.SCHEDULED),
+    [QueueName.WEBHOOK]: new ApMemoryQueue<WebhookJobData>(log, QueueName.WEBHOOK),
+    [QueueName.USERS_INTERACTION]: new ApMemoryQueue<UserInteractionJobData>(log, QueueName.USERS_INTERACTION),
+    [QueueName.AGENTS]: new ApMemoryQueue<AgentJobData>(log, QueueName.AGENTS),
+})
 
-export const memoryQueue = (log: FastifyBaseLogger): QueueManager => ({
-    async removeRepeatingJob({ flowVersionId }) {
-        await memoryQueues[QueueName.SCHEDULED].remove(flowVersionId)
-    },
-    async init(): Promise<void> {
-        await renewWebhooks(log)
-        await renewEnabledRepeating(log)
-        await addDelayedRun(log)
-    },
-    async add(params) {
-        const { type, data } = params
-        switch (type) {
-            case JobType.ONE_TIME: {
-                memoryQueues[QueueName.ONE_TIME].add({
-                    id: params.id,
-                    data,
-                })
-                break
-            }
-            case JobType.REPEATING: {
-                memoryQueues[QueueName.SCHEDULED].add({
-                    id: nanoid(),
-                    data,
-                    cronExpression: params.scheduleOptions.cronExpression,
-                    cronTimezone: params.scheduleOptions.timezone,
-                })
-                break
-            }
-            case JobType.DELAYED: {
-                memoryQueues[QueueName.SCHEDULED].add({
-                    id: params.id,
-                    data,
-                    nextFireAtEpochSeconds: dayjs().add(params.delay, 'ms').unix(),
-                })
-                break
-            }
-            case JobType.USERS_INTERACTION: {
-                memoryQueues[QueueName.USERS_INTERACTION].add({
-                    id: params.id,
-                    data,
-                })
-                break
-            }
-            case JobType.WEBHOOK: {
-                memoryQueues[QueueName.WEBHOOK].add({
-                    id: params.id,
-                    data,
-                })
-                break
-            }
-            case JobType.AGENTS: {
-                memoryQueues[QueueName.AGENTS].add({
-                    id: params.id,
-                    data,
-                })
-                break
+export const memoryQueue = (log: FastifyBaseLogger): QueueManager => {
+    const queues = memoryQueues(log)
+
+    return {
+        async setConcurrency(): Promise<void> {
+        },
+        async removeRepeatingJob({ flowVersionId }) {
+            await queues[QueueName.SCHEDULED].remove(flowVersionId)
+        },
+        async init(): Promise<void> {
+            await renewWebhooks(log)
+            await renewEnabledRepeating(log)
+            await addDelayedRun(log)
+        },
+        async add(params) {
+            const { type, data } = params
+            switch (type) {
+                case JobType.ONE_TIME: {
+                    queues[QueueName.ONE_TIME].add({
+                        id: params.id,
+                        data,
+                    })
+                    break
+                }
+                case JobType.REPEATING: {
+                    queues[QueueName.SCHEDULED].add({
+                        id: nanoid(),
+                        data,
+                        cronExpression: params.scheduleOptions.cronExpression,
+                        cronTimezone: params.scheduleOptions.timezone,
+                    })
+                    break
+                }
+                case JobType.DELAYED: {
+                    queues[QueueName.SCHEDULED].add({
+                        id: params.id,
+                        data,
+                        nextFireAtEpochSeconds: dayjs().add(params.delay, 'ms').unix(),
+                    })
+                    break
+                }
+                case JobType.USERS_INTERACTION: {
+                    queues[QueueName.USERS_INTERACTION].add({
+                        id: params.id,
+                        data,
+                    })
+                    break
+                }
+                case JobType.WEBHOOK: {
+                    queues[QueueName.WEBHOOK].add({
+                        id: params.id,
+                        data,
+                    })
+                    break
+                }
+                case JobType.AGENTS: {
+                    queues[QueueName.AGENTS].add({
+                        id: params.id,
+                        data,
+                    })
+                    break
+                }
             }
         }
-    },
-})
+    }
+}
 
 type FlowWithRenewWebhook = {
     flow: PopulatedFlow
@@ -117,7 +123,7 @@ async function addDelayedRun(log: FastifyBaseLogger): Promise<void> {
                     progressUpdateType: delayPauseMetadata.progressUpdateType ?? ProgressUpdateType.NONE,
                 },
                 delay,
-            }).catch((e) => log.error(e, '[MemoryQueue#init] add'))
+            }).catch((e: Error) => log.error(e, '[MemoryQueue#init] add'))
         }
     })
 }
@@ -143,7 +149,7 @@ async function renewEnabledRepeating(log: FastifyBaseLogger): Promise<void> {
                 cronExpression: flow.triggerSource!.schedule!.cronExpression,
                 timezone: flow.triggerSource!.schedule!.timezone,
             },
-        }).catch((e) => log.error(e, '[MemoryQueue#init] add'))
+        }).catch((e: Error) => log.error(e, '[MemoryQueue#init] add'))
     })
 }
 
@@ -171,7 +177,7 @@ async function renewWebhooks(log: FastifyBaseLogger): Promise<void> {
                         trigger,
                         flowId: flow.id,
                     },
-                    'Piece not found for trigger',
+                        'Piece not found for trigger',
                     )
                     return null
                 }
@@ -206,6 +212,6 @@ async function renewWebhooks(log: FastifyBaseLogger): Promise<void> {
             scheduleOptions: {
                 ...scheduleOptions,
             },
-        }).catch((e) => log.error(e, '[MemoryQueue#init] add'))
+        }).catch((e: Error) => log.error(e, '[MemoryQueue#init] add'))
     })
 }

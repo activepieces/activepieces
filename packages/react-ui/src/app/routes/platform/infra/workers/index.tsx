@@ -26,6 +26,7 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
     created: '2024-11-23T18:51:30.000Z',
     updated: dayjs().subtract(10, 'seconds').toISOString(),
     information: {
+      workerId: 'hbAcAzqbOEQLzvIi6PMCF',
       diskInfo: {
         total: 337374281728,
         free: 220669583360,
@@ -49,6 +50,7 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
     created: '2024-11-23T19:12:45.000Z',
     updated: dayjs().subtract(1, 'minute').toISOString(),
     information: {
+      workerId: 'kpMnBxRtYuWvZsQi9NLCJ',
       diskInfo: {
         total: 536870912000,
         free: 322122547200,

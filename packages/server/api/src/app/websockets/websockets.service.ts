@@ -3,8 +3,9 @@ import { ActivepiecesError, ErrorCode, Principal, PrincipalType, WebsocketServer
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
+import { app } from '../server'
 
-export type WebsocketListener<T> = (socket: Socket) => (data: T, principal: Principal) => Promise<void>
+export type WebsocketListener<T> = (socket: Socket) => (data: T, principal: Principal, callback?: (data: unknown) => void) => Promise<void>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ListenerMap = Partial<Record<WebsocketServerEvent, WebsocketListener<any>>>
@@ -25,11 +26,21 @@ export const websocketService = {
         const castedType = type as keyof typeof listener
         switch (type) {
             case PrincipalType.USER: {
+                log.info({
+                    message: 'User connected',
+                    userId: principal.id,
+                    projectId: principal.projectId,
+                })
                 await socket.join(principal.projectId)
                 break
             }
             case PrincipalType.WORKER: {
-                await socket.join(principal.id)
+                const workerId = socket.handshake.auth.workerId
+                log.info({
+                    message: 'Worker connected',
+                    workerId,
+                })
+                await socket.join(workerId)
                 break
             }
             default: {
@@ -42,11 +53,14 @@ export const websocketService = {
             }
         }
         for (const [event, handler] of Object.entries(listener[castedType])) {
-            socket.on(event, async (data) => rejectedPromiseHandler(handler(socket)(data, principal), log))
+            socket.on(event, async (data, callback) => rejectedPromiseHandler(handler(socket)(data, principal, callback), log))
         }
         for (const handler of Object.values(listener[castedType][WebsocketServerEvent.CONNECT] ?? {})) {
             handler(socket)
         }
+    },
+    to(workerId: string): Socket {
+        return app!.io.to(workerId)
     },
     async onDisconnect(socket: Socket): Promise<void> {
         const principal = await websocketService.verifyPrincipal(socket)

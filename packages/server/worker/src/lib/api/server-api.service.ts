@@ -1,5 +1,5 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { exceptionHandler, GetRunForWorkerRequest, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, Agent, AgentRun, CreateTriggerRunRequestBody, ErrorCode, Field, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PlatformUsageMetric, PopulatedFlow, Record, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRecordRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -17,33 +17,6 @@ export const workerApiService = (workerToken: string) => {
     const client = new ApAxiosClient(apiUrl, workerToken)
 
     return {
-        async heartbeat(): Promise<WorkerMachineHealthcheckResponse | null> {
-            const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
-            try {
-                return await client.post<WorkerMachineHealthcheckResponse>('/v1/worker-machines/heartbeat', request)
-            }
-            catch (error) {
-                if (ApAxiosClient.isApAxiosError(error) && error.error.code === 'ECONNREFUSED') {
-                    return null
-                }
-                throw error
-            }
-        },
-        async poll(queueName: QueueName): Promise<ApQueueJob | null> {
-            try {
-                const request: PollJobRequest = {
-                    queueName,
-                }
-                const response = await client.get<ApQueueJob | null>('/v1/workers/poll', {
-                    params: request,
-                })
-                return response
-            }
-            catch (error) {
-                await new Promise((resolve) => setTimeout(resolve, 2000))
-                return null
-            }
-        },
         async resumeRun(request: ResumeRunRequest): Promise<void> {
             await client.post<unknown>('/v1/workers/resume-run', request)
         },
@@ -111,9 +84,6 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
             return client.get<Buffer>(`/v1/engine/files/${fileId}`, {
                 responseType: 'arraybuffer',
             })
-        },
-        async updateJobStatus(request: UpdateJobRequest): Promise<void> {
-            await client.post('/v1/engine/update-job', request)
         },
         async getRun(request: GetRunForWorkerRequest): Promise<FlowRun> {
             return client.get<FlowRun>('/v1/engine/runs/' + request.runId, {})

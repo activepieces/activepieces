@@ -12,6 +12,7 @@ let settings: WorkerMachineHealthcheckResponse | undefined
 const workerId = apId()
 
 export const workerMachine = {
+    getWorkerId: () => workerId,
     async getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
 
@@ -52,6 +53,7 @@ export const workerMachine = {
                 version: await apVersionUtil.getCurrentRelease(),
             },
             workerId,
+            sandboxUsed: 0,
         }
     },
     init: async (_settings: WorkerMachineHealthcheckResponse) => {

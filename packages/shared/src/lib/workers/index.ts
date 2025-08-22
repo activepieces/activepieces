@@ -15,7 +15,7 @@ export const MachineInformation = Type.Object({
         used: Type.Number(),
         percentage: Type.Number(),
     }),
-    workerId: Type.Optional(Type.String()),
+    workerId: Type.String(),
     workerProps: Type.Record(Type.String(), Type.String()),
     ramUsagePercentage: Type.Number(),
     totalAvailableRamInBytes: Type.Number(),
@@ -37,7 +37,19 @@ export const WorkerMachineWithStatus = Type.Composite([WorkerMachine, Type.Objec
 
 export type WorkerMachineWithStatus = Static<typeof WorkerMachineWithStatus>
 
-export const WorkerMachineHealthcheckRequest = MachineInformation
+export const ConsumeJobRequest = Type.Object({
+    jobId: Type.String(),
+    queueName: Type.String(),
+    jobData: Type.Any(),
+    attempsStarted: Type.Number(),
+    engineToken: Type.String(),
+})
+
+export type ConsumeJobRequest = Static<typeof ConsumeJobRequest>
+
+export const WorkerMachineHealthcheckRequest = Type.Composite([MachineInformation, Type.Object({
+    sandboxUsed: Type.Number(),
+})])
 
 export type WorkerMachineHealthcheckRequest = Static<typeof WorkerMachineHealthcheckRequest>
 export const WorkerMachineHealthcheckResponse = Type.Object({

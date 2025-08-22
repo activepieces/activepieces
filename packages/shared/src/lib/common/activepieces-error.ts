@@ -83,6 +83,7 @@ export type ApErrorParams =
     | ErrorUpdatingSubscriptionParams
     | TriggerExecutionFailedParams
     | SubflowFailedParams
+    | MachineNotAvailableParams
     
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -481,7 +482,12 @@ export type SubflowFailedParams = BaseErrorParams<ErrorCode.SUBFLOW_FAILED, {
     message: string
 }>
 
+export type MachineNotAvailableParams = BaseErrorParams<ErrorCode.MACHINE_NOT_AVAILABLE, {
+    resourceType: string
+}>
+
 export enum ErrorCode {
+    MACHINE_NOT_AVAILABLE = 'MACHINE_NOT_AVAILABLE',
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
     ERROR_UPDATING_SUBSCRIPTION = 'ERROR_UPDATING_SUBSCRIPTION',

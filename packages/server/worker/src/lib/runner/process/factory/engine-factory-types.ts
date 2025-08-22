@@ -2,9 +2,7 @@ import { ChildProcess } from 'child_process'
 
 
 export type EngineProcess = {
-
     create: (params: CreateEngineParams) => Promise<ChildProcess>
-
 }
 
 export type EngineProcessOptions =  {

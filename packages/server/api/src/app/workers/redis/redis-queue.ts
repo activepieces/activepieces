@@ -43,6 +43,10 @@ const jobTypeToDefaultJobOptions: Record<QueueName, DefaultJobOptions> = {
 }
 
 export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
+    async setConcurrency(queueName: QueueName, concurrency: number): Promise<void> {
+        const queue = await ensureQueueExists(queueName)
+        await queue.setGlobalConcurrency(concurrency)
+    },
     async init(): Promise<void> {
         await redisRateLimiter(log).init()
         const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName))
