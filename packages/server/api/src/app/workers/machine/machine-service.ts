@@ -13,10 +13,10 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { QueueMode, system } from '../../helper/system/system'
 import { app } from '../../server'
+import { jobQueue } from '../queue'
 import { WorkerMachineEntity } from './machine-entity'
 import { distributedRouting } from './routing/distributed-routing'
 import { simpleRouting } from './routing/simple-routing'
-import { jobQueue } from '../queue'
 
 const machineRouting = system.getOrThrow(AppSystemProp.QUEUE_MODE) === QueueMode.MEMORY ? simpleRouting : distributedRouting
 const workerRepo = repoFactory(WorkerMachineEntity)
