@@ -1,8 +1,9 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { rejectedPromiseHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     AIUsageFeature,
     createAIModel,
     EngineResponseStatus,
+    ExecuteActionResponse,
     isNil,
     McpFlowTool,
     McpPieceTool,
@@ -30,7 +31,9 @@ import { webhookService } from '../../webhooks/webhook.service'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
 import { mcpService } from '../mcp-service'
 import { mcpUtils } from '../mcp-utils'
-import { toolExecutor } from '../tool/tool-execution'
+import { toolInputsResolver } from '../tool/tool-inputs-resolver'
+import { EngineHelperResponse } from 'packages/server/worker/src/lib/runner/engine-runner-types'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 
 
 export async function createMcpServer({
@@ -135,7 +138,7 @@ async function addPieceToServer(
                 
                 const auth = !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
                 
-                const { result, parsedInputs } = await toolExecutor.execute({
+                const parsedInputs = await toolInputsResolver.resolve({
                     auth,
                     userInstructions: params.instructions,
                     actionName: toolPieceMetadata.actionName,
@@ -144,6 +147,19 @@ async function addPieceToServer(
                     aiModel,
                     projectId,
                     platformId,
+                    preDefinedInputs: {},
+                })
+
+                const result = await userInteractionWatcher(logger)
+                    .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
+                    jobType: UserInteractionJobType.EXECUTE_TOOL,
+                    actionName: toolPieceMetadata.actionName,
+                    pieceName: toolPieceMetadata.pieceName,
+                    pieceVersion: toolPieceMetadata.pieceVersion,
+                    packageType: pieceMetadata.packageType,
+                    pieceType: pieceMetadata.pieceType,
+                    input: parsedInputs,
+                    projectId,
                 })
 
                 trackToolCall({ mcpId: mcpTool.mcpId, toolName: toolActionName, projectId, logger })

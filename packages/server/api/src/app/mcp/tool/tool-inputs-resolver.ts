@@ -1,25 +1,21 @@
 import { ActionBase } from '@activepieces/pieces-framework'
-import { UserInteractionJobType } from '@activepieces/server-shared'
 import {
-    ExecuteActionResponse,
     isNil,
     PiecePackage,
     spreadIfDefined,
 } from '@activepieces/shared'
 import { LanguageModelV2 } from '@ai-sdk/provider'
 import { type Schema as AiSchema, generateObject } from 'ai'
-import { EngineHelperResponse } from 'server-worker'
 import { z, ZodRawShape } from 'zod'
 import { system } from '../../helper/system/system'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/piece-metadata-service'
-import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { toolUtils } from './tool-utils'
 
 const logger = system.globalLogger()
 
-export const toolExecutor = {
-    async execute(params: ExecuteToolParams): Promise<ExecuteToolResult> {
-        const { pieceName, pieceVersion, actionName, auth, userInstructions, projectId, platformId, aiModel } = params
+export const toolInputsResolver = {
+    async resolve(params: ResolveToolInputsParams): Promise<Record<string, unknown>> {
+        const { pieceName, pieceVersion, actionName, auth, userInstructions, projectId, platformId, aiModel, preDefinedInputs } = params
 
         const pieceMetadata = await pieceMetadataService(logger).getOrThrow({
             name: pieceName,
@@ -39,28 +35,15 @@ export const toolExecutor = {
             },
         )
 
-        const parsedInputs = await extractActionParametersFromUserInstructions({
+        return await extractActionParametersFromUserInstructions({
             actionMetadata,
             auth,
             userInstructions,
             piecePackage,
             projectId,
             aiModel,
+            preDefinedInputs,
         })
-
-        const result = await userInteractionWatcher(logger)
-            .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
-            jobType: UserInteractionJobType.EXECUTE_TOOL,
-            actionName,
-            pieceName,
-            pieceVersion,
-            packageType: piecePackage.packageType,
-            pieceType: piecePackage.pieceType,
-            input: parsedInputs,
-            projectId,
-        })
-
-        return { result, parsedInputs }
     },
 }
 
@@ -71,6 +54,7 @@ async function extractActionParametersFromUserInstructions({
     piecePackage,
     projectId,
     aiModel,
+    preDefinedInputs,
 }: ExtractActionParametersParams): Promise<Record<string, unknown>> {
     const actionProperties = actionMetadata.props
     const depthToPropertyMap = toolUtils.sortPropertiesByDependencies(actionProperties)
@@ -80,12 +64,15 @@ async function extractActionParametersFromUserInstructions({
             const accumulatedParameters = {
                 ...(await accumulatedParametersPromise),
                 ...spreadIfDefined('auth', auth),
+                ...preDefinedInputs,
             }
+            console.log('HAHAHAHA accumulatedParameters', JSON.stringify(accumulatedParameters, null, 2))
 
             const parameterExtractionPrompt = toolUtils.buildParameterExtractionPrompt({
-                propertyNames,
+                propertyNames: propertyNames.filter(propertyName => !preDefinedInputs[propertyName]),
                 userInstructions,
             })
+            console.log('HAHAHAHA parameterExtractionPrompt', parameterExtractionPrompt)
 
             const propertySchemas = (await Promise.all(propertyNames.map(async propertyName => {
                 const result = await toolUtils.buildZodSchemaForPieceProperty({
@@ -105,6 +92,8 @@ async function extractActionParametersFromUserInstructions({
                     .map(({ propertyName, schema }) => [propertyName, schema!]),
             )
 
+            console.log('HAHAHAHA schemaObject', JSON.stringify(schemaObject, null, 2))
+
             const propertySchemaValues = propertySchemas.map(({ value }) => value).filter(value => value !== null)
 
             try {
@@ -113,14 +102,20 @@ async function extractActionParametersFromUserInstructions({
                     schema: z.object(schemaObject) as unknown as AiSchema,
                     prompt: toolUtils.buildFinalExtractionPrompt({
                         parameterExtractionPrompt,
-                        propertySchemaValues,
+                        propertySchemaValues: {
+                            ...propertySchemaValues,
+                            ...preDefinedInputs,
+                        },
                     }),
                 })
+
+                console.log('HAHAHAHA extractedParameters', JSON.stringify(extractedParameters, null, 2))
 
                 return {
                     ...accumulatedParameters,
                     ...(extractedParameters as Record<string, unknown>),
                     ...spreadIfDefined('auth', auth),
+                    ...preDefinedInputs,
                 }
             }
             catch (error) {
@@ -128,12 +123,13 @@ async function extractActionParametersFromUserInstructions({
                 throw error
             }
         }, 
-        Promise.resolve({ ...spreadIfDefined('auth', auth) }),
+        Promise.resolve({ ...spreadIfDefined('auth', auth), ...preDefinedInputs }),
     )
 
     const nonNullExtractedParameters = Object.fromEntries(
         Object.entries(extractedParameters).filter(([_, value]) => !isNil(value)),
     )
+    console.log('HAHAHAHA nonNullExtractedParameters', JSON.stringify(nonNullExtractedParameters, null, 2))
     return nonNullExtractedParameters
 }  
 
@@ -144,9 +140,10 @@ type ExtractActionParametersParams = {
     auth: string | undefined
     projectId: string
     aiModel: LanguageModelV2
+    preDefinedInputs: Record<string, unknown>
 }
 
-export type ExecuteToolParams = {
+export type ResolveToolInputsParams = {
     pieceName: string
     pieceVersion: string
     actionName: string
@@ -155,9 +152,5 @@ export type ExecuteToolParams = {
     projectId: string
     platformId: string
     aiModel: LanguageModelV2
-}
-
-export type ExecuteToolResult = {
-    result: EngineHelperResponse<ExecuteActionResponse>
-    parsedInputs: Record<string, unknown>
+    preDefinedInputs: Record<string, unknown>
 }

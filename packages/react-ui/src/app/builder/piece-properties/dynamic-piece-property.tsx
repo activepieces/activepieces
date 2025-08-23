@@ -71,8 +71,7 @@ const DynamicPropertiesImplementation = React.memo(
       });
 
       if (
-        !isFirstRender.current &&
-        !deepEqual(previousValues.current, refresherValues)
+        !isFirstRender.current
       ) {
         // the field state won't be cleared if you only unset the parent prop value
         if (propertyMap) {

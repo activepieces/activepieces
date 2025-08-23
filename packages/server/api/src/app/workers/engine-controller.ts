@@ -1,5 +1,5 @@
 import { apAxios, AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, createAIModel, CreateTriggerRunRequestBody, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, ResolveToolInputsRequest, SendFlowResponseRequest, SUPPORTED_AI_PROVIDERS, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent, AIUsageFeature } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -16,6 +16,9 @@ import { triggerRunService } from '../trigger/trigger-run/trigger-run.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
+import { toolInputsResolver } from '../mcp/tool/tool-inputs-resolver'
+import { createOpenAI, openai } from '@ai-sdk/openai'
+import { accessTokenManager } from '../authentication/lib/access-token-manager'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -223,7 +226,52 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             .send(data)
     })
 
+    app.post('/resolve-tool-inputs', ResolveToolInputsParams, async (request) => {
+        const { pieceName, pieceVersion, actionName, auth, preDefinedInputs, propertiesInstructions } = request.body
+        const supportedProvider = SUPPORTED_AI_PROVIDERS.find(p => p.provider === 'openai');
+        const modelInstance = supportedProvider?.languageModels.find(m => m.displayName === 'GPT-4.1');
 
+        if (isNil(modelInstance)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
+                params: {
+                    provider: 'openai',
+                    model: 'gpt-4.1',
+                },
+            })
+        }
+
+        const baseURL = await domainHelper.getPublicApiUrl({
+            path: '/v1/ai-providers/proxy/openai',
+            platformId: request.principal.platform.id,
+        })
+        const engineToken = await accessTokenManager.generateEngineToken({
+            platformId: request.principal.platform.id,
+            projectId: request.principal.projectId,
+        })
+
+        const model = createAIModel({
+            providerName: 'openai',
+            modelInstance: openai('gpt-4.1'),
+            engineToken,
+            baseURL,
+            metadata: {
+                feature: AIUsageFeature.TEXT_AI,
+            },
+        })
+
+        return await toolInputsResolver.resolve({
+            pieceName,
+            pieceVersion,
+            actionName,
+            auth,
+            userInstructions: propertiesInstructions ? JSON.stringify(propertiesInstructions) : '',
+            projectId: request.principal.projectId,
+            platformId: request.principal.platform.id,
+            aiModel: model,
+            preDefinedInputs,
+        })
+    })
 
 }
 
@@ -401,5 +449,14 @@ const UpdateFlowResponseParams = {
     },
     schema: {
         body: SendFlowResponseRequest,
+    },
+}
+
+const ResolveToolInputsParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {
+        body: ResolveToolInputsRequest,
     },
 }
