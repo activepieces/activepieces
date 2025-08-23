@@ -10,6 +10,7 @@ import { webhookExecutor } from './executors/webhook-job-executor'
 import { engineRunner } from './runner'
 import { engineRunnerSocket } from './runner/engine-runner-socket'
 import { workerMachine } from './utils/machine'
+import { inspect } from 'node:util';
 
 let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
@@ -78,10 +79,9 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
                     message: 'Failed to consume job',
                     error,
                 })
-                const errorMessage = error instanceof Error ? error.message : String(error)
                 const response: ConsumeJobResponse = {
                     success: false,
-                    message: errorMessage,
+                    message: inspect(error),
                 }
                 callback(response)
             }
