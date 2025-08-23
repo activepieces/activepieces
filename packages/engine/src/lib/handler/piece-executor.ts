@@ -13,6 +13,7 @@ import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
+import { toolInputsResolver } from '../services/tool-inputs-resolver'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -52,13 +53,46 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             executionState,
         })
 
+        const autoPropertiesKeys = Object.entries(action.settings.inputUiInfo?.customizedInputs ?? {})
+            .filter(([_, value]) => value !== 'Manually')
+            .map(([key]) => key)
+        
+        const promptPropertiesKeys = Object.entries(action.settings.inputUiInfo?.customizedInputs ?? {})
+            .filter(([_, value]) => value !== 'Auto' && value !== 'Manually')
+            .map(([key]) => key)
+
+        const autoPropertiesValues = Object.fromEntries(
+            autoPropertiesKeys.map(key => [key, undefined])
+        )
+
+        const propertiesInstructions = Object.fromEntries(
+            promptPropertiesKeys.map(key => [key, resolvedInput[key]])
+        )
+
         stepOutput.input = censoredInput
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.inputUiInfo?.schema as Record<string, InputPropertyMap> | undefined)
+        const preDefinedInputs = {
+            ...resolvedInput,
+            ...(action.settings.input['auth'] ? { auth: action.settings.input['auth'] } : {}),
+            previousStepsResults: executionState.steps,
+            ...autoPropertiesValues,
+        }
+
+        const aiProccessedInput = await toolInputsResolver.resolve(constants, {
+            pieceName: action.settings.pieceName,
+            pieceVersion: action.settings.pieceVersion,
+            actionName: action.settings.actionName,
+            preDefinedInputs,
+            propertiesInstructions,
+        })
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators({
+            ...aiProccessedInput,
+            ...(resolvedInput['auth'] ? { auth: resolvedInput['auth'] } : {}),
+        }, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.inputUiInfo?.schema as Record<string, InputPropertyMap> | undefined)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors, null, 2))
         }
-
 
         const params: {
             hookResponse: HookResponse

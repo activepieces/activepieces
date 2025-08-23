@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Calendar, SquareFunction, File } from 'lucide-react';
+import { Calendar, SquareFunction, File, MoreHorizontal, Settings, Sparkles } from 'lucide-react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
 import { FormItem, FormLabel } from '@/components/ui/form';
@@ -16,6 +16,8 @@ import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
 import { TextInputWithMentions } from './text-input-with-mentions';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 type inputNameLiteral = `settings.input.${string}`;
 
@@ -49,11 +51,12 @@ const AutoFormFieldWrapper = ({
   field,
 }: AutoFormFieldWrapperProps) => {
   const form = useFormContext<FlowAction | FlowTrigger>();
-  const dynamicInputModeToggled =
-    form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyName] ===
-    true;
+  const inputMode = form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyName] || 'Manually';
+  const isManuallyMode = inputMode === 'Manually';
+  const isDynamicMode = inputMode === 'Dynamic';
+  const isAutoMode = inputMode === 'Auto';
 
-  function handleDynamicValueToggleChange(mode: boolean) {
+  function handleInputModeChange(mode: 'Manually' | 'Dynamic' | 'Auto') {
     const newCustomizedInputs = {
       ...form.getValues().settings?.inputUiInfo?.customizedInputs,
       [propertyName]: mode,
@@ -66,7 +69,7 @@ const AutoFormFieldWrapper = ({
       },
     );
     if (isInputNameLiteral(inputName)) {
-      form.setValue(inputName, property.defaultValue ?? null, {
+      form.setValue(inputName, null, {
         shouldValidate: true,
       });
     } else {
@@ -75,12 +78,13 @@ const AutoFormFieldWrapper = ({
       );
     }
   }
+
   const isArrayProperty = property.type === PropertyType.ARRAY;
 
   return (
     <FormItem className="flex flex-col gap-1">
-      <FormLabel className="flex items-center gap-1 ">
-        {placeBeforeLabelText && !dynamicInputModeToggled && children}
+      <FormLabel className="flex items-center gap-1 " skipError={isAutoMode}>
+        {placeBeforeLabelText && isManuallyMode && children}
         {(property.type === PropertyType.FILE ||
           property.type === PropertyType.DATE_TIME) && (
           <Tooltip>
@@ -107,32 +111,49 @@ const AutoFormFieldWrapper = ({
         </div>
 
         <span className="grow"></span>
-        {allowDynamicValues && (
-          <div className="flex gap-2 items-center">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Toggle
-                  pressed={dynamicInputModeToggled}
-                  onPressedChange={(e) => handleDynamicValueToggleChange(e)}
-                  disabled={disabled}
-                >
-                  <SquareFunction
-                    className={cn('size-5', {
-                      'text-foreground': dynamicInputModeToggled,
-                      'text-muted-foreground': !dynamicInputModeToggled,
-                    })}
-                  />
-                </Toggle>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="bg-background">
-                {t('Dynamic value')}
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        )}
+        <div className="flex gap-2 items-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 px-3">
+                <span>
+                  {isManuallyMode && <Settings className="w-4 h-4" />}
+                  {allowDynamicValues && isDynamicMode && <SquareFunction className="w-4 h-4" />}
+                  {isAutoMode && <Sparkles className="w-4 h-4" />}
+                </span>
+                {inputMode}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>{t('Input Mode')}</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => handleInputModeChange('Manually')}>
+                <Settings className="w-4 h-4 mr-2" />
+                <div>
+                  <div className="font-medium">{t('Manually')}</div>
+                  <div className="text-xs text-muted-foreground">{t('Enter the value for this field manually')}</div>
+                </div>
+              </DropdownMenuItem>
+              {allowDynamicValues && (
+                <DropdownMenuItem onClick={() => handleInputModeChange('Dynamic')}>
+                  <SquareFunction className="w-4 h-4 mr-2" />
+                  <div>
+                    <div className="font-medium">{t('Dynamic')}</div>
+                    <div className="text-xs text-muted-foreground">{t('Use dynamic values from previous steps')}</div>
+                  </div>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => handleInputModeChange('Auto')}>
+                <Sparkles className="w-4 h-4 mr-2" />
+                <div>
+                  <div className="font-medium">{t('Auto')}</div>
+                  <div className="text-xs text-muted-foreground">{t('AI will fill out the field using the context of the previous steps')}</div>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </FormLabel>
 
-      {dynamicInputModeToggled && !isArrayProperty && (
+      {isDynamicMode && !isArrayProperty && (
         <TextInputWithMentions
           disabled={disabled}
           onChange={field.onChange}
@@ -140,7 +161,7 @@ const AutoFormFieldWrapper = ({
         />
       )}
 
-      {isArrayProperty && dynamicInputModeToggled && (
+      {isArrayProperty && isDynamicMode && (
         <ArrayPiecePropertyInInlineItemMode
           disabled={disabled}
           arrayProperties={property.properties}
@@ -150,7 +171,7 @@ const AutoFormFieldWrapper = ({
         />
       )}
 
-      {!placeBeforeLabelText && !dynamicInputModeToggled && (
+      {!placeBeforeLabelText && isManuallyMode && (
         <div>{children}</div>
       )}
       {property.description && !hideDescription && (
