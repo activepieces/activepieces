@@ -239,7 +239,7 @@ export async function execute(operationType: EngineOperationType, operation: Eng
         console.error(e)
         return {
             status: EngineResponseStatus.ERROR,
-            response: utils.tryParseJson((e as Error).message),
+            response: utils.tryParseError(e as Error),
         }
     }
 }

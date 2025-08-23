@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
 import { createConnectionService } from './services/connections.service'
+import { inspect } from 'node:util'
 
 export const utils = {
     async parseJsonFile<T>(filePath: string): Promise<T> {
@@ -14,12 +15,12 @@ export const utils = {
     },
 
 
-    tryParseJson(value: string): unknown {
+    tryParseError(value: Error): unknown {
         try {
-            return JSON.parse(value)
+            return JSON.parse(value.message)
         }
         catch (e) {
-            return value
+            return inspect(value)
         }
     },
     createConnectionManager(params: CreateConnectionManagerParams): ConnectionsManager {
