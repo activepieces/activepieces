@@ -193,7 +193,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(appEventRoutingModule)
     await app.register(authenticationModule)
     await app.register(copilotModule),
-    await app.register(triggerModule)
+        await app.register(triggerModule)
     await app.register(platformModule)
     await app.register(humanInputModule)
     await app.register(tagsModule)
@@ -215,7 +215,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(todoActivityModule)
     await app.register(agentRunsModule)
     await app.register(solutionsModule)
-    
+
     app.get(
         '/redirect',
         async (
@@ -351,7 +351,9 @@ async function getAdapter() {
         case QueueMode.REDIS: {
             const sub = getRedisConnection().duplicate()
             const pub = getRedisConnection().duplicate()
-            return createAdapter(pub, sub)
+            return createAdapter(pub, sub, {
+                requestsTimeout: 30000
+            })
         }
     }
 }
