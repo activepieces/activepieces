@@ -34,7 +34,7 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
         connection: createRedisClient(),
         lockDuration: dayjs.duration(lockDuration, 'milliseconds').add(3, 'minutes').asMilliseconds(),
         telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
-        concurrency: 50,
+        concurrency: undefined,
     })
 
     await consumer[queueName].waitUntilReady()
