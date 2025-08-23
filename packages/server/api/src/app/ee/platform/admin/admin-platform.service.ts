@@ -30,8 +30,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
         const strategy = FlowRetryStrategy.FROM_FAILED_STEP
 
         let query = flowRunRepo().createQueryBuilder('flow_run').where({
-            environment: RunEnvironment.PRODUCTION,
-            status: In([FlowRunStatus.PAUSED, FlowRunStatus.FAILED, FlowRunStatus.INTERNAL_ERROR, FlowRunStatus.TIMEOUT, FlowRunStatus.QUOTA_EXCEEDED]),
+            status: In([FlowRunStatus.INTERNAL_ERROR]),
         })
         if (!isNil(runIds)) {
             query = query.andWhere({

@@ -60,7 +60,8 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                     message: 'Consume job response',
                     response,
                 })
-                if (!response?.[0]?.success) {
+                const isSuccess = response?.[0]?.success
+                if (!isSuccess) {
                     throw new Error(response?.[0]?.message ?? 'Unknown error')
                 }
             }
