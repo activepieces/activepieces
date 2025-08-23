@@ -38,7 +38,6 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
     })
 
     await consumer[queueName].waitUntilReady()
-    await consumer[queueName].startStalledCheckTimer()
     return consumer[queueName]
 }
 
