@@ -1,7 +1,5 @@
 import { api } from '@/lib/api';
 import {
-  AgentRun,
-  AutomateTableRequest,
   CreateTableRequest,
   ExportTableResponse,
   ListTablesRequest,
@@ -29,9 +27,6 @@ export const tablesApi = {
 
   export(id: string): Promise<ExportTableResponse> {
     return api.get<ExportTableResponse>(`/v1/tables/${id}/export`);
-  },
-  automate(id: string, request: AutomateTableRequest): Promise<AgentRun[]> {
-    return api.post<AgentRun[]>(`/v1/tables/${id}/automate`, request);
   },
   update(id: string, request: UpdateTableRequest): Promise<Table> {
     return api.post<Table>(`/v1/tables/${id}`, request);

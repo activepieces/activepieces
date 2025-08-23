@@ -10,9 +10,7 @@
   "Max Tokens": "Max. Token",
   "Web Search": "Websuche",
   "Web Search Options": "Websuche Optionen",
-  "Include Sources": "Quellen einbeziehen",
   "Text": "Text",
   "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Kontrolliert die Kreativität der KI-Reaktion. Ein höherer Wert macht die KI kreativer und ein niedrigerer Wert macht sie deterministischer.",
-  "Whether to use web search to find information for the AI to use in its response.": "Ob Websuche verwendet werden soll, um Informationen für die KI in ihrer Antwort zu finden.",
-  "Whether to include the sources in the response. Useful for getting web search details (e.g. search queries, searched URLs, etc).": "Gibt an, ob die Quellen in die Antwort aufgenommen werden sollen. Nützlich für das Abrufen von Web-Suchdetails (z.B. Suchabfragen, durchsuchte URLs, etc)."
+  "Whether to use web search to find information for the AI to use in its response.": "Ob Websuche verwendet werden soll, um Informationen für die KI in ihrer Antwort zu finden."
 }
