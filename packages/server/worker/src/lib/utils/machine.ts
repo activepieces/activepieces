@@ -98,6 +98,19 @@ export const workerMachine = {
         const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
         return appendSlashAndApi(replaceLocalhost(url))
     },
+    getSocketUrlAndPath: (): { url: string, path: string } => {
+        if (environmentVariables.hasAppModules()) {
+            return {
+                url: 'http://127.0.0.1:3000/',
+                path: '/socket.io',
+            }
+        }
+        const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
+        return {
+            url: removeTrailingSlash(replaceLocalhost(url)),
+            path: '/api/socket.io',
+        }
+    },
     getPublicApiUrl: (): string => {
         return appendSlashAndApi(replaceLocalhost(getPublicUrl()))
     },
@@ -117,6 +130,10 @@ function replaceLocalhost(urlString: string): string {
         url.hostname = '127.0.0.1'
     }
     return url.toString()
+}
+
+function removeTrailingSlash(url: string): string {
+    return url.replace(/\/$/, '')
 }
 
 function appendSlashAndApi(url: string): string {

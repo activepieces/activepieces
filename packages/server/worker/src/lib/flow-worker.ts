@@ -22,9 +22,10 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
 
         workerToken = token
 
-        socket = io(workerMachine.getInternalApiUrl(), {
+        const { url, path } = workerMachine.getSocketUrlAndPath()
+        socket = io(url, {
             transports: ['websocket'],
-            path: '/socket.io',
+            path,
             autoConnect: false,
             reconnection: true,
         })
