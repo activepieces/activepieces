@@ -139,6 +139,7 @@ async function handleInternalError(jobData: OneTimeJobData, engineToken: string,
         runId: jobData.runId,
     })
     exceptionHandler.handle(e, log)
+    throw e
 }
 
 export const flowJobExecutor = (log: FastifyBaseLogger) => ({
@@ -165,12 +166,12 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             const { result } = await engineRunner(runLog).executeFlow(engineToken, input)
 
             if (result.status === FlowRunStatus.INTERNAL_ERROR) {
-                await handleInternalError(jobData, engineToken, new ActivepiecesError({
+                throw new ActivepiecesError({
                     code: ErrorCode.ENGINE_OPERATION_FAILURE,
                     params: {
-                        message: result.error?.message ?? 'internal error',
+                        message: result.error?.message ?? 'internal error'
                     },
-                }), log)
+                })
             }
 
         }
@@ -189,7 +190,6 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             }
             else {
                 await handleInternalError(jobData, engineToken, e as Error, log)
-                throw e
             }
         }
     },
