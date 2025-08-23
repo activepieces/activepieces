@@ -1,8 +1,7 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { exceptionHandler, GetRunForWorkerRequest, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, Agent, AgentRun, CreateTriggerRunRequestBody, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PlatformUsageMetric, PopulatedFlow, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
+import { GetRunForWorkerRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { Agent, AgentRun, CreateTriggerRunRequestBody, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PopulatedFlow, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
@@ -17,9 +16,6 @@ export const workerApiService = (workerToken: string) => {
     const client = new ApAxiosClient(apiUrl, workerToken)
 
     return {
-        async resumeRun(request: ResumeRunRequest): Promise<void> {
-            await client.post<unknown>('/v1/workers/resume-run', request)
-        },
         async savePayloadsAsSampleData(request: SavePayloadRequest): Promise<void> {
             await client.post('/v1/workers/save-payloads', request)
         },
@@ -98,22 +94,6 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
             return client.get<PieceMetadataModel>(`/v1/pieces/${encodeURIComponent(name)}`, {
                 params: options,
             })
-        },
-        async checkTaskLimit(): Promise<void> {
-            try {
-                await client.get<unknown>('/v1/engine/check-task-limit', {})
-            }
-            catch (e) {
-                if (ApAxiosClient.isApAxiosError(e) && e.error.response && e.error.response.status === StatusCodes.PAYMENT_REQUIRED) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.QUOTA_EXCEEDED,
-                        params: {
-                            metric: PlatformUsageMetric.TASKS,
-                        },
-                    })
-                }
-                exceptionHandler.handle(e, log)
-            }
         },
         async getFlow(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
             return client.get<PopulatedFlow | null>('/v1/engine/flows', {

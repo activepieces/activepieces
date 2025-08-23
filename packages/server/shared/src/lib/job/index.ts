@@ -71,9 +71,6 @@ export const GetRunForWorkerRequest = Type.Object({
 })
 export type GetRunForWorkerRequest = Static<typeof GetRunForWorkerRequest>
 
-export const ResumeRunRequest = Type.Omit(DelayedJobData, ['flowId'])
-export type ResumeRunRequest = Static<typeof ResumeRunRequest>
-
 
 export function getEngineTimeout(operationType: EngineOperationType, flowTimeoutSandbox: number, triggerTimeoutSandbox: number): number {
     switch (operationType) {

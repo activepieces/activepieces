@@ -1,5 +1,5 @@
-import { AppSystemProp, exceptionHandler, JobType, QueueName } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
+import { AppSystemProp, JobType, QueueName } from '@activepieces/server-shared'
+import { ApId, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'

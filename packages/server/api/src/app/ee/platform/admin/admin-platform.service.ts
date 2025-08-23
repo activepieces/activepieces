@@ -9,7 +9,6 @@ import {
     isNil,
     PlatformRole,
     ProjectId,
-    RunEnvironment,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'

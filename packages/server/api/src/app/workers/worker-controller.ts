@@ -1,5 +1,5 @@
-import { rejectedPromiseHandler, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
-import { ExecutionType, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
+import { rejectedPromiseHandler, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { ExecutionType, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
@@ -86,34 +86,6 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         return Promise.all(createFlowRuns)
     })
 
-    app.post('/resume-run', {
-        config: {
-            allowedPrincipals: [PrincipalType.WORKER],
-        },
-        schema: {
-            body: ResumeRunRequest,
-        },
-    }, async (request) => {
-        const data = request.body
-        const flowRun = await flowRunService(request.log).getOneOrThrow({
-            id: data.runId,
-            projectId: data.projectId,
-        })
-        await flowRunService(request.log).start({
-            payload: null,
-            existingFlowRunId: data.runId,
-            executeTrigger: false,
-            synchronousHandlerId: data.synchronousHandlerId ?? undefined,
-            projectId: data.projectId,
-            flowVersionId: data.flowVersionId,
-            executionType: ExecutionType.RESUME,
-            httpRequestId: data.httpRequestId,
-            environment: RunEnvironment.PRODUCTION,
-            progressUpdateType: data.progressUpdateType ?? ProgressUpdateType.NONE,
-            parentRunId: flowRun.parentRunId,
-            failParentOnFailure: flowRun.failParentOnFailure,
-        })
-    })
 
 }
 

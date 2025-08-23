@@ -20,12 +20,11 @@ export const repeatingJobExecutor = (log: FastifyBaseLogger) => ({
             case RepeatableJobType.EXECUTE_TRIGGER:
                 await consumePieceTrigger(jobId, data, flowVersion, engineToken, workerToken, log)
                 break
-            case RepeatableJobType.DELAYED_FLOW:
-                await consumeDelayedJob(data, workerToken, log)
-                break
             case RepeatableJobType.RENEW_WEBHOOK:
                 await consumeRenewWebhookJob(data, flowVersion, engineToken, log)
                 break
+            case RepeatableJobType.DELAYED_FLOW:
+                throw new Error('Delayed flow is handled by the app')
         }
     },
 })
@@ -63,13 +62,9 @@ const consumeRenewWebhookJob = async (
     })
 }
 
-const consumeDelayedJob = async (data: DelayedJobData, workerToken: string, log: FastifyBaseLogger): Promise<void> => {
-    log.info({ runId: data.runId }, '[FlowQueueConsumer#consumeDelayedJob]')
-    await workerApiService(workerToken).resumeRun(data)
-}
 
 
-type Params = { 
+type Params = {
     jobId: string
     data: ScheduledJobData
     engineToken: string
