@@ -70,7 +70,7 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
             , {
                 connection: createRedisClient(),
                 maxStalledCount: 5,
-                concurrency: 10,
+                concurrency: 5,
             })
         await worker.waitUntilReady()
 
