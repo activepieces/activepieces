@@ -189,6 +189,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             }
             else {
                 await handleInternalError(jobData, engineToken, e as Error, log)
+                throw e
             }
         }
     },
