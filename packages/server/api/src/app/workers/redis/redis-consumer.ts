@@ -1,4 +1,4 @@
-import { AppSystemProp, QueueName } from '@activepieces/server-shared'
+import { AppSystemProp, QueueName, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
@@ -8,6 +8,7 @@ import { createRedisClient } from '../../database/redis-connection'
 import { system } from '../../helper/system/system'
 import { jobConsumer } from '../consumer/job-consumer'
 import { ConsumerManager } from '../consumer/types'
+import { redisRateLimiter } from './redis-rate-limiter'
 
 const consumer: Record<string, Worker> = {}
 
@@ -30,7 +31,10 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
     }
     const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
     const lockDuration = jobConsumer(log).getLockDurationInMs(queueName)
-    consumer[queueName] = new Worker(queueName, (job) => jobConsumer(log).consume(job.id!, queueName, job.data, job.attemptsStarted), {
+    consumer[queueName] = new Worker(queueName, async (job) => {
+        await jobConsumer(log).consume(job.id!, queueName, job.data, job.attemptsStarted)
+        rejectedPromiseHandler(redisRateLimiter(log).onCompleteOrFailedJob(queueName, job), log)
+    }, {
         connection: createRedisClient(),
         lockDuration: dayjs.duration(lockDuration, 'milliseconds').add(3, 'minutes').asMilliseconds(),
         telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
