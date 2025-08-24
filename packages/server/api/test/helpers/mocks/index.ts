@@ -17,7 +17,6 @@ import {
 } from '@activepieces/ee-shared'
 import {
     AiOverageState,
-    AIProvider,
     apId,
     assertNotNullOrUndefined,
     File,
@@ -69,6 +68,7 @@ import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import { PieceTagSchema } from '../../../src/app/tags/pieces/piece-tag.entity'
 import { TagEntitySchema } from '../../../src/app/tags/tag-entity'
+import { AIProvider } from '@activepieces/ai-providers-shared'
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
 
