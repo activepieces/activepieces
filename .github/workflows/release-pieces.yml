@@ -40,6 +40,13 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      
+      - name: publish ai providers shared package
+        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/ai-providers-shared
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+
       - name: publish pieces-common package
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common
         env:
