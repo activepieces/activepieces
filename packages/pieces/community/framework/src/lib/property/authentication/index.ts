@@ -31,7 +31,6 @@ export const PieceAuth = {
       ...request,
       valueSchema: undefined,
       type: PropertyType.SECRET_TEXT,
-      required: true
     } as unknown as R extends true ? SecretTextProperty<true> : SecretTextProperty<false>;
   },
   OAuth2<T extends OAuth2Props>(
