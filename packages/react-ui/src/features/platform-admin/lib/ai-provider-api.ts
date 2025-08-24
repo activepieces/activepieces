@@ -2,8 +2,8 @@ import { api } from '@/lib/api';
 import {
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
-  SeekPage,
-} from '@activepieces/shared';
+} from '@activepieces/ai-providers-shared';
+import { SeekPage } from '@activepieces/shared';
 
 export const aiProviderApi = {
   list() {

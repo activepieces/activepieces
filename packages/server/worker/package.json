@@ -23,6 +23,7 @@
     "tree-kill": "1.2.2",
     "@ai-sdk/openai": "2.0.12",
     "ai": "5.0.12",
-    "zod": "3.25.76"
+    "zod": "3.25.76",
+    "@activepieces/ai-providers-shared": "0.0.1"
   }
 }

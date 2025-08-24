@@ -1,5 +1,5 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { AIUsageFeature, createAIModel } from '@activepieces/shared';
+import { AIUsageFeature, createAIModel } from '@activepieces/ai-providers-shared';
 import { aiProps } from '@activepieces/pieces-common';
 import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from 'ai';
 import { LanguageModelV2 } from '@ai-sdk/provider';

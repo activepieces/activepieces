@@ -1,5 +1,5 @@
 import { aiProps } from '@activepieces/pieces-common';
-import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, WebSearchOptions, createAIModel, createWebSearchTool } from '@activepieces/shared';
+import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, WebSearchOptions, createAIModel, createWebSearchTool } from '@activepieces/ai-providers-shared';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { LanguageModelV2 } from '@ai-sdk/provider';
 import { ModelMessage, generateText, stepCountIs } from 'ai';

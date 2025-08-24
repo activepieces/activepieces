@@ -1,5 +1,5 @@
+import { AIUsage } from '@activepieces/ai-providers-shared'
 import {
-    AIUsage,
     AppConnection,
     Cell,
     Field,

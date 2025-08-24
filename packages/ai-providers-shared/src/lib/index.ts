@@ -1,6 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, DiscriminatedUnion } from '../common'
-import { SeekPage } from '../common/seek-page'
+import { BaseModelSchema, DiscriminatedUnion, SeekPage } from '@activepieces/shared'
 
 export const AIProvider = Type.Object({
     ...BaseModelSchema,

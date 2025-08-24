@@ -28,6 +28,9 @@
       ],
       "ee-embed-sdk": [
         "../../packages/ee/ui/embed-sdk/src"
+      ],
+      "@activepieces/ai-providers-shared": [
+        "../../packages/ai-providers-shared/src"
       ]
     }
   },

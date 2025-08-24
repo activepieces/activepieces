@@ -6,7 +6,7 @@ import { formatUtils } from '@/lib/utils';
 import {
   AIUsageMetadata,
   ListAICreditsUsageResponse,
-} from '@activepieces/shared';
+} from '@activepieces/ai-providers-shared';
 
 export const aiCreditUsageTableColumns: ColumnDef<ListAICreditsUsageResponse>[] =
   [
