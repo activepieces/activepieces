@@ -22,7 +22,7 @@ export const flowWorkerCache = (log: FastifyBaseLogger) => ({
         }
 
         try {
-            const flow = await engineApiService(engineToken, log).getFlow({
+            const flow = await engineApiService(engineToken).getFlow({
                 versionId: flowVersionId,
             })
             await this.writeFileToCacheIfCachable(flowVersionId, flow)

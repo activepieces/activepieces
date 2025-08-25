@@ -12,7 +12,7 @@ type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, attempsStarted: number, engineToken: string, log: FastifyBaseLogger): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {
     switch (jobData.executionType) {
         case ExecutionType.BEGIN: {
-            const flowRun = (jobData.executionType === ExecutionType.BEGIN && attempsStarted > 1) ? await engineApiService(engineToken, log).getRun({
+            const flowRun = (jobData.executionType === ExecutionType.BEGIN && attempsStarted > 1) ? await engineApiService(engineToken).getRun({
                 runId: jobData.runId,
             }) : undefined
             return {
@@ -36,7 +36,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
         }
         case ExecutionType.RESUME: {
 
-            const flowRun = await engineApiService(engineToken, log).getRun({
+            const flowRun = await engineApiService(engineToken).getRun({
                 runId: jobData.runId,
             })
             return {
@@ -61,7 +61,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
 
 
 async function handleMemoryIssueError(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
-    await engineApiService(engineToken, log).updateRunStatus({
+    await engineApiService(engineToken).updateRunStatus({
         runDetails: {
             duration: 0,
             status: FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
@@ -80,7 +80,7 @@ async function handleMemoryIssueError(jobData: OneTimeJobData, engineToken: stri
 
 async function handleTimeoutError(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
     const timeoutFlowInSeconds = workerMachine.getSettings().FLOW_TIMEOUT_SECONDS * 1000
-    await engineApiService(engineToken, log).updateRunStatus({
+    await engineApiService(engineToken).updateRunStatus({
         runDetails: {
             duration: timeoutFlowInSeconds,
             status: FlowRunStatus.TIMEOUT,
@@ -94,7 +94,7 @@ async function handleTimeoutError(jobData: OneTimeJobData, engineToken: string, 
 }
 
 async function handleInternalError(jobData: OneTimeJobData, engineToken: string, e: Error, log: FastifyBaseLogger): Promise<void> {
-    await engineApiService(engineToken, log).updateRunStatus({
+    await engineApiService(engineToken).updateRunStatus({
         runDetails: {
             duration: 0,
             status: FlowRunStatus.INTERNAL_ERROR,

@@ -15,7 +15,7 @@ export const pieceWorkerCache = (log: FastifyBaseLogger) => ({
         if (!isNil(piece)) {
             return piece
         }
-        const pieceMetadata = await engineApiService(engineToken, log).getPiece(pieceName, {
+        const pieceMetadata = await engineApiService(engineToken).getPiece(pieceName, {
             version: pieceVersion,
         })
         await this.writePieceToCacheIfCachable({ pieceName, pieceVersion, projectId }, pieceMetadata)

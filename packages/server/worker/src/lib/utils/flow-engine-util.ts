@@ -23,7 +23,7 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
         return this.getExactPieceForStep(engineToken, trigger)
     },
     async resolveExactVersion(engineToken: string, piece: BasicPieceInformation): Promise<PiecePackage> {
-        const pieceMetadata = await engineApiService(engineToken, log).getPiece(piece.pieceName, {
+            const pieceMetadata = await engineApiService(engineToken).getPiece(piece.pieceName, {
             version: piece.pieceVersion,
         })
         return this.enrichPieceWithArchive(engineToken, pieceMetadata)
@@ -37,7 +37,7 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
                     pieceVersion: version,
                 }, log)
 
-                const archive = await engineApiService(engineToken, log).getFile(archiveId!)
+                const archive = await engineApiService(engineToken).getFile(archiveId!)
 
                 return {
                     packageType: pieceMetadata.packageType,
@@ -94,7 +94,7 @@ async function getPieceVersionAndArchiveId(engineToken: string, archiveId: strin
             archiveId,
         }
     }
-    const pieceMetadata = await engineApiService(engineToken, log).getPiece(piece.pieceName, {
+    const pieceMetadata = await engineApiService(engineToken).getPiece(piece.pieceName, {
         version: piece.pieceVersion,
     })
     return {

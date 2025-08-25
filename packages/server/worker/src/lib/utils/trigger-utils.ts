@@ -43,7 +43,7 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
             return []
         }
         const { payloads, status, error } = await getTriggerPayloadsAndStatus(engineToken, log, params)
-        rejectedPromiseHandler(engineApiService(engineToken, log).createTriggerRun({
+        rejectedPromiseHandler(engineApiService(engineToken).createTriggerRun({
             status,
             payload,
             flowId: flowVersion.flowId,
