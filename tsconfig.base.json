@@ -680,6 +680,9 @@
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
       ],
+      "@activepieces/piece-open-phone": [
+        "packages/pieces/community/open-phone/src/index.ts"
+      ],
       "@activepieces/piece-open-router": [
         "packages/pieces/community/open-router/src/index.ts"
       ],

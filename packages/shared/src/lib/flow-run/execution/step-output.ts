@@ -145,6 +145,16 @@ LoopStepResult
         })
     }
 
+    setIterations(iterations: Record<string, StepOutput>[]): LoopStepOutput {
+        return new LoopStepOutput({
+            ...this,
+            output: {
+                ...this.output,
+                iterations,
+            },
+        })
+    }
+
     hasIteration(iteration: number): boolean {
         return !isNil(this.output?.iterations[iteration])
     }
