@@ -1,7 +1,6 @@
-import { spreadIfDefined } from '@activepieces/shared'
+import { isNil, spreadIfDefined } from '@activepieces/shared'
 import axios, { AxiosError, AxiosInstance, isAxiosError } from 'axios'
 import axiosRetry from 'axios-retry'
-import { StatusCodes } from 'http-status-codes'
 
 export class ApAxiosError extends Error {
     constructor(public error: AxiosError, message?: string) {
@@ -21,13 +20,13 @@ export class ApAxiosClient {
             },
         })
         axiosRetry(this._axios, {
-            retries: 5,
+            retries: 3,
             retryDelay: (retryCount: number) => {
                 return retryCount * 5000
             },
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             retryCondition: (error: any) => {
-                return error?.response?.status && ([StatusCodes.GATEWAY_TIMEOUT, StatusCodes.BAD_GATEWAY, StatusCodes.SERVICE_UNAVAILABLE].includes(error?.response?.status))
+                return !isNil(error?.response?.status) && (error?.response?.status >= 500)
             },
         })
     }

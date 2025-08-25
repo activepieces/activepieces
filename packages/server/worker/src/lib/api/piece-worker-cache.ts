@@ -1,7 +1,7 @@
 import path from 'path'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { GLOBAL_CACHE_PIECES_PATH, PiecesSource } from '@activepieces/server-shared'
-import { isNil, PieceType, ProjectId } from '@activepieces/shared'
+import { isNil, ProjectId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
 import { workerMachine } from '../utils/machine'
