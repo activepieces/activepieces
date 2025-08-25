@@ -13,7 +13,10 @@ const folderExists = async (filePath: string): Promise<boolean> => {
     }
 }
 
-async function getPiecePath(packageName: string): Promise<string> {
+async function getPiecePath(packageName: string, piecesSource: string): Promise<string> {
+    if(piecesSource === 'FILE') {
+        return packageName
+    }
     let currentDir = __dirname
     const rootDir = path.parse(currentDir).root
     const maxIterations = currentDir.split(path.sep).length
@@ -42,7 +45,7 @@ const loadPieceOrThrow = async (
         piecesSource,
     })
 
-    const module = await import(await getPiecePath(packageName))
+    const module =  await import(await getPiecePath(packageName, piecesSource))
 
     const piece = extractPieceFromModule<Piece>({
         module,
