@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises'
+import { inspect } from 'node:util'
 import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
 import { createConnectionService } from './services/connections.service'
 
@@ -14,12 +15,12 @@ export const utils = {
     },
 
 
-    tryParseJson(value: string): unknown {
+    tryParseError(value: Error): unknown {
         try {
-            return JSON.parse(value)
+            return JSON.parse(value.message)
         }
         catch (e) {
-            return value
+            return inspect(value)
         }
     },
     createConnectionManager(params: CreateConnectionManagerParams): ConnectionsManager {

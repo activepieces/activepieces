@@ -334,6 +334,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         await flowRunSideEffects(log).pause({ flowRun })
     },
 
+    async getOne(params: GetOneParams): Promise<FlowRun | null> {
+        return flowRunRepo().findOneBy({
+            projectId: params.projectId,
+            id: params.id,
+        })
+    },
     async getOneOrThrow(params: GetOneParams): Promise<FlowRun> {
         const flowRun = await flowRunRepo().findOneBy({
             projectId: params.projectId,

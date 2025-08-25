@@ -4,6 +4,8 @@ import os from 'os'
 import { promisify } from 'util'
 import { apVersionUtil, environmentVariables, exceptionHandler, fileExists, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { engineProcessManager } from '../runner/process/engine-process-manager'
 
 const execAsync = promisify(exec)
 
@@ -12,6 +14,7 @@ let settings: WorkerMachineHealthcheckResponse | undefined
 const workerId = apId()
 
 export const workerMachine = {
+    getWorkerId: () => workerId,
     async getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
 
@@ -52,9 +55,11 @@ export const workerMachine = {
                 version: await apVersionUtil.getCurrentRelease(),
             },
             workerId,
+            totalSandboxes: engineProcessManager.getTotalSandboxes(),
+            freeSandboxes: engineProcessManager.getFreeSandboxes(),
         }
     },
-    init: async (_settings: WorkerMachineHealthcheckResponse) => {
+    init: async (_settings: WorkerMachineHealthcheckResponse, log: FastifyBaseLogger) => {
         settings = {
             ..._settings,
             ...spreadIfDefined('FLOW_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.FLOW_WORKER_CONCURRENCY)),
@@ -62,7 +67,21 @@ export const workerMachine = {
             ...spreadIfDefined('AGENTS_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.AGENTS_WORKER_CONCURRENCY)),
         }
 
+        const memoryLimit = Math.floor(Number(settings.SANDBOX_MEMORY_LIMIT) / 1024)
         await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)
+        engineProcessManager.init(3 * settings.FLOW_WORKER_CONCURRENCY + settings.SCHEDULED_WORKER_CONCURRENCY, {
+            env: getEnvironmentVariables(),
+            resourceLimits: {
+                maxOldGenerationSizeMb: memoryLimit,
+                maxYoungGenerationSizeMb: memoryLimit,
+                stackSizeMb: memoryLimit,
+            },
+            execArgv: [
+                `--max-old-space-size=${memoryLimit}`,
+                `--max-semi-space-size=${memoryLimit}`,
+                `--stack-size=${memoryLimit * 1024}`,
+            ],
+        }, log)
         exceptionHandler.initializeSentry(settings.SENTRY_DSN)
     },
     hasSettings: () => {
@@ -78,6 +97,19 @@ export const workerMachine = {
         }
         const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
         return appendSlashAndApi(replaceLocalhost(url))
+    },
+    getSocketUrlAndPath: (): { url: string, path: string } => {
+        if (environmentVariables.hasAppModules()) {
+            return {
+                url: 'http://127.0.0.1:3000/',
+                path: '/socket.io',
+            }
+        }
+        const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
+        return {
+            url: removeTrailingSlash(replaceLocalhost(url)),
+            path: '/api/socket.io',
+        }
     },
     getPublicApiUrl: (): string => {
         return appendSlashAndApi(replaceLocalhost(getPublicUrl()))
@@ -98,6 +130,10 @@ function replaceLocalhost(urlString: string): string {
         url.hostname = '127.0.0.1'
     }
     return url.toString()
+}
+
+function removeTrailingSlash(url: string): string {
+    return url.replace(/\/$/, '')
 }
 
 function appendSlashAndApi(url: string): string {
@@ -169,5 +205,21 @@ async function getDiskInfo(): Promise<MachineInformation['diskInfo']> {
             used: 0,
             percentage: 0,
         }
+    }
+}
+
+
+function getEnvironmentVariables(): Record<string, string | undefined> {
+    const allowedEnvVariables = workerMachine.getSettings().SANDBOX_PROPAGATED_ENV_VARS
+    const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
+    return {
+        ...propagatedEnvVars,
+        NODE_OPTIONS: '--enable-source-maps',
+        AP_PAUSED_FLOW_TIMEOUT_DAYS: workerMachine.getSettings().PAUSED_FLOW_TIMEOUT_DAYS.toString(),
+        AP_EXECUTION_MODE: workerMachine.getSettings().EXECUTION_MODE,
+        AP_PIECES_SOURCE: workerMachine.getSettings().PIECES_SOURCE,
+        AP_MAX_FILE_SIZE_MB: workerMachine.getSettings().MAX_FILE_SIZE_MB.toString(),
+        AP_FILE_STORAGE_LOCATION: workerMachine.getSettings().FILE_STORAGE_LOCATION,
+        AP_S3_USE_SIGNED_URLS: workerMachine.getSettings().S3_USE_SIGNED_URLS,
     }
 }
