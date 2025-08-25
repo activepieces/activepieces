@@ -1,4 +1,4 @@
-import { AgentJobData, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
+import { AgentJobData, exceptionHandler, GLOBAL_CACHE_ALL_VERSIONS_PATH, LATEST_CACHE_VERSION, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
 import { ConsumeJobRequest, ConsumeJobResponse, WebsocketClientEvent, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { io, Socket } from 'socket.io-client'
@@ -11,6 +11,8 @@ import { engineRunner } from './runner'
 import { engineRunnerSocket } from './runner/engine-runner-socket'
 import { workerMachine } from './utils/machine'
 import { inspect } from 'node:util';
+import path from 'node:path'
+import { readdir, rmdir } from 'node:fs/promises'
 
 let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
@@ -18,7 +20,7 @@ let socket: Socket
 
 export const flowWorker = (log: FastifyBaseLogger) => ({
     async init({ workerToken: token }: { workerToken: string }): Promise<void> {
-
+        rejectedPromiseHandler(deleteStaleCache(log), log)
         await engineRunnerSocket(log).init()
 
         workerToken = token
@@ -155,5 +157,21 @@ async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): P
             })
             break
         }
+    }
+}
+
+async function deleteStaleCache(log: FastifyBaseLogger): Promise<void> {
+    try {
+        const cacheDir = path.resolve(GLOBAL_CACHE_ALL_VERSIONS_PATH)
+        const entries = await readdir(cacheDir, { withFileTypes: true })
+
+        for (const entry of entries) {
+            if (entry.isDirectory() && entry.name !== LATEST_CACHE_VERSION) {
+                await rmdir(path.join(cacheDir, entry.name), { recursive: true })
+            }
+        }
+    }
+    catch (error) {
+        exceptionHandler.handle(error, log)
     }
 }

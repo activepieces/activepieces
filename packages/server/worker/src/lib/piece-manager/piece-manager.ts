@@ -8,7 +8,7 @@ import {
     PiecePackage,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { PackageInfo, packageManager } from '../cache/package-manager'
+import { PackageInfo } from '../cache/package-manager'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(systemConstants.PACKAGE_ARCHIVE_PATH)
 
@@ -18,10 +18,6 @@ export abstract class PieceManager {
             if (isEmpty(pieces)) {
                 return
             }
-
-            await packageManager(log).init({
-                path: projectPath,
-            })
 
             const uniquePieces = this.removeDuplicatedPieces(pieces)
 
