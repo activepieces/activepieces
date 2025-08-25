@@ -1,9 +1,7 @@
 {
-  "name": "@activepieces/ai-providers-shared",
+  "name": "@activepieces/common-ai",
   "version": "0.0.1",
   "type": "commonjs",
-  "main": "./src/index.js",
-  "types": "./src/index.d.ts",
   "dependencies": {
     "tslib": "^2.3.0",
     "@ai-sdk/anthropic": "2.0.3",
@@ -12,6 +10,9 @@
     "@ai-sdk/provider": "2.0.0",
     "@ai-sdk/replicate": "1.0.3",
     "ai": "5.0.12",
-    "@sinclair/typebox": "0.34.11"
+    "@sinclair/typebox": "0.34.11",
+    "@activepieces/shared": "0.19.0",
+    "@activepieces/pieces-framework": "0.18.3",
+    "@activepieces/pieces-common": "0.7.0"
   }
 }

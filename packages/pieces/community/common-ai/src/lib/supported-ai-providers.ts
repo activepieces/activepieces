@@ -89,7 +89,7 @@ export type CategorizedLanguageModelPricing = {
 }
 
 
-export type LanguageModelPricing = FlatLanguageModelPricing | TieredLanguageModelPricing | CategorizedLanguageModelPricing
+type LanguageModelPricing = FlatLanguageModelPricing | TieredLanguageModelPricing | CategorizedLanguageModelPricing
 
 // we define a temp api token here because replicate throws an error if no api token is provided
 const replicate = createReplicate({

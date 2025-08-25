@@ -4,9 +4,10 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { LanguageModelV2 } from '@ai-sdk/provider'
 import { createReplicate } from '@ai-sdk/replicate'
 import { ImageModel, Tool } from 'ai'
-import { spreadIfDefined } from '../common'
 import { SUPPORTED_AI_PROVIDERS } from './supported-ai-providers'
-import { AI_USAGE_AGENT_ID_HEADER, AI_USAGE_FEATURE_HEADER, AI_USAGE_MCP_ID_HEADER, AIUsageFeature, AIUsageMetadata } from './index'
+import { AI_USAGE_AGENT_ID_HEADER, AI_USAGE_FEATURE_HEADER, AI_USAGE_MCP_ID_HEADER, AIUsageFeature, AIUsageMetadata } from './types'
+import { spreadIfDefined } from '@activepieces/shared'
+
 
 export function createAIModel<T extends LanguageModelV2 | ImageModel>({
     providerName,
@@ -99,7 +100,7 @@ export function createAIModel<T extends LanguageModelV2 | ImageModel>({
     }
 }
 
-export function buildUserLocation(options: UserLocationOptions): (UserLocationOptions & { type: 'approximate' }) | undefined {
+function buildUserLocation(options: UserLocationOptions): (UserLocationOptions & { type: 'approximate' }) | undefined {
     if (!options.userLocationCity && !options.userLocationRegion && 
         !options.userLocationCountry && !options.userLocationTimezone) {
         return undefined
@@ -179,24 +180,24 @@ type CreateAIModelParams<T extends LanguageModelV2 | ImageModel> = {
     openaiResponsesModel?: boolean
 }
 
-export type BaseWebSearchOptions = {
+type BaseWebSearchOptions = {
     maxUses?: number
     includeSources?: boolean
 }
 
-export type UserLocationOptions = {
+type UserLocationOptions = {
     userLocationCity?: string
     userLocationRegion?: string
     userLocationCountry?: string
     userLocationTimezone?: string
 }
 
-export type AnthropicWebSearchOptions = BaseWebSearchOptions & UserLocationOptions & {
+type AnthropicWebSearchOptions = BaseWebSearchOptions & UserLocationOptions & {
     allowedDomains?: { domain: string }[]
     blockedDomains?: { domain: string }[]
 }
 
-export type OpenAIWebSearchOptions = BaseWebSearchOptions & UserLocationOptions & {
+type OpenAIWebSearchOptions = BaseWebSearchOptions & UserLocationOptions & {
     searchContextSize?: 'low' | 'medium' | 'high'
 }
 
