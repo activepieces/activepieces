@@ -17,8 +17,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@activepieces/ai-providers-shared": [
-        "packages/ai-providers-shared/src/index.ts"
+      "@activepieces/common-ai": [
+        "packages/pieces/community/common-ai/src/index.ts"
       ],
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],

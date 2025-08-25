@@ -15,8 +15,7 @@ description: 'The AI Toolkit to build AI pieces tailored for specific use cases 
 Activepieces integrates with the [AI SDK](https://ai-sdk.dev/) to provide a unified interface for calling LLMs across multiple AI providers. Here's an example on how to use the AI SDK's `generateText` function to call an LLM in your actions.
 
 ```typescript
-import { aiProps } from '@activepieces/pieces-common';
-import { SUPPORTED_AI_PROVIDERS, createAIProvider } from '@activepieces/shared';
+import { SUPPORTED_AI_PROVIDERS, createAIProvider, aiProps } from '@activepieces/common-ai';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { LanguageModel, generateText } from 'ai';
 
@@ -85,7 +84,7 @@ export const askAI = createAction({
 Use `aiProps` to create consistent AI-related properties:
 
 ```typescript
-import { aiProps } from '@activepieces/pieces-common';
+import { aiProps } from '@activepieces/ai-common';
 
 // For language models (text generation)
 props: {
@@ -171,7 +170,7 @@ npm install @ai-sdk/openai
 
 ### 2. Update SUPPORTED_AI_PROVIDERS Array
 
-First, add your new provider to the `SUPPORTED_AI_PROVIDERS` array in `packages/shared/src/lib/ai/supported-ai-providers.ts`:
+First, add your new provider to the `SUPPORTED_AI_PROVIDERS` array in `packages/ai-providers-shared/src/lib/supported-ai-providers.ts`:
 
 ```typescript
 import { openai } from '@ai-sdk/openai' // Import the OpenAI SDK

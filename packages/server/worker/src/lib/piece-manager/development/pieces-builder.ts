@@ -64,6 +64,7 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
         await cache.setCache('@activepieces/pieces-framework', CacheState.PENDING)
         await cache.setCache('@activepieces/pieces-common', CacheState.PENDING)
         await cache.setCache('@activepieces/shared', CacheState.PENDING)
+        await cache.setCache('@activepieces/common-ai', CacheState.PENDING)
         await cache.setCache(piecePackageName, CacheState.PENDING)
 
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
