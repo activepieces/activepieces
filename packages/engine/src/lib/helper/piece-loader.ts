@@ -1,7 +1,38 @@
+import { access } from 'node:fs/promises'
+import path from 'node:path'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
 import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, isNil } from '@activepieces/shared'
 
+const folderExists = async (filePath: string): Promise<boolean> => {
+    try {
+        await access(filePath)
+        return true
+    }
+    catch {
+        return false
+    }
+}
 
+async function getPiecePath(packageName: string): Promise<string> {
+    let currentDir = process.cwd()
+    const rootDir = path.parse(currentDir).root
+    const maxIterations = currentDir.split(path.sep).length
+    
+    for (let i = 0; i < maxIterations; i++) {
+        const piecePath = path.resolve(currentDir, 'pieces', packageName, 'node_modules', packageName)
+        
+        if (await folderExists(piecePath)) {
+            return piecePath
+        }
+        const parentDir = path.dirname(currentDir)
+        if (parentDir === currentDir || currentDir === rootDir) {
+            break
+        }
+        currentDir = parentDir
+    }
+    
+    throw new Error(`Piece path not found for package: ${packageName}`)
+}
 const loadPieceOrThrow = async (
     { pieceName, pieceVersion, piecesSource }:
     { pieceName: string, pieceVersion: string, piecesSource: string },
@@ -12,7 +43,8 @@ const loadPieceOrThrow = async (
         piecesSource,
     })
 
-    const module = await import(`./pieces/${packageName}/node_modules/${packageName}`)
+    const module = await import(await getPiecePath(packageName))
+
     const piece = extractPieceFromModule<Piece>({
         module,
         pieceName,
