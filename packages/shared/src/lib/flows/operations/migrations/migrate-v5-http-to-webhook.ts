@@ -1,8 +1,8 @@
+import semver from 'semver'
 import { FlowActionType } from '../../actions/action'
 import { FlowVersion } from '../../flow-version'
 import { flowStructureUtil } from '../../util/flow-structure-util'
 import { Migration } from '.'
-import semver from 'semver'
 
 const HTTP_PIECE_NAME = '@activepieces/piece-http'
 const WEBHOOK_PIECE_NAME = '@activepieces/piece-webhook'
@@ -28,8 +28,7 @@ export const migrateHttpToWebhookV5: Migration = {
                     fields['body'] = (httpInput['body'] as Record<string, unknown>)['data']
                 }
 
-                if(httpInput['body'] && typeof httpInput['body'] === 'object' && !isGreaterThanOrEqual050)
-                {
+                if (httpInput['body'] && typeof httpInput['body'] === 'object' && !isGreaterThanOrEqual050) {
                     fields['body'] = (httpInput['body'] as Record<string, unknown>)
                 }
            
