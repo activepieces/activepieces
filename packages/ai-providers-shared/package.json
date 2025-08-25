@@ -12,7 +12,6 @@
     "@ai-sdk/provider": "2.0.0",
     "@ai-sdk/replicate": "1.0.3",
     "ai": "5.0.12",
-    "@activepieces/shared": "0.19.0",
     "@sinclair/typebox": "0.34.11"
   }
 }

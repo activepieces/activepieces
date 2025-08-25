@@ -1,5 +1,6 @@
-import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, DiscriminatedUnion, SeekPage } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
+
 
 export const AIProvider = Type.Object({
     ...BaseModelSchema,
@@ -108,3 +109,4 @@ export type AIErrorResponse = Static<typeof AIErrorResponse>
 
 export * from './supported-ai-providers'
 export * from './ai-sdk'
+export * from './ai-pieces-props'

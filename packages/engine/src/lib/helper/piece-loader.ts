@@ -12,7 +12,7 @@ const loadPieceOrThrow = async (
         piecesSource,
     })
 
-    const module = await import(packageName)
+    const module = await import(`./pieces/${packageName}/node_modules/${packageName}`)
     const piece = extractPieceFromModule<Piece>({
         module,
         pieceName,
