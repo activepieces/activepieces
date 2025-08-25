@@ -67,6 +67,7 @@ import { AddStepNameToTestInFlowRunEntitySqlite1754355397885 } from './migration
 import { AddTriggerSqlite1754477404726 } from './migration/sqlite/1754477404726-AddTriggerSqlite'
 import { AddJobIdToTriggerRun1754510243053 } from './migration/sqlite/1754510243053-AddJobIdToTriggerRun'
 import { RemoveAgentTestPromptSqlite1754863757450 } from './migration/sqlite/1754863757450-RemoveAgentTestPromptSqlite'
+import { RemoveAgentRelationToTablesSqlite1755954639833 } from './migration/sqlite/1755954639833-RemoveAgentRelationToTablesSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -89,6 +90,7 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        RemoveAgentRelationToTablesSqlite1755954639833,
         AddStepNameToTestInFlowRunEntitySqlite1754355397885,
         RemoveAgentTestPromptSqlite1754863757450,
         AddExternalidToMCPToolSQLite1754220095236,

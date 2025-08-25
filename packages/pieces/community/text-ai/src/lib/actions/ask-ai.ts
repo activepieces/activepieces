@@ -33,12 +33,6 @@ export const askAI = createAction({
     }),
     webSearch: aiProps({ modelType: 'language' }).webSearch,
     webSearchOptions: aiProps({ modelType: 'language' }).webSearchOptions,
-    includeSources: Property.Checkbox({
-      displayName: 'Include Sources',
-      description: 'Whether to include the sources in the response. Useful for getting web search details (e.g. search queries, searched URLs, etc).',
-      required: false,
-      defaultValue: false,
-    }),
   },
   async run(context) {
     const providerName = context.propsValue.provider as string;
@@ -107,6 +101,6 @@ export const askAI = createAction({
       await storage.put(conversationKey, conversation);
     }
 
-    return context.propsValue.includeSources ? { text: response.text, sources: response.sources } : response.text;
+    return webSearchOptions.includeSources ? { text: response.text, sources: response.sources } : response.text;
   },
 });

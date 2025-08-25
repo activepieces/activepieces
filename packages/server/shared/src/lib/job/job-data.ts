@@ -1,5 +1,4 @@
 import {
-    DiscriminatedUnion,
     ExecutionType,
     FlowTriggerType,
     FlowVersion,
@@ -84,7 +83,6 @@ export type OneTimeJobData = Static<typeof OneTimeJobData>
 
 export enum AgentJobSource {
     DIRECT = 'direct',
-    TABLE = 'table',
 }
 
 const BaseAgentJobData = Type.Object({
@@ -94,18 +92,10 @@ const BaseAgentJobData = Type.Object({
     prompt: Type.String(),
 })
 
-export const AgentJobData = DiscriminatedUnion('source', [
-    Type.Object({
-        source: Type.Literal(AgentJobSource.DIRECT),
-        ...BaseAgentJobData.properties,
-    }),
-    Type.Object({
-        source: Type.Literal(AgentJobSource.TABLE),
-        ...BaseAgentJobData.properties,
-        recordId: Type.String(),
-        tableId: Type.String(),
-    }),
-])
+export const AgentJobData = Type.Object({
+    source: Type.Literal(AgentJobSource.DIRECT),
+    ...BaseAgentJobData.properties,
+})
 export type AgentJobData = Static<typeof AgentJobData>
 
 export const WebhookJobData = Type.Object({
