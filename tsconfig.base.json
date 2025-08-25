@@ -208,6 +208,9 @@
       "@activepieces/piece-clearout": [
         "packages/pieces/community/clearout/src/index.ts"
       ],
+      "@activepieces/piece-clickfunnels": [
+        "packages/pieces/community/clickfunnels/src/index.ts"
+      ],
       "@activepieces/piece-clicksend": [
         "packages/pieces/community/clicksend/src/index.ts"
       ],
