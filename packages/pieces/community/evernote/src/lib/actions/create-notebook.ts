@@ -2,12 +2,14 @@ import {
     createAction,
     Property,
 } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from "@activepieces/pieces-common";
+
+// Corrected import syntax to match the library's structure
+import * as Evernote from 'evernote';
 
 export const createNotebook = createAction({
     name: 'create_notebook',
     displayName: 'Create Notebook',
-    description: 'Provision a project notebook when a new project record is created.',
+    description: 'Creates a new notebook in your Evernote account.',
     props: {
         name: Property.ShortText({
             displayName: 'Notebook Name',
@@ -24,28 +26,29 @@ export const createNotebook = createAction({
         const { name, stack } = context.propsValue;
         const token = context.auth as string;
 
-        const notebookPayload: {
-            name: string;
-            stack?: string;
-        } = {
-            name: name,
-        };
+        // Initialize the Evernote client
+        // The sandbox: false parameter ensures you're using the production environment
+        const client = new Evernote.Client({ token: token, sandbox: false });
+        const noteStore = await client.getNoteStore();
+
+        // Create a notebook object in the format Evernote's API expects
+        const notebook = new Evernote.Types.Notebook();
+        notebook.name = name;
 
         if (stack) {
-            notebookPayload.stack = stack;
+            notebook.stack = stack;
         }
 
-        // Corresponds to NoteStore.createNotebook
-        const response = await httpClient.sendRequest({
-            method: HttpMethod.POST,
-            url: 'https://www.evernote.com/api/v1/notebooks',
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: notebookPayload,
-        });
-
-        return response.body;
+        try {
+            // Use the SDK to call the createNotebook function
+            const createdNotebook = await noteStore.createNotebook(notebook);
+            return createdNotebook;
+        } catch (error) {
+            // The Evernote SDK throws detailed errors.
+            // It's good practice to log them for easier debugging.
+            console.error("Evernote API Error:", error);
+            // Re-throw the error to let Activepieces handle it
+            throw error;
+        }
     },
 });

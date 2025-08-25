@@ -179,6 +179,7 @@
     "embla-carousel-react": "8.1.8",
     "ethers": "6.15.0",
     "eventsource-parser": "3.0.2",
+    "evernote": "2.0.5",
     "exifreader": "4.20.0",
     "fast-glob": "3.3.3",
     "fastify": "5.4.0",
