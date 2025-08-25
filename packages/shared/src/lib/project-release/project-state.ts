@@ -3,8 +3,7 @@ import { AgentOutputField, AgentOutputType } from '../agents'
 import { Nullable, NullableEnum } from '../common'
 import { PopulatedFlow } from '../flows/flow'
 import { McpTool } from '../mcp'
-import { TableAutomationStatus } from '../tables'
-import { TableAutomationTrigger } from '../tables'
+import { TableAutomationStatus, TableAutomationTrigger } from '../tables'
 
 export enum FlowProjectOperationType {
     UPDATE_FLOW = 'UPDATE_FLOW',
