@@ -1,4 +1,4 @@
-import { AgentOperation, AgentOperationType, AgentState, isNil, McpState, ProjectState } from '@activepieces/shared'
+import { AgentOperation, AgentOperationType, AgentState, isNil, ProjectState } from '@activepieces/shared'
 
 export const agentDiffService = {
     diff({ newState, currentState }: DiffParams): AgentOperation[] {
@@ -10,31 +10,7 @@ export const agentDiffService = {
 }
 
 function isAgentChanged(stateOne: AgentState, stateTwo: AgentState): boolean {
-    const stateOneWithoutExtraFields = getAgentState(stateOne)
-    const stateTwoWithoutExtraFields = getAgentState(stateTwo)
-    return JSON.stringify(stateOneWithoutExtraFields) !== JSON.stringify(stateTwoWithoutExtraFields) 
-}
-
-function getAgentState(agent: AgentState): AgentState {
-    const mcpState: McpState = {
-        token: agent.mcp.token,
-        externalId: agent.mcp.externalId,
-        name: agent.mcp.name,
-        tools: agent.mcp.tools,
-    }
-    const agentState: AgentState = {
-        displayName: agent.displayName,
-        externalId: agent.externalId,
-        outputType: agent.outputType,
-        outputFields: agent.outputFields,
-        mcp: mcpState,
-        systemPrompt: agent.systemPrompt,
-        description: agent.description,
-        profilePictureUrl: agent.profilePictureUrl,
-        maxSteps: agent.maxSteps,
-        runCompleted: agent.runCompleted,
-    }
-    return agentState
+    return JSON.stringify(stateOne) !== JSON.stringify(stateTwo) 
 }
 
 function findAgentsToUpdate(currentState: ProjectState, newState: ProjectState): AgentOperation[] {
