@@ -33,7 +33,11 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 schedule: scheduleOptions,
                 simulate,
             }
-            return triggerSourceRepo().save(triggerSource)
+            await triggerSourceRepo().upsert(triggerSource, ['flowId', 'simulate'])
+            return triggerSourceService(log).getOrThrow({
+                projectId,
+                id: triggerSource.id,
+            })
         },
         async get(params: GetTriggerParams): Promise<TriggerSource | null> {
             const { projectId, id } = params
