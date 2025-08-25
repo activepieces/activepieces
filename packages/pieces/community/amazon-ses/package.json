@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-amazon-ses",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "dependencies": {
     "@aws-sdk/client-ses": "3.864.0"
   }
