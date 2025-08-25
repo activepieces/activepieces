@@ -6,10 +6,14 @@
   "List Spaces": "Listar espacios",
   "Add Space Record": "Añadir registro espacial",
   "Ask Space": "Preguntar espacio",
+  "Delete Space": "Eliminar espacio",
+  "Rename Space": "Renombrar espacio",
   "Create a new Space.": "Crear un nuevo espacio.",
   "List all user Spaces": "Listar todos los espacios de usuario",
   "Adds a Record into a Space": "Añade un registro a un espacio",
   "Ask anything to a Space": "Pregunte cualquier cosa a un espacio",
+  "Delete an existing Space.": "Eliminar un espacio existente.",
+  "Rename an existing Space.": "Renombrar un Espacio existente.",
   "Space Name": "Nombre del espacio",
   "Space": "Espacio",
   "Source Type": "Tipo de origen",
@@ -30,6 +34,10 @@
   "Text": "Texto",
   "Image": "Imagen",
   "File": "Archivo",
-  "Single AI Agent": "Agente de IA individual",
-  "Basic AI Chat": "Chat básico de IA"
+  "MedullaryAI Agent": "Agente de MedullaryAI",
+  "MedullaryAI Agent (xAI Grok)": "MedullaryAI Agent (xAI Grok)",
+  "MedullaryAI Fact Check": "Chequeo de Datos de MedullaryAI",
+  "MedullaryAI Researcher": "Investigador de MedullaryAI",
+  "MedullaryAI Sales Researcher": "Investigador de ventas de MedullaryAI",
+  "MedullaryAI Search Agent": "Buscar agente en MedullaryAI"
 }
