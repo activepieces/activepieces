@@ -1,3 +1,5 @@
+import { readdir, rmdir } from 'fs/promises'
+import path from 'path'
 import { AgentJobData, exceptionHandler, GLOBAL_CACHE_ALL_VERSIONS_PATH, JobData, JobStatus, LATEST_CACHE_VERSION, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -11,8 +13,6 @@ import { jobPoller } from './job-polling'
 import { engineRunner } from './runner'
 import { engineRunnerSocket } from './runner/engine-runner-socket'
 import { workerMachine } from './utils/machine'
-import path from 'path'
-import { readdir, rmdir } from 'fs/promises'
 
 let closed = true
 let workerToken: string
@@ -20,7 +20,7 @@ let heartbeatInterval: NodeJS.Timeout
 
 export const flowWorker = (log: FastifyBaseLogger) => ({
     async init({ workerToken: token }: { workerToken: string }): Promise<void> {
-        await deleteStaleCache()
+        rejectedPromiseHandler(deleteStaleCache(log), log)
         await engineRunnerSocket(log).init()
 
         closed = false
@@ -171,13 +171,18 @@ async function markJobAsCompleted(queueName: QueueName, engineToken: string, log
     }
 }
 
-async function deleteStaleCache(): Promise<void> {
-    const cacheDir = path.resolve(GLOBAL_CACHE_ALL_VERSIONS_PATH)
-    const entries = await readdir(cacheDir, { withFileTypes: true })
+async function deleteStaleCache(log: FastifyBaseLogger): Promise<void> {
+    try {
+        const cacheDir = path.resolve(GLOBAL_CACHE_ALL_VERSIONS_PATH)
+        const entries = await readdir(cacheDir, { withFileTypes: true })
 
-    for (const entry of entries) {
-        if (entry.isDirectory() && entry.name !== LATEST_CACHE_VERSION) {
-            await rmdir(path.join(cacheDir, entry.name), { recursive: true })
+        for (const entry of entries) {
+            if (entry.isDirectory() && entry.name !== LATEST_CACHE_VERSION) {
+                await rmdir(path.join(cacheDir, entry.name), { recursive: true })
+            }
         }
+    }
+    catch (error) {
+        exceptionHandler.handle(error, log)
     }
 }
