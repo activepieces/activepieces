@@ -1,4 +1,4 @@
-import { AIUsage } from '@activepieces/ai-providers-shared'
+import { AIUsage } from '@activepieces/common-ai'
 import {
     AppConnection,
     Cell,

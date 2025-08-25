@@ -2,7 +2,7 @@ import { api } from '@/lib/api';
 import {
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
-} from '@activepieces/ai-providers-shared';
+} from '@activepieces/common-ai';
 import { SeekPage } from '@activepieces/shared';
 
 export const aiProviderApi = {

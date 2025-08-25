@@ -4,7 +4,7 @@ import { askClaude } from './lib/actions/send-prompt';
 import { baseUrl } from './lib/common/common';
 import { PieceCategory } from '@activepieces/shared';
 import { extractStructuredDataAction } from './lib/actions/extract-structured-data';
-import { SUPPORTED_AI_PROVIDERS } from '@activepieces/ai-providers-shared';
+import { SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
 
 export const claudeAuth = PieceAuth.SecretText({
   displayName: 'API Key',

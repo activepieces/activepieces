@@ -1,4 +1,4 @@
-import { AIProvider, DALLE2PricingPerImage, DALLE3PricingPerImage, FlatLanguageModelPricing, GPTImage1PricingPerImage  } from '@activepieces/ai-providers-shared'
+import { AIProvider, DALLE2PricingPerImage, DALLE3PricingPerImage, FlatLanguageModelPricing, GPTImage1PricingPerImage  } from '@activepieces/common-ai'
 import { ActivepiecesError, ErrorCode,  isNil } from '@activepieces/shared'
 import { createParser } from 'eventsource-parser'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'

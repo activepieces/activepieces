@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
-import { ListAICreditsUsageRequest } from '@activepieces/ai-providers-shared';
+import { ListAICreditsUsageRequest } from '@activepieces/common-ai';
 import {
   CreateSubscriptionParams,
   ToggleAiCreditsOverageEnabledParams,

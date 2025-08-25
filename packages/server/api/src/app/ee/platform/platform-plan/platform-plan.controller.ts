@@ -1,4 +1,4 @@
-import { ListAICreditsUsageRequest, ListAICreditsUsageResponse } from '@activepieces/ai-providers-shared'
+import { ListAICreditsUsageRequest, ListAICreditsUsageResponse } from '@activepieces/common-ai'
 import { BillingCycle, CreateSubscriptionParamsSchema, getPlanLimits, PlanName, SetAiCreditsOverageLimitParamsSchema, StartTrialParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'

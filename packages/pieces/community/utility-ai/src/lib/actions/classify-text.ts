@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { LanguageModelV2 } from '@ai-sdk/provider';
 import { generateText } from 'ai';
-import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from '@activepieces/ai-providers-shared';
-import { aiProps } from '@activepieces/universal-ai-pieces-common';
+import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
+import { aiProps } from '@activepieces/common-ai';
 
 export const classifyText = createAction({
   name: 'classifyText',

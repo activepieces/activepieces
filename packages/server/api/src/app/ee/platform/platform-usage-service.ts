@@ -1,4 +1,4 @@
-import { AIUsage, AIUsageMetadata } from '@activepieces/ai-providers-shared'
+import { AIUsage, AIUsageMetadata } from '@activepieces/common-ai'
 import { AppSystemProp } from '@activepieces/server-shared'
 import { AiOverageState, ApEdition, ApEnvironment, apId, Cursor, FlowStatus, PlatformUsage, SeekPage, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'

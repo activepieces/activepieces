@@ -15,9 +15,8 @@ description: 'The AI Toolkit to build AI pieces tailored for specific use cases 
 Activepieces integrates with the [AI SDK](https://ai-sdk.dev/) to provide a unified interface for calling LLMs across multiple AI providers. Here's an example on how to use the AI SDK's `generateText` function to call an LLM in your actions.
 
 ```typescript
-import { SUPPORTED_AI_PROVIDERS, createAIProvider } from '@activepieces/ai-providers-shared';
+import { SUPPORTED_AI_PROVIDERS, createAIProvider, aiProps } from '@activepieces/common-ai';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { aiProps } from '@activepieces/universal-ai-pieces-common';
 import { LanguageModel, generateText } from 'ai';
 
 export const askAI = createAction({
@@ -85,7 +84,7 @@ export const askAI = createAction({
 Use `aiProps` to create consistent AI-related properties:
 
 ```typescript
-import { aiProps } from '@activepieces/universal-ai-pieces-common';
+import { aiProps } from '@activepieces/ai-common';
 
 // For language models (text generation)
 props: {

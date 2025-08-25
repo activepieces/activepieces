@@ -1,4 +1,4 @@
-import { AIUsage } from '@activepieces/ai-providers-shared'
+import { AIUsage } from '@activepieces/common-ai'
 import { Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../database/database-common'

@@ -1,4 +1,4 @@
-import { AIProvider } from '@activepieces/ai-providers-shared'
+import { AIProvider } from '@activepieces/common-ai'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 
 export type Usage = {

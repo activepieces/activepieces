@@ -2,7 +2,7 @@ import { api } from '@/lib/api';
 import {
   ListAICreditsUsageRequest,
   ListAICreditsUsageResponse,
-} from '@activepieces/ai-providers-shared';
+} from '@activepieces/common-ai';
 import {
   CreateSubscriptionParams,
   ToggleAiCreditsOverageEnabledParams,

@@ -1,4 +1,4 @@
-import { AIProvider, AIProviderWithoutSensitiveData, CreateAIProviderRequest, SUPPORTED_AI_PROVIDERS,  SupportedAIProvider } from '@activepieces/ai-providers-shared'
+import { AIProvider, AIProviderWithoutSensitiveData, CreateAIProviderRequest, SUPPORTED_AI_PROVIDERS,  SupportedAIProvider } from '@activepieces/common-ai'
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,

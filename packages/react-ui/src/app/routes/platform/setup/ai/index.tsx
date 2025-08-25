@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { SUPPORTED_AI_PROVIDERS } from '@activepieces/ai-providers-shared';
+import { SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
 import { PlatformRole, ApFlagId, ApEdition } from '@activepieces/shared';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';

@@ -15,7 +15,7 @@ import { translateAction } from './lib/actions/translation';
 import { visionPrompt } from './lib/actions/vision-prompt';
 import { baseUrl } from './lib/common/common';
 import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
-import { SUPPORTED_AI_PROVIDERS } from '@activepieces/ai-providers-shared';
+import { SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
 
 export const openaiAuth = PieceAuth.SecretText({
   description: SUPPORTED_AI_PROVIDERS.find(p => p.provider === 'openai')?.markdown,

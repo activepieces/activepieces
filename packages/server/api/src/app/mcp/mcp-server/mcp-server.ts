@@ -1,4 +1,4 @@
-import { AIUsageFeature, createAIModel } from '@activepieces/ai-providers-shared'
+import { AIUsageFeature, createAIModel } from '@activepieces/common-ai'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     EngineResponseStatus,

@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from '@activepieces/ai-providers-shared';
+import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
 import { ImageModel } from 'ai';
 import { experimental_generateImage as generateImage } from 'ai';
-import { aiProps } from '@activepieces/universal-ai-pieces-common';
+import { aiProps } from '@activepieces/common-ai';
 
 export const generateImageAction = createAction({
   name: 'generateImage',

@@ -28,7 +28,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   CreateAIProviderRequest,
   SupportedAIProvider,
-} from '@activepieces/ai-providers-shared';
+} from '@activepieces/common-ai';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
 

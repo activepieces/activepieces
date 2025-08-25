@@ -1,4 +1,4 @@
-import { AIUsageFeature, createAIModel } from '@activepieces/ai-providers-shared'
+import { AIUsageFeature, createAIModel } from '@activepieces/common-ai'
 import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, apId, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, PopulatedAgent, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { Schema as AiSchema, generateObject } from 'ai'
