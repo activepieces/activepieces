@@ -78,6 +78,7 @@ import { AddStepNameToTestInFlowRunEntity1754330492027 } from './migration/postg
 import { AddTriggerSource1754478770608 } from './migration/postgres/1754478770608-AddTriggerSource'
 import { AddJobIdToTriggerRun1754510611628 } from './migration/postgres/1754510611628-AddJobIdToTriggerRun'
 import { RemoveAgentTestPrompt1754863565929 } from './migration/postgres/1754863565929-RemoveAgentTestPrompt'
+import { RemoveAgentRelationToTables1755954192258 } from './migration/postgres/1755954192258-RemoveAgentRelationToTables'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -91,6 +92,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        RemoveAgentRelationToTables1755954192258,
         AddStepNameToTestInFlowRunEntity1754330492027,
         RemoveAgentTestPrompt1754863565929,
         AddExternalidToMCPToolPostgres1754214833292,

@@ -214,6 +214,12 @@ export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCal
                     defaultValue: 5,
                     description: 'Maximum number of searches to use. Default is 5.',
                 }),
+                includeSources: Property.Checkbox({
+                    displayName: 'Include Sources',
+                    description: 'Whether to include the sources in the response. Useful for getting web search details (e.g. search queries, searched URLs, etc).',
+                    required: false,
+                    defaultValue: false,
+                }),
             };
 
             const userLocationOptions = {

@@ -8,6 +8,9 @@
   "Conversation Key": "Clé de conversation",
   "Creativity": "Créativité",
   "Max Tokens": "Tokens max",
+  "Web Search": "Recherche Web",
+  "Web Search Options": "Options de recherche Web",
   "Text": "Texte du texte",
-  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Contrôle la créativité de la réponse IA. Une valeur plus élevée rendra l'IA plus créative et une valeur plus faible la rendra plus déterministe."
+  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Contrôle la créativité de la réponse IA. Une valeur plus élevée rendra l'IA plus créative et une valeur plus faible la rendra plus déterministe.",
+  "Whether to use web search to find information for the AI to use in its response.": "S'il faut utiliser la recherche sur le Web pour trouver des informations à utiliser dans sa réponse."
 }
