@@ -161,7 +161,8 @@ export const httpSendRequestAction = createAction({
     }),
     response_is_binary: Property.Checkbox({
       displayName: 'Response is Binary',
-      description: 'Enable for files like PDFs, images, etc. A base64 body will be returned.',
+      description:
+        'Enable for files like PDFs, images, etc. A base64 body will be returned.',
       required: false,
       defaultValue: false,
     }),
@@ -214,8 +215,9 @@ export const httpSendRequestAction = createAction({
         disabled: false,
         options: [
           { label: 'Retry on all errors (4xx, 5xx)', value: 'all' },
-          { label: 'Continue flow', value: 'continue' },
           { label: 'Retry on internal errors (5xx)', value: '5xx' },
+          { label: 'Continue flow on all errors', value: 'continue' },
+          { label: 'Continue flow on 4xx errors', value: '4xx' },
         ],
       },
     }),
@@ -309,7 +311,10 @@ export const httpSendRequestAction = createAction({
           httpsAgent,
         });
 
-        const proxied_response = await httpClient.sendRequest(request, axiosClient);
+        const proxied_response = await httpClient.sendRequest(
+          request,
+          axiosClient
+        );
         return handleBinaryResponse(
           proxied_response.body,
           proxied_response.status,
@@ -322,19 +327,31 @@ export const httpSendRequestAction = createAction({
         response.body,
         response.status,
         response.headers,
-        response_is_binary,
+        response_is_binary
       );
     } catch (error) {
       switch (failureMode) {
         case 'all': {
           throw error;
-        } case '5xx':
-          if ((error as HttpError).response.status >= 500 && (error as HttpError).response.status < 600) {
+        }
+        case '5xx':
+          if (
+            (error as HttpError).response.status >= 500 &&
+            (error as HttpError).response.status < 600
+          ) {
             throw error;
           }
           return (error as HttpError).errorMessage();
         case 'continue':
           return (error as HttpError).errorMessage();
+        case '4xx':
+          if (
+            (error as HttpError).response.status >= 400 &&
+            (error as HttpError).response.status < 500
+          ) {
+            return (error as HttpError).errorMessage();
+          }
+          throw error;
         default:
           throw error;
       }
