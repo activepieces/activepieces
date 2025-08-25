@@ -14,13 +14,12 @@ const folderExists = async (filePath: string): Promise<boolean> => {
 }
 
 async function getPiecePath(packageName: string): Promise<string> {
-    let currentDir = process.cwd()
+    let currentDir = __dirname
     const rootDir = path.parse(currentDir).root
     const maxIterations = currentDir.split(path.sep).length
     
     for (let i = 0; i < maxIterations; i++) {
         const piecePath = path.resolve(currentDir, 'pieces', packageName, 'node_modules', packageName)
-        
         if (await folderExists(piecePath)) {
             return piecePath
         }
