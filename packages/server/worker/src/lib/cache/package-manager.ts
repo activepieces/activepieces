@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import fsPath from 'path'
-import { enrichErrorContext, execPromise, fileExists, memoryLock } from '@activepieces/server-shared'
+import { enrichErrorContext, execPromise, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
 import { isEmpty } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
@@ -33,6 +33,8 @@ const runCommand = async (
 ): Promise<PackageManagerOutput> => {
     try {
         log.debug({ path, command, args }, '[PackageManager#execute]')
+
+        await threadSafeMkdir(path)
 
         const commandLine = `pnpm ${command} ${args.join(' ')}`
         return await execPromise(commandLine, { cwd: path })
@@ -67,8 +69,19 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             '--config.auto-install-peers=true',
         ]
 
-        const dependencyArgs = dependencies.map((d) => `${d.alias}@${d.spec}`)
-        return runCommand(path, 'add', log, ...dependencyArgs, ...config)
+        let stdout = ''
+        let stderr = ''
+        for (const dependency of dependencies) {
+            const piecePath = fsPath.join(path, 'pieces', dependency.alias)
+            await packageManager(log).init({ path: piecePath })
+            const result = await runCommand(piecePath, 'add', log, ...[`${dependency.alias}@${dependency.spec}`], ...config)
+            stdout += result.stdout
+            stderr += result.stderr
+        }
+        return {
+            stdout,
+            stderr,
+        }
     },
 
     async init({ path }: InitParams): Promise<PackageManagerOutput> {

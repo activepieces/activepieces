@@ -19,10 +19,6 @@ export abstract class PieceManager {
                 return
             }
 
-            await packageManager(log).init({
-                path: projectPath,
-            })
-
             const uniquePieces = this.removeDuplicatedPieces(pieces)
 
             await this.installDependencies({
