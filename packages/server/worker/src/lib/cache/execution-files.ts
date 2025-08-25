@@ -1,5 +1,5 @@
 import path from 'path'
-import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH, GLOBAL_CODE_CACHE_PATH, PiecesSource, threadSafeMkdir } from '@activepieces/server-shared'
+import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION, GLOBAL_CODE_CACHE_PATH, PiecesSource, threadSafeMkdir } from '@activepieces/server-shared'
 import { ExecutionMode, PiecePackage, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceManager } from '../piece-manager'
@@ -13,11 +13,11 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
     getCustomPiecesPath(params: { projectId: string } | { platformId: string }): string {
         if (workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOXED) {
             if ('projectId' in params) {
-                return path.resolve(GLOBAL_CACHE_PATH, 'custom_pieces', params.projectId)
+                return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', params.projectId)
             }
-            return path.resolve(GLOBAL_CACHE_PATH, 'custom_pieces', params.platformId)
+            return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', params.platformId)
         }
-        return GLOBAL_CACHE_PATH
+        return GLOBAL_CACHE_PATH_LATEST_VERSION
     },
     async provision({
         pieces,
@@ -27,7 +27,7 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         const startTime = performance.now()
 
         const source = workerMachine.getSettings().PIECES_SOURCE as PiecesSource
-        await threadSafeMkdir(GLOBAL_CACHE_PATH)
+        await threadSafeMkdir(GLOBAL_CACHE_PATH_LATEST_VERSION)
 
         const startTimeCode = performance.now()
         await threadSafeMkdir(GLOBAL_CODE_CACHE_PATH)
