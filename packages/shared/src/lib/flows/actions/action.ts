@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { VersionType } from '../../pieces'
+import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
 import { PieceTriggerSettings } from '../triggers/trigger'
 
@@ -25,7 +26,10 @@ const commonActionProps = {
     valid: Type.Boolean({}),
     displayName: Type.String({}),
     skip: Type.Optional(Type.Boolean({})),
-    customLogoUrl: Type.Optional(Type.String({})),
+}
+const commonActionSettings = {
+    sampleData: Type.Optional(SampleDataSetting),
+    customLogoUrl: Type.Optional(Type.String()),
 }
 
 export const ActionErrorHandlingOptions = Type.Optional(
@@ -54,9 +58,9 @@ export const SourceCode = Type.Object({
 export type SourceCode = Static<typeof SourceCode>
 
 export const CodeActionSettings = Type.Object({
+    ...commonActionSettings,
     sourceCode: SourceCode,
     input: Type.Record(Type.String({}), Type.Any()),
-    inputUiInfo: Type.Optional(SampleDataSetting),
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
 
@@ -68,11 +72,12 @@ export const CodeActionSchema = Type.Object({
     settings: CodeActionSettings,
 })
 export const PieceActionSettings = Type.Object({
+    ...commonActionSettings,
+    propertySettings: Type.Record(Type.String(), PropertySettings),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
     actionName: Type.Optional(Type.String({})),
     input: Type.Record(Type.String({}), Type.Unknown()),
-    inputUiInfo: SampleDataSetting,
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
 export type PieceActionSettings = Static<typeof PieceActionSettings>
@@ -85,8 +90,8 @@ export const PieceActionSchema = Type.Object({
 
 // Loop Items
 export const LoopOnItemsActionSettings = Type.Object({
+    ...commonActionSettings,
     items: Type.String(),
-    inputUiInfo: SampleDataSetting,
 })
 export type LoopOnItemsActionSettings = Static<
   typeof LoopOnItemsActionSettings
@@ -254,15 +259,14 @@ export const RouterBranchesSchema = (addMinLength: boolean) =>
     )
 
 export const RouterActionSettings = Type.Object({
+    ...commonActionSettings,
     branches: RouterBranchesSchema(false),
     executionType: Type.Enum(RouterExecutionType),
-    inputUiInfo: SampleDataSetting,
 })
 
 export const RouterActionSettingsWithValidation = Type.Object({
     branches: RouterBranchesSchema(true),
     executionType: Type.Enum(RouterExecutionType),
-    inputUiInfo: SampleDataSetting,
 })
 
 export type RouterActionSettings = Static<typeof RouterActionSettings>

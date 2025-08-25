@@ -5,6 +5,7 @@ import { migrateAgentPieceV2 } from './migrate-v2-agent-piece'
 import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
 import { migrateHttpToWebhookV5 } from './migrate-v5-http-to-webhook'
+import { migratePropertySettingsV6 } from './migrate-v6-property-settings'
 
 export type Migration = {
     targetSchemaVersion: string | undefined
@@ -18,6 +19,7 @@ const migrations: Migration[] = [
     migrateAgentPieceV3,
     migrateAgentPieceV4,
     migrateHttpToWebhookV5,
+    migratePropertySettingsV6,
 ]
 
 const apply = (flowVersion: FlowVersion) => {

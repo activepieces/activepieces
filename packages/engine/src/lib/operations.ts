@@ -20,6 +20,7 @@ import {
     GenericStepOutput,
     isNil,
     LoopStepOutput,
+    PropertyExecutionType,
     StepOutput,
     StepOutputStatus,
     TriggerHookType,
@@ -89,7 +90,6 @@ async function executeActionForTool(input: ExecuteToolOperation): Promise<Execut
             actionName: input.actionName,
             pieceName: input.pieceName,
             pieceVersion: input.pieceVersion,
-            inputUiInfo: {},
             errorHandlingOptions: {
                 continueOnFailure: {
                     value: false,
@@ -98,6 +98,10 @@ async function executeActionForTool(input: ExecuteToolOperation): Promise<Execut
                     value: false,
                 },
             },
+            propertySettings: Object.fromEntries(Object.entries(input.input).map(([key]) => [key, {
+                type: PropertyExecutionType.MANUAL,
+                schema: undefined,
+            }])),
         },
         valid: true,
     }

@@ -165,8 +165,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
 function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
     if (operation.type === FlowOperationType.IMPORT_FLOW) {
-        const clearInputUiInfo = {
-            currentSelectedData: undefined,
+        const clearSampleData = {
             sampleDataFileId: undefined,
             sampleDataInputFileId: undefined,
             lastTestDate: undefined,
@@ -176,9 +175,9 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
                 ...step,
                 settings: {
                     ...step.settings,
-                    inputUiInfo: {
-                        ...step.settings.inputUiInfo,
-                        ...clearInputUiInfo,
+                    sampleData: {
+                        ...step.settings.sampleData,
+                        ...clearSampleData,
                     },
                 },
             }
@@ -191,9 +190,9 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
                     ...trigger,
                     settings: {
                         ...trigger.settings,
-                        inputUiInfo: {
-                            ...trigger.settings.inputUiInfo,
-                            ...clearInputUiInfo,
+                        sampleData: {
+                            ...trigger.settings.sampleData,
+                            ...clearSampleData,
                         },
                     },
                 },

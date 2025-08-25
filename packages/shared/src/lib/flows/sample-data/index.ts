@@ -49,12 +49,6 @@ export const SampleDataSetting = Type.Object(
         sampleDataFileId: Type.Optional(Type.String()),
         sampleDataInputFileId: Type.Optional(Type.String()),
         lastTestDate: Type.Optional(Type.String()),
-        customizedInputs: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-        schema: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-        /**
-         * @deprecated This field is deprecated and will be removed in 2025.
-         */
-        currentSelectedData: Type.Optional(Type.Unknown()),
     },
     {
         additionalProperties: true,
@@ -66,7 +60,6 @@ export type SampleDataSettings = Static<typeof SampleDataSetting>
 export const DEFAULT_SAMPLE_DATA_SETTINGS: SampleDataSettings = {
     sampleDataFileId: undefined,
     sampleDataInputFileId: undefined,
-    customizedInputs: undefined,
 }
 
 export const SaveSampleDataResponse = Pick(File, ['id', 'size', 'type'])
