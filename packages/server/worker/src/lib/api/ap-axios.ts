@@ -21,13 +21,13 @@ export class ApAxiosClient {
             },
         })
         axiosRetry(this._axios, {
-            retries: 3, 
+            retries: 5,
             retryDelay: (retryCount: number) => {
-                return retryCount * 10000 
+                return retryCount * 5000
             },
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             retryCondition: (error: any) => {
-                return error?.response?.status && error?.response?.status === StatusCodes.GATEWAY_TIMEOUT
+                return error?.response?.status && ([StatusCodes.GATEWAY_TIMEOUT, StatusCodes.BAD_GATEWAY, StatusCodes.SERVICE_UNAVAILABLE].includes(error?.response?.status))
             },
         })
     }
