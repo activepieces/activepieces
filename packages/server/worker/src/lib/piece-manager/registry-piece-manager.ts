@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { CacheState, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
 import {
@@ -28,6 +28,7 @@ export class RegistryPieceManager extends PieceManager {
 
         const cache = cacheState(projectPath)
 
+
         try {
             const dependencies = await this.filterExistingPieces(projectPath, pieces)
             if (dependencies.length === 0) {
@@ -35,8 +36,8 @@ export class RegistryPieceManager extends PieceManager {
             }
             for (const dependency of dependencies) {
                 const exactVersionPath = join(projectPath, 'pieces', dependency.alias)
-                await packageManager(log).init({ path: exactVersionPath })
-                await packageManager(log).add({ path: exactVersionPath, dependencies: [dependency] })
+                await mkdir(exactVersionPath, { recursive: true })
+                await packageManager(log).add({ path: projectPath, dependencies: [dependency], installDir: exactVersionPath })
             }
 
             await Promise.all(
