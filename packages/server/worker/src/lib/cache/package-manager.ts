@@ -69,19 +69,8 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             '--config.auto-install-peers=true',
         ]
 
-        let stdout = ''
-        let stderr = ''
-        for (const dependency of dependencies) {
-            const piecePath = fsPath.join(path, 'pieces', dependency.alias)
-            await packageManager(log).init({ path: piecePath })
-            const result = await runCommand(piecePath, 'add', log, ...[`${dependency.alias}@${dependency.spec}`], ...config)
-            stdout += result.stdout
-            stderr += result.stderr
-        }
-        return {
-            stdout,
-            stderr,
-        }
+        const dependencyArgs = dependencies.map((d) => `${d.alias}@${d.spec}`)
+        return runCommand(path, 'add', log, ...dependencyArgs, ...config)
     },
 
     async init({ path }: InitParams): Promise<PackageManagerOutput> {
