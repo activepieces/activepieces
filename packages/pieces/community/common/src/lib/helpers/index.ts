@@ -6,6 +6,7 @@ import {
   createAction,
   StaticPropsValue,
   InputPropertyMap,
+  FilesService,
 } from '@activepieces/pieces-framework';
 import {
   HttpError,
@@ -30,27 +31,38 @@ export const getAccessTokenOrThrow = (
 
   return accessToken;
 };
-const joinBaseUrlWithRelativePath = ({ baseUrl, relativePath }: { baseUrl: string, relativePath: string }) => {
-  const baseUrlWithSlash = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
-  const relativePathWithoutSlash = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath
-  return `${baseUrlWithSlash}${relativePathWithoutSlash}`
-}
+const joinBaseUrlWithRelativePath = ({
+  baseUrl,
+  relativePath,
+}: {
+  baseUrl: string;
+  relativePath: string;
+}) => {
+  const baseUrlWithSlash = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const relativePathWithoutSlash = relativePath.startsWith('/')
+    ? relativePath.slice(1)
+    : relativePath;
+  return `${baseUrlWithSlash}${relativePathWithoutSlash}`;
+};
 
-
-const getBaseUrlForDescription = (baseUrl: (auth?: unknown) => string, auth?: unknown) => {
-  const exampleBaseUrl = `https://api.example.com`
+const getBaseUrlForDescription = (
+  baseUrl: (auth?: unknown) => string,
+  auth?: unknown
+) => {
+  const exampleBaseUrl = `https://api.example.com`;
   try {
     const baseUrlValue = auth ? baseUrl(auth) : undefined;
-    const baseUrlValueWithoutTrailingSlash = baseUrlValue?.endsWith('/') ? baseUrlValue.slice(0, -1) : baseUrlValue
-    return baseUrlValueWithoutTrailingSlash ?? exampleBaseUrl
-  }
-  //If baseUrl fails we stil want to return a valid baseUrl for description
-  catch (error) {
+    const baseUrlValueWithoutTrailingSlash = baseUrlValue?.endsWith('/')
+      ? baseUrlValue.slice(0, -1)
+      : baseUrlValue;
+    return baseUrlValueWithoutTrailingSlash ?? exampleBaseUrl;
+  } catch (error) {
+    //If baseUrl fails we stil want to return a valid baseUrl for description
     {
-      return exampleBaseUrl
+      return exampleBaseUrl;
     }
   }
-}
+};
 export function createCustomApiCallAction({
   auth,
   baseUrl,
@@ -66,7 +78,7 @@ export function createCustomApiCallAction({
   baseUrl: (auth?: unknown) => string;
   authMapping?: (
     auth: unknown,
-    propsValue: StaticPropsValue<any>,
+    propsValue: StaticPropsValue<any>
   ) => Promise<HttpHeaders | QueryParams>;
   //   add description as a parameter that can be null
   description?: string | null;
@@ -84,7 +96,6 @@ export function createCustomApiCallAction({
   extraProps?: InputPropertyMap;
   authLocation?: 'headers' | 'queryParams';
 }) {
-
   return createAction({
     name: name ? name : 'custom_api_call',
     displayName: displayName ? displayName : 'Custom API Call',
@@ -141,6 +152,13 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         required: false,
         ...(props?.body ?? {}),
       }),
+      response_is_binary: Property.Checkbox({
+        displayName: 'Response is Binary ?',
+        description:
+          'Enable for files like PDFs, images, etc..',
+        required: false,
+        defaultValue: false,
+      }),
       failsafe: Property.Checkbox({
         displayName: 'No Error on Failure',
         required: false,
@@ -155,93 +173,108 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
     },
 
     run: async (context) => {
-      const { method, url, headers, queryParams, body, failsafe, timeout } =
-        context.propsValue;
+      const {
+        method,
+        url,
+        headers,
+        queryParams,
+        body,
+        failsafe,
+        timeout,
+        response_is_binary,
+      } = context.propsValue;
 
       assertNotNullOrUndefined(method, 'Method');
       assertNotNullOrUndefined(url, 'URL');
 
-      const authValue = !isNil(authMapping) ? await authMapping(context.auth, context.propsValue) : {};
+      const authValue = !isNil(authMapping)
+        ? await authMapping(context.auth, context.propsValue)
+        : {};
 
       const urlValue = url['url'] as string;
-      const fullUrl = urlValue.startsWith('http://') || urlValue.startsWith('https://') ? urlValue :
-        joinBaseUrlWithRelativePath({ baseUrl: baseUrl(context.auth), relativePath: urlValue })
+      const fullUrl =
+        urlValue.startsWith('http://') || urlValue.startsWith('https://')
+          ? urlValue
+          : joinBaseUrlWithRelativePath({
+              baseUrl: baseUrl(context.auth),
+              relativePath: urlValue,
+            });
       const request: HttpRequest<Record<string, unknown>> = {
         method,
         url: fullUrl,
         headers: {
-          ...(headers ?? {}) as HttpHeaders,
-          ...((authLocation === 'headers' || !isNil(authLocation)) ? authValue : {}),
+          ...((headers ?? {}) as HttpHeaders),
+          ...(authLocation === 'headers' || !isNil(authLocation)
+            ? authValue
+            : {}),
         },
         queryParams: {
-          ...(authLocation === 'queryParams' ? authValue as QueryParams : {}),
+          ...(authLocation === 'queryParams' ? (authValue as QueryParams) : {}),
           ...((queryParams as QueryParams) ?? {}),
         },
         timeout: timeout ? timeout * 1000 : 0,
-        responseType: 'arraybuffer'
       };
+
+      // Set response type to arraybuffer if binary response is expected
+      if (response_is_binary) {
+        request.responseType = 'arraybuffer';
+      }
 
       if (body) {
         request.body = body;
       }
 
-      const objectContentTypes = [
-        'application/json',                   // JSON responses
-        'application/xml',                    // XML responses
-        'text/plain',                         // Plain text responses
-        'text/html',                          // HTML responses
-        'application/x-www-form-urlencoded',  // Form submissions
-      ];
-
-      const objectContentTypeSuffixes = ['+json', '+xml'];
-
-      let response;
       try {
-        response = await httpClient.sendRequest(request);
+        const response = await httpClient.sendRequest(request);
+        return await handleBinaryResponse(
+          context.files,
+          response.body,
+          response.status,
+          response.headers,
+          response_is_binary
+        );
       } catch (error) {
         if (failsafe) {
           return (error as HttpError).errorMessage();
         }
         throw error;
       }
-
-      // Capture content type from header
-      const contentTypeValue = Array.isArray(response.headers?.['content-type'])
-        ? response.headers['content-type'][0]
-        : response.headers?.['content-type']
-
-      // Return unaltered response if content type is associated with objects or strings
-      const isObjectContentType = objectContentTypes.some(type => (contentTypeValue ?? '').includes(type)) ||
-        objectContentTypeSuffixes.some(suffix => (contentTypeValue ?? '').endsWith(suffix));
-
-      if (isObjectContentType) {
-        try {
-          // Parse JSON responses if valid
-          response.body = JSON.parse(response.body || '{}');
-        } catch (err) {
-          // Fall back to returning plain text if JSON parsing fails
-          response.body = response.body?.toString() || '';
-        }
-
-        return response
-      }
-
-      // Get file extension from content type
-      const fileExtension: string = mime.extension(contentTypeValue ?? '') || 'txt'
-
-      // Return response as file
-      return {
-        ...response,
-        body: await context.files.write({
-          fileName: `output.${fileExtension}`,
-          data: Buffer.from(response.body)
-        })
-      }
     },
   });
 }
 
 export function is_chromium_installed(): boolean {
-  const chromiumPath = '/usr/bin/chromium'
-  return fs.existsSync(chromiumPath)
+  const chromiumPath = '/usr/bin/chromium';
+  return fs.existsSync(chromiumPath);
 }
+
+const handleBinaryResponse = async (
+  files: FilesService,
+  bodyContent: string | ArrayBuffer | Buffer,
+  status: number,
+  headers?: HttpHeaders,
+  isBinary?: boolean
+) => {
+  let body;
+
+  if (isBinary && isBinaryBody(bodyContent)) {
+    const contentTypeValue = Array.isArray(headers?.['content-type'])
+      ? headers['content-type'][0]
+      : headers?.['content-type'];
+    const fileExtension: string =
+      mime.extension(contentTypeValue ?? '') || 'txt';
+    body = await files.write({
+      fileName: `output.${fileExtension}`,
+      data: Buffer.from(bodyContent),
+    });
+  } else {
+    body = bodyContent;
+  }
+
+  return { status, headers, body };
+};
+
+const isBinaryBody = (body: string | ArrayBuffer | Buffer) => {
+  return body instanceof ArrayBuffer || Buffer.isBuffer(body);
+};
+

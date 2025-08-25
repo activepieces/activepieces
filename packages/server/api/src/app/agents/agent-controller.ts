@@ -14,6 +14,7 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
             limit: limit ?? DEFAULT_LIMIT,
             cursorRequest: cursor ?? null,
+            externalIds: request.query.externalIds,
         })
     })
 
