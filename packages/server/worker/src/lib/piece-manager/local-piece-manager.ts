@@ -43,7 +43,7 @@ export class LocalPieceManager extends PieceManager {
                 '@activepieces/pieces-common': `link:${baseLinkPath}/common`,
                 '@activepieces/pieces-framework': `link:${baseLinkPath}/framework`,
                 '@activepieces/shared': `link:${basePath}/dist/packages/shared`,
-                '@activepieces/common-ai': `link:${basePath}/dist/packages/common-ai`,
+                '@activepieces/common-ai': `link:${baseLinkPath}/common-ai`,
             }
             await linkPackages(projectPath, join(baseLinkPath, 'framework'), '@activepieces/pieces-framework', frameworkPackages, params.log)
             await linkPackages(projectPath, join(baseLinkPath, 'common'), '@activepieces/pieces-common', frameworkPackages, params.log)
