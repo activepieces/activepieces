@@ -1,6 +1,6 @@
 import { ChildProcess } from 'child_process'
 import { ApSemaphore, getEngineTimeout } from '@activepieces/server-shared'
-import { ApEnvironment, assertNotNullOrUndefined, EngineError, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, EngineResult, EngineStderr, EngineStdout, ExecuteFlowOperation, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionMode, isNil, TriggerHookType } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineError, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, EngineResult, EngineStderr, EngineStdout, ExecuteFlowOperation, ExecutePropsOptions, ExecuteTriggerOperation, isNil, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import treeKill from 'tree-kill'
@@ -270,9 +270,9 @@ async function forceTerminate(childProcess: ChildProcess, log: FastifyBaseLogger
     })
 }
 
-
+// Temporary fix for imports cache memory leak
 function isWorkerNotResuable(): boolean {
-    const isDevelopment = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
-    const isSandboxed = workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOXED
-    return isDevelopment || isSandboxed
+    // const isDevelopment = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
+    // const isSandboxed = workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOXED
+    return true
 }
