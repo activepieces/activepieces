@@ -1,8 +1,9 @@
 import { Static, Type } from '@sinclair/typebox'
 import { AgentOutputField, AgentOutputType } from '../agents'
-import { Nullable } from '../common'
+import { Nullable, NullableEnum } from '../common'
 import { PopulatedFlow } from '../flows/flow'
 import { McpTool } from '../mcp'
+import { TableAutomationStatus, TableAutomationTrigger } from '../tables'
 
 export enum FlowProjectOperationType {
     UPDATE_FLOW = 'UPDATE_FLOW',
@@ -54,11 +55,12 @@ export const TableState = Type.Object({
     name: Type.String(),
     externalId: Type.String(),
     fields: Type.Array(FieldState),
+    status: NullableEnum(Type.Enum(TableAutomationStatus)),
+    trigger: NullableEnum(Type.Enum(TableAutomationTrigger)),
 })
 export type TableState = Static<typeof TableState>
 
 export const McpState = Type.Object({
-    id: Type.String(),
     name: Type.String(),
     externalId: Type.String(),
     token: Type.String(),
@@ -132,9 +134,7 @@ export const TableOperation = Type.Union([
     }),
     Type.Object({
         type: Type.Literal(TableOperationType.DELETE_TABLE),
-        tableState: Type.Object({
-            externalId: Type.String(),
-        }),
+        tableState: TableState,
     }),
 ])
 export type TableOperation = Static<typeof TableOperation>
@@ -151,9 +151,7 @@ export const AgentOperation = Type.Union([
     }),
     Type.Object({
         type: Type.Literal(AgentOperationType.DELETE_AGENT),
-        agentState: Type.Object({
-            externalId: Type.String(),
-        }),
+        agentState: AgentState,
     }),
 ])
 export type AgentOperation = Static<typeof AgentOperation>
