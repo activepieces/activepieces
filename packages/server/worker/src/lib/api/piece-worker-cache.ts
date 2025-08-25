@@ -21,7 +21,7 @@ export const pieceWorkerCache = (log: FastifyBaseLogger) => ({
         return pieceMetadata
     },
     async writePieceToCacheIfCachable({ pieceName, pieceVersion, projectId }: PieceCacheKey, piece: PieceMetadataModel): Promise<void> {
-        const cacheKey = getCacheKey({ pieceName, pieceVersion, projectId, pieceType: piece.pieceType })
+        const cacheKey = getCacheKey({ pieceName, pieceVersion, projectId })
         const pieceCache = getCacheForPiece(cacheKey)
         await pieceCache.setCache(cacheKey, JSON.stringify(piece))
     },
@@ -33,13 +33,11 @@ async function getPieceFromCache({ pieceName, pieceVersion, projectId }: GetPiec
         return null
     }
     try {
-        for (const pieceType of [PieceType.CUSTOM, PieceType.OFFICIAL]) {
-            const cacheKey = getCacheKey({ pieceName, pieceVersion, projectId, pieceType })
-            const pieceCache = getCacheForPiece(cacheKey)
-            const cachedPiece = await pieceCache.cacheCheckState(cacheKey)
-            if (!isNil(cachedPiece)) {
-                return JSON.parse(cachedPiece) as PieceMetadataModel
-            }
+        const cacheKey = getCacheKey({ pieceName, pieceVersion, projectId })
+        const pieceCache = getCacheForPiece(cacheKey)
+        const cachedPiece = await pieceCache.cacheCheckState(cacheKey)
+        if (!isNil(cachedPiece)) {
+            return JSON.parse(cachedPiece) as PieceMetadataModel
         }
         return null
     }
@@ -48,13 +46,8 @@ async function getPieceFromCache({ pieceName, pieceVersion, projectId }: GetPiec
     }
 }
 
-function getCacheKey({ pieceName, pieceVersion, projectId, pieceType }: PieceCacheKeyWithType) {
-    switch (pieceType) {
-        case PieceType.OFFICIAL:
-            return `${pieceName}-${pieceVersion}`
-        case PieceType.CUSTOM:
-            return `${pieceName}-${pieceVersion}-${projectId}`
-    }
+function getCacheKey({ pieceName, pieceVersion, projectId }: PieceCacheKeyWithType) {
+    return `${pieceName}-${pieceVersion}-${projectId}`
 }
 
 type GetPieceRequestQueryWorker = PieceCacheKey & {
@@ -67,9 +60,7 @@ type PieceCacheKey = {
     projectId: ProjectId
 }
 
-type PieceCacheKeyWithType = PieceCacheKey & {
-    pieceType: PieceType
-}
+type PieceCacheKeyWithType = PieceCacheKey
 
 function getCacheForPiece(cacheKey: string) {
     return cacheState(path.join(GLOBAL_CACHE_PIECES_PATH, cacheKey))
