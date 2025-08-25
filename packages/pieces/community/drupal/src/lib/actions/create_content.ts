@@ -86,12 +86,24 @@ export const drupalCreateContentAction = createAction({
               required: field.required,
               defaultValue: field.default_value,
             });
-          } else if (field.type === 'text_with_summary') {
+          } else if (field.type === 'text' || field.type === 'text_long' || field.type === 'text_with_summary') {
             fields[field.key] = Property.LongText({
               displayName: field.label,
               description: field.description,
               required: field.required,
               defaultValue: field.default_value,
+            });
+          } else if (field.type === 'select') {
+            fields[field.key] = Property.StaticDropdown({
+              displayName: field.label,
+              description: field.description,
+              required: field.required,
+              defaultValue: field.default_value,
+              options: {
+                options: field.options.map((option: DrupalEntityTypeFieldTypeSelectOptions) => ({
+                  label: option.name,
+                  value: option.key,
+                }))},
             });
           } else if (field.type === 'comment') {
             // Ignore this field.
@@ -147,6 +159,12 @@ interface DrupalEntityTypeFields {
   label: string;
   description: string;
   required: boolean;
-  type: string,
-  defaultValue: string,
+  type: string;
+  defaultValue: string;
+  options: DrupalEntityTypeFieldTypeSelectOptions[];
+}
+
+interface DrupalEntityTypeFieldTypeSelectOptions {
+  key: string;
+  name: string;
 }
