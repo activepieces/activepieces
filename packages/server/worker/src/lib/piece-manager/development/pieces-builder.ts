@@ -6,8 +6,8 @@ import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
 import chokidar from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import { cacheState } from '../../cache/cache-state'
 import { Server } from 'socket.io'
+import { cacheState } from '../../cache/cache-state'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 

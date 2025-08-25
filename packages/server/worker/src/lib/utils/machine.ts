@@ -4,8 +4,8 @@ import os from 'os'
 import { promisify } from 'util'
 import { apVersionUtil, environmentVariables, exceptionHandler, fileExists, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
-import { engineProcessManager } from '../runner/process/engine-process-manager'
 import { FastifyBaseLogger } from 'fastify'
+import { engineProcessManager } from '../runner/process/engine-process-manager'
 
 const execAsync = promisify(exec)
 
@@ -69,7 +69,7 @@ export const workerMachine = {
 
         const memoryLimit = Math.floor(Number(settings.SANDBOX_MEMORY_LIMIT) / 1024)
         await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)
-        await engineProcessManager.init(3 * settings.FLOW_WORKER_CONCURRENCY + settings.SCHEDULED_WORKER_CONCURRENCY, {
+        engineProcessManager.init(3 * settings.FLOW_WORKER_CONCURRENCY + settings.SCHEDULED_WORKER_CONCURRENCY, {
             env: getEnvironmentVariables(),
             resourceLimits: {
                 maxOldGenerationSizeMb: memoryLimit,

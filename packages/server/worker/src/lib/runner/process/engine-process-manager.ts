@@ -22,7 +22,7 @@ let processIds: string[] = []
 let options: EngineProcessOptions
 let lock: ApSemaphore
 let engineSocketServer: ReturnType<typeof engineRunnerSocket>
-let initialized: boolean = false
+let initialized = false
 
 export const engineProcessManager = {
     init(_maxWorkers: number, _options: EngineProcessOptions, log: FastifyBaseLogger) {
@@ -84,7 +84,7 @@ export const engineProcessManager = {
                     workerIndex,
                     customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
                     flowVersionId: getFlowVersionId(operation, operationType),
-                    options: options,
+                    options,
                 })
                 const connection = await engineSocketServer.waitForConnect(workerId)
                 if (!connection) {
@@ -121,7 +121,7 @@ export const engineProcessManager = {
         for (const worker of processes) {
             worker?.kill()
         }
-    }
+    },
 }
 
 async function processTask(workerIndex: number, operationType: EngineOperationType, operation: EngineOperation, log: FastifyBaseLogger): Promise<WorkerResult> {

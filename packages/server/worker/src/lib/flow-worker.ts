@@ -1,3 +1,6 @@
+import { readdir, rmdir } from 'node:fs/promises'
+import path from 'node:path'
+import { inspect } from 'node:util'
 import { AgentJobData, exceptionHandler, GLOBAL_CACHE_ALL_VERSIONS_PATH, LATEST_CACHE_VERSION, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
 import { ConsumeJobRequest, ConsumeJobResponse, WebsocketClientEvent, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -10,9 +13,6 @@ import { webhookExecutor } from './executors/webhook-job-executor'
 import { engineRunner } from './runner'
 import { engineRunnerSocket } from './runner/engine-runner-socket'
 import { workerMachine } from './utils/machine'
-import { inspect } from 'node:util';
-import path from 'node:path'
-import { readdir, rmdir } from 'node:fs/promises'
 
 let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
@@ -76,7 +76,8 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
                     success: true,
                 }
                 callback(response)
-            } catch (error) {
+            }
+            catch (error) {
                 log.info({
                     message: 'Failed to consume job',
                     error,
@@ -102,8 +103,9 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
             try {
                 const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
                 const response = await socket.timeout(10000).emitWithAck(WebsocketServerEvent.MACHINE_HEARTBEAT, request)
-                workerMachine.init(response, log)
-            } catch (error) {
+                await workerMachine.init(response, log)
+            }
+            catch (error) {
                 log.error({
                     message: 'Failed to send heartbeat, retrying...',
                     error,

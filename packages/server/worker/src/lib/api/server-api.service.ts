@@ -71,7 +71,7 @@ function splitPayloadsIntoOneMegabyteBatches(payloads: unknown[]): unknown[][] {
 
 
 
-export const engineApiService = (engineToken: string, log: FastifyBaseLogger) => {
+export const engineApiService = (engineToken: string) => {
     const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
     const client = new ApAxiosClient(apiUrl, engineToken)
 
