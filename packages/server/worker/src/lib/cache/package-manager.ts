@@ -23,6 +23,11 @@ export type PackageInfo = {
    * where to get the package from, could be an npm tag, a local path, or a tarball.
    */
     spec: string
+
+    /**
+   * if the package is standalone, it means it get installed in it's own folder
+   */
+    standalone?: boolean
 }
 
 const runCommand = async (
