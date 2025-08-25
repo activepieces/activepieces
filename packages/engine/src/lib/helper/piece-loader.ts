@@ -13,11 +13,11 @@ const folderExists = async (filePath: string): Promise<boolean> => {
     }
 }
 
-async function getPiecePath({packageName, pieceSource}:{packageName: string, pieceSource:string}): Promise<string> {
+async function getPiecePath({ packageName, pieceSource }: { packageName: string, pieceSource: string }): Promise<string> {
     let currentDir = __dirname
     const rootDir = path.parse(currentDir).root
     const maxIterations = currentDir.split(path.sep).length
-    if(pieceSource === 'FILE'){
+    if (pieceSource === 'FILE') {
         return packageName
     }
     for (let i = 0; i < maxIterations; i++) {
