@@ -8,6 +8,9 @@
   "Conversation Key": "對話鍵",
   "Creativity": "創造力",
   "Max Tokens": "最大的符號",
+  "Web Search": "Web Search",
+  "Web Search Options": "Web Search Options",
   "Text": "文本",
-  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "控制 AI 回答的創造力。更高的值將使 AI 更具創造性，而較低的值將使其更具決定性。"
+  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "控制 AI 回答的創造力。更高的值將使 AI 更具創造性，而較低的值將使其更具決定性。",
+  "Whether to use web search to find information for the AI to use in its response.": "Whether to use web search to find information for the AI to use in its response."
 }

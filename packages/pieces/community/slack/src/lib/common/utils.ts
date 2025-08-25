@@ -10,6 +10,7 @@ export const slackSendMessage = async ({
   threadTs,
   token,
   file,
+  replyBroadcast,
 }: SlackSendMessageParams) => {
   const client = new WebClient(token);
 
@@ -26,14 +27,20 @@ export const slackSendMessage = async ({
       ],
     });
   } else {
-    return await client.chat.postMessage({
+    const messageParams: any = {
       text,
       channel: conversationId,
       username,
       icon_url: profilePicture,
       blocks: blocks as Block[],
       thread_ts: threadTs,
-    });
+    };
+    
+    if (replyBroadcast) {
+      messageParams.reply_broadcast = replyBroadcast;
+    }
+    
+    return await client.chat.postMessage(messageParams);
   }
 };
 
@@ -46,6 +53,7 @@ type SlackSendMessageParams = {
   text: string;
   file?: ApFile;
   threadTs?: string;
+  replyBroadcast?: boolean;
 };
 
 export function processMessageTimestamp(input: string) {

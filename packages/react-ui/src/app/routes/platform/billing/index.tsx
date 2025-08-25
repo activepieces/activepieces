@@ -131,9 +131,11 @@ export default function Billing() {
               </Button>
             )
           )}
-          <Button variant="default" onClick={() => openDialog()}>
-            {t('Upgrade Plan')}
-          </Button>
+          {!isEnterprise && (
+            <Button variant="default" onClick={() => openDialog()}>
+              {t('Upgrade Plan')}
+            </Button>
+          )}
         </div>
       </DashboardPageHeader>
       <section className="flex flex-col w-full gap-6">
