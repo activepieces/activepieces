@@ -1,8 +1,8 @@
-import { AIProviderWithoutSensitiveData, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/ai-providers-shared';
 import { Property, InputPropertyMap } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from '../http';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { ImageModel } from 'ai';
 import { isNil, SeekPage } from '@activepieces/shared';
+import { AIProviderWithoutSensitiveData,SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/ai-providers-shared';
 
 export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
     provider: Property.Dropdown<string, true>({
