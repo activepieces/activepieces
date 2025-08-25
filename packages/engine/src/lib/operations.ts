@@ -167,11 +167,11 @@ async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: F
 }
 
 async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Promise<StepOutput | null> {
-    if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(stepOutput.status)) {
-        return stepOutput
+    if (![StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(stepOutput.status)) {
+        return null
     }
     if (stepOutput.type === FlowActionType.LOOP_ON_ITEMS) {
-        const loopOutput = stepOutput as LoopStepOutput
+        const loopOutput = new LoopStepOutput(stepOutput)
         const iterations = loopOutput.output?.iterations ?? []
         const newIterations: Record<string, StepOutput>[] = []
         for (const iteration of iterations) {
@@ -186,7 +186,7 @@ async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Pr
         }
         return loopOutput.setIterations(newIterations)
     }
-    return null
+    return stepOutput
 }
 
 export async function execute(operationType: EngineOperationType, operation: EngineOperation): Promise<EngineResponse<unknown>> {
