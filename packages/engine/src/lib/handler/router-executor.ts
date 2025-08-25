@@ -14,7 +14,6 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
         const { censoredInput, resolvedInput } = await constants.propsResolver.resolve<RouterActionSettings>({
             unresolvedInput: {
                 ...action.settings,
-                inputUiInfo: undefined,
             },
             executionState,
         })

@@ -112,7 +112,7 @@ async function normalize(flowVersion: FlowVersion): Promise<FlowVersion> {
     const flowUpgradable = flowPieceUtil.makeFlowAutoUpgradable(flowVersion)
     return flowStructureUtil.transferFlow(flowUpgradable, (step) => {
         const clonedStep: Step = JSON.parse(JSON.stringify(step))
-        clonedStep.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
+        clonedStep.settings.sampleData = DEFAULT_SAMPLE_DATA_SETTINGS
         const authExists = clonedStep?.settings?.input?.auth
         
         if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {

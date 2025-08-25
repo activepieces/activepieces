@@ -69,23 +69,23 @@ async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowV
             const triggerChanged = operation.type === FlowOperationType.UPDATE_TRIGGER && (flowVersion.trigger.type !== operation.request.type
                     || flowVersion.trigger.settings.triggerName !== operation.request.settings.triggerName
                     || flowVersion.trigger.settings.pieceName !== operation.request.settings.pieceName)
-            const sampleDataExists = !isNil(stepToDelete?.settings.inputUiInfo?.sampleDataFileId)
+            const sampleDataExists = !isNil(stepToDelete?.settings.sampleData?.sampleDataFileId)
             if (triggerChanged && sampleDataExists) {
                 await sampleDataService(log).deleteForStep({
                     projectId,
                     flowVersionId: flowVersion.id,
                     flowId: flowVersion.flowId,
-                    fileId: stepToDelete.settings.inputUiInfo.sampleDataFileId,
+                    fileId: stepToDelete.settings.sampleData.sampleDataFileId,
                     fileType: FileType.SAMPLE_DATA,
                 })
             }
-            const sampleDataInputExists = !isNil(stepToDelete?.settings.inputUiInfo?.sampleDataInputFileId)
+            const sampleDataInputExists = !isNil(stepToDelete?.settings.sampleData?.sampleDataInputFileId)
             if (triggerChanged && sampleDataInputExists) {
                 await sampleDataService(log).deleteForStep({
                     projectId,
                     flowVersionId: flowVersion.id,
                     flowId: flowVersion.flowId,
-                    fileId: stepToDelete.settings.inputUiInfo.sampleDataInputFileId,
+                    fileId: stepToDelete.settings.sampleData.sampleDataInputFileId,
                     fileType: FileType.SAMPLE_DATA_INPUT,
                 })
             }
@@ -94,23 +94,23 @@ async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowV
         case FlowOperationType.DELETE_ACTION: {
             const stepsToDelete = operation.request.names.map(name => flowStructureUtil.getStepOrThrow(name, flowVersion.trigger))
             for (const step of stepsToDelete) {
-                const sampleDataExists = !isNil(step.settings.inputUiInfo?.sampleDataFileId)
+                const sampleDataExists = !isNil(step.settings.sampleData?.sampleDataFileId)
                 if (sampleDataExists) {
                     await sampleDataService(log).deleteForStep({
                         projectId,
                         flowVersionId: flowVersion.id,
                         flowId: flowVersion.flowId,
-                        fileId: step.settings.inputUiInfo.sampleDataFileId,
+                        fileId: step.settings.sampleData.sampleDataFileId,
                         fileType: FileType.SAMPLE_DATA,
                     })
                 }
-                const sampleDataInputExists = !isNil(step.settings.inputUiInfo?.sampleDataInputFileId)
+                const sampleDataInputExists = !isNil(step.settings.sampleData?.sampleDataInputFileId)
                 if (sampleDataInputExists) {
                     await sampleDataService(log).deleteForStep({
                         projectId,
                         flowVersionId: flowVersion.id,
                         flowId: flowVersion.flowId,
-                        fileId: step.settings.inputUiInfo.sampleDataInputFileId,
+                        fileId: step.settings.sampleData.sampleDataInputFileId,
                         fileType: FileType.SAMPLE_DATA_INPUT,
                     })
                 }

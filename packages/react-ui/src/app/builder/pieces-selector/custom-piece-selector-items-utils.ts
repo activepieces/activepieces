@@ -82,7 +82,6 @@ export const createRouterStep = ({
       },
     ],
     executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
-    inputUiInfo: {},
   };
   return handleAddingOrUpdatingStep({
     pieceSelectorItem: {

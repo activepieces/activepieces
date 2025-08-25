@@ -1,5 +1,5 @@
-import { InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, isNil, isObject } from '@activepieces/shared'
+import { InputProperty, InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
+import { AUTHENTICATION_PROPERTY_NAME, isNil, isObject, PropertySettings } from '@activepieces/shared'
 import { z } from 'zod'
 import { processors } from './processors'
 import { arrayZipperProcessor } from './processors/array-zipper'
@@ -16,8 +16,12 @@ export const propsProcessor = {
         props: InputPropertyMap,
         auth: PieceAuthProperty | undefined,
         requireAuth: boolean,
-        dynamaicPropertiesSchema: Record<string, InputPropertyMap> | undefined | null,
+        propertySettings: Record<string, PropertySettings>,
     ): Promise<{ processedInput: StaticPropsValue<PiecePropertyMap>, errors: PropsValidationError }> => {
+        const dynamaicPropertiesSchema: Record<string, InputProperty> = {}
+        for (const [key, propertySetting] of Object.entries(propertySettings)) {
+            dynamaicPropertiesSchema[key] = propertySetting.schema as InputProperty
+        }
         const processedInput = { ...resolvedInput }
         const errors: PropsValidationError = {}
 
@@ -28,7 +32,7 @@ export const propsProcessor = {
                 auth.props,
                 undefined,
                 requireAuth,
-                undefined,
+                {},
             )
             processedInput.auth = authProcessedInput
             if (Object.keys(authErrors).length > 0) {
@@ -44,10 +48,10 @@ export const propsProcessor = {
             if (property.type === PropertyType.DYNAMIC && !isNil(dynamaicPropertiesSchema?.[key])) {
                 const { processedInput: itemProcessedInput, errors: itemErrors } = await propsProcessor.applyProcessorsAndValidators(
                     value,
-                    dynamaicPropertiesSchema[key],
+                    dynamaicPropertiesSchema,
                     undefined,
                     false,
-                    undefined,
+                    {},
                 )
                 processedInput[key] = itemProcessedInput
                 if (Object.keys(itemErrors).length > 0) {
@@ -64,7 +68,7 @@ export const propsProcessor = {
                         property.properties,
                         undefined,
                         false,
-                        undefined,
+                        {},
                     )
                     processedArray.push(itemProcessedInput)
                     processedErrors.push(itemErrors)
