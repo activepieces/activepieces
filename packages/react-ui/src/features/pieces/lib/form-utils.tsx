@@ -38,6 +38,7 @@ import {
   FlowAction,
   FlowTrigger,
   PropertyExecutionType,
+  PropertySettings,
 } from '@activepieces/shared';
 
 function addAuthToPieceProps(
@@ -268,6 +269,7 @@ export const formUtils = {
         const defaultValues = getDefaultValueForStep(
           props ?? {},
           includeCurrentInput ? input : {},
+          selectedStep.settings.propertySettings ?? {},
         );
         return {
           ...selectedStep,
@@ -308,6 +310,7 @@ export const formUtils = {
         const defaultValues = getDefaultValueForStep(
           props ?? {},
           includeCurrentInput ? input : {},
+          selectedStep.settings.propertySettings ?? {},
         );
 
         return {
@@ -546,6 +549,7 @@ export const formUtils = {
 export function getDefaultValueForStep(
   props: PiecePropertyMap | OAuth2Props,
   existingInput: Record<string, unknown>,
+  propertySettings?: Record<string, PropertySettings>,
 ): Record<string, unknown> {
   const defaultValues: Record<string, unknown> = {};
   const entries = Object.entries(props);
@@ -557,9 +561,15 @@ export function getDefaultValueForStep(
         break;
       }
       case PropertyType.ARRAY: {
+        const isCustomizedArrayOfProperties =
+          !isNil(propertySettings) &&
+          propertySettings[name] &&
+          !isNil(property.properties);
         const existingValue = existingInput[name];
         if (!isNil(existingValue)) {
           defaultValues[name] = existingValue;
+        } else if (isCustomizedArrayOfProperties) {
+          defaultValues[name] = {};
         } else {
           defaultValues[name] = property.defaultValue ?? [];
         }

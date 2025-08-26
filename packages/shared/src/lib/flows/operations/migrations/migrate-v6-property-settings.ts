@@ -8,15 +8,28 @@ export const migratePropertySettingsV6: Migration = {
     targetSchemaVersion: '6',
     migrate: (flowVersion: FlowVersion): FlowVersion => {
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
-            const input = step.settings.input
+            const input = step.settings?.input
+            const sampleDataFileId = step.settings?.inputUiInfo?.sampleDataFileId
+            const sampleDataInputFileId = step.settings?.inputUiInfo?.sampleDataInputFileId
+            const lastTestDate = step.settings?.inputUiInfo?.lastTestDate
+            const schema = step.settings?.schema
+            const customLogoUrl = step.settings?.inputUiInfo?.customizedInputs?.logoUrl ?? ('customLogoUrl' in step && step.customLogoUrl) ?? undefined
+            const customizedInputs = step.settings?.inputUiInfo?.customizedInputs
+            
             if (step.type === FlowActionType.PIECE) {
                 return {
                     ...step,
                     settings: {
                         ...step.settings,
+                        customLogoUrl,
+                        sampleDataSettings: {
+                            sampleDataFileId,
+                            sampleDataInputFileId,
+                            lastTestDate,
+                        },
                         propertySettings: Object.fromEntries(Object.entries(input).map(([key]) => [key, {
-                            type: PropertyExecutionType.MANUAL,
-                            schema: undefined,
+                            type: customizedInputs?.[key] ? PropertyExecutionType.DYNAMIC : PropertyExecutionType.MANUAL,
+                            schema: schema[key] ?? undefined,
                         }])),
                     },
                 }

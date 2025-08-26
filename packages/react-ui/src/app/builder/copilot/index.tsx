@@ -211,6 +211,7 @@ export const CopilotSidebar = () => {
               settings: {
                 ...codeAction.settings,
                 customLogoUrl: message.content.icon,
+                input: message.content.inputs,
                 errorHandlingOptions,
               },
               type: FlowActionType.CODE,

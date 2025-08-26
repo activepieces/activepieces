@@ -58,13 +58,13 @@ const AutoFormFieldWrapper = ({
     PropertyExecutionType.DYNAMIC;
 
   function handleDynamicValueToggleChange(mode: PropertyExecutionType) {
-    const newPropertySettings = {
+    const propertySettingsForSingleProperty = {
       ...form.getValues().settings?.propertySettings?.[propertyName],
       type: mode,
     };
     form.setValue(
       `settings.propertySettings.${propertyName}`,
-      newPropertySettings,
+      propertySettingsForSingleProperty,
       {
         shouldValidate: true,
       },
