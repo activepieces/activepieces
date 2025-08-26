@@ -60,6 +60,7 @@
     "@fastify/rate-limit": "10.3.0",
     "@fastify/swagger": "9.5.1",
     "@fastify/type-provider-typebox": "5.1.0",
+    "@google/genai": "1.13.0",
     "@google/generative-ai": "0.21.0",
     "@hookform/resolvers": "3.9.0",
     "@hyperdx/node-opentelemetry": "0.8.2",

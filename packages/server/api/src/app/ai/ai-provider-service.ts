@@ -148,6 +148,7 @@ export const aiProviderService = {
         return (
             !isNil(providerConfig.languageModels.find((m) => m.instance.modelId === model)) ||
             !isNil(providerConfig.imageModels.find((m) => m.instance.modelId === model)) ||
+            !isNil(providerConfig.transcriptionModels.find((m) => m.instance.modelId === model)) ||
             this.isModerationRequest(provider, request)
         )
     },

@@ -1,4 +1,4 @@
-import { CategorizedLanguageModelPricing, FlatLanguageModelPricing, TieredLanguageModelPricing } from '@activepieces/shared'
+import { CategorizedModelPricing, FlatLanguageModelPricing, TieredLanguageModelPricing } from '@activepieces/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, Usage } from './types'
 import { calculateTokensCost, getProviderConfig } from './utils'
@@ -34,11 +34,11 @@ export const googleProvider: AIProviderStrategy = {
 
         if (typeof pricing.input === 'object') {
             if ('audio' in pricing.input) {
-                const { input, output: outputCost } = pricing as CategorizedLanguageModelPricing
+                const { input, output: outputCost } = pricing as CategorizedModelPricing
                 cost += calculateTokensCost(candidatesTokenCount + (thoughtsTokenCount ?? 0), outputCost)
 
                 promptTokensDetails.forEach((detail) => {
-                    const inputCost = detail.modality === 'AUDIO' ? input.audio : input.default
+                    const inputCost = detail.modality === 'AUDIO' ? input.audio : input.text
                     cost += calculateTokensCost(detail.tokenCount, inputCost)
                 })
             }

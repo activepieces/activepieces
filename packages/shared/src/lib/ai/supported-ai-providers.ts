@@ -2,7 +2,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { google } from '@ai-sdk/google'
 import { openai } from '@ai-sdk/openai'
 import { createReplicate } from '@ai-sdk/replicate'
-import { ImageModel, LanguageModel } from 'ai'
+import { ImageModel, LanguageModel, TranscriptionModel } from 'ai'
 
 export type SupportedAIProvider = {
     provider: string
@@ -25,6 +25,11 @@ export type SupportedAIProvider = {
         displayName: string
         instance: ImageModel
         pricing: ImageModelPricing
+    }[]
+    transcriptionModels: {
+        displayName: string
+        instance: TranscriptionModel
+        pricing: CategorizedModelPricing
     }[]
 }
 
@@ -78,16 +83,16 @@ export type TieredLanguageModelPricing = {
     }
 }
 
-export type CategorizedLanguageModelPricing = {
+export type CategorizedModelPricing = {
     input: {
-        default: number
+        text: number
         audio: number
     }
     output: number
 }
 
 
-export type LanguageModelPricing = FlatLanguageModelPricing | TieredLanguageModelPricing | CategorizedLanguageModelPricing
+export type LanguageModelPricing = FlatLanguageModelPricing | TieredLanguageModelPricing | CategorizedModelPricing
 
 // we define a temp api token here because replicate throws an error if no api token is provided
 const replicate = createReplicate({
@@ -280,6 +285,30 @@ It is strongly recommended that you add your credit card information to your Ope
                 } as DALLE2PricingPerImage,
             },
         ],
+        transcriptionModels: [
+            {
+                displayName: 'GPT-4o Transcribe',
+                instance: openai.transcription('gpt-4o-transcribe'),
+                pricing: {
+                    input: {
+                        text: 2.50,
+                        audio: 6.00,
+                    },
+                    output: 10.00,
+                },
+            },
+            {
+                displayName: 'GPT-4o Mini Transcribe',
+                instance: openai.transcription('gpt-4o-mini-transcribe'),
+                pricing: {
+                    input: {
+                        text: 1.25,
+                        audio: 3.00,
+                    },
+                    output: 5.00,
+                },
+            },
+        ],
     },
     {
         provider: 'anthropic',
@@ -353,6 +382,7 @@ It is strongly recommended that you add your credit card information to your Ope
             },
         ],
         imageModels: [],
+        transcriptionModels: [],
     },
     {
         provider: 'replicate',
@@ -387,6 +417,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: 0.003,
             },
         ],
+        transcriptionModels: [],
     },
     {
         provider: 'google',
@@ -425,7 +456,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 functionCalling: true,
                 pricing: {
                     input: {
-                        default: 0.30,
+                        text: 0.30,
                         audio: 1.00,
                     },
                     output: 2.50,
@@ -437,7 +468,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 functionCalling: true,
                 pricing: {
                     input: {
-                        default: 0.10,
+                        text: 0.10,
                         audio: 0.50,
                     },
                     output: 0.40,
@@ -454,5 +485,7 @@ It is strongly recommended that you add your credit card information to your Ope
             },
         ],
         imageModels: [],
+        // same as language models
+        transcriptionModels: [],
     },
 ]

@@ -38,6 +38,7 @@ export enum AIUsageFeature {
     TEXT_AI = 'Text AI',
     IMAGE_AI = 'Image AI',
     UTILITY_AI = 'Utility AI',
+    VOICE_AI = 'Voice AI',
     UNKNOWN = 'Unknown',
 }
 
@@ -51,7 +52,7 @@ const mcpMetadata = Type.Object({
     mcpid: Type.String(),
 })
 
-const simpleFeatures = [AIUsageFeature.TEXT_AI, AIUsageFeature.IMAGE_AI, AIUsageFeature.UTILITY_AI, AIUsageFeature.UNKNOWN] as const
+const simpleFeatures = [AIUsageFeature.TEXT_AI, AIUsageFeature.IMAGE_AI, AIUsageFeature.UTILITY_AI, AIUsageFeature.VOICE_AI, AIUsageFeature.UNKNOWN] as const
 const simpleMetadataVariants = simpleFeatures.map(feature => 
     Type.Object({
         feature: Type.Literal(feature),

@@ -3,7 +3,7 @@ import { Property, InputPropertyMap } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from '../http';
 import { ImageModel } from 'ai';
 
-export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
+export const aiProps = <T extends ModelType>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
     provider: Property.Dropdown<string, true>({
         displayName: 'Provider',
         required: true,
@@ -38,6 +38,8 @@ export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCal
                     }
                 } else if (modelType === 'image') {
                     if (provider.imageModels.length === 0) return null;
+                } else if (modelType === 'transcription') {
+                    if (provider.transcriptionModels.length === 0 && provider.provider !== 'google') return null;
                 }
 
                 return {
@@ -78,15 +80,18 @@ export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCal
                 };
             }
 
-            const allModels = modelType === 'language' ? supportedProvider.languageModels : supportedProvider.imageModels;
-            const models = (modelType === 'language' && functionCalling)
-                ? allModels.filter(model => (model as SupportedAIProvider['languageModels'][number]).functionCalling)
+            const allModels = getModelsByType(modelType, supportedProvider);
+            
+            const models = modelType === 'language' && functionCalling
+                ? allModels.filter(model => 
+                    hasLanguageModelWithFunctionCalling(model) && model.functionCalling
+                  )
                 : allModels;
 
             return {
                 placeholder: 'Select AI Model',
                 disabled: false,
-                options: models.map(model => ({
+                options: models.map((model: AnyModel) => ({
                     label: model.displayName,
                     value: model.instance,
                 })),
@@ -186,10 +191,29 @@ export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCal
     })
 })
 
+const getModelsByType = (type: ModelType, supportedProvider: SupportedAIProvider): AnyModel[] => {
+    switch (type) {
+        case 'language':
+            return supportedProvider.languageModels;
+        case 'image':
+            return supportedProvider.imageModels;
+        case 'transcription':
+            // Special case: Google uses language models for transcription
+            return supportedProvider.provider === 'google' 
+                ? supportedProvider.languageModels 
+                : supportedProvider.transcriptionModels;
+        default:
+            return [];
+    }
+};
 
-type AIPropsParams<T extends 'language' | 'image'> = {
+const hasLanguageModelWithFunctionCalling = (model: AnyModel): model is SupportedAIProvider['languageModels'][number] => {
+    return 'functionCalling' in model && model.functionCalling;
+};
+
+type AIPropsParams<T extends ModelType> = {
     modelType: T,
-    functionCalling?: T extends 'image' ? never : boolean
+    functionCalling?: T extends 'language' ? boolean : never
 }
 
 type AIPropsReturn = {
@@ -197,3 +221,9 @@ type AIPropsReturn = {
     model: ReturnType<typeof Property.Dropdown>;
     advancedOptions: ReturnType<typeof Property.DynamicProperties>;
 }
+
+type AnyModel = SupportedAIProvider['languageModels'][number] | 
+               SupportedAIProvider['imageModels'][number] | 
+               SupportedAIProvider['transcriptionModels'][number];
+
+type ModelType = 'language' | 'image' | 'transcription';

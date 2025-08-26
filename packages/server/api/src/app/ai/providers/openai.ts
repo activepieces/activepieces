@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProvider, DALLE2PricingPerImage, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, GPTImage1PricingPerImage, isNil } from '@activepieces/shared'
+import { ActivepiecesError, AIProvider, CategorizedModelPricing, DALLE2PricingPerImage, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, GPTImage1PricingPerImage, isNil } from '@activepieces/shared'
 import { createParser } from 'eventsource-parser'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, StreamingParser, Usage } from './types'
@@ -13,8 +13,8 @@ export const openaiProvider: AIProviderStrategy = {
     calculateUsage: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage => {
         const body = request.body as { size: string, model: string, n?: string, quality?: string }
         const apiResponse = response as {
-            usage: 
-            | { input_tokens: number, output_tokens: number, input_tokens_details: { text_tokens: number, image_tokens: number } }
+            usage:
+            | { input_tokens: number, output_tokens: number, input_tokens_details: { text_tokens: number, image_tokens: number, audio_tokens: number } }
             | { prompt_tokens: number, completion_tokens: number }
         } 
         const { provider } = request.params as { provider: string }
@@ -34,7 +34,8 @@ export const openaiProvider: AIProviderStrategy = {
 
         const languageModelConfig = providerConfig.languageModels.find((m) => m.instance.modelId === model)
         const imageModelConfig = providerConfig.imageModels.find((m) => m.instance.modelId === model)
-        if (!languageModelConfig && !imageModelConfig) {
+        const transcriptionModelConfig = providerConfig.transcriptionModels.find((m) => m.instance.modelId === model)
+        if (!languageModelConfig && !imageModelConfig && !transcriptionModelConfig) {
             throw new ActivepiecesError({
                 code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
                 params: {
@@ -58,6 +59,19 @@ export const openaiProvider: AIProviderStrategy = {
             const { input: inputCost, output: outputCost } = languageModelConfig.pricing as FlatLanguageModelPricing
             return {
                 cost: calculateTokensCost(inputTokens, inputCost) + calculateTokensCost(outputTokens, outputCost),
+                model,
+            }
+        }
+
+        if (transcriptionModelConfig) {
+            const { input: inputCost, output: outputCost } = transcriptionModelConfig.pricing as CategorizedModelPricing
+            const { input_tokens_details } = apiResponse.usage as { input_tokens_details: { text_tokens: number, audio_tokens: number } }
+            const { output_tokens } = apiResponse.usage as { output_tokens: number }
+            const inputTextTokens = input_tokens_details.text_tokens
+            const inputAudioTokens = input_tokens_details.audio_tokens
+            const outputTokens = output_tokens
+            return {
+                cost: calculateTokensCost(inputTextTokens, inputCost.text) + calculateTokensCost(inputAudioTokens, inputCost.audio) + calculateTokensCost(outputTokens, outputCost),
                 model,
             }
         }
@@ -163,4 +177,4 @@ export const openaiProvider: AIProviderStrategy = {
     isModerationRequest: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean => {
         return request.url.includes('/moderations') && (request.body as { model: string }).model === 'omni-moderation-latest'
     },
-} 
+}

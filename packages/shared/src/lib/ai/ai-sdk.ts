@@ -2,11 +2,11 @@ import { createAnthropic } from '@ai-sdk/anthropic'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createReplicate } from '@ai-sdk/replicate'
-import { ImageModel, LanguageModel } from 'ai'
+import { ImageModel, LanguageModel, TranscriptionModel } from 'ai'
 import { SUPPORTED_AI_PROVIDERS } from './supported-ai-providers'
 import { AI_USAGE_AGENT_ID_HEADER, AI_USAGE_FEATURE_HEADER, AI_USAGE_MCP_ID_HEADER, AIUsageFeature, AIUsageMetadata } from './index'
 
-export function createAIProvider<T extends LanguageModel | ImageModel>({
+export function createAIProvider<T extends LanguageModel | ImageModel | TranscriptionModel>({
     providerName,
     modelInstance,
     apiKey,
@@ -15,6 +15,10 @@ export function createAIProvider<T extends LanguageModel | ImageModel>({
 }: CreateAIProviderParams<T>): T {
     const isImageModel = SUPPORTED_AI_PROVIDERS
         .flatMap(provider => provider.imageModels)
+        .some(model => model.instance.modelId === modelInstance.modelId)
+
+    const isTranscriptionModel = SUPPORTED_AI_PROVIDERS
+        .flatMap(provider => provider.transcriptionModels)
         .some(model => model.instance.modelId === modelInstance.modelId)
 
     const getMetadataId = (): string | undefined => {
@@ -51,6 +55,12 @@ export function createAIProvider<T extends LanguageModel | ImageModel>({
             })
             if (isImageModel) {
                 return provider.imageModel(modelInstance.modelId) as T
+            }
+            if (isTranscriptionModel) {
+                if (!provider.transcriptionModel) {
+                    throw new Error(`Provider ${providerName} does not support transcription models`)
+                }
+                return provider.transcriptionModel(modelInstance.modelId) as T
             }
             return provider(modelInstance.modelId) as T
         }
@@ -95,7 +105,7 @@ export function createAIProvider<T extends LanguageModel | ImageModel>({
     }
 }
 
-type CreateAIProviderParams<T extends LanguageModel | ImageModel> = {
+type CreateAIProviderParams<T extends LanguageModel | ImageModel | TranscriptionModel> = {
     providerName: string
     modelInstance: T
     apiKey: string

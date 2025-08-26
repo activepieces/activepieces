@@ -1,4 +1,4 @@
-import { CategorizedLanguageModelPricing, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, GPTImage1PricingPerImage, PrincipalType, TieredLanguageModelPricing } from '@activepieces/shared'
+import { CategorizedModelPricing, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, GPTImage1PricingPerImage, PrincipalType, TieredLanguageModelPricing } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
 import { AIUsageEntity, AIUsageSchema } from '../../../../src/app/ai/ai-usage-entity'
@@ -532,7 +532,7 @@ describe('AI Providers Proxy', () => {
                 }
 
                 // assert
-                const { input: inputPricing, output: outputCost } = model?.pricing as CategorizedLanguageModelPricing
+                const { input: inputPricing, output: outputCost } = model?.pricing as CategorizedModelPricing
                 const totalCost = calculateTokensCost(usageMetadata.candidatesTokenCount + (usageMetadata.thoughtsTokenCount ?? 0), outputCost) +
                     calculateTokensCost(usageMetadata.promptTokenCount, inputPricing.default)
 
