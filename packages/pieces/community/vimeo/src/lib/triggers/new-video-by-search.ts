@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newVideoBySearch = createTrigger({
   name: 'new_video_by_search',
   displayName: 'New Video by Search',
-  description: 'Fires when a new video is added that matches a search query',
+  description: 'Triggers when a new video is added that matches a search query',
   auth: vimeoAuth,
   props: {
     query: Property.ShortText({

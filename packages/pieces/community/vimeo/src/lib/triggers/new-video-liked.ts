@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newVideoLiked = createTrigger({
   name: 'new_video_liked',
   displayName: 'New Video I\'ve Liked',
-  description: 'Fires when you like a new video on Vimeo',
+  description: 'Triggers when you like a new video on Vimeo',
   auth: vimeoAuth,
   props: {
   },

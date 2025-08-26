@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newVideoByUser = createTrigger({
   name: 'new_video_by_user',
   displayName: 'New Video by User',
-  description: 'Fires when another specified user adds a video',
+  description: 'Triggers when another specified user adds a video',
   auth: vimeoAuth,
   props: {
     userId: Property.ShortText({

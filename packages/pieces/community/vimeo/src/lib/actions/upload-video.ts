@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const uploadVideo = createAction({
   name: 'upload_video',
   displayName: 'Upload Video',
-  description: 'Upload a video to your Vimeo account with URL, Name, Description, and Privacy options',
+  description: 'Upload a video to your Vimeo account',
   auth: vimeoAuth,
   props: {
     videoUrl: Property.ShortText({

@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newVideoOfMine = createTrigger({
   name: 'new_video_of_mine',
   displayName: 'New Video of Mine',
-  description: 'Fires when you add/upload a new video',
+  description: 'Triggers when you add/upload a new video',
   auth: vimeoAuth,
   props: {
   },
