@@ -1,6 +1,6 @@
 # Evernote Piece
 
-This piece integrates with Evernote, allowing you to automate note-taking and organization workflows.
+This piece integrates with Evernote, allowing you to automate note-taking and organization workflows using developer tokens.
 
 ## Features
 
@@ -20,12 +20,15 @@ This piece integrates with Evernote, allowing you to automate note-taking and or
 
 ## Authentication
 
-This piece uses OAuth2 authentication. To set up:
+This piece uses **Developer Token authentication**. To set up:
 
 1. Visit the [Evernote Developer Portal](https://dev.evernote.com/)
-2. Create a new application
-3. Configure OAuth settings with redirect URI: `https://cloud.activepieces.com/redirect`
-4. Use your Consumer Key and Consumer Secret
+2. Log in or create an account
+3. Go to "Get an API Key" section
+4. Request a developer token for your application
+5. Copy the token and paste it here
+
+**Note**: Developer tokens are long-lived and don't expire unless revoked. They provide direct API access without OAuth complexity.
 
 ## Use Cases
 
@@ -34,3 +37,12 @@ This piece uses OAuth2 authentication. To set up:
 - Publish tagged notes to CMS queues
 - Maintain daily standup notes by appending updates
 - Mirror labels and tags from other systems
+- Trigger workflows based on note creation, notebook changes, or tag additions
+
+## Technical Details
+
+- **Authentication**: Developer Token (direct API access)
+- **API**: Thrift-based API integration via Evernote SDK
+- **Error Handling**: Comprehensive error handling with proper fallbacks
+- **Type Safety**: Full TypeScript support with proper interfaces
+- **SDK**: Uses official Evernote Node.js SDK for reliable API access
