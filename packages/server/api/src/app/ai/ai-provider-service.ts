@@ -1,21 +1,23 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
-    ActivepiecesError,
     AI_USAGE_AGENT_ID_HEADER,
     AI_USAGE_FEATURE_HEADER,
     AI_USAGE_MCP_ID_HEADER,
     AIProvider,
     AIProviderWithoutSensitiveData,
     AIUsageFeature,
+    CreateAIProviderRequest,
+    SUPPORTED_AI_PROVIDERS,
+    SupportedAIProvider,
+} from '@activepieces/common-ai'
+import { AppSystemProp } from '@activepieces/server-shared'
+import {
+    ActivepiecesError,
     ApEdition,
     apId,
-    CreateAIProviderRequest,
     ErrorCode,
     isNil,
     PlatformId,
     SeekPage,
-    SUPPORTED_AI_PROVIDERS,
-    SupportedAIProvider,
 } from '@activepieces/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
@@ -206,7 +208,7 @@ export const aiProviderService = {
                 },
             })
         }
-        
+
         const model = this.extractModelId(provider, request)
         if (!this.isModelSupported(provider, model, request)) {
             throw new ActivepiecesError({
@@ -273,7 +275,7 @@ function validateAIUsageHeaders(headers: Record<string, string | string[] | unde
             },
         })
     }
-    
+
     if (feature === AIUsageFeature.MCP && !mcpId) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,

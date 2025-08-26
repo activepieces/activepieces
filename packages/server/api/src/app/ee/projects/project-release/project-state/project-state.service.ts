@@ -1,4 +1,4 @@
-import { AgentOperationType, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowProjectOperationType, FlowSyncError, isNil, ProjectId, ProjectState, TableOperationType } from '@activepieces/shared'
+import { AgentOperationType, AgentState, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowProjectOperationType, FlowState, FlowSyncError, isNil, McpState, PopulatedAgent, PopulatedFlow, ProjectId, ProjectState, Table, TableOperationType, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { agentsService } from '../../../../agents/agents-service'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
@@ -240,7 +240,8 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 projectId,
             })
         }))
-        const connections = await appConnectionService(log).getManyConnectionStates({
+        
+        const connections: ConnectionState[] = await appConnectionService(log).getManyConnectionStates({
             projectId,
         })
 
@@ -251,16 +252,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             name: undefined,
             externalIds: undefined,
         })
-        const allPopulatedTables = await Promise.all(tables.data.map(async (table) => {
-            const fields = await fieldService.getAll({
-                projectId,
-                tableId: table.id,
-            })
-            return {
-                ...table,
-                fields,
-            }
-        }))
 
         const agents = await agentsService(log).list({
             projectId,
@@ -268,12 +259,13 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             cursorRequest: null,
         })
 
-        return {
+        return toProjectState({
             flows: allPopulatedFlows,
             connections,
-            tables: allPopulatedTables,
+            tables: tables.data,
             agents: agents.data,
-        }
+            projectId,
+        })
     },
 })
 
@@ -310,9 +302,99 @@ async function handleCreateField(projectId: ProjectId, field: FieldState, tableI
     }
 }
 
+async function toProjectState({ flows, connections, tables, agents, projectId }: ToProjectStateParams): Promise<ProjectState> {
+    const flowsInProjectState: FlowState[] = flows.map((flow) => {
+        const flowState: FlowState = {
+            id: flow.id,
+            projectId: flow.projectId,
+            created: flow.created,
+            status: flow.status,
+            updated: flow.updated,
+            version: flow.version,
+            externalId: flow.externalId,
+            folderId: flow.folderId,
+            metadata: flow.metadata,
+            publishedVersionId: flow.publishedVersionId,
+            triggerSource: flow.triggerSource,
+        }
+        return flowState
+    })
+
+    const tablesInProjectState: TableState[] = await Promise.all(tables.map(async (table) => {
+        const fields = await fieldService.getAll({
+            projectId,
+            tableId: table.id,
+        })
+        const tableState: TableState = {
+            id: table.id,
+            name: table.name,
+            externalId: table.externalId,
+            fields: fields.map((field) => {
+                switch (field.type) {
+                    case FieldType.STATIC_DROPDOWN: {
+                        return {
+                            name: field.name,
+                            type: field.type,
+                            externalId: field.externalId,
+                            data: field.data,
+                        }
+                    }
+                    case FieldType.DATE:
+                    case FieldType.NUMBER:
+                    case FieldType.TEXT: {
+                        return {
+                            name: field.name,
+                            type: field.type,
+                            externalId: field.externalId,
+                        }
+                    }
+                }
+            }),
+        }
+        return tableState
+    }))
+
+    const agentsProjectState = agents.map((agent) => {
+        const mcpState: McpState = {
+            token: agent.mcp.token,
+            externalId: agent.mcp.externalId,
+            name: agent.mcp.name,
+            tools: agent.mcp.tools,
+        }
+        const agentState: AgentState = {
+            displayName: agent.displayName,
+            externalId: agent.externalId,
+            outputType: agent.outputType,
+            outputFields: agent.outputFields,
+            mcp: mcpState,
+            systemPrompt: agent.systemPrompt,
+            description: agent.description,
+            profilePictureUrl: agent.profilePictureUrl,
+            maxSteps: agent.maxSteps,
+            runCompleted: agent.runCompleted,
+        }
+        return agentState
+    })
+
+    return {
+        flows: flowsInProjectState,
+        connections,
+        tables: tablesInProjectState,
+        agents: agentsProjectState,
+    }
+}
+
 type ApplyProjectStateRequest = {
     projectId: string
     diffs: DiffState
     log: FastifyBaseLogger
     platformId: string
+}
+
+type ToProjectStateParams = {
+    flows: PopulatedFlow[]
+    connections: ConnectionState[]
+    tables: Table[]
+    agents: PopulatedAgent[]
+    projectId: ProjectId
 }

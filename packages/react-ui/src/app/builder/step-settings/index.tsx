@@ -139,7 +139,6 @@ const StepSettingsContainer = () => {
       } else {
         debouncedAction({ ...cleanedNewValues, valid });
       }
-
       return result;
     },
   });

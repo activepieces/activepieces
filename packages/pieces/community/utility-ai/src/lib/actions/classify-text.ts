@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { aiProps } from '@activepieces/pieces-common';
 import { LanguageModelV2 } from '@ai-sdk/provider';
 import { generateText } from 'ai';
-import { AIUsageFeature, createAIProvider, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
+import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
+import { aiProps } from '@activepieces/common-ai';
 
 export const classifyText = createAction({
   name: 'classifyText',
@@ -34,10 +34,10 @@ export const classifyText = createAction({
 
     const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
     const engineToken = context.server.token;
-    const provider = createAIProvider({
+    const model = createAIModel({
       providerName,
       modelInstance,
-      apiKey: engineToken,
+      engineToken,
       baseURL,
       metadata: {
         feature: AIUsageFeature.UTILITY_AI,
@@ -45,7 +45,7 @@ export const classifyText = createAction({
     });
 
     const response = await generateText({
-      model: provider,
+      model,
       prompt: `As a text classifier, your task is to assign one of the following categories to the provided text: ${categories.join(
         ', '
       )}. Please respond with only the selected category as a single word, and nothing else.

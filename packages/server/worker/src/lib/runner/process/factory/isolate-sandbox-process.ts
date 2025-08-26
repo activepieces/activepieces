@@ -80,7 +80,7 @@ async function getDirsToBindArgs(flowVersionId: string | undefined, customPieces
         dirsToBind.push(`--dir=${path.join('/codes', flowVersionId)}=${path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId)}`)
     }
     if (customPiecesPath) {
-        dirsToBind.push(`--dir=/node_modules=${path.resolve(customPiecesPath, 'node_modules')}:maybe`)
+        dirsToBind.push(`--dir=/pieces=${path.resolve(customPiecesPath, 'pieces')}:maybe`)
     }
 
     const piecesSource = workerMachine.getSettings().PIECES_SOURCE

@@ -1,7 +1,8 @@
-import { ActivepiecesError, CategorizedLanguageModelPricing, ErrorCode, FlatLanguageModelPricing, TieredLanguageModelPricing } from '@activepieces/shared'
+import { CategorizedLanguageModelPricing, FlatLanguageModelPricing, TieredLanguageModelPricing } from '@activepieces/common-ai'
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, Usage } from './types'
-import { calculateTokensCost, getProviderConfig } from './utils'
+import { calculateTokensCost, calculateWebSearchCost, getProviderConfig } from './utils'
 
 export const googleProvider: AIProviderStrategy = {
     extractModelId: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null => {
@@ -22,6 +23,11 @@ export const googleProvider: AIProviderStrategy = {
                     tokenCount: number
                 }[]
             }
+            candidates: {
+                groundingMetadata?: {
+                    webSearchQueries: string[]
+                }
+            }[]
         }
         | { name: string, error?: Record<string, unknown> }
 
@@ -59,6 +65,10 @@ export const googleProvider: AIProviderStrategy = {
                 const { input: inputCost, output: outputCost } = pricing as FlatLanguageModelPricing
                 cost += calculateTokensCost(promptTokenCount, inputCost) + calculateTokensCost(candidatesTokenCount + (thoughtsTokenCount ?? 0), outputCost)
             }
+
+            const webSearchCost = languageModelConfig.webSearchCost ?? 0
+            const webSearchCalls = apiResponse.candidates.some(candidate => candidate.groundingMetadata?.webSearchQueries?.length ?? 0 > 0) ? 1 : 0
+            cost += calculateWebSearchCost(webSearchCalls, webSearchCost)
 
             return {
                 cost,

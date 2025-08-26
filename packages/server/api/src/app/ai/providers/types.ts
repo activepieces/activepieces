@@ -1,4 +1,4 @@
-import { AIProvider, AIUsageMetadata } from '@activepieces/shared'
+import { AIProvider, AIUsageMetadata } from '@activepieces/common-ai'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 
 export type Usage = {
