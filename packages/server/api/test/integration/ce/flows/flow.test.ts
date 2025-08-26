@@ -6,6 +6,7 @@ import {
     PackageType,
     PieceType,
     PrincipalType,
+    PropertyExecutionType,
     TriggerStrategy,
     TriggerTestStrategy,
     WebhookHandshakeStrategy,
@@ -153,7 +154,11 @@ describe('Flow API', () => {
                             run_on_weekends: false,
                         },
                         triggerName: 'every_hour',
-                        inputUiInfo: {},
+                        propertySettings: {
+                            'run_on_weekends': {
+                                type: PropertyExecutionType.MANUAL,
+                            },
+                        },
                     },
                     valid: true,
                     name: 'webhook',
@@ -334,7 +339,11 @@ describe('Flow API', () => {
                             run_on_weekends: false,
                         },
                         triggerName: 'every_hour',
-                        inputUiInfo: {},
+                        propertySettings: {
+                            'run_on_weekends': {
+                                type: PropertyExecutionType.MANUAL,
+                            },
+                        },
                     },
                     valid: true,
                     name: 'webhook',

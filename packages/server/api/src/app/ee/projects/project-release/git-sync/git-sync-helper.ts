@@ -2,19 +2,20 @@ import fs from 'fs/promises'
 import path from 'path'
 import { GitRepo } from '@activepieces/ee-shared'
 import { fileExists } from '@activepieces/server-shared'
-import { AgentState, AppConnectionScope, ConnectionState, FieldState, FieldType, flowMigrations, FlowState, McpState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
+import { AgentState, AppConnectionScope, ConnectionState, flowMigrations, FlowState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SimpleGit } from 'simple-git'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { gitHelper } from './git-helper'
+import { projectStateService } from '../project-state/project-state.service'
 
-export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
+export const gitSyncHelper = (log: FastifyBaseLogger) => ({
     async getStateFromGit({ flowPath, connectionsFolderPath, tablesFolderPath, agentsFolderPath }: GetStateFromGitParams): Promise<ProjectState> {
         try {
-            const flows = await readFlowsFromGit(flowPath)
+            const flows = await readFlowsFromGit(flowPath, log)
             const connections = await readConnectionsFromGit(connectionsFolderPath)
-            const tables = await readTablesFromGit(tablesFolderPath)
-            const agents = await readAgentsFromGit(agentsFolderPath)
+            const tables = await readTablesFromGit(tablesFolderPath, log)
+            const agents = await readAgentsFromGit(agentsFolderPath, log)
             return {
                 flows,
                 connections,
@@ -23,7 +24,7 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
             }
         }
         catch (error) {
-            _log.error(`Failed to read flow files: ${error}`)
+            log.error(`Failed to read flow files: ${error}`)
             throw error
         }
     },
@@ -32,11 +33,11 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
         try {
             const flowJsonPath = path.join(flowFolderPath, `${fileName}.json`)
             await fs.mkdir(path.dirname(flowJsonPath), { recursive: true })
-            const flowState = getFlowState(flow)
+            const flowState = projectStateService(log).getFlowState(flow)
             await fs.writeFile(flowJsonPath, JSON.stringify(flowState, null, 2))
         }
         catch (error) {
-            _log.error(`Failed to write flow file ${fileName}: ${error}`)
+            log.error(`Failed to write flow file ${fileName}: ${error}`)
             throw error
         }
     },
@@ -44,7 +45,7 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
     async upsertTableToGit({ fileName, table, tablesFolderPath }: UpsertTableIntoProjectParams): Promise<void> {
         const tableJsonPath = path.join(tablesFolderPath, `${fileName}.json`)
         await fs.mkdir(path.dirname(tableJsonPath), { recursive: true })
-        const tableState = getTableState(table)
+        const tableState = projectStateService(log).getTableState(table)
         await fs.writeFile(tableJsonPath, JSON.stringify(tableState, null, 2))
     },
 
@@ -57,7 +58,7 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
     async upsertAgentToGit({ fileName, agent, agentsFolderPath }: UpsertAgentIntoProjectParams): Promise<void> {
         const agentJsonPath = path.join(agentsFolderPath, `${fileName}.json`)
         await fs.mkdir(path.dirname(agentJsonPath), { recursive: true })
-        const agentState = getAgentState(agent)
+        const agentState = projectStateService(log).getAgentState(agent)
         await fs.writeFile(agentJsonPath, JSON.stringify(agentState, null, 2))
     },
 
@@ -74,7 +75,7 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
         const oldConnections = await readConnectionsFromGit(connectionsFolderPath)
         await Promise.all(oldConnections.map((connection) => this.deleteFromGit({ fileName: connection.externalId, folderPath: connectionsFolderPath })))
 
-        const flows = await readFlowsFromGit(flowFolderPath)
+        const flows = await readFlowsFromGit(flowFolderPath, log)
         const connectionsInFlows = flows.flatMap((flow) => flow.version.connectionIds)
         const currentConnections = await appConnectionService(log).list({
             projectId: gitRepo.projectId,
@@ -104,7 +105,7 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
     
 })
 
-async function readFlowsFromGit(flowFolderPath: string): Promise<FlowState[]> {
+async function readFlowsFromGit(flowFolderPath: string, log: FastifyBaseLogger): Promise<FlowState[]> {
     const flowFiles = await fs.readdir(flowFolderPath)
     const flows: FlowState[] = []
     for (const file of flowFiles) {
@@ -117,7 +118,7 @@ async function readFlowsFromGit(flowFolderPath: string): Promise<FlowState[]> {
             externalId: flow.externalId ?? flow.id,
             version: migratedFlowVersion,
         }
-        const flowState = getFlowState(populatedMigratedFlow)
+        const flowState = projectStateService(log).getFlowState(populatedMigratedFlow)
         flows.push(flowState)
     }
     return flows
@@ -135,82 +136,27 @@ async function readConnectionsFromGit(connectionsFolderPath: string): Promise<Co
     return connections
 }
 
-async function readTablesFromGit(tablesFolderPath: string): Promise<TableState[]> {
+async function readTablesFromGit(tablesFolderPath: string, log: FastifyBaseLogger): Promise<TableState[]> {
     const tableFiles = await fs.readdir(tablesFolderPath)
     const tables: TableState[] = []
     for (const file of tableFiles) {
         const table = JSON.parse(
             await fs.readFile(path.join(tablesFolderPath, file), 'utf-8'),
         )
-        const tableState = getTableState(table)
+        const tableState = projectStateService(log).getTableState(table)
         tables.push(tableState)
     }
     return tables
 }
 
-async function readAgentsFromGit(agentsFolderPath: string): Promise<AgentState[]> {
+async function readAgentsFromGit(agentsFolderPath: string, log: FastifyBaseLogger): Promise<AgentState[]> {
     const agentFiles = await fs.readdir(agentsFolderPath)
     const agents: AgentState[] = []
     for (const file of agentFiles) {
         const agent: PopulatedAgent = JSON.parse(await fs.readFile(path.join(agentsFolderPath, file), 'utf-8'))
-        agents.push(getAgentState(agent))
+        agents.push(projectStateService(log).getAgentState(agent))
     }
     return agents
-}
-
-function getAgentState(agent: PopulatedAgent): AgentState {
-    const mcpState: McpState = {
-        token: agent.mcp.token,
-        externalId: agent.mcp.externalId,
-        name: agent.mcp.name,
-        tools: agent.mcp.tools,
-    }
-    const agentState: AgentState = {
-        displayName: agent.displayName,
-        externalId: agent.externalId,
-        outputType: agent.outputType,
-        outputFields: agent.outputFields,
-        mcp: mcpState,
-        description: agent.description,
-        systemPrompt: agent.systemPrompt,
-        profilePictureUrl: agent.profilePictureUrl,
-        maxSteps: agent.maxSteps,
-        runCompleted: agent.runCompleted,
-    }
-    return agentState
-}
-
-function getFlowState(flow: PopulatedFlow): FlowState {
-    const flowState: FlowState = {
-        id: flow.id,
-        externalId: flow.externalId ?? flow.id,
-        version: flowMigrations.apply(flow.version),
-        created: flow.created,
-        updated: flow.updated,
-        folderId: flow.folderId,
-        publishedVersionId: flow.publishedVersionId,
-        metadata: flow.metadata,
-        projectId: flow.projectId,
-        status: flow.status,
-        triggerSource: flow.triggerSource,
-    }
-    return flowState
-}
-
-function getTableState(table: PopulatedTable): TableState {
-    const fields: FieldState[] = table.fields.map((field) => ({
-        name: field.name,
-        type: field.type,
-        externalId: field.externalId,
-        data: field.type === FieldType.STATIC_DROPDOWN ? field.data : undefined,
-    }))
-    const tableState: TableState = {
-        id: table.id,
-        externalId: table.externalId ?? table.id,
-        name: table.name,
-        fields,
-    }
-    return tableState
 }
 
 type GetStateFromGitParams = {

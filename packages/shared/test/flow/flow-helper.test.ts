@@ -69,8 +69,10 @@ const flowVersionWithBranching: FlowVersion = {
                     pieceName: 'store',
                     pieceVersion: '~0.2.6',
                     actionName: 'get',
-                    inputUiInfo: {
-                        customizedInputs: {},
+                    propertySettings: {
+                        'key': {
+                            type: PropertyExecutionType.MANUAL,
+                        },
                     },
                 },
                 displayName: 'Get',
@@ -103,8 +105,13 @@ const flowVersionWithBranching: FlowVersion = {
                     pieceName: 'discord',
                     pieceVersion: '0.2.1',
                     actionName: 'send_message_webhook',
-                    inputUiInfo: {
-                        customizedInputs: {},
+                    propertySettings: {
+                        'content': {
+                            type: PropertyExecutionType.MANUAL,
+                        },
+                        'webhook_url': {
+                            type: PropertyExecutionType.MANUAL,
+                        },
                     },
                 },
                 displayName: 'Send Message Webhook',
@@ -302,11 +309,6 @@ describe('Flow Helper', () => {
                 type: FlowActionType.LOOP_ON_ITEMS,
                 settings: {
                     items: 'items',
-                    propertySettings: {
-                        'items': {
-                            type: PropertyExecutionType.MANUAL,
-                        },
-                    },
                 },
                 firstLoopAction: {
                     displayName: 'Code',
