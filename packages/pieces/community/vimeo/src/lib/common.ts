@@ -36,7 +36,7 @@ export async function apiRequest({
       timeout: 30000,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth.accessToken,
+        token: auth.access_token,
       },
       ...(headers ? { headers } : {}),
     });

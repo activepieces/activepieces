@@ -1,52 +1,21 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 
 const authGuide = `
 ### To obtain your Vimeo API access token, follow these steps:
 
-1. After creating the app, navigate to https://developer.vimeo.com/apps
-2. Select your app
-3. Scroll and find **Authentication** -> **Generate an access token**
-4. Select: **Authenticated (you)**
-5. Select this scope: **[ Private, Edit, Delete, Upload, Video Files ]**
-  - You need to do request upload access if it's not available
-6. Click the **Generate** button
-7. Copy the created token and paste it into the **Access Token** field below.
-
-### To request API upload access:
-1. Visit the My Apps page
-2. Select the name of your app
-3. On your app's information page, under the Permissions section, select the **Request Upload Access** link and fill the required information.
-4. Or you can also submit a [support ticket](https://vimeo.com/help/contact) requesting Vimeo API upload access
+1. Login to your Vimeo account
+2. Create your app on Vimeo, navigate to https://developer.vimeo.com/apps
+3. After creating the app, copy **Client identifier** and fill it to **Client ID** field below.
+4. Scroll down and Copy **Client secrets** and fill it to **Client Secret** field below.
+5. Scroll down and find "Your callback URLs" section, and add new URL. Make sure you copy the **Redirect URL** from the field below to Vimeo's redirect URL.
+6. Click **Connect** from below and allow access to your account.
+7. Save
 `;
 
-// Vimeo API authentication
-export const vimeoAuth = PieceAuth.CustomAuth({
+export const vimeoAuth = PieceAuth.OAuth2({
   description: authGuide,
-  props: {
-    accessToken: PieceAuth.SecretText({
-      displayName: 'Access Token',
-      description: 'Your Vimeo API Access Token',
-      required: true,
-    }),
-  },
+  authUrl: 'https://api.vimeo.com/oauth/authorize',
+  tokenUrl: 'https://api.vimeo.com/oauth/access_token',
   required: true,
-  async validate({ auth }) {
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: 'https://api.vimeo.com/me',
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth.accessToken,
-        },
-      });
-      return { valid: true };
-    } catch (e: any) {
-      return {
-        valid: false,
-        error: e?.message || 'Invalid Vimeo credentials',
-      };
-    }
-  },
+  scope: ['public', 'private', 'edit', 'upload', 'delete'],
 });
