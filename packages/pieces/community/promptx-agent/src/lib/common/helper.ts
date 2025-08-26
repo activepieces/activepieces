@@ -26,15 +26,19 @@ export const urlMap = {
 
 export const getAccessToken = async (auth: PromptXAuthType) => {
   const { server, username, password } = auth;
+  const isStaging = server === 'staging';
+  const body = isStaging
+    ? new URLSearchParams({ username, password }).toString()
+    : JSON.stringify({ username, password });
+  const headers = {
+    'Content-Type': isStaging
+      ? 'application/x-www-form-urlencoded'
+      : 'application/json',
+  };
   const response = await fetch(urlMap[server].loginUrl, {
     method: 'POST',
-    body: new URLSearchParams({
-      username: username,
-      password: password,
-    }).toString(),
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+    body,
+    headers,
   });
   const data: PromptXLoginResponseType = await response.json();
   if (response.status !== 200) {
