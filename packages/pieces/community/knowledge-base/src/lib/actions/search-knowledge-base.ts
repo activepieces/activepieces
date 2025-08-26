@@ -10,11 +10,13 @@ export const getMasterData = async (auth: any) => {
     if (isTest) {
       masterData.CENTER_AUTH_LOGIN_URL = "https://mocha.centerapp.io/center/auth/login";
       masterData.CENTER_API_USERS_ME_URL = "https://mocha.centerapp.io/center/api/v1/users/me";
+      masterData.KNOWLEDGE_BASE_URL = "https://test.oneweb.tech/KnowledgeBaseFileService";
       masterData.KNOWLEDGE_BASE_RUN_URL = "https://mlsandbox.oneweb.tech/px/retrieval";
       masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = "https://test.oneweb.tech/KnowledgeBaseFileService/collections";
     } else {
       masterData.CENTER_AUTH_LOGIN_URL = "https://centerapp.io/center/auth/login";
       masterData.CENTER_API_USERS_ME_URL = "https://centerapp.io/center/api/v1/users/me";
+      masterData.KNOWLEDGE_BASE_URL = "https://promptxai.com/KnowledgeBaseFileService";
       masterData.KNOWLEDGE_BASE_RUN_URL = "https://centerapp.io/knowledge/retrieval";
       masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = "https://promptxai.com/KnowledgeBaseFileService/collections";
     }
@@ -23,13 +25,14 @@ export const getMasterData = async (auth: any) => {
     const masterData: any = {};
     masterData.CENTER_AUTH_LOGIN_URL = "https://mocha.centerapp.io/center/auth/login";
     masterData.CENTER_API_USERS_ME_URL = "https://mocha.centerapp.io/center/api/v1/users/me";
+    masterData.KNOWLEDGE_BASE_URL = "https://test.oneweb.tech/KnowledgeBaseFileService";
     masterData.KNOWLEDGE_BASE_RUN_URL = "https://mlsandbox.oneweb.tech/px/retrieval";
     masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = "https://test.oneweb.tech/KnowledgeBaseFileService/collections";
     return masterData;
   }
 };
 
-const getAccessToken = async (CENTER_AUTH_LOGIN_URL: string, auth: any): Promise<string | null> => {
+export const getAccessToken = async (CENTER_AUTH_LOGIN_URL: string, auth: any): Promise<string | null> => {
   const response = await fetch(CENTER_AUTH_LOGIN_URL, {
     method: 'POST',
     body: JSON.stringify({
@@ -44,7 +47,7 @@ const getAccessToken = async (CENTER_AUTH_LOGIN_URL: string, auth: any): Promise
   return data.token;
 };
 
-const getUserMe = async (CENTER_API_USERS_ME_URL: string, accessToken: string) => {
+export const getUserMe = async (CENTER_API_USERS_ME_URL: string, accessToken: string) => {
   const response = await fetch(CENTER_API_USERS_ME_URL, {
     method: 'GET',
     headers: {
@@ -53,7 +56,7 @@ const getUserMe = async (CENTER_API_USERS_ME_URL: string, accessToken: string) =
     }
   });
   const data = await response.json();
-  return data.iam2ID;
+  return data;
 }
 
 export const searchKnowledgeBase = createAction({
@@ -84,10 +87,10 @@ export const searchKnowledgeBase = createAction({
         try {
           const masterData = await getMasterData(auth);
           const accessToken = await getAccessToken(masterData.CENTER_AUTH_LOGIN_URL, auth) || '';
-          const userId = await getUserMe(masterData.CENTER_API_USERS_ME_URL, accessToken);
+          const userMe = await getUserMe(masterData.CENTER_API_USERS_ME_URL, accessToken);
 
           const response = await axios.get(
-            masterData.KNOWLEDGE_BASE_COLLECTIONS_URL + `/` + userId,
+            masterData.KNOWLEDGE_BASE_COLLECTIONS_URL + `/` + userMe.iam2ID,
             {
               headers: {
                 'Authorization': `Bearer ` + accessToken,
@@ -134,7 +137,7 @@ export const searchKnowledgeBase = createAction({
       const auth = context.auth;
       const masterData = await getMasterData(auth);
       const accessToken = await getAccessToken(masterData.CENTER_AUTH_LOGIN_URL, auth) || '';
-      const userId = await getUserMe(masterData.CENTER_API_USERS_ME_URL, accessToken);
+      const userMe = await getUserMe(masterData.CENTER_API_USERS_ME_URL, accessToken);
 
       const response = await axios.post(
         masterData.KNOWLEDGE_BASE_RUN_URL,
@@ -149,7 +152,7 @@ export const searchKnowledgeBase = createAction({
         {
           headers: {
             'Authorization': `Bearer ` + accessToken,
-            'userId': userId,
+            'userId': userMe.iam2ID,
             'Content-Type': 'application/json',
           },
         }

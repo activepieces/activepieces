@@ -1,5 +1,6 @@
 import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { searchKnowledgeBase, getMasterData } from './lib/actions/search-knowledge-base';
+import { addToKnowledgeBase } from './lib/actions/add-to-knowledge-base';
 
 export const Production = "PromptX";
 export const Test = "Staging";
@@ -75,11 +76,11 @@ export const knowledgeBaseAuth = PieceAuth.CustomAuth({
 
 export const knowledgeBase = createPiece({
   displayName: "PromptX Knowledge Base",
-  description: "Search for content in PromptX's knowledge base",
+  description: "PromptX Knowledge Base",
   auth: knowledgeBaseAuth,
   minimumSupportedRelease: "0.36.1",
   logoUrl: "https://ml.oneweb.tech/public_img_main/images/PromptXAI/PromptXAI_c5008fdcd9a94d61b293c1080ebec834.png",
   authors: ["rupalbarman"],
-  actions: [searchKnowledgeBase],
+  actions: [searchKnowledgeBase, addToKnowledgeBase],
   triggers: [],
 });
