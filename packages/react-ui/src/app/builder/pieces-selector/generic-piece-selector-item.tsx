@@ -3,7 +3,7 @@ import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { PIECE_SELECTOR_ELEMENTS_HEIGHTS } from '@/features/pieces/lib/piece-selector-utils';
 import { PieceSelectorItem, StepMetadataWithSuggestions } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { ActionType, TriggerType } from '@activepieces/shared';
+import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
 type GenericActionOrTriggerItemProps = {
   item: PieceSelectorItem;
   hidePieceIconAndDescription: boolean;
@@ -12,7 +12,10 @@ type GenericActionOrTriggerItemProps = {
 };
 
 const getPieceSelectorItemInfo = (item: PieceSelectorItem) => {
-  if (item.type === ActionType.PIECE || item.type === TriggerType.PIECE) {
+  if (
+    item.type === FlowActionType.PIECE ||
+    item.type === FlowTriggerType.PIECE
+  ) {
     return {
       displayName: item.actionOrTrigger.displayName,
       description: item.actionOrTrigger.description,

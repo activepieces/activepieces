@@ -35,6 +35,11 @@ jobs:
       - name: copy project .npmrc to user level
         run: cp .npmrc $HOME/.npmrc
 
+      - name: publish ai providers shared package
+        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/ai-providers-shared
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: publish shared package
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/shared
         env:
@@ -55,7 +60,19 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Check available memory
+        run: free -h
+
       - name: update pieces metadata
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/pieces/update-pieces-metadata.ts packages/pieces/community/framework
         env:
           AP_CLOUD_API_KEY: ${{ secrets.AP_CLOUD_API_KEY }}
+          NODE_OPTIONS: "--max-old-space-size=8192"
+
+      - name: Notify Discord on failure
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"🚨 **Release Pieces Workflow Failed** 🚨\\n\\n**Repository:** ${{ github.repository }}\\n**Branch:** ${{ github.ref_name }}\\n**Commit:** ${{ github.sha }}\\n**Action URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n\\nThe release pieces workflow has failed. Please check the logs for more details.\"}" \
+            ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}

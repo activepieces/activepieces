@@ -1,11 +1,12 @@
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
+import i18next, { t } from 'i18next';
 import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-import { LocalesEnum } from '@activepieces/shared';
+import { LocalesEnum, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from './authentication-session';
 
@@ -27,7 +28,7 @@ export const formatUtils = {
       .join(' ');
   },
   formatNumber(number: number) {
-    return new Intl.NumberFormat('en-US').format(number);
+    return new Intl.NumberFormat(i18next.language).format(number);
   },
   formatDateOnlyOrFail(date: Date, fallback: string) {
     try {
@@ -37,7 +38,7 @@ export const formatUtils = {
     }
   },
   formatDateOnly(date: Date) {
-    return Intl.DateTimeFormat('en-US', {
+    return Intl.DateTimeFormat(i18next.language, {
       month: 'numeric',
       day: 'numeric',
       year: 'numeric',
@@ -46,22 +47,21 @@ export const formatUtils = {
   formatDate(date: Date) {
     const now = dayjs();
     const inputDate = dayjs(date);
-
     const isToday = inputDate.isSame(now, 'day');
     const isYesterday = inputDate.isSame(now.subtract(1, 'day'), 'day');
 
-    const timeFormat = new Intl.DateTimeFormat('en-US', {
+    const timeFormat = new Intl.DateTimeFormat(i18next.language, {
       hour: 'numeric',
       minute: 'numeric',
       hour12: true,
     });
 
     if (isToday) {
-      return `Today at ${timeFormat.format(date)}`;
+      return `${t('Today')}, ${timeFormat.format(date)}`;
     } else if (isYesterday) {
-      return `Yesterday at ${timeFormat.format(date)}`;
+      return `${t('Yesterday')}, ${timeFormat.format(date)}`;
     }
-    return Intl.DateTimeFormat('en-US', {
+    return Intl.DateTimeFormat(i18next.language, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -152,20 +152,15 @@ export function useForwardedRef<T>(ref: React.ForwardedRef<T>) {
 }
 
 export const localesMap = {
-  [LocalesEnum.BULGARIAN]: 'Български',
   [LocalesEnum.CHINESE_SIMPLIFIED]: '简体中文',
-  [LocalesEnum.INDONESIAN]: 'Bahasa Indonesia',
   [LocalesEnum.GERMAN]: 'Deutsch',
   [LocalesEnum.ENGLISH]: 'English',
   [LocalesEnum.SPANISH]: 'Español',
   [LocalesEnum.FRENCH]: 'Français',
-  [LocalesEnum.ITALIAN]: 'Italiano',
   [LocalesEnum.JAPANESE]: '日本語',
-  [LocalesEnum.HUNGARIAN]: 'Magyar',
   [LocalesEnum.DUTCH]: 'Nederlands',
-  [LocalesEnum.PORTUGUESE]: 'Português (Brasil)',
-  [LocalesEnum.UKRAINIAN]: 'Українська',
-  [LocalesEnum.VIETNAMESE]: 'Tiếng Việt',
+  [LocalesEnum.PORTUGUESE]: 'Português',
+  [LocalesEnum.CHINESE_TRADITIONAL]: '繁體中文',
 };
 
 export const useElementSize = (ref: RefObject<HTMLElement>) => {
@@ -231,13 +226,20 @@ export const useTimeAgo = (date: Date) => {
   return timeAgo;
 };
 
-export const determineDefaultRoute = (isEmbedded: boolean) => {
-  if (isEmbedded) {
+export const determineDefaultRoute = (
+  checkAccess: (permission: Permission) => boolean,
+) => {
+  if (checkAccess(Permission.READ_FLOW)) {
     return authenticationSession.appendProjectRoutePrefix('/flows');
   }
-  return authenticationSession.appendProjectRoutePrefix('/agents');
+  if (checkAccess(Permission.READ_RUN)) {
+    return authenticationSession.appendProjectRoutePrefix('/runs');
+  }
+  if (checkAccess(Permission.READ_ISSUES)) {
+    return authenticationSession.appendProjectRoutePrefix('/issues');
+  }
+  return authenticationSession.appendProjectRoutePrefix('/settings');
 };
-
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
 export const NEW_TABLE_QUERY_PARAM = 'newTable';
 export const NEW_MCP_QUERY_PARAM = 'newMcp';

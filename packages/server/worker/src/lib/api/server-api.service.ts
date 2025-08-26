@@ -1,6 +1,6 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, Agent, AgentRun, ErrorCode, Field, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PlatformUsageMetric, PopulatedFlow, Record, RunAgentRequestBody, UpdateAgentRunRequestBody, UpdateRecordRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { ActivepiecesError, Agent, AgentRun, CreateTriggerRunRequestBody, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PlatformUsageMetric, PopulatedFlow, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
@@ -115,11 +115,11 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
         async updateJobStatus(request: UpdateJobRequest): Promise<void> {
             await client.post('/v1/engine/update-job', request)
         },
-        async updateFailureCount(request: UpdateFailureCountRequest): Promise<void> {
-            await client.post('/v1/engine/update-failure-count', request)
-        },
         async getRun(request: GetRunForWorkerRequest): Promise<FlowRun> {
             return client.get<FlowRun>('/v1/engine/runs/' + request.runId, {})
+        },
+        async createTriggerRun(request: CreateTriggerRunRequestBody): Promise<TriggerRun> {
+            return client.post<TriggerRun>('/v1/engine/create-trigger-run', request)
         },
         async updateRunStatus(request: UpdateRunProgressRequest): Promise<void> {
             await client.post('/v1/engine/update-run', request)
@@ -127,7 +127,7 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
         async getPiece(name: string, options: GetPieceRequestQuery): Promise<PieceMetadataModel> {
             return client.get<PieceMetadataModel>(`/v1/pieces/${encodeURIComponent(name)}`, {
                 params: options,
-            })  
+            })
         },
         async checkTaskLimit(): Promise<void> {
             try {
@@ -166,31 +166,11 @@ export const agentsApiService = (workerToken: string, _log: FastifyBaseLogger) =
             return client.get<McpWithTools>(`/v1/mcp-servers/${mcpId}`, {})
         },
 
-        async getAgentRun(agentRunId: string): Promise<AgentRun> {
-            return client.get<AgentRun>(`/v1/agent-runs/${agentRunId}`, {})
-        },
         async createAgentRun(agentRun: RunAgentRequestBody): Promise<AgentRun> {
             return client.post<AgentRun>('/v1/agent-runs', agentRun)
         },
         async updateAgentRun(agentRunId: string, agentRun: UpdateAgentRunRequestBody): Promise<AgentRun> {
             return client.post<AgentRun>(`/v1/agent-runs/${agentRunId}/update`, agentRun)
-        },
-    }
-}
-
-export const tablesApiService = (workerToken: string) => {
-    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
-    const client = new ApAxiosClient(apiUrl, workerToken)
-
-    return {
-        async getFields(tableId: string): Promise<Field[]> {
-            return client.get<Field[]>(`/v1/fields?tableId=${tableId}`, {})
-        },
-        async getRecord(recordId: string): Promise<Record> {
-            return client.get<Record>(`/v1/records/${recordId}`, {})
-        },
-        async updateRecord(recordId: string, record: UpdateRecordRequest): Promise<Record> {
-            return client.post<Record>(`/v1/records/${recordId}`, { ...record, agentUpdate: true })
         },
     }
 }

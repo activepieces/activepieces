@@ -90,6 +90,7 @@ async function removeDeprecatedJobs() {
         'trigger-data-cleaner',
         'logs-cleanup-trigger',
         'usage-report',
+        'platform-usage-report',
     ]
     const allSystemJobs = await systemJobsQueue.getJobSchedulers()
     const deprecatedJobsFromQueue = allSystemJobs.filter(f => !isNil(f) && (deprecatedJobs.includes(f.key) || deprecatedJobs.some(d => f.key.startsWith(d))))

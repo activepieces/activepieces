@@ -13,8 +13,6 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
-  Action,
-  ActionType,
   CodeActionSchema,
   isEmpty,
   LoopOnItemsActionSchema,
@@ -22,8 +20,6 @@ import {
   PieceActionSettings,
   PieceTrigger,
   PieceTriggerSettings,
-  Trigger,
-  TriggerType,
   isNil,
   spreadIfDefined,
   RouterActionSchema,
@@ -37,6 +33,10 @@ import {
   UpsertCustomAuthRequest,
   UpsertBasicAuthRequest,
   UpsertSecretTextRequest,
+  FlowTriggerType,
+  FlowActionType,
+  FlowAction,
+  FlowTrigger,
 } from '@activepieces/shared';
 
 function addAuthToPieceProps(
@@ -60,12 +60,12 @@ function addAuthToPieceProps(
 }
 
 function buildInputSchemaForStep(
-  type: ActionType | TriggerType,
+  type: FlowActionType | FlowTriggerType,
   piece: PieceMetadata | null,
   actionNameOrTriggerName: string,
 ): TSchema {
   switch (type) {
-    case ActionType.PIECE: {
+    case FlowActionType.PIECE: {
       if (
         piece &&
         actionNameOrTriggerName &&
@@ -81,7 +81,7 @@ function buildInputSchemaForStep(
       }
       return Type.Object({});
     }
-    case TriggerType.PIECE: {
+    case FlowTriggerType.PIECE: {
       if (
         piece &&
         actionNameOrTriggerName &&
@@ -183,11 +183,11 @@ function buildConnectionSchema(
 
 export const formUtils = {
   /**When we use deepEqual if one object has an undefined value and the other doesn't have the key, that's an unequality, so to be safe we remove undefined values */
-  removeUndefinedFromInput: (step: Action | Trigger) => {
+  removeUndefinedFromInput: (step: FlowAction | FlowTrigger) => {
     const copiedStep = JSON.parse(JSON.stringify(step));
     if (
-      copiedStep.type !== TriggerType.PIECE &&
-      copiedStep.type !== ActionType.PIECE
+      copiedStep.type !== FlowTriggerType.PIECE &&
+      copiedStep.type !== FlowActionType.PIECE
     ) {
       return step;
     }
@@ -200,10 +200,10 @@ export const formUtils = {
     return copiedStep;
   },
   buildPieceDefaultValue: (
-    selectedStep: Action | Trigger,
+    selectedStep: FlowAction | FlowTrigger,
     piece: PieceMetadata | null | undefined,
     includeCurrentInput: boolean,
-  ): Action | Trigger => {
+  ): FlowAction | FlowTrigger => {
     const { type } = selectedStep;
     const defaultErrorOptions = {
       continueOnFailure: {
@@ -218,7 +218,7 @@ export const formUtils = {
       },
     };
     switch (type) {
-      case ActionType.LOOP_ON_ITEMS:
+      case FlowActionType.LOOP_ON_ITEMS:
         return {
           ...selectedStep,
           settings: {
@@ -226,11 +226,11 @@ export const formUtils = {
             items: selectedStep.settings.items ?? '',
           },
         };
-      case ActionType.ROUTER:
+      case FlowActionType.ROUTER:
         return {
           ...selectedStep,
         };
-      case ActionType.CODE: {
+      case FlowActionType.CODE: {
         const defaultCode = `export const code = async (inputs) => {
   return true;
 };`;
@@ -246,7 +246,7 @@ export const formUtils = {
           },
         };
       }
-      case ActionType.PIECE: {
+      case FlowActionType.PIECE: {
         const actionName = selectedStep?.settings?.actionName;
         const requireAuth = isNil(actionName)
           ? false
@@ -277,7 +277,7 @@ export const formUtils = {
           },
         };
       }
-      case TriggerType.PIECE: {
+      case FlowTriggerType.PIECE: {
         const triggerName = selectedStep?.settings?.triggerName;
         const requireAuth = isNil(triggerName)
           ? false
@@ -313,12 +313,12 @@ export const formUtils = {
     }
   },
   buildPieceSchema: (
-    type: ActionType | TriggerType,
+    type: FlowActionType | FlowTriggerType,
     actionNameOrTriggerName: string,
     piece: PieceMetadataModel | null,
   ) => {
     switch (type) {
-      case ActionType.LOOP_ON_ITEMS:
+      case FlowActionType.LOOP_ON_ITEMS:
         return Type.Composite([
           LoopOnItemsActionSchema,
           Type.Object({
@@ -329,7 +329,7 @@ export const formUtils = {
             }),
           }),
         ]);
-      case ActionType.ROUTER:
+      case FlowActionType.ROUTER:
         return Type.Intersect([
           Type.Omit(RouterActionSchema, ['settings']),
           Type.Object({
@@ -340,9 +340,9 @@ export const formUtils = {
             }),
           }),
         ]);
-      case ActionType.CODE:
+      case FlowActionType.CODE:
         return CodeActionSchema;
-      case ActionType.PIECE: {
+      case FlowActionType.PIECE: {
         return Type.Composite([
           Type.Omit(PieceActionSchema, ['settings']),
           Type.Object({
@@ -362,7 +362,7 @@ export const formUtils = {
           }),
         ]);
       }
-      case TriggerType.PIECE: {
+      case FlowTriggerType.PIECE: {
         return Type.Composite([
           Type.Omit(PieceTrigger, ['settings']),
           Type.Object({
@@ -491,7 +491,9 @@ export const formUtils = {
         case PropertyType.MULTI_SELECT_DROPDOWN:
         case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
           propsSchema[name] = Type.Union([
-            Type.Array(Type.Any()),
+            Type.Array(Type.Any(), {
+              minItems: property.required ? 1 : undefined,
+            }),
             Type.String({
               minLength: property.required ? 1 : undefined,
             }),

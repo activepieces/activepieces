@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/form';
 import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Switch } from '@/components/ui/switch';
-import { Action, Trigger } from '@activepieces/shared';
+import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
 type ActionErrorHandlingFormProps = {
   hideContinueOnFailure?: boolean;
@@ -24,7 +24,7 @@ const ActionErrorHandlingForm = React.memo(
     hideRetryOnFailure,
     disabled,
   }: ActionErrorHandlingFormProps) => {
-    const form = useFormContext<Action | Trigger>();
+    const form = useFormContext<FlowAction | FlowTrigger>();
 
     return (
       <div className="grid gap-4">

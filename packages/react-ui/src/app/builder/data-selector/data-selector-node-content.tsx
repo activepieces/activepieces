@@ -57,7 +57,7 @@ const DataSelectorNodeContent = ({
   const showInsertButton =
     node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode;
   const showNodeValue = !node.children && node.data.type === 'value';
-
+  const depthMultiplier = 23 / (1 + depth * 0.05);
   return (
     <div
       tabIndex={0}
@@ -81,7 +81,9 @@ const DataSelectorNodeContent = ({
       <div className="flex-grow  max-w-full flex items-center gap-2 min-h-[48px] pr-3 select-none">
         <div
           style={{
-            minWidth: `${depth * 25 + (depth === 0 ? 0 : 25) + 18}px`,
+            minWidth: `${
+              depth * depthMultiplier + (depth === 0 ? 0 : 12) + 18
+            }px`,
           }}
         ></div>
         {stepMetadata && (

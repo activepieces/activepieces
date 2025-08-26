@@ -6,7 +6,7 @@ import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { TableTitle } from '@/components/custom/table-title';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
@@ -69,34 +69,30 @@ const SigningKeysPage = () => {
       )}
     >
       <div className="flex-col w-full">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex flex-col gap-2">
-            <TableTitle
-              description={
-                <Trans>
-                  Use our embedding{' '}
-                  <Link
-                    rel="noopener noreferrer"
-                    target="_blank"
-                    className="font-medium text-primary underline underline-offset-4"
-                    to="https://www.activepieces.com/docs/embedding/provision-users"
-                  >
-                    JavaScript SDK
-                  </Link>{' '}
-                  to authenticate users with signing keys.
-                </Trans>
-              }
-            >
-              {t('Signing Keys')}
-            </TableTitle>
-          </div>
+        <DashboardPageHeader
+          title={t('Signing Keys')}
+          description={
+            <Trans>
+              Use our embedding{' '}
+              <Link
+                rel="noopener noreferrer"
+                target="_blank"
+                className="font-medium text-primary underline underline-offset-4"
+                to="https://www.activepieces.com/docs/embedding/provision-users"
+              >
+                JavaScript SDK
+              </Link>{' '}
+              to authenticate users with signing keys.
+            </Trans>
+          }
+        >
           <NewSigningKeyDialog onCreate={() => refetch()}>
             <Button size="sm" className="flex items-center gap-2">
               <Plus className="size-4" />
               {t('New Signing Key')}
             </Button>
           </NewSigningKeyDialog>
-        </div>
+        </DashboardPageHeader>
         <DataTable
           emptyStateTextTitle={t('No signing keys found')}
           emptyStateTextDescription={t(

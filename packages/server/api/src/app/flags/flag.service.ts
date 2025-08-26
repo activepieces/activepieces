@@ -29,7 +29,6 @@ export const flagService = {
                 ApFlagId.CLOUD_AUTH_ENABLED,
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
-                ApFlagId.IS_CLOUD_PLATFORM,
                 ApFlagId.EMAIL_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
@@ -117,12 +116,7 @@ export const flagService = {
                 created,
                 updated,
             },
-            {
-                id: ApFlagId.IS_CLOUD_PLATFORM,
-                value: false,
-                created,
-                updated,
-            },
+     
             {
                 id: ApFlagId.SHOW_BILLING,
                 value: system.getEdition() === ApEdition.CLOUD,
@@ -257,6 +251,12 @@ export const flagService = {
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.SHOW_TUTORIALS,
+                value: true,
+                created,
+                updated,
+            },
         )
 
         if (system.isApp()) {
@@ -279,15 +279,7 @@ export const flagService = {
         }
         return flags
     },
-    
-    isCloudPlatform(platformId: string | null): boolean {
-        const cloudPlatformId = system.get(AppSystemProp.CLOUD_PLATFORM_ID)
-        if (!cloudPlatformId || !platformId) {
-            return false
-        }
 
-        return platformId === cloudPlatformId
-    },
 }
 
 

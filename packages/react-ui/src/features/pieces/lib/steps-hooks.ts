@@ -2,13 +2,13 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import {
-  Action,
-  ActionType,
+  FlowAction,
+  FlowActionType,
+  FlowTriggerType,
   flowStructureUtil,
   LocalesEnum,
   SuggestionType,
-  Trigger,
-  TriggerType,
+  FlowTrigger,
 } from '@activepieces/shared';
 
 import {
@@ -39,7 +39,7 @@ export const stepsHooks = {
       isLoading: query.isLoading,
     };
   },
-  useStepsMetadata: (props: (Action | Trigger)[]) => {
+  useStepsMetadata: (props: (FlowAction | FlowTrigger)[]) => {
     const { i18n } = useTranslation();
     return useQueries({
       queries: props.map((step) => {
@@ -119,7 +119,7 @@ function passSearch(
 }
 
 type UseStepMetadata = {
-  step: Action | Trigger;
+  step: FlowAction | FlowTrigger;
   enabled?: boolean;
 };
 
@@ -130,11 +130,11 @@ type UseMetadataProps = {
 };
 
 const getQueryKeyForStepMetadata = (
-  step: Action | Trigger,
+  step: FlowAction | FlowTrigger,
   locale: LocalesEnum,
 ): (string | undefined)[] => {
   const isPieceStep =
-    step.type === ActionType.PIECE || step.type === TriggerType.PIECE;
+    step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE;
   const pieceName = isPieceStep ? step.settings.pieceName : undefined;
   const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
   const customLogoUrl =

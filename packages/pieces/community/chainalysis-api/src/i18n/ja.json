@@ -1,0 +1,9 @@
+{
+  "Chainalysis Screening API": "ChainalysisスクリーニングAPI",
+  "Chainalysis Screening API allows you to check if a blockchain address is sanctioned.": "ChainalysisスクリーニングAPIを使用すると、ブロックチェーンアドレスが制裁されているかどうかを確認できます。",
+  "API Key for Chainalysis Screening API": "ChainalysisスクリーニングAPIキー",
+  "Check Address Sanctions": "アドレス制約を確認",
+  "Check if an address is sanctioned": "住所が認可されているかどうかを確認します。",
+  "Address": "住所",
+  "Address to check for sanctions": "制裁を確認するアドレス"
+}

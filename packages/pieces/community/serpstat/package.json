@@ -1,0 +1,7 @@
+{
+  "name": "@activepieces/piece-serpstat",
+  "version": "0.0.2",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts"
+}

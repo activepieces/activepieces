@@ -1,0 +1,20 @@
+{
+  "Copy.ai": "Copia.ai",
+  "AI-powered content generation and copywriting platform": "Plataforma de generación de contenidos y copywriting impulsada por AIs",
+  "\nTo use Copy AI, you need to get an API key:\n1. Login to your account at https://copy.ai.\n2. Click on Workflows in the left sidebar.\n3. Click on any Workflow you have. You need to create a new Workflow, if you don't have one.\n4. Click on the API tab.\n5. Click the Copy button below WORKSPACE API KEY.\n": "\nTo use Copy AI, you need to get an API key:\n1. Login to your account at https://copy.ai.\n2. Click on Workflows in the left sidebar.\n3. Click on any Workflow you have. You need to create a new Workflow, if you don't have one.\n4. Click on the API tab.\n5. Click the Copy button below WORKSPACE API KEY.\n",
+  "Run Workflow": "Ejecutar workkflow",
+  "Get Workflow Run Status": "Obtener estado de Workflow Run",
+  "Get Workflow Run Outputs": "Obtener Salidas de Funcionamiento",
+  "Start a Copy.ai workflow execution.": "Iniciar una ejecución de flujo de trabajo Copy.ai.",
+  "Retrieves the status of a workflow execution.": "Recuperar el estado de una ejecución de un workflow.",
+  "Retrieves the outputs of a completed workflow run.": "Recuperar las salidas de una ejecución de flujo de trabajo completada.",
+  "Workflow ID": "ID de flujo de trabajo",
+  "Workflow Inputs": "Entradas de flujo de trabajo",
+  "Run ID": "Ejecutar ID",
+  "The ID of the workflow to run.": "El ID del flujo de trabajo a ejecutar.",
+  "The input data for the workflow.": "Los datos de entrada para el flujo de trabajo.",
+  "The ID of the workflow run to check.": "El ID del flujo de trabajo se ejecuta para comprobar.",
+  "The ID of the workflow run to get outputs from.": "El ID del flujo de trabajo corre para obtener salidas.",
+  "Workflow Run Completed": "Ejecución de flujo de trabajo completada",
+  "Triggered when a workflow run is completed.": "Se activa cuando se completa una ejecución de flujo de trabajo."
+}

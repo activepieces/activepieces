@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { ActionType, isNil } from '@activepieces/shared';
+import { FlowActionType, isNil } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { useBuilderStateContext } from '../builder-hooks';
@@ -35,7 +35,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
   const totalIterations =
     stepOutput &&
     stepOutput.output &&
-    stepOutput.type === ActionType.LOOP_ON_ITEMS
+    stepOutput.type === FlowActionType.LOOP_ON_ITEMS
       ? stepOutput.output.iterations.length
       : 0;
 

@@ -28,6 +28,14 @@
   "Bottom": "Bas",
   "Card Moved to list": "Carte déplacée vers la liste",
   "New Card": "Nouvelle carte",
+  "Card Deadline": "Date limite de la carte",
   "Trigger when a card is moved to the list specified": "Déclencher quand une carte est déplacée dans la liste spécifiée",
-  "Trigger when a new card is created": "Déclencher quand une nouvelle carte est créée"
+  "Trigger when a new card is created": "Déclencher quand une nouvelle carte est créée",
+  "Triggers at a specified time before a card deadline.": "Déclenche à un moment précis avant la date limite de la carte.",
+  "Time unit": "Unité de temps",
+  "Time before due": "Temps avant échéance",
+  "Select unit for time before due": "Sélectionnez l'unité pour le temps avant la date limite",
+  "How long before the due date the trigger should run (use with time unit)": "Combien de temps avant la date d'échéance le déclencheur doit s'exécuter (utiliser avec l'unité de temps)",
+  "Minutes": "Minutes",
+  "Hours": "Heures"
 }

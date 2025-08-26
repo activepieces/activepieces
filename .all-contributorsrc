@@ -1985,6 +1985,60 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "helenedurand-smet",
+      "name": "helenedurand-smet",
+      "avatar_url": "https://avatars.githubusercontent.com/u/206527847?v=4",
+      "profile": "https://github.com/helenedurand-smet",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "nuvex-dev",
+      "name": "Nuvex",
+      "avatar_url": "https://avatars.githubusercontent.com/u/181783827?v=4",
+      "profile": "https://github.com/nuvex-dev",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Zebi15",
+      "name": "Apostol Eusebiu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/80625145?v=4",
+      "profile": "https://github.com/Zebi15",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "fortunamide",
+      "name": "Fortunate",
+      "avatar_url": "https://avatars.githubusercontent.com/u/122938302?v=4",
+      "profile": "https://github.com/fortunamide",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "thejaachi",
+      "name": "Jaachịmmá Anyatọnwụ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/173014495?v=4",
+      "profile": "https://jaachiwrites.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "LuizDMM",
+      "name": "Luiz D. M. Mainart",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55499897?v=4",
+      "profile": "http://luizmainart.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

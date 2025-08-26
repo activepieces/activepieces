@@ -1,0 +1,17 @@
+{
+  "Village": "Aldeia",
+  "The Social Capital API": "A API de Capital Social",
+  "Your Village API Key": "Sua chave API da Village",
+  "Find Person Paths": "Encontrar caminhos de pessoa",
+  "Find Company Paths": "Encontrar caminhos da empresa",
+  "Enrich a person record with all available intro paths": "Enriquecer um registro de pessoa com todos os caminhos de introdução disponíveis",
+  "Enrich a company record with all people that have available intro paths": "Enriquecer registro de empresa com todas as pessoas que têm caminhos de introdução disponíveis",
+  "User Identifier": "Identificador do usuário",
+  "Person Linkedin URL": "URL Pessoal Linkeddin",
+  "Company Domain URL": "URL do domínio da empresa",
+  "Company Linkedin URL": "URL da empresa LinkedIn",
+  "If you're a Village Partner, use this field that identifies your user": "Se você é um parceiro da Vila, use este campo que identifique seu usuário",
+  "The Linkedin URL of the person you're trying to find paths to.": "A URL do Linkedin da pessoa para quem você está tentando encontrar caminhos.",
+  "The Company Domain URL of the company you're trying to find paths to. E.g. https://openai.com/": "A URL de domínio da empresa para a qual você está tentando encontrar caminhos. Por exemplo, https://openai.com/",
+  "The Company Linkedin URL of the company you're trying to find paths to. E.g. https://www.linkedin.com/company/openai/": "A URL da empresa Linkeddin da empresa para a qual você está tentando encontrar caminhos. Por exemplo, https://www.linkedin.com/company/openai/"
+}

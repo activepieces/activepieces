@@ -1,14 +1,14 @@
-import { AgentJobData, AgentJobSource } from '@activepieces/server-shared'
-import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, AIUsageFeature, assertNotNullOrUndefined, ContentBlockType, createAIProvider, Field, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
+import { AgentJobData } from '@activepieces/server-shared'
+import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, AIUsageFeature, assertNotNullOrUndefined, ContentBlockType, createAIModel, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
-import { APICallError, streamText } from 'ai'
+import { APICallError, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { agentsApiService, tablesApiService } from '../api/server-api.service'
+import { agentsApiService } from '../api/server-api.service'
 import { agentTools } from '../utils/agent-tools'
 import { workerMachine } from '../utils/machine'
 
 export const agentJobExecutor = (log: FastifyBaseLogger) => ({
-    async executeAgent(jobData: AgentJobData, engineToken: string, workerToken: string): Promise<void> {
+    async executeAgent({ jobData, engineToken, workerToken }: ExecuteAgentParams): Promise<void> {
         let agentToolInstance: Awaited<ReturnType<typeof agentTools>> | undefined
         try {
             const agentResult: UpdateAgentRunRequestBody & { steps: AgentStepBlock[] } = {
@@ -22,14 +22,6 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
             await agentsApiService(workerToken, log).updateAgentRun(jobData.agentRunId, agentResult)
 
             const agent = await agentsApiService(workerToken, log).getAgent(jobData.agentId)
-            let fields: Field[] | undefined
-            let record: Record<string, unknown> | undefined
-            if (jobData.source === AgentJobSource.TABLE) {
-                [fields, record] = await Promise.all([
-                    tablesApiService(workerToken).getFields(jobData.tableId),
-                    tablesApiService(workerToken).getRecord(jobData.recordId),
-                ])
-            }
             const mcp = await agentsApiService(workerToken, log).getMcp(agent.mcpId)
             agentToolInstance = await agentTools({
                 agent,
@@ -37,38 +29,34 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                 token: engineToken,
                 mcp,
                 source: jobData.source,
-                metadata: jobData.source === AgentJobSource.TABLE ? {
-                    tableId: jobData.tableId,
-                    recordId: jobData.recordId,
-                } : undefined,
             })
 
             const baseURL = `${workerMachine.getPublicApiUrl()}v1/ai-providers/proxy/openai`
-            const model = createAIProvider({
+            const model = createAIModel({
                 providerName: 'openai',
                 modelInstance: openai('gpt-4.1'),
-                apiKey: engineToken,
+                engineToken,
                 baseURL,
                 metadata: {
                     feature: AIUsageFeature.AGENTS,
                     agentid: jobData.agentId,
                 },
             })
-            const systemPrompt = await constructSystemPrompt(agent, fields, record)
+            const systemPrompt = await constructSystemPrompt(agent)
             const { fullStream } = streamText({
                 model,
                 system: systemPrompt,
                 prompt: jobData.prompt,
-                maxSteps: agent.maxSteps,
+                stopWhen: stepCountIs(agent.maxSteps),
                 tools: await agentToolInstance.tools(),
             })
             let currentText = ''
     
             for await (const chunk of fullStream) {
                 if (chunk.type === 'text-delta') {
-                    currentText += chunk.textDelta
+                    currentText += chunk.text
                 }
-                else if (chunk.type === 'tool-call') {
+                else if (chunk.type === 'tool-call') { 
                     if (currentText.length > 0) {
                         agentResult.steps.push({
                             type: ContentBlockType.MARKDOWN,
@@ -81,7 +69,7 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                         toolCallId: chunk.toolCallId,
                         type: ContentBlockType.TOOL_CALL,
                         status: ToolCallStatus.IN_PROGRESS,
-                        input: chunk.args as Record<string, unknown>,
+                        input: chunk.input as Record<string, unknown>,
                         output: undefined,
                         startTime: new Date().toISOString(),
                     })
@@ -95,7 +83,7 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                         ...lastBlock,
                         status: ToolCallStatus.COMPLETED,
                         endTime: new Date().toISOString(),
-                        output: chunk.result,
+                        output: chunk.output,
                     }
                 }
                 else if (chunk.type === 'error') {
@@ -192,8 +180,8 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
     }
 }
 
-async function constructSystemPrompt(agent: Agent, fields: Field[] | undefined, record: Record<string, unknown> | undefined) {
-    let systemPrompt = `
+async function constructSystemPrompt(agent: Agent) {
+    const systemPrompt = `
     You are an autonomous assistant designed to efficiently achieve the user's goal.
     YOU MUST ALWAYS call the mark as complete tool with the output or message wether you have successfully completed the task or not.
     You MUST ALWAYS do the requested task before calling the mark as complete tool.
@@ -204,21 +192,15 @@ async function constructSystemPrompt(agent: Agent, fields: Field[] | undefined, 
     ---
     ${agent.systemPrompt}
     `
-
-    if (fields && record) {
-        systemPrompt += `
-        ---
-        **Fields**:
-        ${JSON.stringify(fields, null, 2)}
-
-        **Current Record**:
-        ${JSON.stringify(record, null, 2)}
-        `
-    }
-
     return systemPrompt
 }
 
 function concatMarkdown(blocks: AgentStepBlock[]): string {
     return blocks.filter((block) => block.type === ContentBlockType.MARKDOWN).map((block) => block.markdown).join('\n')
+}
+
+type ExecuteAgentParams = {
+    jobData: AgentJobData
+    engineToken: string
+    workerToken: string
 }

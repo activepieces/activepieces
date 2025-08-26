@@ -1,0 +1,16 @@
+{
+  "Data Summarizer": "データサマリーザー",
+  "Calculate Average": "平均を計算する",
+  "Calculate Sum": "合計を計算",
+  "Count Uniques": "Count Uniques",
+  "Find Min and Max": "最小値と最大値を検索",
+  "Calculates the average of a list of values.": "値のリストの平均を計算します。",
+  "Calculates the sum of a list of values.": "値のリストの合計を計算します。",
+  "Counts the number of unique values for multiple fields": "複数のフィールドの一意の値の数をカウントします。",
+  "Get the smallest and greatest values from a list of numeric values.": "数値のリストから最小値と最大値を取得します。",
+  "Markdown": "Markdown",
+  "Values": "値",
+  "Fields": "フィールド",
+  "If you'd like to use the values with a previous step, click the (X) first, and then select the step you want to use.": "前のステップで値を使用する場合は、まず (X) をクリックしてから、使用するステップを選択します。",
+  "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave fields empty.": "渡すデータがオブジェクトの場合、フィルタリングする特定のフィールドを指定できます。 フィールドが存在しない場合、オブジェクトは破棄されます。そうでなければ、フィールドは空のままにします。"
+}

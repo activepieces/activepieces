@@ -1,12 +1,14 @@
-export const McpSvg = (
+import { cn } from '@/lib/utils';
+
+export const McpSvg = ({ className }: { className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 64 64"
     fill="none"
-    className="w-6 h-6"
+    className={cn('w-6 h-6 transition-all duration-150 ease-in-out', className)}
   >
     <path
-      className="stroke-froeground"
+      stroke="currentColor"
       strokeLinecap="round"
       strokeWidth="4.312"
       d="M6.288 30.06 30.68 5.669a8.624 8.624 0 0 1 12.196 0v0a8.624 8.624 0 0 1 0 12.197l-18.42 18.421"

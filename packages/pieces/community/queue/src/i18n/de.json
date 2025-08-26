@@ -1,0 +1,16 @@
+{
+  "Queue": "Warteschlange",
+  "A piece that allows you to push items into a queue, providing a way to throttle requests or process data in a First-In-First-Out (FIFO) manner.": "Ein Stück, das es Ihnen ermöglicht, Elemente in eine Warteschlange zu schieben, um Anfragen zu drosseln oder Daten auf eine First-In-First-Out (FIFO) Weise zu verarbeiten.",
+  "Push to Queue": "In die Warteschlange schieben",
+  "Pull items from queue": "Elemente aus der Warteschlange ziehen",
+  "Clear queue": "Warteschlange leeren",
+  "Push item to queue": "Element zur Warteschlange schieben",
+  "Clears all items inside a queue": "Löscht alle Elemente in einer Warteschlange",
+  "Markdown": "Markdown",
+  "Queue Name": "Queue-Name",
+  "Items": "Items",
+  "Number of items": "Anzahl der Elemente",
+  "**Note:**\n- You can push items from other flows. The queue name should be unique across all flows.\n- The testing step work in isolation and doesn't affect the actual queue after publishing.\n": "**Hinweis:**\n- Du kannst Gegenstände aus anderen Strömen schieben. Der Name der Warteschlange sollte über alle Ströme hinweg eindeutig sein.\n- Der Prüfschritt funktioniert isoliert und beeinflusst nicht die eigentliche Warteschlange nach dem Veröffentlichen.\n",
+  "**Note:**\n- You can pull items from other flows. The queue name should be unique across all flows.\n- The testing step work in isolation and doesn't affect the actual queue after publishing.\n": "**Hinweis:**\n- Du kannst Gegenstände aus anderen Strömungen ziehen. Der Name der Warteschlange sollte über alle Ströme hinweg eindeutig sein.\n- Der Prüfschritt funktioniert isoliert und beeinflusst nicht die eigentliche Warteschlange nach dem Veröffentlichen.\n",
+  "**Note:**\n- This deletes all items inside the queue permanently.\n- The testing step work in isolation and doesn't affect the actual queue after publishing.\n": "**Hinweis:**\n- Dies löscht alle Elemente in der Warteschlange dauerhaft.\n- Der Prüfschritt funktioniert isoliert und beeinflusst nicht die eigentliche Warteschlange nach dem Veröffentlichen.\n"
+}

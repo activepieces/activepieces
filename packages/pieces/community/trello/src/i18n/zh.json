@@ -28,6 +28,14 @@
   "Bottom": "底部",
   "Card Moved to list": "卡片已移至列表",
   "New Card": "新卡片",
+  "Card Deadline": "Card Deadline",
   "Trigger when a card is moved to the list specified": "當卡片移動到指定列表時觸發",
-  "Trigger when a new card is created": "當創建新卡片時觸發"
+  "Trigger when a new card is created": "當創建新卡片時觸發",
+  "Triggers at a specified time before a card deadline.": "Triggers at a specified time before a card deadline.",
+  "Time unit": "Time unit",
+  "Time before due": "Time before due",
+  "Select unit for time before due": "Select unit for time before due",
+  "How long before the due date the trigger should run (use with time unit)": "How long before the due date the trigger should run (use with time unit)",
+  "Minutes": "Minutes",
+  "Hours": "Hours"
 }

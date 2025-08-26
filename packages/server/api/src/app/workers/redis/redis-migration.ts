@@ -1,9 +1,11 @@
 import { LATEST_JOB_DATA_SCHEMA_VERSION, QueueName, RepeatableJobType, ScheduledJobData } from '@activepieces/server-shared'
-import { ExecutionType, isNil, RunEnvironment, ScheduleType } from '@activepieces/shared'
+import { apId, ExecutionType, isNil, RunEnvironment, TriggerStrategy } from '@activepieces/shared'
 import { Job, RepeatableJob } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../flows/flow/flow.repo'
+import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { distributedLock } from '../../helper/lock'
+import { triggerSourceRepo } from '../../trigger/trigger-source/trigger-source-service'
 import { bullMqGroups } from './redis-queue'
 
 export const redisMigrations = (log: FastifyBaseLogger) => ({
@@ -153,14 +155,23 @@ async function updateCronExpressionOfRedisToPostgresTable(job: Job, log: Fastify
     const flow = await flowRepo().findOneBy({
         publishedVersionId: job.data.flowVersionId,
     })
-    if (isNil(flow)) {
+    if (isNil(flow) || isNil(flow.publishedVersionId)) {
         return
     }
-    await flowRepo().update(flow.id, {
+    const flowVersion = await flowVersionService(log).getOneOrThrow(flow.publishedVersionId)
+    await triggerSourceRepo().save({
+        id: apId(),
+        flowId: flow.id,
+        flowVersionId: flow.publishedVersionId,
+        projectId: flow.projectId,
+        type: TriggerStrategy.POLLING,
+        pieceName: flowVersion.trigger.settings.pieceName,
+        pieceVersion: flowVersion.trigger.settings.pieceVersion,
+        handshakeConfiguration: flowVersion.trigger.settings.handshakeConfiguration,
         schedule: {
-            type: ScheduleType.CRON_EXPRESSION,
             timezone: tz,
             cronExpression: pattern,
         },
+
     })
 }

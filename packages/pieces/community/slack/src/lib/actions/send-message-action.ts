@@ -4,6 +4,7 @@ import {
   slackChannel,
   username,
   blocks,
+  threadTs,
   singleSelectChannelInfo,
 } from '../common/props';
 import { processMessageTimestamp, slackSendMessage } from '../common/utils';
@@ -30,19 +31,20 @@ export const slackSendMessageAction = createAction({
       displayName: 'Attachment',
       required: false,
     }),
-    threadTs: Property.ShortText({
-      displayName: 'Thread ts',
-      description:
-        'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.Alternatively, you can easily obtain the message link by clicking on the three dots next to the parent message and selecting the `Copy link` option.',
+    threadTs,
+    replyBroadcast: Property.Checkbox({
+      displayName: 'Broadcast reply to channel',
+      description: 'When replying to a thread, also make the message visible to everyone in the channel (only applicable when Thread Timestamp is provided)',
       required: false,
+      defaultValue: false,
     }),
     blocks,
   },
   async run(context) {
     const token = context.auth.access_token;
-    const { text, channel, username, profilePicture, threadTs, file,blocks } =
+    const { text, channel, username, profilePicture, threadTs, file, blocks, replyBroadcast } =
       context.propsValue;
-    
+
     const blockList = blocks ?[{ type: 'section', text: { type: 'mrkdwn', text } }, ...(blocks as unknown as (KnownBlock | Block)[])] :undefined
 
     return slackSendMessage({
@@ -54,6 +56,7 @@ export const slackSendMessageAction = createAction({
       threadTs: threadTs ? processMessageTimestamp(threadTs) : undefined,
       file,
       blocks: blockList,
+      replyBroadcast,
     });
   },
 });

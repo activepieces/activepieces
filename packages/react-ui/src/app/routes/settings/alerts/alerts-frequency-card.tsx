@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
 
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import {
   Card,
   CardContent,
@@ -59,6 +60,11 @@ const AlertFrequencyCard = React.memo(() => {
 
   return (
     <Card className="w-full">
+      <DashboardPageHeader
+        title={t('Alerts')}
+        description={t('Manage alerts settings')}
+      />
+
       <CardHeader className="pb-3">
         <CardTitle className="text-xl">{t('Alerts')}</CardTitle>
         <CardDescription>

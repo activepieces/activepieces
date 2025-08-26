@@ -34,8 +34,8 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             nullable: true,
         },
         eligibleForTrial: {
-            type: Boolean,
-            nullable: false,
+            type: String,
+            nullable: true,
         },
         stripeSubscriptionStartDate: {
             type: Number,
@@ -117,6 +117,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         stripeSubscriptionStatus: {
             type: String,
             nullable: true,
+        },
+        stripeBillingCycle: {
+            type: String,
         },
         tablesEnabled: {
             type: Boolean,

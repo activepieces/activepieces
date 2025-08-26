@@ -4,6 +4,7 @@ import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AppearanceSection } from '@/app/routes/platform/setup/branding/appearance-section';
 import { CustomDomainsCard } from '@/app/routes/platform/setup/branding/custom-domain-section';
 import { SmtpSection } from '@/app/routes/platform/setup/branding/smtp-section';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export const BrandingPage = () => {
@@ -19,12 +20,12 @@ export const BrandingPage = () => {
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/appearance.mp4"
     >
       <div className="w-full flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold w-full">{t('Branding')}</h1>
-          <span className="text-sm text-muted-foreground max-w-[500px]">
-            {t('Configure the appearance and SMTP settings for your platform.')}
-          </span>
-        </div>
+        <DashboardPageHeader
+          title={t('Branding')}
+          description={t(
+            'Configure the appearance and SMTP settings for your platform.',
+          )}
+        />
         <SmtpSection />
         <CustomDomainsCard />
         <AppearanceSection />

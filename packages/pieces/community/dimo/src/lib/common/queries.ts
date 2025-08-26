@@ -224,6 +224,18 @@ export const TelemetryQueries = {
       }
     }
   `,
+  getEvents: `
+    query {
+      events(
+        tokenId: <tokenId>,
+        from: "<startDate>", to: "<endDate>"
+      ) {
+        name
+        metadata
+        timestamp
+      }
+    }
+  `,
 	getMaxSpeedOfVehicle: `
     query {
       signals(

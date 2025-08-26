@@ -96,7 +96,7 @@ export const pipedrive = createPiece({
 		findActivityAction,
 		findUserAction,
 		createCustomApiCallAction({
-			baseUrl: () => 'https://api.pipedrive.com/v1',
+			baseUrl: () => 'https://api.pipedrive.com/api/v2',
 			auth: pipedriveAuth,
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,

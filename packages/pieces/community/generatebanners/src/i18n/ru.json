@@ -1,0 +1,15 @@
+{
+  "GenerateBanners": "Генерировать баннеры",
+  "Image generation API for banners and social media posts": "API генерации изображений для баннеров и сообщений в социальных сетях",
+  "Public API Key": "Публичный ключ API",
+  "Secret API Key": "Секретный API ключ",
+  "\nTo obtain your GenerateBanners public and secret API Keys, you can follow the steps below:\n\n1. Go to the [GenerateBanners homepage](https://www.generatebanners.com/).\n2. Sign up or log in into your account.\n3. Go to your [account page](https://www.generatebanners.com/app/account).\n4. The public and secret API keys are now displayed, copy them one by one into the right Activepieces fields.\n": "\nДля получения публичных и секретных ключей API GenerateBanners, вы можете выполнить следующие действия:\n\n1. Перейдите на страницу [GenerateBanner](https://www.generatebanners.com/).\n2. Зарегистрируйтесь или войдите в свою учетную запись.\n3. Перейдите на свою [страницу счета](https://www.generatebanners.com/app/account).\n4. Публичные и секретные ключи API теперь отображаются, скопируйте их по одному в правильные поля Activepieces .\n",
+  "Render Template": "Шаблон рендера",
+  "Render a GenerateBanners template": "Шаблон генерации баннеров",
+  "Template": "Шаблон",
+  "File type": "Тип файла",
+  "Variables": "Переменные",
+  "Image (jpg)": "Изображение (jpg)",
+  "Image (png)": "Изображение (png)",
+  "Document (pdf)": "Документ (pdf)"
+}

@@ -39,13 +39,14 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 }
             })
             const piecesWithTags = await enrichTags(params.platformId, latestVersionOfEachPiece, params.includeTags)
+            const translatedPieces = piecesWithTags.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, params.locale))
             const filteredPieces = await pieceListUtils.filterPieces({
                 ...params,
-                pieces: piecesWithTags,
+                pieces: translatedPieces,
                 suggestionType: params.suggestionType,
             })
-            const translatedPieces = filteredPieces.map((piece) => pieceTranslation.translatePiece<PieceMetadataModel>(piece, params.locale))
-            return toPieceMetadataModelSummary(translatedPieces, piecesWithTags, params.suggestionType)
+           
+            return toPieceMetadataModelSummary(filteredPieces, piecesWithTags, params.suggestionType)
         },
         async get({ projectId, platformId, version, name }): Promise<PieceMetadataModel | undefined> {
             const versionToSearch = findNextExcludedVersion(version)

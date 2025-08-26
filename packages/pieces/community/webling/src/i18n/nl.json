@@ -1,0 +1,15 @@
+{
+  "Webling": "Weblling",
+  "Base URL": "Basis URL",
+  "API Key": "API Sleutel",
+  "Get Events by ID": "Events ophalen via ID",
+  "Gets event data by a list of event IDs and optional calendar ID to filter.": "Haalt gegevens van afspraken op met een lijst van event IDs en optionele kalender ID om te filteren.",
+  "Event ID list": "Event ID lijst",
+  "Calendar": "Kalender",
+  "Comma separated list of event IDs (e.g. '536,525,506,535'). When at least one ID doesn't exist the whole query return a 404 error.": "Kommagescheiden lijst met event IDs (bijv. '536,525,506,535'). Wanneer ten minste één ID niet bestaat geeft de hele query een 404 fout.",
+  "Calendar to filter the events by.": "Kalender om gebeurtenissen op te filteren.",
+  "New or Updated Event": "Nieuwe of Bijgewerkte gebeurtenis",
+  "On Changed Data": "Bij Gewijzigde gegevens",
+  "Triggers when an event is added or updated.": "Triggert wanneer een gebeurtenis wordt toegevoegd of bijgewerkt.",
+  "Triggers when anything was added, updated or deleted since last request.": "Triggers wanneer er iets is toegevoegd, bijgewerkt of verwijderd sinds de laatste aanvraag."
+}

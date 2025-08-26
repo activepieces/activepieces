@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { InfoIcon, Network, Server, ServerOff } from 'lucide-react';
 
 import { CircularIcon } from '@/components/custom/circular-icon';
-import { TableTitle } from '@/components/custom/table-title';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -83,11 +83,12 @@ export default function WorkersPage() {
 
   return (
     <div className="flex flex-col w-full gap-4">
-      <TableTitle description={t('Check the health of your worker machines')}>
-        {t('Workers Machine')}
-      </TableTitle>
+      <DashboardPageHeader
+        description={t('Check the health of your worker machines')}
+        title={t('Workers Machine')}
+      />
       {showDemoData && (
-        <Alert variant="default" className="mt-4">
+        <Alert variant="default">
           <div className="flex items-center gap-2">
             <InfoIcon size={16} />
             <AlertDescription>

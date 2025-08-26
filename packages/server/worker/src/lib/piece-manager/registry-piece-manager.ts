@@ -1,5 +1,5 @@
 import { writeFile } from 'node:fs/promises'
-import { dirname } from 'node:path'
+import { dirname, join } from 'node:path'
 import { CacheState, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
@@ -33,7 +33,11 @@ export class RegistryPieceManager extends PieceManager {
             if (dependencies.length === 0) {
                 return
             }
-            await packageManager(log).add({ path: projectPath, dependencies })
+            for (const dependency of dependencies) {
+                const exactVersionPath = join(projectPath, 'pieces', dependency.alias)
+                await packageManager(log).init({ path: exactVersionPath })
+                await packageManager(log).add({ path: exactVersionPath, dependencies: [dependency] })
+            }
 
             await Promise.all(
                 dependencies.map(pkg => cache.setCache(pkg.alias, CacheState.READY)),

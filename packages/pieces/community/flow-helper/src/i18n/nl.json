@@ -1,0 +1,10 @@
+{
+  "Flow Helper": "Stroomsterkte Helper",
+  "Get Run Info": "Get Run Info",
+  "Fail Flow": "Flow mislukt",
+  "Stop Flow": "Stoppen met stroom",
+  "Fails the flow execution with a custom message.": "Fout bij uitvoeren van de stroom met een aangepast bericht.",
+  "Stops the flow immediately this step is reached.": "Stopt de stroom zodra deze stap is bereikt.",
+  "Error Message": "Fout bericht",
+  "The error message to show when the flow fails.": "Het foutbericht om te laten zien wanneer de stroom mislukt."
+}

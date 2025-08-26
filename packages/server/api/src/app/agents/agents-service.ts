@@ -1,8 +1,8 @@
-import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AI_USAGE_FEATURE_HEADER, AIUsageFeature, apId, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, SeekPage, spreadIfDefined } from '@activepieces/shared'
-import { createOpenAI } from '@ai-sdk/openai'
-import { generateObject } from 'ai'
+import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AIUsageFeature, apId, createAIModel, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, PopulatedAgent, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { openai } from '@ai-sdk/openai'
+import { Schema as AiSchema, generateObject } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { Equal, FindOperator, In, Not } from 'typeorm'
+import { Equal, FindOperator, In } from 'typeorm'
 import { z } from 'zod'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { repoFactory } from '../core/db/repo-factory'
@@ -12,14 +12,13 @@ import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { mcpService } from '../mcp/mcp-service'
 import { projectService } from '../project/project-service'
-import { tableService } from '../tables/table/table.service'
 import { AgentEntity } from './agent-entity'
 import { agentRunsService } from './agent-runs/agent-runs-service'
 
 export const agentRepo = repoFactory(AgentEntity)
 
 export const agentsService = (log: FastifyBaseLogger) => ({
-    async create(params: CreateParams): Promise<Agent> {
+    async create(params: CreateParams): Promise<PopulatedAgent> {
         await PlatformPlanHelper.checkQuotaOrThrow({
             platformId: params.platformId,
             projectId: params.projectId,
@@ -28,21 +27,29 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         const mcp = await mcpService(log).create({
             name: params.displayName,
             projectId: params.projectId,
+            externalId: params.mcpExternalId,
         })
-        const agentPayload: Omit<Agent, 'created' | 'updated' | 'taskCompleted' | 'runCompleted'> = {
-            id: apId(),
-            displayName: params.displayName,
-            description: params.description,
-            systemPrompt: params.systemPrompt,
+        const id = apId()
+        const { description, displayName, systemPrompt } = params.enhancePrompt ? await this.enhanceAgentPrompt({
             platformId: params.platformId,
-            profilePictureUrl: getAgentProfilePictureUrl(),
-            testPrompt: '',
+            projectId: params.projectId,
+            systemPrompt: params.systemPrompt,
+            agentId: id,
+        }) : { ...params }
+
+        const agentPayload: Omit<Agent, 'created' | 'updated' | 'taskCompleted' | 'runCompleted'> = {
+            id,
+            displayName,
+            description,
+            systemPrompt,
+            platformId: params.platformId,
+            profilePictureUrl: params.profilePictureUrl ?? getAgentProfilePictureUrl(),
             maxSteps: 10,
             projectId: params.projectId,
-            externalId: apId(),
+            externalId: params.externalId ?? apId(),
             mcpId: mcp.id,
-            outputType: AgentOutputType.NO_OUTPUT,
-            outputFields: [],
+            outputType: params.outputType ?? AgentOutputType.NO_OUTPUT,
+            outputFields: params.outputFields ?? [],
         }
         const agent = await agentRepo().save(agentPayload)
         await mcpService(log).update({
@@ -52,38 +59,40 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         return enrichAgent(agent, log)
     },
     async enhanceAgentPrompt(params: EnhaceAgentParams): Promise<EnhancedAgentPrompt> {
-        const { systemPrompt, projectId, platformId } = params
-        const baseURL = await domainHelper.getPublicApiUrl({ path: '/v1/ai-providers/proxy/openai/v1', platformId })
+        const { systemPrompt, projectId, platformId, agentId } = params
+        const baseURL = await domainHelper.getPublicApiUrl({ path: '/v1/ai-providers/proxy/openai', platformId })
         const enhancePromptSchema = z.object({
             systemPrompt: z.string().describe('The enhanced version of the original prompt.'),
             displayName: z.string().describe('A concise and descriptive name for the agent based on the system prompt.'),
             description: z.string().describe('A brief description of what the agent does, derived from the system prompt.'),
         })
 
-        const apiKey = await accessTokenManager.generateEngineToken({
+        const engineToken = await accessTokenManager.generateEngineToken({
             platformId,
             projectId,
         })
-        const model =  createOpenAI({
-            baseURL,
-            apiKey,
-            headers: {
-                [AI_USAGE_FEATURE_HEADER]: AIUsageFeature.TEXT_AI,
-            },
-        }).chat('gpt-4o')
         const { system, prompt } = getEnhancementPrompt(systemPrompt)
+        const model = createAIModel({
+            providerName: 'openai',
+            modelInstance: openai('gpt-4o-mini'),
+            engineToken,
+            baseURL,
+            metadata: {
+                feature: AIUsageFeature.AGENTS,
+                agentid: agentId,
+            },
+        })
 
         const { object } = await generateObject({
             model,
-            system, 
+            system,
             prompt,
             mode: 'json',
-            schema: enhancePromptSchema, 
+            schema: enhancePromptSchema as unknown as AiSchema,
         })
-
-        return object
+        return object as EnhancedAgentPrompt
     },
-    async getOneByExternalIdOrThrow(params: GetOneByExternalIdParams): Promise<Agent> {
+    async getOneByExternalIdOrThrow(params: GetOneByExternalIdParams): Promise<PopulatedAgent> {
         const agent = await agentRepo().findOneBy({ externalId: params.externalId, projectId: params.projectId })
         if (isNil(agent)) {
             throw new ActivepiecesError({
@@ -93,9 +102,9 @@ export const agentsService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        return agent
+        return enrichAgent(agent, log)
     },
-    async update(params: UpdateParams): Promise<Agent> {
+    async update(params: UpdateParams): Promise<PopulatedAgent> {
         const platformId = await projectService.getPlatformId(params.projectId)
         await PlatformPlanHelper.checkResourceLocked({ platformId, resource: PlatformUsageMetric.AGENTS })
 
@@ -106,20 +115,19 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('displayName', params.displayName),
             ...spreadIfDefined('systemPrompt', params.systemPrompt),
             ...spreadIfDefined('description', params.description),
-            ...spreadIfDefined('testPrompt', params.testPrompt),
             ...spreadIfDefined('outputType', params.outputType),
             ...spreadIfDefined('outputFields', params.outputFields),
         })
         return this.getOneOrThrow({ id: params.id, projectId: params.projectId })
     },
-    async getOne(params: GetOneParams): Promise<Agent | null> {
+    async getOne(params: GetOneParams): Promise<PopulatedAgent | null> {
         const agent = await agentRepo().findOneBy({ id: params.id })
         if (isNil(agent)) {
             return null
         }
         return enrichAgent(agent, log)
     },
-    async getOneOrThrow(params: GetOneParams): Promise<Agent> {
+    async getOneOrThrow(params: GetOneParams): Promise<PopulatedAgent> {
         const agent = await this.getOne({ id: params.id, projectId: params.projectId })
         if (isNil(agent)) {
             throw new ActivepiecesError({
@@ -137,7 +145,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             id: agent.id,
         })
     },
-    async list(params: ListParams): Promise<SeekPage<Agent>> {
+    async list(params: ListParams): Promise<SeekPage<PopulatedAgent>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursorRequest)
 
         const paginator = buildPaginator({
@@ -157,23 +165,25 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             .createQueryBuilder('agent')
             .where(querySelector)
 
-        const agentsInTable = await tableService.getAllAgentIds({ projectId: params.projectId })
-        queryBuilder.andWhere({
-            id: Not(In(agentsInTable)),
-        })
+        if (params.externalIds) {
+            queryBuilder.andWhere({
+                externalId: In(params.externalIds),
+            })
+        }
         const { data, cursor } = await paginator.paginate(queryBuilder)
-
-        return paginationHelper.createPage<Agent>(
+        return paginationHelper.createPage<PopulatedAgent>(
             await Promise.all(data.map(agent => enrichAgent(agent, log))),
             cursor,
         )
     },
 })
 
-async function enrichAgent(agent: Omit<Agent, 'runCompleted'>, log: FastifyBaseLogger): Promise<Agent> {
+async function enrichAgent(agent: Omit<Agent, 'runCompleted'>, log: FastifyBaseLogger): Promise<PopulatedAgent> {
+    const mcp = await mcpService(log).getOrThrow({ mcpId: agent.mcpId, projectId: agent.projectId })
     return {
         ...agent,
         runCompleted: await agentRunsService(log).count({ agentId: agent.id, projectId: agent.projectId }),
+        mcp,
     }
 }
 
@@ -199,7 +209,6 @@ function getEnhancementPrompt(originalPrompt: string) {
     }
 }
 
-
 type GetOneByExternalIdParams = {
     externalId: string
     projectId: string
@@ -209,6 +218,7 @@ type ListParams = {
     projectId: string
     limit: number
     cursorRequest: Cursor
+    externalIds?: string[]
 }
 
 type CreateParams = {
@@ -217,6 +227,12 @@ type CreateParams = {
     systemPrompt: string
     platformId: string
     projectId: string
+    profilePictureUrl?: string
+    outputType?: AgentOutputType
+    outputFields?: AgentOutputField[]
+    externalId?: string
+    mcpExternalId?: string
+    enhancePrompt?: boolean
 }
 
 type UpdateParams = {
@@ -225,7 +241,6 @@ type UpdateParams = {
     displayName?: string
     systemPrompt?: string
     description?: string
-    testPrompt?: string
     outputType?: string
     outputFields?: AgentOutputField[]
 }
@@ -241,6 +256,7 @@ type DeleteParams = {
 }
 
 type EnhaceAgentParams = {
+    agentId: string
     platformId: string
     projectId: string
     systemPrompt: string

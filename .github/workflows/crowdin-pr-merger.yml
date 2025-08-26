@@ -1,0 +1,178 @@
+name: Auto Merge Crowdin PRs Action
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+jobs:
+  auto-merge-bot-pr:
+    runs-on: ubuntu-latest
+    
+    if: |
+      github.event.pull_request.user.login == 'AbdulTheActivePiecer' &&
+      github.event.pull_request.head.ref == 'l10n_main'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Add label to PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['auto-merge', 'translations','skip-changelog']
+            })
+      
+      - name: Fetch main branch
+        run: |
+          git fetch origin main:main
+          # Fetch the PR branch to make it available locally
+          git fetch origin ${{ github.event.pull_request.head.ref }}:${{ github.event.pull_request.head.ref }}
+          # Reset branch to match remote repository
+          echo "Resetting branch to match remote repository..."
+          git reset --hard origin/${{ github.event.pull_request.head.ref }}
+          git clean -fd
+      
+      - name: Run Node.js script
+        run: |
+          echo "Running Node.js script..."
+          npm run bump-translated-pieces
+      
+      - name: Check for changes and commit
+        id: check-changes
+        run: |
+          # Check if there are any changes
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "Changes detected, committing..."
+            
+            # Configure git
+            git config --local user.email "abdulyki@activepieces.com"
+            git config --local user.name "AbdulTheActivePiecer"
+            
+            # Add all changes
+            git add .
+            
+            # Commit with a descriptive message
+            git commit -m "chore: auto bump translated pieces"
+            
+            # Push changes back to the PR branch
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+            
+            echo "Changes committed and pushed to PR branch"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes detected, skipping commit"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update PR branch from base
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.CROWDIN_PRS }}
+          script: |
+            try {
+              await github.rest.pulls.updateBranch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number
+              });
+              console.log('Triggered branch update from base');
+            } catch (e) {
+              if (e.status === 422) {
+                console.log('Branch already up to date or cannot be updated automatically');
+              } else {
+                throw e;
+              }
+            }
+
+      - name: Wait until PR is mergeable
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.CROWDIN_PRS }}
+          script: |
+            // we need to wait because the updating of the branch happens asynchronously not on api call, so we will try for 2 minutes at max to wait until the PR becomes mergable
+            const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+            for (let i = 0; i < 24; i++) {
+              const { data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number
+              });
+              console.log(`mergeable=${pr.mergeable}, mergeable_state=${pr.mergeable_state}`);
+
+              if (pr.mergeable_state === 'dirty') {
+                core.setFailed('PR has merge conflicts; skipping auto-merge');
+                return;
+              }
+
+              // proceed once it's not behind (up-to-date with base)
+              if (pr.mergeable_state && pr.mergeable_state !== 'behind' && pr.mergeable_state !== 'unknown') {
+                return;
+              }
+              await wait(5000);
+            }
+            core.setFailed('PR did not become up-to-date in time');
+
+      - name: Merge PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.CROWDIN_PRS }}
+          script: |
+            await github.rest.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              merge_method: 'merge'
+            });
+
+      - name: Delete branch after merge
+        uses: actions/github-script@v7
+        if: success()
+        with:
+          github-token: ${{ secrets.CROWDIN_PRS }}
+          script: |
+            // Get the PR info to get the branch name
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            // Delete the branch
+            await github.rest.git.deleteRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `heads/${pr.data.head.ref}`
+            });
+            
+            console.log(`Deleted branch: ${pr.data.head.ref}`);
+
+  notify-failure:
+    needs: [auto-merge-bot-pr]
+    if: ${{ always() && needs.auto-merge-bot-pr.result == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord on failure
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"🚨 **Crowdin PR Merger Workflow Failed** 🚨\\n\\n**Repository:** ${{ github.repository }}\\n**Branch:** ${{ github.ref_name }}\\n**Commit:** ${{ github.sha }}\\n**PR #:** ${{ github.event.pull_request.number }}\\n**Action URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n\\nThe workflow has failed. Please check the logs for more details.\"}" \
+            ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}

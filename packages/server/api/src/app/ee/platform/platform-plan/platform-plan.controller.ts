@@ -1,38 +1,14 @@
-import { ApSubscriptionStatus, CreateSubscriptionParamsSchema, DEFAULT_BUSINESS_SEATS, isUpgradeExperience, PlanName, SetAiCreditsOverageLimitParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
+import { BillingCycle, CreateSubscriptionParamsSchema, getPlanLimits, PlanName, SetAiCreditsOverageLimitParamsSchema, StartTrialParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, ListAICreditsUsageRequest, ListAICreditsUsageResponse, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-authorization'
 import { platformUsageService } from '../platform-usage-service'
+import { PlatformPlanHelper } from './platform-plan-helper'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
-
-async function getNextBillingAmount(subscriptionStatus: ApSubscriptionStatus, log: FastifyBaseLogger, subscriptionId?: string): Promise<number> {
-    const stripe = stripeHelper(log).getStripe()
-    
-    if (isNil(stripe)) {
-        return 0
-    }
-
-    try {
-        const upcomingInvoice = await stripe.invoices.createPreview({
-            subscription: subscriptionId,
-        })
-        return upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
-    }
-    catch {
-        switch (subscriptionStatus) {
-            case ApSubscriptionStatus.TRIALING: {
-                return 25
-            }
-            default: {
-                return 0
-            }
-        }
-    }
-}
 
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
@@ -47,7 +23,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const { stripeSubscriptionCancelDate: cancelDate } = platformPlan
         const { endDate: nextBillingDate } = await platformPlanService(request.log).getBillingDates(platformPlan)
 
-        const nextBillingAmount = await getNextBillingAmount(platformPlan.stripeSubscriptionStatus as ApSubscriptionStatus, request.log, platformPlan.stripeSubscriptionId)
+        const nextBillingAmount = await platformPlanService(request.log).getNextBillingAmount({ plan: platformPlan.plan!, subscriptionId: platformPlan.stripeSubscriptionId })
 
         const response: PlatformBillingInformation = {
             plan: platformPlan,
@@ -56,7 +32,6 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             nextBillingDate,
             cancelAt: cancelDate,
         }
-        
         return response
     })
 
@@ -164,55 +139,91 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     })
 
     fastify.post('/create-subscription', CreateSubscriptionRequest, async (request) => {
-        const platformPlan = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        const customerId = platformPlan.stripeCustomerId
+        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
-        const { plan } = request.body
+        const { plan, cycle, addons } = request.body
+
+        const baseLimits = getPlanLimits(plan as PlanName)
+        const baseUserSeatsLimit = baseLimits.userSeatsLimit ?? 0
+        const baseProjectsLimit = baseLimits.projectsLimit ?? 0
+        const baseActiveFlowsLimit = baseLimits.activeFlowsLimit ?? 0
+
+        const newProjectsLimit = addons.projects ?? 0
+        const newActiveFlowsLimit = addons.activeFlows ?? 0
+        const newUserSeatsLimit = addons.userSeats ?? 0
+
+        const extraUserSeats = Math.max(0, newUserSeatsLimit - baseUserSeatsLimit)
+        const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
+        const extraProjects = Math.max(0, newProjectsLimit - baseProjectsLimit)
 
         return stripeHelper(request.log).createSubscriptionCheckoutUrl(
             platformPlan.platformId,
             customerId,
-            { plan },
+            { plan, cycle, addons: {
+                userSeats: extraUserSeats,
+                projects: extraProjects,
+                activeFlows: extraActiveFlows,
+            } },
         )
 
     })
 
     fastify.post('/update-subscription', UpgradeRequest, async (request) => {
-        const platformPlan = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        const subscriptionId = platformPlan.stripeSubscriptionId
+        const { plan: currentPlan, stripeSubscriptionId: subscriptionId, projectsLimit, activeFlowsLimit, userSeatsLimit, stripeBillingCycle } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         assertNotNullOrUndefined(subscriptionId, 'Stripe subscription id is not set')
 
-        const { plan: newPlan, seats } = request.body
-        const extraUsers =  seats ? seats - DEFAULT_BUSINESS_SEATS : 0
+        const { plan: newPlan, addons, cycle } = request.body
 
-        const currentPlan = platformPlan.plan as PlanName ?? PlanName.FREE
+        const baseLimits = getPlanLimits(currentPlan as PlanName)
+        const baseUserSeatsLimit = baseLimits.userSeatsLimit ?? 0
+        const baseProjectsLimit = baseLimits.projectsLimit ?? 0
+        const baseActiveFlowsLimit = baseLimits.activeFlowsLimit ?? 0
 
-        const upgradeExperience = isUpgradeExperience(currentPlan, newPlan, platformPlan.userSeatsLimit, seats)
+        const currentProjectsLimit = projectsLimit ?? 0
+        const currentActiveFlowsLimit = activeFlowsLimit ?? 0
+        const currentUserSeatsLimit = userSeatsLimit ?? 0
 
-        if (newPlan !== PlanName.BUSINESS && !isNil(seats)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Extra users are only available for business plan',
-                },
-            })
-        }
+        const newProjectsLimit = addons.projects ?? currentProjectsLimit
+        const newActiveFlowsLimit = addons.activeFlows ?? currentActiveFlowsLimit
+        const newUserSeatsLimit = addons.userSeats ?? currentUserSeatsLimit
 
-        return stripeHelper(request.log).handleSubscriptionUpdate(
-            platformPlan.platformId,
-            subscriptionId,
+        const extraUserSeats = Math.max(0, newUserSeatsLimit - baseUserSeatsLimit)
+        const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
+        const extraProjects = Math.max(0, newProjectsLimit - baseProjectsLimit)
+
+        const isUpgrade = PlatformPlanHelper.isUpgradeExperience({
+            currentActiveFlowsLimit,
+            currentProjectsLimit,
+            currentUserSeatsLimit,
             newPlan,
-            extraUsers,
-            request.log,
-            upgradeExperience,
-        )
+            currentPlan: currentPlan as PlanName,
+            newActiveFlowsLimit,
+            newProjectsLimit,
+            newUserSeatsLimit,
+            newCycle: cycle,
+            currentCycle: stripeBillingCycle as BillingCycle,
+        })
+
+        await PlatformPlanHelper.checkLegitSubscriptionUpdateOrThrow({ projectsAddon: extraProjects, userSeatsAddon: extraUserSeats, newPlan })
+
+        return stripeHelper(request.log).handleSubscriptionUpdate({
+            extraActiveFlows,
+            extraProjects,
+            extraUserSeats,
+            isUpgrade,
+            newPlan,
+            subscriptionId,
+            newCycle: cycle,
+            currentCycle: stripeBillingCycle as BillingCycle,
+        })
     })
 
     fastify.post('/start-trial', StartTrialRequest, async (request) => {
+        const { plan } = request.body
         const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         
-        if (!platformBilling.eligibleForTrial) {
+        if (isNil(platformBilling.eligibleForTrial)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -224,15 +235,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const customerId = platformBilling.stripeCustomerId
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
-        const trialSubscriptionId = await stripeHelper(request.log).startTrial(customerId, platformBilling.platformId)
-        
-        if (trialSubscriptionId) {
-            await platformPlanService(request.log).update({
-                platformId: platformBilling.platformId,
-                stripeSubscriptionId: trialSubscriptionId,
-                eligibleForTrial: false,
-            })
-        }
+        await stripeHelper(request.log).startTrial({ customerId, platformId: platformBilling.platformId, plan, existingSubscriptionId: platformBilling.stripeSubscriptionId })
 
         return { success: true }
     })
@@ -267,7 +270,6 @@ const UpgradeRequest = {
     },
 }
 
-
 const CreateSubscriptionRequest = {
     schema: {
         body: CreateSubscriptionParamsSchema,
@@ -276,7 +278,6 @@ const CreateSubscriptionRequest = {
         allowedPrincipals: [PrincipalType.USER],
     },
 }
-
 
 const SetAiCreditsOverageLimitRequest = {
     schema: {
@@ -300,13 +301,15 @@ const StartTrialRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
     },
+    schema: {
+        body: StartTrialParamsSchema,
+    },
     response: {
         [StatusCodes.OK]: Type.Object({
             success: Type.Boolean(),
         }),
     },
 }
-
 
 const ListAIUsageRequest = {
     config: {

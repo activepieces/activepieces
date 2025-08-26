@@ -5,7 +5,7 @@ export class AddExternalIdToMCPPostgres1753787093467 implements MigrationInterfa
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."mcp_project_id"
+            DROP INDEX "mcp_project_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "mcp"
@@ -26,7 +26,7 @@ export class AddExternalIdToMCPPostgres1753787093467 implements MigrationInterfa
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."mcp_project_id_external_id"
+            DROP INDEX "mcp_project_id_external_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "mcp" DROP COLUMN "externalId"

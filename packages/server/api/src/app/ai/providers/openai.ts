@@ -1,8 +1,8 @@
-import { ActivepiecesError, AIProvider, DALLE2PricingPerImage, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, isNil } from '@activepieces/shared'
+import { ActivepiecesError, AIProvider, DALLE2PricingPerImage, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, GPTImage1PricingPerImage, isNil } from '@activepieces/shared'
 import { createParser } from 'eventsource-parser'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, StreamingParser, Usage } from './types'
-import { calculateTokensCost, getProviderConfig } from './utils'
+import { calculateTokensCost, calculateWebSearchCost, getProviderConfig } from './utils'
 
 export const openaiProvider: AIProviderStrategy = {
     extractModelId: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null => {
@@ -13,8 +13,13 @@ export const openaiProvider: AIProviderStrategy = {
     calculateUsage: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage => {
         const body = request.body as { size: string, model: string, n?: string, quality?: string }
         const apiResponse = response as {
+            tools: { type: string }[]
             usage: 
-            | { input_tokens: number, output_tokens: number }
+            | { 
+                input_tokens: number
+                output_tokens: number
+                input_tokens_details: { text_tokens: number, image_tokens: number }
+            }
             | { prompt_tokens: number, completion_tokens: number }
         } 
         const { provider } = request.params as { provider: string }
@@ -46,6 +51,7 @@ export const openaiProvider: AIProviderStrategy = {
         if (languageModelConfig) {
             let inputTokens: number
             let outputTokens: number
+            let webSearchCalls = 0
             if ('prompt_tokens' in apiResponse.usage) {
                 inputTokens = apiResponse.usage.prompt_tokens
                 outputTokens = apiResponse.usage.completion_tokens
@@ -53,11 +59,15 @@ export const openaiProvider: AIProviderStrategy = {
             else {
                 inputTokens = apiResponse.usage.input_tokens
                 outputTokens = apiResponse.usage.output_tokens
+                if (apiResponse.tools.length > 0) {
+                    webSearchCalls = apiResponse.tools.filter((tool) => tool.type === 'web_search_preview' || tool.type === 'web_search_preview_2025_03_11').length
+                }
             }
 
             const { input: inputCost, output: outputCost } = languageModelConfig.pricing as FlatLanguageModelPricing
+            const webSearchCost = languageModelConfig.webSearchCost ?? 0
             return {
-                cost: calculateTokensCost(inputTokens, inputCost) + calculateTokensCost(outputTokens, outputCost),
+                cost: calculateTokensCost(inputTokens, inputCost) + calculateTokensCost(outputTokens, outputCost) + calculateWebSearchCost(webSearchCalls, webSearchCost),
                 model,
             }
         }
@@ -67,6 +77,19 @@ export const openaiProvider: AIProviderStrategy = {
             const imageCost = pricing[quality][size as keyof typeof pricing[typeof quality]]
             return {
                 cost: imageCost * imageCount,
+                model,
+            }
+        }
+
+        if (imageModelConfig?.instance.modelId === 'gpt-image-1') {
+            const pricing = imageModelConfig.pricing as GPTImage1PricingPerImage
+            const { input_tokens_details } = apiResponse.usage as { input_tokens_details: { text_tokens: number, image_tokens: number } }
+            const { output_tokens } = apiResponse.usage as { output_tokens: number }
+            const imageInputCost = pricing.input.image
+            const textInputCost = pricing.input.text
+            const outputCost = pricing.output
+            return {
+                cost: calculateTokensCost(input_tokens_details.image_tokens, imageInputCost) + calculateTokensCost(input_tokens_details.text_tokens, textInputCost) + calculateTokensCost(output_tokens, outputCost),
                 model,
             }
         }
@@ -150,4 +173,4 @@ export const openaiProvider: AIProviderStrategy = {
     isModerationRequest: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean => {
         return request.url.includes('/moderations') && (request.body as { model: string }).model === 'omni-moderation-latest'
     },
-} 
+}

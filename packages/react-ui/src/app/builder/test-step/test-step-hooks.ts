@@ -12,17 +12,18 @@ import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { api } from '@/lib/api';
 import { wait } from '@/lib/utils';
 import {
-  Action,
+  FlowAction,
   ApErrorParams,
   ErrorCode,
   parseToJsonIfPossible,
   StepRunResponse,
-  Trigger,
+  FlowTrigger,
   TriggerEventWithPayload,
   isNil,
   FlowOperationType,
   flowStructureUtil,
   SampleDataFileType,
+  TriggerTestStrategy,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -32,7 +33,7 @@ import { testStepUtils } from './test-step-utils';
 export const testStepHooks = {
   useUpdateSampleData: (
     stepName: string,
-    onSuccess?: (step: Trigger | Action) => void,
+    onSuccess?: (step: FlowTrigger | FlowAction) => void,
   ) => {
     const queryClient = useQueryClient();
     const { setSampleData, flowVersionId, applyOperation, flowId, step } =
@@ -77,12 +78,12 @@ export const testStepHooks = {
             if (flowStructureUtil.isTrigger(modifiedStep?.type)) {
               applyOperation({
                 type: FlowOperationType.UPDATE_TRIGGER,
-                request: modifiedStep as Trigger,
+                request: modifiedStep as FlowTrigger,
               });
             } else {
               applyOperation({
                 type: FlowOperationType.UPDATE_ACTION,
-                request: modifiedStep as Action,
+                request: modifiedStep as FlowAction,
               });
             }
           }
@@ -106,6 +107,7 @@ export const testStepHooks = {
   }) => {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
+    const flowVersionId = builderState.flowVersionId;
     const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
       form.getValues().name,
     );
@@ -116,12 +118,11 @@ export const testStepHooks = {
         const ids = (
           await triggerEventsApi.list({ flowId, cursor: undefined, limit: 5 })
         ).data.map((triggerEvent) => triggerEvent.id);
-        const webhookSimulation = await triggerEventsApi.getWebhookSimulation(
+        await triggerEventsApi.test({
           flowId,
-        );
-        if (!webhookSimulation) {
-          await triggerEventsApi.startWebhookSimulation(flowId);
-        }
+          flowVersionId,
+          testStrategy: TriggerTestStrategy.SIMULATION,
+        });
         let attempt = 0;
         while (attempt < 1000) {
           if (abortSignal.aborted) {
@@ -149,12 +150,10 @@ export const testStepHooks = {
       onSuccess: async (results) => {
         if (results.length > 0) {
           onSuccess();
-          await triggerEventsApi.deleteWebhookSimulation(flowId);
         }
       },
       onError: async (error) => {
         console.error(error);
-        await triggerEventsApi.deleteWebhookSimulation(flowId);
         setErrorMessage?.(
           testStepUtils.formatErrorMessage(
             t('There is no sample data available found for this trigger.'),
@@ -172,10 +171,10 @@ export const testStepHooks = {
 
     return useMutation({
       mutationFn: async (mockData: unknown) => {
-        const data = await triggerEventsApi.saveTriggerMockdata(
+        const data = await triggerEventsApi.saveTriggerMockdata({
           flowId,
           mockData,
-        );
+        });
         await updateSampleData({
           response: { success: true, output: data.payload },
         });
@@ -193,6 +192,7 @@ export const testStepHooks = {
   }) => {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
+    const flowVersionId = builderState.flowVersionId;
     const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
       form.getValues().name,
     );
@@ -200,7 +200,11 @@ export const testStepHooks = {
     return useMutation<TriggerEventWithPayload[], Error, void>({
       mutationFn: async () => {
         setErrorMessage(undefined);
-        const { data } = await triggerEventsApi.pollTrigger({ flowId });
+        const { data } = await triggerEventsApi.test({
+          flowId,
+          flowVersionId,
+          testStrategy: TriggerTestStrategy.TEST_FUNCTION,
+        });
         if (data.length > 0) {
           await updateSampleData({
             response: { success: true, output: data[0].payload },
@@ -249,7 +253,7 @@ export const testStepHooks = {
     onProgress,
     mutationKey,
   }: {
-    currentStep: Action;
+    currentStep: FlowAction;
     setErrorMessage: ((msg: string | undefined) => void) | undefined;
     setConsoleLogs: ((logs: string | null) => void) | undefined;
     onSuccess: (() => void) | undefined;
@@ -288,7 +292,7 @@ export const testStepHooks = {
       },
       onSuccess: (testStepResponse: StepRunResponse) => {
         const { success, standardOutput, standardError } = testStepResponse;
-        const errorMessage = standardOutput ?? standardError;
+        const errorMessage = success ? standardOutput : standardError;
         setErrorMessage?.(undefined);
         setConsoleLogs?.(errorMessage ?? null);
         if (success) {
@@ -318,7 +322,7 @@ export const testStepHooks = {
 };
 
 const useRequiredStateToTestSteps = () => {
-  const form = useFormContext<Trigger>();
+  const form = useFormContext<FlowTrigger>();
   const builderState = useBuilderStateContext((state) => ({
     flow: state.flow,
     flowVersion: state.flowVersion,

@@ -1,0 +1,16 @@
+{
+  "Queue": "Wachtrij",
+  "A piece that allows you to push items into a queue, providing a way to throttle requests or process data in a First-In-First-Out (FIFO) manner.": "Een stuk dat je toelaat om items in een wachtrij te duwen en een manier biedt om verzoeken af te zwakken of gegevens te verwerken op een eerste-In-First-Out (FIFO) manier.",
+  "Push to Queue": "Push naar wachtrij",
+  "Pull items from queue": "Trek items uit de wachtrij",
+  "Clear queue": "Wachtrij wissen",
+  "Push item to queue": "Item naar wachtrij schuiven",
+  "Clears all items inside a queue": "Wist alle voorwerpen binnen een wachtrij",
+  "Markdown": "Markdown",
+  "Queue Name": "Wachtrij naam",
+  "Items": "Artikelen",
+  "Number of items": "Aantal items",
+  "**Note:**\n- You can push items from other flows. The queue name should be unique across all flows.\n- The testing step work in isolation and doesn't affect the actual queue after publishing.\n": "**Let op:**\n- U kunt items van andere flows duwen. De wachtrijnaam moet uniek zijn in alle flows.\n- De teststap werkt geïsoleerd en heeft geen invloed op de werkelijke wachtrij na publiceren.\n",
+  "**Note:**\n- You can pull items from other flows. The queue name should be unique across all flows.\n- The testing step work in isolation and doesn't affect the actual queue after publishing.\n": "**Let op:**\n- U kunt items van andere flows trekken. De wachtrijnaam moet uniek zijn in alle stromen.\n- De teststap werkt geïsoleerd en heeft geen invloed op de werkelijke wachtrij na publiceren.\n",
+  "**Note:**\n- This deletes all items inside the queue permanently.\n- The testing step work in isolation and doesn't affect the actual queue after publishing.\n": "**Opmerking:**\n- Dit verwijdert alle items in de wachtrij permanent.\n- De teststap werkt geïsoleerd en heeft geen invloed op de werkelijke wachtrij na publiceren.\n"
+}

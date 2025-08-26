@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/piece-crypto",
-  "version": "0.0.8"
+  "version": "0.0.11",
+  "dependencies": {
+    "openpgp": "^6.2.0"
+  }
 }

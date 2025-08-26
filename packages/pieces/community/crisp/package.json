@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-crisp",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",

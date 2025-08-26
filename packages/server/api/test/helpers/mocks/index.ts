@@ -2,6 +2,7 @@ import {
     ApiKey,
     ApplicationEvent,
     ApplicationEventName,
+    BillingCycle,
     CustomDomain,
     CustomDomainStatus,
     GitBranchType,
@@ -29,6 +30,7 @@ import {
     FlowRunStatus,
     FlowStatus,
     FlowTemplate,
+    FlowTriggerType,
     FlowVersion,
     FlowVersionState,
     InvitationStatus,
@@ -48,7 +50,6 @@ import {
     RoleType,
     RunEnvironment,
     TemplateType,
-    TriggerType,
     User,
     UserIdentity,
     UserIdentityProvider,
@@ -200,7 +201,8 @@ export const createMockGitRepo = (gitRepo?: Partial<GitRepo>): GitRepo => {
 
 export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): PlatformPlan => {
     return {
-        eligibleForTrial: platformPlan?.eligibleForTrial ?? false,
+        eligibleForTrial: platformPlan?.eligibleForTrial ?? null,
+        stripeBillingCycle: platformPlan?.stripeBillingCycle ?? BillingCycle.MONTHLY,
         id: platformPlan?.id ?? apId(),
         created: platformPlan?.created ?? faker.date.recent().toISOString(),
         updated: platformPlan?.updated ?? faker.date.recent().toISOString(),
@@ -485,7 +487,6 @@ export const createMockFlow = (flow?: Partial<Flow>): Flow => {
         projectId: flow?.projectId ?? apId(),
         status: flow?.status ?? faker.helpers.enumValue(FlowStatus),
         folderId: flow?.folderId ?? null,
-        schedule: flow?.schedule ?? null,
         publishedVersionId: flow?.publishedVersionId ?? null,
         externalId: flow?.externalId ?? apId(),
     }
@@ -495,7 +496,7 @@ export const createMockFlowVersion = (
     flowVersion?: Partial<FlowVersion>,
 ): FlowVersion => {
     const emptyTrigger = {
-        type: TriggerType.EMPTY,
+        type: FlowTriggerType.EMPTY,
         name: 'trigger',
         settings: {},
         valid: false,
@@ -561,6 +562,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
             customRolesEnabled: true,
             manageProjectsEnabled: true,
             customDomainsEnabled: true,
+            includedAiCredits: 1000,
             ...params?.plan,
         })
         await databaseConnection().getRepository('platform_plan').upsert(mockPlatformPlan, ['platformId'])

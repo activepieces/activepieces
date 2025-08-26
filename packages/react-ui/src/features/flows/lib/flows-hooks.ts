@@ -20,8 +20,8 @@ import {
   FlowVersionMetadata,
   ListFlowsRequest,
   PopulatedFlow,
-  Trigger,
-  TriggerType,
+  FlowTrigger,
+  FlowTriggerType,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -77,6 +77,12 @@ export const flowsHooks = {
         setIsPublishing(false);
       },
       onError: (err: Error) => {
+        toast({
+          title: t('Error'),
+          description: t('Failed to publish flow, please contact support.'),
+          variant: 'destructive',
+        });
+        console.error('Failed to publish flow', err);
         setIsPublishing(false);
       },
     });
@@ -165,13 +171,13 @@ export const flowsHooks = {
           stepName: 'trigger',
           pieceSelectorItem: {
             actionOrTrigger: trigger,
-            type: TriggerType.PIECE,
+            type: FlowTriggerType.PIECE,
             pieceMetadata: stepUtils.mapPieceToMetadata({
               piece: mcpPiece,
               type: 'trigger',
             }),
           },
-        }) as Trigger;
+        }) as FlowTrigger;
         await flowsApi.update(flow.id, {
           type: FlowOperationType.UPDATE_TRIGGER,
           request: stepData,

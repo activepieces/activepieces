@@ -1,9 +1,10 @@
 {
   "name": "@activepieces/piece-scrapeless",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
-    "@scrapeless-ai/sdk": "1.5.1"  }
+    "@scrapeless-ai/sdk": "1.5.1"
+  }
 }

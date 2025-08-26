@@ -13,3 +13,10 @@ export const TestTriggerRequestBody = Type.Object({
 })
 
 export type TestTriggerRequestBody = Static<typeof TestTriggerRequestBody>
+
+
+export const CancelTestTriggerRequestBody = Type.Object({
+    flowId: ApId,
+})
+
+export type CancelTestTriggerRequestBody = Static<typeof CancelTestTriggerRequestBody>

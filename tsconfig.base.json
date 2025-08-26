@@ -17,6 +17,9 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@activepieces/ai-providers-shared": [
+        "packages/ai-providers-shared/src/index.ts"
+      ],
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
@@ -44,6 +47,9 @@
       ],
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
+      ],
+      "@activepieces/piece-aircall": [
+        "packages/pieces/community/aircall/src/index.ts"
       ],
       "@activepieces/piece-airparser": [
         "packages/pieces/community/airparser/src/index.ts"
@@ -99,6 +105,9 @@
       "@activepieces/piece-attio": [
         "packages/pieces/community/attio/src/index.ts"
       ],
+      "@activepieces/piece-autocalls": [
+        "packages/pieces/community/autocalls/src/index.ts"
+      ],
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
       ],
@@ -126,6 +135,9 @@
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
+      "@activepieces/piece-bigin-by-zoho": [
+        "packages/pieces/community/bigin-by-zoho/src/index.ts"
+      ],
       "@activepieces/piece-binance": [
         "packages/pieces/community/binance/src/index.ts"
       ],
@@ -134,6 +146,9 @@
       ],
       "@activepieces/piece-blockscout": [
         "packages/pieces/community/blockscout/src/index.ts"
+      ],
+      "@activepieces/piece-bluesky": [
+        "packages/pieces/community/bluesky/src/index.ts"
       ],
       "@activepieces/piece-bonjoro": [
         "packages/pieces/community/bonjoro/src/index.ts"
@@ -447,6 +462,9 @@
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
       ],
+      "@activepieces/piece-help-scout": [
+        "packages/pieces/community/help-scout/src/index.ts"
+      ],
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],
@@ -458,6 +476,9 @@
       ],
       "@activepieces/piece-hubspot": [
         "packages/pieces/community/hubspot/src/index.ts"
+      ],
+      "@activepieces/piece-hugging-face": [
+        "packages/pieces/community/hugging-face/src/index.ts"
       ],
       "@activepieces/piece-hunter": [
         "packages/pieces/community/hunter/src/index.ts"
@@ -581,11 +602,17 @@
       "@activepieces/piece-messagebird": [
         "packages/pieces/community/messagebird/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-365-people": [
+        "packages/pieces/community/microsoft-365-people/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-excel-365": [
         "packages/pieces/community/microsoft-excel-365/src/index.ts"
       ],
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-onenote": [
+        "packages/pieces/community/microsoft-onenote/src/index.ts"
       ],
       "@activepieces/piece-microsoft-outlook": [
         "packages/pieces/community/microsoft-outlook/src/index.ts"
@@ -604,6 +631,9 @@
       ],
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
+      ],
+      "@activepieces/piece-missive": [
+        "packages/pieces/community/missive/src/index.ts"
       ],
       "@activepieces/piece-mistral-ai": [
         "packages/pieces/community/mistral-ai/src/index.ts"
@@ -650,6 +680,9 @@
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
       ],
+      "@activepieces/piece-open-phone": [
+        "packages/pieces/community/open-phone/src/index.ts"
+      ],
       "@activepieces/piece-open-router": [
         "packages/pieces/community/open-router/src/index.ts"
       ],
@@ -658,6 +691,9 @@
       ],
       "@activepieces/piece-pandadoc": [
         "packages/pieces/community/pandadoc/src/index.ts"
+      ],
+      "@activepieces/piece-paperform": [
+        "packages/pieces/community/paperform/src/index.ts"
       ],
       "@activepieces/piece-pastebin": [
         "packages/pieces/community/pastebin/src/index.ts"
@@ -692,6 +728,9 @@
       ],
       "@activepieces/piece-placid": [
         "packages/pieces/community/placid/src/index.ts"
+      ],
+      "@activepieces/piece-podio": [
+        "packages/pieces/community/podio/src/index.ts"
       ],
       "@activepieces/piece-poper": [
         "packages/pieces/community/poper/src/index.ts"
@@ -746,6 +785,9 @@
       ],
       "@activepieces/piece-respaid": [
         "packages/pieces/community/respaid/src/index.ts"
+      ],
+      "@activepieces/piece-respond-io": [
+        "packages/pieces/community/respond-io/src/index.ts"
       ],
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
@@ -802,6 +844,9 @@
       "@activepieces/piece-serp-api": [
         "packages/pieces/community/serp-api/src/index.ts"
       ],
+      "@activepieces/piece-serpstat": [
+        "packages/pieces/community/serpstat/src/index.ts"
+      ],
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"
       ],
@@ -843,6 +888,9 @@
       ],
       "@activepieces/piece-soap": [
         "packages/pieces/community/soap/src/index.ts"
+      ],
+      "@activepieces/piece-softr": [
+        "packages/pieces/community/softr/src/index.ts"
       ],
       "@activepieces/piece-sperse": [
         "packages/pieces/community/sperse/src/index.ts"

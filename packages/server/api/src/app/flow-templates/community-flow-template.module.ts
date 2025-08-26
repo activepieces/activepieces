@@ -1,8 +1,10 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
+    FlowTemplate,
     isNil,
     ListFlowTemplatesRequest,
+    SeekPage,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -26,23 +28,31 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         },
         async (request) => {
-            const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
-            if (isNil(templateSource)) {
-                return paginationHelper.createPage([], null)
-            }
-            const queryString = convertToQueryString(request.query)
-            const url = `${templateSource}?${queryString}`
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            })
-            const templates = await response.json()
-            return templates
+            return communityTemplates.get(request.query)
         },
     )
 }
+
+export const communityTemplates = {
+    get: async (request: ListFlowTemplatesRequest): Promise<SeekPage<FlowTemplate>> => {
+
+        const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
+        if (isNil(templateSource)) {
+            return paginationHelper.createPage([], null)
+        }
+        const queryString = convertToQueryString(request)
+        const url = `${templateSource}?${queryString}`
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        const templates = await response.json()
+        return templates
+    },
+}
+
 
 function convertToQueryString(params: ListFlowTemplatesRequest): string {
     const searchParams = new URLSearchParams()

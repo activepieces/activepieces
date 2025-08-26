@@ -17,7 +17,7 @@ import {
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PieceSelectorOperation } from '@/lib/types';
-import { FlowOperationType, TriggerType } from '@activepieces/shared';
+import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
 
 import { ExploreTabContent } from './explore-tab-content';
 import { PiecesCardList } from './pieces-card-list';
@@ -47,7 +47,8 @@ const PieceSelector = ({
     state.openedPieceSelectorStepNameOrAddButtonId,
     state.setOpenedPieceSelectorStepNameOrAddButtonId,
     state.setSelectedPieceMetadataInPieceSelector,
-    state.flowVersion.trigger.type === TriggerType.EMPTY && id === 'trigger',
+    state.flowVersion.trigger.type === FlowTriggerType.EMPTY &&
+      id === 'trigger',
     state.deselectStep,
   ]);
   const [searchQuery, setSearchQuery] = useState('');

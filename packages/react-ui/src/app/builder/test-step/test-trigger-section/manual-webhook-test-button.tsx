@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
-import { Trigger } from '@activepieces/shared';
+import { FlowTrigger } from '@activepieces/shared';
 
 import TestWebhookDialog from '../custom-test-step/test-webhook-dialog';
 
@@ -17,7 +17,7 @@ export const ManualWebhookTestButton = ({
   setIsWebhookTestingDialogOpen,
 }: ManualWebhookTestButtonProps) => {
   const [id, setId] = useState<number>(0);
-  const formValues = useFormContext<Trigger>().getValues();
+  const formValues = useFormContext<FlowTrigger>().getValues();
 
   return (
     <>

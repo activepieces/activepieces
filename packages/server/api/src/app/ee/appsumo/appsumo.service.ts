@@ -1,5 +1,5 @@
-import { APPSUMO_PLAN, FREE_CLOUD_PLAN, PlatformPlanWithOnlyLimits } from '@activepieces/ee-shared'
-import { isNil, PlatformRole } from '@activepieces/shared'
+import { APPSUMO_PLAN, FREE_CLOUD_PLAN } from '@activepieces/ee-shared'
+import { isNil, PlatformPlanWithOnlyLimits, PlatformRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -9,7 +9,6 @@ import { platformPlanService } from '../platform/platform-plan/platform-plan.ser
 import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
 
 const appsumoRepo = repoFactory(AppSumoEntity)
-
 
 const appSumoPlans: Record<string, PlatformPlanWithOnlyLimits> = {
     activepieces_tier1: APPSUMO_PLAN({
@@ -119,7 +118,7 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
                     await platformPlanService(log).update({
                         platformId: project.platformId,
                         ...appSumoPlan,
-                        eligibleForTrial: false,
+                        eligibleForTrial: undefined,
                     })
 
                 }

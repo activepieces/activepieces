@@ -6,18 +6,22 @@ import {
   StepMetadata,
   StepMetadataWithSuggestions,
 } from '@/lib/types';
-import { PieceCategory, TriggerType, ActionType } from '@activepieces/shared';
+import {
+  PieceCategory,
+  FlowTriggerType,
+  FlowActionType,
+} from '@activepieces/shared';
 
 const isFlowController = (stepMetadata: StepMetadata) => {
   if (
-    stepMetadata.type === ActionType.PIECE ||
-    stepMetadata.type === TriggerType.PIECE
+    stepMetadata.type === FlowActionType.PIECE ||
+    stepMetadata.type === FlowTriggerType.PIECE
   ) {
     return stepMetadata.categories.includes(PieceCategory.FLOW_CONTROL);
   }
   return (
-    stepMetadata.type === ActionType.LOOP_ON_ITEMS ||
-    stepMetadata.type === ActionType.ROUTER
+    stepMetadata.type === FlowActionType.LOOP_ON_ITEMS ||
+    stepMetadata.type === FlowActionType.ROUTER
   );
 };
 
@@ -52,8 +56,8 @@ const getAiAndAgentsPieces = (queryResult: StepMetadataWithSuggestions[]) => {
 
 const isAiAndAgentPiece = (stepMetadata: StepMetadata) => {
   if (
-    stepMetadata.type === ActionType.PIECE ||
-    stepMetadata.type === TriggerType.PIECE
+    stepMetadata.type === FlowActionType.PIECE ||
+    stepMetadata.type === FlowTriggerType.PIECE
   ) {
     return stepMetadata.categories.some((category) =>
       [
@@ -66,7 +70,8 @@ const isAiAndAgentPiece = (stepMetadata: StepMetadata) => {
 };
 
 const isUtilityPiece = (metadata: StepMetadata) =>
-  metadata.type !== TriggerType.PIECE && metadata.type !== ActionType.PIECE
+  metadata.type !== FlowTriggerType.PIECE &&
+  metadata.type !== FlowActionType.PIECE
     ? !isFlowController(metadata)
     : metadata.categories.includes(PieceCategory.CORE) &&
       !isFlowController(metadata);
@@ -119,7 +124,8 @@ const filterResultByPieceType = (
 ) => {
   return queryResult.filter(
     (piece): piece is PieceStepMetadataWithSuggestions =>
-      piece.type === ActionType.PIECE || piece.type === TriggerType.PIECE,
+      piece.type === FlowActionType.PIECE ||
+      piece.type === FlowTriggerType.PIECE,
   );
 };
 

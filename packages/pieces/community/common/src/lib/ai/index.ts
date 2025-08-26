@@ -1,6 +1,7 @@
 import { isNil, SeekPage, AIProviderWithoutSensitiveData, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared';
 import { Property, InputPropertyMap } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from '../http';
+import { ImageModel } from 'ai';
 
 export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
     provider: Property.Dropdown<string, true>({
@@ -98,47 +99,204 @@ export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCal
         refreshers: ['provider', 'model'],
         props: async (propsValue): Promise<InputPropertyMap> => {
             const provider = propsValue['provider'] as unknown as string;
+            const model = propsValue['model'] as unknown as ImageModel;
 
             const providerMetadata = SUPPORTED_AI_PROVIDERS.find(p => p.provider === provider);
             if (isNil(providerMetadata)) {
                 return {};
             }
 
+            let options: InputPropertyMap = {};
+
             if (modelType === 'image') {
                 if (provider === 'openai') {
-                    return {
+                    options = {
                         quality: Property.StaticDropdown({
                             options: {
-                                options: [
+                                options: model.modelId === 'dall-e-3' ? [
                                     { label: 'Standard', value: 'standard' },
                                     { label: 'HD', value: 'hd' },
-                                ],
-                                disabled: false,
-                                placeholder: 'Select Image Quality',
+                                ] : model.modelId === 'gpt-image-1' ? [
+                                    { label: 'High', value: 'high' },
+                                    { label: 'Medium', value: 'medium' },
+                                    { label: 'Low', value: 'low' },
+                                ] : [],
+                                disabled: model.modelId === 'dall-e-2',
                             },
-                            defaultValue: 'standard',
-                            description:
-                                'Standard images are less detailed and faster to generate, while HD images are more detailed but slower to generate.',
+                            defaultValue: model.modelId === 'dall-e-3' ? 'standard' : 'high',
                             displayName: 'Image Quality',
-                            required: true,
+                            required: false,
                         }),
-                    };
+                        size: Property.StaticDropdown({
+                            options: {
+                                options: model.modelId === 'dall-e-3' ? [
+                                    { label: '1024x1024', value: '1024x1024' },
+                                    { label: '1792x1024', value: '1792x1024' },
+                                    { label: '1024x1792', value: '1024x1792' },
+                                ] : model.modelId === 'gpt-image-1' ? [
+                                    { label: '1024x1024', value: '1024x1024' },
+                                    { label: '1536x1024', value: '1536x1024' },
+                                    { label: '1024x1536', value: '1024x1536' },
+                                ] : [
+                                    { label: '256x256', value: '256x256' },
+                                    { label: '512x512', value: '512x512' },
+                                    { label: '1024x1024', value: '1024x1024' },
+                                ],
+                            },
+                            displayName: 'Image Size',
+                            required: false,
+                        }),
+                    }
+
+                    if (model.modelId === 'gpt-image-1') {
+                        options = {
+                            ...options,
+                            background: Property.StaticDropdown({
+                                options: {
+                                    options: [
+                                        { label: 'Auto', value: 'auto' },
+                                        { label: 'Transparent', value: 'transparent' },
+                                        { label: 'Opaque', value: 'opaque' },
+                                    ],
+                                },
+                                defaultValue: 'auto',
+                                description: 'The background of the image.',
+                                displayName: 'Background',
+                                required: true,
+                            }),
+                        }
+                    }
+
+                    return options;
                 }
 
                 if (provider === 'replicate') {
-                    return {
+                    options = {
                         negativePrompt: Property.ShortText({
                             displayName: 'Negative Prompt',
                             required: true,
                             description: 'A prompt to avoid in the generated image.',
-                          }),
-                    };
+                        }),
+                    }
                 }
             }
 
-            return {};
+            return options;
         },
-    })
+    }),
+    webSearch: Property.Checkbox({
+        displayName: 'Web Search',
+        required: false,
+        defaultValue: false,
+        description: 'Whether to use web search to find information for the AI to use in its response.',
+    }),
+    webSearchOptions: Property.DynamicProperties({
+        displayName: 'Web Search Options',
+        required: false,
+        refreshers: ['webSearch', 'provider', 'model'],
+        props: async (propsValue) => {
+            const webSearchEnabled = propsValue['webSearch'] as unknown as boolean;
+            const provider = propsValue['provider'] as unknown as string;
+
+            if (!webSearchEnabled) {
+                return {};
+            }
+
+            const providerMetadata = SUPPORTED_AI_PROVIDERS.find(p => p.provider === provider);
+            if (isNil(providerMetadata)) {
+                return {};
+            }
+
+            let options: InputPropertyMap = {
+                maxUses: Property.Number({
+                    displayName: 'Max Web Search Uses',
+                    required: false,
+                    defaultValue: 5,
+                    description: 'Maximum number of searches to use. Default is 5.',
+                }),
+                includeSources: Property.Checkbox({
+                    displayName: 'Include Sources',
+                    description: 'Whether to include the sources in the response. Useful for getting web search details (e.g. search queries, searched URLs, etc).',
+                    required: false,
+                    defaultValue: false,
+                }),
+            };
+
+            const userLocationOptions = {
+                userLocationCity: Property.ShortText({
+                    displayName: 'User Location - City',
+                    required: false,
+                    description: 'The city name for localizing search results (e.g., San Francisco).',
+                }),
+                userLocationRegion: Property.ShortText({
+                    displayName: 'User Location - Region',
+                    required: false,
+                    description: 'The region or state for localizing search results (e.g., California).',
+                }),
+                userLocationCountry: Property.ShortText({
+                    displayName: 'User Location - Country',
+                    required: false,
+                    description: 'The country code for localizing search results (e.g., US).',
+                }),
+                userLocationTimezone: Property.ShortText({
+                    displayName: 'User Location - Timezone',
+                    required: false,
+                    description: 'The IANA timezone ID for localizing search results (e.g., America/Los_Angeles).',
+                }),
+            };
+
+            if (provider === 'anthropic') {
+                options = {
+                    ...options,
+                    allowedDomains: Property.Array({
+                        displayName: 'Allowed Domains',
+                        required: false,
+                        description: 'List of domains to search (e.g., example.com, docs.example.com/blog). Domains should not include HTTP/HTTPS scheme. Subdomains are automatically included unless more specific subpaths are provided. Overrides Blocked Domains if both are provided.',
+                        properties: {
+                            domain: Property.ShortText({
+                                displayName: 'Domain',
+                                required: true,
+                            }),
+                        },
+                    }),
+                    blockedDomains: Property.Array({
+                        displayName: 'Blocked Domains',
+                        required: false,
+                        description: 'List of domains to exclude from search (e.g., example.com, docs.example.com/blog). Domains should not include HTTP/HTTPS scheme. Subdomains are automatically included unless more specific subpaths are provided. Overrided by Allowed Domains if both are provided.',
+                        properties: {
+                            domain: Property.ShortText({
+                                displayName: 'Domain',
+                                required: true,
+                            }),
+                        },
+                    }),
+                    ...userLocationOptions,
+                };
+            }
+
+            if (provider === 'openai') {
+                options = {
+                    ...options,
+                    searchContextSize: Property.StaticDropdown({
+                        displayName: 'Search Context Size',
+                        required: false,
+                        defaultValue: 'medium',
+                        options: {
+                            options: [
+                                { label: 'Low', value: 'low' },
+                                { label: 'Medium', value: 'medium' },
+                                { label: 'High', value: 'high' },
+                            ],
+                        },
+                        description: 'High level guidance for the amount of context window space to use for the search.',
+                    }),
+                    ...userLocationOptions,
+                };
+            }
+
+            return options;
+        },
+    }),
 })
 
 
@@ -151,4 +309,6 @@ type AIPropsReturn = {
     provider: ReturnType<typeof Property.Dropdown<string, true>>;
     model: ReturnType<typeof Property.Dropdown>;
     advancedOptions: ReturnType<typeof Property.DynamicProperties>;
+    webSearch: ReturnType<typeof Property.Checkbox>;
+    webSearchOptions: ReturnType<typeof Property.DynamicProperties>;
 }

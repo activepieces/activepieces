@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { CircleMinus, Pencil, RotateCcw, Trash, User } from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
@@ -17,8 +18,6 @@ import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { platformUserApi } from '@/lib/platform-user-api';
 import { formatUtils } from '@/lib/utils';
 import { PlatformRole, UserStatus } from '@activepieces/shared';
-
-import { TableTitle } from '../../../../components/custom/table-title';
 
 import { UpdateUserDialog } from './update-user-dialog';
 
@@ -75,9 +74,12 @@ export default function UsersPage() {
       lockDescription={t('Manage your users and their access to your projects')}
     >
       <div className="flex flex-col w-full">
-        <div className="flex items-center justify-between flex-row">
-          <TableTitle>{t('Users')}</TableTitle>
-        </div>
+        <DashboardPageHeader
+          title={t('Users')}
+          description={t(
+            'Manage, delete, active and desactivate users on platfrom',
+          )}
+        />
         <DataTable
           emptyStateTextTitle={t('No users found')}
           emptyStateTextDescription={t('Start inviting users to your project')}

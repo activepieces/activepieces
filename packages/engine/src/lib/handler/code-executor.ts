@@ -1,6 +1,6 @@
 import path from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
-import { ActionType, assertNotNullOrUndefined, CodeAction, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertNotNullOrUndefined, CodeAction, FlowActionType, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
@@ -31,7 +31,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
 
     const stepOutput = GenericStepOutput.create({
         input: censoredInput,
-        type: ActionType.CODE,
+        type: FlowActionType.CODE,
         status: StepOutputStatus.RUNNING,
     })
 

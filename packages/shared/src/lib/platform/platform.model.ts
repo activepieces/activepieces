@@ -18,7 +18,6 @@ export const SMTPInformation = Type.Object({
     host: Type.String(),
     port: Type.Number(),
 })
-
 export type SMTPInformation = Static<typeof SMTPInformation>
 
 export enum CopilotProviderType {
@@ -30,7 +29,6 @@ export const OpenAiProvider = Type.Object({
     baseUrl: Type.String(),
     apiKey: Type.String(),
 })
-
 export type OpenAiProvider = Static<typeof OpenAiProvider>
 
 export const AzureOpenAiProvider = Type.Object({
@@ -38,7 +36,6 @@ export const AzureOpenAiProvider = Type.Object({
     deploymentName: Type.String(),
     apiKey: Type.String(),
 })
-
 export type AzureOpenAiProvider = Static<typeof AzureOpenAiProvider>
 
 export const CopilotSettings = Type.Object({
@@ -47,7 +44,6 @@ export const CopilotSettings = Type.Object({
         [CopilotProviderType.AZURE_OPENAI]: Type.Optional(AzureOpenAiProvider),
     }),
 })
-
 export type CopilotSettings = Static<typeof CopilotSettings>
 
 export const CopilotSettingsWithoutSensitiveData = Type.Object({
@@ -68,7 +64,6 @@ export enum PlatformUsageMetric {
     TABLES = 'tables',
     MCPS = 'mcps',
 }
-
 
 export const PlatformUsage = Type.Object({
     tasks: Type.Number(),
@@ -116,7 +111,7 @@ export const PlatformPlan = Type.Object({
     globalConnectionsEnabled: Type.Boolean(),
     customRolesEnabled: Type.Boolean(),
     apiKeysEnabled: Type.Boolean(),
-    eligibleForTrial: Type.Boolean(),
+    eligibleForTrial: Nullable(Type.String()),
     ssoEnabled: Type.Boolean(),
     licenseKey: Type.Optional(Type.String()),
     licenseExpiresAt: Type.Optional(Type.String()),
@@ -127,6 +122,7 @@ export const PlatformPlan = Type.Object({
     stripeSubscriptionEndDate: Type.Optional(Type.Number()),
     stripeSubscriptionCancelDate: Type.Optional(Type.Number()),
     stripePaymentMethod: Type.Optional(Type.String()),
+    stripeBillingCycle: Type.String(),
 
     userSeatsLimit: Nullable(Type.Number()),
     projectsLimit: Nullable(Type.Number()),
@@ -135,11 +131,11 @@ export const PlatformPlan = Type.Object({
     activeFlowsLimit: Nullable(Type.Number()),
     agentsLimit: Nullable(Type.Number()),
 })
-  
 export type PlatformPlan = Static<typeof PlatformPlan>
 
 export const PlatformPlanLimits = Type.Omit(PlatformPlan, ['id', 'platformId', 'created', 'updated'])
 export type PlatformPlanLimits = Static<typeof PlatformPlanLimits>
+export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate' | 'stripeBillingCycle'>
 
 export const Platform = Type.Object({
     ...BaseModelSchema,
@@ -166,7 +162,6 @@ export const Platform = Type.Object({
     pinnedPieces: Type.Array(Type.String()),
     copilotSettings: Type.Optional(CopilotSettings),
 })
-
 export type Platform = Static<typeof Platform>
 
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
@@ -194,7 +189,6 @@ export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     'emailAuthEnabled',
     'pinnedPieces',
 ])])
-
 export type PlatformWithoutSensitiveData = Static<typeof PlatformWithoutSensitiveData>
 
 export const PlatformBillingInformation = Type.Object({
@@ -204,5 +198,4 @@ export const PlatformBillingInformation = Type.Object({
     nextBillingAmount: Type.Number(),
     cancelAt: Type.Optional(Type.Number()),
 })
-
 export type PlatformBillingInformation = Static<typeof PlatformBillingInformation>

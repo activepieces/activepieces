@@ -13,7 +13,7 @@ import {
   PieceStepMetadataWithSuggestions,
 } from '@/lib/types';
 import {
-  ActionType,
+  FlowActionType,
   Agent,
   BranchExecutionType,
   BranchOperator,
@@ -86,7 +86,7 @@ export const createRouterStep = ({
   };
   return handleAddingOrUpdatingStep({
     pieceSelectorItem: {
-      ...CORE_STEP_METADATA[ActionType.ROUTER],
+      ...CORE_STEP_METADATA[FlowActionType.ROUTER],
       displayName: t('Check Todo Status'),
     },
     operation: {
@@ -124,7 +124,7 @@ export const createTodoStep = ({
   return handleAddingOrUpdatingStep({
     pieceSelectorItem: {
       actionOrTrigger: createTodoAction,
-      type: ActionType.PIECE,
+      type: FlowActionType.PIECE,
       pieceMetadata: pieceMetadata,
     },
     operation,
@@ -150,7 +150,7 @@ export const createWaitForApprovalStep = ({
   }
   const pieceSelectorItem: PieceSelectorItem = {
     actionOrTrigger: waitForApprovalAction,
-    type: ActionType.PIECE,
+    type: FlowActionType.PIECE,
     pieceMetadata: pieceMetadata,
   };
   const waitForApprovalStep = {
@@ -170,7 +170,7 @@ export const createWaitForApprovalStep = ({
     stepName: waitForApprovalStepName,
     pieceSelectorItem: {
       actionOrTrigger: waitForApprovalAction,
-      type: ActionType.PIECE,
+      type: FlowActionType.PIECE,
       pieceMetadata: pieceMetadata,
     },
   });
@@ -219,7 +219,7 @@ export const handleAddingOrUpdatingCustomAgentPieceSelectorItem = (
     stepName,
     pieceSelectorItem: agentPieceSelectorItem,
   });
-  defaultValues.settings.input.agentId = agent.id;
+  defaultValues.settings.input.agentId = agent.externalId;
   return handleAddingOrUpdatingStep({
     pieceSelectorItem: agentPieceSelectorItem,
     operation: {

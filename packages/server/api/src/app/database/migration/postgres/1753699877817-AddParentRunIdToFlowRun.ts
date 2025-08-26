@@ -16,7 +16,7 @@ export class AddParentRunIdToFlowRun1753699877817 implements MigrationInterface 
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_run_parent_run_id"
+            DROP INDEX "idx_run_parent_run_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "flow_run" DROP COLUMN "parentRunId", DROP COLUMN "failParentOnFailure"

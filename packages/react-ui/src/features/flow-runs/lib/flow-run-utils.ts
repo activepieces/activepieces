@@ -10,10 +10,11 @@ import {
 } from 'lucide-react';
 
 import {
-  ActionType,
+  FlowActionType,
   FlowRun,
   FlowRunStatus,
   flowStructureUtil,
+  FlowTrigger,
   FlowVersion,
   isFailedState,
   isNil,
@@ -21,7 +22,6 @@ import {
   LoopStepOutput,
   StepOutput,
   StepOutputStatus,
-  Trigger,
 } from '@activepieces/shared';
 
 export const flowRunUtils = {
@@ -31,7 +31,7 @@ export const flowRunUtils = {
     stepName: string,
     loopIndexes: Record<string, number>,
     output: Record<string, StepOutput>,
-    trigger: Trigger,
+    trigger: FlowTrigger,
   ): StepOutput | undefined => {
     const stepOutput = output[stepName];
     if (!isNil(stepOutput)) {
@@ -41,7 +41,7 @@ export const flowRunUtils = {
       .findPathToStep(trigger, stepName)
       .filter(
         (p) =>
-          p.type === ActionType.LOOP_ON_ITEMS &&
+          p.type === FlowActionType.LOOP_ON_ITEMS &&
           flowStructureUtil.isChildOf(p, stepName),
       ) as LoopOnItemsAction[];
 
@@ -143,7 +143,7 @@ function findLoopsState(
 ) {
   const loops = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
-    .filter((s) => s.type === ActionType.LOOP_ON_ITEMS);
+    .filter((s) => s.type === FlowActionType.LOOP_ON_ITEMS);
   const failedStep = run.steps
     ? findLastStepWithStatus(run.status, run.steps)
     : null;
@@ -174,7 +174,11 @@ function findLastStepWithStatus(
     ? StepOutputStatus.FAILED
     : undefined;
   return Object.entries(steps).reduce((res, [stepName, step]) => {
-    if (step.type === ActionType.LOOP_ON_ITEMS && step.output && isNil(res)) {
+    if (
+      step.type === FlowActionType.LOOP_ON_ITEMS &&
+      step.output &&
+      isNil(res)
+    ) {
       const latestStepInLoop = findLatestStepInLoop(
         step as LoopStepOutput,
         runStatus,

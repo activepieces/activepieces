@@ -26,7 +26,7 @@ export const sendMms = createAction({
           const authVaue = auth as PiecePropValueSchema<typeof krispcallAuth>;
           const res = await httpClient.sendRequest<Item[]>({
             method: HttpMethod.GET,
-            url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/get-numbers',
+            url: 'https://app.krispcall.com/api/v3/platform/activepiece/get-numbers',
             headers: {
               'X-API-KEY': authVaue.apiKey,
             },
@@ -49,7 +49,7 @@ export const sendMms = createAction({
         }
       },
     }),
-    to_number: Property.Number({
+    to_number: Property.ShortText({
       displayName: 'To Number',
       description: 'Enter the number to which you want to send sms.',
       required: true,
@@ -69,7 +69,7 @@ export const sendMms = createAction({
     console.log(auth.apiKey);
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
-      url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/send-mms',
+      url: 'https://app.krispcall.com/api/v3/platform/activepiece/send-mms',
       headers: {
         'X-API-KEY': auth.apiKey,
       },

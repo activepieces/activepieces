@@ -1,0 +1,9 @@
+{
+  "Apollo": "Apollo",
+  "Match Person": "人と一致",
+  "Enrich Company": "Enrich Company",
+  "Email": "Eメールアドレス",
+  "Cache Response": "キャッシュ応答",
+  "Domain": "ドメイン",
+  "Store the response in the project store for future use.": "今後使用するためにプロジェクトストアに応答を保存します。"
+}

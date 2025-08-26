@@ -1,4 +1,6 @@
-import { AgentJobData, exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
+import { readdir, rmdir } from 'fs/promises'
+import path from 'path'
+import { AgentJobData, exceptionHandler, GLOBAL_CACHE_ALL_VERSIONS_PATH, JobData, JobStatus, LATEST_CACHE_VERSION, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService, workerApiService } from './api/server-api.service'
@@ -18,7 +20,7 @@ let heartbeatInterval: NodeJS.Timeout
 
 export const flowWorker = (log: FastifyBaseLogger) => ({
     async init({ workerToken: token }: { workerToken: string }): Promise<void> {
-
+        rejectedPromiseHandler(deleteStaleCache(log), log)
         await engineRunnerSocket(log).init()
 
         closed = false
@@ -95,7 +97,7 @@ async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): P
             }
             const { data, engineToken: jobEngineToken, attempsStarted } = job
             engineToken = jobEngineToken
-            await consumeJob(queueName, data, attempsStarted, engineToken, log)
+            await consumeJob(job.id, queueName, data, attempsStarted, engineToken, log)
             await markJobAsCompleted(queueName, engineToken, log)
             log.debug({
                 job: {
@@ -120,7 +122,7 @@ async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): P
     }
 }
 
-async function consumeJob(queueName: QueueName, jobData: JobData, attempsStarted: number, engineToken: string, log: FastifyBaseLogger): Promise<void> {
+async function consumeJob(jobId: string, queueName: QueueName, jobData: JobData, attempsStarted: number, engineToken: string, log: FastifyBaseLogger): Promise<void> {
     switch (queueName) {
         case QueueName.USERS_INTERACTION:
             await userInteractionJobExecutor(log).execute(jobData as UserInteractionJobData, engineToken, workerToken)
@@ -130,17 +132,22 @@ async function consumeJob(queueName: QueueName, jobData: JobData, attempsStarted
             break
         case QueueName.SCHEDULED:
             await repeatingJobExecutor(log).executeRepeatingJob({
+                jobId,
                 data: jobData as RepeatingJobData,
                 engineToken,
                 workerToken,
             })
             break
         case QueueName.WEBHOOK: {
-            await webhookExecutor(log).consumeWebhook(jobData as WebhookJobData, engineToken, workerToken)
+            await webhookExecutor(log).consumeWebhook(jobId, jobData as WebhookJobData, engineToken, workerToken)
             break
         }
         case QueueName.AGENTS: {
-            await agentJobExecutor(log).executeAgent(jobData as AgentJobData, engineToken, workerToken)
+            await agentJobExecutor(log).executeAgent({
+                jobData: jobData as AgentJobData,
+                engineToken,
+                workerToken,
+            })
             break
         }
     }
@@ -161,5 +168,21 @@ async function markJobAsCompleted(queueName: QueueName, engineToken: string, log
                 queueName,
             })
         }
+    }
+}
+
+async function deleteStaleCache(log: FastifyBaseLogger): Promise<void> {
+    try {
+        const cacheDir = path.resolve(GLOBAL_CACHE_ALL_VERSIONS_PATH)
+        const entries = await readdir(cacheDir, { withFileTypes: true })
+
+        for (const entry of entries) {
+            if (entry.isDirectory() && entry.name !== LATEST_CACHE_VERSION) {
+                await rmdir(path.join(cacheDir, entry.name), { recursive: true })
+            }
+        }
+    }
+    catch (error) {
+        exceptionHandler.handle(error, log)
     }
 }

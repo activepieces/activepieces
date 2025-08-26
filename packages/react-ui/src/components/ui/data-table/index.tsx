@@ -284,7 +284,7 @@ export function DataTable<
         </DataTableToolbar>
       )}
 
-      <div className="rounded-md border mt-0">
+      <div className="rounded-md border mt-0 overflow-hidden">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

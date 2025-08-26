@@ -1,0 +1,20 @@
+{
+  "Azure Communication Services": "Службы связи Azure",
+  "Communication services from Microsoft Azure": "Службы связи от Microsoft Azure",
+  "Send Email": "Отправить письмо",
+  "Send a text or HTML email": "Отправить текст или HTML email",
+  "Sender Email (From)": "Электронная почта отправителя (From)",
+  "To": "Кому",
+  "Cc": "Cc",
+  "Bcc": "Bcc",
+  "Reply To": "Ответить",
+  "Subject": "Тема",
+  "Content Type": "Тип контента",
+  "Content": "Содержание",
+  "Sender email": "Email отправителя",
+  "Emails of the recipients": "Письма получателей",
+  "List of emails in cc": "Список писем в cc",
+  "List of emails in bcc": "Список писем в bcc",
+  "Email to receive replies on (defaults to sender)": "Письмо для получения ответов (по умолчанию для отправителя)",
+  "HTML is only allowed if you selected HTML as type": "HTML допускается только если вы выбрали HTML как тип"
+}

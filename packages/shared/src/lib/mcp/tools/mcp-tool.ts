@@ -20,6 +20,7 @@ export type McpPieceToolData = Static<typeof McpPieceToolData>
 
 const McpToolBase = {
     ...BaseModelSchema,
+    externalId: ApId,
     toolName: Type.Optional(Type.String()),
     mcpId: ApId,
 }

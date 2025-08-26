@@ -3,7 +3,7 @@ import { CheckCircle, WifiOff, Frown } from 'lucide-react';
 import React from 'react';
 import semver from 'semver';
 
-import { TableTitle } from '@/components/custom/table-title';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { useSocket } from '@/components/socket-provider';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -64,11 +64,10 @@ export default function WorkersPage() {
 
   return (
     <div className="flex flex-col w-full gap-4">
-      <TableTitle
+      <DashboardPageHeader
+        title={t('System Health Status')}
         description={t('Check the status of your platform and its components')}
-      >
-        {t('System Health Status')}
-      </TableTitle>
+      />
       <DataTable
         emptyStateTextTitle={t('No issues detected')}
         emptyStateTextDescription={t('All systems are running smoothly')}
