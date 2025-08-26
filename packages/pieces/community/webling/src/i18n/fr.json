@@ -1,15 +1,15 @@
 {
   "Webling": "Webling",
-  "Base URL": "URL de base",
-  "API Key": "Clé API",
-  "Get Events by ID": "Obtenir des événements par ID",
-  "Gets event data by a list of event IDs and optional calendar ID to filter.": "Récupère les données d'événement par une liste d'ID d'événements et l'ID de calendrier facultatif à filtrer.",
-  "Event ID list": "Liste des ID d'événements",
-  "Calendar": "Calendrier",
-  "Comma separated list of event IDs (e.g. '536,525,506,535'). When at least one ID doesn't exist the whole query return a 404 error.": "Liste des ID d'événements séparés par des virgules (par exemple '536,525,506,535'). Quand au moins un ID n'existe pas, la requête entière renvoie une erreur 404.",
-  "Calendar to filter the events by.": "Calendrier pour filtrer les événements.",
-  "New or Updated Event": "Nouvel événement ou mise à jour",
-  "On Changed Data": "Sur les données modifiées",
-  "Triggers when an event is added or updated.": "Déclenche lorsqu'un événement est ajouté ou mis à jour.",
-  "Triggers when anything was added, updated or deleted since last request.": "Déclenche quand quelque chose a été ajouté, mis à jour ou supprimé depuis la dernière requête."
+  "Base URL": "Base URL",
+  "API Key": "API Key",
+  "Get Events by ID": "Get Events by ID",
+  "Gets event data by a list of event IDs and optional calendar ID to filter.": "Gets event data by a list of event IDs and optional calendar ID to filter.",
+  "Event ID list": "Event ID list",
+  "Calendar": "Calendar",
+  "Comma separated list of event IDs (e.g. '536,525,506,535'). When at least one ID doesn't exist the whole query return a 404 error.": "Comma separated list of event IDs (e.g. '536,525,506,535'). When at least one ID doesn't exist the whole query return a 404 error.",
+  "Calendar to filter the events by.": "Calendar to filter the events by.",
+  "New or Updated Event": "New or Updated Event",
+  "On Changed Data": "On Changed Data",
+  "Triggers when an event is added or updated.": "Triggers when an event is added or updated.",
+  "Triggers when anything was added, updated or deleted since last request.": "Triggers when anything was added, updated or deleted since last request."
 }
