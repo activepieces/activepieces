@@ -1,12 +1,12 @@
 {
-  "RSS Feed": "RSS feed",
-  "Stay updated with RSS feeds": "Blijf op de hoogte van RSS-feeds",
-  "New Item In Feed": "Nieuw item in feed",
-  "New Items in Multiple Feeds": "Nieuwe items in meerdere feeds",
-  "Runs when a new item is added in the RSS feed": "Voert uit wanneer een nieuw item wordt toegevoegd in de RSS-feed",
-  "Runs when a new item is added in one of the RSS feed": "Voert uit wanneer een nieuw item wordt toegevoegd in een van de RSS-feed",
+  "RSS Feed": "RSS Feed",
+  "Stay updated with RSS feeds": "Stay updated with RSS feeds",
+  "New Item In Feed": "New Item In Feed",
+  "New Items in Multiple Feeds": "New Items in Multiple Feeds",
+  "Runs when a new item is added in the RSS feed": "Runs when a new item is added in the RSS feed",
+  "Runs when a new item is added in one of the RSS feed": "Runs when a new item is added in one of the RSS feed",
   "RSS Feed URL": "RSS Feed URL",
-  "RSS Feed URLs": "RSS Feed URL's",
+  "RSS Feed URLs": "RSS Feed URLs",
   "Single RSS feed URL": "Single RSS feed URL",
-  "List of RSS feed URLs": "Lijst van RSS feed URL's"
+  "List of RSS feed URLs": "List of RSS feed URLs"
 }

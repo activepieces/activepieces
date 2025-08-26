@@ -1,10 +1,10 @@
 {
-  "Whatsable": "Incontournable",
-  "Manage your WhatsApp business account": "Gérez votre compte WhatsApp Business",
-  "The auth token for Whatsable": "Le jeton d'authentification pour Whatsable",
-  "Send Message": "Envoyer un message",
-  "To": "À",
+  "Whatsable": "Whatsable",
+  "Manage your WhatsApp business account": "Manage your WhatsApp business account",
+  "The auth token for Whatsable": "The auth token for Whatsable",
+  "Send Message": "Send Message",
+  "To": "To",
   "Message": "Message",
-  "The recipient of the message": "Destinataire du message",
-  "The message to send": "Le message à envoyer"
+  "The recipient of the message": "The recipient of the message",
+  "The message to send": "The message to send"
 }

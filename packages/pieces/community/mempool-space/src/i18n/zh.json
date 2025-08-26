@@ -135,6 +135,6 @@
   "POST": "帖子",
   "PATCH": "PATCH",
   "PUT": "弹出",
-  "DELETE": "删除",
-  "HEAD": "黑色"
+  "DELETE": "DELETE",
+  "HEAD": "HEAD"
 }

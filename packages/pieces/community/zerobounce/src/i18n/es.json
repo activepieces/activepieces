@@ -1,8 +1,8 @@
 {
-  "ZeroBounce": "CeroBounce",
-  "ZeroBounce is an email validation service that helps you reduce bounces, improve email deliverability and increase email marketing ROI.": "ZeroBounce es un servicio de validación de correo electrónico que te ayuda a reducir rebotes, mejorar la entregabilidad del correo electrónico y aumentar la ROI de marketing de correo electrónico.",
+  "ZeroBounce": "ZeroBounce",
+  "ZeroBounce is an email validation service that helps you reduce bounces, improve email deliverability and increase email marketing ROI.": "ZeroBounce is an email validation service that helps you reduce bounces, improve email deliverability and increase email marketing ROI.",
   "Validate Email": "Validate Email",
-  "Email": "E-mail",
-  "Cache Response": "Respuesta de caché",
-  "Store the response in the project store for future use.": "Almacena la respuesta en la tienda de proyectos para su uso futuro."
+  "Email": "Email",
+  "Cache Response": "Cache Response",
+  "Store the response in the project store for future use.": "Store the response in the project store for future use."
 }

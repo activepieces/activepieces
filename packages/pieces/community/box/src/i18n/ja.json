@@ -31,5 +31,5 @@
   "The ID of the item to trigger a webhook": "WebhookをトリガーするアイテムのID",
   "The type of the item to trigger a webhook": "Webhookをトリガーするアイテムの種類",
   "File": "ファイル",
-  "Folder": "Folder"
+  "Folder": "フォルダ"
 }
