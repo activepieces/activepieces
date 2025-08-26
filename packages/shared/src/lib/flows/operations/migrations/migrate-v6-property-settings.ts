@@ -1,4 +1,3 @@
-import { FlowActionType } from '../../actions/action'
 import { FlowVersion } from '../../flow-version'
 import { PropertyExecutionType } from '../../properties'
 import { flowStructureUtil } from '../../util/flow-structure-util'
@@ -15,26 +14,23 @@ export const migratePropertySettingsV6: Migration = {
             const schema = step.settings?.schema
             const customLogoUrl = step.settings?.inputUiInfo?.customizedInputs?.logoUrl ?? ('customLogoUrl' in step && step.customLogoUrl) ?? undefined
             const customizedInputs = step.settings?.inputUiInfo?.customizedInputs
-            
-            if (step.type === FlowActionType.PIECE) {
-                return {
-                    ...step,
-                    settings: {
-                        ...step.settings,
-                        customLogoUrl,
-                        sampleDataSettings: {
-                            sampleDataFileId,
-                            sampleDataInputFileId,
-                            lastTestDate,
-                        },
-                        propertySettings: Object.fromEntries(Object.entries(input).map(([key]) => [key, {
-                            type: customizedInputs?.[key] ? PropertyExecutionType.DYNAMIC : PropertyExecutionType.MANUAL,
-                            schema: schema[key] ?? undefined,
-                        }])),
+            return {
+                ...step,
+                settings: {
+                    ...step.settings,
+                    customLogoUrl,
+                    sampleDataSettings: {
+                        sampleDataFileId,
+                        sampleDataInputFileId,
+                        lastTestDate,
                     },
-                }
+                    propertySettings: Object.fromEntries(Object.entries(input).map(([key]) => [key, {
+                        type: customizedInputs?.[key] ? PropertyExecutionType.DYNAMIC : PropertyExecutionType.MANUAL,
+                        schema: schema?.[key] ?? undefined,
+                    }])),
+                    inputUiInfo: undefined,
+                },
             }
-            return step
         })
         
         return {
