@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { createIndex } from './lib/actions/create-index';
 import { upsertVector } from './lib/actions/upsert-vector';
 import { updateVector } from './lib/actions/update-vector';
@@ -7,31 +7,84 @@ import { deleteVector } from './lib/actions/delete-vector';
 import { searchVector } from './lib/actions/search-vector';
 import { searchText } from './lib/actions/search-text';
 
-export const pineconeAuth = PieceAuth.SecretText({
-  displayName: 'Pinecone API Key',
-  description:
-    'Enter your Pinecone API key. You can create a new API key in the Pinecone console for your target project. All requests to Pinecone APIs must contain a valid API key.',
+export const pineconeAuth = PieceAuth.CustomAuth({
+  description: 'Configure your Pinecone API key and optional proxy settings',
   required: true,
+  props: {
+    apiKey: Property.LongText({
+      displayName: 'API Key',
+      description: 'Enter your Pinecone API key. You can create a new API key in the Pinecone console for your target project.',
+      required: true,
+    }),
+    useProxy: Property.Checkbox({
+      displayName: 'Use Proxy',
+      description: 'Enable proxy configuration for Pinecone requests',
+      required: false,
+      defaultValue: false,
+    }),
+    proxyUrl: Property.ShortText({
+      displayName: 'Proxy URL',
+      description: 'Proxy server URL (e.g., https://your-proxy.com)',
+      required: false,
+    }),
+    proxyPort: Property.Number({
+      displayName: 'Proxy Port',
+      description: 'Proxy server port',
+      required: false,
+    }),
+    proxyHost: Property.ShortText({
+      displayName: 'Proxy Host',
+      description: 'Proxy server host',
+      required: false,
+    }),
+    proxyCertPath: Property.ShortText({
+      displayName: 'Proxy Certificate Path',
+      description: 'Path to proxy certificate file (e.g., path/to/mitmproxy-ca-cert.pem)',
+      required: false,
+    }),
+  },
   validate: async ({ auth }) => {
     try {
-      // Basic validation to ensure the API key is not empty and has reasonable format
-      if (!auth || typeof auth !== 'string') {
+      const { apiKey, useProxy, proxyUrl, proxyPort, proxyHost } = auth;
+      
+      // Validate API key
+      if (!apiKey || typeof apiKey !== 'string') {
         return {
           valid: false,
           error: 'API key is required'
         };
       }
 
-      if (auth.length < 10) {
+      if (apiKey.length < 10) {
         return {
           valid: false,
-          error:
-            'API key appears to be too short. Please check your Pinecone API key.'
+          error: 'API key appears to be too short. Please check your Pinecone API key.'
         };
       }
 
-      // Additional validation could be added here to test the API key
-      // by making a simple API call to Pinecone, but for now we'll keep it simple
+      // Validate proxy configuration if enabled
+      if (useProxy) {
+        if (!proxyUrl) {
+          return {
+            valid: false,
+            error: 'Proxy URL is required when proxy is enabled'
+          };
+        }
+        
+        if (!proxyPort) {
+          return {
+            valid: false,
+            error: 'Proxy port is required when proxy is enabled'
+          };
+        }
+        
+        if (!proxyHost) {
+          return {
+            valid: false,
+            error: 'Proxy host is required when proxy is enabled'
+          };
+        }
+      }
 
       return {
         valid: true
@@ -39,7 +92,7 @@ export const pineconeAuth = PieceAuth.SecretText({
     } catch (error) {
       return {
         valid: false,
-        error: 'Invalid API key format'
+        error: 'Invalid authentication configuration'
       };
     }
   }

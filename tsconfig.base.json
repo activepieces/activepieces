@@ -711,6 +711,9 @@
       "@activepieces/piece-photoroom": [
         "packages/pieces/community/photoroom/src/index.ts"
       ],
+      "@activepieces/piece-pinecone-api": [
+        "packages/pieces/community/pinecone-api/src/index.ts"
+      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
@@ -832,7 +835,7 @@
       "@activepieces/piece-serp-api": [
         "packages/pieces/community/serp-api/src/index.ts"
       ],
-      "@activepieces/piece-serpstat":[
+      "@activepieces/piece-serpstat": [
         "packages/pieces/community/serpstat/src/index.ts"
       ],
       "@activepieces/piece-sessions-us": [

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createPineconeClient } from '../common/pinecone-client';
+import { createPineconeClientFromAuth } from '../common/pinecone-client';
 import { pineconeAuth } from '../../index';
 
 export const searchVector = createAction({
@@ -102,7 +102,6 @@ export const searchVector = createAction({
       includeValues,
       includeMetadata
     } = context.propsValue;
-    const apiKey = context.auth;
 
     // Validation following SDK pattern
     if (!indexName) {
@@ -129,7 +128,7 @@ export const searchVector = createAction({
     }
 
     // Initialize Pinecone client following SDK documentation
-    const pc = createPineconeClient(apiKey);
+    const pc = createPineconeClientFromAuth(context.auth);
 
     // Declare query request in outer scope for error handling
     let queryRequest: any = {};

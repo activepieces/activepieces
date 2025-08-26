@@ -81,6 +81,7 @@
     "@opentelemetry/sdk-logs": "0.203.0",
     "@opentelemetry/sdk-metrics": "2.0.1",
     "@opentelemetry/sdk-node": "0.203.0",
+    "@pinecone-database/pinecone": "6.1.2",
     "@qdrant/js-client-rest": "1.7.0",
     "@radix-ui/react-accordion": "1.2.4",
     "@radix-ui/react-avatar": "1.1.0",

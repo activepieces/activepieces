@@ -5,6 +5,8 @@
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "@pinecone-database/pinecone": "^3.0.0",
+    "undici": "^6.0.0"
   }
 }

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createPineconeClient } from '../common/pinecone-client';
+import { createPineconeClientFromAuth } from '../common/pinecone-client';
 import { pineconeAuth } from '../../index';
 
 export const upsertVector = createAction({
@@ -76,7 +76,6 @@ export const upsertVector = createAction({
       metadata,
       records
     } = context.propsValue;
-    const apiKey = context.auth;
 
     // Validation following SDK pattern
     if (!indexName) {
@@ -84,7 +83,7 @@ export const upsertVector = createAction({
     }
 
     // Initialize Pinecone client following SDK documentation
-    const pc = createPineconeClient(apiKey);
+    const pc = createPineconeClientFromAuth(context.auth);
 
     // Declare vectorsToUpsert in outer scope so it's accessible in catch block
     let vectorsToUpsert: any[] = [];
