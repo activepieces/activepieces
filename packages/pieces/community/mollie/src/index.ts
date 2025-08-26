@@ -14,6 +14,7 @@ import { mollieNewInvoice } from './lib/triggers/new-invoice';
 import { mollieNewPayment } from './lib/triggers/new-payment';
 import { mollieNewRefund } from './lib/triggers/new-refund';
 import { mollieNewChargeback } from './lib/triggers/new-chargeback';
+import { PieceCategory } from '@activepieces/shared';
 
 export const mollieAuth = PieceAuth.OAuth2({
   description: 'Connect your Mollie account',
@@ -41,6 +42,9 @@ export const mollie = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/mollie.png',
   authors: ['onyedikachi-david', 'Ani-4x'],
+  description:
+    'Automate Mollie payments, orders, refunds, customers, and invoices. Triggers on payment events and statuses.',
+  categories: [PieceCategory.PAYMENT_PROCESSING],
   actions: [
     mollieCreateOrder,
     mollieCreatePaymentLink,
