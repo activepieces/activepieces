@@ -17,7 +17,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "失败时没有错误",
   "Timeout (in seconds)": "超时(秒)",
-  "Search query": "Search query",
+  "Search query": "搜索查询",
   "Hybrid search is combining dense and sparse embeddings.": "Hybrid search is combining dense and sparse embeddings.",
   "Summarizes the datastore search results": "Summarizes the datastore search results",
   "Authorization headers are injected automatically from your connection.": "授权头自动从您的连接中注入。",
