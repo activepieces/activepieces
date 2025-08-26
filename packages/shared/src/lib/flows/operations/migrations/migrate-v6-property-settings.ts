@@ -12,8 +12,8 @@ export const migratePropertySettingsV6: Migration = {
             const sampleDataInputFileId = step.settings?.inputUiInfo?.sampleDataInputFileId
             const lastTestDate = step.settings?.inputUiInfo?.lastTestDate
             const schema = step.settings?.schema
-            const customLogoUrl = step.settings?.inputUiInfo?.customizedInputs?.logoUrl ?? ('customLogoUrl' in step && step.customLogoUrl) ?? undefined
-            const customizedInputs = step.settings?.inputUiInfo?.customizedInputs
+            const customLogoUrl = step.settings?.inputUiInfo?.customizedInputs?.logoUrl ?? (('customLogoUrl' in step && step.customLogoUrl) ? step.customLogoUrl : undefined)
+            const customizedInputs = step.settings?.inputUiInfo?.customizedInputs ?? {}
             return {
                 ...step,
                 settings: {
@@ -32,7 +32,6 @@ export const migratePropertySettingsV6: Migration = {
                 },
             }
         })
-        
         return {
             ...newVersion,
             schemaVersion: '7',
