@@ -1,9 +1,9 @@
 import { faker } from '@faker-js/faker'
 import { nanoid } from 'nanoid'
 import { projectDiffService } from '../../../../../../src/app/ee/projects/project-release/project-state/project-diff.service'
+import { projectStateService } from '../../../../../../src/app/ee/projects/project-release/project-state/project-state.service'
+import { system } from '../../../../../../src/app/helper/system/system'
 import { flowGenerator } from '../../../../../helpers/flow-generator'
-import { projectStateService } from 'packages/server/api/src/app/ee/projects/project-release/project-state/project-state.service'
-import { system } from 'packages/server/api/src/app/helper/system/system'
 
 const logger = system.globalLogger()
 describe('Flow Diff Service', () => {

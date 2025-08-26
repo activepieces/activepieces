@@ -5,7 +5,6 @@ import { PropertyType } from './input/property-type';
 import { DropdownState } from './input/dropdown/common';
 
 // EXPORTED
-export { InputProperty } from './input'
 export { ApFile } from './input/file-property';
 export { DropdownProperty, MultiSelectDropdownProperty } from './input/dropdown/dropdown-prop';
 export { DynamicProperties, DynamicProp } from './input/dynamic-prop';

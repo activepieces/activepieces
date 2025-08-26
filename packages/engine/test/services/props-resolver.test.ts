@@ -543,17 +543,17 @@ describe('Props resolver', () => {
                 type: PropertyExecutionType.MANUAL,
                 schema: {
                     items: Property.Array({
-                    displayName: 'Items',
-                    required: true,
-                    properties: {
-                        id: Property.Number({
-                            displayName: 'ID',
-                            required: true,
-                        }),
-                        name: Property.LongText({
-                            displayName: 'Name',
-                            required: true,
-                        }),
+                        displayName: 'Items',
+                        required: true,
+                        properties: {
+                            id: Property.Number({
+                                displayName: 'ID',
+                                required: true,
+                            }),
+                            name: Property.LongText({
+                                displayName: 'Name',
+                                required: true,
+                            }),
                         },
                     }),
                 },

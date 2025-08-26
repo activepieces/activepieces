@@ -6,8 +6,8 @@ import { AgentState, AppConnectionScope, ConnectionState, flowMigrations, FlowSt
 import { FastifyBaseLogger } from 'fastify'
 import { SimpleGit } from 'simple-git'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
-import { gitHelper } from './git-helper'
 import { projectStateService } from '../project-state/project-state.service'
+import { gitHelper } from './git-helper'
 
 export const gitSyncHelper = (log: FastifyBaseLogger) => ({
     async getStateFromGit({ flowPath, connectionsFolderPath, tablesFolderPath, agentsFolderPath }: GetStateFromGitParams): Promise<ProjectState> {
