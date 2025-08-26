@@ -7,7 +7,7 @@ export const migratePropertySettingsV6: Migration = {
     targetSchemaVersion: '6',
     migrate: (flowVersion: FlowVersion): FlowVersion => {
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
-            const input = step.settings?.input
+            const input = step.settings?.input ?? {}
             const sampleDataFileId = step.settings?.inputUiInfo?.sampleDataFileId
             const sampleDataInputFileId = step.settings?.inputUiInfo?.sampleDataInputFileId
             const lastTestDate = step.settings?.inputUiInfo?.lastTestDate
