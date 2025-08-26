@@ -9,6 +9,7 @@ import { getPhoneNumber } from './lib/actions/get-phone-number';
 import { getVoice } from './lib/actions/get-voice';
 import { getAgent } from './lib/actions/get-agent';
 import { newCallTrigger } from './lib/triggers/new-call';
+import { PieceCategory } from '@activepieces/shared';
 
 export const retellAi = createPiece({
   displayName: "Retell AI",
@@ -16,6 +17,7 @@ export const retellAi = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/retell-ai.png",
   authors: ['aryel780'],
+  categories:[PieceCategory.BUSINESS_INTELLIGENCE,PieceCategory.PRODUCTIVITY,PieceCategory.COMMUNICATION],
   actions: [
     makePhoneCall, 
     createPhoneNumber, 

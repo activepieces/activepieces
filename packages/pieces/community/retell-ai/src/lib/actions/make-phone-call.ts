@@ -22,7 +22,7 @@ export const makePhoneCall = createAction({
         'The number you want to call, in E.164 format. If using a number purchased from Retell, only US numbers are supported as destination.',
       required: true,
     }),
-    overrideAgentId: agentIdDropdown,
+    overrideAgentId: agentIdDropdown('Agent'),
     overrideAgentVersion: Property.Number({
       displayName: 'Override Agent Version',
       description:

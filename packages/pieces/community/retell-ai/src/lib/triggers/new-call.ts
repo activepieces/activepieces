@@ -9,7 +9,7 @@ import { retellAiAuth } from '../common/auth';
 export const newCallTrigger = createTrigger({
   name: 'new_call',
   displayName: 'New Call',
-  description: 'Fires when a new outgoing or incoming call is created in Retell AI. Provides call status and metadata.',
+  description: 'Triggers when a new outgoing or incoming call is created.',
   auth: retellAiAuth,
   props: {
     webhookInstructions: Property.MarkDown({

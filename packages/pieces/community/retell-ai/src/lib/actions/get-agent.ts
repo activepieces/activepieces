@@ -10,7 +10,7 @@ export const getAgent = createAction({
   displayName: 'Get Agent',
   description: 'Fetch details of a Retell AI agent by Agent ID.',
   props: {
-    agentId: agentIdDropdown,
+    agentId: agentIdDropdown('Agent ID',true),
     version: Property.Number({
       displayName: 'Version',
       description: 'Optional version of the API to use for this request. If not provided, will default to latest version.',

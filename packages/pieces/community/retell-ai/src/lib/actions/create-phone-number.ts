@@ -10,8 +10,8 @@ export const createPhoneNumber = createAction({
   displayName: 'Create Phone Number',
   description: 'Buys a new phone number and binds agents.',
   props: {
-    inboundAgentId: agentIdDropdown,
-    outboundAgentId: agentIdDropdown,
+    inboundAgentId: agentIdDropdown('Inbound Agent'),
+    outboundAgentId: agentIdDropdown('Outbound Agent'),
     inboundAgentVersion: Property.Number({
       displayName: 'Inbound Agent Version',
       description:

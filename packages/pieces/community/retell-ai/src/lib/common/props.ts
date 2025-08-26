@@ -90,11 +90,11 @@ interface RetellAiVoice {
 }
 
 // --- Agent Dropdown ---
-export const agentIdDropdown = Property.Dropdown({
-  displayName: 'Agent',
+export const agentIdDropdown = (displayName:string,required=false)=> Property.Dropdown({
+  displayName,
   description: 'Select the Retell AI agent.',
-  required: true,
-  refreshers: ['auth'],
+  required,
+  refreshers: [],
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -142,7 +142,6 @@ export const agentIdDropdown = Property.Dropdown({
 // --- Call ID Dropdown ---
 export const callIdDropdown = Property.Dropdown({
   displayName: 'Call ID',
-  description: 'Select a call from your Retell AI account.',
   required: true,
   refreshers: ['auth'],
   options: async ({ auth }) => {
@@ -194,7 +193,6 @@ export const callIdDropdown = Property.Dropdown({
 // --- Voice Dropdown ---
 export const voiceIdDropdown = Property.Dropdown({
   displayName: 'Voice',
-  description: 'Select the Retell AI voice.',
   required: true,
   refreshers: ['auth'],
   options: async ({ auth }) => {
