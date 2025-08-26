@@ -1,16 +1,16 @@
 {
-  "Text AI": "Sms'en naar AI",
-  "Ask AI": "Vraag het AI",
-  "Summarize Text": "Samenvatting tekst",
-  "Provider": "Leverancier",
+  "Text AI": "Text AI",
+  "Ask AI": "Ask AI",
+  "Summarize Text": "Summarize Text",
+  "Provider": "Provider",
   "Model": "Model",
   "Prompt": "Prompt",
-  "Conversation Key": "Gesprek sleutel",
-  "Creativity": "Creativiteit",
+  "Conversation Key": "Conversation Key",
+  "Creativity": "Creativity",
   "Max Tokens": "Max Tokens",
-  "Web Search": "Zoeken op internet",
-  "Web Search Options": "Web Zoekopties",
-  "Text": "Tekstveld",
-  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Door de creativiteit van de AI-respons te controleren, zal een hogere waarde de AI creatiever en een lagere waarde deterministischer maken.",
-  "Whether to use web search to find information for the AI to use in its response.": "Of u gebruik maakt van webzoekopdrachten om informatie te vinden voor de AI in zijn antwoord."
+  "Web Search": "Web Search",
+  "Web Search Options": "Web Search Options",
+  "Text": "Text",
+  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.",
+  "Whether to use web search to find information for the AI to use in its response.": "Whether to use web search to find information for the AI to use in its response."
 }

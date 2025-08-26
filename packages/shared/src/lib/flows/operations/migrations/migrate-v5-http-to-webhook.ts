@@ -1,5 +1,7 @@
+import semver from 'semver'
 import { FlowActionType } from '../../actions/action'
 import { FlowVersion } from '../../flow-version'
+import { PropertyExecutionType } from '../../properties'
 import { flowStructureUtil } from '../../util/flow-structure-util'
 import { Migration } from '.'
 
@@ -19,10 +21,20 @@ export const migrateHttpToWebhookV5: Migration = {
             ) {
                 const httpInput = step.settings.input || {}
                 const fields: Record<string, unknown> = {}
-                
-                if (httpInput['body'] && typeof httpInput['body'] === 'object' && 'data' in httpInput['body']) {
+                const pieceVersionWithoutTildaOrPlus = step.settings.pieceVersion.replace('~', '').replace('^', '')
+                // Check the scehma for each action in the http piece
+                const isGreaterThanOrEqual050 = semver.gte(pieceVersionWithoutTildaOrPlus, '0.5.0')
+
+                if (httpInput['body'] && typeof httpInput['body'] === 'object' && 'data' in httpInput['body'] && isGreaterThanOrEqual050) {
                     fields['body'] = (httpInput['body'] as Record<string, unknown>)['data']
                 }
+
+                if (httpInput['body'] && typeof httpInput['body'] === 'object' && !isGreaterThanOrEqual050) {
+                    fields['body'] = (httpInput['body'] as Record<string, unknown>)
+                }
+           
+
+
                 if (httpInput['status'] !== undefined) {
                     fields['status'] = httpInput['status']
                 }
@@ -44,8 +56,20 @@ export const migrateHttpToWebhookV5: Migration = {
                         pieceVersion: '0.1.20',
                         actionName: WEBHOOK_RETURN_RESPONSE_ACTION,
                         input: webhookInput,
-                        inputUiInfo: {
-                            customizedInputs: {},
+                        propertySettings: {
+                            ...step.settings.propertySettings,
+                            'respond': {
+                                type: PropertyExecutionType.MANUAL,
+                                schema: undefined,
+                            },
+                            'responseType': {
+                                type: PropertyExecutionType.MANUAL,
+                                schema: undefined,
+                            },
+                            'fields': {
+                                type: PropertyExecutionType.MANUAL,
+                                schema: undefined,
+                            },
                         },
                     },
                 }

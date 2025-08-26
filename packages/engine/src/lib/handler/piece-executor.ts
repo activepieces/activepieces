@@ -1,6 +1,6 @@
 import { URL } from 'url'
-import { ActionContext, InputPropertyMap, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, PropertyExecutionType, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { PausedFlowTimeoutError } from '../helper/execution-errors'
@@ -53,12 +53,12 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             executionState,
         })
 
-        const autoPropertiesKeys = Object.entries(action.settings.inputUiInfo?.customizedInputs ?? {})
-            .filter(([_, value]) => value !== 'Manually')
+        const autoPropertiesKeys = Object.entries(action.settings.propertySettings ?? {})
+            .filter(([_, value]) => value.type === PropertyExecutionType.AUTO)
             .map(([key]) => key)
         
-        const promptPropertiesKeys = Object.entries(action.settings.inputUiInfo?.customizedInputs ?? {})
-            .filter(([_, value]) => value !== 'Auto' && value !== 'Manually')
+        const promptPropertiesKeys = Object.entries(action.settings.propertySettings ?? {})
+            .filter(([_, value]) => value.type === PropertyExecutionType.DYNAMIC)
             .map(([key]) => key)
 
         const autoPropertiesValues = Object.fromEntries(
@@ -89,7 +89,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators({
             ...aiProccessedInput,
             ...(resolvedInput['auth'] ? { auth: resolvedInput['auth'] } : {}),
-        }, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.inputUiInfo?.schema as Record<string, InputPropertyMap> | undefined)
+        }, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.propertySettings)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors, null, 2))
         }

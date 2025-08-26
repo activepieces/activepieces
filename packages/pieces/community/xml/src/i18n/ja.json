@@ -1,10 +1,10 @@
 {
   "XML": "XML",
-  "Extensible Markup Language for storing and transporting data": "データの保存と転送のための拡張可能なマークアップ言語",
-  "Convert JSON to XML": "JSONをXMLに変換する",
+  "Extensible Markup Language for storing and transporting data": "Extensible Markup Language for storing and transporting data",
+  "Convert JSON to XML": "Convert JSON to XML",
   "JSON": "JSON",
-  "Attribute field": "属性フィールド",
-  "Header": "ヘッダー",
-  "Field to add your tag's attributes": "タグの属性を追加するフィールド",
-  "Add XML header": "XML ヘッダーを追加"
+  "Attribute field": "Attribute field",
+  "Header": "Header",
+  "Field to add your tag's attributes": "Field to add your tag's attributes",
+  "Add XML header": "Add XML header"
 }

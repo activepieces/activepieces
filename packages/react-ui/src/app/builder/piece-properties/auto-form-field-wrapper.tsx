@@ -12,7 +12,11 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
-import { FlowAction, FlowTrigger } from '@activepieces/shared';
+import {
+  FlowAction,
+  FlowTrigger,
+  PropertyExecutionType,
+} from '@activepieces/shared';
 
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
 import { TextInputWithMentions } from './text-input-with-mentions';
@@ -51,19 +55,19 @@ const AutoFormFieldWrapper = ({
   field,
 }: AutoFormFieldWrapperProps) => {
   const form = useFormContext<FlowAction | FlowTrigger>();
-  const inputMode = form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyName] || 'Manually';
-  const isManuallyMode = inputMode === 'Manually';
-  const isDynamicMode = inputMode === 'Dynamic';
-  const isAutoMode = inputMode === 'Auto';
+  const inputMode = form.getValues().settings?.propertySettings?.[propertyName]?.type;
+  const isManuallyMode = inputMode === PropertyExecutionType.MANUAL;
+  const isDynamicMode = inputMode === PropertyExecutionType.DYNAMIC;
+  const isAutoMode = inputMode === PropertyExecutionType.AUTO;
 
-  function handleInputModeChange(mode: 'Manually' | 'Dynamic' | 'Auto') {
-    const newCustomizedInputs = {
-      ...form.getValues().settings?.inputUiInfo?.customizedInputs,
-      [propertyName]: mode,
+  function handleDynamicValueToggleChange(mode: PropertyExecutionType) {
+    const propertySettingsForSingleProperty = {
+      ...form.getValues().settings?.propertySettings?.[propertyName],
+      type: mode,
     };
     form.setValue(
-      `settings.inputUiInfo.customizedInputs`,
-      newCustomizedInputs,
+      `settings.propertySettings.${propertyName}`,
+      propertySettingsForSingleProperty,
       {
         shouldValidate: true,
       },
@@ -125,7 +129,7 @@ const AutoFormFieldWrapper = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuLabel>{t('Input Mode')}</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => handleInputModeChange('Manually')}>
+              <DropdownMenuItem onClick={() => handleDynamicValueToggleChange(PropertyExecutionType.MANUAL)}>
                 <Settings className="w-4 h-4 mr-2" />
                 <div>
                   <div className="font-medium">{t('Manually')}</div>
@@ -133,7 +137,7 @@ const AutoFormFieldWrapper = ({
                 </div>
               </DropdownMenuItem>
               {allowDynamicValues && (
-                <DropdownMenuItem onClick={() => handleInputModeChange('Dynamic')}>
+                <DropdownMenuItem onClick={() => handleDynamicValueToggleChange(PropertyExecutionType.DYNAMIC)}>
                   <SquareFunction className="w-4 h-4 mr-2" />
                   <div>
                     <div className="font-medium">{t('Dynamic')}</div>
@@ -141,7 +145,7 @@ const AutoFormFieldWrapper = ({
                   </div>
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={() => handleInputModeChange('Auto')}>
+              <DropdownMenuItem onClick={() => handleDynamicValueToggleChange(PropertyExecutionType.AUTO)}>
                 <Sparkles className="w-4 h-4 mr-2" />
                 <div>
                   <div className="font-medium">{t('Auto')}</div>
@@ -151,6 +155,35 @@ const AutoFormFieldWrapper = ({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        {allowDynamicValues && (
+          <div className="flex gap-2 items-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Toggle
+                  pressed={isDynamicMode}
+                  onPressedChange={(e) =>
+                    handleDynamicValueToggleChange(
+                      e
+                        ? PropertyExecutionType.DYNAMIC
+                        : PropertyExecutionType.MANUAL,
+                    )
+                  }
+                  disabled={disabled}
+                >
+                  <SquareFunction
+                    className={cn('size-5', {
+                      'text-foreground': isDynamicMode,
+                      'text-muted-foreground': !isDynamicMode,
+                    })}
+                  />
+                </Toggle>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-background">
+                {t('Dynamic value')}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        )}
       </FormLabel>
 
       {isDynamicMode && !isArrayProperty && (
