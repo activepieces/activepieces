@@ -10,7 +10,7 @@ export const oneTimeOrderPaid = createTrigger({
   auth: clickfunnelsAuth,
   name: 'OneTimeOrderPaid',
   displayName: MODULE_NAME,
-  description: 'Fires when a customer pays a one-time order.',
+  description: 'Triggers when a customer pays a one-time order.',
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

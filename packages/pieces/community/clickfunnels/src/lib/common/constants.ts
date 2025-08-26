@@ -19,13 +19,13 @@ export type CLICKFUNNELS_APIKEY_AUTH = {
 };
 
 export const clickfunnelsAuth = PieceAuth.CustomAuth({
-  description: 'Enter your ClickFunnels subdomain and API key',
+  description: 'Enter your ClickFunnels subdomain and API key.',
   required: true,
   props: {
     subdomain: Property.ShortText({
       displayName: 'Subdomain',
       description:
-        'Your ClickFunnels subdomain (e.g., if your URL is https://mycompany.myclickfunnels.com, enter "mycompany")',
+        'Your ClickFunnels subdomain (e.g., if your URL is https://mycompany.myclickfunnels.com, enter "mycompany").',
       required: true,
     }),
     apiKey: PieceAuth.SecretText({

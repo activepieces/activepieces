@@ -234,8 +234,8 @@ export const pipelinesDropdown = (refreshers: string[]) =>
 
 export const pipelineStagesDropdown = (refreshers: string[]) =>
   Property.Dropdown({
-    displayName: 'Pipeline',
-    description: 'Select a pipeline',
+    displayName: 'Pipeline Stage',
+    description: 'Select a pipeline stage.',
     required: true,
     refreshers,
     options: async ({ auth, pipelineId }: any) => {

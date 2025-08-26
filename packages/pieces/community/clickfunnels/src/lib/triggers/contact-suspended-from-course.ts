@@ -10,7 +10,7 @@ export const contactSuspendedFromCourse = createTrigger({
   auth: clickfunnelsAuth,
   name: 'contactSuspendedFromCourse',
   displayName: `${MODULE_NAME} From Course`,
-  description: 'Fires when a contact is suspended from a course.',
+  description: 'Triggers when a contact is suspended from a course.',
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

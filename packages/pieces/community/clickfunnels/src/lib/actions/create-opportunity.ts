@@ -15,7 +15,7 @@ export const createOpportunity = createAction({
   name: 'createOpportunity',
   displayName: 'Create Opportunity',
   description:
-    'Create a new opportunity for a contact (pipeline, stage, name, value, close date).',
+    'Create a new opportunity for a contact.',
   props: {
     name: Property.ShortText({
       displayName: 'Opportunity Name',

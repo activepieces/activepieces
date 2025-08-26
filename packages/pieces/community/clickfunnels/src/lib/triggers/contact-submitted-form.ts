@@ -10,7 +10,7 @@ export const contactSubmittedForm = createTrigger({
   auth: clickfunnelsAuth,
   name: 'contactSubmittedForm',
   displayName: MODULE_NAME,
-  description: 'Fires each time a contact submits a form (opt-in or order).',
+  description: 'Triggers each time a contact submits a form (opt-in or order).',
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

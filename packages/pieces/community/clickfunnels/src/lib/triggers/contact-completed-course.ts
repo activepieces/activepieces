@@ -10,7 +10,7 @@ export const contactCompletedCourse = createTrigger({
   auth: clickfunnelsAuth,
   name: 'contactCompletedCourse',
   displayName: MODULE_NAME,
-  description: 'Fires when a contact completes a course.',
+  description: 'Triggers when a contact completes a course.',
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

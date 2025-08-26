@@ -10,7 +10,7 @@ export const contactIdentified = createTrigger({
   auth: clickfunnelsAuth,
   name: 'contactIdentified',
   displayName: MODULE_NAME,
-  description: 'Fires when a new contact is identified by email/phone.',
+  description: 'Triggers when a new contact is identified by email/phone.',
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

@@ -10,7 +10,7 @@ export const subscriptionInvoicePaid = createTrigger({
   auth: clickfunnelsAuth,
   name: 'subscriptionInvoicePaid',
   displayName: MODULE_NAME,
-  description: 'Fires when a subscription invoice is paid.',
+  description: 'Triggers when a subscription invoice is paid.',
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

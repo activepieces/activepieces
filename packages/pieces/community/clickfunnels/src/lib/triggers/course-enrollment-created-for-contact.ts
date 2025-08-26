@@ -10,7 +10,7 @@ export const courseEnrollmentCreatedForContact = createTrigger({
   auth: clickfunnelsAuth,
   name: 'courseEnrollmentCreatedForContact',
   displayName: `${MODULE_NAME} for contact`,
-  description: 'Fires when a course enrollment is created for a contact.',
+  description: 'Triggers when a course enrollment is created for a contact.',
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),
