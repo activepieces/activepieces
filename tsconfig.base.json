@@ -17,6 +17,9 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@activepieces/common-ai": [
+        "packages/pieces/community/common-ai/src/index.ts"
+      ],
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
@@ -474,6 +477,9 @@
       "@activepieces/piece-hubspot": [
         "packages/pieces/community/hubspot/src/index.ts"
       ],
+      "@activepieces/piece-hugging-face": [
+        "packages/pieces/community/hugging-face/src/index.ts"
+      ],
       "@activepieces/piece-hunter": [
         "packages/pieces/community/hunter/src/index.ts"
       ],
@@ -673,6 +679,9 @@
       ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
+      ],
+      "@activepieces/piece-open-phone": [
+        "packages/pieces/community/open-phone/src/index.ts"
       ],
       "@activepieces/piece-open-router": [
         "packages/pieces/community/open-router/src/index.ts"

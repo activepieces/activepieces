@@ -1,0 +1,104 @@
+name: Reusable - Finalize Translations PR
+
+on:
+  workflow_call:
+    inputs:
+      branch_name:
+        description: "Branch name to open PR from"
+        required: true
+        type: string
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure git
+        run: |
+          git config --local user.email "abdulyki@activepieces.com"
+          git config --local user.name "AbdulTheActivePiecer"
+
+      - name: Prepare branch
+        env:
+          BRANCH_NAME: ${{ inputs.branch_name }}
+        run: |
+          git fetch origin
+          if git rev-parse --verify origin/$BRANCH_NAME >/dev/null 2>&1; then
+            git checkout -b $BRANCH_NAME origin/$BRANCH_NAME || git checkout $BRANCH_NAME
+          else
+            git checkout -b $BRANCH_NAME origin/main
+          fi
+
+      - name: Generate translation files for UI
+        run: npm run i18n:extract
+
+      - name: Commit UI changes (if any)
+        env:
+          BRANCH_NAME: ${{ inputs.branch_name }}
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "feat: update UI translations [skip-changelog]"
+            git push origin $BRANCH_NAME
+          else
+            echo "No changes for UI translations in react app"
+          fi
+
+      - name: Check branch ahead of main
+        id: ahead
+        env:
+          BRANCH_NAME: ${{ inputs.branch_name }}
+        run: |
+          git fetch origin
+          git checkout $BRANCH_NAME
+          LEFT_RIGHT=$(git rev-list --left-right --count origin/main...HEAD)
+          AHEAD=$(echo $LEFT_RIGHT | awk '{print $2}')
+          if [ "$AHEAD" -gt 0 ]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.ahead.outputs.changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.CROWDIN_PRS }}
+          script: |
+            const branchName = `${{ inputs.branch_name }}`;
+            const { data: pullRequest } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'feat: New translation files',
+              body: 'Automatically generated translation files for all pieces',
+              head: branchName,
+              base: 'main',
+              draft: false
+            });
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pullRequest.number,
+              labels: ['skip-changelog', 'translations', 'auto-merge']
+            });
+            await github.rest.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullRequest.number,
+              merge_method: 'squash'
+            });
+
+

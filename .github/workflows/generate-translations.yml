@@ -6,82 +6,75 @@ on:
   workflow_dispatch:
 
 jobs:
-  generate-translations:
+  shard-0:
+    uses: ./.github/workflows/reusable-generate-translations-shard.yml
+    with:
+      shard_index: 0
+      shard_total: 6
+      branch_name: auto/translation-files-${{ github.run_id }}
+    secrets: inherit
+
+  shard-1:
+    needs: shard-0
+    uses: ./.github/workflows/reusable-generate-translations-shard.yml
+    with:
+      shard_index: 1
+      shard_total: 6
+      branch_name: auto/translation-files-${{ github.run_id }}
+    secrets: inherit
+
+  shard-2:
+    needs: shard-1
+    uses: ./.github/workflows/reusable-generate-translations-shard.yml
+    with:
+      shard_index: 2
+      shard_total: 6
+      branch_name: auto/translation-files-${{ github.run_id }}
+    secrets: inherit
+
+  shard-3:
+    needs: shard-2
+    uses: ./.github/workflows/reusable-generate-translations-shard.yml
+    with:
+      shard_index: 3
+      shard_total: 6
+      branch_name: auto/translation-files-${{ github.run_id }}
+    secrets: inherit
+
+  shard-4:
+    needs: shard-3
+    uses: ./.github/workflows/reusable-generate-translations-shard.yml
+    with:
+      shard_index: 4
+      shard_total: 6
+      branch_name: auto/translation-files-${{ github.run_id }}
+    secrets: inherit
+
+  shard-5:
+    needs: shard-4
+    uses: ./.github/workflows/reusable-generate-translations-shard.yml
+    with:
+      shard_index: 5
+      shard_total: 6
+      branch_name: auto/translation-files-${{ github.run_id }}
+    secrets: inherit
+
+  finalize:
+    needs: shard-5
+    uses: ./.github/workflows/reusable-finalize-translations-pr.yml
+    with:
+      branch_name: auto/translation-files-${{ github.run_id }}
+    secrets: inherit
+
+  notify-failure:
+    # Only run when any of the shards failed; still evaluate even if they failed
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    needs: [shard-0, shard-1, shard-2, shard-3, shard-4, shard-5]
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Generate translation files for all pieces
-        run: npm run cli pieces generate-translation-file-for-all-pieces
-      
-      - name: Generate translation files for UI
-        run: npm run i18n:extract
-      
-      - name: Check for changes
-        id: check-changes
+      - name: Notify Discord on shard failure
         run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "changes=false" >> $GITHUB_OUTPUT
-          fi
-      
-      - name: Create branch and commit changes
-        id: create-branch
-        if: steps.check-changes.outputs.changes == 'true'
-        run: |
-          # Configure git
-          git config --local user.email "abdulyki@activepieces.com"
-          git config --local user.name "AbdulTheActivePiecer"
-          BRANCH_NAME="auto/translation-files-$(date +%Y%m%d-%H%M%S)"
-          git checkout -b $BRANCH_NAME
-          git add .
-          git commit -m "feat: generate translation files for all pieces [skip-changelog]"
-          git push origin $BRANCH_NAME
-          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
-      
-      - name: Create Pull Request
-        if: steps.check-changes.outputs.changes == 'true'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.CROWDIN_PRS }}
-          script: |
-            const branchName = '${{ steps.create-branch.outputs.branch_name }}';
-            const { data: pullRequest } = await github.rest.pulls.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'New translation files',
-              body: 'Automatically generated translation files for all pieces',
-              head: branchName,
-              base: 'main',
-              draft: false
-            });
-            
-            // Add labels to the PR
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pullRequest.number,
-              labels: ['skip-changelog', 'translations', 'auto-merge']
-            });
-            
-            // Auto merge the PR
-            await github.rest.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pullRequest.number,
-              merge_method: 'squash'
-            });
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"🚨 **Generate Translations Workflow Failed** 🚨\\n\\n**Repository:** ${{ github.repository }}\\n**Branch:** ${{ github.ref_name }}\\n**Commit:** ${{ github.sha }}\\n**Action URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n\\nOne or more shards failed. Please check the logs for details.\"}" \
+            ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
