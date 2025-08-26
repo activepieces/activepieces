@@ -1,8 +1,4 @@
-import {
-  createAction,
-  Property,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
 import { mollieAuth } from '../../index';
@@ -59,7 +55,8 @@ export const mollieCreateCustomer = createAction({
 
     metadata: Property.ShortText({
       displayName: 'Metadata',
-      description: 'Additional data to save alongside the customer (JSON string)',
+      description:
+        'Additional data to save alongside the customer (JSON string)',
       required: false,
     }),
 
@@ -72,7 +69,7 @@ export const mollieCreateCustomer = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const { access_token } = auth as OAuth2PropertyValue;
+    const apiKey = auth as string;
 
     const customerData: Record<string, unknown> = {};
 
@@ -94,7 +91,7 @@ export const mollieCreateCustomer = createAction({
     }
 
     const response = await mollieCommon.makeRequest(
-      access_token,
+      apiKey,
       HttpMethod.POST,
       '/customers',
       customerData,

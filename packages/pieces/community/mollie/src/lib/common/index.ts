@@ -9,7 +9,7 @@ export const mollieCommon = {
   baseUrl: 'https://api.mollie.com/v2',
 
   makeRequest: async <T = unknown>(
-    accessToken: string,
+    apiKey: string,
     method: HttpMethod,
     url: string,
     body?: unknown,
@@ -25,7 +25,7 @@ export const mollieCommon = {
       url: `${mollieCommon.baseUrl}${url}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: accessToken,
+        token: apiKey,
       },
       body,
       queryParams,

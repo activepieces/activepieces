@@ -46,7 +46,7 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const { access_token } = auth;
+    const apiKey = auth as string;
     const isTest = lastFetchEpochMS === 0;
 
     let from: string | undefined;
@@ -71,7 +71,7 @@ const polling: Polling<
         : `/customers?sort=desc&limit=${limit}`;
 
       const response = await mollieCommon.makeRequest<MollieCustomerResponse>(
-        access_token,
+        apiKey,
         HttpMethod.GET,
         url
       );

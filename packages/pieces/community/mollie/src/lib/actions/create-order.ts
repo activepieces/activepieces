@@ -1,8 +1,4 @@
-import {
-  createAction,
-  Property,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mollieCommon, MollieOrder } from '../common';
 import { mollieAuth } from '../../index';
@@ -370,7 +366,7 @@ export const mollieCreateOrder = createAction({
       description: 'The date the order should expire in YYYY-MM-DD format',
       required: false,
     }),
-    consumerDateOfBirth: Property.ShortText({
+    consumerDateOfBirth: Property.DateTime({
       displayName: 'Consumer Date of Birth',
       description: 'The date of birth of the consumer in YYYY-MM-DD format',
       required: false,
@@ -384,7 +380,7 @@ export const mollieCreateOrder = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const { access_token } = auth as OAuth2PropertyValue;
+    const apiKey = auth as string;
 
     const billingAddress = {
       givenName: propsValue.billingGivenName,
@@ -510,7 +506,7 @@ export const mollieCreateOrder = createAction({
     }
 
     const response = await mollieCommon.makeRequest<MollieOrder>(
-      access_token,
+      apiKey,
       HttpMethod.POST,
       '/orders',
       orderData,

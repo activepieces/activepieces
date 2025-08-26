@@ -1,8 +1,4 @@
-import {
-  createAction,
-  Property,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
 import { mollieAuth } from '../../index';
@@ -28,9 +24,9 @@ export const mollieCreatePaymentRefund = createAction({
         }
 
         try {
-          const { access_token } = auth as OAuth2PropertyValue;
+          const apiKey = auth as string;
           const payments = await mollieCommon.makeRequest(
-            access_token,
+            apiKey,
             HttpMethod.GET,
             '/payments?limit=250'
           );
@@ -163,7 +159,7 @@ export const mollieCreatePaymentRefund = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const { access_token } = auth as OAuth2PropertyValue;
+    const apiKey = auth as string;
 
     const refundData: Record<string, unknown> = {
       amount: {
@@ -224,7 +220,7 @@ export const mollieCreatePaymentRefund = createAction({
     }
 
     const response = await mollieCommon.makeRequest(
-      access_token,
+      apiKey,
       HttpMethod.POST,
       `/payments/${propsValue.paymentId}/refunds`,
       refundData,

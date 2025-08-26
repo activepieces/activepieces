@@ -1,8 +1,4 @@
-import {
-  createAction,
-  Property,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
 import { mollieAuth } from '../../index';
@@ -392,7 +388,7 @@ export const mollieCreatePaymentLink = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const { access_token } = auth as OAuth2PropertyValue;
+    const apiKey = auth as string;
 
     const paymentLinkData: Record<string, unknown> = {
       description: propsValue.description,
@@ -561,11 +557,10 @@ export const mollieCreatePaymentLink = createAction({
     }
 
     const response = await mollieCommon.makeRequest(
-      access_token,
+      apiKey,
       HttpMethod.POST,
       '/payment-links',
-      paymentLinkData,
-      propsValue.testmode
+      paymentLinkData
     );
 
     return response;

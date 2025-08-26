@@ -50,7 +50,7 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS, propsValue }) => {
-    const { access_token } = auth;
+    const apiKey = auth as string;
     const { paymentId } = propsValue;
     const isTest = lastFetchEpochMS === 0;
 
@@ -83,7 +83,7 @@ const polling: Polling<
         : `/payments/${paymentId}/chargebacks?limit=${limit}`;
 
       const response = await mollieCommon.makeRequest<MollieChargebackResponse>(
-        access_token,
+        apiKey,
         HttpMethod.GET,
         url
       );
@@ -151,9 +151,9 @@ export const mollieNewChargeback = createTrigger({
         }
 
         try {
-          const { access_token } = auth as { access_token: string };
+          const apiKey = auth as string;
           const response = await mollieCommon.makeRequest(
-            access_token,
+            apiKey,
             HttpMethod.GET,
             '/payments?limit=250&sort=desc'
           );

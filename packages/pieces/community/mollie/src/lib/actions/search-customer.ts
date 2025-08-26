@@ -1,8 +1,4 @@
-import {
-  createAction,
-  Property,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
 import { mollieAuth } from '../../index';
@@ -47,7 +43,7 @@ export const mollieSearchCustomer = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const { access_token } = auth as OAuth2PropertyValue;
+    const apiKey = auth as string;
 
     const queryParams: Record<string, string> = {};
 
@@ -71,7 +67,7 @@ export const mollieSearchCustomer = createAction({
     const url = queryString ? `/customers?${queryString}` : '/customers';
 
     const response = await mollieCommon.makeRequest(
-      access_token,
+      apiKey,
       HttpMethod.GET,
       url
     );

@@ -16,24 +16,10 @@ import { mollieNewRefund } from './lib/triggers/new-refund';
 import { mollieNewChargeback } from './lib/triggers/new-chargeback';
 import { PieceCategory } from '@activepieces/shared';
 
-export const mollieAuth = PieceAuth.OAuth2({
-  description: 'Connect your Mollie account',
-  authUrl: 'https://my.mollie.com/oauth2/authorize',
-  tokenUrl: 'https://api.mollie.com/oauth2/tokens',
+export const mollieAuth = PieceAuth.SecretText({
+  displayName: 'API Key',
+  description: 'Enter your Mollie API key (starts with live_ or test_)',
   required: true,
-  scope: [
-    'orders.write',
-    'payment-links.write',
-    'payments.write',
-    'customers.write',
-    'refunds.write',
-    'payments.read',
-    'orders.read',
-    'customers.read',
-    'settlements.read',
-    'webhooks.write',
-    'refunds.read',
-  ],
 });
 
 export const mollie = createPiece({
