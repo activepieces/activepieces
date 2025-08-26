@@ -641,6 +641,9 @@
       "@activepieces/piece-mixpanel": [
         "packages/pieces/community/mixpanel/src/index.ts"
       ],
+      "@activepieces/piece-mollie": [
+        "packages/pieces/community/mollie/src/index.ts"
+      ],
       "@activepieces/piece-monday": [
         "packages/pieces/community/monday/src/index.ts"
       ],
