@@ -1,8 +1,8 @@
 {
   "Photoroom": "Photoroom",
-  "API key": "API-Schlüssel",
-  "Remove background": "Hintergrund entfernen",
-  "Remove the background of the image given as input": "Den Hintergrund des Bildes als Eingabe entfernen",
-  "Image file": "Bilddatei",
-  "Generated filename": "Generierter Dateiname"
+  "API key": "API key",
+  "Remove background": "Remove background",
+  "Remove the background of the image given as input": "Remove the background of the image given as input",
+  "Image file": "Image file",
+  "Generated filename": "Generated filename"
 }
