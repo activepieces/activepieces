@@ -49,7 +49,7 @@ const polling: Polling<
     const { access_token } = auth;
     const isTest = lastFetchEpochMS === 0;
 
-    let page = 1;
+    let from: string | undefined;
     let hasMorePages = true;
     let stopFetching = false;
     const settlements: Array<{
@@ -70,7 +70,9 @@ const polling: Polling<
 
     do {
       const limit = isTest ? 10 : 250;
-      const url = `/settlements?limit=${limit}&page=${page}`;
+      const url = from
+        ? `/settlements?limit=${limit}&from=${from}`
+        : `/settlements?limit=${limit}`;
 
       const response = await mollieCommon.makeRequest<MollieSettlementResponse>(
         access_token,
@@ -101,8 +103,13 @@ const polling: Polling<
 
       if (stopFetching || isTest) break;
 
-      page++;
-      hasMorePages = response._links?.next ? true : false;
+      if (response._links?.next) {
+        const nextUrl = new URL(response._links.next.href);
+        from = nextUrl.searchParams.get('from') || undefined;
+        hasMorePages = true;
+      } else {
+        hasMorePages = false;
+      }
     } while (hasMorePages);
 
     return settlements.map((settlement) => ({
