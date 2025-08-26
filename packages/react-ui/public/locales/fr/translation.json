@@ -1151,6 +1151,7 @@
   "Step Stopped": "Étape arrêtée",
   "Step Succeeded": "Étape réussie",
   "Step Failed": "Étape échouée",
+  "Failed to change flow status, please contact support.": "",
   "Please publish flow first": "Veuillez d'abord publier le flux",
   "Flow is on": "Flux activé",
   "Flow is off": "Flux désactivé",

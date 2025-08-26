@@ -18,11 +18,14 @@
         "../../packages/shared/src"
       ],
       "@activepieces/pieces-framework": [
-        "../../packages/pieces/community/framework/src" 
+        "../../packages/pieces/community/framework/src"
       ],
       "@activepieces/pieces-common": [
-        "../../packages/pieces/community/common/src" 
+        "../../packages/pieces/community/common/src"
       ],
+      "@activepieces/common-ai": [
+        "../../packages/pieces/community/common-ai/src"
+      ]
     }
   },
   "exclude": [
