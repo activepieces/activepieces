@@ -1,8 +1,7 @@
-import { readdir, rmdir } from 'node:fs/promises'
-import path from 'node:path'
-import { inspect } from 'node:util'
-import { AgentJobData, exceptionHandler, GLOBAL_CACHE_ALL_VERSIONS_PATH, LATEST_CACHE_VERSION, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
-import { ConsumeJobRequest, ConsumeJobResponse, WebsocketClientEvent, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import { readdir, rm } from 'fs/promises'
+import path from 'path'
+import { AgentJobData, exceptionHandler, GLOBAL_CACHE_ALL_VERSIONS_PATH, JobData, JobStatus, LATEST_CACHE_VERSION, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
+import { ConsumeJobRequest, ConsumeJobResponse, isNil, WebsocketClientEvent, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { io, Socket } from 'socket.io-client'
 import { agentJobExecutor } from './executors/agent-job-executor'
@@ -13,6 +12,7 @@ import { webhookExecutor } from './executors/webhook-job-executor'
 import { engineRunner } from './runner'
 import { engineRunnerSocket } from './runner/engine-runner-socket'
 import { workerMachine } from './utils/machine'
+import { inspect } from 'util'
 
 let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
@@ -169,7 +169,7 @@ async function deleteStaleCache(log: FastifyBaseLogger): Promise<void> {
 
         for (const entry of entries) {
             if (entry.isDirectory() && entry.name !== LATEST_CACHE_VERSION) {
-                await rmdir(path.join(cacheDir, entry.name), { recursive: true })
+                await rm(path.join(cacheDir, entry.name), { recursive: true })
             }
         }
     }

@@ -1,3 +1,4 @@
+import { AIProvider } from '@activepieces/common-ai'
 import {
     ApiKey,
     ApplicationEvent,
@@ -17,7 +18,6 @@ import {
 } from '@activepieces/ee-shared'
 import {
     AiOverageState,
-    AIProvider,
     apId,
     assertNotNullOrUndefined,
     File,
