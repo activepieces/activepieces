@@ -3,6 +3,7 @@ import { Static, Type } from '@sinclair/typebox'
 export enum PropertyExecutionType {
     MANUAL = 'MANUAL',
     DYNAMIC = 'DYNAMIC',
+    AUTO = 'AUTO',
 }
 
 export const PropertySettings = Type.Object({
