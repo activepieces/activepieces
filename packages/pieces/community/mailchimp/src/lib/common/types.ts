@@ -65,3 +65,43 @@ export type MailChimpSubscribeWebhookRequest = MailChimpWebhookRequest<
   MailChimpWebhookType.SUBSCRIBE,
   MailChimpSubscribeWebhookData
 >;
+
+export type MailChimpUnsubscribeWebhookData = {
+  id: string;
+  list_id: string;
+  email: string;
+  email_type: MailChimpEmailType;
+  reason: string;
+  merges: Record<string, string>;
+};
+
+export type MailChimpUnsubscribeWebhookRequest = MailChimpWebhookRequest<
+  MailChimpWebhookType.UNSUBSCRIBE,
+  MailChimpUnsubscribeWebhookData
+>;
+
+export type MailChimpCampaignWebhookData = {
+  id: string;
+  subject: string;
+  list_id: string;
+  status: string;
+  send_time: string;
+};
+
+export type MailChimpCampaignWebhookRequest = MailChimpWebhookRequest<
+  MailChimpWebhookType.CAMPAIGN,
+  MailChimpCampaignWebhookData
+>;
+
+export type MailChimpProfileWebhookData = {
+  id: string;
+  list_id: string;
+  email: string;
+  email_type: MailChimpEmailType;
+  merges: Record<string, string>;
+};
+
+export type MailChimpProfileWebhookRequest = MailChimpWebhookRequest<
+  MailChimpWebhookType.PROFILE,
+  MailChimpProfileWebhookData
+>;

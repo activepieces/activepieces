@@ -110,6 +110,104 @@ export const mailchimpCommon = {
   getMD5EmailHash: (email: string) => {
     return crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
   },
+  mailChimpCampaignIdDropdown: Property.Dropdown<string>({
+    displayName: 'Campaign',
+    refreshers: [],
+    description: 'Campaign to use',
+    required: true,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a connection',
+        };
+      }
+
+      const authProp = auth as OAuth2PropertyValue;
+      const access_token = authProp.access_token;
+      const mailChimpServerPrefix =
+        await mailchimpCommon.getMailChimpServerPrefix(access_token!);
+      
+      const campaignResponse = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `https://${mailChimpServerPrefix}.api.mailchimp.com/3.0/campaigns`,
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: access_token!,
+        },
+      });
+
+      const options = campaignResponse.body.campaigns.map((campaign: any) => ({
+        label: campaign.settings.subject_line || campaign.id,
+        value: campaign.id,
+      }));
+
+      return {
+        disabled: false,
+        options,
+      };
+    },
+  }),
+  mailChimpStoreIdDropdown: Property.Dropdown<string>({
+    displayName: 'Store',
+    refreshers: [],
+    description: 'E-commerce store to use',
+    required: true,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a connection',
+        };
+      }
+
+      const authProp = auth as OAuth2PropertyValue;
+      const access_token = authProp.access_token;
+      const mailChimpServerPrefix =
+        await mailchimpCommon.getMailChimpServerPrefix(access_token!);
+      
+      const storeResponse = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `https://${mailChimpServerPrefix}.api.mailchimp.com/3.0/ecommerce/stores`,
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: access_token!,
+        },
+      });
+
+      const options = storeResponse.body.stores.map((store: any) => ({
+        label: store.name,
+        value: store.id,
+      }));
+
+      return {
+        disabled: false,
+        options,
+      };
+    },
+  }),
+  makeApiRequest: async (
+    authProp: OAuth2PropertyValue,
+    endpoint: string,
+    method: HttpMethod = HttpMethod.GET,
+    body?: any
+  ) => {
+    const access_token = authProp.access_token;
+    const mailChimpServerPrefix =
+      await mailchimpCommon.getMailChimpServerPrefix(access_token!);
+    
+    return await httpClient.sendRequest({
+      method,
+      url: `https://${mailChimpServerPrefix}.api.mailchimp.com/3.0${endpoint}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: access_token!,
+      },
+      body,
+    });
+  },
 };
 
 type TriggerRequestParams = {
