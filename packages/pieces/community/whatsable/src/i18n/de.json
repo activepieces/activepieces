@@ -1,10 +1,10 @@
 {
-  "Whatsable": "Unglaublich",
-  "Manage your WhatsApp business account": "Verwalten Sie Ihr WhatsApp Business-Konto",
-  "The auth token for Whatsable": "Das Auth-Token für Was ist möglich",
-  "Send Message": "Nachricht senden",
-  "To": "An",
-  "Message": "Nachricht",
-  "The recipient of the message": "Der Empfänger der Nachricht",
-  "The message to send": "Die Nachricht zum Senden"
+  "Whatsable": "Whatsable",
+  "Manage your WhatsApp business account": "Manage your WhatsApp business account",
+  "The auth token for Whatsable": "The auth token for Whatsable",
+  "Send Message": "Send Message",
+  "To": "To",
+  "Message": "Message",
+  "The recipient of the message": "The recipient of the message",
+  "The message to send": "The message to send"
 }
