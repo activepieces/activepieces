@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Workflow Chat UI</title>
+  <style>
+    body {
+      display: flex;
+      height: 100vh;
+      margin: 0;
+      font-family: sans-serif;
+    }
+
+    #flow-pane {
+      width: 40%;
+      padding: 16px;
+      border-right: 1px solid #ccc;
+      overflow-y: auto;
+    }
+
+    #chat-pane {
+      width: 60%;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+    }
+
+    #chat-history {
+      flex-grow: 1;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 8px;
+      margin-bottom: 8px;
+      background: #f9f9f9;
+    }
+
+    .message {
+      margin-bottom: 6px;
+    }
+
+    .user {
+      font-weight: bold;
+      color: #007bff;
+    }
+
+    .bot {
+      color: #333;
+    }
+
+    form {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"] {
+      flex-grow: 1;
+      padding: 8px;
+    }
+
+    button {
+      padding: 8px 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="flow-pane">
+    <h3>Workflow View</h3>
+    <pre id="workflow-data">Loading...</pre>
+  </div>
+
+  <div id="chat-pane">
+    <h3>Workflow Chat</h3>
+    <div id="chat-history"></div>
+    <form id="chat-form">
+      <input type="text" id="user-input" placeholder="Type your message..." required />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <script>
+    const AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjEifQ.eyJpZCI6IkxMcVZQVHlNdE1zWVprNWM1WDZIZCIsInR5cGUiOiJVU0VSIiwicHJvamVjdElkIjoibkZDSW1xMU9IbFJnS1dVVTV5Zm9mIiwicGxhdGZvcm0iOnsiaWQiOiJIR2tBbDJkQjNVUVBCUXlmY1NPTWIifSwidG9rZW5WZXJzaW9uIjoiaFpLalNXaU5RVnZiazh2UHVUdXlmIiwiaWF0IjoxNzU2MTc2OTkxLCJleHAiOjE3NTY3ODE3OTEsImlzcyI6ImFjdGl2ZXBpZWNlcyJ9.LtGUJCvuxdgH62JOVuyjizPWxYZqgXOIPnx4PxGZueY';
+    const workflowUrl = 'http://localhost:4200/api/v1/flows/IdRtZA6Mc1HoVuU3Ag7D9';
+    const chatUrl = 'http://localhost:4200/api/v1/builder/flow/IdRtZA6Mc1HoVuU3Ag7D9';
+
+    const workflowDataEl = document.getElementById('workflow-data');
+    const chatHistoryEl = document.getElementById('chat-history');
+    const chatForm = document.getElementById('chat-form');
+    const userInput = document.getElementById('user-input');
+
+    // In-memory conversation history for sending to backend
+    let messages = [];
+
+    // Load workflow data (GET)
+    async function loadWorkflow() {
+      try {
+        const res = await fetch(workflowUrl, {
+          headers: {
+            'Authorization': `Bearer ${AUTH_TOKEN}`
+          }
+        });
+        const data = await res.json();
+        workflowDataEl.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        workflowDataEl.textContent = 'Error loading workflow data';
+      }
+    }
+
+    // Append message to chat
+    function appendMessage(sender, text) {
+      const msgEl = document.createElement('div');
+      msgEl.className = `message ${sender}`;
+      msgEl.textContent = `${sender === 'user' ? 'You' : 'Bot'}: ${text}`;
+      chatHistoryEl.appendChild(msgEl);
+      chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+    }
+
+    // Handle chat form submission (POST)
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const message = userInput.value;
+      userInput.value = '';
+
+      // Add to UI
+      appendMessage('user', message);
+
+      // Add to messages array
+      messages.push({ role: 'user', content: message });
+
+      try {
+        const res = await fetch(chatUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${AUTH_TOKEN}`
+          },
+          body: JSON.stringify({
+            messages: messages  // Send full conversation
+          }),
+        });
+
+        const data = await res.text();
+
+        // Decide where the assistant's reply comes from
+        const botReply = data || 'No reply';
+        appendMessage('bot', botReply);
+
+        // Add assistant reply to messages array
+        messages.push({ role: 'assistant', content: botReply });
+
+      } catch (err) {
+        console.log(err);
+        appendMessage('bot', 'Error connecting to backend.');
+      }
+
+      await loadWorkflow(); // Refresh workflow view after message
+    });
+
+    // Initial load
+    loadWorkflow();
+  </script>
+</body>
+</html>

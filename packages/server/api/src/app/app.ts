@@ -17,6 +17,7 @@ import { userOAuth2Service } from './app-connection/app-connection-service/oauth
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
 import { authenticationModule } from './authentication/authentication.module'
+import { builderModule } from './builder/builder.module'
 import { changelogModule } from './changelog/changelog.module'
 import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
@@ -233,6 +234,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(projectMemberModule)
 
     await app.register(agentRunsModule)
+    await app.register(builderModule)
 
     app.get(
         '/redirect',
