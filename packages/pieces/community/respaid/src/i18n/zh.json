@@ -13,7 +13,7 @@
   "Agency collection?": "Agency collection?",
   "Import Data (Array of Invoices)": "Import Data (Array of Invoices)",
   "Unique Identifier": "Unique Identifier",
-  "Email": "电子邮件地址",
+  "Email": "Email",
   "Invoice Number": "Invoice Number",
   "Amount": "Amount",
   "Provide an array of invoice objects with the following example structure:\n      [{\n          \"unique_identifier\": \"123\",\n          \"company_name\": \"Company XYZ\",\n          \"email\": \"john@example.com\",\n          \"invoice_number\": \"INV123\",\n          \"invoice_date\": \"01/01/2025\",\n          \"description\": \"Invoice for service\"\n          \"due_amount\": 1000,\n          \"invoicing_entity_name\": \"Creditor ABC\",\n          \"invoicing_entity_address\": \"456 Avenue, City\",\n          \"full_name\": \"John Doe\",\n          \"p": "Provide an array of invoice objects with the following example structure:\n      [{\n          \"unique_identifier\": \"123\",\n          \"company_name\": \"Company XYZ\",\n          \"email\": \"john@example.com\",\n          \"invoice_number\": \"INV123\",\n          \"invoice_date\": \"01/01/2025\",\n          \"description\": \"Invoice for service\"\n          \"due_amount\": 1000,\n          \"invoicing_entity_name\": \"Creditor ABC\",\n          \"invoicing_entity_address\": \"456 Avenue, City\",\n          \"full_name\": \"John Doe\",\n          \"phone_number\": \"1234567890\",\n          \"address\": \"123 Street, City\",\n        }]",
