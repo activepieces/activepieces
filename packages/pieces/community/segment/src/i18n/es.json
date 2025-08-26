@@ -1,8 +1,8 @@
 {
-  "Segment": "Segmento",
-  "Copy and paste your analytics write key here": "Copia y pega tu clave de escritura analítica aquí",
-  "Identify User": "Identificar usuario",
-  "User ID": "ID Usuario",
-  "Traits": "Rasgos",
-  "The traits to associate with the user": "Los rasgos a asociar con el usuario"
+  "Segment": "Segment",
+  "Copy and paste your analytics write key here": "Copy and paste your analytics write key here",
+  "Identify User": "Identify User",
+  "User ID": "User ID",
+  "Traits": "Traits",
+  "The traits to associate with the user": "The traits to associate with the user"
 }

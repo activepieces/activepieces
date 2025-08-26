@@ -1,9 +1,9 @@
 {
   "Tags": "Tags",
-  "Add custom tags to your run for filtration": "Ajouter des tags personnalisés à votre exécution pour filtration",
-  "Add Tag": "Ajouter une étiquette",
-  "Add a tag to the current execution": "Ajouter un tag à l'exécution en cours",
+  "Add custom tags to your run for filtration": "Add custom tags to your run for filtration",
+  "Add Tag": "Add Tag",
+  "Add a tag to the current execution": "Add a tag to the current execution",
   "Markdown": "Markdown",
-  "Tag Name": "Nom de l'étiquette",
+  "Tag Name": "Tag Name",
   "\nThis action add a tag to the current execution, this tag can be used to filter the execution in the **API** only at this moment.\n<br>\n<br>\n**Note:** If you are looking to use it in the user interface, please open a feature request.\n": "\nThis action add a tag to the current execution, this tag can be used to filter the execution in the **API** only at this moment.\n<br>\n<br>\n**Note:** If you are looking to use it in the user interface, please open a feature request.\n"
 }

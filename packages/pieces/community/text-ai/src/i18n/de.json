@@ -1,16 +1,16 @@
 {
-  "Text AI": "Text-KI",
-  "Ask AI": "KI fragen",
-  "Summarize Text": "Text zusammenfassen",
-  "Provider": "Anbieter",
-  "Model": "Modell",
+  "Text AI": "Text AI",
+  "Ask AI": "Ask AI",
+  "Summarize Text": "Summarize Text",
+  "Provider": "Provider",
+  "Model": "Model",
   "Prompt": "Prompt",
-  "Conversation Key": "Konversationsschlüssel",
-  "Creativity": "Kreativität",
-  "Max Tokens": "Max. Token",
-  "Web Search": "Websuche",
-  "Web Search Options": "Websuche Optionen",
+  "Conversation Key": "Conversation Key",
+  "Creativity": "Creativity",
+  "Max Tokens": "Max Tokens",
+  "Web Search": "Web Search",
+  "Web Search Options": "Web Search Options",
   "Text": "Text",
-  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Kontrolliert die Kreativität der KI-Reaktion. Ein höherer Wert macht die KI kreativer und ein niedrigerer Wert macht sie deterministischer.",
-  "Whether to use web search to find information for the AI to use in its response.": "Ob Websuche verwendet werden soll, um Informationen für die KI in ihrer Antwort zu finden."
+  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.",
+  "Whether to use web search to find information for the AI to use in its response.": "Whether to use web search to find information for the AI to use in its response."
 }
