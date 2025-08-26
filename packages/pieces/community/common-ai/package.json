@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/common-ai",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "commonjs",
   "dependencies": {
     "tslib": "^2.3.0",
