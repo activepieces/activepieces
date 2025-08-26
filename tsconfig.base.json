@@ -17,6 +17,9 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@activepieces/common-ai": [
+        "packages/pieces/community/common-ai/src/index.ts"
+      ],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/piece-activecampaign": [
         "packages/pieces/community/activecampaign/src/index.ts"
@@ -677,6 +680,9 @@
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
       ],
+      "@activepieces/piece-open-phone": [
+        "packages/pieces/community/open-phone/src/index.ts"
+      ],
       "@activepieces/piece-open-router": [
         "packages/pieces/community/open-router/src/index.ts"
       ],
@@ -835,7 +841,7 @@
       "@activepieces/piece-serp-api": [
         "packages/pieces/community/serp-api/src/index.ts"
       ],
-      "@activepieces/piece-serpstat":[
+      "@activepieces/piece-serpstat": [
         "packages/pieces/community/serpstat/src/index.ts"
       ],
       "@activepieces/piece-sessions-us": [
