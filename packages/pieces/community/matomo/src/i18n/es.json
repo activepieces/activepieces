@@ -27,10 +27,10 @@
   "Whether or not the note should be starred": "Si la nota debe o no ser protagonizada",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
   "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
-  "GET": "GET",
+  "GET": "RECOGER",
   "POST": "POST",
   "PATCH": "PATCH",
   "PUT": "PUT",
-  "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "DELETE": "BORRAR",
+  "HEAD": "LIMPIO"
 }

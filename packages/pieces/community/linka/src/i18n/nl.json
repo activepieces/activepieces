@@ -379,16 +379,16 @@
   "General": "Algemeen",
   "Event": "Gebeurtenis",
   "Subscription": "Abbonnement",
-  "Digital": "Digital",
-  "OneTime": "OneTime",
+  "Digital": "Digitaal",
+  "OneTime": "Eenmalig",
   "Days": "dagen",
-  "Weeks": "Weeks",
-  "Months": "Months",
-  "Years": "Years",
+  "Weeks": "Weken",
+  "Months": "maanden",
+  "Years": "Jaar",
   "New Lead": "Nieuwe Lead",
   "New Payment": "Nieuwe betaling",
   "New Subscription": "Nieuw abonnement",
   "Triggers when a new lead is created": "Triggert wanneer een nieuwe lead wordt gemaakt",
-  "Triggers when a new payment is created": "Triggers when a new payment is created",
-  "triggers when a new subscription is created": "triggers when a new subscription is created"
+  "Triggers when a new payment is created": "Triggert wanneer een nieuwe betaling wordt aangemaakt",
+  "triggers when a new subscription is created": "activeert wanneer een nieuw abonnement wordt aangemaakt"
 }

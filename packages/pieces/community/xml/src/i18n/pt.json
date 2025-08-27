@@ -1,10 +1,10 @@
 {
   "XML": "XML",
-  "Extensible Markup Language for storing and transporting data": "Extensible Markup Language for storing and transporting data",
-  "Convert JSON to XML": "Convert JSON to XML",
+  "Extensible Markup Language for storing and transporting data": "Linguagem de Marcação Estendida para armazenar e transportar dados",
+  "Convert JSON to XML": "Converter JSON para XML",
   "JSON": "JSON",
-  "Attribute field": "Attribute field",
-  "Header": "Header",
-  "Field to add your tag's attributes": "Field to add your tag's attributes",
-  "Add XML header": "Add XML header"
+  "Attribute field": "Campo atributo",
+  "Header": "Cabeçalho",
+  "Field to add your tag's attributes": "Campo para adicionar atributos da sua etiqueta",
+  "Add XML header": "Adicionar cabeçalho XML"
 }
