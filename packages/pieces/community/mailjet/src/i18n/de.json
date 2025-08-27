@@ -12,10 +12,10 @@
   "From (Name)": "Von (Name)",
   "Emails of recipients": "E-Mails von Empfängern",
   "Subject": "Betreff",
-  "Text part": "Textteil",
-  "HTML part": "HTML-Teil",
+  "Text part": "Text part",
+  "HTML part": "HTML part",
   "Template Id": "Template Id",
-  "Template variables": "Template-Variablen",
-  "Sender email, must be verified in Mailjet": "Absender-E-Mail, muss in Mailjet verifiziert werden",
-  "Template Id (number) defined in Mailjet": "Template-Id (Nummer) definiert in Mailjet"
+  "Template variables": "Template variables",
+  "Sender email, must be verified in Mailjet": "Sender email, must be verified in Mailjet",
+  "Template Id (number) defined in Mailjet": "Template Id (number) defined in Mailjet"
 }

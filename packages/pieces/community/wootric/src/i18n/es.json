@@ -1,10 +1,10 @@
 {
-  "Wootric": "Alimentos",
-  "Measure and boost customer happiness": "Medir y mejorar la felicidad del cliente",
-  "Trigger Wootric Survey": "Encuesta sanguinaria de activación",
-  "Trigger a survey from Wootric": "Activar una encuesta desde Wootric",
-  "Emails": "Correos",
-  "Survey Immediately": "Encuesta inmediatamente",
-  "End user emails, where you want the survey to be received": "Correos de usuario final, donde quieres que la encuesta sea recibida",
-  "Enter \"true\" to survey immediately to bypass checks, otherwise \"false\"": "Introduzca \"verdadero\" para la encuesta inmediatamente para eludir las comprobaciones, de lo contrario \"falso\""
+  "Wootric": "Wootric",
+  "Measure and boost customer happiness": "Measure and boost customer happiness",
+  "Trigger Wootric Survey": "Trigger Wootric Survey",
+  "Trigger a survey from Wootric": "Trigger a survey from Wootric",
+  "Emails": "Emails",
+  "Survey Immediately": "Survey Immediately",
+  "End user emails, where you want the survey to be received": "End user emails, where you want the survey to be received",
+  "Enter \"true\" to survey immediately to bypass checks, otherwise \"false\"": "Enter \"true\" to survey immediately to bypass checks, otherwise \"false\""
 }

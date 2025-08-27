@@ -1,8 +1,8 @@
 {
   "Poper": "Poper",
-  "AI Driven Pop-up Builder that can convert visitors into customers,increase subscriber count, and skyrocket sales.": "KI Driven Pop-up Builder, der Besucher in Kunden konvertieren kann, die Anzahl der Abonnenten erhöhen und den Verkauf von Raketen erhöhen kann.",
-  "New Lead": "Neuer Lead",
-  "Triggers when a new lead is obtained from popup.": "Wird ausgelöst, wenn ein neuer Blei durch Popup gewonnen wird.",
+  "AI Driven Pop-up Builder that can convert visitors into customers,increase subscriber count, and skyrocket sales.": "AI Driven Pop-up Builder that can convert visitors into customers,increase subscriber count, and skyrocket sales.",
+  "New Lead": "New Lead",
+  "Triggers when a new lead is obtained from popup.": "Triggers when a new lead is obtained from popup.",
   "Markdown": "Markdown",
-  "\n1. Log in to your [Poper Account](https://app.poper.ai/).\n2. Click on the popup for which you want to set up a trigger.\n3. On the left-side menu, click on Integrations and search for **Webhook**.\n4. Enter an appropriate webhook name and paste the following URL:\n  ```text\n  {{webhookUrl}}\n  ```\n": "\n1. Melden Sie sich bei Ihrem [Poper Account](https://app.poper.ai/).\n2. Klicken Sie auf das Popup, für das Sie einen Trigger einrichten möchten.\n3. Klicken Sie im linken Menü auf Integrationen und suchen Sie nach **Webhook**.\nGib einen passenden Webhook-Namen ein und füge die folgende URL ein:\n  ```text\n  {{webhookUrl}}\n  ```\n"
+  "\n1. Log in to your [Poper Account](https://app.poper.ai/).\n2. Click on the popup for which you want to set up a trigger.\n3. On the left-side menu, click on Integrations and search for **Webhook**.\n4. Enter an appropriate webhook name and paste the following URL:\n  ```text\n  {{webhookUrl}}\n  ```\n": "\n1. Log in to your [Poper Account](https://app.poper.ai/).\n2. Click on the popup for which you want to set up a trigger.\n3. On the left-side menu, click on Integrations and search for **Webhook**.\n4. Enter an appropriate webhook name and paste the following URL:\n  ```text\n  {{webhookUrl}}\n  ```\n"
 }

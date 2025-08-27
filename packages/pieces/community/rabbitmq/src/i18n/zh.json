@@ -1,9 +1,9 @@
 {
   "RabbitMQ": "RabbitMQ",
-  "Host": "主机",
-  "Username": "用户名",
-  "Password": "密码",
-  "Port": "端口",
+  "Host": "Host",
+  "Username": "Username",
+  "Password": "Password",
+  "Port": "Port",
   "Virtual Host": "Virtual Host",
   "Rabbitmq Auth": "Rabbitmq Auth",
   "sendMessageToExchange": "sendMessageToExchange",

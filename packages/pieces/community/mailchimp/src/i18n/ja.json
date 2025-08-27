@@ -12,7 +12,7 @@
   "Removes a subscriber from a tag": "タグから購読者を削除します",
   "Update a member in an existing Mailchimp audience (list)": "既存の Mailchimp オーディエンスのメンバーを更新します (リスト)",
   "First Name": "名",
-  "Last Name": "Last Name",
+  "Last Name": "姓",
   "Email": "Eメールアドレス",
   "Audience": "オーディエンス:",
   "Status": "ステータス",
