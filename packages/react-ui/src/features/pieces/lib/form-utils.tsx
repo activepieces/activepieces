@@ -281,7 +281,9 @@ export const formUtils = {
               Object.entries(defaultValues).map(([key]) => [
                 key,
                 {
-                  type: PropertyExecutionType.MANUAL,
+                  type:
+                    selectedStep.settings.propertySettings?.[key]?.type ??
+                    PropertyExecutionType.MANUAL,
                   schema: undefined,
                 },
               ]),
