@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { toast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
   FlowOperationType,
@@ -53,6 +54,14 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
     },
     onSuccess: (flow) => {
       setIsChecked(flow.status === FlowStatus.ENABLED);
+    },
+    onError: (err: Error) => {
+      toast({
+        title: t('Error'),
+        description: t('Failed to change flow status, please contact support.'),
+        variant: 'destructive',
+      });
+      console.error('Failed to change flow status', err);
     },
   });
 

@@ -1,12 +1,12 @@
 {
-  "RSS Feed": "Flux RSS",
-  "Stay updated with RSS feeds": "Restez à jour avec les fils RSS",
-  "New Item In Feed": "Nouvel élément dans le flux",
-  "New Items in Multiple Feeds": "Nouveaux éléments dans plusieurs flux",
-  "Runs when a new item is added in the RSS feed": "Exécute lorsqu'un nouvel élément est ajouté dans le flux RSS",
-  "Runs when a new item is added in one of the RSS feed": "Exécute lorsqu'un nouvel élément est ajouté dans un flux RSS",
-  "RSS Feed URL": "URL du flux RSS",
-  "RSS Feed URLs": "URL du flux RSS",
-  "Single RSS feed URL": "URL du flux RSS unique",
-  "List of RSS feed URLs": "Liste des URLs de flux RSS"
+  "RSS Feed": "RSS Feed",
+  "Stay updated with RSS feeds": "Stay updated with RSS feeds",
+  "New Item In Feed": "New Item In Feed",
+  "New Items in Multiple Feeds": "New Items in Multiple Feeds",
+  "Runs when a new item is added in the RSS feed": "Runs when a new item is added in the RSS feed",
+  "Runs when a new item is added in one of the RSS feed": "Runs when a new item is added in one of the RSS feed",
+  "RSS Feed URL": "RSS Feed URL",
+  "RSS Feed URLs": "RSS Feed URLs",
+  "Single RSS feed URL": "Single RSS feed URL",
+  "List of RSS feed URLs": "List of RSS feed URLs"
 }

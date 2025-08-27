@@ -1,0 +1,7 @@
+{
+  "name": "@activepieces/piece-hugging-face",
+  "version": "0.0.4",
+  "dependencies": {
+    "@huggingface/inference": "4.7.1"
+  }
+}

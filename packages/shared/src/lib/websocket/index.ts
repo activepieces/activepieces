@@ -37,4 +37,6 @@ export type TodoActivityCreated = Static<typeof TodoActivityCreated>
 export enum WebsocketServerEvent {
     ASK_COPILOT = 'ASK_COPILOT',
     TEST_FLOW_RUN = 'TEST_FLOW_RUN',
+    CONNECT = 'CONNECT',
+    DISCONNECT = 'DISCONNECT',
 }

@@ -1,8 +1,8 @@
-import { aiProps } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AIUsageFeature, createAIProvider, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
+import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
 import { ImageModel } from 'ai';
 import { experimental_generateImage as generateImage } from 'ai';
+import { aiProps } from '@activepieces/common-ai';
 
 export const generateImageAction = createAction({
   name: 'generateImage',
@@ -28,10 +28,10 @@ export const generateImageAction = createAction({
 
     const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
     const engineToken = context.server.token;
-    const provider = createAIProvider({
+    const model = createAIModel({
       providerName,
       modelInstance,
-      apiKey: engineToken,
+      engineToken,
       baseURL,
       metadata: {
         feature: AIUsageFeature.IMAGE_AI,
@@ -39,7 +39,7 @@ export const generateImageAction = createAction({
     });
 
     const response = await generateImage({
-      model: provider,
+      model,
       prompt: context.propsValue.prompt,
       providerOptions: {
         [providerName]: {

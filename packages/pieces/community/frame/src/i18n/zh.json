@@ -8,9 +8,11 @@
   "Headers": "信头",
   "Query Parameters": "查询参数",
   "Body": "正文内容",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "失败时没有错误",
   "Timeout (in seconds)": "超时(秒)",
   "Authorization headers are injected automatically from your connection.": "授权头自动从您的连接中注入。",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "GET": "获取",
   "POST": "帖子",
   "PATCH": "PATCH",
@@ -24,7 +26,7 @@
   "Triggered when a new asset is created.": "Triggered when a new asset is created.",
   "Triggered when a new comment is created.": "Triggered when a new comment is created.",
   "Account": "Account",
-  "Team": "团队",
+  "Team": "Team",
   "Accounts accessible via a given User": "Accounts accessible via a given User",
   "Teams accessible via a given Account": "Teams accessible via a given Account"
 }
