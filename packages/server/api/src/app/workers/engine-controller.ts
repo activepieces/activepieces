@@ -101,7 +101,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         const runWithoutSteps = await flowRunService(request.log).updateRun({
             flowRunId: runId,
             status: runDetails.status,
-            tasks: progressUpdateType === ProgressUpdateType.TEST_FLOW ? 0 : runDetails.tasks,
+            tasks: runDetails.tasks,
             duration: runDetails.duration,
             projectId: request.principal.projectId,
             tags: runDetails.tags ?? [],
