@@ -66,11 +66,6 @@ export const searchKnowledgeBase = createAction({
   description: "Search for any information in Avalant's knowledge base",
   auth: knowledgeBaseAuth,
   props: {
-    query: Property.ShortText({
-      displayName: 'Search Query',
-      description: 'The query to search for in the knowledge base',
-      required: true,
-    }),
     knowledgeBaseId: Property.Dropdown({
       displayName: 'Knowledge Base ID',
       description: 'The knowledge base ID to search in',
@@ -117,6 +112,36 @@ export const searchKnowledgeBase = createAction({
         }
       },
     }),
+    fetchOption: Property.StaticDropdown<string>({
+      displayName: 'Fetch Option',
+      description: 'Choose retrieval granularity',
+      required: true,
+      defaultValue: 'filecontents',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'File Contents', value: 'filecontents' },
+          { label: 'Section', value: 'section' },
+          { label: 'Chunk', value: 'chunk' },
+        ],
+      },
+    }),
+    query: Property.ShortText({
+      displayName: 'Search Query',
+      description: 'The query to search for in the knowledge base',
+      required: true,
+    }),
+    filterTags: Property.Array({
+      displayName: 'Filter Tags',
+      description: 'Optional list of tags to filter by',
+      required: false,
+      properties: {
+        tag: Property.ShortText({
+          displayName: 'Tag',
+          required: true,
+        }),
+      },
+    }),
     topK: Property.Number({
       displayName: 'Number of Results',
       description: 'Number of top results to return (1-10)',
@@ -131,7 +156,7 @@ export const searchKnowledgeBase = createAction({
     }),
   },
   async run(context) {
-    const { query, knowledgeBaseId, topK, scoreThreshold } = context.propsValue;
+    const { query, knowledgeBaseId, fetchOption, filterTags, topK, scoreThreshold } = context.propsValue;
 
     try {
       const auth = context.auth;
@@ -139,16 +164,21 @@ export const searchKnowledgeBase = createAction({
       const accessToken = await getAccessToken(masterData.CENTER_AUTH_LOGIN_URL, auth) || '';
       const userMe = await getUserMe(masterData.CENTER_API_USERS_ME_URL, accessToken);
 
-      const response = await axios.post(
-        masterData.KNOWLEDGE_BASE_RUN_URL,
-        {
-          query: query,
-          knowledge_id: knowledgeBaseId,
-          retrieval_setting: {
-            top_k: topK,
-            score_threshold: scoreThreshold,
-          }
+      const tagArray: string[] = Array.isArray(filterTags) ? filterTags.map((t: any) => (t && typeof t.tag === 'string' ? t.tag.trim() : '')).filter((t: string) => t.length > 0) : [];
+
+      const payload = {
+        knowledge_id: knowledgeBaseId,
+        fetch_option: fetchOption,
+        query: query,
+        filter_tags: tagArray,
+        retrieval_setting: {
+          top_k: topK,
+          score_threshold: scoreThreshold ?? 0,
         },
+      };
+
+      const response = await axios.post(
+        masterData.KNOWLEDGE_BASE_RUN_URL, payload,
         {
           headers: {
             'Authorization': `Bearer ` + accessToken,
