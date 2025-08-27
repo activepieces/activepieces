@@ -314,7 +314,7 @@ function traverseStep(
   zipArraysOfProperties: boolean,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
-  const stepNeedsTesting = isNil(step.settings.inputUiInfo?.lastTestDate);
+  const stepNeedsTesting = isNil(step.settings.sampleData?.lastTestDate);
   if (stepNeedsTesting) {
     return buildTestStepNode(displayName, step.name);
   }
