@@ -714,9 +714,6 @@
       "@activepieces/piece-pinecone": [
         "packages/pieces/community/pinecone/src/index.ts"
       ],
-      "@activepieces/piece-pinecone-api": [
-        "packages/pieces/community/pinecone-api/src/index.ts"
-      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
