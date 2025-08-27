@@ -1,8 +1,11 @@
 import { faker } from '@faker-js/faker'
 import { nanoid } from 'nanoid'
 import { projectDiffService } from '../../../../../../src/app/ee/projects/project-release/project-state/project-diff.service'
+import { projectStateService } from '../../../../../../src/app/ee/projects/project-release/project-state/project-state.service'
+import { system } from '../../../../../../src/app/helper/system/system'
 import { flowGenerator } from '../../../../../helpers/flow-generator'
 
+const logger = system.globalLogger()
 describe('Flow Diff Service', () => {
 
     it('should return the flow to delete', async () => {
@@ -82,15 +85,17 @@ describe('Flow Diff Service', () => {
     it('should skip the flow to update if the flow is not changed', async () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()
         const flowOneDist = flowGenerator.randomizeMetadata(undefined, flowOne.version)
-        flowOneDist.version.trigger.settings.inputUiInfo = faker.airline.airplane()
+        flowOneDist.version.trigger.settings.propertySettings = faker.airline.airplane()
         flowOne.externalId = flowOneDist.id
 
+        const stateOne = projectStateService(logger).getFlowState(flowOne)
+        const stateTwo = projectStateService(logger).getFlowState(flowOneDist)
         const diff = await projectDiffService.diff({
             currentState: {
-                flows: [flowOne],
+                flows: [stateOne],
             },
             newState: {
-                flows: [flowOneDist],
+                flows: [stateTwo],
             },
         })
         expect(diff.flows).toEqual([])
