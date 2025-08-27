@@ -5,8 +5,8 @@ import { pineconeAuth } from '../../index';
 export const getVector = createAction({
   auth: pineconeAuth,
   name: 'get_vector',
-  displayName: 'Get Vector',
-  description: 'Look up and return vectors by ID from a single namespace. The returned vectors include the vector data and/or metadata.',
+  displayName: 'Get a Vector',
+  description: 'Look up and return vectors by ID from a namespace.',
   props: {
     indexName: Property.ShortText({
       displayName: 'Index Name',
@@ -29,18 +29,7 @@ export const getVector = createAction({
       required: false,
       defaultValue: 'example-namespace',
     }),
-    includeValues: Property.Checkbox({
-      displayName: 'Include Values',
-      description: 'Whether to include vector values in the response',
-      required: false,
-      defaultValue: true,
-    }),
-    includeMetadata: Property.Checkbox({
-      displayName: 'Include Metadata',
-      description: 'Whether to include vector metadata in the response',
-      required: false,
-      defaultValue: true,
-    }),
+
   },
   async run(context) {
     const {
@@ -48,11 +37,8 @@ export const getVector = createAction({
       indexHost,
       ids,
       namespace,
-      includeValues,
-      includeMetadata,
     } = context.propsValue;
 
-    // Validation following SDK pattern
     if (!indexName) {
       throw new Error('You must provide an index name to fetch vectors.');
     }
@@ -61,28 +47,23 @@ export const getVector = createAction({
       throw new Error('You must provide at least one vector ID to fetch.');
     }
 
-    // Validate IDs don't contain spaces (as per API requirement)
     const invalidIds = ids.filter((id: any) => typeof id === 'string' && id.includes(' '));
     if (invalidIds.length > 0) {
       throw new Error(`Vector IDs cannot contain spaces. Invalid IDs: ${invalidIds.join(', ')}`);
     }
 
-    // Initialize Pinecone client following SDK documentation
     const pc = createPineconeClientFromAuth(context.auth);
 
     try {
-      // Target the index following SDK pattern
-      // const index = pc.index("INDEX_NAME", "INDEX_HOST")
+
       const index = indexHost ? pc.index(indexName, indexHost) : pc.index(indexName);
 
-      // Fetch vectors following SDK pattern
-      // const fetchResult = await index.namespace('example-namespace').fetch(['id-1', 'id-2']);
+
       const fetchResult = namespace 
         ? await index.namespace(namespace).fetch(ids as string[])
         : await index.fetch(ids as string[]);
 
-      // Process the response to match the documented structure
-      const records = fetchResult?.records || {};
+      const records = fetchResult.records || {};
       const vectorCount = Object.keys(records).length;
       const foundIds = Object.keys(records);
       const notFoundIds = (ids as string[]).filter(id => !foundIds.includes(id));
@@ -90,9 +71,9 @@ export const getVector = createAction({
       return {
         success: true,
         indexName: indexName,
-        namespace: fetchResult?.namespace || namespace || 'default',
-        usage: fetchResult?.usage || { readUnits: 0 },
-        records: records,
+        namespace: fetchResult.namespace,
+        usage: fetchResult.usage,
+        vectors: records,
         summary: {
           requested: ids.length,
           found: vectorCount,
@@ -104,11 +85,9 @@ export const getVector = createAction({
     } catch (caught) {
       console.log('Failed to fetch vector(s).', caught);
       
-      // Handle specific API error responses following documentation
       if (caught instanceof Error) {
         const error = caught as any;
         
-        // Handle 400 Bad Request - Invalid request parameters
         if (error.status === 400 || error.code === 400) {
           return {
             success: false,
@@ -122,7 +101,6 @@ export const getVector = createAction({
           };
         }
         
-        // Handle 4XX Client Errors - Unexpected error response
         if (error.status >= 400 && error.status < 500) {
           return {
             success: false,
@@ -136,7 +114,6 @@ export const getVector = createAction({
           };
         }
         
-        // Handle 5XX Server Errors - Unexpected error response
         if (error.status >= 500 || error.code >= 500) {
           return {
             success: false,
@@ -151,7 +128,6 @@ export const getVector = createAction({
         }
       }
       
-      // Handle any other errors
       return {
         success: false,
         error: 'Unknown Error',

@@ -6,8 +6,7 @@ export const upsertVector = createAction({
   auth: pineconeAuth,
   name: 'upsert_vector',
   displayName: 'Upsert Vector',
-  description:
-    'Upsert vectors into a namespace. If a new value is upserted for an existing vector ID, it will overwrite the previous value. Recommended batch limit is up to 1000 vectors.',
+  description: 'Upsert vectors into a namespace. Overwrites existing vectors with the same ID.',
   props: {
     indexName: Property.ShortText({
       displayName: 'Index Name',
@@ -39,7 +38,6 @@ export const upsertVector = createAction({
       },
       defaultValue: 'single'
     }),
-    // Single vector properties
     id: Property.ShortText({
       displayName: 'Vector ID',
       description: 'The unique identifier for the vector (e.g., "vec1")',
@@ -51,18 +49,43 @@ export const upsertVector = createAction({
         'Array of numbers representing the vector (e.g., [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1])',
       required: false
     }),
-    metadata: Property.Json({
-      displayName: 'Metadata',
-      description:
-        'Optional metadata object to store with the vector (e.g., {"genre": "comedy", "year": 2020})',
-      required: false
-    }),
-    // Multiple vectors property
-    records: Property.Json({
-      displayName: 'Records',
-      description:
-        'JSON array of vector records. Each must have id, values, and optionally metadata. Max 1000 vectors per batch.',
-      required: false
+
+    vectors: Property.Array({
+      displayName: 'Vectors',
+      description: 'Array of vectors to upsert (for multiple vectors input)',
+      required: false,
+      properties: {
+        id: Property.ShortText({
+          displayName: 'Vector ID',
+          description: 'Unique identifier for this vector',
+          required: true
+        }),
+        values: Property.LongText({
+          displayName: 'Vector Values',
+          description: 'Comma-separated numbers (e.g., 0.1,0.2,0.3,0.4)',
+          required: true
+        }),
+        metadataKeys: Property.LongText({
+          displayName: 'Metadata Keys',
+          description: 'Comma-separated metadata field names (e.g., genre,year,rating)',
+          required: false
+        }),
+        metadataValues: Property.LongText({
+          displayName: 'Metadata Values',
+          description: 'Comma-separated metadata values (e.g., comedy,2020,8.5)',
+          required: false
+        }),
+        sparseIndices: Property.LongText({
+          displayName: 'Sparse Indices',
+          description: 'Comma-separated indices for sparse vector (e.g., 1,312,822)',
+          required: false
+        }),
+        sparseValues: Property.LongText({
+          displayName: 'Sparse Values',
+          description: 'Comma-separated values for sparse vector (e.g., 0.1,0.2,0.3)',
+          required: false
+        })
+      }
     })
   },
   async run(context) {
@@ -73,30 +96,24 @@ export const upsertVector = createAction({
       vectorsInput,
       id,
       values,
-      metadata,
-      records
+      vectors
     } = context.propsValue;
 
-    // Validation following SDK pattern
     if (!indexName) {
       throw new Error('You must provide an index name to upsert vectors.');
     }
 
-    // Initialize Pinecone client following SDK documentation
     const pc = createPineconeClientFromAuth(context.auth);
 
-    // Declare vectorsToUpsert in outer scope so it's accessible in catch block
     let vectorsToUpsert: any[] = [];
 
     try {
-      // Target the index following SDK pattern
-      // const index = pc.index("INDEX_NAME", "INDEX_HOST")
+
       const index = indexHost
         ? pc.index(indexName, indexHost)
         : pc.index(indexName);
 
       if (vectorsInput === 'single') {
-        // Single vector validation
         if (!id) {
           throw new Error(
             'You must provide a vector ID for single vector input.'
@@ -108,60 +125,101 @@ export const upsertVector = createAction({
           );
         }
 
-        // Build single vector following SDK example structure
-        const record = {
+        const record: any = {
           id: id,
-          values: values.map((v) => Number(v)),
-          ...(metadata && { metadata })
+          values: values.map((v) => Number(v))
         };
 
         vectorsToUpsert = [record];
       } else if (vectorsInput === 'multiple') {
-        // Multiple vectors validation
-        if (!records || !Array.isArray(records)) {
+        if (!vectors || !Array.isArray(vectors) || vectors.length === 0) {
           throw new Error(
-            'You must provide records as a JSON array when using multiple vectors input.'
+            'You must provide vectors array when using multiple vectors input.'
           );
         }
 
-        if (records.length > 1000) {
+        if (vectors.length > 1000) {
           throw new Error(
-            'Recommended batch limit is up to 1000 vectors. Please reduce the number of records.'
+            'Recommended batch limit is up to 1000 vectors. Please reduce the number of vectors.'
           );
         }
 
-        // Validate each record in the array following SDK structure
-        vectorsToUpsert = records.map((record: any, index: number) => {
-          if (!record.id) {
+        vectorsToUpsert = vectors.map((vector: any, index: number) => {
+          if (!vector.id) {
             throw new Error(
-              `Record at index ${index} must have an 'id' field.`
+              `Vector at index ${index} must have an ID.`
             );
           }
-          if (
-            !record.values ||
-            !Array.isArray(record.values) ||
-            record.values.length === 0
-          ) {
+          
+          if (!vector.values) {
             throw new Error(
-              `Record at index ${index} must have 'values' as a non-empty array of numbers.`
+              `Vector at index ${index} must have values.`
             );
           }
 
-          return {
-            id: record.id,
-            values: record.values.map((v: any) => Number(v)),
-            ...(record.metadata && { metadata: record.metadata })
+          const values = vector.values.split(',').map((v: string) => Number(v.trim()));
+          if (values.some(isNaN) || values.length === 0) {
+            throw new Error(
+              `Vector at index ${index} has invalid values. Use comma-separated numbers.`
+            );
+          }
+
+          const record: any = {
+            id: String(vector.id),
+            values: values
           };
+
+          if (vector.sparseIndices && vector.sparseValues) {
+            const sparseIndices = vector.sparseIndices.split(',').map((v: string) => Number(v.trim()));
+            const sparseValues = vector.sparseValues.split(',').map((v: string) => Number(v.trim()));
+            
+            if (sparseIndices.some(isNaN) || sparseValues.some(isNaN)) {
+              throw new Error(
+                `Vector at index ${index} has invalid sparse values. Use comma-separated numbers.`
+              );
+            }
+            
+            if (sparseIndices.length !== sparseValues.length) {
+              throw new Error(
+                `Vector at index ${index}: sparse indices and values must have the same length.`
+              );
+            }
+
+            record.sparseValues = {
+              indices: sparseIndices,
+              values: sparseValues
+            };
+          }
+
+          if (vector.metadataKeys && vector.metadataValues) {
+            const keys = vector.metadataKeys.split(',').map((k: string) => k.trim());
+            const vals = vector.metadataValues.split(',').map((v: string) => v.trim());
+            
+            if (keys.length !== vals.length) {
+              throw new Error(
+                `Vector at index ${index}: metadata keys and values must have the same length.`
+              );
+            }
+            
+            const metadata: any = {};
+            for (let i = 0; i < keys.length; i++) {
+              const key = keys[i];
+              const value = vals[i];
+              const numValue = Number(value);
+              metadata[key] = isNaN(numValue) ? value : numValue;
+            }
+            record.metadata = metadata;
+          }
+
+          return record;
         });
       }
 
-      // Upsert vectors following SDK pattern
-      // await index.namespace('example-namespace').upsert(records);
+
       const response: any = namespace
         ? await index.namespace(namespace).upsert(vectorsToUpsert)
         : await index.upsert(vectorsToUpsert);
 
-      // Extract upserted count from response if available
       const upsertedCount =
         response && typeof response === 'object' && response.upsertedCount
           ? response.upsertedCount
@@ -182,11 +240,9 @@ export const upsertVector = createAction({
     } catch (caught) {
       console.log('Failed to upsert vector(s).', caught);
 
-      // Handle specific API error responses following documentation
       if (caught instanceof Error) {
         const error = caught as any;
 
-        // Handle 400 Bad Request - Invalid request parameters
         if (error.status === 400 || error.code === 400) {
           return {
             success: false,
@@ -202,7 +258,6 @@ export const upsertVector = createAction({
           };
         }
 
-        // Handle 4XX Client Errors - Unexpected error response
         if (error.status >= 400 && error.status < 500) {
           return {
             success: false,
@@ -216,7 +271,6 @@ export const upsertVector = createAction({
           };
         }
 
-        // Handle 5XX Server Errors - Unexpected error response
         if (error.status >= 500 || error.code >= 500) {
           return {
             success: false,
@@ -231,7 +285,6 @@ export const upsertVector = createAction({
         }
       }
 
-      // Handle any other errors
       return {
         success: false,
         error: 'Unknown Error',

@@ -5,9 +5,8 @@ import { pineconeAuth } from '../../index';
 export const deleteVector = createAction({
   auth: pineconeAuth,
   name: 'delete_vector',
-  displayName: 'Delete Vector',
-  description:
-    'Delete vectors by id from a single namespace. You can delete one record, multiple records, or all records in a namespace.',
+  displayName: 'Delete a Vector',
+  description: 'Delete vectors by ID from a namespace.',
   props: {
     indexName: Property.ShortText({
       displayName: 'Index Name',
@@ -41,20 +40,17 @@ export const deleteVector = createAction({
       },
       defaultValue: 'one'
     }),
-    // Single vector deletion
     id: Property.ShortText({
       displayName: 'Vector ID',
       description:
         'The ID of the vector to delete (for single vector deletion)',
       required: false
     }),
-    // Multiple vector deletion
     ids: Property.Array({
       displayName: 'Vector IDs',
       description: 'Array of vector IDs to delete (e.g., ["id-2", "id-3"])',
       required: false
     }),
-    // Delete all confirmation
     confirmDeleteAll: Property.Checkbox({
       displayName: 'Confirm Delete All',
       description:
@@ -62,11 +58,9 @@ export const deleteVector = createAction({
       required: false,
       defaultValue: false
     }),
-    // Filter-based deletion
     filter: Property.Json({
       displayName: 'Metadata Filter',
-      description:
-        'Metadata filter to select vectors to delete (mutually exclusive with IDs or delete all)',
+      description: 'Metadata filter expression to select vectors to delete. Examples:\n• {"genre": {"$eq": "documentary"}}\n• {"year": {"$gt": 2019}}\n• {"$and": [{"genre": "comedy"}, {"year": {"$gte": 2020}}]}',
       required: false
     })
   },
@@ -82,23 +76,19 @@ export const deleteVector = createAction({
       filter
     } = context.propsValue;
 
-    // Validation following SDK pattern
     if (!indexName) {
       throw new Error('You must provide an index name to delete vectors.');
     }
 
-    // Initialize Pinecone client following SDK documentation
     const pc = createPineconeClientFromAuth(context.auth);
 
     try {
-      // Target the index following SDK pattern
-      // const index = pc.index("INDEX_NAME", "INDEX_HOST")
+
       const index = indexHost
         ? pc.index(indexName, indexHost)
         : pc.index(indexName);
 
-      // Get namespace reference following SDK pattern
-      // const ns = index.namespace('example-namespace')
+
       const ns = namespace ? index.namespace(namespace) : index;
 
       let deleteResult: any;
@@ -106,8 +96,7 @@ export const deleteVector = createAction({
       let operation = '';
 
       if (deleteMode === 'one') {
-        // Delete one record by ID following SDK pattern
-        // await ns.deleteOne('id-1');
+
         if (!id) {
           throw new Error(
             'You must provide a vector ID for single vector deletion.'
@@ -118,8 +107,7 @@ export const deleteVector = createAction({
         deletedCount = 1;
         operation = `Deleted vector with ID: ${id}`;
       } else if (deleteMode === 'many') {
-        // Delete more than one record by ID following SDK pattern
-        // await ns.deleteMany(['id-2', 'id-3']);
+
         if (!ids || !Array.isArray(ids) || ids.length === 0) {
           throw new Error(
             'You must provide an array of vector IDs for multiple vector deletion.'
@@ -132,31 +120,26 @@ export const deleteVector = createAction({
           ids as string[]
         ).join(', ')}`;
       } else if (deleteMode === 'all') {
-        // Delete all vectors in namespace
         if (!confirmDeleteAll) {
           throw new Error(
             'You must confirm deletion by checking "Confirm Delete All" to delete all vectors in the namespace.'
           );
         }
 
-        // Use the deleteAll method to delete all vectors
         deleteResult = await ns.deleteAll();
         operation = `Deleted ALL vectors in namespace: ${
           namespace || 'default'
         }`;
       } else if (deleteMode === 'filter') {
-        // Delete by metadata filter
+
         if (!filter) {
           throw new Error(
             'You must provide a metadata filter for filter-based deletion.'
           );
         }
 
-        // For filter-based deletion, we need to use a different approach
-        // This might require querying first and then deleting the results
-        throw new Error(
-          'Filter-based deletion is not directly supported by the current Pinecone SDK. Please use query + deleteMany approach.'
-        );
+        await ns.deleteMany(filter);
+        operation = `Deleted vectors matching filter: ${JSON.stringify(filter)}`;
       }
 
       return {
@@ -171,7 +154,54 @@ export const deleteVector = createAction({
       };
     } catch (caught) {
       console.log('Failed to delete vector(s).', caught);
-      return caught;
+      
+      if (caught instanceof Error) {
+        const error = caught as any;
+        
+        if (error.status === 400 || error.code === 400) {
+          return {
+            success: false,
+            error: 'Bad Request',
+            code: 400,
+            message: error.message || 'The request body included invalid request parameters.',
+            details: error.details || [],
+            indexName: indexName,
+            namespace: namespace || 'default',
+          };
+        }
+        
+        if (error.status >= 400 && error.status < 500) {
+          return {
+            success: false,
+            error: 'Client Error',
+            code: error.status || error.code,
+            message: error.message || 'An unexpected client error occurred.',
+            details: error.details || [],
+            indexName: indexName,
+            namespace: namespace || 'default',
+          };
+        }
+        
+        if (error.status >= 500 || error.code >= 500) {
+          return {
+            success: false,
+            error: 'Server Error',
+            code: error.status || error.code,
+            message: error.message || 'An unexpected server error occurred.',
+            details: error.details || [],
+            indexName: indexName,
+            namespace: namespace || 'default',
+          };
+        }
+      }
+      
+      return {
+        success: false,
+        error: 'Unknown Error',
+        message: caught instanceof Error ? caught.message : 'An unexpected error occurred while deleting vectors.',
+        indexName: indexName,
+        namespace: namespace || 'default',
+      };
     }
   }
 });

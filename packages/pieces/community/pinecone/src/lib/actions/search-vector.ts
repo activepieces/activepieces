@@ -5,9 +5,8 @@ import { pineconeAuth } from '../../index';
 export const searchVector = createAction({
   auth: pineconeAuth,
   name: 'search_vector',
-  displayName: 'Search with Vector',
-  description:
-    'Search a namespace using a query vector. It retrieves the ids of the most similar items in a namespace, along with their similarity scores.',
+  displayName: 'Search Vectors',
+  description: 'Search a namespace using a query vector to find similar records.',
   props: {
     indexName: Property.ShortText({
       displayName: 'Index Name',
@@ -70,8 +69,7 @@ export const searchVector = createAction({
     }),
     filter: Property.Json({
       displayName: 'Metadata Filter',
-      description:
-        'Filter to apply using vector metadata (e.g., {"genre": {"$eq": "documentary"}})',
+      description: 'Filter to apply using vector metadata. Examples:\n• {"genre": {"$eq": "documentary"}}\n• {"year": {"$gt": 2019}}\n• {"$and": [{"genre": {"$in": ["comedy", "drama"]}}, {"year": {"$gte": 2020}}]}',
       required: false
     }),
     includeValues: Property.Checkbox({
@@ -103,7 +101,6 @@ export const searchVector = createAction({
       includeMetadata
     } = context.propsValue;
 
-    // Validation following SDK pattern
     if (!indexName) {
       throw new Error('You must provide an index name to search vectors.');
     }
@@ -112,7 +109,6 @@ export const searchVector = createAction({
       throw new Error('topK must be between 1 and 10000.');
     }
 
-    // Validate query method requirements
     if (queryMethod === 'vector') {
       if (!vector || !Array.isArray(vector) || vector.length === 0) {
         throw new Error(
@@ -127,27 +123,22 @@ export const searchVector = createAction({
       }
     }
 
-    // Initialize Pinecone client following SDK documentation
     const pc = createPineconeClientFromAuth(context.auth);
 
-    // Declare query request in outer scope for error handling
     let queryRequest: any = {};
 
     try {
-      // Target the index following SDK pattern
-      // const index = pc.index("INDEX_NAME", "INDEX_HOST")
+
       const index = indexHost
         ? pc.index(indexName, indexHost)
         : pc.index(indexName);
 
-      // Build query request following SDK structure
       queryRequest = {
         topK: topK,
         includeValues: includeValues || false,
         includeMetadata: includeMetadata || false
       };
 
-      // Add query vector or ID
       if (queryMethod === 'vector') {
         if (vector && Array.isArray(vector)) {
           queryRequest.vector = vector.map((v) => Number(v));
@@ -158,7 +149,6 @@ export const searchVector = createAction({
         }
       }
 
-      // Add sparse vector if provided
       if (sparseIndices && sparseValues) {
         if (!Array.isArray(sparseIndices) || !Array.isArray(sparseValues)) {
           throw new Error('Sparse indices and values must be arrays.');
@@ -175,18 +165,14 @@ export const searchVector = createAction({
         };
       }
 
-      // Add filter if provided
       if (filter) {
         queryRequest.filter = filter;
       }
 
-      // Query vectors following SDK pattern
-      // const queryResponse = await index.namespace('example-namespace').query({...});
       const queryResponse = namespace
         ? await index.namespace(namespace).query(queryRequest)
         : await index.query(queryRequest);
 
-      // Process response following documented structure
       const matches = queryResponse?.matches || [];
       const usage = queryResponse?.usage || { readUnits: 0 };
 
@@ -213,11 +199,9 @@ export const searchVector = createAction({
     } catch (caught) {
       console.log('Failed to search vectors.', caught);
 
-      // Handle specific API error responses following documentation
       if (caught instanceof Error) {
         const error = caught as any;
 
-        // Handle 400 Bad Request - Invalid request parameters
         if (error.status === 400 || error.code === 400) {
           return {
             success: false,
@@ -233,7 +217,6 @@ export const searchVector = createAction({
           };
         }
 
-        // Handle 4XX Client Errors - Unexpected error response
         if (error.status >= 400 && error.status < 500) {
           return {
             success: false,
@@ -247,7 +230,6 @@ export const searchVector = createAction({
           };
         }
 
-        // Handle 5XX Server Errors - Unexpected error response
         if (error.status >= 500 || error.code >= 500) {
           return {
             success: false,
@@ -262,7 +244,6 @@ export const searchVector = createAction({
         }
       }
 
-      // Handle any other errors
       return {
         success: false,
         error: 'Unknown Error',

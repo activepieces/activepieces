@@ -6,8 +6,7 @@ export const createIndex = createAction({
   auth: pineconeAuth,
   name: 'create_index',
   displayName: 'Create Index',
-  description:
-    'Creates a new Pinecone index with custom settings. You must pass required properties (name, dimension, spec) to create an index.',
+  description: 'Creates a new Pinecone index with custom settings.',
   props: {
     name: Property.ShortText({
       displayName: 'Index Name',
@@ -33,7 +32,6 @@ export const createIndex = createAction({
       },
       defaultValue: 'serverless'
     }),
-    // Serverless options
     cloud: Property.StaticDropdown({
       displayName: 'Cloud Provider',
       description:
@@ -55,18 +53,33 @@ export const createIndex = createAction({
       required: false,
       defaultValue: 'us-west-2'
     }),
-    // Pod options
     environment: Property.ShortText({
       displayName: 'Environment',
       description:
         'The environment where the index is hosted (for pod-based indexes)',
       required: false
     }),
-    podType: Property.ShortText({
+    podType: Property.StaticDropdown({
       displayName: 'Pod Type',
-      description:
-        'The type of pod to use. One of s1, p1, or p2 appended with . and one of x1, x2, x4, or x8 (e.g., "s1.x1")',
-      required: false
+      description: 'The type of pod to use',
+      required: false,
+      options: {
+        options: [
+          { label: 's1.x1', value: 's1.x1' },
+          { label: 's1.x2', value: 's1.x2' },
+          { label: 's1.x4', value: 's1.x4' },
+          { label: 's1.x8', value: 's1.x8' },
+          { label: 'p1.x1', value: 'p1.x1' },
+          { label: 'p1.x2', value: 'p1.x2' },
+          { label: 'p1.x4', value: 'p1.x4' },
+          { label: 'p1.x8', value: 'p1.x8' },
+          { label: 'p2.x1', value: 'p2.x1' },
+          { label: 'p2.x2', value: 'p2.x2' },
+          { label: 'p2.x4', value: 'p2.x4' },
+          { label: 'p2.x8', value: 'p2.x8' }
+        ]
+      },
+      defaultValue: 'p1.x1'
     }),
     replicas: Property.Number({
       displayName: 'Replicas',
@@ -86,7 +99,6 @@ export const createIndex = createAction({
         'The number of pods to be used in the index. This should be equal to shards x replicas.',
       required: false
     }),
-    // Common options
     metric: Property.StaticDropdown({
       displayName: 'Metric',
       description:
@@ -167,7 +179,6 @@ export const createIndex = createAction({
       sourceCollection
     } = context.propsValue;
 
-    // Validation following SDK pattern
     if (!name) {
       throw new Error(
         'You must pass a non-empty string for `name` in order to create an index.'
@@ -180,7 +191,6 @@ export const createIndex = createAction({
       );
     }
 
-    // Validate vector type and dimension requirements
     const vType = vectorType?.toLowerCase() || 'dense';
     if (vType === 'sparse') {
       if (dimension && dimension > 0) {
@@ -197,11 +207,9 @@ export const createIndex = createAction({
       }
     }
 
-    // Initialize Pinecone client
     const pc = createPineconeClientFromAuth(context.auth);
 
     try {
-      // Build the spec object based on index type
       let spec: any;
 
       if (indexType === 'serverless') {
@@ -247,20 +255,20 @@ export const createIndex = createAction({
         };
       }
 
-      // Build the create index options following SDK structure
       const createIndexOptions: any = {
         name: name,
+        dimension: dimension,
         spec: spec,
-        ...(dimension && { dimension }),
         ...(metric && { metric }),
-        ...(vectorType && { vectorType }),
-        ...(deletionProtection !== undefined && { deletionProtection }),
+        ...(vectorType && { vector_type: vectorType }),
+        ...(deletionProtection !== undefined && { 
+          deletionProtection: deletionProtection ? 'enabled' : 'disabled' 
+        }),
         ...(tags && { tags }),
         waitUntilReady: waitUntilReady || false,
         suppressConflicts: suppressConflicts || false
       };
 
-      // Set default metric based on vector type (following SDK logic)
       if (!createIndexOptions.metric) {
         if (vType === 'sparse') {
           createIndexOptions.metric = 'dotproduct';
@@ -269,7 +277,6 @@ export const createIndex = createAction({
         }
       }
 
-      // Create index following SDK pattern
       const response = await pc.createIndex(createIndexOptions);
 
       return {

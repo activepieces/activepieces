@@ -1,12 +1,11 @@
 {
-  "name": "@activepieces/piece-pinecone-api",
+  "name": "@activepieces/piece-pinecone",
   "version": "0.0.1",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
     "tslib": "^2.3.0",
-    "@pinecone-database/pinecone": "^3.0.0",
-    "undici": "^6.0.0"
+    "@pinecone-database/pinecone": "^6.1.1"
   }
 }
