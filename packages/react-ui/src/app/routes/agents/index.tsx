@@ -81,10 +81,8 @@ export const AgentsPage = () => {
               setIsOpen(open);
               if (!open) {
                 setSelectedAgent(undefined);
+                refetch();
               }
-            }}
-            onChange={() => {
-              refetch();
             }}
             agent={selectedAgent}
             showUseInFlow={true}

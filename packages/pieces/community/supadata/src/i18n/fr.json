@@ -1,13 +1,13 @@
 {
   "Supadata": "Supadata",
-  "YouTube Transcripts": "Transcriptions YouTube",
+  "YouTube Transcripts": "YouTube Transcripts",
   "\nTo obtain your free Supadata API Key, sign up at [Supadata](https://supadata.ai) and then copy the key available in the [dashboard](https://dash.supadata.ai).\n": "\nTo obtain your free Supadata API Key, sign up at [Supadata](https://supadata.ai) and then copy the key available in the [dashboard](https://dash.supadata.ai).\n",
   "Get Transcript": "Get Transcript",
-  "Fetches transcript of a YouTube video.": "Récupère la transcription d'une vidéo YouTube.",
-  "YouTube URL": "URL YouTube",
-  "Language Preference": "Préférence de la langue",
-  "Merge Text": "Fusionner le texte",
-  "The URL of a single YouTube video.": "L'URL d'une seule vidéo YouTube.",
-  "Preferred language of the transcript. If not available, the first available language will be returned.": "Langue préférée de la transcription. Si elle n'est pas disponible, la première langue disponible sera retournée.",
-  "If true, the transcript will be merged into a single text instead of timestamped chunks.": "Si activé, la transcription sera fusionnée en un seul texte au lieu de chunks horodatés."
+  "Fetches transcript of a YouTube video.": "Fetches transcript of a YouTube video.",
+  "YouTube URL": "YouTube URL",
+  "Language Preference": "Language Preference",
+  "Merge Text": "Merge Text",
+  "The URL of a single YouTube video.": "The URL of a single YouTube video.",
+  "Preferred language of the transcript. If not available, the first available language will be returned.": "Preferred language of the transcript. If not available, the first available language will be returned.",
+  "If true, the transcript will be merged into a single text instead of timestamped chunks.": "If true, the transcript will be merged into a single text instead of timestamped chunks."
 }

@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { PencilIcon, Plus } from 'lucide-react';
+import { PencilIcon, Plus, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import * as z from 'zod';
@@ -299,6 +299,14 @@ const CreateReleaseDialogContent = ({
                           </span>
                         </div>
                       )}
+                      {table.type === TableOperationType.DELETE_TABLE && (
+                        <div className="flex items-center gap-2">
+                          <TrashIcon className="w-4 h-4 shrink-0 text-destructive" />
+                          <span className="text-destructive">
+                            {table.tableState.name}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </ScrollArea>
@@ -332,6 +340,14 @@ const CreateReleaseDialogContent = ({
                         <div className="flex items-center gap-2">
                           <Plus className="w-4 h-4 shrink-0 text-success" />
                           <span className="text-success">
+                            {agent.agentState.displayName}
+                          </span>
+                        </div>
+                      )}
+                      {agent.type === AgentOperationType.DELETE_AGENT && (
+                        <div className="flex items-center gap-2">
+                          <TrashIcon className="w-4 h-4 shrink-0 text-destructive" />
+                          <span className="text-destructive">
                             {agent.agentState.displayName}
                           </span>
                         </div>
