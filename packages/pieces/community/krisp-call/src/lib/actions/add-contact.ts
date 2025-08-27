@@ -13,7 +13,7 @@ export const addContact = createAction({
       description: 'Enter your name',
       required: false,
     }),
-    number: Property.Number({
+    number: Property.ShortText({
       displayName: 'Contact number',
       description: 'Enter contact number',
       required: true,

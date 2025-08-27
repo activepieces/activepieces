@@ -1,13 +1,16 @@
 {
-  "Text AI": "Envoyer un message à l'IA",
-  "Ask AI": "Demander à l'IA",
-  "Summarize Text": "Résumer le texte",
-  "Provider": "Fournisseur",
-  "Model": "Modélisation",
+  "Text AI": "Text AI",
+  "Ask AI": "Ask AI",
+  "Summarize Text": "Summarize Text",
+  "Provider": "Provider",
+  "Model": "Model",
   "Prompt": "Prompt",
-  "Conversation Key": "Clé de conversation",
-  "Creativity": "Créativité",
-  "Max Tokens": "Tokens max",
-  "Text": "Texte du texte",
-  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Contrôle la créativité de la réponse IA. Une valeur plus élevée rendra l'IA plus créative et une valeur plus faible la rendra plus déterministe."
+  "Conversation Key": "Conversation Key",
+  "Creativity": "Creativity",
+  "Max Tokens": "Max Tokens",
+  "Web Search": "Web Search",
+  "Web Search Options": "Web Search Options",
+  "Text": "Text",
+  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.",
+  "Whether to use web search to find information for the AI to use in its response.": "Whether to use web search to find information for the AI to use in its response."
 }

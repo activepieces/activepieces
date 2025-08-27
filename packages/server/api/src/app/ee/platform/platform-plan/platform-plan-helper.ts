@@ -127,8 +127,8 @@ export const PlatformPlanHelper = {
         const { projectsAddon, userSeatsAddon, newPlan } = params
 
         const isNotBusinessPlan = newPlan !== PlanName.BUSINESS
-        const requestUserSeatAddon = !isNil(userSeatsAddon)
-        const requestProjectAddon = !isNil(projectsAddon)
+        const requestUserSeatAddon = !isNil(userSeatsAddon) && userSeatsAddon > 0
+        const requestProjectAddon = !isNil(projectsAddon) && projectsAddon > 0
 
         if (isNotBusinessPlan && (requestUserSeatAddon || requestProjectAddon)) {
             throw new ActivepiecesError({

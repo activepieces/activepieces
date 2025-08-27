@@ -219,7 +219,7 @@ export const handleAddingOrUpdatingCustomAgentPieceSelectorItem = (
     stepName,
     pieceSelectorItem: agentPieceSelectorItem,
   });
-  defaultValues.settings.input.agentId = agent.id;
+  defaultValues.settings.input.agentId = agent.externalId;
   return handleAddingOrUpdatingStep({
     pieceSelectorItem: agentPieceSelectorItem,
     operation: {
