@@ -69,10 +69,11 @@ const HomeButton = ({ route, showBackButton }: HomeButtonProps) => {
               </Button>
             </TooltipTrigger>
           </HomeButtonWrapper>
-
-          <TooltipContent side="bottom">
-            {!showBackButton && t('Go to Dashboard')}
-          </TooltipContent>
+          {!showBackButton && (
+            <TooltipContent side="bottom">
+              {t('Go to Dashboard')}
+            </TooltipContent>
+          )}
         </Tooltip>
       )}
     </>
