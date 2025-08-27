@@ -53,41 +53,40 @@ const AutoPropertiesFormComponent = React.memo(
     return (
       Object.keys(props).length > 0 && (
         <div className="flex flex-col gap-4 w-full">
-          {Object.entries(props)
-            .map(([propertyName]) => {
-              return (
-                <FormField
-                  key={propertyName}
-                  name={`${prefixValue}.${propertyName}`}
-                  control={form.control}
-                  render={({ field }) =>
-                    selectFormComponentForProperty({
-                      field: {
-                        ...field,
-                        onChange: (value) => {
-                          console.log('propertyName', propertyName);
-                          console.log('value', value);
-                          console.log('field', field);
-                          field.onChange(value);
-                          //must come after because the form value won't be updated yet otherwise
-                          onValueChange?.({
-                            value,
-                            propertyName,
-                          });
-                        },
+          {Object.entries(props).map(([propertyName]) => {
+            return (
+              <FormField
+                key={propertyName}
+                name={`${prefixValue}.${propertyName}`}
+                control={form.control}
+                render={({ field }) =>
+                  selectFormComponentForProperty({
+                    field: {
+                      ...field,
+                      onChange: (value) => {
+                        console.log('propertyName', propertyName);
+                        console.log('value', value);
+                        console.log('field', field);
+                        field.onChange(value);
+                        //must come after because the form value won't be updated yet otherwise
+                        onValueChange?.({
+                          value,
+                          propertyName,
+                        });
                       },
-                      propertyName,
-                      inputName: `${prefixValue}.${propertyName}`,
-                      property: props[propertyName],
-                      allowDynamicValues,
-                      markdownVariables: markdownVariables ?? {},
-                      useMentionTextInput: useMentionTextInput,
-                      disabled: disabled ?? false,
-                    })
-                  }
-                />
-              );
-            })}
+                    },
+                    propertyName,
+                    inputName: `${prefixValue}.${propertyName}`,
+                    property: props[propertyName],
+                    allowDynamicValues,
+                    markdownVariables: markdownVariables ?? {},
+                    useMentionTextInput: useMentionTextInput,
+                    disabled: disabled ?? false,
+                  })
+                }
+              />
+            );
+          })}
         </div>
       )
     );

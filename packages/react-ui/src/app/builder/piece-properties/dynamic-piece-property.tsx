@@ -1,4 +1,3 @@
-import deepEqual from 'deep-equal';
 import React, { useState, useRef, useContext } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
@@ -70,9 +69,7 @@ const DynamicPropertiesImplementation = React.memo(
         input[refresher] = refresherValues[index];
       });
 
-      if (
-        !isFirstRender.current
-      ) {
+      if (!isFirstRender.current) {
         // the field state won't be cleared if you only unset the parent prop value
         if (propertyMap) {
           Object.keys(propertyMap).forEach((childPropName) => {
