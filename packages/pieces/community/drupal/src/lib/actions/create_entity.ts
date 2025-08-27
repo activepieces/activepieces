@@ -3,68 +3,35 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { drupalAuth } from '../../';
+import { 
+  fetchEntityTypes, 
+  makeEntityRequest, 
+  DrupalEntityType, 
+  DrupalEntityTypeFields, 
+  DrupalEntityTypeFieldTypeSelectOptions 
+} from '../common/entity-utils';
+
 type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
 
-export const drupalCreateContentAction = createAction({
+export const drupalCreateEntityAction = createAction({
   auth: drupalAuth,
-  name: 'drupal-create-content',
-  displayName: 'Create Content',
-  description: 'Create a new content entity on the Drupal site',
+  name: 'drupal-create-entity',
+  displayName: 'Create Entity',
+  description: 'Create a new entity (content, user, taxonomy term, etc.) on the Drupal site',
   props: {
     entity_type: Property.Dropdown({
-      displayName: 'Entity type',
+      displayName: 'Entity Type',
       description: 'The entity type and bundle to create.',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        const { website_url, api_key } = (auth as DrupalAuthType);
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please authenticate first.',
-          };
-        }
-
-        try {
-          const response = await httpClient.sendRequest<DrupalEntityType[]>({
-            method: HttpMethod.GET,
-            url: website_url + `/modeler_api/entity_types`,
-            headers: {
-              'x-api-key': api_key,
-            },
-          });
-          console.debug('Entity types response', response);
-          if (response.status === 200) {
-            return {
-              disabled: false,
-              options: response.body.map((entity_type) => {
-                return {
-                  label: entity_type.label,
-                  description: entity_type.description,
-                  value: entity_type,
-                };
-              }),
-            };
-          }
-        } catch (e: any) {
-          console.debug('Entity types error', e);
-        }
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Error processing entity types',
-        };
+        return await fetchEntityTypes(auth as DrupalAuthType);
       },
     }),
     fields: Property.DynamicProperties({
-      displayName: 'Content',
+      displayName: 'Fields',
       refreshers: ['entity_type'],
       required: true,
       props: async ({ entity_type }) => {
@@ -122,49 +89,26 @@ export const drupalCreateContentAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { website_url, api_key } = (auth as DrupalAuthType);
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: website_url + `/modeler_api/entity/create`,
-      body: {
-        entity_type: propsValue.entity_type.id,
-        fields: propsValue.fields,
-      },
-      headers: {
-        'x-api-key': api_key,
-      },
+    const requestBody = {
+      entity_type: propsValue.entity_type.id,
+      fields: propsValue.fields,
     };
 
-    console.debug('Entity create', propsValue);
-    const result = await httpClient.sendRequest<DrupalEntityType>(request);
+    console.debug('Entity create request', requestBody);
+    
+    const result = await makeEntityRequest<DrupalEntityType>(
+      auth as DrupalAuthType,
+      `/modeler_api/entity/create`,
+      HttpMethod.POST,
+      requestBody
+    );
+    
     console.debug('Entity create call completed', result);
 
     if (result.status === 200 || result.status === 202) {
       return result.body;
     } else {
-      return result;
+      throw new Error(`Failed to create entity: ${result.status} - ${JSON.stringify(result.body)}`);
     }
   },
 });
-
-interface DrupalEntityType {
-  id: string;
-  label: string;
-  description: string;
-  fields: DrupalEntityTypeFields[];
-}
-
-interface DrupalEntityTypeFields {
-  key: string;
-  label: string;
-  description: string;
-  required: boolean;
-  type: string;
-  defaultValue: string;
-  options: DrupalEntityTypeFieldTypeSelectOptions[];
-}
-
-interface DrupalEntityTypeFieldTypeSelectOptions {
-  key: string;
-  name: string;
-}

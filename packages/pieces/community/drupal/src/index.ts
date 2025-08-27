@@ -9,7 +9,9 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { drupalCallToolAction } from './lib/actions/tools';
-import { drupalCreateContentAction } from './lib/actions/create_content';
+import { drupalCreateEntityAction } from './lib/actions/create_entity';
+import { drupalListEntitiesAction } from './lib/actions/list_entities';
+import { drupalGetEntityAction } from './lib/actions/get_entity';
 import { drupalPolling } from './lib/triggers/polling';
 import { drupalWebhook } from './lib/triggers/webhook';
 
@@ -87,6 +89,11 @@ export const drupal = createPiece({
     PieceCategory.MARKETING,
   ],
   authors: ['jurgenhaas'],
-  actions: [drupalCallToolAction, drupalCreateContentAction],
+  actions: [
+    drupalCallToolAction, 
+    drupalCreateEntityAction, 
+    drupalListEntitiesAction, 
+    drupalGetEntityAction
+  ],
   triggers: [drupalPolling, drupalWebhook],
 });
