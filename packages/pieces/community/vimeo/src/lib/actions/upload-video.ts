@@ -6,7 +6,7 @@ import { vimeoCommon } from '../common/client';
 export const uploadVideo = createAction({
     name: 'upload_video',
     displayName: 'Upload Video',
-    description: 'Upload a video to your Vimeo account using the pull approach',
+    description: 'Upload a video to your Vimeo account',
     auth: vimeoAuth,
     props: {
         upload_approach: Property.StaticDropdown({
@@ -24,37 +24,93 @@ export const uploadVideo = createAction({
         }),
         video_url: Property.ShortText({
             displayName: 'Video URL',
-            description: 'Direct URL to the video file (required for pull approach)',
+            description: 'Direct link to video file (required for pull upload)',
             required: false,
         }),
         video_size: Property.Number({
             displayName: 'Video Size (bytes)',
-            description: 'Size of the video file in bytes (required for pull and tus approaches)',
+            description: 'File size in bytes (required for pull and resumable uploads)',
             required: false,
         }),
         redirect_url: Property.ShortText({
             displayName: 'Redirect URL',
-            description: 'URL to redirect to after form upload completes (required for post approach)',
+            description: 'Where to redirect after form upload (required for form-based uploads)',
             required: false,
         }),
         name: Property.ShortText({
             displayName: 'Video Name',
-            description: 'Title for the video',
+            description: 'Video title',
             required: false,
         }),
         description: Property.LongText({
             displayName: 'Description',
-            description: 'Description for the video',
+            description: 'Video description',
             required: false,
         }),
-        folder_uri: Property.ShortText({
-            displayName: 'Folder URI',
-            description: 'URI of the folder to upload the video to (e.g., /users/{user_id}/projects/{project_id})',
+        folder: Property.DynamicProperties({
+            displayName: 'Folder',
+            description: 'Choose a folder for your video',
             required: false,
+            refreshers: [],
+            props: async ({ auth }) => {
+                if (!auth) {
+                    return {
+                        folder_uri: Property.ShortText({
+                            displayName: 'Folder URI',
+                            description: 'Enter folder URI manually (e.g., /users/{user_id}/projects/{project_id})',
+                            required: false,
+                        })
+                    };
+                }
+
+                try {
+                    const response = await vimeoCommon.apiCall({
+                        auth,
+                        method: HttpMethod.GET,
+                        resourceUri: '/me/projects',
+                        query: { per_page: '50' }
+                    });
+
+                    const folders = response.body?.data || [];
+                    const folderOptions = folders.map((folder: any) => ({
+                        label: folder.name || 'Untitled Folder',
+                        value: folder.uri
+                    }));
+
+                    if (folderOptions.length > 0) {
+                        return {
+                            folder_uri: Property.StaticDropdown({
+                                displayName: 'Select Folder',
+                                description: 'Choose a folder for your video',
+                                required: false,
+                                options: {
+                                    options: folderOptions
+                                }
+                            })
+                        };
+                    } else {
+                        return {
+                            folder_uri: Property.ShortText({
+                                displayName: 'Folder URI',
+                                description: 'No folders found. Enter folder URI manually',
+                                required: false,
+                            })
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        folder_uri: Property.ShortText({
+                            displayName: 'Folder URI',
+                            description: 'Enter folder URI manually (e.g., /users/{user_id}/projects/{project_id})',
+                            required: false,
+                        })
+                    };
+                }
+            }
         }),
         privacy_view: Property.StaticDropdown({
-            displayName: 'Privacy - Who can view',
-            description: 'Who can view the video on Vimeo',
+            displayName: 'Who Can View',
+            description: 'Set video visibility',
             required: false,
             defaultValue: 'anybody',
             options: {
@@ -69,12 +125,12 @@ export const uploadVideo = createAction({
         }),
         password: Property.ShortText({
             displayName: 'Password',
-            description: 'Password for the video (required when privacy view is password)',
+            description: 'Required when privacy is set to password-protected',
             required: false,
         }),
         privacy_embed: Property.StaticDropdown({
-            displayName: 'Privacy - Embed setting',
-            description: 'Where the video can be embedded',
+            displayName: 'Embed Settings',
+            description: 'Control where video can be embedded',
             required: false,
             defaultValue: 'public',
             options: {
@@ -85,32 +141,25 @@ export const uploadVideo = createAction({
                 ]
             }
         }),
-        embed_domains: Property.Array({
-            displayName: 'Embed Domains',
-            description: 'List of domains where video can be embedded (required when embed privacy is whitelist)',
+        embed_domains: Property.LongText({
+            displayName: 'Allowed Domains',
+            description: 'Enter domains where video can be embedded, one per line',
             required: false,
-            properties: {
-                domain: Property.ShortText({
-                    displayName: 'Domain',
-                    description: 'Domain name (e.g., example.com)',
-                    required: true,
-                })
-            }
         }),
         privacy_download: Property.Checkbox({
-            displayName: 'Privacy - Allow Download',
-            description: 'Whether users can download the video (not available for Vimeo Free)',
+            displayName: 'Allow Download',
+            description: 'Let users download the video (not available for free accounts)',
             required: false,
             defaultValue: false,
         }),
         privacy_add: Property.Checkbox({
-            displayName: 'Privacy - Allow Adding to Collections',
-            description: 'Whether users can add the video to showcases, channels, or groups',
+            displayName: 'Allow Adding to Collections',
+            description: 'Let users add video to showcases, channels, or groups',
             required: false,
             defaultValue: true,
         }),
         privacy_comments: Property.StaticDropdown({
-            displayName: 'Privacy - Comments',
+            displayName: 'Comments',
             description: 'Who can comment on the video',
             required: false,
             defaultValue: 'anybody',
@@ -124,13 +173,13 @@ export const uploadVideo = createAction({
         }),
         hide_from_vimeo: Property.Checkbox({
             displayName: 'Hide from Vimeo',
-            description: 'Hide video from everyone except owner (unlisted links work only for owner)',
+            description: 'Hide video from everyone except you',
             required: false,
             defaultValue: false,
         }),
         license: Property.StaticDropdown({
-            displayName: 'Creative Commons License',
-            description: 'Creative Commons license for the video',
+            displayName: 'License',
+            description: 'Set Creative Commons license',
             required: false,
             options: {
                 options: [
@@ -145,14 +194,70 @@ export const uploadVideo = createAction({
                 ]
             }
         }),
-        locale: Property.ShortText({
+        language: Property.DynamicProperties({
             displayName: 'Language',
-            description: 'Default language of the video (e.g., en, es, fr)',
+            description: 'Set video language',
             required: false,
+            refreshers: [],
+            props: async ({ auth }) => {
+                if (!auth) {
+                    return {
+                        locale: Property.ShortText({
+                            displayName: 'Language Code',
+                            description: 'Enter language code (e.g., en, es, fr)',
+                            required: false,
+                        })
+                    };
+                }
+
+                try {
+                    const response = await vimeoCommon.apiCall({
+                        auth,
+                        method: HttpMethod.GET,
+                        resourceUri: '/languages',
+                        query: { filter: 'texttracks' }
+                    });
+
+                    const languages = response.body?.data || [];
+                    const languageOptions = languages.map((lang: any) => ({
+                        label: lang.name || lang.code?.toUpperCase(),
+                        value: lang.code
+                    }));
+
+                    if (languageOptions.length > 0) {
+                        return {
+                            locale: Property.StaticDropdown({
+                                displayName: 'Select Language',
+                                description: 'Choose the video language',
+                                required: false,
+                                options: {
+                                    options: languageOptions
+                                }
+                            })
+                        };
+                    } else {
+                        return {
+                            locale: Property.ShortText({
+                                displayName: 'Language Code',
+                                description: 'No languages found. Enter language code manually',
+                                required: false,
+                            })
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        locale: Property.ShortText({
+                            displayName: 'Language Code',
+                            description: 'Enter language code (e.g., en, es, fr)',
+                            required: false,
+                        })
+                    };
+                }
+            }
         }),
         review_page_active: Property.Checkbox({
-            displayName: 'Enable Video Review',
-            description: 'Enable video review page',
+            displayName: 'Enable Review Page',
+            description: 'Allow video review and feedback',
             required: false,
             defaultValue: false,
         }),
@@ -165,7 +270,7 @@ export const uploadVideo = createAction({
             redirect_url,
             name,
             description,
-            folder_uri,
+            folder,
             privacy_view,
             password,
             privacy_embed,
@@ -175,9 +280,13 @@ export const uploadVideo = createAction({
             privacy_comments,
             hide_from_vimeo,
             license,
-            locale,
+            language,
             review_page_active
         } = context.propsValue;
+
+        // Extract dynamic property values
+        const folder_uri = folder?.['folder_uri'];
+        const locale = language?.['locale'];
 
         const approach = upload_approach || 'pull';
 
@@ -193,7 +302,7 @@ export const uploadVideo = createAction({
         if (privacy_view === 'password' && !password) {
             throw new Error('Password is required when privacy view is set to password');
         }
-        if (privacy_embed === 'whitelist' && (!embed_domains || embed_domains.length === 0)) {
+        if (privacy_embed === 'whitelist' && (!embed_domains || embed_domains.trim().length === 0)) {
             throw new Error('Embed domains are required when embed privacy is set to whitelist');
         }
 
@@ -261,8 +370,8 @@ export const uploadVideo = createAction({
             requestBody.privacy = privacySettings;
         }
 
-        if (privacy_embed === 'whitelist' && embed_domains && embed_domains.length > 0) {
-            requestBody.embed_domains = embed_domains.map((item: any) => item.domain);
+        if (privacy_embed === 'whitelist' && embed_domains && embed_domains.trim().length > 0) {
+            requestBody.embed_domains = embed_domains.split('\n').map(domain => domain.trim()).filter(domain => domain.length > 0);
         }
 
         if (review_page_active !== undefined) {

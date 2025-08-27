@@ -5,91 +5,108 @@ import { vimeoCommon } from '../common/client';
 
 export const deleteVideo = createAction({
     name: 'delete_video',
-    displayName: 'Delete Video(s)',
-    description: 'Permanently delete one or more videos from your account',
+    displayName: 'Delete Video',
+    description: 'Permanently delete a video from your account',
     auth: vimeoAuth,
     props: {
-        deletion_method: Property.StaticDropdown({
-            displayName: 'Deletion Method',
-            description: 'Choose whether to delete a single video or multiple videos',
+        video: Property.DynamicProperties({
+            displayName: 'Video',
+            description: 'Select a video to delete',
             required: true,
-            defaultValue: 'single',
-            options: {
-                options: [
-                    { label: 'Delete Single Video', value: 'single' },
-                    { label: 'Delete Multiple Videos', value: 'multiple' }
-                ]
+            refreshers: [],
+            props: async ({ auth }) => {
+                if (!auth) {
+                    return {
+                        video_id: Property.ShortText({
+                            displayName: 'Video ID',
+                            description: 'Enter video ID manually',
+                            required: true,
+                        })
+                    };
+                }
+
+                try {
+                    const response = await vimeoCommon.apiCall({
+                        auth,
+                        method: HttpMethod.GET,
+                        resourceUri: '/me/videos',
+                        query: { 
+                            per_page: '50',
+                            sort: 'date',
+                            direction: 'desc',
+                            fields: 'uri,name,description,created_time'
+                        }
+                    });
+
+                    const videos = response.body?.data || [];
+                    const videoOptions = videos.map((video: any) => ({
+                        label: `${video.name || 'Untitled'} (${video.uri?.split('/').pop()})`,
+                        value: video.uri?.split('/').pop()
+                    }));
+
+                    if (videoOptions.length > 0) {
+                        return {
+                            video_id: Property.StaticDropdown({
+                                displayName: 'Select Video',
+                                description: 'Choose a video to delete',
+                                required: true,
+                                options: {
+                                    options: videoOptions
+                                }
+                            })
+                        };
+                    } else {
+                        return {
+                            video_id: Property.ShortText({
+                                displayName: 'Video ID',
+                                description: 'No videos found. Enter video ID manually',
+                                required: true,
+                            })
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        video_id: Property.ShortText({
+                            displayName: 'Video ID',
+                            description: 'Enter video ID manually',
+                            required: true,
+                        })
+                    };
+                }
             }
-        }),
-        video_id: Property.ShortText({
-            displayName: 'Video ID',
-            description: 'The ID of the video to delete (e.g., 123456789)',
-            required: false,
-        }),
-        video_uris: Property.LongText({
-            displayName: 'Video URIs',
-            description: 'Comma-separated list of video URIs to delete (e.g., /videos/123456789,/videos/987654321)',
-            required: false,
         }),
         confirm_deletion: Property.Checkbox({
             displayName: 'Confirm Deletion',
-            description: 'Check this box to confirm you want to permanently delete the video(s)',
+            description: 'I understand this will permanently delete the video',
             required: true,
         }),
     },
     async run(context) {
-        const { deletion_method, video_id, video_uris, confirm_deletion } = context.propsValue;
+        const { video, confirm_deletion } = context.propsValue;
 
         if (!confirm_deletion) {
             throw new Error('You must confirm the deletion by checking the confirmation checkbox');
         }
 
-        const method = deletion_method || 'single';
+        // Extract dynamic property value
+        const video_id = video?.['video_id'];
 
-        if (method === 'single' && !video_id) {
-            throw new Error('Video ID is required for single video deletion');
-        }
-
-        if (method === 'multiple' && !video_uris) {
-            throw new Error('Video URIs are required for multiple video deletion');
+        if (!video_id) {
+            throw new Error('Video ID is required');
         }
 
         try {
-            let response;
-            let deletedItems;
-
-            if (method === 'single') {
-                response = await vimeoCommon.apiCall({
-                    auth: context.auth,
-                    method: HttpMethod.DELETE,
-                    resourceUri: `/videos/${video_id}`,
-                });
-                deletedItems = [video_id];
-            } else {
-                const urisParam = video_uris?.trim();
-                if (!urisParam) {
-                    throw new Error('Video URIs cannot be empty');
-                }
-
-                response = await vimeoCommon.apiCall({
-                    auth: context.auth,
-                    method: HttpMethod.DELETE,
-                    resourceUri: '/me/videos',
-                    query: {
-                        uris: urisParam
-                    }
-                });
-                deletedItems = urisParam.split(',').map(uri => uri.trim());
-            }
+            const response = await vimeoCommon.apiCall({
+                auth: context.auth,
+                method: HttpMethod.DELETE,
+                resourceUri: `/videos/${video_id}`,
+            });
 
             if (response.status === 204) {
                 return {
                     success: true,
-                    deletion_method: method,
-                    deleted_videos: deletedItems,
-                    message: method === 'single' 
-                        ? `Video ${video_id} has been permanently deleted`
-                        : `${deletedItems.length} video(s) have been permanently deleted`
+                    video_id,
+                    message: `Video has been permanently deleted`
                 };
             } else {
                 throw new Error(`Unexpected response status: ${response.status}. Expected 204 No Content.`);
@@ -101,24 +118,24 @@ export const deleteVideo = createAction({
                 
                 switch (errorCode) {
                     case 2204:
-                        throw new Error(`Invalid input: ${errorMessage}. Please check your video ID or URIs.`);
+                        throw new Error(`Invalid video ID: Please check the video ID is correct.`);
                     case 3200:
-                        throw new Error(`Permission denied: ${errorMessage}. You can only delete videos you own.`);
+                        throw new Error(`Permission denied: You can only delete videos you own.`);
                     case 5000:
-                        throw new Error(`Video not found: ${errorMessage}. The specified video does not exist.`);
+                        throw new Error(`Video not found: The video does not exist.`);
                     case 8000:
-                        throw new Error(`Authentication error: ${errorMessage}. Please check your credentials.`);
+                        throw new Error(`Authentication error: Please check your credentials.`);
                     default:
                         throw new Error(`Vimeo API error ${errorCode}: ${errorMessage}`);
                 }
             }
 
             if (error.response?.status === 403) {
-                throw new Error('Permission denied: You can only delete videos that you own.');
+                throw new Error('Permission denied: You can only delete videos you own.');
             }
 
             if (error.response?.status === 404) {
-                throw new Error('Video not found: The specified video does not exist or has already been deleted.');
+                throw new Error('Video not found: The video does not exist or has already been deleted.');
             }
             
             throw new Error(`Delete failed: ${error.message || 'Unknown error occurred'}`);
