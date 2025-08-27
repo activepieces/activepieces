@@ -53,7 +53,6 @@ const getDefaultValueForDynamicValue = (
     : JSON.stringify(currentValue);
 };
 
-
 const AutoFormFieldWrapper = ({
   placeBeforeLabelText = false,
   children,
@@ -83,9 +82,10 @@ const AutoFormFieldWrapper = ({
     );
     if (isInputNameLiteral(inputName)) {
       const currentValue = form.getValues(inputName);
-      const newValue = mode === PropertyExecutionType.DYNAMIC
-        ? getDefaultValueForDynamicValue(property, currentValue)
-        : property.defaultValue ?? null;
+      const newValue =
+        mode === PropertyExecutionType.DYNAMIC
+          ? getDefaultValueForDynamicValue(property, currentValue)
+          : property.defaultValue ?? null;
       form.setValue(inputName, newValue, {
         shouldValidate: true,
       });
