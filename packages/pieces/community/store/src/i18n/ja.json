@@ -22,6 +22,6 @@
   "The storage scope of the value.": "値のストレージスコープ。",
   "Separator between added values, use \\n for newlines": "値の間の区切り文字。改行には \\n を使用します。",
   "Project": "プロジェクト",
-  "Flow": "Flow",
-  "Run": "Run"
+  "Flow": "フロー",
+  "Run": "実行"
 }

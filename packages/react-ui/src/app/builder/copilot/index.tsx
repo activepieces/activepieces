@@ -177,7 +177,7 @@ export const CopilotSidebar = () => {
       }) as CodeAction;
 
       codeAction.displayName = message.content.title;
-      codeAction.customLogoUrl = message.content.icon;
+      codeAction.settings.customLogoUrl = message.content.icon;
       if (askAiButtonProps.type === FlowOperationType.ADD_ACTION) {
         applyOperation({
           type: FlowOperationType.ADD_ACTION,
@@ -208,9 +208,9 @@ export const CopilotSidebar = () => {
             request: {
               displayName: message.content.title,
               name: step.name,
-              customLogoUrl: message.content.icon,
               settings: {
                 ...codeAction.settings,
+                customLogoUrl: message.content.icon,
                 input: message.content.inputs,
                 errorHandlingOptions,
               },

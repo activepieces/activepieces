@@ -10,6 +10,7 @@ import {
     FlowVersionState,
     PackageType,
     PieceType,
+    PropertyExecutionType,
     StepLocationRelativeToParent,
 } from '../../src'
 import { _getImportOperations } from '../../src/lib/flows/operations/import-flow'
@@ -32,7 +33,11 @@ const flowVersionWithBranching: FlowVersion = {
             },
             pieceName: 'schedule',
             pieceVersion: '0.0.2',
-            inputUiInfo: {},
+            propertySettings: {
+                'cronExpression': {
+                    type: PropertyExecutionType.MANUAL,
+                },
+            },
             triggerName: 'cron_expression',
         },
         nextAction: {
@@ -64,8 +69,10 @@ const flowVersionWithBranching: FlowVersion = {
                     pieceName: 'store',
                     pieceVersion: '~0.2.6',
                     actionName: 'get',
-                    inputUiInfo: {
-                        customizedInputs: {},
+                    propertySettings: {
+                        'key': {
+                            type: PropertyExecutionType.MANUAL,
+                        },
                     },
                 },
                 displayName: 'Get',
@@ -98,8 +105,13 @@ const flowVersionWithBranching: FlowVersion = {
                     pieceName: 'discord',
                     pieceVersion: '0.2.1',
                     actionName: 'send_message_webhook',
-                    inputUiInfo: {
-                        customizedInputs: {},
+                    propertySettings: {
+                        'content': {
+                            type: PropertyExecutionType.MANUAL,
+                        },
+                        'webhook_url': {
+                            type: PropertyExecutionType.MANUAL,
+                        },
                     },
                 },
                 displayName: 'Send Message Webhook',
@@ -145,7 +157,11 @@ const emptyScheduleFlowVersion: FlowVersion = {
             },
             pieceName: 'schedule',
             pieceVersion: '0.0.2',
-            inputUiInfo: {},
+            propertySettings: {
+                'cronExpression': {
+                    type: PropertyExecutionType.MANUAL,
+                },
+            },
             triggerName: 'cron_expression',
         },
         displayName: 'Cron Expression',
@@ -193,7 +209,11 @@ describe('Flow Helper', () => {
                     },
                     pieceName: 'schedule',
                     pieceVersion: '~0.0.2',
-                    inputUiInfo: {},
+                    propertySettings: {
+                        'cronExpression': {
+                            type: PropertyExecutionType.MANUAL,
+                        },
+                    },
                     triggerName: 'cron_expression',
                 },
                 displayName: 'Cron Expression',
@@ -210,8 +230,10 @@ describe('Flow Helper', () => {
                         pieceName: 'store',
                         pieceVersion: '~0.2.6',
                         actionName: 'get',
-                        inputUiInfo: {
-                            customizedInputs: {},
+                        propertySettings: {
+                            'key': {
+                                type: PropertyExecutionType.MANUAL,
+                            },
                         },
                     },
                     displayName: 'Get',
@@ -237,7 +259,6 @@ describe('Flow Helper', () => {
                     valid: true,
                     settings: {
                         items: 'items',
-                        inputUiInfo: {},
                     },
                 },
             },
@@ -273,7 +294,11 @@ describe('Flow Helper', () => {
                 },
                 pieceName: 'schedule',
                 pieceVersion: '~0.0.2',
-                inputUiInfo: {},
+                propertySettings: {
+                    'cronExpression': {
+                        type: PropertyExecutionType.MANUAL,
+                    },
+                },
                 triggerName: 'cron_expression',
             },
             displayName: 'Cron Expression',
@@ -284,7 +309,6 @@ describe('Flow Helper', () => {
                 type: FlowActionType.LOOP_ON_ITEMS,
                 settings: {
                     items: 'items',
-                    inputUiInfo: {},
                 },
                 firstLoopAction: {
                     displayName: 'Code',
@@ -341,7 +365,14 @@ test('Duplicate Flow With Loops using Import', () => {
                 },
                 pieceName: 'github',
                 pieceVersion: '0.1.3',
-                inputUiInfo: {},
+                propertySettings: {
+                    'repository': {
+                        type: PropertyExecutionType.MANUAL,
+                    },
+                    'authentication': {
+                        type: PropertyExecutionType.MANUAL,
+                    },
+                },
                 triggerName: 'trigger_star',
             },
             nextAction: {
@@ -350,7 +381,6 @@ test('Duplicate Flow With Loops using Import', () => {
                 valid: false,
                 settings: {
                     items: '',
-                    inputUiInfo: {},
                 },
                 nextAction: {
                     name: 'step_3',
@@ -398,7 +428,6 @@ test('Duplicate Flow With Loops using Import', () => {
                     valid: false,
                     settings: {
                         items: '',
-                        inputUiInfo: {},
                     },
                     displayName: 'Loop on Items',
                 },

@@ -43,10 +43,11 @@ export class LocalPieceManager extends PieceManager {
                 '@activepieces/pieces-common': `link:${baseLinkPath}/common`,
                 '@activepieces/pieces-framework': `link:${baseLinkPath}/framework`,
                 '@activepieces/shared': `link:${basePath}/dist/packages/shared`,
+                '@activepieces/common-ai': `link:${baseLinkPath}/common-ai`,
             }
             await linkPackages(projectPath, join(baseLinkPath, 'framework'), '@activepieces/pieces-framework', frameworkPackages, params.log)
             await linkPackages(projectPath, join(baseLinkPath, 'common'), '@activepieces/pieces-common', frameworkPackages, params.log)
-
+            await linkPackages(projectPath, join(baseLinkPath, 'common-ai'), '@activepieces/common-ai', frameworkPackages, params.log)
             for (const piece of pieces) {
                 assertEqual(piece.packageType, PackageType.REGISTRY, 'packageType', `Piece ${piece.pieceName} is not of type REGISTRY`)
                 const directoryPath = await filePiecesUtils(packages, params.log).findDirectoryByPackageName(piece.pieceName)

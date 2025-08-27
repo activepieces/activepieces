@@ -37,6 +37,8 @@ import {
   FlowActionType,
   FlowAction,
   FlowTrigger,
+  PropertyExecutionType,
+  PropertySettings,
 } from '@activepieces/shared';
 
 function addAuthToPieceProps(
@@ -267,6 +269,7 @@ export const formUtils = {
         const defaultValues = getDefaultValueForStep(
           props ?? {},
           includeCurrentInput ? input : {},
+          selectedStep.settings.propertySettings ?? {},
         );
         return {
           ...selectedStep,
@@ -274,6 +277,17 @@ export const formUtils = {
             ...selectedStep.settings,
             input: defaultValues,
             errorHandlingOptions: defaultErrorOptions,
+            propertySettings: Object.fromEntries(
+              Object.entries(defaultValues).map(([key]) => [
+                key,
+                {
+                  type:
+                    selectedStep.settings.propertySettings?.[key]?.type ??
+                    PropertyExecutionType.MANUAL,
+                  schema: undefined,
+                },
+              ]),
+            ),
           },
         };
       }
@@ -298,6 +312,7 @@ export const formUtils = {
         const defaultValues = getDefaultValueForStep(
           props ?? {},
           includeCurrentInput ? input : {},
+          selectedStep.settings.propertySettings ?? {},
         );
 
         return {
@@ -305,6 +320,15 @@ export const formUtils = {
           settings: {
             ...selectedStep.settings,
             input: defaultValues,
+            propertySettings: Object.fromEntries(
+              Object.entries(defaultValues).map(([key]) => [
+                key,
+                {
+                  type: PropertyExecutionType.MANUAL,
+                  schema: undefined,
+                },
+              ]),
+            ),
           },
         };
       }
@@ -336,7 +360,7 @@ export const formUtils = {
             settings: Type.Object({
               branches: RouterBranchesSchema(true),
               executionType: Type.Enum(RouterExecutionType),
-              inputUiInfo: SampleDataSetting,
+              sampleData: SampleDataSetting,
             }),
           }),
         ]);
@@ -527,7 +551,7 @@ export const formUtils = {
 export function getDefaultValueForStep(
   props: PiecePropertyMap | OAuth2Props,
   existingInput: Record<string, unknown>,
-  customizedInput?: Record<string, boolean>,
+  propertySettings?: Record<string, PropertySettings>,
 ): Record<string, unknown> {
   const defaultValues: Record<string, unknown> = {};
   const entries = Object.entries(props);
@@ -540,8 +564,8 @@ export function getDefaultValueForStep(
       }
       case PropertyType.ARRAY: {
         const isCustomizedArrayOfProperties =
-          !isNil(customizedInput) &&
-          customizedInput[name] &&
+          !isNil(propertySettings) &&
+          propertySettings[name] &&
           !isNil(property.properties);
         const existingValue = existingInput[name];
         if (!isNil(existingValue)) {
