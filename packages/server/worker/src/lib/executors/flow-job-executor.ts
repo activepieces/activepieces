@@ -117,7 +117,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
     async executeFlow(jobData: OneTimeJobData, attempsStarted: number, engineToken: string): Promise<void> {
         try {
 
-            const flow = await flowWorkerCache(log).getFlow({
+            const flow = await flowWorkerCache.getFlow({
                 engineToken,
                 flowVersionId: jobData.flowVersionId,
             })

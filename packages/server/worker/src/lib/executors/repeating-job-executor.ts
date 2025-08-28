@@ -9,7 +9,7 @@ export const repeatingJobExecutor = (log: FastifyBaseLogger) => ({
     async executeRepeatingJob({ jobId, data, engineToken, workerToken }: Params): Promise<void> {
         const { flowVersionId, jobType } = data
 
-        const populatedFlow = await flowWorkerCache(log).getFlow({
+        const populatedFlow = await flowWorkerCache.getFlow({
             engineToken,
             flowVersionId,
         })
