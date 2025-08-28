@@ -373,5 +373,7 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             } in flow "${event.data.flowVersion.displayName}" for the step "${
                 event.data.request.request.stepName
             }".`
+        case FlowOperationType.UPDATE_FLOW_CONTEXT:
+            return `Updated flow context for flow "${event.data.flowVersion.displayName}" to "${event.data.request.request.flowContext}".`
     }
 }

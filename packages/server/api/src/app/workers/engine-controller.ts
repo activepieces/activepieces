@@ -1,10 +1,12 @@
+import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai'
 import { apAxios, AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, ResolveToolInputsRequest, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
-import { createAIModel, AIUsageFeature, SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai'
+import { openai } from '@ai-sdk/openai'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
+import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { fileService } from '../file/file.service'
@@ -13,13 +15,11 @@ import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { stepRunProgressHandler } from '../flows/flow-run/step-run-progress.handler'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
+import { toolInputsResolver } from '../mcp/tool/tool-inputs-resolver'
 import { triggerRunService } from '../trigger/trigger-run/trigger-run.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
-import { toolInputsResolver } from '../mcp/tool/tool-inputs-resolver'
-import { createOpenAI, openai } from '@ai-sdk/openai'
-import { accessTokenManager } from '../authentication/lib/access-token-manager'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -228,9 +228,10 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/resolve-tool-inputs', ResolveToolInputsParams, async (request) => {
-        const { pieceName, pieceVersion, actionName, auth, preDefinedInputs, propertiesInstructions } = request.body
-        const supportedProvider = SUPPORTED_AI_PROVIDERS.find(p => p.provider === 'openai');
-        const modelInstance = supportedProvider?.languageModels.find(m => m.displayName === 'GPT-4.1');
+        const { pieceName, pieceVersion, actionName, auth, preDefinedInputs, flowVersionId } = request.body
+        const supportedProvider = SUPPORTED_AI_PROVIDERS.find(p => p.provider === 'openai')
+        const modelInstance = supportedProvider?.languageModels.find(m => m.displayName === 'GPT-4.1')
+        const flowVersion = await flowVersionService(request.log).getOneOrThrow(flowVersionId)
 
         if (isNil(modelInstance)) {
             throw new ActivepiecesError({
@@ -261,12 +262,12 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             },
         })
 
-        return await toolInputsResolver.resolve({
+        return toolInputsResolver.resolve({
             pieceName,
             pieceVersion,
             actionName,
             auth,
-            userInstructions: propertiesInstructions ? JSON.stringify(propertiesInstructions) : '',
+            userInstructions: flowVersion.flowContext ?? '',
             projectId: request.principal.projectId,
             platformId: request.principal.platform.id,
             aiModel: model,

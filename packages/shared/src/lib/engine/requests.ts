@@ -54,6 +54,6 @@ export const ResolveToolInputsRequest = Type.Object({
     pieceVersion: Type.String(),
     actionName: Type.String(),
     preDefinedInputs: Type.Record(Type.String(), Type.Any()),
-    propertiesInstructions: Type.Record(Type.String(), Type.Any()),
+    flowVersionId: Type.String(),
 })
 export type ResolveToolInputsRequest = Static<typeof ResolveToolInputsRequest>

@@ -25,11 +25,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 import {
+  ApEdition,
   FlowAction,
   FlowTrigger,
   PropertyExecutionType,
+  ApFlagId,
 } from '@activepieces/shared';
 
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
@@ -80,11 +83,13 @@ const AutoFormFieldWrapper = ({
   field,
 }: AutoFormFieldWrapperProps) => {
   const form = useFormContext<FlowAction | FlowTrigger>();
+  const { data: flags } = flagsHooks.useFlags();
   const inputMode =
     form.getValues().settings?.propertySettings?.[propertyName]?.type;
   const isManuallyMode = inputMode === PropertyExecutionType.MANUAL;
   const isDynamicMode = inputMode === PropertyExecutionType.DYNAMIC;
   const isAutoMode = inputMode === PropertyExecutionType.AUTO;
+  const edition = flags?.[ApFlagId.EDITION];
 
   function handleDynamicValueToggleChange(mode: PropertyExecutionType) {
     const propertySettingsForSingleProperty = {
@@ -185,26 +190,30 @@ const AutoFormFieldWrapper = ({
                   <div>
                     <div className="font-medium">{t('Dynamic')}</div>
                     <div className="text-xs text-muted-foreground">
-                      {t('Use dynamic values from previous steps')}
+                      {t(
+                        'Enter the value dynamically from your previous steps',
+                      )}
                     </div>
                   </div>
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem
-                onClick={() =>
-                  handleDynamicValueToggleChange(PropertyExecutionType.AUTO)
-                }
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                <div>
-                  <div className="font-medium">{t('Auto')}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {t(
-                      'AI will fill out the field using the context of the previous steps',
-                    )}
+              {edition !== ApEdition.COMMUNITY && (
+                <DropdownMenuItem
+                  onClick={() =>
+                    handleDynamicValueToggleChange(PropertyExecutionType.AUTO)
+                  }
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  <div>
+                    <div className="font-medium">{t('Auto')}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {t(
+                        'AI will fill in the field using the context from previous steps and the flow prompt',
+                      )}
+                    </div>
                   </div>
-                </div>
-              </DropdownMenuItem>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

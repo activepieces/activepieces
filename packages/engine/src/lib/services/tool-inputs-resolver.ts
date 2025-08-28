@@ -1,6 +1,6 @@
-import fetchRetry from "fetch-retry"
-import { EngineConstants } from "../handler/context/engine-constants"
-import { ResolveToolInputsRequest } from "@activepieces/shared"
+import { ResolveToolInputsRequest } from '@activepieces/shared'
+import fetchRetry from 'fetch-retry'
+import { EngineConstants } from '../handler/context/engine-constants'
 
 const fetchWithRetry = fetchRetry(global.fetch)
 
@@ -16,6 +16,6 @@ export const toolInputsResolver = {
             retries: 3,
             body: JSON.stringify(request),
         })
-        return await response.json()
-    }
+        return response.json()
+    },
 }

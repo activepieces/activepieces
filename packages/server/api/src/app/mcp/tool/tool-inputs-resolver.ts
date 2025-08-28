@@ -35,7 +35,7 @@ export const toolInputsResolver = {
             },
         )
 
-        return await extractActionParametersFromUserInstructions({
+        return extractActionParametersFromUserInstructions({
             actionMetadata,
             auth,
             userInstructions,
@@ -66,13 +66,11 @@ async function extractActionParametersFromUserInstructions({
                 ...spreadIfDefined('auth', auth),
                 ...preDefinedInputs,
             }
-            console.log('HAHAHAHA accumulatedParameters', JSON.stringify(accumulatedParameters, null, 2))
 
             const parameterExtractionPrompt = toolUtils.buildParameterExtractionPrompt({
                 propertyNames: propertyNames.filter(propertyName => !preDefinedInputs[propertyName]),
                 userInstructions,
             })
-            console.log('HAHAHAHA parameterExtractionPrompt', parameterExtractionPrompt)
 
             const propertySchemas = (await Promise.all(propertyNames.map(async propertyName => {
                 const result = await toolUtils.buildZodSchemaForPieceProperty({
@@ -92,8 +90,6 @@ async function extractActionParametersFromUserInstructions({
                     .map(({ propertyName, schema }) => [propertyName, schema!]),
             )
 
-            console.log('HAHAHAHA schemaObject', JSON.stringify(schemaObject, null, 2))
-
             const propertySchemaValues = propertySchemas.map(({ value }) => value).filter(value => value !== null)
 
             try {
@@ -108,8 +104,6 @@ async function extractActionParametersFromUserInstructions({
                         },
                     }),
                 })
-
-                console.log('HAHAHAHA extractedParameters', JSON.stringify(extractedParameters, null, 2))
 
                 return {
                     ...accumulatedParameters,
@@ -129,7 +123,6 @@ async function extractActionParametersFromUserInstructions({
     const nonNullExtractedParameters = Object.fromEntries(
         Object.entries(extractedParameters).filter(([_, value]) => !isNil(value)),
     )
-    console.log('HAHAHAHA nonNullExtractedParameters', JSON.stringify(nonNullExtractedParameters, null, 2))
     return nonNullExtractedParameters
 }  
 

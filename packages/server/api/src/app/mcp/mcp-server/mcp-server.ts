@@ -1,5 +1,5 @@
-import { rejectedPromiseHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import { AIUsageFeature, createAIModel } from '@activepieces/common-ai'
+import { rejectedPromiseHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     EngineResponseStatus,
     ExecuteActionResponse,
@@ -17,6 +17,7 @@ import { LanguageModelV2 } from '@ai-sdk/provider'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { EngineHelperResponse } from 'server-worker'
 import { z } from 'zod'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
@@ -27,12 +28,11 @@ import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
 import { mcpService } from '../mcp-service'
 import { mcpUtils } from '../mcp-utils'
 import { toolInputsResolver } from '../tool/tool-inputs-resolver'
-import { EngineHelperResponse } from 'packages/server/worker/src/lib/runner/engine-runner-types'
-import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 
 
 export async function createMcpServer({

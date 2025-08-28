@@ -264,6 +264,7 @@ import { AddBillingCycle1754559781173 } from './migration/postgres/1754559781173
 import { EligibileForTrial1754852385518 } from './migration/postgres/1754852385518-EligibileForTrial'
 import { RemoveAgentTestPrompt1754863565929 } from './migration/postgres/1754863565929-RemoveAgentTestPrompt'
 import { RemoveAgentRelationToTables1755954192258 } from './migration/postgres/1755954192258-RemoveAgentRelationToTables'
+import { AddFlowContextToFlowVersion1756299230217 } from './migration/postgres/1756299230217-AddFlowContextToFlowVersion'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -449,6 +450,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddJobIdToTriggerRun1754510611628,
         RemoveAgentTestPrompt1754863565929,
         RemoveAgentRelationToTables1755954192258,
+        AddFlowContextToFlowVersion1756299230217,
     ]
 
     const edition = system.getEdition()

@@ -24,6 +24,7 @@ export const FlowVersion = Type.Object({
     agentIds: Type.Array(Type.String()),
     state: Type.Enum(FlowVersionState),
     connectionIds: Type.Array(Type.String()),
+    flowContext: Nullable(Type.String()),
 })
 
 export type FlowVersion = Static<typeof FlowVersion>
@@ -37,6 +38,7 @@ export const FlowVersionMetadata = Type.Object({
     updatedBy: Nullable(Type.String()),
     schemaVersion: Nullable(Type.String()),
     updatedByUser: Nullable(UserWithMetaInformation),
+    flowContext: Nullable(Type.String()),
 })
 
 export type FlowVersionMetadata = Static<typeof FlowVersionMetadata>
