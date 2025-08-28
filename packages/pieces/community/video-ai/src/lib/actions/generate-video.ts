@@ -1,9 +1,9 @@
-import { aiProps, httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { createAction, Property } from "@activepieces/pieces-framework"
-import { AI_USAGE_FEATURE_HEADER, AIUsageFeature, spreadIfDefined, SUPPORTED_AI_PROVIDERS } from "@activepieces/shared";
+import { spreadIfDefined } from "@activepieces/shared";
+import { SUPPORTED_AI_PROVIDERS, aiProps, AI_USAGE_FEATURE_HEADER, AIUsageFeature } from "@activepieces/common-ai";
 import { GoogleGenAI } from "@google/genai";
 import mime from 'mime-types';
-
 export const generateVideo = createAction({
     name: 'generate-video',
     displayName: 'Generate Video',
