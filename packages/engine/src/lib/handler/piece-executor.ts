@@ -209,18 +209,16 @@ async function resolveInputsUsingAI({ resolvedInput, constants, action, executio
     if (constants.edition === ApEdition.COMMUNITY) {
         return resolvedInput
     }
-    const autoPropertiesKeys = Object.entries(action.settings.propertySettings ?? {})
-        .filter(([_, value]) => value.type === PropertyExecutionType.AUTO)
-        .map(([key]) => key)
-    const autoPropertiesValues = Object.fromEntries(
-        autoPropertiesKeys.map(key => [key, undefined]),
-    )
-    const preDefinedInputs = {
+    const preDefinedInputs: Record<string, unknown> = {
         ...resolvedInput,
         ...(action.settings.input['auth'] ? { auth: action.settings.input['auth'] } : {}),
         previousStepsResults: executionState.steps,
-        ...autoPropertiesValues,
     }
+    Object.entries(action.settings.propertySettings ?? {}).forEach(([key, value]) => {
+        if (value.type === PropertyExecutionType.AUTO) {
+            preDefinedInputs[key] = undefined
+        }
+    })
     assertNotNullOrUndefined(action.settings.actionName, 'actionName')
     try {
         const aiResolvedInput = await toolInputsResolver.resolve(constants, {

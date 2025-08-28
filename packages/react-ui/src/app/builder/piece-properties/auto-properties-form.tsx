@@ -64,9 +64,6 @@ const AutoPropertiesFormComponent = React.memo(
                     field: {
                       ...field,
                       onChange: (value) => {
-                        console.log('propertyName', propertyName);
-                        console.log('value', value);
-                        console.log('field', field);
                         field.onChange(value);
                         //must come after because the form value won't be updated yet otherwise
                         onValueChange?.({
