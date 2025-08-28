@@ -10,12 +10,60 @@
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "packages/react-ui/jest.config.ts"
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
       }
     },
     "vite-typecheck": {
       "executor": "nx:run-commands",
       "options": {
         "command": "tsc --noEmit -p packages/react-ui/tsconfig.app.json"
+      }
+    },
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/packages/react-ui"
+      },
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "mode": "production"
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/vite:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "react-ui:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "react-ui:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "react-ui:build:production",
+          "hmr": false
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/react-ui/**/*.{ts,tsx,js,jsx}"
+        ]
       }
     }
   }

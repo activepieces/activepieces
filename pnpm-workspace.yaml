@@ -1,0 +1,27 @@
+packages:
+  - packages/*
+  - packages/pieces/*
+  - packages/server/*
+
+ignoredBuiltDependencies:
+  - '@parcel/watcher'
+  - '@swc/core'
+  - bcrypt
+  - core-js
+  - cpu-features
+  - esbuild
+  - exifreader
+  - fastify-socket
+  - isolated-vm
+  - msgpackr-extract
+  - nx
+  - protobufjs
+  - puppeteer
+  - sharp
+  - sqlite3
+  - ssh2
+  - yarn
+
+onlyBuiltDependencies:
+  - oxc-resolver
+  - unrs-resolver

@@ -1,16 +1,18 @@
 {
-  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "module": "commonjs",
-  },
-  "files": [],
-  "include": [],
-  "references": [
-    {
-      "path": "./tsconfig.lib.json"
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "strict": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
     },
-    {
-      "path": "./tsconfig.spec.json"
-    }
-  ]
+    "outDir": "dist"
+  },
+  "include": ["src"]
 }

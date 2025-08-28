@@ -265,7 +265,7 @@ const handleBinaryResponse = async (
       mime.extension(contentTypeValue ?? '') || 'txt';
     body = await files.write({
       fileName: `output.${fileExtension}`,
-      data: Buffer.from(bodyContent),
+      data: bodyContent instanceof ArrayBuffer ? Buffer.from(new Uint8Array(bodyContent)) : Buffer.from(bodyContent as string | ArrayLike<number>),
     });
   } else {
     body = bodyContent;

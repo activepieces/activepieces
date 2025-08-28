@@ -1,10 +1,10 @@
 import { writeFile } from 'node:fs/promises';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { buildPiece, findPiece, findPieces } from '../utils/piece-utils';
-import { makeFolderRecursive } from '../utils/files';
+import { buildPiece, findPiece, findPieces } from '../utils/piece-utils.js';
+import { makeFolderRecursive } from '../utils/files.js';
 import { join, basename } from 'node:path';
-import { exec } from '../utils/exec';
+import { exec } from '../utils/exec.js';
 import { pieceTranslation } from '@activepieces/pieces-framework';
 import { MAX_KEY_LENGTH_FOR_CORWDIN } from '@activepieces/shared';
 

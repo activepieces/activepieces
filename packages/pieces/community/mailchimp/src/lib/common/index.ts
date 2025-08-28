@@ -8,13 +8,30 @@ import mailchimp from '@mailchimp/mailchimp_marketing';
 import { AuthenticationType } from '@activepieces/pieces-common';
 import crypto from 'crypto';
 
-export const mailchimpCommon = {
+interface MailchimpCommon {
+  mailChimpListIdDropdown: any; // Replace 'any' with the proper type from @activepieces/pieces-framework
+  getUserLists(authProp: OAuth2PropertyValue): Promise<unknown>;
+  getMailChimpServerPrefix(access_token: string): Promise<string>;
+  enableWebhookRequest(params: EnableTriggerRequestParams): Promise<string>;
+  disableWebhookRequest(params: DisableTriggerRequestParams): Promise<void>;
+  getMD5EmailHash(email: string): string;
+  mailChimpCampaignIdDropdown: any; // Replace 'any' with the proper type
+  mailChimpStoreIdDropdown: any; // Replace 'any' with the proper type
+  makeApiRequest<T = any>(
+    authProp: OAuth2PropertyValue,
+    endpoint: string,
+    method?: HttpMethod,
+    body?: any
+  ): Promise<T>;
+}
+
+export const mailchimpCommon: MailchimpCommon = {
   mailChimpListIdDropdown: Property.Dropdown<string>({
     displayName: 'Audience',
     refreshers: [],
     description: 'Audience you want to add the contact to',
     required: true,
-    options: async ({ auth }) => {
+    options: async ({ auth }): Promise<{ disabled: boolean; options: Array<{ label: string; value: string }>; placeholder?: string }> => {
       if (!auth) {
         return {
           disabled: true,
@@ -41,8 +58,9 @@ export const mailchimpCommon = {
   }),
   getUserLists: async (authProp: OAuth2PropertyValue) => {
     const access_token = authProp.access_token;
-    const mailChimpServerPrefix =
-      await mailchimpCommon.getMailChimpServerPrefix(access_token!);
+    const mailChimpServerPrefix: string = await mailchimpCommon.getMailChimpServerPrefix(
+      authProp.access_token
+    );
     mailchimp.setConfig({
       accessToken: access_token,
       server: mailChimpServerPrefix,
@@ -115,7 +133,7 @@ export const mailchimpCommon = {
     refreshers: [],
     description: 'Campaign to use',
     required: true,
-    options: async ({ auth }) => {
+    options: async ({ auth }): Promise<{ disabled: boolean; options: Array<{ label: string; value: string }>; placeholder?: string }> => {
       if (!auth) {
         return {
           disabled: true,
@@ -126,8 +144,9 @@ export const mailchimpCommon = {
 
       const authProp = auth as OAuth2PropertyValue;
       const access_token = authProp.access_token;
-      const mailChimpServerPrefix =
-        await mailchimpCommon.getMailChimpServerPrefix(access_token!);
+      const mailChimpServerPrefix: string = await mailchimpCommon.getMailChimpServerPrefix(
+        authProp.access_token
+      );
       
       const campaignResponse = await httpClient.sendRequest({
         method: HttpMethod.GET,
@@ -154,7 +173,7 @@ export const mailchimpCommon = {
     refreshers: [],
     description: 'E-commerce store to use',
     required: true,
-    options: async ({ auth }) => {
+    options: async ({ auth }): Promise<{ disabled: boolean; options: Array<{ label: string; value: string }>; placeholder?: string }> => {
       if (!auth) {
         return {
           disabled: true,
@@ -165,8 +184,9 @@ export const mailchimpCommon = {
 
       const authProp = auth as OAuth2PropertyValue;
       const access_token = authProp.access_token;
-      const mailChimpServerPrefix =
-        await mailchimpCommon.getMailChimpServerPrefix(access_token!);
+      const mailChimpServerPrefix: string = await mailchimpCommon.getMailChimpServerPrefix(
+        authProp.access_token
+      );
       
       const storeResponse = await httpClient.sendRequest({
         method: HttpMethod.GET,
@@ -188,17 +208,18 @@ export const mailchimpCommon = {
       };
     },
   }),
-  makeApiRequest: async (
+  makeApiRequest: async function <T = any>(
     authProp: OAuth2PropertyValue,
     endpoint: string,
     method: HttpMethod = HttpMethod.GET,
     body?: any
-  ) => {
+  ): Promise<T> {
     const access_token = authProp.access_token;
-    const mailChimpServerPrefix =
-      await mailchimpCommon.getMailChimpServerPrefix(access_token!);
+    const mailChimpServerPrefix: string = await mailchimpCommon.getMailChimpServerPrefix(
+      authProp.access_token
+    );
     
-    return await httpClient.sendRequest({
+    const response = await httpClient.sendRequest<T>({
       method,
       url: `https://${mailChimpServerPrefix}.api.mailchimp.com/3.0${endpoint}`,
       authentication: {
@@ -207,6 +228,8 @@ export const mailchimpCommon = {
       },
       body,
     });
+
+    return response.body;
   },
 };
 

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 
 import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -28,6 +29,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { todosHooks } from '@/features/todos/lib/todo-hook';
 import { todoUtils } from '@/features/todos/lib/todo-utils';
+import { todosApi } from '@/features/todos/lib/todos-api';
 import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/utils';
 import {
@@ -42,7 +44,7 @@ import { ApAvatar } from '../../../components/custom/ap-avatar';
 import { TodoDetailsDrawer } from './todos-details-drawer';
 
 function TodosPage() {
-  const [selectedRows, setSelectedRows] = useState<Array<Todo>>([]);
+  const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
   const [selectedTask, setSelectedTask] = useState<PopulatedTodo | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'needs-action'>('all');
@@ -52,7 +54,14 @@ function TodosPage() {
   const { data: currentUser } = userHooks.useCurrentUser();
 
   const { data, isLoading, refetch } = todosHooks.useTodosList(activeTab);
-  const { mutateAsync: deleteTodos } = todosHooks.useDeleteTodos(refetch);
+  const { mutateAsync: deleteTodos } = useMutation({
+    mutationFn: async (todoIds: string[]) => {
+      await Promise.all(todoIds.map((id) => todosApi.delete(id)));
+    },
+    onSuccess: () => {
+      refetch();
+    },
+  });
 
   const filteredData = useMemo(() => {
     if (!data?.data) return undefined;
@@ -115,7 +124,7 @@ function TodosPage() {
     return CircleDot;
   };
 
-  const bulkActions: BulkAction<Todo>[] = useMemo(
+  const bulkActions: BulkAction<PopulatedTodo>[] = useMemo(
     () => [
       {
         render: (_, resetSelection) => {
@@ -128,10 +137,14 @@ function TodosPage() {
                     'Are you sure you want to delete these todos? This action cannot be undone.',
                   )}
                   mutationFn={async () => {
-                    await deleteTodos(selectedRows.map((row) => row.id));
-                    refetch();
-                    resetSelection();
-                    setSelectedRows([]);
+                    try {
+                      await deleteTodos(selectedRows);
+                      resetSelection();
+                      setSelectedRows([]);
+                    } catch (error) {
+                      console.error('Error deleting todos:', error);
+                      throw error;
+                    }
                   }}
                   entityName={t('todos')}
                   open={showDeleteDialog}
@@ -153,7 +166,7 @@ function TodosPage() {
         },
       },
     ],
-    [selectedRows, showDeleteDialog],
+    [selectedRows, showDeleteDialog, deleteTodos, refetch],
   );
 
   const columns: ColumnDef<RowDataWithActions<PopulatedTodo>, unknown>[] = [
@@ -166,59 +179,28 @@ function TodosPage() {
             table.getIsSomePageRowsSelected()
           }
           variant="secondary"
-          onCheckedChange={(value) => {
-            const isChecked = !!value;
-            table.toggleAllPageRowsSelected(isChecked);
-
-            if (isChecked) {
-              const allRows = table
-                .getRowModel()
-                .rows.map((row) => row.original);
-
-              const newSelectedRows = [...allRows, ...selectedRows];
-
-              const uniqueRows = Array.from(
-                new Map(
-                  newSelectedRows.map((item) => [item.id, item]),
-                ).values(),
-              );
-
-              setSelectedRows(uniqueRows);
+          onCheckedChange={(value: boolean) => {
+            if (value) {
+              setSelectedRows(data?.data?.map((todo) => todo.id) || []);
             } else {
-              const filteredRows = selectedRows.filter((row) => {
-                return !table
-                  .getRowModel()
-                  .rows.some((r) => r.original.id === row.id);
-              });
-              setSelectedRows(filteredRows);
+              setSelectedRows([]);
             }
+            table.toggleAllPageRowsSelected(!!value);
           }}
         />
       ),
       cell: ({ row }) => {
-        const isChecked = selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
-        );
+        const isChecked = selectedRows.includes(row.original.id);
         return (
           <Checkbox
             variant="secondary"
             checked={isChecked}
-            onCheckedChange={(value) => {
-              const isChecked = !!value;
-              let newSelectedRows = [...selectedRows];
-              if (isChecked) {
-                const exists = newSelectedRows.some(
-                  (selectedRow) => selectedRow.id === row.original.id,
-                );
-                if (!exists) {
-                  newSelectedRows.push(row.original);
-                }
+            onCheckedChange={(value: boolean) => {
+              if (value) {
+                setSelectedRows((prev) => [...prev, row.original.id]);
               } else {
-                newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
-                );
+                setSelectedRows((prev) => prev.filter((id) => id !== row.original.id));
               }
-              setSelectedRows(newSelectedRows);
               row.toggleSelected(!!value);
             }}
           />

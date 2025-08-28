@@ -11,12 +11,12 @@
       "cache": true
     },
     "test": {
-      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
+      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.cjs"],
       "cache": true
     },
     "@nx/jest:jest": {
       "cache": true,
-      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
+      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.cjs"],
       "options": {
         "passWithNoTests": true
       },

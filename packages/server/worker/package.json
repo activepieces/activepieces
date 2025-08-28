@@ -6,7 +6,7 @@
   "typings": "./src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-framework": "0.18.4",
-    "@activepieces/server-shared": "0.0.2",
+    "@activepieces/server-shared": "workspace:*",
     "@activepieces/shared": "0.19.1",
     "write-file-atomic": "5.0.1",
     "tslib": "2.6.2",

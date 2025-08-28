@@ -15,7 +15,7 @@
         "main": "packages/server/api/src/main.ts",
         "tsConfig": "packages/server/api/tsconfig.app.json",
         "assets": ["packages/server/api/src/assets"],
-        "webpackConfig": "packages/server/api/webpack.config.js",
+        "webpackConfig": "packages/server/api/webpack.config.cjs",
         "babelUpwardRootMode": true,
         "sourceMap": true
       },

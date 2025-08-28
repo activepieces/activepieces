@@ -1,8 +1,9 @@
 {
     "name": "@activepieces/cli",
     "version": "1.0.1",
+    "type": "module",
     "bin": {
-        "pieces-cli":"../../dist/cli/src/index.js"
+        "pieces-cli": "../../dist/cli/src/index.js"
     },
     "scripts": {
         "start": "ts-node src/index.ts",
@@ -10,7 +11,15 @@
     },
     "dependencies": {
         "@activepieces/pieces-framework": "*",
-        "@activepieces/shared": "*"
+        "@activepieces/shared": "*",
+        "dotenv": "^16.4.5"
+    },
+    "devDependencies": {
+        "inquirer": "^8.2.7",
+        "@types/dotenv": "^8.2.0"
+    },
+    "ts-node": {
+        "esm": true,
+        "experimentalSpecifierResolution": "node"
     }
 }
-  

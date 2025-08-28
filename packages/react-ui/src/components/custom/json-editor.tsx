@@ -78,7 +78,7 @@ const JsonEditor = React.memo(
           }}
           theme={editorTheme}
           readOnly={readonly}
-          onFocus={() => onFocus?.(ref)}
+          onFocus={() => ref.current && onFocus?.(ref)}
           extensions={extensions}
         />
       </div>

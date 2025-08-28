@@ -1,14 +1,18 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "composite": true,
     "outDir": "../../dist/out-tsc",
     "types": [
       "node",
-      "@nx/react/typings/cssmodule.d.ts",
-      "@nx/react/typings/image.d.ts",
       "vite/client"
     ],
-    "noEmit": true,
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
       "@/*": [

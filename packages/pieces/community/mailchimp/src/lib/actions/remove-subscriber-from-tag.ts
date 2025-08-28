@@ -7,7 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import crypto from 'crypto';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mailchimpAuth } from '../..';
+import { mailchimpAuth } from '../auth';
 
 export const removeSubscriberFromTag = createAction({
   auth: mailchimpAuth,

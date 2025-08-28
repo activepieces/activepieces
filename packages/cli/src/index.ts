@@ -1,12 +1,12 @@
 import { Command } from 'commander';
-import { createActionCommand } from './lib/commands/create-action';
-import { createPieceCommand } from './lib/commands/create-piece';
-import { createTriggerCommand } from './lib/commands/create-trigger';
-import { syncPieceCommand } from './lib/commands/sync-pieces';
-import { publishPieceCommand } from './lib/commands/publish-piece';
-import { buildPieceCommand } from './lib/commands/build-piece';
-import { generateWorkerTokenCommand } from './lib/commands/generate-worker-token';
-import { generateTranslationFileForAllPiecesCommand, generateTranslationFileForPieceCommand } from './lib/commands/generate-translation-file-for-piece';
+import { createActionCommand } from './lib/commands/create-action.ts';
+import { createPieceCommand } from './lib/commands/create-piece.ts';
+import { createTriggerCommand } from './lib/commands/create-trigger.ts';
+import { syncPieceCommand } from './lib/commands/sync-pieces.ts';
+import { publishPieceCommand } from './lib/commands/publish-piece.ts';
+import { buildPieceCommand } from './lib/commands/build-piece.ts';
+import { generateWorkerTokenCommand } from './lib/commands/generate-worker-token.ts';
+import { generateTranslationFileForAllPiecesCommand, generateTranslationFileForPieceCommand } from './lib/commands/generate-translation-file-for-piece.ts';
 
 const pieceCommand = new Command('pieces')
   .description('Manage pieces');

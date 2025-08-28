@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { publishPieceFromFolder, findPiece, assertPieceExists } from '../utils/piece-utils';
+import { publishPieceFromFolder, findPiece, assertPieceExists } from '../utils/piece-utils.js';
 import chalk from "chalk";
 import inquirer from 'inquirer';
 import * as dotenv from 'dotenv';
@@ -34,18 +34,18 @@ export const publishPieceCommand = new Command('publish')
     .description('Publish pieces to the platform')
     .option('-f, --fail-on-error', 'Exit the process if an error occurs while syncing a piece', false)
     .action(async (command) => {
-        const questions = [
+        const answers = await inquirer.prompt([
             {
                 type: 'input',
                 name: 'name',
                 message: 'Enter the piece folder name',
-                placeholder: 'google-drive',
+                default: 'google-drive',
             },
             {
                 type: 'input',
                 name: 'apiUrl',
                 message: 'Enter the API URL',
-                placeholder: 'https://cloud.activepieces.com/api',
+                default: 'https://cloud.activepieces.com/api',
             },
             {
                 type: 'list',
@@ -54,18 +54,18 @@ export const publishPieceCommand = new Command('publish')
                 choices: ['Env Variable (AP_API_KEY)', 'Manually'],
                 default: 'Env Variable (AP_API_KEY)'
             }
-        ]
-
-        const answers = await inquirer.prompt(questions);
+        ]);
+        let apiKey: string | undefined;
         if (answers.apiKeySource === 'Manually') {
             const apiKeyAnswers = await inquirer.prompt([{
                 type: 'input',
                 name: 'apiKey',
                 message: 'Enter the API Key',
             }]);
-            answers.apiKey = apiKeyAnswers.apiKey;
+            apiKey = apiKeyAnswers.apiKey;
+        } else {
+            apiKey = process.env.AP_API_KEY;
         }
-        const apiKey = answers.apiKeySource === 'Env Variable (AP_API_KEY)' ? process.env.AP_API_KEY : answers.apiKey;
         assertNullOrUndefinedOrEmpty(answers.name, 'Piece name is required');
         assertNullOrUndefinedOrEmpty(answers.apiUrl, 'API URL is required');
         assertNullOrUndefinedOrEmpty(apiKey, 'API Key is required');

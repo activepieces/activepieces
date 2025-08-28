@@ -1,6 +1,6 @@
 export default {
   displayName: 'common-ai',
-  preset: '../../../../jest.preset.js',
+  preset: '../../../../jest.preset.cjs',
   testEnvironment: 'node',
   transform: {
     '^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }],

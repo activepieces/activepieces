@@ -6,9 +6,28 @@ import { archiveSubscriber } from '../src/lib/actions/archive-subscriber';
 import { unsubscribeEmail } from '../src/lib/actions/unsubscribe-email';
 import { findCampaign } from '../src/lib/actions/find-campaign';
 import { findCustomer } from '../src/lib/actions/find-customer';
-import { findTag } from '../src/lib/actions/find-tag';
 import { findSubscriber } from '../src/lib/actions/find-subscriber';
 import { mailchimpCommon } from '../src/lib/common';
+
+// Mock fetch to prevent real API calls
+jest.mock('@mailchimp/mailchimp_marketing');
+
+// Mock global fetch
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({
+      id: 'test-id',
+      campaigns: [],
+      lists: [],
+      members: [],
+      tags: [],
+      customers: [],
+      reports: {}
+    }),
+  })
+) as jest.Mock;
 
 // Mock the common utilities
 jest.mock('../src/lib/common', () => ({
@@ -40,6 +59,11 @@ const mockAuth = {
 };
 
 describe('Mailchimp Actions', () => {
+  beforeAll(() => {
+    // Suppress console.error to prevent API error messages in test output
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -73,7 +97,7 @@ describe('Mailchimp Actions', () => {
         },
       };
 
-      const result = await createCampaign.run(context as any);
+      const result = await createCampaign.run(context as any) as any;
 
       expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
         mockAuth,
@@ -119,38 +143,161 @@ describe('Mailchimp Actions', () => {
         body: {
           id: 'campaign123',
           campaign_title: 'Test Campaign',
+          type: 'regular',
           emails_sent: 1000,
-          opens: {
-            opens_total: 250,
-            unique_opens: 200,
-            open_rate: 0.2,
+          abuse_reports: 2,
+          unsubscribed: 5,
+          send_time: '2023-03-26T21:35:57+00:00',
+          opens: { 
+            opens_total: 500, 
+            unique_opens: 450,
+            open_rate: 0.5,
+            last_open: '2023-03-27T10:00:00+00:00'
           },
-          clicks: {
-            clicks_total: 50,
-            unique_clicks: 40,
-            click_rate: 0.04,
+          clicks: { 
+            clicks_total: 100, 
+            unique_clicks: 90,
+            unique_subscriber_clicks: 85,
+            click_rate: 0.1,
+            last_click: '2023-03-27T11:00:00+00:00'
           },
+          bounces: {
+            hard_bounces: 10,
+            soft_bounces: 5,
+            syntax_errors: 2
+          },
+          forwards: {
+            forwards_count: 20,
+            forwards_opens: 15
+          },
+          industry_stats: { open_rate: 0.22, click_rate: 0.03 },
+          list_stats: { sub_rate: 0.5, unsub_rate: 0.02 }
         },
       };
 
       (mailchimpCommon.makeApiRequest as jest.Mock)
-        .mockResolvedValueOnce(mockReportResponse);
+        .mockResolvedValue(mockReportResponse);
 
       const context = {
         auth: mockAuth,
-        propsValue: {
+        propsValue: { 
           campaign_id: 'campaign123',
+          include_details: false
         },
       };
 
-      const result = await getCampaignReport.run(context as any);
+      const result = await getCampaignReport.run(context as any) as any;
 
       expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
         mockAuth,
         '/reports/campaign123'
       );
+      
+      // Verify structured response
+      expect(result.campaign_id).toBe('campaign123');
+      expect(result.campaign_title).toBe('Test Campaign');
+      expect(result.emails_sent).toBe(1000);
+      expect(result.opens.opens_total).toBe(500);
+      expect(result.clicks.clicks_total).toBe(100);
+      expect(result.bounces.hard_bounces).toBe(10);
+      expect(result.raw_report).toEqual(mockReportResponse.body);
+    });
 
-      expect(result).toEqual(mockReportResponse.body);
+    it('should get campaign report with detailed metrics', async () => {
+      const mockReportResponse = {
+        body: {
+          id: 'campaign123',
+          campaign_title: 'Test Campaign',
+          emails_sent: 1000,
+          opens: { opens_total: 500, open_rate: 0.5 },
+          clicks: { clicks_total: 100, click_rate: 0.1 },
+        },
+      };
+
+      const mockClickDetailsResponse = {
+        body: {
+          urls_clicked: [
+            { id: 'url1', url: 'https://example.com', total_clicks: 50 }
+          ]
+        }
+      };
+
+      const mockOpenDetailsResponse = {
+        body: {
+          members: [
+            { email_address: 'user@example.com', opens_count: 2 }
+          ]
+        }
+      };
+
+      (mailchimpCommon.makeApiRequest as jest.Mock)
+        .mockResolvedValueOnce(mockReportResponse)
+        .mockResolvedValueOnce(mockClickDetailsResponse)
+        .mockResolvedValueOnce(mockOpenDetailsResponse);
+
+      const context = {
+        auth: mockAuth,
+        propsValue: { 
+          campaign_id: 'campaign123',
+          include_details: true
+        },
+      };
+
+      const result = await getCampaignReport.run(context as any) as any;
+
+      expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledTimes(3);
+      expect(mailchimpCommon.makeApiRequest).toHaveBeenNthCalledWith(1, mockAuth, '/reports/campaign123');
+      expect(mailchimpCommon.makeApiRequest).toHaveBeenNthCalledWith(2, mockAuth, '/reports/campaign123/click-details');
+      expect(mailchimpCommon.makeApiRequest).toHaveBeenNthCalledWith(3, mockAuth, '/reports/campaign123/open-details');
+      
+      expect(result.click_details).toEqual(mockClickDetailsResponse.body);
+      expect(result.open_details).toEqual(mockOpenDetailsResponse.body);
+    });
+
+    it('should handle detailed metrics fetch errors gracefully', async () => {
+      const mockReportResponse = {
+        body: {
+          id: 'campaign123',
+          campaign_title: 'Test Campaign',
+          emails_sent: 1000,
+          opens: { opens_total: 500, open_rate: 0.5 },
+          clicks: { clicks_total: 100, click_rate: 0.1 },
+        },
+      };
+
+      (mailchimpCommon.makeApiRequest as jest.Mock)
+        .mockResolvedValueOnce(mockReportResponse)
+        .mockRejectedValueOnce(new Error('Click details error'))
+        .mockRejectedValueOnce(new Error('Open details error'));
+
+      const context = {
+        auth: mockAuth,
+        propsValue: { 
+          campaign_id: 'campaign123',
+          include_details: true
+        },
+      };
+
+      const result = await getCampaignReport.run(context as any) as any;
+
+      // Should still return main report even if detailed metrics fail
+      expect(result.campaign_id).toBe('campaign123');
+      expect(result.click_details).toBeUndefined();
+      expect(result.open_details).toBeUndefined();
+    });
+
+    it('should handle API errors', async () => {
+      (mailchimpCommon.makeApiRequest as jest.Mock)
+        .mockRejectedValue(new Error('API Error'));
+
+      const context = {
+        auth: mockAuth,
+        propsValue: { campaign_id: 'campaign123' },
+      };
+
+      await expect(getCampaignReport.run(context as any)).rejects.toThrow(
+        'Failed to get campaign report'
+      );
     });
   });
 
@@ -184,7 +331,7 @@ describe('Mailchimp Actions', () => {
         },
       };
 
-      const result = await createAudience.run(context as any);
+      const result = await createAudience.run(context as any) as any;
 
       expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
         mockAuth,
@@ -229,7 +376,7 @@ describe('Mailchimp Actions', () => {
         },
       };
 
-      const result = await addOrUpdateSubscriber.run(context as any);
+      const result = await addOrUpdateSubscriber.run(context as any) as any;
 
       expect(mailchimpCommon.getMD5EmailHash).toHaveBeenCalledWith('test@example.com');
       expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
@@ -273,7 +420,7 @@ describe('Mailchimp Actions', () => {
         },
       };
 
-      const result = await archiveSubscriber.run(context as any);
+      const result = await archiveSubscriber.run(context as any) as any;
 
       expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
         mockAuth,
@@ -309,7 +456,7 @@ describe('Mailchimp Actions', () => {
         },
       };
 
-      const result = await unsubscribeEmail.run(context as any);
+      const result = await unsubscribeEmail.run(context as any) as any;
 
       expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
         mockAuth,
@@ -357,7 +504,7 @@ describe('Mailchimp Actions', () => {
         },
       };
 
-      const result = await findCampaign.run(context as any);
+      const result = await findCampaign.run(context as any) as any;
 
       expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
         mockAuth,
@@ -391,7 +538,7 @@ describe('Mailchimp Actions', () => {
         },
       };
 
-      const result = await findCustomer.run(context as any);
+      const result = await findCustomer.run(context as any) as any;
 
       expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
         mockAuth,
@@ -425,7 +572,7 @@ describe('Mailchimp Actions', () => {
         },
       };
 
-      const result = await findSubscriber.run(context as any);
+      const result = await findSubscriber.run(context as any) as any;
 
       expect(mailchimpCommon.getMD5EmailHash).toHaveBeenCalledWith('test@example.com');
       expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(

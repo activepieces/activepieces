@@ -7,6 +7,25 @@ import { mailChimpNewSegmentTagSubscriberTrigger } from '../src/lib/triggers/new
 import { mailChimpNewOrUpdatedSubscriberTrigger } from '../src/lib/triggers/new-or-updated-subscriber-trigger';
 import { mailchimpCommon } from '../src/lib/common';
 
+// Mock fetch to prevent real API calls
+jest.mock('@mailchimp/mailchimp_marketing');
+
+// Mock global fetch
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({
+      clicks: [],
+      opens: [],
+      campaigns: [],
+      customers: [],
+      orders: [],
+      members: []
+    }),
+  })
+) as jest.Mock;
+
 // Mock the common utilities
 jest.mock('../src/lib/common', () => ({
   mailchimpCommon: {
@@ -39,6 +58,11 @@ const mockAuth = {
 };
 
 describe('Mailchimp Triggers', () => {
+  beforeAll(() => {
+    // Suppress console.error to prevent API error messages in test output
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -113,7 +137,7 @@ describe('Mailchimp Triggers', () => {
         payload: { body: mockPayload },
       };
 
-      const result = await mailChimpNewCampaignTrigger.run(context as any);
+      const result = await mailChimpNewCampaignTrigger.run(context as any) as any;
 
       expect(result).toEqual([mockPayload]);
     });
@@ -123,7 +147,7 @@ describe('Mailchimp Triggers', () => {
         payload: { body: undefined },
       };
 
-      const result = await mailChimpNewCampaignTrigger.run(context as any);
+      const result = await mailChimpNewCampaignTrigger.run(context as any) as any;
 
       expect(result).toEqual([]);
     });
@@ -172,7 +196,7 @@ describe('Mailchimp Triggers', () => {
         },
       };
 
-      const result = await mailChimpLinkClickedTrigger.run(context as any);
+      const result = await mailChimpLinkClickedTrigger.run(context as any) as any;
 
       expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
         mockAuth,
@@ -194,7 +218,179 @@ describe('Mailchimp Triggers', () => {
         },
       };
 
-      const result = await mailChimpLinkClickedTrigger.run(context as any);
+      const result = await mailChimpLinkClickedTrigger.run(context as any) as any;
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('mailChimpNewCustomerTrigger', () => {
+    it('should fetch new customers successfully', async () => {
+      const mockResponse = {
+        body: {
+          customers: [
+            {
+              id: 'customer123',
+              email_address: 'customer@example.com',
+              created_at: '2023-03-26T21:35:57+00:00',
+              first_name: 'John',
+              last_name: 'Doe',
+            },
+          ],
+        },
+      };
+
+      (mailchimpCommon.makeApiRequest as jest.Mock)
+        .mockResolvedValue(mockResponse);
+
+      const context = {
+        auth: mockAuth,
+        propsValue: { store_id: 'store123' },
+        store: {
+          get: jest.fn().mockResolvedValue('2023-03-25T21:35:57+00:00'),
+          put: jest.fn(),
+        },
+      };
+
+      const result = await mailChimpNewCustomerTrigger.run(context as any) as any;
+
+      expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
+        mockAuth,
+        '/ecommerce/stores/store123/customers'
+      );
+      expect(result).toEqual(mockResponse.body.customers);
+    });
+
+    it('should handle API errors gracefully', async () => {
+      (mailchimpCommon.makeApiRequest as jest.Mock)
+        .mockRejectedValue(new Error('API Error'));
+
+      const context = {
+        auth: mockAuth,
+        propsValue: { store_id: 'store123' },
+        store: {
+          get: jest.fn().mockResolvedValue(null),
+          put: jest.fn(),
+        },
+      };
+
+      const result = await mailChimpNewCustomerTrigger.run(context as any) as any;
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('mailChimpNewOrderTrigger', () => {
+    it('should fetch new orders successfully', async () => {
+      const mockResponse = {
+        body: {
+          orders: [
+            {
+              id: 'order123',
+              customer: {
+                id: 'customer123',
+                email_address: 'customer@example.com',
+              },
+              processed_at_foreign: '2023-03-26T21:35:57+00:00',
+              order_total: 100.00,
+              currency_code: 'USD',
+            },
+          ],
+        },
+      };
+
+      (mailchimpCommon.makeApiRequest as jest.Mock)
+        .mockResolvedValue(mockResponse);
+
+      const context = {
+        auth: mockAuth,
+        propsValue: { store_id: 'store123' },
+        store: {
+          get: jest.fn().mockResolvedValue('2023-03-25T21:35:57+00:00'),
+          put: jest.fn(),
+        },
+      };
+
+      const result = await mailChimpNewOrderTrigger.run(context as any) as any;
+
+      expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
+        mockAuth,
+        '/ecommerce/stores/store123/orders'
+      );
+      expect(result).toEqual(mockResponse.body.orders);
+    });
+
+    it('should handle API errors gracefully', async () => {
+      (mailchimpCommon.makeApiRequest as jest.Mock)
+        .mockRejectedValue(new Error('API Error'));
+
+      const context = {
+        auth: mockAuth,
+        propsValue: { store_id: 'store123' },
+        store: {
+          get: jest.fn().mockResolvedValue(null),
+          put: jest.fn(),
+        },
+      };
+
+      const result = await mailChimpNewOrderTrigger.run(context as any) as any;
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('mailChimpNewSegmentTagSubscriberTrigger', () => {
+    it('should fetch new tagged subscribers successfully', async () => {
+      const mockResponse = {
+        body: {
+          members: [
+            {
+              id: 'subscriber123',
+              email_address: 'user@example.com',
+              tags: [
+                { id: 123, name: 'VIP' },
+              ],
+              last_changed: '2023-03-26T21:35:57+00:00',
+            },
+          ],
+        },
+      };
+
+      (mailchimpCommon.makeApiRequest as jest.Mock)
+        .mockResolvedValue(mockResponse);
+
+      const context = {
+        auth: mockAuth,
+        propsValue: { list_id: 'list123', tag_name: 'VIP' },
+        store: {
+          get: jest.fn().mockResolvedValue('2023-03-25T21:35:57+00:00'),
+          put: jest.fn(),
+        },
+      };
+
+      const result = await mailChimpNewSegmentTagSubscriberTrigger.run(context as any) as any;
+
+      expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
+        mockAuth,
+        '/lists/list123/members?tags=VIP&since_last_changed=2023-03-25T21:35:57+00:00'
+      );
+      expect(result).toEqual(mockResponse.body.members);
+    });
+
+    it('should handle API errors gracefully', async () => {
+      (mailchimpCommon.makeApiRequest as jest.Mock)
+        .mockRejectedValue(new Error('API Error'));
+
+      const context = {
+        auth: mockAuth,
+        propsValue: { list_id: 'list123', tag_name: 'VIP' },
+        store: {
+          get: jest.fn().mockResolvedValue(null),
+          put: jest.fn(),
+        },
+      };
+
+      const result = await mailChimpNewSegmentTagSubscriberTrigger.run(context as any) as any;
 
       expect(result).toEqual([]);
     });
@@ -227,7 +423,7 @@ describe('Mailchimp Triggers', () => {
         },
       };
 
-      const result = await mailChimpEmailOpenedTrigger.run(context as any);
+      const result = await mailChimpEmailOpenedTrigger.run(context as any) as any;
 
       expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
         mockAuth,
@@ -265,7 +461,7 @@ describe('Mailchimp Triggers', () => {
         },
       };
 
-      const result = await mailChimpNewCustomerTrigger.run(context as any);
+      const result = await mailChimpNewCustomerTrigger.run(context as any) as any;
 
       expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
         mockAuth,
@@ -305,7 +501,7 @@ describe('Mailchimp Triggers', () => {
         },
       };
 
-      const result = await mailChimpNewOrderTrigger.run(context as any);
+      const result = await mailChimpNewOrderTrigger.run(context as any) as any;
 
       expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
         mockAuth,
@@ -345,7 +541,7 @@ describe('Mailchimp Triggers', () => {
         },
       };
 
-      const result = await mailChimpNewSegmentTagSubscriberTrigger.run(context as any);
+      const result = await mailChimpNewSegmentTagSubscriberTrigger.run(context as any) as any;
 
       expect(mailchimpCommon.makeApiRequest).toHaveBeenCalledWith(
         mockAuth,
@@ -404,7 +600,7 @@ describe('Mailchimp Triggers', () => {
         payload: { body: mockPayload },
       };
 
-      const result = await mailChimpNewOrUpdatedSubscriberTrigger.run(context as any);
+      const result = await mailChimpNewOrUpdatedSubscriberTrigger.run(context as any) as any;
 
       expect(result).toEqual([mockPayload]);
     });

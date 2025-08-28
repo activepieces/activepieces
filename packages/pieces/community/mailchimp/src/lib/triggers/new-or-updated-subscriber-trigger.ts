@@ -2,7 +2,7 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
 import { MailChimpProfileWebhookRequest } from '../common/types';
-import { mailchimpAuth } from '../..';
+import { mailchimpAuth } from '../auth';
 
 const WEBHOOK_DATA_STORE_KEY = 'mail_chimp_profile_webhook_data';
 

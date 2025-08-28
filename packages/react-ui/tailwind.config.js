@@ -1,15 +1,23 @@
-const { createGlobPatternsForDependencies } = require('@nx/react/tailwind');
 const { join } = require('path');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ['class'],
+  darkMode: 'class',
   content: [
-    join(
-      __dirname,
-      '{src,pages,components,app}/**/*!(*.stories|*.spec).{ts,tsx,html}',
-    ),
-    ...createGlobPatternsForDependencies(__dirname),
+    join(__dirname, 'src/**/*.{js,ts,jsx,tsx}'),
+    join(__dirname, 'index.html'),
+    join(__dirname, '../../node_modules/@activepieces/shared/**/*.{js,ts,jsx,tsx}'),
+  ],
+  safelist: [
+    // Add any dynamic classes that need to be included in the build
+  ],
+  corePlugins: {
+    preflight: true,
+  },
+  plugins: [
+    require('@tailwindcss/typography'),
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/aspect-ratio'),
   ],
   theme: {
     transitionTimingFunction: {

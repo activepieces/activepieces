@@ -117,12 +117,14 @@ export const askGpt = createAction({
             };
         });
 
-        const completion = await openai.getChatCompletions(propsValue.deploymentId, [...roles, ...messageHistory], {
-            maxTokens: propsValue.maxTokens,
+        const completion = await openai.chat.completions.create({
+            model: propsValue.deploymentId,
+            messages: [...roles, ...messageHistory],
+            max_tokens: propsValue.maxTokens,
             temperature: propsValue.temperature,
-            frequencyPenalty: propsValue.frequencyPenalty,
-            presencePenalty: propsValue.presencePenalty,
-            topP: propsValue.topP,
+            frequency_penalty: propsValue.frequencyPenalty,
+            presence_penalty: propsValue.presencePenalty,
+            top_p: propsValue.topP,
         });
 
         const responseText = completion.choices[0].message?.content;

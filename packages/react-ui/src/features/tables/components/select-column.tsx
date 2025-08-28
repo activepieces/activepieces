@@ -39,6 +39,7 @@ export function SelectCell({
 }) {
   const locked = row.locked;
   const { isRowSelected, onRowSelectionChange } = useRowSelection();
+  const previousStatus = useRef<Row['status'] | undefined>();
   return (
     <div
       className={cn(
@@ -62,7 +63,7 @@ export function SelectCell({
                 isShiftClick: false,
               });
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           />
         </div>
       )}

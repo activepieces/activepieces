@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mailchimpCommon } from '../common';
-import { mailchimpAuth } from '../..';
+import { mailchimpAuth } from '../auth';
 
 export const addOrUpdateSubscriber = createAction({
   auth: mailchimpAuth,
@@ -46,32 +46,6 @@ export const addOrUpdateSubscriber = createAction({
       displayName: 'Address',
       description: 'Address information for the subscriber',
       required: false,
-      properties: {
-        addr1: Property.ShortText({
-          displayName: 'Address Line 1',
-          required: false,
-        }),
-        addr2: Property.ShortText({
-          displayName: 'Address Line 2',
-          required: false,
-        }),
-        city: Property.ShortText({
-          displayName: 'City',
-          required: false,
-        }),
-        state: Property.ShortText({
-          displayName: 'State/Province',
-          required: false,
-        }),
-        zip: Property.ShortText({
-          displayName: 'Postal Code',
-          required: false,
-        }),
-        country: Property.ShortText({
-          displayName: 'Country',
-          required: false,
-        }),
-      },
     }),
     tags: Property.Array({
       displayName: 'Tags',
@@ -106,7 +80,7 @@ export const addOrUpdateSubscriber = createAction({
       // Add tags if provided
       if (context.propsValue.tags && context.propsValue.tags.length > 0) {
         const tagsData = {
-          tags: context.propsValue.tags.map((tag: string) => ({ name: tag, status: 'active' })),
+          tags: (context.propsValue.tags as string[]).map((tag: string) => ({ name: tag, status: 'active' })),
         };
 
         await mailchimpCommon.makeApiRequest(

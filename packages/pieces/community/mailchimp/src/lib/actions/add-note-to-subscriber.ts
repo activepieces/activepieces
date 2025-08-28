@@ -11,7 +11,7 @@ import {
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
-import { mailchimpAuth } from '../..';
+import { mailchimpAuth } from '../auth';
 import { mailchimpCommon } from '../common';
 
 export const addNoteToSubscriber = createAction({

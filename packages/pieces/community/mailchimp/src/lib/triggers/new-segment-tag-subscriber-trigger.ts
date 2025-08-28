@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { mailchimpCommon } from '../common';
-import { mailchimpAuth } from '../..';
+import { mailchimpAuth } from '../auth';
 
 export const mailChimpNewSegmentTagSubscriberTrigger = createTrigger({
   auth: mailchimpAuth,

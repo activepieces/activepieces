@@ -2,7 +2,7 @@ import { mailchimpCommon } from '../common';
 import { MailChimpWebhookType } from '../common/types';
 import mailchimp, { Status } from '@mailchimp/mailchimp_marketing';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mailchimpAuth } from '../..';
+import { mailchimpAuth } from '../auth';
 
 export const addMemberToList = createAction({
   auth: mailchimpAuth,

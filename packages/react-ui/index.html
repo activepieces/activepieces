@@ -1,21 +1,47 @@
-<!-- Keep title and favicon in one line, so the github actions remove them correctly -->
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-  <meta charset="utf-8" />
-  <base href="/" />
-  <title><%= apTitle %></title>
-
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" type="image/x-icon" href="<%= apFavicon %>">
-  <script type='text/javascript'>(function() {var gs = document.createElement('script');gs.src = 'https://join.activepieces.com/pr/js';gs.type = 'text/javascript';gs.async = 'true';gs.onload = gs.onreadystatechange = function() {var rs = this.readyState;if (rs && rs != 'complete' && rs != 'loaded') return;try {growsumo._initialize('pk_hXXmQVEnpqPOxa9D1sD085zFWUWbpwd9'); if (typeof(growsumoInit) === 'function') {growsumoInit();}} catch (e) {}};var s = document.getElementsByTagName('script')[0];s.parentNode.insertBefore(gs, s);})();</script>
-  <link rel="stylesheet" href="/src/styles.css" />
-</head>
-
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
-
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Activepieces - Open Source Workflow Automation" />
+    
+    <title><%= AP_TITLE %></title>
+    <link rel="icon" type="image/x-icon" href="<%= AP_FAVICON %>">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/src/styles.css" as="style">
+    
+    <!-- Load styles -->
+    <link rel="stylesheet" href="/src/styles.css" />
+    
+    <!-- Load Growsumo script asynchronously -->
+    <script>
+      (function() {
+        var gs = document.createElement('script');
+        gs.src = 'https://join.activepieces.com/pr/js';
+        gs.async = true;
+        gs.onload = gs.onreadystatechange = function() {
+          var rs = this.readyState;
+          if (rs && rs != 'complete' && rs != 'loaded') return;
+          try {
+            if (window.growsumo && typeof window.growsumo._initialize === 'function') {
+              window.growsumo._initialize('pk_hXXmQVEnpqPOxa9D1sD085zFWUWbpwd9');
+              if (typeof window.growsumoInit === 'function') {
+                window.growsumoInit();
+              }
+            }
+          } catch (e) {
+            console.error('Growsumo initialization error:', e);
+          }
+        };
+        document.head.appendChild(gs);
+      })();
+    </script>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

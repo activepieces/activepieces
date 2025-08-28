@@ -1,7 +1,7 @@
 /* eslint-disable */
 export default {
   displayName: 'shared',
-  preset: '../../jest.preset.js',
+  preset: '../../jest.preset.cjs',
   globals: {},
   testEnvironment: 'node',
   transform: {
