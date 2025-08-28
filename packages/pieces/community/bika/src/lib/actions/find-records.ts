@@ -25,11 +25,6 @@ export const findRecordsAction = createAction({
       description: 'How many records are returned per page (max 1000)',
       required: false,
     }),
-    pageNum: Property.Number({
-      displayName: 'Page Number',
-      description: 'Specifies the page number of the page',
-      required: false,
-    }),
     filter: Property.LongText({
       displayName: 'Filter',
       description:
@@ -42,7 +37,6 @@ export const findRecordsAction = createAction({
     const spaceId = context.propsValue.space_id;
     const maxRecords = context.propsValue.maxRecords;
     const pageSize = context.propsValue.pageSize ?? 100;
-    const pageNum = context.propsValue.pageNum ?? 1;
     const filter = context.propsValue.filter;
 
     const client = makeClient(
@@ -53,7 +47,6 @@ export const findRecordsAction = createAction({
       databaseId,
       prepareQuery({
         pageSize,
-        offset: pageNum,
         maxRecords,
         filter,
       })

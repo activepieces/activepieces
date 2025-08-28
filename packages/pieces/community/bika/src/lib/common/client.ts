@@ -31,6 +31,7 @@ export function prepareQuery(request?: Record<string, any>): QueryParams {
   return params;
 }
 
+
 export class BikaClient {
   constructor( private token: string, private bikaUrl = "https://bika.ai") {}
 
@@ -49,9 +50,7 @@ export class BikaClient {
         type: AuthenticationType.BEARER_TOKEN,
         token: this.token,
       },
-      queryParams: {
-
-      },
+      queryParams: query,
       body: body,
     });
 
@@ -133,7 +132,6 @@ export class BikaClient {
 
 
   async listRecords(space_id: string, database_id: string, query?: QueryParams) {
-    console.log(JSON.stringify(query, null, 2))
     return await this.makeRequest<{
       data: {
         total: number;
