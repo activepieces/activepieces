@@ -10,12 +10,12 @@
   "Update Record": "更新記録",
   "Find Records": "レコードを検索",
   "Custom API Call": "カスタムAPI通話",
-  "Creates a new record in datasheet.": "データシートに新しいレコードを作成します。",
-  "Updates an existing record in datasheet.": "データシートの既存のレコードを更新します。",
-  "Finds records in datasheet.": "データシートのレコードを検索します。",
+  "Creates a new record in database.": "データシートに新しいレコードを作成します。",
+  "Updates an existing record in database.": "データシートの既存のレコードを更新します。",
+  "Finds records in database.": "データシートのレコードを検索します。",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "Space": "スペース",
-  "Datasheet": "Datasheet",
+  "Database": "Database",
   "Fields": "フィールド",
   "Record ID": "レコードID",
   "Record IDs": "レコードID",
@@ -38,7 +38,7 @@
   "How many records are returned in total": "返されるレコードの合計数",
   "How many records are returned per page (max 1000)": "1ページあたりのレコードの返却回数（最大1000回）",
   "Specifies the page number of the page": "ページのページ番号を指定します",
-  "The filter to apply to the records (see https://help.bika.ai/docs/guide/manual-formula-field-overview/)": "レコードに適用するフィルター (https://help.bika.ai/docs/guide/manual-formula-field-overview/を参照)",
+  "The filter to apply to the records (see https://bika.ai/help/guide/developer/filter-query-language)": "レコードに適用するフィルター (https://bika.ai/help/guide/developer/filter-query-languageを参照)",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
   "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
   "GET": "取得",
@@ -48,5 +48,5 @@
   "DELETE": "削除",
   "HEAD": "頭",
   "New Record": "新しいレコード",
-  "Triggers when a new record is added to a datasheet.": "新しいレコードがデータシートに追加されたときにトリガーされます。"
+  "Triggers when a new record is added to a database.": "新しいレコードがデータシートに追加されたときにトリガーされます。"
 }

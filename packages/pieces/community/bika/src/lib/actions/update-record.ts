@@ -11,10 +11,10 @@ export const updateRecordAction = createAction({
 	auth: BikaAuth,
 	name: 'bika_update_record',
 	displayName: 'Update Record',
-	description: 'Updates an existing record in datasheet.',
+	description: 'Updates an existing record in database.',
 	props: {
 		space_id: BikaCommon.space_id,
-		datasheet_id: BikaCommon.datasheet_id,
+		database_id: BikaCommon.database_id,
 		recordId: Property.ShortText({
 			displayName: 'Record ID',
 			description: 'The ID of the record to update.',
@@ -24,7 +24,7 @@ export const updateRecordAction = createAction({
 	},
 	async run(context) {
 		const auth = context.auth;
-		const datasheetId = context.propsValue.datasheet_id;
+		const databaseId = context.propsValue.database_id;
 		const spaceId = context.propsValue.space_id;
 		const recordId = context.propsValue.recordId;
 		const dynamicFields: DynamicPropsValue = context.propsValue.fields;
@@ -42,13 +42,13 @@ export const updateRecordAction = createAction({
 		const newFields: Record<string, unknown> = await createNewFields(
 			auth as PiecePropValueSchema<typeof BikaAuth>,
 			spaceId,
-			datasheetId,
+			databaseId,
 			fields,
 		);
 
 		const client = makeClient(context.auth as PiecePropValueSchema<typeof BikaAuth>);
 
-		const response: any = await client.updateRecord(spaceId, datasheetId, recordId, {
+		const response: any = await client.updateRecord(spaceId, databaseId, recordId, {
 					fields: {
 						...newFields,
 					},

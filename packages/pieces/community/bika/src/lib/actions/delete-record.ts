@@ -10,10 +10,10 @@ export const deleteRecordAction = createAction({
   auth: BikaAuth,
   name: 'bika_delete_record',
   displayName: 'Delete a Record',
-  description: 'Deletes a record in datasheet by ID.',
+  description: 'Deletes a record in database by ID.',
   props: {
     space_id: BikaCommon.space_id,
-    datasheet_id: BikaCommon.datasheet_id,
+    database_id: BikaCommon.database_id,
       recordId: Property.ShortText({
       displayName: 'Record ID',
       description: 'The ID of the record to delete.',
@@ -21,7 +21,7 @@ export const deleteRecordAction = createAction({
     }),
   },
   async run(context) {
-    const datasheetId = context.propsValue.datasheet_id;
+    const databaseId = context.propsValue.database_id;
     const spaceId = context.propsValue.space_id;
     const recordId = context.propsValue.recordId;
 
@@ -31,7 +31,7 @@ export const deleteRecordAction = createAction({
 
     const response: any = await client.deleteRecord(
       spaceId,
-      datasheetId,
+      databaseId,
       recordId,
     );
 

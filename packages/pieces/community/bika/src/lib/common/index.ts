@@ -34,8 +34,8 @@ export const BikaCommon = {
 			};
 		},
 	}),
-	datasheet_id: Property.Dropdown({
-		displayName: 'Datasheet',
+	database_id: Property.Dropdown({
+		displayName: 'Database',
 		required: true,
 		refreshers: ['space_id'],
 		options: async ({ auth, space_id }) => {
@@ -47,14 +47,14 @@ export const BikaCommon = {
 				};
 			}
 			const client = makeClient(auth as PiecePropValueSchema<typeof BikaAuth>);
-			const res = await client.listDatasheets(space_id as string);
+			const res = await client.listDatabases(space_id as string);
 
 			return {
 				disabled: false,
-				options: res.data.map((datasheet) => {
+				options: res.data.map((database) => {
 					return {
-						label: datasheet.name,
-						value: datasheet.id,
+						label: database.name,
+						value: database.id,
 					};
 				}),
 			};
@@ -64,10 +64,10 @@ export const BikaCommon = {
 		displayName: 'Fields',
 		description: 'The fields to add to the record.',
 		required: true,
-		refreshers: ['auth', 'datasheet_id'],
-		props: async ({ auth, space_id, datasheet_id }) => {
+		refreshers: ['auth', 'database_id'],
+		props: async ({ auth, space_id, database_id }) => {
 			const client = makeClient(auth as PiecePropValueSchema<typeof BikaAuth>);
-			const res = await client.getDatasheetFields(space_id as unknown as  string, datasheet_id as unknown as string);
+			const res = await client.getDatabaseFields(space_id as unknown as  string, database_id as unknown as string);
 
 			const props: DynamicPropsValue = {};
 
@@ -183,16 +183,16 @@ export const BikaCommon = {
 export async function createNewFields(
 	auth: PiecePropValueSchema<typeof BikaAuth>,
 	space_id: string,
-	datasheet_id: string,
+	database_id: string,
 	fields: Record<string, unknown>,
 ) {
 	if (!auth) return fields;
-	if (!datasheet_id) return fields;
+	if (!database_id) return fields;
 
 	const newFields: Record<string, unknown> = {};
 
 	const client = makeClient(auth as PiecePropValueSchema<typeof BikaAuth>);
-	const res = await client.getDatasheetFields(space_id,datasheet_id);
+	const res = await client.getDatabaseFields(space_id,database_id);
 
 	for(const field of res.data) {
 		if (

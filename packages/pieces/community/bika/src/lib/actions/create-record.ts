@@ -10,15 +10,15 @@ export const createRecordAction = createAction({
   auth: BikaAuth,
   name: 'bika_create_record',
   displayName: 'Create Record',
-  description: 'Creates a new record in datasheet.',
+  description: 'Creates a new record in database.',
   props: {
     space_id: BikaCommon.space_id,
-    datasheet_id: BikaCommon.datasheet_id,
+    database_id: BikaCommon.database_id,
     fields: BikaCommon.fields,
   },
   async run(context) {
     const auth = context.auth;
-    const datasheetId = context.propsValue.datasheet_id;
+    const databaseId = context.propsValue.database_id;
     const spaceId = context.propsValue.space_id;
     const dynamicFields: DynamicPropsValue = context.propsValue.fields;
     const fields: {
@@ -35,14 +35,14 @@ export const createRecordAction = createAction({
     const newFields: Record<string, unknown> = await createNewFields(
       auth as PiecePropValueSchema<typeof BikaAuth>,
       spaceId,
-      datasheetId,
+      databaseId,
       fields
     );
 
     const client = makeClient(
       context.auth as PiecePropValueSchema<typeof BikaAuth>
     );
-    const response: any = await client.createRecord(spaceId, datasheetId , {
+    const response: any = await client.createRecord(spaceId, databaseId , {
       records: [
         {
           fields: {

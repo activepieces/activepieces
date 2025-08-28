@@ -11,10 +11,10 @@ export const findRecordsAction = createAction({
   auth: BikaAuth,
   name: 'bika_find_records',
   displayName: 'Find Records',
-  description: 'Finds records in datasheet.',
+  description: 'Finds records in database.',
   props: {
     space_id: BikaCommon.space_id,
-    datasheet_id: BikaCommon.datasheet_id,
+    database_id: BikaCommon.database_id,
     maxRecords: Property.Number({
       displayName: 'Max Records',
       description: 'How many records are returned in total',
@@ -38,7 +38,7 @@ export const findRecordsAction = createAction({
     }),
   },
   async run(context) {
-    const datasheetId = context.propsValue.datasheet_id;
+    const databaseId = context.propsValue.database_id;
     const spaceId = context.propsValue.space_id;
     const maxRecords = context.propsValue.maxRecords;
     const pageSize = context.propsValue.pageSize ?? 100;
@@ -50,12 +50,12 @@ export const findRecordsAction = createAction({
     );
     const response: any = await client.listRecords(
       spaceId,
-      datasheetId,
+      databaseId,
       prepareQuery({
-        pageSize: pageSize,
-        pageNum: pageNum,
-        maxRecords: maxRecords,
-        filter ,
+        pageSize,
+        offset: pageNum,
+        maxRecords,
+        filter,
       })
     );
 

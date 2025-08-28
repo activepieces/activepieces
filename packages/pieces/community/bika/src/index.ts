@@ -10,7 +10,6 @@ import { findRecordsAction } from './lib/actions/find-records';
 import { findRecordAction} from './lib/actions/find-record';
 import {deleteRecordAction } from './lib/actions/delete-record';
 import { updateRecordAction } from './lib/actions/update-record';
-import { newRecordTrigger } from './lib/triggers/new-record';
 import { makeClient } from './lib/common';
 
 export const BikaAuth = PieceAuth.CustomAuth({
@@ -75,5 +74,5 @@ export const bika = createPiece({
       }),
     }),
   ],
-  triggers: [newRecordTrigger],
+  triggers: [],
 });

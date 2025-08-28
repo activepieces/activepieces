@@ -66,7 +66,7 @@ export class BikaClient {
         }[];
     }>(HttpMethod.GET, '/v1/spaces');
   }
-  async listDatasheets(space_id: string) {
+  async listDatabases(space_id: string) {
     return await this.makeRequest<{
       data: {
           id: string;
@@ -75,7 +75,7 @@ export class BikaClient {
     }>(HttpMethod.GET, `/v1/spaces/${space_id}/nodes`);
   }
 
-  async getDatasheetFields(space_id: string, datasheet_id: string) {
+  async getDatabaseFields(space_id: string, database_id: string) {
     return await this.makeRequest<{
       data: {
           id: string;
@@ -91,33 +91,33 @@ export class BikaClient {
             }[];
         };
       }[];
-    }>(HttpMethod.GET, `/v1/spaces/${space_id}/resources/databases/${datasheet_id}/fields`);
+    }>(HttpMethod.GET, `/v1/spaces/${space_id}/resources/databases/${database_id}/fields`);
   }
 
-  async createRecord(space_id: string, datasheet_id: string, request: object) {
+  async createRecord(space_id: string, database_id: string, request: object) {
     return await this.makeRequest(
       HttpMethod.POST,
-      `/v2/spaces/${space_id}/resources/databases/${datasheet_id}/records`,
+      `/v2/spaces/${space_id}/resources/databases/${database_id}/records`,
       undefined,
       request
     );
   }
-    async deleteRecord(space_id: string, datasheet_id: string, record_id: string) {
+    async deleteRecord(space_id: string, database_id: string, record_id: string) {
     return await this.makeRequest(
       HttpMethod.DELETE,
-      `/v2/spaces/${space_id}/resources/databases/${datasheet_id}/records/${record_id}`
+      `/v2/spaces/${space_id}/resources/databases/${database_id}/records/${record_id}`
     );
   }
-  async updateRecord(space_id: string, datasheet_id: string, record_id: string, request: object) {
+  async updateRecord(space_id: string, database_id: string, record_id: string, request: object) {
     return await this.makeRequest(
       HttpMethod.PUT,
-      `/v2/spaces/${space_id}/resources/databases/${datasheet_id}/records/${record_id}`,
+      `/v2/spaces/${space_id}/resources/databases/${database_id}/records/${record_id}`,
       undefined,
       request
     );
   }
 
-    async findRecord(space_id: string, datasheet_id: string, record_id: string, query?: QueryParams) {
+    async findRecord(space_id: string, database_id: string, record_id: string, query?: QueryParams) {
     return await this.makeRequest<{
       data: {
         total: number;
@@ -128,11 +128,12 @@ export class BikaClient {
           fields: Record<string, unknown>;
         }[];
       };
-    }>(HttpMethod.GET, `/v2/spaces/${space_id}/resources/databases/${datasheet_id}/records/${record_id}`, query);
+    }>(HttpMethod.GET, `/v2/spaces/${space_id}/resources/databases/${database_id}/records/${record_id}`, query);
   }
 
 
-  async listRecords(space_id: string, datasheet_id: string, query?: QueryParams) {
+  async listRecords(space_id: string, database_id: string, query?: QueryParams) {
+    console.log(JSON.stringify(query, null, 2))
     return await this.makeRequest<{
       data: {
         total: number;
@@ -143,6 +144,6 @@ export class BikaClient {
           fields: Record<string, unknown>;
         }[];
       };
-    }>(HttpMethod.GET, `/v2/spaces/${space_id}/resources/databases/${datasheet_id}/records`, query);
+    }>(HttpMethod.GET, `/v2/spaces/${space_id}/resources/databases/${database_id}/records`, query);
   }
 }
