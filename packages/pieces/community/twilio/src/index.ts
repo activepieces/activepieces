@@ -2,7 +2,15 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { twilioSendSms } from './lib/action/send-sms';
+import { twilioPhoneNumberLookup } from './lib/action/phone-number-lookup';
+import { twilioCallPhone } from './lib/action/call-phone';
+import { twilioGetMessage } from './lib/action/get-message';
+import { twilioDownloadRecordingMedia } from './lib/action/download-recording-media';
 import { twilioNewIncomingSms } from './lib/trigger/new-incoming-sms';
+import { twilioNewPhoneNumber } from './lib/trigger/new-phone-number';
+import { twilioNewRecording } from './lib/trigger/new-recording';
+import { twilioNewTranscription } from './lib/trigger/new-transcription';
+import { twilioNewCall } from './lib/trigger/new-call';
 
 export const twilioAuth = PieceAuth.BasicAuth({
   description: 'The authentication to use to connect to Twilio',
@@ -29,6 +37,10 @@ export const twilio = createPiece({
   categories: [PieceCategory.COMMUNICATION],
   actions: [
     twilioSendSms,
+    twilioPhoneNumberLookup,
+    twilioCallPhone,
+    twilioGetMessage,
+    twilioDownloadRecordingMedia,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.twilio.com/2010-04-01',
       auth: twilioAuth,
@@ -42,5 +54,11 @@ export const twilio = createPiece({
     }),
   ],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
-  triggers: [twilioNewIncomingSms],
+  triggers: [
+    twilioNewIncomingSms,
+    twilioNewPhoneNumber,
+    twilioNewRecording,
+    twilioNewTranscription,
+    twilioNewCall,
+  ],
 });
