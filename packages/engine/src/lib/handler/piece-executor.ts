@@ -49,18 +49,25 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             piecesSource: constants.piecesSource,
         })
 
-        const { resolvedInput, censoredInput } = await constants.propsResolver.resolve<StaticPropsValue<PiecePropertyMap>>({
+        const { resolvedInput } = await constants.propsResolver.resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: action.settings.input,
             executionState,
         })
-        stepOutput.input = censoredInput
 
-        const aiProccessedInput = await resolveInputsUsingAI({ resolvedInput, constants, action, executionState })
+        const aiProcessedInput = await resolveInputsUsingAI({ resolvedInput, constants, action, executionState })
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators({
-            ...aiProccessedInput,
+        const inputToProcess = {
+            ...aiProcessedInput,
             ...(resolvedInput['auth'] ? { auth: resolvedInput['auth'] } : {}),
-        }, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.propertySettings)
+        }
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(inputToProcess, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.propertySettings)
+
+        const { censoredInput: aiCensoredInput } = await constants.propsResolver.resolve<StaticPropsValue<PiecePropertyMap>>({
+            unresolvedInput: aiProcessedInput,
+            executionState,
+        })
+
+        stepOutput.input = aiCensoredInput
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors, null, 2))
         }
@@ -205,11 +212,9 @@ async function resolveInputsUsingAI({ resolvedInput, constants, action, executio
     const autoPropertiesKeys = Object.entries(action.settings.propertySettings ?? {})
         .filter(([_, value]) => value.type === PropertyExecutionType.AUTO)
         .map(([key]) => key)
-    
     const autoPropertiesValues = Object.fromEntries(
         autoPropertiesKeys.map(key => [key, undefined]),
     )
-
     const preDefinedInputs = {
         ...resolvedInput,
         ...(action.settings.input['auth'] ? { auth: action.settings.input['auth'] } : {}),
@@ -217,16 +222,18 @@ async function resolveInputsUsingAI({ resolvedInput, constants, action, executio
         ...autoPropertiesValues,
     }
     assertNotNullOrUndefined(action.settings.actionName, 'actionName')
-
     try {
-        return toolInputsResolver.resolve(constants, {
+        const aiResolvedInput = await toolInputsResolver.resolve(constants, {
             pieceName: action.settings.pieceName,
             pieceVersion: action.settings.pieceVersion,
             actionName: action.settings.actionName,
             preDefinedInputs,
             flowVersionId: constants.flowVersionId,
         })
-    } catch (error) {
+        aiResolvedInput['previousStepsResults'] = undefined
+        return aiResolvedInput
+    }
+    catch (error) {
         console.error('Error resolving inputs using AI', error)
         return resolvedInput
     }

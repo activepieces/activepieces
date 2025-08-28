@@ -49,6 +49,7 @@ export const workerMachine = {
                 ...spreadIfDefined('PIECES_SOURCE', settings?.PIECES_SOURCE),
                 ...spreadIfDefined('DEV_PIECES', settings?.DEV_PIECES?.join(',')),
                 ...spreadIfDefined('S3_USE_SIGNED_URLS', settings?.S3_USE_SIGNED_URLS),
+                ...spreadIfDefined('EDITION', settings?.EDITION),
                 version: await apVersionUtil.getCurrentRelease(),
             },
             workerId,
