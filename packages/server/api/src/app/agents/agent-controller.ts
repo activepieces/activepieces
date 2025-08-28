@@ -14,6 +14,7 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
             limit: limit ?? DEFAULT_LIMIT,
             cursorRequest: cursor ?? null,
+            externalIds: request.query.externalIds,
         })
     })
 
@@ -60,9 +61,13 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.delete('/:id', DeleteAgentRequest, async (request) => {
+        const agent = await agentsService(request.log).getOneOrThrow({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+        })
         await gitRepoService(request.log).onDeleted({
             type: GitPushOperationType.DELETE_AGENT,
-            idOrExternalId: request.params.id,
+            externalId: agent.externalId,
             userId: request.principal.id,
             projectId: request.principal.projectId,
             platformId: request.principal.platform.id,

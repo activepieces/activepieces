@@ -20,7 +20,10 @@ function createAction(request: UpdateActionRequest, {
         name: request.name,
         valid: false,
         skip: request.skip,
-        customLogoUrl: request.customLogoUrl,
+        settings: {
+            ...request.settings,
+            customLogoUrl: request.settings.customLogoUrl,
+        },
         nextAction,
     }
     let action: FlowAction

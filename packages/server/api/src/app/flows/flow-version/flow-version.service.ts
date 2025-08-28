@@ -328,11 +328,10 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             if (removeConnectionNames) {
                 clonedStep.settings.input = removeConnectionsFromInput(clonedStep.settings.input)
             }
-            if (removeSampleData && !isNil(clonedStep?.settings?.inputUiInfo)) {
-                clonedStep.settings.inputUiInfo.sampleDataFileId = undefined
-                clonedStep.settings.inputUiInfo.sampleDataInputFileId = undefined
-                clonedStep.settings.inputUiInfo.currentSelectedData = undefined
-                clonedStep.settings.inputUiInfo.lastTestDate = undefined
+            if (removeSampleData && !isNil(clonedStep?.settings?.sampleData)) {
+                clonedStep.settings.sampleData.sampleDataFileId = undefined
+                clonedStep.settings.sampleData.sampleDataInputFileId = undefined
+                clonedStep.settings.sampleData.lastTestDate = undefined
             }
             return clonedStep
         })
@@ -387,6 +386,10 @@ function removeConnectionsFromInput(
             replacedObj[key] = removeConnectionsFromInput(value as Record<string, unknown>)
         }
         else if (typeof value === 'string') {
+            if (value.trim() === '') {
+                replacedObj[key] = value;
+                continue;
+            }
             const replacedValue = value.replace(/\{{connections\.[^}]*}}/g, '')
             replacedObj[key] = replacedValue === '' ? undefined : replacedValue
         }

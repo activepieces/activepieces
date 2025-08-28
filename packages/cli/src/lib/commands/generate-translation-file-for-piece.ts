@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import { buildPiece, findPiece, findPieces } from '../utils/piece-utils';
 import { makeFolderRecursive } from '../utils/files';
-import { join } from 'node:path';
+import { join, basename } from 'node:path';
 import { exec } from '../utils/exec';
 import { pieceTranslation } from '@activepieces/pieces-framework';
 import { MAX_KEY_LENGTH_FOR_CORWDIN } from '@activepieces/shared';
@@ -90,15 +90,23 @@ export const generateTranslationFileForPieceCommand = new Command('generate-tran
   });
   export const generateTranslationFileForAllPiecesCommand = new Command('generate-translation-file-for-all-pieces')
   .description('Generate i18n for all pieces')
-  .action(async () => {
+  .requiredOption('--shard-index <shardIndex>', 'Zero-based shard index to process', (value) => parseInt(value, 10))
+  .requiredOption('--shard-total <shardTotal>', 'Total number of shards', (value) => parseInt(value, 10))
+  .action(async ({shardIndex, shardTotal}: { shardIndex: number; shardTotal: number }) => {
     const piecesDirectory = join(process.cwd(), 'packages', 'pieces', 'community')
     const pieces = (await findPieces(piecesDirectory)).map(piece => piece.split('/').pop());
     let totalTime = 0
+    let indexAcrossAllPieces = 0
     for (const piece of pieces) {
+      if ((indexAcrossAllPieces % shardTotal) !== shardIndex) {
+        indexAcrossAllPieces++
+        continue
+      }
       const time= performance.now()
       await generateTranslationFile(piece);
       console.log(chalk.yellow('✨'), `Translation file for piece ${piece} created in ${(performance.now() - time)/1000}s`)
       totalTime += (performance.now() - time)/1000
+      indexAcrossAllPieces++
     }
-    console.log(chalk.yellow('✨'), `Total time taken to generate translation files for all pieces: ${totalTime}s`)
+    console.log(chalk.yellow('✨'), `Total time taken to generate translation files for selected pieces: ${totalTime}s`)
   });

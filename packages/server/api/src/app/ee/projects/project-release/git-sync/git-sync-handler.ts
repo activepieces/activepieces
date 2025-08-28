@@ -1,10 +1,9 @@
 import { PushAgentsGitRepoRequest, PushFlowsGitRepoRequest, PushTablesGitRepoRequest } from '@activepieces/ee-shared'
 import {
-    AgentState,
-    FieldType,
     FlowState,
     FlowVersionState,
-    TableState,
+    PopulatedAgent,
+    PopulatedTable,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { agentsService } from '../../../../agents/agents-service'
@@ -22,6 +21,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
             const { git, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
 
             const flows = await listFlowsByExternalIds(log, gitRepo.projectId, request.externalFlowIds)
+            
 
             for (const flow of flows) {
                 const flowName = flow.externalId
@@ -84,9 +84,9 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
             const gitRepo = await gitRepoService(log).getOrThrow({ id })
             const { git, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
 
-            const tables: TableState[] = await listTablesByExternalIds(gitRepo.projectId, request.externalTableIds)
+            const populatedTables: PopulatedTable[] = await listTablesByExternalIds(gitRepo.projectId, request.externalTableIds)
 
-            for (const table of tables) {
+            for (const table of populatedTables) {
                 const tableName = table.externalId || table.id
                 await gitSyncHelper(log).upsertTableToGit({
                     fileName: tableName,
@@ -102,8 +102,8 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
             const gitRepo = await gitRepoService(log).getOrThrow({ id })
             const { git, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
 
-            const tables = await listTablesByExternalIds(gitRepo.projectId, request.externalTableIds)
-            for (const table of tables) {
+            const populatedTables = await listTablesByExternalIds(gitRepo.projectId, request.externalTableIds)
+            for (const table of populatedTables) {
                 await gitSyncHelper(log).deleteFromGit({
                     fileName: table.externalId,
                     folderPath: tablesFolderPath,
@@ -147,7 +147,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
 
 })
 
-function listAgentsByExternalIds(log: FastifyBaseLogger, projectId: string, externalIds: string[]): Promise<AgentState[]> {
+function listAgentsByExternalIds(log: FastifyBaseLogger, projectId: string, externalIds: string[]): Promise<PopulatedAgent[]> {
     return agentsService(log).list({
         projectId,
         limit: 10000,
@@ -155,7 +155,7 @@ function listAgentsByExternalIds(log: FastifyBaseLogger, projectId: string, exte
     }).then((page) => page.data.filter((agent) => externalIds.includes(agent.externalId)))
 }
 
-async function listTablesByExternalIds(projectId: string, externalIds: string[]): Promise<TableState[]> {
+async function listTablesByExternalIds(projectId: string, externalIds: string[]): Promise<PopulatedTable[]> {
     const tables = await tableService.list({
         projectId,
         limit: 10000,
@@ -164,25 +164,17 @@ async function listTablesByExternalIds(projectId: string, externalIds: string[])
         externalIds: undefined,
     }).then((page) => page.data.filter((table) => externalIds.includes(table.externalId)))
 
-    const result: TableState[] = []
-    for (const table of tables) {
+    const populatedTables = await Promise.all(tables.map(async (table) => {
         const fields = await fieldService.getAll({
             projectId,
             tableId: table.id,
         })
-        result.push({
-            id: table.id,
-            name: table.name,
-            externalId: table.externalId,
-            fields: fields.map((field) => ({
-                name: field.name,
-                type: field.type,
-                data: field.type === FieldType.STATIC_DROPDOWN ? field.data : undefined,
-                externalId: field.externalId,
-            })),
-        })
-    }
-    return result
+        return {
+            ...table,
+            fields,
+        }
+    }))
+    return populatedTables
 }
 
 function listFlowsByExternalIds(log: FastifyBaseLogger, projectId: string, externalIds: string[]): Promise<FlowState[]> {

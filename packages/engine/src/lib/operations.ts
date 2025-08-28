@@ -18,6 +18,9 @@ import {
     FlowRunResponse,
     flowStructureUtil,
     GenericStepOutput,
+    isNil,
+    LoopStepOutput,
+    PropertyExecutionType,
     StepOutput,
     StepOutputStatus,
     TriggerHookType,
@@ -87,7 +90,6 @@ async function executeActionForTool(input: ExecuteToolOperation): Promise<Execut
             actionName: input.actionName,
             pieceName: input.pieceName,
             pieceVersion: input.pieceVersion,
-            inputUiInfo: {},
             errorHandlingOptions: {
                 continueOnFailure: {
                     value: false,
@@ -96,6 +98,10 @@ async function executeActionForTool(input: ExecuteToolOperation): Promise<Execut
                     value: false,
                 },
             },
+            propertySettings: Object.fromEntries(Object.entries(input.input).map(([key]) => [key, {
+                type: PropertyExecutionType.MANUAL,
+                schema: undefined,
+            }])),
         },
         valid: true,
     }
@@ -155,10 +161,36 @@ async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: F
 
     for (const [step, output] of Object.entries(input.executionState.steps)) {
         if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
-            flowContext = flowContext.upsertStep(step, output)
+            const newOutput = await insertSuccessStepsOrPausedRecursively(output)
+            if (!isNil(newOutput)) {
+                flowContext = flowContext.upsertStep(step, newOutput)
+            }
         }
     }
     return flowContext
+}
+
+async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Promise<StepOutput | null> {
+    if (![StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(stepOutput.status)) {
+        return null
+    }
+    if (stepOutput.type === FlowActionType.LOOP_ON_ITEMS) {
+        const loopOutput = new LoopStepOutput(stepOutput)
+        const iterations = loopOutput.output?.iterations ?? []
+        const newIterations: Record<string, StepOutput>[] = []
+        for (const iteration of iterations) {
+            const newSteps: Record<string, StepOutput> = {}
+            for (const [step, output] of Object.entries(iteration)) {
+                const newOutput = await insertSuccessStepsOrPausedRecursively(output)
+                if (!isNil(newOutput)) {
+                    newSteps[step] = newOutput
+                }
+            }
+            newIterations.push(newSteps)
+        }
+        return loopOutput.setIterations(newIterations)
+    }
+    return stepOutput
 }
 
 export async function execute(operationType: EngineOperationType, operation: EngineOperation): Promise<EngineResponse<unknown>> {

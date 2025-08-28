@@ -1,10 +1,4 @@
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';
@@ -76,15 +70,21 @@ export const gmailSendEmailAction = createAction({
         "The address must be listed in your GMail account's settings",
       required: false,
     }),
-    attachment: Property.File({
-      displayName: 'Attachment',
-      description: 'File to attach to the email you want to send',
+    attachments: Property.Array({
+      displayName: 'Attachments',
       required: false,
-    }),
-    attachment_name: Property.ShortText({
-      displayName: 'Attachment Name',
-      description: 'In case you want to change the name of the attachment',
-      required: false,
+      properties: {
+        file: Property.File({
+          displayName: 'File',
+          description: 'File to attach to the email you want to send.',
+          required: true,
+        }),
+        name: Property.ShortText({
+          displayName: 'Attachment Name',
+          description: 'In case you want to change the name of the attachment.',
+          required: false,
+        }),
+      },
     }),
     in_reply_to: Property.ShortText({
       displayName: 'In reply to',
@@ -107,7 +107,10 @@ export const gmailSendEmailAction = createAction({
     const subjectBase64 = Buffer.from(context.propsValue['subject']).toString(
       'base64'
     );
-    const attachment = context.propsValue['attachment'];
+    const attachments = context.propsValue.attachments as {
+      file: ApFile;
+      name: string | undefined;
+    }[];
     const replyTo = context.propsValue['reply_to']?.filter(
       (email) => email !== ''
     );
@@ -161,18 +164,21 @@ export const gmailSendEmailAction = createAction({
         : senderEmail;
     }
 
-    if (attachment) {
-      const lookupResult = mime.lookup(
-        attachment.extension ? attachment.extension : ''
+    if (attachments && attachments.length > 0) {
+      const attachmentOption: Attachment[] = attachments.map(
+        ({ file, name }) => {
+          const lookupResult = mime.lookup(
+            file.extension ? file.extension : ''
+          );
+          return {
+            filename: name ?? file.filename,
+            content: file?.base64,
+            contentType: lookupResult ? lookupResult : undefined,
+            encoding: 'base64',
+          };
+        }
       );
-      const attachmentOption: Attachment[] = [
-        {
-          filename: context.propsValue.attachment_name ?? attachment.filename,
-          content: attachment?.base64,
-          contentType: lookupResult ? lookupResult : undefined,
-          encoding: 'base64',
-        },
-      ];
+
       mailOptions.attachments = attachmentOption;
     }
 
