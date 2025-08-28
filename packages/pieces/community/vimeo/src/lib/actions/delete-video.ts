@@ -19,7 +19,7 @@ export const deleteVideo = createAction({
     const { videoId } = propsValue;
 
     // require a access token with `delete` scope
-    let response = await apiRequest({
+    const response = await apiRequest({
       auth,
       path: `/videos/${videoId}`,
       method: HttpMethod.DELETE,

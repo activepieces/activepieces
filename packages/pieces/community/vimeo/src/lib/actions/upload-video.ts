@@ -46,7 +46,7 @@ export const uploadVideo = createAction({
       required: false,
       refreshers: ['privacy'],
       async props(propsValue): Promise<any> {
-        let privacy = propsValue['privacy'] as unknown as string;
+        const privacy = propsValue['privacy'] as unknown as string;
         if(privacy === 'password') {
           return {
             password: Property.ShortText({
@@ -156,14 +156,14 @@ export const uploadVideo = createAction({
     if (license) uploadData.license = license;
 
     // require a access token with `upload` scope
-    let response = await apiRequest({
+    const response = await apiRequest({
       auth,
       path: '/me/videos',
       method: HttpMethod.POST,
       body: uploadData,
     });
 
-    let body = response.body;
+    const body = response.body;
     body.video_id = body.uri.split('/').pop();
 
     return body;

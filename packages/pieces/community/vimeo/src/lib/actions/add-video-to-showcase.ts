@@ -43,11 +43,8 @@ export const addVideoToShowcase = createAction({
   async run({ auth, propsValue }) {
     const { videoId, showcaseId } = propsValue;
 
-    if(!/^\d+$/m.test(videoId)) throw new Error("Video ID must be a number");
-    if(!/^\d+$/m.test(showcaseId)) throw new Error("Showcase ID must be a number");
-
     // require a access token with `edit` scope
-    let response = await apiRequest({
+    const response = await apiRequest({
       auth,
       path: `/albums/${showcaseId}/videos/${videoId}`,
       method: HttpMethod.PUT,

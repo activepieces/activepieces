@@ -4,9 +4,7 @@ import { apiRequest } from '../common';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 
-type Props = {};
-
-const polling: Polling<PiecePropValueSchema<typeof vimeoAuth>, Props> = {
+const polling: Polling<PiecePropValueSchema<typeof vimeoAuth>, object> = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS }) {
     const response = await apiRequest({

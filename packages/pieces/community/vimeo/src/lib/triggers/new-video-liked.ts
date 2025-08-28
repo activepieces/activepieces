@@ -2,11 +2,8 @@ import { PiecePropValueSchema, createTrigger, TriggerStrategy } from '@activepie
 import { vimeoAuth } from '../auth';
 import { apiRequest } from '../common';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
-import dayjs from 'dayjs';
 
-type Props = {};
-
-const polling: Polling<PiecePropValueSchema<typeof vimeoAuth>, Props> = {
+const polling: Polling<PiecePropValueSchema<typeof vimeoAuth>, object> = {
   strategy: DedupeStrategy.LAST_ITEM,
   async items({ auth, lastItemId }) {
     const response = await apiRequest({
