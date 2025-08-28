@@ -9,7 +9,7 @@ import { workerMachine } from '../utils/machine'
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
 
-async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, attempsStarted: number, engineToken: string, log: FastifyBaseLogger): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {
+async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, attempsStarted: number, engineToken: string): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {
     switch (jobData.executionType) {
         case ExecutionType.BEGIN: {
             const flowRun = (jobData.executionType === ExecutionType.BEGIN && attempsStarted > 1) ? await engineApiService(engineToken).getRun({
@@ -32,6 +32,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 httpRequestId: jobData.httpRequestId ?? null,
                 progressUpdateType: jobData.progressUpdateType,
                 stepNameToTest: jobData.stepNameToTest ?? null,
+                logsUploadUrl: jobData.logsUploadUrl,
             }
         }
         case ExecutionType.RESUME: {
@@ -54,13 +55,14 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 resumePayload: jobData.payload as ResumePayload,
                 progressUpdateType: jobData.progressUpdateType,
                 stepNameToTest: jobData.stepNameToTest ?? null,
+                logsUploadUrl: jobData.logsUploadUrl,
             }
         }
     }
 }
 
 
-async function handleMemoryIssueError(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
+async function handleMemoryIssueError(jobData: OneTimeJobData, engineToken: string): Promise<void> {
     await engineApiService(engineToken).updateRunStatus({
         runDetails: {
             duration: 0,
@@ -78,7 +80,7 @@ async function handleMemoryIssueError(jobData: OneTimeJobData, engineToken: stri
 
 
 
-async function handleTimeoutError(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
+async function handleTimeoutError(jobData: OneTimeJobData, engineToken: string): Promise<void> {
     const timeoutFlowInSeconds = workerMachine.getSettings().FLOW_TIMEOUT_SECONDS * 1000
     await engineApiService(engineToken).updateRunStatus({
         runDetails: {
@@ -115,7 +117,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
     async executeFlow(jobData: OneTimeJobData, attempsStarted: number, engineToken: string): Promise<void> {
         try {
 
-            const flow = await flowWorkerCache(log).getFlow({
+            const flow = await flowWorkerCache.getFlow({
                 engineToken,
                 flowVersionId: jobData.flowVersionId,
             })
@@ -131,7 +133,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             })
 
 
-            const input = await prepareInput(flow.version, jobData, attempsStarted, engineToken, runLog)
+            const input = await prepareInput(flow.version, jobData, attempsStarted, engineToken)
             const { result } = await engineRunner(runLog).executeFlow(engineToken, input)
 
             if (result.status === FlowRunStatus.INTERNAL_ERROR) {
@@ -149,10 +151,10 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             const isMemoryIssueError = e instanceof ActivepiecesError && e.error.code === ErrorCode.MEMORY_ISSUE
 
             if (isTimeoutError) {
-                await handleTimeoutError(jobData, engineToken, log)
+                await handleTimeoutError(jobData, engineToken)
             }
             else if (isMemoryIssueError) {
-                await handleMemoryIssueError(jobData, engineToken, log)
+                await handleMemoryIssueError(jobData, engineToken)
             }
             else {
                 await handleInternalError(jobData, engineToken, e as Error, log)

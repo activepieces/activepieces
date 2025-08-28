@@ -77,6 +77,7 @@ export const OneTimeJobData = Type.Object({
     progressUpdateType: Type.Enum(ProgressUpdateType),
     stepNameToTest: Type.Optional(Type.String()),
     sampleData: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+    logsUploadUrl: Type.Optional(Type.String()),
 })
 export type OneTimeJobData = Static<typeof OneTimeJobData>
 

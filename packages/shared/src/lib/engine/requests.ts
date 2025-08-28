@@ -17,12 +17,6 @@ export const UpdateRunProgressRequest = Type.Object({
 
 export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>
 
-export const UpdateRunProgressResponse = Type.Object({
-    uploadUrl: Type.Optional(Type.String()),
-})
-export type UpdateRunProgressResponse = Static<typeof UpdateRunProgressResponse>
-
-
 export const NotifyFrontendRequest = Type.Object({
     type: Type.Literal(WebsocketClientEvent.FLOW_RUN_PROGRESS),
     data: Type.Object({

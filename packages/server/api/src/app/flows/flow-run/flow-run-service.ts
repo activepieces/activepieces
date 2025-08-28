@@ -34,7 +34,6 @@ import {
     APArrayContains,
 } from '../../database/database-connection'
 import { fileService } from '../../file/file.service'
-import { s3Helper } from '../../file/s3-helper'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -377,7 +376,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             steps,
         }
     },
-    async updateLogsAndReturnUploadUrl({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<string | undefined> {
+    async updateLogs({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<void> {
         const executionState = executionStateString ? Buffer.from(executionStateString) : undefined
         if (executionStateContentLength > maxFileSizeInBytes || (!isNil(executionState) && executionState.byteLength > maxFileSizeInBytes)) {
             const errors = new Error(
@@ -387,7 +386,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             throw errors
         }
         const newLogsFileId = logsFileId ?? apId()
-        const file = await fileService(log).save({
+        await fileService(log).save({
             fileId: newLogsFileId,
             projectId,
             data: executionState ?? null,
@@ -404,7 +403,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 logsFileId: newLogsFileId,
             })
         }
-        return getUploadUrl(file.s3Key, executionState, executionStateContentLength, log)
     },
     async handleSyncResumeFlow({ runId, payload, requestId }: { runId: string, payload: unknown, requestId: string }) {
         const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
@@ -504,15 +502,6 @@ async function filterFlowRunsAndApplyFilters(
 
     const flowRuns = await query.getMany()
     return flowRuns.map(flowRun => flowRun.id)
-}
-
-
-const getUploadUrl = async (s3Key: string | undefined, executionDate: unknown, contentLength: number, log: FastifyBaseLogger): Promise<string | undefined> => {
-    if (!isNil(executionDate)) {
-        return undefined
-    }
-    assertNotNullOrUndefined(s3Key, 's3Key')
-    return s3Helper(log).putS3SignedUrl(s3Key, contentLength)
 }
 
 

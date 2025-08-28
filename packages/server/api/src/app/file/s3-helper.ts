@@ -63,7 +63,7 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         })
         return getSignedUrl(client, command)
     },
-    async putS3SignedUrl(s3Key: string, contentLength: number): Promise<string> {
+    async putS3SignedUrl(s3Key: string, contentLength?: number | undefined): Promise<string> {
         const client = getS3Client()
         const command = new PutObjectCommand({
             Bucket: getS3BucketName(),
