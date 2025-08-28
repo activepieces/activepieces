@@ -66,6 +66,12 @@ export const uploadVideo = createAction({
       required: false,
       defaultValue: true,
     }),
+    allowDownload: Property.Checkbox({
+      displayName: 'Allow Download',
+      description: 'Allow others to download this video (not available for free Vimeo users)',
+      required: false,
+      defaultValue: false,
+    }),
     contentRating: Property.Dropdown({
       displayName: 'Content Rating',
       description: 'Content rating for the video',
@@ -110,8 +116,10 @@ export const uploadVideo = createAction({
       displayName: 'License',
       description: 'License for the video',
       required: false,
+      defaultValue: '',
       options: {
         options: [
+          { value: '', label: 'All Right Reserved' },
           { value: 'by', label: 'Attribution Required' },
           { value: 'by-sa', label: 'Attribution-ShareAlike' },
           { value: 'by-nd', label: 'Attribution-NoDerivs' },
@@ -124,7 +132,7 @@ export const uploadVideo = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { videoUrl, name, description, privacy, password, allowEmbed, contentRating, language, license } = propsValue;
+    const { videoUrl, name, description, privacy, password, allowEmbed, allowDownload, contentRating, language, license } = propsValue;
 
     const uploadData: any = {
       upload: {
@@ -138,6 +146,7 @@ export const uploadVideo = createAction({
     if (description) uploadData.description = description;
     uploadData.privacy.view = privacy;
 
+    if (allowDownload) uploadData.privacy.download = allowDownload;
     if (password && privacy === 'password') uploadData.password = password;
     uploadData.privacy.embed = allowEmbed ? 'public' : 'private';
 
