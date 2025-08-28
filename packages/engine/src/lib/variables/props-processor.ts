@@ -18,9 +18,9 @@ export const propsProcessor = {
         requireAuth: boolean,
         propertySettings: Record<string, PropertySettings>,
     ): Promise<{ processedInput: StaticPropsValue<PiecePropertyMap>, errors: PropsValidationError }> => {
-        const dynamaicPropertiesSchema: Record<string, InputPropertyMap> = {}
-        for (const [key, propertySetting] of Object.entries(propertySettings)) {
-            dynamaicPropertiesSchema[key] = propertySetting.schema as InputPropertyMap
+        let dynamaicPropertiesSchema: Record<string, InputPropertyMap> | undefined = undefined
+        if (Object.keys(propertySettings).length > 0) {
+            dynamaicPropertiesSchema = Object.fromEntries(Object.entries(propertySettings).map(([key, propertySetting]) => [key, propertySetting.schema]))
         }
         const processedInput = { ...resolvedInput }
         const errors: PropsValidationError = {}
