@@ -230,9 +230,7 @@ export const buildBuilderTools = ({ userId, projectId, platformId, flowId, flowV
                         pieceName,
                         pieceVersion,
                         input: {},
-                        inputUiInfo: {
-                            customizedInputs: {},
-                        },
+                        propertySettings: {},
                         triggerName: pieceTriggerName.toLowerCase().replace(' ', '-'),
                     },
                 }
@@ -278,7 +276,7 @@ export const buildBuilderTools = ({ userId, projectId, platformId, flowId, flowV
                             pieceVersion,
                             actionName: pieceActionName,
                             input: {},
-                            inputUiInfo: {},
+                            propertySettings: {},
                             errorHandlingOptions: {},
                         },
                     },
@@ -320,7 +318,7 @@ export const buildBuilderTools = ({ userId, projectId, platformId, flowId, flowV
                         pieceVersion,
                         actionName: pieceActionName,
                         input: {},
-                        inputUiInfo: {},
+                        propertySettings: {},
                         errorHandlingOptions: {},
                     },
                 }
