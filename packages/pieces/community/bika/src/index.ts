@@ -15,10 +15,10 @@ import { makeClient } from './lib/common';
 export const BikaAuth = PieceAuth.CustomAuth({
   required: true,
   description: `
-    To obtain your AITable token, follow these steps:
+    To obtain your Bika token, follow these steps:
 
-    1. Log in to your AITable account.
-    2. Visit https://bika.com/workbench
+    1. Log in to your Bika account.
+    2. Visit https://bika.com
     3. Click on your profile picture (Bottom left).
     4. Click on "My Settings".
     5. Click on "Developer".
@@ -28,14 +28,8 @@ export const BikaAuth = PieceAuth.CustomAuth({
   props: {
     token: PieceAuth.SecretText({
       displayName: 'Token',
-      description: 'The token of the AITable account',
+      description: 'The token of the Bika account',
       required: true,
-    }),
-    bikaUrl: Property.ShortText({
-      displayName: 'Instance Url',
-      description: 'The url of the AITable instance.',
-      required: true,
-      defaultValue: 'https://bika.ai',
     }),
   },
   validate: async ({ auth }) => {
@@ -57,18 +51,14 @@ export const BikaAuth = PieceAuth.CustomAuth({
 });
 
 export const bika = createPiece({
-  displayName: 'AITable',
+  displayName: 'Bika',
   auth: BikaAuth,
   description: `Interactive spreadsheets with collaboration`,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bika.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: [
-    'alerdenisov',
-    'Abdallah-Alwarawreh',
-    'kishanprmr',
-    'MoShizzle',
-    'abuaboud',
+    'codegino'
   ],
   actions: [
     createRecordAction,

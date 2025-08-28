@@ -5,7 +5,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { AITableFieldType } from './constants';
+import { BikaFieldType } from './constants';
 
 function emptyValueFilter(
   accessor: (key: string) => any
@@ -31,8 +31,8 @@ export function prepareQuery(request?: Record<string, any>): QueryParams {
   return params;
 }
 
-export class AITableClient {
-  constructor(private bikaUrl: string, private token: string) {}
+export class BikaClient {
+  constructor( private token: string, private bikaUrl = "https://bika.ai") {}
 
   async makeRequest<T extends HttpMessageBody>(
     method: HttpMethod,
@@ -41,9 +41,14 @@ export class AITableClient {
     body: any | undefined = undefined
   ): Promise<T> {
     const baseUrl = this.bikaUrl.replace(/\/$/, '');
+
+    console.log({
+      url: `${baseUrl}/api/openapi/bika` + resourceUri,
+    });
+
     const res = await httpClient.sendRequest<T>({
       method: method,
-      url: `${baseUrl}/fusion` + resourceUri,
+      url: `${baseUrl}/api/openapi/bika` + resourceUri,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: this.token,
@@ -81,7 +86,7 @@ export class AITableClient {
         fields: {
           id: string;
           name: string;
-          type: AITableFieldType;
+          type: BikaFieldType;
           desc: string;
           property?: {
             format?: string;

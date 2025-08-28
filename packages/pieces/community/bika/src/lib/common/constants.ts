@@ -1,4 +1,4 @@
-export const enum AITableFieldType {
+export const enum BikaFieldType {
 	SINGLE_TEXT = 'SingleText',
 	ONE_WAY_LINK = 'OneWayLink',
 	TWO_WAY_LINK = 'TwoWayLink',
@@ -26,9 +26,9 @@ export const enum AITableFieldType {
 	ATTACHMENT = 'Attachment',
 }
 
-export const AITableNumericFieldTypes = [
-	AITableFieldType.NUMBER,
-	AITableFieldType.RATING,
-	AITableFieldType.CURRENCY,
-	AITableFieldType.PERCENT,
+export const BikaNumericFieldTypes = [
+	BikaFieldType.NUMBER,
+	BikaFieldType.RATING,
+	BikaFieldType.CURRENCY,
+	BikaFieldType.PERCENT,
 ];

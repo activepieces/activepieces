@@ -1,10 +1,10 @@
 import { DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { BikaAuth } from '../..';
-import { AITableClient } from './client';
-import { AITableFieldType, AITableNumericFieldTypes } from './constants';
+import { BikaClient } from './client';
+import { BikaFieldType, BikaNumericFieldTypes } from './constants';
 
 export function makeClient(auth: PiecePropValueSchema<typeof BikaAuth>) {
-	const client = new AITableClient(auth.bikaUrl, auth.token);
+	const client = new BikaClient(auth.token);
 	return client;
 }
 
@@ -73,56 +73,56 @@ export const BikaCommon = {
 			for (const field of res.data.fields) {
 				if (
 					![
-						AITableFieldType.ATTACHMENT,
-						AITableFieldType.AUTONUMBER,
-						AITableFieldType.CASCADER,
-						AITableFieldType.CREATED_BY,
-						AITableFieldType.CREATED_TIME,
-						AITableFieldType.FORMULA,
-						AITableFieldType.LAST_MODIEFIED_TIME,
-						AITableFieldType.LAST_MODIFIED_BY,
-						AITableFieldType.MAGIC_LOOKUP,
-						AITableFieldType.ONE_WAY_LINK,
+						BikaFieldType.ATTACHMENT,
+						BikaFieldType.AUTONUMBER,
+						BikaFieldType.CASCADER,
+						BikaFieldType.CREATED_BY,
+						BikaFieldType.CREATED_TIME,
+						BikaFieldType.FORMULA,
+						BikaFieldType.LAST_MODIEFIED_TIME,
+						BikaFieldType.LAST_MODIFIED_BY,
+						BikaFieldType.MAGIC_LOOKUP,
+						BikaFieldType.ONE_WAY_LINK,
 					].includes(field.type)
 				) {
 					switch (field.type) {
-						case AITableFieldType.CHECKBOX:
+						case BikaFieldType.CHECKBOX:
 							props[field.name] = Property.Checkbox({
 								displayName: field.name,
 								required: false,
 							});
 							break;
-						case AITableFieldType.CURRENCY:
-						case AITableFieldType.NUMBER:
-						case AITableFieldType.PERCENT:
-						case AITableFieldType.RATING:
+						case BikaFieldType.CURRENCY:
+						case BikaFieldType.NUMBER:
+						case BikaFieldType.PERCENT:
+						case BikaFieldType.RATING:
 							props[field.name] = Property.Number({
 								displayName: field.name,
 								required: false,
 							});
 							break;
-						case AITableFieldType.DATETIME:
+						case BikaFieldType.DATETIME:
 							props[field.name] = Property.DateTime({
 								displayName: field.name,
 								required: false,
 							});
 							break;
-						case AITableFieldType.EMAIL:
-						case AITableFieldType.PHONE:
-						case AITableFieldType.SINGLE_TEXT:
-						case AITableFieldType.URL:
+						case BikaFieldType.EMAIL:
+						case BikaFieldType.PHONE:
+						case BikaFieldType.SINGLE_TEXT:
+						case BikaFieldType.URL:
 							props[field.name] = Property.ShortText({
 								displayName: field.name,
 								required: false,
 							});
 							break;
-						case AITableFieldType.TEXT:
+						case BikaFieldType.TEXT:
 							props[field.name] = Property.LongText({
 								displayName: field.name,
 								required: false,
 							});
 							break;
-						case AITableFieldType.MULTI_SELECT:
+						case BikaFieldType.MULTI_SELECT:
 							props[field.name] = Property.StaticMultiSelectDropdown({
 								displayName: field.name,
 								required: false,
@@ -137,7 +137,7 @@ export const BikaCommon = {
 								},
 							});
 							break;
-						case AITableFieldType.SINGLE_SELECT:
+						case BikaFieldType.SINGLE_SELECT:
 							props[field.name] = Property.StaticDropdown({
 								displayName: field.name,
 								required: false,
@@ -152,7 +152,7 @@ export const BikaCommon = {
 								},
 							});
 							break;
-						case AITableFieldType.MEMBER:
+						case BikaFieldType.MEMBER:
 							props[field.name] = Property.StaticMultiSelectDropdown({
 								displayName: field.name,
 								required: false,
@@ -167,7 +167,7 @@ export const BikaCommon = {
 								},
 							});
 							break;
-						case AITableFieldType.TWO_WAY_LINK:
+						case BikaFieldType.TWO_WAY_LINK:
 							props[field.name] = Property.Array({
 								displayName: field.name,
 								required: false,
@@ -197,16 +197,16 @@ export async function createNewFields(
 	for(const field of res.data.fields) {
 		if (
 			[
-			  AITableFieldType.ATTACHMENT,
-			  AITableFieldType.AUTONUMBER,
-			  AITableFieldType.CASCADER,
-			  AITableFieldType.CREATED_BY,
-			  AITableFieldType.CREATED_TIME,
-			  AITableFieldType.FORMULA,
-			  AITableFieldType.LAST_MODIEFIED_TIME,
-			  AITableFieldType.LAST_MODIFIED_BY,
-			  AITableFieldType.MAGIC_LOOKUP,
-			  AITableFieldType.ONE_WAY_LINK,
+			  BikaFieldType.ATTACHMENT,
+			  BikaFieldType.AUTONUMBER,
+			  BikaFieldType.CASCADER,
+			  BikaFieldType.CREATED_BY,
+			  BikaFieldType.CREATED_TIME,
+			  BikaFieldType.FORMULA,
+			  BikaFieldType.LAST_MODIEFIED_TIME,
+			  BikaFieldType.LAST_MODIFIED_BY,
+			  BikaFieldType.MAGIC_LOOKUP,
+			  BikaFieldType.ONE_WAY_LINK,
 			].includes(field.type) || !(field.name in fields)
 		  ) {
 			continue; // Skip irrelevant or missing fields
@@ -215,19 +215,19 @@ export async function createNewFields(
 		  const key = field.name;
 
 		  // Handle numeric fields
-		  if(AITableNumericFieldTypes.includes(field.type))
+		  if(BikaNumericFieldTypes.includes(field.type))
 		  {
 			newFields[key] = Number(fields[key]);
 		  }
 		  // Handle member fields
-		  else if(field.type === AITableFieldType.MEMBER)
+		  else if(field.type === BikaFieldType.MEMBER)
 		  {
 			newFields[key] = field.property?.options?.filter(
 				(member) => member.id === `${fields[key]}`,
 			);
 		  }
 		  // Handle multi-select and two-way-link fields
-		  else if([AITableFieldType.MULTI_SELECT, AITableFieldType.TWO_WAY_LINK].includes(field.type))
+		  else if([BikaFieldType.MULTI_SELECT, BikaFieldType.TWO_WAY_LINK].includes(field.type))
 		  {
 			if(!Array.isArray(fields[key]) || (fields[key] as Array<unknown>).length === 0)
 			{
