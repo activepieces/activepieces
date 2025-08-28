@@ -25,7 +25,7 @@ export const deleteVideo = createAction({
       method: HttpMethod.DELETE,
     });
 
-    if(response.status > 200 && response.status < 300){
+    if(response.status >= 200 && response.status < 300){
       return {
         success: true
       };

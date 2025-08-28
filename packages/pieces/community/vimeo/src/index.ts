@@ -3,6 +3,7 @@ import { vimeoAuth } from "./lib/auth";
 import { uploadVideo } from './lib/actions/upload-video';
 import { deleteVideo } from './lib/actions/delete-video';
 import { addVideoToShowcase } from './lib/actions/add-video-to-showcase';
+import { addVideoToFolder } from './lib/actions/add-video-to-folder';
 import { newVideoLiked } from './lib/triggers/new-video-liked';
 import { newVideoBySearch } from './lib/triggers/new-video-by-search';
 import { newVideoOfMine } from './lib/triggers/new-video-of-mine';
@@ -21,6 +22,7 @@ export const vimeo = createPiece({
     uploadVideo,
     deleteVideo,
     addVideoToShowcase,
+    addVideoToFolder,
     createCustomApiCallAction({
       auth: vimeoAuth,
       baseUrl: () => "https://api.vimeo.com",

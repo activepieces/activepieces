@@ -17,5 +17,5 @@ export const vimeoAuth = PieceAuth.OAuth2({
   authUrl: 'https://api.vimeo.com/oauth/authorize',
   tokenUrl: 'https://api.vimeo.com/oauth/access_token',
   required: true,
-  scope: ['public', 'private', 'edit', 'upload', 'delete'],
+  scope: ['public', 'private', 'edit', 'upload', 'delete', 'interact'],
 });

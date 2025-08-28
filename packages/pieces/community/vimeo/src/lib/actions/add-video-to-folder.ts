@@ -3,50 +3,50 @@ import { vimeoAuth } from '../auth';
 import { apiRequest } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-export const addVideoToShowcase = createAction({
-  name: 'add_video_to_showcase',
-  displayName: 'Add Video to Showcase',
-  description: 'Adds an existing video to a user\'s showcase',
+export const addVideoToFolder = createAction({
+  name: 'add_video_to_folder',
+  displayName: 'Add Video to Folder',
+  description: 'Adds an existing video to a user\'s folder',
   auth: vimeoAuth,
   props: {
     videoId: Property.ShortText({
       displayName: 'Video ID',
-      description: 'ID of the video to add to the showcase',
+      description: 'ID of the video to add to the folder',
       required: true,
     }),
-    showcaseId: Property.Dropdown({
-      displayName: 'Showcase ID',
-      description: 'ID of the showcase to add the video to',
+    folderId: Property.Dropdown({
+      displayName: 'Folder ID',
+      description: 'ID of the folder to add the video to',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
         const response = await apiRequest({
           auth,
-          path: '/me/albums',
+          path: '/me/folders',
           method: HttpMethod.GET,
           queryParams: {
             per_page: '100',
           },
         });
 
-        const showcases = response.body.data.map((folder: any) => ({
+        const folders = response.body.data.map((folder: any) => ({
           value: folder.uri.split('/').pop(),
           label: folder.name,
         }));
 
         return {
-          options: showcases,
+          options: folders,
         };
       },
     }),
   },
   async run({ auth, propsValue }) {
-    const { videoId, showcaseId } = propsValue;
+    const { videoId, folderId } = propsValue;
 
-    // require a access token with `edit` scope
+    // require a access token with `interact` scope
     const response = await apiRequest({
       auth,
-      path: `/albums/${showcaseId}/videos/${videoId}`,
+      path: `/me/projects/${folderId}/videos/${videoId}`,
       method: HttpMethod.PUT,
     });
 
