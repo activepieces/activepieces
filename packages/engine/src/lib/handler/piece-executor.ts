@@ -44,7 +44,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             pieceName: action.settings.pieceName,
             pieceVersion: action.settings.pieceVersion,
             actionName: action.settings.actionName,
-            piecesSource: constants.piecesSource,
+            pieceSource: constants.piecesSource,
         })
 
         const { resolvedInput, censoredInput } = await constants.propsResolver.resolve<StaticPropsValue<PiecePropertyMap>>({

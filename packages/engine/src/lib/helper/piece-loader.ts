@@ -1,52 +1,20 @@
-import { access } from 'node:fs/promises'
-import path from 'node:path'
-import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
+import { Action, getPiecePath, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
 import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, isNil } from '@activepieces/shared'
 
-const folderExists = async (filePath: string): Promise<boolean> => {
-    try {
-        await access(filePath)
-        return true
-    }
-    catch {
-        return false
-    }
-}
 
-async function getPiecePath({ packageName, pieceSource }: { packageName: string, pieceSource: string }): Promise<string> {
-    let currentDir = __dirname
-    const rootDir = path.parse(currentDir).root
-    const maxIterations = currentDir.split(path.sep).length
-    if (pieceSource === 'FILE') {
-        return packageName
-    }
-    for (let i = 0; i < maxIterations; i++) {
-        const piecePath = path.resolve(currentDir, 'pieces', packageName, 'node_modules', packageName)
-        if (await folderExists(piecePath)) {
-            return piecePath
-        }
-        const parentDir = path.dirname(currentDir)
-        if (parentDir === currentDir || currentDir === rootDir) {
-            break
-        }
-        currentDir = parentDir
-    }
-    
-    throw new Error(`Piece path not found for package: ${packageName}`)
-}
 const loadPieceOrThrow = async (
-    { pieceName, pieceVersion, piecesSource }:
-    { pieceName: string, pieceVersion: string, piecesSource: string },
+    { pieceName, pieceVersion, pieceSource }:
+    { pieceName: string, pieceVersion: string, pieceSource: string },
 ): Promise<Piece> => {
     const packageName = getPackageAlias({
         pieceName,
         pieceVersion,
-        piecesSource,
+        pieceSource,
     })
 
     const module = await import(await getPiecePath({
         packageName,
-        pieceSource: piecesSource,
+        pieceSource,
     }))
 
     const piece = extractPieceFromModule<Piece>({
@@ -73,11 +41,11 @@ const getPieceAndTriggerOrThrow = async (params: {
     pieceName: string
     pieceVersion: string
     triggerName: string
-    piecesSource: string
+    pieceSource: string
 },
 ): Promise<{ piece: Piece, pieceTrigger: Trigger }> => {
-    const { pieceName, pieceVersion, triggerName, piecesSource } = params
-    const piece = await loadPieceOrThrow({ pieceName, pieceVersion, piecesSource })
+    const { pieceName, pieceVersion, triggerName, pieceSource } = params
+    const piece = await loadPieceOrThrow({ pieceName, pieceVersion, pieceSource })
     const trigger = piece.getTrigger(triggerName)
 
     if (trigger === undefined) {
@@ -94,12 +62,12 @@ const getPieceAndActionOrThrow = async (params: {
     pieceName: string
     pieceVersion: string
     actionName: string
-    piecesSource: string
+    pieceSource: string
 },
 ): Promise<{ piece: Piece, pieceAction: Action }> => {
-    const { pieceName, pieceVersion, actionName, piecesSource } = params
+    const { pieceName, pieceVersion, actionName, pieceSource } = params
 
-    const piece = await loadPieceOrThrow({ pieceName, pieceVersion, piecesSource })
+    const piece = await loadPieceOrThrow({ pieceName, pieceVersion, pieceSource })
     const pieceAction = piece.getAction(actionName)
 
     if (isNil(pieceAction)) {
@@ -119,10 +87,10 @@ const getPieceAndActionOrThrow = async (params: {
     }
 }
 
-const getPropOrThrow = async ({ params, piecesSource }: { params: ExecutePropsOptions, piecesSource: string }) => {
+const getPropOrThrow = async ({ params, pieceSource }: { params: ExecutePropsOptions, pieceSource: string }) => {
     const { piece: piecePackage, actionOrTriggerName, propertyName } = params
 
-    const piece = await loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, piecesSource })
+    const piece = await loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, pieceSource })
 
     const actionOrTrigger = piece.getAction(actionOrTriggerName) ?? piece.getTrigger(actionOrTriggerName)
 
@@ -154,12 +122,12 @@ const getPropOrThrow = async ({ params, piecesSource }: { params: ExecutePropsOp
     return prop
 }
 
-const getPackageAlias = ({ pieceName, pieceVersion, piecesSource }: {
+const getPackageAlias = ({ pieceName, pieceVersion, pieceSource }: {
     pieceName: string
-    piecesSource: string
+    pieceSource: string
     pieceVersion: string
 }) => {
-    if (piecesSource.trim() === 'FILE') {
+    if (pieceSource.trim() === 'FILE') {
         return pieceName
     }
 

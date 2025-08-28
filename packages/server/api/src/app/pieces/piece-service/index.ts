@@ -49,6 +49,7 @@ export const pieceService = (log: FastifyBaseLogger) => ({
                         pieceInformation.maximumSupportedRelease ?? '999.999.999',
                     name: pieceInformation.name,
                     version: pieceInformation.version,
+                    i18n: pieceInformation.i18n,
                 },
                 // TODO (@abuaboud) delete after migrating everyone to their own platform
                 projectId: undefined,
