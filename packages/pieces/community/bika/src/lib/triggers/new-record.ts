@@ -14,14 +14,14 @@ import dayjs from 'dayjs';
 
 const polling: Polling<
   PiecePropValueSchema<typeof BikaAuth>,
-  { datasheet_id: string }
+  { datasheet_id: string, space_id: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue: { datasheet_id }, lastFetchEpochMS }) => {
+  items: async ({ auth, propsValue: { datasheet_id, space_id }, lastFetchEpochMS }) => {
     const client = makeClient(
       auth as PiecePropValueSchema<typeof BikaAuth>
     );
-    const records = await client.listRecords(datasheet_id as string, {
+    const records = await client.listRecords(space_id as string, datasheet_id as string, {
       filterByFormula: `CREATED_TIME() > ${
         lastFetchEpochMS === 0
           ? dayjs().subtract(1, 'day').valueOf()
@@ -62,7 +62,7 @@ export const newRecordTrigger = createTrigger({
     return await pollingHelper.test(polling, {
       store: context.store,
       auth: context.auth,
-      propsValue: { datasheet_id: context.propsValue.datasheet_id },
+      propsValue: { datasheet_id: context.propsValue.datasheet_id, space_id: context.propsValue.space_id },
       files: context.files,
     });
   },
@@ -70,21 +70,21 @@ export const newRecordTrigger = createTrigger({
     await pollingHelper.onEnable(polling, {
       store: context.store,
       auth: context.auth,
-      propsValue: { datasheet_id: context.propsValue.datasheet_id },
+      propsValue: { datasheet_id: context.propsValue.datasheet_id, space_id: context.propsValue.space_id },
     });
   },
   async onDisable(context) {
     await pollingHelper.onDisable(polling, {
       store: context.store,
       auth: context.auth,
-      propsValue: { datasheet_id: context.propsValue.datasheet_id },
+      propsValue: { datasheet_id: context.propsValue.datasheet_id, space_id: context.propsValue.space_id },
     });
   },
   async run(context) {
     return await pollingHelper.poll(polling, {
       store: context.store,
       auth: context.auth,
-      propsValue: { datasheet_id: context.propsValue.datasheet_id },
+      propsValue: { datasheet_id: context.propsValue.datasheet_id, space_id: context.propsValue.space_id },
       files: context.files,
     });
   },

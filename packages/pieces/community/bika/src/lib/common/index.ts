@@ -25,7 +25,7 @@ export const BikaCommon = {
 			const res = await client.listSpaces();
 			return {
 				disabled: false,
-				options: res.data.spaces.map((space) => {
+				options: res.data.map((space) => {
 					return {
 						label: space.name,
 						value: space.id,
@@ -48,9 +48,10 @@ export const BikaCommon = {
 			}
 			const client = makeClient(auth as PiecePropValueSchema<typeof BikaAuth>);
 			const res = await client.listDatasheets(space_id as string);
+
 			return {
 				disabled: false,
-				options: res.data.nodes.map((datasheet) => {
+				options: res.data.map((datasheet) => {
 					return {
 						label: datasheet.name,
 						value: datasheet.id,
@@ -64,28 +65,32 @@ export const BikaCommon = {
 		description: 'The fields to add to the record.',
 		required: true,
 		refreshers: ['auth', 'datasheet_id'],
-		props: async ({ auth, datasheet_id }) => {
+		props: async ({ auth, space_id, datasheet_id }) => {
 			const client = makeClient(auth as PiecePropValueSchema<typeof BikaAuth>);
-			const res = await client.getDatasheetFields(datasheet_id as unknown as string);
+			const res = await client.getDatasheetFields(space_id as unknown as  string, datasheet_id as unknown as string);
 
 			const props: DynamicPropsValue = {};
 
-			for (const field of res.data.fields) {
+			for (const field of res.data) {
 				if (
 					![
-						BikaFieldType.ATTACHMENT,
 						BikaFieldType.AUTONUMBER,
 						BikaFieldType.CASCADER,
 						BikaFieldType.CREATED_BY,
 						BikaFieldType.CREATED_TIME,
 						BikaFieldType.FORMULA,
-						BikaFieldType.LAST_MODIEFIED_TIME,
 						BikaFieldType.LAST_MODIFIED_BY,
-						BikaFieldType.MAGIC_LOOKUP,
-						BikaFieldType.ONE_WAY_LINK,
+						BikaFieldType.LAST_MODIFIED_TIME,
+						BikaFieldType.LOOKUP,
 					].includes(field.type)
 				) {
 					switch (field.type) {
+						case BikaFieldType.ATTACHMENT:
+							props[field.name] = Property.File({
+								displayName: field.name,
+								required: false,
+							});
+							break;
 						case BikaFieldType.CHECKBOX:
 							props[field.name] = Property.Checkbox({
 								displayName: field.name,
@@ -127,13 +132,10 @@ export const BikaCommon = {
 								displayName: field.name,
 								required: false,
 								options: {
-									options:
-										field.property?.options?.map((option) => {
-											return {
-												label: option.name,
-												value: option.name,
-											};
-										}) || [],
+									options: field.property?.options?.map((option) => ({
+										label: option.name,
+										value: option.name,
+									})) || [],
 								},
 							});
 							break;
@@ -142,13 +144,10 @@ export const BikaCommon = {
 								displayName: field.name,
 								required: false,
 								options: {
-									options:
-										field.property?.options?.map((option) => {
-											return {
-												label: option.name,
-												value: option.name,
-											};
-										}) || [],
+									options: field.property?.options?.map((option) => ({
+										label: option.name,
+										value: option.name,
+									})) || [],
 								},
 							});
 							break;
@@ -167,7 +166,7 @@ export const BikaCommon = {
 								},
 							});
 							break;
-						case BikaFieldType.TWO_WAY_LINK:
+					case BikaFieldType.LINK:
 							props[field.name] = Property.Array({
 								displayName: field.name,
 								required: false,
@@ -183,6 +182,7 @@ export const BikaCommon = {
 
 export async function createNewFields(
 	auth: PiecePropValueSchema<typeof BikaAuth>,
+	space_id: string,
 	datasheet_id: string,
 	fields: Record<string, unknown>,
 ) {
@@ -192,21 +192,19 @@ export async function createNewFields(
 	const newFields: Record<string, unknown> = {};
 
 	const client = makeClient(auth as PiecePropValueSchema<typeof BikaAuth>);
-	const res = await client.getDatasheetFields(datasheet_id as string);
+	const res = await client.getDatasheetFields(space_id,datasheet_id);
 
-	for(const field of res.data.fields) {
+	for(const field of res.data) {
 		if (
 			[
-			  BikaFieldType.ATTACHMENT,
 			  BikaFieldType.AUTONUMBER,
 			  BikaFieldType.CASCADER,
 			  BikaFieldType.CREATED_BY,
 			  BikaFieldType.CREATED_TIME,
 			  BikaFieldType.FORMULA,
-			  BikaFieldType.LAST_MODIEFIED_TIME,
+			  BikaFieldType.LAST_MODIFIED_TIME,
 			  BikaFieldType.LAST_MODIFIED_BY,
-			  BikaFieldType.MAGIC_LOOKUP,
-			  BikaFieldType.ONE_WAY_LINK,
+			  BikaFieldType.LOOKUP,
 			].includes(field.type) || !(field.name in fields)
 		  ) {
 			continue; // Skip irrelevant or missing fields
@@ -227,7 +225,7 @@ export async function createNewFields(
 			);
 		  }
 		  // Handle multi-select and two-way-link fields
-		  else if([BikaFieldType.MULTI_SELECT, BikaFieldType.TWO_WAY_LINK].includes(field.type))
+		  else if([BikaFieldType.MULTI_SELECT].includes(field.type))
 		  {
 			if(!Array.isArray(fields[key]) || (fields[key] as Array<unknown>).length === 0)
 			{
