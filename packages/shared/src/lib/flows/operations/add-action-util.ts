@@ -62,12 +62,11 @@ function clone(step: FlowAction, oldNameToNewName: Record<string, string>): Flow
             )
         })
     }
-    if (step.settings.inputUiInfo) {
+    if (step.settings.sampleData) {
         step.settings = {
             ...step.settings,
-            inputUiInfo: {
-                ...step.settings.inputUiInfo,
-                currentSelectedData: undefined,
+            sampleData: {
+                ...step.settings.sampleData,
                 sampleDataFileId: undefined,
                 sampleDataInputFileId: undefined,
                 lastTestDate: undefined,

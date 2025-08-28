@@ -1,10 +1,10 @@
 {
-  "Twin Web Agent": "Twin Web Agent",
-  "Please use ***your-twin-labs-api-key*** as value for API Key": "Please use ***your-twin-labs-api-key*** as value for API Key",
-  "Browse": "Browse",
-  "Browse the internet with an AI web navigation agent that can find information for you": "Browse the internet with an AI web navigation agent that can find information for you",
+  "Twin Web Agent": "Agente web Twin",
+  "Please use ***your-twin-labs-api-key*** as value for API Key": "Por favor usa ***tu-doble-labs-api-key*** como valor para la Clave API",
+  "Browse": "Navegar",
+  "Browse the internet with an AI web navigation agent that can find information for you": "Navegue por Internet con un agente de navegación web de IA que puede encontrar información para usted",
   "startUrl": "startUrl",
-  "Goal": "Goal",
-  "The URL where the browsing task should begin": "The URL where the browsing task should begin",
-  "The goal or objective of the browsing task": "The goal or objective of the browsing task"
+  "Goal": "Objetivo",
+  "The URL where the browsing task should begin": "La URL donde debe comenzar la tarea de navegación",
+  "The goal or objective of the browsing task": "El objetivo o objetivo de la tarea de navegación"
 }

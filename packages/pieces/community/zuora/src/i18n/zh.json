@@ -1,8 +1,8 @@
 {
   "Zuora": "Zuora",
   "Cloud-based subscription management platform that enables businesses to launch and monetize subscription services.": "Cloud-based subscription management platform that enables businesses to launch and monetize subscription services.",
-  "Client ID": "Client ID",
-  "Client Secret": "Client Secret",
+  "Client ID": "客户端ID",
+  "Client Secret": "客户端密钥",
   "Environment": "Environment",
   "US Cloud 1 Production": "US Cloud 1 Production",
   "US Cloud 1 API Sandbox": "US Cloud 1 API Sandbox",
@@ -27,7 +27,7 @@
   "Due Date": "Due Date",
   "Invoice Date": "Invoice Date",
   "Invoice Items": "Invoice Items",
-  "Status": "Status",
+  "Status": "状态",
   "Account Name": "Account Name",
   "Product Rate Plan Name": "Product Rate Plan Name",
   "Product ID": "Product ID",
@@ -36,6 +36,6 @@
   "Whether invoices are automatically picked up for processing in the corresponding payment run.": "Whether invoices are automatically picked up for processing in the corresponding payment run.",
   "Provide YYYY-MM-DD format.": "Provide YYYY-MM-DD format.",
   "i.e. StealthCo Premium": "i.e. StealthCo Premium",
-  "Draft": "Draft",
+  "Draft": "草稿",
   "Posted": "Posted"
 }
