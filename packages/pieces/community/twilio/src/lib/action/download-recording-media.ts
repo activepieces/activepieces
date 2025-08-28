@@ -59,7 +59,7 @@ export const twilioDownloadRecordingMedia = createAction({
         username: account_sid,
         password: auth_token,
       },
-      responseType: 'arraybuffer', // We expect binary data, not JSON
+      responseType: 'arraybuffer',
     });
 
     const fileData = Buffer.from(response.body);
