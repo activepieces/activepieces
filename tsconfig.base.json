@@ -105,6 +105,9 @@
       "@activepieces/piece-autocalls": [
         "packages/pieces/community/autocalls/src/index.ts"
       ],
+      "@activepieces/piece-avoma": [
+        "packages/pieces/community/avoma/src/index.ts"
+      ],
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
       ],
@@ -832,7 +835,7 @@
       "@activepieces/piece-serp-api": [
         "packages/pieces/community/serp-api/src/index.ts"
       ],
-      "@activepieces/piece-serpstat":[
+      "@activepieces/piece-serpstat": [
         "packages/pieces/community/serpstat/src/index.ts"
       ],
       "@activepieces/piece-sessions-us": [
