@@ -26,7 +26,9 @@ export const drupalWebhook = createTrigger({
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const { website_url, api_key } = (context.auth as DrupalAuthType);
+    const { website_url, username, password } = (context.auth as DrupalAuthType);
+    // For triggers, we still use modeler_api - this would need an API key from modeler_api setup  
+    const api_key = 'placeholder'; // This would come from modeler_api configuration
     const body: any = {
       id: context.propsValue.id,
       webHookUrl: context.webhookUrl,
@@ -43,7 +45,9 @@ export const drupalWebhook = createTrigger({
     await context.store.put(`_drupal_webhook_trigger_` + context.propsValue.id, response.body);
   },
   async onDisable(context) {
-    const { website_url, api_key } = (context.auth as DrupalAuthType);
+    const { website_url, username, password } = (context.auth as DrupalAuthType);
+    // For triggers, we still use modeler_api - this would need an API key from modeler_api setup  
+    const api_key = 'placeholder'; // This would come from modeler_api configuration
     const webhook = await context.store.get(`_drupal_webhook_trigger` + context.propsValue.id);
     if (webhook) {
       const response = await httpClient.sendRequest({
