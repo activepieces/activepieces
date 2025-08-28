@@ -1,6 +1,6 @@
 import { URL } from 'url'
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, PropertyExecutionType, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, PropertyExecutionType, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { PausedFlowTimeoutError } from '../helper/execution-errors'
@@ -199,6 +199,9 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 }
 
 async function resolveInputsUsingAI({ resolvedInput, constants, action, executionState }: ResolveInputsUsingAIParams) {
+    if (constants.edition === ApEdition.COMMUNITY) {
+        return resolvedInput
+    }
     const autoPropertiesKeys = Object.entries(action.settings.propertySettings ?? {})
         .filter(([_, value]) => value.type === PropertyExecutionType.AUTO)
         .map(([key]) => key)
@@ -215,13 +218,18 @@ async function resolveInputsUsingAI({ resolvedInput, constants, action, executio
     }
     assertNotNullOrUndefined(action.settings.actionName, 'actionName')
 
-    return toolInputsResolver.resolve(constants, {
-        pieceName: action.settings.pieceName,
-        pieceVersion: action.settings.pieceVersion,
-        actionName: action.settings.actionName,
-        preDefinedInputs,
-        flowVersionId: constants.flowVersionId,
-    })
+    try {
+        return toolInputsResolver.resolve(constants, {
+            pieceName: action.settings.pieceName,
+            pieceVersion: action.settings.pieceVersion,
+            actionName: action.settings.actionName,
+            preDefinedInputs,
+            flowVersionId: constants.flowVersionId,
+        })
+    } catch (error) {
+        console.error('Error resolving inputs using AI', error)
+        return resolvedInput
+    }
 }
 
 function getResponse(hookResponse: HookResponse): RespondResponse | undefined {
