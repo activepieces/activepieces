@@ -89,10 +89,7 @@ export const BuilderHeader = () => {
     <div className="bg-background select-none">
       <div className="relative items-center flex h-[55px] w-full p-4 bg-muted/30">
         <div className="flex items-center gap-2">
-          {/* <HomeButton
-            route={'/flows'}
-            showBackButton={embedState.homeButtonIcon === 'back'}
-          /> */}
+          {/*<HomeButton />*/}
           <div className="flex gap-2 items-center">
             {!embedState.hideFolders &&
               !embedState.disableNavigationInBuilder && (

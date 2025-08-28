@@ -6,7 +6,7 @@
   "Host": "主机",
   "Port": "端口",
   "Username": "用户名",
-  "Password": "密码",
+  "Password": "Password",
   "The protocol to use": "The protocol to use",
   "Allow connections to servers with self-signed certificates": "Allow connections to servers with self-signed certificates",
   "The host of the server": "The host of the server",
