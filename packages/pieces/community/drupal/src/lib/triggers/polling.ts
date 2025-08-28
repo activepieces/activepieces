@@ -17,7 +17,9 @@ type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
 const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { id: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const { website_url, api_key } = (auth as DrupalAuthType);
+    const { website_url, username, password } = (auth as DrupalAuthType);
+    // For triggers, we still use modeler_api - this would need an API key from modeler_api setup
+    const api_key = 'placeholder'; // This would come from modeler_api configuration
     const body: any = {
       id: propsValue['id'],
       timestamp: lastFetchEpochMS,

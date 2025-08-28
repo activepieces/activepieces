@@ -14,36 +14,42 @@ import {
 
 type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
 
-export const drupalCreateEntityAction = createAction({
+export const drupalUpdateEntityAction = createAction({
   auth: drupalAuth,
-  name: 'drupal-create-entity',
-  displayName: 'Create Entity',
-  description: 'Create a new entity in Drupal with smart field discovery and validation',
+  name: 'drupal-update-entity',
+  displayName: 'Update Entity',
+  description: 'Update an existing entity in Drupal with smart field discovery and validation',
   props: {
     entity_type: Property.Dropdown({
       displayName: 'Entity Type',
-      description: 'Choose the type of content to create.',
+      description: 'Select the entity type and bundle',
       required: true,
       refreshers: [],
       options: async ({ auth }) => fetchEntityTypesForEditing(auth as DrupalAuthType),
     }),
+    entity_uuid: Property.ShortText({
+      displayName: 'Entity UUID',
+      description: 'The UUID of the entity to update',
+      required: true,
+    }),
     entity_fields: Property.DynamicProperties({
       displayName: 'Entity Fields',
-      description: 'Fill in the content fields. Available fields depend on the entity type selected above.',
+      description: 'Update the values for the entity fields (only provide values for fields you want to change)',
       required: false,
       refreshers: ['entity_type'],
       props: async (propsValue) => {
         const { auth, entity_type } = propsValue;
-        return buildFieldProperties(auth as DrupalAuthType, entity_type, true);
+        return buildFieldProperties(auth as DrupalAuthType, entity_type, false);
       }
     }),
   },
   async run({ auth, propsValue }) {
     const entityInfo = propsValue['entity_type'] as any;
+    
     const fieldsData = propsValue['entity_fields'] as any;
     
     // Extract field values, handling text fields with format correctly
-    const fieldsToCreate: Record<string, any> = {};
+    const fieldsToUpdate: Record<string, any> = {};
     const processedFormatFields = new Set<string>();
     
     for (const [key, value] of Object.entries(fieldsData)) {
@@ -58,7 +64,7 @@ export const drupalCreateEntityAction = createAction({
         const textValue = fieldsData[textFieldName];
         
         if (textValue) {
-          fieldsToCreate[textFieldName] = {
+          fieldsToUpdate[textFieldName] = {
             value: textValue,
             format: value
           };
@@ -71,27 +77,28 @@ export const drupalCreateEntityAction = createAction({
         const formatKey = `${key}_format`;
         const formatValue = fieldsData[formatKey];
         
-        if (formatValue && formatValue !== 'undefined') {
-          fieldsToCreate[key] = {
+        if (formatValue && formatValue !== undefined && formatValue !== null && formatValue !== '') {
+          fieldsToUpdate[key] = {
             value: value,
             format: formatValue
           };
           processedFormatFields.add(formatKey);
         } else {
-          fieldsToCreate[key] = value;
+          fieldsToUpdate[key] = value;
         }
       }
     }
     
-    if (Object.keys(fieldsToCreate).length === 0) {
-      throw new Error('At least one field must be provided to create an entity');
+    if (Object.keys(fieldsToUpdate).length === 0) {
+      throw new Error('No fields provided to update');
     }
     
-    return await drupal.createEntity(
+    return await drupal.updateEntity(
       auth as DrupalAuthType,
       entityInfo.entity_type,
       entityInfo.bundle,
-      fieldsToCreate
+      propsValue['entity_uuid'],
+      fieldsToUpdate
     );
   },
 });

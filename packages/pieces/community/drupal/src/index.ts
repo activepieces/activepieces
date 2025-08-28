@@ -12,13 +12,19 @@ import { drupalCallToolAction } from './lib/actions/tools';
 import { drupalCreateEntityAction } from './lib/actions/create_entity';
 import { drupalListEntitiesAction } from './lib/actions/list_entities';
 import { drupalGetEntityAction } from './lib/actions/get_entity';
+import { drupalUpdateEntityAction } from './lib/actions/update_entity';
+import { drupalDeleteEntityAction } from './lib/actions/delete_entity';
 import { drupalPolling } from './lib/triggers/polling';
 import { drupalWebhook } from './lib/triggers/webhook';
 
 const markdownPropertyDescription = `
-First, install the [Drupal Modeler API](https://www.drupal.org/project/modeler_api) module.
+**Using Drupal's JSON:API**
 
-Then, after you've enabled the **modeler_api_connect** module, you get your API key from your user profile in Drupal.
+Your Drupal site comes with JSON:API built-in. Just ensure it's enabled and configure user authentication:
+
+1. Enable the JSON:API module
+2. Create a user account and give it the permissions you want Activepieces to have
+3. Use that account's credentials for authentication
 
 Provide the website URL in the format https://www.example.com.
 `;
@@ -30,28 +36,33 @@ export const drupalAuth = PieceAuth.CustomAuth({
     website_url: Property.ShortText({
       displayName: 'Website URL',
       required: true,
-      description:
-        'URL of the Drupal website, e.g. https://www.example.com',
+      description: 'URL of your Drupal site',
     }),
-    api_key: Property.ShortText({
-      displayName: 'API Key',
+    username: Property.ShortText({
+      displayName: 'Username',
+      required: true,
+    }),
+    password: Property.ShortText({
+      displayName: 'Password',
       required: true,
     }),
   },
   validate: async ({ auth }) => {
-    const { website_url, api_key } = auth;
-    if (!website_url || !api_key) {
+    const { website_url, username, password } = auth;
+    if (!website_url || !username || !password) {
       return {
         valid: false,
-        error: 'Please fill all the fields [website_url, api_key]',
+        error: 'Please fill all the fields [website_url, username, password]',
       };
     }
     try {
+      const basicAuth = Buffer.from(`${username}:${password}`).toString('base64');
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: website_url + `/modeler_api`,
+        url: website_url + `/jsonapi`,
         headers: {
-          'x-api-key': api_key,
+          'Authorization': `Basic ${basicAuth}`,
+          'Accept': 'application/vnd.api+json',
         },
       });
       console.debug('Auth validation response', response);
@@ -62,12 +73,12 @@ export const drupalAuth = PieceAuth.CustomAuth({
       }
       return {
         valid: false,
-        error: 'Validation failed with response code ' + response.status,
+        error: 'Authentication failed. Please check your credentials.',
       };
     } catch (e: any) {
       return {
         valid: false,
-        error: 'Validation failed: ' + e.message,
+        error: 'Connection failed: ' + e.message,
       };
     }
   },
@@ -93,7 +104,9 @@ export const drupal = createPiece({
     drupalCallToolAction, 
     drupalCreateEntityAction, 
     drupalListEntitiesAction, 
-    drupalGetEntityAction
+    drupalGetEntityAction,
+    drupalUpdateEntityAction,
+    drupalDeleteEntityAction
   ],
   triggers: [drupalPolling, drupalWebhook],
 });

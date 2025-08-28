@@ -23,7 +23,7 @@ export const drupalCallToolAction = createAction({
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        const { website_url, api_key } = (auth as DrupalAuthType);
+        const { website_url, username, password } = (auth as DrupalAuthType);
         if (!auth) {
           return {
             disabled: true,
@@ -37,7 +37,8 @@ export const drupalCallToolAction = createAction({
             method: HttpMethod.GET,
             url: website_url + `/modeler_api/tools`,
             headers: {
-              'x-api-key': api_key,
+              'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
+            'Accept': 'application/vnd.api+json',
             },
           });
           console.debug('Tool response', response);
@@ -84,7 +85,7 @@ export const drupalCallToolAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { website_url, api_key } = (auth as DrupalAuthType);
+    const { website_url, username, password } = (auth as DrupalAuthType);
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: website_url + `/modeler_api/tool/execute`,
@@ -93,7 +94,8 @@ export const drupalCallToolAction = createAction({
         config: propsValue.config,
       },
       headers: {
-        'x-api-key': api_key,
+        'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
+        'Accept': 'application/vnd.api+json',
       },
     };
 
