@@ -6,17 +6,17 @@ import {
 import { BikaCommon, makeClient } from '../common';
 import { BikaAuth } from '../../index';
 
-export const findRecordAction = createAction({
+export const deleteRecordAction = createAction({
   auth: BikaAuth,
-  name: 'bika_find_record',
-  displayName: 'Find a Record',
-  description: 'Finds a record in datasheet by ID.',
+  name: 'bika_delete_record',
+  displayName: 'Delete a Record',
+  description: 'Deletes a record in datasheet by ID.',
   props: {
     space_id: BikaCommon.space_id,
     datasheet_id: BikaCommon.datasheet_id,
       recordId: Property.ShortText({
       displayName: 'Record ID',
-      description: 'The ID of the record to find.',
+      description: 'The ID of the record to delete.',
       required: true,
     }),
   },
@@ -29,7 +29,7 @@ export const findRecordAction = createAction({
       context.auth as PiecePropValueSchema<typeof BikaAuth>
     );
 
-    const response: any = await client.findRecord(
+    const response: any = await client.deleteRecord(
       spaceId,
       datasheetId,
       recordId,

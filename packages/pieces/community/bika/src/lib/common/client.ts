@@ -102,6 +102,12 @@ export class BikaClient {
       request
     );
   }
+    async deleteRecord(space_id: string, datasheet_id: string, record_id: string) {
+    return await this.makeRequest(
+      HttpMethod.DELETE,
+      `/v2/spaces/${space_id}/resources/databases/${datasheet_id}/records/${record_id}`
+    );
+  }
   async updateRecord(space_id: string, datasheet_id: string, record_id: string, request: object) {
     return await this.makeRequest(
       HttpMethod.PUT,

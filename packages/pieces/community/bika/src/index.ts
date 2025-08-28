@@ -3,12 +3,12 @@ import {
   createPiece,
   PieceAuth,
   PiecePropValueSchema,
-  Property,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createRecordAction } from './lib/actions/create-record';
 import { findRecordsAction } from './lib/actions/find-records';
 import { findRecordAction} from './lib/actions/find-record';
+import {deleteRecordAction } from './lib/actions/delete-record';
 import { updateRecordAction } from './lib/actions/update-record';
 import { newRecordTrigger } from './lib/triggers/new-record';
 import { makeClient } from './lib/common';
@@ -63,9 +63,10 @@ export const bika = createPiece({
   ],
   actions: [
     createRecordAction,
-    updateRecordAction,
     findRecordsAction,
     findRecordAction,
+    updateRecordAction,
+    deleteRecordAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://bika.ai/api/openapi/bika',
       auth: BikaAuth,
