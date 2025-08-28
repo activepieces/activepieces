@@ -8,7 +8,7 @@
   "Extract structured data from provided text,image or PDF.": "Extract structured data from provided text,image or PDF.",
   "Provider": "Provider",
   "Model": "Model",
-  "Text": "Text",
+  "Text": "文本",
   "Images": "Images",
   "Text to Classify": "Text to Classify",
   "Categories": "Categories",

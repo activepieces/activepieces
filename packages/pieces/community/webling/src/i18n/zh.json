@@ -1,7 +1,7 @@
 {
   "Webling": "Webling",
-  "Base URL": "Base URL",
-  "API Key": "API Key",
+  "Base URL": "基本网址",
+  "API Key": "API 密钥",
   "Get Events by ID": "Get Events by ID",
   "Gets event data by a list of event IDs and optional calendar ID to filter.": "Gets event data by a list of event IDs and optional calendar ID to filter.",
   "Event ID list": "Event ID list",

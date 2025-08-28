@@ -90,20 +90,24 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
     async resetPlatformUsage(platformId: string): Promise<void> {
         const redisConnection = getRedisConnection()
         const today = dayjs()
-
-        const platformTasksRedisKey = getDailyUsageRedisKey('tasks', 'platform', platformId, today)
-        await redisConnection.del(platformTasksRedisKey)
-
-        const platformAiCreditRedisKey = getDailyUsageRedisKey('ai_credits', 'platform', platformId, today)
-        await redisConnection.del(platformAiCreditRedisKey)
+        const startOfMonth = today.startOf('month')
 
         const projectIds = await projectService.getProjectIdsByPlatform(platformId)
-        for (const projectId of projectIds) {
-            const projectTasksRedisKey = getDailyUsageRedisKey('tasks', 'project', projectId, today)
-            await redisConnection.del(projectTasksRedisKey)
 
-            const projectAiCreditRedisKey = getDailyUsageRedisKey('ai_credits', 'project', projectId, today)
-            await redisConnection.del(projectAiCreditRedisKey)
+        for (let d = startOfMonth; d.isSame(today) || d.isBefore(today); d = d.add(1, 'day')) {
+            const platformTasksRedisKey = getDailyUsageRedisKey('tasks', 'platform', platformId, d)
+            await redisConnection.del(platformTasksRedisKey)
+
+            const platformAiCreditRedisKey = getDailyUsageRedisKey('ai_credits', 'platform', platformId, d)
+            await redisConnection.del(platformAiCreditRedisKey)
+
+            for (const projectId of projectIds) {
+                const projectTasksRedisKey = getDailyUsageRedisKey('tasks', 'project', projectId, d)
+                await redisConnection.del(projectTasksRedisKey)
+
+                const projectAiCreditRedisKey = getDailyUsageRedisKey('ai_credits', 'project', projectId, d)
+                await redisConnection.del(projectAiCreditRedisKey)
+            }
         }
     },
 

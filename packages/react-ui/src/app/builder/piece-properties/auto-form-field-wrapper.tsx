@@ -41,6 +41,18 @@ type AutoFormFieldWrapperProps = {
   inputName: string;
 };
 
+const getDefaultValueForDynamicValue = (
+  property: PieceProperty,
+  currentValue: unknown,
+) => {
+  if (property.type === PropertyType.ARRAY) {
+    return null;
+  }
+  return typeof currentValue === 'string' || typeof currentValue === 'number'
+    ? currentValue
+    : JSON.stringify(currentValue);
+};
+
 const AutoFormFieldWrapper = ({
   placeBeforeLabelText = false,
   children,
@@ -56,7 +68,6 @@ const AutoFormFieldWrapper = ({
   const dynamicInputModeToggled =
     form.getValues().settings?.propertySettings?.[propertyName]?.type ===
     PropertyExecutionType.DYNAMIC;
-
   function handleDynamicValueToggleChange(mode: PropertyExecutionType) {
     const propertySettingsForSingleProperty = {
       ...form.getValues().settings?.propertySettings?.[propertyName],
@@ -70,7 +81,12 @@ const AutoFormFieldWrapper = ({
       },
     );
     if (isInputNameLiteral(inputName)) {
-      form.setValue(inputName, property.defaultValue ?? null, {
+      const currentValue = form.getValues(inputName);
+      const newValue =
+        mode === PropertyExecutionType.DYNAMIC
+          ? getDefaultValueForDynamicValue(property, currentValue)
+          : property.defaultValue ?? null;
+      form.setValue(inputName, newValue, {
         shouldValidate: true,
       });
     } else {
