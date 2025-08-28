@@ -1,5 +1,5 @@
 import { apAxios, GetRunForWorkerRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -64,8 +64,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         app.io.to(request.principal.projectId).emit(type, data)
     })
 
-    app.post('/update-run', UpdateRunProgress, async (request) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId, executionStateBuffer, executionStateContentLength, failedStepName: failedStepName } = request.body
+    app.post('/update-run', UpdateRunProgress, async (request, reply) => {
+        const { runId, workerHandlerId, runDetails, httpRequestId, executionStateContentLength, executionStateBuffer, failedStepName: failedStepName } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
@@ -87,10 +87,9 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             failedStepName,
         })
 
-        let uploadUrl: string | undefined
         const updateLogs = !isNil(executionStateContentLength) && executionStateContentLength > 0
         if (updateLogs) {
-            uploadUrl = await flowRunService(request.log).updateLogsAndReturnUploadUrl({
+            await flowRunService(request.log).updateLogs({
                 flowRunId: runId,
                 logsFileId: runWithoutSteps.logsFileId ?? undefined,
                 projectId: request.principal.projectId,
@@ -122,10 +121,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 log: request.log,
             })
         }
-        const response: UpdateRunProgressResponse = {
-            uploadUrl,
-        }
-        return response
+        return reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     app.post('/update-flow-response', UpdateFlowResponseParams, async (request) => {
