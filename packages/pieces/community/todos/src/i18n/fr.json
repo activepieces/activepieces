@@ -5,7 +5,7 @@
   "Wait for Approval": "Attendre l'approbation",
   "Create Todo and Wait": "Créer une todo et attendre",
   "Creates a todo for a user, requiring them to respond or take action.": "Crée une todo pour un utilisateur, lui demandant de réagir ou de prendre des mesures.",
-  "Pauses the flow and wait for the approval from the user": "Met en pause le flux et attend l'approbation de l'utilisateur",
+  "Pauses the flow and wait for the approval from the user": "Met le flow en pause et attend l'approbation de l'utilisateur",
   "Creates a todo for a user and wait for their response or take action.": "Crée une todo pour un utilisateur et attend sa réponse ou prend des mesures.",
   "Title": "Titre de la page",
   "Description": "Libellé",

@@ -205,6 +205,9 @@
       "@activepieces/piece-clearout": [
         "packages/pieces/community/clearout/src/index.ts"
       ],
+      "@activepieces/piece-clickfunnels": [
+        "packages/pieces/community/clickfunnels/src/index.ts"
+      ],
       "@activepieces/piece-clicksend": [
         "packages/pieces/community/clicksend/src/index.ts"
       ],
@@ -641,6 +644,9 @@
       "@activepieces/piece-mixpanel": [
         "packages/pieces/community/mixpanel/src/index.ts"
       ],
+      "@activepieces/piece-mollie": [
+        "packages/pieces/community/mollie/src/index.ts"
+      ],
       "@activepieces/piece-monday": [
         "packages/pieces/community/monday/src/index.ts"
       ],
@@ -720,6 +726,9 @@
       "@activepieces/piece-photoroom": [
         "packages/pieces/community/photoroom/src/index.ts"
       ],
+      "@activepieces/piece-pinecone": [
+        "packages/pieces/community/pinecone/src/index.ts"
+      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
@@ -788,6 +797,9 @@
       ],
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
+      ],
+        "@activepieces/piece-retell-ai": [
+        "packages/pieces/community/retell-ai/src/index.ts"
       ],
       "@activepieces/piece-retune": [
         "packages/pieces/community/retune/src/index.ts"

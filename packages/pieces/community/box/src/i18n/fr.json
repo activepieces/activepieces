@@ -31,5 +31,5 @@
   "The ID of the item to trigger a webhook": "L'ID de l'élément pour déclencher un webhook",
   "The type of the item to trigger a webhook": "Le type de l'élément pour déclencher un webhook",
   "File": "Ficher",
-  "Folder": "Folder"
+  "Folder": "Dossier"
 }

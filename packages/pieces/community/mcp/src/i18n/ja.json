@@ -15,7 +15,7 @@
   "Respond and Continue": "応答して続ける",
   "MCP Tool": "MCP ツール",
   "Creates a tool that MCP clients can call to execute this flow": "MCP クライアントがこのフローを実行するために呼び出すことができるツールを作成します",
-  "Name": "Name",
+  "Name": "名前",
   "Description": "説明",
   "Parameters": "パラメータ",
   "Wait for Response": "応答待ち",

@@ -30,16 +30,15 @@ export const TriggerEventSelect = React.memo(
     const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
       formValues.name,
       (step) => {
-        const sampleDataFileId = step.settings.inputUiInfo?.sampleDataFileId;
+        const sampleDataFileId = step.settings.sampleData?.sampleDataFileId;
         const sampleDataInputFileId =
-          step.settings.inputUiInfo?.sampleDataInputFileId;
+          step.settings.sampleData?.sampleDataInputFileId;
         form.setValue(
-          'settings.inputUiInfo',
+          'settings.sampleData',
           {
-            ...formValues.settings.inputUiInfo,
+            ...formValues.settings.sampleData,
             sampleDataFileId,
             sampleDataInputFileId,
-            currentSelectedData: undefined,
             lastTestDate: dayjs().toISOString(),
           },
           { shouldValidate: true },
