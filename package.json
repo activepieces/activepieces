@@ -239,6 +239,7 @@
     "nanoid": "3.3.8",
     "next-themes": "0.4.6",
     "node-cron": "3.0.3",
+    "node-exiftool": "2.3.0",
     "nodemailer": "6.9.9",
     "notion-to-md": "3.1.1",
     "nx-cloud": "19.1.0",
