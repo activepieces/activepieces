@@ -1,7 +1,7 @@
 import {
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { 
+import {
   PiecePropValueSchema,
   DynamicPropsValue,
   Property,
@@ -18,11 +18,11 @@ type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
 
 /**
  * Discovers available entity types from Drupal's JSON:API endpoint
- * 
+ *
  * This function queries the main JSON:API endpoint to see what entity types
  * and bundles are available, then filters them to only show content entities
  * that users would typically want to work with (not config entities).
- * 
+ *
  * @param auth - Drupal authentication credentials
  * @param context - Whether entities will be used for 'reading' or 'editing'
  * @returns Dropdown options for entity type selection
@@ -38,32 +38,32 @@ async function fetchEntityTypes(auth: DrupalAuthType, context: 'reading' | 'edit
 
   try {
     const response = await makeJsonApiRequest(auth, `${auth.website_url}/jsonapi`, HttpMethod.GET);
-    
+
     if (response.status === 200) {
       const entityTypes: Array<{label: string; value: any}> = [];
       const data = response.body as any;
-      
+
       // Design choice: Hardcode entity types, discover bundles dynamically
       // - Entity types are hardcoded to avoid config entities like 'action', 'view', etc.
       // - Bundles are discovered from JSON:API to support custom content types
       // - For editing: only node/media have reliable form display configurations
       // - For reading: include content entities that users typically query
-      const allowedEntityTypes = context === 'editing' 
+      const allowedEntityTypes = context === 'editing'
         ? ['node', 'media']
         : ['node', 'taxonomy_term', 'user', 'media'];
-      
+
       if (data.links) {
         for (const [key, value] of Object.entries(data.links)) {
           if (key !== 'self' && typeof value === 'object' && (value as any).href) {
             const parts = key.split('--');
             if (parts.length === 2) {
               const [entityType, bundle] = parts;
-              
+
               if (allowedEntityTypes.includes(entityType)) {
                 const bundleName = bundle.charAt(0).toUpperCase() + bundle.slice(1).replace(/_/g, ' ');
                 const entityTypeName = entityType.charAt(0).toUpperCase() + entityType.slice(1).replace(/_/g, ' ');
                 const label = `${bundleName} (${entityTypeName})`;
-                
+
                 entityTypes.push({
                   label,
                   value: {
@@ -77,7 +77,7 @@ async function fetchEntityTypes(auth: DrupalAuthType, context: 'reading' | 'edit
           }
         }
       }
-      
+
       return {
         disabled: false,
         options: entityTypes.sort((a, b) => a.label.localeCompare(b.label)),
@@ -86,7 +86,7 @@ async function fetchEntityTypes(auth: DrupalAuthType, context: 'reading' | 'edit
   } catch (e) {
     console.error('Failed to fetch entity types', e);
   }
-  
+
   return {
     disabled: true,
     options: [],
@@ -109,14 +109,14 @@ export async function fetchEntityTypesForEditing(auth: DrupalAuthType) {
 
 /**
  * Fetches the form display configuration for an entity bundle
- * 
+ *
  * In Drupal, administrators configure which fields appear on edit forms,
  * their order, and how they're displayed. This function retrieves that
  * configuration so we can show the same fields in the same order.
- * 
+ *
  * Without this, we might show fields that admins have intentionally hidden
  * or fields that are read-only and shouldn't be edited.
- * 
+ *
  * @param auth - Drupal authentication credentials
  * @param entityType - The entity type (e.g., 'node', 'user')
  * @param bundle - The bundle (e.g., 'article', 'page')
@@ -140,14 +140,14 @@ export async function fetchEntityFormDisplay(auth: DrupalAuthType, entityType: s
   } catch (e) {
     console.error('Failed to fetch form display', e);
   }
-  
+
   return {};
 }
 
 /**
  * Fetches available text formats for rich text fields
- * 
- * Drupal allows different text formats (like 'basic_html', 'full_html') 
+ *
+ * Drupal allows different text formats (like 'basic_html', 'full_html')
  * for rich text fields. This function gets the available formats so users
  * can choose how their content should be processed.
  */
@@ -173,7 +173,7 @@ export async function fetchTextFormats(auth: DrupalAuthType) {
   } catch (e) {
     console.error('Failed to fetch text formats', e);
   }
-  
+
   return {};
 }
 
@@ -184,11 +184,11 @@ export async function fetchTextFormats(auth: DrupalAuthType) {
 
 /**
  * Fetches detailed field configuration including labels and requirements
- * 
+ *
  * This gets the actual field definitions including human-readable labels,
  * whether fields are required, field types, etc. This metadata is used
  * to create appropriate form inputs with proper validation.
- * 
+ *
  * @param auth - Drupal authentication credentials
  * @param entityType - The entity type (e.g., 'node', 'user')
  * @param bundle - The bundle (e.g., 'article', 'page')
@@ -205,7 +205,7 @@ export async function fetchEntityFieldConfig(auth: DrupalAuthType, entityType: s
     if (response.status === 200 && response.body) {
       const fields = (response.body as any).data || [];
       const fieldConfig: Record<string, any> = {};
-      
+
       fields.forEach((field: any) => {
         const fieldName = field.attributes.field_name;
         fieldConfig[fieldName] = {
@@ -214,19 +214,19 @@ export async function fetchEntityFieldConfig(auth: DrupalAuthType, entityType: s
           fieldType: field.attributes.field_type,
         };
       });
-      
+
       return fieldConfig;
     }
   } catch (e) {
     console.error('Failed to fetch field config', e);
   }
-  
+
   return {};
 }
 
 /**
  * Checks if a field type can be edited with simple form inputs
- * 
+ *
  * Some Drupal field types are too complex for simple text/checkbox inputs
  * (like entity references, file uploads). This function determines which
  * field types we can reasonably handle in a workflow interface.
@@ -241,12 +241,12 @@ export function isEditableFieldType(fieldType: string): boolean {
 
 /**
  * Gets human-readable labels for Drupal base fields
- * 
+ *
  * TODO: This should be fetched from the form display instead of hardcoded.
  * Base fields like 'title', 'status' have standard labels, but these could
  * be customized by site administrators. We should get the actual labels
  * from the form display configuration.
- * 
+ *
  * @param fieldName - The machine name of the field
  * @returns Human-readable label for the field
  */
@@ -261,7 +261,7 @@ export function getBaseFieldLabel(fieldName: string): string {
     'name': 'Name',
     'mail': 'Email address',
   };
-  
+
   return baseFieldLabels[fieldName] || fieldName;
 }
 
@@ -272,21 +272,21 @@ export function getBaseFieldLabel(fieldName: string): string {
 
 /**
  * Extracts editable fields from form display configuration
- * 
+ *
  * This combines form display configuration (what fields to show) with
  * field configuration (labels, types, requirements) to create a list
  * of fields that should be editable in the workflow interface.
- * 
- * @param auth - Drupal authentication credentials  
+ *
+ * @param auth - Drupal authentication credentials
  * @param entityType - The entity type (e.g., 'node', 'user')
  * @param bundle - The bundle (e.g., 'article', 'page')
  * @param formDisplayContent - Form display configuration from fetchEntityFormDisplay
  * @returns Array of field objects with name, type, label, required, weight
  */
 export async function getEditableFieldsWithLabels(
-  auth: DrupalAuthType, 
-  entityType: string, 
-  bundle: string, 
+  auth: DrupalAuthType,
+  entityType: string,
+  bundle: string,
   formDisplayContent: Record<string, any>
 ) {
   const fieldConfig = await fetchEntityFieldConfig(auth, entityType, bundle);
@@ -301,7 +301,7 @@ export async function getEditableFieldsWithLabels(
   for (const [fieldName, config] of Object.entries(formDisplayContent)) {
     if (config && typeof config === 'object' && config.type) {
       const configInfo = fieldConfig[fieldName];
-      
+
       if (configInfo) {
         // Custom field with configuration
         if (isEditableFieldType(configInfo.fieldType)) {
@@ -337,11 +337,11 @@ export async function getEditableFieldsWithLabels(
 
 /**
  * Builds Activepieces Property objects for dynamic form generation
- * 
- * This is the main function that combines all the field discovery and 
+ *
+ * This is the main function that combines all the field discovery and
  * configuration to create the actual form properties that users will
  * see in the Activepieces interface.
- * 
+ *
  * @param auth - Drupal authentication credentials
  * @param entityType - Selected entity type from dropdown
  * @param isCreateAction - Whether this is for creating (true) or updating (false)
@@ -380,7 +380,7 @@ export async function buildFieldProperties(
       const displayName = field.label;
       const description = undefined;
       const isRequired = field.required && isCreateAction;
-      
+
       if (field.type === 'text_with_summary' || field.type === 'text_long') {
         properties[field.name] = Property.LongText({
           displayName,
