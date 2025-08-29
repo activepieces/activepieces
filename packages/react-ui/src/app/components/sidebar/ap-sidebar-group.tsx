@@ -1,0 +1,67 @@
+import { ChevronRightIcon } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+} from '@/components/ui/sidebar-shadcn';
+
+import { ApSidebarItem } from './ap-sidebar-item';
+import { SidebarGroupType } from './common';
+
+export function ApSidebareGroup(item: SidebarGroupType) {
+  const location = useLocation();
+  return (
+    <Collapsible
+      defaultOpen={item.isActive?.(location.pathname)}
+      className="group/collapsible"
+      onOpenChange={(open) => item.setOpen(open)}
+    >
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton className="px-2 mb-1">
+            {item.icon && <item.icon className="size-4" />}
+            <span>{item.label}</span>
+            <SidebarMenuAction asChild>
+              <ChevronRightIcon
+                className={`${item.open && 'rotate-90'} duration-150`}
+              />
+            </SidebarMenuAction>
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {item.items.map(
+              (link, index) =>
+                link.show && (
+                  <SidebarMenuSubItem key={link.label}>
+                    <SidebarMenuButton asChild>
+                      <ApSidebarItem
+                        to={link.to}
+                        label={link.label}
+                        icon={link.icon}
+                        key={index}
+                        notification={link.notification}
+                        locked={link.locked}
+                        isActive={link.isActive}
+                        type={link.type}
+                      />
+                    </SidebarMenuButton>
+                  </SidebarMenuSubItem>
+                ),
+            )}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  );
+}
