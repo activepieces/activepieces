@@ -1,12 +1,10 @@
-'use client';
-
-import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
+import { CheckIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { ChevronsUpDown } from 'lucide-react';
 import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -16,22 +14,29 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar-shadcn';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { projectHooks } from '../../../hooks/project-hooks';
 
-function ProjectSwitcher() {
+export function ProjectSwitcher() {
   const location = useLocation();
+  const branding = flagsHooks.useWebsiteBranding();
   const queryClient = useQueryClient();
   const { data: allProjects } = projectHooks.useProjectsForPlatforms();
-  const [open, setOpen] = React.useState(false);
   const { data: currentProject, setCurrentProject } =
     projectHooks.useCurrentProject();
+
   const filterProjects = React.useCallback(
     (value: string, search: string) => {
       const project = allProjects
@@ -48,70 +53,76 @@ function ProjectSwitcher() {
   );
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          role="combobox"
-          size={'sm'}
-          aria-expanded={open}
-          aria-label="Select a project"
-          className="gap-2 w-full justify-start px-2"
-        >
-          <div className="flex grow flex-col justify-start items-start">
-            <span className="flex-grow truncate overflow-hidden text-sm max-w-[100px]">
-              {currentProject?.displayName}
-            </span>
-          </div>
-          <CaretSortIcon className="size-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full max-w-full p-0">
-        <Command filter={filterProjects}>
-          <CommandList>
-            <CommandInput placeholder="Search project..." />
-            <CommandEmpty>{t('No projects found')}</CommandEmpty>
-            {allProjects &&
-              allProjects.map((platform) => (
-                <CommandGroup
-                  key={platform.platformName}
-                  heading={platform.platformName}
-                >
-                  <ScrollArea viewPortClassName="max-h-[200px]">
-                    {platform.projects &&
-                      platform.projects.map((project) => (
-                        <CommandItem
-                          key={project.id}
-                          onSelect={() => {
-                            setCurrentProject(
-                              queryClient,
-                              project,
-                              location.pathname,
-                            );
-                            setOpen(false);
-                          }}
-                          value={project.id}
-                          className="text-sm break-all"
-                        >
-                          {project.displayName}
-                          <CheckIcon
-                            className={cn(
-                              'ml-auto h-4 w-4 shrink-0',
-                              currentProject?.id === project.id
-                                ? 'opacity-100'
-                                : 'opacity-0',
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                  </ScrollArea>
-                </CommandGroup>
-              ))}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton size="lg" className="px-2 gap-x-3">
+              <div className="flex aspect-square size-8 border items-center justify-center rounded-lg">
+                <img
+                  src={branding.logos.logoIconUrl}
+                  alt={t('home')}
+                  className="h-5 w-5 object-contain"
+                />
+              </div>
+              <h1 className="truncate font-semibold">
+                {currentProject?.displayName}
+              </h1>
+              <ChevronsUpDown className="ml-auto" />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent
+            className="w-60 p-0 rounded-lg"
+            align="start"
+            side="bottom"
+            sideOffset={4}
+          >
+            <Command filter={filterProjects}>
+              <CommandList>
+                <CommandInput placeholder="Search project..." />
+                {allProjects &&
+                  allProjects.map((platform) => (
+                    <CommandGroup
+                      key={platform.platformName}
+                      heading={platform.platformName}
+                    >
+                      <ScrollArea viewPortClassName="max-h-[200px]">
+                        {platform.projects &&
+                          platform.projects.map((project) => (
+                            <CommandItem
+                              key={project.id}
+                              onSelect={() => {
+                                setCurrentProject(
+                                  queryClient,
+                                  project,
+                                  location.pathname,
+                                );
+                              }}
+                              value={project.id}
+                              className="text-sm p-2 break-all"
+                            >
+                              {project.displayName}
+                              <CheckIcon
+                                className={cn(
+                                  'ml-auto h-4 w-4 shrink-0',
+                                  currentProject?.id === project.id
+                                    ? 'opacity-100'
+                                    : 'opacity-0',
+                                )}
+                              />
+                            </CommandItem>
+                          ))}
+                      </ScrollArea>
+
+                      <CommandEmpty>{t('No projects found')}</CommandEmpty>
+                    </CommandGroup>
+                  ))}
+              </CommandList>
+            </Command>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    </SidebarMenu>
   );
 }
-
-export { ProjectSwitcher };
