@@ -38,6 +38,16 @@ export enum MailChimpWebhookType {
    * transactional
    */
   TRANSACTIONAL = 'transactional',
+
+  /**
+   * triggers when a subscriber clicks a link in a campaign.
+   */
+  CLICK = 'click',
+
+  /**
+   * triggers when a subscriber opens an email in a campaign.
+   */
+  OPEN = 'open',
 }
 
 export enum MailChimpEmailType {
@@ -64,4 +74,49 @@ export type MailChimpSubscribeWebhookData = {
 export type MailChimpSubscribeWebhookRequest = MailChimpWebhookRequest<
   MailChimpWebhookType.SUBSCRIBE,
   MailChimpSubscribeWebhookData
+>;
+
+export type MailChimpClickWebhookData = {
+  id: string;
+  list_id: string;
+  campaign_id: string;
+  email: string;
+  url: string;
+  ip: string;
+  user_agent: string;
+};
+
+export type MailChimpClickWebhookRequest = MailChimpWebhookRequest<
+  MailChimpWebhookType.CLICK,
+  MailChimpClickWebhookData
+>;
+
+export type MailChimpOpenWebhookData = {
+  id: string;
+  list_id: string;
+  campaign_id: string;
+  email: string;
+  ip: string;
+  user_agent: string;
+  timestamp: string;
+};
+
+export type MailChimpOpenWebhookRequest = MailChimpWebhookRequest<
+  MailChimpWebhookType.OPEN,
+  MailChimpOpenWebhookData
+>;
+
+export type MailChimpCampaignWebhookData = {
+  id: string;
+  list_id: string;
+  campaign_id: string;
+  campaign_title: string;
+  campaign_subject: string;
+  campaign_send_time: string;
+  campaign_status: string;
+};
+
+export type MailChimpCampaignWebhookRequest = MailChimpWebhookRequest<
+  MailChimpWebhookType.CAMPAIGN,
+  MailChimpCampaignWebhookData
 >;
