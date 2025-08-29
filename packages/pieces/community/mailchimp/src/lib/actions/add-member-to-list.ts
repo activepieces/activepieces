@@ -25,11 +25,7 @@ export const addMemberToList = createAction({
       description: 'Email of the new contact',
       required: true,
     }),
-    list_id: Property.ShortText({
-      displayName: 'Audience ID',
-      description: 'The unique ID of the Mailchimp audience/list',
-      required: true,
-    }),
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
     status: Property.StaticDropdown<Status>({
       displayName: 'Status',
       required: true,
@@ -53,7 +49,7 @@ export const addMemberToList = createAction({
       server: mailChimpServerPrefix,
     });
     try {
-      return await mailchimp.lists.addListMember(context.propsValue.list_id!, {
+      return await mailchimp.lists.addListMember(context.propsValue.list_id as string, {
         email_address: context.propsValue.email!,
         status: context.propsValue.status,
         merge_fields: {

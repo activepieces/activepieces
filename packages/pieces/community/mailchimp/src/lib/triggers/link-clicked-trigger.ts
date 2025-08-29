@@ -128,11 +128,7 @@ export const mailChimpLinkClickedTrigger = createTrigger({
   description: 'Fires when a recipient clicks a link in a campaign. This trigger captures link engagement events, click tracking, and subscriber interaction data for conversion analysis and automation workflows.',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    list_id: Property.ShortText({
-      displayName: 'Audience ID',
-      description: 'The unique ID of the Mailchimp audience/list to monitor for link click events',
-      required: true,
-    }),
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
   },
   sampleData: {
     type: 'click',
@@ -168,7 +164,7 @@ export const mailChimpLinkClickedTrigger = createTrigger({
 
       const enabledWebhookId = await mailchimpCommon.enableWebhookRequest({
         server,
-        listId: context.propsValue.list_id!,
+        listId: context.propsValue.list_id as string,
         token: accessToken,
         webhookUrl: context.webhookUrl!,
         events: { 
@@ -179,7 +175,7 @@ export const mailChimpLinkClickedTrigger = createTrigger({
 
       await context.store?.put<WebhookData>(WEBHOOK_DATA_STORE_KEY, {
         id: enabledWebhookId,
-        listId: context.propsValue.list_id!,
+        listId: context.propsValue.list_id as string,
       });
     } catch (error: any) {
       throw new Error(`Failed to enable link clicked webhook: ${error.message || JSON.stringify(error)}`);

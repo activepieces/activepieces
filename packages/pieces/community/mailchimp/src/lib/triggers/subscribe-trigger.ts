@@ -41,11 +41,7 @@ export const mailChimpSubscribeTrigger = createTrigger({
   description: 'Fires when a new subscriber joins your Mailchimp audience. This trigger captures new subscriptions, opt-ins, and audience growth events with comprehensive subscriber information.',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    list_id: Property.ShortText({
-      displayName: 'Audience ID',
-      description: 'The unique ID of the Mailchimp audience/list to monitor for new subscriptions',
-      required: true,
-    }),
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
   },
   sampleData: {
     type: 'subscribe',

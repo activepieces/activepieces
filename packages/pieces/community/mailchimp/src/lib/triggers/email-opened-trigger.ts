@@ -103,11 +103,7 @@ export const mailChimpEmailOpenedTrigger = createTrigger({
   description: 'Fires when a recipient opens an email in a specific campaign. This trigger captures email engagement events, open tracking, and subscriber interaction data for performance analysis and automation workflows.',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    list_id: Property.ShortText({
-      displayName: 'Audience ID',
-      description: 'The unique ID of the Mailchimp audience/list to monitor for email open events',
-      required: true,
-    }),
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
   },
   sampleData: {
     type: 'open',
@@ -141,7 +137,7 @@ export const mailChimpEmailOpenedTrigger = createTrigger({
 
       const enabledWebhookId = await mailchimpCommon.enableWebhookRequest({
         server,
-        listId: context.propsValue.list_id!,
+        listId: context.propsValue.list_id as string,
         token: accessToken,
         webhookUrl: context.webhookUrl!,
         events: { 
@@ -152,7 +148,7 @@ export const mailChimpEmailOpenedTrigger = createTrigger({
 
       await context.store?.put<WebhookData>(WEBHOOK_DATA_STORE_KEY, {
         id: enabledWebhookId,
-        listId: context.propsValue.list_id!,
+        listId: context.propsValue.list_id as string,
       });
     } catch (error: any) {
       throw new Error(`Failed to enable email opened webhook: ${error.message || JSON.stringify(error)}`);

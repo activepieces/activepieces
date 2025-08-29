@@ -59,7 +59,7 @@ export const unsubscribeEmail = createAction({
 
     try {
       const email = context.propsValue.email!;
-      const listId = context.propsValue.list_id!;
+      const listId = context.propsValue.list_id as string;
       const sendGoodbye = context.propsValue.send_goodbye ?? true;
       const sendNotify = context.propsValue.send_notify ?? false;
       const unsubscribeReason = context.propsValue.unsubscribe_reason || '';

@@ -49,11 +49,7 @@ export const mailChimpSubscriberUpdatedTrigger = createTrigger({
   description: 'Fires when a subscriber profile is updated, including changes to merge fields, interests, or contact information. This trigger captures profile updates, new subscriptions, and subscriber modifications.',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    list_id: Property.ShortText({
-      displayName: 'Audience ID',
-      description: 'The unique ID of the Mailchimp audience/list to monitor for subscriber updates',
-      required: true,
-    }),
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
   },
   sampleData: {
     type: 'profile',
@@ -99,7 +95,7 @@ export const mailChimpSubscriberUpdatedTrigger = createTrigger({
 
       const enabledWebhookId = await mailchimpCommon.enableWebhookRequest({
         server,
-        listId: context.propsValue.list_id!,
+        listId: context.propsValue.list_id as string,
         token: accessToken,
         webhookUrl: context.webhookUrl!,
         events: { 
@@ -112,7 +108,7 @@ export const mailChimpSubscriberUpdatedTrigger = createTrigger({
 
       await context.store?.put<WebhookData>(WEBHOOK_DATA_STORE_KEY, {
         id: enabledWebhookId,
-        listId: context.propsValue.list_id!,
+        listId: context.propsValue.list_id as string,
       });
     } catch (error: any) {
       throw new Error(`Failed to enable subscriber updated webhook: ${error.message || JSON.stringify(error)}`);

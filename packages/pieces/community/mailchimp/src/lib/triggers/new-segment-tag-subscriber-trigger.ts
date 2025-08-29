@@ -125,11 +125,7 @@ export const mailChimpNewSegmentTagSubscriberTrigger = createTrigger({
   description: 'Fires when a subscriber joins a specific audience segment or is tagged with a specific label. This trigger captures segment membership changes, tag applications, and audience segmentation events for targeted marketing and automation workflows.',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    list_id: Property.ShortText({
-      displayName: 'Audience ID',
-      description: 'The unique ID of the Mailchimp audience/list to monitor for segment and tag events',
-      required: true,
-    }),
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
     segment_id: Property.ShortText({
       displayName: 'Segment ID (Optional)',
       description: 'The specific segment ID to monitor. Leave empty to monitor all segments.',
@@ -198,7 +194,7 @@ export const mailChimpNewSegmentTagSubscriberTrigger = createTrigger({
 
       const enabledWebhookId = await mailchimpCommon.enableWebhookRequest({
         server,
-        listId: context.propsValue.list_id!,
+        listId: context.propsValue.list_id as string,
         token: accessToken,
         webhookUrl: context.webhookUrl!,
         events: { 
@@ -212,7 +208,7 @@ export const mailChimpNewSegmentTagSubscriberTrigger = createTrigger({
 
       await context.store?.put<WebhookData>(WEBHOOK_DATA_STORE_KEY, {
         id: enabledWebhookId,
-        listId: context.propsValue.list_id!,
+        listId: context.propsValue.list_id as string,
         segmentId: context.propsValue.segment_id,
         tagName: context.propsValue.tag_name,
       });

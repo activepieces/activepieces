@@ -68,11 +68,7 @@ export const mailChimpNewCampaignTrigger = createTrigger({
   description: 'Fires when a new campaign is created, sent, or updated in your Mailchimp account. This trigger captures campaign lifecycle events including creation, sending, and delivery status changes.',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    list_id: Property.ShortText({
-      displayName: 'Audience ID',
-      description: 'The unique ID of the Mailchimp audience/list to monitor for campaign events',
-      required: true,
-    }),
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
   },
   sampleData: {
     type: 'campaign',
@@ -105,7 +101,7 @@ export const mailChimpNewCampaignTrigger = createTrigger({
 
       const enabledWebhookId = await mailchimpCommon.enableWebhookRequest({
         server,
-        listId: context.propsValue.list_id!,
+        listId: context.propsValue.list_id as string,
         token: accessToken,
         webhookUrl: context.webhookUrl!,
         events: { 
@@ -116,7 +112,7 @@ export const mailChimpNewCampaignTrigger = createTrigger({
 
       await context.store?.put<WebhookData>(WEBHOOK_DATA_STORE_KEY, {
         id: enabledWebhookId,
-        listId: context.propsValue.list_id!,
+        listId: context.propsValue.list_id as string,
       });
     } catch (error: any) {
       throw new Error(`Failed to enable campaign webhook: ${error.message || JSON.stringify(error)}`);
