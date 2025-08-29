@@ -18,18 +18,17 @@ const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { id: string }> 
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const { website_url, username, password } = (auth as DrupalAuthType);
-    // For triggers, we still use modeler_api - this would need an API key from modeler_api setup
-    const api_key = 'placeholder'; // This would come from modeler_api configuration
     const body: any = {
       id: propsValue['id'],
       timestamp: lastFetchEpochMS,
     };
     const response = await httpClient.sendRequest<DrupalPollItem[]>({
       method: HttpMethod.POST,
-      url: website_url + `/modeler_api/poll`,
+      url: website_url + `/orchestration/poll`,
       body: body,
       headers: {
-        'x-api-key': api_key,
+        'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
+        'Accept': 'application/vnd.api+json',
       },
     });
     console.debug('Poll response', response);

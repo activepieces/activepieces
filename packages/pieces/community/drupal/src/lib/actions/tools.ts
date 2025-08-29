@@ -35,10 +35,10 @@ export const drupalCallToolAction = createAction({
         try {
           const response = await httpClient.sendRequest<DrupalTool[]>({
             method: HttpMethod.GET,
-            url: website_url + `/modeler_api/tools`,
+            url: website_url + `/orchestration/tools`,
             headers: {
               'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
-            'Accept': 'application/vnd.api+json',
+              'Accept': 'application/vnd.api+json',
             },
           });
           console.debug('Tool response', response);
@@ -88,9 +88,9 @@ export const drupalCallToolAction = createAction({
     const { website_url, username, password } = (auth as DrupalAuthType);
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: website_url + `/modeler_api/tool/execute`,
+      url: website_url + `/orchestration/tool/execute`,
       body: {
-        tool: propsValue.tool.id,
+        id: propsValue.tool.id,
         config: propsValue.config,
       },
       headers: {
