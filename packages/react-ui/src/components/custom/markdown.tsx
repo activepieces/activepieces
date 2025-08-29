@@ -3,15 +3,24 @@ import { t } from 'i18next';
 import { Check, Copy, Info, AlertTriangle, Lightbulb } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+// @ts-ignore - unified types are included in the unified package
+import type { Pluggable } from 'unified';
 import breaks from 'remark-breaks';
 import gfm from 'remark-gfm';
-
 import { cn } from '@/lib/utils';
 import { MarkdownVariant } from '@activepieces/shared';
-
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
 import { useToast } from '../ui/use-toast';
+
+type CodeProps = {
+  node?: any;
+  inline?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+  [key: string]: any; // Allow additional props
+};
+
 
 function applyVariables(markdown: string, variables: Record<string, string>) {
   if (typeof markdown !== 'string') {
@@ -32,12 +41,14 @@ type MarkdownProps = {
   loading?: string;
 };
 
-const Container = ({
-  variant,
-  children,
-}: {
+interface ContainerProps {
   variant?: MarkdownVariant;
   children: React.ReactNode;
+}
+
+const Container: React.FC<ContainerProps> = ({
+  variant,
+  children,
 }) => {
   return (
     <Alert
@@ -70,25 +81,21 @@ const Container = ({
   );
 };
 
-const ApMarkdown = React.memo(
-  ({ markdown, variables, variant, className, loading }: MarkdownProps) => {
-    const [copiedText, setCopiedText] = useState<string | null>(null);
-    const { toast } = useToast();
+const ApMarkdown = React.memo<MarkdownProps>(({ markdown, variables, variant, className, loading }) => {
+  const [copiedText, setCopiedText] = useState<string | null>(null);
+  const { toast } = useToast();
 
-    const { mutate: copyToClipboard } = useMutation({
-      mutationFn: async (text: string) => {
-        await navigator.clipboard.writeText(text);
-        setCopiedText(text);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setCopiedText(null);
-      },
-      onError: () => {
-        toast({
-          title: t('Failed to copy to clipboard'),
-          duration: 3000,
-        });
-      },
-    });
+  const { mutateAsync: copyToClipboard } = useMutation({
+    mutationFn: async (text: string) => {
+      return navigator.clipboard.writeText(text);
+    },
+    onError: () => {
+      toast({
+        variant: 'destructive',
+        title: t('error.failed_to_copy'),
+      });
+    },
+  });
 
     if (loading && loading.length > 0) {
       return (
@@ -106,29 +113,59 @@ const ApMarkdown = React.memo(
 
     return (
       <Container variant={variant}>
-        <ReactMarkdown
-          className={cn('flex-grow w-full ', className)}
-          remarkPlugins={[gfm, breaks]}
-          components={{
-            code(props) {
-              const isLanguageText = props.className?.includes('language-text');
-              if (!isLanguageText) {
-                return <code {...props} className="text-wrap" />;
+        <div className={cn('flex-grow w-full', className)}>
+          <ReactMarkdown
+            // @ts-ignore - The types are correct but there's a version mismatch
+            remarkPlugins={[gfm, breaks]}
+            components={{
+            code: ({
+              node,
+              inline = false,
+              className: codeClassName,
+              children,
+              ...props
+            }: CodeProps) => {
+              if (inline || !children) {
+                return (
+                  <code className={cn('text-wrap', codeClassName)} {...props}>
+                    {children}
+                  </code>
+                );
               }
-              const codeContent = String(props.children).trim();
+
+              const isLanguageText = codeClassName?.includes('language-text');
+              if (!isLanguageText) {
+                return (
+                  <code className={cn('text-wrap', codeClassName)} {...props}>
+                    {children}
+                  </code>
+                );
+              }
+              const codeContent = String(children).trim();
               const isCopying = codeContent === copiedText;
+              
+              const handleCopy = async () => {
+                try {
+                  await copyToClipboard(codeContent);
+                  setCopiedText(codeContent);
+                  setTimeout(() => setCopiedText(null), 2000);
+                } catch (error) {
+                  console.error('Failed to copy text: ', error);
+                }
+              };
               return (
-                <div className="relative w-full items-center flex bg-background border border-solid text-sm rounded block w-full gap-1 p-1.5">
+                <div className="relative w-full flex items-center bg-background border border-solid text-sm rounded gap-1 p-1.5">
                   <input
                     type="text"
                     className="grow bg-background"
                     value={codeContent}
                     disabled
+                    readOnly
                   />
                   <Button
                     variant="ghost"
                     className="bg-background rounded p-2 inline-flex items-center justify-center h-8"
-                    onClick={() => copyToClipboard(codeContent)}
+                    onClick={handleCopy}
                   >
                     {isCopying ? (
                       <Check className="w-3 h-3" />
@@ -147,7 +184,7 @@ const ApMarkdown = React.memo(
             ),
             h2: ({ node, ...props }) => (
               <h2
-                className="scroll-m-20 text-lg text-xl font-semibold tracking-tight first:mt-0"
+                className="scroll-m-20 text-xl font-semibold tracking-tight first:mt-0"
                 {...props}
               />
             ),
@@ -187,7 +224,9 @@ const ApMarkdown = React.memo(
             hr: ({ node, ...props }) => (
               <hr className="my-4 border-t border-border/50" {...props} />
             ),
-            img: ({ node, ...props }) => <img className="my-8" {...props} />,
+            img: ({ node, ...props }) => (
+              <img className="my-8" {...props} />
+            ),
             b: ({ node, ...props }) => <b {...props} />,
             em: ({ node, ...props }) => <em {...props} />,
             table: ({ node, ...props }) => (
@@ -202,15 +241,17 @@ const ApMarkdown = React.memo(
             th: ({ node, ...props }) => (
               <th className="text-left p-2 font-medium" {...props} />
             ),
-            td: ({ node, ...props }) => <td className="p-2" {...props} />,
+            td: ({ node, ...props }) => (
+              <td className="p-2" {...props} />
+            ),
           }}
         >
-          {markdownProcessed.trim()}
-        </ReactMarkdown>
+            {markdownProcessed.trim()}
+          </ReactMarkdown>
+        </div>
       </Container>
     );
-  },
-);
+  });
 
 ApMarkdown.displayName = 'ApMarkdown';
 export { ApMarkdown };

@@ -11,7 +11,7 @@ export const BasePropertySchema = Type.Object({
 
 export type BasePropertySchema = Static<typeof BasePropertySchema>
 
-export const TPropertyValue = <T extends TSchema, U extends PropertyType>(T: T, propertyType: U): TObject => Type.Object({
+export const TPropertyValue = <T extends TSchema, U extends PropertyType>(_schema: T, propertyType: U): TObject => Type.Object({
     type: Type.Literal(propertyType),
     required: Type.Boolean(),
     defaultValue: Type.Optional(Type.Any()),

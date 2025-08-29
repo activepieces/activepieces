@@ -3,14 +3,14 @@ import { Command } from 'commander';
 import { readdir, unlink, writeFile } from 'fs/promises';
 import inquirer from 'inquirer';
 import assert from 'node:assert';
-import { exec } from '../utils/exec';
+import { exec } from '../utils/exec.js';
 import {
   readPackageEslint,
   readProjectJson,
   writePackageEslint,
   writeProjectJson,
-} from '../utils/files';
-import { findPiece } from '../utils/piece-utils';
+} from '../utils/files.js';
+import { findPiece } from '../utils/piece-utils.js';
 
 const validatePieceName = async (pieceName: string) => {
   console.log(chalk.yellow('Validating piece name....'));
@@ -210,7 +210,7 @@ export const createPiece = async (
 export const createPieceCommand = new Command('create')
   .description('Create a new piece')
   .action(async () => {
-    const questions = [
+    const answers = await inquirer.prompt([
       {
         type: 'input',
         name: 'pieceName',
@@ -230,8 +230,6 @@ export const createPieceCommand = new Command('create')
         choices: ['community', 'custom'],
         default: 'community',
       },
-    ];
-
-    const answers = await inquirer.prompt(questions);
+    ]);
     createPiece(answers.pieceName, answers.packageName, answers.pieceType);
   });

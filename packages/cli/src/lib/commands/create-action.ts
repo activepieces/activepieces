@@ -2,8 +2,8 @@ import { writeFile } from 'node:fs/promises';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
-import { assertPieceExists, displayNameToCamelCase, displayNameToKebabCase, findPiece } from '../utils/piece-utils';
-import { checkIfFileExists, makeFolderRecursive } from '../utils/files';
+import { assertPieceExists, displayNameToCamelCase, displayNameToKebabCase, findPiece } from '../utils/piece-utils.js';
+import { checkIfFileExists, makeFolderRecursive } from '../utils/files.js';
 import { join } from 'node:path';
 
 function createActionTemplate(displayName: string, description: string) {
@@ -50,12 +50,12 @@ const createAction = async (pieceName: string, displayActionName: string, action
 export const createActionCommand = new Command('create')
   .description('Create a new action')
   .action(async () => {
-    const questions = [
+    const answers = await inquirer.prompt([
       {
         type: 'input',
         name: 'pieceName',
         message: 'Enter the piece folder name:',
-        placeholder: 'google-drive',
+        default: 'google-drive',
       },
       {
         type: 'input',
@@ -67,8 +67,6 @@ export const createActionCommand = new Command('create')
         name: 'actionDescription',
         message: 'Enter the action description',
       }
-    ];
-
-    const answers = await inquirer.prompt(questions);
+    ]);
     createAction(answers.pieceName, answers.actionName, answers.actionDescription);
   });

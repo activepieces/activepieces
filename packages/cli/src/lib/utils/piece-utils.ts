@@ -1,8 +1,8 @@
 import { readdir, stat } from 'node:fs/promises'
 import * as path from 'path'
 import { cwd } from 'node:process'
-import { readPackageJson, readProjectJson } from './files'
-import { exec } from './exec'
+import { readPackageJson, readProjectJson } from './files.js'
+import { exec } from './exec.js'
 import axios from 'axios'
 import chalk from 'chalk'
 import FormData from 'form-data';

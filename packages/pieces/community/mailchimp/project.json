@@ -31,6 +31,14 @@
       "outputs": [
         "{options.outputFile}"
       ]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/pieces/community/mailchimp/jest.config.ts",
+        "passWithNoTests": true
+      }
     }
   },
   "tags": []

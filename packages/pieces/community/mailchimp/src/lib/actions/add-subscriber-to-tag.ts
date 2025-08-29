@@ -7,7 +7,7 @@ import {
   httpClient,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { mailchimpAuth } from '../..';
+import { mailchimpAuth } from '../auth';
 
 export const addSubscriberToTag = createAction({
   auth: mailchimpAuth,

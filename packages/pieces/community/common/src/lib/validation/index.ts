@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z, ZodError, ZodIssue } from 'zod';
 
 export const propsValidation = {
     async validateZod<T extends Record<string, unknown>>(props: T, schema: Partial<Record<keyof T, z.ZodType>>): Promise<void> {
@@ -12,15 +12,13 @@ export const propsValidation = {
         try {
             await schemaObj.parseAsync(props)
         } catch (error) {
-            if (error instanceof z.ZodError) {
-                const errors = error.errors.reduce((acc, err) => {
-                    const path = err.path.join('.')
-                    return {
-                        ...acc,
-                        [path]: err.message
-                    }
-                }, {})
-                throw new Error(JSON.stringify({ errors }, null, 2))
+            if (error instanceof ZodError) {
+                const errors: Record<string, string> = error.issues.reduce((acc: Record<string, string>, err: ZodIssue) => {
+                    const path = err.path.join('.');
+                    acc[path] = err.message;
+                    return acc;
+                }, {} as Record<string, string>);
+                throw new Error(JSON.stringify({ errors }, null, 2));
             }
             throw error
         }

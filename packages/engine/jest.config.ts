@@ -6,7 +6,7 @@ process.env.AP_TEST_MODE = 'true'
 /* eslint-disable */
 export default {
   displayName: 'engine',
-  preset: '../../jest.preset.js',
+  preset: '../../jest.preset.cjs',
   testEnvironment: 'node',
   transform: {
     '^.+\\.[tj]s$': [

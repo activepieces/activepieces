@@ -142,7 +142,7 @@ export const pollingHelper = {
   },
   async onDisable<AuthValue, PropsValue>(
     polling: Polling<AuthValue, PropsValue>,
-    params: { store: Store; auth: AuthValue; propsValue: PropsValue }
+    _params: { store: Store; auth: AuthValue; propsValue: PropsValue }
   ): Promise<void> {
     switch (polling.strategy) {
       case DedupeStrategy.TIMEBASED:

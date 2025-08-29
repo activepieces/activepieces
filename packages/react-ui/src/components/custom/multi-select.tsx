@@ -130,7 +130,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 
   const handleSelect = React.useCallback(
     (value: string, item: MultiSelectOptionItem) => {
-      setValue((prev) => {
+      setValue((prev: string[] | undefined) => {
         if (prev?.includes(value)) {
           return prev;
         }
@@ -145,14 +145,14 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 
   const handleDeselect = React.useCallback(
     (value: string, item: MultiSelectOptionItem) => {
-      setValue((prev) => {
+      setValue((prev: string[] | undefined) => {
         if (!prev || !prev.includes(value)) {
           return prev;
         }
 
         onDeselectProp?.(value, item);
 
-        return prev.filter((v) => v !== value);
+        return prev.filter((v: string) => v !== value);
       });
     },
     [onDeselectProp, setValue],
@@ -318,7 +318,7 @@ const MultiSelectValue = React.forwardRef<
             className,
           )}
           {...props}
-          ref={forwardRef}
+          ref={forwardRef as React.RefObject<HTMLDivElement>}
         >
           {renderItems.map((value) => {
             const item = itemCache.get(value);
@@ -418,7 +418,7 @@ const MultiSelectContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => {
   const context = useMultiSelect();
 
-  const fragmentRef = React.useRef<DocumentFragment>();
+  const fragmentRef = React.useRef<DocumentFragment | null>(null);
 
   if (!fragmentRef.current && typeof window !== 'undefined') {
     fragmentRef.current = document.createDocumentFragment();

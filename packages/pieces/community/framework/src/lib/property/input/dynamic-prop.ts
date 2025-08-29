@@ -6,7 +6,7 @@ import { PropertyContext } from "../../context";
 import { PropertyType } from "./property-type";
 import { JsonProperty } from "./json-property";
 import { ArrayProperty } from "./array-property";
-import { DropdownState, InputPropertyMap } from "..";
+import { InputPropertyMap } from "..";
 
 export const DynamicProp = Type.Union([
   ShortTextProperty,

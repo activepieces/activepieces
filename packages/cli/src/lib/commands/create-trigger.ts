@@ -3,12 +3,12 @@ import { Command } from 'commander';
 import inquirer from 'inquirer';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { checkIfFileExists, makeFolderRecursive } from '../utils/files';
+import { checkIfFileExists, makeFolderRecursive } from '../utils/files.js';
 import {
     assertPieceExists,
   displayNameToCamelCase,
   displayNameToKebabCase, findPiece,
-} from '../utils/piece-utils';
+} from '../utils/piece-utils.js';
 
 function createTriggerTemplate(displayName: string, description: string, technique: string) {
     const camelCase = displayNameToCamelCase(displayName)
@@ -110,12 +110,12 @@ const createTrigger = async (pieceName: string, displayTriggerName: string, trig
 export const createTriggerCommand = new Command('create')
     .description('Create a new trigger')
     .action(async () => {
-        const questions = [
+        const answers = await inquirer.prompt([
             {
                 type: 'input',
                 name: 'pieceName',
                 message: 'Enter the piece folder name:',
-                placeholder: 'google-drive',
+                default: 'google-drive',
             },
             {
                 type: 'input',
@@ -134,8 +134,6 @@ export const createTriggerCommand = new Command('create')
                 choices: ['polling', 'webhook'],
                 default: 'webhook',
             },
-        ];
-
-        const answers = await inquirer.prompt(questions);
+        ]);
         createTrigger(answers.pieceName, answers.triggerName, answers.triggerDescription, answers.triggerTechnique);
     });

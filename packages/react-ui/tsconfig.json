@@ -1,30 +1,41 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "Node",
-    "resolveJsonModule": true,
-    "jsx": "react-jsx",
     "strict": true,
+    "jsx": "react-jsx",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
     "noEmit": true,
-    "types": ["vite/client"]
-  },
-  "files": [],
-  "include": [],
-  "references": [
-    {
-      "path": "./tsconfig.app.json"
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@activepieces/shared": ["../../packages/shared/src"],
+      "@activepieces/ee-shared": ["../../packages/ee/shared/src"],
+      "@activepieces/pieces-framework": ["../../packages/pieces/community/framework/src"],
+      "@activepieces/pieces-common": ["../../packages/pieces/community/common/src"],
+      "ee-embed-sdk": ["../../packages/ee/ui/embed-sdk/src"],
+      "@activepieces/common-ai": ["../../packages/pieces/community/common-ai/src"]
     },
-    {
-      "path": "./tsconfig.spec.json"
-    }
+    "types": ["vite/client", "node"]
+  },
+  "include": [
+    "src",
+    "vite.config.ts"
   ],
-  "extends": "../../tsconfig.base.json"
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.spec.json" }
+  ]
 }

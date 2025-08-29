@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { findPieces, publishPieceFromFolder } from '../utils/piece-utils';
+import { findPieces, publishPieceFromFolder } from '../utils/piece-utils.js';
 import chalk from "chalk";
 import { join } from "path";
 

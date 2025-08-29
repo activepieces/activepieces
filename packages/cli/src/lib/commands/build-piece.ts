@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { buildPiece, findPiece } from '../utils/piece-utils';
+import { buildPiece, findPiece } from '../utils/piece-utils.js';
 import chalk from "chalk";
 import inquirer from "inquirer";
 
@@ -12,14 +12,13 @@ async function buildPieces(pieceName: string) {
 export const buildPieceCommand = new Command('build')
     .description('Build pieces without publishing')
     .action(async () => {
-        const questions = [
+        const answers = await inquirer.prompt([
             {
                 type: 'input',
                 name: 'name',
                 message: 'Enter the piece folder name',
-                placeholder: 'google-drive',
+                default: 'google-drive',
             },
-        ];
-        const answers = await inquirer.prompt(questions);
+        ]);
         await buildPieces(answers.name);
     });

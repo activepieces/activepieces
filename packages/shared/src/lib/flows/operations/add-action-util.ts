@@ -29,7 +29,7 @@ function replaceOldStepNameWithNewOne({
     newStepName,
 }: ReplaceOldStepNameWithNewOneProps): string {
     const regex = /{{(.*?)}}/g // Regular expression to match strings inside {{ }}
-    return input.replace(regex, (match, content) => {
+    return input.replace(regex, (_match, content) => {
         // Replace the content inside {{ }} using the provided function
         const replacedContent = content.replaceAll(
             new RegExp(`\\b${oldStepName}\\b`, 'g'),
