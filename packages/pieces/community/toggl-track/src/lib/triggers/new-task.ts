@@ -45,7 +45,7 @@ export const newTask = createTrigger({
           options: workspaces.map((workspace) => {
             return {
               label: workspace.name,
-              value: workspace.id,
+              value: workspace.id.toString(),
             };
           }),
         };
@@ -69,7 +69,7 @@ export const newTask = createTrigger({
                 options: projects.map((project) => {
                     return {
                         label: project.name,
-                        value: project.id,
+                        value: project.id.toString(),
                     };
                 }),
             };
@@ -77,7 +77,13 @@ export const newTask = createTrigger({
     }),
   },
   type: TriggerStrategy.POLLING,
-  sampleData: {},
+  sampleData: {
+    "id": 123456789,
+    "wid": 123456,
+    "pid": 1234567,
+    "name": "New Task",
+    "at": "2023-01-01T12:00:00Z"
+  },
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {
       auth: context.auth,

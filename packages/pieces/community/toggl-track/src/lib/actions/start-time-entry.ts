@@ -26,7 +26,7 @@ export const startTimeEntry = createAction({
           options: workspaces.map((workspace) => {
             return {
               label: workspace.name,
-              value: workspace.id,
+              value: workspace.id.toString(),
             };
           }),
         };
@@ -57,7 +57,7 @@ export const startTimeEntry = createAction({
           options: projects.map((project) => {
             return {
               label: project.name,
-              value: project.id,
+              value: project.id.toString(),
             };
           }),
         };

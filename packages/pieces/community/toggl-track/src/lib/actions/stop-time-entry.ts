@@ -26,7 +26,7 @@ export const stopTimeEntry = createAction({
           options: workspaces.map((workspace) => {
             return {
               label: workspace.name,
-              value: workspace.id,
+              value: workspace.id.toString(),
             };
           }),
         };

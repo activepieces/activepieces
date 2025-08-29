@@ -27,7 +27,17 @@ export const newTimeEntryStarted = createTrigger({
   description: 'Fires when a time entry is started and is currently running.',
   props: {},
   type: TriggerStrategy.POLLING,
-  sampleData: {},
+  sampleData: {
+    "id": 123456789,
+    "wid": 123456,
+    "pid": 1234567,
+    "billable": false,
+    "start": "2023-01-01T12:00:00Z",
+    "duration": -1,
+    "description": "Doing something",
+    "tags": [],
+    "at": "2023-01-01T13:00:00Z"
+  },
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {
       auth: context.auth,

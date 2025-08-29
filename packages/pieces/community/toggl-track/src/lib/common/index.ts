@@ -73,10 +73,10 @@ export const togglTrackApi = {
     return response.body;
   },
 
-  async getTimeEntries(apiToken: string): Promise<any[]> {
+  async getTimeEntries(apiToken: string, workspaceId: number): Promise<any[]> {
     const response = await httpClient.sendRequest<any[]>({
       method: HttpMethod.GET,
-      url: `${this.BASE_URL}/me/time_entries`,
+      url: `${this.BASE_URL}/workspaces/${workspaceId}/time_entries`,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Basic ${Buffer.from(`${apiToken}:api_token`).toString(

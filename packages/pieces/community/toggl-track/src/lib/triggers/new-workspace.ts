@@ -24,7 +24,11 @@ export const newWorkspace = createTrigger({
   description: 'Fires when a new workspace is created.',
   props: {},
   type: TriggerStrategy.POLLING,
-  sampleData: {},
+  sampleData: {
+    "id": 123456,
+    "name": "New Workspace",
+    "at": "2023-01-01T12:00:00Z"
+  },
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {
       auth: context.auth,

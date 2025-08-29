@@ -44,7 +44,7 @@ export const newClient = createTrigger({
           options: workspaces.map((workspace) => {
             return {
               label: workspace.name,
-              value: workspace.id,
+              value: workspace.id.toString(),
             };
           }),
         };
@@ -52,7 +52,12 @@ export const newClient = createTrigger({
     }),
   },
   type: TriggerStrategy.POLLING,
-  sampleData: {},
+  sampleData: {
+    "id": 123456789,
+    "wid": 123456,
+    "name": "New Client",
+    "at": "2023-01-01T12:00:00Z"
+  },
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {
       auth: context.auth,

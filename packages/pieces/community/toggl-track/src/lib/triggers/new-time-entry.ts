@@ -7,7 +7,7 @@ import { DedupeStrategy } from '@activepieces/pieces-common';
 const polling: Polling<string, { workspaceId: string }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue }) => {
-    const timeEntries = await togglTrackApi.getTimeEntries(auth);
+    const timeEntries = await togglTrackApi.getTimeEntries(auth, parseInt(propsValue.workspaceId));
     return timeEntries.map((entry) => {
       return {
         id: entry.id,
@@ -41,7 +41,7 @@ export const newTimeEntry = createTrigger({
                 options: workspaces.map((workspace) => {
                     return {
                         label: workspace.name,
-                        value: workspace.id,
+                        value: workspace.id.toString(),
                     };
                 }),
             };
@@ -49,7 +49,17 @@ export const newTimeEntry = createTrigger({
     }),
   },
   type: TriggerStrategy.POLLING,
-  sampleData: {},
+  sampleData: {
+    "id": 123456789,
+    "wid": 123456,
+    "pid": 1234567,
+    "billable": false,
+    "start": "2023-01-01T12:00:00Z",
+    "duration": 3600,
+    "description": "Doing something",
+    "tags": [],
+    "at": "2023-01-01T13:00:00Z"
+  },
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {
       auth: context.auth,
