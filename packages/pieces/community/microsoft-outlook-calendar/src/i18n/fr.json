@@ -11,7 +11,7 @@
   "Title of the event": "Titre de l'événement",
   "Start date time of the event": "Date de début de l'événement",
   "End date time of the event": "Date de fin de l'événement",
-  "Timezone": "Timezone",
+  "Timezone": "Fuseau horaire",
   "Location": "Localisation",
   "Event ID": "ID de l'événement",
   "Filter": "Filtre",

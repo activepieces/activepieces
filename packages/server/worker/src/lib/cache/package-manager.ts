@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import fsPath from 'path'
 import { enrichErrorContext, execPromise, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
-import { isEmpty } from '@activepieces/shared'
+import { isEmpty, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
 type PackageManagerOutput = {
@@ -23,6 +23,11 @@ export type PackageInfo = {
    * where to get the package from, could be an npm tag, a local path, or a tarball.
    */
     spec: string
+
+    /**
+   * if the package is standalone, it means it get installed in it's own folder
+   */
+    standalone?: boolean
 }
 
 const runCommand = async (
@@ -54,7 +59,7 @@ const runCommand = async (
 }
 
 export const packageManager = (log: FastifyBaseLogger) => ({
-    async add({ path, dependencies }: AddParams): Promise<PackageManagerOutput> {
+    async add({ path, dependencies, installDir }: AddParams): Promise<PackageManagerOutput> {
         if (isEmpty(dependencies)) {
             return {
                 stdout: '',
@@ -68,6 +73,9 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             '--config.lockfile=false',
             '--config.auto-install-peers=true',
         ]
+        if (!isNil(installDir)) {
+            config.push(`--dir=${installDir}`)
+        }
 
         const dependencyArgs = dependencies.map((d) => `${d.alias}@${d.spec}`)
         return runCommand(path, 'add', log, ...dependencyArgs, ...config)
@@ -135,6 +143,7 @@ const replaceRelativeSystemLinkWithAbsolute = async (filePath: string, log: Fast
 type AddParams = {
     path: string
     dependencies: PackageInfo[]
+    installDir?: string
 }
 
 type InitParams = {

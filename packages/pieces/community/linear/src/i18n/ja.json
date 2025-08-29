@@ -14,7 +14,7 @@
   "Update a existing project in Linear workspace": "Linear ワークスペースの既存のプロジェクトを更新する",
   "Create a new comment on an issue in Linear workspace": "Linear ワークスペースの課題に新しいコメントを作成する",
   "Perform a raw GraphQL query": "生のGraphQLクエリを実行します",
-  "Team": "チーム",
+  "Team": "Team",
   "Title": "タイトル",
   "Description": "説明",
   "Status": "ステータス",

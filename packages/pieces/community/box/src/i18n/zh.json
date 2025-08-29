@@ -31,5 +31,5 @@
   "The ID of the item to trigger a webhook": "The ID of the item to trigger a webhook",
   "The type of the item to trigger a webhook": "The type of the item to trigger a webhook",
   "File": "文件",
-  "Folder": "Folder"
+  "Folder": "文件夹"
 }

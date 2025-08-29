@@ -1,6 +1,7 @@
 import semver from 'semver'
 import { FlowActionType } from '../../actions/action'
 import { FlowVersion } from '../../flow-version'
+import { PropertyExecutionType } from '../../properties'
 import { flowStructureUtil } from '../../util/flow-structure-util'
 import { Migration } from '.'
 
@@ -55,8 +56,20 @@ export const migrateHttpToWebhookV5: Migration = {
                         pieceVersion: '0.1.20',
                         actionName: WEBHOOK_RETURN_RESPONSE_ACTION,
                         input: webhookInput,
-                        inputUiInfo: {
-                            customizedInputs: {},
+                        propertySettings: {
+                            ...step.settings.propertySettings,
+                            'respond': {
+                                type: PropertyExecutionType.MANUAL,
+                                schema: undefined,
+                            },
+                            'responseType': {
+                                type: PropertyExecutionType.MANUAL,
+                                schema: undefined,
+                            },
+                            'fields': {
+                                type: PropertyExecutionType.MANUAL,
+                                schema: undefined,
+                            },
                         },
                     },
                 }

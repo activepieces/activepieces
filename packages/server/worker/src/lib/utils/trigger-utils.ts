@@ -15,6 +15,7 @@ import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../runner'
 import { workerMachine } from './machine'
 import { webhookUtils } from './webhook-utils'
+import { inspect } from 'util'
 
 export const triggerHooks = (log: FastifyBaseLogger) => ({
     renewWebhook: async (params: RenewParams): Promise<void> => {
@@ -49,7 +50,7 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
             flowId: flowVersion.flowId,
             simulate,
             jobId,
-            error: !isNil(error) && typeof error === 'string' ? error : JSON.stringify(error),
+            error: inspect(error),
         }), log)
 
         return payloads
@@ -118,13 +119,13 @@ async function getTriggerPayloadsAndStatus(
             return {
                 payloads: [],
                 status: TriggerRunStatus.TIMED_OUT,
-                error: e,
+                error: inspect(e),
             }
         }
         return {
             payloads: [],
             status: TriggerRunStatus.INTERNAL_ERROR,
-            error: e,
+            error: inspect(e),
         }
     }
 }

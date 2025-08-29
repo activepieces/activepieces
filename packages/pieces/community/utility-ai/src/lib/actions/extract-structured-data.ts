@@ -1,10 +1,10 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { AIUsageFeature, createAIModel } from '@activepieces/shared';
-import { aiProps } from '@activepieces/pieces-common';
+import { AIUsageFeature, createAIModel } from '@activepieces/common-ai';
 import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from 'ai';
 import { LanguageModelV2 } from '@ai-sdk/provider';
 import mime from 'mime-types';
 import Ajv from 'ajv';
+import { aiProps } from '@activepieces/common-ai';
 
 export const extractStructuredData = createAction({
 	name: 'extractStructuredData',
