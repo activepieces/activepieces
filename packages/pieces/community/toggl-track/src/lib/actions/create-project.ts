@@ -32,18 +32,6 @@ export const createProject = createAction({
         };
       },
     }),
-    name: Property.ShortText({
-      displayName: 'Name',
-      required: true,
-    }),
-    is_private: Property.Checkbox({
-      displayName: 'Private',
-      required: false,
-    }),
-    billable: Property.Checkbox({
-      displayName: 'Billable',
-      required: false,
-    }),
     clientId: Property.Dropdown({
       displayName: 'Client',
       required: false,
@@ -71,14 +59,33 @@ export const createProject = createAction({
         };
       },
     }),
+    name: Property.ShortText({
+      displayName: 'Name',
+      required: true,
+    }),
+    is_private: Property.Checkbox({
+      displayName: 'Private',
+      required: false,
+    }),
+    billable: Property.Checkbox({
+      displayName: 'Billable',
+      required: false,
+      defaultValue: true,
+    }),
+    active: Property.Checkbox({
+      displayName: 'Active',
+      required: false,
+      defaultValue: true,
+    }),
   },
   async run(context) {
-    const { workspaceId, name, is_private, billable, clientId } = context.propsValue;
+    const { workspaceId, name, is_private, billable, clientId, active } = context.propsValue;
     const project = {
       name: name as string,
       is_private: is_private as boolean,
-      billable: billable as boolean,
+      billable: billable === undefined ? true : billable,
       client_id: clientId ? parseInt(clientId as string) : undefined,
+      active: active === undefined ? true : active,
     };
     return await togglTrackApi.createProject(
       context.auth as string,
