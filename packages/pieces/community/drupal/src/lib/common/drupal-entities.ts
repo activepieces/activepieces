@@ -36,21 +36,23 @@ async function fetchEntityTypes(auth: DrupalAuthType, context: 'reading' | 'edit
     };
   }
 
+  // Get the list of entity types that are allowed for this context
+  const type = context === 'editing'
+    ? 'form'
+    : 'view';
+  const response = await makeJsonApiRequest(auth, `${auth.website_url}/jsonapi/entity_${type}_display/entity_${type}_display`, HttpMethod.GET);
+  const data = (response.body as any).data || [];
+  const allowedEntityTypes: string[] = [];
+  data.forEach((entityType: any) => {
+    allowedEntityTypes.push(entityType.attributes.targetEntityType + '--' + entityType.attributes.bundle);
+  });
+
   try {
     const response = await makeJsonApiRequest(auth, `${auth.website_url}/jsonapi`, HttpMethod.GET);
 
     if (response.status === 200) {
       const entityTypes: Array<{label: string; value: any}> = [];
       const data = response.body as any;
-
-      // Design choice: Hardcode entity types, discover bundles dynamically
-      // - Entity types are hardcoded to avoid config entities like 'action', 'view', etc.
-      // - Bundles are discovered from JSON:API to support custom content types
-      // - For editing: only node/media have reliable form display configurations
-      // - For reading: include content entities that users typically query
-      const allowedEntityTypes = context === 'editing'
-        ? ['node', 'media']
-        : ['node', 'taxonomy_term', 'user', 'media'];
 
       if (data.links) {
         for (const [key, value] of Object.entries(data.links)) {
@@ -59,7 +61,7 @@ async function fetchEntityTypes(auth: DrupalAuthType, context: 'reading' | 'edit
             if (parts.length === 2) {
               const [entityType, bundle] = parts;
 
-              if (allowedEntityTypes.includes(entityType)) {
+              if (allowedEntityTypes.includes(key)) {
                 const bundleName = bundle.charAt(0).toUpperCase() + bundle.slice(1).replace(/_/g, ' ');
                 const entityTypeName = entityType.charAt(0).toUpperCase() + entityType.slice(1).replace(/_/g, ' ');
                 const label = `${bundleName} (${entityTypeName})`;
