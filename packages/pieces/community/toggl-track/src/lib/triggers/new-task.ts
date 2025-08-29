@@ -63,7 +63,7 @@ export const newTask = createTrigger({
                     placeholder: 'Please select a workspace first',
                 };
             }
-            const projects = await togglTrackApi.getProjects(auth as string, (propsValue as any).workspaceId as number);
+            const projects = await togglTrackApi.getProjects(auth as string, parseInt((propsValue as any).workspaceId as string));
             return {
                 disabled: false,
                 options: projects.map((project) => {

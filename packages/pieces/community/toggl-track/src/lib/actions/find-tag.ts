@@ -8,7 +8,7 @@ export const findTag = createAction({
   displayName: 'Find Tag',
   description: 'Find a tag by name.',
   props: {
-    workspace_id: Property.Dropdown({
+    workspaceId: Property.Dropdown({
       displayName: 'Workspace',
       required: true,
       refreshers: [],
@@ -38,10 +38,10 @@ export const findTag = createAction({
     }),
   },
   async run(context) {
-    const { workspace_id, name } = context.propsValue;
+    const { workspaceId, name } = context.propsValue;
     const tags = await togglTrackApi.getTags(
       context.auth as string,
-      workspace_id as number
+      parseInt(workspaceId as string)
     );
     return tags.find((tag) => tag.name === name);
   },

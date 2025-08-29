@@ -8,7 +8,7 @@ export const createProject = createAction({
   displayName: 'Create Project',
   description: 'Create a new project.',
   props: {
-    workspace_id: Property.Dropdown({
+    workspaceId: Property.Dropdown({
       displayName: 'Workspace',
       required: true,
       refreshers: [],
@@ -36,13 +36,54 @@ export const createProject = createAction({
       displayName: 'Name',
       required: true,
     }),
+    is_private: Property.Checkbox({
+      displayName: 'Private',
+      required: false,
+    }),
+    billable: Property.Checkbox({
+      displayName: 'Billable',
+      required: false,
+    }),
+    clientId: Property.Dropdown({
+      displayName: 'Client',
+      required: false,
+      refreshers: ['workspaceId'],
+      options: async ({ auth, workspaceId }) => {
+        if (!auth || !workspaceId) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please select a workspace first',
+          };
+        }
+        const clients = await togglTrackApi.getClients(
+          auth as string,
+          parseInt(workspaceId as string)
+        );
+        return {
+          disabled: false,
+          options: clients.map((client) => {
+            return {
+              label: client.name,
+              value: client.id.toString(),
+            };
+          }),
+        };
+      },
+    }),
   },
   async run(context) {
-    const { workspace_id, name } = context.propsValue;
+    const { workspaceId, name, is_private, billable, clientId } = context.propsValue;
+    const project = {
+      name: name as string,
+      is_private: is_private as boolean,
+      billable: billable as boolean,
+      client_id: clientId ? parseInt(clientId as string) : undefined,
+    };
     return await togglTrackApi.createProject(
       context.auth as string,
-      workspace_id as number,
-      name as string
+      parseInt(workspaceId as string),
+      project
     );
   },
 });

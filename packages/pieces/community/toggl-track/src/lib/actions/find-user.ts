@@ -8,7 +8,7 @@ export const findUser = createAction({
   displayName: 'Find User',
   description: 'Locate a user in a workspace.',
   props: {
-    workspace_id: Property.Dropdown({
+    workspaceId: Property.Dropdown({
       displayName: 'Workspace',
       required: true,
       refreshers: [],
@@ -38,10 +38,10 @@ export const findUser = createAction({
     }),
   },
   async run(context) {
-    const { workspace_id, email } = context.propsValue;
+    const { workspaceId, email } = context.propsValue;
     const users = await togglTrackApi.getWorkspaceUsers(
       context.auth as string,
-      workspace_id as number
+      parseInt(workspaceId as string)
     );
     return users.find((user) => user.email === email);
   },

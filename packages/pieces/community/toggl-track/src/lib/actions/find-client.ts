@@ -8,7 +8,7 @@ export const findClient = createAction({
   displayName: 'Find Client',
   description: 'Find a client by name or status.',
   props: {
-    workspace_id: Property.Dropdown({
+    workspaceId: Property.Dropdown({
       displayName: 'Workspace',
       required: true,
       refreshers: [],
@@ -38,10 +38,10 @@ export const findClient = createAction({
     }),
   },
   async run(context) {
-    const { workspace_id, name } = context.propsValue;
+    const { workspaceId, name } = context.propsValue;
     const clients = await togglTrackApi.getClients(
       context.auth as string,
-      workspace_id as number
+      parseInt(workspaceId as string)
     );
     return clients.find((client) => client.name === name);
   },

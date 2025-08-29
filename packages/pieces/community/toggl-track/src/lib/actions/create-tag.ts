@@ -8,7 +8,7 @@ export const createTag = createAction({
   displayName: 'Create Tag',
   description: 'Create a new tag in the workspace.',
   props: {
-    workspace_id: Property.Dropdown({
+    workspaceId: Property.Dropdown({
       displayName: 'Workspace',
       required: true,
       refreshers: [],
@@ -38,10 +38,10 @@ export const createTag = createAction({
     }),
   },
   async run(context) {
-    const { workspace_id, name } = context.propsValue;
+    const { workspaceId, name } = context.propsValue;
     return await togglTrackApi.createTag(
       context.auth as string,
-      workspace_id as number,
+      parseInt(workspaceId as string),
       name as string
     );
   },

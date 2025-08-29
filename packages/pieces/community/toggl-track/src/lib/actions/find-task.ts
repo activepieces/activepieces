@@ -8,7 +8,7 @@ export const findTask = createAction({
   displayName: 'Find Task',
   description: 'Find a task by name and status.',
   props: {
-    workspace_id: Property.Dropdown({
+    workspaceId: Property.Dropdown({
       displayName: 'Workspace',
       required: true,
       refreshers: [],
@@ -32,12 +32,12 @@ export const findTask = createAction({
         };
       },
     }),
-    project_id: Property.Dropdown({
+    projectId: Property.Dropdown({
       displayName: 'Project',
       required: true,
-      refreshers: ['workspace_id'],
-      options: async ({ auth, workspace_id }) => {
-        if (!auth || !workspace_id) {
+      refreshers: ['workspaceId'],
+      options: async ({ auth, workspaceId }) => {
+        if (!auth || !workspaceId) {
           return {
             disabled: true,
             options: [],
@@ -46,7 +46,7 @@ export const findTask = createAction({
         }
         const projects = await togglTrackApi.getProjects(
           auth as string,
-          workspace_id as number
+          parseInt(workspaceId as string)
         );
         return {
           disabled: false,
@@ -65,11 +65,11 @@ export const findTask = createAction({
     }),
   },
   async run(context) {
-    const { workspace_id, project_id, name } = context.propsValue;
+    const { workspaceId, projectId, name } = context.propsValue;
     const tasks = await togglTrackApi.getTasks(
       context.auth as string,
-      workspace_id as number,
-      project_id as number
+      parseInt(workspaceId as string),
+      parseInt(projectId as string)
     );
     return tasks.find((task) => task.name === name);
   },

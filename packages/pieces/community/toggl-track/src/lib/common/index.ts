@@ -126,7 +126,7 @@ export const togglTrackApi = {
   async createProject(
     apiToken: string,
     workspaceId: number,
-    projectName: string
+    project: any
   ): Promise<any> {
     const response = await httpClient.sendRequest<any>({
       method: HttpMethod.POST,
@@ -137,9 +137,7 @@ export const togglTrackApi = {
           'base64'
         )}`,
       },
-      body: {
-        name: projectName,
-      },
+      body: project,
     });
     return response.body;
   },

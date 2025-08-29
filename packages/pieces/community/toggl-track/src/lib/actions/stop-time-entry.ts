@@ -8,7 +8,7 @@ export const stopTimeEntry = createAction({
   displayName: 'Stop Time Entry',
   description: 'Stops the running time entry.',
   props: {
-    workspace_id: Property.Dropdown({
+    workspaceId: Property.Dropdown({
       displayName: 'Workspace',
       required: true,
       refreshers: [],

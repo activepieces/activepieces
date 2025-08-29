@@ -8,7 +8,7 @@ export const createTimeEntry = createAction({
   displayName: 'Create Time Entry',
   description: 'Manually create a time entry.',
   props: {
-    workspace_id: Property.Dropdown({
+    workspaceId: Property.Dropdown({
       displayName: 'Workspace',
       required: true,
       refreshers: [],
@@ -44,12 +44,12 @@ export const createTimeEntry = createAction({
       displayName: 'Duration (seconds)',
       required: true,
     }),
-    project_id: Property.Dropdown({
+    projectId: Property.Dropdown({
       displayName: 'Project',
       required: false,
-      refreshers: ['workspace_id'],
-      options: async ({ auth, workspace_id }) => {
-        if (!auth || !workspace_id) {
+      refreshers: ['workspaceId'],
+      options: async ({ auth, workspaceId }) => {
+        if (!auth || !workspaceId) {
           return {
             disabled: true,
             options: [],
@@ -58,7 +58,7 @@ export const createTimeEntry = createAction({
         }
         const projects = await togglTrackApi.getProjects(
           auth as string,
-          workspace_id as number
+          parseInt(workspaceId as string)
         );
         return {
           disabled: false,
@@ -71,20 +71,25 @@ export const createTimeEntry = createAction({
         };
       },
     }),
+    tags: Property.Array({
+      displayName: 'Tags',
+      required: false,
+    }),
   },
   async run(context) {
-    const { workspace_id, description, start_time, duration, project_id } = context.propsValue;
+    const { workspaceId, description, start_time, duration, projectId, tags } = context.propsValue;
     const timeEntry = {
       description,
       start: start_time,
       duration,
-      project_id,
-      workspace_id,
+      project_id: projectId ? parseInt(projectId as string) : undefined,
+      tags: tags as string[],
+      workspace_id: parseInt(workspaceId as string),
       created_with: 'Activepieces',
     };
     return await togglTrackApi.createTimeEntry(
       context.auth as string,
-      workspace_id as number,
+      parseInt(workspaceId as string),
       timeEntry
     );
   },
