@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { assembledCommon } from '../common';
-import { assembledAuth } from '../..';
+import { assembledAuth } from '../common/auth';
 
 export const customGraphql = createAction({
   name: 'custom_graphql',
