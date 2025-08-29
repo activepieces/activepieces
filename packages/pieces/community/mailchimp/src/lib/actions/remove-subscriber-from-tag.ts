@@ -52,11 +52,36 @@ export const removeSubscriberFromTag = createAction({
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Failed to remove subscriber from tag: ${errorData.detail || response.statusText}`);
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        
+        try {
+          const errorText = await response.text();
+          if (errorText && errorText.trim()) {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.detail || errorData.title || errorData.message || errorText;
+          }
+        } catch (parseError) {
+          const errorText = await response.text();
+          if (errorText && errorText.trim()) {
+            errorMessage = errorText;
+          }
+        }
+
+        throw new Error(`Failed to remove subscriber from tag: ${errorMessage}`);
       }
 
-      const result = await response.json();
+      let result;
+      try {
+        const responseText = await response.text();
+        if (responseText && responseText.trim()) {
+          result = JSON.parse(responseText);
+        } else {
+          result = { success: true };
+        }
+      } catch (parseError) {
+        result = { success: true };
+      }
+
       return {
         success: true,
         message: `Successfully removed subscriber ${email} from tag ${tag_name}`,
