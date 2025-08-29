@@ -53,6 +53,7 @@ import {
 } from '@activepieces/shared';
 
 import { userInvitationsHooks } from '../lib/user-invitations-hooks';
+import { useEmbedding } from '@/components/embed-provider';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -76,8 +77,8 @@ const FormSchema = Type.Object({
 
 type FormSchema = Static<typeof FormSchema>;
 
-export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const InviteUserDialog = ({ open, setOpen }: { open: boolean, setOpen: (_open: boolean) => void }) => {
+  const { embedState } = useEmbedding();
   const [invitationLink, setInvitationLink] = useState('');
   const { platform } = platformHooks.useCurrentPlatform();
   const { refetch } = userInvitationsHooks.useInvitations();
@@ -114,7 +115,7 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
       if (res.link) {
         setInvitationLink(res.link);
       } else {
-        setIsOpen(false);
+        setOpen(false);
         toast({
           title: t('Invitation sent successfully'),
         });
@@ -164,33 +165,24 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
     });
   };
 
+  if (embedState.isEmbedded) {
+    return null;
+  }
+
   return (
     <>
       {userHasPermissionToInviteUser && (
         <Dialog
-          open={isOpen}
+          open={open}
+          modal
           onOpenChange={(open) => {
-            setIsOpen(open);
+            setOpen(open);
             if (open) {
               form.reset();
               setInvitationLink('');
             }
           }}
         >
-          <DialogTrigger asChild>
-            {children ? (
-              children
-            ) : (
-              <Button
-                variant={'outline'}
-                size="sm"
-                className="flex items-center justify-center gap-2 w-full"
-              >
-                <Plus className="size-4" />
-                <span>{t('Invite User')}</span>
-              </Button>
-            )}
-          </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>

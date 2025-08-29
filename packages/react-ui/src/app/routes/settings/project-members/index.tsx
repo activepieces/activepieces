@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { InvitationCard } from '@/features/team/component/invitation-card';
-import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 import { ProjectMemberCard } from '@/features/team/component/project-member-card';
 import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { userInvitationsHooks } from '@/features/team/lib/user-invitations-hooks';
@@ -94,11 +93,6 @@ export default function ProjectMembersPage() {
                     invitation={invitation}
                   ></InvitationCard>
                 ))}
-            </div>
-            <div className="mt-4 flex items-center  space-x-2">
-              <div className="flex-grow">
-                <InviteUserDialog></InviteUserDialog>
-              </div>
             </div>
           </CardContent>
         </Card>
