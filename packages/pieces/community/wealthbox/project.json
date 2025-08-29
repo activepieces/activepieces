@@ -1,0 +1,36 @@
+{
+  "name": "piece-wealthbox",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/wealthbox/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/wealthbox",
+        "tsConfig": "packages/pieces/community/wealthbox/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/wealthbox/package.json",
+        "main": "packages/pieces/community/wealthbox/src/index.ts",
+        "assets": ["packages/pieces/community/wealthbox/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/community/wealthbox/**/*.ts"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/pieces/community/wealthbox/jest.config.ts"
+      }
+    }
+  },
+  "tags": []
+} 
