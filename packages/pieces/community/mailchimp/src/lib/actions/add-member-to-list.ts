@@ -30,7 +30,6 @@ export const addMemberToList = createAction({
       displayName: 'Status',
       required: true,
       options: {
-        disabled: false,
         options: [
           { label: 'Subscribed', value: 'subscribed' },
           { label: 'Unsubscribed', value: 'unsubscribed' },
@@ -50,7 +49,7 @@ export const addMemberToList = createAction({
       server: mailChimpServerPrefix,
     });
     try {
-      return await mailchimp.lists.addListMember(context.propsValue.list_id!, {
+      return await mailchimp.lists.addListMember(context.propsValue.list_id as string, {
         email_address: context.propsValue.email!,
         status: context.propsValue.status,
         merge_fields: {
