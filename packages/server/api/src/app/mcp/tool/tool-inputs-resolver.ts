@@ -83,11 +83,13 @@ async function extractActionParametersFromUserInstructions({
                     piecePackage,
                 })
                 return { propertyName, ...result }
-            }))).filter(schema => schema !== null)
+            }))).filter((schema): schema is NonNullable<typeof schema> & { schema: NonNullable<typeof schema.schema> } => 
+                schema !== null && schema.schema !== null
+            )
 
             const schemaObject: ZodRawShape = Object.fromEntries(
                 propertySchemas
-                    .map(({ propertyName, schema }) => [propertyName, schema!]),
+                    .map(({ propertyName, schema }) => [propertyName, schema]),
             )
 
             const propertySchemaValues = propertySchemas.map(({ value }) => value).filter(value => value !== null)

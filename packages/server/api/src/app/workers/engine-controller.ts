@@ -231,16 +231,9 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         const { pieceName, pieceVersion, actionName, auth, preDefinedInputs, flowVersionId } = request.body
         const supportedProvider = SUPPORTED_AI_PROVIDERS.find(p => p.provider === 'openai')
         const modelInstance = supportedProvider?.languageModels.find(m => m.displayName === 'GPT-4.1')
-        const flowVersion = await flowVersionService(request.log).getOneOrThrow(flowVersionId)
-
-        if (isNil(modelInstance)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
-                params: {
-                    provider: 'openai',
-                    model: 'gpt-4.1',
-                },
-            })
+        const flowVersion = await flowVersionService(request.log).getOne(flowVersionId)
+        if (isNil(flowVersion) || isNil(modelInstance)) {
+            return null
         }
 
         const baseURL = await domainHelper.getPublicApiUrl({

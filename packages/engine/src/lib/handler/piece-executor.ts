@@ -220,21 +220,19 @@ async function resolveInputsUsingAI({ resolvedInput, constants, action, executio
         }
     })
     assertNotNullOrUndefined(action.settings.actionName, 'actionName')
-    try {
-        const aiResolvedInput = await toolInputsResolver.resolve(constants, {
-            pieceName: action.settings.pieceName,
-            pieceVersion: action.settings.pieceVersion,
-            actionName: action.settings.actionName,
-            preDefinedInputs,
-            flowVersionId: constants.flowVersionId,
-        })
-        aiResolvedInput['previousStepsResults'] = undefined
-        return aiResolvedInput
-    }
-    catch (error) {
-        console.error('Error resolving inputs using AI', error)
+    const aiResolvedInput = await toolInputsResolver.resolve(constants, {
+        pieceName: action.settings.pieceName,
+        pieceVersion: action.settings.pieceVersion,
+        actionName: action.settings.actionName,
+        preDefinedInputs,
+        flowVersionId: constants.flowVersionId,
+    })
+    if (isNil(aiResolvedInput)) {
         return resolvedInput
     }
+    aiResolvedInput['previousStepsResults'] = undefined
+    return aiResolvedInput
+    
 }
 
 function getResponse(hookResponse: HookResponse): RespondResponse | undefined {

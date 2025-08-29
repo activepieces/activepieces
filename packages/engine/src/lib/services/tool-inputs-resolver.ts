@@ -1,11 +1,11 @@
-import { ResolveToolInputsRequest } from '@activepieces/shared'
+import { isNil, ResolveToolInputsRequest } from '@activepieces/shared'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
 
 const fetchWithRetry = fetchRetry(global.fetch)
 
 export const toolInputsResolver = {
-    resolve: async (engineConstants: EngineConstants, request: ResolveToolInputsRequest): Promise<Record<string, unknown>> => {
+    resolve: async (engineConstants: EngineConstants, request: ResolveToolInputsRequest): Promise<Record<string, unknown> | null> => {
         const response = await fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/resolve-tool-inputs`).toString(), {
             method: 'POST',
             headers: {
@@ -16,6 +16,9 @@ export const toolInputsResolver = {
             retries: 3,
             body: JSON.stringify(request),
         })
+        if (isNil(response)) {
+            return null
+        }
         return response.json()
     },
 }
