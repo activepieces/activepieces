@@ -9,17 +9,17 @@ export const getMeetingTranscription = createAction({
   displayName: 'Get Meeting Transcription',
   description: 'Returns a single transcription for a given meeting.',
   props: {
-    meetingUuid: Property.ShortText({
-      displayName: 'Meeting UUID',
-      description: 'The UUID of the meeting to retrieve the recording for.',
+    transcriptionUuid: Property.ShortText({
+      displayName: 'Transcription UUID',
+      description: 'The UUID of the transcription to retrieve.',
       required: true,
     }),
   },
   async run({ auth: apiKey, propsValue }) {
-    propsValidation.validateZod(propsValue, { meetingUuid: z.string().uuid() });
+    propsValidation.validateZod(propsValue, { transcriptionUuid: z.string().uuid() });
     return await avomaCommon.getMeetingTranscription({
       apiKey,
-      meetingUuid: propsValue.meetingUuid,
+      transcriptionUuid: propsValue.transcriptionUuid,
     });
   },
 });

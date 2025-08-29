@@ -13,6 +13,10 @@ type meetingDetailParams = authenticatedParams & {
   meetingUuid: string;
 };
 
+type transcriptionParams = authenticatedParams & {
+  transcriptionUuid: string;
+};
+
 type Call = {
   additional_details?: string;
   answered?: boolean;
@@ -208,10 +212,7 @@ export const avomaCommon = {
     }),
     participants: Property.Array({
       displayName: 'Participants',
-      description: `
-        List of participants in the call. First entry should be of the prospect or
-        lead with whom the call happened. This will be used in formulating the
-        subject of the call in Avoma.`,
+      description: 'List of participants in the call. First entry should be of the prospect or lead with whom the call happened. This will be used in formulating the subject of the call in Avoma.',
       required: true,
       properties: {
         email: Property.ShortText({
@@ -224,14 +225,12 @@ export const avomaCommon = {
     }),
     recordingUrl: Property.ShortText({
       displayName: 'Recording URL',
-      description: `URL of the recording of the call. This will be used to download the
-        recording by avoma for processing, so should be a public URL.`,
+      description: 'URL of the recording of the call. This will be used to download the recording by avoma for processing, so should be a public URL.',
       required: false,
     }),
     source: Property.ShortText({
       displayName: 'Source',
-      description: `Lowercase string indicating the source of the call, e.g. zoom, zoomphone,
-        twilio, phoneburner, ringcentral, aircall, etc.`,
+      description: 'Lowercase string indicating the source of the call, e.g. zoom, zoomphone, twilio, phoneburner, ringcentral, aircall, etc.',
       required: false,
     }),
     startAt: Property.DateTime({
@@ -251,9 +250,8 @@ export const avomaCommon = {
     }),
     userEmail: Property.ShortText({
       displayName: 'User Email',
-      description: `Email of the user who made or received the call.
-        This should be an Avoma user's email. License for this user will be used to process
-        the call.`,
+      description:
+        "Email of the user who made or received the call. This should be an Avoma user's email. License for this user will be used to process the call.",
       required: true,
     }),
   },
@@ -332,13 +330,13 @@ export const avomaCommon = {
   },
   getMeetingTranscription: async ({
     apiKey,
-    meetingUuid,
-  }: meetingDetailParams) => {
+    transcriptionUuid,
+  }: transcriptionParams) => {
     return await httpClient.sendRequest<meetingTranscription>({
       method: HttpMethod.GET,
       url: `${
         avomaCommon.baseURL
-      }${avomaCommon.endpoints.getMeetingTranscription(meetingUuid)}`,
+      }${avomaCommon.endpoints.getMeetingTranscription(transcriptionUuid)}`,
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },
