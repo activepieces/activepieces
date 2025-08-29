@@ -22,11 +22,7 @@ export const createCampaign = createAction({
         ],
       },
     }),
-    list_id: Property.ShortText({
-      displayName: 'Audience ID',
-      description: 'The unique ID of the Mailchimp audience/list',
-      required: true,
-    }),
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
     subject_line: Property.ShortText({
       displayName: 'Subject Line',
       description: 'The subject line for the campaign',

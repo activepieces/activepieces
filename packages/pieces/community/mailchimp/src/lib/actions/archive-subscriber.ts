@@ -9,11 +9,7 @@ export const archiveSubscriber = createAction({
   displayName: 'Archive Subscriber',
   description: 'Archive a subscriber from a Mailchimp audience (list)',
   props: {
-    list_id: Property.ShortText({
-      displayName: 'Audience ID',
-      description: 'The unique ID of the Mailchimp audience/list',
-      required: true,
-    }),
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({
       displayName: 'Email',
       description: 'Email of the subscriber to archive',

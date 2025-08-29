@@ -9,11 +9,7 @@ export const addSubscriberToTag = createAction({
   displayName: 'Add Subscriber to Tag',
   description: 'Add a subscriber to a specific tag in your Mailchimp audience.',
   props: {
-    list_id: Property.ShortText({
-      displayName: 'Audience ID',
-      description: 'The unique ID of the Mailchimp audience/list',
-      required: true,
-    }),
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({
       displayName: 'Email Address',
       description: 'The email address of the subscriber to add to the tag',

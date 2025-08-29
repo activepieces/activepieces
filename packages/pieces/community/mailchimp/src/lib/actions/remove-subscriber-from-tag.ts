@@ -9,11 +9,7 @@ export const removeSubscriberFromTag = createAction({
   displayName: 'Remove Subscriber from Tag',
   description: 'Remove a subscriber from a specific tag in your Mailchimp audience.',
   props: {
-    list_id: Property.ShortText({
-      displayName: 'Audience ID',
-      description: 'The unique ID of the Mailchimp audience/list',
-      required: true,
-    }),
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({
       displayName: 'Email Address',
       description: 'The email address of the subscriber to remove from the tag',

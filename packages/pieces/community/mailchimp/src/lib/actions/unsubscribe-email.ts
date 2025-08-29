@@ -9,11 +9,7 @@ export const unsubscribeEmail = createAction({
   displayName: 'Unsubscribe Email',
   description: 'Unsubscribe an email address from a Mailchimp audience with comprehensive options for goodbye emails, notifications, and status management',
   props: {
-    list_id: Property.ShortText({
-      displayName: 'List ID',
-      description: 'The unique ID of the audience/list to unsubscribe the email from',
-      required: true,
-    }),
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({
       displayName: 'Email Address',
       description: 'Email address of the subscriber to unsubscribe',

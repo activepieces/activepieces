@@ -9,11 +9,7 @@ export const findSubscriber = createAction({
   displayName: 'Find Subscriber',
   description: 'Search for subscribers across all lists or within a specific list. This action provides comprehensive subscriber information including merge fields, interests, and activity data.',
   props: {
-    list_id: Property.ShortText({
-      displayName: 'List ID (Optional)',
-      description: 'The ID of a specific list to search within. Leave empty to search across all lists in your account.',
-      required: false,
-    }),
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({
       displayName: 'Email Address',
       description: 'Email address of the subscriber to search for',

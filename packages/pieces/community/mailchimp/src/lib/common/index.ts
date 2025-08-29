@@ -2,10 +2,16 @@ import { Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 
 export const mailchimpCommon = {
-  mailChimpListIdDropdown: Property.ShortText({
+  mailChimpListIdDropdown: Property.Dropdown({
     displayName: 'Audience ID',
     description: 'The unique ID of the Mailchimp audience/list',
     required: true,
+    refreshers: [],
+    options: async () => {
+      return {
+        options: [],
+      };
+    },
   }),
 
   async getMailChimpServerPrefix(accessToken: string): Promise<string> {
