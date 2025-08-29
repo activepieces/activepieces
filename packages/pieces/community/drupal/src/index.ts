@@ -59,7 +59,7 @@ export const drupalAuth = PieceAuth.CustomAuth({
       const basicAuth = Buffer.from(`${username}:${password}`).toString('base64');
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: website_url + `/jsonapi`,
+        url: website_url + `/jsonapi/user/user?filter[name]=` + username,
         headers: {
           'Authorization': `Basic ${basicAuth}`,
           'Accept': 'application/vnd.api+json',
@@ -67,8 +67,9 @@ export const drupalAuth = PieceAuth.CustomAuth({
       });
       console.debug('Auth validation response', response);
       if (response.status === 200) {
+        const data = (response.body as any).data;
         return {
-          valid: true,
+          valid: (data && data.length > 0 && data[0].attributes.name === username),
         };
       }
       return {
@@ -101,9 +102,9 @@ export const drupal = createPiece({
   ],
   authors: ['jurgenhaas'],
   actions: [
-    drupalCallToolAction, 
-    drupalCreateEntityAction, 
-    drupalListEntitiesAction, 
+    drupalCallToolAction,
+    drupalCreateEntityAction,
+    drupalListEntitiesAction,
     drupalGetEntityAction,
     drupalUpdateEntityAction,
     drupalDeleteEntityAction
