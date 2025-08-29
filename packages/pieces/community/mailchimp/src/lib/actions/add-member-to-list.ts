@@ -25,12 +25,15 @@ export const addMemberToList = createAction({
       description: 'Email of the new contact',
       required: true,
     }),
-    list_id: mailchimpCommon.mailChimpListIdDropdown,
+    list_id: Property.ShortText({
+      displayName: 'Audience ID',
+      description: 'The unique ID of the Mailchimp audience/list',
+      required: true,
+    }),
     status: Property.StaticDropdown<Status>({
       displayName: 'Status',
       required: true,
       options: {
-        disabled: false,
         options: [
           { label: 'Subscribed', value: 'subscribed' },
           { label: 'Unsubscribed', value: 'unsubscribed' },

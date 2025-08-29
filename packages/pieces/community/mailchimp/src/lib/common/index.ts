@@ -2,14 +2,10 @@ import { Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 
 export const mailchimpCommon = {
-  mailChimpListIdDropdown: Property.Dropdown({
+  mailChimpListIdDropdown: Property.ShortText({
     displayName: 'Audience ID',
     description: 'The unique ID of the Mailchimp audience/list',
     required: true,
-    options: {
-      disabled: true,
-      options: [],
-    },
   }),
 
   async getMailChimpServerPrefix(accessToken: string): Promise<string> {
@@ -24,7 +20,18 @@ export const mailchimpCommon = {
         throw new Error(`Failed to get server prefix: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        const responseText = await response.text();
+        if (responseText && responseText.trim()) {
+          data = JSON.parse(responseText);
+        } else {
+          throw new Error('Empty response from server');
+        }
+      } catch (parseError) {
+        throw new Error('Invalid response format from server');
+      }
+      
       return data.dc;
     } catch (error) {
       console.error('Error getting Mailchimp server prefix:', error);
@@ -72,11 +79,36 @@ export const mailchimpCommon = {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Failed to enable webhook: ${errorData.detail || response.statusText}`);
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        
+        try {
+          const errorText = await response.text();
+          if (errorText && errorText.trim()) {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.detail || errorData.title || errorData.message || errorText;
+          }
+        } catch (parseError) {
+          const errorText = await response.text();
+          if (errorText && errorText.trim()) {
+            errorMessage = errorText;
+          }
+        }
+
+        throw new Error(`Failed to enable webhook: ${errorMessage}`);
       }
 
-      const result = await response.json();
+      let result;
+      try {
+        const responseText = await response.text();
+        if (responseText && responseText.trim()) {
+          result = JSON.parse(responseText);
+        } else {
+          throw new Error('Empty response from server');
+        }
+      } catch (parseError) {
+        throw new Error('Invalid response format from server');
+      }
+      
       return result.id;
     } catch (error: any) {
       console.error('Error enabling webhook:', error);

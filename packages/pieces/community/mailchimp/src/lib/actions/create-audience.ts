@@ -1,38 +1,28 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { mailchimpAuth } from '../..';
 import { mailchimpCommon } from '../common';
 import mailchimp from '@mailchimp/mailchimp_marketing';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { mailchimpAuth } from '../..';
 
 export const createAudience = createAction({
   auth: mailchimpAuth,
   name: 'create_audience',
-  displayName: 'Create Audience',
-  description: 'Creates a new Mailchimp audience (list)',
+  displayName: 'Create Audience (List)',
+  description: 'Create a new Mailchimp audience (list)',
   props: {
     audience_name: Property.ShortText({
       displayName: 'Audience Name',
-      description: 'The name of the audience to create',
+      description: 'The name of the new audience',
       required: true,
-    }),
-    audience_description: Property.LongText({
-      displayName: 'Audience Description',
-      description: 'A description of the audience',
-      required: false,
     }),
     from_name: Property.ShortText({
       displayName: 'From Name',
-      description: 'The name that will appear in the "From" field of emails',
+      description: 'The default from name for emails sent to this audience',
       required: true,
     }),
     from_email: Property.ShortText({
       displayName: 'From Email',
-      description: 'The email address that will appear in the "From" field',
+      description: 'The default from email address for emails sent to this audience',
       required: true,
-    }),
-    reply_to: Property.ShortText({
-      displayName: 'Reply To Email',
-      description: 'The email address that will receive replies',
-      required: false,
     }),
     subject_line: Property.ShortText({
       displayName: 'Subject Line',
@@ -44,7 +34,6 @@ export const createAudience = createAction({
       description: 'The language of the audience',
       required: true,
       options: {
-        disabled: false,
         options: [
           { label: 'English', value: 'en' },
           { label: 'Spanish', value: 'es' },
@@ -92,7 +81,7 @@ export const createAudience = createAction({
     });
 
     try {
-      const audience = await mailchimp.lists.createList({
+      const audience = await (mailchimp as any).lists.createList({
         name: context.propsValue.audience_name!,
         contact: {
           company: '',
