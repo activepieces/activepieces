@@ -1,36 +1,62 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
-import { mailchimpAuth } from '../auth';
+import { mailchimpAuth } from '../..';
+import mailchimp from '@mailchimp/mailchimp_marketing';
+import { MailchimpClient } from '../common/types';
+import crypto from 'crypto';
 
 export const archiveSubscriber = createAction({
   auth: mailchimpAuth,
   name: 'archive_subscriber',
   displayName: 'Archive Subscriber',
-  description: 'Archive a subscriber in a Mailchimp audience',
+  description: 'Archive an existing audience member',
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
-    email: Property.ShortText({
-      displayName: 'Email Address',
-      description: 'The email address of the subscriber to archive',
+    subscriber_hash: Property.ShortText({
+      displayName: 'Subscriber Hash or Email',
+      description: 'MD5 hash of the lowercase email address, email address, or contact_id',
       required: true,
     }),
   },
   async run(context) {
-    try {
-      const subscriberHash = mailchimpCommon.getMD5EmailHash(context.propsValue.email!);
-      
-      const response = await mailchimpCommon.makeApiRequest(
-        context.auth,
-        `/lists/${context.propsValue.list_id}/members/${subscriberHash}`,
-        'PATCH' as any,
-        {
-          status: 'archived',
-        }
-      );
+    const accessToken = getAccessTokenOrThrow(context.auth);
+    const server = await mailchimpCommon.getMailChimpServerPrefix(accessToken);
+    
+    const client = mailchimp as unknown as MailchimpClient;
+    client.setConfig({
+      accessToken: accessToken,
+      server: server,
+    });
 
-      return response.body;
-    } catch (error) {
-      throw new Error(`Failed to archive subscriber: ${JSON.stringify(error)}`);
+    try {
+      let subscriberHash = context.propsValue.subscriber_hash;
+      
+      // If it's an email, convert to MD5 hash
+      if (subscriberHash.includes('@')) {
+        subscriberHash = crypto.createHash('md5').update(subscriberHash.toLowerCase()).digest('hex');
+      }
+
+      await client.lists.deleteListMember(context.propsValue.list_id!, subscriberHash);
+
+      return {
+        success: true,
+        message: 'Subscriber archived successfully',
+        list_id: context.propsValue.list_id,
+        subscriber_hash: subscriberHash,
+        archived_at: new Date().toISOString(),
+      };
+    } catch (error: any) {
+      if (error.status === 404) {
+        return {
+          success: false,
+          error: 'Subscriber not found',
+          message: 'The subscriber could not be found in the specified list.',
+          detail: error.detail || 'The requested resource could not be found',
+        };
+      }
+      
+      throw new Error(`Failed to archive subscriber: ${error.message || JSON.stringify(error)}`);
     }
   },
 });
