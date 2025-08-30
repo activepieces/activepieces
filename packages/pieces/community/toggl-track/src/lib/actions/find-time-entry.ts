@@ -39,7 +39,7 @@ export const findTimeEntry = createAction({
         end_date: end_date,
     };
 
-    // 1. Fetch all time entries within the specified date range
+    
     const response = await httpClient.sendRequest<TimeEntry[]>({
       method: HttpMethod.GET,
       url: `https://api.track.toggl.com/api/v9/me/time_entries`,
@@ -54,7 +54,7 @@ export const findTimeEntry = createAction({
 
     const timeEntries = response.body || [];
 
-    // 2. Filter the results by description, as the API doesn't support it directly
+    
     const matchingEntries = timeEntries.filter(entry => 
         entry.description && entry.description.toLowerCase().includes(description.toLowerCase())
     );

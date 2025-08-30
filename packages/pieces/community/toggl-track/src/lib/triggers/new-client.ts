@@ -29,8 +29,7 @@ export const newClient = createTrigger({
     type: TriggerStrategy.POLLING,
 
     async onEnable(context) {
-        // This runs when the trigger is turned on.
-        // We fetch the current clients and store their IDs to avoid triggering on existing data.
+        
         const clients = await getClients(context.auth, context.propsValue.workspace_id as number);
         const clientIds = clients.map(client => client.id);
         
@@ -38,7 +37,7 @@ export const newClient = createTrigger({
     },
 
     async onDisable(context) {
-        // This runs when the trigger is turned off.
+       
         await context.store.delete(pollingStoreKey);
     },
 
@@ -50,7 +49,7 @@ export const newClient = createTrigger({
         const newClients = currentClients.filter(client => !oldClientIdsSet.has(client.id));
 
         if (newClients.length > 0) {
-            // Update the store with all current client IDs for the next run
+            
             const allCurrentIds = currentClients.map(client => client.id);
             await context.store.put(pollingStoreKey, allCurrentIds);
         }

@@ -20,8 +20,7 @@ export const findTag = createAction({
     const { workspace_id, name } = context.propsValue;
     const apiToken = context.auth;
 
-    // Note: The API docs for this endpoint incorrectly state the `search` param
-    // is for "task name", but it functions as a search for the tag name.
+    
     const queryParams: QueryParams = {
         search: name,
     };
@@ -38,7 +37,7 @@ export const findTag = createAction({
       queryParams: queryParams
     });
 
-    // The API performs a "contains" search, so we filter for an exact match.
+    
     const matchingTags = response.body.filter(tag => tag.name.toLowerCase() === name.toLowerCase());
 
     return matchingTags;

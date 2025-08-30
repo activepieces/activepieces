@@ -22,7 +22,6 @@ import { newTimeEntry } from './lib/triggers/new-time-entry';
 import { newTimeEntryStarted } from './lib/triggers/new-time-entry-started';
 import { newTag } from './lib/triggers/new-tag';
 
-// This function validates the API token by making a call to the /me endpoint.
 const validateAuth = async ({ auth }: { auth: string }) => {
   try {
     await httpClient.sendRequest({
@@ -67,7 +66,6 @@ export const togglTrack = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/toggl-track.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: [
-    // Add your name here, e.g., "kishanprmr"
   ],
   actions: [
     createClient,

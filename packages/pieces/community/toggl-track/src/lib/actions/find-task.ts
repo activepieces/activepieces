@@ -35,7 +35,7 @@ export const findTask = createAction({
 
     const queryParams: QueryParams = { search: search_term };
     if (project_id) {
-        // Convert the project_id number to a string
+        
         queryParams['pid'] = (project_id as number).toString();
     }
     if (status) {

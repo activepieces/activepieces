@@ -1,7 +1,11 @@
 import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-// Type definitions
+
+type TogglOrganization = {
+  id: number;
+  name: string;
+};
 type TogglWorkspace = {
   id: number;
   name: string;
@@ -24,6 +28,46 @@ type TogglTask = {
 }
 
 export const togglCommon = {
+  organization_id: Property.Dropdown({
+    displayName: 'Organization',
+    description: 'The organization to operate in.',
+    required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          placeholder: 'Connect your account first',
+          options: [],
+        };
+      }
+      const apiToken = auth as string;
+      const response = await httpClient.sendRequest<TogglOrganization[]>({
+        method: HttpMethod.GET,
+        url: 'https://api.track.toggl.com/api/v9/me/organizations',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Basic ${Buffer.from(
+            `${apiToken}:api_token`
+          ).toString('base64')}`,
+        },
+      });
+      if (response.status === 200) {
+        return {
+          disabled: false,
+          options: (response.body || []).map((org) => ({
+            label: org.name,
+            value: org.id,
+          })),
+        };
+      }
+      return {
+        disabled: true,
+        placeholder: 'Error fetching organizations',
+        options: [],
+      };
+    },
+  }),
   workspace_id: Property.Dropdown({
     displayName: 'Workspace',
     description: 'The workspace to operate in.',
@@ -38,11 +82,10 @@ export const togglCommon = {
         };
       }
       const apiToken = auth as string;
-      const response = await httpClient.sendRequest<{
-        workspaces: TogglWorkspace[];
-      }>({
+      
+      const response = await httpClient.sendRequest<TogglWorkspace[]>({
         method: HttpMethod.GET,
-        url: 'https://api.track.toggl.com/api/v9/me',
+        url: 'https://api.track.toggl.com/api/v9/me/workspaces',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Basic ${Buffer.from(
@@ -53,7 +96,8 @@ export const togglCommon = {
       if (response.status === 200) {
         return {
           disabled: false,
-          options: response.body.workspaces.map((workspace) => ({
+          
+          options: (response.body || []).map((workspace) => ({
             label: workspace.name,
             value: workspace.id,
           })),
@@ -93,7 +137,7 @@ export const togglCommon = {
       if (response.status === 200) {
         return {
           disabled: false,
-          options: response.body.map((client) => ({
+          options: (response.body || []).map((client) => ({
             label: client.name,
             value: client.id,
           })),
@@ -133,7 +177,7 @@ export const togglCommon = {
       if (response.status === 200) {
         return {
           disabled: false,
-          options: response.body.map((project) => ({
+          options: (response.body || []).map((project) => ({
             label: project.name,
             value: project.id,
           })),
@@ -173,7 +217,7 @@ export const togglCommon = {
       if (response.status === 200) {
         return {
           disabled: false,
-          options: response.body.map((project) => ({
+          options: (response.body || []).map((project) => ({
             label: project.name,
             value: project.id,
           })),
@@ -213,7 +257,7 @@ export const togglCommon = {
       if (response.status === 200) {
         return {
           disabled: false,
-          options: response.body.map((tag) => ({
+          options: (response.body || []).map((tag) => ({
             label: tag.name,
             value: tag.name,
           })),
@@ -228,42 +272,53 @@ export const togglCommon = {
   }),
   optional_task_id: Property.Dropdown({
     displayName: "Task",
-    description: "The task to filter by (optional).",
+    description: "The task to select.",
     required: false,
     refreshers: ['workspace_id', 'optional_project_id'],
     options: async ({ auth, workspace_id, optional_project_id }) => {
         if (!auth || !workspace_id || !optional_project_id) {
             return {
-              disabled: true,
-              placeholder: 'Select a workspace and project first',
-              options: [],
+                disabled: true,
+                placeholder: 'Select a workspace and project first',
+                options: [],
             };
         }
         const apiToken = auth as string;
-        const response = await httpClient.sendRequest<TogglTask[]>({
+
+        // Note the changes to the request below
+        const response = await httpClient.sendRequest<{ data: TogglTask[] }>({
             method: HttpMethod.GET,
-            url: `https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/projects/${optional_project_id}/tasks`,
+            // 1. Use the more general workspace tasks endpoint
+            url: `https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/tasks`,
+            // 2. Add a query parameter to filter by project ID
+            queryParams: {
+                pid: optional_project_id as string
+            },
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Basic ${Buffer.from(
-                `${apiToken}:api_token`
+                    `${apiToken}:api_token`
                 ).toString('base64')}`,
             },
         });
+
         if (response.status === 200) {
             return {
                 disabled: false,
-                options: response.body.map((task) => ({
+                // 3. Access the 'data' property from the response body
+                options: (response.body.data || []).map((task) => ({
                     label: task.name,
                     value: task.id,
                 })),
             };
         }
+        
         return {
             disabled: true,
             placeholder: 'Error fetching tasks',
             options: [],
         };
     }
-  }),
+}),
 };
+

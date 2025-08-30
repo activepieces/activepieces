@@ -34,7 +34,7 @@ export const findProject = createAction({
       }
     });
 
-    // The API returns an array of matching projects
+    
     return response.body;
   },
 });

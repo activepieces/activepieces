@@ -20,7 +20,7 @@ export const findUser = createAction({
     const { workspace_id, search_term } = context.propsValue;
     const apiToken = context.auth;
 
-    // 1. Get workspace details to find the organization_id
+    
     const workspaceDetails = await httpClient.sendRequest<{ organization_id: number }>({
         method: HttpMethod.GET,
         url: `https://api.track.toggl.com/api/v9/workspaces/${workspace_id}`,
@@ -34,7 +34,7 @@ export const findUser = createAction({
     const organization_id = workspaceDetails.body.organization_id;
 
 
-    // 2. Search for the user within that workspace and organization
+    
     const searchResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `https://api.track.toggl.com/api/v9/organizations/${organization_id}/workspaces/${workspace_id}/workspace_users`,

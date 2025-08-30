@@ -17,7 +17,7 @@ export const newTask = createTrigger({
     description: 'Fires when a new task is created.',
     props: {
         workspace_id: togglCommon.workspace_id,
-        project_id: togglCommon.optional_project_id, // Allow optional filtering by project
+        project_id: togglCommon.optional_project_id,
     },
     sampleData: {
         "id": 789123456,

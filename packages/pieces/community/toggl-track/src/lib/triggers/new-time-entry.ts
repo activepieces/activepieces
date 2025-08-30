@@ -21,7 +21,8 @@ export const newTimeEntry = createTrigger({
     description: 'Fires when a new time entry is added.',
     props: {
         workspace_id: togglCommon.workspace_id,
-        project_id: togglCommon.optional_project_id,
+        
+        optional_project_id: togglCommon.optional_project_id,
         task_id: togglCommon.optional_task_id,
     },
     sampleData: {
@@ -40,7 +41,7 @@ export const newTimeEntry = createTrigger({
     type: TriggerStrategy.POLLING,
 
     async onEnable(context) {
-        // Use a timestamp-based polling strategy for time entries
+        
         const lastPoll = Math.floor(Date.now() / 1000);
         await context.store.put(pollingStoreKey, { lastPoll });
     },
@@ -50,7 +51,8 @@ export const newTimeEntry = createTrigger({
     },
 
     async run(context) {
-        const { workspace_id, project_id, task_id } = context.propsValue;
+        
+        const { workspace_id, optional_project_id: project_id, task_id } = context.propsValue;
         const { lastPoll } = await context.store.get<{ lastPoll: number }>(pollingStoreKey) ?? { lastPoll: 0 };
         const newPollTimestamp = Math.floor(Date.now() / 1000);
 
@@ -68,12 +70,12 @@ export const newTimeEntry = createTrigger({
 
         const timeEntries = response.body || [];
 
-        // Filter for truly new entries created since the last poll
-        let newEntries = timeEntries.filter(entry => 
+        
+        let newEntries = timeEntries.filter(entry =>
             Math.floor(new Date(entry.start).getTime() / 1000) > lastPoll
         );
 
-        // Apply optional client-side filters
+        
         if (workspace_id) {
             newEntries = newEntries.filter(entry => entry.workspace_id === workspace_id);
         }
@@ -84,7 +86,7 @@ export const newTimeEntry = createTrigger({
             newEntries = newEntries.filter(entry => entry.task_id === task_id);
         }
 
-        // Update the store with the new poll time for the next run
+        
         await context.store.put(pollingStoreKey, { lastPoll: newPollTimestamp });
         
         return newEntries;

@@ -30,15 +30,15 @@ export const stopTimeEntry = createAction({
       });
       runningEntryId = runningEntryResponse.body.id;
     } catch (e) {
-      // Toggl returns 404 when no timer is running, which httpClient throws as an error.
+     
       if (e instanceof HttpError && e.response.status === 404) {
         return { success: false, message: "No time entry is currently running." };
       }
-      // Re-throw other unexpected errors
+      
       throw e;
     }
 
-    // 2. Stop the time entry using its ID
+    
     const stopResponse = await httpClient.sendRequest({
       method: HttpMethod.PATCH,
       url: `https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/time_entries/${runningEntryId}/stop`,

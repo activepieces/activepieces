@@ -41,7 +41,7 @@ export const startTimeEntry = createAction({
         tags,
         billable,
         project_id,
-        // Key difference: start time is now, duration is -1 to start a timer
+        
         start: new Date().toISOString(),
         duration: -1, 
         created_with: 'Activepieces',

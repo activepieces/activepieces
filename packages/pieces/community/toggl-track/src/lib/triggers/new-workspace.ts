@@ -15,7 +15,7 @@ export const newWorkspace = createTrigger({
     displayName: 'New Workspace',
     description: 'Fires when a new workspace is created.',
     props: {
-        // No properties needed, this trigger monitors all workspaces.
+        
     },
     sampleData: {
         "id": 123456,
