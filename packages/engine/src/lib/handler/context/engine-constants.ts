@@ -1,4 +1,4 @@
-import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, isNil, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { ApEdition, DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, isNil, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -42,6 +42,7 @@ export class EngineConstants {
     public static readonly OUTPUT_FILE = './output.json'
     public static readonly PIECE_SOURCES = process.env.AP_PIECES_SOURCE ?? 'FILE'
     public static readonly TEST_MODE = process.env.AP_TEST_MODE === 'true'
+    public static readonly EDITION = process.env.AP_EDITION ?? ApEdition.COMMUNITY
 
     public readonly flowId: string
     public readonly flowVersionId: string
@@ -73,6 +74,10 @@ export class EngineConstants {
 
     public get piecesSource(): string {
         return EngineConstants.PIECE_SOURCES
+    }
+
+    public get edition(): string {
+        return EngineConstants.EDITION
     }
 
     public constructor(params: EngineConstantsParams) {

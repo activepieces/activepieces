@@ -1,10 +1,10 @@
+import { inspect } from 'util'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
     FlowTriggerType,
     FlowVersion,
-    isNil,
     ProjectId,
     TriggerHookType,
     TriggerPayload,
@@ -15,7 +15,6 @@ import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../runner'
 import { workerMachine } from './machine'
 import { webhookUtils } from './webhook-utils'
-import { inspect } from 'util'
 
 export const triggerHooks = (log: FastifyBaseLogger) => ({
     renewWebhook: async (params: RenewParams): Promise<void> => {
