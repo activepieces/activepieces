@@ -33,7 +33,7 @@ export const netlifyAuth = PieceAuth.OAuth2({
 export const netlify = createPiece({
     displayName: "Netlify",
     description: "Build, deploy, and manage modern web projects",
-    auth: netlifyAuth, // Use the new auth object
+    auth: netlifyAuth, 
     minimumSupportedRelease: '0.36.1',
     logoUrl: "https://cdn.activepieces.com/pieces/netlify.png",
     categories: [PieceCategory.DEVELOPER_TOOLS],

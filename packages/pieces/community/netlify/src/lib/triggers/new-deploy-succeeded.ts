@@ -5,8 +5,8 @@ import { callNetlifyApi } from '../common';
 
 interface Deploy {
     id: string;
-    state: string; // We need the 'state' to check for success
-    // Add other relevant properties from the deploy object if needed
+    state: string; 
+    
 }
 
 export const newDeploySucceeded = createTrigger({
@@ -45,7 +45,7 @@ export const newDeploySucceeded = createTrigger({
         "id": "603f7a4b1e5a5c0007a3b3c4",
         "site_id": "YOUR_SITE_ID",
         "build_id": "603f7a4b1e5a5c0007a3b3c5",
-        "state": "ready", // Sample state is 'ready' for success
+        "state": "ready", 
         "name": "your-site-name",
         "url": "https://603f7a4b1e5a5c0007a3b3c4--your-site-name.netlify.app",
         "published_at": "2025-08-29T12:30:33.222Z",
@@ -53,7 +53,7 @@ export const newDeploySucceeded = createTrigger({
     },
 
     async onEnable(context) {
-        // Fetch recent deploys to find the last successful one
+        
         const deploys = await callNetlifyApi<Deploy[]>(
             HttpMethod.GET,
             `sites/${context.propsValue.site_id}/deploys`,
@@ -81,7 +81,7 @@ export const newDeploySucceeded = createTrigger({
             return [];
         }
 
-        // Store the ID of the newest successful deploy for the next run
+        
         await context.store.put('last_succeeded_deploy_id', successfulDeploys[0].id);
 
         const newSuccessfulDeploys = [];

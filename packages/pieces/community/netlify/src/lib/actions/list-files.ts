@@ -23,7 +23,7 @@ export const listFiles = createAction({
                         options: [],
                     };
                 }
-                // Fetches sites from Netlify API to populate the dropdown
+                
                 const sites = await callNetlifyApi<any[]>(
                     HttpMethod.GET,
                     'sites',
@@ -43,7 +43,7 @@ export const listFiles = createAction({
         const { auth } = context;
         const { site_id } = context.propsValue;
 
-        // Makes the API call to the site files endpoint
+        
         return await callNetlifyApi(
             HttpMethod.GET,
             `sites/${site_id}/files`,

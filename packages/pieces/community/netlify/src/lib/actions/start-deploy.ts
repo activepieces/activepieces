@@ -23,7 +23,7 @@ export const startDeploy = createAction({
                         options: [],
                     };
                 }
-                // Fetches sites from Netlify API to populate the dropdown
+                
                 const sites = await callNetlifyApi<any[]>(
                     HttpMethod.GET,
                     'sites',
@@ -53,7 +53,7 @@ export const startDeploy = createAction({
             clear_cache: clear_cache ?? false,
         };
 
-        // Triggers a new build for the selected site
+        
         return await callNetlifyApi(
             HttpMethod.POST,
             `sites/${site_id}/builds`,

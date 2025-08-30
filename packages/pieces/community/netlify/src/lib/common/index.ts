@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod, AuthenticationType, HttpRequest, QueryParams } from "@activepieces/pieces-common";
 import { OAuth2PropertyValue } from "@activepieces/pieces-framework";
 
-// The base URL for the Netlify API v1
+
 export const NETLIFY_API_URL = "https://api.netlify.com/api/v1";
 
 /**
@@ -18,7 +18,7 @@ export const callNetlifyApi = <T>(
     endpoint: string,
     auth: OAuth2PropertyValue,
     body?: object,
-    queryParams?: QueryParams, // <-- Added this parameter
+    queryParams?: QueryParams, 
 ): Promise<T> => {
     const request: HttpRequest = {
         method: method,
@@ -28,9 +28,9 @@ export const callNetlifyApi = <T>(
             token: auth.access_token,
         },
         body: body,
-        queryParams: queryParams, // <-- Added this to the request
+        queryParams: queryParams, 
     };
 
-    // Use the httpClient to send the request and return the response body
+    
     return httpClient.sendRequest<T>(request).then(response => response.body);
 };

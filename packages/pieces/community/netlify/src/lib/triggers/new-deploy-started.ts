@@ -6,7 +6,7 @@ import { callNetlifyApi } from '../common';
 interface Deploy {
     id: string;
     site_id: string;
-    // Add other relevant properties from the deploy object if needed
+    
 }
 
 export const newDeployStarted = createTrigger({
@@ -60,7 +60,7 @@ export const newDeployStarted = createTrigger({
     },
 
     async onEnable(context) {
-        // Fetch the most recent deploy to set an initial state
+        
         const deploys = await callNetlifyApi<Deploy[]>(
             HttpMethod.GET,
             `sites/${context.propsValue.site_id}/deploys`,
@@ -73,7 +73,7 @@ export const newDeployStarted = createTrigger({
     },
 
     async onDisable(context) {
-        // Clean up the store when the trigger is disabled
+        
         await context.store.delete('last_deploy_id');
     },
 
@@ -89,18 +89,18 @@ export const newDeployStarted = createTrigger({
             return [];
         }
 
-        // Store the ID of the newest deploy for the next run
+        
         await context.store.put('last_deploy_id', deploys[0].id);
 
         const newDeploys = [];
         for (const deploy of deploys) {
             if (deploy.id === lastId) {
-                break; // Stop when we reach the last processed deploy
+                break; 
             }
             newDeploys.push(deploy);
         }
 
-        // Return new deploys in chronological order (oldest first)
+        
         return newDeploys.reverse();
     },
 });

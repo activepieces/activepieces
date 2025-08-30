@@ -5,7 +5,7 @@ import { callNetlifyApi } from '../common';
 
 interface Deploy {
     id: string;
-    state: string; // We need the 'state' to check for failure
+    state: string; 
     error_message?: string;
 }
 
@@ -53,7 +53,7 @@ export const newDeployFailed = createTrigger({
     },
 
     async onEnable(context) {
-        // Fetch recent deploys to find the last failed one
+        
         const deploys = await callNetlifyApi<Deploy[]>(
             HttpMethod.GET,
             `sites/${context.propsValue.site_id}/deploys`,
@@ -81,7 +81,7 @@ export const newDeployFailed = createTrigger({
             return [];
         }
 
-        // Store the ID of the newest failed deploy for the next run
+        
         await context.store.put('last_failed_deploy_id', failedDeploys[0].id);
 
         const newFailedDeploys = [];

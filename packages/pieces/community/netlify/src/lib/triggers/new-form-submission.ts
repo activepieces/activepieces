@@ -5,7 +5,7 @@ import { callNetlifyApi } from '../common';
 
 interface Submission {
     id: string;
-    // Add other relevant properties if needed
+   
 }
 
 export const newFormSubmission = createTrigger({
@@ -42,7 +42,7 @@ export const newFormSubmission = createTrigger({
             displayName: 'Form',
             description: 'The form to monitor for new submissions.',
             required: true,
-            refreshers: ['site_id'], // This dropdown depends on the site_id prop
+            refreshers: ['site_id'], 
             async options(propsValue) {
                 const { auth, site_id } = propsValue;
                 if (!auth || !site_id) {

@@ -60,7 +60,7 @@ export const listSiteDeploys = createAction({
             HttpMethod.GET,
             `sites/${site_id}/deploys`,
             auth,
-            undefined, // No body for GET request
+            undefined, 
             queryParams
         );
     },
