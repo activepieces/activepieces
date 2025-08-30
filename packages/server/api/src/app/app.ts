@@ -215,7 +215,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(todoActivityModule)
     await app.register(agentRunsModule)
     await app.register(solutionsModule)
-    
+
     app.get(
         '/redirect',
         async (
@@ -243,6 +243,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         cors: {
             origin: '*',
         },
+        maxHttpBufferSize: 1e8,
         ...spreadIfDefined('adapter', await getAdapter()),
         transports: ['websocket'],
     })
@@ -350,7 +351,9 @@ async function getAdapter() {
         case QueueMode.REDIS: {
             const sub = getRedisConnection().duplicate()
             const pub = getRedisConnection().duplicate()
-            return createAdapter(pub, sub)
+            return createAdapter(pub, sub, {
+                requestsTimeout: 30000,
+            })
         }
     }
 }

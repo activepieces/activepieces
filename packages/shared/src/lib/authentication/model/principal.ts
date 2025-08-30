@@ -21,7 +21,6 @@ export type WorkerPrincipal = {
 export type EnginePrincipal = {
     id: ApId
     type: PrincipalType.ENGINE
-    queueToken: string | undefined
     projectId: ProjectId
     platform: {
         id: PlatformId

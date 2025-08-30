@@ -14,8 +14,10 @@ import { system } from './helper/system/system'
 import { setupWorker } from './worker'
 
 
+export let app: FastifyInstance | undefined = undefined
+
 export const setupServer = async (): Promise<FastifyInstance> => {
-    const app = await setupBaseApp()
+    app = await setupBaseApp()
 
     if (system.isApp()) {
         await setupApp(app)
