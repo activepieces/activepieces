@@ -9,4 +9,3 @@ export { createTask } from './create-task';
 export { startWorkflow } from './start-workflow';
 export { findContact } from './find-contact';
 export { findTask } from './find-task';
-export { createEvent } from './create-event';

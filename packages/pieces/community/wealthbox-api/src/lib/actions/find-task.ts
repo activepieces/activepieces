@@ -34,11 +34,8 @@ export const findTask = createAction({
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: url,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken
-        },
         headers: {
+          'ACCESS_TOKEN': context.auth as string,
           'Accept': 'application/json'
         }
       });

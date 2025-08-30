@@ -205,11 +205,8 @@ export const createOpportunity = createAction({
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://api.crmworkspace.com/v1/opportunities',
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken
-        },
         headers: {
+          'ACCESS_TOKEN': context.auth as string,
           'Content-Type': 'application/json'
         },
         body: requestBody

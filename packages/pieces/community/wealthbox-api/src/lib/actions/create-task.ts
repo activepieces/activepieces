@@ -1,15 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import {
+  httpClient,
+  HttpMethod,
+  AuthenticationType
+} from '@activepieces/pieces-common';
 
 export const createTask = createAction({
   name: 'create_task',
   displayName: 'Create Task',
-  description: 'Creates tasks tied to contacts with due dates and assignment types',
+  description:
+    'Creates tasks tied to contacts with due dates and assignment types',
   props: {
     // Required fields
     name: Property.ShortText({
       displayName: 'Task Name',
-      description: 'The name of the task (e.g., "Return Bill\'s call", "Follow up on proposal")',
+      description:
+        'The name of the task (e.g., "Return Bill\'s call", "Follow up on proposal")',
       required: true
     }),
     due_date: Property.DateTime({
@@ -17,14 +23,14 @@ export const createTask = createAction({
       description: 'When the task is due',
       required: true
     }),
-    
+
     // Assignment
     assigned_to: Property.Number({
       displayName: 'Assigned To User ID',
       description: 'The ID of the user who the task is assigned to',
       required: false
     }),
-    
+
     // Task details
     description: Property.LongText({
       displayName: 'Description',
@@ -50,7 +56,7 @@ export const createTask = createAction({
       required: false,
       defaultValue: false
     }),
-    
+
     // Linking options
     link_type: Property.StaticDropdown({
       displayName: 'Link To',
@@ -66,7 +72,8 @@ export const createTask = createAction({
     }),
     linked_id: Property.Number({
       displayName: 'Linked Record ID',
-      description: 'The ID of the record to link this task to (Contact, Project, or Opportunity)',
+      description:
+        'The ID of the record to link this task to (Contact, Project, or Opportunity)',
       required: false
     }),
     linked_name: Property.ShortText({
@@ -74,14 +81,14 @@ export const createTask = createAction({
       description: 'The name of the linked record (for reference)',
       required: false
     }),
-    
+
     // Category
     category: Property.Number({
       displayName: 'Category ID',
       description: 'The ID of the category this task belongs to',
       required: false
     }),
-    
+
     // Visibility
     visible_to: Property.StaticDropdown({
       displayName: 'Visible To',
@@ -96,14 +103,15 @@ export const createTask = createAction({
         ]
       }
     }),
-    
+
     // Due later (for recurring tasks)
     due_later: Property.ShortText({
       displayName: 'Due Later',
-      description: 'Interval for when this task is due after start (e.g., "2 days later at 5:00 PM")',
+      description:
+        'Interval for when this task is due after start (e.g., "2 days later at 5:00 PM")',
       required: false
     }),
-    
+
     // Custom fields
     custom_field_1_id: Property.Number({
       displayName: 'Custom Field 1 ID',
@@ -126,108 +134,110 @@ export const createTask = createAction({
       required: false
     })
   },
-  
+
   async run(context) {
     const { auth, propsValue } = context;
-    
+
     if (!auth) {
-      throw new Error('Authentication is required');
+      throw new Error('API access token is required');
     }
-    
-    const accessToken = (auth as any).access_token;
-    if (!accessToken) {
-      throw new Error('Access token not found in authentication');
-    }
-    
+
     // Build the request body
     const requestBody: any = {
       name: propsValue.name,
       due_date: propsValue.due_date
     };
-    
+
     // Add optional fields if provided
     if (propsValue.assigned_to) {
       requestBody.assigned_to = propsValue.assigned_to;
     }
-    
+
     if (propsValue.description) {
       requestBody.description = propsValue.description;
     }
-    
+
     if (propsValue.priority) {
       requestBody.priority = propsValue.priority;
     }
-    
+
     if (propsValue.complete !== undefined) {
       requestBody.complete = propsValue.complete;
     }
-    
+
     if (propsValue.category) {
       requestBody.category = propsValue.category;
     }
-    
+
     if (propsValue.visible_to) {
       requestBody.visible_to = propsValue.visible_to;
     }
-    
+
     if (propsValue.due_later) {
       requestBody.due_later = propsValue.due_later;
     }
-    
+
     // Handle linking to records
     if (propsValue.link_type && propsValue.linked_id) {
       requestBody.linked_to = [
         {
           id: propsValue.linked_id,
           type: propsValue.link_type,
-          name: propsValue.linked_name || `${propsValue.link_type} ${propsValue.linked_id}`
+          name:
+            propsValue.linked_name ||
+            `${propsValue.link_type} ${propsValue.linked_id}`
         }
       ];
     }
-    
+
     // Handle custom fields
     const customFields: any[] = [];
-    
+
     if (propsValue.custom_field_1_id && propsValue.custom_field_1_value) {
       customFields.push({
         id: propsValue.custom_field_1_id,
         value: propsValue.custom_field_1_value
       });
     }
-    
+
     if (propsValue.custom_field_2_id && propsValue.custom_field_2_value) {
       customFields.push({
         id: propsValue.custom_field_2_id,
         value: propsValue.custom_field_2_value
       });
     }
-    
+
     if (customFields.length > 0) {
       requestBody.custom_fields = customFields;
     }
-    
+
     // Make the API request
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://api.crmworkspace.com/v1/tasks',
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken
-        },
         headers: {
+          ACCESS_TOKEN: context.auth as string,
           'Content-Type': 'application/json'
         },
         body: requestBody
       });
-      
+
       if (response.status >= 400) {
-        throw new Error(`Wealthbox API error: ${response.status} - ${JSON.stringify(response.body)}`);
+        throw new Error(
+          `Wealthbox API error: ${response.status} - ${JSON.stringify(
+            response.body
+          )}`
+        );
       }
-      
+
       return response.body;
     } catch (error) {
-      throw new Error(`Failed to create task: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to create task: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
     }
   }
 });

@@ -12,17 +12,22 @@ import {
   findContact,
   findTask
 } from './lib/actions';
-import { newTask, newContact, newEvent, newOpportunity } from './lib/triggers';
+import { 
+  newTask, 
+  newContact, 
+  newEvent, 
+  newOpportunity 
+} from './lib/triggers';
+
+export const wealthboxAuth = PieceAuth.SecretText({
+  displayName: 'API Access Token',
+  description: 'Enter your Wealthbox API access token. Get it from Settings → API Access Tokens in your Wealthbox account.',
+  required: true,
+});
 
 export const wealthboxApi = createPiece({
   displayName: 'Wealthbox API',
-  auth: PieceAuth.OAuth2({
-    description: 'Authenticate with your Wealthbox account',
-    authUrl: 'https://app.crmworkspace.com/oauth/authorize',
-    tokenUrl: 'https://app.crmworkspace.com/oauth/token',
-    required: true,
-    scope: ['login', 'data']
-  }),
+  auth: wealthboxAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/wealthbox-api.png',
   authors: [],
@@ -39,5 +44,10 @@ export const wealthboxApi = createPiece({
     findContact,
     findTask
   ],
-  triggers: [newTask, newContact, newEvent, newOpportunity]
+  triggers: [
+    newTask, 
+    newContact, 
+    newEvent, 
+    newOpportunity
+  ]
 });

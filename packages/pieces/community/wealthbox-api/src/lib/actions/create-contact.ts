@@ -134,8 +134,7 @@ export const createContact = createAction({
     email_address: Property.ShortText({
       displayName: 'Email Address',
       description: 'Primary email address for the contact',
-      required: false,
-      validators: []
+      required: false
     }),
     phone_number: Property.ShortText({
       displayName: 'Phone Number',
@@ -317,11 +316,8 @@ export const createContact = createAction({
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://api.crmworkspace.com/v1/contacts',
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken
-        },
         headers: {
+          'ACCESS_TOKEN': context.auth as string,
           'Content-Type': 'application/json'
         },
         body: requestBody

@@ -222,11 +222,8 @@ export const createEvent = createAction({
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://api.crmworkspace.com/v1/events',
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken
-        },
         headers: {
+          'ACCESS_TOKEN': context.auth as string,
           'Content-Type': 'application/json'
         },
         body: requestBody

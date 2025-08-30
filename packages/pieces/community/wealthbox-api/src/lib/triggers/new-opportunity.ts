@@ -88,12 +88,7 @@ export const newOpportunity = createTrigger({
     
     // Check for authentication
     if (!context.auth) {
-      throw new Error('Authentication is required');
-    }
-
-    const accessToken = (context.auth as any).access_token;
-    if (!accessToken) {
-      throw new Error('Access token not found in authentication');
+      throw new Error('API access token is required');
     }
     
     // Get the last check timestamp
@@ -127,7 +122,7 @@ export const newOpportunity = createTrigger({
         method: HttpMethod.GET,
         url,
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          'ACCESS_TOKEN': context.auth as string,
           'Content-Type': 'application/json',
         },
       });
