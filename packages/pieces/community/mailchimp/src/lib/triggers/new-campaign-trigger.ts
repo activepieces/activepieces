@@ -11,18 +11,17 @@ type WebhookData = {
   listId: string;
 };
 
-const getCampaignEventSummary = (request: any): any => {
-  const data = request.data || {};
+const getCampaignEventSummary = (request: MailChimpCampaignWebhookRequest): any => {
+  const data = request.data;
   return {
-    campaign_id: data.campaign_id || 'N/A',
-    campaign_title: data.campaign_title || 'N/A',
-    campaign_subject: data.campaign_subject || 'N/A',
-    campaign_send_time: data.campaign_send_time || 'N/A',
-    campaign_status: data.campaign_status || 'N/A',
-    list_id: data.list_id || 'N/A',
-    subscriber_id: data.id || 'N/A',
-    email: data.email || 'N/A',
-    event_timestamp: request.fired_at || 'N/A',
+    campaign_id: data.campaign_id,
+    campaign_title: data.campaign_title,
+    campaign_subject: data.campaign_subject,
+    campaign_send_time: data.campaign_send_time,
+    campaign_status: data.campaign_status,
+    list_id: data.list_id,
+    subscriber_id: data.id,
+    event_timestamp: request.fired_at,
     campaign_type: inferCampaignType(data),
     delivery_status: assessDeliveryStatus(data),
   };
@@ -46,26 +45,14 @@ const assessDeliveryStatus = (data: any): string => {
   return 'Unknown';
 };
 
-const extractPerformanceMetrics = (data: any): any => {
-  return {
-    emails_sent: data.emails_sent || 0,
-    emails_delivered: data.emails_delivered || 0,
-    emails_opened: data.emails_opened || 0,
-    emails_clicked: data.emails_clicked || 0,
-    open_rate: data.open_rate || 0,
-    click_rate: data.click_rate || 0,
-    delivery_rate: data.emails_delivered && data.emails_sent ? 
-      (data.emails_delivered / data.emails_sent) : 0,
-    engagement_rate: data.emails_opened && data.emails_delivered ? 
-      (data.emails_opened / data.emails_delivered) : 0,
-  };
-};
+// Note: Campaign webhook data doesn't include performance metrics
+// These would need to be fetched separately via the campaigns API if needed
 
 export const mailChimpNewCampaignTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'new_campaign',
   displayName: 'New Campaign',
-  description: 'Fires when a new campaign is created, sent, or updated in your Mailchimp account. This trigger captures campaign lifecycle events including creation, sending, and delivery status changes.',
+  description: 'Fires when a new campaign is created or sent',
   type: TriggerStrategy.WEBHOOK,
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
@@ -81,16 +68,6 @@ export const mailChimpNewCampaignTrigger = createTrigger({
       campaign_subject: 'Welcome to our newsletter',
       campaign_send_time: '2024-01-15T10:30:00Z',
       campaign_status: 'sent',
-      campaign_type: 'regular',
-      emails_sent: 1500,
-      emails_delivered: 1480,
-      emails_opened: 740,
-      emails_clicked: 222,
-      open_rate: 0.493,
-      click_rate: 0.148,
-      campaign_recipients: 1500,
-      campaign_archive_url: 'https://example.com/archive',
-      campaign_web_id: 12345,
     },
   },
 
@@ -106,7 +83,6 @@ export const mailChimpNewCampaignTrigger = createTrigger({
         webhookUrl: context.webhookUrl!,
         events: { 
           campaign: true,
-          profile: true,
         },
       });
 
@@ -145,7 +121,7 @@ export const mailChimpNewCampaignTrigger = createTrigger({
     try {
       const request = context.payload.body as MailChimpCampaignWebhookRequest;
 
-      if (request === undefined || request.type !== 'campaign') {
+      if (!request || request.type !== 'campaign') {
         return [];
       }
 
@@ -155,16 +131,9 @@ export const mailChimpNewCampaignTrigger = createTrigger({
         event_category: 'Campaign Activity',
         processed_at: new Date().toISOString(),
         campaign_summary: getCampaignEventSummary(request),
-        business_context: {
-          campaign_management: true,
-          marketing_automation: true,
-          performance_tracking: true,
-          audience_engagement: true,
-        },
         campaign_insights: {
           campaign_type: inferCampaignType(request.data),
           delivery_status: assessDeliveryStatus(request.data),
-          performance_metrics: extractPerformanceMetrics(request.data),
         },
       };
 

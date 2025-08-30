@@ -126,14 +126,10 @@ export const mailChimpNewOrderTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'new_order',
   displayName: 'New Order',
-  description: 'Fires when a new order is created in a connected e-commerce store. This trigger captures order creation events, customer information, and purchase data for order management and marketing automation.',
+  description: 'Fires when a new order is created in the connected store',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    store_id: Property.ShortText({
-      displayName: 'Store ID',
-      description: 'The unique ID of the e-commerce store to monitor for new order events',
-      required: true,
-    }),
+    store_id: mailchimpCommon.mailChimpStoreIdDropdown,
   },
   sampleData: {
     type: 'order',

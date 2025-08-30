@@ -11,7 +11,7 @@ type WebhookData = {
   listId: string;
 };
 
-const getLinkClickEventSummary = (request: any): any => {
+const getLinkClickEventSummary = (request: MailChimpClickWebhookRequest): any => {
   const data = request.data || {};
   return {
     email: data.email || 'N/A',
@@ -125,7 +125,7 @@ export const mailChimpLinkClickedTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'link_clicked',
   displayName: 'Link Clicked',
-  description: 'Fires when a recipient clicks a link in a campaign. This trigger captures link engagement events, click tracking, and subscriber interaction data for conversion analysis and automation workflows.',
+  description: 'Fires when a recipient clicks a specified link in a campaign',
   type: TriggerStrategy.WEBHOOK,
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
@@ -169,7 +169,6 @@ export const mailChimpLinkClickedTrigger = createTrigger({
         webhookUrl: context.webhookUrl!,
         events: { 
           click: true,
-          profile: true,
         },
       });
 
@@ -208,7 +207,7 @@ export const mailChimpLinkClickedTrigger = createTrigger({
     try {
       const request = context.payload.body as MailChimpClickWebhookRequest;
 
-      if (request === undefined || request.type !== 'click') {
+      if (!request || request.type !== 'click') {
         return [];
       }
 

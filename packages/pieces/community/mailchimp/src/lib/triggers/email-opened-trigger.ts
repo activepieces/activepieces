@@ -100,7 +100,7 @@ export const mailChimpEmailOpenedTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'email_opened',
   displayName: 'Email Opened',
-  description: 'Fires when a recipient opens an email in a specific campaign. This trigger captures email engagement events, open tracking, and subscriber interaction data for performance analysis and automation workflows.',
+  description: 'Fires when a recipient opens a an email in a specific campaign',
   type: TriggerStrategy.WEBHOOK,
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
@@ -142,7 +142,6 @@ export const mailChimpEmailOpenedTrigger = createTrigger({
         webhookUrl: context.webhookUrl!,
         events: { 
           open: true,
-          profile: true,
         },
       });
 
@@ -181,7 +180,7 @@ export const mailChimpEmailOpenedTrigger = createTrigger({
     try {
       const request = context.payload.body as MailChimpOpenWebhookRequest;
 
-      if (request === undefined || request.type !== 'open') {
+      if (!request || request.type !== 'open') {
         return [];
       }
 

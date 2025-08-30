@@ -91,7 +91,6 @@ export const mailChimpSubscribeTrigger = createTrigger({
         webhookUrl: context.webhookUrl!,
         events: { 
           subscribe: true,
-          profile: true,
         },
       });
 
@@ -130,7 +129,7 @@ export const mailChimpSubscribeTrigger = createTrigger({
     try {
       const request = context.payload.body as MailChimpSubscribeWebhookRequest;
 
-      if (request === undefined || request.type !== 'subscribe') {
+      if (!request || request.type !== 'subscribe') {
         return [];
       }
 

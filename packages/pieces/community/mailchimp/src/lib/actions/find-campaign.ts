@@ -2,105 +2,65 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
 import { mailchimpAuth } from '../..';
+import mailchimp from '@mailchimp/mailchimp_marketing';
+import { MailchimpClient, CampaignGetOptions } from '../common/types';
 
 export const findCampaign = createAction({
   auth: mailchimpAuth,
   name: 'find_campaign',
   displayName: 'Find Campaign',
-  description: 'Get information about a specific Mailchimp campaign',
+  description: 'Search all campaigns for the specified query terms',
   props: {
-    campaign_id: Property.ShortText({
-      displayName: 'Campaign ID',
-      description: 'The unique ID of the campaign to find',
+    query: Property.ShortText({
+      displayName: 'Search Query',
+      description: 'Search terms to find campaigns',
       required: true,
     }),
-    fields: Property.ShortText({
+    fields: Property.LongText({
       displayName: 'Fields',
-      description: 'Comma-separated list of fields to return (optional)',
+      description: 'Comma-separated list of fields to return',
       required: false,
     }),
-    exclude_fields: Property.ShortText({
+    exclude_fields: Property.LongText({
       displayName: 'Exclude Fields',
-      description: 'Comma-separated list of fields to exclude (optional)',
+      description: 'Comma-separated list of fields to exclude',
       required: false,
-    }),
-    include_resend_shortcut_eligibility: Property.Checkbox({
-      displayName: 'Include Resend Shortcut Eligibility',
-      description: 'Include resend shortcut eligibility information',
-      required: false,
-      defaultValue: false,
-    }),
-    include_resend_shortcut_usage: Property.Checkbox({
-      displayName: 'Include Resend Shortcut Usage',
-      description: 'Include resend shortcut usage information',
-      required: false,
-      defaultValue: false,
     }),
   },
   async run(context) {
     const accessToken = getAccessTokenOrThrow(context.auth);
     const server = await mailchimpCommon.getMailChimpServerPrefix(accessToken);
 
+    const client = mailchimp as unknown as MailchimpClient;
+    client.setConfig({
+      accessToken: accessToken,
+      server: server,
+    });
+
     try {
-      const mailchimp = require('@mailchimp/mailchimp_marketing');
-      mailchimp.setConfig({
-        accessToken: accessToken,
-        server: server,
-      });
+      const searchParams: any = {
+        query: context.propsValue.query,
+      };
 
-      const queryParams: any = {};
-      
       if (context.propsValue.fields) {
-        queryParams.fields = context.propsValue.fields;
-      }
-      
-      if (context.propsValue.exclude_fields) {
-        queryParams.exclude_fields = context.propsValue.exclude_fields;
-      }
-      
-      if (context.propsValue.include_resend_shortcut_eligibility) {
-        queryParams.include_resend_shortcut_eligibility = context.propsValue.include_resend_shortcut_eligibility;
-      }
-      
-      if (context.propsValue.include_resend_shortcut_usage) {
-        queryParams.include_resend_shortcut_usage = context.propsValue.include_resend_shortcut_usage;
+        searchParams.fields = context.propsValue.fields.split(',').map(f => f.trim());
       }
 
-      const campaign = await mailchimp.campaigns.get(context.propsValue.campaign_id!, queryParams);
+      if (context.propsValue.exclude_fields) {
+        searchParams.exclude_fields = context.propsValue.exclude_fields.split(',').map(f => f.trim());
+      }
+
+      const searchResult = await client.searchCampaigns.search(searchParams);
 
       return {
         success: true,
-        campaign: {
-          id: campaign.id,
-          web_id: campaign.web_id,
-          type: campaign.type,
-          create_time: campaign.create_time,
-          archive_url: campaign.archive_url,
-          long_archive_url: campaign.long_archive_url,
-          status: campaign.status,
-          emails_sent: campaign.emails_sent,
-          send_time: campaign.send_time,
-          content_type: campaign.content_type,
-          needs_block_refresh: campaign.needs_block_refresh,
-          resendable: campaign.resendable,
-          recipients: campaign.recipients,
-          settings: campaign.settings,
-          variate_settings: campaign.variate_settings,
-          tracking: campaign.tracking,
-          rss_opts: campaign.rss_opts,
-          ab_split_opts: campaign.ab_split_opts,
-          social_card: campaign.social_card,
-          report_summary: campaign.report_summary,
-          delivery_status: campaign.delivery_status,
-          resend_shortcut_eligibility: campaign.resend_shortcut_eligibility,
-          resend_shortcut_usage: campaign.resend_shortcut_usage,
-          _links: campaign._links || [],
-        },
-        _links: campaign._links || [],
+        query: context.propsValue.query,
+        results: searchResult.results,
+        total_items: searchResult.total_items,
+        _links: searchResult._links,
       };
     } catch (error: any) {
-      console.error('Error finding campaign:', error);
-      throw new Error(`Failed to find campaign: ${error.message || JSON.stringify(error)}`);
+      throw new Error(`Failed to search campaigns: ${error.message || JSON.stringify(error)}`);
     }
   },
 });

@@ -7,7 +7,7 @@ const WEBHOOK_DATA_STORE_KEY = 'mail_chimp_new_customer_webhook_data';
 
 type WebhookData = {
   id: string;
-  storeId: string;
+  listId: string;
 };
 
 const getNewCustomerEventSummary = (request: any): any => {
@@ -106,14 +106,10 @@ export const mailChimpNewCustomerTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'new_customer',
   displayName: 'New Customer',
-  description: 'Fires when a new customer is added to a connected e-commerce store. This trigger captures new customer registrations, profile information, and initial engagement data for customer onboarding and marketing automation.',
+  description: 'Fires when a new customer is added to a connected store',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    store_id: Property.ShortText({
-      displayName: 'Store ID',
-      description: 'The unique ID of the e-commerce store to monitor for new customer events',
-      required: true,
-    }),
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
   },
   sampleData: {
     type: 'customer',
@@ -155,18 +151,17 @@ export const mailChimpNewCustomerTrigger = createTrigger({
 
       const enabledWebhookId = await mailchimpCommon.enableWebhookRequest({
         server,
-        listId: context.propsValue.store_id!,
+        listId: context.propsValue.list_id as string,
         token: accessToken,
         webhookUrl: context.webhookUrl!,
         events: { 
           customer: true,
-          profile: true,
         },
       });
 
       await context.store?.put<WebhookData>(WEBHOOK_DATA_STORE_KEY, {
         id: enabledWebhookId,
-        storeId: context.propsValue.store_id!,
+        listId: context.propsValue.list_id as string,
       });
     } catch (error: any) {
       throw new Error(`Failed to enable new customer webhook: ${error.message || JSON.stringify(error)}`);
@@ -187,7 +182,7 @@ export const mailChimpNewCustomerTrigger = createTrigger({
       await mailchimpCommon.disableWebhookRequest({
         server,
         token,
-        listId: webhookData.storeId,
+        listId: webhookData.listId,
         webhookId: webhookData.id,
       });
     } catch (error: any) {
@@ -199,7 +194,7 @@ export const mailChimpNewCustomerTrigger = createTrigger({
     try {
       const request = context.payload.body as any;
 
-      if (request === undefined || request.type !== 'customer') {
+      if (!request || request.type !== 'customer') {
         return [];
       }
 

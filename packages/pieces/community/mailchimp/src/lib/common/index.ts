@@ -1,209 +1,228 @@
-import { Property } from '@activepieces/pieces-framework';
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import {
+  HttpRequest,
+  HttpMethod,
+  httpClient,
+} from '@activepieces/pieces-common';
+import mailchimp from '@mailchimp/mailchimp_marketing';
+import { AuthenticationType } from '@activepieces/pieces-common';
+import crypto from 'crypto';
 
 export const mailchimpCommon = {
-  mailChimpListIdDropdown: Property.Dropdown({
-    displayName: 'Audience ID',
-    description: 'The unique ID of the Mailchimp audience/list',
-    required: true,
+  mailChimpListIdDropdown: Property.Dropdown<string>({
+    displayName: 'Audience',
     refreshers: [],
-    options: async () => {
+    description: 'Audience you want to add the contact to',
+    required: true,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a connection',
+        };
+      }
+
+      const authProp = auth as OAuth2PropertyValue;
+      const listResponse = (await mailchimpCommon.getUserLists(
+        authProp
+      )) as any;
+
+      const options = listResponse.lists.map((list: any) => ({
+        label: list.name,
+        value: list.id,
+      }));
+
       return {
-        options: [],
+        disabled: false,
+        options,
+      };
+    },
+  }),
+  getUserLists: async (authProp: OAuth2PropertyValue) => {
+    const access_token = authProp.access_token;
+    const mailChimpServerPrefix =
+      await mailchimpCommon.getMailChimpServerPrefix(access_token!);
+    mailchimp.setConfig({
+      accessToken: access_token,
+      server: mailChimpServerPrefix,
+    });
+
+    // mailchimp types are not complete this is from the docs.
+    return await (mailchimp as any).lists.getAllLists({
+      fields: ['lists.id', 'lists.name', 'total_items'],
+      count: 1000,
+    });
+  },
+
+  mailChimpCampaignIdDropdown: Property.Dropdown<string>({
+    displayName: 'Campaign',
+    refreshers: [],
+    description: 'Select the campaign to get information for',
+    required: true,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a connection',
+        };
+      }
+
+      const authProp = auth as OAuth2PropertyValue;
+      const campaignResponse = (await mailchimpCommon.getUserCampaigns(
+        authProp
+      )) as any;
+
+      const options = campaignResponse.campaigns.map((campaign: any) => ({
+        label: `${campaign.settings?.title || campaign.id} (${campaign.status})`,
+        value: campaign.id,
+      }));
+
+      return {
+        disabled: false,
+        options,
       };
     },
   }),
 
-  async getMailChimpServerPrefix(accessToken: string): Promise<string> {
-    try {
-      const response = await fetch('https://login.mailchimp.com/oauth2/metadata', {
-        headers: {
-          'Authorization': `OAuth ${accessToken}`,
-        },
-      });
+  getUserCampaigns: async (authProp: OAuth2PropertyValue) => {
+    const access_token = authProp.access_token;
+    const mailChimpServerPrefix =
+      await mailchimpCommon.getMailChimpServerPrefix(access_token!);
+    mailchimp.setConfig({
+      accessToken: access_token,
+      server: mailChimpServerPrefix,
+    });
 
-      if (!response.ok) {
-        throw new Error(`Failed to get server prefix: ${response.statusText}`);
-      }
-
-      let data;
-      try {
-        const responseText = await response.text();
-        if (responseText && responseText.trim()) {
-          data = JSON.parse(responseText);
-        } else {
-          throw new Error('Empty response from server');
-        }
-      } catch (parseError) {
-        throw new Error('Invalid response format from server');
-      }
-      
-      return data.dc;
-    } catch (error) {
-      console.error('Error getting Mailchimp server prefix:', error);
-      throw new Error('Failed to get Mailchimp server prefix');
-    }
+    // Get campaigns with essential fields for dropdown
+    return await (mailchimp as any).campaigns.list({
+      fields: ['campaigns.id', 'campaigns.settings.title', 'campaigns.status', 'total_items'],
+      count: 1000,
+    });
   },
 
-  getMD5EmailHash(email: string): string {
-    const crypto = require('crypto');
-    return crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
-  },
+  mailChimpStoreIdDropdown: Property.Dropdown<string>({
+    displayName: 'Store',
+    refreshers: [],
+    description: 'Select the e-commerce store',
+    required: true,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a connection',
+        };
+      }
 
-  async enableWebhookRequest({
+      const authProp = auth as OAuth2PropertyValue;
+      const storeResponse = (await mailchimpCommon.getUserStores(
+        authProp
+      )) as any;
+
+      const options = storeResponse.stores.map((store: any) => ({
+        label: `${store.name} (${store.id})`,
+        value: store.id,
+      }));
+
+      return {
+        disabled: false,
+        options,
+      };
+    },
+  }),
+
+  getUserStores: async (authProp: OAuth2PropertyValue) => {
+    const access_token = authProp.access_token;
+    const mailChimpServerPrefix =
+      await mailchimpCommon.getMailChimpServerPrefix(access_token!);
+    mailchimp.setConfig({
+      accessToken: access_token,
+      server: mailChimpServerPrefix,
+    });
+
+    // Get stores with essential fields for dropdown
+    return await (mailchimp as any).ecommerce.stores({
+      fields: ['stores.id', 'stores.name', 'total_items'],
+      count: 1000,
+    });
+  },
+  getMailChimpServerPrefix: async (access_token: string) => {
+    const mailChimpMetaDataRequest: HttpRequest<{ dc: string }> = {
+      method: HttpMethod.GET,
+      url: 'https://login.mailchimp.com/oauth2/metadata',
+      headers: {
+        Authorization: `OAuth ${access_token}`,
+      },
+    };
+    return (await httpClient.sendRequest(mailChimpMetaDataRequest)).body['dc'];
+  },
+  enableWebhookRequest: async ({
     server,
-    listId,
     token,
+    listId,
     webhookUrl,
     events,
-  }: {
-    server: string;
-    listId: string;
-    token: string;
-    webhookUrl: string;
-    events: Record<string, boolean>;
-  }): Promise<string> {
-    try {
-      const response = await fetch(
-        `https://${server}.api.mailchimp.com/3.0/lists/${listId}/webhooks`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: webhookUrl,
-            events,
-            sources: {
-              user: true,
-              admin: true,
-              api: true,
-            },
-          }),
-        }
-      );
+  }: EnableTriggerRequestParams): Promise<string> => {
+    const response = await httpClient.sendRequest<EnableTriggerResponse>({
+      method: HttpMethod.POST,
+      url: `https://${server}.api.mailchimp.com/3.0/lists/${listId}/webhooks`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+      body: {
+        url: webhookUrl,
+        events,
+        sources: {
+          user: true,
+          admin: true,
+          api: true,
+        },
+      },
+    });
 
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        
-        try {
-          const errorText = await response.text();
-          if (errorText && errorText.trim()) {
-            const errorData = JSON.parse(errorText);
-            errorMessage = errorData.detail || errorData.title || errorData.message || errorText;
-          }
-        } catch (parseError) {
-          const errorText = await response.text();
-          if (errorText && errorText.trim()) {
-            errorMessage = errorText;
-          }
-        }
-
-        throw new Error(`Failed to enable webhook: ${errorMessage}`);
-      }
-
-      let result;
-      try {
-        const responseText = await response.text();
-        if (responseText && responseText.trim()) {
-          result = JSON.parse(responseText);
-        } else {
-          throw new Error('Empty response from server');
-        }
-      } catch (parseError) {
-        throw new Error('Invalid response format from server');
-      }
-      
-      return result.id;
-    } catch (error: any) {
-      console.error('Error enabling webhook:', error);
-      throw new Error(`Failed to enable webhook: ${error.message}`);
-    }
+    const { id: webhookId } = response.body;
+    return webhookId;
   },
-
-  async disableWebhookRequest({
+  disableWebhookRequest: async ({
     server,
     token,
     listId,
     webhookId,
-  }: {
-    server: string;
-    token: string;
-    listId: string;
-    webhookId: string;
-  }): Promise<void> {
-    try {
-      const response = await fetch(
-        `https://${server}.api.mailchimp.com/3.0/lists/${listId}/webhooks/${webhookId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        console.error(`Failed to disable webhook: ${response.statusText}`);
-      }
-    } catch (error: any) {
-      console.error('Error disabling webhook:', error);
-    }
+  }: DisableTriggerRequestParams): Promise<void> => {
+    await httpClient.sendRequest<EnableTriggerResponse>({
+      method: HttpMethod.DELETE,
+      url: `https://${server}.api.mailchimp.com/3.0/lists/${listId}/webhooks/${webhookId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+    });
+  },
+  getMD5EmailHash: (email: string) => {
+    return crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
   },
 };
 
-export type MailChimpWebhookRequest = {
-  type: string;
-  fired_at: string;
-  data: any;
+type TriggerRequestParams = {
+  server: string;
+  token: string;
+  listId: string;
 };
 
-export type MailChimpCampaignWebhookRequest = {
-  type: 'campaign';
-  fired_at: string;
-  data: {
-    campaign_id: string;
-    campaign_title: string;
-    campaign_subject: string;
-    campaign_send_time: string;
-    campaign_status: string;
-    campaign_type: string;
-    emails_sent: number;
-    emails_delivered: number;
-    emails_opened: number;
-    emails_clicked: number;
-    open_rate: number;
-    click_rate: number;
-    campaign_recipients: number;
-    campaign_archive_url: string;
-    campaign_web_id: number;
-  };
+type EnableTriggerRequestParams = TriggerRequestParams & {
+  webhookUrl: string;
+  events: object;
 };
 
-export type MailChimpClickWebhookRequest = {
-  type: 'click';
-  fired_at: string;
-  data: {
-    id: string;
-    list_id: string;
-    campaign_id: string;
-    email: string;
-    url: string;
-    ip: string;
-    user_agent: string;
-  };
+type DisableTriggerRequestParams = TriggerRequestParams & {
+  webhookId: string;
 };
 
-export type MailChimpOpenWebhookRequest = {
-  type: 'open';
-  fired_at: string;
-  data: {
-    id: string;
-    list_id: string;
-    campaign_id: string;
-    email: string;
-    ip: string;
-    user_agent: string;
-  };
+type EnableTriggerResponse = {
+  id: string;
+  url: string;
+  list_id: string;
 };

@@ -122,7 +122,7 @@ export const mailChimpNewSegmentTagSubscriberTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'new_segment_tag_subscriber',
   displayName: 'New Segment Tag Subscriber',
-  description: 'Fires when a subscriber joins a specific audience segment or is tagged with a specific label. This trigger captures segment membership changes, tag applications, and audience segmentation events for targeted marketing and automation workflows.',
+  description: 'Fires when a subscriber joins a specific segment or tag',
   type: TriggerStrategy.WEBHOOK,
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
@@ -199,10 +199,6 @@ export const mailChimpNewSegmentTagSubscriberTrigger = createTrigger({
         webhookUrl: context.webhookUrl!,
         events: { 
           profile: true,
-          subscribe: true,
-          upemail: true,
-          segment: true,
-          tag: true,
         },
       });
 

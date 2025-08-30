@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpAuth } from '../..';
 import { mailchimpCommon } from '../common';
 import mailchimp from '@mailchimp/mailchimp_marketing';
+import { MailchimpClient, CampaignReportOptions } from '../common/types';
 
 export const getCampaignReport = createAction({
   auth: mailchimpAuth,
@@ -9,43 +11,40 @@ export const getCampaignReport = createAction({
   displayName: 'Get Campaign Report',
   description: 'Get comprehensive report details for a specific sent campaign including opens, clicks, bounces, and performance metrics',
   props: {
-    campaign_id: Property.ShortText({
-      displayName: 'Campaign ID',
-      description: 'The unique ID of the campaign to get the report for',
-      required: true,
-    }),
-    fields: Property.Array({
+    campaign_id: mailchimpCommon.mailChimpCampaignIdDropdown,
+    fields: Property.LongText({
       displayName: 'Include Fields',
-      description: 'A comma-separated list of fields to return. Reference parameters of sub-objects with dot notation (e.g., "opens.unique_opens", "clicks.click_rate")',
+      description: 'Comma-separated list of fields to return (e.g., "opens.unique_opens,clicks.click_rate")',
       required: false,
     }),
-    exclude_fields: Property.Array({
+    exclude_fields: Property.LongText({
       displayName: 'Exclude Fields',
-      description: 'A comma-separated list of fields to exclude. Reference parameters of sub-objects with dot notation',
+      description: 'Comma-separated list of fields to exclude (e.g., "timeseries,_links")',
       required: false,
     }),
   },
   async run(context) {
-    const access_token = context.auth.access_token;
-    const mailChimpServerPrefix = await mailchimpCommon.getMailChimpServerPrefix(access_token);
+    const accessToken = getAccessTokenOrThrow(context.auth);
+    const server = await mailchimpCommon.getMailChimpServerPrefix(accessToken);
     
-    mailchimp.setConfig({
-      accessToken: access_token,
-      server: mailChimpServerPrefix,
+    const client = mailchimp as unknown as MailchimpClient;
+    client.setConfig({
+      accessToken: accessToken,
+      server: server,
     });
 
     try {
-      const options: any = {};
+      const options: CampaignReportOptions = {};
       
-      if (context.propsValue.fields && context.propsValue.fields.length > 0) {
-        options.fields = context.propsValue.fields.join(',');
+      if (context.propsValue.fields && context.propsValue.fields.trim()) {
+        options.fields = context.propsValue.fields.trim();
       }
       
-      if (context.propsValue.exclude_fields && context.propsValue.exclude_fields.length > 0) {
-        options.exclude_fields = context.propsValue.exclude_fields.join(',');
+      if (context.propsValue.exclude_fields && context.propsValue.exclude_fields.trim()) {
+        options.exclude_fields = context.propsValue.exclude_fields.trim();
       }
 
-      const report = await (mailchimp as any).reports.getCampaignReport(context.propsValue.campaign_id, options);
+      const report = await client.reports.getCampaignReport(context.propsValue.campaign_id!, options);
 
       return {
         success: true,
