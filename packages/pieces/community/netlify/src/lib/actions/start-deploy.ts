@@ -1,0 +1,65 @@
+import { createAction, Property } from "@activepieces/pieces-framework";
+import { HttpMethod } from "@activepieces/pieces-common";
+import { netlifyAuth } from "../../index";
+import { callNetlifyApi } from "../common";
+
+export const startDeploy = createAction({
+    name: 'start_deploy',
+    auth: netlifyAuth,
+    displayName: 'Start Deploy',
+    description: 'Triggers a new build for a site on Netlify. Supports clearing build cache.',
+    props: {
+        site_id: Property.Dropdown({
+            displayName: 'Site',
+            description: 'The Netlify site to deploy.',
+            required: true,
+            refreshers: [],
+            async options({ auth }) {
+                if (!auth) {
+                    return {
+                        disabled: true,
+                        placeholder: 'Please connect your Netlify account first.',
+                        options: [],
+                    };
+                }
+
+                
+                const sites = await callNetlifyApi<any[]>(
+                    HttpMethod.GET,
+                    'sites',
+                    auth as string,
+                );
+
+                return {
+                    disabled: false,
+                    options: sites.map((site) => ({
+                        label: site.name,
+                        value: site.id,
+                    })),
+                };
+            },
+        }),
+        clear_cache: Property.Checkbox({
+            displayName: 'Clear Build Cache',
+            description: 'If true, clears the build cache before starting the build.',
+            required: false,
+            defaultValue: false,
+        }),
+    },
+    async run(context) {
+        const { auth } = context;
+        const { site_id, clear_cache } = context.propsValue;
+
+        const body = {
+            clear_cache: clear_cache ?? false,
+        };
+
+        
+        return await callNetlifyApi(
+            HttpMethod.POST,
+            `sites/${site_id}/builds`,
+            auth,
+            body
+        );
+    },
+});
