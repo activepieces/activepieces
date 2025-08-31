@@ -1,90 +1,126 @@
-import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
+import { createTrigger, Property, TriggerStrategy, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { netlifyAuth } from "../common/auth";
 
 export const newFormSubmission = createTrigger({
   name: "new_form_submission",
   displayName: "New Form Submission",
-  description: "Fires when a Netlify form submission is received",
-  auth: netlifyAuth,
+  description: "Fires when a Netlify form submission is received.",
   props: {
-    siteId: Property.ShortText({
-      displayName: "Site ID",
-      description: "The ID of the site to monitor for form submissions",
+    siteId: Property.Dropdown({
+      displayName: "Site",
+      description: "Select the site to monitor for form submissions",
       required: true,
-    }),
-    formId: Property.ShortText({
-      displayName: "Form ID (Optional)",
-      description: "The specific form ID to monitor. Leave empty to monitor all forms on the site",
-      required: false,
+      refreshers: ['auth'],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: "Connect your account first",
+            options: [],
+          };
+        }
+
+        const authentication = auth as OAuth2PropertyValue;
+        if (!authentication.access_token) {
+          return {
+            disabled: true,
+            placeholder: "Access token is required",
+            options: [],
+          };
+        }
+
+        try {
+          const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: "https://api.netlify.com/api/v1/sites?per_page=50",
+            headers: {
+              "Authorization": `Bearer ${authentication.access_token}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (response.status === 200) {
+            const sites = response.body as any[];
+            return {
+              disabled: false,
+              options: sites.map((site) => ({
+                label: `${site.name} (${site.url})`,
+                value: site.id,
+              })),
+            };
+          } else {
+            return {
+              disabled: true,
+              placeholder: `Failed to fetch sites: ${response.status}`,
+              options: [],
+            };
+          }
+        } catch (error) {
+          return {
+            disabled: true,
+            placeholder: "Failed to fetch sites",
+            options: [],
+          };
+        }
+      },
     }),
   },
   type: TriggerStrategy.WEBHOOK,
-  sampleData: {
-    id: "submission_id_123",
-    number: 1,
-    title: null,
-    email: "user@example.com",
-    name: "John Doe",
-    first_name: "John",
-    last_name: "Doe",
-    company: "Example Corp",
-    summary: "Contact form submission",
-    body: "Hello, I would like to get in touch.",
-    data: {
-      email: "user@example.com",
-      name: "John Doe",
-      company: "Example Corp",
-      message: "Hello, I would like to get in touch.",
-      ip: "192.168.1.1",
-    },
-    created_at: "2023-01-01T00:00:00Z",
-    site_url: "https://example.netlify.app",
-  },
-  async onEnable(context) {
-    const webhookBody: any = {
-      site_id: context.propsValue.siteId,
-      type: "url",
-      event: "submission_created",
-      data: {
-        url: context.webhookUrl,
-      },
-    };
+  onEnable: async (context) => {
+    if (!context.auth) {
+      throw new Error("Authentication is required");
+    }
 
-    if (context.propsValue.formId) {
-      webhookBody.form_id = context.propsValue.formId;
+    const auth = context.auth as OAuth2PropertyValue;
+    if (!auth.access_token) {
+      throw new Error("Access token is required");
     }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: "https://api.netlify.com/api/v1/hooks",
       headers: {
-        "Authorization": `Bearer ${context.auth.access_token}`,
+        "Authorization": `Bearer ${auth.access_token}`,
         "Content-Type": "application/json",
       },
-      body: webhookBody,
+      body: {
+        site_id: context.propsValue.siteId,
+        type: "url",
+        event: "submission_created",
+        data: {
+          url: context.webhookUrl,
+        },
+      },
     });
 
     if (response.status === 201) {
-      await context.store.put("form_submission_webhook_id", response.body.id);
+      await context.store.put("webhook_id", response.body.id);
     } else {
-      throw new Error(`Failed to create webhook: ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to create webhook: ${response.status}`);
     }
   },
-  async onDisable(context) {
-    const webhookId = await context.store.get("form_submission_webhook_id");
+  onDisable: async (context) => {
+    const webhookId = await context.store.get("webhook_id");
     if (webhookId) {
+      if (!context.auth) {
+        throw new Error("Authentication is required");
+      }
+
+      const auth = context.auth as OAuth2PropertyValue;
+      if (!auth.access_token) {
+        throw new Error("Access token is required");
+      }
+
       await httpClient.sendRequest({
         method: HttpMethod.DELETE,
         url: `https://api.netlify.com/api/v1/hooks/${webhookId}`,
         headers: {
-          "Authorization": `Bearer ${context.auth.access_token}`,
+          "Authorization": `Bearer ${auth.access_token}`,
         },
       });
-      await context.store.delete("form_submission_webhook_id");
     }
   },
-  async run(context) {
+  run: async (context) => {
     return [context.payload.body];
   },
 });

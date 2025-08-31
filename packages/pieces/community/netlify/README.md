@@ -1,36 +1,30 @@
 # Netlify Piece
 
-This piece integrates with Netlify to provide comprehensive actions and triggers for managing sites, deployments, forms, and webhooks.
+This piece integrates with Netlify to provide actions and triggers for managing sites, deployments, and form submissions.
 
 ## Actions
 
-### Site Management
-- **Create Site** - Creates a new site on Netlify with custom domain, SSL, and processing settings
-- **Get Site** - Retrieves information about a specific Netlify site
-- **List Sites** - Returns all sites you have access to with pagination support
-
 ### Deployment Management
-- **Start Deploy** - Triggers a new build for a site on Netlify with support for clearing build cache, draft deploys, branch selection, and custom titles
-- **Get Deploy** - Returns a specific deploy by ID
-- **List Site Deploys** - Returns a list of all deploys for a specific site with pagination support (max 100 per page)
-- **Restore Deploy (Rollback)** - Restores an old deploy and makes it the live version of the site
+- **Start Deploy** - Triggers a new build for a site on Netlify. Supports clearing build cache, draft deploys, branch selection, and custom titles.
+
+### Site Management
+- **Get Site** - Get a specified site.
+
+### Deployment Information
+- **List Site Deploys** - Returns a list of all deploys for a specific site.
 
 ### File Management
-- **List Files** - Returns a list of all files in the current deploy or a specific deploy
-
-### Form Management
-- **List Forms** - Returns a list of all forms for a site, including metadata about each form
-- **List Form Submissions** - Returns verified form submissions across all forms or for a specific form, with spam filtering and pagination
+- **List Files** - Returns a list of all the files in the current deploy.
 
 ## Triggers
 
 ### Deploy Events
-- **New Deploy Started** - Fires immediately when a deploy job starts on your Netlify site
-- **New Deploy Succeeded** - Fires when a new site version has successfully deployed  
-- **New Deploy Failed** - Fires when a site deploy fails
+- **New Deploy Started** - Fires immediately when a deploy job starts on your Netlify site.
+- **New Deploy Succeeded** - Fires when a new site version has successfully deployed.
+- **New Deploy Failed** - Fires when a site deploy fails.
 
 ### Form Events
-- **New Form Submission** - Fires when a Netlify form submission is received
+- **New Form Submission** - Fires when a Netlify form submission is received.
 
 ## Authentication
 
@@ -58,12 +52,7 @@ This piece supports two authentication methods:
 
 ## API Reference
 
-This piece integrates with the [Netlify API](https://docs.netlify.com/api-and-cli-guides/api-guides/get-started-with-api/) following all documented endpoints:
-
-- **Sites API** - For creating, retrieving, and managing sites
-- **Deploys API** - For managing deployments, listing files, and rollbacks
-- **Forms API** - For accessing form metadata and submissions
-- **Hooks API** - For webhook management in triggers
+This piece integrates with the [Netlify API](https://docs.netlify.com/api-and-cli-guides/api-guides/get-started-with-api/) following the documented endpoints for the requested actions and triggers.
 
 ## Rate Limiting
 
@@ -90,5 +79,3 @@ The piece uses the correct Netlify webhook events:
 - **Error Handling** - Robust error handling with meaningful error messages
 - **Rate Limiting Awareness** - Built with Netlify's API rate limits in mind
 - **Production Ready** - Follows Activepieces best practices and patterns
-- **Comprehensive Coverage** - Covers all major Netlify API endpoints
-- **Pagination Support** - Handles large datasets efficiently

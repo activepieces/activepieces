@@ -1,62 +1,86 @@
-import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
+import { createTrigger, Property, TriggerStrategy, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { netlifyAuth } from "../common/auth";
 
 export const newDeployStarted = createTrigger({
   name: "new_deploy_started",
   displayName: "New Deploy Started",
-  description: "Fires immediately when a deploy job starts on your Netlify site",
-  auth: netlifyAuth,
+  description: "Fires immediately when a deploy job starts on your Netlify site.",
   props: {
-    siteId: Property.ShortText({
-      displayName: "Site ID",
-      description: "The ID of the site to monitor for deploy events",
+    siteId: Property.Dropdown({
+      displayName: "Site",
+      description: "Select the site to monitor for deploy events",
       required: true,
+      refreshers: ['auth'],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: "Connect your account first",
+            options: [],
+          };
+        }
+
+        const authentication = auth as OAuth2PropertyValue;
+        if (!authentication.access_token) {
+          return {
+            disabled: true,
+            placeholder: "Access token is required",
+            options: [],
+          };
+        }
+
+        try {
+          const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: "https://api.netlify.com/api/v1/sites?per_page=50",
+            headers: {
+              "Authorization": `Bearer ${authentication.access_token}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (response.status === 200) {
+            const sites = response.body as any[];
+            return {
+              disabled: false,
+              options: sites.map((site) => ({
+                label: `${site.name} (${site.url})`,
+                value: site.id,
+              })),
+            };
+          } else {
+            return {
+              disabled: true,
+              placeholder: `Failed to fetch sites: ${response.status}`,
+              options: [],
+            };
+          }
+        } catch (error) {
+          return {
+            disabled: true,
+            placeholder: "Failed to fetch sites",
+            options: [],
+          };
+        }
+      },
     }),
   },
   type: TriggerStrategy.WEBHOOK,
-  sampleData: {
-    id: "deploy_id_123",
-    site_id: "site_id_456",
-    type: "deploy_created",
-    created_at: "2023-01-01T00:00:00Z",
-    deploy_time: 30,
-    name: "Site Name",
-    url: "https://example.netlify.app",
-    ssl_url: "https://example.netlify.app",
-    admin_url: "https://app.netlify.com/sites/example",
-    deploy_url: "https://deploy-preview-123--example.netlify.app",
-    build_id: "build_id_789",
-    state: "building",
-    error_message: null,
-    branch: "main",
-    commit_ref: "commit_hash",
-    commit_url: "https://github.com/user/repo/commit/commit_hash",
-    skip: false,
-    updated_at: "2023-01-01T00:00:00Z",
-    published_at: null,
-    user_id: "user_id_123",
-    context: "production",
-    locked: false,
-    review_id: null,
-    title: "Deploy Title",
-    review_url: null,
-    manual_deploy: false,
-    screenshot_url: null,
-    site_capabilities: {
-      large_media_enabled: false,
-    },
-    framework: "jekyll",
-    function_schedules: [],
-    plugins: [],
-    has_draft_shift: false,
-  },
-  async onEnable(context) {
+  onEnable: async (context) => {
+    if (!context.auth) {
+      throw new Error("Authentication is required");
+    }
+
+    const auth = context.auth as OAuth2PropertyValue;
+    if (!auth.access_token) {
+      throw new Error("Access token is required");
+    }
+
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: "https://api.netlify.com/api/v1/hooks",
       headers: {
-        "Authorization": `Bearer ${context.auth.access_token}`,
+        "Authorization": `Bearer ${auth.access_token}`,
         "Content-Type": "application/json",
       },
       body: {
@@ -70,25 +94,33 @@ export const newDeployStarted = createTrigger({
     });
 
     if (response.status === 201) {
-      await context.store.put("deploy_started_webhook_id", response.body.id);
+      await context.store.put("webhook_id", response.body.id);
     } else {
-      throw new Error(`Failed to create webhook: ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to create webhook: ${response.status}`);
     }
   },
-  async onDisable(context) {
-    const webhookId = await context.store.get("deploy_started_webhook_id");
+  onDisable: async (context) => {
+    const webhookId = await context.store.get("webhook_id");
     if (webhookId) {
+      if (!context.auth) {
+        throw new Error("Authentication is required");
+      }
+
+      const auth = context.auth as OAuth2PropertyValue;
+      if (!auth.access_token) {
+        throw new Error("Access token is required");
+      }
+
       await httpClient.sendRequest({
         method: HttpMethod.DELETE,
         url: `https://api.netlify.com/api/v1/hooks/${webhookId}`,
         headers: {
-          "Authorization": `Bearer ${context.auth.access_token}`,
+          "Authorization": `Bearer ${auth.access_token}`,
         },
       });
-      await context.store.delete("deploy_started_webhook_id");
     }
   },
-  async run(context) {
+  run: async (context) => {
     return [context.payload.body];
   },
 });
