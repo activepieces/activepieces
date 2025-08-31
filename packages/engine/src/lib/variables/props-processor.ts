@@ -48,7 +48,7 @@ export const propsProcessor = {
             if (property.type === PropertyType.DYNAMIC && !isNil(dynamaicPropertiesSchema?.[key])) {
                 const { processedInput: itemProcessedInput, errors: itemErrors } = await propsProcessor.applyProcessorsAndValidators(
                     value,
-                    dynamaicPropertiesSchema[key],
+                    dynamaicPropertiesSchema[key][key] as unknown as InputPropertyMap,
                     undefined,
                     false,
                     {},
