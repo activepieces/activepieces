@@ -2,6 +2,7 @@ import React, { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
+import { TaskLimitAlert } from '@/features/billing/components/task-limit-alert';
 import { WelcomeTrialDialog } from '@/features/billing/components/trial-dialog';
 import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -28,7 +29,13 @@ export const CloseTaskLimitAlertContext = createContext({
   setIsAlertClosed: (_isAlertClosed: boolean) => {},
 });
 
-export function AppLayout({ children }: { children: React.ReactNode }) {
+export function AppLayout({
+  children,
+  fullContainer,
+}: {
+  children: React.ReactNode;
+  fullContainer?: boolean;
+}) {
   const [isAlertClosed, setIsAlertClosed] = useState(false);
 
   const currentProjectId = authenticationSession.getProjectId();
@@ -50,7 +57,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       >
         <SidebarProvider>
           <AppSidebar />
-          <SidebarInset className="px-4 relative pb-4">{children}</SidebarInset>
+          <SidebarInset
+            className={`relative overflow-hidden ${
+              !fullContainer && 'px-4 pb-4'
+            }`}
+          >
+            <TaskLimitAlert />
+            {children}
+          </SidebarInset>
         </SidebarProvider>
 
         {showBilling && <WelcomeTrialDialog />}

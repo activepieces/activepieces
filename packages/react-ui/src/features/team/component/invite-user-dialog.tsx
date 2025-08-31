@@ -2,10 +2,11 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CopyIcon, Plus } from 'lucide-react';
-import { useState, ReactNode } from 'react';
+import { CopyIcon } from 'lucide-react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,7 +16,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -53,7 +53,6 @@ import {
 } from '@activepieces/shared';
 
 import { userInvitationsHooks } from '../lib/user-invitations-hooks';
-import { useEmbedding } from '@/components/embed-provider';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -77,7 +76,13 @@ const FormSchema = Type.Object({
 
 type FormSchema = Static<typeof FormSchema>;
 
-export const InviteUserDialog = ({ open, setOpen }: { open: boolean, setOpen: (_open: boolean) => void }) => {
+export const InviteUserDialog = ({
+  open,
+  setOpen,
+}: {
+  open: boolean;
+  setOpen: (_open: boolean) => void;
+}) => {
   const { embedState } = useEmbedding();
   const [invitationLink, setInvitationLink] = useState('');
   const { platform } = platformHooks.useCurrentPlatform();

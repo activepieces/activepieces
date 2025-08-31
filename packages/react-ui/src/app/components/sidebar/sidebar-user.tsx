@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronsUpDown, LogOut, Settings, UserPlus } from 'lucide-react';
+import { useState } from 'react';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
@@ -19,16 +20,20 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
+import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
+import { ProjectSettingsDialog } from '../project-settings-dialog';
+
 import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
-import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
-import { useState } from 'react';
 
 export function SidebarUser() {
-  const [open, setOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { embedState } = useEmbedding();
+  const { project } = projectHooks.useCurrentProject();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
   const { reset } = useTelemetry();
@@ -99,11 +104,13 @@ export function SidebarUser() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Settings className="w-4 h-4 mr-2" />
-                {t('Settings')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setOpen(true)}>
+              {!embedState.hideProjectSettings && (
+                <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+                  <Settings className="w-4 h-4 mr-2" />
+                  {t('Settings')}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => setInviteOpen(true)}>
                 <UserPlus className="size-4 mr-2" />
                 <span>{t('Invite User')}</span>
               </DropdownMenuItem>
@@ -117,7 +124,17 @@ export function SidebarUser() {
         </DropdownMenu>
       </SidebarMenuItem>
 
-      <InviteUserDialog open={open} setOpen={setOpen} />
+      <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
+      <ProjectSettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        projectId={project?.id}
+        initialValues={{
+          projectName: project?.displayName,
+          tasks: project?.plan?.tasks?.toString() ?? '',
+          aiCredits: project?.plan?.aiCredits?.toString() ?? '',
+        }}
+      />
     </SidebarMenu>
   );
 }
