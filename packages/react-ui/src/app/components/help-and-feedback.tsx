@@ -27,7 +27,7 @@ export const HelpAndFeedback = () => {
         <SidebarMenuButton className="px-2">
           <div className="flex items-center gap-2">
             <QuestionMarkCircledIcon className="size-4" />
-            <span>{t("Help & Feedback")}</span>
+            <span>{t('Help & Feedback')}</span>
           </div>
           <ChevronRight className="size-4 ml-auto" />
         </SidebarMenuButton>
@@ -56,7 +56,7 @@ export const HelpAndFeedback = () => {
           >
             <div className="flex items-center gap-2">
               <History className="size-4" />
-              <span>{t("Changelog")}</span>
+              <span>{t('Changelog')}</span>
             </div>
           </Link>
         </DropdownMenuItem>

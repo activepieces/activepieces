@@ -184,7 +184,7 @@ const BuilderPage = () => {
     useState(false);
 
   return (
-    <div className="flex h-screen w-screen flex-col relative">
+    <div className="flex h-full w-full flex-col relative">
       {run && (
         <RunDetailsBar
           canExitRun={canExitRun}
@@ -207,7 +207,7 @@ const BuilderPage = () => {
           maxSize={39}
           order={1}
           ref={leftHandleRef}
-          className={cn('min-w-0 bg-background z-20', {
+          className={cn('min-w-0 bg-background z-20  overflow-visible', {
             [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
             [animateResizeClassName]: !isDraggingHandle,
           })}
@@ -223,7 +223,9 @@ const BuilderPage = () => {
           disabled={leftSidebar === LeftSideBarType.NONE}
           withHandle={leftSidebar !== LeftSideBarType.NONE}
           onDragging={setIsDraggingHandle}
-          className="z-20"
+          className={
+            leftSidebar === LeftSideBarType.NONE ? 'bg-transparent' : 'z-50'
+          }
         />
 
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">

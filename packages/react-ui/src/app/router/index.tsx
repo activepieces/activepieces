@@ -114,7 +114,7 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/flows/:flowId',
     element: (
-      <AppLayout>
+      <AppLayout fullContainer={true}>
         <RoutePermissionGuard permission={Permission.READ_FLOW}>
           <PageTitle title="Builder">
             <FlowBuilderPage />
