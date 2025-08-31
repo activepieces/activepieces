@@ -1,6 +1,6 @@
 {
   "YouTube": "YouTube",
-  "Enjoy the videos and music you love, upload original content, and share it all with friends, family, and the world on YouTube": "欣賞您喜愛的影片和音樂，在YouTube上上傳原創內容，並與朋友、家人和全世界分享",
+  "Enjoy the videos and music you love, upload original content, and share it all with friends, family, and the world on YouTube": "Enjoy the videos and music you love, upload original content, and share it all with friends, family, and the world on YouTube",
   "\n    1. Sign in to [Google Cloud Console](https://console.cloud.google.com/).\n    2. Create a new project or you can use existing one.\n    3. Go to **APIs & Services** and click **Enable APIs & Services**.\n    4. Search for **YouTube API** in the search bar and enable it.\n    5. Go to **OAuth consent screen** and select **External** type and click create.\n    6. Fill App Name, User Support Email, and Developer Contact Information. Click on the Save and Continue button.\n    7. Click on **Add or Remove Scopes": "\n    1. Sign in to [Google Cloud Console](https://console.cloud.google.com/).\n    2. Create a new project or you can use existing one.\n    3. Go to **APIs & Services** and click **Enable APIs & Services**.\n    4. Search for **YouTube API** in the search bar and enable it.\n    5. Go to **OAuth consent screen** and select **External** type and click create.\n    6. Fill App Name, User Support Email, and Developer Contact Information. Click on the Save and Continue button.\n    7. Click on **Add or Remove Scopes** and add following scopes and click update.\n       - https://www.googleapis.com/auth/youtube\n       - https://www.googleapis.com/auth/youtube.readonly\n       - https://www.googleapis.com/auth/youtube.upload\t\n       - https://www.googleapis.com/auth/youtube.force-ssl\n    8. Click Save and Continue to finish the Scopes step.\n    9. Click on the Add Users button and add a test email You can add your own email).Then finally click Save and Continue to finish the Test Users portion.\n    10. Go to **Credentials**. Click on the **Create Credentials** button and select the **OAuth client ID** option.\n    11. Select the application type as **Web Application** and fill the Name field.\n    12. Add https://cloud.activepieces.com/redirect in **Authorized redirect URIs** field, and click on the Create button.\n    13. Copy **Client ID** and **Client Secret**.",
   "Custom API Call": "自定义 API 呼叫",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
@@ -16,11 +16,11 @@
   "GET": "获取",
   "POST": "帖子",
   "PATCH": "PATCH",
-  "PUT": "PUT",
+  "PUT": "弹出",
   "DELETE": "删除",
   "HEAD": "黑色",
-  "New Video In Channel": "新影片在頻道中",
-  "Runs when a new video is added to a YouTube channel": "當新影片添加到YouTube頻道時運行",
-  "Channel ID, URL, or handle": "頻道ID、網址或處理器",
-  "YouTube channel's ID, URL, or handle (e.g: @DutchPilotGirl)": "YouTube 頻道的ID、網址或處理器（例如：@DutchPilotGirl）"
+  "New Video In Channel": "New Video In Channel",
+  "Runs when a new video is added to a YouTube channel": "Runs when a new video is added to a YouTube channel",
+  "Channel ID, URL, or handle": "Channel ID, URL, or handle",
+  "YouTube channel's ID, URL, or handle (e.g: @DutchPilotGirl)": "YouTube channel's ID, URL, or handle (e.g: @DutchPilotGirl)"
 }

@@ -9,7 +9,7 @@
   "Creates a customer charge.": "顧客課金を作成します。",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "First Name": "名",
-  "Last Name": "姓",
+  "Last Name": "Last Name",
   "Email": "Eメールアドレス",
   "Phone": "電話番号",
   "Signup Date": "登録日",

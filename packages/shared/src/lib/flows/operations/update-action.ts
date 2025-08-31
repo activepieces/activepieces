@@ -13,12 +13,15 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             return stepToUpdate
         }
      
-        const baseProps: Omit<FlowAction, 'type' | 'settings'> = {
+        const baseProps: Omit<FlowAction, 'type'> = {
             displayName: request.displayName,
             name: request.name,
             valid: false,
             skip: request.skip,
-            customLogoUrl: request.customLogoUrl,
+            settings: {
+                ...stepToUpdate.settings,
+                customLogoUrl: request.settings.customLogoUrl,
+            },
         }
 
         let updatedAction: FlowAction

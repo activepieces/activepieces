@@ -26,7 +26,7 @@
   "Triggered when a new asset is created.": "Triggered when a new asset is created.",
   "Triggered when a new comment is created.": "Triggered when a new comment is created.",
   "Account": "Account",
-  "Team": "团队",
+  "Team": "Team",
   "Accounts accessible via a given User": "Accounts accessible via a given User",
   "Teams accessible via a given Account": "Teams accessible via a given Account"
 }

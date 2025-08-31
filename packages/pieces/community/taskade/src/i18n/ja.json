@@ -11,7 +11,7 @@
   "Delete an existing task in a project.": "プロジェクト内の既存のタスクを削除します。",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "Workspace": "ワークスペース",
-  "Folder": "フォルダ",
+  "Folder": "Folder",
   "Project": "プロジェクト",
   "Content Type": "コンテンツタイプ",
   "Task Content": "タスクの内容",
