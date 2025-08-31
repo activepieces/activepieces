@@ -502,6 +502,18 @@ It is strongly recommended that you add your credit card information to your Ope
                 },
             },
         ],
-        imageModels: [],
+        imageModels: [
+            {
+                displayName: 'Gemini-2.5-flash-image-preview (Nano Banana)',
+                instance: google.image('gemini-2.5-flash-image-preview'),
+                pricing: {
+                    input: {
+                        image: 0.30,
+                        text: 0.30
+                    },
+                    output: 30.0
+                }
+            }
+        ],
     },
 ]

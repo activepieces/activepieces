@@ -181,6 +181,19 @@ export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCal
                         }),
                     }
                 }
+                options = {
+                    image: Property.Array({
+                        displayName: 'Images',
+                        required:false,
+                        properties: {
+                            file: Property.File({
+                                displayName: 'Image File',
+                                required: true,
+                            }),
+                        },
+                        description: 'The image(s) you want to edit/merge',
+                    }),
+                }
             }
 
             return options;
