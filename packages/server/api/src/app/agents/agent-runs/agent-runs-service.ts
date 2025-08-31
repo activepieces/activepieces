@@ -18,7 +18,7 @@ export const agentRunsService = (log: FastifyBaseLogger) => ({
             entity: AgentRunEntity,
             query: {
                 limit: params.limit,
-                order: 'ASC',
+                order: 'DESC',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -73,10 +73,6 @@ export const agentRunsService = (log: FastifyBaseLogger) => ({
             prompt: params.prompt,
             steps: [],
             status: AgentTaskStatus.IN_PROGRESS,
-            metadata: params.source === AgentJobSource.TABLE ? {
-                recordId: params.recordId,
-                tableId: params.tableId,
-            } : undefined,
         })
 
         await jobQueue(log).add({
@@ -131,13 +127,6 @@ type RunParams = {
     projectId: string
     prompt: string
     source: AgentJobSource.DIRECT
-} | {
-    agentId: string
-    projectId: string
-    prompt: string
-    source: AgentJobSource.TABLE
-    recordId: string
-    tableId: string
 }
 
 type UpdateParams = {

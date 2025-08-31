@@ -1,4 +1,6 @@
-import { AgentJobData, exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
+import { readdir, rm } from 'fs/promises'
+import path from 'path'
+import { AgentJobData, exceptionHandler, GLOBAL_CACHE_ALL_VERSIONS_PATH, JobData, JobStatus, LATEST_CACHE_VERSION, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService, workerApiService } from './api/server-api.service'
@@ -18,7 +20,7 @@ let heartbeatInterval: NodeJS.Timeout
 
 export const flowWorker = (log: FastifyBaseLogger) => ({
     async init({ workerToken: token }: { workerToken: string }): Promise<void> {
-
+        rejectedPromiseHandler(deleteStaleCache(log), log)
         await engineRunnerSocket(log).init()
 
         closed = false
@@ -141,7 +143,11 @@ async function consumeJob(jobId: string, queueName: QueueName, jobData: JobData,
             break
         }
         case QueueName.AGENTS: {
-            await agentJobExecutor(log).executeAgent(jobData as AgentJobData, engineToken, workerToken)
+            await agentJobExecutor(log).executeAgent({
+                jobData: jobData as AgentJobData,
+                engineToken,
+                workerToken,
+            })
             break
         }
     }
@@ -162,5 +168,21 @@ async function markJobAsCompleted(queueName: QueueName, engineToken: string, log
                 queueName,
             })
         }
+    }
+}
+
+async function deleteStaleCache(log: FastifyBaseLogger): Promise<void> {
+    try {
+        const cacheDir = path.resolve(GLOBAL_CACHE_ALL_VERSIONS_PATH)
+        const entries = await readdir(cacheDir, { withFileTypes: true })
+
+        for (const entry of entries) {
+            if (entry.isDirectory() && entry.name !== LATEST_CACHE_VERSION) {
+                await rm(path.join(cacheDir, entry.name), { recursive: true })
+            }
+        }
+    }
+    catch (error) {
+        exceptionHandler.handle(error, log)
     }
 }

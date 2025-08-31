@@ -1,0 +1,21 @@
+{
+  "NetSuite": "NetSuite",
+  "Account ID": "アカウントID",
+  "Consumer Key": "コンシューマー キー",
+  "Consumer Secret": "コンシューマーシークレット",
+  "Token ID": "Token ID",
+  "Token Secret": "トークンシークレット",
+  "Your NetSuite account ID": "NetSuiteアカウントID",
+  "Your NetSuite consumer key": "NetSuiteコンシューマーキー",
+  "Your NetSuite consumer secret": "NetSuiteのコンシューマーシークレット",
+  "Your NetSuite token ID": "NetSuiteトークンID",
+  "Your NetSuite token secret": "NetSuiteトークンシークレット",
+  "Get Vendor": "Get Vendor",
+  "Get Customer": "顧客を取得",
+  "Gets vendor details from NetSuite.": "NetSuite からベンダーの詳細を取得します。",
+  "Gets customer details from NetSuite.": "NetSuiteから顧客の詳細を取得します。",
+  "Vendor ID": "仕入先ID",
+  "Customer ID": "顧客 ID",
+  "The ID of the vendor to retrieve.": "取得するベンダID。",
+  "The ID of the customer to retrieve.": "取得する顧客ID。"
+}

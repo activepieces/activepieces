@@ -1,6 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, FlowVersion, isNil, TriggerSource } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { flowTriggerSideEffect } from './flow-trigger-side-effect'
@@ -42,7 +41,6 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 where: {
                     id,
                     projectId,
-                    deleted: IsNull(),
                 },
             })
         },
@@ -52,7 +50,6 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 where: {
                     flowId,
                     simulate,
-                    deleted: IsNull(),
                 },
             })
         },
@@ -61,7 +58,6 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 where: {
                     id,
                     projectId,
-                    deleted: IsNull(),
                 },
             })
             if (isNil(triggerSource)) {
@@ -80,7 +76,6 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
             return triggerSourceRepo().existsBy({
                 flowId,
                 simulate,
-                deleted: IsNull(),
             })
         },
         async disable(params: DisableTriggerParams): Promise<void> {
@@ -89,7 +84,6 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 flowId,
                 projectId,
                 simulate,
-                deleted: IsNull(),
             })
             if (isNil(triggerSource)) {
                 return

@@ -69,7 +69,9 @@ export const flowExecutor = {
                 constants,
             })
 
-            if (flowExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
+            const shouldBreakExecution = flowExecutionContext.verdict !== ExecutionVerdict.RUNNING || constants.testSingleStepMode
+
+            if (shouldBreakExecution) {
                 break
             }
 
@@ -80,3 +82,4 @@ export const flowExecutor = {
         return flowExecutionContext.setDuration(flowEndTime - flowStartTime)
     },
 }
+

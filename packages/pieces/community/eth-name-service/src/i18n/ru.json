@@ -1,0 +1,9 @@
+{
+  "Ethereum Name Service (ENS)": "Служба имен Ethereum (ENS)",
+  "Ethereum Name Service (ENS) is a decentralized naming system on the Ethereum blockchain.": "Ethereum Name Service (ENS) – децентрализованная система именования на блокчейне Ethereum.",
+  "*Get your api Key: https://thegraph.com/studio/apikeys": "*Получить ваш ключ api Key: https://thegraph.com/studio/apikeys",
+  "List ENS Domains": "Список ENS доменов",
+  "List the ENS domains for a given address.": "Список доменов ENS для данного адреса.",
+  "Address": "Адрес",
+  "Address to list ENS domains for": "Адрес в список ENS доменов для"
+}

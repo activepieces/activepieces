@@ -1,7 +1,8 @@
-import { ActivepiecesError, ErrorCode, FlatLanguageModelPricing } from '@activepieces/shared'
+import { FlatLanguageModelPricing } from '@activepieces/common-ai'
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, Usage } from './types'
-import { calculateTokensCost, getProviderConfig } from './utils'
+import { calculateTokensCost, calculateWebSearchCost, getProviderConfig } from './utils'
 
 export const anthropicProvider: AIProviderStrategy = {
     extractModelId: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null => {
@@ -10,7 +11,7 @@ export const anthropicProvider: AIProviderStrategy = {
     },
 
     calculateUsage: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage => {
-        const apiResponse = response as { usage: { input_tokens: number, output_tokens: number } }
+        const apiResponse = response as { usage: { input_tokens: number, output_tokens: number, server_tool_use: { web_search_requests: number } } }
         const { provider } = request.params as { provider: string }
 
         const providerConfig = getProviderConfig(provider)!
@@ -28,9 +29,10 @@ export const anthropicProvider: AIProviderStrategy = {
         }
 
         const { input: inputCost, output: outputCost } = languageModelConfig.pricing as FlatLanguageModelPricing
-        const { input_tokens, output_tokens } = apiResponse.usage
+        const webSearchCost = languageModelConfig.webSearchCost ?? 0
+        const { input_tokens, output_tokens, server_tool_use: { web_search_requests } } = apiResponse.usage
         return {
-            cost: calculateTokensCost(input_tokens, inputCost) + calculateTokensCost(output_tokens, outputCost),
+            cost: calculateTokensCost(input_tokens, inputCost) + calculateTokensCost(output_tokens, outputCost) + calculateWebSearchCost(web_search_requests, webSearchCost),
             model,
         }
     },

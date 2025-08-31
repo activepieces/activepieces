@@ -3,17 +3,17 @@ import { createAction } from '@activepieces/pieces-framework';
 import { labelIdsProp, personIdProp } from '../common/props';
 import {
 	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
+	pipedrivePaginatedV1ApiCall,
 	pipedriveTransformCustomFields,
 } from '../common';
-import { GetField, PersonCreateResponse } from '../common/types';
+import { GetField, GetPersonResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const addLabelToPersonAction = createAction({
 	auth: pipedriveAuth,
 	name: 'add-labels-to-person',
 	displayName: 'Add Labels to Person',
-	description: 'Adds an existing labels to an existing person.',
+	description: 'Adds existing labels to an existing person.',
 	props: {
 		personId: personIdProp(true),
 		labelIds: labelIdsProp('person', 'label_ids', true),
@@ -22,37 +22,37 @@ export const addLabelToPersonAction = createAction({
 		const { personId } = context.propsValue;
 		const labelIds = (context.propsValue.labelIds as number[]) ?? [];
 
-		const personDefaultFields: Record<string, any> = {};
+		const personUpdatePayload: Record<string, any> = {};
 
 		if (labelIds.length > 0) {
-			personDefaultFields.label_ids = labelIds;
+			personUpdatePayload.label_ids = labelIds;
 		}
 
-		const updatedPersonResponse = await pipedriveApiCall<PersonCreateResponse>({
+		const updatedPersonResponse = await pipedriveApiCall<GetPersonResponse>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.PUT,
-			resourceUri: `/persons/${personId}`,
+			method: HttpMethod.PATCH,
+			resourceUri: `/v2/persons/${personId}`,
 			body: {
-				...personDefaultFields,
+				...personUpdatePayload,
 			},
 		});
 
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+		const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/personFields',
+			resourceUri: '/v1/personFields',
 		});
 
-		const updatedPersonProperties = pipedriveTransformCustomFields(
+		const transformedPersonData = pipedriveTransformCustomFields(
 			customFieldsResponse,
 			updatedPersonResponse.data,
 		);
 
 		return {
 			...updatedPersonResponse,
-			data: updatedPersonProperties,
+			data: transformedPersonData,
 		};
 	},
 });

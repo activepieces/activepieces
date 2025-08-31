@@ -1,7 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
-import { DiscriminatedUnion, Nullable } from '../common'
+import { Nullable } from '../common'
 import { FlowRunResponse } from '../flow-run/execution/flow-execution'
-import { StepRunResponse } from '../flows'
 import { WebsocketClientEvent } from '../websocket'
 import { ProgressUpdateType } from './engine-operation'
 
@@ -24,18 +23,13 @@ export const UpdateRunProgressResponse = Type.Object({
 export type UpdateRunProgressResponse = Static<typeof UpdateRunProgressResponse>
 
 
-export const NotifyFrontendRequest = DiscriminatedUnion('type', [
-    Type.Object({
-        type: Type.Literal(WebsocketClientEvent.FLOW_RUN_PROGRESS),
-        data: Type.Object({
-            runId: Type.String(),
-        }),
+export const NotifyFrontendRequest = Type.Object({
+    type: Type.Literal(WebsocketClientEvent.FLOW_RUN_PROGRESS),
+    data: Type.Object({
+        runId: Type.String(),
+        testSingleStepMode: Type.Optional(Type.Boolean()),
     }),
-    Type.Object({
-        type: Type.Literal(WebsocketClientEvent.TEST_STEP_PROGRESS),
-        data: StepRunResponse,
-    }),
-])
+})
 export type NotifyFrontendRequest = Static<typeof NotifyFrontendRequest>
 
 export const SendFlowResponseRequest = Type.Object({

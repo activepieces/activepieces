@@ -1,0 +1,17 @@
+{
+  "Gotify": "Doelstelling",
+  "Self-hosted push notification service": "Zelf gehoste push-meldingen",
+  "Server URL": "Server URL",
+  "App Token": "App Token",
+  "Gotify Instance URL": "Gotify instantie URL",
+  "Gotify App Token": "Gotify App Token",
+  "\n    To obtain a token:\n\n    1. Log in to your Gotify instance.\n    2. Click on Apps\n    3. Select the Eye icon in the same row as your App to copy your token, or CREATE APPLICATION if you do not have one app yet.\n    4. Copy your access token & and paste them into the fields below.\n    ": "\n    om een token te krijgen:\n\n    1. Log in op uw Gotify instantie.\n    2. Klik op Apps\n    3. Selecteer het Oogpictogram op dezelfde rij als je app om het token te kopiëren. of MAAK APPLICATIE als je nog geen app hebt.\n    4. Kopieer uw toegangstoken en plak ze in de onderstaande velden.\n    ",
+  "Send Notification": "Stuur notificatie",
+  "Send a notification to gotify": "Stuur een notificatie voor gotify",
+  "Title": "Aanspreektitel",
+  "Message": "bericht",
+  "Priority": "Prioriteit",
+  "The title of the notification": "De titel van de melding",
+  "The message to send": "Het te verzenden bericht",
+  "The priority of the notification (0-10). 0 is lowest priority.": "De prioriteit van de melding (0-10). 0 is de laagste prioriteit."
+}

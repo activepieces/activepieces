@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { CalendarDays } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import { ApSubscriptionStatus } from '@activepieces/ee-shared';
+import { ApSubscriptionStatus, BillingCycle } from '@activepieces/ee-shared';
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
 type SubscriptionInfoProps = {
@@ -13,6 +13,7 @@ type SubscriptionInfoProps = {
 export const SubscriptionInfo = ({ info }: SubscriptionInfoProps) => {
   const isTrial =
     info?.plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
+  const isMonthly = info?.plan.stripeBillingCycle === BillingCycle.MONTHLY;
 
   return (
     <div className="space-y-4">
@@ -26,7 +27,9 @@ export const SubscriptionInfo = ({ info }: SubscriptionInfoProps) => {
         <div className="text-5xl font-semibold">
           ${info.nextBillingAmount || Number(0).toFixed(2)}
         </div>
-        <div className="text-xl text-muted-foreground">/month</div>
+        <div className="text-xl text-muted-foreground">
+          {isMonthly ? t('/month') : t('/year')}
+        </div>
       </div>
 
       {info?.nextBillingDate && isNil(info.cancelAt) && (

@@ -28,6 +28,14 @@
   "Bottom": "Onderaan",
   "Card Moved to list": "Kaart verplaatst naar lijst",
   "New Card": "Nieuwe creditcard",
+  "Card Deadline": "Kaart Deadline",
   "Trigger when a card is moved to the list specified": "Trigger wanneer een kaart wordt verplaatst naar de opgegeven lijst",
-  "Trigger when a new card is created": "Trigger wanneer een nieuwe kaart wordt gemaakt"
+  "Trigger when a new card is created": "Trigger wanneer een nieuwe kaart wordt gemaakt",
+  "Triggers at a specified time before a card deadline.": "Triggert om een bepaalde tijd voor een kaartdeadline.",
+  "Time unit": "Tijd eenheid",
+  "Time before due": "Tijd voor vervaldatum",
+  "Select unit for time before due": "Kies eerst de eenheid voor de tijd",
+  "How long before the due date the trigger should run (use with time unit)": "Hoe lang voor de vervaldatum moet de trigger worden uitgevoerd (gebruik met tijd-eenheid)",
+  "Minutes": "minuten",
+  "Hours": "Uren"
 }

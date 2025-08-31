@@ -1,0 +1,10 @@
+{
+  "Gistly": "Grisé",
+  "YouTube Transcripts": "Transcriptions YouTube",
+  "\nTo obtain your free Gistly API Key, sign up at [Gistly](https://gist.ly/youtube-transcript-api) and then copy the key available in the [dashboard](https://api-portal.gist.ly/).\n": "\nTo obtain your free Gistly API Key, sign up at [Gistly](https://gist.ly/youtube-transcript-api) and then copy the key available in the [dashboard](https://api-portal.gist.ly/).\n",
+  "Get Transcript": "Get Transcript",
+  "Fetches transcript of a YouTube video.": "Récupère la transcription d'une vidéo YouTube.",
+  "YouTube URL": "URL YouTube",
+  "Merge Text": "Fusionner le texte",
+  "If true, the transcript will be merged into a single text instead of timestamped chunks.": "Si activé, la transcription sera fusionnée en un seul texte au lieu de chunks horodatés."
+}

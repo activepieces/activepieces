@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Check, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { Check, TrendingUp, TrendingDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -52,14 +52,6 @@ export const Success = () => {
           title: t('Success!'),
           description: t('Subscription created successfully'),
         };
-      case 'setup':
-        return {
-          icon: Wallet,
-          iconBg: 'bg-primary/10',
-          iconColor: 'text-primary',
-          title: t('Success!'),
-          description: t('Payment method attached successfully'),
-        };
       default:
         return {
           icon: Check,
@@ -75,7 +67,7 @@ export const Success = () => {
   const IconComponent = config.icon;
 
   return (
-    <div className="h-screen bg-background flex items-center justify-center p-4">
+    <div className="h-full bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <CardContent className="pt-8 pb-6 px-6">
           <div className="text-center space-y-6">

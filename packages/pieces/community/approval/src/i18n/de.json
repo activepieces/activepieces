@@ -1,0 +1,10 @@
+{
+  "Approval (Legacy)": "Genehmigung (Legacy)",
+  "Build approval process in your workflows": "Erstellen Sie den Genehmigungsprozess in Ihren Workflows",
+  "Wait for Approval": "Warten auf Genehmigung",
+  "Create Approval Links": "Links zur Genehmigung erstellen",
+  "Pauses the flow and wait for the approval from the user": "Pausiert den Fluss und wartet auf die Genehmigung des Benutzers",
+  "Create links only without pausing the flow, use wait for approval to pause": "Erstelle Links nur ohne den Fluss zu pausieren, benutze Wartezeit um zu pausieren",
+  "Markdown": "Markdown",
+  "Please use Manual Task feature instead from 0.48.0 and above": "Bitte verwenden Sie stattdessen die Manuelle Aufgabenfunktion ab 0.48.0 und höher"
+}

@@ -256,8 +256,14 @@ import { AddExternalIdToAgentId1753641361099 } from './migration/postgres/175364
 import { AddParentRunIdToFlowRun1753699877817 } from './migration/postgres/1753699877817-AddParentRunIdToFlowRun'
 import { AddCascadeOnAgents1753727379513 } from './migration/postgres/1753727379513-AddCascadeOnAgents'
 import { AddExternalIdToMCPPostgres1753787093467 } from './migration/postgres/1753787093467-AddExternalIdToMCPPostgres'
+import { AddExternalidToMCPToolPostgres1754214833292 } from './migration/postgres/1754214833292-AddExternalidToMCPToolPostgres'
+import { AddStepNameToTestInFlowRunEntity1754330492027 } from './migration/postgres/1754330492027-AddStepNameToTestInFlowRunEntity'
 import { AddTriggerSource1754478770608 } from './migration/postgres/1754478770608-AddTriggerSource'
 import { AddJobIdToTriggerRun1754510611628 } from './migration/postgres/1754510611628-AddJobIdToTriggerRun'
+import { AddBillingCycle1754559781173 } from './migration/postgres/1754559781173-addBillingCycle'
+import { EligibileForTrial1754852385518 } from './migration/postgres/1754852385518-EligibileForTrial'
+import { RemoveAgentTestPrompt1754863565929 } from './migration/postgres/1754863565929-RemoveAgentTestPrompt'
+import { RemoveAgentRelationToTables1755954192258 } from './migration/postgres/1755954192258-RemoveAgentRelationToTables'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -437,8 +443,12 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddParentRunIdToFlowRun1753699877817,
         AddCascadeOnAgents1753727379513,
         AddExternalIdToMCPPostgres1753787093467,
+        AddExternalidToMCPToolPostgres1754214833292,
         AddTriggerSource1754478770608,
+        AddStepNameToTestInFlowRunEntity1754330492027,
         AddJobIdToTriggerRun1754510611628,
+        RemoveAgentTestPrompt1754863565929,
+        RemoveAgentRelationToTables1755954192258,
     ]
 
     const edition = system.getEdition()
@@ -536,6 +546,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddLockedColumnToProjectPlan1751878623268,
                 AddMcpsEnabled1751989232042,
                 AddPlatformAnalyticsReportEntity1753091760355,
+                AddBillingCycle1754559781173,
+                EligibileForTrial1754852385518,
             )
             break
         case ApEdition.COMMUNITY:

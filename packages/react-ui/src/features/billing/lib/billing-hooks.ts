@@ -4,17 +4,15 @@ import { useNavigate } from 'react-router-dom';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
+import { ListAICreditsUsageRequest } from '@activepieces/common-ai';
 import {
   CreateSubscriptionParams,
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
   UpdateSubscriptionParams,
+  StartTrialParams,
 } from '@activepieces/ee-shared';
-import {
-  ApErrorParams,
-  ErrorCode,
-  ListAICreditsUsageRequest,
-} from '@activepieces/shared';
+import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 import { platformBillingApi } from './api';
 
@@ -114,7 +112,8 @@ export const billingMutations = {
   },
   useStartTrial: () => {
     return useMutation({
-      mutationFn: () => platformBillingApi.startTrial(),
+      mutationFn: (params: StartTrialParams) =>
+        platformBillingApi.startTrial(params),
       onError: (error) => {
         if (api.isError(error)) {
           const apError = error.response?.data as ApErrorParams;

@@ -1,0 +1,15 @@
+{
+  "GenerateBanners": "Genereerbanners",
+  "Image generation API for banners and social media posts": "API voor afbeeldingen genereren voor banners en social media berichten",
+  "Public API Key": "Publieke API-sleutel",
+  "Secret API Key": "Geheime API Sleutel",
+  "\nTo obtain your GenerateBanners public and secret API Keys, you can follow the steps below:\n\n1. Go to the [GenerateBanners homepage](https://www.generatebanners.com/).\n2. Sign up or log in into your account.\n3. Go to your [account page](https://www.generatebanners.com/app/account).\n4. The public and secret API keys are now displayed, copy them one by one into the right Activepieces fields.\n": "\nOm publieke en geheime API-sleutels van uw GenerateBanners te verkrijgen, kunt u de volgende stappen zetten:\n\n1. Ga naar de [GenerateBanners homepage](https://www.generatebanners.com/).\n2. Meld u aan of log in op uw account.\n3. Ga naar uw [accountpagina](https://www.generatebanners.com/app/account).\n4. De publieke en geheime API-sleutels worden nu weergegeven, kopieer ze één voor één naar de juiste Activepieces velden.\n",
+  "Render Template": "Sjabloon weergeven",
+  "Render a GenerateBanners template": "Geef een GenerateBanners sjabloon weer",
+  "Template": "Sjabloon",
+  "File type": "Soort bestand",
+  "Variables": "Variabelen",
+  "Image (jpg)": "Afbeelding (jpg)",
+  "Image (png)": "Afbeelding (png)",
+  "Document (pdf)": "Document (pdf)"
+}

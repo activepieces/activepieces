@@ -17,6 +17,9 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@activepieces/common-ai": [
+        "packages/pieces/community/common-ai/src/index.ts"
+      ],
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
@@ -132,6 +135,9 @@
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
+      "@activepieces/piece-bigin-by-zoho": [
+        "packages/pieces/community/bigin-by-zoho/src/index.ts"
+      ],
       "@activepieces/piece-binance": [
         "packages/pieces/community/binance/src/index.ts"
       ],
@@ -201,6 +207,9 @@
       ],
       "@activepieces/piece-clearout": [
         "packages/pieces/community/clearout/src/index.ts"
+      ],
+      "@activepieces/piece-clickfunnels": [
+        "packages/pieces/community/clickfunnels/src/index.ts"
       ],
       "@activepieces/piece-clicksend": [
         "packages/pieces/community/clicksend/src/index.ts"
@@ -459,6 +468,9 @@
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
       ],
+      "@activepieces/piece-help-scout": [
+        "packages/pieces/community/help-scout/src/index.ts"
+      ],
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],
@@ -470,6 +482,9 @@
       ],
       "@activepieces/piece-hubspot": [
         "packages/pieces/community/hubspot/src/index.ts"
+      ],
+      "@activepieces/piece-hugging-face": [
+        "packages/pieces/community/hugging-face/src/index.ts"
       ],
       "@activepieces/piece-hunter": [
         "packages/pieces/community/hunter/src/index.ts"
@@ -593,11 +608,17 @@
       "@activepieces/piece-messagebird": [
         "packages/pieces/community/messagebird/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-365-people": [
+        "packages/pieces/community/microsoft-365-people/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-excel-365": [
         "packages/pieces/community/microsoft-excel-365/src/index.ts"
       ],
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-onenote": [
+        "packages/pieces/community/microsoft-onenote/src/index.ts"
       ],
       "@activepieces/piece-microsoft-outlook": [
         "packages/pieces/community/microsoft-outlook/src/index.ts"
@@ -625,6 +646,9 @@
       ],
       "@activepieces/piece-mixpanel": [
         "packages/pieces/community/mixpanel/src/index.ts"
+      ],
+      "@activepieces/piece-mollie": [
+        "packages/pieces/community/mollie/src/index.ts"
       ],
       "@activepieces/piece-monday": [
         "packages/pieces/community/monday/src/index.ts"
@@ -665,6 +689,9 @@
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
       ],
+      "@activepieces/piece-open-phone": [
+        "packages/pieces/community/open-phone/src/index.ts"
+      ],
       "@activepieces/piece-open-router": [
         "packages/pieces/community/open-router/src/index.ts"
       ],
@@ -701,6 +728,9 @@
       ],
       "@activepieces/piece-photoroom": [
         "packages/pieces/community/photoroom/src/index.ts"
+      ],
+      "@activepieces/piece-pinecone": [
+        "packages/pieces/community/pinecone/src/index.ts"
       ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
@@ -771,6 +801,9 @@
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
       ],
+        "@activepieces/piece-retell-ai": [
+        "packages/pieces/community/retell-ai/src/index.ts"
+      ],
       "@activepieces/piece-retune": [
         "packages/pieces/community/retune/src/index.ts"
       ],
@@ -822,6 +855,9 @@
       ],
       "@activepieces/piece-serp-api": [
         "packages/pieces/community/serp-api/src/index.ts"
+      ],
+      "@activepieces/piece-serpstat": [
+        "packages/pieces/community/serpstat/src/index.ts"
       ],
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"

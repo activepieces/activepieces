@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { VersionType } from '../../pieces'
+import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
 
 export const AUTHENTICATION_PROPERTY_NAME = 'auth'
@@ -16,6 +17,12 @@ const commonProps = {
     nextAction: Type.Optional(Type.Any()),
 }
 
+const commonTriggerSettings = {
+    sampleData: Type.Optional(SampleDataSetting),
+    propertySettings: Type.Record(Type.String(), PropertySettings),
+    customLogoUrl: Type.Optional(Type.String()),
+}
+
 export const EmptyTrigger = Type.Object({
     ...commonProps,
     type: Type.Literal(FlowTriggerType.EMPTY),
@@ -25,11 +32,11 @@ export const EmptyTrigger = Type.Object({
 export type EmptyTrigger = Static<typeof EmptyTrigger>
 
 export const PieceTriggerSettings = Type.Object({
+    ...commonTriggerSettings,
     pieceName: Type.String({}),
     pieceVersion: VersionType,
     triggerName: Type.Optional(Type.String({})),
     input: Type.Record(Type.String({}), Type.Any()),
-    inputUiInfo: SampleDataSetting,
 })
 
 export type PieceTriggerSettings = Static<typeof PieceTriggerSettings>

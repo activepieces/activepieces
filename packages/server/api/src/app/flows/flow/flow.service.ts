@@ -124,7 +124,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }
 
         if (externalIds !== undefined) {
-            queryBuilder.andWhere('ff.externalId IN (:...externalIds)', { externalIds })
+            queryBuilder.andWhere('ff."externalId" IN (:...externalIds)', { externalIds })
         }
 
         if (connectionExternalIds !== undefined) {
