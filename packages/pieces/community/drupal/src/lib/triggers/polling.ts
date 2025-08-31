@@ -17,17 +17,18 @@ type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
 const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { id: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const { website_url, api_key } = (auth as DrupalAuthType);
+    const { website_url, username, password } = (auth as DrupalAuthType);
     const body: any = {
       id: propsValue['id'],
       timestamp: lastFetchEpochMS,
     };
     const response = await httpClient.sendRequest<DrupalPollItem[]>({
       method: HttpMethod.POST,
-      url: website_url + `/modeler_api/poll`,
+      url: website_url + `/orchestration/poll`,
       body: body,
       headers: {
-        'x-api-key': api_key,
+        'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
+        'Accept': 'application/vnd.api+json',
       },
     });
     console.debug('Poll response', response);
