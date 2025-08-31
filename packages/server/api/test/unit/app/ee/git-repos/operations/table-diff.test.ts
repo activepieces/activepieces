@@ -214,11 +214,9 @@ describe('Table Diff Service', () => {
         const tableOne = tableGenerator.simpleTable()
         const tableTwo = tableGenerator.simpleTable(tableOne.externalId)
 
-        // Ensure all logical fields are identical
+        // Ensure all fields are identical
         tableTwo.name = tableOne.name
         tableTwo.fields = tableOne.fields
-        tableTwo.status = tableOne.status
-        tableTwo.trigger = tableOne.trigger
 
         const diff = await projectDiffService.diff({
             currentState: {

@@ -8,16 +8,10 @@ export const tableDiffService = {
         return [...updates, ...creates, ...deletes]
     },
 }
-
 function isTableChanged(stateOne: TableState, stateTwo: TableState): boolean {
-    const serialize = (t: TableState): string => JSON.stringify({
-        name: t.name,
-        externalId: t.externalId,
-        fields: t.fields,
-        status: t.status,
-        trigger: t.trigger,
-    })
-    return serialize(stateOne) !== serialize(stateTwo)
+    const { id: _, ...restOne } = stateOne
+    const { id: __, ...restTwo } = stateTwo
+    return JSON.stringify(restOne) !== JSON.stringify(restTwo)
 }
 
 function findTablesToUpdate(currentState: ProjectState, newState: ProjectState): TableOperation[] {
