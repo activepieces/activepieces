@@ -1,34 +1,36 @@
-import { ActionErrorHandlingOptions, BranchCondition, BranchExecutionType, CodeAction, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
+import { ActionErrorHandlingOptions, BranchCondition, BranchExecutionType, CodeAction, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 import { createPropsResolver } from '../../src/lib/variables/props-resolver'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
     return new EngineConstants(
-        params?.flowId ?? 'flowId',
-        params?.flowVersionId ?? 'flowVersionId',
-        params?.flowVersionState ?? FlowVersionState.DRAFT,
-        params?.flowRunId ?? 'flowRunId',
-        params?.publicApiUrl ?? 'http://127.0.0.1:4200/api/',
-        params?.internalApiUrl ??  'http://127.0.0.1:3000/',
-        params?.retryConstants ?? {
-            maxAttempts: 2,
-            retryExponential: 1,
-            retryInterval: 1,
-        },
-        params?.engineToken ?? 'engineToken',
-        params?.projectId ?? 'projectId',
-        params?.propsResolver ?? createPropsResolver({
-            projectId: 'projectId',
-            engineToken: 'engineToken',
-            apiUrl: 'http://127.0.0.1:3000',
-        }),
-        params?.testSingleStepMode ?? false,
-        params?.progressUpdateType ?? ProgressUpdateType.NONE,
-        params?.serverHandlerId ?? null,
-        params?.httpRequestId ?? null,
-        params?.resumePayload,
-        params?.runEnvironment ?? RunEnvironment.TESTING,
-    )
+        {
+            flowId: params?.flowId ?? 'flowId',
+            flowVersionId: params?.flowVersionId ?? 'flowVersionId',
+            flowVersionState: params?.flowVersionState ?? FlowVersionState.DRAFT,
+            flowRunId: params?.flowRunId ?? 'flowRunId',
+            publicApiUrl: params?.publicApiUrl ?? 'http://127.0.0.1:4200/api/',
+            internalApiUrl: params?.internalApiUrl ?? 'http://127.0.0.1:3000/',
+            retryConstants: params?.retryConstants ?? {
+                maxAttempts: 2,
+                retryExponential: 1,
+                retryInterval: 1,
+            },
+            engineToken: params?.engineToken ?? 'engineToken',
+            projectId: params?.projectId ?? 'projectId',
+            propsResolver: params?.propsResolver ?? createPropsResolver({
+                projectId: 'projectId',
+                engineToken: 'engineToken',
+                apiUrl: 'http://127.0.0.1:3000',
+            }),
+            triggerPieceName: params?.triggerPieceName ?? 'mcp-trigger-piece-name',
+            progressUpdateType: params?.progressUpdateType ?? ProgressUpdateType.NONE,
+            serverHandlerId: params?.serverHandlerId ?? null,
+            httpRequestId: params?.httpRequestId ?? null,
+            resumePayload: params?.resumePayload,
+            runEnvironment: params?.runEnvironment ?? RunEnvironment.TESTING,
+            testSingleStepMode: params?.testSingleStepMode ?? false,
+        })
 }
 
 export function buildSimpleLoopAction({
@@ -49,7 +51,6 @@ export function buildSimpleLoopAction({
         skip: skip ?? false,
         settings: {
             items: loopItems,
-            inputUiInfo: {},
         },
         firstLoopAction,
         valid: true,
@@ -77,7 +78,6 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
                 }
             }),
             executionType,
-            inputUiInfo: {},
         },
         children,
         valid: true,
@@ -114,7 +114,10 @@ export function buildPieceAction({ name, input, skip, pieceName, actionName, nex
             pieceName,
             pieceVersion: '1.0.0', // Not required since it's running in development mode
             actionName,
-            inputUiInfo: {},
+            propertySettings: Object.fromEntries(Object.entries(input).map(([key]) => [key, {
+                type: PropertyExecutionType.MANUAL,
+                schema: undefined,
+            }])),
             errorHandlingOptions,
         },
         nextAction,

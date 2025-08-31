@@ -1,0 +1,14 @@
+{
+  "GCloud Pub/Sub": "GCloud Pub/Sub",
+  "Google Cloud's event streaming service": "Google Cloudのイベントストリーミングサービス",
+  "Service Key (JSON)": "サービスキー (JSON)",
+  "\nYou can get it from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials/serviceaccountkey).\n": "\n[Google Cloud Console](https://console.cloud.google.com/apis/credentials/serviceaccountkey)から入手できます。\n",
+  "Publish to topic": "トピックに公開",
+  "Publish message to topic": "メッセージをトピックに公開",
+  "Message": "メッセージ",
+  "Topic": "トピック",
+  "New Message": "新しいメッセージ",
+  "Trigger when a new message is sended.": "新しいメッセージが送信されたときにトリガーします。",
+  "Subscription name": "サブスクリプション名",
+  "Ack Deadline Seconds": "Ack 締切秒"
+}

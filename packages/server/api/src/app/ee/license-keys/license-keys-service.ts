@@ -1,5 +1,5 @@
 import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, TelemetryEventName } from '@activepieces/shared'
 import { PlanName } from '@ee/shared/src/lib/billing'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -7,7 +7,8 @@ import { StatusCodes } from 'http-status-codes'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
 import { platformService } from '../../platform/platform.service'
-import { userService } from '../../user/user-service'
+import { PlatformPlanHelper } from '../platform/platform-plan/platform-plan-helper'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
@@ -120,11 +121,19 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         }
     },
     async downgradeToFreePlan(platformId: string): Promise<void> {
+        await platformPlanService(log).update({ ...turnedOffFeatures, platformId })
         await platformService.update({
             id: platformId,
-            ...turnedOffFeatures,
+            plan: {
+                ...turnedOffFeatures,
+            },
         })
-        await deactivatePlatformUsersOtherThanAdmin(platformId)
+        await PlatformPlanHelper.handleResourceLocking({
+            platformId, 
+            newLimits: {
+                userSeatsLimit: 0,
+            },
+        })
     },
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
         const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD
@@ -155,7 +164,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 userSeatsLimit: undefined,
                 stripeSubscriptionId: undefined,
                 stripeSubscriptionStatus: undefined,
-                eligibleForTrial: false,
+                eligibleForTrial: undefined,
                 tablesLimit: undefined,
                 agentsEnabled: key.agentsEnabled,
                 manageTemplatesEnabled: key.manageTemplatesEnabled,
@@ -167,23 +176,6 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         })
     },
 })
-
-const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<void> = async (platformId: string) => {
-    const { data } = await userService.list({
-        platformId,
-        cursorRequest: null,
-        limit: 1000,
-    })
-    const users = data.filter(f => f.platformRole !== PlatformRole.ADMIN).map(u => {
-        return userService.update({
-            id: u.id,
-            status: UserStatus.INACTIVE,
-            platformId,
-            platformRole: u.platformRole,
-        })
-    })
-    await Promise.all(users)
-}
 
 const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt' | 'activatedAt' | 'isTrial' | 'email' | 'customerName' | 'key'> = {
     ssoEnabled: false,

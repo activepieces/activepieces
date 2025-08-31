@@ -1,7 +1,7 @@
 import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { activityTypeIdProp, filterIdProp, ownerIdProp } from '../common/props';
-import { pipedrivePaginatedApiCall } from '../common';
+import { pipedrivePaginatedV2ApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
 
@@ -44,17 +44,21 @@ export const findActivityAction = createAction({
 	async run(context) {
 		const { subject, assignTo, type, filterId, status, exactMatch } = context.propsValue;
 
-		const response = await pipedrivePaginatedApiCall<{ id: number; subject: string }>({
+		const response = await pipedrivePaginatedV2ApiCall<{
+			id: number;
+			subject: string;
+			type: string;
+		}>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/activities',
+			resourceUri: '/v2/activities',
 			query: {
-				sort: 'update_time DESC',
+				owner_id: assignTo,
+				done: status != null ? status === 1 : undefined,
+				sort_by: 'update_time',
+				sort_direction: 'desc',
 				filter_id: filterId,
-				user_id: assignTo,
-				type,
-				done: status,
 			},
 		});
 
@@ -68,10 +72,25 @@ export const findActivityAction = createAction({
 		const result = [];
 
 		for (const activity of response) {
-			if (exactMatch && activity.subject === subject) {
-				result.push(activity);
-			} else if (!exactMatch && activity.subject.toLowerCase().includes(subject.toLowerCase())) {
-				result.push(activity);
+			let matched = false;
+
+			if (activity.subject) {
+				if (exactMatch && activity.subject === subject) {
+					matched = true;
+				} else if (!exactMatch && activity.subject.toLowerCase().includes(subject.toLowerCase())) {
+					matched = true;
+				}
+			}
+
+			// If type is provided, require both subject & type match
+			if (type) {
+				if (matched && activity.type === type) {
+					result.push(activity);
+				}
+			} else {
+				if (matched) {
+					result.push(activity);
+				}
 			}
 		}
 

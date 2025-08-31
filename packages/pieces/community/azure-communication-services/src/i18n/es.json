@@ -1,0 +1,20 @@
+{
+  "Azure Communication Services": "Servicios de Comunicación Azure",
+  "Communication services from Microsoft Azure": "Servicios de comunicación de Microsoft Azure",
+  "Send Email": "Enviar Email",
+  "Send a text or HTML email": "Enviar un mensaje de texto o HTML",
+  "Sender Email (From)": "Email del remitente (From)",
+  "To": "A",
+  "Cc": "Cc",
+  "Bcc": "Cco",
+  "Reply To": "Responder a",
+  "Subject": "Asunto",
+  "Content Type": "Tipo de contenido",
+  "Content": "Contenido",
+  "Sender email": "Email del remitente",
+  "Emails of the recipients": "Correos de los destinatarios",
+  "List of emails in cc": "Lista de correos en cc",
+  "List of emails in bcc": "Lista de correos en bcc",
+  "Email to receive replies on (defaults to sender)": "Correo electrónico en el que recibir respuestas (por defecto el remitente)",
+  "HTML is only allowed if you selected HTML as type": "Sólo se permite HTML si ha seleccionado HTML como tipo"
+}

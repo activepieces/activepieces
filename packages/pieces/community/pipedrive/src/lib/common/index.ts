@@ -5,10 +5,15 @@ import {
 	HttpMessageBody,
 	HttpMethod,
 	HttpRequest,
-	QueryParams,
 } from '@activepieces/pieces-common';
-import { GetField, PaginatedResponse, RequestParams } from './types';
-import { isNil } from '@activepieces/shared';
+import { GetField, PaginatedV2Response, PaginatedV1Response, RequestParams } from './types';
+import { isEmpty, isNil } from '@activepieces/shared';
+import dayjs from 'dayjs';
+
+type FlexibleQueryParams = Record<
+	string,
+	string | number | boolean | string[] | number[] | null | undefined
+>;
 
 export const pipedriveCommon = {
 	subscribeWebhook: async (
@@ -25,7 +30,7 @@ export const pipedriveCommon = {
 				event_object: object,
 				event_action: action,
 				subscription_url: webhookUrl,
-				version: '1.0',
+				version: '2.0',
 			},
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
@@ -39,6 +44,7 @@ export const pipedriveCommon = {
 		}>(request);
 		return webhook;
 	},
+
 	unsubscribeWebhook: async (webhookId: string, apiDomain: string, accessToken: string) => {
 		const request: HttpRequest = {
 			method: HttpMethod.DELETE,
@@ -69,34 +75,36 @@ export async function pipedriveApiCall<T extends HttpMessageBody>({
 	query,
 	body,
 }: PipedriveApiCallParams): Promise<T> {
-	const baseUrl = `${apiDomain}/api/v1`;
-	const qs: QueryParams = {};
-	let data: any;
+	const url = `${apiDomain}/api${resourceUri}`;
 
+	const qs: Record<string, string> = {};
 	if (query) {
 		for (const [key, value] of Object.entries(query)) {
 			if (value !== null && value !== undefined) {
-				qs[key] = String(value);
+				qs[key] = Array.isArray(value) ? value.map(String).join(',') : String(value);
 			}
 		}
 	}
+
+	let requestBody: any;
 	if (body) {
-		data = Object.entries(body).reduce((acc, [key, value]) => {
+		requestBody = Object.entries(body).reduce((acc, [key, value]) => {
 			if (!isNil(value)) {
 				acc[key] = value;
 			}
 			return acc;
 		}, {} as Record<string, any>);
 	}
+
 	const request: HttpRequest = {
 		method,
-		url: baseUrl + resourceUri,
+		url,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
 			token: accessToken,
 		},
 		queryParams: qs,
-		body: data,
+		body: requestBody,
 	};
 
 	try {
@@ -112,7 +120,7 @@ export async function pipedriveApiCall<T extends HttpMessageBody>({
 	}
 }
 
-export async function pipedrivePaginatedApiCall<T extends HttpMessageBody>({
+export async function pipedrivePaginatedV1ApiCall<T extends HttpMessageBody>({
 	accessToken,
 	apiDomain,
 	method,
@@ -129,7 +137,7 @@ export async function pipedrivePaginatedApiCall<T extends HttpMessageBody>({
 	let hasMoreItems = true;
 
 	do {
-		const response = await pipedriveApiCall<PaginatedResponse<T>>({
+		const response = await pipedriveApiCall<PaginatedV1Response<T>>({
 			accessToken,
 			apiDomain,
 			method,
@@ -150,7 +158,154 @@ export async function pipedrivePaginatedApiCall<T extends HttpMessageBody>({
 	return resultData;
 }
 
+export async function pipedrivePaginatedV2ApiCall<T extends HttpMessageBody>({
+	accessToken,
+	apiDomain,
+	method,
+	resourceUri,
+	query,
+	body,
+}: PipedriveApiCallParams): Promise<T[]> {
+	const qs: FlexibleQueryParams = query ? { ...query } : {};
+
+	let cursor: string | undefined = undefined;
+	const resultData: T[] = [];
+	let hasMoreItems = true;
+
+
+	do {
+		const currentQuery: FlexibleQueryParams = { ...qs };
+		if (cursor) {
+			currentQuery.cursor = cursor;
+		}
+		currentQuery.limit = 500;
+
+		const response = await pipedriveApiCall<PaginatedV2Response<T>>({
+			accessToken,
+			apiDomain,
+			method,
+			resourceUri,
+			query: currentQuery as RequestParams,
+			body,
+		});
+
+
+		if (isNil(response.data)) {
+			break;
+		}
+
+		if (Array.isArray(response.data)) {
+			resultData.push(...response.data);
+		} else {
+			resultData.push(response.data);
+		}
+
+		hasMoreItems = response.additional_data?.next_cursor != null;
+		cursor = response.additional_data?.next_cursor;
+	} while (hasMoreItems && cursor);
+
+	return resultData;
+}
+
+function formatDateIfValid(val: any) {
+	return dayjs(val).isValid() ? dayjs(val).format('YYYY-MM-DD') : val;
+}
+
+export function pipedriveParseCustomFields(
+	customFieldsDefinitions: GetField[],
+	inputData: Record<string, any>,
+): Record<string, any> {
+	const fieldTypeMap: Record<string, GetField> = customFieldsDefinitions.reduce((acc, field) => {
+		acc[field.key] = field;
+		return acc;
+	}, {} as Record<string, GetField>);
+
+	const parsedFields: Record<string, any> = {};
+
+	for (const [key, value] of Object.entries(inputData)) {
+		if (isEmpty(value)) continue;
+
+		const matchedField = fieldTypeMap[key];
+		if (!matchedField) continue;
+
+		// https://pipedrive.readme.io/docs/pipedrive-api-v2-migration-guide#custom-fields
+		if (matchedField.is_subfield) {
+			const parentField = key.split('_')[0];
+			parsedFields[parentField] = {
+				...parsedFields[parentField],
+				[matchedField.id_suffix]: matchedField.field_type === "date" ? formatDateIfValid(value) : value,
+			};
+			continue;
+		}
+
+		switch (matchedField.field_type) {
+			case 'monetary':
+				parsedFields[key] = { ...parsedFields[key], value: Number(value) };
+				break;
+			case 'address':
+			case 'daterange':
+			case 'timerange':
+            case 'time':
+				parsedFields[key] = { ...parsedFields[key], value: formatDateIfValid(value) };
+				break;
+			case 'date':
+				parsedFields[key] = formatDateIfValid(value);
+				break;
+			default:
+				parsedFields[key] = value;
+				break;
+		}
+	}
+
+	return parsedFields;
+}
+
 export function pipedriveTransformCustomFields(
+	customFieldsDefinitions: GetField[],
+	responseData: Record<string, any>,
+): Record<string, any> {
+	const updatedResponseData = { ...responseData };
+
+	const rawCustomFields = responseData.custom_fields || {};
+
+	for (const field of customFieldsDefinitions) {
+		if (!field.edit_flag) {
+			continue;
+		}
+
+		const oldKey = field.key;
+		const newKey = field.name;
+		const fieldType = field.field_type;
+
+		if (oldKey in rawCustomFields) {
+			const value = rawCustomFields[oldKey];
+
+			if (isNil(value)) {
+				updatedResponseData[newKey] = null;
+			} else if (fieldType === 'enum') {
+				updatedResponseData[newKey] =
+					field.options?.find((option) => option.id === value)?.label || null;
+			} else if (fieldType === 'set') {
+				if (Array.isArray(value)) {
+					updatedResponseData[newKey] = value.map(
+						(item) => field.options?.find((option) => option.id === item)?.label || null,
+					);
+				} else {
+					updatedResponseData[newKey] = value;
+				}
+			} else {
+				updatedResponseData[newKey] = value;
+			}
+		}
+	}
+
+	delete updatedResponseData.custom_fields;
+
+	return updatedResponseData;
+}
+
+
+export function pipedriveTransformV1CustomFields(
 	CustomFields: GetField[],
 	responseData: Record<string, any>,
 ): Record<string, any> {

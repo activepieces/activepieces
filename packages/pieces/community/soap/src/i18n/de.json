@@ -1,0 +1,22 @@
+{
+  "SOAP": "SOAP",
+  "Simple Object Access Protocol for communication between applications": "Einfaches Object Access Protokoll für die Kommunikation zwischen Anwendungen",
+  "Authentication Type": "Authentifizierungstyp",
+  "Username": "Benutzername",
+  "Password": "Kennwort",
+  "Custom Header": "Eigene Kopfzeile",
+  "The WS Security username": "Der WS-Sicherheits-Benutzername",
+  "The WS Security password": "Das WS-Sicherheitspasswort",
+  "Custom Header Content": "Eigener Kopfzeileninhalt",
+  "None": "Keine",
+  "WS Security": "WS-Sicherheit",
+  "Basic Auth": "Einfacher Auth",
+  "Call SOAP Method": "SOAP-Methode aufrufen",
+  "Call a SOAP from a given wsdl specification": "SOAP aus einer gegebenen wsdl-Spezifikation aufrufen",
+  "WSDL URL": "WSDL-URL",
+  "Method": "Methode",
+  "Parameters": "Parameter",
+  "Parsed": "Parsed",
+  "The SOAP Method": "Die SOAP-Methode",
+  "Arguments for the SOAP method": "Argumente für die SOAP-Methode"
+}

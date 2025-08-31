@@ -4,7 +4,5 @@
   "Provider": "Anbieter",
   "Model": "Modell",
   "Prompt": "Prompt",
-  "Advanced Options": "Erweiterte Optionen",
-  "Resolution": "Auflösung",
-  "The resolution to generate the image in.": "Die Auflösung, in der das Bild erzeugt wird."
+  "Advanced Options": "Erweiterte Optionen"
 }

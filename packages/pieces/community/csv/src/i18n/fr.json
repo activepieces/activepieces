@@ -1,7 +1,7 @@
 {
   "CSV": "CSV",
   "Manipulate CSV text": "Manipuler le texte CSV",
-  "Convert CSV to JSON": "Convertir le CSV en JSON",
+  "Convert CSV to JSON": "Convertir CSV en JSON",
   "Convert JSON to CSV": "Convertir JSON en CSV",
   "This function reads a CSV string and converts it into JSON array format.": "Cette fonction lit une chaîne CSV et la convertit au format JSON.",
   "This function reads a JSON array and converts it into CSV format.": "Cette fonction lit un tableau JSON et le convertit au format CSV.",

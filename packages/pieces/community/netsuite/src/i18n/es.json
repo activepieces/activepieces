@@ -1,0 +1,21 @@
+{
+  "NetSuite": "NetSuite",
+  "Account ID": "ID de cuenta",
+  "Consumer Key": "Clave del consumidor",
+  "Consumer Secret": "Secreto de consumidor",
+  "Token ID": "Token ID",
+  "Token Secret": "Clave de Token",
+  "Your NetSuite account ID": "Su ID de cuenta de NetSuite",
+  "Your NetSuite consumer key": "Tu clave de consumidor de NetSuite",
+  "Your NetSuite consumer secret": "Tu secreto de consumidor de NetSuite",
+  "Your NetSuite token ID": "Su ID de token de NetSuite",
+  "Your NetSuite token secret": "Tu secreto de NetSuite",
+  "Get Vendor": "Get Vendor",
+  "Get Customer": "Obtener cliente",
+  "Gets vendor details from NetSuite.": "Obtiene detalles del proveedor de NetSuite.",
+  "Gets customer details from NetSuite.": "Obtiene los detalles del cliente de NetSuite.",
+  "Vendor ID": "ID del proveedor",
+  "Customer ID": "ID del cliente",
+  "The ID of the vendor to retrieve.": "El ID del proveedor a recuperar.",
+  "The ID of the customer to retrieve.": "El ID del cliente a recuperar."
+}

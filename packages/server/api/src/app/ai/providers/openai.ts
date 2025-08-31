@@ -1,8 +1,9 @@
-import { ActivepiecesError, AIProvider, CategorizedModelPricing, DALLE2PricingPerImage, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, GPTImage1PricingPerImage, isNil } from '@activepieces/shared'
+import { AIProvider, CategorizedModelPricing, DALLE2PricingPerImage, DALLE3PricingPerImage, FlatLanguageModelPricing, GPTImage1PricingPerImage  } from '@activepieces/common-ai'
+import { ActivepiecesError, ErrorCode,  isNil } from '@activepieces/shared'
 import { createParser } from 'eventsource-parser'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, StreamingParser, Usage } from './types'
-import { calculateTokensCost, getProviderConfig } from './utils'
+import { calculateTokensCost, calculateWebSearchCost, getProviderConfig } from './utils'
 
 export const openaiProvider: AIProviderStrategy = {
     extractModelId: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null => {
@@ -16,6 +17,7 @@ export const openaiProvider: AIProviderStrategy = {
             usage:
             | { input_tokens: number, output_tokens: number, input_tokens_details: { text_tokens: number, image_tokens: number, audio_tokens: number } }
             | { prompt_tokens: number, completion_tokens: number }
+            tools: { type: string }[]          
         } 
         const { provider } = request.params as { provider: string }
 
@@ -47,6 +49,7 @@ export const openaiProvider: AIProviderStrategy = {
         if (languageModelConfig) {
             let inputTokens: number
             let outputTokens: number
+            let webSearchCalls = 0
             if ('prompt_tokens' in apiResponse.usage) {
                 inputTokens = apiResponse.usage.prompt_tokens
                 outputTokens = apiResponse.usage.completion_tokens
@@ -54,11 +57,15 @@ export const openaiProvider: AIProviderStrategy = {
             else {
                 inputTokens = apiResponse.usage.input_tokens
                 outputTokens = apiResponse.usage.output_tokens
+                if (apiResponse.tools.length > 0) {
+                    webSearchCalls = apiResponse.tools.filter((tool) => tool.type === 'web_search_preview' || tool.type === 'web_search_preview_2025_03_11').length
+                }
             }
 
             const { input: inputCost, output: outputCost } = languageModelConfig.pricing as FlatLanguageModelPricing
+            const webSearchCost = languageModelConfig.webSearchCost ?? 0
             return {
-                cost: calculateTokensCost(inputTokens, inputCost) + calculateTokensCost(outputTokens, outputCost),
+                cost: calculateTokensCost(inputTokens, inputCost) + calculateTokensCost(outputTokens, outputCost) + calculateWebSearchCost(webSearchCalls, webSearchCost),
                 model,
             }
         }

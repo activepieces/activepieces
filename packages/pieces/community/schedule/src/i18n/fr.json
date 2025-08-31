@@ -47,7 +47,7 @@
   "Minutes": "Minutes",
   "Run on weekends (Sat,Sun)": "Courir les week-ends (Sat,Dim)",
   "Hour of the day": "Heure de la journée",
-  "Timezone": "Timezone",
+  "Timezone": "Fuseau horaire",
   "Day of the week": "Jour de la semaine",
   "Day of the month": "Jour du mois",
   "Valid value between 1 to 59.": "Valeur valide comprise entre 1 et 59.",

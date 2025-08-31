@@ -1,0 +1,22 @@
+{
+  "GraphQL": "GraphQL",
+  "Send Request": "Envoyer la demande",
+  "Makes a GraphQL request.": "Fait une requête GraphQL.",
+  "Method": "Méthode",
+  "URL": "URL",
+  "Query params": "Paramètres de requête",
+  "Headers": "En-têtes",
+  "Query": "Requête",
+  "Variables": "Variables",
+  "Use Proxy": "Utiliser le proxy",
+  "Proxy Settings": "Paramètres du proxy",
+  "Timeout(in seconds)": "Délai d'attente (en secondes)",
+  "No Error on Failure": "Aucune erreur en cas d'échec",
+  "Use a proxy for this request": "Utiliser un proxy pour cette requête",
+  "GET": "OBTENIR",
+  "POST": "POSTER",
+  "PATCH": "PATCH",
+  "PUT": "EFFACER",
+  "DELETE": "SUPPRIMER",
+  "HEAD": "TÊTE"
+}

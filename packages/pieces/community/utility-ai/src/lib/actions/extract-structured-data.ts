@@ -1,9 +1,10 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { AI_USAGE_FEATURE_HEADER, AIUsageFeature, createAIProvider, MarkdownVariant } from '@activepieces/shared';
-import { aiProps } from '@activepieces/pieces-common';
-import { generateText, tool, LanguageModel, jsonSchema, CoreMessage, CoreUserMessage } from 'ai';
+import { AIUsageFeature, createAIModel } from '@activepieces/common-ai';
+import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from 'ai';
+import { LanguageModelV2 } from '@ai-sdk/provider';
 import mime from 'mime-types';
 import Ajv from 'ajv';
+import { aiProps } from '@activepieces/common-ai';
 
 export const extractStructuredData = createAction({
 	name: 'extractStructuredData',
@@ -116,7 +117,7 @@ export const extractStructuredData = createAction({
 				};
 			},
 		}),
-		maxTokens: Property.Number({
+		maxOutputTokens: Property.Number({
 			displayName: 'Max Tokens',
 			required: false,
 			defaultValue: 2000,
@@ -124,12 +125,12 @@ export const extractStructuredData = createAction({
 	},
 	async run(context) {
 		const providerName = context.propsValue.provider as string;
-		const modelInstance = context.propsValue.model as LanguageModel;
+		const modelInstance = context.propsValue.model as LanguageModelV2;
 		const text = context.propsValue.text;
 		const files = (context.propsValue.files as Array<{ file: ApFile }>) ?? [];
 		const prompt = context.propsValue.prompt;
 		const schema = context.propsValue.schama;
-		const maxTokens = context.propsValue.maxTokens;
+		const maxOutputTokens = context.propsValue.maxOutputTokens;
 
 		if (!text && !files.length) {
 			throw new Error('Please provide text or image/PDF to extract data from.');
@@ -137,10 +138,10 @@ export const extractStructuredData = createAction({
 
 		const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
 		const engineToken = context.server.token;
-		const provider = createAIProvider({
+		const model = createAIModel({
 			providerName,
 			modelInstance,
-			apiKey: engineToken,
+			engineToken,
 			baseURL,
 			metadata: {
 				feature: AIUsageFeature.UTILITY_AI,
@@ -173,8 +174,12 @@ export const extractStructuredData = createAction({
 
 			const properties: Record<string, any> = {};
 			const required: string[] = [];
-			
+
 			fields.forEach((field) => {
+				if (!/^[a-zA-Z0-9_.-]+$/.test(field.name)) {
+					throw new Error(`Invalid field name: ${field.name}. Field names can only contain letters, numbers, underscores, dots and hyphens.`);
+				}
+
 				properties[field.name] = {
 					type: field.type,
 					description: field.description,
@@ -196,15 +201,15 @@ export const extractStructuredData = createAction({
 
 		const extractionTool = tool({
 			description: 'Extract structured data from the provided content',
-			parameters: schemaDefinition,
+			inputSchema: schemaDefinition,
 			execute: async (data) => {
 				return data;
 			},
 		});
 
-		const messages: Array<CoreMessage> = [];
+		const messages: Array<ModelMessage> = [];
 
-		const contentParts: CoreUserMessage['content']= [];
+		const contentParts: UserModelMessage['content']= [];
 
 		let textContent = prompt || 'Extract the following data from the provided data.';
 		if (text) {
@@ -231,10 +236,11 @@ export const extractStructuredData = createAction({
 					});
 				} else if (fileType && fileType.startsWith('application/pdf') && file.base64) {
 					contentParts.push({
-						type: 'file',
+                        type: 'file',
 						data: `data:${fileType};base64,${file.base64}`,
-						mimeType: fileType,
-					});
+                        mediaType: fileType,
+						filename: file.filename,
+                    });
 				}
 			}
 		}
@@ -246,8 +252,8 @@ export const extractStructuredData = createAction({
 
 		try {
 			const result = await generateText({
-				model: provider,
-				maxTokens,
+				model,
+				maxOutputTokens,
 				tools: {
 					extractData: extractionTool,
 				},
@@ -263,7 +269,7 @@ export const extractStructuredData = createAction({
 				throw new Error('No structured data could be extracted from the input.');
 			}
 
-			const extractedData = toolCalls[0].args;
+			const extractedData = toolCalls[0].input;
 			return extractedData;
 
 		} catch (error) {

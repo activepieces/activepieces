@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Loader2, MessageSquare, ChevronsRight, Play } from 'lucide-react';
+import { Loader2, MessageSquare, Play, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -41,23 +41,17 @@ export const AgentPreviewSection = () => {
   const handleClosePreview = () => {
     setTestSectionIsOpen(false);
   };
-
   return (
     <div className="flex flex-col h-full px-6 py-4 gap-4 w-full bg-background overflow-hidden">
       <div
-        className="flex items-center gap-2 cursor-pointer select-none mb-2"
-        onClick={handleClosePreview}
-        role="button"
+        className="flex items-center justify-between select-none mb-2"
         tabIndex={0}
         aria-label="Close Agent Preview"
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            handleClosePreview();
-          }
-        }}
       >
-        <ChevronsRight className="w-5 h-5 text-muted-foreground" />
-        <h2 className="text-lg font-semibold m-0">Agent Preview</h2>
+        <h2 className="text-lg font-semibold m-0">{t('Agent Preview')}</h2>
+        <Button variant="ghost" size="icon" onClick={handleClosePreview}>
+          <X className="w-5 h-5  " />
+        </Button>
       </div>
       <ScrollArea className="flex-1 min-h-0 overflow-hidden">
         {currentRunId ? (
@@ -92,7 +86,7 @@ export const AgentPreviewSection = () => {
             ) : (
               <Play className="w-5 h-5" />
             )}
-            {isRunning ? 'Running...' : 'Run'}
+            {isRunning ? t('Running...') : t('Run')}
           </Button>
         </div>
       </div>

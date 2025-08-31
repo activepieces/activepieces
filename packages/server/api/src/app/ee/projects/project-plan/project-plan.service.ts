@@ -139,10 +139,8 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
 
         return projectPlan
     },
+    
 })
-
-
-
 
 async function projectReachedLimit(params: LimitReachedFromProjectPlanParams): Promise<boolean> {
     const { manageProjectsEnabled, projectPlan, projectUsage, usageType } = params

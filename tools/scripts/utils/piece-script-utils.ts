@@ -59,9 +59,7 @@ export function getCommunityPieceFolder(pieceName: string): string {
 export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
     const piecesPath = resolve(cwd(), 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
-    const enterprisePiecesPath = resolve(cwd(), 'packages', 'ee', 'pieces')
-    const enterprisePiecesPaths = await traverseFolder(enterprisePiecesPath)
-    return [...paths, ...enterprisePiecesPaths]
+    return paths
 }
 
 export const pieceMetadataExists = async (
@@ -89,21 +87,32 @@ export const pieceMetadataExists = async (
 
 export async function findNewPieces(): Promise<PieceMetadata[]> {
     const paths = await findAllDistPaths()
-    const changedPieces = (await Promise.all(paths.map(async (folderPath) => {
-        const packageJson = await readPackageJson(folderPath);
-        if (NON_PIECES_PACKAGES.includes(packageJson.name)) {
-            return null;
-        }
-        const exists = await pieceMetadataExists(packageJson.name, packageJson.version)
-        if (!exists) {
-            try {
-                return loadPieceFromFolder(folderPath);
-            } catch (ex) {
+    const changedPieces: PieceMetadata[] = []
+    
+    // Adding batches because of memory limit when we have a lot of pieces
+    const batchSize = 75
+    for (let i = 0; i < paths.length; i += batchSize) {
+        const batch = paths.slice(i, i + batchSize)
+        const batchResults = await Promise.all(batch.map(async (folderPath) => {
+            const packageJson = await readPackageJson(folderPath);
+            if (NON_PIECES_PACKAGES.includes(packageJson.name)) {
                 return null;
             }
-        }
-        return null;
-    }))).filter((piece): piece is PieceMetadata => piece !== null)
+            const exists = await pieceMetadataExists(packageJson.name, packageJson.version)
+            if (!exists) {
+                try {
+                    return loadPieceFromFolder(folderPath);
+                } catch (ex) {
+                    return null;
+                }
+            }
+            return null;
+        }))
+        
+        const validResults = batchResults.filter((piece): piece is PieceMetadata => piece !== null)
+        changedPieces.push(...validResults)
+    }
+    
     return changedPieces;
 }
 
@@ -115,13 +124,8 @@ export async function findAllPieces(): Promise<PieceMetadata[]> {
 
 async function findAllDistPaths(): Promise<string[]> {
     const baseDir = resolve(cwd(), 'dist', 'packages')
-    const standardPiecesPath = resolve(baseDir, 'pieces')
-    const enterprisePiecesPath = resolve(baseDir, 'ee', 'pieces')
-    const paths = [
-        ...await traverseFolder(standardPiecesPath),
-        ...await traverseFolder(enterprisePiecesPath)
-    ]
-    return paths
+    const piecesBuildOutputPath = resolve(baseDir, 'pieces')
+    return await traverseFolder(piecesBuildOutputPath)
 }
 
 async function traverseFolder(folderPath: string): Promise<string[]> {

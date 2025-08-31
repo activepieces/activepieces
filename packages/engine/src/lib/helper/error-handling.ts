@@ -47,10 +47,9 @@ export async function continueIfFailureHandler(
 }
 
 export const handleExecutionError = (error: unknown): ErrorHandlingResponse => {
-    console.log(error)
     const isEngineError = (error instanceof ExecutionError) && error.type === ExecutionErrorType.ENGINE
     const isActivepiecesError = error instanceof ActivepiecesError
-    const errorMessage = isActivepiecesError ? JSON.stringify(error?.error?.params) : JSON.stringify(error)
+    const errorMessage = isActivepiecesError ? JSON.stringify(error?.error?.params, null, 2) : JSON.stringify(error, null, 2)
     return {
         message: error instanceof Error ? error.message : errorMessage,
         verdictResponse: isEngineError ? {

@@ -103,7 +103,7 @@ export type PauseHookParams = {
 };
 
 export type PauseHook = (params: {
-  pauseMetadata: DelayPauseMetadata | Omit<WebhookPauseMetadata, 'requestId'>
+  pauseMetadata: Omit<DelayPauseMetadata, 'requestIdToReply'> | Omit<WebhookPauseMetadata, 'requestId' | 'requestIdToReply'>
 }) => void;
 
 export type FlowsContext = {

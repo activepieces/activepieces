@@ -1,0 +1,15 @@
+{
+  "GenerateBanners": "GenerateBanners",
+  "Image generation API for banners and social media posts": "Image generation API for banners and social media posts",
+  "Public API Key": "Public API Key",
+  "Secret API Key": "Secret API Key",
+  "\nTo obtain your GenerateBanners public and secret API Keys, you can follow the steps below:\n\n1. Go to the [GenerateBanners homepage](https://www.generatebanners.com/).\n2. Sign up or log in into your account.\n3. Go to your [account page](https://www.generatebanners.com/app/account).\n4. The public and secret API keys are now displayed, copy them one by one into the right Activepieces fields.\n": "\nTo obtain your GenerateBanners public and secret API Keys, you can follow the steps below:\n\n1. Go to the [GenerateBanners homepage](https://www.generatebanners.com/).\n2. Sign up or log in into your account.\n3. Go to your [account page](https://www.generatebanners.com/app/account).\n4. The public and secret API keys are now displayed, copy them one by one into the right Activepieces fields.\n",
+  "Render Template": "Render Template",
+  "Render a GenerateBanners template": "Render a GenerateBanners template",
+  "Template": "Template",
+  "File type": "File type",
+  "Variables": "Variables",
+  "Image (jpg)": "Image (jpg)",
+  "Image (png)": "Image (png)",
+  "Document (pdf)": "Document (pdf)"
+}
