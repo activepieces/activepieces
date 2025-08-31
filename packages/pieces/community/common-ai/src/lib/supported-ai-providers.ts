@@ -33,7 +33,8 @@ export type SupportedAIProvider = {
         instance: { modelId: string }
         pricing: {
             costPerSecond: number
-        }
+        },
+        minimumDurationInSeconds: number
     }[]
 }
 
@@ -441,7 +442,23 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: 0.003,
             },
         ],
-        videoModels: [],
+        videoModels: []
+        //     {
+        //         displayName: 'minimax/hailuo-02',
+        //         instance: { modelId: 'minimax/hailuo-02' },
+        //         pricing: {
+        //             costPerSecond: 0.08,
+        //         },
+        //         minimumDurationInSeconds: 6,
+        //     },
+        //     {
+        //         displayName: 'bytedance/seedance-1-pro',
+        //         instance: { modelId: 'bytedance/seedance-1-pro' },
+        //         pricing: {
+        //             costPerSecond: 0.15,
+        //         },
+        //         minimumDurationInSeconds: 5,
+        //     }
     },
     {
         provider: 'google',
@@ -519,14 +536,16 @@ It is strongly recommended that you add your credit card information to your Ope
                 instance: { modelId: 'veo-3.0-generate-preview' },
                 pricing: {
                     costPerSecond: 0.75,
-                },
+                },  
+                minimumDurationInSeconds: 8,
             },
             {
                 displayName: 'VEO 3 Fast Preview',
                 instance: { modelId: 'veo-3.0-fast-generate-preview' },
                 pricing: {
-                    costPerSecond: 0.40,
+                    costPerSecond: 0.40,    
                 },
+                minimumDurationInSeconds: 8,
             },
             {
                 displayName: 'VEO 2',
@@ -534,6 +553,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     costPerSecond: 0.35,
                 },
+                minimumDurationInSeconds: 8,
             },
         ],
     },

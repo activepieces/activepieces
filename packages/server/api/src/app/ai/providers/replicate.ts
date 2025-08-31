@@ -29,22 +29,27 @@ export const replicateProvider: AIProviderStrategy = {
         const model = apiResponse.model
 
         const imageModelConfig = providerConfig.imageModels.find((m) => m.instance.modelId.split(':')[0] === model)
-        if (!imageModelConfig) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
-                params: {
-                    provider,
-                    model,
-                },
-            })
-        }
-
+        const videoModelConfig = providerConfig.videoModels.find((m) => m.instance.modelId.split(':')[0] === model)
+        if (imageModelConfig && typeof imageModelConfig.pricing === 'number') {
         return {
-            cost: imageModelConfig.pricing as number * imageCount,
-            model,
+                cost: imageModelConfig.pricing * imageCount,
+                model,
+            }
         }
+        if (videoModelConfig) {
+            return {
+                cost: videoModelConfig.pricing.costPerSecond * videoModelConfig.minimumDurationInSeconds,
+                model,
+            }
+        }
+        throw new ActivepiecesError({
+            code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
+            params: {
+                provider,
+                model,
+            },
+        })
     },
-
     isStreaming: (_request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean => {
         return false
     },

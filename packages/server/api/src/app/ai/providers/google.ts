@@ -78,9 +78,8 @@ export const googleProvider: AIProviderStrategy = {
 
         let videoOperationId
         if (videoModelConfig && request.url.includes(':predictLongRunning') && 'name' in apiResponse) {
-            const VEO_VIDEO_DURATION_SECONDS = 8
             const { name } = apiResponse // models/veo-2.0-generate-001/operations/hnp64qpr7tj2\
-            cost = videoModelConfig.pricing.costPerSecond * VEO_VIDEO_DURATION_SECONDS   
+            cost = videoModelConfig.pricing.costPerSecond * videoModelConfig.minimumDurationInSeconds   
             videoOperationId = name.split('/').pop()
         }
 

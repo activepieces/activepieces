@@ -31,7 +31,6 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 request.body = (request as ModifiedFastifyRequest).originalBody
                 const projectId = request.principal.projectId
                 const { provider } = request.params as { provider: string }
-
                 if (aiProviderService.isNonUsageRequest(provider, request)) {
                     return reply.send(response.stream)
                 }
@@ -157,7 +156,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
 
             const platformId = await aiProviderService.getAIProviderPlatformId(userPlatformId)
             const config = await aiProviderService.getConfig(provider, platformId);
-
+ 
             (request as ModifiedFastifyRequest).customUpstream = aiProviderService.getBaseUrl(provider, config)
             request.raw.url = aiProviderService.rewriteUrl(provider, config, request.url)
 
