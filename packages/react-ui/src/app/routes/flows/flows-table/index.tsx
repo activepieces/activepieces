@@ -130,9 +130,7 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
 
   return (
     <div className="flex flex-row gap-8">
-      {!embedState.hideFolders && (
-        <FolderFilterList key="folder-filter" refresh={refresh} />
-      )}
+      {true && <FolderFilterList key="folder-filter" refresh={refresh} />}
       <div className="w-full">
         <DataTable
           emptyStateTextTitle={t('No flows found')}
