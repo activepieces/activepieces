@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 
 export const newNote = createTrigger({
   name: 'new_note',
@@ -6,7 +6,49 @@ export const newNote = createTrigger({
   description:
     'Triggers when notes are successfully generated for meetings or calls',
   type: TriggerStrategy.WEBHOOK,
-  props: {},
+  props: {
+    setupInstructions: Property.MarkDown({
+      value: `
+## Setup Instructions
+
+To use this trigger, you need to manually configure a webhook in your Avoma account:
+
+### 1. Access Avoma Webhook Settings
+- Log into your Avoma account
+- Go to **Settings > Integrations > Webhooks**
+- Click **"Add Webhook"** or **"Create New Webhook"**
+
+### 2. Configure the Webhook
+1. **Webhook URL**: Paste this URL:
+\`\`\`text
+{{webhookUrl}}
+\`\`\`
+2. **Event Type**: Select **"AI Notes Generated"** or **"Notes Ready"**
+3. **HTTP Method**: Set to **POST**
+4. **Content Type**: Set to **application/json**
+
+### 3. Optional Filters
+Configure filters if needed:
+- **Meeting Types**: Choose specific meeting types (calls, video meetings, etc.)
+- **User Filters**: Limit to specific users or teams
+- **Meeting Duration**: Filter by meeting length
+
+### 4. Test and Save
+1. Click **"Test Webhook"** to verify the connection
+2. Click **"Save"** to activate the webhook
+
+---
+
+**Note:** You need admin permissions in Avoma to configure webhooks.
+
+**Use Cases:**
+- Automatically process meeting notes in your CRM
+- Send meeting summaries to team channels
+- Extract action items for task management
+- Archive meeting insights to knowledge bases
+      `,
+    }),
+  },
   sampleData: {
     action_items: [
       {
@@ -53,24 +95,15 @@ export const newNote = createTrigger({
     video_ready: true,
     video_url: 'http://example.com'
   },
-  async onEnable() {
-    // Webhook URL is automatically generated and available at context.webhookUrl
-    // Users need to configure this URL in their Avoma webhook settings
-    return;
+  async onEnable(context) {
+    // Manual setup - no programmatic registration needed
   },
-  async onDisable() {
-    // Cleanup if needed when trigger is disabled
-    return;
+
+  async onDisable(context) {
+    // Manual setup - users manage webhooks in Avoma UI
   },
+
   async run(context) {
-    const payload = context.payload;
-
-    // Validate that this is a note generation event
-    if (!payload?.body || (payload.body as any).event_type !== 'AINOTE') {
-      return [];
-    }
-
-    // Return the webhook payload as a trigger event
-    return [payload.body];
+    return [context.payload.body];
   }
 });

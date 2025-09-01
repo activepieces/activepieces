@@ -1,11 +1,55 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 
 export const newMeetingScheduled = createTrigger({
   name: 'new_meeting_scheduled',
   displayName: 'New Meeting Scheduled',
   description: 'Triggers when a meeting is booked via one of your Avoma scheduling pages',
   type: TriggerStrategy.WEBHOOK,
-  props: {},
+  props: {
+    setupInstructions: Property.MarkDown({
+      value: `
+## Setup Instructions
+
+To use this trigger, you need to manually configure a webhook in your Avoma account:
+
+### 1. Access Avoma Webhook Settings
+- Log into your Avoma account
+- Go to **Settings > Integrations > Webhooks**
+- Click **"Add Webhook"** or **"Create New Webhook"**
+
+### 2. Configure the Webhook
+1. **Webhook URL**: Paste this URL:
+\`\`\`text
+{{webhookUrl}}
+\`\`\`
+2. **Event Type**: Select **"Meeting Scheduled"** or **"Meeting Booked"**
+3. **HTTP Method**: Set to **POST**
+4. **Content Type**: Set to **application/json**
+
+### 3. Optional Filters
+Configure filters if needed:
+- **Scheduling Pages**: Limit to specific Avoma scheduling pages
+- **Meeting Types**: Filter by meeting purpose or type
+- **Organizer**: Limit to specific organizers or teams
+- **Time Range**: Filter by meeting duration or time slots
+
+### 4. Test and Save
+1. Click **"Test Webhook"** to verify the connection
+2. Click **"Save"** to activate the webhook
+
+---
+
+**Note:** You need admin permissions in Avoma to configure webhooks.
+
+**Use Cases:**
+- Automatically create calendar events in other systems
+- Send meeting confirmations via custom channels
+- Update CRM with new meeting bookings
+- Trigger preparation workflows for sales meetings
+- Sync meeting data with project management tools
+      `,
+    }),
+  },
   sampleData: {
     booker_email: 'client@example.com',
     cancel_reason: null,
@@ -39,24 +83,15 @@ export const newMeetingScheduled = createTrigger({
     subject: 'Product Demo - John Client',
     uuid: '095be615-a8ad-4c33-8e9c-c7612fbf6c9f'
   },
-  async onEnable() {
-    // Webhook URL is automatically generated and available at context.webhookUrl
-    // Users need to configure this URL in their Avoma webhook settings
-    return;
+  async onEnable(context) {
+    // Manual setup - no programmatic registration needed
   },
-  async onDisable() {
-    // Cleanup if needed when trigger is disabled
-    return;
-  },
-  async run(context) {
-    const payload = context.payload;
-    
-    // Validate that this is a meeting scheduled event
-    if (!payload?.body || (payload.body as any).event_type !== 'MEETING_BOOKED_VIA_SCHEDULER') {
-      return [];
-    }
 
-    // Return the webhook payload as a trigger event
-    return [payload.body];
+  async onDisable(context) {
+    // Manual setup - users manage webhooks in Avoma UI
+  },
+
+  async run(context) {
+    return [context.payload.body];
   }
 });
