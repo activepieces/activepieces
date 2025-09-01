@@ -15,6 +15,12 @@ export const createClient = createAction({
       description: 'The name of the new client.',
       required: true,
     }),
+    external_reference: Property.ShortText({
+      displayName: 'External Reference',
+      description:
+        'External reference to link this client with external systems.',
+      required: false,
+    }),
     notes: Property.LongText({
       displayName: 'Notes',
       description: 'Notes for the client.',
@@ -22,7 +28,8 @@ export const createClient = createAction({
     }),
   },
   async run(context) {
-    const { workspace_id, name, notes } = context.propsValue;
+    const { workspace_id, name, external_reference, notes } =
+      context.propsValue;
     const apiToken = context.auth;
 
     const response = await httpClient.sendRequest({
@@ -36,6 +43,7 @@ export const createClient = createAction({
       },
       body: {
         name,
+        external_reference,
         notes,
       },
     });

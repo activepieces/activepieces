@@ -21,10 +21,34 @@ export const createTask = createAction({
       description: 'The estimated time for the task in seconds.',
       required: false,
     }),
+    external_reference: Property.ShortText({
+      displayName: 'External Reference',
+      description:
+        'External reference to link this task with external systems.',
+      required: false,
+    }),
+    active: Property.Checkbox({
+      displayName: 'Active',
+      description: 'Whether the task is active. Use false to mark as done.',
+      required: false,
+      defaultValue: true,
+    }),
+    user_id: Property.Number({
+      displayName: 'Creator User ID',
+      description: 'Creator ID, if omitted, will use requester user ID.',
+      required: false,
+    }),
   },
   async run(context) {
-    const { workspace_id, project_id, name, estimated_seconds } =
-      context.propsValue;
+    const {
+      workspace_id,
+      project_id,
+      name,
+      estimated_seconds,
+      external_reference,
+      active,
+      user_id,
+    } = context.propsValue;
     const apiToken = context.auth;
 
     const response = await httpClient.sendRequest({
@@ -38,7 +62,10 @@ export const createTask = createAction({
       },
       body: {
         name,
-        estimated_seconds,
+        active,
+        ...(estimated_seconds && { estimated_seconds }),
+        ...(external_reference && { external_reference }),
+        ...(user_id && { user_id }),
       },
     });
 

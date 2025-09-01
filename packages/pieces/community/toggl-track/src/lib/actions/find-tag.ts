@@ -1,5 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, QueryParams } from '@activepieces/pieces-common';
+import {
+  HttpMethod,
+  httpClient,
+  QueryParams,
+} from '@activepieces/pieces-common';
 import { togglTrackAuth } from '../..';
 import { togglCommon } from '../common';
 
@@ -10,22 +14,32 @@ export const findTag = createAction({
   description: 'Find a tag by name in a workspace.',
   props: {
     workspace_id: togglCommon.workspace_id,
-    name: Property.ShortText({
-        displayName: 'Tag Name',
-        description: 'The name of the tag to find.',
-        required: true,
+    search: Property.ShortText({
+      displayName: 'Tag Name',
+      description: 'Search by tag name.',
+      required: false,
+    }),
+    page: Property.Number({
+      displayName: 'Page Number',
+      description: 'Page number for pagination.',
+      required: false,
+    }),
+    per_page: Property.Number({
+      displayName: 'Items Per Page',
+      description: 'Number of items per page.',
+      required: false,
     }),
   },
   async run(context) {
-    const { workspace_id, name } = context.propsValue;
+    const { workspace_id, search, page, per_page } = context.propsValue;
     const apiToken = context.auth;
 
-    
-    const queryParams: QueryParams = {
-        search: name,
-    };
+    const queryParams: QueryParams = {};
+    if (search) queryParams['search'] = search;
+    if (page) queryParams['page'] = page.toString();
+    if (per_page) queryParams['per_page'] = per_page.toString();
 
-    const response = await httpClient.sendRequest<[{ id: number, name: string }]>({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/tags`,
       headers: {
@@ -34,12 +48,9 @@ export const findTag = createAction({
           'base64'
         )}`,
       },
-      queryParams: queryParams
+      queryParams: queryParams,
     });
 
-    
-    const matchingTags = response.body.filter(tag => tag.name.toLowerCase() === name.toLowerCase());
-
-    return matchingTags;
+    return response.body;
   },
 });

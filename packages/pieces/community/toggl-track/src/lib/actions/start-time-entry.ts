@@ -18,11 +18,14 @@ export const startTimeEntry = createAction({
     tags: togglCommon.tags,
     billable: Property.Checkbox({
       displayName: 'Billable',
+      description: 'Whether the time entry is marked as billable.',
       required: false,
+      defaultValue: false,
     }),
+    task_id: togglCommon.optional_task_id,
   },
   async run(context) {
-    const { workspace_id, description, project_id, tags, billable } =
+    const { workspace_id, description, project_id, tags, billable, task_id } =
       context.propsValue;
     const apiToken = context.auth;
 
@@ -38,13 +41,13 @@ export const startTimeEntry = createAction({
       body: {
         workspace_id: Number(workspace_id),
         description,
-        tags,
-        billable,
-        project_id,
-        
         start: new Date().toISOString(),
-        duration: -1, 
+        duration: -1,
         created_with: 'Activepieces',
+        billable,
+        ...(project_id && { project_id }),
+        ...(task_id && { task_id }),
+        ...(tags && { tags }),
       },
     });
 

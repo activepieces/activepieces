@@ -16,7 +16,7 @@ export const createTimeEntry = createAction({
     }),
     start: Property.DateTime({
       displayName: 'Start Time',
-      description: "The start time of the entry in UTC. Defaults to the current time if left blank.",
+      description: 'The start time of the entry in UTC.',
       required: true,
     }),
     duration: Property.Number({
@@ -25,10 +25,25 @@ export const createTimeEntry = createAction({
         'Duration of the time entry. Use a negative number (e.g., -1) to start a running timer.',
       required: true,
     }),
+    stop: Property.DateTime({
+      displayName: 'Stop Time',
+      description:
+        'The stop time of the entry in UTC. Can be omitted if still running.',
+      required: false,
+    }),
+    task_id: togglCommon.optional_task_id,
     project_id: togglCommon.optional_project_id,
     tags: togglCommon.tags,
     billable: Property.Checkbox({
       displayName: 'Billable',
+      description: 'Whether the time entry is marked as billable.',
+      required: false,
+      defaultValue: false,
+    }),
+    user_id: Property.Number({
+      displayName: 'Creator User ID',
+      description:
+        'Time entry creator ID. If omitted, will use requester user ID.',
       required: false,
     }),
   },
@@ -38,9 +53,12 @@ export const createTimeEntry = createAction({
       description,
       start,
       duration,
+      stop,
       project_id,
+      task_id,
       tags,
       billable,
+      user_id,
     } = context.propsValue;
     const apiToken = context.auth;
 
@@ -58,10 +76,13 @@ export const createTimeEntry = createAction({
         description,
         start: new Date(start).toISOString(),
         duration,
-        project_id,
-        tags,
-        billable,
         created_with: 'Activepieces',
+        billable,
+        ...(stop && { stop: new Date(stop).toISOString() }),
+        ...(project_id && { project_id }),
+        ...(task_id && { task_id }),
+        ...(tags && { tags }),
+        ...(user_id && { user_id }),
       },
     });
 
