@@ -10,8 +10,8 @@ import { prepareQuery } from '../common/client';
 export const findCompaniesAction = createAction({
   auth: PredictLeadsAuth,
   name: 'predict-leads_find_companies',
-  displayName: 'Find Companies',
-  description: 'Finds companies',
+  displayName: 'Retrieve companies',
+  description: 'Retrieve all companies',
   props: {
     location: Property.ShortText({
       displayName: 'Location',
@@ -52,13 +52,11 @@ export const findCompaniesAction = createAction({
   },
 });
 
-
-
 export const findCompanyByDomainAction = createAction({
   auth: PredictLeadsAuth,
   name: 'predict-leads_find_company_by_domain',
-  displayName: 'Find Company by domain',
-  description: 'Finds a company by its domain.',
+  displayName: 'Retrieve a company',
+  description: 'Retrieve a company by its domain.',
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',

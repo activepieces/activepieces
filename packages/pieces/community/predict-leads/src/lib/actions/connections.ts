@@ -10,8 +10,8 @@ import { prepareQuery } from '../common/client';
 export const findConnectionsByDomainAction = createAction({
   auth: PredictLeadsAuth,
   name: 'predict-leads_find_connections_by_domain',
-  displayName: 'Find Connections by domain',
-  description: 'Finds connections by the domain of the company.',
+  displayName: 'Retrieve company connections',
+  description: 'Retrieves company connections by domain.',
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',
@@ -48,8 +48,8 @@ export const findConnectionsByDomainAction = createAction({
 export const findConnectionsAction = createAction({
   auth: PredictLeadsAuth,
   name: 'predict-leads_find_connections',
-  displayName: 'Find Connections',
-  description: 'Finds all connectionn',
+  displayName: 'Retrieve all connections',
+  description: 'Finds all portfolio companies',
   props: {
     first_seen_at_from: firstSeenAtFromField,
     first_seen_at_until: firstSeenAtUntilField,

@@ -40,8 +40,8 @@ const categories = [
 export const getCompanyJobOpeningsActions = createAction({
   auth: PredictLeadsAuth,
   name: 'predict-leads_find_company_job_openings',
-  displayName: 'Find Company Job Openings',
-  description: 'Finds job openings by company domain',
+  displayName: 'Retrieve company job openings',
+  description: 'Retrieve job openings by company domain',
   props: {
     domain: Property.ShortText({
       displayName: "Domain",
@@ -128,8 +128,8 @@ export const getCompanyJobOpeningsActions = createAction({
 export const getAJobOpeningByIdAction = createAction({
   auth: PredictLeadsAuth,
   name: 'predict-leads_get_a_job_opening_by_id',
-  displayName: 'Get a Job Opening by ID',
-  description: 'Retrieves a specific job opening by its ID.',
+  displayName: 'Retrieve job opening',
+  description: 'Retrieves a single job opening by ID.',
   props: {
     jobOpeningId: Property.ShortText({
       displayName: "Job Opening ID",
@@ -156,8 +156,8 @@ export const getAJobOpeningByIdAction = createAction({
 export const findJobOpeningsAction = createAction({
   auth: PredictLeadsAuth,
   name: 'predict-leads_find_job_openings',
-  displayName: 'Find Job Openings',
-  description: 'Finds job openings',
+  displayName: 'Retrieve job openings',
+  description: 'Retrieve a list of job openings',
   props: {
     onet_codes: Property.Array({
       displayName: 'onet_codes',
