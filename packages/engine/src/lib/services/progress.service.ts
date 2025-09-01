@@ -102,7 +102,6 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
                 steps: runDetails.steps as Record<string, StepOutput>,
             },
         })
-        console.log('engineConstants', engineConstants)
 
         if (!isNil(engineConstants.logsUploadUrl)) {
             await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
