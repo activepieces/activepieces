@@ -238,6 +238,9 @@
       "@activepieces/piece-cognito-forms": [
         "packages/pieces/community/cognito-forms/src/index.ts"
       ],
+      "@activepieces/piece-cometapi": [
+        "packages/pieces/community/cometapi/src/index.ts"
+      ],
       "@activepieces/piece-comfyicu": [
         "packages/pieces/community/comfyicu/src/index.ts"
       ],
@@ -798,7 +801,7 @@
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
       ],
-        "@activepieces/piece-retell-ai": [
+      "@activepieces/piece-retell-ai": [
         "packages/pieces/community/retell-ai/src/index.ts"
       ],
       "@activepieces/piece-retune": [
