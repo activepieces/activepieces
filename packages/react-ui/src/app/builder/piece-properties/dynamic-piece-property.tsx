@@ -134,7 +134,7 @@ const DynamicPropertiesImplementation = React.memo(
                 `settings.propertySettings.${props.propertyName}.schema`,
                 {
                   ...schemaInput,
-                  [props.propertyName]: response.options,
+                  ...response.options,
                 } as Record<string, unknown>,
               );
             }
