@@ -53,6 +53,7 @@ import { ApSidebarItem } from './ap-sidebar-item';
 import { SidebarGeneralItemType, SidebarItemType } from './common';
 import { FoldersSection } from './sidebar-folders'; // Import the new component
 import { SidebarUser } from './sidebar-user';
+import UsageLimitsButton from './usage-limits-button';
 
 export function AppSidebar() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -308,6 +309,9 @@ export function AppSidebar() {
               <HelpAndFeedback />
             </SidebarMenu>
           )}
+
+          <UsageLimitsButton />
+
           <SidebarUser />
         </SidebarFooter>
         <SidebarRail />
