@@ -6,7 +6,7 @@ import { twilioAuth } from '../..';
 export const twilioGetMessage = createAction({
   auth: twilioAuth,
   name: 'get_message',
-  description: 'Return the details of a specific message.',
+  description: 'Retrieves the details of a specific message.',
   displayName: 'Get Message',
   props: {
     message_sid: Property.ShortText({
@@ -22,10 +22,12 @@ export const twilioGetMessage = createAction({
 
     const path = `Messages/${message_sid}.json`;
 
-    return await callTwilioApi(
+    const response =  await callTwilioApi(
       HttpMethod.GET,
       path,
       { account_sid, auth_token }
     );
+
+    return response.body;
   },
 });

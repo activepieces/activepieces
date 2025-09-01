@@ -6,7 +6,7 @@ import { twilioAuth } from '../..';
 export const twilioMakeCall = createAction({
   auth: twilioAuth,
   name: 'make_call',
-  description: 'Place a phone call and speak a message using text-to-speech.',
+  description: 'Call a number and say a message.',
   displayName: 'Call Phone',
   props: {
     from: twilioCommon.phone_number,
@@ -87,11 +87,13 @@ export const twilioMakeCall = createAction({
       bodyParams['Timeout'] = timeout;
     }
 
-    return await callTwilioApi(
+    const response =  await callTwilioApi(
       HttpMethod.POST,
       'Calls.json',
       { account_sid, auth_token },
       bodyParams
     );
+
+    return response.body;
   },
 });
