@@ -378,10 +378,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 ...flowRun,
                 steps,
             }
-        },
-    async updateLogs({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise < void> {
-            const executionState = executionStateString ? Buffer.from(executionStateString) : undefined
-        if(executionStateContentLength > maxFileSizeInBytes || (!isNil(executionState) && executionState.byteLength > maxFileSizeInBytes)) {
+        }
+        return flowRun
+    },
+    async updateLogs({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<void> {
+        const executionState = executionStateString ? Buffer.from(executionStateString) : undefined
+        if (executionStateContentLength > maxFileSizeInBytes || (!isNil(executionState) && executionState.byteLength > maxFileSizeInBytes)) {
             const errors = new Error(
                 'Execution Output is too large, maximum size is ' + maxFileSizeInBytes,
             )
