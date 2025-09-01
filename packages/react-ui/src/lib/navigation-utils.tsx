@@ -1,7 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { isNil } from '@activepieces/shared';
-
 import { useEmbedding } from '../components/embed-provider';
 
 export const useNewWindow = () => {
@@ -30,7 +28,7 @@ export const LOGIN_QUERY_PARAM = 'activepiecesLogin';
 export const PROVIDER_NAME_QUERY_PARAM = 'providerName';
 
 export const useDefaultRedirectPath = () => {
-   return '/flows';
+  return '/flows';
 };
 
 export const useRedirectAfterLogin = () => {

@@ -126,7 +126,6 @@ const DynamicPropertiesImplementation = React.memo(
             );
 
             if (!readonly) {
-          
               form.setValue(
                 `settings.propertySettings.${props.propertyName}.schema`,
                 response.options,
