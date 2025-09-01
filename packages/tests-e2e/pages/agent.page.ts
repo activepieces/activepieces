@@ -11,7 +11,7 @@ export class AgentPage extends BasePage {
 
   actions = {
     waitFor: async (page: Page) => {
-      await page.waitForURL('**/flows');
+      await page.waitForURL('**/agents');
       await this.getters.pageTitle(page).waitFor({ state: 'visible' });
     },
   };
