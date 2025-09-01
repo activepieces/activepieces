@@ -70,7 +70,6 @@ const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
 
 
 const translatePiece = <T extends PieceMetadataModelSummary | PieceMetadataModel>(piece: T, locale?: LocalesEnum): T => {
-  console.log('translatePiece-----------------', piece.displayName)
   if (!locale) {
     return piece
   }
@@ -83,7 +82,6 @@ const translatePiece = <T extends PieceMetadataModelSummary | PieceMetadataModel
     pathsToValuesToTranslate.forEach(key => {
       translateProperty(translatedPiece, key, target)
     })
-    console.log('piece translated successfully', translatedPiece.displayName)
     return translatedPiece
   }
   catch (err) {
@@ -93,13 +91,13 @@ const translatePiece = <T extends PieceMetadataModelSummary | PieceMetadataModel
 }
 
 /**Gets the piece metadata regardles of piece location (node_modules or dist), wasn't included inside piece.metadata() for backwards compatibility issues (if an old ap version installs a new piece it would fail)*/
-const initializeI18n =  async ({pieceName, pieceSource}: {pieceName: string, pieceSource: string}): Promise<I18nForPiece | undefined> => {
-  try{
+const initializeI18n = async ({ pieceName, pieceSource }: { pieceName: string, pieceSource: string }): Promise<I18nForPiece | undefined> => {
+  try {
     const locales = Object.values(LocalesEnum);
     const i18n: I18nForPiece = {};
 
-    const pieceOutputPath = await getPiecePath({packageName: pieceName, pieceSource})
- 
+    const pieceOutputPath = await getPiecePath({ packageName: pieceName, pieceSource })
+
     if (!pieceOutputPath) {
       return undefined
     }
