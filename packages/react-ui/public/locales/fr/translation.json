@@ -1013,7 +1013,7 @@
   "Save Limit": "Enregistrer la limite",
   "$1 per 1000 additional credits beyond plan limit": "1 $ par 1000 crédits supplémentaires au-delà de la limite du plan",
   "When a project AI credits limit is reached, all flows using universal AI pieces or agents and MCP servers will fail.": "Quand la limite de crédits d'un projet IA est atteinte, tous les Flows utilisant des pièces ou des agents IA universels et les serveurs MCP échoueront.",
-  "Ai Credits Usage Exceeded": "Utilisation des crédits IA dépassée",
+  "AI Credits Usage Exceeded": "",
   "of the Allowed Limit.": "de la limite autorisée.",
   "Date": "Date",
   "Model": "Modélisation",
