@@ -117,9 +117,9 @@ export const generateVideo = createAction({
             required: true,
         }),
         image: Property.File({
-            displayName: 'Image',
+            displayName: 'First Frame Image',
             required: false,
-            description: 'Image to use as a starting frame for the video.',
+            description: 'The first frame that the video will start with.',
         }),
         advancedOptions: aiProps({ modelType: 'video' }).advancedOptions,
     },
