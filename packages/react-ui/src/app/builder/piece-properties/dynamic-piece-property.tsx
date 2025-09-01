@@ -126,16 +126,10 @@ const DynamicPropertiesImplementation = React.memo(
             );
 
             if (!readonly) {
-              const schemaInput: Record<string, unknown> =
-                form.getValues()?.settings?.propertySettings?.[
-                  props.propertyName
-                ]?.schema ?? {};
+          
               form.setValue(
                 `settings.propertySettings.${props.propertyName}.schema`,
-                {
-                  ...schemaInput,
-                  [props.propertyName]: response.options,
-                } as Record<string, unknown>,
+                response.options,
               );
             }
 
