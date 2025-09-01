@@ -4,6 +4,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { togglTrackAuth } from '../..';
 import { togglCommon } from '../common';
 import {
@@ -85,7 +86,23 @@ export const newTimeEntry = createTrigger({
   async run(context) {
     const payload = context.payload.body as any;
     
-    if (payload?.payload === 'ping') {
+    // Handle validation pings automatically
+    if (payload?.payload === 'ping' && payload?.validation_code && payload?.validation_code_url) {
+      try {
+        // Automatically validate the webhook using Toggl's validation URL
+        const response = await httpClient.sendRequest({
+          method: HttpMethod.GET,
+          url: payload.validation_code_url,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        console.log('Webhook automatically validated:', response.status);
+      } catch (error) {
+        console.error('Failed to auto-validate webhook:', error);
+      }
+      
       return [];
     }
 

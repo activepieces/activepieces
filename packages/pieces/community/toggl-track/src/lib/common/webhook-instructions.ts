@@ -29,7 +29,7 @@ To use this trigger, you need to manually create a webhook in your Toggl Track a
 - The webhook will appear in your webhooks list when ready
 
 ### 4. Verification
-- Your webhook status should show as **"Validated"**
+- Your webhook status should show as **"Validated"** (happens automatically)
 - You can use the **"Test"** option to verify it's working
 - ${description}
 
@@ -43,11 +43,11 @@ To use this trigger, you need to manually create a webhook in your Toggl Track a
 ${eventDetails}
 
 **Troubleshooting:**
-- If status shows **"Not validated"**, check the webhook URL
+- If status shows **"Not validated"**, click "Test" to trigger auto-validation
 - If status shows **"Disabled"**, re-enable it from the 3-dot menu
 - If events aren't received, verify you selected "${eventName}" event
 
-**Note:** This trigger uses manual webhook setup as recommended by Toggl Track. The webhook will be managed through your Toggl Track dashboard, not programmatically through ActivePieces.
+**Note:** This trigger uses manual webhook setup as recommended by Toggl Track. **Validation happens automatically** when you click "Test" or when Toggl sends the first ping. The webhook will be managed through your Toggl Track dashboard, not programmatically through ActivePieces.
   `;
 }
 
