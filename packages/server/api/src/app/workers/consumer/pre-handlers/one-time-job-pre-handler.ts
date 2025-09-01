@@ -66,7 +66,7 @@ async function saveTriggerPayloadAndMarkQuotaExceeded(oneTimeJob: OneTimeJobData
             },
         },
     })
-    await flowRunService(log).updateLogsAndReturnUploadUrl({
+    await flowRunService(log).updateLogs({
         flowRunId: savedRun.id,
         logsFileId: savedRun.logsFileId ?? undefined,
         projectId,

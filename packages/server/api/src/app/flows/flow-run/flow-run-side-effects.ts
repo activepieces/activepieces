@@ -1,9 +1,13 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType } from '@activepieces/server-shared'
+import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
+    assertNotNullOrUndefined,
     ErrorCode,
     ExecutionType,
+    FileCompression,
+    FileLocation,
+    FileType,
     FlowRun,
     isFlowUserTerminalState,
     isNil,
@@ -12,10 +16,14 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { fileService } from '../../file/file.service'
+import { s3Helper } from '../../file/s3-helper'
 import { eventsHooks } from '../../helper/application-events'
+import { system } from '../../helper/system/system'
 import { jobQueue } from '../../workers/queue'
 import { JOB_PRIORITY } from '../../workers/queue/queue-manager'
 import { flowRunHooks } from './flow-run-hooks'
+import { flowRunRepo } from './flow-run-service'
 
 type StartParams = {
     flowRun: FlowRun
@@ -33,6 +41,9 @@ type StartParams = {
 type PauseParams = {
     flowRun: FlowRun
 }
+
+const FILE_STORAGE_LOCATION = system.get(AppSystemProp.FILE_STORAGE_LOCATION) as FileLocation
+const USE_SIGNED_URL = (system.get(AppSystemProp.S3_USE_SIGNED_URLS) === 'true') && FILE_STORAGE_LOCATION === FileLocation.S3
 
 const calculateDelayForPausedRun = (
     resumeDateTimeIsoString: string,
@@ -78,6 +89,13 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
             flowRunId: flowRun.id,
             executionType,
         }, '[FlowRunSideEffects#start]')
+        let logsUploadUrl: string | undefined
+        if (USE_SIGNED_URL) {
+            logsUploadUrl = await createLogsUploadUrl({
+                flowRunId: flowRun.id,
+                projectId: flowRun.projectId,
+            }, log)
+        }
 
         await jobQueue(log).add({
             id: flowRun.id,
@@ -96,6 +114,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                 progressUpdateType,
                 stepNameToTest,
                 sampleData,
+                logsUploadUrl,
             },
         })
         eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
@@ -123,7 +142,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         }
 
         switch (pauseMetadata.type) {
-            case PauseType.DELAY:
+            case PauseType.DELAY: {
                 await jobQueue(log).add({
                     id: flowRun.id,
                     type: JobType.DELAYED,
@@ -141,8 +160,36 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                     delay: calculateDelayForPausedRun(pauseMetadata.resumeDateTime),
                 })
                 break
+            }
             case PauseType.WEBHOOK:
                 break
         }
     },
 })
+
+const createLogsUploadUrl = async (params: CreateLogsUploadUrlParams, log: FastifyBaseLogger): Promise<string | undefined> => {
+    const file = await fileService(log).save({
+        fileId: params.flowRunId,
+        projectId: params.projectId,
+        data: null,
+        size: 0,
+        type: FileType.FLOW_RUN_LOG,
+        compression: FileCompression.NONE,
+        metadata: {
+            flowRunId: params.flowRunId,
+            projectId: params.projectId,
+        },
+    })
+    await flowRunRepo().update(params.flowRunId, {
+        logsFileId: file.id,
+    })
+
+    assertNotNullOrUndefined(file.s3Key, 's3Key')
+    return s3Helper(log).putS3SignedUrl(file.s3Key)
+}
+
+
+type CreateLogsUploadUrlParams = {
+    flowRunId: string
+    projectId: string
+}
