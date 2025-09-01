@@ -38,7 +38,7 @@ export function prepareQuery(request?: Record<string, any>): QueryParams {
   return params;
 }
 
-export class AITableClient {
+export class PredictLeadsClient {
   constructor(private apiKey: string, private apiToken: string) { }
 
   async makeRequest<T extends HttpMessageBody>(

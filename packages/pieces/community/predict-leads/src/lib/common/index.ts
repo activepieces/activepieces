@@ -1,9 +1,9 @@
 import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { PredictLeadsAuth } from '../..';
-import { AITableClient } from './client';
+import { PredictLeadsClient } from './client';
 
 export function makeClient(auth: PiecePropValueSchema<typeof PredictLeadsAuth>) {
-	const client = new AITableClient(auth.apiKey, auth.apiToken);
+	const client = new PredictLeadsClient(auth.apiKey, auth.apiToken);
 	return client;
 }
 
