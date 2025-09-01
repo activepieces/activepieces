@@ -8,7 +8,7 @@
   "Clears all items inside a queue": "Clears all items inside a queue",
   "Markdown": "Markdown",
   "Queue Name": "Queue Name",
-  "Items": "Items",
+  "Items": "项目",
   "Number of items": "Number of items",
   "**Note:**\n- You can push items from other flows. The queue name should be unique across all flows.\n- The testing step work in isolation and doesn't affect the actual queue after publishing.\n": "**Note:**\n- You can push items from other flows. The queue name should be unique across all flows.\n- The testing step work in isolation and doesn't affect the actual queue after publishing.\n",
   "**Note:**\n- You can pull items from other flows. The queue name should be unique across all flows.\n- The testing step work in isolation and doesn't affect the actual queue after publishing.\n": "**Note:**\n- You can pull items from other flows. The queue name should be unique across all flows.\n- The testing step work in isolation and doesn't affect the actual queue after publishing.\n",

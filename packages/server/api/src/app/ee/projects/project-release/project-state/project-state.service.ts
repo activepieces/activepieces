@@ -1,4 +1,4 @@
-import { AgentOperationType, AgentState, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowProjectOperationType, FlowState, FlowSyncError, isNil, McpState, PopulatedAgent, PopulatedFlow, ProjectId, ProjectState, Table, TableOperationType, TableState } from '@activepieces/shared'
+import { AgentOperationType, AgentState, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, flowMigrations, FlowProjectOperationType, FlowState, FlowSyncError, isNil, McpState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, Table, TableOperationType, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { agentsService } from '../../../../agents/agents-service'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
@@ -266,6 +266,59 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             agents: agents.data,
             projectId,
         })
+    },
+
+    getAgentState(agent: PopulatedAgent): AgentState {
+        const mcpState: McpState = {
+            token: agent.mcp.token,
+            externalId: agent.mcp.externalId,
+            name: agent.mcp.name,
+            tools: agent.mcp.tools,
+        }
+        const agentState: AgentState = {
+            displayName: agent.displayName,
+            externalId: agent.externalId,
+            outputType: agent.outputType,
+            outputFields: agent.outputFields,
+            mcp: mcpState,
+            description: agent.description,
+            systemPrompt: agent.systemPrompt,
+            profilePictureUrl: agent.profilePictureUrl,
+            maxSteps: agent.maxSteps,
+            runCompleted: agent.runCompleted,
+        }
+        return agentState
+    },
+    getFlowState(flow: PopulatedFlow): FlowState {
+        const flowState: FlowState = {
+            id: flow.id,
+            externalId: flow.externalId ?? flow.id,
+            version: flowMigrations.apply(flow.version),
+            created: flow.created,
+            updated: flow.updated,
+            folderId: flow.folderId,
+            publishedVersionId: flow.publishedVersionId,
+            metadata: flow.metadata,
+            projectId: flow.projectId,
+            status: flow.status,
+            triggerSource: flow.triggerSource,
+        }
+        return flowState
+    },
+    getTableState(table: PopulatedTable): TableState {
+        const fields: FieldState[] = table.fields.map((field) => ({
+            name: field.name,
+            type: field.type,
+            externalId: field.externalId,
+            data: field.type === FieldType.STATIC_DROPDOWN ? field.data : undefined,
+        }))
+        const tableState: TableState = {
+            id: table.id,
+            externalId: table.externalId ?? table.id,
+            name: table.name,
+            fields,
+        }
+        return tableState
     },
 })
 

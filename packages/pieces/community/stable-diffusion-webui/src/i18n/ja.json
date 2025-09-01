@@ -1,10 +1,10 @@
 {
-  "Stable Dffusion web UI": "Stable Dffusion web UI",
-  "A web interface for Stable Diffusion": "A web interface for Stable Diffusion",
-  "Stable Diffusion web UI API base URL": "Stable Diffusion web UI API base URL",
-  "Text to Image": "Text to Image",
+  "Stable Dffusion web UI": "安定版DffusionウェブUI",
+  "A web interface for Stable Diffusion": "安定した拡散のためのウェブインターフェイス",
+  "Stable Diffusion web UI API base URL": "安定した拡散ウェブ UI APIベースURL",
+  "Text to Image": "テキストから画像へ",
   "Prompt": "Prompt",
-  "Model": "Model",
-  "Advanced parameters (key/value)": "Advanced parameters (key/value)",
-  "Refer to API documentation": "Refer to API documentation"
+  "Model": "モデル",
+  "Advanced parameters (key/value)": "高度なパラメータ (キー/値)",
+  "Refer to API documentation": "API ドキュメントを参照してください"
 }

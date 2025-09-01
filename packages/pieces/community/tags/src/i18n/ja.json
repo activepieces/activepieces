@@ -1,9 +1,9 @@
 {
-  "Tags": "Tags",
-  "Add custom tags to your run for filtration": "Add custom tags to your run for filtration",
-  "Add Tag": "Add Tag",
-  "Add a tag to the current execution": "Add a tag to the current execution",
+  "Tags": "タグ",
+  "Add custom tags to your run for filtration": "濾過用にカスタムタグをランニングに追加する",
+  "Add Tag": "タグを追加",
+  "Add a tag to the current execution": "現在の実行にタグを追加",
   "Markdown": "Markdown",
-  "Tag Name": "Tag Name",
+  "Tag Name": "タグ名",
   "\nThis action add a tag to the current execution, this tag can be used to filter the execution in the **API** only at this moment.\n<br>\n<br>\n**Note:** If you are looking to use it in the user interface, please open a feature request.\n": "\nThis action add a tag to the current execution, this tag can be used to filter the execution in the **API** only at this moment.\n<br>\n<br>\n**Note:** If you are looking to use it in the user interface, please open a feature request.\n"
 }

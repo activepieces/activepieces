@@ -1,5 +1,5 @@
 {
-  "Tables": "Tables",
+  "Tables": "表",
   "Create Record(s)": "Create Record(s)",
   "Delete Record(s)": "Delete Record(s)",
   "Update Record": "Update Record",
@@ -14,9 +14,9 @@
   "Records": "Records",
   "Records IDs": "Records IDs",
   "Record ID": "Record ID",
-  "Values": "Values",
+  "Values": "值",
   "Limit": "Limit",
-  "Filters": "Filters",
+  "Filters": "篩選條件",
   "The records to create.": "The records to create.",
   "The IDs of the records to delete": "The IDs of the records to delete",
   "The ID of the record to do the action on.": "The ID of the record to do the action on.",

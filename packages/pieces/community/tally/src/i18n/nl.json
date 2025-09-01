@@ -1,8 +1,8 @@
 {
-  "Tally": "Tally",
-  "Receive form submissions from Tally forms": "Receive form submissions from Tally forms",
-  "New Submission": "New Submission",
-  "Triggers when form receives a new submission": "Triggers when form receives a new submission",
+  "Tally": "Taal",
+  "Receive form submissions from Tally forms": "Ontvang formulierinzendingen van Tally formulieren",
+  "New Submission": "Nieuwe inzending",
+  "Triggers when form receives a new submission": "Triggert wanneer het formulier een nieuwe uitwerking ontvangt",
   "Markdown": "Markdown",
-  "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Integrations\" section.\n4. Find the \"Webhooks\" integration and click on \"Connect\" to activate it.\n5. In the webhook settings, paste the following URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n  \n6. Click on \"Submit\".\n": "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Integrations\" section.\n4. Find the \"Webhooks\" integration and click on \"Connect\" to activate it.\n5. In the webhook settings, paste the following URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n  \n6. Click on \"Submit\".\n"
+  "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Integrations\" section.\n4. Find the \"Webhooks\" integration and click on \"Connect\" to activate it.\n5. In the webhook settings, paste the following URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n  \n6. Click on \"Submit\".\n": "\nOm de trigger voor nieuwe formulierinzendingen in te stellen, volg je deze stappen:\n. Ga naar het \"Dashboard\" gedeelte.\n2. Selecteer het formulier waar de trigger zich moet voordoen.\n3. Klik op de \"Integraties\" sectie.\n4. Zoek de integratie \"Webhooks\" en klik op \"Verbinden\" om het te activeren.\n5. In de webhook instellingen, plak de volgende URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n  \n 6. Klik op \"Verzenden\".\n"
 }
