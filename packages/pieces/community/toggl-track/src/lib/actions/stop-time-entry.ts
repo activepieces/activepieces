@@ -16,7 +16,6 @@ export const stopTimeEntry = createAction({
     const apiToken = context.auth;
     let runningEntryId: number;
 
-    // 1. Get the currently running time entry
     try {
       const runningEntryResponse = await httpClient.sendRequest<{ id: number }>({
         method: HttpMethod.GET,

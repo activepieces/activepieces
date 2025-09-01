@@ -29,8 +29,6 @@ const validateAuth = async ({ auth }: { auth: string }) => {
       url: 'https://api.track.toggl.com/api/v9/me',
       headers: {
         'Content-Type': 'application/json',
-        // As per Toggl docs, we construct the Basic Auth header from the API token.
-        // The format is base64Encode(<api_token> + ':api_token')
         Authorization: `Basic ${Buffer.from(`${auth}:api_token`).toString(
           'base64'
         )}`,
@@ -65,8 +63,7 @@ export const togglTrack = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/toggl-track.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: [
-  ],
+  authors: ["Pranith124", "onyedikachi-david"],
   actions: [
     createClient,
     createProject,

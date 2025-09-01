@@ -64,16 +64,14 @@ export const newTimeEntry = createTrigger({
   },
 
   async run(context) {
-    const payload = context.payload.body;
+    const payload = context.payload.body as any;
 
-    // Apply optional project filter if specified
     if (context.propsValue.optional_project_id && payload?.project_id) {
       if (payload.project_id !== context.propsValue.optional_project_id) {
         return [];
       }
     }
 
-    // Apply optional task filter if specified
     if (context.propsValue.task_id && payload?.task_id) {
       if (payload.task_id !== context.propsValue.task_id) {
         return [];

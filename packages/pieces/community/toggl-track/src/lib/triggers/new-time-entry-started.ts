@@ -1,40 +1,54 @@
 import {
   createTrigger,
-  Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { togglTrackAuth } from '../..';
 import { togglCommon } from '../common';
 import {
-  generateTogglWebhookInstructions,
-  TOGGL_WEBHOOK_EVENTS,
-} from '../common/webhook-instructions';
+  HttpMethod,
+  httpClient,
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
+} from '@activepieces/pieces-common';
+
+const polling: Polling<string, any> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, propsValue }) => {
+    const authHeader = `Basic ${Buffer.from(`${auth}:api_token`).toString('base64')}`;
+    
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: 'https://api.track.toggl.com/api/v9/me/time_entries',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
+      },
+    });
+
+    const timeEntries = response.body as any[];
+    
+    const runningEntries = timeEntries.filter((entry: any) => {
+      const isRunning = entry.duration < 0;
+      const isInWorkspace = !propsValue.workspace_id || 
+                           entry.workspace_id === propsValue.workspace_id;
+      return isRunning && isInWorkspace;
+    });
+
+    return runningEntries.map((entry: any) => ({
+      epochMilliSeconds: new Date(entry.start).getTime(),
+      data: entry,
+    }));
+  },
+};
 
 export const newTimeEntryStarted = createTrigger({
   auth: togglTrackAuth,
   name: 'new_time_entry_started',
   displayName: 'New Time Entry Started',
-  description: 'Fires when a time entry is started and is currently running.',
+  description: 'Fires when a new time entry is started and is currently running.',
   props: {
     workspace_id: togglCommon.workspace_id,
-    setupInstructions: Property.MarkDown({
-      value: generateTogglWebhookInstructions(
-        TOGGL_WEBHOOK_EVENTS.TIME_ENTRY_CREATED,
-        'New Time Entry Started',
-        'Start a test time entry to ensure events are received',
-        `This trigger will fire when time entries are started and will include:
-- Time entry ID and details
-- Start time (stop time will be null for running entries)
-- Negative duration indicating it's currently running
-- Project and task associations (if any)
-- Workspace information
-- Description and tags
-- Creator information
-- Billable status
-
-**Note:** This trigger specifically filters for started/running time entries (those with negative duration). You may also want to listen for "Time entry updated" events to catch when existing entries are restarted.`
-      ),
-    }),
   },
   sampleData: {
     id: 1234567891,
@@ -51,29 +65,39 @@ export const newTimeEntryStarted = createTrigger({
     user_id: 6,
     created_with: 'Toggl Track',
   },
-  type: TriggerStrategy.WEBHOOK,
+  type: TriggerStrategy.POLLING,
 
   async onEnable(context) {
-    // Manual setup - no programmatic registration needed
+    await pollingHelper.onEnable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
   },
 
   async onDisable(context) {
-    // Manual setup - users manage webhooks in Toggl Track UI
+    await pollingHelper.onDisable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
   },
 
   async run(context) {
-    const payload = context.payload.body;
-    
-    // Check if this is a started time entry (negative duration indicates running)
-    if (payload && typeof payload === 'object') {
-      const timeEntryData = payload as any;
+    return await pollingHelper.poll(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
+  },
 
-      // A time entry is considered "started" if it has negative duration
-      if (timeEntryData.duration && timeEntryData.duration < 0) {
-        return [timeEntryData];
-      }
-    }
-
-    return [];
+  async test(context) {
+    return await pollingHelper.test(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
   },
 });

@@ -57,9 +57,8 @@ export const newTask = createTrigger({
   },
 
   async run(context) {
-    const payload = context.payload.body;
+    const payload = context.payload.body as any;
 
-    // Apply optional project filter if specified
     if (context.propsValue.optional_project_id && payload?.project_id) {
       if (payload.project_id !== context.propsValue.optional_project_id) {
         return [];

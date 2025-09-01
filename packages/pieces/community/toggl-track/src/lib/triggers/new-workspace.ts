@@ -1,59 +1,109 @@
 import {
   createTrigger,
-  Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { togglTrackAuth } from '../..';
 import {
-  generateTogglWebhookInstructions,
-  TOGGL_WEBHOOK_EVENTS,
-} from '../common/webhook-instructions';
+  HttpMethod,
+  httpClient,
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
+} from '@activepieces/pieces-common';
+
+const polling: Polling<string, any> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth }) => {
+    const authHeader = `Basic ${Buffer.from(`${auth}:api_token`).toString('base64')}`;
+    
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: 'https://api.track.toggl.com/api/v9/workspaces',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
+      },
+    });
+
+    const workspaces = response.body as any[];
+    
+    return workspaces.map((workspace: any) => ({
+      epochMilliSeconds: new Date(workspace.at || workspace.last_modified).getTime(),
+      data: workspace,
+    }));
+  },
+};
 
 export const newWorkspace = createTrigger({
   auth: togglTrackAuth,
   name: 'new_workspace',
-  displayName: 'New Workspace',
-  description: 'Fires when a new workspace is created.',
-  props: {
-    setupInstructions: Property.MarkDown({
-      value: generateTogglWebhookInstructions(
-        TOGGL_WEBHOOK_EVENTS.WORKSPACE_CREATED,
-        'New Workspace',
-        'Create a test workspace to ensure events are received',
-        `This trigger will fire when workspaces are created and will include:
-- Workspace ID and details
-- Organization information
-- Creation timestamp
-- Creator information
-- Workspace settings (currency, permissions, etc.)`
-      ),
-    }),
-  },
+  displayName: 'New or Updated Workspace',
+  description: 'Fires when a workspace is created or updated (Toggl only supports workspace updated events).',
+  props: {},
   sampleData: {
-    id: 123456,
-    organization_id: 98765,
-    name: 'My New Workspace',
+    id: 20763798,
+    organization_id: 20764737,
+    name: 'Workspace',
     premium: true,
+    business_ws: true,
     admin: true,
+    role: 'admin',
+    suspended_at: null,
+    server_deleted_at: null,
+    default_hourly_rate: null,
+    rate_last_updated: null,
     default_currency: 'USD',
     only_admins_may_create_projects: false,
-    only_admins_see_billable_rates: true,
+    only_admins_may_create_tags: false,
+    only_admins_see_team_dashboard: false,
+    projects_billable_by_default: true,
+    projects_private_by_default: true,
+    projects_enforce_billable: false,
+    limit_public_project_data: false,
+    last_modified: '2025-09-01T00:00:00Z',
+    reports_collapse: true,
     rounding: 1,
     rounding_minutes: 0,
-    at: '2025-08-29T10:15:30+00:00',
-    logo_url: 'https://assets.toggl.com/images/workspace.jpg',
+    api_token: '72565784d2250b9ba2f2d61039ba9fee',
+    at: '2025-09-01T09:23:02+00:00',
+    logo_url: 'https://assets.track.toggl.com/images/workspace.jpg',
+    ical_enabled: true,
+    working_hours_in_minutes: null,
+    active_project_count: 1,
   },
-  type: TriggerStrategy.WEBHOOK,
+  type: TriggerStrategy.POLLING,
 
   async onEnable(context) {
-    // Manual setup - no programmatic registration needed
+    await pollingHelper.onEnable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
   },
 
   async onDisable(context) {
-    // Manual setup - users manage webhooks in Toggl Track UI
+    await pollingHelper.onDisable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
   },
 
   async run(context) {
-    return [context.payload.body];
+    return await pollingHelper.poll(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
+  },
+
+  async test(context) {
+    return await pollingHelper.test(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
   },
 });

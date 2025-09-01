@@ -285,12 +285,9 @@ export const togglCommon = {
         }
         const apiToken = auth as string;
 
-        // Note the changes to the request below
         const response = await httpClient.sendRequest<{ data: TogglTask[] }>({
             method: HttpMethod.GET,
-            // 1. Use the more general workspace tasks endpoint
             url: `https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/tasks`,
-            // 2. Add a query parameter to filter by project ID
             queryParams: {
                 pid: optional_project_id as string
             },
@@ -305,7 +302,6 @@ export const togglCommon = {
         if (response.status === 200) {
             return {
                 disabled: false,
-                // 3. Access the 'data' property from the response body
                 options: (response.body.data || []).map((task) => ({
                     label: task.name,
                     value: task.id,

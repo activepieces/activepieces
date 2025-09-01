@@ -90,7 +90,6 @@ export const findTimeEntry = createAction({
 
     const timeEntries = response.body.items || [];
 
-    // Filter by description if provided
     if (description) {
       const matchingEntries = timeEntries.filter(
         (entry) =>
