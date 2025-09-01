@@ -66,6 +66,7 @@ export const WorkerMachineHealthcheckResponse = Type.Object({
     HYPERDX_TOKEN: Type.Optional(Type.String()),
     FILE_STORAGE_LOCATION: Type.String(),
     S3_USE_SIGNED_URLS: Type.String(),
+    EDITION: Type.String(),
 })
 
 export type WorkerMachineHealthcheckResponse = Static<typeof WorkerMachineHealthcheckResponse>

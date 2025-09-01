@@ -1,9 +1,12 @@
+import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai'
 import { apAxios, AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, ResolveToolInputsRequest, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { openai } from '@ai-sdk/openai'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
+import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { fileService } from '../file/file.service'
@@ -12,6 +15,7 @@ import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { stepRunProgressHandler } from '../flows/flow-run/step-run-progress.handler'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
+import { toolInputsResolver } from '../mcp/tool/tool-inputs-resolver'
 import { triggerRunService } from '../trigger/trigger-run/trigger-run.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { flowConsumer } from './consumer'
@@ -223,7 +227,46 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             .send(data)
     })
 
+    app.post('/resolve-tool-inputs', ResolveToolInputsParams, async (request) => {
+        const { pieceName, pieceVersion, actionName, auth, preDefinedInputs, flowVersionId } = request.body
+        const supportedProvider = SUPPORTED_AI_PROVIDERS.find(p => p.provider === 'openai')
+        const modelInstance = supportedProvider?.languageModels.find(m => m.displayName === 'GPT-4.1')
+        const flowVersion = await flowVersionService(request.log).getOne(flowVersionId)
+        if (isNil(flowVersion) || isNil(modelInstance)) {
+            return null
+        }
 
+        const baseURL = await domainHelper.getPublicApiUrl({
+            path: '/v1/ai-providers/proxy/openai',
+            platformId: request.principal.platform.id,
+        })
+        const engineToken = await accessTokenManager.generateEngineToken({
+            platformId: request.principal.platform.id,
+            projectId: request.principal.projectId,
+        })
+
+        const model = createAIModel({
+            providerName: 'openai',
+            modelInstance: openai('gpt-4.1'),
+            engineToken,
+            baseURL,
+            metadata: {
+                feature: AIUsageFeature.TEXT_AI,
+            },
+        })
+
+        return toolInputsResolver.resolve({
+            pieceName,
+            pieceVersion,
+            actionName,
+            auth,
+            userInstructions: flowVersion.flowContext ?? '',
+            projectId: request.principal.projectId,
+            platformId: request.principal.platform.id,
+            aiModel: model,
+            preDefinedInputs,
+        })
+    })
 
 }
 
@@ -401,5 +444,14 @@ const UpdateFlowResponseParams = {
     },
     schema: {
         body: SendFlowResponseRequest,
+    },
+}
+
+const ResolveToolInputsParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {
+        body: ResolveToolInputsRequest,
     },
 }
