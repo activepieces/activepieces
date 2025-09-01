@@ -141,7 +141,8 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             aiProviderService.validateRequest(provider, request)
 
             const projectId = request.principal.projectId
-            const exceededLimit = await projectLimitsService(request.log).checkAICreditsExceededLimit(projectId)
+            const videoModelRequestCost = aiProviderService.getVideoModelCost({ provider, request })
+            const exceededLimit = await projectLimitsService(request.log).checkAICreditsExceededLimit({ projectId, videoModelRequestCost })
             if (exceededLimit) {
                 throw new ActivepiecesError({
                     code: ErrorCode.QUOTA_EXCEEDED,
@@ -150,6 +151,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                     },
                 })
             }
+           
 
             const userPlatformId = request.principal.platform.id
             const providerConfig = getProviderConfigOrThrow(provider)

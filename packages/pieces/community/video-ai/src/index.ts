@@ -4,10 +4,10 @@ import { generateVideo } from "./lib/actions/generate-video";
 import { PieceCategory } from "@activepieces/shared";
 
 export const videoAI = createPiece({
-  displayName: "Video-ai",
+  displayName: "Video AI",
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://cdn.activepieces.com/pieces/video-ai.png",
+  logoUrl: "https://cdn.activepieces.com/pieces/video-ai-piece.svg",
   authors: ['amrdb'],
   actions: [generateVideo],
   triggers: [],

@@ -31,7 +31,7 @@ export const replicateProvider: AIProviderStrategy = {
         const imageModelConfig = providerConfig.imageModels.find((m) => m.instance.modelId.split(':')[0] === model)
         const videoModelConfig = providerConfig.videoModels.find((m) => m.instance.modelId.split(':')[0] === model)
         if (imageModelConfig && typeof imageModelConfig.pricing === 'number') {
-        return {
+            return {
                 cost: imageModelConfig.pricing * imageCount,
                 model,
             }

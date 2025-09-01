@@ -161,7 +161,16 @@ export const aiProviderService = {
             !isNil(providerConfig.videoModels.find((m) => m.instance.modelId === model))
         )
     },
-
+    getVideoModelCost({ provider, request }: { provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase> }) {
+        const providerStrategy = aiProvidersStrategies[provider]
+        const modelConfig = providerStrategy.extractModelId(request)
+        const providerConfig = getProviderConfig(provider)
+        const videoModelConfig = providerConfig?.videoModels.find((m) => m.instance.modelId === modelConfig)
+        if (videoModelConfig) {
+            return videoModelConfig.pricing.costPerSecond * videoModelConfig.minimumDurationInSeconds
+        }
+        return 0
+    },
     isStreaming(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
         const providerStrategy = aiProvidersStrategies[provider]
         return providerStrategy.isStreaming(request)
