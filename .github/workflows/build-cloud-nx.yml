@@ -69,11 +69,27 @@ jobs:
       - name: Build all pieces projects
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
         run: npx nx run-many --target=build -c production --projects="pieces-*" --agents --parallel
-        
       - name: Run all tests in parallel
         run: |
+          set -euo pipefail
+          pids=()
+
           npx nx run-many --target=test --projects=engine,shared --agents --parallel &
+          pids+=($!)
+
           npx nx run server-api:test-ce &
+          pids+=($!)
+
           npx nx run server-api:test-ee &
+          pids+=($!)
+
           npx nx run server-api:test-cloud &
-          wait
+          pids+=($!)
+
+          status=0
+          for pid in "${pids[@]}"; do
+            if ! wait "$pid"; then
+              status=1
+            fi
+          done
+          exit $status

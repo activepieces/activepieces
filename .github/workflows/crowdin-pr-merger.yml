@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     
     if: |
-      github.event.pull_request.user.login == 'AbdulTheActivePiecer' &&
+      github.event.pull_request.user.login == 'automated-commits-ap' &&
       github.event.pull_request.head.ref == 'l10n_main'
     
     steps:
@@ -62,8 +62,8 @@ jobs:
             echo "Changes detected, committing..."
             
             # Configure git
-            git config --local user.email "abdulyki@activepieces.com"
-            git config --local user.name "AbdulTheActivePiecer"
+            git config --local user.email "abdulyki+automatedcommits@activepieces.com"
+            git config --local user.name "automated-commits-ap"
             
             # Add all changes
             git add .
@@ -164,3 +164,15 @@ jobs:
             });
             
             console.log(`Deleted branch: ${pr.data.head.ref}`);
+
+  notify-failure:
+    needs: [auto-merge-bot-pr]
+    if: ${{ always() && needs.auto-merge-bot-pr.result == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord on failure
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"🚨 **Crowdin PR Merger Workflow Failed** 🚨\\n\\n**Repository:** ${{ github.repository }}\\n**Branch:** ${{ github.ref_name }}\\n**Commit:** ${{ github.sha }}\\n**PR #:** ${{ github.event.pull_request.number }}\\n**Action URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n\\nThe workflow has failed. Please check the logs for more details.\"}" \
+            ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}

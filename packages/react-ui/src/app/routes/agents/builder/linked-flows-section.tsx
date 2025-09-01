@@ -41,9 +41,6 @@ const template = {
         input: {
           botName: 'AI Bot',
         },
-        inputUiInfo: {
-          customizedInputs: {},
-        },
         triggerName: 'chat_submission',
       },
       nextAction: {
@@ -68,9 +65,6 @@ const template = {
               value: false,
             },
           },
-          inputUiInfo: {
-            customizedInputs: {},
-          },
         },
         type: FlowActionType.PIECE,
         nextAction: {
@@ -94,9 +88,6 @@ const template = {
               retryOnFailure: {
                 value: false,
               },
-            },
-            inputUiInfo: {
-              customizedInputs: {},
             },
           },
           type: FlowActionType.PIECE,

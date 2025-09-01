@@ -1,8 +1,9 @@
-import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, AIUsageFeature, apId, createAIModel, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, PopulatedAgent, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { AIUsageFeature, createAIModel } from '@activepieces/common-ai'
+import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, apId, Cursor, EnhancedAgentPrompt, ErrorCode, isNil, PlatformUsageMetric, PopulatedAgent, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { Schema as AiSchema, generateObject } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { Equal, FindOperator, In, Not } from 'typeorm'
+import { Equal, FindOperator, In } from 'typeorm'
 import { z } from 'zod'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { repoFactory } from '../core/db/repo-factory'
@@ -12,7 +13,6 @@ import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { mcpService } from '../mcp/mcp-service'
 import { projectService } from '../project/project-service'
-import { tableService } from '../tables/table/table.service'
 import { AgentEntity } from './agent-entity'
 import { agentRunsService } from './agent-runs/agent-runs-service'
 
@@ -166,12 +166,12 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             .createQueryBuilder('agent')
             .where(querySelector)
 
-        const agentsInTable = await tableService.getAllAgentIds({ projectId: params.projectId })
-        queryBuilder.andWhere({
-            id: Not(In(agentsInTable)),
-        })
+        if (params.externalIds) {
+            queryBuilder.andWhere({
+                externalId: In(params.externalIds),
+            })
+        }
         const { data, cursor } = await paginator.paginate(queryBuilder)
-
         return paginationHelper.createPage<PopulatedAgent>(
             await Promise.all(data.map(agent => enrichAgent(agent, log))),
             cursor,
@@ -219,7 +219,7 @@ type ListParams = {
     projectId: string
     limit: number
     cursorRequest: Cursor
-
+    externalIds?: string[]
 }
 
 type CreateParams = {
