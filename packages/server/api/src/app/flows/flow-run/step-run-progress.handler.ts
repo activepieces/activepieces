@@ -1,9 +1,9 @@
 import { exceptionHandler } from '@activepieces/server-shared'
 import {
+    isFlowStateTerminal,
     isNil,
     StepOutputStatus,
     StepRunResponse,
-    isFlowStateTerminal,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRunService } from './flow-run-service'
