@@ -1,8 +1,8 @@
 {
   "SimplePDF": "SimplePDF",
-  "PDF editing and generation tool": "PDF editing and generation tool",
-  "New Submission": "New Submission",
-  "Triggers when a form receives a new submission": "Triggers when a form receives a new submission",
+  "PDF editing and generation tool": "Herramienta de edición y generación de PDF",
+  "New Submission": "Nuevo envío",
+  "Triggers when a form receives a new submission": "Dispara cuando un formulario recibe un nuevo envío",
   "Markdown": "Markdown",
-  "\n- Paste this URL in the webhook integration endpoint:\n```text\n{{webhookUrl}}\n```\n- Click update (keep other settings unchanged)\n<br>\n<br>\n\n_[Read more about configuring webhooks](https://simplepdf.eu/help/how-to/configure-webhooks-pdf-form-submissions)_\n": "\n- Paste this URL in the webhook integration endpoint:\n```text\n{{webhookUrl}}\n```\n- Click update (keep other settings unchanged)\n<br>\n<br>\n\n_[Read more about configuring webhooks](https://simplepdf.eu/help/how-to/configure-webhooks-pdf-form-submissions)_\n"
+  "\n- Paste this URL in the webhook integration endpoint:\n```text\n{{webhookUrl}}\n```\n- Click update (keep other settings unchanged)\n<br>\n<br>\n\n_[Read more about configuring webhooks](https://simplepdf.eu/help/how-to/configure-webhooks-pdf-form-submissions)_\n": "\n- Pegar esta URL en el punto final de integración de webhook:\n```text\n{{webhookUrl}}\n```\n- Haga clic en actualizar (mantener otros ajustes sin cambios)\n<br>\n<br>\n\n_[Leer más sobre la configuración de webhooks](https://simplepdf.eu/help/how-to/configure-webhooks-pdf-form-submissions)_\n"
 }

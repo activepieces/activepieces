@@ -1,10 +1,10 @@
 {
   "Postgres": "Postgres",
   "The world's most advanced open-source relational database": "The world's most advanced open-source relational database",
-  "Host": "Host",
-  "Port": "Port",
-  "User": "User",
-  "Password": "Password",
+  "Host": "主机",
+  "Port": "端口",
+  "User": "用户",
+  "Password": "密码",
   "Database": "Database",
   "Enable SSL": "Enable SSL",
   "Verify server certificate": "Verify server certificate",
@@ -32,12 +32,12 @@
   "A string indicating the name of the client application connecting to the server.": "A string indicating the name of the client application connecting to the server.",
   "New Row": "New Row",
   "triggered when a new row is added": "triggered when a new row is added",
-  "Table name": "Table name",
+  "Table name": "表格名称",
   "Column to order by": "Column to order by",
   "Order Direction": "Order Direction",
   "**NOTE:** The trigger fetches the latest rows using the provided order by column (newest first), and then will keep polling until the previous last row is reached.": "**NOTE:** The trigger fetches the latest rows using the provided order by column (newest first), and then will keep polling until the previous last row is reached.",
   "Use something like a created timestamp or an auto-incrementing ID.": "Use something like a created timestamp or an auto-incrementing ID.",
   "The direction to sort by such that the newest rows are fetched first.": "The direction to sort by such that the newest rows are fetched first.",
-  "Ascending": "Ascending",
-  "Descending": "Descending"
+  "Ascending": "升序",
+  "Descending": "降序"
 }

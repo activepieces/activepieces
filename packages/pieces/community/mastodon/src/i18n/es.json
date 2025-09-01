@@ -16,17 +16,17 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
-  "Response is Binary ?": "Response is Binary ?",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "The text of your status": "El texto de tu estado",
   "The media attachment for your status": "El archivo adjunto para tu estado",
-  "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
-  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
-  "GET": "GET",
+  "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
+  "GET": "RECOGER",
   "POST": "POST",
   "PATCH": "PATCH",
   "PUT": "PUT",
-  "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "DELETE": "BORRAR",
+  "HEAD": "LIMPIO"
 }

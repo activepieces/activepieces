@@ -1,10 +1,10 @@
 {
-  "Stable Dffusion web UI": "Stable Dffusion web UI",
-  "A web interface for Stable Diffusion": "A web interface for Stable Diffusion",
-  "Stable Diffusion web UI API base URL": "Stable Diffusion web UI API base URL",
-  "Text to Image": "Text to Image",
+  "Stable Dffusion web UI": "Interface web de Dffusion stable",
+  "A web interface for Stable Diffusion": "Une interface web pour une Diffusion Stable",
+  "Stable Diffusion web UI API base URL": "URL de base de l'API web de Diffusion stable",
+  "Text to Image": "Texte à l'image",
   "Prompt": "Prompt",
-  "Model": "Model",
-  "Advanced parameters (key/value)": "Advanced parameters (key/value)",
-  "Refer to API documentation": "Refer to API documentation"
+  "Model": "Modélisation",
+  "Advanced parameters (key/value)": "Paramètres avancés (clé/valeur)",
+  "Refer to API documentation": "Reportez-vous à la documentation de l'API"
 }

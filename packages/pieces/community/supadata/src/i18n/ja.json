@@ -1,13 +1,13 @@
 {
   "Supadata": "Supadata",
-  "YouTube Transcripts": "YouTube Transcripts",
+  "YouTube Transcripts": "YouTubeトランスクリプト",
   "\nTo obtain your free Supadata API Key, sign up at [Supadata](https://supadata.ai) and then copy the key available in the [dashboard](https://dash.supadata.ai).\n": "\nTo obtain your free Supadata API Key, sign up at [Supadata](https://supadata.ai) and then copy the key available in the [dashboard](https://dash.supadata.ai).\n",
   "Get Transcript": "Get Transcript",
-  "Fetches transcript of a YouTube video.": "Fetches transcript of a YouTube video.",
+  "Fetches transcript of a YouTube video.": "YouTube動画の記録を取得します。",
   "YouTube URL": "YouTube URL",
-  "Language Preference": "Language Preference",
-  "Merge Text": "Merge Text",
-  "The URL of a single YouTube video.": "The URL of a single YouTube video.",
-  "Preferred language of the transcript. If not available, the first available language will be returned.": "Preferred language of the transcript. If not available, the first available language will be returned.",
-  "If true, the transcript will be merged into a single text instead of timestamped chunks.": "If true, the transcript will be merged into a single text instead of timestamped chunks."
+  "Language Preference": "言語設定",
+  "Merge Text": "テキストを結合",
+  "The URL of a single YouTube video.": "単一のYouTube動画のURL。",
+  "Preferred language of the transcript. If not available, the first available language will be returned.": "優先言語のトランスクリプトです。利用できない場合は、最初に利用可能な言語が返されます。",
+  "If true, the transcript will be merged into a single text instead of timestamped chunks.": "true の場合、トランスクリプトはタイムスタンプされたチャンクの代わりに1つのテキストにマージされます。"
 }

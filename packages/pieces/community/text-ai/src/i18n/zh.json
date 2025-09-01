@@ -1,6 +1,6 @@
 {
   "Text AI": "Text AI",
-  "Ask AI": "Ask AI",
+  "Ask AI": "询问AI",
   "Summarize Text": "Summarize Text",
   "Provider": "Provider",
   "Model": "Model",
@@ -10,7 +10,7 @@
   "Max Tokens": "Max Tokens",
   "Web Search": "Web Search",
   "Web Search Options": "Web Search Options",
-  "Text": "Text",
+  "Text": "文本",
   "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.",
   "Whether to use web search to find information for the AI to use in its response.": "Whether to use web search to find information for the AI to use in its response."
 }
