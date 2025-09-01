@@ -162,7 +162,7 @@ export const findJobOpeningsAction = createAction({
     onet_codes: Property.Array({
       displayName: 'onet_codes',
       description: 'O*NET codes to filter by, such as "17-2071.00" for "Electrical Engineers" or "15-1254.00" for "Web Developers". For full list of possible codes see: https://www.onetonline.org/find/all',
-      required: true,
+      required: false,
     }),
     page: pageField,
     limit: limitField,
