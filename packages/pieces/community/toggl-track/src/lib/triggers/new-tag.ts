@@ -3,6 +3,7 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 import { togglTrackAuth } from '../..';
 import { togglCommon } from '../common';
 import {
@@ -39,6 +40,24 @@ export const newTag = createTrigger({
     creator_id: 6,
   },
   type: TriggerStrategy.WEBHOOK,
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.BODY_PARAM_PRESENT,
+    paramName: 'validation_code',
+  },
+
+  async onHandshake(context) {
+    const body = context.payload.body as any;
+    
+    if (body?.payload === 'ping' && body?.validation_code) {
+      return {
+        status: 200,
+        body: { validation_code: body.validation_code },
+        headers: { 'Content-Type': 'application/json' },
+      };
+    }
+    
+    return { status: 400, body: { error: 'Invalid handshake request' } };
+  },
 
   async onEnable(context) {
     // Manual setup - no programmatic registration needed
@@ -49,6 +68,12 @@ export const newTag = createTrigger({
   },
 
   async run(context) {
-    return [context.payload.body];
+    const payload = context.payload.body as any;
+    
+    if (payload?.payload === 'ping') {
+      return [];
+    }
+    
+    return [payload];
   },
 });
