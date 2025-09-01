@@ -1,14 +1,14 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import {
+  createTrigger,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { togglTrackAuth } from '../..';
 import { togglCommon } from '../common';
 import {
-  TogglWebhookManager,
-  TogglWebhookEvent,
-  generateWebhookSecret,
-  createEventFilters,
-  generateSubscriptionDescription,
-} from '../common/webhook-utils';
+  generateTogglWebhookInstructions,
+  TOGGL_WEBHOOK_EVENTS,
+} from '../common/webhook-instructions';
 
 export const newTimeEntry = createTrigger({
   auth: togglTrackAuth,
@@ -20,6 +20,23 @@ export const newTimeEntry = createTrigger({
     workspace_id: togglCommon.workspace_id,
     optional_project_id: togglCommon.optional_project_id,
     task_id: togglCommon.optional_task_id,
+    setupInstructions: Property.MarkDown({
+      value: generateTogglWebhookInstructions(
+        TOGGL_WEBHOOK_EVENTS.TIME_ENTRY_CREATED,
+        'New Time Entry',
+        'Create a test time entry to ensure events are received',
+        `This trigger will fire when time entries are created and will include:
+- Time entry ID and details
+- Start/stop times and duration
+- Project and task associations (if any)
+- Workspace information
+- Description and tags
+- Creator information
+- Billable status
+
+**Note:** You can filter time entries by project and task using the optional filters above.`
+      ),
+    }),
   },
   sampleData: {
     id: 1234567890,
@@ -37,189 +54,32 @@ export const newTimeEntry = createTrigger({
     created_with: 'Toggl Track',
   },
   type: TriggerStrategy.WEBHOOK,
-  handshakeConfiguration: {
-    strategy: WebhookHandshakeStrategy.BODY_PARAM_PRESENT,
-    paramName: 'validation_code',
-  },
-
-  async onHandshake(context) {
-    const body = context.payload.body as {
-      payload?: string;
-      validation_code?: string;
-    };
-
-    // Handle Toggl PING events with validation_code
-    if (body?.payload === 'ping' && body?.validation_code) {
-      return {
-        status: 200,
-        body: { validation_code: body.validation_code },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      };
-    }
-
-    return {
-      status: 400,
-      body: { error: 'Invalid handshake request' },
-    };
-  },
 
   async onEnable(context) {
-    const webhookManager = new TogglWebhookManager(context.auth);
-    const workspaceId = context.propsValue.workspace_id;
-
-    if (!workspaceId) {
-      throw new Error('Workspace ID is required');
-    }
-
-    // Generate a secret for webhook validation
-    const secret = generateWebhookSecret();
-
-    // Create event filters for time entry creation
-    const eventFilters = createEventFilters('time_entry', 'created');
-
-    // Generate unique description
-    const description = generateSubscriptionDescription(
-      'new-time-entry',
-      workspaceId
-    );
-
-    try {
-      // Create webhook subscription with enabled: true and rely on handshake
-      const subscription = await webhookManager.createSubscription(
-        workspaceId,
-        context.webhookUrl,
-        eventFilters,
-        description,
-        secret,
-        true // enabled, handshake will handle validation
-      );
-
-      // Store subscription details
-      await context.store.put('webhook_subscription', {
-        subscriptionId: subscription.subscription_id,
-        workspaceId: workspaceId,
-        secret: secret,
-        projectFilter: context.propsValue.optional_project_id,
-        taskFilter: context.propsValue.task_id,
-      });
-
-      // No need for additional validation - handshake handles it
-    } catch (error) {
-      throw new Error(`Failed to create webhook subscription: ${error}`);
-    }
+    // Manual setup - no programmatic registration needed
   },
 
   async onDisable(context) {
-    const storedData = await context.store.get<{
-      subscriptionId: number;
-      workspaceId: number;
-      secret: string;
-      projectFilter?: number;
-      taskFilter?: number;
-    }>('webhook_subscription');
-
-    if (storedData) {
-      try {
-        const webhookManager = new TogglWebhookManager(context.auth);
-        await webhookManager.deleteSubscription(
-          storedData.workspaceId,
-          storedData.subscriptionId
-        );
-      } catch (error) {
-        console.error('Failed to delete webhook subscription:', error);
-      }
-
-      await context.store.delete('webhook_subscription');
-    }
+    // Manual setup - users manage webhooks in Toggl Track UI
   },
 
   async run(context) {
-    const { body, headers } = context.payload;
+    const payload = context.payload.body;
 
-    // Get stored subscription data for validation
-    const storedData = await context.store.get<{
-      subscriptionId: number;
-      workspaceId: number;
-      secret: string;
-      projectFilter?: number;
-      taskFilter?: number;
-    }>('webhook_subscription');
-
-    if (!storedData) {
-      throw new Error('Webhook subscription data not found');
-    }
-
-    // Validate webhook signature
-    const signature = headers['x-webhook-signature-256'];
-    if (!signature) {
-      throw new Error('Missing webhook signature');
-    }
-
-    const webhookManager = new TogglWebhookManager(context.auth);
-    const bodyString = typeof body === 'string' ? body : JSON.stringify(body);
-
-    if (
-      !webhookManager.validateEventSignature(
-        bodyString,
-        signature,
-        storedData.secret
-      )
-    ) {
-      throw new Error('Invalid webhook signature');
-    }
-
-    // Parse webhook event
-    const event: TogglWebhookEvent =
-      webhookManager.parseWebhookEvent(bodyString);
-
-    // Skip PING events (handled by onHandshake)
-    if (event.payload === 'ping') {
-      return [];
-    }
-
-    // Validate that this event is for our subscription
-    if (event.subscription_id !== storedData.subscriptionId) {
-      throw new Error('Event subscription ID mismatch');
-    }
-
-    // Validate URL callback matches
-    if (event.url_callback !== context.webhookUrl) {
-      throw new Error('URL callback mismatch');
-    }
-
-    // Filter for time entry creation events only
-    if (
-      event.metadata.request_type !== 'POST' ||
-      !event.metadata.path?.includes('/time_entries')
-    ) {
-      return [];
-    }
-
-    // Apply filters if specified
-    if (event.payload && typeof event.payload === 'object') {
-      const timeEntryData = event.payload as any;
-
-      // Check project filter
-      if (
-        storedData.projectFilter &&
-        timeEntryData.project_id !== storedData.projectFilter
-      ) {
+    // Apply optional project filter if specified
+    if (context.propsValue.optional_project_id && payload?.project_id) {
+      if (payload.project_id !== context.propsValue.optional_project_id) {
         return [];
       }
-
-      // Check task filter
-      if (
-        storedData.taskFilter &&
-        timeEntryData.task_id !== storedData.taskFilter
-      ) {
-        return [];
-      }
-
-      return [timeEntryData];
     }
 
-    return [];
+    // Apply optional task filter if specified
+    if (context.propsValue.task_id && payload?.task_id) {
+      if (payload.task_id !== context.propsValue.task_id) {
+        return [];
+      }
+    }
+
+    return [payload];
   },
 });
