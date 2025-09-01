@@ -3,6 +3,7 @@ import {
     isNil,
     StepOutputStatus,
     StepRunResponse,
+    isFlowStateTerminal,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRunService } from './flow-run-service'
@@ -20,9 +21,10 @@ export const stepRunProgressHandler = (log: FastifyBaseLogger) => ({
             // In single-step execution mode, the engine executes the step directly without traverse the flow, which means the step will always be at the root level
             const stepOutput = populatedFlowRun.steps[populatedFlowRun.stepNameToTest]
 
-            if (isNil(stepOutput) || stepOutput.status === StepOutputStatus.RUNNING) {
+            if (isNil(stepOutput) || !isFlowStateTerminal(populatedFlowRun.status)) {
                 return null
             }
+
             const isSuccess = stepOutput.status === StepOutputStatus.SUCCEEDED || stepOutput.status === StepOutputStatus.PAUSED
             return {
                 runId: params.runId,
