@@ -4,7 +4,6 @@ import { spreadIfDefined } from "@activepieces/shared";
 import { SUPPORTED_AI_PROVIDERS, aiProps, AI_USAGE_FEATURE_HEADER, AIUsageFeature } from "@activepieces/common-ai";
 import { GoogleGenAI } from "@google/genai";
 import mime from 'mime-types';
-import Replicate from 'replicate'
 
 type GenerateVideoParams =  {
     apiKey: string,
@@ -72,39 +71,7 @@ const generateVideoForGoogle = async (
     const proxyUrl = `${baseUrl}/download/v1beta/files/${videoFileId}`;
     return proxyUrl;
 }
-const generateVideoForReplicate = async (
-    {
-        apiKey,
-        baseUrl,
-        image,
-        prompt,
-        advancedOptions,
-        modelInstance,
-    }:GenerateVideoParams
-) => {
-      const replicate = new Replicate({
-        auth: apiKey,
-        baseUrl: `${baseUrl}/v1`,
-        fetch: (input, init) => {
-            const apHeader = {
-                [AI_USAGE_FEATURE_HEADER]: AIUsageFeature.VIDEO_AI
-            }
-            const headers = init && init.headers ? { ...init.headers, ...apHeader } : apHeader;
-            return fetch(input, { ...init, headers });
-        }
-      });
 
-      const output = await replicate.run(modelInstance.modelId as `${string}/${string}`, {
-        input: {
-            prompt,
-            ...advancedOptions,
-            image,
-            duration:6
-        },
-      }) as { url: () => string };
-      // replicate api returns the file url so we can directly use it
-    return output.url();
-}
 export const generateVideo = createAction({
     name: 'generate-video',
     displayName: 'Generate Video',
@@ -137,16 +104,6 @@ export const generateVideo = createAction({
         let videoFileUrl: string | undefined;
         if(providerName === 'google') {
             videoFileUrl = await generateVideoForGoogle({
-                apiKey: context.server.token,
-                baseUrl,
-                image,
-                prompt,
-                advancedOptions,
-                modelInstance,
-            });
-        }
-        else if(providerName === 'replicate') {
-            videoFileUrl = await generateVideoForReplicate({
                 apiKey: context.server.token,
                 baseUrl,
                 image,
