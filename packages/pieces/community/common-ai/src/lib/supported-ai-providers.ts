@@ -443,22 +443,6 @@ It is strongly recommended that you add your credit card information to your Ope
             },
         ],
         videoModels: []
-        //     {
-        //         displayName: 'minimax/hailuo-02',
-        //         instance: { modelId: 'minimax/hailuo-02' },
-        //         pricing: {
-        //             costPerSecond: 0.08,
-        //         },
-        //         minimumDurationInSeconds: 6,
-        //     },
-        //     {
-        //         displayName: 'bytedance/seedance-1-pro',
-        //         instance: { modelId: 'bytedance/seedance-1-pro' },
-        //         pricing: {
-        //             costPerSecond: 0.15,
-        //         },
-        //         minimumDurationInSeconds: 5,
-        //     }
     },
     {
         provider: 'google',
