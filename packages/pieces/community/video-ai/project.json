@@ -36,6 +36,31 @@
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/video-ai",
+        "command": "npm ci"
+      }
+    },
+    "build-with-deps": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run pieces-video-ai:prebuild",
+          "nx run pieces-video-ai:build",
+          "nx run pieces-video-ai:postbuild"
+        ],
+        "parallel": false
+      }
+    },
+    "postbuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "dist/packages/pieces/community/video-ai",
+        "command": "npm install"
+      }
+    },
     "nx-release-publish": {
       "options": {
         "packageRoot": "dist/{projectRoot}"
