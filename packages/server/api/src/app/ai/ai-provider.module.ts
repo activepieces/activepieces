@@ -31,10 +31,6 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 request.body = (request as ModifiedFastifyRequest).originalBody
                 const projectId = request.principal.projectId
                 const { provider } = request.params as { provider: string }
-                if (aiProviderService.isNonUsageRequest(provider, request)) {
-                    return reply.send(response.stream)
-                }
-
                 const isStreaming = aiProviderService.isStreaming(provider, request)
                 let streamingParser: StreamingParser
                 if (isStreaming) {
@@ -82,7 +78,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                 return
                             }
 
-                            let usage: Usage | null
+                            let usage: Usage
                             if (isStreaming) {
                                 const finalResponse = streamingParser.onEnd()
                                 if (!finalResponse) {
@@ -95,20 +91,15 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                 usage = aiProviderService.calculateUsage(provider, request, completeResponse)
                             }
 
-                            if (usage) {
-                                const metadata = {
-                                    ...usage.metadata,
-                                    ...buildAIUsageMetadata(request.headers),
-                                }
-                                await platformUsageService(app.log).increaseAiCreditUsage({ 
-                                    projectId,
-                                    platformId: request.principal.platform.id,
-                                    provider,
-                                    model: usage.model,
-                                    cost: usage.cost,
-                                    metadata,
-                                })
-                            }
+                            const metadata = buildAIUsageMetadata(request.headers)
+                            await platformUsageService(app.log).increaseAiCreditUsage({ 
+                                projectId,
+                                platformId: request.principal.platform.id,
+                                provider,
+                                model: usage.model,
+                                cost: usage.cost,
+                                metadata,
+                            })
                         }
                         catch (error) {
                             exceptionHandler.handle({
@@ -137,12 +128,31 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 })
             }
 
+            validateAIUsageHeaders(request.headers)
+
             const provider = (request.params as { provider: string }).provider
-            aiProviderService.validateRequest(provider, request)
+            if (aiProviderService.isStreaming(provider, request) && !aiProviderService.providerSupportsStreaming(provider)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
+                    params: {
+                        message: 'Streaming is not supported for this provider',
+                    },
+                })
+            }
+
+            const model = aiProviderService.extractModelId(provider, request)
+            if (!model || !aiProviderService.isModelSupported(provider, model, request)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
+                    params: {
+                        provider,
+                        model: model ?? 'unknown',
+                    },
+                })
+            }
 
             const projectId = request.principal.projectId
-            const videoModelRequestCost = aiProviderService.getVideoModelCost({ provider, request })
-            const exceededLimit = await projectLimitsService(request.log).checkAICreditsExceededLimit({ projectId, requestCostBeforeFiring: videoModelRequestCost })
+            const exceededLimit = await projectLimitsService(request.log).checkAICreditsExceededLimit(projectId)
             if (exceededLimit) {
                 throw new ActivepiecesError({
                     code: ErrorCode.QUOTA_EXCEEDED,
@@ -151,14 +161,13 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                     },
                 })
             }
-           
 
             const userPlatformId = request.principal.platform.id
             const providerConfig = getProviderConfigOrThrow(provider)
 
             const platformId = await aiProviderService.getAIProviderPlatformId(userPlatformId)
             const config = await aiProviderService.getConfig(provider, platformId);
- 
+
             (request as ModifiedFastifyRequest).customUpstream = aiProviderService.getBaseUrl(provider, config)
             request.raw.url = aiProviderService.rewriteUrl(provider, config, request.url)
 
@@ -193,6 +202,41 @@ function getProviderConfigOrThrow(provider: string | undefined): SupportedAIProv
         })
     }
     return providerConfig
+}
+
+function validateAIUsageHeaders(headers: Record<string, string | string[] | undefined>): void {
+    const feature = headers[AI_USAGE_FEATURE_HEADER] as AIUsageFeature
+    const agentId = headers[AI_USAGE_AGENT_ID_HEADER] as string | undefined
+    const mcpId = headers[AI_USAGE_MCP_ID_HEADER] as string | undefined
+
+    // Validate feature header
+    const supportedFeatures = Object.values(AIUsageFeature).filter(f => f !== AIUsageFeature.UNKNOWN) as AIUsageFeature[]
+    if (feature && !supportedFeatures.includes(feature)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `${AI_USAGE_FEATURE_HEADER} header must be one of the following: ${supportedFeatures.join(', ')}`,
+            },
+        })
+    }
+
+    if (feature === AIUsageFeature.AGENTS && !agentId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `${AI_USAGE_AGENT_ID_HEADER} header is required when feature is ${AIUsageFeature.AGENTS}`,
+            },
+        })
+    }
+    
+    if (feature === AIUsageFeature.MCP && !mcpId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `${AI_USAGE_MCP_ID_HEADER} header is required when feature is ${AIUsageFeature.MCP}`,
+            },
+        })
+    }
 }
 
 function buildAIUsageMetadata(headers: Record<string, string | string[] | undefined>): AIUsageMetadata {

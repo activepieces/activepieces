@@ -5,7 +5,7 @@ import { isNil, SeekPage } from '@activepieces/shared';
 import { SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from './supported-ai-providers';
 import { AIProviderWithoutSensitiveData } from './types';
 
-export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
+export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
     provider: Property.Dropdown<string, true>({
         displayName: 'Provider',
         required: true,
@@ -40,8 +40,6 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
                     }
                 } else if (modelType === 'image') {
                     if (provider.imageModels.length === 0) return null;
-                } else if (modelType === 'video') {
-                    if (provider.videoModels.length === 0) return null;
                 }
 
                 return {
@@ -82,7 +80,7 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
                 };
             }
 
-            const allModels = modelType === 'language' ? supportedProvider.languageModels : modelType === 'image' ? supportedProvider.imageModels : supportedProvider.videoModels;
+            const allModels = modelType === 'language' ? supportedProvider.languageModels : supportedProvider.imageModels;
             const models = (modelType === 'language' && functionCalling)
                 ? allModels.filter(model => (model as SupportedAIProvider['languageModels'][number]).functionCalling)
                 : allModels;
@@ -182,36 +180,6 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
                             description: 'A prompt to avoid in the generated image.',
                         }),
                     }
-                }
-            } else if (modelType === 'video') {
-                if (provider === 'google') {
-                    if (model.modelId === 'veo-2.0-generate-001') {
-                        options = {
-                            aspectRatio: Property.StaticDropdown({
-                                displayName: 'Aspect Ratio',
-                                required: false,
-                                defaultValue: '16:9',
-                                options: {
-                                    options: [
-                                        { label: '16:9', value: '16:9' },
-                                        { label: '9:16', value: '9:16' },
-                                    ],
-                                },
-                            }),
-                            personGeneration: Property.StaticDropdown({
-                                displayName: 'Person Generation',
-                                required: false,
-                                options: {
-                                    options: [
-                                        { label: 'Allow Adult', value: 'allow_adult' },
-                                        { label: 'Don\'t Allow', value: 'dont_allow' },
-                                        { label: 'Allow All', value: 'allow_all' },
-                                    ],
-                                },
-                            }),
-                        }
-                    }
-                    
                 }
             }
 
@@ -334,9 +302,9 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
 })
 
 
-type AIPropsParams<T extends 'language' | 'image' | 'video'> = {
+type AIPropsParams<T extends 'language' | 'image'> = {
     modelType: T,
-    functionCalling?: T extends 'language' ? boolean : never
+    functionCalling?: T extends 'image' ? never : boolean
 }
 
 type AIPropsReturn = {
