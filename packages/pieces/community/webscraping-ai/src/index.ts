@@ -7,7 +7,7 @@ import { scrapeWebsiteText } from './lib/actions/scrape-website-text';
 import { webscrapingAiAuth } from './lib/common';
 
 export const webscrapingAi = createPiece({
-  displayName: 'Webscraping-ai',
+  displayName: 'WebScraping.ai',
   auth: webscrapingAiAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/webscraping-ai.png',
@@ -16,7 +16,7 @@ export const webscrapingAi = createPiece({
     askAQuestionAboutTheWebPage,
     getPageHtml,
     scrapeWebsiteText,
-    extractStructuredData, // TODO
+    extractStructuredData,
     getAccountInformation,
   ],
   triggers: [],

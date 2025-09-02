@@ -22,7 +22,7 @@ const baseRequestProperties = {
     displayName: 'Timeout',
     description:
       'Maximum web page retrieval time in ms. Increase it in case of timeout errors \
-        (10000 by default, maximum is 30000).',
+ (10000 by default, maximum is 30000).',
     required: false,
   }),
   js: Property.Checkbox({
@@ -36,22 +36,22 @@ const baseRequestProperties = {
     displayName: 'JavaScript Timeout',
     description:
       'Maximum JavaScript rendering time in ms. Increase it in case if you \
-        see a loading indicator instead of data on the target page.',
+ see a loading indicator instead of data on the target page.',
     required: false,
   }),
   waitFor: Property.ShortText({
     displayName: 'Wait For',
     description:
       'CSS selector to wait for before returning the page content. \
-      Useful for pages with dynamic content loading. Overrides js_timeout.',
+ Useful for pages with dynamic content loading. Overrides js_timeout.',
     required: false,
   }),
   proxy: Property.StaticDropdown({
     displayName: 'Proxy',
     description:
       'Type of proxy, use residential proxies if your site restricts \
-        traffic from datacenters (datacenter by default). Note that residential proxy \
-        requests are more expensive than datacenter, see the pricing page for details.',
+ traffic from datacenters (datacenter by default). Note that residential proxy \
+ requests are more expensive than datacenter, see the pricing page for details.',
     required: false,
     defaultValue: 'datacenter',
     options: {
@@ -86,14 +86,14 @@ const baseRequestProperties = {
     displayName: 'Custom Proxy',
     description:
       'Your own proxy URL to use instead of our built-in proxy pool \
-        in "http://user:password@host:port" format (Smartproxy for example).',
+ in "http://user:password@host:port" format (Smartproxy for example).',
     required: false,
   }),
   jsScript: Property.LongText({
     displayName: 'JavaScript Code',
     description:
       "Custom JavaScript code to execute on the target page. \
-        Example: `js_script=document.querySelector('button').click();`",
+ Example: `js_script=document.querySelector('button').click();`",
     required: false,
   }),
 };
@@ -122,6 +122,7 @@ export const webscrapingAiCommon = {
         'Question or instructions to ask the LLM model about the target page.',
       required: false,
     }),
+    ...baseRequestProperties,
     device: Property.StaticDropdown({
       displayName: 'Device',
       description: 'Type of device emulation.',
@@ -150,8 +151,8 @@ export const webscrapingAiCommon = {
       displayName: 'Response Format',
       description:
         'Format of the response (text by default). \
-        "json" will return a JSON object with the response, "text" will return a \
-        plain text/HTML response.',
+ "json" will return a JSON object with the response, "text" will return a \
+ plain text/HTML response.',
       required: false,
       options: {
         options: [
@@ -160,7 +161,6 @@ export const webscrapingAiCommon = {
         ],
       },
     }),
-    ...baseRequestProperties,
   },
   getPageHtmlProperties: {
     ...baseRequestProperties,
@@ -168,15 +168,15 @@ export const webscrapingAiCommon = {
       displayName: 'Return JavaScript Result',
       description:
         'Return result of the custom JavaScript code (js_script parameter) \
-        execution on the target page (false by default, page HTML will be returned).',
+ execution on the target page (false by default, page HTML will be returned).',
       required: false,
     }),
     format: Property.StaticDropdown({
       displayName: 'Response Format',
       description:
         'Format of the response (text by default). \
-        "json" will return a JSON object with the response, "text" will return a \
-        plain text/HTML response.',
+ "json" will return a JSON object with the response, "text" will return a \
+ plain text/HTML response.',
       required: false,
       options: {
         options: [
@@ -192,8 +192,8 @@ export const webscrapingAiCommon = {
       displayName: 'Text Format',
       description:
         'Format of the text response (plain by default). "plain" will return only \
-        the page body text. "json" and "xml" will return a json/xml with "title", \
-        "description" and "content" keys.',
+ the page body text. "json" and "xml" will return a json/xml with "title", \
+ "description" and "content" keys.',
       required: false,
       options: {
         options: [
@@ -207,7 +207,7 @@ export const webscrapingAiCommon = {
       displayName: 'Return Links',
       description:
         '[Works only with text_format=json] Return links from the page \
-        body text (false by default). Useful for building web crawlers.',
+ body text (false by default). Useful for building web crawlers.',
       required: false,
     }),
     device: Property.StaticDropdown({
