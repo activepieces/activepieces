@@ -166,6 +166,7 @@ export const scrapeUrl = createAction({
                             selector = parsed.selector;
                         }
                     } catch (e) {
+                        console.error('Error parsing selector:', e);
                     }
                 } else if (typeof selector === 'object' && selector.selector) {
                     selector = selector.selector;
