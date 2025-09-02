@@ -19,30 +19,86 @@ export const runBqlQuery = createAction({
             description: 'Variables to pass to the BQL query (JSON object)',
             required: false,
         }),
+        operationName: Property.ShortText({
+            displayName: 'Operation Name',
+            description: 'Name of the GraphQL operation to execute',
+            required: false,
+        }),
         timeout: Property.Number({
             displayName: 'Timeout (ms)',
             description: 'Maximum execution time in milliseconds',
             required: false,
             defaultValue: 30000,
         }),
-        browserType: Property.StaticDropdown({
-            displayName: 'Browser Type',
-            description: 'Browser engine to use for the query',
-            required: false,
-            defaultValue: 'chromium',
-            options: {
-                options: [
-                    { label: 'Chromium', value: 'chromium' },
-                    { label: 'Firefox', value: 'firefox' },
-                    { label: 'WebKit', value: 'webkit' }
-                ]
-            }
-        }),
+
         stealth: Property.Checkbox({
             displayName: 'Stealth Mode',
             description: 'Enable stealth mode for bot detection bypass',
             required: false,
             defaultValue: true,
+        }),
+        headless: Property.Checkbox({
+            displayName: 'Headless Mode',
+            description: 'Run browser in headless mode (set to false for GUI)',
+            required: false,
+            defaultValue: true,
+        }),
+        humanlike: Property.Checkbox({
+            displayName: 'Human-like Behavior',
+            description: 'Enable human-like mouse movement, typing, and delays',
+            required: false,
+            defaultValue: false,
+        }),
+        proxy: Property.StaticDropdown({
+            displayName: 'Proxy Type',
+            description: 'Type of proxy to use',
+            required: false,
+            options: {
+                options: [
+                    { label: 'Residential', value: 'residential' },
+                    { label: 'None', value: 'none' }
+                ]
+            }
+        }),
+        proxyCountry: Property.ShortText({
+            displayName: 'Proxy Country',
+            description: 'Country code for residential proxy (e.g., us, gb, de)',
+            required: false,
+        }),
+        proxySticky: Property.Checkbox({
+            displayName: 'Sticky Proxy',
+            description: 'Maintain same proxy IP across session',
+            required: false,
+            defaultValue: false,
+        }),
+        blockAds: Property.Checkbox({
+            displayName: 'Block Ads',
+            description: 'Enable ad blocker (uBlock Origin)',
+            required: false,
+            defaultValue: false,
+        }),
+        blockConsentModals: Property.Checkbox({
+            displayName: 'Block Consent Modals',
+            description: 'Automatically block/dismiss cookie consent banners',
+            required: false,
+            defaultValue: false,
+        }),
+        record: Property.Checkbox({
+            displayName: 'Record Session',
+            description: 'Enable session recording for debugging',
+            required: false,
+            defaultValue: false,
+        }),
+        slowMo: Property.Number({
+            displayName: 'Slow Motion (ms)',
+            description: 'Add delays between browser actions in milliseconds',
+            required: false,
+        }),
+        ignoreHTTPSErrors: Property.Checkbox({
+            displayName: 'Ignore HTTPS Errors',
+            description: 'Ignore HTTPS certificate errors during navigation',
+            required: false,
+            defaultValue: false,
         }),
         userAgent: Property.ShortText({
             displayName: 'User Agent',
@@ -61,7 +117,7 @@ export const runBqlQuery = createAction({
         }),
         cookies: Property.Array({
             displayName: 'Cookies',
-            description: 'Cookies to set before executing code',
+            description: 'Cookies to set before executing BQL query',
             required: false,
             properties: {
                 name: Property.ShortText({
@@ -72,6 +128,11 @@ export const runBqlQuery = createAction({
                     displayName: 'Cookie Value',
                     required: true,
                 }),
+                url: Property.ShortText({
+                    displayName: 'URL',
+                    description: 'Request-URI to associate with the cookie',
+                    required: false,
+                }),
                 domain: Property.ShortText({
                     displayName: 'Domain',
                     required: false,
@@ -80,11 +141,39 @@ export const runBqlQuery = createAction({
                     displayName: 'Path',
                     required: false,
                 }),
+                secure: Property.Checkbox({
+                    displayName: 'Secure',
+                    description: 'Indicates if the cookie is secure',
+                    required: false,
+                    defaultValue: false,
+                }),
+                httpOnly: Property.Checkbox({
+                    displayName: 'HTTP Only',
+                    description: 'Indicates if the cookie is HTTP-only',
+                    required: false,
+                    defaultValue: false,
+                }),
+                sameSite: Property.StaticDropdown({
+                    displayName: 'SameSite',
+                    description: 'SameSite policy for the cookie',
+                    required: false,
+                    options: {
+                        options: [
+                            { label: 'Strict', value: 'Strict' },
+                            { label: 'Lax', value: 'Lax' },
+                            { label: 'None', value: 'None' }
+                        ]
+                    }
+                }),
+                expires: Property.Number({
+                    displayName: 'Expires',
+                    description: 'Expiration date as timestamp (session cookie if not set)',
+                    required: false,
+                }),
             }
         }),
     },
     async run(context) {
-        const browserType = context.propsValue.browserType || 'chromium';
         const requestBody: any = {
             query: context.propsValue.query,
         };
@@ -93,8 +182,11 @@ export const runBqlQuery = createAction({
             requestBody.variables = context.propsValue.variables;
         }
 
-        const bqlEndpoint = `/${browserType}/bql`;
-        let resourceUri = bqlEndpoint;
+        if (context.propsValue.operationName) {
+            requestBody.operationName = context.propsValue.operationName;
+        }
+
+        let resourceUri = '/chromium/bql';
 
         const queryParams: string[] = [];
 
@@ -102,8 +194,46 @@ export const runBqlQuery = createAction({
             queryParams.push(`timeout=${context.propsValue.timeout}`);
         }
 
-        if (context.propsValue.stealth) {
-            queryParams.push('stealth=true');
+        if (context.propsValue.stealth !== undefined) {
+            queryParams.push(`stealth=${context.propsValue.stealth}`);
+        }
+
+        if (context.propsValue.headless !== undefined) {
+            queryParams.push(`headless=${context.propsValue.headless}`);
+        }
+
+        if (context.propsValue.humanlike) {
+            queryParams.push(`humanlike=true`);
+        }
+
+        if (context.propsValue.proxy && context.propsValue.proxy !== 'none') {
+            queryParams.push(`proxy=${context.propsValue.proxy}`);
+            if (context.propsValue.proxyCountry) {
+                queryParams.push(`proxyCountry=${context.propsValue.proxyCountry}`);
+            }
+            if (context.propsValue.proxySticky) {
+                queryParams.push(`proxySticky=true`);
+            }
+        }
+
+        if (context.propsValue.blockAds) {
+            queryParams.push(`blockAds=true`);
+        }
+
+        if (context.propsValue.blockConsentModals) {
+            queryParams.push(`blockConsentModals=true`);
+        }
+
+        if (context.propsValue.record) {
+            queryParams.push(`record=true`);
+        }
+
+        if (context.propsValue.slowMo) {
+            queryParams.push(`slowMo=${context.propsValue.slowMo}`);
+        }
+
+        if (context.propsValue.ignoreHTTPSErrors) {
+            queryParams.push(`ignoreHTTPSErrors=true`);
         }
 
         if (context.propsValue.userAgent) {
@@ -118,8 +248,13 @@ export const runBqlQuery = createAction({
             const cookiesJson = JSON.stringify(context.propsValue.cookies.map((cookie: any) => ({
                 name: cookie.name,
                 value: cookie.value,
+                ...(cookie.url && { url: cookie.url }),
                 ...(cookie.domain && { domain: cookie.domain }),
-                ...(cookie.path && { path: cookie.path })
+                ...(cookie.path && { path: cookie.path }),
+                ...(cookie.secure !== undefined && { secure: cookie.secure }),
+                ...(cookie.httpOnly !== undefined && { httpOnly: cookie.httpOnly }),
+                ...(cookie.sameSite && { sameSite: cookie.sameSite }),
+                ...(cookie.expires !== undefined && { expires: cookie.expires })
             })));
             queryParams.push(`cookies=${encodeURIComponent(cookiesJson)}`);
         }
@@ -148,7 +283,7 @@ export const runBqlQuery = createAction({
             errors: parsedResult?.errors || null,
             result: parsedResult,
             metadata: {
-                browserType: browserType,
+                browserType: 'chromium',
                 executionTime: response.headers?.['x-response-time'] || 'unknown',
                 timestamp: new Date().toISOString(),
                 stealth: context.propsValue.stealth || false,

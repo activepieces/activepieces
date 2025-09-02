@@ -16,7 +16,7 @@ export const scrapeUrl = createAction({
         }),
         elements: Property.Array({
             displayName: 'Elements to Extract',
-            description: 'CSS selectors and names for elements to extract',
+            description: 'CSS selectors for elements to extract',
             required: true,
             properties: {
                 selector: Property.ShortText({
@@ -24,21 +24,10 @@ export const scrapeUrl = createAction({
                     description: 'CSS selector for the element',
                     required: true,
                 }),
-                name: Property.ShortText({
-                    displayName: 'Field Name',
-                    description: 'Name for this field in the output',
-                    required: true,
-                }),
-                attribute: Property.ShortText({
-                    displayName: 'Attribute',
-                    description: 'HTML attribute to extract (leave empty for text content)',
+                timeout: Property.Number({
+                    displayName: 'Timeout (ms)',
+                    description: 'Timeout in milliseconds for this specific selector',
                     required: false,
-                }),
-                multiple: Property.Checkbox({
-                    displayName: 'Multiple Elements',
-                    description: 'Extract all matching elements (returns array)',
-                    required: false,
-                    defaultValue: false,
                 }),
             }
         }),
@@ -47,10 +36,61 @@ export const scrapeUrl = createAction({
             description: 'CSS selector to wait for before scraping',
             required: false,
         }),
-        delay: Property.Number({
-            displayName: 'Delay (ms)',
-            description: 'Delay in milliseconds before scraping',
+        waitForSelectorTimeout: Property.Number({
+            displayName: 'Wait for Selector Timeout',
+            description: 'Timeout in milliseconds for waiting for selector',
             required: false,
+        }),
+        waitForSelectorVisible: Property.Checkbox({
+            displayName: 'Wait for Selector Visible',
+            description: 'Wait for selector to be visible',
+            required: false,
+            defaultValue: true,
+        }),
+        waitForSelectorHidden: Property.Checkbox({
+            displayName: 'Wait for Selector Hidden',
+            description: 'Wait for selector to be hidden',
+            required: false,
+            defaultValue: false,
+        }),
+        waitForTimeout: Property.Number({
+            displayName: 'Wait Timeout (ms)',
+            description: 'Timeout in milliseconds to wait before scraping',
+            required: false,
+        }),
+        waitForEvent: Property.ShortText({
+            displayName: 'Wait for Event',
+            description: 'Event name to wait for before scraping',
+            required: false,
+        }),
+        waitForEventTimeout: Property.Number({
+            displayName: 'Wait for Event Timeout',
+            description: 'Timeout in milliseconds for wait event',
+            required: false,
+        }),
+        debugConsole: Property.Checkbox({
+            displayName: 'Debug Console',
+            description: 'Include console logs in debug output',
+            required: false,
+            defaultValue: false,
+        }),
+        debugCookies: Property.Checkbox({
+            displayName: 'Debug Cookies',
+            description: 'Include cookies in debug output',
+            required: false,
+            defaultValue: false,
+        }),
+        debugNetwork: Property.Checkbox({
+            displayName: 'Debug Network',
+            description: 'Include network requests in debug output',
+            required: false,
+            defaultValue: false,
+        }),
+        bestAttempt: Property.Checkbox({
+            displayName: 'Best Attempt',
+            description: 'Attempt to proceed when awaited events fail or timeout',
+            required: false,
+            defaultValue: false,
         }),
         userAgent: Property.ShortText({
             displayName: 'User Agent',
@@ -118,77 +158,115 @@ export const scrapeUrl = createAction({
         const requestBody: any = {
             url: context.propsValue.url,
             elements: (context.propsValue.elements || []).map((element: any) => {
+                let selector = element.selector;
+                if (typeof selector === 'string') {
+                    try {
+                        const parsed = JSON.parse(selector);
+                        if (parsed.selector) {
+                            selector = parsed.selector;
+                        }
+                    } catch (e) {
+                    }
+                } else if (typeof selector === 'object' && selector.selector) {
+                    selector = selector.selector;
+                }
+
                 const elementConfig: any = {
-                    selector: element.selector,
-                    name: element.name,
+                    selector: selector,
                 };
-                
-                if (element.attribute) {
-                    elementConfig.attribute = element.attribute;
+
+                if (element.timeout !== undefined) {
+                    elementConfig.timeout = element.timeout;
                 }
-                
-                if (element.multiple) {
-                    elementConfig.multiple = element.multiple;
-                }
-                
+
                 return elementConfig;
             })
         };
 
-        const gotoOptions: any = {};
-        const waitFor: any = {};
-        const options: any = {};
-
-        if (context.propsValue.timeout) {
-            gotoOptions.timeout = context.propsValue.timeout;
-        }
-
-        if (context.propsValue.waitUntil) {
-            gotoOptions.waitUntil = context.propsValue.waitUntil;
+        if (context.propsValue.timeout || context.propsValue.waitUntil) {
+            requestBody.gotoOptions = {};
+            if (context.propsValue.timeout) {
+                requestBody.gotoOptions.timeout = context.propsValue.timeout;
+            }
+            if (context.propsValue.waitUntil) {
+                requestBody.gotoOptions.waitUntil = context.propsValue.waitUntil;
+            }
         }
 
         if (context.propsValue.waitForSelector) {
-            waitFor.waitForSelector = { selector: context.propsValue.waitForSelector };
+            const waitForSelectorObj: any = {
+                selector: context.propsValue.waitForSelector,
+            };
+
+            if (context.propsValue.waitForSelectorTimeout !== undefined) {
+                waitForSelectorObj.timeout = context.propsValue.waitForSelectorTimeout;
+            }
+
+            if (context.propsValue.waitForSelectorVisible !== undefined) {
+                waitForSelectorObj.visible = context.propsValue.waitForSelectorVisible;
+            }
+
+            if (context.propsValue.waitForSelectorHidden !== undefined) {
+                waitForSelectorObj.hidden = context.propsValue.waitForSelectorHidden;
+            }
+
+            requestBody.waitForSelector = waitForSelectorObj;
         }
 
-        if (context.propsValue.delay) {
-            waitFor.waitForTimeout = { timeout: context.propsValue.delay };
+        if (context.propsValue.waitForTimeout) {
+            requestBody.waitForTimeout = context.propsValue.waitForTimeout;
+        }
+
+        if (context.propsValue.waitForEvent) {
+            const waitForEventObj: any = {
+                event: context.propsValue.waitForEvent,
+            };
+
+            if (context.propsValue.waitForEventTimeout !== undefined) {
+                waitForEventObj.timeout = context.propsValue.waitForEventTimeout;
+            }
+
+            requestBody.waitForEvent = waitForEventObj;
+        }
+
+        const debugOpts: any = {};
+        if (context.propsValue.debugConsole) debugOpts.console = true;
+        if (context.propsValue.debugCookies) debugOpts.cookies = true;
+        if (context.propsValue.debugNetwork) debugOpts.network = true;
+
+        if (Object.keys(debugOpts).length > 0) {
+            requestBody.debugOpts = debugOpts;
+        }
+
+        if (context.propsValue.bestAttempt) {
+            requestBody.bestAttempt = context.propsValue.bestAttempt;
         }
 
         if (context.propsValue.waitForFunction) {
-            waitFor.waitForFunction = { fn: context.propsValue.waitForFunction };
+            requestBody.waitForFunction = {
+                fn: context.propsValue.waitForFunction
+            };
         }
 
         if (context.propsValue.userAgent) {
-            options.userAgent = context.propsValue.userAgent;
+            requestBody.userAgent = context.propsValue.userAgent;
         }
 
         if (context.propsValue.viewportWidth && context.propsValue.viewportHeight) {
-            options.viewport = {
+            requestBody.viewport = {
                 width: context.propsValue.viewportWidth,
                 height: context.propsValue.viewportHeight,
             };
         }
 
         if (context.propsValue.cookies && context.propsValue.cookies.length > 0) {
-            options.cookies = context.propsValue.cookies.map((cookie: any) => ({
+            requestBody.cookies = context.propsValue.cookies.map((cookie: any) => ({
                 name: cookie.name,
                 value: cookie.value,
                 ...(cookie.domain && { domain: cookie.domain })
             }));
         }
 
-        if (Object.keys(gotoOptions).length > 0) {
-            requestBody.gotoOptions = gotoOptions;
-        }
-
-        if (Object.keys(waitFor).length > 0) {
-            requestBody.waitFor = waitFor;
-        }
-
-        if (Object.keys(options).length > 0) {
-            requestBody.options = options;
-        }
 
         const response = await browserlessCommon.apiCall({
             auth: context.auth,

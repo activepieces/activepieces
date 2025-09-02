@@ -99,48 +99,134 @@ export const getWebsitePerformance = createAction({
                 ]
             }
         }),
+        budgets: Property.Array({
+            displayName: 'Performance Budgets',
+            description: 'Lighthouse performance budgets for resource sizes',
+            required: false,
+            properties: {
+                resourceType: Property.StaticDropdown({
+                    displayName: 'Resource Type',
+                    description: 'Type of resource to budget',
+                    required: true,
+                    options: {
+                        options: [
+                            { label: 'Document', value: 'document' },
+                            { label: 'Script', value: 'script' },
+                            { label: 'Stylesheet', value: 'stylesheet' },
+                            { label: 'Image', value: 'image' },
+                            { label: 'Media', value: 'media' },
+                            { label: 'Font', value: 'font' },
+                            { label: 'Other', value: 'other' },
+                            { label: 'Third-party', value: 'third-party' }
+                        ]
+                    }
+                }),
+                budget: Property.Number({
+                    displayName: 'Budget Size (KB)',
+                    description: 'Maximum allowed size in kilobytes',
+                    required: true,
+                })
+            }
+        }),
+        stealth: Property.Checkbox({
+            displayName: 'Stealth Mode',
+            description: 'Enable stealth mode for bot detection bypass',
+            required: false,
+            defaultValue: false,
+        }),
+        blockAds: Property.Checkbox({
+            displayName: 'Block Ads',
+            description: 'Enable ad blocker during performance analysis',
+            required: false,
+            defaultValue: false,
+        }),
     },
     async run(context) {
         const requestBody: any = {
             url: context.propsValue.url,
-            options: {
-                onlyCategories: context.propsValue.onlyCategories || false,
-                locale: context.propsValue.locale || 'en-US',
-            }
+        };
+
+        const lighthouseConfig: any = {
+            extends: 'lighthouse:default',
+            settings: {}
         };
 
         if (context.propsValue.categories && context.propsValue.categories.length > 0) {
-            requestBody.options.categories = context.propsValue.categories.map((cat: any) => cat.category);
+            lighthouseConfig.settings.onlyCategories = context.propsValue.categories.map((cat: any) => cat.category);
+        }
+
+        if (context.propsValue.locale) {
+            lighthouseConfig.settings.locale = context.propsValue.locale;
         }
 
         if (context.propsValue.device) {
-            requestBody.options.device = context.propsValue.device;
+            lighthouseConfig.settings.formFactor = context.propsValue.device;
         }
 
         if (context.propsValue.throttling && context.propsValue.throttling !== 'none') {
-            requestBody.options.throttling = context.propsValue.throttling;
+            lighthouseConfig.settings.throttling = { rttMs: 150, throughputKbps: 1638.4, cpuSlowdownMultiplier: 4 };
+
+            switch (context.propsValue.throttling) {
+                case 'mobileSlow4G':
+                    lighthouseConfig.settings.throttling = { rttMs: 150, throughputKbps: 1638.4, cpuSlowdownMultiplier: 4 };
+                    break;
+                case 'mobileRegular4G':
+                    lighthouseConfig.settings.throttling = { rttMs: 100, throughputKbps: 2048, cpuSlowdownMultiplier: 3 };
+                    break;
+                case 'mobileFast4G':
+                    lighthouseConfig.settings.throttling = { rttMs: 50, throughputKbps: 4096, cpuSlowdownMultiplier: 2 };
+                    break;
+            }
         }
 
         if (context.propsValue.userAgent) {
-            requestBody.options.userAgent = context.propsValue.userAgent;
+            lighthouseConfig.settings.userAgent = context.propsValue.userAgent;
         }
 
         if (context.propsValue.timeout) {
-            requestBody.options.timeout = context.propsValue.timeout;
+            lighthouseConfig.settings.timeout = context.propsValue.timeout;
         }
 
         if (context.propsValue.waitForSelector) {
-            requestBody.options.waitForSelector = context.propsValue.waitForSelector;
+            lighthouseConfig.settings.waitForSelector = context.propsValue.waitForSelector;
         }
 
         if (context.propsValue.emulateMediaType) {
-            requestBody.options.emulateMediaType = context.propsValue.emulateMediaType;
+            lighthouseConfig.settings.emulatedFormFactor = context.propsValue.emulateMediaType;
+        }
+
+        if (context.propsValue.onlyCategories && !lighthouseConfig.settings.onlyCategories) {
+            lighthouseConfig.settings.onlyCategories = ['performance', 'accessibility', 'best-practices', 'seo', 'pwa'];
+        }
+
+        requestBody.config = lighthouseConfig;
+
+        if (context.propsValue.budgets && context.propsValue.budgets.length > 0) {
+            requestBody.budgets = context.propsValue.budgets.map((budget: any) => ({
+                resourceType: budget.resourceType,
+                budget: budget.budget * 1024
+            }));
+        }
+
+        let resourceUri = '/performance';
+        const queryParams: string[] = [];
+
+        if (context.propsValue.stealth) {
+            queryParams.push('stealth=true');
+        }
+
+        if (context.propsValue.blockAds) {
+            queryParams.push('blockAds=true');
+        }
+
+        if (queryParams.length > 0) {
+            resourceUri += `?${queryParams.join('&')}`;
         }
 
         const response = await browserlessCommon.apiCall({
             auth: context.auth,
             method: HttpMethod.POST,
-            resourceUri: '/performance',
+            resourceUri,
             body: requestBody,
         });
 
@@ -148,7 +234,7 @@ export const getWebsitePerformance = createAction({
         
         const summary: any = {
             url: context.propsValue.url,
-            device: context.propsValue.device || 'desktop',
+            formFactor: context.propsValue.device || 'desktop',
             timestamp: new Date().toISOString(),
         };
 

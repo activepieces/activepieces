@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { browserlessAuth } from '../common/auth';
-import { browserlessCommon } from '../common/client';
+import { browserlessCommon, convertBinaryToBase64, isBinaryResponse } from '../common/client';
 
 export const captureScreenshot = createAction({
     name: 'capture_screenshot',
@@ -98,18 +98,20 @@ export const captureScreenshot = createAction({
         }
 
         if (context.propsValue.width && context.propsValue.height) {
-            requestBody.options.viewport = {
+            requestBody.viewport = {
                 width: context.propsValue.width,
                 height: context.propsValue.height,
             };
         }
 
         if (context.propsValue.waitForSelector) {
-            requestBody.options.waitForSelector = context.propsValue.waitForSelector;
+            requestBody.waitForSelector = {
+                selector: context.propsValue.waitForSelector,
+            };
         }
 
         if (context.propsValue.delay) {
-            requestBody.options.delay = context.propsValue.delay;
+            requestBody.waitForTimeout = context.propsValue.delay;
         }
 
         if (context.propsValue.omitBackground) {
@@ -135,14 +137,37 @@ export const captureScreenshot = createAction({
             body: requestBody,
         });
 
+        const imageType = context.propsValue.imageType || 'png';
+        const fileName = `screenshot.${imageType}`;
+        
+        let fileData: Buffer;
+        
+        if (response.body instanceof ArrayBuffer) {
+            fileData = Buffer.from(response.body);
+        } else if (Buffer.isBuffer(response.body)) {
+            fileData = response.body;
+        } else if (typeof response.body === 'string') {
+            fileData = Buffer.from(response.body, 'latin1');
+        } else {
+            fileData = Buffer.from(String(response.body), 'latin1');
+        }
+
+        const file = await context.files.write({
+            data: fileData,
+            fileName: fileName,
+        });
+
         return {
             success: true,
-            screenshot: response.body,
+            file: file,
+            screenshotBase64: convertBinaryToBase64(fileData),
             metadata: {
                 url: context.propsValue.url,
-                type: context.propsValue.imageType || 'png',
+                type: imageType,
                 fullPage: context.propsValue.fullPage || false,
                 timestamp: new Date().toISOString(),
+                contentType: response.headers?.['content-type'] || `image/${imageType}`,
+                fileName: fileName,
             }
         };
     },
