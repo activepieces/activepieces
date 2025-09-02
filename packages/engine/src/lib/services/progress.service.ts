@@ -116,6 +116,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             executionStateContentLength: executionState.byteLength,
             progressUpdateType: engineConstants.progressUpdateType,
             failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
+            logsFileId: engineConstants.logsFileId,
         }
         const requestHash = crypto.createHash('sha256').update(JSON.stringify(request)).digest('hex')
         if (requestHash === lastRequestHash) {

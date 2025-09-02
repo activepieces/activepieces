@@ -13,6 +13,7 @@ export const UpdateRunProgressRequest = Type.Object({
     workerHandlerId: Nullable(Type.String()),
     httpRequestId: Nullable(Type.String()),
     failedStepName: Type.Optional(Type.String()),
+    logsFileId: Type.Optional(Type.String()),
 })
 
 export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>

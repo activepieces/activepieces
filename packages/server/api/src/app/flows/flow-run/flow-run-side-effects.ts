@@ -23,7 +23,6 @@ import { system } from '../../helper/system/system'
 import { jobQueue } from '../../workers/queue'
 import { JOB_PRIORITY } from '../../workers/queue/queue-manager'
 import { flowRunHooks } from './flow-run-hooks'
-import { flowRunRepo } from './flow-run-service'
 
 type StartParams = {
     flowRun: FlowRun
@@ -90,11 +89,14 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
             executionType,
         }, '[FlowRunSideEffects#start]')
         let logsUploadUrl: string | undefined
+        let logsFileId: string | undefined
         if (USE_SIGNED_URL) {
-            logsUploadUrl = await createLogsUploadUrl({
+            const logsUploadResult = await createLogsUploadUrl({
                 flowRunId: flowRun.id,
                 projectId: flowRun.projectId,
             }, log)
+            logsUploadUrl = logsUploadResult?.uploadUrl
+            logsFileId = logsUploadResult?.fileId
         }
 
         await jobQueue(log).add({
@@ -115,6 +117,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                 stepNameToTest,
                 sampleData,
                 logsUploadUrl,
+                logsFileId,
             },
         })
         eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
@@ -167,9 +170,8 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
     },
 })
 
-const createLogsUploadUrl = async (params: CreateLogsUploadUrlParams, log: FastifyBaseLogger): Promise<string | undefined> => {
+const createLogsUploadUrl = async (params: CreateLogsUploadUrlParams, log: FastifyBaseLogger): Promise<{ uploadUrl: string, fileId: string } | undefined> => {
     const file = await fileService(log).save({
-        fileId: params.flowRunId,
         projectId: params.projectId,
         data: null,
         size: 0,
@@ -180,12 +182,10 @@ const createLogsUploadUrl = async (params: CreateLogsUploadUrlParams, log: Fasti
             projectId: params.projectId,
         },
     })
-    await flowRunRepo().update(params.flowRunId, {
-        logsFileId: file.id,
-    })
 
     assertNotNullOrUndefined(file.s3Key, 's3Key')
-    return s3Helper(log).putS3SignedUrl(file.s3Key)
+    const uploadUrl = await s3Helper(log).putS3SignedUrl(file.s3Key)
+    return { uploadUrl, fileId: file.id }
 }
 
 

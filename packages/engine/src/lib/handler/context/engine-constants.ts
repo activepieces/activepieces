@@ -26,6 +26,7 @@ type EngineConstantsParams = {
     runEnvironment?: RunEnvironment
     testSingleStepMode?: boolean
     logsUploadUrl?: string
+    logsFileId?: string
 }
 
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
@@ -62,6 +63,7 @@ export class EngineConstants {
     public readonly runEnvironment?: RunEnvironment
     public readonly testSingleStepMode?: boolean
     public readonly logsUploadUrl?: string
+    public readonly logsFileId?: string
 
     private project: Project | null = null
 
@@ -103,6 +105,7 @@ export class EngineConstants {
         this.runEnvironment = params.runEnvironment
         this.testSingleStepMode = params.testSingleStepMode
         this.logsUploadUrl = params.logsUploadUrl
+        this.logsFileId = params.logsFileId
     }
 
     public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
@@ -129,6 +132,7 @@ export class EngineConstants {
             runEnvironment: input.runEnvironment,
             testSingleStepMode: !isNil(input.stepNameToTest),
             logsUploadUrl: input.logsUploadUrl,
+            logsFileId: input.logsFileId,
         })
     }
 
