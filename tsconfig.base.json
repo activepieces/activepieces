@@ -163,6 +163,9 @@
       "@activepieces/piece-browse-ai": [
         "packages/pieces/community/browse-ai/src/index.ts"
       ],
+      "@activepieces/piece-browserless": [
+        "packages/pieces/community/browserless/src/index.ts"
+      ],
       "@activepieces/piece-bubble": [
         "packages/pieces/community/bubble/src/index.ts"
       ],
