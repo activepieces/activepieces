@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createHousehold = createAction({
   name: 'create_household',
@@ -143,16 +143,15 @@ export const createHousehold = createAction({
       throw new Error('Authentication is required');
     }
     
-    const accessToken = (auth as any).access_token;
-    if (!accessToken) {
-      throw new Error('Access token not found in authentication');
+    if (!auth) {
+      throw new Error('Authentication is required');
     }
     
-    // Build the request body - creating as a contact with type "Household"
+    // Build the request body - create as a contact with household type
     const requestBody: any = {
       first_name: propsValue.name,
-      last_name: '', // Households typically don't have last names
-      type: propsValue.type || 'Household'
+      last_name: 'Household', // Standard practice for household contacts
+      contact_type: 'Household'
     };
     
     // Add optional fields if provided
@@ -199,24 +198,18 @@ export const createHousehold = createAction({
       requestBody.tags = propsValue.tags;
     }
     
-    // Handle initial household member (head)
-    if (propsValue.head_contact_id) {
-      requestBody.household = {
-        name: propsValue.name,
-        title: 'Head'
-      };
-    }
+    // Remove head contact ID from initial creation - we'll add it as a member after
+    // if (propsValue.head_contact_id) {
+    //   requestBody.head_contact_id = propsValue.head_contact_id;
+    // }
     
     // Make the API request to create the household as a contact
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://api.crmworkspace.com/v1/contacts',
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken
-        },
         headers: {
+          'ACCESS_TOKEN': auth as string,
           'Content-Type': 'application/json'
         },
         body: requestBody
@@ -234,11 +227,8 @@ export const createHousehold = createAction({
           const memberResponse = await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: `https://api.crmworkspace.com/v1/households/${householdContact.id}/members`,
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: accessToken
-            },
             headers: {
+              'ACCESS_TOKEN': auth as string,
               'Content-Type': 'application/json'
             },
             body: {

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const startWorkflow = createAction({
   name: 'start_workflow',
@@ -43,7 +43,7 @@ export const startWorkflow = createAction({
     }),
     starts_at: Property.DateTime({
       displayName: 'Start Date & Time',
-      description: 'When you want the workflow to start (optional, defaults to now)',
+      description: 'When you want the workflow to start (YYYY-MM-DD HH:MM format, optional, defaults to now)',
       required: false
     }),
     
@@ -75,7 +75,7 @@ export const startWorkflow = createAction({
     }),
     milestone_1_date: Property.DateTime({
       displayName: 'Milestone 1 Date',
-      description: 'When the first milestone should occur',
+      description: 'When the first milestone should occur (YYYY-MM-DD HH:MM format)',
       required: false
     }),
     
@@ -92,7 +92,7 @@ export const startWorkflow = createAction({
     }),
     milestone_2_date: Property.DateTime({
       displayName: 'Milestone 2 Date',
-      description: 'When the second milestone should occur',
+      description: 'When the second milestone should occur (YYYY-MM-DD HH:MM format)',
       required: false
     }),
     
@@ -109,7 +109,7 @@ export const startWorkflow = createAction({
     }),
     milestone_3_date: Property.DateTime({
       displayName: 'Milestone 3 Date',
-      description: 'When the third milestone should occur',
+      description: 'When the third milestone should occur (YYYY-MM-DD HH:MM format)',
       required: false
     })
   },
@@ -121,10 +121,7 @@ export const startWorkflow = createAction({
       throw new Error('Authentication is required');
     }
     
-    const accessToken = (auth as any).access_token;
-    if (!accessToken) {
-      throw new Error('Access token not found in authentication');
-    }
+
     
     // Build the request body
     const requestBody: any = {
@@ -194,11 +191,8 @@ export const startWorkflow = createAction({
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://api.crmworkspace.com/v1/workflows',
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken
-        },
         headers: {
+          'ACCESS_TOKEN': auth as string,
           'Content-Type': 'application/json'
         },
         body: requestBody

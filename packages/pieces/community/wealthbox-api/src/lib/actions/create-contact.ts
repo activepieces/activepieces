@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createContact = createAction({
   name: 'create_contact',
@@ -110,7 +110,7 @@ export const createContact = createAction({
     }),
     birth_date: Property.DateTime({
       displayName: 'Birth Date',
-      description: 'The birthdate of the contact',
+      description: 'The birthdate of the contact (YYYY-MM-DD format)',
       required: false
     }),
     marital_status: Property.StaticDropdown({
@@ -242,11 +242,6 @@ export const createContact = createAction({
       throw new Error('Authentication is required');
     }
     
-    const accessToken = (auth as any).access_token;
-    if (!accessToken) {
-      throw new Error('Access token not found in authentication');
-    }
-    
     // Build the request body
     const requestBody: any = {
       first_name: propsValue.first_name,
@@ -317,7 +312,7 @@ export const createContact = createAction({
         method: HttpMethod.POST,
         url: 'https://api.crmworkspace.com/v1/contacts',
         headers: {
-          'ACCESS_TOKEN': context.auth as string,
+          'ACCESS_TOKEN': auth as string,
           'Content-Type': 'application/json'
         },
         body: requestBody

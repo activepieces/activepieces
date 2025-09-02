@@ -25,12 +25,12 @@ export const newEvent = createTrigger({
     }),
     start_date_min: Property.DateTime({
       displayName: 'Start Date Minimum',
-      description: 'Only include events starting on or after this date',
+      description: 'Only include events starting on or after this date (YYYY-MM-DD format)',
       required: false
     }),
     start_date_max: Property.DateTime({
       displayName: 'Start Date Maximum',
-      description: 'Only include events starting on or before this date',
+      description: 'Only include events starting on or before this date (YYYY-MM-DD format)',
       required: false
     }),
     event_category: Property.Number({

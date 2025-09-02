@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createOpportunity = createAction({
   name: 'create_opportunity',
@@ -9,25 +9,43 @@ export const createOpportunity = createAction({
     // Required fields
     name: Property.ShortText({
       displayName: 'Opportunity Name',
-      description: 'The name of the opportunity (e.g., "Financial Plan", "Investment Advisory", "Estate Planning")',
+      description:
+        'The name of the opportunity (e.g., "Financial Plan", "Investment Advisory", "Estate Planning")',
       required: true
     }),
     target_close: Property.DateTime({
       displayName: 'Target Close Date',
-      description: 'The date/time when the opportunity should close',
+      description:
+        'The date/time when the opportunity should close (YYYY-MM-DD HH:MM format)',
       required: true
     }),
     probability: Property.Number({
       displayName: 'Probability (%)',
-      description: 'The chance the opportunity will close, as a percentage (0-100)',
+      description:
+        'The chance the opportunity will close, as a percentage (0-100)',
       required: true
     }),
-    stage: Property.Number({
-      displayName: 'Stage ID',
-      description: 'The ID representing the current stage the opportunity is in',
-      required: true
+    stage: Property.StaticDropdown({
+      displayName: 'Stage',
+      description: 'The current stage the opportunity is in',
+      required: true,
+      options: {
+        options: [
+          { label: 'Won', value: 'Won' },
+          { label: 'Evaluation', value: 'Evaluation' },
+          {
+            label: 'Identify Decision Makers',
+            value: 'Identify Decision Makers'
+          },
+          { label: 'Qualification', value: 'Qualification' },
+          { label: 'Needs Analysis', value: 'Needs Analysis' },
+          { label: 'Review', value: 'Review' },
+          { label: 'Proposal', value: 'Proposal' },
+          { label: 'Lost', value: 'Lost' }
+        ]
+      }
     }),
-    
+
     // Amount information
     amount: Property.Number({
       displayName: 'Amount',
@@ -58,13 +76,12 @@ export const createOpportunity = createAction({
         options: [
           { label: 'Fee', value: 'Fee' },
           { label: 'Commission', value: 'Commission' },
-          { label: 'Revenue', value: 'Revenue' },
-          { label: 'Assets', value: 'Assets' },
+          { label: 'AUM', value: 'AUM' },
           { label: 'Other', value: 'Other' }
         ]
       }
     }),
-    
+
     // Contact linking
     contact_id: Property.Number({
       displayName: 'Contact ID',
@@ -76,7 +93,7 @@ export const createOpportunity = createAction({
       description: 'The name of the contact (for reference)',
       required: false
     }),
-    
+
     // Optional fields
     description: Property.LongText({
       displayName: 'Description',
@@ -85,10 +102,11 @@ export const createOpportunity = createAction({
     }),
     manager: Property.Number({
       displayName: 'Manager User ID',
-      description: 'The ID of the user designated as manager of this opportunity',
+      description:
+        'The ID of the user designated as manager of this opportunity',
       required: false
     }),
-    
+
     // Visibility
     visible_to: Property.StaticDropdown({
       displayName: 'Visible To',
@@ -103,7 +121,7 @@ export const createOpportunity = createAction({
         ]
       }
     }),
-    
+
     // Custom fields
     custom_field_1_id: Property.Number({
       displayName: 'Custom Field 1 ID',
@@ -126,30 +144,24 @@ export const createOpportunity = createAction({
       required: false
     })
   },
-  
+
   async run(context) {
     const { auth, propsValue } = context;
-    
+
     if (!auth) {
       throw new Error('Authentication is required');
     }
-    
-    const accessToken = (auth as any).access_token;
-    if (!accessToken) {
-      throw new Error('Access token not found in authentication');
-    }
-    
+
     // Validate probability range
     if (propsValue.probability < 0 || propsValue.probability > 100) {
       throw new Error('Probability must be between 0 and 100');
     }
-    
+
     // Build the request body
     const requestBody: any = {
       name: propsValue.name,
       target_close: propsValue.target_close,
       probability: propsValue.probability,
-      stage: propsValue.stage,
       amounts: [
         {
           amount: propsValue.amount,
@@ -165,60 +177,71 @@ export const createOpportunity = createAction({
         }
       ]
     };
-    
+
+    // Add required stage
+    requestBody.stage = propsValue.stage;
+
     // Add optional fields if provided
     if (propsValue.description) {
       requestBody.description = propsValue.description;
     }
-    
+
     if (propsValue.manager) {
       requestBody.manager = propsValue.manager;
     }
-    
+
     if (propsValue.visible_to) {
       requestBody.visible_to = propsValue.visible_to;
     }
-    
+
     // Handle custom fields
     const customFields: any[] = [];
-    
+
     if (propsValue.custom_field_1_id && propsValue.custom_field_1_value) {
       customFields.push({
         id: propsValue.custom_field_1_id,
         value: propsValue.custom_field_1_value
       });
     }
-    
+
     if (propsValue.custom_field_2_id && propsValue.custom_field_2_value) {
       customFields.push({
         id: propsValue.custom_field_2_id,
         value: propsValue.custom_field_2_value
       });
     }
-    
+
     if (customFields.length > 0) {
       requestBody.custom_fields = customFields;
     }
-    
+
     // Make the API request
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://api.crmworkspace.com/v1/opportunities',
         headers: {
-          'ACCESS_TOKEN': context.auth as string,
+          ACCESS_TOKEN: auth as string,
           'Content-Type': 'application/json'
         },
         body: requestBody
       });
-      
+
       if (response.status >= 400) {
-        throw new Error(`Wealthbox API error: ${response.status} - ${JSON.stringify(response.body)}`);
+        throw new Error(
+          `Wealthbox API error: ${response.status} - ${JSON.stringify(
+            response.body
+          )}`
+        );
       }
-      
+
       return response.body;
     } catch (error) {
-      throw new Error(`Failed to create opportunity: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to create opportunity: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
     }
   }
 });

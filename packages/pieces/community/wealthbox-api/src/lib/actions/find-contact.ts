@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const findContact = createAction({
   name: 'find_contact',
@@ -76,10 +76,7 @@ export const findContact = createAction({
       throw new Error('Authentication is required');
     }
     
-    const accessToken = (auth as any).access_token;
-    if (!accessToken) {
-      throw new Error('Access token not found in authentication');
-    }
+
     
     let url = 'https://api.crmworkspace.com/v1/contacts';
     let searchParams: any = {};
@@ -136,11 +133,8 @@ export const findContact = createAction({
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: url,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken
-        },
         headers: {
+          'ACCESS_TOKEN': auth as string,
           'Accept': 'application/json'
         }
       });

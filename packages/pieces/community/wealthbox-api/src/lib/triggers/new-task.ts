@@ -5,8 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   httpClient,
-  HttpMethod,
-  AuthenticationType
+  HttpMethod
 } from '@activepieces/pieces-common';
 import {
   pollingHelper,
@@ -22,10 +21,7 @@ const polling: Polling<any, any> = {
       throw new Error('Authentication is required');
     }
 
-    const accessToken = (auth as any).access_token;
-    if (!accessToken) {
-      throw new Error('Access token not found in authentication');
-    }
+
 
     // Build URL with updated_since parameter for polling
     let url = 'https://api.crmworkspace.com/v1/tasks?per_page=100';
@@ -42,12 +38,9 @@ const polling: Polling<any, any> = {
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: url,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken
-        },
         headers: {
-          Accept: 'application/json'
+          'ACCESS_TOKEN': auth as string,
+          'Accept': 'application/json'
         }
       });
 

@@ -1,8 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   httpClient,
-  HttpMethod,
-  AuthenticationType
+  HttpMethod
 } from '@activepieces/pieces-common';
 
 export const createTask = createAction({
@@ -20,7 +19,7 @@ export const createTask = createAction({
     }),
     due_date: Property.DateTime({
       displayName: 'Due Date',
-      description: 'When the task is due',
+      description: 'When the task is due (YYYY-MM-DD HH:MM format)',
       required: true
     }),
 
@@ -217,7 +216,7 @@ export const createTask = createAction({
         method: HttpMethod.POST,
         url: 'https://api.crmworkspace.com/v1/tasks',
         headers: {
-          ACCESS_TOKEN: context.auth as string,
+          'ACCESS_TOKEN': auth as string,
           'Content-Type': 'application/json'
         },
         body: requestBody

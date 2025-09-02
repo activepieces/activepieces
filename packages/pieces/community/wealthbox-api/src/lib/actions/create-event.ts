@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createEvent = createAction({
   name: 'create_event',
@@ -14,12 +14,12 @@ export const createEvent = createAction({
     }),
     starts_at: Property.DateTime({
       displayName: 'Start Date & Time',
-      description: 'When the event starts',
+      description: 'When the event starts (YYYY-MM-DD HH:MM format)',
       required: true
     }),
     ends_at: Property.DateTime({
       displayName: 'End Date & Time',
-      description: 'When the event ends',
+      description: 'When the event ends (YYYY-MM-DD HH:MM format)',
       required: true
     }),
     
@@ -143,9 +143,8 @@ export const createEvent = createAction({
       throw new Error('Authentication is required');
     }
     
-    const accessToken = (auth as any).access_token;
-    if (!accessToken) {
-      throw new Error('Access token not found in authentication');
+    if (!auth) {
+      throw new Error('Authentication is required');
     }
     
     // Build the request body
@@ -223,7 +222,7 @@ export const createEvent = createAction({
         method: HttpMethod.POST,
         url: 'https://api.crmworkspace.com/v1/events',
         headers: {
-          'ACCESS_TOKEN': context.auth as string,
+          'ACCESS_TOKEN': auth as string,
           'Content-Type': 'application/json'
         },
         body: requestBody

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createNote = createAction({
   name: 'create_note',
@@ -55,10 +55,7 @@ export const createNote = createAction({
       throw new Error('Authentication is required');
     }
     
-    const accessToken = (auth as any).access_token;
-    if (!accessToken) {
-      throw new Error('Access token not found in authentication');
-    }
+
     
     // Build the request body
     const requestBody: any = {
@@ -88,7 +85,7 @@ export const createNote = createAction({
         method: HttpMethod.POST,
         url: 'https://api.crmworkspace.com/v1/notes',
         headers: {
-          'ACCESS_TOKEN': context.auth as string,
+          'ACCESS_TOKEN': auth as string,
           'Content-Type': 'application/json'
         },
         body: requestBody

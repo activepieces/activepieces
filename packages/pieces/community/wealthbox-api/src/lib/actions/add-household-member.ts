@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const addHouseholdMember = createAction({
   name: 'add_household_member',
@@ -45,9 +45,8 @@ export const addHouseholdMember = createAction({
       throw new Error('Authentication is required');
     }
     
-    const accessToken = (auth as any).access_token;
-    if (!accessToken) {
-      throw new Error('Access token not found in authentication');
+    if (!auth) {
+      throw new Error('Authentication is required');
     }
     
     // Build the request body
@@ -61,11 +60,8 @@ export const addHouseholdMember = createAction({
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: `https://api.crmworkspace.com/v1/households/${propsValue.household_id}/members`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken
-        },
         headers: {
+          'ACCESS_TOKEN': auth as string,
           'Content-Type': 'application/json'
         },
         body: requestBody
