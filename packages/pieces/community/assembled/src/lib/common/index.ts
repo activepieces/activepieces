@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const assembledCommon = {
-  baseUrl: 'https://api.assembled.com/v1',
+  baseUrl: 'https://api.assembledhq.com/v0',
   
   async makeRequest(
     auth: string, 
@@ -16,7 +16,7 @@ export const assembledCommon = {
       method,
       url,
       headers: {
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Basic ${Buffer.from(auth + ':').toString('base64')}`,
         'Content-Type': 'application/json',
         ...headers,
       },
