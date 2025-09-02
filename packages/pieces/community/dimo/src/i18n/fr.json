@@ -108,7 +108,7 @@
   "Status": "Statut",
   "Verification Token": "Jeton de vérification",
   "Description": "Libellé",
-  "Operator": "Operator",
+  "Operator": "Opérateur",
   "Webhook ID": "Identifiant Webhook",
   "The ID of the vehicle for generating VIN Verifiable Credential for.": "L'ID du véhicule pour la génération des identifiants vérifiables VIN.",
   "3-letter ISO 3166-1 alpha-3 country code (e.g. USA)": "Code pays ISO 3166-1 alpha-3 à 3 lettres (ex. USA)",

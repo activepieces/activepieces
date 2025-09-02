@@ -17,13 +17,6 @@ export const ExportTableResponse = Type.Object({
 
 export type ExportTableResponse = Static<typeof ExportTableResponse>
 
-
-export const AutomateTableRequest = Type.Object({
-    recordIds: Type.Array(Type.String()),
-})
-
-export type AutomateTableRequest = Static<typeof AutomateTableRequest>
-
 export const CreateTableWebhookRequest = Type.Object({
     events: Type.Array(Type.Enum(TableWebhookEventType)),
     webhookUrl: Type.String(),

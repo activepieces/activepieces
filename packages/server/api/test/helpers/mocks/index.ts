@@ -1,3 +1,4 @@
+import { AIProvider } from '@activepieces/common-ai'
 import {
     ApiKey,
     ApplicationEvent,
@@ -17,7 +18,6 @@ import {
 } from '@activepieces/ee-shared'
 import {
     AiOverageState,
-    AIProvider,
     apId,
     assertNotNullOrUndefined,
     File,
@@ -562,6 +562,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
             customRolesEnabled: true,
             manageProjectsEnabled: true,
             customDomainsEnabled: true,
+            includedAiCredits: 1000,
             ...params?.plan,
         })
         await databaseConnection().getRepository('platform_plan').upsert(mockPlatformPlan, ['platformId'])

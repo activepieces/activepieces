@@ -11,18 +11,7 @@ import { useEmbedding } from '../embed-provider';
 import { Button } from './button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
-type HomeButtonProps = {
-  route: string;
-  showBackButton?: boolean;
-};
-
-const HomeButtonWrapper = ({
-  route,
-  children,
-}: {
-  route: string;
-  children: React.ReactNode;
-}) => {
+const HomeButtonWrapper = ({ children }: { children: React.ReactNode }) => {
   const { embedState } = useEmbedding();
   if (embedState.emitHomeButtonClickedEvent) {
     const handleClick = () => {
@@ -30,7 +19,7 @@ const HomeButtonWrapper = ({
         {
           type: ActivepiecesClientEventName.CLIENT_BUILDER_HOME_BUTTON_CLICKED,
           data: {
-            route,
+            route: '/flows',
           },
         },
         '*',
@@ -39,19 +28,20 @@ const HomeButtonWrapper = ({
     return <div onClick={handleClick}>{children}</div>;
   }
   return (
-    <Link to={authenticationSession.appendProjectRoutePrefix(route)}>
+    <Link to={authenticationSession.appendProjectRoutePrefix('/flows')}>
       {children}
     </Link>
   );
 };
-const HomeButton = ({ route, showBackButton }: HomeButtonProps) => {
+const HomeButton = () => {
   const { embedState } = useEmbedding();
   const branding = flagsHooks.useWebsiteBranding();
+  const showBackButton = embedState.homeButtonIcon === 'back';
   return (
     <>
       {!embedState.hideHomeButtonInBuilder && (
         <Tooltip>
-          <HomeButtonWrapper route={route}>
+          <HomeButtonWrapper>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
@@ -69,10 +59,11 @@ const HomeButton = ({ route, showBackButton }: HomeButtonProps) => {
               </Button>
             </TooltipTrigger>
           </HomeButtonWrapper>
-
-          <TooltipContent side="bottom">
-            {!showBackButton && t('Go to Dashboard')}
-          </TooltipContent>
+          {!showBackButton && (
+            <TooltipContent side="bottom">
+              {t('Go to Dashboard')}
+            </TooltipContent>
+          )}
         </Tooltip>
       )}
     </>

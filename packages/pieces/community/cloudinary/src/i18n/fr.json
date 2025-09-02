@@ -20,7 +20,7 @@
   "Apply transformations (resize, crop, watermark, etc.) to an asset and generate a new URL.": "Appliquer les transformations (redimensionnement, recadrage, filigrane, etc.) à une ressource et générer une nouvelle URL.",
   "File": "Ficher",
   "Public ID": "Identifiant public",
-  "Folder": "Folder",
+  "Folder": "Dossier",
   "Tags": "Tags",
   "Overwrite": "Écraser",
   "Use Original Filename": "Utiliser le nom de fichier original",

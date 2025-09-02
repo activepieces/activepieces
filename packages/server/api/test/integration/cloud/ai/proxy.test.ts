@@ -1,4 +1,5 @@
-import { CategorizedLanguageModelPricing, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, GPTImage1PricingPerImage, PrincipalType, TieredLanguageModelPricing } from '@activepieces/shared'
+import { CategorizedLanguageModelPricing, DALLE3PricingPerImage, FlatLanguageModelPricing, GPTImage1PricingPerImage, TieredLanguageModelPricing } from '@activepieces/common-ai'
+import { ErrorCode, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
 import { AIUsageEntity, AIUsageSchema } from '../../../../src/app/ai/ai-usage-entity'
@@ -159,6 +160,60 @@ describe('AI Providers Proxy', () => {
                 expect(aiUsage?.cost).toBe(totalCost)
             })
 
+            it('should record the usage cost of a responses request with web search', async () => {
+                // arrange
+                const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                    platform: {
+                        id: CLOUD_PLATFORM_ID,
+                    },
+                })
+                await mockAndSaveAIProvider({
+                    platformId: mockPlatform.id,
+                    provider: 'openai',
+                    config: {
+                        apiKey: openaiKey,
+                    },
+                })
+
+                const mockToken = await generateMockToken({
+                    type: PrincipalType.USER,
+                    projectId: mockProject.id,
+                    id: mockOwner.id,
+                    platform: {
+                        id: mockPlatform.id,
+                    },
+                })
+
+                const model = getProviderConfig('openai')?.languageModels.find(model => model.instance.modelId === 'gpt-4.1-mini')
+
+                // act
+                const response = await app?.inject({
+                    method: 'POST',
+                    url: '/v1/ai-providers/proxy/openai/v1/responses',
+                    headers: {
+                        authorization: `Bearer ${mockToken}`,
+                    },
+                    body: {
+                        model: model?.instance.modelId,
+                        input: 'Give me a title of hackernews article',
+                        tools: [{
+                            type: 'web_search_preview',
+                        }],
+                        max_tool_calls: 1,
+                    },
+                })
+                const data = response?.json()
+                const { usage } = data as { usage: { input_tokens: number, output_tokens: number } }
+
+                // assert
+                const { input: inputCost, output: outputCost } = model?.pricing as FlatLanguageModelPricing
+                const webSearchCost = model?.webSearchCost ?? 0
+                const totalCost = calculateTokensCost(usage.input_tokens, inputCost) + calculateTokensCost(usage.output_tokens, outputCost) + webSearchCost
+
+                const aiUsage = await pollForAIUsage(mockProject.id, 'openai')
+                expect(aiUsage?.cost).toBe(totalCost)
+            })
+
             it('should record the usage cost of a DALL-E 3 image generation request', async () => {
                 // arrange
                 const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
@@ -277,7 +332,7 @@ describe('AI Providers Proxy', () => {
 
     if (anthropicKey) {
         describe('Anthropic', () => {
-            it('should record the usage cost of a messages request', async () => {
+            it('should record the usage cost of a messages request with web search', async () => {
                 // arrange
                 const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                     platform: {
@@ -319,10 +374,15 @@ describe('AI Providers Proxy', () => {
                         messages: [
                             {
                                 role: 'user',
-                                content: 'Hello, how are you?',
+                                content: 'Give me a title of hackernews article',
                             },
                         ],
-                        max_tokens: 100,
+                        max_tokens: 2000,
+                        tools: [{
+                            type: 'web_search_20250305',
+                            name: 'web_search',
+                            max_uses: 1,
+                        }],
                     },
                 })
                 const data = response?.json()
@@ -330,7 +390,8 @@ describe('AI Providers Proxy', () => {
 
                 // assert
                 const { input: inputCost, output: outputCost } = model?.pricing as FlatLanguageModelPricing
-                const totalCost = calculateTokensCost(usage.input_tokens, inputCost) + calculateTokensCost(usage.output_tokens, outputCost)
+                const webSearchCost = model?.webSearchCost ?? 0
+                const totalCost = calculateTokensCost(usage.input_tokens, inputCost) + calculateTokensCost(usage.output_tokens, outputCost) + webSearchCost
 
                 const aiUsage = await pollForAIUsage(mockProject.id, 'anthropic')
                 expect(aiUsage?.cost).toBe(totalCost)
@@ -468,7 +529,7 @@ describe('AI Providers Proxy', () => {
                 expect(aiUsage?.cost).toBe(totalCost)
             })
 
-            it('should record the usage cost of a categorized pricing model (Gemini 2.5 Flash) with text input', async () => {
+            it('should record the usage cost of a categorized pricing model (Gemini 2.5 Flash) with text input and web search', async () => {
                 // arrange
                 const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                     platform: {
@@ -511,11 +572,14 @@ describe('AI Providers Proxy', () => {
                                 role: 'user',
                                 parts: [
                                     {
-                                        text: 'Hello, how are you?',
+                                        text: 'Give me a title of hackernews article. Use the web search tool only a SINGLE time.',
                                     },
                                 ],
                             },
                         ],
+                        tools: [{
+                            google_search: {},
+                        }],
                     },
                 })
                 const data = response?.json()
@@ -533,8 +597,9 @@ describe('AI Providers Proxy', () => {
 
                 // assert
                 const { input: inputPricing, output: outputCost } = model?.pricing as CategorizedLanguageModelPricing
+                const webSearchCost = model?.webSearchCost ?? 0
                 const totalCost = calculateTokensCost(usageMetadata.candidatesTokenCount + (usageMetadata.thoughtsTokenCount ?? 0), outputCost) +
-                    calculateTokensCost(usageMetadata.promptTokenCount, inputPricing.default)
+                    calculateTokensCost(usageMetadata.promptTokenCount, inputPricing.default) + webSearchCost
 
                 const aiUsage = await pollForAIUsage(mockProject.id, 'google')
                 expect(aiUsage?.cost).toBe(totalCost)
@@ -835,7 +900,7 @@ describe('AI Providers Proxy', () => {
 /**
  * Polls for AI usage data because response is returned before Ai usage is recorded
  */
-async function pollForAIUsage(projectId: string, provider: string, maxAttempts = 4): Promise<AIUsageSchema | null> {
+async function pollForAIUsage(projectId: string, provider: string, maxAttempts = 5): Promise<AIUsageSchema | null> {
     let tries = 0
     let aiUsage: AIUsageSchema | null = null
     
@@ -855,7 +920,7 @@ async function pollForAIUsage(projectId: string, provider: string, maxAttempts =
         }
         
         tries++
-        // Add a small delay between attempts to avoid overwhelming the database
+        // Add a small delay between attempts to wait for the AI usage to be recorded
         await new Promise(resolve => setTimeout(resolve, 100))
     }
     
