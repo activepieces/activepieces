@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, FileLocation, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, FileLocation, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -102,15 +102,21 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
                 steps: runDetails.steps as Record<string, StepOutput>,
             },
         })
+
+        if (!isNil(engineConstants.logsUploadUrl)) {
+            await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
+        }
+
         const request = {
             runId: engineConstants.flowRunId,
             workerHandlerId: engineConstants.serverHandlerId ?? null,
             httpRequestId: engineConstants.httpRequestId ?? null,
             runDetails: runDetailsWithoutSteps,
-            executionStateBuffer: USE_SIGNED_URL ? undefined : executionState.toString(),
+            executionStateBuffer: (!isNil(engineConstants.logsUploadUrl) || USE_SIGNED_URL) ? undefined : executionState.toString(),
             executionStateContentLength: executionState.byteLength,
             progressUpdateType: engineConstants.progressUpdateType,
             failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
+            logsFileId: engineConstants.logsFileId,
         }
         const requestHash = crypto.createHash('sha256').update(JSON.stringify(request)).digest('hex')
         if (requestHash === lastRequestHash) {
@@ -121,13 +127,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         if (!response.ok) {
             throw new ProgressUpdateError('Failed to send progress update', response)
         }
-        if (USE_SIGNED_URL) {
-            const responseBody: UpdateRunProgressResponse = await response.json()
-            if (isNil(responseBody.uploadUrl)) {
-                throw new ProgressUpdateError('Upload URL is not available', response)
-            }
-            await uploadExecutionState(responseBody.uploadUrl, executionState)
-        }
+
         await notifyFrontend(engineConstants, {
             type: WebsocketClientEvent.FLOW_RUN_PROGRESS,
             data: {

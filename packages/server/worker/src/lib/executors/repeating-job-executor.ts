@@ -1,16 +1,15 @@
-
-import { DelayedJobData, RenewWebhookJobData, RepeatableJobType, RepeatingJobData, ScheduledJobData } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, FlowVersion, ProgressUpdateType, RunEnvironment, TriggerPayload } from '@activepieces/shared'
+import { RenewWebhookJobData, RepeatableJobType, RepeatingJobData, ScheduledJobData } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, ConsumeJobResponse, ConsumeJobResponseStatus, FlowVersion, ProgressUpdateType, RunEnvironment, TriggerPayload, TriggerRunStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowWorkerCache } from '../api/flow-worker-cache'
 import { workerApiService } from '../api/server-api.service'
 import { triggerHooks } from '../utils/trigger-utils'
 
 export const repeatingJobExecutor = (log: FastifyBaseLogger) => ({
-    async executeRepeatingJob({ jobId, data, engineToken, workerToken }: Params): Promise<void> {
+    async executeRepeatingJob({ jobId, data, engineToken, workerToken }: Params): Promise<ConsumeJobResponse> {
         const { flowVersionId, jobType } = data
 
-        const populatedFlow = await flowWorkerCache(log).getFlow({
+        const populatedFlow = await flowWorkerCache.getFlow({
             engineToken,
             flowVersionId,
         })
@@ -18,27 +17,31 @@ export const repeatingJobExecutor = (log: FastifyBaseLogger) => ({
         assertNotNullOrUndefined(flowVersion, 'flowVersion')
         switch (jobType) {
             case RepeatableJobType.EXECUTE_TRIGGER:
-                await consumePieceTrigger(jobId, data, flowVersion, engineToken, workerToken, log)
-                break
-            case RepeatableJobType.DELAYED_FLOW:
-                await consumeDelayedJob(data, workerToken, log)
-                break
+                return await consumePieceTrigger(jobId, data, flowVersion, engineToken, workerToken, log)
             case RepeatableJobType.RENEW_WEBHOOK:
-                await consumeRenewWebhookJob(data, flowVersion, engineToken, log)
-                break
+                return await consumeRenewWebhookJob(data, flowVersion, engineToken, log)
+
+            case RepeatableJobType.DELAYED_FLOW:
+                throw new Error('Delayed flow is handled by the app')
         }
     },
 })
 
 
-const consumePieceTrigger = async (jobId: string, data: RepeatingJobData, flowVersion: FlowVersion, engineToken: string, workerToken: string, log: FastifyBaseLogger): Promise<void> => {
-    const payloads: unknown[] = await triggerHooks(log).extractPayloads(engineToken, {
+const consumePieceTrigger = async (jobId: string, data: RepeatingJobData, flowVersion: FlowVersion, engineToken: string, workerToken: string, log: FastifyBaseLogger): Promise<ConsumeJobResponse> => {
+    const { payloads, status, errorMessage } = await triggerHooks(log).extractPayloads(engineToken, {
         projectId: data.projectId,
         flowVersion,
         payload: {} as TriggerPayload,
         simulate: false,
         jobId,
     })
+    if (status === TriggerRunStatus.INTERNAL_ERROR) {
+        return {
+            status: ConsumeJobResponseStatus.INTERNAL_ERROR,
+            errorMessage,
+        }
+    }
     await workerApiService(workerToken).startRuns({
         flowVersionId: data.flowVersionId,
         progressUpdateType: ProgressUpdateType.NONE,
@@ -46,6 +49,9 @@ const consumePieceTrigger = async (jobId: string, data: RepeatingJobData, flowVe
         payloads,
         environment: RunEnvironment.PRODUCTION,
     })
+    return {
+        status: ConsumeJobResponseStatus.OK,
+    }
 }
 
 const consumeRenewWebhookJob = async (
@@ -53,7 +59,7 @@ const consumeRenewWebhookJob = async (
     flowVersion: FlowVersion,
     engineToken: string,
     log: FastifyBaseLogger,
-): Promise<void> => {
+): Promise<ConsumeJobResponse> => {
     log.info({ flowVersionId: data.flowVersionId }, '[FlowQueueConsumer#consumeRenewWebhookJob]')
     await triggerHooks(log).renewWebhook({
         engineToken,
@@ -61,15 +67,14 @@ const consumeRenewWebhookJob = async (
         projectId: data.projectId,
         simulate: false,
     })
+    return {
+        status: ConsumeJobResponseStatus.OK,
+    }
 }
 
-const consumeDelayedJob = async (data: DelayedJobData, workerToken: string, log: FastifyBaseLogger): Promise<void> => {
-    log.info({ runId: data.runId }, '[FlowQueueConsumer#consumeDelayedJob]')
-    await workerApiService(workerToken).resumeRun(data)
-}
 
 
-type Params = { 
+type Params = {
     jobId: string
     data: ScheduledJobData
     engineToken: string

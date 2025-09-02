@@ -1,17 +1,16 @@
 import path from 'path'
-import { GLOBAL_CACHE_FLOWS_PATH } from '@activepieces/server-shared'
 import { FlowVersionId, FlowVersionState, isNil, LATEST_SCHEMA_VERSION, PopulatedFlow } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
 import { ApAxiosClient } from './ap-axios'
 import { engineApiService } from './server-api.service'
+import { GLOBAL_CACHE_FLOWS_PATH } from '../cache/worker-cache'
 
-export const flowWorkerCache = (log: FastifyBaseLogger) => ({
+export const flowWorkerCache = {
     async writeFileToCacheIfCachable(flowVersionId: FlowVersionId, flow: PopulatedFlow | null): Promise<void> {
         if (isNil(flow) || flow.version.state !== FlowVersionState.LOCKED) {
             return
         }
-        const flowCache = getCacheForFlow(flowVersionId)
+        const flowCache = cacheFolderForFlow(flowVersionId)
         await flowCache.setCache(flowVersionId, JSON.stringify(flow))
     },
     async getFlow({ engineToken, flowVersionId }: GetFlowRequest): Promise<PopulatedFlow | null> {
@@ -21,7 +20,7 @@ export const flowWorkerCache = (log: FastifyBaseLogger) => ({
         }
 
         try {
-            const flow = await engineApiService(engineToken, log).getFlow({
+            const flow = await engineApiService(engineToken).getFlow({
                 versionId: flowVersionId,
             })
             await this.writeFileToCacheIfCachable(flowVersionId, flow)
@@ -34,7 +33,7 @@ export const flowWorkerCache = (log: FastifyBaseLogger) => ({
             throw e
         }
     },
-})
+}
 
 type GetFlowRequest = {
     engineToken: string
@@ -43,7 +42,7 @@ type GetFlowRequest = {
 
 async function getFlowFromCache(flowVersionId: FlowVersionId): Promise<PopulatedFlow | null> {
     try {
-        const flowCache = getCacheForFlow(flowVersionId)
+        const flowCache = cacheFolderForFlow(flowVersionId)
         const cachedFlow = await flowCache.cacheCheckState(flowVersionId)
         if (isNil(cachedFlow)) {
             return null
@@ -59,6 +58,4 @@ async function getFlowFromCache(flowVersionId: FlowVersionId): Promise<Populated
     }
 }
 
-function getCacheForFlow(flowVersionId: string) {
-    return cacheState(path.join(GLOBAL_CACHE_FLOWS_PATH, flowVersionId))
-} 
+const cacheFolderForFlow = (flowVersionId: string) => cacheState(path.join(GLOBAL_CACHE_FLOWS_PATH, flowVersionId))

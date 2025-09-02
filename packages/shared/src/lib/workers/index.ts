@@ -15,11 +15,13 @@ export const MachineInformation = Type.Object({
         used: Type.Number(),
         percentage: Type.Number(),
     }),
-    workerId: Type.Optional(Type.String()),
+    workerId: Type.String(),
     workerProps: Type.Record(Type.String(), Type.String()),
     ramUsagePercentage: Type.Number(),
     totalAvailableRamInBytes: Type.Number(),
     ip: Type.String(),
+    totalSandboxes: Type.Number(),
+    freeSandboxes: Type.Number(),
 })
 
 export type MachineInformation = Static<typeof MachineInformation>
@@ -36,6 +38,28 @@ export const WorkerMachineWithStatus = Type.Composite([WorkerMachine, Type.Objec
 })])
 
 export type WorkerMachineWithStatus = Static<typeof WorkerMachineWithStatus>
+
+export const ConsumeJobRequest = Type.Object({
+    jobId: Type.String(),
+    queueName: Type.String(),
+    jobData: Type.Any(),
+    attempsStarted: Type.Number(),
+    engineToken: Type.String(),
+})
+
+export enum ConsumeJobResponseStatus {
+    OK = 'OK',
+    INTERNAL_ERROR = 'INTERNAL_ERROR',
+}
+
+export type ConsumeJobRequest = Static<typeof ConsumeJobRequest>
+
+export const ConsumeJobResponse = Type.Object({
+    status: Type.Enum(ConsumeJobResponseStatus),
+    errorMessage: Type.Optional(Type.String()),
+})
+
+export type ConsumeJobResponse = Static<typeof ConsumeJobResponse>
 
 export const WorkerMachineHealthcheckRequest = MachineInformation
 

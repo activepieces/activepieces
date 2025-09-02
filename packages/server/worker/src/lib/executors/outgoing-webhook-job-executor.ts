@@ -1,7 +1,6 @@
 import { OutgoingWebhookJobData } from '@activepieces/server-shared'
 import axios from 'axios'
 import { FastifyBaseLogger } from 'fastify'
-import { workerMachine } from '../utils/machine'
 
 export const outgoingWebhookExecutor = (log: FastifyBaseLogger) => ({
     async consumeOutgoingWebhook(jobId: string, jobData: OutgoingWebhookJobData): Promise<void> {

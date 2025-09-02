@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
-import { ApLock, CacheState, filePiecesUtils, memoryLock } from '@activepieces/server-shared'
+import { ApLock, filePiecesUtils, memoryLock } from '@activepieces/server-shared'
 import { assertEqual, assertNotNullOrUndefined, isEmpty, PackageType, PiecePackage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
@@ -8,6 +8,7 @@ import { packageManager } from '../cache/package-manager'
 import { workerMachine } from '../utils/machine'
 import { PIECES_BUILDER_MUTEX_KEY } from './development/pieces-builder'
 import { PieceManager } from './piece-manager'
+import { CacheState } from '../cache/worker-cache'
 
 export class LocalPieceManager extends PieceManager {
 

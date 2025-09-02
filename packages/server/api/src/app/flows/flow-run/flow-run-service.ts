@@ -34,7 +34,6 @@ import {
     APArrayContains,
 } from '../../database/database-connection'
 import { fileService } from '../../file/file.service'
-import { s3Helper } from '../../file/s3-helper'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -209,6 +208,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         tags,
         duration,
         failedStepName,
+        logsFileId,
     }: FinishParams): Promise<FlowRun> {
         log.info({
             flowRunId,
@@ -228,6 +228,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             tags,
             finishTime: new Date().toISOString(),
             failedStepName: failedStepName ?? undefined,
+            logsFileId: logsFileId ?? undefined,
         })
 
 
@@ -334,6 +335,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         await flowRunSideEffects(log).pause({ flowRun })
     },
 
+    async getOne(params: GetOneParams): Promise<FlowRun | null> {
+        return flowRunRepo().findOneBy({
+            projectId: params.projectId,
+            id: params.id,
+        })
+    },
     async getOneOrThrow(params: GetOneParams): Promise<FlowRun> {
         const flowRun = await flowRunRepo().findOneBy({
             projectId: params.projectId,
@@ -371,7 +378,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             steps,
         }
     },
-    async updateLogsAndReturnUploadUrl({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<string | undefined> {
+    async updateLogs({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<void> {
         const executionState = executionStateString ? Buffer.from(executionStateString) : undefined
         if (executionStateContentLength > maxFileSizeInBytes || (!isNil(executionState) && executionState.byteLength > maxFileSizeInBytes)) {
             const errors = new Error(
@@ -381,7 +388,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             throw errors
         }
         const newLogsFileId = logsFileId ?? apId()
-        const file = await fileService(log).save({
+        await fileService(log).save({
             fileId: newLogsFileId,
             projectId,
             data: executionState ?? null,
@@ -398,7 +405,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 logsFileId: newLogsFileId,
             })
         }
-        return getUploadUrl(file.s3Key, executionState, executionStateContentLength, log)
     },
     async handleSyncResumeFlow({ runId, payload, requestId }: { runId: string, payload: unknown, requestId: string }) {
         const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
@@ -501,15 +507,6 @@ async function filterFlowRunsAndApplyFilters(
 }
 
 
-const getUploadUrl = async (s3Key: string | undefined, executionDate: unknown, contentLength: number, log: FastifyBaseLogger): Promise<string | undefined> => {
-    if (!isNil(executionDate)) {
-        return undefined
-    }
-    assertNotNullOrUndefined(s3Key, 's3Key')
-    return s3Helper(log).putS3SignedUrl(s3Key, contentLength)
-}
-
-
 function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined, log: FastifyBaseLogger): string {
     const handlerId = engineResponseWatcher(log).getServerId()
     if (isNil(pauseMetadata)) {
@@ -579,6 +576,7 @@ type FinishParams = {
     duration: number | undefined
     tags: string[]
     failedStepName?: string | undefined
+    logsFileId?: string | undefined
 }
 
 type GetOrCreateParams = {

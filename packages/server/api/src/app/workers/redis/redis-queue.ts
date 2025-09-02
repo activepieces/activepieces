@@ -1,11 +1,12 @@
-import { AppSystemProp, exceptionHandler, JobType, QueueName } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
+import { AppSystemProp, JobType, QueueName } from '@activepieces/server-shared'
+import { ApId, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
+import { machineService } from '../machine/machine-service'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
 import { redisRateLimiter } from './redis-rate-limiter'
@@ -52,10 +53,16 @@ const jobTypeToDefaultJobOptions: Record<QueueName, DefaultJobOptions> = {
 }
 
 export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
+    async setConcurrency(queueName: QueueName, concurrency: number): Promise<void> {
+        const queue = await ensureQueueExists(queueName)
+        await queue.setGlobalConcurrency(concurrency)
+    },
     async init(): Promise<void> {
         await redisRateLimiter(log).init()
         const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName))
         await Promise.all(queues)
+        await machineService(log).updateConcurrency()
+
         await redisMigrations(log).run()
         log.info('[redisQueueManager#init] Redis queues initialized')
     },
@@ -111,19 +118,7 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
         log.info({
             flowVersionId,
         }, '[redisQueue#removeRepeatingJob] removing the jobs')
-        const hasScheduledJob = await queue.getJobScheduler(flowVersionId)
-        if (isNil(hasScheduledJob)) {
-            return
-        }
-        const result = await queue.removeJobScheduler(flowVersionId)
-        if (!result) {
-            exceptionHandler.handle(new ActivepiecesError({
-                code: ErrorCode.JOB_REMOVAL_FAILURE,
-                params: {
-                    flowVersionId,
-                },
-            }), log)
-        }
+        await queue.removeJobScheduler(flowVersionId)
     },
 
 })
@@ -139,6 +134,7 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
             telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
             connection: createRedisClient(),
             defaultJobOptions: jobTypeToDefaultJobOptions[queueName],
+
         },
     )
     await bullMqGroups[queueName].waitUntilReady()

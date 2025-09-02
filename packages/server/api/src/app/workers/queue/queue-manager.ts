@@ -4,6 +4,7 @@ import {
     JobType,
     OneTimeJobData,
     OutgoingWebhookJobData,
+    QueueName,
     RenewWebhookJobData,
     RepeatingJobData,
     UserInteractionJobData,
@@ -31,6 +32,7 @@ export async function getJobPriority(synchronousHandlerId: string | null | undef
 }
 
 export type QueueManager = {
+    setConcurrency(queueName: QueueName, concurrency: number): Promise<void>
     init(): Promise<void>
     add<JT extends JobType>(params: AddParams<JT>): Promise<void>
     removeRepeatingJob(params: RemoveParams): Promise<void>

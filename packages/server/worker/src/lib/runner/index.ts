@@ -1,5 +1,5 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, isNil, PackageType, PieceActionSettings, PieceTriggerSettings, TriggerHookType } from '@activepieces/shared'
+import { EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PackageType, PieceActionSettings, PieceTriggerSettings, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceWorkerCache } from '../api/piece-worker-cache'
 import { executionFiles } from '../cache/execution-files'
@@ -7,10 +7,8 @@ import { pieceEngineUtil } from '../utils/flow-engine-util'
 import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
 import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from './engine-runner-types'
-import { EngineProcessManager } from './process/engine-process-manager'
+import { engineProcessManager } from './process/engine-process-manager'
 
-
-let processManager: EngineProcessManager
 
 export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async executeFlow(engineToken, operation) {
@@ -35,8 +33,8 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             projectId: operation.projectId,
         }, '[threadEngineRunner#executeTrigger]')
 
-        const triggerPiece = await pieceEngineUtil(log).getTriggerPiece(engineToken, operation.flowVersion)
-        const lockedVersion = await pieceEngineUtil(log).lockSingleStepPieceVersion({
+        const triggerPiece = await pieceEngineUtil.getTriggerPiece(engineToken, operation.flowVersion)
+        const lockedVersion = await pieceEngineUtil.lockSingleStepPieceVersion({
             engineToken,
             stepName: operation.flowVersion.trigger.name,
             flowVersion: operation.flowVersion,
@@ -67,7 +65,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async extractPieceMetadata(engineToken, operation) {
         log.debug({ operation }, '[threadEngineRunner#extractPieceMetadata]')
 
-        const lockedPiece = await pieceEngineUtil(log).enrichPieceWithArchive(engineToken, {
+        const lockedPiece = await pieceEngineUtil.enrichPieceWithArchive(engineToken, {
             name: operation.pieceName,
             version: operation.pieceVersion,
             packageType: operation.packageType,
@@ -86,7 +84,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         log.debug({ ...operation.piece, platformId: operation.platformId }, '[threadEngineRunner#executeValidateAuth]')
 
         const { piece } = operation
-        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, piece)
+        const lockedPiece = await pieceEngineUtil.resolveExactVersion(engineToken, piece)
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
@@ -109,7 +107,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
 
         const { piece } = operation
 
-        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, piece)
+        const lockedPiece = await pieceEngineUtil.resolveExactVersion(engineToken, piece)
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
@@ -127,7 +125,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async excuteTool(engineToken, operation) {
         log.debug({ operation }, '[threadEngineRunner#excuteTool]')
 
-        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, operation)
+        const lockedPiece = await pieceEngineUtil.resolveExactVersion(engineToken, operation)
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
@@ -142,9 +140,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         return execute(log, input, EngineOperationType.EXECUTE_TOOL)
     },
     async shutdownAllWorkers() {
-        if (!isNil(processManager)) {
-            await processManager.shutdown()
-        }
+        await engineProcessManager.shutdown()
     },
 })
 
@@ -152,15 +148,15 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
     const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
     const pieces = steps.filter((step) => step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE).map(async (step) => {
         const { pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
-        const pieceMetadata = await pieceWorkerCache(log).getPiece({
+        const pieceMetadata = await pieceWorkerCache.getPiece({
             engineToken,
             pieceName,
             pieceVersion,
             projectId,
         })
-        return pieceEngineUtil(log).enrichPieceWithArchive(engineToken, pieceMetadata)
+        return pieceEngineUtil.enrichPieceWithArchive(engineToken, pieceMetadata)
     })
-    const codeSteps = pieceEngineUtil(log).getCodeSteps(flowVersion)
+    const codeSteps = pieceEngineUtil.getCodeSteps(flowVersion)
     await executionFiles(log).provision({
         pieces: await Promise.all(pieces),
         codeSteps,
@@ -170,25 +166,8 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
 
 
 async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger, operation: EngineOperation, operationType: EngineOperationType): Promise<EngineHelperResponse<Result>> {
-    const memoryLimit = Math.floor(Number(workerMachine.getSettings().SANDBOX_MEMORY_LIMIT) / 1024)
-
     const startTime = Date.now()
-    if (isNil(processManager)) {
-        processManager = new EngineProcessManager(log, workerMachine.getSettings().FLOW_WORKER_CONCURRENCY + workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY, {
-            env: getEnvironmentVariables(),
-            resourceLimits: {
-                maxOldGenerationSizeMb: memoryLimit,
-                maxYoungGenerationSizeMb: memoryLimit,
-                stackSizeMb: memoryLimit,
-            },
-            execArgv: [
-                `--max-old-space-size=${memoryLimit}`,
-                `--max-semi-space-size=${memoryLimit}`,
-                `--stack-size=${memoryLimit * 1024}`, // stack size is in KB
-            ],
-        })
-    }
-    const { engine, stdError, stdOut } = await processManager.executeTask(operationType, operation)
+    const { engine, stdError, stdOut } = await engineProcessManager.executeTask(operationType, operation, log)
     return engineRunnerUtils(log).readResults({
         timeInSeconds: (Date.now() - startTime) / 1000,
         verdict: engine.status,
@@ -196,19 +175,4 @@ async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger
         standardOutput: stdOut,
         standardError: stdError,
     })
-}
-
-function getEnvironmentVariables(): Record<string, string | undefined> {
-    const allowedEnvVariables = workerMachine.getSettings().SANDBOX_PROPAGATED_ENV_VARS
-    const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
-    return {
-        ...propagatedEnvVars,
-        NODE_OPTIONS: '--enable-source-maps',
-        AP_PAUSED_FLOW_TIMEOUT_DAYS: workerMachine.getSettings().PAUSED_FLOW_TIMEOUT_DAYS.toString(),
-        AP_EXECUTION_MODE: workerMachine.getSettings().EXECUTION_MODE,
-        AP_PIECES_SOURCE: workerMachine.getSettings().PIECES_SOURCE,
-        AP_MAX_FILE_SIZE_MB: workerMachine.getSettings().MAX_FILE_SIZE_MB.toString(),
-        AP_FILE_STORAGE_LOCATION: workerMachine.getSettings().FILE_STORAGE_LOCATION,
-        AP_S3_USE_SIGNED_URLS: workerMachine.getSettings().S3_USE_SIGNED_URLS,
-    }
 }

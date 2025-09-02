@@ -32,6 +32,7 @@ const createStandaloneClient = (config: Partial<RedisOptions>): Redis => {
         username,
         password,
         db,
+        retryStrategy: (times) => Math.min(times * 50, 2000),
         tls: useSsl ? {
             ca: readCAFile(sslCaFile),
         } : undefined,
