@@ -31,7 +31,7 @@ test.describe('Slack Integration', () => {
       password: config.password
     });
 
-    await agentPage.actions.waitFor(page);
+    await flowsPage.actions.waitFor(page);
 
     await flowsPage.actions.navigate(page);
 
