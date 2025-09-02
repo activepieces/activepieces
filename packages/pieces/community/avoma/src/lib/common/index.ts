@@ -17,16 +17,18 @@ export const avomaCommon = {
       }
 
       try {
+        const toDate = new Date().toISOString();
+        const fromDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: 'https://api.avoma.com/v1/meetings/?limit=100',
+          url: `https://api.avoma.com/v1/meetings/?page_size=100&from_date=${encodeURIComponent(fromDate)}&to_date=${encodeURIComponent(toDate)}`,
           headers: {
             'Authorization': `Bearer ${auth}`,
             'Content-Type': 'application/json'
           }
         });
 
-        // Handle different possible response structures
         const meetings = response.body?.results || response.body?.data || response.body || [];
         
         if (!Array.isArray(meetings)) {
@@ -77,49 +79,51 @@ export const avomaCommon = {
       }
 
       try {
-        // First get meetings, then get transcriptions for each meeting
-        const meetingsResponse = await httpClient.sendRequest({
+        const toDate = new Date().toISOString();
+        const fromDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+        const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: 'https://api.avoma.com/v1/meetings/?limit=100',
+          url: `https://api.avoma.com/v1/transcriptions/?page_size=100&from_date=${encodeURIComponent(fromDate)}&to_date=${encodeURIComponent(toDate)}`,
           headers: {
             'Authorization': `Bearer ${auth}`,
             'Content-Type': 'application/json'
           }
         });
 
-        const meetings = meetingsResponse.body?.results || [];
-        const transcriptionOptions: { label: string; value: string }[] = [];
-
-        // For each meeting, try to get its transcriptions
-        for (const meeting of meetings.slice(0, 20)) { // Limit to first 20 meetings to avoid too many API calls
-          try {
-            const transcriptionResponse = await httpClient.sendRequest({
-              method: HttpMethod.GET,
-              url: `https://api.avoma.com/v1/meetings/${meeting.uuid}/transcriptions/`,
-              headers: {
-                'Authorization': `Bearer ${auth}`,
-                'Content-Type': 'application/json'
-              }
-            });
-
-            const transcriptions = transcriptionResponse.body?.results || [];
-            transcriptions.forEach((transcription: any) => {
-              transcriptionOptions.push({
-                label: `${meeting.subject || 'Untitled Meeting'} - ${new Date(meeting.start_time).toLocaleDateString()}`,
-                value: transcription.uuid
-              });
-            });
-          } catch (error) {
-            // Skip meetings without transcriptions
-            continue;
-          }
+        let transcriptions = [];
+        if (response.body?.results) {
+          transcriptions = response.body.results;
+        } else if (Array.isArray(response.body)) {
+          transcriptions = response.body;
+        } else if (response.body && typeof response.body === 'object') {
+          transcriptions = [response.body];
         }
-        
+
+        if (!Array.isArray(transcriptions)) {
+          return {
+            disabled: true,
+            placeholder: 'Unexpected response format from API',
+            options: []
+          };
+        }
+
         return {
           disabled: false,
-          options: transcriptionOptions
+          options: transcriptions.map((transcription: any) => {
+            const meetingUuid = transcription.meeting_uuid || 'Unknown Meeting';
+            const transcriptionUuid = transcription.uuid;
+            const speakersCount = transcription.speakers?.length || 0;
+            const transcriptLength = transcription.transcript?.length || 0;
+
+            return {
+              label: `Transcription ${transcriptionUuid.substring(0, 8)}... - ${speakersCount} speakers, ${transcriptLength} paragraphs`,
+              value: transcriptionUuid
+            };
+          })
         };
       } catch (error) {
+        console.error('Error fetching transcriptions:', error);
         return {
           disabled: true,
           placeholder: 'Failed to load transcriptions. Please check your API key.',

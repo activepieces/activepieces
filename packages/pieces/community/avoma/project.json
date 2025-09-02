@@ -1,7 +1,7 @@
 {
-  "name": "pieces-avoma-api",
+  "name": "pieces-avoma",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/avoma-api/src",
+  "sourceRoot": "packages/pieces/community/avoma/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -20,14 +20,14 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/avoma-api",
-        "tsConfig": "packages/pieces/community/avoma-api/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/avoma-api/package.json",
-        "main": "packages/pieces/community/avoma-api/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/avoma",
+        "tsConfig": "packages/pieces/community/avoma/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/avoma/package.json",
+        "main": "packages/pieces/community/avoma/src/index.ts",
         "assets": [
-          "packages/pieces/community/avoma-api/*.md",
+          "packages/pieces/community/avoma/*.md",
           {
-            "input": "packages/pieces/community/avoma-api/src/i18n",
+            "input": "packages/pieces/community/avoma/src/i18n",
             "output": "./src/i18n",
             "glob": "**/!(i18n.json)"
           }

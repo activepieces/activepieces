@@ -9,43 +9,15 @@ export const newNote = createTrigger({
   props: {
     setupInstructions: Property.MarkDown({
       value: `
-## Setup Instructions
+**Quick Setup:**
 
-To use this trigger, you need to manually configure a webhook in your Avoma account:
+1. In Avoma: **Settings > Integrations > Webhooks**
+2. **Webhook URL:** \`{{webhookUrl}}\`
+3. **Event Type:** Select **"AINOTE"**
+4. **HTTP Method:** POST
+5. **Content Type:** application/json
 
-### 1. Access Avoma Webhook Settings
-- Log into your Avoma account
-- Go to **Settings > Integrations > Webhooks**
-- Click **"Add Webhook"** or **"Create New Webhook"**
-
-### 2. Configure the Webhook
-1. **Webhook URL**: Paste this URL:
-\`\`\`text
-{{webhookUrl}}
-\`\`\`
-2. **Event Type**: Select **"AI Notes Generated"** or **"Notes Ready"**
-3. **HTTP Method**: Set to **POST**
-4. **Content Type**: Set to **application/json**
-
-### 3. Optional Filters
-Configure filters if needed:
-- **Meeting Types**: Choose specific meeting types (calls, video meetings, etc.)
-- **User Filters**: Limit to specific users or teams
-- **Meeting Duration**: Filter by meeting length
-
-### 4. Test and Save
-1. Click **"Test Webhook"** to verify the connection
-2. Click **"Save"** to activate the webhook
-
----
-
-**Note:** You need admin permissions in Avoma to configure webhooks.
-
-**Use Cases:**
-- Automatically process meeting notes in your CRM
-- Send meeting summaries to team channels
-- Extract action items for task management
-- Archive meeting insights to knowledge bases
+**Note:** Requires admin permissions in Avoma.
       `,
     }),
   },
@@ -84,6 +56,19 @@ Configure filters if needed:
     organizer_name: 'John Doe',
     privacy: 'private',
     processing_status: 'completed',
+    insights: {
+      filler_wpm: [],
+      longest_monologue: {},
+      patience: [],
+      sentiment: {},
+      speaker_mapping: {},
+      talk_stats: {},
+      wpm: []
+    },
+    purpose: {
+      label: 'Sales Call',
+      uuid: '095be615-a8ad-4c33-8e9c-c7612fbf6c9f'
+    },
     recording_uuid: '3e256a03-2cdd-4fe9-823b-2b61bb25d916',
     start_at: '2019-08-24T14:15:22Z',
     state: 'completed',

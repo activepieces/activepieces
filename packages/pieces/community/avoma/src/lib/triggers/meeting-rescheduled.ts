@@ -8,45 +8,15 @@ export const meetingRescheduled = createTrigger({
   props: {
     setupInstructions: Property.MarkDown({
       value: `
-## Setup Instructions
+**Quick Setup:**
 
-To use this trigger, you need to manually configure a webhook in your Avoma account:
+1. In Avoma: **Settings > Integrations > Webhooks**
+2. **Webhook URL:** \`{{webhookUrl}}\`
+3. **Event Type:** Select **"MEETING_BOOKED_VIA_SCHEDULER_RESCHEDULED"**
+4. **HTTP Method:** POST
+5. **Content Type:** application/json
 
-### 1. Access Avoma Webhook Settings
-- Log into your Avoma account
-- Go to **Settings > Integrations > Webhooks**
-- Click **"Add Webhook"** or **"Create New Webhook"**
-
-### 2. Configure the Webhook
-1. **Webhook URL**: Paste this URL:
-\`\`\`text
-{{webhookUrl}}
-\`\`\`
-2. **Event Type**: Select **"Meeting Rescheduled"** or **"Meeting Updated"**
-3. **HTTP Method**: Set to **POST**
-4. **Content Type**: Set to **application/json**
-
-### 3. Optional Filters
-Configure filters if needed:
-- **Scheduling Pages**: Limit to specific Avoma scheduling pages
-- **Reschedule Reason**: Filter by specific reschedule reasons
-- **Organizer**: Limit to specific organizers or teams
-- **Time Changes**: Filter by how much the meeting time changed
-
-### 4. Test and Save
-1. Click **"Test Webhook"** to verify the connection
-2. Click **"Save"** to activate the webhook
-
----
-
-**Note:** You need admin permissions in Avoma to configure webhooks.
-
-**Use Cases:**
-- Automatically update calendar systems with new meeting times
-- Send reschedule notifications to participants
-- Update CRM records with new meeting information
-- Trigger preparation workflows for the new meeting time
-- Track rescheduling patterns for scheduling optimization
+**Note:** Requires admin permissions in Avoma.
       `,
     }),
   },

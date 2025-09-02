@@ -78,6 +78,21 @@ export const createCall = createAction({
           displayName: 'Email',
           description: 'Email of the participant',
           required: true
+        }),
+        crm_id: Property.ShortText({
+          displayName: 'CRM Record ID',
+          description: 'CRM record ID for this participant (optional)',
+          required: false
+        }),
+        crm_type: Property.ShortText({
+          displayName: 'CRM Record Type',
+          description: 'Type of CRM record (e.g., contact, lead, opportunity)',
+          required: false
+        }),
+        crm_system: Property.ShortText({
+          displayName: 'CRM System',
+          description: 'CRM system name (e.g., hubspot, salesforce)',
+          required: false
         })
       }
     }),
@@ -116,6 +131,23 @@ export const createCall = createAction({
   async run(context) {
     const { auth, propsValue } = context;
 
+    const participants = propsValue.participants?.map((participant: any) => {
+      const participantData: any = {
+        email: participant.email,
+        name: participant.name
+      };
+
+      if (participant.crm_id && participant.crm_type && participant.crm_system) {
+        participantData.associations = [{
+          id: participant.crm_id,
+          type: participant.crm_type,
+          system: participant.crm_system
+        }];
+      }
+
+      return participantData;
+    }) || [];
+
     const requestBody: any = {
       external_id: propsValue.external_id,
       user_email: propsValue.user_email,
@@ -125,10 +157,9 @@ export const createCall = createAction({
       frm: propsValue.frm,
       to: propsValue.to,
       recording_url: propsValue.recording_url,
-      participants: propsValue.participants
+      participants: participants
     };
 
-    // Add optional fields if provided
     if (propsValue.end_at) {
       requestBody.end_at = propsValue.end_at;
     }
@@ -152,16 +183,47 @@ export const createCall = createAction({
       }
     }
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://api.avoma.com/v1/calls/',
-      headers: {
-        'Authorization': `Bearer ${auth}`,
-        'Content-Type': 'application/json'
-      },
-      body: requestBody
-    });
+    try {
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: 'https://api.avoma.com/v1/calls/',
+        headers: {
+          'Authorization': `Bearer ${auth}`,
+          'Content-Type': 'application/json'
+        },
+        body: requestBody
+      });
 
-    return response.body;
+      if (response.status === 400) {
+        const errorDetails = response.body;
+        let errorMessage = 'Bad request: ';
+
+        if (typeof errorDetails === 'object') {
+          const fieldErrors = Object.entries(errorDetails)
+            .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+            .join('; ');
+          errorMessage += fieldErrors;
+        } else {
+          errorMessage += JSON.stringify(errorDetails) || 'Invalid input data';
+        }
+
+        if (errorMessage.includes('external_id') && errorMessage.includes('source')) {
+          errorMessage += '. This may be due to a duplicate call (same external_id and source already exists)';
+        } else if (errorMessage.includes('user_email')) {
+          errorMessage += '. Check that the user exists, is active, belongs to your organization, and has dialer permissions';
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      if (response.status >= 400) {
+        throw new Error(`API error (${response.status}): ${JSON.stringify(response.body) || 'Unknown error'}`);
+      }
+
+      return response.body;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to create call: ${errorMessage}`);
+    }
   }
 });

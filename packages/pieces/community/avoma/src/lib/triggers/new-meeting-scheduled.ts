@@ -8,45 +8,15 @@ export const newMeetingScheduled = createTrigger({
   props: {
     setupInstructions: Property.MarkDown({
       value: `
-## Setup Instructions
+**Quick Setup:**
 
-To use this trigger, you need to manually configure a webhook in your Avoma account:
+1. In Avoma: **Settings > Integrations > Webhooks**
+2. **Webhook URL:** \`{{webhookUrl}}\`
+3. **Event Type:** Select **"MEETING_BOOKED_VIA_SCHEDULER"**
+4. **HTTP Method:** POST
+5. **Content Type:** application/json
 
-### 1. Access Avoma Webhook Settings
-- Log into your Avoma account
-- Go to **Settings > Integrations > Webhooks**
-- Click **"Add Webhook"** or **"Create New Webhook"**
-
-### 2. Configure the Webhook
-1. **Webhook URL**: Paste this URL:
-\`\`\`text
-{{webhookUrl}}
-\`\`\`
-2. **Event Type**: Select **"Meeting Scheduled"** or **"Meeting Booked"**
-3. **HTTP Method**: Set to **POST**
-4. **Content Type**: Set to **application/json**
-
-### 3. Optional Filters
-Configure filters if needed:
-- **Scheduling Pages**: Limit to specific Avoma scheduling pages
-- **Meeting Types**: Filter by meeting purpose or type
-- **Organizer**: Limit to specific organizers or teams
-- **Time Range**: Filter by meeting duration or time slots
-
-### 4. Test and Save
-1. Click **"Test Webhook"** to verify the connection
-2. Click **"Save"** to activate the webhook
-
----
-
-**Note:** You need admin permissions in Avoma to configure webhooks.
-
-**Use Cases:**
-- Automatically create calendar events in other systems
-- Send meeting confirmations via custom channels
-- Update CRM with new meeting bookings
-- Trigger preparation workflows for sales meetings
-- Sync meeting data with project management tools
+**Note:** Requires admin permissions in Avoma.
       `,
     }),
   },
