@@ -53,6 +53,20 @@ export const extractStructuredData: Action = createAction({
         const propsValue = context.propsValue as any
         const auth: WebScrapingAiAuth = { apiKey: (context.auth as any).apiKey as string }
         const qp: Record<string, string> = { url: String(propsValue.url) }
+
+        const normalizeJsonParam = (value: unknown, name: string): Record<string, unknown> | undefined => {
+            if (value === undefined || value === null) return undefined
+            if (typeof value === 'object') return value as Record<string, unknown>
+            if (typeof value === 'string') {
+                const trimmed = value.trim()
+                try {
+                    return JSON.parse(trimmed)
+                } catch {
+                    throw new Error(`${name} must be a valid JSON object string. Example: {\"title\": \"Main product title\", \"price\": \"Current product price\"}`)
+                }
+            }
+            throw new Error(`${name} must be a JSON object`)
+        }
         const entries = Object.entries(propsValue)
         for (const [key, value] of entries) {
             switch (key) {
@@ -74,8 +88,19 @@ export const extractStructuredData: Action = createAction({
                     if (value) qp[key] = String(value)
                     break
                 case 'headers':
+                    {
+                        const obj = normalizeJsonParam(value, 'headers')
+                        if (obj) qp[key] = JSON.stringify(obj)
+                    }
+                    break
                 case 'fields':
-                    if (value) qp[key] = JSON.stringify(value)
+                    {
+                        const obj = normalizeJsonParam(value, 'fields')
+                        if (!obj || Array.isArray(obj)) {
+                            throw new Error('fields must be a JSON object mapping field names to descriptions. Example: {"title":"Main product title","price":"Current product price"}')
+                        }
+                        qp[key] = JSON.stringify(obj)
+                    }
                     break
                 default:
                     break
