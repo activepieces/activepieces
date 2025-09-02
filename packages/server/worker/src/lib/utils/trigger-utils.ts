@@ -2,6 +2,8 @@ import { inspect } from 'util'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
+    ConsumeJobResponse,
+    ConsumeJobResponseStatus,
     ErrorCode,
     FlowTriggerType,
     FlowVersion,
@@ -34,33 +36,40 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
     extractPayloads: async (
         engineToken: string,
         params: ExecuteTrigger,
-    ): Promise<unknown[]> => {
+    ): Promise<ExtractPayloadsResult> => {
         const { payload, flowVersion, simulate, jobId } = params
         if (flowVersion.trigger.type === FlowTriggerType.EMPTY) {
             log.warn({
                 flowVersionId: flowVersion.id,
             }, '[WebhookUtils#extractPayload] empty trigger, skipping')
-            return []
+            return {
+                status: TriggerRunStatus.COMPLETED,
+                payloads: [],
+            }
         }
-        const { payloads, status, error } = await getTriggerPayloadsAndStatus(engineToken, log, params)
+        const { payloads, status, errorMessage } = await getTriggerPayloadsAndStatus(engineToken, log, params)
         rejectedPromiseHandler(engineApiService(engineToken).createTriggerRun({
             status,
             payload,
             flowId: flowVersion.flowId,
             simulate,
             jobId,
-            error: inspect(error),
+            error: errorMessage,
         }), log)
 
-        return payloads
+        return {
+            status,
+            payloads,
+            errorMessage,
+        }
     },
-}) 
+})
 
 
 type ExtractPayloadsResult = {
     payloads: unknown[]
     status: TriggerRunStatus
-    error?: unknown
+    errorMessage?: string
 }
 
 type ExecuteTrigger = {
@@ -98,17 +107,16 @@ async function getTriggerPayloadsAndStatus(
             test: simulate,
         })
 
-        if (result.success && Array.isArray(result.output)) {
+        if (result.success) {
             return {
                 payloads: result.output as unknown[],
                 status: TriggerRunStatus.COMPLETED,
             }
-        }
-        else {
+        } else {
             return {
                 payloads: [],
-                status: TriggerRunStatus.INTERNAL_ERROR,
-                error: result.message,
+                status: TriggerRunStatus.FAILED,
+                errorMessage: result.message,
             }
         }
     }
@@ -118,13 +126,13 @@ async function getTriggerPayloadsAndStatus(
             return {
                 payloads: [],
                 status: TriggerRunStatus.TIMED_OUT,
-                error: inspect(e),
+                errorMessage: inspect(e),
             }
         }
         return {
             payloads: [],
             status: TriggerRunStatus.INTERNAL_ERROR,
-            error: inspect(e),
+            errorMessage: inspect(e),
         }
     }
 }

@@ -1,5 +1,5 @@
 import { AppSystemProp, JobData, OneTimeJobData, QueueName, ScheduledJobData, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
-import { ConsumeJobRequest, ConsumeJobResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
@@ -50,9 +50,9 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                     message: 'Consume job response',
                     response,
                 })
-                const isSuccess = response?.[0]?.success
-                if (!isSuccess) {
-                    throw new Error(response?.[0]?.message ?? 'Unknown error')
+                const isInternalError = response?.[0]?.status === ConsumeJobResponseStatus.INTERNAL_ERROR
+                if (isInternalError) {
+                    throw new Error(response?.[0]?.errorMessage ?? 'Unknown error')
                 }
             }
             finally {

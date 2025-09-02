@@ -1,10 +1,11 @@
 import path from 'path'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { GLOBAL_CACHE_PIECES_PATH, PiecesSource } from '@activepieces/server-shared'
+import { PiecesSource } from '@activepieces/server-shared'
 import { isNil, ProjectId } from '@activepieces/shared'
 import { cacheState } from '../cache/cache-state'
 import { workerMachine } from '../utils/machine'
 import { engineApiService } from './server-api.service'
+import { GLOBAL_CACHE_PIECES_PATH } from '../cache/worker-cache'
 
 
 export const pieceWorkerCache = {

@@ -35,21 +35,13 @@ export type EngineOperation =
     | ExecuteValidateAuthOperation
 
 export const enum EngineSocketEvent {
-    ENGINE_RESULT = 'engine-result',
-    ENGINE_ERROR = 'engine-error',
+    ENGINE_RESPONSE = 'engine-response',
     ENGINE_STDOUT = 'engine-stdout',
     ENGINE_STDERR = 'engine-stderr',
     ENGINE_READY = 'engine-ready',
     ENGINE_OPERATION = 'engine-operation',
 }
 
-export const EngineResult = Type.Object({
-    result: Type.Unknown(),
-})
-
-export const EngineError = Type.Object({
-    error: Type.Unknown(),
-})
 
 export const EngineStdout = Type.Object({
     message: Type.String(),
@@ -60,8 +52,6 @@ export const EngineStderr = Type.Object({
 })
 
 
-export type EngineResult = Static<typeof EngineResult>
-export type EngineError = Static<typeof EngineError>
 export type EngineStdout = Static<typeof EngineStdout>
 export type EngineStderr = Static<typeof EngineStderr>
 
@@ -211,10 +201,10 @@ export type EngineHttpResponse = Static<typeof EngineHttpResponse>
 
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
     H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :
-        H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
-            H extends TriggerHookType.RENEW ? Record<string, never> :
-                H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
-                    ExecuteOnEnableTriggerResponse
+    H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
+    H extends TriggerHookType.RENEW ? Record<string, never> :
+    H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
+    ExecuteOnEnableTriggerResponse
 
 export type ExecuteActionResponse = {
     success: boolean
@@ -237,14 +227,15 @@ export type ExecuteValidateAuthResponse =
     | InvalidExecuteValidateAuthResponseOutput
 
 
-export type EngineResponse<T> = {
+export type EngineResponse<T = unknown> = {
     status: EngineResponseStatus
     response: T
+    error?: string
 }
 
 export enum EngineResponseStatus {
     OK = 'OK',
-    ERROR = 'ERROR',
+    INTERNAL_ERROR = 'INTERNAL_ERROR',
     TIMEOUT = 'TIMEOUT',
     MEMORY_ISSUE = 'MEMORY_ISSUE',
 }

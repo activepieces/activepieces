@@ -47,11 +47,16 @@ export const ConsumeJobRequest = Type.Object({
     engineToken: Type.String(),
 })
 
+export enum ConsumeJobResponseStatus {
+    OK = 'OK',
+    INTERNAL_ERROR = 'INTERNAL_ERROR',
+}
+
 export type ConsumeJobRequest = Static<typeof ConsumeJobRequest>
 
 export const ConsumeJobResponse = Type.Object({
-    success: Type.Boolean(),
-    message: Type.Optional(Type.String()),
+    status: Type.Enum(ConsumeJobResponseStatus),
+    errorMessage: Type.Optional(Type.String()),
 })
 
 export type ConsumeJobResponse = Static<typeof ConsumeJobResponse>

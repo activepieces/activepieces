@@ -15,9 +15,9 @@ export const utils = {
     },
 
 
-    tryParseError(value: Error): unknown {
+    formatError(value: Error): string {
         try {
-            return JSON.parse(value.message)
+            return JSON.stringify(JSON.parse(value.message), null, 2)
         }
         catch (e) {
             return inspect(value)

@@ -4,7 +4,7 @@ import {
     RunEnvironment,
 } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-import { DelayedJobData, JobData } from './job-data'
+import { JobData } from './job-data'
 
 export enum JobType {
     WEBHOOK = 'WEBHOOK',

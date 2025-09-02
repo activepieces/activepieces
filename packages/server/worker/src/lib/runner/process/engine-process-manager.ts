@@ -1,6 +1,6 @@
 import { ChildProcess } from 'child_process'
 import { ApSemaphore, getEngineTimeout } from '@activepieces/server-shared'
-import { ApEnvironment, assertNotNullOrUndefined, EngineError, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, EngineResult, EngineStderr, EngineStdout, ExecuteFlowOperation, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionMode, isNil, TriggerHookType } from '@activepieces/shared'
+import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, EngineStderr, EngineStdout, ExecuteFlowOperation, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionMode, isNil, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import treeKill from 'tree-kill'
@@ -145,16 +145,13 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
             }, timeout * 1000)
 
 
-            const onResult = (result: EngineResult) => {
+            const onResult = (result: EngineResponse<unknown>) => {
 
                 resolve({
-                    engine: result.result as EngineResponse<unknown>,
+                    engine: result,
                     stdOut,
                     stdError,
                 })
-            }
-            const onError = (error: EngineError) => {
-                reject({ status: EngineResponseStatus.ERROR, response: error.error })
             }
             const onStdout = (stdout: EngineStdout) => {
                 stdOut += stdout.message
@@ -163,13 +160,13 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                 stdError += stderr.message
             }
 
-            engineSocketServer.subscribe(workerId, onResult, onError, onStdout, onStderr)
+            engineSocketServer.subscribe(workerId, onResult, onStdout, onStderr)
 
             worker.on('error', (error) => {
                 log.info({
                     error,
                 }, 'Worker returned something in stderr')
-                reject({ status: EngineResponseStatus.ERROR, response: error })
+                reject({ status: EngineResponseStatus.INTERNAL_ERROR, error: error })
             })
 
             worker.on('exit', (code, signal) => {
@@ -206,7 +203,7 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                     })
                 }
                 else {
-                    reject({ status: EngineResponseStatus.ERROR, response: 'Worker exited with code ' + code + ' and signal ' + signal })
+                    reject({ status: EngineResponseStatus.INTERNAL_ERROR, error: 'Worker exited with code ' + code + ' and signal ' + signal })
                 }
             })
             log.debug({

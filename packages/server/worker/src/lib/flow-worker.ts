@@ -1,8 +1,5 @@
-import { readdir, rm } from 'fs/promises'
-import path from 'path'
-import { inspect } from 'util'
-import { AgentJobData, exceptionHandler, GLOBAL_CACHE_ALL_VERSIONS_PATH, LATEST_CACHE_VERSION, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
-import { ConsumeJobRequest, ConsumeJobResponse, WebsocketClientEvent, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import { AgentJobData, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
+import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, WebsocketClientEvent, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { io, Socket } from 'socket.io-client'
 import { agentJobExecutor } from './executors/agent-job-executor'
@@ -13,6 +10,8 @@ import { webhookExecutor } from './executors/webhook-job-executor'
 import { engineRunner } from './runner'
 import { engineRunnerSocket } from './runner/engine-runner-socket'
 import { workerMachine } from './utils/machine'
+import { workerCache } from './cache/worker-cache'
+import { inspect } from 'util'
 
 let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
@@ -20,7 +19,7 @@ let socket: Socket
 
 export const flowWorker = (log: FastifyBaseLogger) => ({
     async init({ workerToken: token }: { workerToken: string }): Promise<void> {
-        rejectedPromiseHandler(deleteStaleCache(log), log)
+        rejectedPromiseHandler(workerCache(log).deleteStaleCache(), log)
         await engineRunnerSocket(log).init()
 
         workerToken = token
@@ -71,20 +70,16 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
                 attempsStarted: request.attempsStarted,
             })
             try {
-                await consumeJob(request, log)
-                const response: ConsumeJobResponse = {
-                    success: true,
-                }
+                const response: ConsumeJobResponse = await consumeJob(request, log)
                 callback(response)
-            }
-            catch (error) {
+            } catch (error) {
                 log.info({
                     message: 'Failed to consume job',
                     error,
                 })
                 const response: ConsumeJobResponse = {
-                    success: false,
-                    message: inspect(error),
+                    status: ConsumeJobResponseStatus.INTERNAL_ERROR,
+                    errorMessage: inspect(error),
                 }
                 callback(response)
             }
@@ -130,26 +125,29 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
 })
 
 
-async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): Promise<void> {
+async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): Promise<ConsumeJobResponse> {
     const { jobId, queueName, jobData, attempsStarted, engineToken } = request
     switch (queueName) {
         case QueueName.USERS_INTERACTION:
             await userInteractionJobExecutor(log).execute(jobData as unknown as UserInteractionJobData, engineToken, workerToken)
-            break
+            return {
+                status: ConsumeJobResponseStatus.OK,
+            }
         case QueueName.ONE_TIME:
             await flowJobExecutor(log).executeFlow(jobData as unknown as OneTimeJobData, attempsStarted, engineToken)
-            break
+            return {
+                status: ConsumeJobResponseStatus.OK,
+            }
         case QueueName.SCHEDULED:
-            await repeatingJobExecutor(log).executeRepeatingJob({
+            return repeatingJobExecutor(log).executeRepeatingJob({
                 jobId,
                 data: jobData as unknown as RepeatingJobData,
                 engineToken,
                 workerToken,
             })
-            break
+
         case QueueName.WEBHOOK: {
-            await webhookExecutor(log).consumeWebhook(jobId, jobData as unknown as WebhookJobData, engineToken, workerToken)
-            break
+            return webhookExecutor(log).consumeWebhook(jobId, jobData as unknown as WebhookJobData, engineToken, workerToken)
         }
         case QueueName.AGENTS: {
             await agentJobExecutor(log).executeAgent({
@@ -157,23 +155,12 @@ async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): P
                 engineToken,
                 workerToken,
             })
-            break
-        }
-    }
-}
-
-async function deleteStaleCache(log: FastifyBaseLogger): Promise<void> {
-    try {
-        const cacheDir = path.resolve(GLOBAL_CACHE_ALL_VERSIONS_PATH)
-        const entries = await readdir(cacheDir, { withFileTypes: true })
-
-        for (const entry of entries) {
-            if (entry.isDirectory() && entry.name !== LATEST_CACHE_VERSION) {
-                await rm(path.join(cacheDir, entry.name), { recursive: true })
+            return {
+                status: ConsumeJobResponseStatus.OK,
             }
         }
-    }
-    catch (error) {
-        exceptionHandler.handle(error, log)
+        default: {
+            throw new Error(`Unknown queue name: ${queueName}`)
+        }
     }
 }
