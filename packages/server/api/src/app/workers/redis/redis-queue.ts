@@ -11,6 +11,7 @@ import { redisMigrations } from './redis-migration'
 import { redisRateLimiter } from './redis-rate-limiter'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
+const ONE_MINUTE_IN_MILLISECONDS = apDayjsDuration(1, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
 const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT)
 
@@ -40,6 +41,14 @@ const jobTypeToDefaultJobOptions: Record<QueueName, DefaultJobOptions> = {
         attempts: 3,
     },
     [QueueName.AGENTS]: defaultJobOptions,
+    [QueueName.OUTGOING_WEBHOOK]: {
+        ...defaultJobOptions,
+        attempts: 12,
+        backoff: {
+            type: 'exponential',
+            delay: ONE_MINUTE_IN_MILLISECONDS,
+        },
+    },
 }
 
 export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
@@ -90,6 +99,11 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
                 await addJobWithPriority(queue, params)
                 break
             }
+            case JobType.OUTGOING_WEBHOOK: {
+                const queue = await ensureQueueExists(QueueName.OUTGOING_WEBHOOK)
+                await addJobWithPriority(queue, params)
+                break
+            }
         }
     },
     async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
@@ -131,7 +145,7 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
     return bullMqGroups[queueName]
 }
 
-async function addJobWithPriority(queue: Queue, params: AddParams<JobType.WEBHOOK | JobType.ONE_TIME | JobType.AGENTS>): Promise<void> {
+async function addJobWithPriority(queue: Queue, params: AddParams<JobType.WEBHOOK | JobType.ONE_TIME | JobType.AGENTS | JobType.OUTGOING_WEBHOOK>): Promise<void> {
     const { id, data, priority } = params
     await queue.add(id, data, {
         jobId: id,

@@ -1,5 +1,5 @@
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
-import { AgentJobData, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
+import { AgentJobData, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, OneTimeJobData, OutgoingWebhookJobData, QueueName, RepeatableJobType, ScheduledJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
 import { FlowRun, FlowRunStatus, FlowTriggerType, isNil, PauseType, PopulatedFlow, ProgressUpdateType, RunEnvironment, TriggerSourceScheduleType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -17,6 +17,7 @@ export const memoryQueues = {
     [QueueName.WEBHOOK]: new ApMemoryQueue<WebhookJobData>(),
     [QueueName.USERS_INTERACTION]: new ApMemoryQueue<UserInteractionJobData>(),
     [QueueName.AGENTS]: new ApMemoryQueue<AgentJobData>(),
+    [QueueName.OUTGOING_WEBHOOK]: new ApMemoryQueue<OutgoingWebhookJobData>(),
 }
 
 export const memoryQueue = (log: FastifyBaseLogger): QueueManager => ({
@@ -71,6 +72,13 @@ export const memoryQueue = (log: FastifyBaseLogger): QueueManager => ({
             }
             case JobType.AGENTS: {
                 memoryQueues[QueueName.AGENTS].add({
+                    id: params.id,
+                    data,
+                })
+                break
+            }
+            case JobType.OUTGOING_WEBHOOK: {
+                memoryQueues[QueueName.OUTGOING_WEBHOOK].add({
                     id: params.id,
                     data,
                 })

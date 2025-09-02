@@ -1,11 +1,12 @@
 import { readdir, rm } from 'fs/promises'
 import path from 'path'
-import { AgentJobData, exceptionHandler, GLOBAL_CACHE_ALL_VERSIONS_PATH, JobData, JobStatus, LATEST_CACHE_VERSION, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
+import { AgentJobData, exceptionHandler, GLOBAL_CACHE_ALL_VERSIONS_PATH, JobData, JobStatus, LATEST_CACHE_VERSION, OneTimeJobData, OutgoingWebhookJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService, workerApiService } from './api/server-api.service'
 import { agentJobExecutor } from './executors/agent-job-executor'
 import { flowJobExecutor } from './executors/flow-job-executor'
+import { outgoingWebhookExecutor } from './executors/outgoing-webhook-job-executor'
 import { repeatingJobExecutor } from './executors/repeating-job-executor'
 import { userInteractionJobExecutor } from './executors/user-interaction-job-executor'
 import { webhookExecutor } from './executors/webhook-job-executor'
@@ -150,6 +151,10 @@ async function consumeJob(jobId: string, queueName: QueueName, jobData: JobData,
             })
             break
         }
+        case QueueName.OUTGOING_WEBHOOK: {
+            await outgoingWebhookExecutor(log).consumeOutgoingWebhook(jobId, jobData as OutgoingWebhookJobData)
+            break
+        }
     }
 }
 
@@ -162,6 +167,7 @@ async function markJobAsCompleted(queueName: QueueName, engineToken: string, log
         case QueueName.AGENTS:
         case QueueName.USERS_INTERACTION:
         case QueueName.SCHEDULED:
+        case QueueName.OUTGOING_WEBHOOK:
         case QueueName.WEBHOOK: {
             await engineApiService(engineToken, log).updateJobStatus({
                 status: JobStatus.COMPLETED,

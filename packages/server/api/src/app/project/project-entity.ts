@@ -5,6 +5,7 @@ import {
     Field,
     Flow,
     Folder,
+    OutgoingWebhook,
     Platform,
     Project,
     Record,
@@ -35,6 +36,7 @@ type ProjectSchema = Project & {
     cells: Cell[]
     tableWebhooks: TableWebhook[]
     aiUsage: AIUsage[]
+    outgoingWebhooks: OutgoingWebhook[]
 }
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
@@ -156,6 +158,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         aiUsage: {
             type: 'one-to-many',
             target: 'ai_usage',
+            inverseSide: 'project',
+        },
+        outgoingWebhooks: {
+            type: 'one-to-many',
+            target: 'outgoing_webhook',
             inverseSide: 'project',
         },
     },

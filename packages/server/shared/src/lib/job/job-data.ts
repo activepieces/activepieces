@@ -113,6 +113,15 @@ export const WebhookJobData = Type.Object({
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
 
+export const OutgoingWebhookJobData = Type.Object({
+    platformId: Type.String(),
+    projectId: Type.String(),
+    webhookId: Type.String(),
+    url: Type.String(),
+    payload: Type.Any(),
+})
+export type OutgoingWebhookJobData = Static<typeof OutgoingWebhookJobData>
+
 
 export enum UserInteractionJobType {
     EXECUTE_VALIDATION = 'EXECUTE_VALIDATION',
@@ -208,5 +217,6 @@ export const JobData = Type.Union([
     WebhookJobData,
     UserInteractionJobData,
     AgentJobData,
+    OutgoingWebhookJobData,
 ])
 export type JobData = Static<typeof JobData>

@@ -13,6 +13,7 @@ export enum JobType {
     DELAYED = 'DELAYED',
     USERS_INTERACTION = 'USERS_INTERACTION',
     AGENTS = 'AGENTS',
+    OUTGOING_WEBHOOK = 'OUTGOING_WEBHOOK',
 }
 
 export enum JobStatus {
@@ -26,6 +27,7 @@ export enum QueueName {
     SCHEDULED = 'repeatableJobs',
     USERS_INTERACTION = 'usersInteractionJobs',
     AGENTS = 'agentsJobs',
+    OUTGOING_WEBHOOK = 'outgoingWebhookJobs',
 }
 
 export const PollJobRequest = Type.Object({

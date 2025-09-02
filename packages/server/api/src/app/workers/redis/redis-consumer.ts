@@ -94,6 +94,7 @@ function getLockDurationInMs(queueName: QueueName): number {
     const triggerTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS)
     const flowTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS)
     const agentTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.AGENT_TIMEOUT_SECONDS)
+    const outgoingWebhookTimeout = system.getNumberOrThrow(AppSystemProp.OUTGOING_WEBHOOK_TIMEOUT_SECONDS)
     switch (queueName) {
         case QueueName.WEBHOOK:
             return dayjs.duration(triggerTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
@@ -105,5 +106,7 @@ function getLockDurationInMs(queueName: QueueName): number {
             return dayjs.duration(triggerTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
         case QueueName.AGENTS:
             return dayjs.duration(agentTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
+        case QueueName.OUTGOING_WEBHOOK:
+            return dayjs.duration(outgoingWebhookTimeout, 'seconds').add(3, 'minutes').asMilliseconds()
     }
 }

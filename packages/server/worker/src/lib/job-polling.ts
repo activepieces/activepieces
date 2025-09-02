@@ -10,6 +10,7 @@ const pollLocks = {
     [QueueName.WEBHOOK]: new Semaphore(POLLING_POOL_SIZE),
     [QueueName.USERS_INTERACTION]: new Semaphore(POLLING_POOL_SIZE),
     [QueueName.AGENTS]: new Semaphore(POLLING_POOL_SIZE),
+    [QueueName.OUTGOING_WEBHOOK]: new Semaphore(POLLING_POOL_SIZE),
 }
 
 export const jobPoller = {

@@ -1,4 +1,4 @@
-import { ApQueueJob, DelayedJobData, JobData, JobStatus, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, RepeatableJobType, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
+import { ApQueueJob, DelayedJobData, JobData, JobStatus, OneTimeJobData, OutgoingWebhookJobData, PollJobRequest, QueueName, rejectedPromiseHandler, RepeatableJobType, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
 import { apId, ExecutionType, FlowRunStatus, FlowStatus, isNil, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
@@ -275,8 +275,9 @@ async function getProjectIdAndPlatformId(queueName: QueueName, job: JobData): Pr
         case QueueName.AGENTS:
         case QueueName.ONE_TIME:
         case QueueName.WEBHOOK:
+        case QueueName.OUTGOING_WEBHOOK:
         case QueueName.SCHEDULED: {
-            const castedJob = job as OneTimeJobData | WebhookJobData | ScheduledJobData
+            const castedJob = job as OneTimeJobData | WebhookJobData | ScheduledJobData | OutgoingWebhookJobData
             return {
                 projectId: castedJob.projectId,
                 platformId: await projectService.getPlatformId(castedJob.projectId),
