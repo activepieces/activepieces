@@ -30,7 +30,7 @@ const getGeneratedImage = async ({
     engineToken,
     baseURL,
     metadata: {
-      feature: AIUsageFeature.TEXT_AI,
+      feature: AIUsageFeature.IMAGE_AI,
     },
   });
   const images = advancedOptions?.['image'] as Array<{ file: ApFile }> | undefined ?? [];
