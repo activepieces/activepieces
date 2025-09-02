@@ -8,6 +8,7 @@ import { SwitchToRouter1741578250432 } from './migration/common/1741578250432-sw
 import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
+import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
 import { AddPgLocaleCollation1740031341436 } from './migration/postgres/1740031341436-add-pg-locale-collation'
 import { InitialPg1740031656104 } from './migration/postgres/1740031656104-initial-pg'
 import { AddFlowTemplate1741587483735 } from './migration/postgres/1741587483735-add-flow-template'
@@ -92,6 +93,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AddIndexToIssues1756775080449,
         RemoveAgentRelationToTables1755954192258,
         AddStepNameToTestInFlowRunEntity1754330492027,
         RemoveAgentTestPrompt1754863565929,
