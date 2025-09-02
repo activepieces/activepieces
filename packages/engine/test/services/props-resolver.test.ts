@@ -57,6 +57,8 @@ const executionState = FlowExecutorContext.empty()
 
 
 describe('Props resolver', () => {
+
+
     test('Test resolve inside nested loops', async () => {
 
         const modifiedExecutionState = executionState.upsertStep('step_3', GenericStepOutput.create({
@@ -681,6 +683,39 @@ describe('Array Flatter Processor', () => {
         ])
         expect(errors).toEqual({})
     })
+
+    it('should convert number to string for ShortText properties', async () => {
+        const input = {
+            items: {
+                id: 123,
+                name: 'Item Name',
+            },
+        }
+        const props = {
+            items: Property.Array({
+                displayName: 'Items',
+                required: true,
+                properties: {
+                    id: Property.ShortText({
+                        displayName: 'ID',
+                        required: true,
+                    }),
+                    name: Property.LongText({
+                        displayName: 'Name',
+                        required: true,
+                    }),
+                },
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
+
+        expect(processedInput.items).toEqual([
+            { id: '123', name: 'Item Name' },
+        ])
+        expect(errors).toEqual({})
+    })
+
 
     it('should handle arrays with string values', async () => {
         const input = {
