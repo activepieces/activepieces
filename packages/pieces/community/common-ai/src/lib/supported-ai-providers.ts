@@ -28,6 +28,14 @@ export type SupportedAIProvider = {
         instance: ImageModel
         pricing: ImageModelPricing
     }[]
+    videoModels: {
+        displayName: string
+        instance: { modelId: string }
+        pricing: {
+            costPerSecond: number
+        },
+        minimumDurationInSeconds: number
+    }[]
 }
 
 type TableData<
@@ -293,6 +301,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 } as DALLE2PricingPerImage,
             },
         ],
+        videoModels: [],
     },
     {
         provider: 'anthropic',
@@ -398,6 +407,7 @@ It is strongly recommended that you add your credit card information to your Ope
             },
         ],
         imageModels: [],
+        videoModels: [],
     },
     {
         provider: 'replicate',
@@ -432,6 +442,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: 0.003,
             },
         ],
+        videoModels: []
     },
     {
         provider: 'google',
@@ -502,18 +513,42 @@ It is strongly recommended that you add your credit card information to your Ope
                 },
             },
         ],
-        imageModels: [
-            {
-                displayName: 'Gemini-2.5-flash-image-preview (Nano Banana)',
-                instance: google.image('gemini-2.5-flash-image-preview'),
-                pricing: {
-                    input: {
-                        image: 0.30,
-                        text: 0.30
-                    },
-                    output: 30.0
-                }
+        imageModels: [ {
+            displayName: 'Gemini-2.5-flash-image-preview (Nano Banana)',
+            instance: google.image('gemini-2.5-flash-image-preview'),
+            pricing: {
+                input: {
+                    image: 0.30,
+                    text: 0.30
+                },
+                output: 30.0
             }
+        }],
+        videoModels: [
+            {
+                displayName: 'VEO 3 Preview',
+                instance: { modelId: 'veo-3.0-generate-preview' },
+                pricing: {
+                    costPerSecond: 0.75,
+                },  
+                minimumDurationInSeconds: 8,
+            },
+            {
+                displayName: 'VEO 3 Fast Preview',
+                instance: { modelId: 'veo-3.0-fast-generate-preview' },
+                pricing: {
+                    costPerSecond: 0.40,    
+                },
+                minimumDurationInSeconds: 8,
+            },
+            {
+                displayName: 'VEO 2',
+                instance: { modelId: 'veo-2.0-generate-001' },
+                pricing: {
+                    costPerSecond: 0.35,
+                },
+                minimumDurationInSeconds: 8,
+            },
         ],
     },
 ]
