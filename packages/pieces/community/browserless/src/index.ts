@@ -13,7 +13,7 @@ export const browserless = createPiece({
     logoUrl: 'https://cdn.activepieces.com/pieces/browserless.png',
     categories: [PieceCategory.DEVELOPER_TOOLS],
     description: 'Browserless is a headless browser automation tool that allows you to scrape websites, take screenshots, and more.',
-    authors: ['owuzo'],
+    authors: ['owuzo', 'onyedikachi-david'],
     auth: browserlessAuth,
     actions: [
         captureScreenshot,
