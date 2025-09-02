@@ -1,4 +1,4 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, FAILED_STATES, FlowRun, FlowRunStatus, flowStructureUtil, FlowVersion, isNil, Issue, IssueStatus, ListIssuesParams, PopulatedIssue, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -6,6 +6,7 @@ import { In, LessThan } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
 import { FlowRunEntity } from '../flow-run/flow-run-entity'
 import { flowRunRepo } from '../flow-run/flow-run-service'
@@ -13,6 +14,7 @@ import { flowVersionService } from '../flow-version/flow-version.service'
 import { IssueEntity } from './issues-entity'
 
 const repo = repoFactory(IssueEntity)
+const archiveDays = system.getNumberOrThrow(AppSystemProp.ISSUE_ARCHIVE_DAYS)
 
 export const issuesService = (log: FastifyBaseLogger) => ({
     async add(flowRun: FlowRun): Promise<PopulatedIssue> {
@@ -141,23 +143,6 @@ export const issuesService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async archiveOldIssues(olderThanDays: number): Promise<void> {
-        const cutoffDate = dayjs().subtract(olderThanDays, 'days').toISOString()
-
-        const result = await repo().update({
-            status: IssueStatus.UNRESOLVED,
-            updated: LessThan(cutoffDate),
-        }, {
-            status: IssueStatus.ARCHIVED,
-            updated: new Date().toISOString(),
-        })
-
-        log.info({
-            archivedCount: result.affected,
-            olderThanDays,
-            cutoffDate,
-        }, 'Archived old issues')
-    },
 })
 
 type UpdateParams = {
@@ -190,6 +175,16 @@ async function resolveIssueWithZeroCount(projectId: string, log: FastifyBaseLogg
         }, { statuses: FAILED_STATES })
         .execute()
 
+
+    const cutoffDate = dayjs().subtract(archiveDays, 'days').toISOString()
+    await repo().update({
+        projectId,
+        status: IssueStatus.UNRESOLVED,
+        updated: LessThan(cutoffDate),
+    }, {
+        status: IssueStatus.ARCHIVED,
+        updated: new Date().toISOString(),
+    })
     log.info('Resolved issues with zero failed runs')
 }
 
