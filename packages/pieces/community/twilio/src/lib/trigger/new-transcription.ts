@@ -1,100 +1,136 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import {
+  createTrigger,
+  PiecePropValueSchema,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
+import {
+  AuthenticationType,
+  DedupeStrategy,
+  httpClient,
+  HttpMethod,
+  Polling,
+  pollingHelper,
+} from '@activepieces/pieces-common';
 import { twilioAuth } from '../..';
-import { callTwilioApi } from '../common';
 
 interface Transcription {
-    sid: string;
-    status: string;
-    date_created: string;
-    recording_sid: string;
-    duration: string;
-    price: string;
-    price_unit: string;
-    transcription_text: string;
+  sid: string;
+  status: string;
+  date_created: string;
+  recording_sid: string;
+  duration: string;
+  price: string;
+  price_unit: string;
+  transcription_text: string;
 }
 
 interface TranscriptionsResponse {
-    transcriptions: Transcription[];
+  transcriptions: Transcription[];
+  next_page_uri: string;
 }
 
-interface StoreValue {
-    lastTranscriptionSid?: string;
-}
+const polling: Polling<
+  PiecePropValueSchema<typeof twilioAuth>,
+  Record<string, unknown>
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  async items({ auth, lastFetchEpochMS }) {
+    const isTest = lastFetchEpochMS === 0;
+    const account_sid = auth.username;
+    const auth_token = auth.password;
+
+    let currentUri:
+      | string
+      | null = `/2010-04-01/Accounts/${account_sid}/Transcriptions.json?PageSize=${
+      isTest ? 10 : 1000
+    }`;
+
+    const results = [];
+    let stop = false;
+
+    do {
+      const response: any = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `https://api.twilio.com${currentUri}`,
+        authentication: {
+          type: AuthenticationType.BASIC,
+          username: account_sid,
+          password: auth_token,
+        },
+      });
+
+      const payload = response.body as TranscriptionsResponse;
+
+      const transcriptions = payload.transcriptions ?? [];
+
+      for (const recording of transcriptions) {
+        const ts = new Date(recording.date_created).getTime();
+
+        if (recording.status !== 'completed') continue;
+
+        if (isTest || ts > lastFetchEpochMS) {
+          results.push(recording);
+        } else {
+          stop = true;
+          break;
+        }
+      }
+
+      if (isTest) break;
+      currentUri = payload?.next_page_uri ?? null;
+    } while (currentUri && !stop);
+
+    return results.map((recording) => {
+      return {
+        epochMilliSeconds: new Date(recording.date_created).getTime(),
+        data: recording,
+      };
+    });
+  },
+};
 
 export const twilioNewTranscription = createTrigger({
-    auth: twilioAuth,
-    name: 'new_transcription',
-    displayName: 'New Transcription',
-    description: 'Fires when a new call recording transcription is completed.',
-    props: {},
-    sampleData: {
-        "sid": "TRXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-        "date_created": "2025-08-28T11:50:45+00:00",
-        "date_updated": "2025-08-28T11:50:45+00:00",
-        "account_sid": "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-        "status": "completed",
-        "recording_sid": "REXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-        "duration": "10",
-        "transcription_text": "Hello, this is a test transcription.",
-        "price": "0.05",
-        "price_unit": "USD",
-        "uri": "/2010-04-01/Accounts/ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/Transcriptions/TRXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.json"
+  auth: twilioAuth,
+  name: 'new_transcription',
+  displayName: 'New Transcription',
+  description: 'Triggers when a new call recording transcription is completed.',
+  props: {},
+  sampleData: {
+      "account_sid": "ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "api_version": "2008-08-01",
+      "date_created": "Thu, 25 Aug 2011 20:59:45 +0000",
+      "date_updated": "Thu, 25 Aug 2011 20:59:45 +0000",
+      "duration": "10",
+      "price": "0.00000",
+      "price_unit": "USD",
+      "recording_sid": "REaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sid": "TRaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "completed",
+      "transcription_text": null,
+      "type": "fast",
+      "uri": "/2010-04-01/Accounts/ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Transcriptions/TRaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json"
     },
-    type: TriggerStrategy.POLLING,
+  type: TriggerStrategy.POLLING,
 
-    async onEnable(context) {
-        // Fetch the single most recent transcription to set the initial state
-        const response = await callTwilioApi<TranscriptionsResponse>(
-            HttpMethod.GET,
-            'Transcriptions.json?PageSize=1',
-            {
-                account_sid: context.auth.username,
-                auth_token: context.auth.password,
-            }
-        );
-        // If there are any transcriptions, store the SID of the newest one
-        const lastTranscriptionSid = response.body.transcriptions[0]?.sid;
-        await context.store.put<StoreValue>('twilio_new_transcription', { lastTranscriptionSid });
-    },
 
-    async onDisable(context) {
-        await context.store.delete('twilio_new_transcription');
-    },
-
-    async run(context) {
-        const { lastTranscriptionSid } = (await context.store.get<StoreValue>('twilio_new_transcription')) ?? {};
-
-        const response = await callTwilioApi<TranscriptionsResponse>(
-            HttpMethod.GET,
-            'Transcriptions.json?PageSize=50', // Fetch a reasonable number of recent transcriptions
-            {
-                account_sid: context.auth.username,
-                auth_token: context.auth.password,
-            }
-        );
-
-        const allTranscriptions = response.body.transcriptions;
-        const newTranscriptions: Transcription[] = [];
-
-        // The newest transcription SID from the current API call
-        const newestTranscriptionSidInBatch = allTranscriptions[0]?.sid;
-
-        for (const transcription of allTranscriptions) {
-            if (transcription.sid === lastTranscriptionSid) {
-                // Stop when we reach the last transcription we've already processed
-                break;
-            }
-            newTranscriptions.push(transcription);
-        }
-
-        // If we found any new transcriptions, update the store to the newest one
-        if (newestTranscriptionSidInBatch) {
-            await context.store.put<StoreValue>('twilio_new_transcription', { lastTranscriptionSid: newestTranscriptionSidInBatch });
-        }
-        
-        // Only return transcriptions that are 'completed' and process them oldest-first.
-        const completedTranscriptions = newTranscriptions.filter(r => r.status === 'completed');
-        return completedTranscriptions.reverse();
-    },
+  async onEnable(context) {
+    await pollingHelper.onEnable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
+  },
+  async test(context) {
+    return await pollingHelper.test(polling, context);
+  },
+  async run(context) {
+    return await pollingHelper.poll(polling, context);
+  },
 });

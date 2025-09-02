@@ -1,7 +1,6 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { twilioAuth } from '../..';
-import { callTwilioApi } from '../common';
+import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 interface Call {
     sid: string;
@@ -14,122 +13,141 @@ interface Call {
     duration: string;
     price: string;
     price_unit: string;
+    date_created:string
 }
 
 interface CallsResponse {
     calls: Call[];
+          next_page_uri:string
+
 }
 
-interface StoreValue {
-    lastCallSid?: string;
-}
 
-// Helper function to build the URL path with query parameters
-const buildPathWithParams = (props: { to_number?: string; status?: string[] }, pageSize?: number): string => {
-    const params = new URLSearchParams();
-    if (props.to_number) {
-        params.append('To', props.to_number);
-    }
-    if (props.status && props.status.length > 0) {
-        props.status.forEach(s => params.append('Status', s));
-    }
-    if (pageSize) {
-        params.append('PageSize', pageSize.toString());
-    }
-    const queryString = params.toString();
-    return `Calls.json${queryString ? '?' + queryString : ''}`;
+const polling: Polling<
+  PiecePropValueSchema<typeof twilioAuth>,
+  Record<string, unknown>
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  async items({ auth, lastFetchEpochMS }) {
+    const isTest = lastFetchEpochMS === 0;
+    const account_sid = auth.username;
+    const auth_token = auth.password;
+
+    let currentUri:
+      | string
+      | null = `/2010-04-01/Accounts/${account_sid}/Calls.json?PageSize=${
+      isTest ? 1 : 1000
+    }`;
+
+    const results = [];
+    let stop = false;
+
+    do {
+      const response: any = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `https://api.twilio.com${currentUri}`,
+        authentication: {
+          type: AuthenticationType.BASIC,
+          username: account_sid,
+          password: auth_token,
+        },
+      });
+
+      const payload = response.body as CallsResponse;
+
+      const calls = payload.calls ?? [];
+
+      for (const call of calls) {
+        const ts = new Date(call.date_created).getTime();
+
+        if(call.status !== 'completed') continue;
+
+        if (isTest || ts > lastFetchEpochMS) {
+          results.push(call);
+        } else {
+          stop = true;
+          break;
+        }
+      }
+
+      if (isTest) break;
+      currentUri = payload?.next_page_uri ?? null;
+    } while (currentUri && !stop);
+
+    return results.map((call) => {
+      return {
+        epochMilliSeconds: new Date(call.date_created).getTime(),
+        data: call,
+      };
+    });
+  },
 };
 
 export const twilioNewCall = createTrigger({
     auth: twilioAuth,
     name: 'new_call',
     displayName: 'New Call',
-    description: 'Fires when a call completes (incoming or outgoing).',
-    props: {
-        to_number: Property.ShortText({
-            displayName: 'To Number (Optional)',
-            description: 'The Twilio phone number that received the call. If not provided, the trigger will run on all numbers in the account.',
-            required: false,
-        }),
-        // FIX: Changed MultiSelectDropdown to StaticMultiSelectDropdown
-        status: Property.StaticMultiSelectDropdown({
-            displayName: 'Status (Optional)',
-            description: 'Select the call statuses to trigger on. If none are selected, the trigger will run for any terminal status.',
-            required: false,
-            options: {
-                options: [
-                    { label: "Completed", value: "completed" },
-                    { label: "Busy", value: "busy" },
-                    { label: "No Answer", value: "no-answer" },
-                    { label: "Canceled", value: "canceled" },
-                    { label: "Failed", value: "failed" },
-                ]
-            }
-        })
-    },
-    sampleData: {
-        "sid": "CAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-        "direction": "inbound",
-        "from": "+15551234567",
-        "to": "+15557654321",
-        "start_time": "2025-08-28T11:55:29+00:00",
-        "end_time": "2025-08-28T11:55:44+00:00",
-        "status": "completed",
-        "duration": "15",
-        "price": "-0.03000",
-        "price_unit": "USD",
+    description: 'Triggers when a call completes (incoming or outgoing).',
+    props: {},
+    sampleData:{
+      "account_sid": "ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "answered_by": "machine_start",
+      "api_version": "2010-04-01",
+      "caller_name": "callerid1",
+      "date_created": "Fri, 18 Oct 2019 17:00:00 +0000",
+      "date_updated": "Fri, 18 Oct 2019 17:01:00 +0000",
+      "direction": "outbound-api",
+      "duration": "4",
+      "end_time": "Fri, 18 Oct 2019 17:03:00 +0000",
+      "forwarded_from": "calledvia1",
+      "from": "+13051416799",
+      "from_formatted": "(305) 141-6799",
+      "group_sid": "GPdeadbeefdeadbeefdeadbeefdeadbeef",
+      "parent_call_sid": "CAdeadbeefdeadbeefdeadbeefdeadbeef",
+      "phone_number_sid": "PNdeadbeefdeadbeefdeadbeefdeadbeef",
+      "price": "-0.200",
+      "price_unit": "USD",
+      "sid": "CAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "start_time": "Fri, 18 Oct 2019 17:02:00 +0000",
+      "status": "completed",
+      "subresource_uris": {
+        "notifications": "/2010-04-01/Accounts/ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Calls/CAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Notifications.json",
+        "recordings": "/2010-04-01/Accounts/ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Calls/CAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Recordings.json",
+        "payments": "/2010-04-01/Accounts/ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Calls/CAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Payments.json",
+        "events": "/2010-04-01/Accounts/ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Calls/CAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Events.json",
+        "siprec": "/2010-04-01/Accounts/ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Calls/CAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Siprec.json",
+        "streams": "/2010-04-01/Accounts/ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Calls/CAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Streams.json",
+        "transcriptions": "/2010-04-01/Accounts/ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Calls/CAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Transcriptions.json",
+        "user_defined_message_subscriptions": "/2010-04-01/Accounts/ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Calls/CAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/UserDefinedMessageSubscriptions.json",
+        "user_defined_messages": "/2010-04-01/Accounts/ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Calls/CAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/UserDefinedMessages.json"
+      },
+      "to": "+13051913581",
+      "to_formatted": "(305) 191-3581",
+      "trunk_sid": "TKdeadbeefdeadbeefdeadbeefdeadbeef",
+      "uri": "/2010-04-01/Accounts/ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/Calls/CAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json",
+      "queue_time": "1000"
     },
     type: TriggerStrategy.POLLING,
 
-    async onEnable(context) {
-        const path = buildPathWithParams(context.propsValue, 1);
 
-        const response = await callTwilioApi<CallsResponse>(
-            HttpMethod.GET,
-            path,
-            {
-                account_sid: context.auth.username,
-                auth_token: context.auth.password,
-            }
-        );
-        
-        const lastCallSid = response.body.calls[0]?.sid;
-        await context.store.put<StoreValue>('twilio_new_call', { lastCallSid });
-    },
-
-    async onDisable(context) {
-        await context.store.delete('twilio_new_call');
-    },
-
-    async run(context) {
-        const { lastCallSid } = (await context.store.get<StoreValue>('twilio_new_call')) ?? {};
-        const path = buildPathWithParams(context.propsValue);
-        
-        const response = await callTwilioApi<CallsResponse>(
-            HttpMethod.GET,
-            path,
-            {
-                account_sid: context.auth.username,
-                auth_token: context.auth.password,
-            }
-        );
-
-        const allCalls = response.body.calls;
-        const newCalls: Call[] = [];
-        
-        const newestCallSidInBatch = allCalls[0]?.sid;
-
-        for (const call of allCalls) {
-            if (call.sid === lastCallSid) {
-                break;
-            }
-            newCalls.push(call);
-        }
-
-        if (newestCallSidInBatch) {
-            await context.store.put<StoreValue>('twilio_new_call', { lastCallSid: newestCallSidInBatch });
-        }
-        
-        return newCalls.reverse();
-    },
+  async onEnable(context) {
+    await pollingHelper.onEnable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
+  },
+  async test(context) {
+    return await pollingHelper.test(polling, context);
+  },
+  async run(context) {
+    return await pollingHelper.poll(polling, context);
+  },
 });
