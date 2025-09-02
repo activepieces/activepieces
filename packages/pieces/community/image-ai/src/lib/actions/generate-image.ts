@@ -5,6 +5,7 @@ import { experimental_generateImage as generateImage } from 'ai';
 import { aiProps } from '@activepieces/common-ai';
 import { LanguageModelV2 } from '@ai-sdk/provider';
 import mime from 'mime-types';
+import { isNil } from '@activepieces/shared';
 
 const getGeneratedImage = async ({
   providerName,
@@ -59,7 +60,17 @@ const getGeneratedImage = async ({
        
       ]
   });
-   return result.files[0];
+   const responseBody =  result.response.body && typeof result.response.body === 'object' && 'candidates' in result.response.body ? result.response.body : { candidates: [] };
+   const responseCandidates =  Array.isArray(responseBody?.candidates) ? responseBody?.candidates : [];
+   responseCandidates.forEach(candidate => {
+     if(candidate.finishReason !== 'STOP') {
+      throw new Error('Image generation failed Reason:\n ' + JSON.stringify(responseCandidates, null, 2));
+     }
+   })
+   if(isNil(result.files) || result.files.length === 0) {
+    throw new Error('No image generated');
+   }
+   return  result.files[0];
    }
    else{
     const response = await generateImage({
@@ -107,16 +118,11 @@ export const generateImageAction = createAction({
       prompt: context.propsValue.prompt,
       advancedOptions: context.propsValue.advancedOptions,
     });
-    if (image.base64) {
-      return context.files.write({
-        data: Buffer.from(image.base64, 'base64'),
-        fileName: 'image.png',
-      });
-    } else {
-      return context.files.write({
-        data: Buffer.from(image.uint8Array),
-        fileName: 'image.png',
-      });
-    }
+
+     const imageData = image.base64 && image.base64.length > 0 ? Buffer.from(image.base64, 'base64') : Buffer.from(image.uint8Array);
+     return context.files.write({
+      data: imageData,
+      fileName: 'image.png',
+     });
   },
 });
