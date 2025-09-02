@@ -28,6 +28,7 @@ export const createNewIssue = createTrigger({
     name: string, // Unique name across the piece.
     displayName: string, // Display name on the interface.
 	description: string, // Description for the action
+    sampleData: null,
     type: TriggerStrategy.WEBHOOK | TriggerStrategy.POLLING | TriggerStrategy.APP_WEBHOOK,
 
     props: {}; // Required properties from the user.
