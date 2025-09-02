@@ -33,6 +33,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 progressUpdateType: jobData.progressUpdateType,
                 stepNameToTest: jobData.stepNameToTest ?? null,
                 logsUploadUrl: jobData.logsUploadUrl,
+                logsFileId: jobData.logsFileId,
             }
         }
         case ExecutionType.RESUME: {
@@ -56,6 +57,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 progressUpdateType: jobData.progressUpdateType,
                 stepNameToTest: jobData.stepNameToTest ?? null,
                 logsUploadUrl: jobData.logsUploadUrl,
+                logsFileId: jobData.logsFileId,
             }
         }
     }
