@@ -3,8 +3,6 @@ import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, Usage } from './types'
 import { calculateTokensCost, calculateWebSearchCost, getProviderConfig } from './utils'
-import path from 'path'
-import * as fs from 'fs'
 export const googleProvider: AIProviderStrategy = {
     extractModelId: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null => {
         // https://generativelanguage.googleapis.com/v1beta/{model=models/*}:streamGenerateContent
@@ -14,10 +12,6 @@ export const googleProvider: AIProviderStrategy = {
     },
 
     calculateUsage: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage | null => {
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-        const filename = `google-api-response-${timestamp}.json`
-        const outputDir = path.join(process.cwd(), 'api-responses')
-     
 
         const apiResponse = response as {
             usageMetadata: {
@@ -86,8 +80,8 @@ export const googleProvider: AIProviderStrategy = {
                     model,
                 }
             }
-            if(imageModelConfig) {
-                if(typeof imageModelConfig.pricing !== 'number' && imageModelConfig.pricing.type === 'GPTImage1') {
+            if (imageModelConfig) {
+                if (typeof imageModelConfig.pricing !== 'number' && imageModelConfig.pricing.type === 'GPTImage1') {
                     cost += calculateTokensCost(promptTokenCount, imageModelConfig.pricing.input.image) + calculateTokensCost(candidatesTokenCount + (thoughtsTokenCount ?? 0), imageModelConfig.pricing.output)
                 }
                 else throw new ActivepiecesError({
