@@ -65,6 +65,30 @@ export const newFormSubmission = createTrigger({
       },
     }),
   },
+  sampleData: {
+    id: "507f1f77bcf86cd799439015",
+    number: 42,
+    email: "user@example.com",
+    name: "John Doe",
+    first_name: "John",
+    last_name: "Doe",
+    company: "Acme Corp",
+    summary: "Contact form submission from website",
+    body: "Hello, I'm interested in your services. Please contact me.",
+    data: {
+      name: "John Doe",
+      email: "user@example.com",
+      message: "Hello, I'm interested in your services. Please contact me.",
+      phone: "+1-555-123-4567"
+    },
+    created_at: "2025-09-02T10:15:30.000Z",
+    site_url: "https://my-site.netlify.app",
+    form_id: "507f1f77bcf86cd799439016",
+    form_name: "contact",
+    ip: "192.168.1.100",
+    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    referrer: "https://my-site.netlify.app/contact"
+  },
   type: TriggerStrategy.WEBHOOK,
   onEnable: async (context) => {
     if (!context.auth) {

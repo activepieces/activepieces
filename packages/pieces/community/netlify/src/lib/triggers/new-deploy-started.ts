@@ -65,6 +65,28 @@ export const newDeployStarted = createTrigger({
       },
     }),
   },
+  sampleData: {
+    id: "507f1f77bcf86cd799439013",
+    site_id: "b6fda79c-0cb0-44ca-8e73-3f5f2c0f0e2d",
+    build_id: "5d7725b654c02c0007350e8b",
+    state: "building",
+    name: "my-site",
+    url: "https://my-site.netlify.app",
+    ssl_url: "https://my-site.netlify.app",
+    admin_url: "https://app.netlify.com/sites/my-site",
+    deploy_url: "https://5d7725b654c02c0007350e8b--my-site.netlify.app",
+    deploy_ssl_url: "https://5d7725b654c02c0007350e8b--my-site.netlify.app",
+    created_at: "2025-09-02T10:15:30.000Z",
+    updated_at: "2025-09-02T10:15:30.000Z",
+    user_id: "507f1f77bcf86cd799439012",
+    branch: "main",
+    commit_ref: "def456ghi789",
+    commit_url: "https://github.com/user/repo/commit/def456ghi789",
+    skipped: false,
+    locked: false,
+    review_id: null,
+    framework: "react"
+  },
   type: TriggerStrategy.WEBHOOK,
   onEnable: async (context) => {
     if (!context.auth) {
