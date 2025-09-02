@@ -10,7 +10,7 @@ import { prepareQuery } from '../common/client';
 export const findConnectionsByDomainAction = createAction({
   auth: PredictLeadsAuth,
   name: 'predict-leads_find_connections_by_domain',
-  displayName: 'Retrieve company connections',
+  displayName: 'Get Company Connections',
   description: 'Retrieves company connections by domain.',
   props: {
     domain: Property.ShortText({
@@ -18,8 +18,8 @@ export const findConnectionsByDomainAction = createAction({
       description: 'The domain to find.',
       required: true,
     }),
-    first_seen_at_from: firstSeenAtFromField,
-    first_seen_at_until: firstSeenAtUntilField,
+    // first_seen_at_from: firstSeenAtFromField,
+    // first_seen_at_until: firstSeenAtUntilField,
     page: pageField,
     limit: limitField
   },
@@ -48,13 +48,13 @@ export const findConnectionsByDomainAction = createAction({
 export const findConnectionsAction = createAction({
   auth: PredictLeadsAuth,
   name: 'predict-leads_find_connections',
-  displayName: 'Retrieve all connections',
-  description: 'Finds all portfolio companies',
+  displayName: 'List Connections',
+  description: 'Finds all portfolio companies.',
   props: {
-    first_seen_at_from: firstSeenAtFromField,
-    first_seen_at_until: firstSeenAtUntilField,
-    last_seen_at_from: lastSeenAtFromField,
-    last_seen_at_until: lastSeenAtUntilField,
+    // first_seen_at_from: firstSeenAtFromField,
+    // first_seen_at_until: firstSeenAtUntilField,
+    // last_seen_at_from: lastSeenAtFromField,
+    // last_seen_at_until: lastSeenAtUntilField,
     page: pageField,
     limit: limitField
   },

@@ -42,8 +42,8 @@ const categories = [
 export const findNewsEventsByDomainAction = createAction({
   auth: PredictLeadsAuth,
   name: 'predict-leads_find_news_by_domain',
-  displayName: 'Retrieve company news events',
-  description: 'Retrieve news events by company domain',
+  displayName: 'List Company News Events',
+  description: 'Retrieves news events by company domain',
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',
@@ -101,7 +101,7 @@ export const findNewsEventsByDomainAction = createAction({
 export const findNewsEventByIdAction = createAction({
   auth: PredictLeadsAuth,
   name: 'predict-leads_find_news_event_by_id',
-  displayName: 'Retrieve news event',
+  displayName: 'Get News Event',
   description: 'Retrieves a single news event by ID.',
   props: {
     id: Property.ShortText({

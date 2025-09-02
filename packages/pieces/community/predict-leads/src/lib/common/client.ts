@@ -24,7 +24,7 @@ type ResponseSchema = {
     type: string;
     attributes: unknown
     relationships: unknown
-  };
+  }[];
 }
 
 export function prepareQuery(request?: Record<string, any>): QueryParams {

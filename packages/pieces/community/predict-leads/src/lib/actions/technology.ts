@@ -10,8 +10,8 @@ import { prepareQuery } from '../common/client';
 export const findTechnologiesAction = createAction({
   auth: PredictLeadsAuth,
   name: 'predict-leads_find_technologies',
-  displayName: 'Retrieve Technologies',
-  description: 'Retrieve all tracked technologies',
+  displayName: 'List Technologies',
+  description: 'Retrieves all tracked technologies',
   props: {
     order_by: Property.StaticDropdown({
       displayName: 'Order By',
@@ -53,7 +53,7 @@ export const findTechnologiesAction = createAction({
 export const findTechnologyByIdAction = createAction({
   auth: PredictLeadsAuth,
   name: 'predict-leads_find_technology_by_id',
-  displayName: 'Retrieve Technology',
+  displayName: 'Get Technology',
   description: 'Retrieves a single technology by ID.',
   props: {
     id: Property.ShortText({
