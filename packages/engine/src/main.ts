@@ -21,11 +21,10 @@ let socket: WebSocket | undefined
 async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
     const result = await execute(operationType, operation)
     const resultParsed = JSON.parse(JSON.stringify(result))
-    const engineResult: EngineResponse = {
-        response: resultParsed,
-        status: EngineResponseStatus.OK,
-    }
-    socket?.send(JSON.stringify(engineResult))
+    socket?.send(JSON.stringify({
+        type: EngineSocketEvent.ENGINE_RESPONSE,
+        data: resultParsed,
+    }))
 }
 
 function setupSocket() {

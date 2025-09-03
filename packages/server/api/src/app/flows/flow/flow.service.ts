@@ -261,7 +261,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const flowLock = lock
             ? await distributedLock.acquireLock({
                 key: id,
-                timeout: 30000,
+                timeout: 120000,
                 log,
             })
             : null
