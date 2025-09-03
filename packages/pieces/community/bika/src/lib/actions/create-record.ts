@@ -22,7 +22,7 @@ export const createRecordAction = createAction({
     const spaceId = context.propsValue.space_id;
     const dynamicFields: DynamicPropsValue = context.propsValue.fields;
     const fields: {
-      [n: string]: string;
+      [n: string]: any;
     } = {};
 
     const props = Object.entries(dynamicFields);

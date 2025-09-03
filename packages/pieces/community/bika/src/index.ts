@@ -18,7 +18,7 @@ export const BikaAuth = PieceAuth.CustomAuth({
     To obtain your Bika token, follow these steps:
 
     1. Log in to your Bika account.
-    2. Visit https://bika.com
+    2. Visit https://bika.com.
     3. Click on your profile picture (Bottom left).
     4. Click on "My Settings".
     5. Click on "Developer".
@@ -44,14 +44,14 @@ export const BikaAuth = PieceAuth.CustomAuth({
     } catch (e) {
       return {
         valid: false,
-        error: 'Invalid Token or Instance URL.',
+        error: 'Invalid Token.',
       };
     }
   },
 });
 
 export const bika = createPiece({
-  displayName: 'Bika',
+  displayName: 'Bika.ai',
   auth: BikaAuth,
   description: `Interactive spreadsheets with collaboration`,
   minimumSupportedRelease: '0.30.0',

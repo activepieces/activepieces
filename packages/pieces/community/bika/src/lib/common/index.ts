@@ -18,7 +18,7 @@ export const BikaCommon = {
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Connect your account first',
+					placeholder: 'Connect your account first.',
 				};
 			}
 			const client = makeClient(auth as PiecePropValueSchema<typeof BikaAuth>);
@@ -66,6 +66,8 @@ export const BikaCommon = {
 		required: true,
 		refreshers: ['auth', 'database_id'],
 		props: async ({ auth, space_id, database_id }) => {
+			if(!auth || !space_id || !database_id) return {};
+			
 			const client = makeClient(auth as PiecePropValueSchema<typeof BikaAuth>);
 			const res = await client.getDatabaseFields(space_id as unknown as  string, database_id as unknown as string);
 

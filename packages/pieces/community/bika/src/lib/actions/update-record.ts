@@ -29,7 +29,7 @@ export const updateRecordAction = createAction({
 		const recordId = context.propsValue.recordId;
 		const dynamicFields: DynamicPropsValue = context.propsValue.fields;
 		const fields: {
-			[n: string]: string;
+			[n: string]: any;
 		} = {};
 
 		const props = Object.entries(dynamicFields);

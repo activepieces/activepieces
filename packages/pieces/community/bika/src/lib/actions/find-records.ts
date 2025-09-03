@@ -17,18 +17,18 @@ export const findRecordsAction = createAction({
     database_id: BikaCommon.database_id,
     maxRecords: Property.Number({
       displayName: 'Max Records',
-      description: 'How many records are returned in total',
+      description: 'How many records are returned in total.',
       required: false,
     }),
     pageSize: Property.Number({
       displayName: 'Page Size',
-      description: 'How many records are returned per page (max 1000)',
+      description: 'How many records are returned per page (max 1000).',
       required: false,
     }),
     filter: Property.LongText({
       displayName: 'Filter',
       description:
-        'The filter to apply to the records (see https://bika.ai/help/guide/developer/filter-query-language)',
+        'The filter to apply to the records (see https://bika.ai/help/guide/developer/filter-query-language).',
       required: false,
     }),
   },

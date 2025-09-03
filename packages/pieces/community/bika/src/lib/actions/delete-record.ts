@@ -9,7 +9,7 @@ import { BikaAuth } from '../../index';
 export const deleteRecordAction = createAction({
   auth: BikaAuth,
   name: 'bika_delete_record',
-  displayName: 'Delete a Record',
+  displayName: 'Delete Record',
   description: 'Deletes a record in database by ID.',
   props: {
     space_id: BikaCommon.space_id,

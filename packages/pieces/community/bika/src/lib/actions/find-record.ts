@@ -9,14 +9,13 @@ import { BikaAuth } from '../../index';
 export const findRecordAction = createAction({
   auth: BikaAuth,
   name: 'bika_find_record',
-  displayName: 'Find a Record',
-  description: 'Finds a record in database by ID.',
+  displayName: 'Get Record',
+  description: 'Retrieves a record in database by ID.',
   props: {
     space_id: BikaCommon.space_id,
     database_id: BikaCommon.database_id,
       recordId: Property.ShortText({
       displayName: 'Record ID',
-      description: 'The ID of the record to find.',
       required: true,
     }),
   },
