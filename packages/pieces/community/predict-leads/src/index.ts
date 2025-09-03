@@ -7,7 +7,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { findCompaniesAction, findCompanyByDomainAction } from './lib/actions/companies';
 import { findJobOpeningsAction, getAJobOpeningByIdAction, getCompanyJobOpeningsActions } from './lib/actions/jobs';
 import { makeClient } from './lib/common';
-import { findTechnologiesAction, findTechnologyByIdAction } from './lib/actions/technology';
+import { findTechnologiesByCompanyAction, findCompaniesByTechnologyIdAction } from './lib/actions/technology';
 import { findNewsEventByIdAction, findNewsEventsByDomainAction } from './lib/actions/news-events';
 import { findConnectionsAction, findConnectionsByDomainAction } from './lib/actions/connections';
 import { prepareQuery } from './lib/common/client';
@@ -70,8 +70,8 @@ export const predictLeads = createPiece({
     findJobOpeningsAction,
     getCompanyJobOpeningsActions,
     getAJobOpeningByIdAction,
-    findTechnologiesAction,
-    findTechnologyByIdAction,
+    findTechnologiesByCompanyAction,
+    findCompaniesByTechnologyIdAction,
     findNewsEventsByDomainAction,
     findNewsEventByIdAction,
     findConnectionsAction,
