@@ -82,12 +82,12 @@ export class PredictLeadsClient {
     return await this.makeRequest<ResponseSchema>(HttpMethod.GET, `/v3/discover/job_openings`, query);
   }
 
-  async findTechnologies(query?: QueryParams) {
-    return await this.makeRequest<ResponseSchema>(HttpMethod.GET, `/v3/technologies`, query);
+  async findTechnologies(domain: string, query?: QueryParams) {
+    return await this.makeRequest<ResponseSchema>(HttpMethod.GET, `/v3/companies/${domain}/technology_detections`, query);
   }
 
-  async findTechnologyById(technologyId: string) {
-    return await this.makeRequest<ResponseSchema>(HttpMethod.GET, `/v3/technologies/${technologyId}`);
+  async findCompaniesTechnologyById(technologyId: string, query?: QueryParams) {
+    return await this.makeRequest<ResponseSchema>(HttpMethod.GET, `/v3/discover/technologies/${technologyId}/technology_detections`, query);
   }
 
   async findNewsByDomain(domain: string, query?: QueryParams) {
