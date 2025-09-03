@@ -1,9 +1,8 @@
+import fs from 'fs/promises'
+import path from 'path'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
 import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, isNil } from '@activepieces/shared'
-import path from 'path'
 import { utils } from '../utils'
-import * as fsWalkPromises from '@nodelib/fs.walk';
-import fs from 'fs/promises';
 
 export const pieceLoader = {
     loadPieceOrThrow: async (
@@ -148,22 +147,23 @@ export const pieceLoader = {
 }
 
 async function loadPieceFromDistFolder(packageName: string): Promise<string | null> {
-    const distPath = path.resolve('dist/packages/pieces');
-    const entries = await utils.walk(distPath);
+    const distPath = path.resolve('dist/packages/pieces')
+    const entries = await utils.walk(distPath)
     for await (const entry of entries) {
         try {
-            const packageJsonPath = entry.path;
-            const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
-            const packageJson = JSON.parse(packageJsonContent);
+            const packageJsonPath = entry.path
+            const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8')
+            const packageJson = JSON.parse(packageJsonContent)
 
             if (packageJson.name === packageName) {
-                return path.dirname(packageJsonPath);
+                return path.dirname(packageJsonPath)
             }
-        } catch (error) {
+        }
+        catch (error) {
             // Skip invalid package.json files
         }
     }
-    return null;
+    return null
 }
 
 async function traverseAllParentFoldersToFindPiece(packageName: string): Promise<string | null> {
