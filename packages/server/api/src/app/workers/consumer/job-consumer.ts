@@ -37,7 +37,8 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                     message: 'Acquired worker id',
                     workerId,
                 })
-                const lockTimeout = dayjs.duration(jobConsumer(log).getLockDurationInMs(queueName), 'milliseconds').add(1, 'minutes').asMilliseconds()
+                const jobTimeout = dayjs.duration(jobConsumer(log).getTimeoutForWorkerJob(queueName), 'milliseconds').add(1, 'minutes').asMilliseconds()
+
                 const request: ConsumeJobRequest = {
                     jobId,
                     queueName,
@@ -45,7 +46,7 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                     attempsStarted,
                     engineToken,
                 }
-                const response: ConsumeJobResponse[] | undefined = await app!.io.to(workerId).timeout(lockTimeout).emitWithAck(WebsocketClientEvent.CONSUME_JOB_REQUEST, request)
+                const response: ConsumeJobResponse[] | undefined = await app!.io.to(workerId).timeout(jobTimeout).emitWithAck(WebsocketClientEvent.CONSUME_JOB_REQUEST, request)
                 log.info({
                     message: 'Consume job response',
                     response,
@@ -61,7 +62,7 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                 }
             }
         },
-        getLockDurationInMs(queueName: QueueName): number {
+        getTimeoutForWorkerJob(queueName: QueueName): number {
             const triggerTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS)
             const flowTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS)
             const agentTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.AGENT_TIMEOUT_SECONDS)

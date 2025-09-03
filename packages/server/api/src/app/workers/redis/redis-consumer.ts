@@ -2,7 +2,6 @@ import { AppSystemProp, QueueName, rejectedPromiseHandler } from '@activepieces/
 import { isNil } from '@activepieces/shared'
 import { Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
 import { system } from '../../helper/system/system'
@@ -30,13 +29,11 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
         return consumer[queueName]
     }
     const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
-    const lockDuration = jobConsumer(log).getLockDurationInMs(queueName)
     consumer[queueName] = new Worker(queueName, async (job) => {
         await jobConsumer(log).consume(job.id!, queueName, job.data, job.attemptsStarted)
         rejectedPromiseHandler(redisRateLimiter(log).onCompleteOrFailedJob(queueName, job), log)
     }, {
         connection: createRedisClient(),
-        lockDuration: dayjs.duration(lockDuration, 'milliseconds').add(3, 'minutes').asMilliseconds(),
         telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
         concurrency: 50,
     })

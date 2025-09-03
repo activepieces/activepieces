@@ -5,10 +5,11 @@ import { workerApiService } from '../api/server-api.service'
 import { engineRunner } from '../runner'
 import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
+import { EngineHelperResponse, EngineHelperResult } from '../runner/engine-runner-types'
 
 export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
     async execute(jobData: UserInteractionJobData, engineToken: string, workerToken: string): Promise<void> {
-        let response: unknown
+        let response: EngineHelperResponse<EngineHelperResult>
         switch (jobData.jobType) {
             case UserInteractionJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
                 response = await engineRunner(log).extractPieceMetadata(engineToken, {
@@ -62,7 +63,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
         await workerApiService(workerToken).sendUpdate({
             workerServerId: jobData.webserverId,
             requestId: jobData.requestId,
-            response,
+            response: response,
         })
     },
 })
