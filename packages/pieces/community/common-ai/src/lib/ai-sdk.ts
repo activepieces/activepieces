@@ -90,9 +90,7 @@ export function createAIModel<T extends LanguageModelV2 | ImageModel>({
                 baseURL: `${baseURL}/${googleVersion}`,
                 headers: createHeaders(),
             })
-            if (isImageModel) {
-                throw new Error(`Provider ${providerName} does not support image models`)
-            }
+
             return provider(modelId) as T
         }
         default:
