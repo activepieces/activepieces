@@ -1,8 +1,8 @@
+import fs from 'fs/promises'
 import { readFile } from 'node:fs/promises'
+import path from 'path'
 import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
 import { createConnectionService } from './services/connections.service'
-import fs from 'fs/promises'
-import path from 'path'
 
 export type FileEntry = {
     name: string
@@ -34,14 +34,15 @@ export const utils = {
                     
                     entries.push({
                         name: item.name,
-                        path: absolutePath
+                        path: absolutePath,
                     })
                     
                     if (item.isDirectory()) {
                         await walkRecursive(fullPath)
                     }
                 }
-            } catch (error) {
+            }
+            catch (error) {
                 // Skip directories that can't be read
             }
         }
