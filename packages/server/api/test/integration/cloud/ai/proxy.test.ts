@@ -732,75 +732,75 @@ describe('AI Providers Proxy', () => {
             it('should record the usage cost of an image model (Gemini 2.5 Flash Image Preview)', async () => {
                 // arrange
                 const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
-                  platform: {
-                      id: CLOUD_PLATFORM_ID,
-                  },
-                  plan: {
-                      includedAiCredits: 10,
-                  },
-              })
-              await mockAndSaveAIProvider({
-                  platformId: mockPlatform.id,
-                  provider: 'google',
-                  config: {
-                      apiKey: geminiKey,
-                  },
-              })
+                    platform: {
+                        id: CLOUD_PLATFORM_ID,
+                    },
+                    plan: {
+                        includedAiCredits: 10,
+                    },
+                })
+                await mockAndSaveAIProvider({
+                    platformId: mockPlatform.id,
+                    provider: 'google',
+                    config: {
+                        apiKey: geminiKey,
+                    },
+                })
 
-              const mockToken = await generateMockToken({
-                  type: PrincipalType.USER,
-                  projectId: mockProject.id,
-                  id: mockOwner.id,
-                  platform: {
-                      id: mockPlatform.id,
-                  },
-              })
+                const mockToken = await generateMockToken({
+                    type: PrincipalType.USER,
+                    projectId: mockProject.id,
+                    id: mockOwner.id,
+                    platform: {
+                        id: mockPlatform.id,
+                    },
+                })
 
-              const model = getProviderConfig('google')?.imageModels.find(model => model.instance.modelId === 'gemini-2.5-flash-image-preview')
-              if(isNil(model)){
-                  throw new Error('Google Gemini 2.5 Flash Image Preview model not found')
-              }
-              if(typeof model.pricing !== 'object' || model.pricing.type !== 'GPTImage1'){
-                  throw new Error('Google Gemini 2.5 Flash Image Preview model pricing type is not GPTImage1')
-              }
-              // act
-              const response = await app?.inject({
-                  method: 'POST',
-                  url: `/v1/ai-providers/proxy/google/v1beta/models/${model?.instance.modelId}:generateContent`,
-                  headers: {
-                      'x-goog-api-key': geminiKey,
-                      authorization: `Bearer ${mockToken}`,
-                  },
-                  body: {
-                      contents: [
-                          {
-                              role: 'user',
-                              parts: [
-                                  {
-                                      text: 'generate an image of a cat',
-                                  },
-                              ],
-                          },
-                      ],
-                  },
-              })
-              const data = response?.json()
-              const { usageMetadata } = data as { 
-                  usageMetadata: { 
-                      promptTokenCount: number
-                      candidatesTokenCount: number
-                      thoughtsTokenCount?: number
-                  } 
-              }
+                const model = getProviderConfig('google')?.imageModels.find(model => model.instance.modelId === 'gemini-2.5-flash-image-preview')
+                if (isNil(model)) {
+                    throw new Error('Google Gemini 2.5 Flash Image Preview model not found')
+                }
+                if (typeof model.pricing !== 'object' || model.pricing.type !== 'GPTImage1') {
+                    throw new Error('Google Gemini 2.5 Flash Image Preview model pricing type is not GPTImage1')
+                }
+                // act
+                const response = await app?.inject({
+                    method: 'POST',
+                    url: `/v1/ai-providers/proxy/google/v1beta/models/${model?.instance.modelId}:generateContent`,
+                    headers: {
+                        'x-goog-api-key': geminiKey,
+                        authorization: `Bearer ${mockToken}`,
+                    },
+                    body: {
+                        contents: [
+                            {
+                                role: 'user',
+                                parts: [
+                                    {
+                                        text: 'generate an image of a cat',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                })
+                const data = response?.json()
+                const { usageMetadata } = data as { 
+                    usageMetadata: { 
+                        promptTokenCount: number
+                        candidatesTokenCount: number
+                        thoughtsTokenCount?: number
+                    } 
+                }
 
-              // assert
-              const { input: inputCost, output: outputCost } = model.pricing 
-              const totalCost = calculateTokensCost(usageMetadata.promptTokenCount, inputCost.image) + 
+                // assert
+                const { input: inputCost, output: outputCost } = model.pricing 
+                const totalCost = calculateTokensCost(usageMetadata.promptTokenCount, inputCost.image) + 
                   calculateTokensCost(usageMetadata.candidatesTokenCount + (usageMetadata.thoughtsTokenCount ?? 0), outputCost)
 
-              const aiUsage = await pollForAIUsage(mockProject.id, 'google')
-              expect(aiUsage?.cost).toBe(totalCost)
-          })
+                const aiUsage = await pollForAIUsage(mockProject.id, 'google')
+                expect(aiUsage?.cost).toBe(totalCost)
+            })
         })
     }
 
