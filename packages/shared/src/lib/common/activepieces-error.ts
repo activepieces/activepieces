@@ -54,8 +54,7 @@ export type ApErrorParams =
     | SystemInvalidErrorParams
     | SystemPropNotDefinedErrorParams
     | TestTriggerFailedErrorParams
-    | TriggerDisableErrorParams
-    | TriggerEnableErrorParams
+    | TriggerUpdateStatusErrorParams
     | TriggerFailedErrorParams
     | ValidationErrorParams
     | InvitationOnlySignUpParams
@@ -332,20 +331,13 @@ ErrorCode.VALIDATION,
 }
 >
 
-export type TriggerEnableErrorParams = BaseErrorParams<
-ErrorCode.TRIGGER_ENABLE,
+export type TriggerUpdateStatusErrorParams = BaseErrorParams<
+ErrorCode.TRIGGER_UPDATE_STATUS,
 {
     flowVersionId?: FlowVersionId
     message?: string
     standardOutput?: string
     standardError?: string
-}
->
-
-export type TriggerDisableErrorParams = BaseErrorParams<
-ErrorCode.TRIGGER_DISABLE,
-{
-    flowVersionId?: FlowVersionId
 }
 >
 
