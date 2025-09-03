@@ -70,6 +70,7 @@ export const WorkerMachineHealthcheckResponse = Type.Object({
     PAUSED_FLOW_TIMEOUT_DAYS: Type.Number(),
     EXECUTION_MODE: Type.String(),
     FLOW_TIMEOUT_SECONDS: Type.Number(),
+    OUTGOING_WEBHOOK_TIMEOUT_SECONDS: Type.Number(),
     FLOW_WORKER_CONCURRENCY: Type.Number(),
     SCHEDULED_WORKER_CONCURRENCY: Type.Number(),
     AGENTS_WORKER_CONCURRENCY: Type.Number(),

@@ -72,6 +72,7 @@ import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { mcpModule } from './mcp/mcp-module'
+import { outgoingWebhooksModule } from './outgoing-webhooks/outgoing-webhooks-module'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceSyncService } from './pieces/piece-sync-service'
@@ -215,6 +216,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(todoActivityModule)
     await app.register(agentRunsModule)
     await app.register(solutionsModule)
+    await app.register(outgoingWebhooksModule)
 
     app.get(
         '/redirect',

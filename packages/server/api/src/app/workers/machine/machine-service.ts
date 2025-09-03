@@ -62,6 +62,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                 [QueueName.WEBHOOK]: flowWorkerConcurrency,
                 [QueueName.USERS_INTERACTION]: flowWorkerConcurrency,
                 [QueueName.AGENTS]: agentsWorkerConcurrency,
+                [QueueName.OUTGOING_WEBHOOK]: flowWorkerConcurrency,
             }
         },
         async updateConcurrency(): Promise<void> {
@@ -104,6 +105,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                 PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
                 EXECUTION_MODE: system.getOrThrow(AppSystemProp.EXECUTION_MODE),
                 FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
+                OUTGOING_WEBHOOK_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.OUTGOING_WEBHOOK_TIMEOUT_SECONDS),
                 FLOW_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.FLOW_WORKER_CONCURRENCY),
                 SCHEDULED_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY),
                 AGENTS_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.AGENTS_WORKER_CONCURRENCY),

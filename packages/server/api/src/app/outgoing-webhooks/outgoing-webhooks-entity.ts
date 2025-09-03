@@ -1,4 +1,5 @@
-import { OutgoingWebhook, Platform, Project } from '@activepieces/shared'
+import { OutgoingWebhook, OutgoingWebhookScope } from '@activepieces/ee-shared'
+import { Platform, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, ARRAY_COLUMN_TYPE, BaseColumnSchemaPart, isPostgres } from '../database/database-common'
 
@@ -33,6 +34,18 @@ export const OutgoingWebhookEntity = new EntitySchema<OutgoingWebhookSchema>({
             nullable: false,
         },
     },
+    indices: [
+        {
+            name: 'idx_outgoing_webhook_platform_scope',
+            columns: ['platformId'],
+            where: `scope = '${OutgoingWebhookScope.PLATFORM}'`,
+        },
+        {
+            name: 'idx_outgoing_webhook_project_scope',
+            columns: ['projectId'],
+            where: `scope = '${OutgoingWebhookScope.PROJECT}'`,
+        },
+    ],
     relations: {
         platform: {
             type: 'many-to-one',

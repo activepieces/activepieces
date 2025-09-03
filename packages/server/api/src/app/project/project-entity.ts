@@ -1,11 +1,11 @@
 import { AIUsage } from '@activepieces/common-ai'
+import { OutgoingWebhook } from '@activepieces/ee-shared'
 import {
     AppConnection,
     Cell,
     Field,
     Flow,
     Folder,
-    OutgoingWebhook,
     Platform,
     Project,
     Record,

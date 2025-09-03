@@ -55,7 +55,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [WorkerSystemProp.FLOW_WORKER_CONCURRENCY]: '10',
     [WorkerSystemProp.AGENTS_WORKER_CONCURRENCY]: '20',
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
-    [AppSystemProp.OUTGOING_WEBHOOK_TIMEOUT_SECONDS]: '15',
+    [AppSystemProp.OUTGOING_WEBHOOK_TIMEOUT_SECONDS]: '20',
     [WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY]: '10',
     [AppSystemProp.LOG_LEVEL]: 'info',
     [AppSystemProp.LOG_PRETTY]: 'false',

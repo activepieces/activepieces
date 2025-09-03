@@ -25,4 +25,5 @@ export const preHandlers: Record<QueueName, JobPreHandler> = {
     [QueueName.WEBHOOK]: defaultPreHandler,
     [QueueName.USERS_INTERACTION]: defaultPreHandler,
     [QueueName.AGENTS]: defaultPreHandler,
+    [QueueName.OUTGOING_WEBHOOK]: defaultPreHandler,
 }

@@ -90,24 +90,26 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
         socket.connect()
 
 
-        heartbeatInterval = setInterval(async () => {
-            if (!socket.connected) {
-                log.error({
-                    message: 'Not connected to server, retrying...',
-                })
-                return
-            }
-            try {
-                const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
-                const response = await socket.timeout(10000).emitWithAck(WebsocketServerEvent.MACHINE_HEARTBEAT, request)
-                await workerMachine.init(response, log)
-            }
-            catch (error) {
-                log.error({
-                    message: 'Failed to send heartbeat, retrying...',
-                    error,
-                })
-            }
+        heartbeatInterval = setInterval(() => {
+            void (async (): Promise<void> => {
+                if (!socket.connected) {
+                    log.error({
+                        message: 'Not connected to server, retrying...',
+                    })
+                    return
+                }
+                try {
+                    const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
+                    const response = await socket.timeout(10000).emitWithAck(WebsocketServerEvent.MACHINE_HEARTBEAT, request)
+                    await workerMachine.init(response, log)
+                }
+                catch (error) {
+                    log.error({
+                        message: 'Failed to send heartbeat, retrying...',
+                        error,
+                    })
+                }
+            })()
         }, 15000)
 
     },
@@ -119,7 +121,7 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
             socket.disconnect()
         }
 
-        clearTimeout(heartbeatInterval)
+        clearInterval(heartbeatInterval)
         if (workerMachine.hasSettings()) {
             await engineRunner(log).shutdownAllWorkers()
         }

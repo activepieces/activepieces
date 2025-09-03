@@ -1,4 +1,4 @@
-import { AppSystemProp, JobData, OneTimeJobData, QueueName, ScheduledJobData, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
+import { AppSystemProp, JobData, OneTimeJobData, OutgoingWebhookJobData, QueueName, ScheduledJobData, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
 import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -65,6 +65,7 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
             const triggerTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS)
             const flowTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS)
             const agentTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.AGENT_TIMEOUT_SECONDS)
+            const outgoingWebhookTimeout = system.getNumberOrThrow(AppSystemProp.OUTGOING_WEBHOOK_TIMEOUT_SECONDS)
             switch (queueName) {
                 case QueueName.WEBHOOK:
                     return dayjs.duration(triggerTimeoutSandbox, 'seconds').asMilliseconds()
@@ -76,6 +77,8 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                     return dayjs.duration(triggerTimeoutSandbox, 'seconds').asMilliseconds()
                 case QueueName.AGENTS:
                     return dayjs.duration(agentTimeoutSandbox, 'seconds').asMilliseconds()
+                case QueueName.OUTGOING_WEBHOOK:
+                    return dayjs.duration(outgoingWebhookTimeout, 'seconds').asMilliseconds()
             }
         },
     }
@@ -111,6 +114,13 @@ async function getProjectIdAndPlatformId(queueName: QueueName, job: JobData): Pr
                         projectId: userInteractionJob.projectId,
                         platformId: await projectService.getPlatformId(userInteractionJob.projectId),
                     }
+            }
+        }
+        case QueueName.OUTGOING_WEBHOOK: {
+            const outgoingWebhookJob = job as OutgoingWebhookJobData
+            return {
+                projectId: outgoingWebhookJob.projectId!,
+                platformId: outgoingWebhookJob.platformId,
             }
         }
     }

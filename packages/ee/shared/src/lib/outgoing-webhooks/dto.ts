@@ -1,9 +1,10 @@
+import { DiscriminatedUnion } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-import { DiscriminatedUnion } from '../common'
-import { OutgoingWebhookEventType, OutgoingWebhookScope } from './'
+import { ApplicationEventName } from '../audit-events'
+import { OutgoingWebhookScope } from './types'
 
 const CreateOutgoingWebhookBase = {
-    events: Type.Array(Type.Enum(OutgoingWebhookEventType)),
+    events: Type.Array(Type.Enum(ApplicationEventName)),
     url: Type.String(),
 }
 
@@ -19,8 +20,8 @@ const CreateOutgoingWebhookProjectScopeRequestBody = Type.Object({
 })
 
 export const CreateOutgoingWebhookRequestBody = DiscriminatedUnion('scope', [
-    CreateOutgoingWebhookPlatformScopeRequestBody,
     CreateOutgoingWebhookProjectScopeRequestBody,
+    CreateOutgoingWebhookPlatformScopeRequestBody,
 ])
 
 export type CreateOutgoingWebhookRequestBody = Static<typeof CreateOutgoingWebhookRequestBody>

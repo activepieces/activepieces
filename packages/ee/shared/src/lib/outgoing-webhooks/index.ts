@@ -1,19 +1,12 @@
+import { BaseModelSchema, DiscriminatedUnion } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, DiscriminatedUnion } from '../common'
-
-export enum OutgoingWebhookEventType {
-    RUN_FAILED = 'RUN_FAILED',
-}
-
-export enum OutgoingWebhookScope {
-    PLATFORM = 'PLATFORM',
-    PROJECT = 'PROJECT',
-}
+import { ApplicationEventName } from '../audit-events/index'
+import { OutgoingWebhookScope } from './types'
 
 const OutgoingWebhookBase = {
     ...BaseModelSchema,
     platformId: Type.String(),
-    events: Type.Array(Type.Enum(OutgoingWebhookEventType)),
+    events: Type.Array(Type.Enum(ApplicationEventName)),
     url: Type.String(),
 }
 
@@ -36,3 +29,4 @@ export const OutgoingWebhook = DiscriminatedUnion('scope', [
 export type OutgoingWebhook = Static<typeof OutgoingWebhook>
 
 export * from './dto'
+export * from './types'

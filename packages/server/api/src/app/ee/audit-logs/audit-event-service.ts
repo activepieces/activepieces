@@ -1,6 +1,4 @@
-import {
-    ApplicationEvent,
-} from '@activepieces/ee-shared'
+import { ApplicationEvent } from '@activepieces/ee-shared'
 import { AppSystemProp, networkUtils, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     apId,
@@ -19,6 +17,7 @@ import { AuditEventParam } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
+import { outgoingWebhookService } from '../../outgoing-webhooks/outgoing-webhooks-service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -132,7 +131,15 @@ async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam, log: 
     const clonedAndSerializedDates = JSON.parse(JSON.stringify(eventToSave))
     const cleanedEvent = Value.Clean(ApplicationEvent, clonedAndSerializedDates) as ApplicationEvent
 
-    await auditLogRepo().save(cleanedEvent)
+    await Promise.all([
+        auditLogRepo().save(cleanedEvent),
+        outgoingWebhookService(log).trigger({
+            platformId: info.platformId,
+            projectId: info.projectId,
+            event: cleanedEvent.action,
+            payload: cleanedEvent,
+        }),
+    ])
     log.info({
         action: cleanedEvent.action,
         message: '[AuditEventService#saveEvent] Audit event saved',

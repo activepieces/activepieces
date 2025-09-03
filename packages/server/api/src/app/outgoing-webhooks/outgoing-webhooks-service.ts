@@ -1,5 +1,6 @@
+import { ApplicationEvent, ApplicationEventName, CreateOutgoingWebhookRequestBody, OutgoingWebhook, OutgoingWebhookScope } from '@activepieces/ee-shared'
 import { JobType } from '@activepieces/server-shared'
-import { ApId, CreateOutgoingWebhookRequestBody, OutgoingWebhook, OutgoingWebhookEventType, OutgoingWebhookScope } from '@activepieces/shared'
+import { apId, ApId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { AddAPArrayContainsToQueryBuilder } from '../database/database-connection'
@@ -11,8 +12,9 @@ export const outgoingWebhookRepo = repoFactory<OutgoingWebhook>(OutgoingWebhookE
 
 export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
     create: async (request: CreateOutgoingWebhookRequestBody, platformId: string): Promise<OutgoingWebhook> => {
-        return outgoingWebhookRepo().create({
+        return outgoingWebhookRepo().save({
             ...request,
+            id: apId(),
             platformId,
         })
     },
@@ -31,21 +33,22 @@ export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
     },
     trigger: async ({ platformId, projectId, event, payload }: triggerParams): Promise<void> => {
         const qb = outgoingWebhookRepo().createQueryBuilder('outgoing_webhook')
-            .where('outgoing_webhook.scope = :projectScope AND outgoing_webhook.projectId = :projectId', {
-                projectScope: OutgoingWebhookScope.PROJECT,
-                projectId,
-            })
-            .orWhere('outgoing_webhook.scope = :platformScope AND outgoing_webhook.platformId = :platformId', {
+            .where('outgoing_webhook.scope = :platformScope AND outgoing_webhook.platformId = :platformId', {
                 platformScope: OutgoingWebhookScope.PLATFORM,
                 platformId,
             })
-            
+        
+        if (projectId) {
+            qb.orWhere('outgoing_webhook.scope = :projectScope AND outgoing_webhook.projectId = :projectId', {
+                projectScope: OutgoingWebhookScope.PROJECT,
+                projectId,
+            })
+        }            
         AddAPArrayContainsToQueryBuilder(qb, 'events', [event])
-
         const webhooks = await qb.getMany()
 
-        for (const webhook of webhooks) {
-            await jobQueue(log).add({
+        await Promise.all(webhooks.map(webhook => 
+            jobQueue(log).add({
                 type: JobType.OUTGOING_WEBHOOK,
                 id: ApId.generate(),
                 data: {
@@ -56,8 +59,8 @@ export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
                     payload,
                 },
                 priority: DEFAULT_PRIORITY,
-            })
-        }
+            }),
+        ))
     },
 })
 
@@ -68,7 +71,7 @@ type deleteParams = {
 
 type triggerParams = {
     platformId: string
-    projectId: string
-    event: OutgoingWebhookEventType
-    payload: Record<string, unknown>
+    projectId?: string | undefined
+    event: ApplicationEventName
+    payload: ApplicationEvent
 }

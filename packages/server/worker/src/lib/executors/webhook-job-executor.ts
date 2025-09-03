@@ -79,7 +79,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         return {
             status: ConsumeJobResponseStatus.OK,
         }
-    }
+    },
 })
 
 

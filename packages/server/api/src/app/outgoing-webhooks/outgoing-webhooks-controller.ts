@@ -1,4 +1,5 @@
-import { CreateOutgoingWebhookRequestBody, PrincipalType } from '@activepieces/shared'
+import { CreateOutgoingWebhookRequestBody } from '@activepieces/ee-shared'
+import { EndpointScope, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { outgoingWebhookService } from './outgoing-webhooks-service'
 
@@ -23,12 +24,14 @@ export const CreateOutgoingWebhookRequest = {
     },
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
     },
 }
 
 export const ListOutgoingWebhooksRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
     },
 }
 
@@ -40,5 +43,6 @@ export const DeleteOutgoingWebhookRequest = {
     },
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
     },
 }

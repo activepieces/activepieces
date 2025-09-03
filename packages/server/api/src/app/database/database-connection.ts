@@ -45,6 +45,7 @@ import { DatabaseType, system } from '../helper/system/system'
 import { McpRunEntity } from '../mcp/mcp-run/mcp-run.entity'
 import { McpEntity } from '../mcp/mcp-server/mcp-entity'
 import { McpToolEntity } from '../mcp/tool/mcp-tool.entity'
+import { OutgoingWebhookEntity } from '../outgoing-webhooks/outgoing-webhooks-entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -111,6 +112,7 @@ function getEntities(): EntitySchema<unknown>[] {
         AgentRunEntity,
         TriggerSourceEntity,
         TriggerRunEntity,
+        OutgoingWebhookEntity,
     ]
 
     switch (edition) {

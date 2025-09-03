@@ -1,3 +1,4 @@
+import { ApplicationEvent } from '@activepieces/ee-shared'
 import {
     ExecutionType,
     FlowTriggerType,
@@ -117,10 +118,10 @@ export type WebhookJobData = Static<typeof WebhookJobData>
 
 export const OutgoingWebhookJobData = Type.Object({
     platformId: Type.String(),
-    projectId: Type.String(),
+    projectId: Type.Optional(Type.String()),
     webhookId: Type.String(),
     url: Type.String(),
-    payload: Type.Any(),
+    payload: ApplicationEvent,
 })
 export type OutgoingWebhookJobData = Static<typeof OutgoingWebhookJobData>
 
