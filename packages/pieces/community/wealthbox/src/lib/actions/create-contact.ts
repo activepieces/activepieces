@@ -6,7 +6,6 @@ export const createContact = createAction({
   displayName: 'Create Contact',
   description: 'Adds a new contact with rich details (name, address, email, tags, etc.)',
   props: {
-    // Required fields
     first_name: Property.ShortText({
       displayName: 'First Name',
       description: 'The first name of the contact',
@@ -18,7 +17,6 @@ export const createContact = createAction({
       required: true
     }),
     
-    // Basic info
     prefix: Property.ShortText({
       displayName: 'Prefix',
       description: 'The preferred prefix for the contact (e.g., Mr., Ms., Dr.)',
@@ -40,7 +38,6 @@ export const createContact = createAction({
       required: false
     }),
     
-    // Professional info
     job_title: Property.ShortText({
       displayName: 'Job Title',
       description: 'The title the contact holds at their present company',
@@ -52,7 +49,6 @@ export const createContact = createAction({
       required: false
     }),
     
-    // Contact type and classification
     type: Property.StaticDropdown({
       displayName: 'Contact Type',
       description: 'The type of the contact being created',
@@ -94,7 +90,6 @@ export const createContact = createAction({
       }
     }),
     
-    // Personal details
     gender: Property.StaticDropdown({
       displayName: 'Gender',
       description: 'The gender of the contact',
@@ -130,7 +125,6 @@ export const createContact = createAction({
       }
     }),
     
-    // Contact information
     email_address: Property.ShortText({
       displayName: 'Email Address',
       description: 'Primary email address for the contact',
@@ -142,7 +136,6 @@ export const createContact = createAction({
       required: false
     }),
     
-    // Address
     street_line_1: Property.ShortText({
       displayName: 'Street Address Line 1',
       description: 'First line of street address',
@@ -175,7 +168,6 @@ export const createContact = createAction({
       defaultValue: 'United States'
     }),
     
-    // Social and web presence
     twitter_name: Property.ShortText({
       displayName: 'Twitter Handle',
       description: 'The twitter handle of the contact',
@@ -187,7 +179,6 @@ export const createContact = createAction({
       required: false
     }),
     
-    // Additional information
     background_information: Property.LongText({
       displayName: 'Background Information',
       description: 'A brief description of the contact',
@@ -204,7 +195,6 @@ export const createContact = createAction({
       required: false
     }),
     
-    // Business source
     contact_source: Property.StaticDropdown({
       displayName: 'Contact Source',
       description: 'The method in which this contact was acquired',
@@ -220,14 +210,12 @@ export const createContact = createAction({
       }
     }),
     
-    // Tags
     tags: Property.Array({
       displayName: 'Tags',
       description: 'Tags to associate with the contact (e.g., "Client", "VIP", "Referral")',
       required: false
     }),
     
-    // External ID for integrations
     external_unique_id: Property.ShortText({
       displayName: 'External Unique ID',
       description: 'A unique identifier for this contact in an external system',
@@ -242,13 +230,17 @@ export const createContact = createAction({
       throw new Error('Authentication is required');
     }
     
-    // Build the request body
-    const requestBody: any = {
-      first_name: propsValue.first_name,
-      last_name: propsValue.last_name
-    };
+    const requestBody: any = {};
+
+    if (propsValue.type === 'Household') {
+      if (propsValue.first_name) {
+        requestBody.name = propsValue.first_name;
+      }
+    } else {
+      if (propsValue.first_name) requestBody.first_name = propsValue.first_name;
+      if (propsValue.last_name) requestBody.last_name = propsValue.last_name;
+    }
     
-    // Add optional fields if provided
     if (propsValue.prefix) requestBody.prefix = propsValue.prefix;
     if (propsValue.middle_name) requestBody.middle_name = propsValue.middle_name;
     if (propsValue.suffix) requestBody.suffix = propsValue.suffix;
@@ -269,7 +261,6 @@ export const createContact = createAction({
     if (propsValue.contact_source) requestBody.contact_source = propsValue.contact_source;
     if (propsValue.external_unique_id) requestBody.external_unique_id = propsValue.external_unique_id;
     
-    // Handle email address
     if (propsValue.email_address) {
       requestBody.email_addresses = [{
         address: propsValue.email_address,
@@ -278,7 +269,6 @@ export const createContact = createAction({
       }];
     }
     
-    // Handle phone number
     if (propsValue.phone_number) {
       requestBody.phone_numbers = [{
         address: propsValue.phone_number,
@@ -287,7 +277,6 @@ export const createContact = createAction({
       }];
     }
     
-    // Handle address
     if (propsValue.street_line_1 || propsValue.city || propsValue.state || propsValue.zip_code) {
       requestBody.street_addresses = [{
         street_line_1: propsValue.street_line_1 || '',
@@ -301,12 +290,10 @@ export const createContact = createAction({
       }];
     }
     
-    // Handle tags
     if (propsValue.tags && Array.isArray(propsValue.tags)) {
       requestBody.tags = propsValue.tags;
     }
     
-    // Make the API request
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,

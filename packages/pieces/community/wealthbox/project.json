@@ -1,7 +1,7 @@
 {
-  "name": "pieces-wealthbox-api",
+  "name": "pieces-wealthbox",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/wealthbox-api/src",
+  "sourceRoot": "packages/pieces/community/wealthbox/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -20,14 +20,14 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/wealthbox-api",
-        "tsConfig": "packages/pieces/community/wealthbox-api/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/wealthbox-api/package.json",
-        "main": "packages/pieces/community/wealthbox-api/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/wealthbox",
+        "tsConfig": "packages/pieces/community/wealthbox/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/wealthbox/package.json",
+        "main": "packages/pieces/community/wealthbox/src/index.ts",
         "assets": [
-          "packages/pieces/community/wealthbox-api/*.md",
+          "packages/pieces/community/wealthbox/*.md",
           {
-            "input": "packages/pieces/community/wealthbox-api/src/i18n",
+            "input": "packages/pieces/community/wealthbox/src/i18n",
             "output": "./src/i18n",
             "glob": "**/!(i18n.json)"
           }

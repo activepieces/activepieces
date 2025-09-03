@@ -13,6 +13,7 @@ import {
   Polling
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
+import { fetchUsers, fetchTags, WEALTHBOX_API_BASE, handleApiError } from '../common';
 
 const polling: Polling<any, any> = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -21,59 +22,55 @@ const polling: Polling<any, any> = {
       throw new Error('Authentication is required');
     }
 
+    const searchParams = new URLSearchParams();
 
+    searchParams.append('limit', '100');
 
-    // Build URL with updated_since parameter for polling
-    let url = 'https://api.crmworkspace.com/v1/contacts?per_page=100';
+    if (propsValue.contact_type) searchParams.append('contact_type', propsValue.contact_type);
+    if (propsValue.type) searchParams.append('type', propsValue.type);
+    if (propsValue.household_title) searchParams.append('household_title', propsValue.household_title);
+    if (propsValue.assigned_to) searchParams.append('assigned_to', propsValue.assigned_to);
 
-    // Add filter parameters if provided
-    if (propsValue.contact_type) {
-      url += `&contact_type=${encodeURIComponent(propsValue.contact_type)}`;
-    }
-    if (propsValue.type) {
-      url += `&type=${encodeURIComponent(propsValue.type)}`;
-    }
-    if (propsValue.active !== undefined) {
-      url += `&active=${propsValue.active}`;
-    }
-    if (propsValue.tags && propsValue.tags.length > 0) {
-      propsValue.tags.forEach((tag: string) => {
-        url += `&tags[]=${encodeURIComponent(tag)}`;
+    const tagsFilter = propsValue.tags_filter;
+    if (tagsFilter && Array.isArray(tagsFilter) && tagsFilter.length > 0) {
+      tagsFilter.forEach((tag: string) => {
+        searchParams.append('tags[]', tag);
       });
     }
 
-    // Add updated_since parameter if we have a last fetch timestamp
-    if (lastFetchEpochMS) {
-      const lastFetchDate = dayjs(lastFetchEpochMS).format(
-        'YYYY-MM-DD HH:mm:ss'
-      );
-      url += `&updated_since=${encodeURIComponent(lastFetchDate)}`;
+    if (propsValue.active !== undefined && propsValue.active !== '') {
+      searchParams.append('active', propsValue.active);
     }
+    if (propsValue.include_deleted) {
+      searchParams.append('deleted', 'true');
+    }
+
+    if (lastFetchEpochMS) {
+      const lastFetchDate = dayjs(lastFetchEpochMS - 1000).toISOString();
+      searchParams.append('updated_since', lastFetchDate);
+    }
+
+    const queryString = searchParams.toString();
+    const url = queryString ? `${WEALTHBOX_API_BASE}/contacts?${queryString}` : `${WEALTHBOX_API_BASE}/contacts`;
 
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: url,
         headers: {
-          'ACCESS_TOKEN': auth as string,
-          Accept: 'application/json'
+          'ACCESS_TOKEN': auth as unknown as string,
+          'Accept': 'application/json'
         }
       });
 
       if (response.status >= 400) {
-        throw new Error(
-          `Wealthbox API error: ${response.status} - ${JSON.stringify(
-            response.body
-          )}`
-        );
+        handleApiError('poll new contacts', response.status, response.body);
       }
 
       const contacts = response.body.contacts || [];
 
-      // Filter for newly created contacts (not just updated)
-      // We'll use created_at timestamp to identify truly new contacts
       const newContacts = contacts.filter((contact: any) => {
-        if (!lastFetchEpochMS) return true; // First run, return all contacts
+        if (!lastFetchEpochMS) return true;
 
         const contactCreatedAt = dayjs(contact.created_at).valueOf();
         return contactCreatedAt > lastFetchEpochMS;
@@ -84,11 +81,7 @@ const polling: Polling<any, any> = {
         data: contact
       }));
     } catch (error) {
-      throw new Error(
-        `Failed to fetch contacts: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`
-      );
+      throw new Error(`Failed to poll new contacts: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 };
@@ -99,7 +92,6 @@ export const newContact = createTrigger({
   description: 'Fires when a new contact is created',
   type: TriggerStrategy.POLLING,
   props: {
-    // Filter options
     contact_type: Property.StaticDropdown({
       displayName: 'Contact Type',
       description: 'Only trigger for contacts of this type (optional)',
@@ -114,6 +106,7 @@ export const newContact = createTrigger({
         ]
       }
     }),
+
     type: Property.StaticDropdown({
       displayName: 'Entity Type',
       description: 'Only trigger for contacts of this entity type (optional)',
@@ -127,16 +120,107 @@ export const newContact = createTrigger({
         ]
       }
     }),
-    active: Property.Checkbox({
-      displayName: 'Active Contacts Only',
-      description: 'Only trigger for active contacts',
+
+    household_title: Property.StaticDropdown({
+      displayName: 'Household Title',
+      description: 'Only trigger for contacts with this household title (optional)',
       required: false,
-      defaultValue: true
+      options: {
+        options: [
+          { label: 'Head', value: 'Head' },
+          { label: 'Spouse', value: 'Spouse' },
+          { label: 'Partner', value: 'Partner' },
+          { label: 'Child', value: 'Child' },
+          { label: 'Grandchild', value: 'Grandchild' },
+          { label: 'Parent', value: 'Parent' },
+          { label: 'Grandparent', value: 'Grandparent' },
+          { label: 'Sibling', value: 'Sibling' },
+          { label: 'Other', value: 'Other' },
+          { label: 'Dependent', value: 'Dependent' }
+        ]
+      }
     }),
-    tags: Property.Array({
+
+    assigned_to: Property.Dropdown({
+      displayName: 'Assigned To',
+      description: 'Only trigger for contacts assigned to this user (optional)',
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) return { options: [] };
+
+        try {
+          const users = await fetchUsers(auth as unknown as string);
+          return {
+            options: users.map((user: any) => ({
+              label: `${user.name} (${user.email})`,
+              value: user.id
+            }))
+          };
+        } catch (error) {
+          return {
+            options: [],
+            error: 'Failed to load users. Please check your authentication.'
+          };
+        }
+      }
+    }),
+
+    tags_filter: Property.MultiSelectDropdown({
       displayName: 'Tags Filter',
       description: 'Only trigger for contacts with one of these tags (optional)',
-      required: false
+      required: false,
+      refreshers: ['auth'],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Connect your Wealthbox account first'
+          };
+        }
+
+        try {
+          const availableTags = await fetchTags(auth as unknown as string, 'Contact');
+          const tagOptions = availableTags.map((tag: any) => ({
+            label: tag.name,
+            value: tag.name
+          }));
+
+          return {
+            disabled: false,
+            options: tagOptions,
+            placeholder: tagOptions.length === 0 ? 'No tags available' : 'Select tags to filter by'
+          };
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          return {
+            disabled: true,
+            options: [],
+            placeholder: `Error loading tags: ${errorMessage}`
+          };
+        }
+      }
+    }),
+
+    active: Property.StaticDropdown({
+      displayName: 'Active Status',
+      description: 'Filter by active status',
+      required: false,
+      options: {
+        options: [
+          { label: 'All Contacts', value: '' },
+          { label: 'Active Only', value: 'true' },
+          { label: 'Inactive Only', value: 'false' }
+        ]
+      }
+    }),
+
+    include_deleted: Property.Checkbox({
+      displayName: 'Include Deleted Contacts',
+      description: 'Include contacts that have been deleted',
+      required: false,
+      defaultValue: false
     })
   },
   sampleData: {
