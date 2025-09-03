@@ -1,7 +1,14 @@
+import fs from 'fs/promises'
 import { readFile } from 'node:fs/promises'
 import { inspect } from 'node:util'
+import path from 'path'
 import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
 import { createConnectionService } from './services/connections.service'
+
+export type FileEntry = {
+    name: string
+    path: string
+}
 
 export const utils = {
     async parseJsonFile<T>(filePath: string): Promise<T> {
@@ -15,12 +22,51 @@ export const utils = {
     },
 
 
+  
+    async walk(dirPath: string): Promise<FileEntry[]> {
+        const entries: FileEntry[] = []
+        
+        async function walkRecursive(currentPath: string) {
+            try {
+                const items = await fs.readdir(currentPath, { withFileTypes: true })
+                
+                for (const item of items) {
+                    const fullPath = path.join(currentPath, item.name)
+                    const absolutePath = path.resolve(fullPath)
+                    
+                    entries.push({
+                        name: item.name,
+                        path: absolutePath,
+                    })
+                    
+                    if (item.isDirectory()) {
+                        await walkRecursive(fullPath)
+                    }
+                }
+            }
+            catch (error) {
+                // Skip directories that can't be read
+            }
+        }
+        
+        await walkRecursive(dirPath)
+        return entries
+    },
     formatError(value: Error): string {
         try {
             return JSON.stringify(JSON.parse(value.message), null, 2)
         }
         catch (e) {
             return inspect(value)
+        }
+    },
+    async folderExists(filePath: string): Promise<boolean> {
+        try {
+            await fs.access(filePath)
+            return true
+        }
+        catch {
+            return false
         }
     },
     createConnectionManager(params: CreateConnectionManagerParams): ConnectionsManager {
