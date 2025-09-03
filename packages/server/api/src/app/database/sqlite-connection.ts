@@ -9,6 +9,7 @@ import { SwitchToRouter1741578250432 } from './migration/common/1741578250432-sw
 import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
+import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
 import { InitialSqlite1740031972943 } from './migration/sqlite/1740031972943-initial-sqlite'
 import { AddFlowTemplate1741588702453 } from './migration/sqlite/1741588702453-add-flow-template'
 import { AddOauthApp1741683781609 } from './migration/sqlite/1741683781609-add-oauth-app'
@@ -90,6 +91,7 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        AddIndexToIssues1756775080449,
         RemoveAgentRelationToTablesSqlite1755954639833,
         AddStepNameToTestInFlowRunEntitySqlite1754355397885,
         RemoveAgentTestPromptSqlite1754863757450,

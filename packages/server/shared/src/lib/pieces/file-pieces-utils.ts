@@ -124,7 +124,7 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
                 pieceVersion,
             })
             const originalMetadata = piece.metadata()
-            const i18n = await pieceTranslation.initializeI18n(pieceName)
+            const i18n = await pieceTranslation.initializeI18n({ pieceName, pieceSource: 'FILE' })
             const metadata: PieceMetadata = {
                 ...originalMetadata,
                 name: pieceName,
