@@ -1,6 +1,12 @@
 import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
 import { PieceCategory } from "@activepieces/shared";
 
+import { askQuestion } from "./lib/actions/ask-question";
+import { createSource } from "./lib/actions/create-source";
+import { uploadSourceFile } from "./lib/actions/upload-source-file";
+import { createBot } from "./lib/actions/create-bot";
+import { findBot } from "./lib/actions/find-bot";
+
 const markdown = `
 To get your API key, follow these steps:
 1. Log in to your DocsBot dashboard.
@@ -21,7 +27,13 @@ export const docsbot = createPiece({
     minimumSupportedRelease: '0.36.1',
     logoUrl: "https://cdn.activepieces.com/pieces/docsbot.png",
     authors: [],
-    actions: [],
+    actions: [
+        askQuestion,
+        createSource,
+        uploadSourceFile,
+        createBot,
+        findBot,
+    ],
     triggers: [],
     categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
 });
