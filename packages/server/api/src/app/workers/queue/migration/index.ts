@@ -22,10 +22,10 @@ export const queueMigration = (log: FastifyBaseLogger) => ({
                 log,
             })
             try {
-                await unifyOldQueuesIntoOne(log).run()
                 await refillPollingJobs(log).run()
                 await refillRenewWebhookJobs(log).run()
                 await refillPausedRuns(log).run()
+                await unifyOldQueuesIntoOne(log).run()
                 await updateMigrationVersion()
             }
             finally {

@@ -3,7 +3,6 @@ import { isNil, LATEST_JOB_DATA_SCHEMA_VERSION, TriggerSourceScheduleType, Trigg
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
 import { jobQueue } from '..'
-import { flowVersionService } from '../../../flows/flow-version/flow-version.service'
 import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 import { projectService } from '../../../project/project-service'
 import { triggerSourceRepo } from '../../../trigger/trigger-source/trigger-source-service'
@@ -19,7 +18,7 @@ export const refillRenewWebhookJobs = (log: FastifyBaseLogger) => ({
             },
         })
         let migratedRenewWebhookJobs = 0
-        
+
         for (const triggerSource of triggerSources) {
             const pieceMetadata = await pieceMetadataService(log).get({
                 name: triggerSource.pieceName,
@@ -27,14 +26,8 @@ export const refillRenewWebhookJobs = (log: FastifyBaseLogger) => ({
                 projectId: triggerSource.projectId,
                 platformId: await projectService.getPlatformId(triggerSource.projectId),
             })
-            const flowVersion = await flowVersionService(log).getOne(triggerSource.flowVersionId)
-            if (isNil(flowVersion)) {
-                continue
-            }
-            const pieceTrigger = pieceMetadata?.triggers?.[flowVersion?.trigger.settings.triggerName]
-            if (isNil(pieceTrigger)
-                || isNil(pieceTrigger.renewConfiguration)
-                || pieceTrigger.renewConfiguration.strategy !== WebhookRenewStrategy.CRON) {
+            const pieceTrigger = pieceMetadata?.triggers?.[triggerSource.triggerName]
+            if (isNil(pieceTrigger) || isNil(pieceTrigger.renewConfiguration) || pieceTrigger.renewConfiguration.strategy !== WebhookRenewStrategy.CRON) {
                 continue
             }
             await jobQueue(log).add({
@@ -56,7 +49,7 @@ export const refillRenewWebhookJobs = (log: FastifyBaseLogger) => ({
             })
             migratedRenewWebhookJobs++
         }
-        
+
         log.info({
             migratedRenewWebhookJobs,
         }, '[renewWebhookJobsMigration] Migrated renew webhook jobs')
