@@ -1,0 +1,12 @@
+{
+  "name": "@activepieces/piece-netlify",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@activepieces/pieces-framework": "0.36.1",
+    "@activepieces/pieces-common": "0.36.1",
+    "tslib": "^2.3.0"
+  }
+}
