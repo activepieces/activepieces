@@ -24,7 +24,7 @@ export const HelpAndFeedback = () => {
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <SidebarMenuButton className="px-2">
+        <SidebarMenuButton className="px-2 py-5">
           <div className="flex items-center gap-2">
             <QuestionMarkCircledIcon className="size-4" />
             <span>{t('Help & Feedback')}</span>

@@ -19,7 +19,9 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     <SidebarMenuItem>
       <SidebarMenuButton
         asChild
-        className={`${isLinkActive && '!bg-primary/10 !text-primary'} px-2`}
+        className={`${
+          isLinkActive && '!bg-primary/10 !text-primary'
+        } px-2 py-5`}
       >
         <Link
           to={item.to}

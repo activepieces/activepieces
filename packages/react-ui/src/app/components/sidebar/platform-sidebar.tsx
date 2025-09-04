@@ -223,7 +223,7 @@ export function PlatformSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuButton className="px-2 flex items-center gap-2">
+          <SidebarMenuButton className="px-2 py-5 flex items-center gap-2">
             <SidebarPlatformAdminButton />
           </SidebarMenuButton>
         </SidebarMenu>

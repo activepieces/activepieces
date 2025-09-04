@@ -27,14 +27,12 @@ export function ApSidebareGroup(item: SidebarGroupType) {
     >
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton className="px-2 mb-1">
+          <SidebarMenuButton className="px-2 mb-1 py-5">
             {item.icon && <item.icon className="size-4" />}
             <span>{item.label}</span>
-            <SidebarMenuAction asChild>
-              <ChevronRightIcon
-                className={`${item.open && 'rotate-90'} duration-150`}
-              />
-            </SidebarMenuAction>
+            <ChevronRightIcon
+              className={`${item.open && 'rotate-90'} ml-auto duration-150`}
+            />
           </SidebarMenuButton>
         </CollapsibleTrigger>
 
