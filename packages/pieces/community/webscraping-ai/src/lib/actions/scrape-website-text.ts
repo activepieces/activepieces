@@ -9,72 +9,29 @@ export const scrapeWebsiteText = createAction({
     'Returns the visible text content of a webpage specified by the URL.',
   props: webscrapingAiCommon.getPageTextProperties,
   async run({ auth: apiKey, propsValue }) {
-    const { textFormat, headers, ...rest } = propsValue;
-    const validTextFormat =
-      textFormat === 'json' || textFormat === 'plain' || textFormat === 'xml'
-        ? textFormat
-        : undefined;
+    const { textFormat, headers, returnLinks, ...rest } = propsValue;
 
-    // Convert headers to Record<string, string> if present
-    const stringHeaders =
-      headers && typeof headers === 'object'
-        ? Object.fromEntries(
-            Object.entries(headers).map(([k, v]) => [k, String(v)])
-          )
-        : undefined;
-
-    // Ensure device is either "desktop", "mobile", "tablet", or undefined
-    const validDevice =
-      rest.device === 'desktop' ||
-      rest.device === 'mobile' ||
-      rest.device === 'tablet'
-        ? (rest.device as 'desktop' | 'mobile' | 'tablet')
-        : undefined;
-
-    // Ensure proxy is either "datacenter", "residential", or undefined
-    const validProxy =
-      rest.proxy === 'datacenter' || rest.proxy === 'residential'
-        ? (rest.proxy as 'datacenter' | 'residential')
-        : undefined;
-
-    // Validate country to match allowed values
     const allowedCountries = [
-      'us',
-      'gb',
-      'de',
-      'it',
-      'fr',
-      'ca',
-      'es',
-      'ru',
-      'jp',
-      'kr',
-      'in',
+      'us', 'gb', 'de', 'it', 'fr', 'ca', 'es', 'ru', 'jp', 'kr', 'in'
     ];
-    const validCountry =
-      rest.country && allowedCountries.includes(rest.country)
-        ? (rest.country as
-            | 'us'
-            | 'gb'
-            | 'de'
-            | 'it'
-            | 'fr'
-            | 'ca'
-            | 'es'
-            | 'ru'
-            | 'jp'
-            | 'kr'
-            | 'in')
-        : undefined;
 
-    return await webscrapingAiCommon.getPageText({
+    const params: any = {
       apiKey,
       ...rest,
-      country: validCountry,
-      device: validDevice,
-      textFormat: validTextFormat,
-      headers: stringHeaders,
-      proxy: validProxy,
-    });
+      textFormat: (textFormat === 'json' || textFormat === 'plain' || textFormat === 'xml')
+        ? textFormat
+        : undefined,
+      returnLinks: (textFormat === 'json') ? returnLinks : undefined,
+      proxy: (rest.proxy === 'datacenter' || rest.proxy === 'residential') ? rest.proxy : undefined,
+      country: (rest.country && allowedCountries.includes(rest.country))
+        ? rest.country as typeof allowedCountries[number]
+        : undefined,
+      headers: headers && Array.isArray(headers)
+        ? Object.fromEntries(headers.map((h: any) => [(h as any).name, (h as any).value]))
+        : undefined,
+      device: rest.device as 'desktop' | 'mobile' | 'tablet' | undefined,
+    };
+
+    return await webscrapingAiCommon.getPageText(params);
   },
 });

@@ -8,60 +8,29 @@ export const getPageHtml = createAction({
   description: 'Retrieves the raw HTML markup of a web page.',
   props: webscrapingAiCommon.getPageHtmlProperties,
   async run({ auth: apiKey, propsValue }) {
-    // Ensure format is either "json", "text", or undefined
-    const { format, headers, proxy, ...rest } = propsValue;
-    const validFormat =
-      format === 'json' || format === 'text' ? format : undefined;
-    // Convert headers to Record<string, string> if present
-    const stringHeaders =
-      headers && typeof headers === 'object'
-        ? Object.fromEntries(
-            Object.entries(headers).map(([k, v]) => [k, String(v)])
-          )
-        : undefined;
-    // Ensure proxy is either "datacenter", "residential", or undefined
-    const validProxy =
-      proxy === 'datacenter' || proxy === 'residential'
-        ? (proxy as 'datacenter' | 'residential')
-        : undefined;
+    const { format, headers, proxy, device, errorOn404, errorOnRedirect, returnScriptResult, ...rest } = propsValue;
 
-    // Validate country to match allowed values
     const allowedCountries = [
-      'us',
-      'gb',
-      'de',
-      'it',
-      'fr',
-      'ca',
-      'es',
-      'ru',
-      'jp',
-      'kr',
-      'in',
+      'us', 'gb', 'de', 'it', 'fr', 'ca', 'es', 'ru', 'jp', 'kr', 'in'
     ];
-    const validCountry =
-      rest.country && allowedCountries.includes(rest.country)
-        ? (rest.country as
-            | 'us'
-            | 'gb'
-            | 'de'
-            | 'it'
-            | 'fr'
-            | 'ca'
-            | 'es'
-            | 'ru'
-            | 'jp'
-            | 'kr'
-            | 'in')
-        : undefined;
 
-    return await webscrapingAiCommon.getPageHtml({
+    const params: any = {
       apiKey,
       ...rest,
-      country: validCountry,
-      format: validFormat,
-      headers: stringHeaders,
-      proxy: validProxy,
-    });
+      format: (format === 'json' || format === 'text') ? format : undefined,
+      proxy: (proxy === 'datacenter' || proxy === 'residential') ? proxy : undefined,
+      country: (rest.country && allowedCountries.includes(rest.country))
+        ? rest.country as typeof allowedCountries[number]
+        : undefined,
+      headers: headers && Array.isArray(headers)
+        ? Object.fromEntries(headers.map((h: any) => [(h as any).name, (h as any).value]))
+        : undefined,
+      device: device as 'desktop' | 'mobile' | 'tablet' | undefined,
+      errorOn404,
+      errorOnRedirect,
+      returnScriptResult,
+    };
+
+    return await webscrapingAiCommon.getPageHtml(params);
   },
 });
