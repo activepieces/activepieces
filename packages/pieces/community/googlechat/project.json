@@ -1,7 +1,7 @@
 {
-  "name": "pieces-wealthbox",
+  "name": "pieces-googlechat",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/wealthbox/src",
+  "sourceRoot": "packages/pieces/community/googlechat/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -20,14 +20,14 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/wealthbox",
-        "tsConfig": "packages/pieces/community/wealthbox/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/wealthbox/package.json",
-        "main": "packages/pieces/community/wealthbox/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/googlechat",
+        "tsConfig": "packages/pieces/community/googlechat/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/googlechat/package.json",
+        "main": "packages/pieces/community/googlechat/src/index.ts",
         "assets": [
-          "packages/pieces/community/wealthbox/*.md",
+          "packages/pieces/community/googlechat/*.md",
           {
-            "input": "packages/pieces/community/wealthbox/src/i18n",
+            "input": "packages/pieces/community/googlechat/src/i18n",
             "output": "./src/i18n",
             "glob": "**/!(i18n.json)"
           }
