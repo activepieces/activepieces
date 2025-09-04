@@ -17,8 +17,9 @@ export const deleteOOO = createAction({
 
     const response = await assembledCommon.makeRequest(
       context.auth as string,
-      HttpMethod.DELETE,
-      `/OOO-requests/${OOO_id}`
+      HttpMethod.POST,
+      `/time_off/${OOO_id}/cancel`,
+      {} 
     );
 
     return {

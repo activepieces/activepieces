@@ -7,9 +7,9 @@ export const addShift = createAction({
   displayName: 'Add Shift on Assembled',
   description: 'Add a new shift to a user\'s schedule in Assembled',
   props: {
-    user_id: Property.ShortText({
-      displayName: 'User ID',
-      description: 'ID of the user to assign the shift to',
+    agent_id: Property.ShortText({
+      displayName: 'Agent ID',
+      description: 'Agent ID of the person to assign the shift to (use the agent_id field from /people endpoint, not the person id)',
       required: true,
     }),
     start_time: Property.DateTime({
@@ -41,6 +41,11 @@ export const addShift = createAction({
         ],
       },
     }),
+    activity_type_id: Property.ShortText({
+      displayName: 'Activity Type ID',
+      description: 'UUID of the activity type for this shift (get from /activity_types endpoint)',
+      required: true,
+    }),
     notes: Property.LongText({
       displayName: 'Notes',
       description: 'Additional notes for the shift',
@@ -48,22 +53,25 @@ export const addShift = createAction({
     }),
   },
   async run(context) {
-    const { user_id, start_time, end_time, date, shift_type, notes } = context.propsValue;
+    const { agent_id, start_time, end_time, date, shift_type, activity_type_id, notes } = context.propsValue;
     
     try {
+      // Convert to Unix timestamps as required by Assembled API
+      const startTimestamp = Math.floor(new Date(start_time).getTime() / 1000);
+      const endTimestamp = Math.floor(new Date(end_time).getTime() / 1000);
+      
       const shiftData = {
-        user_id,
-        start_time: assembledCommon.formatDateTime(start_time),
-        end_time: assembledCommon.formatDateTime(end_time),
-        date: assembledCommon.formatDate(date),
-        shift_type: shift_type || 'regular',
-        notes: notes || '',
+        agent_id: agent_id, 
+        type_id: activity_type_id, 
+        start_time: startTimestamp,
+        end_time: endTimestamp,
+        description: notes || `${shift_type || 'regular'} shift`,
       };
 
       const response = await assembledCommon.makeRequest(
         context.auth as string,
         HttpMethod.POST,
-        `/users/${user_id}/shifts`,
+        '/activities',
         shiftData
       );
 

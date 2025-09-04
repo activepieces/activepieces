@@ -28,21 +28,10 @@ export const OOO = createAction({
       description: 'End date of the OOO period',
       required: true,
     }),
-    event_type: Property.StaticDropdown({
-      displayName: 'Event Type',
-      description: 'Type of time off',
-      required: false,
-      defaultValue: 'PTO',
-      options: {
-        options: [
-          { label: 'Paid Time Off (PTO)', value: 'PTO' },
-          { label: 'Sick Leave', value: 'SICK' },
-          { label: 'Personal Leave', value: 'PERSONAL' },
-          { label: 'Vacation', value: 'VACATION' },
-          { label: 'Holiday', value: 'HOLIDAY' },
-          { label: 'Out of Office', value: 'OOO' },
-        ],
-      },
+    activity_type_id: Property.ShortText({
+      displayName: 'Activity Type ID',
+      description: 'UUID of the activity type for time off (can be retrieved from activity types endpoints)',
+      required: true,
     }),
     all_day: Property.Checkbox({
       displayName: 'All Day Event',
@@ -57,7 +46,7 @@ export const OOO = createAction({
     }),
   },
   async run(context) {
-    const { mock_mode, user_id, start_date, end_date, event_type, all_day, reason } = context.propsValue;
+    const { mock_mode, user_id, start_date, end_date, activity_type_id, all_day, reason } = context.propsValue;
     
     // Mock response for testing
     if (mock_mode) {
@@ -69,7 +58,7 @@ export const OOO = createAction({
           user_id,
           start_date,
           end_date,
-          event_type: event_type || 'PTO',
+          activity_type_id: activity_type_id || 'mock-activity-type-id',
           status: 'pending',
           created_at: new Date().toISOString(),
         }
@@ -78,23 +67,18 @@ export const OOO = createAction({
     
     try {
       const oooData = {
-        user_id,
-        start_date: all_day ? 
-          assembledCommon.formatDate(start_date) : 
-          assembledCommon.formatDateTime(start_date),
-        end_date: all_day ? 
-          assembledCommon.formatDate(end_date) : 
-          assembledCommon.formatDateTime(end_date),
-        event_type: event_type || 'OOO',
+        user_id: user_id,
+        start_time: Math.floor(new Date(start_date).getTime() / 1000),
+        end_time: Math.floor(new Date(end_date).getTime() / 1000),
+        activity_type_id,
         all_day: all_day ?? true,
-        reason: reason || '',
-        status: 'pending',
+        description: reason || '',
       };
 
       const response = await assembledCommon.makeRequest(
         context.auth as string,
         HttpMethod.POST,
-        '/time-off-requests',
+        '/time_off',
         oooData
       );
 
