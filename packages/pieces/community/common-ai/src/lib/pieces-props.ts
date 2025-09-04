@@ -5,7 +5,7 @@ import { isNil, SeekPage } from '@activepieces/shared';
 import { SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from './supported-ai-providers';
 import { AIProviderWithoutSensitiveData } from './types';
 
-export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
+export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
     provider: Property.Dropdown<string, true>({
         displayName: 'Provider',
         required: true,
@@ -40,6 +40,8 @@ export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCal
                     }
                 } else if (modelType === 'image') {
                     if (provider.imageModels.length === 0) return null;
+                } else if (modelType === 'video') {
+                    if (provider.videoModels.length === 0) return null;
                 }
 
                 return {
@@ -80,7 +82,7 @@ export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCal
                 };
             }
 
-            const allModels = modelType === 'language' ? supportedProvider.languageModels : supportedProvider.imageModels;
+            const allModels = modelType === 'language' ? supportedProvider.languageModels : modelType === 'image' ? supportedProvider.imageModels : supportedProvider.videoModels;
             const models = (modelType === 'language' && functionCalling)
                 ? allModels.filter(model => (model as SupportedAIProvider['languageModels'][number]).functionCalling)
                 : allModels;
@@ -180,6 +182,51 @@ export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCal
                             description: 'A prompt to avoid in the generated image.',
                         }),
                     }
+                }
+                if(provider === 'google' && model.modelId === 'gemini-2.5-flash-image-preview') {
+                    options = {
+                        image: Property.Array({
+                            displayName: 'Images',
+                            required:false,
+                            properties: {
+                                file: Property.File({
+                                    displayName: 'Image File',
+                                    required: true,
+                                }),
+                            },
+                            description: 'The image(s) you want to edit/merge',
+                        })
+                }
+            }
+            } else if (modelType === 'video') {
+                if (provider === 'google') {
+                    if (model.modelId === 'veo-2.0-generate-001') {
+                        options = {
+                            aspectRatio: Property.StaticDropdown({
+                                displayName: 'Aspect Ratio',
+                                required: false,
+                                defaultValue: '16:9',
+                                options: {
+                                    options: [
+                                        { label: '16:9', value: '16:9' },
+                                        { label: '9:16', value: '9:16' },
+                                    ],
+                                },
+                            }),
+                            personGeneration: Property.StaticDropdown({
+                                displayName: 'Person Generation',
+                                required: false,
+                                options: {
+                                    options: [
+                                        { label: 'Allow Adult', value: 'allow_adult' },
+                                        { label: 'Don\'t Allow', value: 'dont_allow' },
+                                        { label: 'Allow All', value: 'allow_all' },
+                                    ],
+                                },
+                            }),
+                        }
+                    }
+                    
                 }
             }
 
@@ -302,9 +349,9 @@ export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCal
 })
 
 
-type AIPropsParams<T extends 'language' | 'image'> = {
+type AIPropsParams<T extends 'language' | 'image' | 'video'> = {
     modelType: T,
-    functionCalling?: T extends 'image' ? never : boolean
+    functionCalling?: T extends 'language' ? boolean : never
 }
 
 type AIPropsReturn = {
