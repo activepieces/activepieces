@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { vimeoAuth } from '../auth';
-import { apiRequest } from '../common';
+import { apiRequest, userVideoDropdown } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const addVideoToShowcase = createAction({
@@ -9,11 +9,7 @@ export const addVideoToShowcase = createAction({
   description: 'Adds an existing video to a user\'s showcase',
   auth: vimeoAuth,
   props: {
-    videoId: Property.ShortText({
-      displayName: 'Video ID',
-      description: 'ID of the video to add to the showcase',
-      required: true,
-    }),
+    videoId: userVideoDropdown,
     showcaseId: Property.Dropdown({
       displayName: 'Showcase ID',
       description: 'ID of the showcase to add the video to',

@@ -82,3 +82,28 @@ export const userFolderDropdown = Property.Dropdown({
     };
   },
 });
+
+export const userVideoDropdown = Property.Dropdown({
+  displayName: 'Video ID',
+  required: true,
+  refreshers: [],
+  options: async ({ auth }) => {
+    const response = await apiRequest({
+      auth,
+      path: '/me/videos',
+      method: HttpMethod.GET,
+      queryParams: {
+        per_page: '100',
+      },
+    });
+
+    const videos = response.body.data.map((video: any) => ({
+      value: video.uri.split('/').pop(),
+      label: video.name,
+    }));
+
+    return {
+      options: videos,
+    };
+  },
+});

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { vimeoAuth } from '../auth';
-import { apiRequest, userFolderDropdown } from '../common';
+import { apiRequest, userFolderDropdown, userVideoDropdown } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const addVideoToFolder = createAction({
@@ -9,11 +9,7 @@ export const addVideoToFolder = createAction({
   description: 'Adds an existing video to a user\'s folder',
   auth: vimeoAuth,
   props: {
-    videoId: Property.ShortText({
-      displayName: 'Video ID',
-      description: 'ID of the video to add to the folder',
-      required: true,
-    }),
+    videoId: userVideoDropdown,
     folderId: userFolderDropdown,
   },
   async run({ auth, propsValue }) {

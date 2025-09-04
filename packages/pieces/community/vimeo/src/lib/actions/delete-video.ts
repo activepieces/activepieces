@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { vimeoAuth } from '../auth';
-import { apiRequest } from '../common';
+import { apiRequest, userVideoDropdown } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const deleteVideo = createAction({
@@ -9,31 +9,7 @@ export const deleteVideo = createAction({
   description: 'Delete a video from Vimeo',
   auth: vimeoAuth,
   props: {
-    videoId: Property.Dropdown({
-      displayName: 'Video ID',
-      description: 'Video to be deleted',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        const response = await apiRequest({
-          auth,
-          path: '/me/videos',
-          method: HttpMethod.GET,
-          queryParams: {
-            per_page: '100',
-          },
-        });
-
-        const videos = response.body.data.map((video: any) => ({
-          value: video.uri.split('/').pop(),
-          label: video.name,
-        }));
-
-        return {
-          options: videos,
-        };
-      },
-    })
+    videoId: userVideoDropdown,
   },
   async run({ auth, propsValue }) {
     const { videoId } = propsValue;
