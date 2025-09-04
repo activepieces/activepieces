@@ -38,9 +38,7 @@ export const workerMachine = {
                 ...spreadIfDefined('SANDBOX_PROPAGATED_ENV_VARS', settings?.SANDBOX_PROPAGATED_ENV_VARS?.join(',')),
                 ...spreadIfDefined('EXECUTION_MODE', settings?.EXECUTION_MODE),
                 ...spreadIfDefined('FILE_STORAGE_LOCATION', settings?.FILE_STORAGE_LOCATION),
-                ...spreadIfDefined('FLOW_WORKER_CONCURRENCY', settings?.FLOW_WORKER_CONCURRENCY?.toString()),
-                ...spreadIfDefined('SCHEDULED_WORKER_CONCURRENCY', settings?.SCHEDULED_WORKER_CONCURRENCY?.toString()),
-                ...spreadIfDefined('AGENTS_WORKER_CONCURRENCY', settings?.AGENTS_WORKER_CONCURRENCY?.toString()),
+                ...spreadIfDefined('WORKER_CONCURRENCY', settings?.WORKER_CONCURRENCY?.toString()),
                 ...spreadIfDefined('TRIGGER_TIMEOUT_SECONDS', settings?.TRIGGER_TIMEOUT_SECONDS?.toString()),
                 ...spreadIfDefined('PAUSED_FLOW_TIMEOUT_DAYS', settings?.PAUSED_FLOW_TIMEOUT_DAYS?.toString()),
                 ...spreadIfDefined('FLOW_TIMEOUT_SECONDS', settings?.FLOW_TIMEOUT_SECONDS?.toString()),
@@ -62,14 +60,12 @@ export const workerMachine = {
     init: async (_settings: WorkerMachineHealthcheckResponse, log: FastifyBaseLogger) => {
         settings = {
             ..._settings,
-            ...spreadIfDefined('FLOW_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.FLOW_WORKER_CONCURRENCY)),
-            ...spreadIfDefined('SCHEDULED_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY)),
-            ...spreadIfDefined('AGENTS_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.AGENTS_WORKER_CONCURRENCY)),
+            ...spreadIfDefined('WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.WORKER_CONCURRENCY)),
         }
 
         const memoryLimit = Math.floor(Number(settings.SANDBOX_MEMORY_LIMIT) / 1024)
         await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)
-        engineProcessManager.init(3 * settings.FLOW_WORKER_CONCURRENCY + settings.SCHEDULED_WORKER_CONCURRENCY, {
+        engineProcessManager.init(settings.WORKER_CONCURRENCY, {
             env: getEnvironmentVariables(),
             resourceLimits: {
                 maxOldGenerationSizeMb: memoryLimit,

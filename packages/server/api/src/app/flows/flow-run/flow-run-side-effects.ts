@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
@@ -11,8 +11,10 @@ import {
     FlowRun,
     isFlowUserTerminalState,
     isNil,
+    LATEST_JOB_DATA_SCHEMA_VERSION,
     PauseType,
     ProgressUpdateType,
+    WorkerJobType,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -20,8 +22,9 @@ import { fileService } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { eventsHooks } from '../../helper/application-events'
 import { system } from '../../helper/system/system'
+import { projectService } from '../../project/project-service'
 import { jobQueue } from '../../workers/queue'
-import { JOB_PRIORITY } from '../../workers/queue/queue-manager'
+import { JOB_PRIORITY, JobType } from '../../workers/queue/queue-manager'
 import { flowRunHooks } from './flow-run-hooks'
 
 type StartParams = {
@@ -98,6 +101,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
             logsUploadUrl = logsUploadResult?.uploadUrl
             logsFileId = logsUploadResult?.fileId
         }
+        const platformId = await projectService.getPlatformId(flowRun.projectId)
 
         await jobQueue(log).add({
             id: flowRun.id,
@@ -106,8 +110,10 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
             data: {
                 synchronousHandlerId: synchronousHandlerId ?? null,
                 projectId: flowRun.projectId,
+                platformId,
                 environment: flowRun.environment,
                 runId: flowRun.id,
+                jobType: WorkerJobType.EXECUTE_FLOW,
                 flowVersionId: flowRun.flowVersionId,
                 payload,
                 executeTrigger,
@@ -146,10 +152,13 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
 
         switch (pauseMetadata.type) {
             case PauseType.DELAY: {
+                const platformId = await projectService.getPlatformId(flowRun.projectId)
                 await jobQueue(log).add({
                     id: flowRun.id,
-                    type: JobType.DELAYED,
+                    type: JobType.ONE_TIME,
                     data: {
+                        jobType: WorkerJobType.DELAYED_FLOW,
+                        platformId,
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         runId: flowRun.id,
                         flowId: flowRun.flowId,
@@ -157,7 +166,6 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                         progressUpdateType: flowRun.pauseMetadata?.progressUpdateType ?? ProgressUpdateType.NONE,
                         projectId: flowRun.projectId,
                         environment: flowRun.environment,
-                        jobType: RepeatableJobType.DELAYED_FLOW,
                         flowVersionId: flowRun.flowVersionId,
                     },
                     delay: calculateDelayForPausedRun(pauseMetadata.resumeDateTime),

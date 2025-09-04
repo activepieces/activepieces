@@ -31,11 +31,12 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
     const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
     consumer[queueName] = new Worker(queueName, async (job) => {
         await jobConsumer(log).consume(job.id!, queueName, job.data, job.attemptsStarted)
-        rejectedPromiseHandler(redisRateLimiter(log).onCompleteOrFailedJob(queueName, job), log)
+        rejectedPromiseHandler(redisRateLimiter(log).onCompleteOrFailedJob(job.data.jobType, job), log)
     }, {
         connection: createRedisClient(),
         telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
         concurrency: 50,
+        stalledInterval: 300001,
     })
 
     await consumer[queueName].waitUntilReady()

@@ -5,10 +5,10 @@ import { assertEqual, assertNotNullOrUndefined, isEmpty, PackageType, PiecePacka
 import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
 import { packageManager } from '../cache/package-manager'
+import { CacheState } from '../cache/worker-cache'
 import { workerMachine } from '../utils/machine'
 import { PIECES_BUILDER_MUTEX_KEY } from './development/pieces-builder'
 import { PieceManager } from './piece-manager'
-import { CacheState } from '../cache/worker-cache'
 
 export class LocalPieceManager extends PieceManager {
 

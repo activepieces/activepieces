@@ -34,9 +34,7 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
         percentage: 34.59205537845069,
       },
       workerProps: {
-        FLOW_WORKER_CONCURRENCY: '8',
-        POLLING_POOL_SIZE: '4',
-        SCHEDULED_WORKER_CONCURRENCY: '8',
+        WORKER_CONCURRENCY: '8',
       },
       cpuUsagePercentage: 2.335817759768149,
       ramUsagePercentage: 52.699635773121855,
@@ -60,9 +58,7 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
         percentage: 40.0,
       },
       workerProps: {
-        FLOW_WORKER_CONCURRENCY: '8',
-        POLLING_POOL_SIZE: '4',
-        SCHEDULED_WORKER_CONCURRENCY: '8',
+        WORKER_CONCURRENCY: '8',
       },
       cpuUsagePercentage: 5.6,
       ramUsagePercentage: 45.2,

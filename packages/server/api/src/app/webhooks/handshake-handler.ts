@@ -1,8 +1,8 @@
-import { UserInteractionJobType } from '@activepieces/server-shared'
-import { EngineResponseStatus, FlowId, FlowVersion, FlowVersionId, isNil, ProjectId, TriggerHookType, TriggerPayload, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared'
+import { EngineResponseStatus, FlowId, FlowVersion, FlowVersionId, isNil, ProjectId, TriggerHookType, TriggerPayload, WebhookHandshakeConfiguration, WebhookHandshakeStrategy, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
+import { projectService } from '../project/project-service'
 import { triggerUtils } from '../trigger/trigger-source/trigger-utils'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 
@@ -18,13 +18,15 @@ export const handshakeHandler = {
             flowId: params.flowId,
             versionId: params.flowVersionId,
         })
+        const platformId = await projectService.getPlatformId(params.projectId)
 
         const engineHelperResponse = await userInteractionWatcher(params.log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.HANDSHAKE>>>({
-            jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
+            jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
             hookType: TriggerHookType.HANDSHAKE,
             flowVersion,
             projectId: params.projectId,
             test: false,
+            platformId,
             triggerPayload: payload,
         })
 

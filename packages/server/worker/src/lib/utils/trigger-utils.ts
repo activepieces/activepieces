@@ -2,8 +2,6 @@ import { inspect } from 'util'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ConsumeJobResponse,
-    ConsumeJobResponseStatus,
     ErrorCode,
     FlowTriggerType,
     FlowVersion,
@@ -112,7 +110,8 @@ async function getTriggerPayloadsAndStatus(
                 payloads: result.output as unknown[],
                 status: TriggerRunStatus.COMPLETED,
             }
-        } else {
+        }
+        else {
             return {
                 payloads: [],
                 status: TriggerRunStatus.FAILED,

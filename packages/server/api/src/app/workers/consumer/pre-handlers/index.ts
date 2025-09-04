@@ -1,5 +1,6 @@
-import { JobData, QueueName } from '@activepieces/server-shared'
+import { JobData, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { delayedJobPreHandler } from './delayed-job-pre-handler'
 import { oneTimeJobPreHandler } from './one-time-job-pre-handler'
 import { scheduledJobPreHandler } from './scheduled-job-pre-handler'
 
@@ -19,10 +20,16 @@ const defaultPreHandler: JobPreHandler = {
     },
 }
 
-export const preHandlers: Record<QueueName, JobPreHandler> = {
-    [QueueName.ONE_TIME]: oneTimeJobPreHandler,
-    [QueueName.SCHEDULED]: scheduledJobPreHandler,
-    [QueueName.WEBHOOK]: defaultPreHandler,
-    [QueueName.USERS_INTERACTION]: defaultPreHandler,
-    [QueueName.AGENTS]: defaultPreHandler,
+export const preHandlers: Record<WorkerJobType, JobPreHandler> = {
+    [WorkerJobType.EXECUTE_FLOW]: oneTimeJobPreHandler,
+    [WorkerJobType.EXECUTE_POLLING]: scheduledJobPreHandler,
+    [WorkerJobType.EXECUTE_WEBHOOK]: defaultPreHandler,
+    [WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION]: defaultPreHandler,
+    [WorkerJobType.RENEW_WEBHOOK]: defaultPreHandler,
+    [WorkerJobType.DELAYED_FLOW]: delayedJobPreHandler,
+    [WorkerJobType.EXECUTE_AGENT]: defaultPreHandler,
+    [WorkerJobType.EXECUTE_VALIDATION]: defaultPreHandler,
+    [WorkerJobType.EXECUTE_TRIGGER_HOOK]: defaultPreHandler,
+    [WorkerJobType.EXECUTE_PROPERTY]: defaultPreHandler,
+    [WorkerJobType.EXECUTE_TOOL]: defaultPreHandler,
 }

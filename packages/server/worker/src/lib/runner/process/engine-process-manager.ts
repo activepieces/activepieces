@@ -166,7 +166,7 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                 log.info({
                     error,
                 }, 'Worker returned something in stderr')
-                reject({ status: EngineResponseStatus.INTERNAL_ERROR, error: error })
+                reject({ status: EngineResponseStatus.INTERNAL_ERROR, error })
             })
 
             worker.on('exit', (code, signal) => {
