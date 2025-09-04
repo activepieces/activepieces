@@ -171,7 +171,7 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
             pieceVersion
         });
         const originalMetadata = piece.metadata()
-        const i18n = await pieceTranslation.initializeI18n(packageJson.name)
+        const i18n = await pieceTranslation.initializeI18n(folderPath)
         const metadata = {
             ...originalMetadata,
             name: packageJson.name,
