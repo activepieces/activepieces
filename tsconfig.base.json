@@ -1060,6 +1060,9 @@
       "@activepieces/piece-webling": [
         "packages/pieces/community/webling/src/index.ts"
       ],
+      "@activepieces/piece-webscraping-ai": [
+        "packages/pieces/community/webscraping-ai/src/index.ts"
+      ],
       "@activepieces/piece-wedof": [
         "packages/pieces/community/wedof/src/index.ts"
       ],
