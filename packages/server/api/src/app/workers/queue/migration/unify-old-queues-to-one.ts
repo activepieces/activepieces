@@ -93,8 +93,8 @@ export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
             migratedDelayedJobs,
         }, '[unifyOldQueuesIntoOne] Migrated delayed jobs')
 
-        await cleanQueue('usersInteractionJobs')
-        await cleanQueue('agentsJobs')
+        //  await cleanQueue('usersInteractionJobs')
+        //    await cleanQueue('agentsJobs')
     },
 })
 
@@ -103,15 +103,16 @@ async function migrateQueue<T>(name: string, migrationFn: (job: Job<T>) => Promi
         connection: createRedisClient(),
     })
 
-    const waitingJobs = await legacyQueue.getJobs(['waiting', 'delayed', 'active'])
+    const waitingJobs = await legacyQueue.getJobs(['waiting', 'delayed', 'active', 'prioritized'])
 
     for (const job of waitingJobs) {
         await migrationFn(job)
     }
-
-    await legacyQueue.obliterate({
-        force: true,
-    })
+    /*
+        await legacyQueue.obliterate({
+            force: true,
+        })
+            */
 }
 
 async function cleanQueue(name: string) {
