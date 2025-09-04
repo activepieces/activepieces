@@ -19,8 +19,10 @@ export const sendPrompt = createAction({
             required: true,
             options: {
                 options: [
-                    { label: 'Chat Sophos 1 (Recommended)', value: 'chat-sophos-1' },
-                    { label: 'Chat Cortex 1', value: 'chat-cortex-1' },
+                    { label: "Gemini 2.0 Flash", value: "gemini-2-0-flash" },
+                    { label: "GPT-4o", value: "gpt-4o" },
+                    { label: "Claude 3.5 Sonnet", value: "claude-3-5-sonnet" },
+                    { label: "Grok 2", value: "grok-2" },
                 ]
             },
             defaultValue: 'chat-sophos-1'
@@ -41,14 +43,14 @@ export const sendPrompt = createAction({
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
-            url: 'https://api.textcortex.com/v1/text/completions',
+            url: 'https://api.textcortex.com/v1/texts/completions',
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 // 'context.auth' automatically contains the API key from the piece's auth setting
                 token: context.auth as string,
             },
             body: {
-                prompt,
+                text:prompt,
                 model,
                 temperature,
                 max_tokens_to_generate,

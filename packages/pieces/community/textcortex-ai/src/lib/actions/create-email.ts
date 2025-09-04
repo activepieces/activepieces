@@ -76,9 +76,12 @@ export const createEmail = createAction({
         }),
     },
     async run(context) {
-        const { ...payload } = context.propsValue;
+        const payload = { ...context.propsValue };
 
-        // Clean the payload to remove null/undefined values before sending
+        // Remove fields that shouldn’t be in the body
+        delete (payload as any).auth;
+
+        // Clean up null/undefined values
         Object.keys(payload).forEach(key => {
             if (payload[key as keyof typeof payload] === null || payload[key as keyof typeof payload] === undefined) {
                 delete payload[key as keyof typeof payload];
@@ -97,4 +100,5 @@ export const createEmail = createAction({
 
         return response.body;
     },
+
 });

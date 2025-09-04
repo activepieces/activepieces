@@ -50,6 +50,8 @@ export const createSummary = createAction({
     async run(context) {
         const { ...payload } = context.propsValue;
 
+        delete (payload as any).auth;
+
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: 'https://api.textcortex.com/v1/texts/summarizations',
