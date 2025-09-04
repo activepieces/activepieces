@@ -20,8 +20,10 @@ export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
             return
         }
 
+        let migratedOneTimeJobs = 0
         await migrateQueue<LegacyOneTimeJobData>('oneTimeJobs', async (job) => {
             const casedData = job.data
+            migratedOneTimeJobs++
             await jobQueue(log).add({
                 id: job.id!,
                 type: JobType.ONE_TIME,
@@ -32,7 +34,11 @@ export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
                 },
             })
         })
+        log.info({
+            migratedOneTimeJobs,
+        }, '[unifyOldQueuesIntoOne] Migrated one time jobs')
 
+        let migratedWebhookJobs = 0
         await migrateQueue<LegacyWebhookJobData>('webhookJobs', async (job) => {
             const casedData = job.data
             await jobQueue(log).add({
@@ -45,12 +51,17 @@ export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
                 },
             })
         })
+        log.info({
+            migratedWebhookJobs,
+        }, '[unifyOldQueuesIntoOne] Migrated webhook jobs')
 
+        let migratedDelayedJobs = 0
         await migrateQueue<LegacyDelayedJobData>('repeatableJobs', async (job) => {
             const castedData = job.data
             if (job.data.jobType !== 'DELAYED_FLOW') {
                 return
             }
+            migratedDelayedJobs++
             await jobQueue(log).add({
                 id: job.id!,
                 type: JobType.ONE_TIME,
@@ -62,6 +73,9 @@ export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
                 },
             })
         })
+        log.info({
+            migratedDelayedJobs,
+        }, '[unifyOldQueuesIntoOne] Migrated delayed jobs')
 
         await cleanQueue('usersInteractionJobs')
         await cleanQueue('agentsJobs')

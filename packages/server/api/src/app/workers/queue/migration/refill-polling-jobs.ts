@@ -17,6 +17,8 @@ export const refillPollingJobs = (log: FastifyBaseLogger) => ({
                 simulate: false,
             },
         })
+        let migratedPollingJobs = 0
+        let migratedRenewWebhookJobs = 0
         for (const triggerSource of triggerSources) {
             if (!triggerSource.schedule) {
                 continue
@@ -56,6 +58,7 @@ export const refillPollingJobs = (log: FastifyBaseLogger) => ({
                             timezone: 'UTC',
                         },
                     })
+                    migratedRenewWebhookJobs++
                     continue
                 }
                 case TriggerStrategy.POLLING: {
@@ -77,6 +80,7 @@ export const refillPollingJobs = (log: FastifyBaseLogger) => ({
                             timezone: triggerSource.schedule.timezone,
                         },
                     })
+                    migratedPollingJobs++
                     break
                 }
                 case TriggerStrategy.APP_WEBHOOK: {
@@ -85,7 +89,8 @@ export const refillPollingJobs = (log: FastifyBaseLogger) => ({
             }
         }
         log.info({
-            count: triggerSources.length,
+            migratedPollingJobs,
+            migratedRenewWebhookJobs,
         }, '[pollingJobsMigration] Migrated polling jobs')
     },
 })

@@ -53,7 +53,7 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
                 break
             }
             case JobType.ONE_TIME: {
-                await queue.add(data.jobType, data, {
+                await queue.add(params.id, data, {
                     priority: JOB_PRIORITY[params.priority ?? getDefaultJobPriority(data)],
                     delay: params.delay,
                 })

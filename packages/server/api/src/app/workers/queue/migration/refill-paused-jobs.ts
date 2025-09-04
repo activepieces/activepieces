@@ -6,6 +6,7 @@ import { flowRunRepo } from '../../../flows/flow-run/flow-run-service'
 import { QueueMode, system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
 import { JobType } from '../queue-manager'
+import dayjs from 'dayjs'
 
 const queueMode = system.getOrThrow(AppSystemProp.QUEUE_MODE)
 
@@ -42,6 +43,7 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                     progressUpdateType: pausedRun.pauseMetadata.progressUpdateType ?? ProgressUpdateType.NONE,
                     jobType: WorkerJobType.DELAYED_FLOW,
                 },
+                delay: calculateDelayForPausedRun(pausedRun.pauseMetadata.resumeDateTime),
             })
         }
         log.info({
@@ -50,4 +52,7 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
     },
 })
 
-
+function calculateDelayForPausedRun(resumeDateTimeIsoString: string): number {
+    const delayInMilliSeconds = dayjs(resumeDateTimeIsoString).diff(dayjs())
+    return delayInMilliSeconds < 0 ? 0 : delayInMilliSeconds
+}
