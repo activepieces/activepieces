@@ -111,9 +111,6 @@ export const WebhookJobData = Type.Object({
 export type WebhookJobData = Static<typeof WebhookJobData>
 
 
-export enum UserInteractionJobType {
-}
-
 export const ExecuteValidateAuthJobData = Type.Object({
     requestId: Type.String(),
     webserverId: Type.String(),
