@@ -2,6 +2,12 @@ import { PieceAuth, Property } from "@activepieces/pieces-framework";
 import { createPiece } from "@activepieces/pieces-framework";
 import { wonderchatAuth } from "./lib/common/auth";
 
+import { askQuestion } from "./lib/actions/ask-question";
+import { addPage } from "./lib/actions/add-page";
+import { addTag } from "./lib/actions/add-tag";
+import { removeTag } from "./lib/actions/remove-tag";
+
+import { newUserMessage } from "./lib/triggers/new-user-message";
 
 
 export const wonderchat = createPiece({
@@ -12,6 +18,13 @@ export const wonderchat = createPiece({
     logoUrl: "https://cdn.activepieces.com/pieces/wonderchat.png",
     authors: [],
     // Register the "Chat with Chatbot" action. More actions can be added here.
-    actions: [],
-    triggers: [],
+    actions: [
+        askQuestion,
+        addPage,
+        addTag,
+        removeTag,
+    ],
+    triggers: [
+        newUserMessage,
+    ],
 });
