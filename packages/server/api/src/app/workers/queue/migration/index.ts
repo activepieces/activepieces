@@ -6,8 +6,8 @@ import { distributedLock } from '../../../helper/lock'
 import { QueueMode, system } from '../../../helper/system/system'
 import { refillPausedRuns } from './refill-paused-jobs'
 import { refillPollingJobs } from './refill-polling-jobs'
+import { refillRenewWebhookJobs } from './refill-renew-webhook-jobs'
 import { unifyOldQueuesIntoOne } from './unify-old-queues-to-one'
-
 
 const QUEUE_MIGRATION_VERSION = '1'
 const QUEUE_MIGRATION_KEY = 'worker_jobs_version'
@@ -24,6 +24,7 @@ export const queueMigration = (log: FastifyBaseLogger) => ({
             try {
                 await unifyOldQueuesIntoOne(log).run()
                 await refillPollingJobs(log).run()
+                await refillRenewWebhookJobs(log).run()
                 await refillPausedRuns(log).run()
                 await updateMigrationVersion()
             }

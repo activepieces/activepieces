@@ -24,6 +24,11 @@ export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
         await migrateQueue<LegacyOneTimeJobData>('oneTimeJobs', async (job) => {
             const casedData = job.data
             migratedOneTimeJobs++
+            if (migratedOneTimeJobs % 500 === 0) {
+                log.info({
+                    migratedOneTimeJobs,
+                }, '[unifyOldQueuesIntoOne] Migrated one time jobs')
+            }
             await jobQueue(log).add({
                 id: job.id!,
                 type: JobType.ONE_TIME,
@@ -41,6 +46,12 @@ export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
         let migratedWebhookJobs = 0
         await migrateQueue<LegacyWebhookJobData>('webhookJobs', async (job) => {
             const casedData = job.data
+            migratedWebhookJobs++
+            if (migratedWebhookJobs % 500 === 0) {
+                log.info({
+                    migratedWebhookJobs,
+                }, '[unifyOldQueuesIntoOne] Migrated webhook jobs')
+            }
             await jobQueue(log).add({
                 id: job.id!,
                 type: JobType.ONE_TIME,
@@ -62,6 +73,11 @@ export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
                 return
             }
             migratedDelayedJobs++
+            if (migratedDelayedJobs % 500 === 0) {
+                log.info({
+                    migratedDelayedJobs,
+                }, '[unifyOldQueuesIntoOne] Migrated delayed jobs')
+            }
             await jobQueue(log).add({
                 id: job.id!,
                 type: JobType.ONE_TIME,
@@ -102,10 +118,10 @@ async function cleanQueue(name: string) {
     if (queueMode == QueueMode.MEMORY) {
         return
     }
-    const scheduledJobsQueue = new Queue(name, {
+    const queue = new Queue(name, {
         connection: createRedisClient(),
     })
-    await scheduledJobsQueue.obliterate({
+    await queue.obliterate({
         force: true,
     })
 }
