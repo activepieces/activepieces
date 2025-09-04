@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { vimeoAuth } from '../auth';
-import { apiRequest } from '../common';
+import { apiRequest, userFolderDropdown } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const uploadVideo = createAction({
@@ -92,6 +92,7 @@ export const uploadVideo = createAction({
         };
       },
     }),
+    folderId: userFolderDropdown,
     language: Property.Dropdown({
       displayName: 'Language',
       description: 'Language code for the video',
@@ -132,12 +133,12 @@ export const uploadVideo = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { videoUrl, name, description, privacy, password, allowEmbed, allowDownload, contentRating, language, license } = propsValue;
+    const { videoUrl, name, description, privacy, password, allowEmbed, allowDownload, contentRating, folderId, language, license } = propsValue;
 
     const uploadData: any = {
       upload: {
         approach: 'pull',
-        link: videoUrl,
+        link: encodeURI(videoUrl),
       },
       name: name,
       privacy: {},
@@ -147,13 +148,14 @@ export const uploadVideo = createAction({
     uploadData.privacy.view = privacy;
 
     if (allowDownload) uploadData.privacy.download = allowDownload;
-    if (password && privacy === 'password') uploadData.password = password;
+    if (password && privacy === 'password') uploadData.password = password['password'];
     uploadData.privacy.embed = allowEmbed ? 'public' : 'private';
 
     // Add new properties
     if (contentRating) uploadData.content_rating = contentRating;
     if (language) uploadData.locale = language;
     if (license) uploadData.license = license;
+    if (folderId) uploadData.folder_uri = `/me/projects/${folderId}`;
 
     // require a access token with `upload` scope
     const response = await apiRequest({
@@ -164,6 +166,11 @@ export const uploadVideo = createAction({
     });
 
     const body = response.body;
+
+    if (!body.uri) {
+      throw new Error('Video upload failed: URI not found in response');
+    }
+
     body.video_id = body.uri.split('/').pop();
 
     return body;

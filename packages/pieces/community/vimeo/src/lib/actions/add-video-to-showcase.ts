@@ -46,13 +46,14 @@ export const addVideoToShowcase = createAction({
     // require a access token with `edit` scope
     const response = await apiRequest({
       auth,
-      path: `/albums/${showcaseId}/videos/${videoId}`,
+      path: `/me/albums/${showcaseId}/videos/${videoId}`,
       method: HttpMethod.PUT,
     });
 
-    if(response.status >= 200 && response.status < 300){
+    if(response.status === 204){
       return {
-        success: true
+        success: true,
+        message: `Video '${videoId}' added to showcase '${showcaseId}' successfully`
       };
     }
 

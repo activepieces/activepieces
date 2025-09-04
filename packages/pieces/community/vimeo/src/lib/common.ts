@@ -1,4 +1,5 @@
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { Property } from '@activepieces/pieces-framework';
 
 export async function apiRequest({
   auth,
@@ -55,3 +56,29 @@ export async function apiRequest({
     throw new Error(`Vimeo API error: ${err.message || err}`);
   }
 }
+
+export const userFolderDropdown = Property.Dropdown({
+  displayName: 'Folder ID',
+  description: 'ID of the folder to add the video to',
+  required: false,
+  refreshers: [],
+  options: async ({ auth }) => {
+    const response = await apiRequest({
+      auth,
+      path: '/me/folders',
+      method: HttpMethod.GET,
+      queryParams: {
+        per_page: '100',
+      },
+    });
+
+    const folders = response.body.data.map((folder: any) => ({
+      value: folder.uri.split('/').pop(),
+      label: folder.name,
+    }));
+
+    return {
+      options: folders,
+    };
+  },
+});

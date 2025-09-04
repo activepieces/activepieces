@@ -9,11 +9,31 @@ export const deleteVideo = createAction({
   description: 'Delete a video from Vimeo',
   auth: vimeoAuth,
   props: {
-    videoId: Property.ShortText({
+    videoId: Property.Dropdown({
       displayName: 'Video ID',
-      description: 'ID of the video to delete',
+      description: 'Video to be deleted',
       required: true,
-    }),
+      refreshers: [],
+      options: async ({ auth }) => {
+        const response = await apiRequest({
+          auth,
+          path: '/me/videos',
+          method: HttpMethod.GET,
+          queryParams: {
+            per_page: '100',
+          },
+        });
+
+        const videos = response.body.data.map((video: any) => ({
+          value: video.uri.split('/').pop(),
+          label: video.name,
+        }));
+
+        return {
+          options: videos,
+        };
+      },
+    })
   },
   async run({ auth, propsValue }) {
     const { videoId } = propsValue;
@@ -25,9 +45,10 @@ export const deleteVideo = createAction({
       method: HttpMethod.DELETE,
     });
 
-    if(response.status >= 200 && response.status < 300){
+    if(response.status === 204){
       return {
-        success: true
+        success: true,
+        message: `Video '${videoId}' deleted successfully`
       };
     }
 
