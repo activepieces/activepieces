@@ -14,7 +14,7 @@ export const webscrapingAi = createPiece({
   description: 'WebScraping AI is a powerful tool that allows you to scrape websites and extract data.',
   categories: [PieceCategory.DEVELOPER_TOOLS, PieceCategory.ARTIFICIAL_INTELLIGENCE],
   logoUrl: 'https://cdn.activepieces.com/pieces/webscraping-ai.png',
-  authors: ['LuizDMM'],
+  authors: ['LuizDMM', 'onyedikachi-david'],
   actions: [
     askAQuestionAboutTheWebPage,
     getPageHtml,
