@@ -1,13 +1,13 @@
 {
   "Supadata": "Supadata",
-  "YouTube Transcripts": "YouTube Transcripts",
-  "\nTo obtain your free Supadata API Key, sign up at [Supadata](https://supadata.ai) and then copy the key available in the [dashboard](https://dash.supadata.ai).\n": "\nTo obtain your free Supadata API Key, sign up at [Supadata](https://supadata.ai) and then copy the key available in the [dashboard](https://dash.supadata.ai).\n",
+  "YouTube Transcripts": "YouTube 脚本",
+  "\nTo obtain your free Supadata API Key, sign up at [Supadata](https://supadata.ai) and then copy the key available in the [dashboard](https://dash.supadata.ai).\n": "\n获取您免费的 Supadata API 密钥， 在 [Supadata](https://supadata.ai上注册，然后复制 [dashboard](https://dash.supadata.ai中可用的密钥。\n",
   "Get Transcript": "Get Transcript",
-  "Fetches transcript of a YouTube video.": "Fetches transcript of a YouTube video.",
+  "Fetches transcript of a YouTube video.": "获取 YouTube 视频的字幕。",
   "YouTube URL": "YouTube URL",
-  "Language Preference": "Language Preference",
-  "Merge Text": "Merge Text",
-  "The URL of a single YouTube video.": "The URL of a single YouTube video.",
-  "Preferred language of the transcript. If not available, the first available language will be returned.": "Preferred language of the transcript. If not available, the first available language will be returned.",
-  "If true, the transcript will be merged into a single text instead of timestamped chunks.": "If true, the transcript will be merged into a single text instead of timestamped chunks."
+  "Language Preference": "语言首选项",
+  "Merge Text": "合并文本",
+  "The URL of a single YouTube video.": "一个 YouTube 视频的 URL。",
+  "Preferred language of the transcript. If not available, the first available language will be returned.": "首选的字幕语言。如果不可用，将返回第一个可用语言。",
+  "If true, the transcript will be merged into a single text instead of timestamped chunks.": "如果为 true，字幕将合并为一个单一文本，而不是时间戳区块。"
 }
