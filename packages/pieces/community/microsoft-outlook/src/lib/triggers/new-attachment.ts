@@ -4,6 +4,7 @@ import {
 	TriggerStrategy,
 	createTrigger,
 	Property,
+	OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { Message, FileAttachment } from '@microsoft/microsoft-graph-types';
@@ -19,38 +20,23 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftOutlookAuth>, { fold
 			},
 		});
 
-		const attachments = [];
+		const attachments: Array<FileAttachment & { parentMessage: Message }> = [];
 		const { folderId } = propsValue;
 
 		const baseUrl = folderId ? `/me/mailFolders/${folderId}/messages` : '/me/messages';
-		const filter = lastFetchEpochMS === 0
-			? '$top=10&$filter=hasAttachments eq true'
-			: `$filter=hasAttachments eq true and receivedDateTime gt ${dayjs(lastFetchEpochMS).toISOString()}`;
+		const timeFilter = lastFetchEpochMS === 0
+			? '$top=10'
+			: `$filter=receivedDateTime gt ${dayjs(lastFetchEpochMS).toISOString()}`;
 
 		let response: PageCollection = await client
-			.api(`${baseUrl}?${filter}`)
+			.api(`${baseUrl}?${timeFilter}`)
 			.orderby('receivedDateTime desc')
 			.get();
 
-		if (lastFetchEpochMS === 0) {
-			for (const message of response.value as Message[]) {
+		const processMessages = async (messages: Message[]) => {
+			for (const message of messages) {
 				if (message.hasAttachments) {
-					const attachmentResponse: PageCollection = await client
-						.api(`/me/messages/${message.id}/attachments`)
-						.get();
-
-					for (const attachment of attachmentResponse.value as FileAttachment[]) {
-						attachments.push({
-							...attachment,
-							parentMessage: message,
-						});
-					}
-				}
-			}
-		} else {
-			while (response.value.length > 0) {
-				for (const message of response.value as Message[]) {
-					if (message.hasAttachments) {
+					try {
 						const attachmentResponse: PageCollection = await client
 							.api(`/me/messages/${message.id}/attachments`)
 							.get();
@@ -61,8 +47,18 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftOutlookAuth>, { fold
 								parentMessage: message,
 							});
 						}
+					} catch (error) {
+						console.warn(`Failed to fetch attachments for message ${message.id}:`, error);
 					}
 				}
+			}
+		};
+
+		if (lastFetchEpochMS === 0) {
+			await processMessages(response.value as Message[]);
+		} else {
+			while (response.value.length > 0) {
+				await processMessages(response.value as Message[]);
 
 				if (response['@odata.nextLink']) {
 					response = await client.api(response['@odata.nextLink']).get();
@@ -100,7 +96,7 @@ export const newAttachmentTrigger = createTrigger({
 
 				const client = Client.initWithMiddleware({
 					authProvider: {
-						getAccessToken: () => Promise.resolve(auth.access_token),
+						getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
 					},
 				});
 

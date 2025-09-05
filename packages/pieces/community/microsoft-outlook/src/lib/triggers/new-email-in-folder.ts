@@ -4,6 +4,7 @@ import {
 	TriggerStrategy,
 	createTrigger,
 	Property,
+	OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { Message, MailFolder } from '@microsoft/microsoft-graph-types';
@@ -77,7 +78,7 @@ export const newEmailInFolderTrigger = createTrigger({
 
 				const client = Client.initWithMiddleware({
 					authProvider: {
-						getAccessToken: () => Promise.resolve((auth as any).access_token),
+						getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
 					},
 				});
 

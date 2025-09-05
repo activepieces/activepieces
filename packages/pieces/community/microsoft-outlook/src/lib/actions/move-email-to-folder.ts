@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { MailFolder } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from '../common/auth';
@@ -29,7 +29,7 @@ export const moveEmailToFolderAction = createAction({
 
 				const client = Client.initWithMiddleware({
 					authProvider: {
-						getAccessToken: () => Promise.resolve(auth.access_token),
+						getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
 					},
 				});
 

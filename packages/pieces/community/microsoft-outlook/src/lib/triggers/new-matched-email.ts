@@ -4,6 +4,7 @@ import {
 	TriggerStrategy,
 	createTrigger,
 	Property,
+	OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { Message } from '@microsoft/microsoft-graph-types';
@@ -19,7 +20,7 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftOutlookAuth>, { sear
 			},
 		});
 
-		const messages = [];
+		const messages: Message[] = [];
 		const { searchQuery, folderId } = propsValue;
 
 		const baseUrl = folderId ? `/me/mailFolders/${folderId}/messages` : '/me/messages';
@@ -28,7 +29,12 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftOutlookAuth>, { sear
 			? '$top=10' 
 			: `$filter=receivedDateTime gt ${dayjs(lastFetchEpochMS).toISOString()}`;
 		
-		const queryParams = [searchParam, timeFilter].filter(Boolean).join('&');
+		let queryParams: string;
+		if (searchQuery && lastFetchEpochMS > 0) {
+			queryParams = `${searchParam}&$top=50`;
+		} else {
+			queryParams = [searchParam, timeFilter].filter(Boolean).join('&');
+		}
 		const url = queryParams ? `${baseUrl}?${queryParams}` : baseUrl;
 
 		const headers: Record<string, string> = {};
@@ -43,15 +49,19 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftOutlookAuth>, { sear
 			.orderby('receivedDateTime desc')
 			.get();
 
-		if (lastFetchEpochMS === 0) {
-			for (const message of response.value as Message[]) {
-				messages.push(message);
-			}
-		} else {
-			while (response.value.length > 0) {
-				for (const message of response.value as Message[]) {
+		const processMessages = (messageList: Message[]): void => {
+			for (const message of messageList) {
+				if (lastFetchEpochMS === 0 || dayjs(message.receivedDateTime).valueOf() > lastFetchEpochMS) {
 					messages.push(message);
 				}
+			}
+		};
+
+		if (lastFetchEpochMS === 0) {
+			processMessages(response.value as Message[]);
+		} else {
+			while (response.value.length > 0) {
+				processMessages(response.value as Message[]);
 
 				if (response['@odata.nextLink']) {
 					response = await client.api(response['@odata.nextLink']).get();
@@ -94,7 +104,7 @@ export const newMatchedEmailTrigger = createTrigger({
 
 				const client = Client.initWithMiddleware({
 					authProvider: {
-						getAccessToken: () => Promise.resolve(auth.access_token),
+						getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
 					},
 				});
 
