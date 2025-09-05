@@ -47,7 +47,7 @@ export const newMention = createTrigger({
     });
 
     const targetResource = `//chat.googleapis.com/${
-      spaceId ? spaceId : 'space/-'
+      spaceId ? spaceId : 'spaces/-'
     }`;
 
     await googleChatAPIService.createWebhookSubscription({
