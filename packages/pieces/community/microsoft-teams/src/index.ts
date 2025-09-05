@@ -8,6 +8,13 @@ import { PieceCategory } from '@activepieces/shared';
 import { createChannelAction } from './lib/actions/create-channel';
 import { sendChannelMessageAction } from './lib/actions/send-channel-message';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { replyToChannelMessage } from './lib/actions/reply-to-channel-message';
+import { createPrivateChannel } from './lib/actions/create-private-channel';
+import { getChatMessage } from './lib/actions/get-chat-message';
+import { getChannelMessage } from './lib/actions/get-channel-message';
+import { findChannel } from './lib/actions/find-channel';
+import { findTeamMember } from './lib/actions/find-team-member';
+import { createChatAndSendMessage } from './lib/actions/create-chat-send-message';
 import { sendChatMessageAction } from './lib/actions/send-chat-message';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { newChannelMessageTrigger } from './lib/triggers/new-channel-message';
@@ -98,6 +105,13 @@ export const microsoftTeams = createPiece({
 	categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.COMMUNICATION],
 	authors: ['kishanprmr'],
 	actions: [
+		createChatAndSendMessage,
+		findTeamMember,
+		findChannel,
+		getChannelMessage,
+		getChatMessage,
+		createPrivateChannel,
+		replyToChannelMessage,
 		createChannelAction,
 		sendChannelMessageAction,
 		sendChatMessageAction,
