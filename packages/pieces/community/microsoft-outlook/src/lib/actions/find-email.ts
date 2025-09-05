@@ -1,6 +1,7 @@
 import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { Message } from '@microsoft/microsoft-graph-types';
+import dayjs from 'dayjs';
 import { microsoftOutlookAuth } from '../common/auth';
 
 export const findEmailAction = createAction({
@@ -96,11 +97,14 @@ export const findEmailAction = createAction({
 		const response: PageCollection = await client
 			.api(url)
 			.headers(headers)
-			.orderby('receivedDateTime desc')
 			.get();
 
-		const messages = response.value as Message[];
+		let messages = response.value as Message[];
 		const nextPageUrl = response['@odata.nextLink'];
+
+		if (searchQuery) {
+			messages.sort((a, b) => dayjs(b.receivedDateTime).valueOf() - dayjs(a.receivedDateTime).valueOf());
+		}
 
 		return {
 			success: true,

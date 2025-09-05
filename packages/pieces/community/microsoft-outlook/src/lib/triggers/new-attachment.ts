@@ -68,6 +68,31 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftOutlookAuth>, { fold
 			}
 		}
 
+		if (attachments.length === 0 && lastFetchEpochMS === 0) {
+			return [{
+				epochMilliSeconds: Date.now(),
+				data: {
+					id: 'sample-attachment-id',
+					name: 'sample-document.pdf',
+					contentType: 'application/pdf',
+					size: 1024,
+					isInline: false,
+					parentMessage: {
+						id: 'sample-message-id',
+						subject: 'Sample Email with Attachment',
+						from: {
+							emailAddress: {
+								name: 'John Doe',
+								address: 'john.doe@example.com'
+							}
+						},
+						receivedDateTime: new Date().toISOString(),
+						hasAttachments: true
+					}
+				}
+			}];
+		}
+
 		return attachments.map((attachment) => ({
 			epochMilliSeconds: dayjs(attachment.parentMessage.receivedDateTime).valueOf(),
 			data: attachment,

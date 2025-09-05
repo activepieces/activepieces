@@ -51,6 +51,31 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftOutlookAuth>, { fold
 			}
 		}
 
+		if (messages.length === 0 && lastFetchEpochMS === 0) {
+			return [{
+				epochMilliSeconds: Date.now(),
+				data: {
+					id: 'sample-message-id',
+					subject: 'Sample Email in Folder',
+					from: {
+						emailAddress: {
+							name: 'Bob Johnson',
+							address: 'bob.johnson@example.com'
+						}
+					},
+					toRecipients: [{
+						emailAddress: {
+							name: 'You',
+							address: 'you@example.com'
+						}
+					}],
+					receivedDateTime: new Date().toISOString(),
+					bodyPreview: 'This is a sample email in the selected folder.',
+					hasAttachments: false
+				}
+			}];
+		}
+
 		return messages.map((message) => ({
 			epochMilliSeconds: dayjs(message.receivedDateTime).valueOf(),
 			data: message,

@@ -43,11 +43,19 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftOutlookAuth>, { sear
 			headers['Prefer'] = 'outlook.body-content-type="text"';
 		}
 
-		let response: PageCollection = await client
-			.api(url)
-			.headers(headers)
-			.orderby('receivedDateTime desc')
-			.get();
+		let response: PageCollection;
+		if (searchQuery) {
+			response = await client
+				.api(url)
+				.headers(headers)
+				.get();
+		} else {
+			response = await client
+				.api(url)
+				.headers(headers)
+				.orderby('receivedDateTime desc')
+				.get();
+		}
 
 		const processMessages = (messageList: Message[]): void => {
 			for (const message of messageList) {
@@ -69,6 +77,35 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftOutlookAuth>, { sear
 					break;
 				}
 			}
+		}
+
+		if (searchQuery) {
+			messages.sort((a, b) => dayjs(b.receivedDateTime).valueOf() - dayjs(a.receivedDateTime).valueOf());
+		}
+
+		if (messages.length === 0 && lastFetchEpochMS === 0) {
+			return [{
+				epochMilliSeconds: Date.now(),
+				data: {
+					id: 'sample-message-id',
+					subject: 'Sample Matched Email',
+					from: {
+						emailAddress: {
+							name: 'Jane Smith',
+							address: 'jane.smith@example.com'
+						}
+					},
+					toRecipients: [{
+						emailAddress: {
+							name: 'You',
+							address: 'you@example.com'
+						}
+					}],
+					receivedDateTime: new Date().toISOString(),
+					bodyPreview: 'This is a sample email that matches your search criteria.',
+					hasAttachments: false
+				}
+			}];
 		}
 
 		return messages.map((message) => ({

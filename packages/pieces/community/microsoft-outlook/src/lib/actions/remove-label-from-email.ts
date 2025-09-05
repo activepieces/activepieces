@@ -1,5 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { Message } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from '../common/auth';
 
 export const removeLabelFromEmailAction = createAction({
@@ -8,10 +9,47 @@ export const removeLabelFromEmailAction = createAction({
 	displayName: 'Remove Label from Email',
 	description: 'Removes a category (label) from an email message.',
 	props: {
-		messageId: Property.ShortText({
-			displayName: 'Message ID',
-			description: 'The ID of the email message to remove the label from.',
+		messageId: Property.Dropdown({
+			displayName: 'Email',
+			description: 'Select the email message to remove the label from.',
 			required: true,
+			refreshers: [],
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						options: [],
+					};
+				}
+
+				const client = Client.initWithMiddleware({
+					authProvider: {
+						getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
+					},
+				});
+
+				try {
+					const response: PageCollection = await client
+						.api('/me/messages?$top=50&$select=id,subject,from,receivedDateTime')
+						.orderby('receivedDateTime desc')
+						.get();
+
+					const messages = response.value as Message[];
+
+					return {
+						disabled: false,
+						options: messages.map((message) => ({
+							label: `${message.subject || 'No Subject'} - ${message.from?.emailAddress?.name || message.from?.emailAddress?.address || 'Unknown Sender'}`,
+							value: message.id || '',
+						})),
+					};
+				} catch (error) {
+					return {
+						disabled: true,
+						options: [],
+					};
+				}
+			},
 		}),
 		categories: Property.Array({
 			displayName: 'Categories to Remove',
