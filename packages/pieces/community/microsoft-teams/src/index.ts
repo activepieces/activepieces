@@ -10,6 +10,11 @@ import { sendChannelMessageAction } from './lib/actions/send-channel-message';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { sendChatMessageAction } from './lib/actions/send-chat-message';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { replyToChannelMessageAction } from './lib/actions/reply-to-channel-message';
+import { createChatSendMessageAction } from './lib/actions/create-chat-send-message';
+import { createPrivateChannelAction } from './lib/actions/create-private-channel';
+import { getChannelMessageAction } from './lib/actions/get-channel-message';
+import { getChatMessageAction } from './lib/actions/get-chat-message';
 import { newChannelMessageTrigger } from './lib/triggers/new-channel-message';
 
 const authDesc = `
@@ -97,6 +102,11 @@ export const microsoftTeams = createPiece({
 		createChannelAction,
 		sendChannelMessageAction,
 		sendChatMessageAction,
+		replyToChannelMessageAction,
+		createChatSendMessageAction,
+		createPrivateChannelAction,
+		getChannelMessageAction,
+		getChatMessageAction,
 		createCustomApiCallAction({
 			auth: microsoftTeamsAuth,
 			baseUrl: () => 'https://graph.microsoft.com/v1.0/teams',
