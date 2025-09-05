@@ -1,50 +1,56 @@
-import {
-    ExecutionType,
-    FlowTriggerType,
-    FlowVersion,
-    PackageType,
-    PiecePackage,
-    PieceType,
-    ProgressUpdateType,
-    RunEnvironment,
-    TriggerHookType,
-    TriggerPayload,
-} from '@activepieces/shared'
+
 import { Static, Type } from '@sinclair/typebox'
+import { ProgressUpdateType, TriggerHookType, TriggerPayload } from '../engine'
+import { ExecutionType } from '../flow-run/execution/execution-output'
+import { RunEnvironment } from '../flow-run/flow-run'
+import { FlowVersion } from '../flows/flow-version'
+import { FlowTriggerType } from '../flows/triggers/trigger'
+import { PackageType, PiecePackage, PieceType } from '../pieces/piece'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 4
 
-export enum RepeatableJobType {
+
+export enum WorkerJobType {
     RENEW_WEBHOOK = 'RENEW_WEBHOOK',
-    EXECUTE_TRIGGER = 'EXECUTE_TRIGGER',
+    EXECUTE_POLLING = 'EXECUTE_POLLING',
     DELAYED_FLOW = 'DELAYED_FLOW',
+    EXECUTE_WEBHOOK = 'EXECUTE_WEBHOOK',
+    EXECUTE_FLOW = 'EXECUTE_FLOW',
+    EXECUTE_AGENT = 'EXECUTE_AGENT',
+    EXECUTE_VALIDATION = 'EXECUTE_VALIDATION',
+    EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
+    EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
+    EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
+    EXECUTE_TOOL = 'EXECUTE_TOOL',
 }
 
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
 export const RenewWebhookJobData = Type.Object({
     schemaVersion: Type.Number(),
     projectId: Type.String(),
+    platformId: Type.String(),
     flowVersionId: Type.String(),
     flowId: Type.String(),
-    jobType: Type.Literal(RepeatableJobType.RENEW_WEBHOOK),
+    jobType: Type.Literal(WorkerJobType.RENEW_WEBHOOK),
 })
 export type RenewWebhookJobData = Static<typeof RenewWebhookJobData>
 
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
-export const RepeatingJobData = Type.Object({
+export const PollingJobData = Type.Object({
     projectId: Type.String(),
-    environment: Type.Enum(RunEnvironment),
+    platformId: Type.String(),
     schemaVersion: Type.Number(),
     flowVersionId: Type.String(),
     flowId: Type.String(),
     triggerType: Type.Enum(FlowTriggerType),
-    jobType: Type.Literal(RepeatableJobType.EXECUTE_TRIGGER),
+    jobType: Type.Literal(WorkerJobType.EXECUTE_POLLING),
 })
-export type RepeatingJobData = Static<typeof RepeatingJobData>
+export type PollingJobData = Static<typeof PollingJobData>
 
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
 export const DelayedJobData = Type.Object({
     projectId: Type.String(),
+    platformId: Type.String(),
     environment: Type.Enum(RunEnvironment),
     schemaVersion: Type.Number(),
     flowVersionId: Type.String(),
@@ -53,19 +59,14 @@ export const DelayedJobData = Type.Object({
     httpRequestId: Type.Optional(Type.String()),
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
-    jobType: Type.Literal(RepeatableJobType.DELAYED_FLOW),
+    jobType: Type.Literal(WorkerJobType.DELAYED_FLOW),
 })
 export type DelayedJobData = Static<typeof DelayedJobData>
 
-export const ScheduledJobData = Type.Union([
-    RepeatingJobData,
-    DelayedJobData,
-    RenewWebhookJobData,
-])
-export type ScheduledJobData = Static<typeof ScheduledJobData>
-
 export const OneTimeJobData = Type.Object({
     projectId: Type.String(),
+    platformId: Type.String(),
+    jobType: Type.Literal(WorkerJobType.EXECUTE_FLOW),
     environment: Type.Enum(RunEnvironment),
     flowVersionId: Type.String(),
     runId: Type.String(),
@@ -82,26 +83,19 @@ export const OneTimeJobData = Type.Object({
 })
 export type OneTimeJobData = Static<typeof OneTimeJobData>
 
-
-export enum AgentJobSource {
-    DIRECT = 'direct',
-}
-
-const BaseAgentJobData = Type.Object({
+export const AgentJobData = Type.Object({
+    jobType: Type.Literal(WorkerJobType.EXECUTE_AGENT),
     agentId: Type.String(),
     projectId: Type.String(),
+    platformId: Type.String(),
     agentRunId: Type.String(),
     prompt: Type.String(),
-})
-
-export const AgentJobData = Type.Object({
-    source: Type.Literal(AgentJobSource.DIRECT),
-    ...BaseAgentJobData.properties,
 })
 export type AgentJobData = Static<typeof AgentJobData>
 
 export const WebhookJobData = Type.Object({
     projectId: Type.String(),
+    platformId: Type.String(),
     schemaVersion: Type.Number(),
     requestId: Type.String(),
     payload: Type.Any(),
@@ -110,24 +104,17 @@ export const WebhookJobData = Type.Object({
     saveSampleData: Type.Boolean(),
     flowVersionIdToRun: Type.String(),
     execute: Type.Boolean(),
+    jobType: Type.Literal(WorkerJobType.EXECUTE_WEBHOOK),
     parentRunId: Type.Optional(Type.String()),
     failParentOnFailure: Type.Optional(Type.Boolean()),
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
 
 
-export enum UserInteractionJobType {
-    EXECUTE_VALIDATION = 'EXECUTE_VALIDATION',
-    EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
-    EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
-    EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
-    EXECUTE_TOOL = 'EXECUTE_TOOL',
-}
-
 export const ExecuteValidateAuthJobData = Type.Object({
     requestId: Type.String(),
     webserverId: Type.String(),
-    jobType: Type.Literal(UserInteractionJobType.EXECUTE_VALIDATION),
+    jobType: Type.Literal(WorkerJobType.EXECUTE_VALIDATION),
     projectId: Type.Optional(Type.String()),
     platformId: Type.String(),
     piece: PiecePackage,
@@ -138,7 +125,8 @@ export type ExecuteValidateAuthJobData = Static<typeof ExecuteValidateAuthJobDat
 export const ExecuteToolJobData = Type.Object({
     requestId: Type.String(),
     webserverId: Type.String(),
-    jobType: Type.Literal(UserInteractionJobType.EXECUTE_TOOL),
+    jobType: Type.Literal(WorkerJobType.EXECUTE_TOOL),
+    platformId: Type.String(),
     projectId: Type.String(),
     actionName: Type.String(),
     pieceName: Type.String(),
@@ -151,7 +139,8 @@ export type ExecuteToolJobData = Static<typeof ExecuteToolJobData>
 
 export const ExecuteTriggerHookJobData = Type.Object({
     requestId: Type.String(),
-    jobType: Type.Literal(UserInteractionJobType.EXECUTE_TRIGGER_HOOK),
+    jobType: Type.Literal(WorkerJobType.EXECUTE_TRIGGER_HOOK),
+    platformId: Type.String(),
     projectId: Type.String(),
     flowVersion: FlowVersion,
     test: Type.Boolean(),
@@ -163,8 +152,9 @@ export type ExecuteTriggerHookJobData = Static<typeof ExecuteTriggerHookJobData>
 
 export const ExecutePropertyJobData = Type.Object({
     requestId: Type.String(),
-    jobType: Type.Literal(UserInteractionJobType.EXECUTE_PROPERTY),
+    jobType: Type.Literal(WorkerJobType.EXECUTE_PROPERTY),
     projectId: Type.String(),
+    platformId: Type.String(),
     flowVersion: Type.Optional(FlowVersion),
     propertyName: Type.String(),
     piece: PiecePackage,
@@ -179,7 +169,7 @@ export type ExecutePropertyJobData = Static<typeof ExecutePropertyJobData>
 export const ExecuteExtractPieceMetadataJobData = Type.Object({
     requestId: Type.String(),
     webserverId: Type.String(),
-    jobType: Type.Literal(UserInteractionJobType.EXECUTE_EXTRACT_PIECE_INFORMATION),
+    jobType: Type.Literal(WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION),
     projectId: Type.Optional(Type.String()),
     platformId: Type.String(),
     piece: PiecePackage,
@@ -205,7 +195,9 @@ export const UserInteractionJobDataWithoutWatchingInformation = Type.Union([
 export type UserInteractionJobDataWithoutWatchingInformation = Static<typeof UserInteractionJobDataWithoutWatchingInformation>
 
 export const JobData = Type.Union([
-    ScheduledJobData,
+    PollingJobData,
+    DelayedJobData,
+    RenewWebhookJobData,
     OneTimeJobData,
     WebhookJobData,
     UserInteractionJobData,

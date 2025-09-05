@@ -1,3 +1,4 @@
+import { inspect } from 'node:util'
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
 import { assertEqual, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, FlowTrigger, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
@@ -10,7 +11,6 @@ import { utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
-import { inspect } from 'node:util'
 
 type Listener = {
     events: string[]
@@ -178,7 +178,8 @@ export const triggerHelper = {
                             }),
                         }),
                     }
-                } catch (e) {
+                }
+                catch (e) {
                     return {
                         success: false,
                         message: `Error while testing trigger: ${inspect(e)}`,

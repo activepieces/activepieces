@@ -1,10 +1,9 @@
-import { AppSystemProp, JobData, OneTimeJobData, QueueName, ScheduledJobData, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
-import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, WebsocketClientEvent } from '@activepieces/shared'
+import { AppSystemProp, QueueName } from '@activepieces/server-shared'
+import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, JobData, WebsocketClientEvent, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { system } from '../../helper/system/system'
-import { projectService } from '../../project/project-service'
 import { app } from '../../server'
 import { machineService } from '../machine/machine-service'
 import { preHandlers } from './pre-handlers'
@@ -12,7 +11,7 @@ import { preHandlers } from './pre-handlers'
 export const jobConsumer = (log: FastifyBaseLogger) => {
     return {
         consume: async (jobId: string, queueName: QueueName, jobData: JobData, attempsStarted: number) => {
-            const preHandler = preHandlers[queueName]
+            const preHandler = preHandlers[jobData.jobType]
             const preHandlerResult = await preHandler.handle(jobData, attempsStarted, log)
             if (preHandlerResult.shouldSkip) {
                 log.debug({
@@ -25,11 +24,10 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
             }
             let workerId: string | undefined
             try {
-                const { projectId, platformId } = await getProjectIdAndPlatformId(queueName, jobData)
                 const engineToken = await accessTokenManager.generateEngineToken({
                     jobId,
-                    projectId,
-                    platformId,
+                    projectId: jobData.projectId!,
+                    platformId: jobData.platformId,
                 })
 
                 workerId = await machineService(log).acquire()
@@ -37,11 +35,10 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                     message: 'Acquired worker id',
                     workerId,
                 })
-                const jobTimeout = dayjs.duration(jobConsumer(log).getTimeoutForWorkerJob(queueName), 'milliseconds').add(1, 'minutes').asMilliseconds()
+                const jobTimeout = dayjs.duration(jobConsumer(log).getTimeoutForWorkerJob(jobData.jobType), 'milliseconds').add(1, 'minutes').asMilliseconds()
 
                 const request: ConsumeJobRequest = {
                     jobId,
-                    queueName,
                     jobData,
                     attempsStarted,
                     engineToken,
@@ -62,58 +59,26 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                 }
             }
         },
-        getTimeoutForWorkerJob(queueName: QueueName): number {
+        getTimeoutForWorkerJob(jobType: WorkerJobType): number {
             const triggerTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS)
             const flowTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS)
             const agentTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.AGENT_TIMEOUT_SECONDS)
-            switch (queueName) {
-                case QueueName.WEBHOOK:
+            switch (jobType) {
+                case WorkerJobType.EXECUTE_WEBHOOK:
+                case WorkerJobType.DELAYED_FLOW:
+                case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
+                case WorkerJobType.EXECUTE_TOOL:
+                case WorkerJobType.EXECUTE_PROPERTY:
+                case WorkerJobType.EXECUTE_TRIGGER_HOOK:
+                case WorkerJobType.EXECUTE_VALIDATION:
+                case WorkerJobType.RENEW_WEBHOOK:
+                case WorkerJobType.EXECUTE_POLLING:
                     return dayjs.duration(triggerTimeoutSandbox, 'seconds').asMilliseconds()
-                case QueueName.USERS_INTERACTION:
+                case WorkerJobType.EXECUTE_FLOW:
                     return dayjs.duration(flowTimeoutSandbox, 'seconds').asMilliseconds()
-                case QueueName.ONE_TIME:
-                    return dayjs.duration(flowTimeoutSandbox, 'seconds').asMilliseconds()
-                case QueueName.SCHEDULED:
-                    return dayjs.duration(triggerTimeoutSandbox, 'seconds').asMilliseconds()
-                case QueueName.AGENTS:
+                case WorkerJobType.EXECUTE_AGENT:
                     return dayjs.duration(agentTimeoutSandbox, 'seconds').asMilliseconds()
             }
         },
     }
 }
-
-
-async function getProjectIdAndPlatformId(queueName: QueueName, job: JobData): Promise<{
-    projectId: string
-    platformId: string
-}> {
-    switch (queueName) {
-        case QueueName.AGENTS:
-        case QueueName.ONE_TIME:
-        case QueueName.WEBHOOK:
-        case QueueName.SCHEDULED: {
-            const castedJob = job as OneTimeJobData | WebhookJobData | ScheduledJobData
-            return {
-                projectId: castedJob.projectId,
-                platformId: await projectService.getPlatformId(castedJob.projectId),
-            }
-        }
-        case QueueName.USERS_INTERACTION: {
-            const userInteractionJob = job as UserInteractionJobData
-            switch (userInteractionJob.jobType) {
-                case UserInteractionJobType.EXECUTE_VALIDATION:
-                case UserInteractionJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
-                    return {
-                        projectId: userInteractionJob.projectId!,
-                        platformId: userInteractionJob.platformId,
-                    }
-                default:
-                    return {
-                        projectId: userInteractionJob.projectId,
-                        platformId: await projectService.getPlatformId(userInteractionJob.projectId),
-                    }
-            }
-        }
-    }
-}
-

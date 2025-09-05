@@ -1,4 +1,4 @@
-import { pinoLogging, WebhookJobData } from '@activepieces/server-shared'
+import { pinoLogging } from '@activepieces/server-shared'
 import {
     ConsumeJobResponse,
     ConsumeJobResponseStatus,
@@ -7,6 +7,7 @@ import {
     PopulatedFlow,
     ProgressUpdateType,
     TriggerRunStatus,
+    WebhookJobData,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowWorkerCache } from '../api/flow-worker-cache'
@@ -79,7 +80,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         return {
             status: ConsumeJobResponseStatus.OK,
         }
-    }
+    },
 })
 
 

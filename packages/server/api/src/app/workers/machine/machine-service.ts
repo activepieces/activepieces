@@ -53,15 +53,9 @@ export const machineService = (log: FastifyBaseLogger) => {
         },
         async getConcurrency(): Promise<Record<QueueName, number>> {
             const machines = await machineService(log).list()
-            const flowWorkerConcurrency = machines.reduce((acc, machine) => acc + (parseInt(machine.information.workerProps[WorkerSystemProp.FLOW_WORKER_CONCURRENCY]) || 0), 0)
-            const scheduledWorkerConcurrency = machines.reduce((acc, machine) => acc + (parseInt(machine.information.workerProps[WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY]) || 0), 0)
-            const agentsWorkerConcurrency = machines.reduce((acc, machine) => acc + (parseInt(machine.information.workerProps[WorkerSystemProp.AGENTS_WORKER_CONCURRENCY]) || 0), 0)
+            const flowWorkerConcurrency = machines.reduce((acc, machine) => acc + (parseInt(machine.information.workerProps[WorkerSystemProp.WORKER_CONCURRENCY]) || 0), 0)
             return {
-                [QueueName.ONE_TIME]: flowWorkerConcurrency,
-                [QueueName.SCHEDULED]: scheduledWorkerConcurrency,
-                [QueueName.WEBHOOK]: flowWorkerConcurrency,
-                [QueueName.USERS_INTERACTION]: flowWorkerConcurrency,
-                [QueueName.AGENTS]: agentsWorkerConcurrency,
+                [QueueName.WORKER_JOBS]: flowWorkerConcurrency,
             }
         },
         async updateConcurrency(): Promise<void> {
@@ -104,9 +98,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                 PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
                 EXECUTION_MODE: system.getOrThrow(AppSystemProp.EXECUTION_MODE),
                 FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
-                FLOW_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.FLOW_WORKER_CONCURRENCY),
-                SCHEDULED_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY),
-                AGENTS_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.AGENTS_WORKER_CONCURRENCY),
+                WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.WORKER_CONCURRENCY),
                 LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
                 LOG_PRETTY: system.getOrThrow(AppSystemProp.LOG_PRETTY),
                 ENVIRONMENT: system.getOrThrow(AppSystemProp.ENVIRONMENT),

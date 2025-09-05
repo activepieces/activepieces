@@ -1,5 +1,5 @@
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
-import { AppSystemProp, UserInteractionJobType } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AddPieceRequestBody,
@@ -18,6 +18,7 @@ import {
     PieceType,
     PlatformId,
     ProjectId,
+    WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse } from 'server-worker'
@@ -124,10 +125,10 @@ async function savePiecePackage(platformId: string | undefined, projectId: strin
 
 const extractPieceInformation = async (request: ExecuteExtractPieceMetadata, projectId: string | undefined, log: FastifyBaseLogger): Promise<PieceMetadata> => {
     const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperExtractPieceInformation>>({
-        jobType: UserInteractionJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+        jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+        platformId: request.platformId,
         piece: request,
         projectId,
-        platformId: request.platformId,
     })
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
