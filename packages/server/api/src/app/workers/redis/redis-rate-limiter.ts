@@ -16,7 +16,7 @@ const RATE_LIMIT_QUEUE_NAME = 'rateLimitJobs'
 const CLEANUP_QUEUE_NAME = 'cleanupJobs'
 const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
 const PROJECT_RATE_LIMITER_ENABLED = system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED)
-const SUPPORTED_QUEUES = [WorkerJobType.EXECUTE_FLOW, WorkerJobType.EXECUTE_WEBHOOK]
+const SUPPORTED_QUEUES = [WorkerJobType.EXECUTE_FLOW]
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const FLOW_TIMEOUT_IN_MILLISECONDS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS), 'seconds').add(1, 'minute').asMilliseconds()
 
