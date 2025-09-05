@@ -15,11 +15,11 @@ export const RATE_LIMIT_PRIORITY: keyof typeof JOB_PRIORITY = 'ultraLow'
 
 export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
     switch (job.jobType) {
-        case WorkerJobType.EXECUTE_FLOW: 
-        case WorkerJobType.EXECUTE_WEBHOOK:
         case WorkerJobType.EXECUTE_POLLING:
         case WorkerJobType.RENEW_WEBHOOK:
             return 'low'
+        case WorkerJobType.EXECUTE_FLOW:
+        case WorkerJobType.EXECUTE_WEBHOOK:
         case WorkerJobType.EXECUTE_AGENT:
         case WorkerJobType.DELAYED_FLOW:
             return 'medium'
