@@ -20,7 +20,7 @@ export const textcortexAi = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/textcortex-ai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['activepieces'],
+  authors: ['owuzo', 'onyedikachi-david'],
   actions: [
     sendPrompt,
     createParaphrase,
