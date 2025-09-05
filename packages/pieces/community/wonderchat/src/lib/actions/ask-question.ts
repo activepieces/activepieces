@@ -3,7 +3,7 @@ import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 import { wonderchatAuth } from "../common/auth";
 
 export const askQuestion = createAction({
-    // Use the shared authentication definition.
+    
     auth: wonderchatAuth,
     name: 'ask_question',
     displayName: 'Ask Question',
@@ -36,13 +36,13 @@ export const askQuestion = createAction({
         })
     },
     async run(context) {
-        // Retrieve the API key from the authenticated connection.
+        
         const { apiKey } = context.auth;
 
-        // Retrieve properties provided by the user in the workflow step.
+        
         const { chatbotId, question, chatlogId, context: customContext, contextUrl } = context.propsValue;
 
-        // Construct the request body according to the Wonderchat API documentation.
+        
         const body = {
             apiKey,
             chatbotId,
@@ -52,14 +52,14 @@ export const askQuestion = createAction({
             contextUrl
         };
 
-        // Send the HTTP POST request to the Wonderchat API.
+        
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: 'https://app.wonderchat.io/api/v1/chat',
             body: body,
         });
 
-        // Return the full response body from the API call.
+        
         return response.body;
     },
 });

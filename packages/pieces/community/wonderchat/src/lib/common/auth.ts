@@ -8,8 +8,7 @@ To get your API Key, follow these steps:
 3. Copy your API Key.
 `;
 
-// Defines the authentication method for the Wonderchat piece.
-// We are using CustomAuth to provide a detailed description and easily manage the API key.
+
 export const wonderchatAuth = PieceAuth.CustomAuth({
     description: markdown,
     required: true,

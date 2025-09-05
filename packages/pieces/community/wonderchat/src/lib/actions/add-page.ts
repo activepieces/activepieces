@@ -3,7 +3,6 @@ import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 import { wonderchatAuth } from "../common/auth";
 
 export const addPage = createAction({
-    // Use the shared authentication definition.
     auth: wonderchatAuth,
     name: 'add_page',
     displayName: 'Add Page',
@@ -26,29 +25,29 @@ export const addPage = createAction({
         }),
     },
     async run(context) {
-        // Retrieve the API key from the authenticated connection.
+        
         const { apiKey } = context.auth;
 
-        // Retrieve properties provided by the user in the workflow step.
+        
         const { chatbotId, urls, sessionCookie } = context.propsValue;
 
-        // Construct the request body according to the Wonderchat API documentation.
+        
         const body = {
             apiKey,
             chatbotId,
-            // The urls property is expected to be an array of strings.
+            
             urls,
             sessionCookie,
         };
 
-        // Send the HTTP POST request to the Wonderchat API.
+        
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: 'https://app.wonderchat.io/api/v1/add-pages',
             body: body,
         });
 
-        // Return the full response body from the API call.
+        
         return response.body;
     },
 });
