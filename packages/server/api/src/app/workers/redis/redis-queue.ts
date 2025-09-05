@@ -31,7 +31,7 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
     async add(params: AddJobParams<JobType>): Promise<void> {
         const { data, type } = params
 
-        if (data.jobType === WorkerJobType.EXECUTE_FLOW || data.jobType === WorkerJobType.EXECUTE_WEBHOOK) {
+        if (data.jobType === WorkerJobType.EXECUTE_FLOW) {
             const { shouldRateLimit } = await redisRateLimiter(log).shouldBeLimited(data.projectId, params.id)
             if (shouldRateLimit) {
                 await redisRateLimiter(log).rateLimitJob(params)
