@@ -134,6 +134,162 @@ export const microsoftTeamsCommon = {
 			};
 		},
 	}),
+	messageId: Property.Dropdown({
+		displayName: 'Message',
+		refreshers: ['teamId', 'channelId'],
+		required: true,
+		options: async ({ auth, teamId, channelId }) => {
+			if (!auth || !teamId || !channelId) {
+				return {
+					disabled: true,
+					placeholder: 'Please select a team and channel first.',
+					options: [],
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
+
+			const client = Client.initWithMiddleware({
+				authProvider: {
+					getAccessToken: () => Promise.resolve(authValue.access_token),
+				},
+			});
+			const options: DropdownOption<string>[] = [];
+
+			try {
+				// Get recent messages from the channel
+				const response: PageCollection = await client
+					.api(`/teams/${teamId}/channels/${channelId}/messages`)
+					.top(20)
+					.get();
+
+				for (const message of response.value) {
+					const preview = message.body?.content?.replace(/<[^>]*>/g, '').substring(0, 50) || 'No content';
+					const author = message.from?.user?.displayName || 'Unknown';
+					const date = new Date(message.createdDateTime).toLocaleDateString();
+					
+					options.push({
+						label: `${author} (${date}): ${preview}...`,
+						value: message.id!,
+					});
+				}
+			} catch (error) {
+				return {
+					disabled: true,
+					placeholder: 'Failed to load messages.',
+					options: [],
+				};
+			}
+
+			return {
+				disabled: false,
+				options: options,
+			};
+		},
+	}),
+	userEmail: Property.Dropdown({
+		displayName: 'User',
+		refreshers: [],
+		required: true,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					placeholder: 'Please connect your account first.',
+					options: [],
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
+
+			const client = Client.initWithMiddleware({
+				authProvider: {
+					getAccessToken: () => Promise.resolve(authValue.access_token),
+				},
+			});
+			const options: DropdownOption<string>[] = [];
+
+			try {
+				// Get users from the organization
+				const response: PageCollection = await client
+					.api('/users')
+					.select('id,displayName,mail,userPrincipalName')
+					.top(50)
+					.get();
+
+				for (const user of response.value) {
+					const email = user.mail || user.userPrincipalName;
+					if (email) {
+						options.push({
+							label: `${user.displayName} (${email})`,
+							value: email,
+						});
+					}
+				}
+			} catch (error) {
+				return {
+					disabled: true,
+					placeholder: 'Failed to load users.',
+					options: [],
+				};
+			}
+
+			return {
+				disabled: false,
+				options: options,
+			};
+		},
+	}),
+	chatMessageId: Property.Dropdown({
+		displayName: 'Chat Message',
+		refreshers: ['chatId'],
+		required: true,
+		options: async ({ auth, chatId }) => {
+			if (!auth || !chatId) {
+				return {
+					disabled: true,
+					placeholder: 'Please select a chat first.',
+					options: [],
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
+
+			const client = Client.initWithMiddleware({
+				authProvider: {
+					getAccessToken: () => Promise.resolve(authValue.access_token),
+				},
+			});
+			const options: DropdownOption<string>[] = [];
+
+			try {
+				// Get recent messages from the chat
+				const response: PageCollection = await client
+					.api(`/chats/${chatId}/messages`)
+					.top(20)
+					.get();
+
+				for (const message of response.value) {
+					const preview = message.body?.content?.replace(/<[^>]*>/g, '').substring(0, 50) || 'No content';
+					const author = message.from?.user?.displayName || 'Unknown';
+					const date = new Date(message.createdDateTime).toLocaleDateString();
+					
+					options.push({
+						label: `${author} (${date}): ${preview}...`,
+						value: message.id!,
+					});
+				}
+			} catch (error) {
+				return {
+					disabled: true,
+					placeholder: 'Failed to load messages.',
+					options: [],
+				};
+			}
+
+			return {
+				disabled: false,
+				options: options,
+			};
+		},
+	}),
 };
 
 const CHAT_TYPE = {
