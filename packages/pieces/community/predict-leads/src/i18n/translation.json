@@ -5,7 +5,7 @@
   "API Token": "API Token",
   "The key of the Predict Leads account.": "The key of the Predict Leads account.",
   "The token of the Predict Leads account.": "The token of the Predict Leads account.",
-  "\n    To obtain your Predict Leads tokens, follow these steps:\n\n    1. Have a PredictLeads account - Create a new user here: [PredictLeads](https://predictleads.com/sign_up).\n    2. Go to: [Subscriptions](https://predictleads.com/subscriptions).\n    3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.\n    ": "\n    To obtain your Predict Leads tokens, follow these steps:\n\n    1. Have a PredictLeads account - Create a new user here: [PredictLeads](https://predictleads.com/sign_up).\n    2. Go to: [Subscriptions](https://predictleads.com/subscriptions).\n    3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.\n    ",
+  "\n    To obtain your PredictLeads tokens, follow these steps:\n\n    1. Have a PredictLeads account - Create a new user here: https://predictleads.com/sign_up.\n    2. Go to: https://predictleads.com/subscriptions.\n    3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.\n    ": "\n    To obtain your PredictLeads tokens, follow these steps:\n\n    1. Have a PredictLeads account - Create a new user here: https://predictleads.com/sign_up.\n    2. Go to: https://predictleads.com/subscriptions.\n    3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.\n    ",
   "List Companies": "List Companies",
   "Retrieve a company": "Retrieve a company",
   "List Job Openings": "List Job Openings",
