@@ -14,7 +14,7 @@ export const deleteVideo = createAction({
   async run({ auth, propsValue }) {
     const { videoId } = propsValue;
 
-    // require a access token with `delete` scope
+    
     const response = await apiRequest({
       auth,
       path: `/videos/${videoId}`,

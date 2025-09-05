@@ -17,7 +17,7 @@ export const vimeo = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/vimeo.png",
   categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: ['privatestefans'],
+  authors: ['privatestefans','sanket-a11y'],
   actions: [
     uploadVideo,
     deleteVideo,

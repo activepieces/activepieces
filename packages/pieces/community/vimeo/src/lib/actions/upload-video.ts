@@ -32,12 +32,12 @@ export const uploadVideo = createAction({
       options: {
         options: [
           { value: 'anybody', label: 'Everybody' },
-          // { value: 'contacts', label: 'Contacts' }, // Deprecated, let's not add this
+          { value: 'contacts', label: 'Contacts' }, 
           { value: 'disable', label: 'Embeddable but hidden' },
           { value: 'nobody', label: 'Only you' },
           { value: 'password', label: 'Password protected' },
           { value: 'unlisted', label: 'Only can be accessed with private link' },
-          // { value: 'users', label: 'Vimeo users' }, // Deprecated, let's not add this
+          { value: 'users', label: 'Vimeo users' }, 
         ],
       },
     }),
