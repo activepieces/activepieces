@@ -5,7 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const updateOOO = createAction({
   name: 'update_OOO',
   displayName: 'Update OOO Request',
-  description: 'Update an existing OOO request',
+  description: 'Updates an existing OOO request.',
   props: {
     OOO_id: Property.ShortText({
       displayName: 'OOO ID',

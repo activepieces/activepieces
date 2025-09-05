@@ -4,8 +4,8 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const OOO = createAction({
   name: 'OOO',
-  displayName: 'OOO',
-  description: 'Create an Out of Office request in Assembled',
+  displayName: 'Create OOO Request',
+  description: 'Create an Out of Office request in Assembled.',
   props: {
     mock_mode: Property.Checkbox({
       displayName: 'Mock Mode',

@@ -5,7 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const timeOffStatusChanged = createTrigger({
   name: 'OOO_status_changed',
   displayName: 'OOO Status Changed',
-  description: 'Triggers on approval/rejection of OOO',
+  description: 'Triggers on approval/rejection of OOO.',
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

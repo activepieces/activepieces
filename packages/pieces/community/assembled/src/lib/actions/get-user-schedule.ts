@@ -5,7 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const getUserSchedule = createAction({
   name: 'get_user_schedule',
   displayName: 'Get User Schedule',
-  description: 'Retrieve user\'s schedule for specified period',
+  description: 'Retrieves user\'s schedule for specified period.',
   props: {
     user_id: Property.ShortText({
       displayName: 'User ID',

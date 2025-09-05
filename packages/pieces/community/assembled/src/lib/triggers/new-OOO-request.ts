@@ -5,7 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newTimeOffRequest = createTrigger({
   name: 'new_OOO_request',
   displayName: 'New OOO Request',
-  description: 'Triggers when a new OOO request is created',
+  description: 'Triggers when a new OOO request is created.',
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

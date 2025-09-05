@@ -5,7 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const scheduleUpdated = createTrigger({
   name: 'schedule_updated',
   displayName: 'Schedule Updated',
-  description: 'Triggers when user schedule is modified',
+  description: 'Triggers when user schedule is modified.',
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {
