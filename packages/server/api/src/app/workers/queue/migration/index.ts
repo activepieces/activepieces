@@ -18,14 +18,14 @@ export const queueMigration = (log: FastifyBaseLogger) => ({
             return
         }
         const migrationLock = await distributedLock.acquireLock({
-            key: 'job_migrations_lock',
+            key: 'job_migration_lock',
             timeout: dayjs.duration(20, 'minute').asMilliseconds(),
             log,
         })
         try {
             if (await needMigration()) {
                 await refillPollingJobs(log).run()
-                await refillRenewWebhookJobs(log).run()
+                    . //  await refillRenewWebhookJobs(log).run()
                 // await refillPausedRuns(log).run()
                 //     await unifyOldQueuesIntoOne(log).run()
                 await updateMigrationVersion()
