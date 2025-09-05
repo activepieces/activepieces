@@ -11,6 +11,10 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import { sendChatMessageAction } from './lib/actions/send-chat-message';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { newChannelMessageTrigger } from './lib/triggers/new-channel-message';
+import { newChatTrigger } from './lib/triggers/new-chat';
+import { newChannelTrigger } from './lib/triggers/new-channel';
+import { newTeamMemberTrigger } from './lib/triggers/new-team-member';
+import { newChatMessageTrigger } from './lib/triggers/new-chat-message';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -105,5 +109,5 @@ export const microsoftTeams = createPiece({
 			}),
 		}),
 	],
-	triggers: [newChannelMessageTrigger],
+	triggers: [newChannelMessageTrigger, newChatTrigger, newChannelTrigger, newTeamMemberTrigger, newChatMessageTrigger],
 });
