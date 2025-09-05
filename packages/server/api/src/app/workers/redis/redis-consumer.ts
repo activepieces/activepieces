@@ -21,6 +21,10 @@ export const redisConsumer = (log: FastifyBaseLogger): ConsumerManager => ({
         const promises = Object.values(consumer).map(consumer => consumer.close())
         await Promise.all(promises)
     },
+    async run(): Promise<void> {
+        const promises = Object.values(consumer).map(consumer => consumer.run())
+        await Promise.all(promises)
+    },
 })
 
 
@@ -36,7 +40,8 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
         connection: createRedisClient(),
         telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
         concurrency: 50,
-        stalledInterval: 300001,
+        autorun: false,
+        stalledInterval: 30000,
     })
 
     await consumer[queueName].waitUntilReady()

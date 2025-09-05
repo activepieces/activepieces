@@ -11,7 +11,9 @@ const emptyConsumer: ConsumerManager = ({
     },
     async close(): Promise<void> {
         // no-op
-
+    },
+    async run(): Promise<void> {
+        // no-op
     },
 })
 export const flowConsumer = (log: FastifyBaseLogger) => systemMode == QueueMode.MEMORY ? emptyConsumer : redisConsumer(log)

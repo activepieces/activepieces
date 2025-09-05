@@ -12,6 +12,7 @@ import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
 import { system } from './helper/system/system'
 import { setupWorker } from './worker'
+import { migrateQueuesAndRunConsumers } from './workers/worker-module'
 
 
 export let app: FastifyInstance | undefined = undefined
@@ -21,6 +22,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
 
     if (system.isApp()) {
         await setupApp(app)
+        await migrateQueuesAndRunConsumers(app)
     }
     if (system.isWorker()) {
         await setupWorker(app)
@@ -30,7 +32,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
 
 async function setupBaseApp(): Promise<FastifyInstance> {
     const MAX_FILE_SIZE_MB = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)
-    const fileSizeLimit =  Math.max(25 * 1024 * 1024, (MAX_FILE_SIZE_MB + 4) * 1024 * 1024)
+    const fileSizeLimit = Math.max(25 * 1024 * 1024, (MAX_FILE_SIZE_MB + 4) * 1024 * 1024)
     const app = fastify({
         disableRequestLogging: true,
         querystringParser: qs.parse,
@@ -51,8 +53,8 @@ async function setupBaseApp(): Promise<FastifyInstance> {
                 formats: {},
             },
         },
-    }) 
-    
+    })
+
     await app.register(fastifyFavicon)
     await app.register(fastifyMultipart, {
         attachFieldsToBody: 'keyValues',
