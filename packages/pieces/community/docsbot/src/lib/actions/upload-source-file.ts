@@ -9,6 +9,7 @@ export const uploadSourceFile = createAction({
   description: 'Upload a file to be used as a source.',
   props: docsbotCommon.uploadSourceFileProperties(),
   async run({ auth: apiKey, propsValue }) {
+    console.log("file:", propsValue.file, typeof propsValue.file);
     await propsValidation.validateZod(
       propsValue,
       docsbotCommon.uploadSourceFileSchema

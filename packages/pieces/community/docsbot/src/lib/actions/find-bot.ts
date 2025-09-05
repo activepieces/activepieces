@@ -18,11 +18,11 @@ export const findBot = createAction({
     });
     const needle = (name ?? '').trim().toLowerCase();
     // Try to find case-insensitive and partial match
-    const bot = teamBots.body.find((bot) =>
+    const bot = teamBots.body.filter((bot) =>
       (bot.name ?? '').toLowerCase().includes(needle)
     );
 
-    if (!bot) {
+    if (bot.length === 0) {
       throw new Error(
         `No bot found with a name containing "${name}" in the selected team.`
       );

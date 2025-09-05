@@ -26,7 +26,7 @@ export const docsbotCommon = {
   baseUrl: 'https://docsbot.ai/api',
   endpoints: {
     askQuestion: ({ teamId, botId }: teamAndBotUrlParams) =>
-      `${docsbotCommon.baseUrl}/teams/${teamId}/bots/${botId}/chat-agent`,
+      `https://api.docsbot.ai/teams/${teamId}/bots/${botId}/chat-agent`,
     createSource: ({ teamId, botId }: teamAndBotUrlParams) =>
       `${docsbotCommon.baseUrl}/teams/${teamId}/bots/${botId}/sources`,
     createBot: (teamId: string) =>

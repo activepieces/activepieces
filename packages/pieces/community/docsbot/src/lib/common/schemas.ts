@@ -1,8 +1,8 @@
 import z from 'zod';
 
 export const askQuestion = {
-  teamId: z.string().uuid(),
-  botId: z.string().uuid(),
+  teamId: z.string(),
+  botId: z.string(),
   conversationId: z.string().uuid('This must be a valid UUID.'),
   question: z.string(),
   metadata: z.object({}).optional(),
@@ -34,7 +34,7 @@ export const createSource = z
     ]),
     title: z.string().optional(),
     url: z.string().url().optional(),
-    file: z.string().url().optional(),
+    file: z.string().optional(),
     faqs: z
       .array(
         z.object({
@@ -85,13 +85,17 @@ export const createSource = z
   });
 
 export const uploadSourceFile = {
-  teamId: z.string().uuid(),
-  botId: z.string().uuid(),
-  file: z.instanceof(Buffer),
+  teamId: z.string(),
+  botId: z.string(),
+  file: z.object({
+    filename: z.string(),
+    data: z.instanceof(Buffer),
+    extension: z.string().optional(),
+  }),
 };
 
 export const createBot = {
-  teamId: z.string().uuid(),
+  teamId: z.string(),
   name: z.string(),
   description: z.string(),
   privacy: z.enum(['public', 'private']),
@@ -106,10 +110,10 @@ export const createBot = {
       'embed-v4.0',
     ])
     .optional(),
-  copyFrom: z.string().uuid().optional(),
+  copyFrom: z.string().optional(),
 };
 
 export const findBot = {
-  teamId: z.string().uuid(),
+  teamId: z.string(),
   name: z.string(),
 };

@@ -39,31 +39,10 @@ const botProperty = ({
   displayName?: string;
   description?: string;
 }) =>
-  Property.Dropdown({
+  Property.ShortText({
     displayName: displayName || 'Bot',
     description: description || 'The bot to use.',
-    required: true,
-    refreshers: ['auth'],
-    options: async ({ auth, teamId }) => {
-      if (!auth || !teamId) {
-        return {
-          disabled: true,
-          placeholder: 'Please select a team first.',
-          options: [],
-        };
-      }
-      const apiKey = auth as string;
-      const bots = await docsbotCommon.listBots({
-        apiKey,
-        teamId: teamId as string,
-      });
-      return {
-        options: bots.body.map((bot) => ({
-          label: bot.name,
-          value: bot.id,
-        })),
-      };
-    },
+    required: true
   });
 
 // Action properties
