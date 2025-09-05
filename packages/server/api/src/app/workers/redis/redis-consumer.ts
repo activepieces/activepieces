@@ -23,7 +23,7 @@ export const redisConsumer = (log: FastifyBaseLogger): ConsumerManager => ({
     },
     async run(): Promise<void> {
         const promises = Object.values(consumer).map(consumer => consumer.run())
-        Promise.all(promises)
+        await Promise.all(promises)
     },
 })
 
