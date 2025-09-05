@@ -7,8 +7,8 @@ import { API_ENDPOINTS, AI_MODELS, FORMALITY_LEVELS, LANGUAGES } from '../common
 export const createSocialMediaCaption = createAction({
   auth: textcortexAuth,
   name: 'create_social_media_caption',
-  displayName: 'Generate Social Media Post',
-  description: 'Generate engaging social media posts for Twitter and LinkedIn with optimized content and hashtags.',
+  displayName: 'Create Social Media Caption',
+  description: 'Generate a caption tailored for a specific social media channel (requires channel and keywords).',
   props: {
     context: Property.LongText({
       displayName: 'Post Context',
@@ -64,42 +64,46 @@ export const createSocialMediaCaption = createAction({
     }),
     target_lang: Property.StaticDropdown({
       displayName: 'Target Language',
-      description: 'The language which the text should be generated in',
+      description: 'The language for the caption',
       required: false,
       defaultValue: 'en',
       options: {
         options: [
           { label: 'English (American)', value: 'en' },
           { label: 'English (British)', value: 'en-gb' },
+          { label: 'Spanish', value: 'es' },
+          { label: 'French', value: 'fr' },
+          { label: 'German', value: 'de' },
           { label: 'Portuguese (Brazilian)', value: 'pt-br' },
           { label: 'Portuguese', value: 'pt' },
-          ...LANGUAGES.filter(lang => !['en', 'pt'].includes(lang.value)),
+          ...LANGUAGES.filter(lang => !['en', 'pt', 'es', 'fr', 'de'].includes(lang.value)),
         ],
       },
     }),
     max_tokens: Property.Number({
       displayName: 'Max Tokens',
-      description: 'The maximum number of tokens to generate',
+      description: 'Maximum length of caption (1-4096 tokens)',
       required: false,
       defaultValue: 2048,
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
-      description: 'The sampling temperature to be used in text generation',
+      description: 'Controls creativity (0.0-2.0). Higher values = more creative, lower = more focused.',
       required: false,
     }),
     n: Property.Number({
       displayName: 'Number of Outputs',
-      description: 'The number of outputs to generate',
+      description: 'How many captions to generate (1-5)',
       required: false,
       defaultValue: 1,
     }),
   },
   async run(context) {
-    const requestBody: any = {
-      context: context.propsValue.context,
-      mode: context.propsValue.mode,
-    };
+    try {
+      const requestBody: any = {
+        context: context.propsValue.context,
+        mode: context.propsValue.mode,
+      };
 
     if (context.propsValue.keywords) {
       requestBody.keywords = context.propsValue.keywords.split(',').map(k => k.trim());
@@ -164,5 +168,21 @@ export const createSocialMediaCaption = createAction({
         timestamp: new Date().toISOString(),
       }
     };
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        throw new Error('Invalid API key. Please check your TextCortex API key.');
+      }
+      if (error.response?.status === 429) {
+        throw new Error('Rate limit exceeded. Please wait and try again or upgrade your TextCortex plan.');
+      }
+      if (error.response?.status === 400) {
+        throw new Error('Invalid request. Please check your input parameters.');
+      }
+      if (error.message?.includes('network') || error.message?.includes('timeout')) {
+        throw new Error('Network error. Please check your connection and try again.');
+      }
+
+      throw new Error(`Caption generation failed: ${error.message || 'Unknown error'}`);
+    }
   },
 });

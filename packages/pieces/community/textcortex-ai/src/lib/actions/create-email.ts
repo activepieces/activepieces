@@ -7,13 +7,13 @@ import { API_ENDPOINTS, AI_MODELS, FORMALITY_LEVELS, LANGUAGES } from '../common
 export const createEmail = createAction({
   auth: textcortexAuth,
   name: 'create_email',
-  displayName: 'Generate Email',
-  description: 'Generate professional emails including replies, cold emails, customer support messages, and more.',
+  displayName: 'Create Email',
+  description: 'Compose an email using context, recipient ("To"), and sender ("From") metadata.',
   props: {
     context: Property.LongText({
       displayName: 'Context',
       description: 'Context of the email. For example, a summary, or a bullet point list',
-      required: false,
+      required: true,
     }),
     mode: Property.StaticDropdown({
       displayName: 'Email Mode',
@@ -93,39 +93,43 @@ export const createEmail = createAction({
     }),
     target_lang: Property.StaticDropdown({
       displayName: 'Target Language',
-      description: 'The language which the text should be generated in',
+      description: 'The language for the email',
       required: false,
       defaultValue: 'en',
       options: {
         options: [
           { label: 'English (American)', value: 'en' },
           { label: 'English (British)', value: 'en-gb' },
+          { label: 'Spanish', value: 'es' },
+          { label: 'French', value: 'fr' },
+          { label: 'German', value: 'de' },
           { label: 'Portuguese (Brazilian)', value: 'pt-br' },
           { label: 'Portuguese', value: 'pt' },
-          ...LANGUAGES.filter(lang => !['en', 'pt'].includes(lang.value)),
+          ...LANGUAGES.filter(lang => !['en', 'pt', 'es', 'fr', 'de'].includes(lang.value)),
         ],
       },
     }),
     max_tokens: Property.Number({
       displayName: 'Max Tokens',
-      description: 'The maximum number of tokens to generate',
+      description: 'Maximum length of email (1-4096 tokens)',
       required: false,
       defaultValue: 2048,
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
-      description: 'The sampling temperature to be used in text generation',
+      description: 'Controls creativity (0.0-2.0). Higher values = more creative, lower = more focused.',
       required: false,
     }),
     n: Property.Number({
       displayName: 'Number of Outputs',
-      description: 'The number of outputs to generate',
+      description: 'How many email drafts to generate (1-5)',
       required: false,
       defaultValue: 1,
     }),
   },
   async run(context) {
-    const requestBody: any = {};
+    try {
+      const requestBody: any = {};
 
     if (context.propsValue.context) {
       requestBody.context = context.propsValue.context;
@@ -220,5 +224,21 @@ export const createEmail = createAction({
         timestamp: new Date().toISOString(),
       }
     };
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        throw new Error('Invalid API key. Please check your TextCortex API key.');
+      }
+      if (error.response?.status === 429) {
+        throw new Error('Rate limit exceeded. Please wait and try again or upgrade your TextCortex plan.');
+      }
+      if (error.response?.status === 400) {
+        throw new Error('Invalid request. Please check your input parameters.');
+      }
+      if (error.message?.includes('network') || error.message?.includes('timeout')) {
+        throw new Error('Network error. Please check your connection and try again.');
+      }
+
+      throw new Error(`Email generation failed: ${error.message || 'Unknown error'}`);
+    }
   },
 });

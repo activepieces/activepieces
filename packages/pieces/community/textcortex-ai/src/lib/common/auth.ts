@@ -13,7 +13,6 @@ Your API key should start with 'gAAAAAB...'`,
   required: true,
   validate: async ({ auth }) => {
     try {
-      // Use a simple v1 API endpoint to validate the key
       await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://api.textcortex.com/v1/texts/completions',
@@ -44,7 +43,6 @@ Your API key should start with 'gAAAAAB...'`,
         };
       }
       if (e.response?.status === 400) {
-        // If we get a 400, the auth worked but our test request was invalid - that's fine
         return { valid: true };
       }
       if (e.message?.toLowerCase().includes('network')) {

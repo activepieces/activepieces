@@ -7,8 +7,8 @@ import { API_ENDPOINTS, FORMALITY_LEVELS, LANGUAGES } from '../common/common';
 export const createTranslation = createAction({
   auth: textcortexAuth,
   name: 'create_translation',
-  displayName: 'Translate Text',
-  description: 'Translate text between 30+ languages with context-aware AI translation and formality control.',
+  displayName: 'Create Translation',
+  description: 'Translate input text into a target language.',
   props: {
     text: Property.LongText({
       displayName: 'Text to Translate',
@@ -23,9 +23,12 @@ export const createTranslation = createAction({
         options: [
           { label: 'English (American)', value: 'en' },
           { label: 'English (British)', value: 'en-gb' },
+          { label: 'Spanish', value: 'es' },
+          { label: 'French', value: 'fr' },
+          { label: 'German', value: 'de' },
           { label: 'Portuguese (Brazilian)', value: 'pt-br' },
           { label: 'Portuguese', value: 'pt' },
-          ...LANGUAGES.filter(lang => !['en', 'pt'].includes(lang.value)),
+          ...LANGUAGES.filter(lang => !['en', 'pt', 'es', 'fr', 'de'].includes(lang.value)),
         ],
       },
     }),
@@ -53,10 +56,11 @@ export const createTranslation = createAction({
     }),
   },
   async run(context) {
-    const requestBody: any = {
-      text: context.propsValue.text,
-      target_lang: context.propsValue.target_lang,
-    };
+    try {
+      const requestBody: any = {
+        text: context.propsValue.text,
+        target_lang: context.propsValue.target_lang,
+      };
 
     if (context.propsValue.source_lang && context.propsValue.source_lang !== 'en') {
       requestBody.source_lang = context.propsValue.source_lang;
@@ -79,6 +83,7 @@ export const createTranslation = createAction({
       success: true,
       original_text: context.propsValue.text,
       translated_text: translatedText,
+      remaining_credits: response.body.data?.remaining_credits,
       metadata: {
         source_language: context.propsValue.source_lang || 'en',
         target_language: context.propsValue.target_lang,
@@ -86,5 +91,21 @@ export const createTranslation = createAction({
         timestamp: new Date().toISOString(),
       }
     };
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        throw new Error('Invalid API key. Please check your TextCortex API key.');
+      }
+      if (error.response?.status === 429) {
+        throw new Error('Rate limit exceeded. Please wait and try again or upgrade your TextCortex plan.');
+      }
+      if (error.response?.status === 400) {
+        throw new Error('Invalid request. Please check your input parameters.');
+      }
+      if (error.message?.includes('network') || error.message?.includes('timeout')) {
+        throw new Error('Network error. Please check your connection and try again.');
+      }
+
+      throw new Error(`Translation failed: ${error.message || 'Unknown error'}`);
+    }
   },
 });

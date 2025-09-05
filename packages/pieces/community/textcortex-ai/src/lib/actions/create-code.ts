@@ -7,8 +7,8 @@ import { PROGRAMMING_LANGUAGES, API_ENDPOINTS, AI_MODELS } from '../common/commo
 export const createCode = createAction({
   auth: textcortexAuth,
   name: 'create_code',
-  displayName: 'Generate Code',
-  description: 'Generate code in various programming languages using AI. Supports Python, JavaScript, Java, Go, PHP, and JS Regex.',
+  displayName: 'Create Code',
+  description: 'Generate code in a specified programming language based on instructions.',
   props: {
     text: Property.LongText({
       displayName: 'Code Instructions',
@@ -34,27 +34,28 @@ export const createCode = createAction({
     }),
     max_tokens: Property.Number({
       displayName: 'Max Tokens',
-      description: 'The maximum number of tokens to generate',
+      description: 'Maximum length of generated code (1-4096 tokens)',
       required: false,
       defaultValue: 2048,
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
-      description: 'The sampling temperature to be used in text generation',
+      description: 'Controls creativity (0.0-2.0). Higher values = more creative, lower = more focused.',
       required: false,
     }),
     n: Property.Number({
       displayName: 'Number of Outputs',
-      description: 'The number of outputs to generate',
+      description: 'How many code snippets to generate (1-5)',
       required: false,
       defaultValue: 1,
     }),
   },
   async run(context) {
-    const requestBody: any = {
-      text: context.propsValue.text,
-      mode: context.propsValue.mode,
-    };
+    try {
+      const requestBody: any = {
+        text: context.propsValue.text,
+        mode: context.propsValue.mode,
+      };
 
     if (context.propsValue.model && context.propsValue.model !== 'gemini-2-0-flash') {
       requestBody.model = context.propsValue.model;
@@ -99,5 +100,21 @@ export const createCode = createAction({
         timestamp: new Date().toISOString(),
       }
     };
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        throw new Error('Invalid API key. Please check your TextCortex API key.');
+      }
+      if (error.response?.status === 429) {
+        throw new Error('Rate limit exceeded. Please wait and try again or upgrade your TextCortex plan.');
+      }
+      if (error.response?.status === 400) {
+        throw new Error('Invalid request. Please check your input parameters.');
+      }
+      if (error.message?.includes('network') || error.message?.includes('timeout')) {
+        throw new Error('Network error. Please check your connection and try again.');
+      }
+
+      throw new Error(`Code generation failed: ${error.message || 'Unknown error'}`);
+    }
   },
 });

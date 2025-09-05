@@ -8,7 +8,7 @@ export const createSummary = createAction({
   auth: textcortexAuth,
   name: 'create_summary',
   displayName: 'Create Summary',
-  description: 'Summarize given text using TextCortex AI.',
+  description: 'Summarize input text to concise form.',
   props: {
     text: Property.LongText({
       displayName: 'Text to Summarize',
@@ -65,39 +65,47 @@ export const createSummary = createAction({
     }),
     target_lang: Property.StaticDropdown({
       displayName: 'Target Language',
-      description: 'The language which the text should be generated in',
+      description: 'The language for the summary',
       required: false,
       defaultValue: 'en',
       options: {
         options: [
           { label: 'English (American)', value: 'en' },
           { label: 'English (British)', value: 'en-gb' },
+          { label: 'Spanish', value: 'es' },
+          { label: 'French', value: 'fr' },
+          { label: 'German', value: 'de' },
           { label: 'Portuguese (Brazilian)', value: 'pt-br' },
           { label: 'Portuguese', value: 'pt' },
-          ...LANGUAGES.filter(lang => !['en', 'pt'].includes(lang.value)),
+          ...LANGUAGES.filter(lang => !['en', 'pt', 'es', 'fr', 'de'].includes(lang.value)),
         ],
       },
     }),
     max_tokens: Property.Number({
       displayName: 'Max Tokens',
-      description: 'The maximum number of tokens to generate',
+      description: 'Maximum length of summary (1-4096 tokens)',
       required: false,
       defaultValue: 2048,
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
-      description: 'The sampling temperature to be used in text generation',
+      description: 'Controls creativity (0.0-2.0). Higher values = more creative, lower = more focused.',
       required: false,
     }),
     n: Property.Number({
       displayName: 'Number of Outputs',
-      description: 'The number of outputs to generate',
+      description: 'How many summaries to generate (1-5)',
       required: false,
       defaultValue: 1,
     }),
   },
   async run(context) {
-    const requestBody: any = {};
+    try {
+      if (!context.propsValue.text && !context.propsValue.file_id) {
+        throw new Error('Please provide either "Text to Summarize" or "File ID" to create a summary.');
+      }
+
+      const requestBody: any = {};
 
     if (context.propsValue.text) {
       requestBody.text = context.propsValue.text;
@@ -170,5 +178,21 @@ export const createSummary = createAction({
         timestamp: new Date().toISOString(),
       }
     };
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        throw new Error('Invalid API key. Please check your TextCortex API key.');
+      }
+      if (error.response?.status === 429) {
+        throw new Error('Rate limit exceeded. Please wait and try again or upgrade your TextCortex plan.');
+      }
+      if (error.response?.status === 400) {
+        throw new Error('Invalid request. Please check your input parameters.');
+      }
+      if (error.message?.includes('network') || error.message?.includes('timeout')) {
+        throw new Error('Network error. Please check your connection and try again.');
+      }
+
+      throw new Error(`Summary generation failed: ${error.message || 'Unknown error'}`);
+    }
   },
 });

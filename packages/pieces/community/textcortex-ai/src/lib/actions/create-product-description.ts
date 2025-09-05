@@ -7,8 +7,8 @@ import { API_ENDPOINTS, AI_MODELS, FORMALITY_LEVELS, LANGUAGES } from '../common
 export const createProductDescription = createAction({
   auth: textcortexAuth,
   name: 'create_product_description',
-  displayName: 'Generate Product Description',
-  description: 'Generate compelling product descriptions with features, benefits, and SEO-optimized content for e-commerce.',
+  displayName: 'Create Product Description',
+  description: 'Create a product description using details like name, brand, category, features, keywords.',
   props: {
     name: Property.ShortText({
       displayName: 'Product Name',
@@ -68,39 +68,43 @@ export const createProductDescription = createAction({
     }),
     target_lang: Property.StaticDropdown({
       displayName: 'Target Language',
-      description: 'The language which the text should be generated in',
+      description: 'The language for the product description',
       required: false,
       defaultValue: 'en',
       options: {
         options: [
           { label: 'English (American)', value: 'en' },
           { label: 'English (British)', value: 'en-gb' },
+          { label: 'Spanish', value: 'es' },
+          { label: 'French', value: 'fr' },
+          { label: 'German', value: 'de' },
           { label: 'Portuguese (Brazilian)', value: 'pt-br' },
           { label: 'Portuguese', value: 'pt' },
-          ...LANGUAGES.filter(lang => !['en', 'pt'].includes(lang.value)),
+          ...LANGUAGES.filter(lang => !['en', 'pt', 'es', 'fr', 'de'].includes(lang.value)),
         ],
       },
     }),
     max_tokens: Property.Number({
       displayName: 'Max Tokens',
-      description: 'The maximum number of tokens to generate',
+      description: 'Maximum length of product description (1-4096 tokens)',
       required: false,
       defaultValue: 2048,
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
-      description: 'The sampling temperature to be used in text generation',
+      description: 'Controls creativity (0.0-2.0). Higher values = more creative, lower = more focused.',
       required: false,
     }),
     n: Property.Number({
       displayName: 'Number of Outputs',
-      description: 'The number of outputs to generate',
+      description: 'How many descriptions to generate (1-5)',
       required: false,
       defaultValue: 1,
     }),
   },
   async run(context) {
-    const requestBody: any = {};
+    try {
+      const requestBody: any = {};
 
     if (context.propsValue.name) {
       requestBody.name = context.propsValue.name;
@@ -182,5 +186,21 @@ export const createProductDescription = createAction({
         timestamp: new Date().toISOString(),
       }
     };
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        throw new Error('Invalid API key. Please check your TextCortex API key.');
+      }
+      if (error.response?.status === 429) {
+        throw new Error('Rate limit exceeded. Please wait and try again or upgrade your TextCortex plan.');
+      }
+      if (error.response?.status === 400) {
+        throw new Error('Invalid request. Please check your input parameters.');
+      }
+      if (error.message?.includes('network') || error.message?.includes('timeout')) {
+        throw new Error('Network error. Please check your connection and try again.');
+      }
+
+      throw new Error(`Product description generation failed: ${error.message || 'Unknown error'}`);
+    }
   },
 });
