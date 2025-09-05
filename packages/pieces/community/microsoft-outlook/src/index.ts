@@ -3,9 +3,19 @@ import { createPiece, OAuth2PropertyValue } from '@activepieces/pieces-framework
 import { PieceCategory } from '@activepieces/shared';
 import { downloadAttachmentAction } from './lib/actions/download-email-attachment';
 import { sendEmailAction } from './lib/actions/send-email';
+import { replyEmailAction } from './lib/actions/reply-email';
+import { createDraftEmailAction } from './lib/actions/create-draft-email';
+import { sendDraftEmailAction } from './lib/actions/send-draft-email';
+import { forwardEmailAction } from './lib/actions/forward-email';
+import { addLabelToEmailAction } from './lib/actions/add-label-to-email';
+import { removeLabelFromEmailAction } from './lib/actions/remove-label-from-email';
+import { moveEmailToFolderAction } from './lib/actions/move-email-to-folder';
+import { findEmailAction } from './lib/actions/find-email';
 import { microsoftOutlookAuth } from './lib/common/auth';
 import { newEmailTrigger } from './lib/triggers/new-email';
-import { replyEmailAction } from './lib/actions/reply-email';
+import { newAttachmentTrigger } from './lib/triggers/new-attachment';
+import { newMatchedEmailTrigger } from './lib/triggers/new-matched-email';
+import { newEmailInFolderTrigger } from './lib/triggers/new-email-in-folder';
 export const microsoftOutlook = createPiece({
 	displayName: 'Microsoft Outlook',
 	auth: microsoftOutlookAuth,
@@ -17,6 +27,13 @@ export const microsoftOutlook = createPiece({
 		sendEmailAction,
 		downloadAttachmentAction,
 		replyEmailAction,
+		createDraftEmailAction,
+		sendDraftEmailAction,
+		forwardEmailAction,
+		addLabelToEmailAction,
+		removeLabelFromEmailAction,
+		moveEmailToFolderAction,
+		findEmailAction,
 		createCustomApiCallAction({
 			auth: microsoftOutlookAuth,
 			baseUrl: () => 'https://graph.microsoft.com/v1.0/',
@@ -25,5 +42,10 @@ export const microsoftOutlook = createPiece({
 			}),
 		}),
 	],
-	triggers: [newEmailTrigger],
+	triggers: [
+		newEmailTrigger,
+		newAttachmentTrigger,
+		newMatchedEmailTrigger,
+		newEmailInFolderTrigger,
+	],
 });
