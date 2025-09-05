@@ -39,7 +39,7 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
     }, {
         connection: createRedisClient(),
         telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
-        concurrency: 50,
+        concurrency: 60,
         autorun: false,
         stalledInterval: 30000,
     })
