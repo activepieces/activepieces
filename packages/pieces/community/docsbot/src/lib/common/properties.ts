@@ -56,12 +56,6 @@ export const askQuestion = () => ({
     description:
       'The question to ask the bot. 2 to 500 characters. Max increased to 8K tokens (roughtly 32k chars) when authenticated.',
   }),
-  conversationId: Property.ShortText({
-    displayName: 'Conversation ID',
-    description:
-      'The conversation ID to maintain the chat. This should be a UUID that you generate on your side and change to start a new conversation.',
-    required: true,
-  }),
   metadata: Property.Object({
     displayName: 'Metadata',
     description:

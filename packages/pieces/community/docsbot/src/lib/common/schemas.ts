@@ -3,7 +3,6 @@ import z from 'zod';
 export const askQuestion = {
   teamId: z.string(),
   botId: z.string(),
-  conversationId: z.string().uuid('This must be a valid UUID.'),
   question: z.string(),
   metadata: z.object({}).optional(),
   context_items: z.number().min(1).optional(),
