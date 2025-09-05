@@ -360,12 +360,19 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const flowRun = await this.getOneOrThrow(params)
         let steps = {}
         if (!isNil(flowRun.logsFileId)) {
-            const { data } = await fileService(log).getDataOrThrow({
+            const file = await fileService(log).getDataOrUndefined({
                 fileId: flowRun.logsFileId,
                 projectId: flowRun.projectId,
             })
 
-            const serializedExecutionOutput = data.toString('utf-8')
+            if (isNil(file)) {
+                return {
+                    ...flowRun,
+                    steps: {},
+                }
+            }
+
+            const serializedExecutionOutput = file.data.toString('utf-8')
             const executionOutput: ExecutioOutputFile = JSON.parse(
                 serializedExecutionOutput,
             )
