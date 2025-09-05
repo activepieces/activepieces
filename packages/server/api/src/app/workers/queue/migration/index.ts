@@ -12,25 +12,24 @@ import { unifyOldQueuesIntoOne } from './unify-old-queues-to-one'
 const QUEUE_MIGRATION_VERSION = '1'
 const QUEUE_MIGRATION_KEY = 'worker_jobs_version'
 const queueMode = system.getOrThrow(AppSystemProp.QUEUE_MODE)
-
 export const queueMigration = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {
-        if (await needMigration()) {
-            const migrationLock = await distributedLock.acquireLock({
-                key: 'jobs_lock',
-                timeout: dayjs.duration(5, 'minute').asMilliseconds(),
-                log,
-            })
-            try {
+        const migrationLock = await distributedLock.acquireLock({
+            key: 'job_migration_lock',
+            timeout: dayjs.duration(5, 'minute').asMilliseconds(),
+            log,
+        })
+        try {
+            if (await needMigration()) {
                 await refillPollingJobs(log).run()
                 await refillRenewWebhookJobs(log).run()
                 await refillPausedRuns(log).run()
                 await unifyOldQueuesIntoOne(log).run()
                 await updateMigrationVersion()
             }
-            finally {
-                await migrationLock.release()
-            }
+        }
+        finally {
+            await migrationLock.release()
         }
     },
 })
