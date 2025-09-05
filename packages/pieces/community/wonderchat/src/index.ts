@@ -2,6 +2,10 @@ import { createPiece } from "@activepieces/pieces-framework";
 import { PieceCategory } from '@activepieces/shared';
 import { wonderchatAuth } from './lib/common/auth';
 import { newUserMessage } from './lib/triggers/new-user-message';
+import { addPage } from './lib/actions/add-page';
+import { askQuestion } from './lib/actions/ask-question';
+import { addTag } from './lib/actions/add-tag';
+import { removeTag } from './lib/actions/remove-tag';
 
 export const wonderchat = createPiece({
   displayName: "WonderChat",
@@ -11,6 +15,6 @@ export const wonderchat = createPiece({
   logoUrl: "https://cdn.activepieces.com/pieces/wonderchat.png",
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.COMMUNICATION],
   authors: [],
-  actions: [],
+  actions: [addPage, askQuestion, addTag, removeTag],
   triggers: [newUserMessage],
 });
