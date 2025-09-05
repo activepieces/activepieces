@@ -27,7 +27,6 @@ props: {
     // eslint-disable-next-line prefer-const
     let { teamId, botId, conversationId, question } = propsValue;
 
-    // ✅ If no conversationId provided, generate one
     if (!conversationId) {
       conversationId = randomUUID();
     }
@@ -40,7 +39,7 @@ props: {
         'Content-Type': 'application/json',
       },
       body: {
-        conversationId, // always required
+        conversationId,
         question,
         human_escalation: false,
         followup_rating: false,
