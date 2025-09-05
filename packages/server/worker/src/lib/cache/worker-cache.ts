@@ -1,7 +1,7 @@
-import { exceptionHandler } from '@activepieces/server-shared'
-import { FastifyBaseLogger } from 'fastify'
 import { readdir, rm } from 'fs/promises'
 import path from 'path'
+import { exceptionHandler } from '@activepieces/server-shared'
+import { FastifyBaseLogger } from 'fastify'
 
 export const LATEST_CACHE_VERSION = 'v3'
 export const GLOBAL_CACHE_ALL_VERSIONS_PATH = path.resolve('cache')
@@ -32,6 +32,6 @@ export const workerCache = (log: FastifyBaseLogger) => ({
         catch (error) {
             exceptionHandler.handle(error, log)
         }
-    }
+    },
 })
 

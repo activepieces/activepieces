@@ -10,8 +10,8 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
 import { PackageInfo, packageManager } from '../cache/package-manager'
-import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
 import { CacheState } from '../cache/worker-cache'
+import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
 
 export class RegistryPieceManager extends PieceManager {
     protected override async installDependencies({

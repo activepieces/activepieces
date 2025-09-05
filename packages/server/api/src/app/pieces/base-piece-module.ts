@@ -1,5 +1,5 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { apVersionUtil, UserInteractionJobType } from '@activepieces/server-shared'
+import { apVersionUtil } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
@@ -15,6 +15,7 @@ import {
     PieceOptionRequest,
     PrincipalType,
     SampleDataFileType,
+    WorkerJobType,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -140,7 +141,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             })
             const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
             const { result } = await userInteractionWatcher(req.log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
-                jobType: UserInteractionJobType.EXECUTE_PROPERTY,
+                jobType: WorkerJobType.EXECUTE_PROPERTY,
+                platformId: platform.id,
                 projectId,
                 flowVersion: flow.version,
                 propertyName: req.body.propertyName,

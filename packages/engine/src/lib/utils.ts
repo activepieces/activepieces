@@ -20,25 +20,22 @@ export const utils = {
             throw Error((e as Error).message)
         }
     },
-
-
-  
     async walk(dirPath: string): Promise<FileEntry[]> {
         const entries: FileEntry[] = []
-        
+
         async function walkRecursive(currentPath: string) {
             try {
                 const items = await fs.readdir(currentPath, { withFileTypes: true })
-                
+
                 for (const item of items) {
                     const fullPath = path.join(currentPath, item.name)
                     const absolutePath = path.resolve(fullPath)
-                    
+
                     entries.push({
                         name: item.name,
                         path: absolutePath,
                     })
-                    
+
                     if (item.isDirectory()) {
                         await walkRecursive(fullPath)
                     }
@@ -48,7 +45,7 @@ export const utils = {
                 // Skip directories that can't be read
             }
         }
-        
+
         await walkRecursive(dirPath)
         return entries
     },
@@ -104,4 +101,4 @@ export type HookResponse = {
     type: 'none'
     tags: string[]
 }
-type CreateConnectionManagerParams =  { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties' } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse }
+type CreateConnectionManagerParams = { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties' } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse }

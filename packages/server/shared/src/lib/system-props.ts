@@ -3,7 +3,6 @@ import axios from 'axios'
 
 export const systemConstants = {
     PACKAGE_ARCHIVE_PATH: 'cache/archives',
-    POLLING_POOL_SIZE: 5,
     ENGINE_EXECUTABLE_PATH: 'dist/packages/engine/main.js',
 }
 
@@ -152,9 +151,7 @@ export enum WorkerSystemProp {
     FRONTEND_URL = 'FRONTEND_URL',
 
     // Optional
-    FLOW_WORKER_CONCURRENCY = 'FLOW_WORKER_CONCURRENCY',
-    SCHEDULED_WORKER_CONCURRENCY = 'SCHEDULED_WORKER_CONCURRENCY',
-    AGENTS_WORKER_CONCURRENCY = 'AGENTS_WORKER_CONCURRENCY',
+    WORKER_CONCURRENCY = 'WORKER_CONCURRENCY',
 }
 
 

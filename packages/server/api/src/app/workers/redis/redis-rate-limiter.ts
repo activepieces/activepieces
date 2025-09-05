@@ -1,5 +1,5 @@
-import { AppSystemProp, JobType, OneTimeJobData, QueueName, WebhookJobData } from '@activepieces/server-shared'
-import { apId, assertNotNullOrUndefined, assertNull, isNil } from '@activepieces/shared'
+import { AppSystemProp } from '@activepieces/server-shared'
+import { apId, assertNotNullOrUndefined, assertNull, isNil, OneTimeJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue, Worker } from 'bullmq'
 import dayjs from 'dayjs'
 
@@ -8,7 +8,7 @@ import { Redis } from 'ioredis'
 import { createRedisClient, getRedisConnection } from '../../database/redis-connection'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
-import { AddParams, RATE_LIMIT_PRIORITY } from '../queue/queue-manager'
+import { AddJobParams, JobType, RATE_LIMIT_PRIORITY } from '../queue/queue-manager'
 import { redisQueue } from './redis-queue'
 
 
@@ -16,7 +16,7 @@ const RATE_LIMIT_QUEUE_NAME = 'rateLimitJobs'
 const CLEANUP_QUEUE_NAME = 'cleanupJobs'
 const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
 const PROJECT_RATE_LIMITER_ENABLED = system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED)
-const SUPPORTED_QUEUES = [QueueName.ONE_TIME, QueueName.WEBHOOK]
+const SUPPORTED_QUEUES = [WorkerJobType.EXECUTE_FLOW]
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const FLOW_TIMEOUT_IN_MILLISECONDS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS), 'seconds').add(1, 'minute').asMilliseconds()
 
@@ -62,7 +62,7 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         )
         await cleanupQueue.waitUntilReady()
 
-        worker = new Worker<AddParams<JobType.ONE_TIME | JobType.WEBHOOK>>(RATE_LIMIT_QUEUE_NAME,
+        worker = new Worker<AddJobParams<JobType>>(RATE_LIMIT_QUEUE_NAME,
             async (job) => redisQueue(log).add({
                 ...job.data,
                 priority: RATE_LIMIT_PRIORITY,
@@ -87,7 +87,7 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         await cleanupWorker.waitUntilReady()
     },
 
-    async rateLimitJob(params: AddParams<JobType>): Promise<void> {
+    async rateLimitJob(params: AddJobParams<JobType>): Promise<void> {
         assertNotNullOrUndefined(queue, 'Queue is not initialized')
         const id = apId()
         await queue.add(id, params, {
@@ -96,7 +96,7 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async onCompleteOrFailedJob(queueName: QueueName, job: Job<WebhookJobData | OneTimeJobData>): Promise<void> {
+    async onCompleteOrFailedJob(queueName: WorkerJobType, job: Job<WebhookJobData | OneTimeJobData>): Promise<void> {
         if (!SUPPORTED_QUEUES.includes(queueName) || !PROJECT_RATE_LIMITER_ENABLED || isNil(job.id)) {
             return
         }

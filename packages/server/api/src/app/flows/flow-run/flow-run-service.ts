@@ -40,7 +40,6 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
-import { getJobPriority } from '../../workers/queue/queue-manager'
 import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
@@ -274,12 +273,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             log,
         })
 
-        const priority = await getJobPriority(synchronousHandlerId)
         await flowRunSideEffects(log).start({
             flowRun,
             httpRequestId,
             payload,
-            priority,
+            priority: !isNil(synchronousHandlerId) ? 'medium' : 'low',
             synchronousHandlerId,
             executeTrigger,
             executionType,
