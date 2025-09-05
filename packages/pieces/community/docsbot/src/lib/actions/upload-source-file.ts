@@ -47,6 +47,7 @@ export const uploadSourceFile = createAction({
   async run({ propsValue, auth }) {
     const { teamId, botId, fileName, fileContent, type, title, url } = propsValue;
 
+   
     const presigned = await httpClient.sendRequest<{
       url: string;
       file: string;
@@ -65,9 +66,9 @@ export const uploadSourceFile = createAction({
       method: HttpMethod.PUT,
       url: uploadUrl,
       headers: {
-        "Content-Type": "application/octet-stream",
+         "Content-Type": "application/octet-stream",
       },
-      body: fileContent,
+      body: fileContent.data, // Buffer data
     });
 
     const createSourceResp = await httpClient.sendRequest({
@@ -79,12 +80,19 @@ export const uploadSourceFile = createAction({
       },
       body: {
         type,
-        title,
         file: filePath,
+        ...(title ? { title } : {}),
         ...(url ? { url } : {}),
       },
     });
 
-    return createSourceResp.body;
+    return {
+      success: true,
+      uploadedFile: {
+        name: fileName,
+        path: filePath,
+      },
+      source: createSourceResp.body,
+    };
   },
 });

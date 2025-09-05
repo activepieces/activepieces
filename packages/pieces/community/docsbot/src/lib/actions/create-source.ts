@@ -43,7 +43,7 @@ export const createSource = createAction({
       displayName: "File Path",
       description:
         "Required for urls, csv, document, or wp types. Usually the cloud storage path returned by GET /upload-url.",
-      required: false,
+      required: true,
     }),
     faqs: Property.Json({
       displayName: "FAQs",
