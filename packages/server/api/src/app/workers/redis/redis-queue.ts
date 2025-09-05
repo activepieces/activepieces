@@ -49,6 +49,9 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
                 }, {
                     name: data.flowVersionId,
                     data,
+                    opts: {
+                        priority: JOB_PRIORITY[params.priority ?? getDefaultJobPriority(data)],
+                    },
                 })
                 break
             }
