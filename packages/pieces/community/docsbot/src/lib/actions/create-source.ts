@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { DocsBotAuth } from '../common/auth';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { docsbotCommon } from '../common/dropdown';
+import { makeRequest } from '../common/client';
 
 export const createSource = createAction({
   auth: DocsBotAuth,
@@ -65,13 +66,11 @@ export const createSource = createAction({
     }),
   },
 
-  async run({ propsValue, auth }) {
+async run({ propsValue, auth }) {
     const { teamId, botId, type, title, url, file, faqs, scheduleInterval } =
       propsValue;
 
-    const body: Record<string, any> = {
-      type,
-    };
+    const body: Record<string, any> = { type };
 
     if (title) body['title'] = title;
     if (url) body['url'] = url;
@@ -79,17 +78,14 @@ export const createSource = createAction({
     if (faqs) body['faqs'] = faqs;
     if (scheduleInterval) body['scheduleInterval'] = scheduleInterval;
 
-    const request = {
-      method: HttpMethod.POST,
-      url: `https://docsbot.ai/api/teams/${teamId}/bots/${botId}/sources`,
-      headers: {
-        Authorization: `Bearer ${auth}`,
-        "Content-Type": "application/json",
-      },
-      body,
-    };
+    const response = await makeRequest(
+      auth,
+      HttpMethod.POST,
+      `/api/teams/${teamId}/bots/${botId}/sources`,
+      undefined,
+      body
+    );
 
-    const response = await httpClient.sendRequest(request);
-    return response.body;
+    return response;
   },
 });

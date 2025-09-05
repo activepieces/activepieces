@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { DocsBotAuth } from '../common/auth';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { docsbotCommon } from '../common/dropdown';
+import { makeRequest } from '../common/client';
 
 export const createBot = createAction({
   auth: DocsBotAuth,
@@ -31,27 +32,34 @@ export const createBot = createAction({
         ],
       },
     }),
-    language: Property.StaticDropdown({
-      displayName: "Language",
-      description: "Choose the language for your bot.",
-      required: true,
+    language: docsbotCommon.language,
+
+    model: Property.StaticDropdown({
+      displayName: "Model",
+      description:
+        "Select the LLM model. GPT-4.1 offers advanced long-context and reasoning; GPT-4o is multimodal with strong performance.",
+      required: false,
       options: {
         options: [
-          { label: "English", value: "en" },
-          { label: "Japanese", value: "jp" },
+          { label: "GPT-4.1", value: "gpt-4.1" },
+          { label: "GPT-4o", value: "gpt-4o" },
         ],
       },
     }),
-    model: Property.ShortText({
-      displayName: "Model",
-      description: "The OpenAI model (e.g., gpt-4.1, gpt-4o, gpt-4o-mini).",
-      required: false,
-    }),
-    embeddingModel: Property.ShortText({
+    embeddingModel: Property.StaticDropdown({
       displayName: "Embedding Model",
       description:
-        "Embedding model (e.g., text-embedding-3-large, text-embedding-3-small, embed-v4.0).",
+        "Select the embedding model: small for efficiency, large for English accuracy, or multilingual models.",
       required: false,
+      options: {
+        options: [
+          { label: "text-embedding-3-small", value: "text-embedding-3-small" },
+          { label: "text-embedding-3-large", value: "text-embedding-3-large" },
+          { label: "text-embedding-ada-002", value: "text-embedding-ada-002" },
+          { label: "embed-multilingual-v3.0", value: "embed-multilingual-v3.0" },
+          { label: "embed-v4.0", value: "embed-v4.0" },
+        ],
+      },
     }),
     copyFrom: Property.ShortText({
       displayName: "Copy From Bot ID",
@@ -61,28 +69,36 @@ export const createBot = createAction({
   },
 
   async run({ propsValue, auth }) {
-    const { teamId, name, description, privacy, language, model, embeddingModel, copyFrom } =
-      propsValue;
+    const {
+      teamId,
+      name,
+      description,
+      privacy,
+      language,
+      model,
+      embeddingModel,
+      copyFrom,
+    } = propsValue;
 
-    const request = {
-      method: HttpMethod.POST,
-      url: `https://docsbot.ai/api/teams/${teamId}/bots`,
-      headers: {
-        Authorization: `Bearer ${auth}`,
-        "Content-Type": "application/json",
-      },
-      body: {
-        name,
-        description,
-        privacy,
-        language,
-        ...(model ? { model } : {}),
-        ...(embeddingModel ? { embeddingModel } : {}),
-        ...(copyFrom ? { copyFrom } : {}),
-      },
+    const body: Record<string, any> = {
+      name,
+      description,
+      privacy,
+      language,
     };
 
-    const response = await httpClient.sendRequest(request);
-    return response.body;
+    if (model) body['model'] = model;
+    if (embeddingModel) body['embeddingModel'] = embeddingModel;
+    if (copyFrom) body['copyFrom'] = copyFrom;
+
+    const response = await makeRequest(
+      auth,
+      HttpMethod.POST,
+      `/api/teams/${teamId}/bots`,
+      undefined,
+      body
+    );
+
+    return response;
   },
 });

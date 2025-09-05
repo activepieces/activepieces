@@ -12,7 +12,7 @@ export const docsbot = createPiece({
   auth: DocsBotAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/docsbot.png",
-  authors: ["NiketNannavare"],
+  authors: ["Niket2035"],
   actions: [askQuestion,createBot,createSource,uploadSourceFile,findBot],
   triggers: [],
 });

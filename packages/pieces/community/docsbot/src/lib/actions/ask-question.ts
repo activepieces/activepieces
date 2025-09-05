@@ -9,7 +9,7 @@ export const askQuestion = createAction({
   name: 'askQuestion',
   displayName: 'Ask Question',
   description: 'Ask a question to a specific bot and get an answer based on its sources.',
-props: {
+  props: {
     teamId: docsbotCommon.teamId,
     botId: docsbotCommon.botId,
     conversationId: Property.ShortText({
@@ -24,12 +24,9 @@ props: {
     }),
   },
   async run({ auth, propsValue }) {
-    // eslint-disable-next-line prefer-const
-    let { teamId, botId, conversationId, question } = propsValue;
+    const { teamId, botId, question } = propsValue;
+    const conversationId = propsValue.conversationId ?? randomUUID();
 
-    if (!conversationId) {
-      conversationId = randomUUID();
-    }
 
     const request = {
       method: HttpMethod.POST,

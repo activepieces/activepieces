@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { DocsBotAuth } from '../common/auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { docsbotCommon } from '../common/dropdown';
+import { makeRequest } from '../common/client';
 
 export const uploadSourceFile = createAction({
   auth: DocsBotAuth,
@@ -47,44 +48,37 @@ export const uploadSourceFile = createAction({
   async run({ propsValue, auth }) {
     const { teamId, botId, fileName, fileContent, type, title, url } = propsValue;
 
-   
-    const presigned = await httpClient.sendRequest<{
-      url: string;
-      file: string;
-    }>({
-      method: HttpMethod.GET,
-      url: `https://docsbot.ai/api/teams/${teamId}/bots/${botId}/upload-url?fileName=${encodeURIComponent(fileName)}`,
-      headers: {
-        Authorization: `Bearer ${auth}`,
-      },
-    });
+    const presigned = await makeRequest(
+      auth,
+      HttpMethod.GET,
+      `/api/teams/${teamId}/bots/${botId}/upload-url`,
+      { fileName: encodeURIComponent(fileName) }
+    );
 
-    const uploadUrl = presigned.body.url;
-    const filePath = presigned.body.file;
+    const uploadUrl = presigned.url;
+    const filePath = presigned.file;
 
     await httpClient.sendRequest({
       method: HttpMethod.PUT,
       url: uploadUrl,
       headers: {
-         "Content-Type": "application/octet-stream",
+        'Content-Type': 'application/octet-stream',
       },
-      body: fileContent.data, // Buffer data
+      body: fileContent.data,
     });
 
-    const createSourceResp = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://docsbot.ai/api/teams/${teamId}/bots/${botId}/sources`,
-      headers: {
-        Authorization: `Bearer ${auth}`,
-        "Content-Type": "application/json",
-      },
-      body: {
+    const source = await makeRequest(
+      auth,
+      HttpMethod.POST,
+      `/api/teams/${teamId}/bots/${botId}/sources`,
+      undefined,
+      {
         type,
         file: filePath,
         ...(title ? { title } : {}),
         ...(url ? { url } : {}),
-      },
-    });
+      }
+    );
 
     return {
       success: true,
@@ -92,7 +86,7 @@ export const uploadSourceFile = createAction({
         name: fileName,
         path: filePath,
       },
-      source: createSourceResp.body,
+      source,
     };
   },
 });
