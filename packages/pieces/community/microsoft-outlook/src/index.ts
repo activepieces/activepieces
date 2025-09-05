@@ -9,11 +9,16 @@ import { removeLabelFromEmailAction } from './lib/actions/remove-label-from-emai
 import { moveEmailToFolderAction } from './lib/actions/move-email-to-folder';
 import { sendDraftEmailAction } from './lib/actions/send-draft-email';
 import { forwardEmailAction } from './lib/actions/forward-email';
+import { findEmailAction } from './lib/actions/find-email';
 
 import { microsoftOutlookAuth } from './lib/common/auth';
 
 import { newEmailTrigger } from './lib/triggers/new-email';
+import { newAttachmentTrigger } from './lib/triggers/new-attachment';
+import { newMatchedEmailTrigger } from './lib/triggers/new-matched-email';
+
 import { replyEmailAction } from './lib/actions/reply-email';
+import { newEmailInFolderTrigger } from './lib/triggers/new-email-in-folder';
 export const microsoftOutlook = createPiece({
 	displayName: 'Microsoft Outlook',
 	auth: microsoftOutlookAuth,
@@ -31,6 +36,7 @@ export const microsoftOutlook = createPiece({
 		moveEmailToFolderAction,
 		sendDraftEmailAction,
 		forwardEmailAction,
+		findEmailAction,
 		createCustomApiCallAction({
 			auth: microsoftOutlookAuth,
 			baseUrl: () => 'https://graph.microsoft.com/v1.0/',
@@ -39,5 +45,10 @@ export const microsoftOutlook = createPiece({
 			}),
 		}),
 	],
-	triggers: [newEmailTrigger],
+	triggers: [newEmailTrigger,
+		newAttachmentTrigger,
+		newMatchedEmailTrigger,
+		newEmailInFolderTrigger,
+
+	],
 });
