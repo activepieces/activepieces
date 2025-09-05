@@ -25,7 +25,7 @@ import { newChatMessageTrigger } from './lib/triggers/new-chat-message';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
-2. From the left sidebar, go to **Microsoft Enfra ID**.
+2. From the left sidebar, go to **Microsoft Entra ID**.
 3. Under **Manage**, click on **App registrations**.
 4. Click the **New registration** button.
 5. Enter a **Name** for your app.
@@ -34,7 +34,7 @@ const authDesc = `
    - Or select based on your requirement.
 7. In **Redirect URI**, select **Web** and add the given URL.
 8. Click **Register**.
-9. After registration, you’ll be redirected to the app’s overview page. Copy the **Application (client) ID**.
+9. After registration, you'll be redirected to the app's overview page. Copy the **Application (client) ID**.
 10. From the left menu, go to **Certificates & secrets**.
     - Under **Client secrets**, click **New client secret**.
     - Provide a description, set an expiry, and click **Add**.
@@ -47,9 +47,12 @@ const authDesc = `
       - Channel.Create
 	  - Channel.ReadBasic.All
 	  - ChannelMessage.Send
-	  - Team.ReadBasic.All
-	  - Chat.ReadWrite
 	  - ChannelMessage.Read.All
+	  - Team.ReadBasic.All
+	  - TeamMember.Read.All
+	  - Chat.ReadWrite
+	  - Chat.Read.All
+	  - Chat.Create
 	  - User.ReadBasic.All
 	  - Presence.Read.All
       - openid
@@ -61,7 +64,7 @@ const authDesc = `
 `
 
 export const microsoftTeamsAuth = PieceAuth.OAuth2({
-	description:authDesc,
+	description: authDesc,
 	required: true,
 	scope: [
 		'openid',
@@ -72,11 +75,14 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
 		'Channel.Create',
 		'Channel.ReadBasic.All',
 		'ChannelMessage.Send',
-		'Team.ReadBasic.All',
-		'Chat.ReadWrite',
 		'ChannelMessage.Read.All',
-    'User.ReadBasic.All',
-    'Presence.Read.All',
+		'Team.ReadBasic.All',
+		'TeamMember.Read.All',
+		'Chat.ReadWrite',
+		'Chat.Read.All',
+		'Chat.Create',
+		'User.ReadBasic.All',
+		'Presence.Read.All',
 	],
 	prompt: 'omit',
 	authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
