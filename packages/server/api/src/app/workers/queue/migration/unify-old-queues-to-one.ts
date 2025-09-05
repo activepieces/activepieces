@@ -104,9 +104,10 @@ async function migrateQueue<T>(name: string, migrationFn: (job: Job<T>) => Promi
     })
 
     const waitingJobs = await legacyQueue.getJobs(['waiting', 'delayed', 'active', 'prioritized'])
-
-    for (const job of waitingJobs) {
-        await migrationFn(job)
+    const batchSize = 200
+    for (let i = 0; i < waitingJobs.length; i += batchSize) {
+        const batch = waitingJobs.slice(i, i + batchSize)
+        await Promise.all(batch.map(job => migrationFn(job)))
     }
     /*
         await legacyQueue.obliterate({

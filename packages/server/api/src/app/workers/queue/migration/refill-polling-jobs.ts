@@ -16,35 +16,38 @@ export const refillPollingJobs = (log: FastifyBaseLogger) => ({
             },
         })
         let migratedPollingJobs = 0
-        
-        for (const triggerSource of triggerSources) {
-            if (!triggerSource.schedule) {
-                continue
-            }
-            await jobQueue(log).add({
-                id: triggerSource.flowVersionId,
-                type: JobType.REPEATING,
-                data: {
-                    projectId: triggerSource.projectId,
-                    platformId: await projectService.getPlatformId(triggerSource.projectId),
-                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                    flowVersionId: triggerSource.flowVersionId,
-                    flowId: triggerSource.flowId,
-                    triggerType: FlowTriggerType.PIECE,
-                    jobType: WorkerJobType.EXECUTE_POLLING,
-                },
-                scheduleOptions: {
-                    type: TriggerSourceScheduleType.CRON_EXPRESSION,
-                    cronExpression: triggerSource.schedule.cronExpression,
-                    timezone: triggerSource.schedule.timezone,
-                },
-            })
-            migratedPollingJobs++
+
+        const batchSize = 100
+        for (let i = 0; i < triggerSources.length; i += batchSize) {
+            const batch = triggerSources.slice(i, i + batchSize)
+            await Promise.all(batch.map(async (triggerSource) => {
+                if (!triggerSource.schedule) {
+                    return
+                }
+                await jobQueue(log).add({
+                    id: triggerSource.flowVersionId,
+                    type: JobType.REPEATING,
+                    data: {
+                        projectId: triggerSource.projectId,
+                        platformId: await projectService.getPlatformId(triggerSource.projectId),
+                        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                        flowVersionId: triggerSource.flowVersionId,
+                        flowId: triggerSource.flowId,
+                        triggerType: FlowTriggerType.PIECE,
+                        jobType: WorkerJobType.EXECUTE_POLLING,
+                    },
+                    scheduleOptions: {
+                        type: TriggerSourceScheduleType.CRON_EXPRESSION,
+                        cronExpression: triggerSource.schedule.cronExpression,
+                        timezone: triggerSource.schedule.timezone,
+                    },
+                })
+                migratedPollingJobs++
+            }))
         }
-        
+
         log.info({
             migratedPollingJobs,
         }, '[pollingJobsMigration] Migrated polling jobs')
     },
 })
-

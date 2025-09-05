@@ -16,7 +16,7 @@ export const queueMigration = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {
         const migrationLock = await distributedLock.acquireLock({
             key: 'job_migration_lock',
-            timeout: dayjs.duration(5, 'minute').asMilliseconds(),
+            timeout: dayjs.duration(15, 'minute').asMilliseconds(),
             log,
         })
         try {

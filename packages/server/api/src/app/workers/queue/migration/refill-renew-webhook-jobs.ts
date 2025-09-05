@@ -19,35 +19,39 @@ export const refillRenewWebhookJobs = (log: FastifyBaseLogger) => ({
         })
         let migratedRenewWebhookJobs = 0
 
-        for (const triggerSource of triggerSources) {
-            const pieceMetadata = await pieceMetadataService(log).get({
-                name: triggerSource.pieceName,
-                version: triggerSource.pieceVersion,
-                projectId: triggerSource.projectId,
-                platformId: await projectService.getPlatformId(triggerSource.projectId),
-            })
-            const pieceTrigger = pieceMetadata?.triggers?.[triggerSource.triggerName]
-            if (isNil(pieceTrigger) || isNil(pieceTrigger.renewConfiguration) || pieceTrigger.renewConfiguration.strategy !== WebhookRenewStrategy.CRON) {
-                continue
-            }
-            await jobQueue(log).add({
-                id: triggerSource.flowVersionId,
-                type: JobType.REPEATING,
-                data: {
+        const batchSize = 100
+        for (let i = 0; i < triggerSources.length; i += batchSize) {
+            const batch = triggerSources.slice(i, i + batchSize)
+            await Promise.all(batch.map(async (triggerSource) => {
+                const pieceMetadata = await pieceMetadataService(log).get({
+                    name: triggerSource.pieceName,
+                    version: triggerSource.pieceVersion,
                     projectId: triggerSource.projectId,
                     platformId: await projectService.getPlatformId(triggerSource.projectId),
-                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                    flowVersionId: triggerSource.flowVersionId,
-                    flowId: triggerSource.flowId,
-                    jobType: WorkerJobType.RENEW_WEBHOOK,
-                },
-                scheduleOptions: {
-                    type: TriggerSourceScheduleType.CRON_EXPRESSION,
-                    cronExpression: pieceTrigger.renewConfiguration.cronExpression,
-                    timezone: 'UTC',
-                },
-            })
-            migratedRenewWebhookJobs++
+                })
+                const pieceTrigger = pieceMetadata?.triggers?.[triggerSource.triggerName]
+                if (isNil(pieceTrigger) || isNil(pieceTrigger.renewConfiguration) || pieceTrigger.renewConfiguration.strategy !== WebhookRenewStrategy.CRON) {
+                    return
+                }
+                await jobQueue(log).add({
+                    id: triggerSource.flowVersionId,
+                    type: JobType.REPEATING,
+                    data: {
+                        projectId: triggerSource.projectId,
+                        platformId: await projectService.getPlatformId(triggerSource.projectId),
+                        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                        flowVersionId: triggerSource.flowVersionId,
+                        flowId: triggerSource.flowId,
+                        jobType: WorkerJobType.RENEW_WEBHOOK,
+                    },
+                    scheduleOptions: {
+                        type: TriggerSourceScheduleType.CRON_EXPRESSION,
+                        cronExpression: pieceTrigger.renewConfiguration.cronExpression,
+                        timezone: 'UTC',
+                    },
+                })
+                migratedRenewWebhookJobs++
+            }))
         }
 
         log.info({
