@@ -12,8 +12,7 @@ import { createSummary } from "./lib/actions/create-summary";
 
 export const textcortexAi = createPiece({
   displayName: "TextCortex AI",
-  // The API uses a Bearer Token, so we use SecretText authentication.
-  // This will prompt the user for their API key when they add a connection.
+  
   auth: PieceAuth.SecretText({
     displayName: "API Key",
     description: "Get your API key from your TextCortex account settings.",

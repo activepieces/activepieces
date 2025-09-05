@@ -35,8 +35,7 @@ export const createEmail = createAction({
             description: 'A summary, bullet points, or the main topic of the email.',
             required: true,
         }),
-        // --- Fields for specific modes ---
-        // ✅ FIXED: Removed validators and made these optional
+        
         received_email: Property.LongText({
             displayName: 'Received Email (for Reply)',
             description: 'The full text of the email you are replying to. Use only when Email Type is "Reply to an Email".',
@@ -57,7 +56,7 @@ export const createEmail = createAction({
             description: 'Details about the company for the customer support response. Use only when Email Type is "Customer Support Email".',
             required: false,
         }),
-        // --- Optional General Fields ---
+        
         model: Property.StaticDropdown({
             displayName: 'Model',
             description: 'The AI model to use for email generation.',
@@ -78,10 +77,10 @@ export const createEmail = createAction({
     async run(context) {
         const payload = { ...context.propsValue };
 
-        // Remove fields that shouldn’t be in the body
+        
         delete (payload as any).auth;
 
-        // Clean up null/undefined values
+        
         Object.keys(payload).forEach(key => {
             if (payload[key as keyof typeof payload] === null || payload[key as keyof typeof payload] === undefined) {
                 delete payload[key as keyof typeof payload];

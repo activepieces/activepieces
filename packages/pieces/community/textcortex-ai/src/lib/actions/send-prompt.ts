@@ -46,7 +46,7 @@ export const sendPrompt = createAction({
             url: 'https://api.textcortex.com/v1/texts/completions',
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                // 'context.auth' automatically contains the API key from the piece's auth setting
+                
                 token: context.auth as string,
             },
             body: {
