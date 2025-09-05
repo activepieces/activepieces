@@ -2,17 +2,18 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { googleChatApiAuth, pubSubClient } from '../common/constants';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
-import { projectsDropdown, spacesDropdown } from '../common/props';
+import { projectsDropdown, spacesDropdown, spacesMembersDropdown } from '../common/props';
 import { googleChatAPIService } from '../common/requests';
 
-export const newMessage = createTrigger({
+export const newMention = createTrigger({
   auth: googleChatApiAuth,
-  name: 'newMessage',
-  displayName: 'New Message',
-  description: 'Triggers when a new message is received in Google Chat.',
+  name: 'newMention',
+  displayName: 'New Mention',
+  description: 'Triggers when a new mention is received in Google Chat.',
   props: {
     projectId: projectsDropdown(['auth']),
-    spaceId: spacesDropdown({ refreshers: ['auth'] }),
+    spaceId: spacesDropdown({refreshers: ['auth']}),
+    spaceMemberId: spacesMembersDropdown(['auth', 'spaceId']),
   },
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,
@@ -46,7 +47,7 @@ export const newMessage = createTrigger({
     });
 
     const targetResource = `//chat.googleapis.com/${
-      spaceId ? spaceId : 'spaces/-'
+      spaceId ? spaceId : 'space/-'
     }`;
 
     await googleChatAPIService.createWebhookSubscription({
@@ -59,7 +60,9 @@ export const newMessage = createTrigger({
       targetResource,
     });
   },
-  async onDisable({ auth, propsValue: { projectId }, store }) {},
+  async onDisable({ auth, propsValue: { projectId }, store }) {
+
+  },
   async run(context) {
     const messageData = JSON.parse(
       Buffer.from(
@@ -67,6 +70,30 @@ export const newMessage = createTrigger({
         'base64'
       ).toString('utf-8')
     );
+
+    const { spaceMemberId } = context.propsValue;
+
+    if (!messageData.message?.annotations) {
+      return [];
+    }
+
+    const mentions = messageData.message.annotations.filter(
+      (a: any) => a.type === 'USER_MENTION'
+    );
+
+    if (mentions.length === 0) {
+      return [];
+    }
+
+    if (spaceMemberId) {
+      const isMatch = mentions.some(
+        (m: any) => m.userMention?.user?.name === spaceMemberId
+      );
+
+      if (!isMatch) {
+        return [];
+      }
+    }
 
     return [messageData];
   },

@@ -1,5 +1,7 @@
 import { PieceAuth } from "@activepieces/pieces-framework";
 import { PubSub } from '@google-cloud/pubsub';
+import { google } from 'googleapis';
+import { GoogleAuth } from 'google-auth-library';
 
 export const pubSubClient = new PubSub();
 
@@ -10,6 +12,16 @@ export const googleChatApiAuth = PieceAuth.OAuth2({
   scope: [
     'https://www.googleapis.com/auth/chat.messages',
     'https://www.googleapis.com/auth/chat.spaces',
-    'https://www.googleapis.com/auth/chat.membership',
+    'https://www.googleapis.com/auth/chat.memberships',
+    'https://www.googleapis.com/auth/cloud-platform',
+    'https://www.googleapis.com/auth/directory.readonly',
   ],
 });
+
+export const GOOGLE_SERVICE_ENTITIES = {
+  chat: 'chat',
+  cloudresourcemanager: 'cloudresourcemanager',
+  pubsub: 'pubsub',
+  workspaceevents: 'workspaceevents',
+  people: 'people',
+};
