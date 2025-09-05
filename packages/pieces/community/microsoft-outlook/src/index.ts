@@ -3,7 +3,15 @@ import { createPiece, OAuth2PropertyValue } from '@activepieces/pieces-framework
 import { PieceCategory } from '@activepieces/shared';
 import { downloadAttachmentAction } from './lib/actions/download-email-attachment';
 import { sendEmailAction } from './lib/actions/send-email';
+import { createDraftEmailAction } from './lib/actions/create-draft-email';
+import { addLabelToEmailAction } from './lib/actions/add-label-to-email';
+import { removeLabelFromEmailAction } from './lib/actions/remove-label-from-email';
+import { moveEmailToFolderAction } from './lib/actions/move-email-to-folder';
+import { sendDraftEmailAction } from './lib/actions/send-draft-email';
+import { forwardEmailAction } from './lib/actions/forward-email';
+
 import { microsoftOutlookAuth } from './lib/common/auth';
+
 import { newEmailTrigger } from './lib/triggers/new-email';
 import { replyEmailAction } from './lib/actions/reply-email';
 export const microsoftOutlook = createPiece({
@@ -17,6 +25,12 @@ export const microsoftOutlook = createPiece({
 		sendEmailAction,
 		downloadAttachmentAction,
 		replyEmailAction,
+		createDraftEmailAction,
+		addLabelToEmailAction,
+		removeLabelFromEmailAction,
+		moveEmailToFolderAction,
+		sendDraftEmailAction,
+		forwardEmailAction,
 		createCustomApiCallAction({
 			auth: microsoftOutlookAuth,
 			baseUrl: () => 'https://graph.microsoft.com/v1.0/',
