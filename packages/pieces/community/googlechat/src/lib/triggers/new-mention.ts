@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { googleChatApiAuth, pubSubClient } from '../common/constants';
+import { googleChatApiAuth } from '../common/constants';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import { projectsDropdown, spacesDropdown, spacesMembersDropdown } from '../common/props';

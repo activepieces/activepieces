@@ -1,9 +1,4 @@
 import { PieceAuth } from "@activepieces/pieces-framework";
-import { PubSub } from '@google-cloud/pubsub';
-import { google } from 'googleapis';
-import { GoogleAuth } from 'google-auth-library';
-
-export const pubSubClient = new PubSub();
 
 export const googleChatApiAuth = PieceAuth.OAuth2({
   authUrl: 'https://accounts.google.com/o/oauth2/auth',
