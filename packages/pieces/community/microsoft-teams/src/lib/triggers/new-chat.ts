@@ -54,7 +54,7 @@ export const newChatTrigger = createTrigger({
 
 const polling: Polling<PiecePropValueSchema<typeof microsoftTeamsAuth>, Record<string, never>> = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, lastFetchEpochMS, store }) {
+	async items({ auth, lastFetchEpochMS }) {
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(auth.access_token),

@@ -31,7 +31,9 @@ export const microsoftTeamsCommon = {
 			let response: PageCollection = await client.api('/me/joinedTeams').get();
 			while (response.value.length > 0) {
 				for (const team of response.value as Team[]) {
-					options.push({ label: team.displayName!, value: team.id! });
+					if (team.displayName && team.id) {
+						options.push({ label: team.displayName, value: team.id });
+					}
 				}
 				if (response['@odata.nextLink']) {
 					response = await client.api(response['@odata.nextLink']).get();
@@ -71,7 +73,9 @@ export const microsoftTeamsCommon = {
 			let response: PageCollection = await client.api(`/teams/${teamId}/channels`).get();
 			while (response.value.length > 0) {
 				for (const channel of response.value as Channel[]) {
-					options.push({ label: channel.displayName!, value: channel.id! });
+					if (channel.displayName && channel.id) {
+						options.push({ label: channel.displayName, value: channel.id });
+					}
 				}
 				if (response['@odata.nextLink']) {
 					response = await client.api(response['@odata.nextLink']).get();
@@ -117,10 +121,12 @@ export const microsoftTeamsCommon = {
 							?.filter((member: ConversationMember) => member.displayName)
 							.map((member: ConversationMember) => member.displayName)
 							.join(',');
-					options.push({
-						label: `(${CHAT_TYPE[chat.chatType!]} Chat) ${chatName || '(no title)'}`,
-						value: chat.id!,
-					});
+					if (chat.id && chat.chatType) {
+						options.push({
+							label: `(${CHAT_TYPE[chat.chatType]} Chat) ${chatName || '(no title)'}`,
+							value: chat.id,
+						});
+					}
 				}
 				if (response['@odata.nextLink']) {
 					response = await client.api(response['@odata.nextLink']).get();

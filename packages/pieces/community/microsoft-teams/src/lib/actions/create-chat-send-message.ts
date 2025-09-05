@@ -2,6 +2,16 @@ import { microsoftTeamsAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@microsoft/microsoft-graph-client';
 
+interface ChatPayload {
+	chatType: 'oneOnOne' | 'group';
+	members: Array<{
+		'@odata.type': string;
+		roles: string[];
+		'user@odata.bind': string;
+	}>;
+	topic?: string;
+}
+
 export const createChatAndSendMessage = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_create_chat_and_send_message',
@@ -96,8 +106,8 @@ export const createChatAndSendMessage = createAction({
 		}
 
 		// Create chat payload
-		const chatPayload: any = {
-			chatType: chatType,
+		const chatPayload: ChatPayload = {
+			chatType: chatType as 'oneOnOne' | 'group',
 			members: members
 		};
 
@@ -105,13 +115,7 @@ export const createChatAndSendMessage = createAction({
 		if (chatType === 'group' && topic) {
 			chatPayload.topic = topic;
 		}
-
-		// Create the chat
-		// https://learn.microsoft.com/en-us/graph/api/chat-post?view=graph-rest-1.0
 		const createdChat = await client.api('/chats').post(chatPayload);
-
-		// Send initial message
-		// https://learn.microsoft.com/en-us/graph/api/chat-post-messages?view=graph-rest-1.0
 		const messagePayload = {
 			body: {
 				content: message,

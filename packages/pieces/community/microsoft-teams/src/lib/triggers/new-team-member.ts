@@ -56,7 +56,7 @@ export const newTeamMemberTrigger = createTrigger({
 
 const polling: Polling<PiecePropValueSchema<typeof microsoftTeamsAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, propsValue, lastFetchEpochMS, store }) {
+	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const { teamId } = propsValue;
 		const client = Client.initWithMiddleware({
 			authProvider: {
