@@ -12,7 +12,6 @@ import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
 import { system } from './helper/system/system'
 import { setupWorker } from './worker'
-import { migrateQueuesAndRunConsumers } from './workers/worker-module'
 
 
 export let app: FastifyInstance | undefined = undefined
@@ -22,7 +21,6 @@ export const setupServer = async (): Promise<FastifyInstance> => {
 
     if (system.isApp()) {
         await setupApp(app)
-        await migrateQueuesAndRunConsumers(app)
     }
     if (system.isWorker()) {
         await setupWorker(app)

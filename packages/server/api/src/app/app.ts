@@ -90,7 +90,7 @@ import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
-import { workerModule } from './workers/worker-module'
+import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -375,10 +375,12 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const piecesSource = system.getOrThrow(AppSystemProp.PIECES_SOURCE)
     const pieces = process.env.AP_DEV_PIECES
 
-    app.log.warn(
-        `[WARNING]: Pieces will be loaded from source type ${piecesSource}`,
-    )
+    await migrateQueuesAndRunConsumers(app)
+    app.log.info('Queues migrated and consumers run')
     if (environment === ApEnvironment.DEVELOPMENT) {
+        app.log.warn(
+            `[WARNING]: Pieces will be loaded from source type ${piecesSource}`,
+        )
         app.log.warn(
             `[WARNING]: The application is running in ${environment} mode.`,
         )
