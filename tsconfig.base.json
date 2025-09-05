@@ -988,6 +988,9 @@
       "@activepieces/piece-text-helper": [
         "packages/pieces/community/text-helper/src/index.ts"
       ],
+      "@activepieces/piece-textcortex-ai": [
+        "packages/pieces/community/textcortex-ai/src/index.ts"
+      ],
       "@activepieces/piece-thankster": [
         "packages/pieces/community/thankster/src/index.ts"
       ],
