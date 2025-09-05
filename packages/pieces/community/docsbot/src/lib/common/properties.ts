@@ -24,7 +24,7 @@ const teamProperty = ({
       }
       const teams = await docsbotCommon.listTeams(auth as string);
       return {
-        options: teams.body.map((team) => ({
+        options: teams.map((team) => ({
           label: team.name,
           value: team.id,
         })),

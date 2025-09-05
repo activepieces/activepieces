@@ -59,7 +59,7 @@ export const docsbotCommon = {
     botId,
     ...chatParams
   }: askQuestionRequestParams) => {
-    return await httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: docsbotCommon.endpoints.askQuestion({ teamId, botId }),
       headers: {
@@ -67,6 +67,7 @@ export const docsbotCommon = {
       },
       body: { ...chatParams },
     });
+    return response.body;
   },
   createSource: async ({
     apiKey,
@@ -74,7 +75,7 @@ export const docsbotCommon = {
     botId,
     ...sourceParams
   }: createSourceRequestParams) => {
-    return await httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: docsbotCommon.endpoints.createSource({
         teamId: teamId,
@@ -85,13 +86,14 @@ export const docsbotCommon = {
       },
       body: { ...sourceParams },
     });
+    return response.body;
   },
   createBot: async ({
     apiKey,
     teamId,
     ...botParams
   }: createBotRequestParams) => {
-    return await httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: docsbotCommon.endpoints.createBot(teamId),
       headers: {
@@ -99,6 +101,7 @@ export const docsbotCommon = {
       },
       body: { ...botParams },
     });
+    return response.body;
   },
   createPresignedFileUploadURL: async ({
     apiKey,
@@ -106,23 +109,23 @@ export const docsbotCommon = {
     botId,
     fileName,
   }: uploadSourceFileRequestParams) => {
-    return await httpClient.sendRequest<PresignedUpdateUrlResponse>({
+    const response = await httpClient.sendRequest<PresignedUpdateUrlResponse>({
       method: HttpMethod.GET,
-      url:
-        docsbotCommon.endpoints.createPresignedFileUploadURL({
-          teamId,
-          botId,
-        }) + `?fileName=${encodeURIComponent(fileName)}`,
+      url: docsbotCommon.endpoints.createPresignedFileUploadURL({
+        teamId,
+        botId,
+      }) + `?fileName=${encodeURIComponent(fileName)}`,
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },
     });
+    return response.body;
   },
   uploadFileToCloudStorage: async ({
     uploadUrl,
     file,
   }: uploadToCloudStorageParams) => {
-    return await httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.PUT,
       url: uploadUrl,
       headers: {
@@ -130,23 +133,26 @@ export const docsbotCommon = {
       },
       body: file,
     });
+    return response.body;
   },
   listBots: async ({ apiKey, teamId }: listBotsParams) => {
-    return await httpClient.sendRequest<Bot[]>({
+    const resonse = await httpClient.sendRequest<Bot[]>({
       method: HttpMethod.GET,
       url: docsbotCommon.endpoints.listBots(teamId),
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },
     });
+    return resonse.body;
   },
   listTeams: async (apiKey: string) => {
-    return await httpClient.sendRequest<Team[]>({
+    const response = await httpClient.sendRequest<Team[]>({
       method: HttpMethod.GET,
       url: docsbotCommon.endpoints.listTeams(),
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },
     });
+    return response.body;
   },
 };
