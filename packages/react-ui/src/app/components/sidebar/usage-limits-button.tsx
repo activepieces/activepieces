@@ -4,7 +4,7 @@ import { Clock, Rocket } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -187,11 +187,7 @@ const TrialProgress = ({
           </span>
         </div>
       </div>
-      <Progress
-        // variant="primary"
-        value={progressPercentage}
-        className="w-full h-[6px]"
-      />
+      <Progress value={progressPercentage} className="w-full h-[6px]" />
     </div>
   );
 };
@@ -229,7 +225,6 @@ const UsageProgress = ({ value, max, name, variant }: UsageProgressProps) => {
         className={cn('w-full h-[6px]', {
           'bg-primary/40': isUnlimited,
         })}
-        // variant={variant}
       />
     </div>
   );

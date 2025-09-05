@@ -220,7 +220,7 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/tables/:tableId',
     element: (
-      <AppLayout>
+      <AppLayout fullContainer>
         <RoutePermissionGuard permission={Permission.READ_TABLE}>
           <PageTitle title="Table">
             <ApTableStateProvider>

@@ -1,7 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
-  Bot,
   GitBranch,
   Link2,
   ListTodo,
@@ -35,8 +33,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar-shadcn';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -66,7 +62,9 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isInBuilder = location.pathname.includes('/flows/');
+  const showNavigation =
+    location.pathname.includes('/flows/') ||
+    location.pathname.includes('/tables/');
 
   const showSwitcher =
     edition !== ApEdition.COMMUNITY && !embedState.isEmbedded;
@@ -77,22 +75,6 @@ export function AppSidebar() {
     }
     return true;
   };
-
-  const { folders, isLoading: foldersLoading } = foldersHooks.useFolders();
-
-  const { data: flows, isLoading: flowsLoading } = useQuery({
-    queryKey: ['flow-table', project.id],
-    staleTime: 0,
-    queryFn: () => {
-      return flowsApi.list({
-        projectId: project.id,
-        cursor: undefined,
-        limit: 100000,
-      });
-    },
-  });
-
-  const flowsData = flows?.data || [];
 
   const releasesLink: SidebarItemType = {
     type: 'link',
@@ -119,26 +101,6 @@ export function AppSidebar() {
       pathname.includes('/issues'),
   };
 
-  const mcpLink: SidebarItemType = {
-    type: 'link',
-    to: authenticationSession.appendProjectRoutePrefix('/mcps'),
-    label: t('MCP'),
-    show: platform.plan.mcpsEnabled || !embedState.isEmbedded,
-    icon: McpSvg,
-    hasPermission: checkAccess(Permission.READ_MCP),
-    isSubItem: false,
-  };
-
-  const agentsLink: SidebarItemType = {
-    type: 'link',
-    to: authenticationSession.appendProjectRoutePrefix('/agents'),
-    label: t('Agents'),
-    icon: Bot,
-    show: platform.plan.agentsEnabled || !embedState.isEmbedded,
-    hasPermission: true,
-    isSubItem: false,
-  };
-
   const tablesLink: SidebarItemType = {
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/tables'),
@@ -161,9 +123,7 @@ export function AppSidebar() {
 
   const items: SidebarGeneralItemType[] = [
     flowsLink,
-    agentsLink,
     tablesLink,
-    mcpLink,
     todosLink,
     releasesLink,
   ].filter(permissionFilter);
@@ -220,22 +180,7 @@ export function AppSidebar() {
         </SidebarHeader>
 
         <SidebarContent>
-          {/* Automations Section - Only shown in builder */}
-          {isInBuilder && (
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('Automations')}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <FoldersSection
-                  folders={folders}
-                  flows={flowsData}
-                  isLoading={foldersLoading || flowsLoading}
-                />
-              </SidebarGroupContent>
-            </SidebarGroup>
-          )}
-
-          {/* Products Section - Only shown outside builder */}
-          {!isInBuilder && (
+          {!showNavigation && (
             <SidebarGroup>
               <SidebarGroupLabel>{t('Products')}</SidebarGroupLabel>
               <SidebarGroupContent>
@@ -257,11 +202,9 @@ export function AppSidebar() {
                     >
                       <DropdownMenuTrigger asChild>
                         <div>
-                          <SidebarMenuButton asChild>
-                            <div className="flex px-2 items-center gap-2 w-full text-sidebar-accent-foreground">
-                              <MoreHorizontal className="size-5" />
-                              <span className="grow">{t('More')}</span>
-                            </div>
+                          <SidebarMenuButton className="px-2 py-5">
+                            <MoreHorizontal className="size-5" />
+                            <span className="grow">{t('More')}</span>
                           </SidebarMenuButton>
                         </div>
                       </DropdownMenuTrigger>
@@ -302,16 +245,12 @@ export function AppSidebar() {
               </SidebarGroupContent>
             </SidebarGroup>
           )}
+
+          {showNavigation && <FoldersSection />}
         </SidebarContent>
         <SidebarFooter>
-          {!isInBuilder && (
-            <SidebarMenu>
-              <HelpAndFeedback />
-            </SidebarMenu>
-          )}
-
-          <UsageLimitsButton />
-
+          {!showNavigation && <HelpAndFeedback />}
+          {!showNavigation && <UsageLimitsButton />}
           <SidebarUser />
         </SidebarFooter>
         <SidebarRail />
