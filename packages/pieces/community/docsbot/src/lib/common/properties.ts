@@ -200,6 +200,7 @@ export const createSource = () => ({
     description:
       'The source refresh scheduled interval. Can be daily, weekly, monthly, or none depending on your plan. Optional, defaults to none.',
     required: false,
+    defaultValue: 'none',
     options: {
       options: [
         { label: 'Daily', value: 'daily' },
@@ -255,10 +256,18 @@ export const createBot = () => ({
       ],
     },
   }),
-  model: Property.ShortText({
+  model: Property.StaticDropdown({
     displayName: 'Model',
     description: 'The OpenAI model.',
     required: false,
+    options: {
+      options: [
+        { label: 'GPT-4.1', value: 'gpt-4.1' },
+        { label: 'GPT-4.1 Mini', value: 'gpt-4.1-mini' },
+        { label: 'GPT-4o', value: 'gpt-4o' },
+        { label: 'GPT-4o Mini', value: 'gpt-4o-mini' },
+      ],
+    },
   }),
   embeddingModel: Property.StaticDropdown({
     displayName: 'Embedding Model',
