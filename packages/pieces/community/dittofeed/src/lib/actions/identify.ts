@@ -1,4 +1,4 @@
-import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { dittofeedAuth } from '../..';
 
@@ -6,7 +6,7 @@ export const identifyAction = createAction({
   name: 'identify',
   auth: dittofeedAuth,
   displayName: 'Identify User',
-  description: 'Identify a user in Dittofeed',
+  description: 'Identify a user in Dittofeed.',
   props: {
     userId: Property.ShortText({
       displayName: 'User ID',

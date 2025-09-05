@@ -10,12 +10,12 @@ export const dittofeedAuth = PieceAuth.CustomAuth({
     apiKey: PieceAuth.SecretText({
       displayName: 'API Key',
       required: true,
-      description: 'Your API key of Dittofeed',
+      description: 'Your API key of Dittofeed.',
     }),
     baseUrl: Property.ShortText({
       displayName: 'Base URL',
       required: true,
-      description: 'The base URL of your Dittofeed instance',
+      description: 'The base URL of your Dittofeed instance.',
       defaultValue: 'http://localhost:3200',
     }),
   },

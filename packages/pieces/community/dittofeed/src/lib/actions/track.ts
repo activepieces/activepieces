@@ -6,7 +6,7 @@ export const trackAction = createAction({
   name: 'track',
   auth: dittofeedAuth,
   displayName: 'Track Event',
-  description: 'Track an event for a user',
+  description: 'Track an event for a user.',
   props: {
     userId: Property.ShortText({
       displayName: 'User ID',

@@ -6,7 +6,7 @@ export const screenAction = createAction({
   name: 'screen',
   auth: dittofeedAuth,
   displayName: 'Screen Event',
-  description: 'Track a screen view event',
+  description: 'Track a screen view event.',
   props: {
     userId: Property.ShortText({
       displayName: 'User ID',
