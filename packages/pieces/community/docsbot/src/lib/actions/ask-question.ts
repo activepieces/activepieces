@@ -5,7 +5,7 @@ import {
     httpClient,
 } from '@activepieces/pieces-common';
 import { docsbotAuth } from '../../index';
-import { docsbotCommon } from '../common/common';
+import { docsbotCommon } from '../common';
 
 export const askQuestion = createAction({
     auth: docsbotAuth,
@@ -20,34 +20,61 @@ export const askQuestion = createAction({
             description: 'The question you want to ask the bot.',
             required: true,
         }),
-        full_source: Property.Checkbox({
-            displayName: 'Full Source',
-            description: 'If true, the full source of the answer is returned.',
-            required: false,
-        }),
         history: Property.Json({
             displayName: 'History',
             description: 'An array of previous questions and answers to provide context. e.g., [{"question": "Hello", "answer": "Hi, how can I help?"}]',
             required: false,
             defaultValue: []
         }),
+        full_source: Property.Checkbox({
+            displayName: 'Full Source',
+            description: 'If true, the full content of the answer source is returned.',
+            required: false,
+        }),
+        format: Property.StaticDropdown({
+            displayName: 'Format',
+            description: "How to format the answer.",
+            required: false,
+            options: {
+                options: [
+                    { label: 'Markdown', value: 'markdown' },
+                    { label: 'Text', value: 'text' },
+                ]
+            }
+        }),
+        metadata: Property.Json({
+            displayName: 'Metadata',
+            description: 'A JSON object with arbitrary metadata about the user (e.g., name, email).',
+            required: false,
+        }),
+        testing: Property.Checkbox({
+            displayName: 'Testing',
+            description: 'If true, question logs will be marked as being from staff.',
+            required: false,
+        }),
+        context_items: Property.Number({
+            displayName: 'Context Items',
+            description: 'Number of sources to look up for the bot to answer from. Default is 5.',
+            required: false,
+        }),
+        autocut: Property.Number({
+            displayName: 'Autocut',
+            description: 'Autocut results to a specific number of groups. Set to 0 to disable.',
+            required: false,
+        }),
     },
 
     async run(context) {
-        const { teamId, botId, question, full_source, history } = context.propsValue;
+        const { teamId, botId, ...bodyParams } = context.propsValue;
 
         const request: HttpRequest<Record<string, unknown>> = {
             method: HttpMethod.POST,
-            url: `https://docsbot.ai/api/teams/${teamId}/bots/${botId}/chat`,
+            url: `https://api.docsbot.ai/teams/${teamId}/bots/${botId}/chat`,
             headers: {
                 'Authorization': `Bearer ${context.auth}`,
                 'Content-Type': 'application/json',
             },
-            body: {
-                question,
-                full_source,
-                history,
-            },
+            body: bodyParams,
         };
 
         const res = await httpClient.sendRequest(request);
@@ -55,3 +82,4 @@ export const askQuestion = createAction({
         return res.body;
     },
 });
+

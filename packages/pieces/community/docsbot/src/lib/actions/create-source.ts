@@ -6,7 +6,7 @@ import {
     HttpHeader,
 } from '@activepieces/pieces-common';
 import { docsbotAuth } from '../../index';
-import { docsbotCommon } from '../common/common';
+import { docsbotCommon } from '../common';
 
 export const createSource = createAction({
     auth: docsbotAuth,

@@ -5,7 +5,7 @@ import {
     httpClient,
 } from '@activepieces/pieces-common';
 import { docsbotAuth } from '../../index';
-import { docsbotCommon } from '../common/common';
+import { docsbotCommon } from '../common';
 
 export const findBot = createAction({
     auth: docsbotAuth,
