@@ -99,6 +99,9 @@
       "@activepieces/piece-ashby": [
         "packages/pieces/community/ashby/src/index.ts"
       ],
+      "@activepieces/piece-assembled": [
+        "packages/pieces/community/assembled/src/index.ts"
+      ],
       "@activepieces/piece-assemblyai": [
         "packages/pieces/community/assemblyai/src/index.ts"
       ],
@@ -140,6 +143,9 @@
       ],
       "@activepieces/piece-bigin-by-zoho": [
         "packages/pieces/community/bigin-by-zoho/src/index.ts"
+      ],
+      "@activepieces/piece-bika": [
+        "packages/pieces/community/bika/src/index.ts"
       ],
       "@activepieces/piece-binance": [
         "packages/pieces/community/binance/src/index.ts"
@@ -310,6 +316,9 @@
       ],
       "@activepieces/piece-discord": [
         "packages/pieces/community/discord/src/index.ts"
+      ],
+      "@activepieces/piece-dittofeed":[
+        "packages/pieces/community/dittofeed/src/index.ts"
       ],
       "@activepieces/piece-discourse": [
         "packages/pieces/community/discourse/src/index.ts"
@@ -886,6 +895,9 @@
       "@activepieces/piece-simplepdf": [
         "packages/pieces/community/simplepdf/src/index.ts"
       ],
+      "@activepieces/piece-simpliroute": [
+        "packages/pieces/community/simpliroute/src/index.ts"
+      ],
       "@activepieces/piece-skyvern": [
         "packages/pieces/community/skyvern/src/index.ts"
       ],
@@ -987,6 +999,9 @@
       ],
       "@activepieces/piece-text-helper": [
         "packages/pieces/community/text-helper/src/index.ts"
+      ],
+      "@activepieces/piece-textcortex-ai": [
+        "packages/pieces/community/textcortex-ai/src/index.ts"
       ],
       "@activepieces/piece-thankster": [
         "packages/pieces/community/thankster/src/index.ts"
