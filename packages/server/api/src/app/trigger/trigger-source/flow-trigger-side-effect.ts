@@ -198,7 +198,7 @@ async function handlePollingTrigger({ engineHelperResponse, flowVersion, project
 function assertEngineResponseIsOk(engineHelperResponse: EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE | TriggerHookType.ON_DISABLE>>, flowVersion: FlowVersion) {
     if (engineHelperResponse.status !== EngineResponseStatus.OK) {
         throw new ActivepiecesError({
-            code: ErrorCode.TRIGGER_ENABLE,
+            code: ErrorCode.TRIGGER_UPDATE_STATUS,
             params: {
                 flowVersionId: flowVersion.id,
                 standardOutput: engineHelperResponse.standardOutput,
