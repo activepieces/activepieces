@@ -27,7 +27,7 @@ export interface askQuestionRequestParams extends AuthenticationParams {
   reasoning_effort?: string;
 }
 
-export interface createSourceRequestParams extends AuthenticationParams {
+export interface createSourceParams {
   teamId: string;
   botId: string;
   type: string;
@@ -37,6 +37,9 @@ export interface createSourceRequestParams extends AuthenticationParams {
   faqs?: { question: string; answer: string }[];
   scheduleInterval?: string;
 }
+export interface createSourceRequestParams
+  extends AuthenticationParams,
+    createSourceParams {}
 
 export interface createBotRequestParams extends AuthenticationParams {
   teamId: string;

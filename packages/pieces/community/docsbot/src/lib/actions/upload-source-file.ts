@@ -23,9 +23,9 @@ export const uploadSourceFile = createAction({
       fileName: file.filename,
     });
     await docsbotCommon.uploadFileToCloudStorage({
-      uploadUrl: presignedUrl.body.url,
+      uploadUrl: presignedUrl.url,
       file: file.data,
     });
-    return presignedUrl.body;
+    return presignedUrl;
   },
 });

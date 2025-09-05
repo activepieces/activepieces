@@ -42,7 +42,7 @@ const botProperty = ({
   Property.ShortText({
     displayName: displayName || 'Bot',
     description: description || 'The bot to use.',
-    required: true
+    required: true,
   });
 
 // Action properties
@@ -159,55 +159,74 @@ export const createSource = () => ({
       ],
     },
   }),
-  title: Property.ShortText({
-    displayName: 'Title',
-    description: 'The source title. Required only for document type.',
-    required: false,
-  }),
-  url: Property.ShortText({
-    displayName: 'URL',
-    description:
-      'The source url. Optional except for url, sitemap, youtube, and rss types.',
-    required: false,
-  }),
-  file: Property.ShortText({
-    displayName: "File URL",
-    description:
-      'The source file path. Required if type is urls, csv, document, or wp. The is usually the cloud storage path from the Upload Source File action.',
-    required: false,
-  }),
-  faqs: Property.Array({
-    displayName: 'FAQs',
-    description:
-      'An array of question and answer objects. Required if type is qa.',
-    required: false,
+  sourceProperties: Property.DynamicProperties({
+    displayName: 'Source Properties',
+    description: 'Create Source Properties',
+    required: true,
+    refreshers: ['auth', 'type'],
+    props: async ({ type }) => {
+      return {
+        title: Property.ShortText({
+          displayName: 'Title',
+          description: 'The source title. Required only for document type.',
+          required:
+            typeof type === 'string' && type === 'document' ? true : false,
+        }),
+        url: Property.ShortText({
+          displayName: 'URL',
+          description:
+            'The source url. Optional except for url, sitemap, youtube, and rss types.',
+          required:
+            typeof type === 'string' &&
+            ['url', 'sitemap', 'youtube', 'rss'].includes(type)
+              ? true
+              : false,
+        }),
+        file: Property.ShortText({
+          displayName: 'File URL',
+          description:
+            'The source file path. Required if type is urls, csv, document, or wp. The is usually the cloud storage path from the Upload Source File action.',
+          required:
+            typeof type === 'string' &&
+            ['urls', 'csv', 'document', 'wp'].includes(type)
+              ? true
+              : false,
+        }),
+        faqs: Property.Array({
+          displayName: 'FAQs',
+          description:
+            'An array of question and answer objects. Required if type is qa.',
+          required: typeof type === 'string' && type === 'qa' ? true : false,
 
-    properties: {
-      question: Property.LongText({
-        displayName: 'Question',
-        required: true,
-        description: 'The question.',
-      }),
-      answer: Property.LongText({
-        displayName: 'Answer',
-        required: true,
-        description: 'The answer.',
-      }),
-    },
-  }),
-  scheduleInterval: Property.StaticDropdown({
-    displayName: 'Schedule Interval',
-    description:
-      'The source refresh scheduled interval. Can be daily, weekly, monthly, or none depending on your plan. Optional, defaults to none.',
-    required: false,
-    defaultValue: 'none',
-    options: {
-      options: [
-        { label: 'Daily', value: 'daily' },
-        { label: 'Weekly', value: 'weekly' },
-        { label: 'Monthly', value: 'monthly' },
-        { label: 'None', value: 'none' },
-      ],
+          properties: {
+            question: Property.LongText({
+              displayName: 'Question',
+              required: true,
+              description: 'The question.',
+            }),
+            answer: Property.LongText({
+              displayName: 'Answer',
+              required: true,
+              description: 'The answer.',
+            }),
+          },
+        }),
+        scheduleInterval: Property.StaticDropdown({
+          displayName: 'Schedule Interval',
+          description:
+            'The source refresh scheduled interval. Can be daily, weekly, monthly, or none depending on your plan. Optional, defaults to none.',
+          required: false,
+          defaultValue: 'none',
+          options: {
+            options: [
+              { label: 'Daily', value: 'daily' },
+              { label: 'Weekly', value: 'weekly' },
+              { label: 'Monthly', value: 'monthly' },
+              { label: 'None', value: 'none' },
+            ],
+          },
+        }),
+      };
     },
   }),
 });
@@ -231,7 +250,8 @@ export const createBot = () => ({
   }),
   description: Property.LongText({
     displayName: 'Description',
-    description: 'The bot description. Shown by default in embeds and share links.',
+    description:
+      'The bot description. Shown by default in embeds and share links.',
     required: true,
   }),
   privacy: Property.StaticDropdown({
@@ -271,7 +291,8 @@ export const createBot = () => ({
   }),
   embeddingModel: Property.StaticDropdown({
     displayName: 'Embedding Model',
-    description: 'The embedding model. Currently supports text-embedding-ada-002, text-embedding-3-large, text-embedding-3-small, embed-multilingual-v3.0, and embed-v4.0 (Cohere) depending on your plan.',
+    description:
+      'The embedding model. Currently supports text-embedding-ada-002, text-embedding-3-large, text-embedding-3-small, embed-multilingual-v3.0, and embed-v4.0 (Cohere) depending on your plan.',
     required: false,
     options: {
       options: [
@@ -285,7 +306,8 @@ export const createBot = () => ({
   }),
   copyFrom: Property.ShortText({
     displayName: 'Copy From',
-    description: 'The ID of an existing bot in your team to copy from. If provided, the new bot will be created as a copy of the specified bot, with all sources copied over after creation.',
+    description:
+      'The ID of an existing bot in your team to copy from. If provided, the new bot will be created as a copy of the specified bot, with all sources copied over after creation.',
     required: false,
   }),
 });

@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import z from 'zod';
 import { docsbotAuth, docsbotCommon } from '../common';
+import { createSourceParams } from '../common/types';
 
 export const createSource = createAction({
   auth: docsbotAuth,
@@ -10,8 +11,13 @@ export const createSource = createAction({
   props: docsbotCommon.createSourceProperties(),
   async run({ auth: apiKey, propsValue }) {
     // Some fields are conditionally required, so we need to use Zod validation manually here
+    const { sourceProperties, ...props } = propsValue;
+    const parsedProps: createSourceParams = {
+      ...props,
+      ...sourceProperties,
+    };
     try {
-      await docsbotCommon.createSourceSchema.parseAsync(propsValue);
+      await docsbotCommon.createSourceSchema.parseAsync(parsedProps);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const errors = error.errors.reduce((acc, err) => {
@@ -26,7 +32,7 @@ export const createSource = createAction({
       throw error;
     }
 
-    const { faqs, ...restProps } = propsValue;
+    const { faqs, ...restProps } = parsedProps;
 
     return await docsbotCommon.createSource({
       apiKey,

@@ -18,7 +18,7 @@ export const findBot = createAction({
     });
     const needle = (name ?? '').trim().toLowerCase();
     // Try to find case-insensitive and partial match
-    const bot = teamBots.body.filter((bot) =>
+    const bot = teamBots.filter((bot) =>
       (bot.name ?? '').toLowerCase().includes(needle)
     );
 
