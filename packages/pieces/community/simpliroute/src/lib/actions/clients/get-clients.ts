@@ -6,8 +6,8 @@ import { API_BASE_URL, commonHeaders } from '../../common/constants';
 export const get_clients = createAction({
     name: 'get_clients',
     auth: simplirouteAuth,
-    displayName: 'Get Clients by key',
-    description: 'Retrieve the list of clients associated with the account. Can filter by client key.',
+    displayName: 'Get Clients',
+    description: 'Retrieves the list of clients associated with the account. Can filter by client key.',
     props: {
         key: Property.ShortText({ 
             displayName: 'Client Key', 

@@ -2,52 +2,10 @@
   "name": "@activepieces/piece-simpliroute",
   "version": "0.0.1",
   "description": "SimpliRoute piece for Activepieces - Last mile delivery optimization platform integration",
-  "main": "src/index",
-  "exports": {
-    ".": {
-      "import": "./src/index.js",
-      "require": "./src/index.js",
-      "types": "./src/index.d.ts"
-    }
-  },
-  "scripts": {
-    "build": "nx build pieces-simpliroute",
-    "lint": "nx lint pieces-simpliroute"
-  },
-  "keywords": [
-    "activepieces",
-    "piece",
-    "simpliroute",
-    "delivery",
-    "logistics",
-    "routing",
-    "optimization"
-  ],
-  "author": "Activepieces Community",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/activepieces/activepieces.git",
-    "directory": "packages/pieces/community/simpliroute"
-  },
-  "bugs": {
-    "url": "https://github.com/activepieces/activepieces/issues"
-  },
-  "homepage": "https://www.activepieces.com/pieces/simpliroute",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-common": "*",
-    "@activepieces/pieces-framework": "*",
-    "@activepieces/shared": "*"
-  },
-  "devDependencies": {
-    "@types/node": "^18.16.9"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
-  "files": [
-    "src/**/*",
-    "README.md",
-    "package.json"
-  ]
+    "tslib": "^2.3.0"
+  }
 }
