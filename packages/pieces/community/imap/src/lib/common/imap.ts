@@ -1,5 +1,6 @@
 import {
   ImapFlow,
+  type CopyResponseObject,
   type ListResponse,
   type MailboxLockObject,
 } from 'imapflow';
@@ -26,7 +27,7 @@ import {
 type Message = {
   data: ParsedMail & { uid: number };
   epochMilliSeconds: number;
-}
+};
 
 function buildImapClient(auth: ImapAuth): ImapFlow {
   const imapConfig = {
@@ -40,8 +41,14 @@ function buildImapClient(auth: ImapAuth): ImapFlow {
   return new ImapFlow({ ...imapConfig, logger: false });
 }
 
-async function confirmEmailExists(imapClient: ImapFlow, uid: number) {
-  const searchResult = await imapClient.search({ uid: uid.toString() }, { uid: true });
+async function confirmEmailExists(
+  imapClient: ImapFlow,
+  uid: number
+): Promise<void> {
+  const searchResult = await imapClient.search(
+    { uid: uid.toString() },
+    { uid: true }
+  );
 
   if (!searchResult || searchResult.length === 0) {
     throw new ImapEmailNotFoundError();
@@ -49,9 +56,47 @@ async function confirmEmailExists(imapClient: ImapFlow, uid: number) {
 }
 
 function detectMissingMailbox(error: unknown): void {
-  if (error && typeof error === 'object' && 'mailboxMissing' in error && (error as { mailboxMissing: boolean }).mailboxMissing) {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'mailboxMissing' in error &&
+    (error as { mailboxMissing: boolean }).mailboxMissing
+  ) {
     throw new ImapMailboxNotFoundError();
   }
+}
+
+async function copyEmail<T extends { success: boolean; newUid?: number }>({
+  auth,
+  sourceMailbox,
+  targetMailbox,
+  uid,
+}: {
+  auth: ImapAuth;
+  sourceMailbox: string;
+  targetMailbox: string;
+  uid: number;
+}): Promise<T> {
+  return (await performMailboxOperation(
+    auth,
+    sourceMailbox,
+    async (imapClient) => {
+      await confirmEmailExists(imapClient, uid);
+
+      const result: false | CopyResponseObject = await imapClient.messageCopy(
+        { uid },
+        targetMailbox,
+        { uid: true }
+      );
+
+      if (!result) {
+        throw new ImapError('Failed to copy email.');
+      }
+
+      const newUid = result.uidMap?.get(uid);
+      return { success: true, newUid };
+    }
+  )) as T;
 }
 
 async function fetchEmails<T extends Message[]>({
@@ -84,10 +129,45 @@ async function fetchEmails<T extends Message[]>({
   })) as T;
 }
 
-async function fetchMailboxes<T extends ListResponse[]>(auth: ImapAuth): Promise<T> {
+async function fetchMailboxes<T extends ListResponse[]>(
+  auth: ImapAuth
+): Promise<T> {
   return (await performImapOperation(auth, async (imapClient) => {
     return await imapClient.list();
   })) as T;
+}
+
+async function moveEmail<T extends { success: boolean; newUid?: number }>({
+  auth,
+  sourceMailbox,
+  targetMailbox,
+  uid,
+}: {
+  auth: ImapAuth;
+  sourceMailbox: string;
+  targetMailbox: string;
+  uid: number;
+}): Promise<T> {
+  return (await performMailboxOperation(
+    auth,
+    sourceMailbox,
+    async (imapClient) => {
+      await confirmEmailExists(imapClient, uid);
+
+      const result: false | CopyResponseObject = await imapClient.messageMove(
+        { uid },
+        targetMailbox,
+        { uid: true }
+      );
+
+      if (result) {
+        const newUid = result.uidMap?.get(uid);
+        return { success: true, newUid };
+      }
+
+      return { success: false };
+    }
+  )) as T;
 }
 
 async function parseStream(stream: Readable) {
@@ -151,16 +231,16 @@ async function performMailboxOperation<T>(
   auth: ImapAuth,
   mailbox: string,
   callback: (imapClient: ImapFlow) => Promise<T>,
-  options: { readOnly?: boolean } = {},
+  options: { readOnly?: boolean } = {}
 ) {
   const { readOnly = true } = options;
-  return await performImapOperation(auth, async (imapClient) => {
+  return (await performImapOperation(auth, async (imapClient) => {
     let lock: MailboxLockObject | null = null;
 
     try {
       lock = await imapClient.getMailboxLock(mailbox, { readOnly });
       return await callback(imapClient);
-    } catch(error) {
+    } catch (error) {
       detectMissingMailbox(error);
       throw error;
     } finally {
@@ -170,7 +250,7 @@ async function performMailboxOperation<T>(
         // Ignore lock release errors during cleanup
       }
     }
-  }) as T;
+  })) as T;
 }
 
 async function setEmailReadStatus<T extends { success: true }>({
@@ -184,17 +264,22 @@ async function setEmailReadStatus<T extends { success: true }>({
   uid: number;
   markAsRead: boolean;
 }): Promise<T> {
-  return (await performMailboxOperation(auth, mailbox, async (imapClient) => {
-    await confirmEmailExists(imapClient, uid);
+  return (await performMailboxOperation(
+    auth,
+    mailbox,
+    async (imapClient) => {
+      await confirmEmailExists(imapClient, uid);
 
-    if (markAsRead) {
-      await imapClient.messageFlagsAdd({ uid }, ['\\Seen'], { uid: true });
-    } else {
-      await imapClient.messageFlagsRemove({ uid }, ['\\Seen'], { uid: true });
-    }
+      if (markAsRead) {
+        await imapClient.messageFlagsAdd({ uid }, ['\\Seen'], { uid: true });
+      } else {
+        await imapClient.messageFlagsRemove({ uid }, ['\\Seen'], { uid: true });
+      }
 
-    return { success: true };
-  }, { readOnly: false })) as T;
+      return { success: true };
+    },
+    { readOnly: false }
+  )) as T;
 }
 
 export {
@@ -207,7 +292,9 @@ export {
   performMailboxOperation,
 
   // Email actions
+  copyEmail,
   fetchEmails,
+  moveEmail,
   setEmailReadStatus,
 
   // Mailbox actions
