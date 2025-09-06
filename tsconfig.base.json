@@ -546,6 +546,9 @@
       "@activepieces/piece-lead-connector": [
         "packages/pieces/community/lead-connector/src/index.ts"
       ],
+      "@activepieces/piece-lemlist": [
+        "packages/pieces/community/lemlist/src/index.ts"
+      ],
       "@activepieces/piece-line": [
         "packages/pieces/community/line/src/index.ts"
       ],
