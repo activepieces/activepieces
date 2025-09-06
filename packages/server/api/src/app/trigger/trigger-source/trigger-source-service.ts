@@ -33,6 +33,7 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 type: pieceTrigger.type,
                 projectId,
                 flowId: flowVersion.flowId,
+                triggerName: pieceTrigger.name,
                 flowVersionId: flowVersion.id,
                 pieceName: flowVersion.trigger.settings.pieceName,
                 pieceVersion: flowVersion.trigger.settings.pieceVersion,
