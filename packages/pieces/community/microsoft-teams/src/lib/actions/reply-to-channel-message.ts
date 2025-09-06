@@ -1,16 +1,22 @@
 import { microsoftTeamsAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { Client } from '@microsoft/microsoft-graph-client';
 import { microsoftTeamsCommon } from '../common';
 import { createGraphClient, withGraphRetry } from '../common/graph';
 
-export const sendChannelMessageAction = createAction({
+export const replyToChannelMessageAction = createAction({
 	auth: microsoftTeamsAuth,
-	name: 'microsoft_teams_send_channel_message',
-	displayName: 'Send Channel Message',
-	description: "Sends a message to a teams's channel.",
+	name: 'microsoft_teams_reply_to_channel_message',
+	displayName: 'Reply to Channel Message',
+	description: 'Post a reply to an existing channel message.',
 	props: {
 		teamId: microsoftTeamsCommon.teamId,
 		channelId: microsoftTeamsCommon.channelId,
+		messageId: Property.ShortText({
+			displayName: 'Message ID',
+			required: true,
+			description: 'ID of the parent message to reply to.'
+		}),
 		contentType: Property.StaticDropdown({
 			displayName: 'Content Type',
 			required: true,
@@ -18,14 +24,8 @@ export const sendChannelMessageAction = createAction({
 			options: {
 				disabled: false,
 				options: [
-					{
-						label: 'Text',
-						value: 'text',
-					},
-					{
-						label: 'HTML',
-						value: 'html',
-					},
+					{ label: 'Text', value: 'text' },
+					{ label: 'HTML', value: 'html' },
 				],
 			},
 		}),
@@ -35,11 +35,10 @@ export const sendChannelMessageAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { teamId, channelId, contentType, content } = context.propsValue;
+		const { teamId, channelId, messageId, contentType, content } = context.propsValue;
 
 		const client = createGraphClient(context.auth.access_token);
 
-		//https://learn.microsoft.com/en-us/graph/api/channel-post-messages?view=graph-rest-1.0&tabs=http
 		const chatMessage = {
 			body: {
 				content: content,
@@ -47,6 +46,13 @@ export const sendChannelMessageAction = createAction({
 			},
 		};
 
-		return await withGraphRetry(() => client.api(`/teams/${teamId}/channels/${channelId}/messages`).post(chatMessage));
+		// https://learn.microsoft.com/graph/api/chatmessage-post-replies?view=graph-rest-1.0
+		return await withGraphRetry(() =>
+			client
+				.api(`/teams/${teamId}/channels/${channelId}/messages/${messageId}/replies`)
+				.post(chatMessage)
+		);
 	},
 });
+
+
