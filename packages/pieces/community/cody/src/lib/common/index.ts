@@ -1,16 +1,16 @@
 import { HttpMethod, AuthenticationType, httpClient } from '@activepieces/pieces-common';
 
-export interface CodyResponse<T = unknown> {
+export interface CodyResponse<T = any> {
   success: boolean;
   data: T;
   error?: string;
 }
 
-export async function makeRequest<T = unknown>(
+export async function makeRequest<T = any>(
   method: HttpMethod,
   url: string,
   apiKey: string,
-  body?: unknown
+  body?: any
 ): Promise<CodyResponse<T>> {
   try {
     const response = await httpClient.sendRequest<CodyResponse<T>>({
@@ -27,11 +27,8 @@ export async function makeRequest<T = unknown>(
     });
 
     return response.body;
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      throw new Error(`Cody API Error: ${error.message}`);
-    }
-    throw new Error('Cody API Error: Unknown error');
+  } catch (error: any) {
+    throw new Error(`Cody API Error: ${error.message}`);
   }
 }
 
