@@ -247,6 +247,9 @@
       "@activepieces/piece-coda": [
         "packages/pieces/community/coda/src/index.ts"
       ],
+      "@activepieces/piece-cody": [
+        "packages/pieces/community/cody/src/index.ts"
+      ],
       "@activepieces/piece-cognito-forms": [
         "packages/pieces/community/cognito-forms/src/index.ts"
       ],
