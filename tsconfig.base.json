@@ -317,11 +317,11 @@
       "@activepieces/piece-discord": [
         "packages/pieces/community/discord/src/index.ts"
       ],
-      "@activepieces/piece-dittofeed":[
-        "packages/pieces/community/dittofeed/src/index.ts"
-      ],
       "@activepieces/piece-discourse": [
         "packages/pieces/community/discourse/src/index.ts"
+      ],
+      "@activepieces/piece-dittofeed": [
+        "packages/pieces/community/dittofeed/src/index.ts"
       ],
       "@activepieces/piece-docusign": [
         "packages/pieces/community/docusign/src/index.ts"
@@ -673,6 +673,9 @@
       ],
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
+      ],
+      "@activepieces/piece-murf-api": [
+        "packages/pieces/community/murf-api/src/index.ts"
       ],
       "@activepieces/piece-mysql": [
         "packages/pieces/community/mysql/src/index.ts"
