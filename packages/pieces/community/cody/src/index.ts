@@ -30,7 +30,7 @@ export const cody = createPiece({
     findBotAction,
     findConversationAction,
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.meetcody.ai/v1',
+      baseUrl: () => 'https://getcody.ai/api/v1',
       auth: codyAuth,
       authMapping: async (auth) => ({
         'Authorization': `Bearer ${auth}`,
