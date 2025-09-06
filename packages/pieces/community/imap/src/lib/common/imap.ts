@@ -99,6 +99,23 @@ async function copyEmail<T extends { success: boolean; newUid?: number }>({
   )) as T;
 }
 
+async function deleteEmail<T extends { success: boolean }>({
+  auth,
+  mailbox,
+  uid,
+}: {
+  auth: ImapAuth;
+  mailbox: string;
+  uid: number;
+}): Promise<T> {
+  return (await performMailboxOperation(auth, mailbox, async (imapClient) => {
+    await confirmEmailExists(imapClient, uid);
+    await imapClient.messageDelete({ uid }, { uid: true });
+
+    return { success: true };
+  })) as T;
+}
+
 async function fetchEmails<T extends Message[]>({
   auth,
   lastPoll,
@@ -293,6 +310,7 @@ export {
 
   // Email actions
   copyEmail,
+  deleteEmail,
   fetchEmails,
   moveEmail,
   setEmailReadStatus,
