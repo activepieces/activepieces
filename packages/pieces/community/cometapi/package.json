@@ -1,0 +1,14 @@
+{
+  "name": "@activepieces/piece-cometapi",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "tslib": "^2.3.0",
+    "@activepieces/pieces-common": "*",
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/shared": "*",
+    "zod": "^3.21.4"
+  }
+}
