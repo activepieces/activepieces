@@ -100,7 +100,7 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         )
     },
 
-
+    boolean
     async getQueue(): Promise<Queue> {
         assertNotNullOrUndefined(queue, 'Queue is not initialized')
         return queue
@@ -167,4 +167,4 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         }
     },
 
-})
+})boolean
