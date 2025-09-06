@@ -665,6 +665,9 @@
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
       ],
+      "@activepieces/piece-murf-api": [
+        "packages/pieces/community/murf-api/src/index.ts"
+      ],
       "@activepieces/piece-mysql": [
         "packages/pieces/community/mysql/src/index.ts"
       ],
