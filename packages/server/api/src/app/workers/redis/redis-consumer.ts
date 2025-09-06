@@ -1,4 +1,4 @@
-import { AppSystemProp, QueueName, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, QueueName } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
