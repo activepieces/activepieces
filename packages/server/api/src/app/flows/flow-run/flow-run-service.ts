@@ -40,7 +40,6 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
-import { getJobPriority } from '../../workers/queue/queue-manager'
 import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
@@ -274,12 +273,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             log,
         })
 
-        const priority = await getJobPriority(synchronousHandlerId)
         await flowRunSideEffects(log).start({
             flowRun,
             httpRequestId,
             payload,
-            priority,
+            priority: !isNil(synchronousHandlerId) ? 'medium' : 'low',
             synchronousHandlerId,
             executeTrigger,
             executionType,
@@ -362,12 +360,19 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const flowRun = await this.getOneOrThrow(params)
         let steps = {}
         if (!isNil(flowRun.logsFileId)) {
-            const { data } = await fileService(log).getDataOrThrow({
+            const file = await fileService(log).getDataOrUndefined({
                 fileId: flowRun.logsFileId,
                 projectId: flowRun.projectId,
             })
 
-            const serializedExecutionOutput = data.toString('utf-8')
+            if (isNil(file)) {
+                return {
+                    ...flowRun,
+                    steps: {},
+                }
+            }
+
+            const serializedExecutionOutput = file.data.toString('utf-8')
             const executionOutput: ExecutioOutputFile = JSON.parse(
                 serializedExecutionOutput,
             )

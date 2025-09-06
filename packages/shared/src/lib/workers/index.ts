@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
+import { JobData } from './job-data'
 
 export enum WorkerMachineStatus {
     ONLINE = 'ONLINE',
@@ -41,8 +42,7 @@ export type WorkerMachineWithStatus = Static<typeof WorkerMachineWithStatus>
 
 export const ConsumeJobRequest = Type.Object({
     jobId: Type.String(),
-    queueName: Type.String(),
-    jobData: Type.Any(),
+    jobData: JobData,
     attempsStarted: Type.Number(),
     engineToken: Type.String(),
 })
@@ -70,9 +70,7 @@ export const WorkerMachineHealthcheckResponse = Type.Object({
     PAUSED_FLOW_TIMEOUT_DAYS: Type.Number(),
     EXECUTION_MODE: Type.String(),
     FLOW_TIMEOUT_SECONDS: Type.Number(),
-    FLOW_WORKER_CONCURRENCY: Type.Number(),
-    SCHEDULED_WORKER_CONCURRENCY: Type.Number(),
-    AGENTS_WORKER_CONCURRENCY: Type.Number(),
+    WORKER_CONCURRENCY: Type.Number(),
     LOG_LEVEL: Type.String(),
     LOG_PRETTY: Type.String(),
     ENVIRONMENT: Type.String(),

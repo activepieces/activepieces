@@ -3,9 +3,9 @@ import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { PiecesSource } from '@activepieces/server-shared'
 import { isNil, ProjectId } from '@activepieces/shared'
 import { cacheState } from '../cache/cache-state'
+import { GLOBAL_CACHE_PIECES_PATH } from '../cache/worker-cache'
 import { workerMachine } from '../utils/machine'
 import { engineApiService } from './server-api.service'
-import { GLOBAL_CACHE_PIECES_PATH } from '../cache/worker-cache'
 
 
 export const pieceWorkerCache = {

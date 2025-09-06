@@ -30,7 +30,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
 
 async function setupBaseApp(): Promise<FastifyInstance> {
     const MAX_FILE_SIZE_MB = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)
-    const fileSizeLimit =  Math.max(25 * 1024 * 1024, (MAX_FILE_SIZE_MB + 4) * 1024 * 1024)
+    const fileSizeLimit = Math.max(25 * 1024 * 1024, (MAX_FILE_SIZE_MB + 4) * 1024 * 1024)
     const app = fastify({
         disableRequestLogging: true,
         querystringParser: qs.parse,
@@ -51,8 +51,8 @@ async function setupBaseApp(): Promise<FastifyInstance> {
                 formats: {},
             },
         },
-    }) 
-    
+    })
+
     await app.register(fastifyFavicon)
     await app.register(fastifyMultipart, {
         attachFieldsToBody: 'keyValues',
