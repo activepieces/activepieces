@@ -95,6 +95,7 @@ export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
 
         await cleanQueue('usersInteractionJobs')
         await cleanQueue('agentsJobs')
+        await cleanQueue('cleanupJobs')
     },
 })
 

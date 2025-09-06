@@ -94,9 +94,9 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         
         return 1
             `,
-            1,
-            setKey,
-            job.id
+        1,
+        setKey,
+        job.id,
         )
     },
 
@@ -157,7 +157,7 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
             currentTime.toString(),
             FLOW_TIMEOUT_IN_MILLISECONDS.toString(),
             MAX_CONCURRENT_JOBS_PER_PROJECT.toString(),
-            jobWithTimestamp
+            jobWithTimestamp,
         ) as [number, number]
 
         const [shouldRateLimit] = result
