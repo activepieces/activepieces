@@ -1118,6 +1118,9 @@
       "@activepieces/piece-zoho-books": [
         "packages/pieces/community/zoho-books/src/index.ts"
       ],
+      "@activepieces/piece-zoho-campaigns": [
+        "packages/pieces/community/zoho-campaigns/src/index.ts"
+      ],
       "@activepieces/piece-zoho-crm": [
         "packages/pieces/community/zoho-crm/src/index.ts"
       ],
