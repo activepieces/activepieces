@@ -9,8 +9,22 @@ import { createChannelAction } from './lib/actions/create-channel';
 import { sendChannelMessageAction } from './lib/actions/send-channel-message';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { sendChatMessageAction } from './lib/actions/send-chat-message';
+import { replyToChannelMessageAction } from './lib/actions/reply-to-channel-message';
+import { listTeamMembersAction } from './lib/actions/list-team-members';
+import { addTeamMemberAction } from './lib/actions/add-team-member';
+import { createTeamAction } from './lib/actions/create-team';
+import { createChatAndSendMessageAction } from './lib/actions/create-chat-and-send-message';
+import { createPrivateChannelAction } from './lib/actions/create-private-channel';
+import { getChatMessageAction } from './lib/actions/get-chat-message';
+import { getChannelMessageAction } from './lib/actions/get-channel-message';
+import { findChannelAction } from './lib/actions/find-channel';
+import { findTeamMemberAction } from './lib/actions/find-team-member';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { newChannelMessageTrigger } from './lib/triggers/new-channel-message';
+import { newChannelTrigger } from './lib/triggers/new-channel';
+import { newChatTrigger } from './lib/triggers/new-chat';
+import { newChatMessageTrigger } from './lib/triggers/new-chat-message';
+import { newTeamMemberTrigger } from './lib/triggers/new-team-member';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -62,10 +76,12 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
 		'Channel.ReadBasic.All',
 		'ChannelMessage.Send',
 		'Team.ReadBasic.All',
+		'TeamMember.Read.All',
+		'Chat.Create',
 		'Chat.ReadWrite',
 		'ChannelMessage.Read.All',
-    'User.ReadBasic.All',
-    'Presence.Read.All',
+		'User.ReadBasic.All',
+		'Presence.Read.All',
 	],
 	prompt: 'omit',
 	authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
@@ -95,8 +111,18 @@ export const microsoftTeams = createPiece({
 	authors: ['kishanprmr'],
 	actions: [
 		createChannelAction,
+		createPrivateChannelAction,
 		sendChannelMessageAction,
 		sendChatMessageAction,
+		replyToChannelMessageAction,
+		getChannelMessageAction,
+		getChatMessageAction,
+		findChannelAction,
+		listTeamMembersAction,
+		findTeamMemberAction,
+		addTeamMemberAction,
+		createTeamAction,
+		createChatAndSendMessageAction,
 		createCustomApiCallAction({
 			auth: microsoftTeamsAuth,
 			baseUrl: () => 'https://graph.microsoft.com/v1.0/teams',
@@ -105,5 +131,5 @@ export const microsoftTeams = createPiece({
 			}),
 		}),
 	],
-	triggers: [newChannelMessageTrigger],
+	triggers: [newChannelMessageTrigger, newChannelTrigger, newChatTrigger, newChatMessageTrigger, newTeamMemberTrigger],
 });
