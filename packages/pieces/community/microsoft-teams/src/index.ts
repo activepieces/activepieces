@@ -8,13 +8,24 @@ import { PieceCategory } from '@activepieces/shared';
 import { createChannelAction } from './lib/actions/create-channel';
 import { sendChannelMessageAction } from './lib/actions/send-channel-message';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { replyToChannelMessage } from './lib/actions/reply-to-channel-message';
+import { createPrivateChannel } from './lib/actions/create-private-channel';
+import { getChatMessage } from './lib/actions/get-chat-message';
+import { getChannelMessage } from './lib/actions/get-channel-message';
+import { findChannel } from './lib/actions/find-channel';
+import { findTeamMember } from './lib/actions/find-team-member';
+import { createChatAndSendMessage } from './lib/actions/create-chat-send-message';
 import { sendChatMessageAction } from './lib/actions/send-chat-message';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { newChannelMessageTrigger } from './lib/triggers/new-channel-message';
+import { newChatTrigger } from './lib/triggers/new-chat';
+import { newChannelTrigger } from './lib/triggers/new-channel';
+import { newTeamMemberTrigger } from './lib/triggers/new-team-member';
+import { newChatMessageTrigger } from './lib/triggers/new-chat-message';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
-2. From the left sidebar, go to **Microsoft Enfra ID**.
+2. From the left sidebar, go to **Microsoft Entra ID**.
 3. Under **Manage**, click on **App registrations**.
 4. Click the **New registration** button.
 5. Enter a **Name** for your app.
@@ -23,7 +34,7 @@ const authDesc = `
    - Or select based on your requirement.
 7. In **Redirect URI**, select **Web** and add the given URL.
 8. Click **Register**.
-9. After registration, you’ll be redirected to the app’s overview page. Copy the **Application (client) ID**.
+9. After registration, you'll be redirected to the app's overview page. Copy the **Application (client) ID**.
 10. From the left menu, go to **Certificates & secrets**.
     - Under **Client secrets**, click **New client secret**.
     - Provide a description, set an expiry, and click **Add**.
@@ -36,9 +47,12 @@ const authDesc = `
       - Channel.Create
 	  - Channel.ReadBasic.All
 	  - ChannelMessage.Send
-	  - Team.ReadBasic.All
-	  - Chat.ReadWrite
 	  - ChannelMessage.Read.All
+	  - Team.ReadBasic.All
+	  - TeamMember.Read.All
+	  - Chat.ReadWrite
+	  - Chat.Read.All
+	  - Chat.Create
 	  - User.ReadBasic.All
 	  - Presence.Read.All
       - openid
@@ -50,7 +64,7 @@ const authDesc = `
 `
 
 export const microsoftTeamsAuth = PieceAuth.OAuth2({
-	description:authDesc,
+	description: authDesc,
 	required: true,
 	scope: [
 		'openid',
@@ -61,11 +75,14 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
 		'Channel.Create',
 		'Channel.ReadBasic.All',
 		'ChannelMessage.Send',
-		'Team.ReadBasic.All',
-		'Chat.ReadWrite',
 		'ChannelMessage.Read.All',
-    'User.ReadBasic.All',
-    'Presence.Read.All',
+		'Team.ReadBasic.All',
+		'TeamMember.Read.All',
+		'Chat.ReadWrite',
+		'Chat.Read.All',
+		'Chat.Create',
+		'User.ReadBasic.All',
+		'Presence.Read.All',
 	],
 	prompt: 'omit',
 	authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
@@ -94,6 +111,13 @@ export const microsoftTeams = createPiece({
 	categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.COMMUNICATION],
 	authors: ['kishanprmr'],
 	actions: [
+		createChatAndSendMessage,
+		findTeamMember,
+		findChannel,
+		getChannelMessage,
+		getChatMessage,
+		createPrivateChannel,
+		replyToChannelMessage,
 		createChannelAction,
 		sendChannelMessageAction,
 		sendChatMessageAction,
@@ -105,5 +129,5 @@ export const microsoftTeams = createPiece({
 			}),
 		}),
 	],
-	triggers: [newChannelMessageTrigger],
+	triggers: [newChannelMessageTrigger, newChatTrigger, newChannelTrigger, newTeamMemberTrigger, newChatMessageTrigger],
 });
