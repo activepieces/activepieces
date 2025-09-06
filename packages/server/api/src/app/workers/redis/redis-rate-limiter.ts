@@ -166,4 +166,4 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         }
     },
 
-})boolean
+})
