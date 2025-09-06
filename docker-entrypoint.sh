@@ -17,4 +17,9 @@ mv /usr/share/nginx/html/index.html.tmp /usr/share/nginx/html/index.html
 nginx -g "daemon off;" &
 
 # Start backend server
-node --enable-source-maps dist/packages/server/api/main.js
+if [ "$AP_CONTAINER_TYPE" = "APP" ]; then
+    echo "Starting backend server with PM2 (APP mode)"
+    pm2 start dist/packages/server/api/main.js --name "activepieces-app" --node-args="--enable-source-maps" -i 0
+else
+    node --enable-source-maps dist/packages/server/api/main.js
+fi
