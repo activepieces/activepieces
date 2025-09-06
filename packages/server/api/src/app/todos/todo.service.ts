@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, PlatformId, PopulatedTodo, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoEnvironment, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Socket } from 'socket.io'
+import { Server } from 'socket.io'
 import { Like } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
@@ -183,7 +183,7 @@ type ResolveParams = {
     id: string
     status: string
     isTest?: boolean
-    socket: Socket
+    socket: Server
 }
 
 type GetParams = {
@@ -229,5 +229,5 @@ type UpdateParams = {
     statusOptions?: StatusOption[]
     assigneeId?: string
     isTest?: boolean
-    socket: Socket
+    socket: Server
 }

@@ -1,5 +1,5 @@
 import path from 'path'
-import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION, GLOBAL_CODE_CACHE_PATH, PiecesSource, threadSafeMkdir } from '@activepieces/server-shared'
+import { PiecesSource, threadSafeMkdir } from '@activepieces/server-shared'
 import { ExecutionMode, PiecePackage, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceManager } from '../piece-manager'
@@ -7,6 +7,7 @@ import { CodeArtifact } from '../runner/engine-runner-types'
 import { workerMachine } from '../utils/machine'
 import { codeBuilder } from './code-builder'
 import { engineInstaller } from './engine-installer'
+import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION, GLOBAL_CODE_CACHE_PATH } from './worker-cache'
 
 export const executionFiles = (log: FastifyBaseLogger) => ({
 

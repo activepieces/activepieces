@@ -1,5 +1,6 @@
 import fs from 'fs/promises'
 import { readFile } from 'node:fs/promises'
+import { inspect } from 'node:util'
 import path from 'path'
 import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
 import { createConnectionService } from './services/connections.service'
@@ -19,24 +20,22 @@ export const utils = {
             throw Error((e as Error).message)
         }
     },
-
-
     async walk(dirPath: string): Promise<FileEntry[]> {
         const entries: FileEntry[] = []
-        
+
         async function walkRecursive(currentPath: string) {
             try {
                 const items = await fs.readdir(currentPath, { withFileTypes: true })
-                
+
                 for (const item of items) {
                     const fullPath = path.join(currentPath, item.name)
                     const absolutePath = path.resolve(fullPath)
-                    
+
                     entries.push({
                         name: item.name,
                         path: absolutePath,
                     })
-                    
+
                     if (item.isDirectory()) {
                         await walkRecursive(fullPath)
                     }
@@ -46,16 +45,16 @@ export const utils = {
                 // Skip directories that can't be read
             }
         }
-        
+
         await walkRecursive(dirPath)
         return entries
     },
-    tryParseJson(value: string): unknown {
+    formatError(value: Error): string {
         try {
-            return JSON.parse(value)
+            return JSON.stringify(JSON.parse(value.message), null, 2)
         }
         catch (e) {
-            return value
+            return inspect(value)
         }
     },
     async folderExists(filePath: string): Promise<boolean> {
@@ -102,4 +101,4 @@ export type HookResponse = {
     type: 'none'
     tags: string[]
 }
-type CreateConnectionManagerParams =  { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties' } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse }
+type CreateConnectionManagerParams = { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties' } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse }

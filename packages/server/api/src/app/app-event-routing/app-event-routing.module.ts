@@ -4,8 +4,6 @@ import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece } from '@activepieces/pieces-framework'
 import {
-    JobType,
-    LATEST_JOB_DATA_SCHEMA_VERSION,
     rejectedPromiseHandler,
 } from '@activepieces/server-shared'
 import {
@@ -16,17 +14,20 @@ import {
     ErrorCode,
     FlowStatus,
     isNil,
+    LATEST_JOB_DATA_SCHEMA_VERSION,
     RunEnvironment,
+    WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { flowService } from '../flows/flow/flow.service'
+import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun, webhookHandler } from '../webhooks/webhook-handler'
 import { jobQueue } from '../workers/queue'
-import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
+import { JobType } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
 
 const appWebhooks: Record<string, Piece> = {
@@ -125,26 +126,26 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                 const requestId = apId()
                 const flow = await flowService(request.log).getOneOrThrow({ id: listener.flowId, projectId: listener.projectId })
                 const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
-
+                const platformId = await projectService.getPlatformId(listener.projectId)
                 return jobQueue(request.log).add({
                     id: requestId,
-                    type: JobType.WEBHOOK,
+                    type: JobType.ONE_TIME,
                     data: {
+                        platformId,
                         projectId: listener.projectId,
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         requestId,
                         payload,
                         flowId: listener.flowId,
+                        jobType: WorkerJobType.EXECUTE_WEBHOOK,
                         runEnvironment: RunEnvironment.PRODUCTION,
                         saveSampleData: await triggerSourceService(request.log).existsByFlowId({
                             flowId: listener.flowId,
                             simulate: true,
-                        },
-                        ),
+                        }),
                         flowVersionIdToRun,
                         execute: flow.status === FlowStatus.ENABLED,
                     },
-                    priority: DEFAULT_PRIORITY,
                 })
             })
             rejectedPromiseHandler(Promise.all(eventsQueue), request.log)

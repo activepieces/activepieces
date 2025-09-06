@@ -1,9 +1,13 @@
-import { pinoLogging, WebhookJobData } from '@activepieces/server-shared'
+import { pinoLogging } from '@activepieces/server-shared'
 import {
+    ConsumeJobResponse,
+    ConsumeJobResponseStatus,
     EventPayload,
     isNil,
     PopulatedFlow,
     ProgressUpdateType,
+    TriggerRunStatus,
+    WebhookJobData,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowWorkerCache } from '../api/flow-worker-cache'
@@ -17,7 +21,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         data: WebhookJobData,
         engineToken: string,
         workerToken: string,
-    ): Promise<void> {
+    ): Promise<ConsumeJobResponse> {
         const webhookLogger = pinoLogging.createWebhookContextLog({
             log,
             webhookId: data.requestId,
@@ -26,13 +30,16 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         webhookLogger.info('Webhook job executor started')
         const { payload, saveSampleData, flowVersionIdToRun, execute } = data
 
-        const populatedFlowToRun = await flowWorkerCache(log).getFlow({
+        const populatedFlowToRun = await flowWorkerCache.getFlow({
             engineToken,
             flowVersionId: flowVersionIdToRun,
         })
 
         if (isNil(populatedFlowToRun)) {
-            return
+            return {
+                status: ConsumeJobResponseStatus.INTERNAL_ERROR,
+                errorMessage: 'Flow not found',
+            }
         }
 
         if (saveSampleData) {
@@ -41,9 +48,11 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
 
         const onlySaveSampleData = !execute
         if (onlySaveSampleData) {
-            return
+            return {
+                status: ConsumeJobResponseStatus.OK,
+            }
         }
-        const filteredPayloads = await triggerHooks(log).extractPayloads(engineToken, {
+        const { payloads, status, errorMessage } = await triggerHooks(log).extractPayloads(engineToken, {
             jobId,
             flowVersion: populatedFlowToRun.version,
             payload,
@@ -51,16 +60,26 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             simulate: saveSampleData,
         })
 
+        if (status === TriggerRunStatus.INTERNAL_ERROR) {
+            return {
+                status: ConsumeJobResponseStatus.INTERNAL_ERROR,
+                errorMessage,
+            }
+        }
+
         await workerApiService(workerToken).startRuns({
             flowVersionId: populatedFlowToRun.version.id,
             projectId: populatedFlowToRun.projectId,
             environment: data.runEnvironment,
             progressUpdateType: ProgressUpdateType.NONE,
             httpRequestId: data.requestId,
-            payloads: filteredPayloads,
+            payloads,
             parentRunId: data.parentRunId,
             failParentOnFailure: data.failParentOnFailure,
-        })
+        })  
+        return {
+            status: ConsumeJobResponseStatus.OK,
+        }
     },
 })
 
@@ -73,7 +92,7 @@ async function handleSampleData(
     log: FastifyBaseLogger,
     payload: EventPayload,
 ): Promise<void> {
-    const payloads = await triggerHooks(log).extractPayloads(engineToken, {
+    const { payloads } = await triggerHooks(log).extractPayloads(engineToken, {
         jobId,
         flowVersion: latestFlowVersion.version,
         payload,

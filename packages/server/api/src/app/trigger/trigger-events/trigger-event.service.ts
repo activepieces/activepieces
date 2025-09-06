@@ -1,4 +1,3 @@
-import { UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -16,6 +15,7 @@ import {
     SeekPage,
     TriggerEventWithPayload,
     TriggerHookType,
+    WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
@@ -25,6 +25,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
+import { projectService } from '../../project/project-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { TriggerEventEntity } from './trigger-event.entity'
 
@@ -70,6 +71,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
         flow,
     }: TestParams): Promise<SeekPage<TriggerEventWithPayload>> {
         const trigger = flow.version.trigger
+        const platformId = await projectService.getPlatformId(projectId)
         const emptyPage = paginationHelper.createPage<TriggerEventWithPayload>([], null)
         switch (trigger.type) {
             case FlowTriggerType.PIECE: {
@@ -79,7 +81,8 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                     flowVersion: flow.version,
                     test: true,
                     projectId,
-                    jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
+                    jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
+                    platformId,
                 })
                 await triggerEventRepo().delete({
                     projectId,

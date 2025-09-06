@@ -4,9 +4,7 @@ import {
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
 import {
-    AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION,
-    RepeatableJobType,
-    UserInteractionJobType,
+    AppSystemProp,
 } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -16,11 +14,12 @@ import {
     FlowTriggerType,
     FlowVersion,
     isNil,
-    RunEnvironment,
+    LATEST_JOB_DATA_SCHEMA_VERSION,
     ScheduleOptions,
     TriggerHookType,
     TriggerSourceScheduleType,
     WebhookHandshakeConfiguration,
+    WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import {
@@ -29,7 +28,9 @@ import {
 } from 'server-worker'
 import { appEventRoutingService } from '../../app-event-routing/app-event-routing.service'
 import { system } from '../../helper/system/system'
+import { projectService } from '../../project/project-service'
 import { jobQueue } from '../../workers/queue'
+import { JobType } from '../../workers/queue/queue-manager'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 
 const environment = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
@@ -45,10 +46,12 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
             }
             const { flowVersion, projectId, simulate, pieceTrigger } = params
 
+            const platformId = await projectService.getPlatformId(projectId)
             const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>>>({
-                jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
+                jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
                 hookType: TriggerHookType.ON_ENABLE,
                 flowVersion,
+                platformId,
                 projectId,
                 test: simulate,
             })
@@ -81,12 +84,14 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
         },
         async disable(params: DisableFlowTriggerParams): Promise<void> {
             const { flowVersion, projectId, simulate, pieceTrigger } = params
+            const platformId = await projectService.getPlatformId(projectId)
             const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>>>({
-                jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
+                jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
                 hookType: TriggerHookType.ON_DISABLE,
                 flowVersion,
                 test: simulate,
                 projectId,
+                platformId,
             })
             if (!params.ignoreError) {
                 assertEngineResponseIsOk(engineHelperResponse, flowVersion)
@@ -138,6 +143,7 @@ async function handleWebhookTrigger({ flowVersion, projectId, pieceTrigger, log 
     const renewConfiguration = pieceTrigger.renewConfiguration
     switch (renewConfiguration?.strategy) {
         case WebhookRenewStrategy.CRON: {
+            const platformId = await projectService.getPlatformId(projectId)
             await jobQueue(log).add({
                 id: flowVersion.id,
                 type: JobType.REPEATING,
@@ -146,7 +152,8 @@ async function handleWebhookTrigger({ flowVersion, projectId, pieceTrigger, log 
                     projectId,
                     flowVersionId: flowVersion.id,
                     flowId: flowVersion.flowId,
-                    jobType: RepeatableJobType.RENEW_WEBHOOK,
+                    jobType: WorkerJobType.RENEW_WEBHOOK,
+                    platformId,
                 },
                 scheduleOptions: {
                     type: TriggerSourceScheduleType.CRON_EXPRESSION,
@@ -175,17 +182,18 @@ async function handlePollingTrigger({ engineHelperResponse, flowVersion, project
             type: TriggerSourceScheduleType.CRON_EXPRESSION,
         }
     }
+    const platformId = await projectService.getPlatformId(projectId)
     await jobQueue(log).add({
         id: flowVersion.id,
         type: JobType.REPEATING,
         data: {
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             projectId,
-            environment: RunEnvironment.PRODUCTION,
             flowVersionId: flowVersion.id,
             flowId: flowVersion.flowId,
             triggerType: FlowTriggerType.PIECE,
-            jobType: RepeatableJobType.EXECUTE_TRIGGER,
+            jobType: WorkerJobType.EXECUTE_POLLING,
+            platformId,
         },
         scheduleOptions: engineHelperResponse.result.scheduleOptions,
     })
