@@ -15,7 +15,7 @@ export async function makeRequest<T = any>(
   try {
     const response = await httpClient.sendRequest<CodyResponse<T>>({
       method,
-      url: `https://api.meetcody.ai/v1${url}`,
+      url: `https://getcody.ai/api/v1${url}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: apiKey,
