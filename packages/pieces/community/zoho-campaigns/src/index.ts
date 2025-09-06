@@ -1,7 +1,18 @@
 import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
+import { createCampaignAction } from "./lib/actions/create-campaign";
+import { cloneCampaignAction } from "./lib/actions/clone-campaign";
+import { sendCampaignAction } from "./lib/actions/send-campaign";
+import { addTagToContactAction } from "./lib/actions/add-tag-to-contact";
+import { addUpdateContactAction } from "./lib/actions/add-update-contact";
+import { removeTagFromContactAction } from "./lib/actions/remove-tag-from-contact";
+import { unsubscribeContactAction } from "./lib/actions/unsubscribe-contact";
+import { addContactToListAction } from "./lib/actions/add-contact-to-list";
+import { findContactAction } from "./lib/actions/find-contact";
+import { findCampaignAction } from "./lib/actions/find-campaign";
 
-// Note: As you build actions and triggers, you will import them here.
-// Example: import { createContact } from "./lib/actions/create-contact.ts";
+import { newContact } from "./lib/triggers/new-contact";
+import { newUnsubscribe } from "./lib/triggers/new-unsubscribe";
+import { newCampaign } from "./lib/triggers/new-campaign";
 
 export const zohoCampaignsAuth = PieceAuth.OAuth2({
     description: `
@@ -24,17 +35,28 @@ export const zohoCampaignsAuth = PieceAuth.OAuth2({
 });
 
 export const zohoCampaigns = createPiece({
-  displayName: "Zoho Campaigns", // Corrected the display name for better readability
-  auth: zohoCampaignsAuth, // Implemented OAuth2 authentication
+  displayName: "Zoho Campaigns", 
+  auth: zohoCampaignsAuth, 
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/zoho-campaigns.png",
   authors: [
-      "your-github-username" 
+      
     ],
   actions: [
-    
+    createCampaignAction,
+    cloneCampaignAction,
+    sendCampaignAction,
+    addTagToContactAction,
+    addUpdateContactAction,
+    removeTagFromContactAction,
+    unsubscribeContactAction,
+    addContactToListAction,
+    findContactAction,
+    findCampaignAction,
   ],
   triggers: [
-    
+    newContact,
+    newUnsubscribe,
+
   ],
 });
