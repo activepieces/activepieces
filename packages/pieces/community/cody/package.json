@@ -1,0 +1,13 @@
+{
+  "name": "@activepieces/piece-cody",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/pieces-common": "*",
+    "@activepieces/shared": "*",
+    "tslib": "^2.3.0"
+  }
+}
