@@ -94,12 +94,11 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         
         return 1
             `,
-            1,
-            setKey,
-            job.id
+        1,
+        setKey,
+        job.id,
         )
     },
-
 
     async getQueue(): Promise<Queue> {
         assertNotNullOrUndefined(queue, 'Queue is not initialized')
@@ -157,7 +156,7 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
             currentTime.toString(),
             FLOW_TIMEOUT_IN_MILLISECONDS.toString(),
             MAX_CONCURRENT_JOBS_PER_PROJECT.toString(),
-            jobWithTimestamp
+            jobWithTimestamp,
         ) as [number, number]
 
         const [shouldRateLimit] = result
@@ -167,4 +166,4 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         }
     },
 
-})
+})boolean
