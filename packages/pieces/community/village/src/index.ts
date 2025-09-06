@@ -1,7 +1,16 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { fetchPeoplePaths } from './lib/actions/fetch-people-paths';
-import { fetchCompaniesPaths } from './lib/actions/fetch-companies-paths';
+
+// People actions
+import { getPersonPaths } from './lib/actions/people/get-person-paths';
+import { sortPeople } from './lib/actions/people/sort-people';
+import { enrichEmail } from './lib/actions/people/enrich-email';
+import { enrichPersonBasic } from './lib/actions/people/enrich-person-basic';
+import { enrichEmailsBulk } from './lib/actions/people/enrich-emails-bulk';
+
+// Company actions
+import { sortCompanies } from './lib/actions/companies/sort-companies';
+import { enrichCompanyBasic } from './lib/actions/companies/enrich-company-basic';
 
 export const villageAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -20,6 +29,16 @@ export const village = createPiece({
     PieceCategory.SALES_AND_CRM,
   ],
   authors: ['rafaelmuttoni'],
-  actions: [fetchPeoplePaths, fetchCompaniesPaths],
+  actions: [
+    // People actions
+    getPersonPaths,
+    sortPeople,
+    enrichEmail,
+    enrichPersonBasic,
+    enrichEmailsBulk,
+    // Company actions
+    sortCompanies,
+    enrichCompanyBasic,
+  ],
   triggers: [],
 });
