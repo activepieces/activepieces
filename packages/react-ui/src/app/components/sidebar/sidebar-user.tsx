@@ -107,7 +107,7 @@ export function SidebarUser() {
               {!embedState.hideProjectSettings && (
                 <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
                   <Settings className="w-4 h-4 mr-2" />
-                  {t('Settings')}
+                  {t('Project Settings')}
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={() => setInviteOpen(true)}>

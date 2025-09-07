@@ -40,7 +40,7 @@ import { isNil, Permission } from '@activepieces/shared';
 
 import { HelpAndFeedback } from '../help-and-feedback';
 
-import { ApSidebareGroup, SidebarGeneralItemType } from './ap-sidebar-group';
+import { SidebarGeneralItemType } from './ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from './ap-sidebar-item';
 import { AppSidebarHeader } from './sidebar-header';
 import { SidebarUser } from './sidebar-user';
@@ -107,12 +107,30 @@ export function ProjectDashboardSidebar() {
     isSubItem: false,
   };
 
-  const items: SidebarGeneralItemType[] = [
-    flowsLink,
-    tablesLink,
-    todosLink,
-    releasesLink,
-  ].filter(permissionFilter);
+  const items = [flowsLink, tablesLink, todosLink, releasesLink].filter(
+    permissionFilter,
+  );
+
+  const otherItems: SidebarItemType[] = [
+    {
+      type: 'link',
+      to: authenticationSession.appendProjectRoutePrefix('/connections'),
+      label: t('Connections'),
+      icon: Link2,
+      hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
+      show: true,
+      isSubItem: false,
+    },
+    {
+      type: 'link',
+      to: authenticationSession.appendProjectRoutePrefix('/mcps'),
+      label: t('MCP'),
+      show: platform.plan.mcpsEnabled || !embedState.isEmbedded,
+      hasPermission: checkAccess(Permission.READ_MCP),
+      icon: McpSvg,
+      isSubItem: false,
+    },
+  ];
 
   const moreItems = [
     {
@@ -131,23 +149,6 @@ export function ProjectDashboardSidebar() {
       type: 'link',
       show: checkAccess(Permission.READ_PROJECT_RELEASE),
     },
-    {
-      type: 'link',
-      to: authenticationSession.appendProjectRoutePrefix('/connections'),
-      label: t('Connections'),
-      icon: Link2,
-      show: checkAccess(Permission.READ_APP_CONNECTION),
-    },
-    {
-      type: 'link',
-      to: authenticationSession.appendProjectRoutePrefix('/mcps'),
-      label: t('MCP'),
-      show:
-        (platform.plan.mcpsEnabled || !embedState.isEmbedded) &&
-        checkAccess(Permission.READ_MCP),
-      icon: McpSvg,
-      tutorialTab: 'mcpServers',
-    },
   ];
 
   return (
@@ -157,19 +158,23 @@ export function ProjectDashboardSidebar() {
 
         <SidebarContent className="gap-y-0">
           <SidebarGroup>
-            <SidebarGroupLabel>{t('Products')}</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('Automations')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {items
-                  .filter((item) => item.label !== 'Agents')
-                  .map((item) =>
-                    item.type === 'group' ? (
-                      <ApSidebareGroup key={item.label} {...item} />
-                    ) : (
-                      <ApSidebarItem key={item.label} {...item} />
-                    ),
-                  )}
+                {items.map((item) => (
+                  <ApSidebarItem key={item.label} {...item} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
 
+          <SidebarGroup>
+            <SidebarGroupLabel>{t('Other')}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {otherItems.map((item) => (
+                  <ApSidebarItem key={item.label} {...item} />
+                ))}
                 <SidebarMenuItem>
                   <DropdownMenu
                     open={isMoreMenuOpen}
