@@ -1,12 +1,7 @@
 import { UseMutationResult } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  Download,
-  EllipsisVertical,
-  PencilIcon,
-  TrashIcon,
-  UploadCloud,
-} from 'lucide-react';
+import { Download, PencilIcon, TrashIcon, UploadCloud } from 'lucide-react';
+import React from 'react';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -29,10 +24,12 @@ const ApTableActionsMenu = ({
   table,
   refetch,
   deleteMutation,
+  children,
 }: {
   table: Table;
   refetch: (() => void) | null;
   deleteMutation: UseMutationResult<void, Error, string[], unknown>;
+  children: React.ReactNode;
 }) => {
   const userHasPermissionToUpdateTable = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
@@ -42,11 +39,7 @@ const ApTableActionsMenu = ({
   );
   return (
     <DropdownMenu modal={true}>
-      <DropdownMenuTrigger asChild>
-        <div className="rounded-full p-2 hover:bg-muted cursor-pointer">
-          <EllipsisVertical className="h-6 w-6" />
-        </div>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent>
         <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateTable}>
           <RenameTableDialog

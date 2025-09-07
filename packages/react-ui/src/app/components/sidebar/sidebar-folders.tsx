@@ -7,6 +7,7 @@ import {
   Plus,
   Workflow,
 } from 'lucide-react';
+import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { CreateFlowDropdown } from '@/app/routes/flows';
@@ -17,6 +18,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -84,6 +86,15 @@ export function FoldersSection() {
     return acc;
   }, {});
 
+  const currentFlowFolderId = useMemo(() => {
+    if (!currentFlowId || !flowsData.length) return null;
+
+    const currentFlow = flowsData.find((flow) => flow.id === currentFlowId);
+    if (!currentFlow) return null;
+
+    return currentFlow.folderId || 'default';
+  }, [currentFlowId, flowsData]);
+
   const sortedFolders =
     folders?.sort((a, b) => a.displayName.localeCompare(b.displayName)) || [];
 
@@ -111,8 +122,8 @@ export function FoldersSection() {
   }
 
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel className="flex pr-0 justify-between items-center w-full mb-1">
+    <SidebarGroup className="max-h-[50%] pb-2">
+      <SidebarGroupLabel className="flex px-0 justify-between items-center w-full mb-1">
         {t('Folders')}
         <PermissionNeededTooltip
           hasPermission={userHasPermissionToUpdateFolders}
@@ -127,30 +138,34 @@ export function FoldersSection() {
           </CreateFolderDialog>
         </PermissionNeededTooltip>
       </SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {defaultFolderFlows.length > 0 && (
-            <DefaultFolder
-              refetchFlows={refetchFlows}
-              flows={defaultFolderFlows}
-              onFlowClick={handleFlowClick}
-              isFlowActive={isFlowActive}
-            />
-          )}
+      <ScrollArea>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {defaultFolderFlows.length > 0 && (
+              <DefaultFolder
+                refetchFlows={refetchFlows}
+                flows={defaultFolderFlows}
+                onFlowClick={handleFlowClick}
+                isFlowActive={isFlowActive}
+                shouldBeOpen={currentFlowFolderId === 'default'}
+              />
+            )}
 
-          {sortedFolders.map((folder) => (
-            <RegularFolder
-              key={folder.id}
-              refetchFolders={refetchFolders}
-              refetchFlows={refetchFlows}
-              folder={folder}
-              flows={flowsByFolder[folder.id] || []}
-              onFlowClick={handleFlowClick}
-              isFlowActive={isFlowActive}
-            />
-          ))}
-        </SidebarMenu>
-      </SidebarGroupContent>
+            {sortedFolders.map((folder) => (
+              <RegularFolder
+                key={folder.id}
+                refetchFolders={refetchFolders}
+                refetchFlows={refetchFlows}
+                folder={folder}
+                flows={flowsByFolder[folder.id] || []}
+                onFlowClick={handleFlowClick}
+                isFlowActive={isFlowActive}
+                shouldBeOpen={currentFlowFolderId === folder.id}
+              />
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </ScrollArea>
     </SidebarGroup>
   );
 }
@@ -160,6 +175,7 @@ interface FolderProps {
   refetchFlows: () => void;
   onFlowClick: (flowId: string) => void;
   isFlowActive: (flowId: string) => boolean;
+  shouldBeOpen: boolean;
 }
 
 function DefaultFolder({
@@ -167,17 +183,27 @@ function DefaultFolder({
   onFlowClick,
   isFlowActive,
   refetchFlows,
+  shouldBeOpen,
 }: FolderProps) {
   return (
-    <Collapsible defaultOpen className="group/collapsible">
+    <Collapsible defaultOpen={shouldBeOpen} className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton className="px-2 mb-1">
+          <SidebarMenuButton className="px-2 mb-1 group/item pr-0">
             <ChevronDown className="w-4 h-4 transition-transform group-data-[state=closed]/collapsible:rotate-[-90deg]" />
             <span>{t('Uncategorized')}</span>
-            <span className="text-xs text-muted-foreground font-semibold ml-auto">
-              {flows.length}
-            </span>
+
+            <div className="ml-auto relative">
+              <span className="text-xs w-9 h-9 flex items-center justify-center text-muted-foreground font-semibold absolute group-hover/item:hidden">
+                {flows.length}
+              </span>
+
+              <CreateFlowDropdown
+                folderId="NULL"
+                variant="small"
+                className="opacity-0 group-hover/item:opacity-100"
+              />
+            </div>
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -210,11 +236,12 @@ function RegularFolder({
   refetchFlows,
   refetchFolders,
   isFlowActive,
+  shouldBeOpen,
 }: RegularFolderProps) {
   return (
     <Collapsible
       key={folder.id}
-      defaultOpen={false}
+      defaultOpen={shouldBeOpen}
       className="group/collapsible"
     >
       <SidebarMenuItem>
@@ -267,10 +294,7 @@ function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
         className={cn(isActive && 'bg-sidebar-accent', 'px-0')}
       >
         <span className="size-5 flex mr-1 items-center justify-center rounded-sm bg-sidebar-accent">
-          <Workflow
-            className="w-3 h-3 !text-muted-foreground"
-            strokeWidth={3}
-          />
+          <Workflow className="w-3 h-3 !text-muted-foreground" />
         </span>
         <span className="truncate">{flow.version.displayName}</span>
         <FlowActionMenu

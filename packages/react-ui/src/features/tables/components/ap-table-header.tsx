@@ -11,6 +11,7 @@ import { useState } from 'react';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -19,6 +20,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import EditableText from '@/components/ui/editable-text';
+import { Separator } from '@/components/ui/separator';
+import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission } from '@activepieces/shared';
 
@@ -47,6 +50,7 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
     state.renameTable,
     state.deleteRecords,
   ]);
+  const { embedState } = useEmbedding();
   const [isImportCsvDialogOpen, setIsImportCsvDialogOpen] = useState(false);
   const [isEditingTableName, setIsEditingTableName] = useState(false);
   const userHasTableWritePermission = useAuthorization().checkAccess(
@@ -63,7 +67,13 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
   return (
     <>
       <div className="flex items-center gap-1 justify-between p-4 w-full">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          {!embedState.isEmbedded && (
+            <>
+              <SidebarTrigger className="size-9" />
+              <Separator orientation="vertical" className="h-5" />
+            </>
+          )}
           <Button
             variant="basic"
             size={'icon'}
