@@ -12,7 +12,7 @@ import { AddJobParams, JobType, RATE_LIMIT_PRIORITY } from '../queue/queue-manag
 import { redisQueue } from './redis-queue'
 
 
-export const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW, WorkerJobType.EXECUTE_WEBHOOK]
+export const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
 
 const RATE_LIMIT_QUEUE_NAME = 'rateLimitJobs'
 const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
