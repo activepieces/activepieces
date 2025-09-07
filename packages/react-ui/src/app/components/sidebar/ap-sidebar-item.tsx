@@ -1,4 +1,5 @@
 import { LockKeyhole } from 'lucide-react';
+import { ComponentType, SVGProps } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
@@ -8,7 +9,20 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
 
-import { SidebarItemType } from './common';
+export type SidebarItemType = {
+  to: string;
+  label: string;
+  type: 'link';
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
+  notification?: boolean;
+  locked?: boolean;
+  newWindow?: boolean;
+  isActive?: (pathname: string) => boolean;
+  isBeta?: boolean;
+  isSubItem?: boolean;
+  show?: boolean;
+  hasPermission?: boolean;
+};
 
 export const ApSidebarItem = (item: SidebarItemType) => {
   const location = useLocation();

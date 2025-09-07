@@ -1,4 +1,5 @@
 import { ChevronRightIcon } from 'lucide-react';
+import { ComponentType, SVGProps } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import {
@@ -13,8 +14,20 @@ import {
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar-shadcn';
 
-import { ApSidebarItem } from './ap-sidebar-item';
-import { SidebarGroupType } from './common';
+import { ApSidebarItem, SidebarItemType } from './ap-sidebar-item';
+
+export type SidebarGeneralItemType = SidebarItemType | SidebarGroupType;
+
+export type SidebarGroupType = {
+  name?: string;
+  label: string;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
+  items: SidebarItemType[];
+  type: 'group';
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  isActive?: (pathname: string) => boolean;
+};
 
 export function ApSidebareGroup(item: SidebarGroupType) {
   const location = useLocation();

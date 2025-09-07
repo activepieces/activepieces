@@ -34,7 +34,6 @@ export const FolderActions = ({ folder, refetch }: FolderActionsProps) => {
       onClick={(e) => e.stopPropagation()}
       className="flex items-center justify-center relative ml-auto"
     >
-      {/* Folder count */}
       <span
         className={cn(
           'text-muted-foreground !text-xs !font-semibold self-end transition-opacity duration-150',
