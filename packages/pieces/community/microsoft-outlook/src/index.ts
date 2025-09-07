@@ -15,7 +15,7 @@ import { microsoftOutlookAuth } from './lib/common/auth';
 import { newAttachmentTrigger } from './lib/triggers/new-attachment';
 import { newEmailInFolderTrigger } from './lib/triggers/new-email-in-folder';
 import { newEmailTrigger } from './lib/triggers/new-email';
-import { newMatchedEmailTrigger } from './lib/triggers/new-matched-email';
+
 export const microsoftOutlook = createPiece({
 	displayName: 'Microsoft Outlook',
 	auth: microsoftOutlookAuth,
@@ -45,7 +45,6 @@ export const microsoftOutlook = createPiece({
 	triggers: [
 		newEmailTrigger,
 		newEmailInFolderTrigger,
-		newMatchedEmailTrigger,
 		newAttachmentTrigger,
 	],
 });

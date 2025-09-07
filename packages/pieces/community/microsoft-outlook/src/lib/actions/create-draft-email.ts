@@ -103,12 +103,6 @@ export const createDraftEmailAction = createAction({
 
 		const response = await client.api('/me/messages').post(mailPayload);
 
-		return {
-			success: true,
-			message: 'Draft created successfully.',
-			draftId: response.id,
-			draftLink: `https://outlook.office.com/mail/drafts/id/${response.id}`,
-			...response,
-		};
+		return response;
 	},
 });

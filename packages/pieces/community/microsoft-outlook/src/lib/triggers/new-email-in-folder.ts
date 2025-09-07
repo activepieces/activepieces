@@ -3,15 +3,14 @@ import {
 	PiecePropValueSchema,
 	TriggerStrategy,
 	createTrigger,
-	Property,
-	OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
-import { Message, MailFolder } from '@microsoft/microsoft-graph-types';
+import { Message } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 import { microsoftOutlookAuth } from '../common/auth';
+import { mailFolderIdDropdown } from '../common/props';
 
-const polling: Polling<PiecePropValueSchema<typeof microsoftOutlookAuth>, { folderId: string }> = {
+const polling: Polling<PiecePropValueSchema<typeof microsoftOutlookAuth>, { folderId?: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, lastFetchEpochMS, propsValue }) => {
 		const client = Client.initWithMiddleware({
@@ -26,11 +25,11 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftOutlookAuth>, { fold
 		const filter =
 			lastFetchEpochMS === 0
 				? '$top=10'
-				: `$filter=receivedDateTime gt ${dayjs(lastFetchEpochMS).toISOString()}`;
+				: `$filter=createdDateTime gt ${dayjs(lastFetchEpochMS).toISOString()}`;
 
 		let response: PageCollection = await client
 			.api(`/me/mailFolders/${folderId}/messages?${filter}`)
-			.orderby('receivedDateTime desc')
+			.orderby('createdDateTime desc')
 			.get();
 
 		if (lastFetchEpochMS === 0) {
@@ -51,33 +50,8 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftOutlookAuth>, { fold
 			}
 		}
 
-		if (messages.length === 0 && lastFetchEpochMS === 0) {
-			return [{
-				epochMilliSeconds: Date.now(),
-				data: {
-					id: 'sample-message-id',
-					subject: 'Sample Email in Folder',
-					from: {
-						emailAddress: {
-							name: 'Bob Johnson',
-							address: 'bob.johnson@example.com'
-						}
-					},
-					toRecipients: [{
-						emailAddress: {
-							name: 'You',
-							address: 'you@example.com'
-						}
-					}],
-					receivedDateTime: new Date().toISOString(),
-					bodyPreview: 'This is a sample email in the selected folder.',
-					hasAttachments: false
-				}
-			}];
-		}
-
 		return messages.map((message) => ({
-			epochMilliSeconds: dayjs(message.receivedDateTime).valueOf(),
+			epochMilliSeconds: dayjs(message.createdDateTime).valueOf(),
 			data: message,
 		}));
 	},
@@ -89,45 +63,10 @@ export const newEmailInFolderTrigger = createTrigger({
 	displayName: 'New Email in Folder',
 	description: 'Triggers when a new email is delivered into the specified folder.',
 	props: {
-		folderId: Property.Dropdown({
+		folderId: mailFolderIdDropdown({
 			displayName: 'Folder',
+			description: '',
 			required: true,
-			refreshers: [],
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						options: [],
-					};
-				}
-
-				const client = Client.initWithMiddleware({
-					authProvider: {
-						getAccessToken: () => Promise.resolve((auth as OAuth2PropertyValue).access_token),
-					},
-				});
-
-				try {
-					const response: PageCollection = await client
-						.api('/me/mailFolders')
-						.get();
-
-					const folders = response.value as MailFolder[];
-
-					return {
-						disabled: false,
-						options: folders.map((folder) => ({
-							label: folder.displayName || folder.id || 'Unknown',
-							value: folder.id || '',
-						})),
-					};
-				} catch (error) {
-					return {
-						disabled: true,
-						options: [],
-					};
-				}
-			},
 		}),
 	},
 	sampleData: {},

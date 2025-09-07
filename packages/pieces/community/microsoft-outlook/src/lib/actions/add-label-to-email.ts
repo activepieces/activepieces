@@ -37,12 +37,7 @@ export const addLabelToEmailAction = createAction({
 		const response = await client.api(`/me/messages/${messageId}`).patch({
 			categories: updatedCategories,
 		});
-
-		return {
-			success: true,
-			message: 'Categories added successfully.',
-			messageId: response.id,
-			categories: response.categories,
-		};
+		
+		return response;
 	},
 });
