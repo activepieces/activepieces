@@ -323,6 +323,9 @@
       "@activepieces/piece-discourse": [
         "packages/pieces/community/discourse/src/index.ts"
       ],
+      "@activepieces/piece-docsbot": [
+        "packages/pieces/community/docsbot/src/index.ts"
+      ],
       "@activepieces/piece-docusign": [
         "packages/pieces/community/docusign/src/index.ts"
       ],
