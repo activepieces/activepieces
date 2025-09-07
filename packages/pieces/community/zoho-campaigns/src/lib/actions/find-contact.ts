@@ -18,17 +18,10 @@ export const findContact = createAction({
       accessToken,
       listkey: listkey as string,
     });
-
     const needle = (email ?? '').trim().toLowerCase();
     // Try to find case-insensitive and partial match
-    interface Contact {
-      email?: string;
-      [key: string]: unknown;
-    }
-
-    const contactsTyped: Contact[] = contacts as Contact[];
-    const contact: Contact[] = contactsTyped.filter((contact: Contact) =>
-      (contact.email ?? '').toLowerCase().includes(needle)
+    const contact = contacts.filter((contact) =>
+      (contact.contact_email ?? '').toLowerCase().includes(needle)
     );
 
     if (contact.length === 0) {

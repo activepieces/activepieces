@@ -14,10 +14,16 @@ export const addUpdateContact = createAction({
       propsValue,
       zohoCampaignsCommon.addUpdateContactSchema
     );
+    const { additionalFields, ...baseFields } = propsValue.contactinfo;
+
     return await zohoCampaignsCommon.addUpdateContact({
       accessToken,
       ...propsValue,
       listkey: String(propsValue.listkey),
+      contactinfo: {
+        ...baseFields,
+        ...additionalFields,
+      },
     });
   },
 });

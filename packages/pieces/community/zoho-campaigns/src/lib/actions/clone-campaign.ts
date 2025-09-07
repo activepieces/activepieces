@@ -13,11 +13,12 @@ export const cloneCampaign = createAction({
       propsValue,
       zohoCampaignsCommon.cloneCampaignSchema
     );
-    const { campaignkey } = propsValue;
-    const campaigninfo = await zohoCampaignsCommon.getCampaign({
-      accessToken,
-      campaignkey: campaignkey as string,
-    });
+    const { campaignkey, campaignname, subject } = propsValue;
+    const campaigninfo = {
+      oldcampaignkey: campaignkey,
+      ...(campaignname && { campaignname }),
+      ...(subject && { subject }),
+    };
     return await zohoCampaignsCommon.cloneCampaign({
       accessToken,
       campaigninfo,

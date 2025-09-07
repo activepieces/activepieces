@@ -15,8 +15,8 @@ export const unsubscribeContact = createAction({
     );
     return await zohoCampaignsCommon.unsubscribeContact({
       accessToken,
-      ...propsValue,
       listkey: String(propsValue.listkey),
+      contactinfo: { "Contact Email": propsValue.contactEmail },
     });
   },
 });

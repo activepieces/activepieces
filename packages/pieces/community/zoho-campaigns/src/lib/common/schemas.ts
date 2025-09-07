@@ -5,12 +5,14 @@ export const createCampaign = {
     from_email: z.string().email(),
     subject: z.string(),
     content_url: z.string().url().optional(),
-    list_details: z.object({}),
-    topicId: z.string().optional(),
+    list_details: z.array(z.string()),
+    topicId: z.string().nullable().optional(),
 }
 
 export const cloneCampaign = {
     campaignkey: z.string(),
+    campaignname: z.string(),
+    subject: z.string().optional(),
 }
 
 export const sendCampaign = {
@@ -21,7 +23,7 @@ export const addUpdateContact = {
     listkey: z.string(),
     contactinfo: z.object({}),
     source: z.string().optional(),
-    topic_id: z.string().optional(),
+    topic_id: z.string().nullable().optional(),
 }
 
 export const addTagToContact = {
@@ -36,8 +38,8 @@ export const removeTag = {
 
 export const unsubscribeContact = {
     listkey: z.string(),
-    contactinfo: z.object({}),
-    topic_id: z.string().optional(),
+    contactEmail: z.string().email(),
+    topic_id: z.string().nullable().optional(),
 }
 
 export const addContactToMailingList = {

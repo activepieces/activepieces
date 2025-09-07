@@ -13,6 +13,16 @@ export const addTagToContact = createAction({
       propsValue,
       zohoCampaignsCommon.addTagToContactSchema
     );
+    const tags = await zohoCampaignsCommon.listTags({ accessToken });
+    const tagExists = tags !== undefined && tags.some((tagMap) =>
+      Object.values(tagMap).some((t) => t.tag_name === propsValue.tagName)
+    );
+    if (!tagExists) {
+      await zohoCampaignsCommon.createTag({
+        accessToken,
+        tagName: propsValue.tagName,
+      });
+    }
     return await zohoCampaignsCommon.addTagToContact({
       accessToken,
       ...propsValue,

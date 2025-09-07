@@ -7,11 +7,19 @@ import {
   AddContactToMailingListParams,
   AddTagToContactParams,
   AddUpdateContactParams,
+  AuthorizationParams,
   CloneCampaignParams,
   CreateCampaignParams,
-  GetCampaignParams,
+  CreateCampaignResponse,
+  CreateTagParams,
   ListCampaignParams,
+  ListCampaignResponse,
   ListContactsParams,
+  ListContactsResponse,
+  ListMailingListsParams,
+  ListMailingListsResponse,
+  ListTagsResponse,
+  ListTopicsResponse,
   RemoveTagParams,
   SendCampaignParams,
   UnsubscribeContactParams,
@@ -23,18 +31,14 @@ export const zohoCampaignsAuth = PieceAuth.OAuth2({
   required: true,
   authUrl: 'https://accounts.zoho.com/oauth/v2/auth',
   tokenUrl: 'https://accounts.zoho.com/oauth/v2/token',
-  scope: [
-    'ZohoCampaigns.campaign.READ',
-    'ZohoCampaigns.campaign.CREATE-UPDATE',
-    'ZohoCampaigns.contact.READ',
-    'ZohoCampaigns.contact.CREATE-UPDATE',
-  ],
+  scope: ['ZohoCampaigns.campaign.ALL', 'ZohoCampaigns.contact.ALL'],
 });
 
 export const zohoCampaignsCommon = {
   baseUrl: 'https://campaigns.zoho.com/api/v1.1',
   endpoints: {
     createCampaign: '/createCampaign',
+    createTag: '/tag/add',
     cloneCampaign: '/json/clonecampaign',
     sendCampaign: '/sendcampaign',
     addUpdateContact: '/json/listsubscribe',
@@ -43,9 +47,10 @@ export const zohoCampaignsCommon = {
     unsubscribeContact: '/json/listunsubscribe',
     addContactToMailingList: '/addlistsubscribersinbulk',
     listContacts: '/getlistsubscribers',
-    listCampaign: '/getmailinglists',
+    listCampaigns: '/recentcampaigns',
+    listMailingLists: '/getmailinglists',
     listTopics: '/topics',
-    getCampaign: '/getcampaigndetails'
+    listTags: '/tag/getalltags',
   },
   baseHeaders: (accessToken: string) => {
     return {
@@ -54,7 +59,7 @@ export const zohoCampaignsCommon = {
     };
   },
   baseParams: {
-    restfmt: 'json',
+    resfmt: 'JSON',
   },
 
   // Properties
@@ -86,15 +91,38 @@ export const zohoCampaignsCommon = {
     accessToken,
     ...campaignParams
   }: CreateCampaignParams) => {
-    const list_details = JSON.stringify(campaignParams.list_details);
-    const response = await httpClient.sendRequest({
+    const {
+      list_details: listDetails,
+      topicId,
+      ...restParams
+    } = campaignParams;
+
+    const list_details = JSON.stringify(listDetails);
+    const body = new URLSearchParams({
+      resfmt: 'json',
+      list_details,
+      ...restParams,
+      ...(topicId && { topicId }),
+    }).toString();
+    const response = await httpClient.sendRequest<CreateCampaignResponse>({
       method: HttpMethod.POST,
       url: `${zohoCampaignsCommon.baseUrl}${zohoCampaignsCommon.endpoints.createCampaign}`,
+      headers: {
+        ...zohoCampaignsCommon.baseHeaders(accessToken),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body,
+    });
+    return response.body;
+  },
+  createTag: async ({ accessToken, tagName }: CreateTagParams) => {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `${zohoCampaignsCommon.baseUrl}${zohoCampaignsCommon.endpoints.createTag}`,
       headers: zohoCampaignsCommon.baseHeaders(accessToken),
       queryParams: {
         ...zohoCampaignsCommon.baseParams,
-        ...campaignParams,
-        list_details,
+        tagName,
       },
     });
     return response.body;
@@ -128,17 +156,29 @@ export const zohoCampaignsCommon = {
     accessToken,
     ...contactParams
   }: AddUpdateContactParams) => {
-    const contactinfo = JSON.stringify(contactParams.contactinfo);
+    const {
+      listkey,
+      contactinfo: contactInfoObj,
+      source,
+      topic_id,
+    } = contactParams;
+    const body = new URLSearchParams({
+      ...zohoCampaignsCommon.baseParams,
+      listkey,
+      ...(source && { source }),
+      ...(topic_id && { topic_id }),
+      contactinfo: JSON.stringify(contactInfoObj),
+    }).toString();
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${zohoCampaignsCommon.baseUrl}${zohoCampaignsCommon.endpoints.addUpdateContact}`,
-      headers: zohoCampaignsCommon.baseHeaders(accessToken),
-      queryParams: {
-        ...zohoCampaignsCommon.baseParams,
-        ...contactParams,
-        contactinfo,
+      headers: {
+        ...zohoCampaignsCommon.baseHeaders(accessToken),
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
+      body,
     });
+
     return response.body;
   },
   addTagToContact: async ({
@@ -146,7 +186,7 @@ export const zohoCampaignsCommon = {
     ...tagParams
   }: AddTagToContactParams) => {
     const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
+      method: HttpMethod.GET,
       url: `${zohoCampaignsCommon.baseUrl}${zohoCampaignsCommon.endpoints.addTagToContact}`,
       headers: zohoCampaignsCommon.baseHeaders(accessToken),
       queryParams: {
@@ -158,7 +198,7 @@ export const zohoCampaignsCommon = {
   },
   removeTag: async ({ accessToken, ...tagParams }: RemoveTagParams) => {
     const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
+      method: HttpMethod.GET,
       url: `${zohoCampaignsCommon.baseUrl}${zohoCampaignsCommon.endpoints.removeTag}`,
       headers: zohoCampaignsCommon.baseHeaders(accessToken),
       queryParams: {
@@ -172,16 +212,25 @@ export const zohoCampaignsCommon = {
     accessToken,
     ...unsubscribeParams
   }: UnsubscribeContactParams) => {
-    const contactinfo = JSON.stringify(unsubscribeParams.contactinfo);
+    const {
+      contactinfo: contactInfoObj,
+      listkey,
+      topic_id,
+    } = unsubscribeParams;
+    const body = new URLSearchParams({
+      ...zohoCampaignsCommon.baseParams,
+      listkey,
+      ...(topic_id && { topic_id }),
+      contactinfo: JSON.stringify(contactInfoObj),
+    }).toString();
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${zohoCampaignsCommon.baseUrl}${zohoCampaignsCommon.endpoints.unsubscribeContact}`,
-      headers: zohoCampaignsCommon.baseHeaders(accessToken),
-      queryParams: {
-        ...zohoCampaignsCommon.baseParams,
-        ...unsubscribeParams,
-        contactinfo,
+      headers: {
+        ...zohoCampaignsCommon.baseHeaders(accessToken),
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
+      body,
     });
     return response.body;
   },
@@ -212,21 +261,17 @@ export const zohoCampaignsCommon = {
     const queryParams = {
       ...zohoCampaignsCommon.baseParams,
       listkey,
+      ...(fromindex && { fromindex: strFromIndex }),
+      ...(range && { range: strRange }),
       ...otherParams,
     };
-    if (strFromIndex) {
-      Object.assign(queryParams, { fromindex: strFromIndex });
-    }
-    if (strRange) {
-      Object.assign(queryParams, { range: strRange });
-    }
-    const response = await httpClient.sendRequest({
+    const response = await httpClient.sendRequest<ListContactsResponse>({
       method: HttpMethod.GET,
       url: `${zohoCampaignsCommon.baseUrl}${zohoCampaignsCommon.endpoints.listContacts}`,
       headers: zohoCampaignsCommon.baseHeaders(accessToken),
       queryParams,
     });
-    return response.body;
+    return response.body.list_of_details;
   },
   listCampaigns: async ({
     accessToken,
@@ -238,24 +283,42 @@ export const zohoCampaignsCommon = {
     const strRange = typeof range === 'number' ? String(range) : undefined;
     const queryParams = {
       ...zohoCampaignsCommon.baseParams,
+      ...(fromindex && { fromindex: strFromIndex }),
+      ...(range && { range: strRange }),
       ...otherParams,
     };
-    if (strFromIndex) {
-      Object.assign(queryParams, { fromindex: strFromIndex });
-    }
-    if (strRange) {
-      Object.assign(queryParams, { range: strRange });
-    }
-    const response = await httpClient.sendRequest({
+    const response = await httpClient.sendRequest<ListCampaignResponse>({
       method: HttpMethod.GET,
-      url: `${zohoCampaignsCommon.baseUrl}${zohoCampaignsCommon.endpoints.listCampaign}`,
+      url: `${zohoCampaignsCommon.baseUrl}${zohoCampaignsCommon.endpoints.listCampaigns}`,
       headers: zohoCampaignsCommon.baseHeaders(accessToken),
       queryParams,
     });
-    return response.body;
+    return response.body.recent_campaigns;
   },
-  listTopics: async ({ accessToken }: { accessToken: string }) => {
-    const response = await httpClient.sendRequest({
+  listMailingLists: async ({
+    accessToken,
+    ...filterParams
+  }: ListMailingListsParams) => {
+    const { fromindex, range, ...otherParams } = filterParams;
+    const strFromIndex =
+      typeof fromindex === 'number' ? String(fromindex) : undefined;
+    const strRange = typeof range === 'number' ? String(range) : undefined;
+    const queryParams = {
+      ...zohoCampaignsCommon.baseParams,
+      ...(fromindex && { fromindex: strFromIndex }),
+      ...(range && { range: strRange }),
+      ...otherParams,
+    };
+    const response = await httpClient.sendRequest<ListMailingListsResponse>({
+      method: HttpMethod.GET,
+      url: `${zohoCampaignsCommon.baseUrl}${zohoCampaignsCommon.endpoints.listMailingLists}`,
+      headers: zohoCampaignsCommon.baseHeaders(accessToken),
+      queryParams,
+    });
+    return response.body.list_of_details;
+  },
+  listTopics: async ({ accessToken }: AuthorizationParams) => {
+    const response = await httpClient.sendRequest<ListTopicsResponse>({
       method: HttpMethod.GET,
       url: `${zohoCampaignsCommon.baseUrl}${zohoCampaignsCommon.endpoints.listTopics}`,
       headers: zohoCampaignsCommon.baseHeaders(accessToken),
@@ -263,18 +326,17 @@ export const zohoCampaignsCommon = {
         ...zohoCampaignsCommon.baseParams,
       },
     });
-    return response.body;
+    return response.body.topicDetails;
   },
-  getCampaign: async ({ accessToken, campaignkey }: GetCampaignParams) => {
-    const response = await httpClient.sendRequest({
+  listTags: async ({ accessToken }: AuthorizationParams) => {
+    const response = await httpClient.sendRequest<ListTagsResponse>({
       method: HttpMethod.GET,
-      url: `${zohoCampaignsCommon.baseUrl}${zohoCampaignsCommon.endpoints.getCampaign}`,
+      url: `${zohoCampaignsCommon.baseUrl}${zohoCampaignsCommon.endpoints.listTags}`,
       headers: zohoCampaignsCommon.baseHeaders(accessToken),
       queryParams: {
         ...zohoCampaignsCommon.baseParams,
-        campaignkey,
       },
     });
-    return response.body;
-  }
+    return response.body.tags;
+  },
 };

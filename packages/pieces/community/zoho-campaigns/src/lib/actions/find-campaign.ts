@@ -19,15 +19,10 @@ export const findCampaign = createAction({
     });
 
     const needle = (campaignName ?? '').trim().toLowerCase();
-    // Try to find case-insensitive and partial match
-    interface Campaign {
-      name?: string;
-      [key: string]: unknown;
-    }
 
-    const campaignsTyped: Campaign[] = campaigns as Campaign[];
-    const campaign: Campaign[] = campaignsTyped.filter((campaign: Campaign) =>
-      (campaign.name ?? '').toLowerCase().includes(needle)
+    // Try to find case-insensitive and partial match
+    const campaign = campaigns.filter((campaign) =>
+      (campaign.campaign_name ?? '').toLowerCase().includes(needle)
     );
 
     if (campaign.length === 0) {
