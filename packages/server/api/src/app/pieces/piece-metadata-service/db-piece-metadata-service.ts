@@ -151,7 +151,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 projectId,
                 platformId,
             })
-            const result = await repo().save({
+            return await repo().save({
                 id: apId(),
                 projectId,
                 packageType,
@@ -161,8 +161,6 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 created: createdDate,
                 ...pieceMetadata,
             })
-            await localPieceCache(log).updateCacheState()
-            return result
         },
     }
 }
