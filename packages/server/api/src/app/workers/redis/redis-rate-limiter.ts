@@ -87,7 +87,6 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
             local member = members[i]
             if string.match(member, '^' .. jobId .. ':') then
                 redis.call('SREM', setKey, member)
-                break
             end
         end
         
