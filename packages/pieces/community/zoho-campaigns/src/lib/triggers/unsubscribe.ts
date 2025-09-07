@@ -1,13 +1,13 @@
 import {
-    DedupeStrategy,
-    Polling,
-    pollingHelper,
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
 } from '@activepieces/pieces-common';
 import {
-    createTrigger,
-    PiecePropValueSchema,
-    StaticPropsValue,
-    TriggerStrategy,
+  createTrigger,
+  PiecePropValueSchema,
+  StaticPropsValue,
+  TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
@@ -24,6 +24,7 @@ const polling: Polling<
       accessToken,
       listkey: propsValue.listkey,
       sort: 'desc',
+      status: 'unsub'
     });
     return items.map((item) => ({
       epochMilliSeconds: dayjs(item.added_time).valueOf(),
