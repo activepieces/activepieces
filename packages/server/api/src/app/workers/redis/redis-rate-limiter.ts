@@ -1,6 +1,6 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { apId, assertNotNullOrUndefined, assertNull, isNil, OneTimeJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
-import { Job, Queue, Worker } from 'bullmq'
+import { assertNotNullOrUndefined, assertNull, isNil, JobData, WorkerJobType } from '@activepieces/shared'
+import { Queue, Worker } from 'bullmq'
 import dayjs from 'dayjs'
 
 import { FastifyBaseLogger } from 'fastify'
@@ -15,7 +15,6 @@ import { redisQueue } from './redis-queue'
 const RATE_LIMIT_QUEUE_NAME = 'rateLimitJobs'
 const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
 const PROJECT_RATE_LIMITER_ENABLED = system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED)
-const SUPPORTED_QUEUES = [WorkerJobType.EXECUTE_FLOW]
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const FLOW_TIMEOUT_IN_MILLISECONDS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS), 'seconds').add(1, 'minute').asMilliseconds()
 
@@ -68,12 +67,12 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async onCompleteOrFailedJob(jobType: WorkerJobType, job: Job<WebhookJobData | OneTimeJobData>): Promise<void> {
-        if (!SUPPORTED_QUEUES.includes(jobType) || !PROJECT_RATE_LIMITER_ENABLED || isNil(job.id)) {
+    async onCompleteOrFailedJob(data: JobData, jobId: string | undefined): Promise<void> {
+        if (data.jobType !== WorkerJobType.EXECUTE_FLOW || !PROJECT_RATE_LIMITER_ENABLED || isNil(jobId)) {
             return
         }
 
-        const setKey = projectSetKey(job.data.projectId)
+        const setKey = projectSetKey(data.projectId)
 
         await redis.eval(`
         local setKey = KEYS[1]
@@ -94,7 +93,7 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
             `,
         1,
         setKey,
-        job.id,
+        jobId,
         )
     },
 

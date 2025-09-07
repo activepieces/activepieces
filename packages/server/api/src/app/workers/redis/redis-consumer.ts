@@ -1,5 +1,5 @@
 import { AppSystemProp, QueueName } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
+import { isNil, JobData } from '@activepieces/shared'
 import { Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -33,14 +33,14 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
         return consumer[queueName]
     }
     const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
-    consumer[queueName] = new Worker(queueName, async (job) => {
+    consumer[queueName] = new Worker<JobData>(queueName, async (job) => {
         try {
             if (!isNil(job.id)) {
                 await jobConsumer(log).consume(job.id, queueName, job.data, job.attemptsStarted)
             }
         }
         finally {
-            await redisRateLimiter(log).onCompleteOrFailedJob(job.data.jobType, job)
+            await redisRateLimiter(log).onCompleteOrFailedJob(job.data, job.id)
         }
     }, {
         connection: createRedisClient(),

@@ -59,6 +59,7 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
                 await queue.add(params.id, data, {
                     priority: JOB_PRIORITY[params.priority ?? getDefaultJobPriority(data)],
                     delay: params.delay,
+                    jobId: params.id,
                 })
                 break
             }
