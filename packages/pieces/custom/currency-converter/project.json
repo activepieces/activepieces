@@ -1,0 +1,32 @@
+{
+  "name": "pieces-currency-converter",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/custom/currency-converter/src",
+  "projectType": "library",
+  "release": {
+    "version": {
+      "manifestRootsToUpdate": ["dist/{projectRoot}"],
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk"
+    }
+  },
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/custom/currency-converter",
+        "tsConfig": "packages/pieces/custom/currency-converter/tsconfig.lib.json",
+        "packageJson": "packages/pieces/custom/currency-converter/package.json",
+        "main": "packages/pieces/custom/currency-converter/src/index.ts",
+        "assets": ["packages/pieces/custom/currency-converter/*.md"]
+      }
+    },
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      }
+    }
+  }
+}

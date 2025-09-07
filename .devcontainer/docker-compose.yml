@@ -45,8 +45,35 @@ services:
       - AP_ENCRYPTION_KEY=49df736df07d198e1897c9a9fc2e4d85
       - AP_JWT_SECRET=my_super_secure_jwt_secret_123456789
       - API_KEY=my_api_key
+      - AP_BACKEND_URL=http://activepieces:80
+      - AP_FRONTEND_URL=http://localhost:3000
     ports:
       - "3000:80"
+    networks:
+      - activepieces
+
+  worker:
+    image: activepieces/activepieces:latest
+    depends_on:
+      - db
+      - redis
+      - activepieces
+    environment:
+      - DATABASE_URL=postgres://postgres:123@db:5432/activepieces
+      - REDIS_URL=redis://redis:6379
+      - AP_REDIS_HOST=redis
+      - AP_REDIS_PORT=6379
+      - AP_POSTGRES_HOST=db
+      - AP_POSTGRES_PORT=5432
+      - AP_POSTGRES_USERNAME=postgres
+      - AP_POSTGRES_PASSWORD=123
+      - AP_POSTGRES_DATABASE=activepieces
+      - AP_ENCRYPTION_KEY=49df736df07d198e1897c9a9fc2e4d85
+      - AP_JWT_SECRET=my_super_secure_jwt_secret_123456789
+      - API_KEY=my_api_key
+      - AP_BACKEND_URL=http://activepieces:80
+      - AP_FRONTEND_URL=http://localhost:3000
+    command: ["ap", "worker"]
     networks:
       - activepieces
 
