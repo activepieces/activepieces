@@ -143,27 +143,27 @@ const contactInformation = Property.DynamicProperties({
   required: true,
   refreshers: ['auth'],
   props: async () => ({
-    "Contact Email": Property.ShortText({
+    'Contact Email': Property.ShortText({
       displayName: 'Contact Email',
       description: 'Email of the contact',
       required: true,
     }),
-    "First Name": Property.ShortText({
+    'First Name': Property.ShortText({
       displayName: 'First Name',
       description: 'First name of the contact',
       required: false,
     }),
-    "Last Name": Property.ShortText({
+    'Last Name': Property.ShortText({
       displayName: 'Last Name',
       description: 'Last name of the contact',
       required: false,
     }),
-    "Phone": Property.ShortText({
+    Phone: Property.ShortText({
       displayName: 'Phone',
       description: 'Phone number of the contact',
       required: false,
     }),
-    "Company Name": Property.ShortText({
+    'Company Name': Property.ShortText({
       displayName: 'Company Name',
       description: 'Company name of the contact',
       required: false,
@@ -294,3 +294,11 @@ export const findCampaign = {
     required: true,
   }),
 };
+
+export const newContact = () => ({
+  listkey: mailingListDropdown({ required: true }),
+});
+
+export const unsubscribe = () => ({
+  listkey: mailingListDropdown({ required: true }),
+})

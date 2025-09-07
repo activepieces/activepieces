@@ -37,8 +37,8 @@ export const zohoCampaigns = createPiece({
     findCampaign,
   ],
   triggers: [
-    newContact, // TODO
-    unsubscribe, // TODO
-    newCampaign, // TODO
+    newContact,
+    unsubscribe,
+    newCampaign,
   ],
 });

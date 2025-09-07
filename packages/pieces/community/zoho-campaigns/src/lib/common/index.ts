@@ -73,6 +73,8 @@ export const zohoCampaignsCommon = {
   addContactToMailingListProperties: properties.addContactToMailingList,
   findContactProperties: properties.findContact,
   findCampaignProperties: properties.findCampaign,
+  newContactProperties: properties.newContact,
+  unsubscribeProperties: properties.unsubscribe,
 
   // Schemas
   createCampaignSchema: schemas.createCampaign,
