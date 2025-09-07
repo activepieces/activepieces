@@ -62,9 +62,8 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
 
     async rateLimitJob(params: AddJobParams<JobType>): Promise<void> {
         assertNotNullOrUndefined(queue, 'Queue is not initialized')
-        const id = apId()
-        await queue.add(id, params, {
-            jobId: id,
+        await queue.add(params.id, params, {
+            jobId: params.id,
             delay: dayjs.duration(15, 'seconds').asMilliseconds(),
         })
     },
