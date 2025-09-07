@@ -196,9 +196,10 @@ export const CreateFlowDropdown = ({
         >
           <Button
             disabled={!doesUserHavePermissionToWriteFlow}
-            variant="ghost"
+            variant={variant === 'small' ? 'ghost' : 'default'}
             size={variant === 'small' ? 'icon' : 'default'}
             loading={isCreateFlowPending}
+            onClick={(e) => e.stopPropagation()}
           >
             {variant === 'small' ? (
               <Plus className="h-4 w-4" />
