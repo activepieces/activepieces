@@ -6,21 +6,20 @@ export async function makeRequest(
   apiKey: string,
   method: HttpMethod,
   path: string,
-  body?: unknown,
+  body?: any,
   isFormData = false
 ) {
   try {
-    const headers: Record<string, string> = {
+    let headers: Record<string, string> = {
       "api-key": apiKey,
     };
 
-    // Only set JSON Content-Type if not sending FormData
-    let requestBody = body;
+    const requestBody = body;
+
     if (!isFormData) {
       headers["Content-Type"] = "application/json";
-    } else {
-      // If body is FormData, let the httpClient handle Content-Type automatically
-      requestBody = body;
+    } else if (body && typeof (body as any).getHeaders === "function") {
+      headers = { ...headers, ...(body as any).getHeaders() };
     }
 
     const response = await httpClient.sendRequest({
@@ -32,6 +31,8 @@ export async function makeRequest(
 
     return response.body;
   } catch (error: any) {
-    throw new Error(`Unexpected error: ${JSON.stringify(error.response || error)}`);
+    throw new Error(
+      `Unexpected error: ${JSON.stringify(error.response || error.message || error)}`
+    );
   }
 }

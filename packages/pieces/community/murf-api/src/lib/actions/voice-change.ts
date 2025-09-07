@@ -3,7 +3,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 import { murfAuth } from "../common/auth";
 import { murfCommon } from "../common/dropdown";
 import { makeRequest } from "../common/client";
-
+import FormData from "form-data";
 
 export const voiceChange = createAction({
   auth: murfAuth,
@@ -64,53 +64,76 @@ export const voiceChange = createAction({
     }),
   },
 
-  async run(context) {
-    const { file, fileUrl, voiceId, format, channelType, pitch, rate, encodeOutputAsBase64 } =
-      context.propsValue as {
-        file?: ApFile;
-        fileUrl?: string;
-        voiceId: string;
-        format?: string;
-        channelType?: string;
-        pitch?: number;
-        rate?: number;
-        encodeOutputAsBase64?: boolean;
+  async run({ auth, propsValue }) {
+    try {
+      const { voiceId, file, fileUrl, format, pitch, rate, encodeOutputAsBase64 } =
+        propsValue as {
+          voiceId: string;
+          file?: ApFile;
+          fileUrl?: string;
+          format?: string;
+          pitch?: number;
+          rate?: number;
+          encodeOutputAsBase64?: boolean;
+        };
+
+      // Validation
+      if (!file && !fileUrl) {
+        throw new Error(" Either 'Source Audio File' or 'Source File URL' must be provided.");
+      }
+      if (file && fileUrl) {
+        throw new Error(" Provide only one: 'Source Audio File' OR 'Source File URL', not both.");
+      }
+
+      // Build FormData
+      const formData = new FormData();
+      formData.append("voice_id", voiceId);
+
+      if (fileUrl) {
+        formData.append("file_url", fileUrl);
+      }
+      if (file) {
+        try {
+          const fileBuffer = Buffer.from(file.base64, "base64");
+          const blob = new Blob([fileBuffer]);
+          formData.append("file", blob, file.filename);
+        } catch (e) {
+          throw new Error("Failed to process uploaded file. Ensure it's a valid audio file.");
+        }
+      }
+
+      if (format) formData.append("format", format);
+      if (pitch !== undefined) formData.append("pitch", pitch.toString());
+      if (rate !== undefined) formData.append("rate", rate.toString());
+      if (encodeOutputAsBase64) formData.append("encode_output_as_base64", "true");
+
+      // API request
+      const response = await makeRequest(
+        auth as string,
+        HttpMethod.POST,
+        "/voice-changer/convert",
+        formData,
+        true
+      );
+
+      // Handle Murf error response
+      if (response?.errorMessage) {
+        throw new Error(
+          ` Murf API error (${response.errorCode || "unknown"}): ${response.errorMessage}`
+        );
+      }
+
+      return {
+        success: true,
+        message: " Voice conversion successful",
+        data: response,
       };
-
-    if (!file && !fileUrl) {
-      throw new Error("Either 'file' or 'fileUrl' must be provided.");
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.message || "Unexpected error during voice conversion",
+        details: error.response?.body || error,
+      };
     }
-    if (file && fileUrl) {
-      throw new Error("Provide either 'file' or 'fileUrl', not both.");
-    }
-
-    const formData = new FormData();
-    formData.append("voice_id", voiceId);
-
-    if (fileUrl) {
-      formData.append("file_url", fileUrl);
-    }
-
-    if (file) {
-      const fileBuffer: any = Buffer.from(file.base64, "base64");
-      formData.append("file", fileBuffer, file.filename);
-    }
-
-
-    if (format) formData.append("format", format);
-    if (channelType) formData.append("channel_type", channelType);
-    if (pitch !== undefined) formData.append("pitch", pitch.toString());
-    if (rate !== undefined) formData.append("rate", rate.toString());
-    if (encodeOutputAsBase64) formData.append("encode_output_as_base64", "true");
-
-    const response = await makeRequest(
-      context.auth,
-      HttpMethod.POST,
-      "/voice-changer/convert",
-      formData,
-      true // indicate that body is FormData
-    );
-
-    return response;
   },
 });
