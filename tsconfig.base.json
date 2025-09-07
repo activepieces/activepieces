@@ -320,11 +320,11 @@
       "@activepieces/piece-discord": [
         "packages/pieces/community/discord/src/index.ts"
       ],
-      "@activepieces/piece-dittofeed":[
-        "packages/pieces/community/dittofeed/src/index.ts"
-      ],
       "@activepieces/piece-discourse": [
         "packages/pieces/community/discourse/src/index.ts"
+      ],
+      "@activepieces/piece-dittofeed": [
+        "packages/pieces/community/dittofeed/src/index.ts"
       ],
       "@activepieces/piece-docsbot": [
         "packages/pieces/community/docsbot/src/index.ts"
@@ -1095,6 +1095,9 @@
       ],
       "@activepieces/piece-whatsapp": [
         "packages/pieces/community/whatsapp/src/index.ts"
+      ],
+      "@activepieces/piece-wonderchat": [
+        "packages/pieces/community/wonderchat/src/index.ts"
       ],
       "@activepieces/piece-woocommerce": [
         "packages/pieces/community/woocommerce/src/index.ts"
