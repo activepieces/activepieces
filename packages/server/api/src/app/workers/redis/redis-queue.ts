@@ -1,5 +1,5 @@
 import { AppSystemProp, QueueName } from '@activepieces/server-shared'
-import { ApId, isNil, WorkerJobType } from '@activepieces/shared'
+import { ApId, isNil } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,7 +8,7 @@ import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
 import { machineService } from '../machine/machine-service'
 import { AddJobParams, getDefaultJobPriority, JOB_PRIORITY, JobType, QueueManager } from '../queue/queue-manager'
-import { redisRateLimiter } from './redis-rate-limiter'
+import { RATE_LIMIT_WORKER_JOB_TYPES, redisRateLimiter } from './redis-rate-limiter'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
@@ -31,7 +31,7 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
     async add(params: AddJobParams<JobType>): Promise<void> {
         const { data, type } = params
 
-        if (data.jobType === WorkerJobType.EXECUTE_FLOW) {
+        if (RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType)) {
             const { shouldRateLimit } = await redisRateLimiter(log).shouldBeLimited(data.projectId, params.id)
             if (shouldRateLimit) {
                 await redisRateLimiter(log).rateLimitJob(params)
