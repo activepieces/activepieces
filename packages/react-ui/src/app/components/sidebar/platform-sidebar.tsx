@@ -14,7 +14,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarMenu,
-  SidebarRail,
   SidebarHeader,
   SidebarGroup,
   SidebarMenuButton,
@@ -23,9 +22,8 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
-import { ApSidebareGroup } from './ap-sidebar-group';
+import { ApSidebareGroup, SidebarGeneralItemType } from './ap-sidebar-group';
 import { ApSidebarItem } from './ap-sidebar-item';
-import { SidebarGeneralItemType } from './common';
 import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
 
 export function PlatformSidebar() {
@@ -223,12 +221,11 @@ export function PlatformSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuButton className="px-2 py-5 flex items-center gap-2">
+          <SidebarMenuButton className="!py-0 !px-2 h-10">
             <SidebarPlatformAdminButton />
           </SidebarMenuButton>
         </SidebarMenu>
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   );
 }

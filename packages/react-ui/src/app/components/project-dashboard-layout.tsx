@@ -11,7 +11,7 @@ import { ApFlagId, isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
-import { AppSidebar } from './sidebar/app-sidebar';
+import { ProjectDashboardSidebar } from './sidebar/project-dashboard-sidebar';
 
 const ProjectChangedRedirector = ({
   currentProjectId,
@@ -29,12 +29,10 @@ export const CloseTaskLimitAlertContext = createContext({
   setIsAlertClosed: (_isAlertClosed: boolean) => {},
 });
 
-export function AppLayout({
+export function ProjectDashboardLayout({
   children,
-  fullContainer,
 }: {
   children: React.ReactNode;
-  fullContainer?: boolean;
 }) {
   const [isAlertClosed, setIsAlertClosed] = useState(false);
 
@@ -56,12 +54,8 @@ export function AppLayout({
         }}
       >
         <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset
-            className={`relative overflow-hidden ${
-              !fullContainer && 'px-4 pb-4'
-            }`}
-          >
+          <ProjectDashboardSidebar />
+          <SidebarInset className={`relative overflow-hidden px-4 pb-4`}>
             <TaskLimitAlert />
             {children}
           </SidebarInset>

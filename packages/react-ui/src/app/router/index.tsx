@@ -26,8 +26,9 @@ import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 import { Permission } from '@activepieces/shared';
 
 import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
-import { AppLayout } from '../components/app-layout';
+import { BuilderLayout } from '../components/builder-layout';
 import { PlatformLayout } from '../components/platform-layout';
+import { ProjectDashboardLayout } from '../components/project-dashboard-layout';
 import ProjectSettingsLayout from '../components/project-settings-layout';
 import NotFoundPage from '../routes/404-page';
 import { AgentsPage } from '../routes/agents';
@@ -56,9 +57,7 @@ import UsersPage from '../routes/platform/users';
 import { ProjectReleasesPage } from '../routes/project-release';
 import ViewRelease from '../routes/project-release/view-release';
 import { FlowRunPage } from '../routes/runs/id';
-import AlertsPage from '../routes/settings/alerts';
 import { EnvironmentPage } from '../routes/settings/environment';
-import ProjectMembersPage from '../routes/settings/project-members';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ApTablesPage } from '../routes/tables';
@@ -102,25 +101,25 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/flows',
     element: (
-      <AppLayout>
+      <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_FLOW}>
           <PageTitle title="Flows">
             <FlowsPage />
           </PageTitle>
         </RoutePermissionGuard>
-      </AppLayout>
+      </ProjectDashboardLayout>
     ),
   }),
   ...ProjectRouterWrapper({
     path: '/flows/:flowId',
     element: (
-      <AppLayout fullContainer={true}>
+      <BuilderLayout>
         <RoutePermissionGuard permission={Permission.READ_FLOW}>
           <PageTitle title="Builder">
             <FlowBuilderPage />
           </PageTitle>
         </RoutePermissionGuard>
-      </AppLayout>
+      </BuilderLayout>
     ),
   }),
   ...ProjectRouterWrapper({
@@ -138,11 +137,11 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/agents',
     element: (
-      <AppLayout>
+      <ProjectDashboardLayout>
         <PageTitle title="Agents">
           <AgentsPage />
         </PageTitle>
-      </AppLayout>
+      </ProjectDashboardLayout>
     ),
   }),
   {
@@ -166,25 +165,25 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/runs',
     element: (
-      <AppLayout>
+      <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_RUN}>
           <PageTitle title="Runs">
             <FlowsPage />
           </PageTitle>
         </RoutePermissionGuard>
-      </AppLayout>
+      </ProjectDashboardLayout>
     ),
   }),
   ...ProjectRouterWrapper({
     path: '/issues',
     element: (
-      <AppLayout>
+      <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_RUN}>
           <PageTitle title="Issues">
             <FlowsPage />
           </PageTitle>
         </RoutePermissionGuard>
-      </AppLayout>
+      </ProjectDashboardLayout>
     ),
   }),
   {
@@ -198,29 +197,29 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/releases/:releaseId',
     element: (
-      <AppLayout>
+      <ProjectDashboardLayout>
         <PageTitle title="Releases">
           <ViewRelease />
         </PageTitle>
-      </AppLayout>
+      </ProjectDashboardLayout>
     ),
   }),
   ...ProjectRouterWrapper({
     path: '/tables',
     element: (
-      <AppLayout>
+      <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_TABLE}>
           <PageTitle title="Tables">
             <ApTablesPage />
           </PageTitle>
         </RoutePermissionGuard>
-      </AppLayout>
+      </ProjectDashboardLayout>
     ),
   }),
   ...ProjectRouterWrapper({
     path: '/tables/:tableId',
     element: (
-      <AppLayout fullContainer>
+      <BuilderLayout>
         <RoutePermissionGuard permission={Permission.READ_TABLE}>
           <PageTitle title="Table">
             <ApTableStateProvider>
@@ -228,39 +227,39 @@ const routes = [
             </ApTableStateProvider>
           </PageTitle>
         </RoutePermissionGuard>
-      </AppLayout>
+      </BuilderLayout>
     ),
   }),
   ...ProjectRouterWrapper({
     path: '/connections',
     element: (
-      <AppLayout>
+      <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_APP_CONNECTION}>
           <PageTitle title="Connections">
             <AppConnectionsPage />
           </PageTitle>
         </RoutePermissionGuard>
-      </AppLayout>
+      </ProjectDashboardLayout>
     ),
   }),
   ...ProjectRouterWrapper({
     path: '/releases',
     element: (
-      <AppLayout>
+      <ProjectDashboardLayout>
         <PageTitle title="Releases">
           <ProjectReleasesPage />
         </PageTitle>
-      </AppLayout>
+      </ProjectDashboardLayout>
     ),
   }),
   ...ProjectRouterWrapper({
     path: '/todos',
     element: (
-      <AppLayout>
+      <ProjectDashboardLayout>
         <PageTitle title="Todos">
           <TodosPage />
         </PageTitle>
-      </AppLayout>
+      </ProjectDashboardLayout>
     ),
   }),
   ...ProjectRouterWrapper({
@@ -274,9 +273,9 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/settings',
     element: (
-      <AppLayout>
+      <ProjectDashboardLayout>
         <SettingsRerouter></SettingsRerouter>
-      </AppLayout>
+      </ProjectDashboardLayout>
     ),
   }),
   {
@@ -319,55 +318,23 @@ const routes = [
       </PageTitle>
     ),
   },
-  ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.alerts,
-    element: (
-      <AppLayout>
-        <RoutePermissionGuard permission={Permission.READ_ALERT}>
-          <PageTitle title="Alerts">
-            <ProjectSettingsLayout>
-              <AlertsPage />
-            </ProjectSettingsLayout>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </AppLayout>
-    ),
-  }),
 
   ...ProjectRouterWrapper({
     path: projectSettingsRoutes.pieces,
     element: (
-      <AppLayout>
+      <ProjectDashboardLayout>
         <PageTitle title="Pieces">
           <ProjectSettingsLayout>
             <ProjectPiecesPage />
           </ProjectSettingsLayout>
         </PageTitle>
-      </AppLayout>
+      </ProjectDashboardLayout>
     ),
   }),
-  ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.team,
-    element: (
-      <AppLayout>
-        <RoutePermissionGuard permission={Permission.READ_PROJECT_MEMBER}>
-          <PageTitle title="Team">
-            <ProjectSettingsLayout>
-              <ProjectMembersPage />
-            </ProjectSettingsLayout>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </AppLayout>
-    ),
-  }),
-  {
-    path: '/team',
-    element: <Navigate to={projectSettingsRoutes.team} replace></Navigate>,
-  },
   ...ProjectRouterWrapper({
     path: projectSettingsRoutes.environments,
     element: (
-      <AppLayout>
+      <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>
           <PageTitle title="Environments">
             <ProjectSettingsLayout>
@@ -375,32 +342,32 @@ const routes = [
             </ProjectSettingsLayout>
           </PageTitle>
         </RoutePermissionGuard>
-      </AppLayout>
+      </ProjectDashboardLayout>
     ),
   }),
 
   ...ProjectRouterWrapper({
     path: '/mcps',
     element: (
-      <AppLayout>
+      <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_MCP}>
           <PageTitle title="MCP">
             <McpServersPage />
           </PageTitle>
         </RoutePermissionGuard>
-      </AppLayout>
+      </ProjectDashboardLayout>
     ),
   }),
   ...ProjectRouterWrapper({
     path: '/mcps/:mcpId',
     element: (
-      <AppLayout>
+      <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_MCP}>
           <PageTitle title="MCP">
             <McpPage />
           </PageTitle>
         </RoutePermissionGuard>
-      </AppLayout>
+      </ProjectDashboardLayout>
     ),
   }),
 

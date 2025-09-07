@@ -27,47 +27,33 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarRail,
-  SidebarHeader,
   SidebarGroupContent,
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar-shadcn';
-import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { ApEdition, ApFlagId, isNil, Permission } from '@activepieces/shared';
+import { isNil, Permission } from '@activepieces/shared';
 
 import { HelpAndFeedback } from '../help-and-feedback';
 
-import { ApSidebareGroup } from './ap-sidebar-group';
-import { ApSidebarItem } from './ap-sidebar-item';
-import { SidebarGeneralItemType, SidebarItemType } from './common';
-import { FoldersSection } from './sidebar-folders'; // Import the new component
+import { ApSidebareGroup, SidebarGeneralItemType } from './ap-sidebar-group';
+import { ApSidebarItem, SidebarItemType } from './ap-sidebar-item';
+import { AppSidebarHeader } from './sidebar-header';
 import { SidebarUser } from './sidebar-user';
 import UsageLimitsButton from './usage-limits-button';
 
-export function AppSidebar() {
+export function ProjectDashboardSidebar() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { project } = projectHooks.useCurrentProject();
   const { checkAccess } = useAuthorization();
-  const branding = flagsHooks.useWebsiteBranding();
   const { embedState } = useEmbedding();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-
-  const showNavigation =
-    location.pathname.includes('/flows/') ||
-    location.pathname.includes('/tables/');
-
-  const showSwitcher =
-    edition !== ApEdition.COMMUNITY && !embedState.isEmbedded;
 
   const permissionFilter = (link: SidebarGeneralItemType) => {
     if (link.type === 'link') {
@@ -167,93 +153,76 @@ export function AppSidebar() {
   return (
     !embedState.hideSideNav && (
       <Sidebar variant="inset">
-        <SidebarHeader>
-          {showSwitcher ? (
-            <ProjectSwitcher />
-          ) : (
-            <img
-              src={branding.logos.fullLogoUrl}
-              alt={t('home')}
-              className="object-contain w-40"
-            />
-          )}
-        </SidebarHeader>
+        <AppSidebarHeader />
 
-        <SidebarContent>
-          {!showNavigation && (
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('Products')}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {items
-                    .filter((item) => item.label !== 'Agents')
-                    .map((item) =>
-                      item.type === 'group' ? (
-                        <ApSidebareGroup key={item.label} {...item} />
-                      ) : (
-                        <ApSidebarItem key={item.label} {...item} />
-                      ),
-                    )}
+        <SidebarContent className="gap-y-0">
+          <SidebarGroup>
+            <SidebarGroupLabel>{t('Products')}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {items
+                  .filter((item) => item.label !== 'Agents')
+                  .map((item) =>
+                    item.type === 'group' ? (
+                      <ApSidebareGroup key={item.label} {...item} />
+                    ) : (
+                      <ApSidebarItem key={item.label} {...item} />
+                    ),
+                  )}
 
-                  <SidebarMenuItem>
-                    <DropdownMenu
-                      open={isMoreMenuOpen}
-                      onOpenChange={setIsMoreMenuOpen}
+                <SidebarMenuItem>
+                  <DropdownMenu
+                    open={isMoreMenuOpen}
+                    onOpenChange={setIsMoreMenuOpen}
+                  >
+                    <DropdownMenuTrigger asChild>
+                      <div>
+                        <SidebarMenuButton className="px-2 py-5">
+                          <MoreHorizontal className="size-5" />
+                          <span className="grow">{t('More')}</span>
+                        </SidebarMenuButton>
+                      </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="center"
+                      side="bottom"
+                      className="w-64"
                     >
-                      <DropdownMenuTrigger asChild>
-                        <div>
-                          <SidebarMenuButton className="px-2 py-5">
-                            <MoreHorizontal className="size-5" />
-                            <span className="grow">{t('More')}</span>
-                          </SidebarMenuButton>
-                        </div>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="start"
-                        side="right"
-                        className="w-[220px]"
-                      >
-                        {moreItems
-                          .filter((item) => item.show)
-                          .map((item) => {
-                            const isActive = location.pathname.includes(
-                              item.to,
-                            );
+                      {moreItems
+                        .filter((item) => item.show)
+                        .map((item) => {
+                          const isActive = location.pathname.includes(item.to);
 
-                            return (
-                              <DropdownMenuItem
-                                key={item.to}
-                                onClick={() => {
-                                  navigate(item.to);
-                                }}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <item.icon
-                                    className={cn('size-4', {
-                                      'text-primary': isActive,
-                                    })}
-                                  />
-                                  <span>{item.label}</span>
-                                </div>
-                              </DropdownMenuItem>
-                            );
-                          })}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          )}
-
-          {showNavigation && <FoldersSection />}
+                          return (
+                            <DropdownMenuItem
+                              key={item.to}
+                              onClick={() => {
+                                navigate(item.to);
+                              }}
+                            >
+                              <div className="flex items-center gap-2">
+                                <item.icon
+                                  className={cn('size-4', {
+                                    'text-primary': isActive,
+                                  })}
+                                />
+                                <span>{item.label}</span>
+                              </div>
+                            </DropdownMenuItem>
+                          );
+                        })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          {!showNavigation && <HelpAndFeedback />}
-          {!showNavigation && <UsageLimitsButton />}
+          <HelpAndFeedback />
+          <UsageLimitsButton />
           <SidebarUser />
         </SidebarFooter>
-        <SidebarRail />
       </Sidebar>
     )
   );

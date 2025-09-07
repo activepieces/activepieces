@@ -73,7 +73,7 @@ export function ProjectSwitcher() {
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
-            className="w-60 p-0 rounded-lg"
+            className="w-64 p-0 rounded-lg"
             align="start"
             side="bottom"
             sideOffset={4}

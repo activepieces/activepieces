@@ -11,7 +11,11 @@ import { PlatformRole } from '@activepieces/shared';
 
 import { notificationHooks } from '../../routes/platform/notifications/hooks/notifications-hooks';
 
-export function SidebarPlatformAdminButton() {
+export function SidebarPlatformAdminButton({
+  className,
+}: {
+  className?: string;
+}) {
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   const { embedState } = useEmbedding();
   const location = useLocation();
@@ -26,7 +30,10 @@ export function SidebarPlatformAdminButton() {
   return (
     <Link
       to={isInPlatformAdmin ? '/' : '/platform'}
-      className={cn('w-full relative')}
+      className={cn(
+        'w-full flex items-center justify-center relative',
+        className,
+      )}
     >
       <div className={`w-full flex items-center gap-2`}>
         {isInPlatformAdmin ? (
