@@ -20,7 +20,7 @@ export const microsoftOutlook = createPiece({
 	displayName: 'Microsoft Outlook',
 	auth: microsoftOutlookAuth,
 	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://cdn.activepieces.com/pieces/outlook.png',
+	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-outlook.jpg',
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: ['lucaslimasouza', 'kishanprmr'],
 	actions: [
