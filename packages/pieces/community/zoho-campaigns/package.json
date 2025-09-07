@@ -1,0 +1,19 @@
+{
+    "name": "@activepieces/piece-zoho-campaigns",
+    "version": "0.1.0",
+    "dependencies": {
+        "@activepieces/pieces-framework": "^0.6.0",
+        "@activepieces/pieces-common": "^0.6.0",
+        "@activepieces/shared": "^0.6.0"
+    },
+    "devDependencies": {
+        "typescript": "^4.9.5",
+        "@types/node": "^18.0.0"
+    },
+    "main": "src/index.ts",
+    "license": "MIT",
+    "private": false,
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}

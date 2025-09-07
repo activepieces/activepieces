@@ -1,0 +1,21 @@
+{
+    "extends": "../../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src",
+        "paths": {
+            "@activepieces/pieces-common": ["../../common/src"],
+            "@activepieces/pieces-framework": ["../../framework/src"],
+            "@activepieces/shared": ["../../shared/src"]
+        }
+    },
+    "references": [
+        {
+            "path": "../../framework"
+        },
+        {
+            "path": "../../common"
+        }
+    ],
+    "include": ["src"]
+}
