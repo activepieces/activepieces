@@ -1,44 +1,38 @@
 {
-    "name": "pieces-close",
-    "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-    "sourceRoot": "packages/pieces/community/close/src",
-    "projectType": "library",
-    "release": {
-      "version": {
-        "generatorOptions": {
-          "packageRoot": "dist/{projectRoot}",
-          "currentVersionResolver": "git-tag"
-        }
+  "name": "pieces-close",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/close/src",
+  "projectType": "library",
+  "release": {
+    "version": {
+      "currentVersionResolver": "git-tag",
+      "preserveLocalDependencyProtocols": false,
+      "manifestRootsToUpdate": ["dist/{projectRoot}"]
+    }
+  },
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/close",
+        "tsConfig": "packages/pieces/community/close/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/close/package.json",
+        "main": "packages/pieces/community/close/src/index.ts",
+        "assets": ["packages/pieces/community/close/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
-    "tags": [],
-    "targets": {
-      "build": {
-        "executor": "@nx/js:tsc",
-        "outputs": [
-          "{options.outputPath}"
-        ],
-        "options": {
-          "outputPath": "dist/packages/pieces/community/close",
-          "tsConfig": "packages/pieces/community/close/tsconfig.lib.json",
-          "packageJson": "packages/pieces/community/close/package.json",
-          "main": "packages/pieces/community/close/src/index.ts",
-          "assets": ["packages/pieces/community/close/*.md"],
-          "buildableProjectDepsInPackageJsonType": "dependencies",
-          "updateBuildableProjectDepsInPackageJson": true
-        }
-      },
-      "nx-release-publish": {
-        "options": {
-          "packageRoot": "dist/{projectRoot}"
-        }
-      },
-      "lint": {
-        "executor": "@nx/eslint:lint",
-        "outputs": [
-          "{options.outputFile}"
-        ]
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
       }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
     }
   }
-  
+}
