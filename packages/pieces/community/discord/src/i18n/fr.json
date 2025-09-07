@@ -61,7 +61,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
-  "List of channels": "Liste des salons",
+  "List of channels": "Liste des channels",
   "Message content to send.": "Message à envoyer.",
   "The avatar url for webhook": "L'url de l'avatar pour le webhook",
   "Embeds to send along with the message": "Intégrer à envoyer avec le message",

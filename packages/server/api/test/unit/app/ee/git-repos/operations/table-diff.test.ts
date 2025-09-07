@@ -209,4 +209,26 @@ describe('Table Diff Service', () => {
         expect(diff.tables.length).toBe(1)
         expect(diff.tables[0].type).toBe('UPDATE_TABLE')
     })
+
+    it('should not detect table as changed when only id field differs', async () => {
+        const tableOne = tableGenerator.simpleTable()
+        const tableTwo = tableGenerator.simpleTable(tableOne.externalId)
+
+        // Ensure all fields are identical
+        tableTwo.name = tableOne.name
+        tableTwo.fields = tableOne.fields
+
+        const diff = await projectDiffService.diff({
+            currentState: {
+                flows: [],
+                tables: [tableOne],
+            },
+            newState: {
+                flows: [],
+                tables: [tableTwo],
+            },
+        })
+
+        expect(diff.tables.length).toBe(0)
+    })
 }) 

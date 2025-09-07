@@ -5,9 +5,9 @@
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-framework": "0.18.4",
+    "@activepieces/pieces-framework": "0.20.0",
     "@activepieces/server-shared": "0.0.2",
-    "@activepieces/shared": "0.19.1",
+    "@activepieces/shared": "0.20.1",
     "write-file-atomic": "5.0.1",
     "tslib": "2.6.2",
     "axios": "1.8.3",
@@ -24,6 +24,6 @@
     "@ai-sdk/openai": "2.0.12",
     "ai": "5.0.12",
     "zod": "3.25.76",
-    "@activepieces/common-ai": "0.0.1"
+    "@activepieces/common-ai": "0.2.0"
   }
 }

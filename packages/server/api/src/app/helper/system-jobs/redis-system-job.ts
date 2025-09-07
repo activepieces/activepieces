@@ -90,6 +90,7 @@ async function removeDeprecatedJobs() {
         'trigger-data-cleaner',
         'logs-cleanup-trigger',
         'usage-report',
+        'archive-old-issues',
         'platform-usage-report',
     ]
     const allSystemJobs = await systemJobsQueue.getJobSchedulers()

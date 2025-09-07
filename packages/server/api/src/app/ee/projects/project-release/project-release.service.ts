@@ -18,7 +18,8 @@ export const projectReleaseService = {
         const lock = await memoryLock.acquire(lockKey)
         try {
             const diffs = await findDiffStates(projectId, ownerId, params, log)
-            const filteredDiffs = await projectDiffService.filterFlows(params.selectedFlowsIds ?? [], diffs)
+            const flowIdsToApply = params.selectedFlowsIds ?? diffs.flows.map((flow) => flow.flowState.id)
+            const filteredDiffs = await projectDiffService.filterFlows(flowIdsToApply, diffs)
             await projectStateService(log).apply({
                 projectId,
                 diffs: filteredDiffs,

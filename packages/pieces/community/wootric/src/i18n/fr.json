@@ -1,10 +1,10 @@
 {
-  "Wootric": "Wootric",
-  "Measure and boost customer happiness": "Measure and boost customer happiness",
-  "Trigger Wootric Survey": "Trigger Wootric Survey",
-  "Trigger a survey from Wootric": "Trigger a survey from Wootric",
-  "Emails": "Emails",
-  "Survey Immediately": "Survey Immediately",
-  "End user emails, where you want the survey to be received": "End user emails, where you want the survey to be received",
-  "Enter \"true\" to survey immediately to bypass checks, otherwise \"false\"": "Enter \"true\" to survey immediately to bypass checks, otherwise \"false\""
+  "Wootric": "Wootrique",
+  "Measure and boost customer happiness": "Mesurer et améliorer le bonheur des clients",
+  "Trigger Wootric Survey": "Déclencher Wootric Survey",
+  "Trigger a survey from Wootric": "Déclencher une enquête de Wootric",
+  "Emails": "E-mails",
+  "Survey Immediately": "Enquête immédiate",
+  "End user emails, where you want the survey to be received": "Emails de l'utilisateur final, où vous voulez que l'enquête soit reçue",
+  "Enter \"true\" to survey immediately to bypass checks, otherwise \"false\"": "Entrez \"true\" pour l'enquête immédiatement pour contourner les vérifications, sinon \"false\""
 }

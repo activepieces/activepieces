@@ -1,5 +1,5 @@
 {
-  "Date Helper": "Assistant Date",
+  "Date Helper": "Date Helper",
   "Manipulate, format, and extract time units for all your date and time needs.": "Manipuler, formater et extraire des unités de temps pour tous vos besoins de date et d'heure.",
   "Get Current Date": "Obtenir la date actuelle",
   "Format Date": "Formater la date",
@@ -39,7 +39,7 @@
   "Enter the starting date": "Entrez la date de début",
   "Enter the ending date": "Entrez la date de fin",
   "Select the unit of difference between the two dates": "Sélectionnez l'unité de différence entre les deux dates",
-  "Provide an expression to add or subtract using the following units (year , month , day , hour , minute or second).\n             \nExamples:\n+ 2 second + 1 hour \n+ 1 year - 3 day - 2 month \n+ 5 minute": "Fournir une expression à ajouter ou à soustraire en utilisant les unités suivantes (année, mois, jour, heure, minute ou seconde).\n             \nExemples :\n+ 2 secondes + 1 heure \n+ 1 an - 3 jours - 2 mois \n+ 5 minutes",
+  "Provide an expression to add or subtract using the following units (year , month , day , hour , minute or second).\n             \nExamples:\n+ 2 second + 1 hour \n+ 1 year - 3 day - 2 month \n+ 5 minute": "Renseignez une expression pour ajouter ou soustraire des unités de temps. Il faut renseigner ces valeurs comme dans les exemples suivants. \n             \nExemples : \nPour ajouter 7 jours, renseignez : \"+7 day\"\nPour soustraire 1 mois, renseignez : -1 month\"\n\nEt ainsi de suite pour les années (\"+/- year\") les heures (\"+/- hour\"), les minutes (\"+/- minute\") et les secondes (\"+/- second\")",
   "The weekday that you would like to get the date and time of.": "Le jour de la semaine dont vous aimeriez obtenir la date et l'heure.",
   "The time that you would like to get the date and time of. This must be in 24h format.": "L'heure dont vous aimeriez obtenir la date et l'heure. Doit être au format 24h.",
   "If checked, the current time will be used instead of the time specified above.": "Si cette case est cochée, l'heure actuelle sera utilisée à la place de l'heure spécifiée ci-dessus.",

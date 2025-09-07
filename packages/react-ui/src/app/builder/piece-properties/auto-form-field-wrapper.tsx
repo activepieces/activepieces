@@ -12,7 +12,11 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
-import { FlowAction, FlowTrigger } from '@activepieces/shared';
+import {
+  FlowAction,
+  FlowTrigger,
+  PropertyExecutionType,
+} from '@activepieces/shared';
 
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
 import { TextInputWithMentions } from './text-input-with-mentions';
@@ -37,6 +41,18 @@ type AutoFormFieldWrapperProps = {
   inputName: string;
 };
 
+const getDefaultValueForDynamicValue = (
+  property: PieceProperty,
+  currentValue: unknown,
+) => {
+  if (property.type === PropertyType.ARRAY) {
+    return null;
+  }
+  return typeof currentValue === 'string' || typeof currentValue === 'number'
+    ? currentValue
+    : JSON.stringify(currentValue);
+};
+
 const AutoFormFieldWrapper = ({
   placeBeforeLabelText = false,
   children,
@@ -50,23 +66,27 @@ const AutoFormFieldWrapper = ({
 }: AutoFormFieldWrapperProps) => {
   const form = useFormContext<FlowAction | FlowTrigger>();
   const dynamicInputModeToggled =
-    form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyName] ===
-    true;
-
-  function handleDynamicValueToggleChange(mode: boolean) {
-    const newCustomizedInputs = {
-      ...form.getValues().settings?.inputUiInfo?.customizedInputs,
-      [propertyName]: mode,
+    form.getValues().settings?.propertySettings?.[propertyName]?.type ===
+    PropertyExecutionType.DYNAMIC;
+  function handleDynamicValueToggleChange(mode: PropertyExecutionType) {
+    const propertySettingsForSingleProperty = {
+      ...form.getValues().settings?.propertySettings?.[propertyName],
+      type: mode,
     };
     form.setValue(
-      `settings.inputUiInfo.customizedInputs`,
-      newCustomizedInputs,
+      `settings.propertySettings.${propertyName}`,
+      propertySettingsForSingleProperty,
       {
         shouldValidate: true,
       },
     );
     if (isInputNameLiteral(inputName)) {
-      form.setValue(inputName, property.defaultValue ?? null, {
+      const currentValue = form.getValues(inputName);
+      const newValue =
+        mode === PropertyExecutionType.DYNAMIC
+          ? getDefaultValueForDynamicValue(property, currentValue)
+          : property.defaultValue ?? null;
+      form.setValue(inputName, newValue, {
         shouldValidate: true,
       });
     } else {
@@ -113,7 +133,13 @@ const AutoFormFieldWrapper = ({
               <TooltipTrigger asChild>
                 <Toggle
                   pressed={dynamicInputModeToggled}
-                  onPressedChange={(e) => handleDynamicValueToggleChange(e)}
+                  onPressedChange={(e) =>
+                    handleDynamicValueToggleChange(
+                      e
+                        ? PropertyExecutionType.DYNAMIC
+                        : PropertyExecutionType.MANUAL,
+                    )
+                  }
                   disabled={disabled}
                 >
                   <SquareFunction
