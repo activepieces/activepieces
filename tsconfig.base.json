@@ -320,11 +320,14 @@
       "@activepieces/piece-discord": [
         "packages/pieces/community/discord/src/index.ts"
       ],
+      "@activepieces/piece-dittofeed":[
+        "packages/pieces/community/dittofeed/src/index.ts"
+      ],
       "@activepieces/piece-discourse": [
         "packages/pieces/community/discourse/src/index.ts"
       ],
-      "@activepieces/piece-dittofeed": [
-        "packages/pieces/community/dittofeed/src/index.ts"
+      "@activepieces/piece-docsbot": [
+        "packages/pieces/community/docsbot/src/index.ts"
       ],
       "@activepieces/piece-docusign": [
         "packages/pieces/community/docusign/src/index.ts"
