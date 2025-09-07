@@ -24,6 +24,10 @@ export const TriggerSourceEntity = new EntitySchema<TriggerSourceSchema>({
             type: String,
             nullable: false,
         },
+        triggerName: {
+            type: String,
+            nullable: false,
+        },
         handshakeConfiguration: {
             type: JSONB_COLUMN_TYPE,
             nullable: true,
