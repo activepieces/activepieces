@@ -1,5 +1,5 @@
 import { apId, FlowId, ProjectId } from '@activepieces/shared'
-import { repoFactory } from '../core/db/repo-factory'
+import { repoFactory } from '../../core/db/repo-factory'
 import {
     AppEventRouting,
     AppEventRoutingEntity,

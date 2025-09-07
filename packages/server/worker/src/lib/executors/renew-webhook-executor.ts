@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, ConsumeJobResponse, ConsumeJobResponseStatus, RenewWebhookJobData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowWorkerCache } from '../api/flow-worker-cache'
+import { flowWorkerCache } from '../cache/flow-worker-cache'
 import { triggerHooks } from '../utils/trigger-utils'
 
 export const renewWebhookExecutor = (log: FastifyBaseLogger) => ({

@@ -10,7 +10,7 @@ import {
     WebhookJobData,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowWorkerCache } from '../api/flow-worker-cache'
+import { flowWorkerCache } from '../cache/flow-worker-cache'
 import { workerApiService } from '../api/server-api.service'
 import { triggerHooks } from '../utils/trigger-utils'
 import { webhookUtils } from '../utils/webhook-utils'

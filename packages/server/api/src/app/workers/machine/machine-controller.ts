@@ -1,7 +1,7 @@
 import { Principal, PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser } from '../../ee/authentication/ee-authorization'
-import { websocketService } from '../../websockets/websockets.service'
+import { websocketService } from '../../core/websockets.service'
 import { machineService } from './machine-service'
 
 export const workerMachineController: FastifyPluginAsyncTypebox = async (app) => {

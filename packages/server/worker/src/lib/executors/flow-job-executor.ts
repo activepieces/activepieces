@@ -1,7 +1,7 @@
 import { exceptionHandler, pinoLogging } from '@activepieces/server-shared'
 import { ActivepiecesError, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, isNil, OneTimeJobData, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowWorkerCache } from '../api/flow-worker-cache'
+import { flowWorkerCache } from '../cache/flow-worker-cache'
 import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../runner'
 import { workerMachine } from '../utils/machine'

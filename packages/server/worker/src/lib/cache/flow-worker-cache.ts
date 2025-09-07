@@ -1,9 +1,9 @@
 import path from 'path'
 import { FlowVersionId, FlowVersionState, isNil, LATEST_SCHEMA_VERSION, PopulatedFlow } from '@activepieces/shared'
-import { cacheState } from '../cache/cache-state'
-import { GLOBAL_CACHE_FLOWS_PATH } from '../cache/worker-cache'
-import { ApAxiosClient } from './ap-axios'
-import { engineApiService } from './server-api.service'
+import { cacheState } from './cache-state'
+import { GLOBAL_CACHE_FLOWS_PATH } from './worker-cache'
+import { ApAxiosClient } from '../api/ap-axios'
+import { engineApiService } from '../api/server-api.service'
 
 export const flowWorkerCache = {
     async writeFileToCacheIfCachable(flowVersionId: FlowVersionId, flow: PopulatedFlow | null): Promise<void> {

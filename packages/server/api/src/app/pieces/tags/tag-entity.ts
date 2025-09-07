@@ -2,7 +2,7 @@ import { Platform, Tag } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     BaseColumnSchemaPart,
-} from '../database/database-common'
+} from '../../database/database-common'
 
 export type TagEntitySchema = Tag & {
     platform: Platform

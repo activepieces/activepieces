@@ -7,8 +7,8 @@ import {
     SeekPage,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { paginationHelper } from '../helper/pagination/pagination-utils'
-import { system } from '../helper/system/system'
+import { system } from '../../helper/system/system'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
 
 export const communityFlowTemplateModule: FastifyPluginAsyncTypebox = async (
     app,

@@ -26,7 +26,7 @@ import {
     EngineHelperResponse,
     EngineHelperTriggerResult,
 } from 'server-worker'
-import { appEventRoutingService } from '../../app-event-routing/app-event-routing.service'
+import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { jobQueue } from '../../workers/queue'

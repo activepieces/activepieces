@@ -17,7 +17,7 @@ import { accessTokenManager } from '../../authentication/lib/access-token-manage
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
-import { pieceTagService } from '../../tags/pieces/piece-tag.service'
+import { pieceTagService } from '../../pieces/tags/pieces/piece-tag.service'
 import { userService } from '../../user/user-service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
 import { projectLimitsService } from '../projects/project-plan/project-plan.service'

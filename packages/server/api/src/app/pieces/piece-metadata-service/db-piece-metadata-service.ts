@@ -7,7 +7,7 @@ import semVer from 'semver'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
-import { pieceTagService } from '../../tags/pieces/piece-tag.service'
+import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import {
     PieceMetadataEntity,
     PieceMetadataSchema,
