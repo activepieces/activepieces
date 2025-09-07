@@ -2,7 +2,7 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { HttpMethod } from "@activepieces/pieces-common";
 import { makeRequest } from "../common/client";
 import { murfAuth } from "../common/auth";
-import { languageDropdown } from "../common/dropdown";
+import { languageDropdown, murfCommon } from "../common/dropdown";
 
 export const createProject = createAction({
   auth: murfAuth,
@@ -24,12 +24,8 @@ export const createProject = createAction({
         ],
       },
     }),
-    sourceLocale: Property.ShortText({
-      displayName: "Source Locale",
-      description: "Optional source locale (e.g., en_US)",
-      required: false,
-    }),
-    targetLocales: languageDropdown,
+    sourceLocale:murfCommon.sourceLocale,
+    targetLocales: murfCommon.language,
     description: Property.LongText({
       displayName: "Description",
       description: "Optional project description",
@@ -51,8 +47,6 @@ export const createProject = createAction({
       HttpMethod.POST,
       "/murfdub/projects/create",
       body,
-      undefined,
-      true
 
     );
 

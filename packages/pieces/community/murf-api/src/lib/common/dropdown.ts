@@ -2,10 +2,36 @@ import { Property } from "@activepieces/pieces-framework";
 import { HttpMethod } from "@activepieces/pieces-common";
 import { makeRequest } from "./client";
 
+// Helper to fetch voices
+const getVoices = async (apiKey: string) => {
+    return await makeRequest(apiKey, HttpMethod.GET, "/speech/voices");
+};
+
+// Helper to build unique language list
+const getLanguages = async (apiKey: string) => {
+    const voices = await getVoices(apiKey);
+    const languageMap = new Map<string, string>();
+
+    voices.forEach((voice: any) => {
+        if (voice.supportedLocales) {
+            Object.keys(voice.supportedLocales).forEach((localeCode) => {
+                if (!languageMap.has(localeCode)) {
+                    languageMap.set(
+                        localeCode,
+                        voice.supportedLocales[localeCode].detail || localeCode
+                    );
+                }
+            });
+        }
+    });
+
+    return Array.from(languageMap, ([value, label]) => ({ label, value }));
+};
+
 export const murfCommon = {
     language: Property.Dropdown({
         displayName: "Language",
-        description: "Select the language for Murf voices",
+        description: "Select a language",
         required: true,
         refreshers: [],
         options: async ({ auth }) => {
@@ -17,15 +43,11 @@ export const murfCommon = {
                 };
             }
 
-            // Fetch available languages
-            const response = await makeRequest((auth as any).murfApiKey, HttpMethod.GET, "/languages");
-
-            const langs = (response.languages || []).map((lang: { name: string; code: string }) => ({
-                label: lang.name,
-                value: lang.code,
-            }));
-
-            return { disabled: false, options: langs };
+            const langs = await getLanguages(auth as string);
+            return {
+                disabled: false,
+                options: langs,
+            };
         },
     }),
 
@@ -35,35 +57,31 @@ export const murfCommon = {
         required: true,
         refreshers: ["language"],
         options: async ({ auth, language }) => {
-            if (!auth || !language) {
+            if (!auth|| !language) {
                 return {
                     disabled: true,
-                    placeholder: "Please select a language first.",
+                    placeholder: "Please select a language and connect your Murf account first.",
                     options: [],
                 };
             }
 
-            const response = await makeRequest(
-                (auth as any).murfApiKey,
-                HttpMethod.GET,
-                `/voices?language=${language}`
+            const voices = await getVoices(auth as string);
+            const filtered = voices.filter((v: any) =>
+                Object.keys(v.supportedLocales || {}).includes(language as string)
             );
-
-            const voices = response.voices.map((v: { id: string; name: string; gender: string }) => ({
-                label: `${v.name} (${v.gender})`,
-                value: v.id,
-            }));
 
             return {
                 disabled: false,
-                options: voices,
+                options: filtered.map((v: any) => ({
+                    label: `${v.displayName} (${v.gender}, ${v.locale})`,
+                    value: v.voiceId,
+                })),
             };
         },
     }),
-
-    projectId: Property.Dropdown({
-        displayName: "Project",
-        description: "Select a Murf project",
+    sourceLocale: Property.Dropdown({
+        displayName: "Source Locale",
+        description: "Select a source locale",
         required: false,
         refreshers: [],
         options: async ({ auth }) => {
@@ -75,19 +93,27 @@ export const murfCommon = {
                 };
             }
 
-            const response = await makeRequest((auth as any).murfApiKey, HttpMethod.GET, "/projects");
+            const voices = await getVoices(auth as string);
 
-            const projects = response.projects.map((p: { id: string; name: string }) => ({
-                label: p.name,
-                value: p.id,
-            }));
+            // Collect all supportedLocales across voices
+            const localeMap = new Map<string, string>();
+            voices.forEach((voice: any) => {
+                if (voice.supportedLocales) {
+                    Object.entries(voice.supportedLocales).forEach(([localeCode, localeData]: any) => {
+                        if (!localeMap.has(localeCode)) {
+                            localeMap.set(localeCode, localeData.detail);
+                        }
+                    });
+                }
+            });
 
             return {
                 disabled: false,
-                options: projects,
+                options: Array.from(localeMap, ([value, label]) => ({ value, label })),
             };
         },
     }),
+
 };
 
 export const languageDropdown = Property.StaticDropdown({

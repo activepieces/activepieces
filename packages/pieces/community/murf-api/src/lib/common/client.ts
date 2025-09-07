@@ -1,51 +1,37 @@
 import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 
-export const BASE_URL = `https://api.murf.ai/v1`;
+export const BASE_URL = "https://api.murf.ai/v1";
 
-type MurfAuth = {
-  murfApiKey: string;
-  murfDubApiKey: string;
-};
-
-/**
- * Makes a request to Murf API or MurfDub API
- * @param auth - The auth object from murfAuth
- * @param method - GET, POST, etc.
- * @param path - API endpoint path (e.g. "/speech/voices")
- * @param body - Optional body for POST/PUT
- * @param queryParams - Optional query params
- * @param useDubKey - If true, uses murfDubApiKey instead of murfApiKey
- */
 export async function makeRequest(
-  auth: MurfAuth,
+  apiKey: string,
   method: HttpMethod,
   path: string,
   body?: unknown,
-  queryParams?: Record<string, string | number | boolean>,
-  useDubKey = false
+  isFormData = false
 ) {
-  const apiKey = useDubKey ? auth.murfDubApiKey : auth.murfApiKey;
-
   try {
+    const headers: Record<string, string> = {
+      "api-key": apiKey,
+    };
+
+    // Only set JSON Content-Type if not sending FormData
+    let requestBody = body;
+    if (!isFormData) {
+      headers["Content-Type"] = "application/json";
+    } else {
+      // If body is FormData, let the httpClient handle Content-Type automatically
+      requestBody = body;
+    }
+
     const response = await httpClient.sendRequest({
       method,
       url: `${BASE_URL}${path}`,
-      headers: {
-        "api-key": apiKey, // ✅ Murf expects `api-key`, not `Authorization`
-        "Content-Type": "application/json",
-      },
-      body,
-      queryParams: queryParams
-        ? Object.fromEntries(
-            Object.entries(queryParams).map(([k, v]) => [k, String(v)])
-          )
-        : undefined,
+      headers,
+      body: requestBody,
     });
 
     return response.body;
   } catch (error: any) {
-    throw new Error(
-      `Murf API request failed: ${error.message || JSON.stringify(error)}`
-    );
+    throw new Error(`Unexpected error: ${JSON.stringify(error.response || error)}`);
   }
 }

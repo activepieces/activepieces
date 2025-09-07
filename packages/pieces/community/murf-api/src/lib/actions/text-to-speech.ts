@@ -83,14 +83,15 @@ export const textToSpeech = createAction({
       description: "Speed adjustment (-50 to 50).",
       required: false,
     }),
+    style: Property.ShortText({
+      displayName: "Style",
+      description:
+        "Voice style (e.g., 'default', 'calm', 'energetic'). Check voice details.",
+      required: false,
+    }),
     sampleRate: Property.Number({
       displayName: "Sample Rate",
       description: "Defaults to 44100. Allowed: 8000, 24000, 44100, 48000.",
-      required: false,
-    }),
-    style: Property.ShortText({
-      displayName: "Style",
-      description: "Voice style to be used (if supported).",
       required: false,
     }),
     variation: Property.Number({

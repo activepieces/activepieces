@@ -1,5 +1,5 @@
-import { createAction, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { HttpMethod, httpClient } from "@activepieces/pieces-common";
+import { ApFile, createAction, Property } from "@activepieces/pieces-framework";
+import { HttpMethod } from "@activepieces/pieces-common";
 import { murfAuth } from "../common/auth";
 import { murfCommon } from "../common/dropdown";
 import { makeRequest } from "../common/client";
@@ -11,6 +11,7 @@ export const voiceChange = createAction({
   displayName: "Voice Changer",
   description: "Convert an input audio file to a different voice using Murf Voice Changer",
   props: {
+    language: murfCommon.language,
     voiceId: murfCommon.voiceId,
     fileUrl: Property.ShortText({
       displayName: "File URL",
@@ -64,44 +65,52 @@ export const voiceChange = createAction({
   },
 
   async run(context) {
-    const formData: Record<string, any> = {
-      voice_id: context.propsValue.voiceId,
-    };
+    const { file, fileUrl, voiceId, format, channelType, pitch, rate, encodeOutputAsBase64 } =
+      context.propsValue as {
+        file?: ApFile;
+        fileUrl?: string;
+        voiceId: string;
+        format?: string;
+        channelType?: string;
+        pitch?: number;
+        rate?: number;
+        encodeOutputAsBase64?: boolean;
+      };
 
-    if (context.propsValue.fileUrl) {
-      formData["file_url"] = context.propsValue.fileUrl;
+    if (!file && !fileUrl) {
+      throw new Error("Either 'file' or 'fileUrl' must be provided.");
     }
-
-    if (context.propsValue.file) {
-      formData["file"] = context.propsValue.file; 
-    }
-
-    if (context.propsValue.format) {
-      formData["format"] = context.propsValue.format;
-    }
-    if (context.propsValue.channelType) {
-      formData["channel_type"] = context.propsValue.channelType;
-    }
-    if (context.propsValue.pitch !== undefined) {
-      formData["pitch"] = context.propsValue.pitch;
-    }
-    if (context.propsValue.rate !== undefined) {
-      formData["rate"] = context.propsValue.rate;
-    }
-    if (context.propsValue.encodeOutputAsBase64) {
-      formData["encode_output_as_base64"] = true;
+    if (file && fileUrl) {
+      throw new Error("Provide either 'file' or 'fileUrl', not both.");
     }
 
-    const response=await makeRequest(
+    const formData = new FormData();
+    formData.append("voice_id", voiceId);
+
+    if (fileUrl) {
+      formData.append("file_url", fileUrl);
+    }
+
+    if (file) {
+      const fileBuffer: any = Buffer.from(file.base64, "base64");
+      formData.append("file", fileBuffer, file.filename);
+    }
+
+
+    if (format) formData.append("format", format);
+    if (channelType) formData.append("channel_type", channelType);
+    if (pitch !== undefined) formData.append("pitch", pitch.toString());
+    if (rate !== undefined) formData.append("rate", rate.toString());
+    if (encodeOutputAsBase64) formData.append("encode_output_as_base64", "true");
+
+    const response = await makeRequest(
       context.auth,
       HttpMethod.POST,
       "/voice-changer/convert",
       formData,
-      {
-        isMultipart: true,
-      }
+      true // indicate that body is FormData
     );
 
-    return response.body;
+    return response;
   },
 });

@@ -2,7 +2,7 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { HttpMethod } from "@activepieces/pieces-common";
 import { makeRequest } from "../common/client";
 import { murfAuth } from "../common/auth";
-import { languageDropdown } from "../common/dropdown";
+import { murfCommon } from "../common/dropdown";
 
 export const listVoices = createAction({
   auth: murfAuth,
@@ -10,7 +10,7 @@ export const listVoices = createAction({
   displayName: "List Voices",
   description: "Get the list of available voices for text-to-speech",
   props: {
-    locale: languageDropdown,
+    locale: murfCommon.language,
     style: Property.Dropdown({
       displayName: "Style",
       description: "Filter by style (optional)",
@@ -25,7 +25,7 @@ export const listVoices = createAction({
           };
         }
 
-        const response = await makeRequest((auth as any).murfApiKey , HttpMethod.GET, "/speech/voices");
+        const response = await makeRequest(auth as string , HttpMethod.GET, "/speech/voices");
         const voices = Array.isArray(response) ? response : [];
 
        
