@@ -41,7 +41,7 @@ export const textToSpeech = createAction({
         }),
     },
     async run({ auth, propsValue }) {
-        // Define the types for your props
+        
         const { text, voiceId, style, format, pitch, rate } = propsValue as {
             text: string;
             voiceId: string;
@@ -51,7 +51,7 @@ export const textToSpeech = createAction({
             rate?: number;
         };
 
-        // Build the request body safely
+        
         const requestBody: Record<string, unknown> = {
             text,
             voiceId,

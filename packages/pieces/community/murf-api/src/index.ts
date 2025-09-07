@@ -4,6 +4,7 @@ import { textToSpeech } from './lib/actions/text-to-speech';
 import { translateText } from './lib/actions/translate-text';
 import { createProject } from './lib/actions/create-project';
 import { listVoices } from './lib/actions/list-voices';
+import { voiceChange } from './lib/actions/voice-change';
 
 const MURF_API_URL = 'https://api.murf.ai/v1';
 
@@ -46,7 +47,7 @@ export const murfApi = createPiece({
         translateText,
         createProject,
         listVoices,
-        
+        voiceChange,
     ],
     triggers: [
     ],

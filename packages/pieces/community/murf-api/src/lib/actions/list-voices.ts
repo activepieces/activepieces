@@ -8,7 +8,7 @@ export const listVoices = createAction({
     name: 'list_voices',
     displayName: 'List Voices',
     description: 'Lists all the voices.',
-    props: {}, // No properties are needed for this action
+    props: {}, 
     async run({ auth }) {
         const response = await httpClient.sendRequest<any[]>({
             method: HttpMethod.GET,

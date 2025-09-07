@@ -3,7 +3,7 @@ import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common
 
 export const MURF_API_URL = 'https://api.murf.ai/v1';
 
-// A helper function to fetch the list of available voices from the Murf API
+
 const getVoices = async (apiKey: string) => {
     const request: HttpRequest = {
         method: HttpMethod.GET,
@@ -16,12 +16,12 @@ const getVoices = async (apiKey: string) => {
     return response.body;
 };
 
-// Helper function to get a unique list of supported translation languages
+
 const getTranslationLanguages = async (apiKey: string) => {
     const voices = await getVoices(apiKey);
     const languageMap = new Map<string, string>();
 
-    // Iterate through all voices and their supported locales to build a unique map
+  
     voices.forEach((voice: any) => {
         if (voice.supportedLocales) {
             Object.keys(voice.supportedLocales).forEach(localeCode => {
@@ -32,7 +32,7 @@ const getTranslationLanguages = async (apiKey: string) => {
         }
     });
 
-    // Convert map to array of options for the dropdown
+
     return Array.from(languageMap, ([value, label]) => ({ label, value }));
 };
 

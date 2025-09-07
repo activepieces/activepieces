@@ -40,7 +40,7 @@ export const createProject = createAction({
             description?: string;
         };
 
-        // Build the request body safely, mapping to the snake_case the API expects
+        
         const requestBody: Record<string, unknown> = {
             name,
             dubbing_type: dubbingType,
