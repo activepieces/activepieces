@@ -31,7 +31,7 @@ const getLanguages = async (apiKey: string) => {
 export const murfCommon = {
     language: Property.Dropdown({
         displayName: "Language",
-        description: "Select a language",
+        description: "Select your preferred language for the translated output.",
         required: true,
         refreshers: [],
         options: async ({ auth }) => {
@@ -53,7 +53,7 @@ export const murfCommon = {
 
     voiceId: Property.Dropdown({
         displayName: "Voice",
-        description: "Choose the voice for text-to-speech",
+        description: "Choose a voice for converting text into speech",
         required: true,
         refreshers: ["language"],
         options: async ({ auth, language }) => {
@@ -81,7 +81,7 @@ export const murfCommon = {
     }),
     sourceLocale: Property.Dropdown({
         displayName: "Source Locale",
-        description: "Select a source locale",
+        description: "Select the source locale for input text.",
         required: false,
         refreshers: [],
         options: async ({ auth }) => {
@@ -95,7 +95,6 @@ export const murfCommon = {
 
             const voices = await getVoices(auth as string);
 
-            // Collect all supportedLocales across voices
             const localeMap = new Map<string, string>();
             voices.forEach((voice: any) => {
                 if (voice.supportedLocales) {
@@ -116,21 +115,3 @@ export const murfCommon = {
 
 };
 
-export const languageDropdown = Property.StaticDropdown({
-    displayName: "Target Language",
-    description: "Select the target language for translation",
-    required: true,
-    options: {
-        disabled: false,
-        options: [
-            { label: "Spanish (es-ES)", value: "es-ES" },
-            { label: "French (fr-FR)", value: "fr-FR" },
-            { label: "German (de-DE)", value: "de-DE" },
-            { label: "Hindi (hi-IN)", value: "hi-IN" },
-            { label: "English - US (en-US)", value: "en-US" },
-            { label: "English - UK (en-UK)", value: "en-UK" },
-            { label: "Chinese - Simplified (zh-CN)", value: "zh-CN" },
-            { label: "Japanese (ja-JP)", value: "ja-JP" },
-        ],
-    },
-});

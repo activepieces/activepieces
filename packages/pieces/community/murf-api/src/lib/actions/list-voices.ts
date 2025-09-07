@@ -60,7 +60,6 @@ export const listVoices = createAction({
     const response = await makeRequest(context.auth, HttpMethod.GET, "/speech/voices");
     const voices = Array.isArray(response) ? response : [];
 
-    // Apply filters
     let filtered = voices;
     if (locale) {
       filtered = filtered.filter(
