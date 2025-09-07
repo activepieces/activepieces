@@ -73,7 +73,7 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         if (!RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType) || !PROJECT_RATE_LIMITER_ENABLED || isNil(jobId)) {
             return
         }
-        const castedJob = data as OneTimeJobData | WebhookJobData
+        const castedJob = data as OneTimeJobData
 
         const setKey = projectSetKey(castedJob.projectId)
 
