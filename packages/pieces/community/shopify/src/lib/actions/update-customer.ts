@@ -1,7 +1,4 @@
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../..';
 import { updateCustomer } from '../common';
 import { z } from 'zod';
@@ -49,6 +46,10 @@ export const updateCustomerAction = createAction({
       description: 'A string of comma-separated tags for filtering and search',
       required: false,
     }),
+    acceptsMarketing: Property.Checkbox({
+      displayName: 'Accepts Marketing ?',
+      required: false,
+    }),
   },
   async run({ auth, propsValue }) {
     const {
@@ -60,6 +61,7 @@ export const updateCustomerAction = createAction({
       lastName,
       phoneNumber,
       tags,
+      acceptsMarketing
     } = propsValue;
 
     await propsValidation.validateZod(propsValue, {
@@ -76,6 +78,10 @@ export const updateCustomerAction = createAction({
         last_name: lastName,
         phone: phoneNumber,
         tags,
+           email_marketing_consent:{
+          state:acceptsMarketing?'subscribed':'unsubscribed',
+          opt_in_level:"unknown"
+        }
       },
       auth
     );

@@ -201,7 +201,7 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                 const input = operation as ExecuteExtractPieceMetadata
                 const output = await pieceHelper.extractPieceMetadata({
                     params: input,
-                    piecesSource: EngineConstants.PIECE_SOURCES,
+                    pieceSource: EngineConstants.PIECE_SOURCES,
                 })
                 return {
                     status: EngineResponseStatus.OK,
@@ -218,7 +218,7 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                 const input = operation as ExecutePropsOptions
                 const output = await pieceHelper.executeProps({
                     params: input,
-                    piecesSource: EngineConstants.PIECE_SOURCES,
+                    pieceSource: EngineConstants.PIECE_SOURCES,
                     executionState: await testExecutionContext.stateFromFlowVersion({
                         apiUrl: input.internalApiUrl,
                         flowVersion: input.flowVersion,
@@ -257,7 +257,7 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                 const input = operation as ExecuteValidateAuthOperation
                 const output = await pieceHelper.executeValidateAuth({
                     params: input,
-                    piecesSource: EngineConstants.PIECE_SOURCES,
+                    pieceSource: EngineConstants.PIECE_SOURCES,
                 })
 
                 return {

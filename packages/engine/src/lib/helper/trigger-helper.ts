@@ -29,7 +29,7 @@ export const triggerHelper = {
             projectId: constants.projectId,
             apiUrl: constants.internalApiUrl,
             engineToken: constants.engineToken,
-            piecesSource: constants.piecesSource,
+            pieceSource: constants.piecesSource,
             propertySettings,
         })
         const isOldVersionOrNotSupported = isNil(pieceTrigger.onStart)
@@ -76,7 +76,7 @@ export const triggerHelper = {
             projectId: params.projectId,
             apiUrl: constants.internalApiUrl,
             engineToken: params.engineToken,
-            piecesSource: constants.piecesSource,
+            pieceSource: constants.piecesSource,
             propertySettings,
         })
 
@@ -248,12 +248,12 @@ type ExecuteTriggerParams = {
     constants: EngineConstants
 }
 
-async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, input, propertySettings, projectId, apiUrl, engineToken, piecesSource }: PrepareTriggerExecutionParams) {
+async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, input, propertySettings, projectId, apiUrl, engineToken, pieceSource }: PrepareTriggerExecutionParams) {
     const { piece, pieceTrigger } = await pieceLoader.getPieceAndTriggerOrThrow({
         pieceName,
         pieceVersion,
         triggerName,
-        piecesSource,
+        pieceSource,
     })
 
     const { resolvedInput } = await createPropsResolver({
@@ -283,5 +283,5 @@ type PrepareTriggerExecutionParams = {
     projectId: string
     apiUrl: string
     engineToken: string
-    piecesSource: string
+    pieceSource: string
 }

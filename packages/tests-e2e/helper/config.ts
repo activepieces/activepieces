@@ -5,9 +5,9 @@ type Config = {
 }
 
 const localConfig: Config = {
-    instanceUrl: 'https://pre-prod.activepieces.com',
-    email: 'test@activepieces.com',
-    password: 'Test@1234578',
+    instanceUrl: 'https://cloud.activepieces.com',
+    email: process.env.E2E_EMAIL ?? 'test@activepieces.com',
+    password: process.env.E2E_PASSWORD ?? 'Test@1234578',
 }
 
 const enterpriseConfig: Config = {

@@ -54,8 +54,7 @@ export type ApErrorParams =
     | SystemInvalidErrorParams
     | SystemPropNotDefinedErrorParams
     | TestTriggerFailedErrorParams
-    | TriggerDisableErrorParams
-    | TriggerEnableErrorParams
+    | TriggerUpdateStatusErrorParams
     | TriggerFailedErrorParams
     | ValidationErrorParams
     | InvitationOnlySignUpParams
@@ -332,20 +331,13 @@ ErrorCode.VALIDATION,
 }
 >
 
-export type TriggerEnableErrorParams = BaseErrorParams<
-ErrorCode.TRIGGER_ENABLE,
+export type TriggerUpdateStatusErrorParams = BaseErrorParams<
+ErrorCode.TRIGGER_UPDATE_STATUS,
 {
     flowVersionId?: FlowVersionId
     message?: string
     standardOutput?: string
     standardError?: string
-}
->
-
-export type TriggerDisableErrorParams = BaseErrorParams<
-ErrorCode.TRIGGER_DISABLE,
-{
-    flowVersionId?: FlowVersionId
 }
 >
 
@@ -535,8 +527,7 @@ export enum ErrorCode {
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
     SYSTEM_PROP_NOT_DEFINED = 'SYSTEM_PROP_NOT_DEFINED',
     TEST_TRIGGER_FAILED = 'TEST_TRIGGER_FAILED',
-    TRIGGER_DISABLE = 'TRIGGER_DISABLE',
-    TRIGGER_ENABLE = 'TRIGGER_ENABLE',
+    TRIGGER_UPDATE_STATUS = 'TRIGGER_UPDATE_STATUS',
     TRIGGER_FAILED = 'TRIGGER_FAILED',
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
     VALIDATION = 'VALIDATION',

@@ -1013,7 +1013,7 @@
   "Save Limit": "Limiet opslaan",
   "$1 per 1000 additional credits beyond plan limit": "$1 per 1000 extra credits buiten plan limiet",
   "When a project AI credits limit is reached, all flows using universal AI pieces or agents and MCP servers will fail.": "Wanneer een project AI kredietlimiet is bereikt, zullen alle stromen met behulp van universele AI stuks of agenten en MCP servers mislukken.",
-  "Ai Credits Usage Exceeded": "Ai Credits gebruik overschreden",
+  "AI Credits Usage Exceeded": "",
   "of the Allowed Limit.": "van de toegestane limiet.",
   "Date": "Datum:",
   "Model": "Model",
