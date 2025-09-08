@@ -72,14 +72,14 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             logsFileId,
         })
 
-        const updateLogs = !isNil(executionStateBuffer) && executionStateBuffer.length > 0
+        const updateLogs = !isNil(executionStateContentLength) && executionStateContentLength > 0
         if (updateLogs) {
             await flowRunService(request.log).updateLogs({
                 flowRunId: runId,
                 logsFileId: runWithoutSteps.logsFileId ?? undefined,
                 projectId: request.principal.projectId,
                 executionStateString: executionStateBuffer,
-                executionStateContentLength: executionStateBuffer.length,
+                executionStateContentLength: executionStateContentLength,
             })
         }
         if (runDetails.status === FlowRunStatus.PAUSED) {
