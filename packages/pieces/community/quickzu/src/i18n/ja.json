@@ -1,5 +1,4 @@
 {
-  "Quickzu": "クイックズ",
   "Streamline ordering from whatsapp": "whatsappから順序を合理化",
   "\n1. Login to your Quickzu Dashboard.\n2. Go to **https://app.quickzu.com/dash/settings/api-webhooks**.\n3. Copy **API Token** to the clipboard and paste it.": "\n1. Quickzu ダッシュボードにログインします。\n2. **https://app.quickzu.com/dash/settings/api-webhooks** に移動します。\n3. **API トークン**をクリップボードにコピーして貼り付けます。",
   "Add Product": "商品を追加",
