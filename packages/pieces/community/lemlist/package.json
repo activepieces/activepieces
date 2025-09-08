@@ -1,6 +1,6 @@
 {
-  "name": "@activepieces/piece-murf-api",
-  "version": "0.0.2",
+  "name": "@activepieces/piece-lemlist",
+  "version": "0.0.1",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
