@@ -128,13 +128,6 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             throw new ProgressUpdateError('Failed to send progress update', response)
         }
 
-        await notifyFrontend(engineConstants, {
-            type: WebsocketClientEvent.FLOW_RUN_PROGRESS,
-            data: {
-                runId: engineConstants.flowRunId,
-                testSingleStepMode: engineConstants.testSingleStepMode,
-            },
-        })
     })
 }
 

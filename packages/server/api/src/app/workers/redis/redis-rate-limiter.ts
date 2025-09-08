@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, assertNull, isNil, JobData, OneTimeJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { assertNotNullOrUndefined, assertNull, isNil, JobData, OneTimeJobData, WorkerJobType } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import dayjs from 'dayjs'
 
