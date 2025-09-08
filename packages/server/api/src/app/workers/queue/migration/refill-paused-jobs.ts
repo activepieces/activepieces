@@ -28,7 +28,7 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                 continue
             }
             await jobQueue(log).add({
-                id: pausedRun.id,
+                id: 'delayed_' + pausedRun.id,
                 type: JobType.ONE_TIME,
                 data: {
                     projectId: pausedRun.projectId,
