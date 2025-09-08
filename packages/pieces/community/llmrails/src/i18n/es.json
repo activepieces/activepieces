@@ -1,5 +1,4 @@
 {
-  "LLMRails": "LLMRails",
   "LLM Rails Platform": "Plataforma de vías LLM",
   "\nFollow these instructions to get your LLMRails API Key:\n\n1. Visit the following website: https://console.llmrails.com/api-keys.\n2. Once on the website, click on create a key.\n3. Once you have created a key, copy it and use it for the Api key field on the site.\n": "\nSigue estas instrucciones para obtener tu LLMRails API Key:\n\n1. Visita el siguiente sitio web: https://console.llmrails.com/api-keys.\n2. Una vez en el sitio web, haga clic en crear una clave.\n3. Una vez que hayas creado una clave, cópiala y úsalo para el campo de la clave Api en el sitio.\n",
   "Datastore search": "Búsqueda de datos",
