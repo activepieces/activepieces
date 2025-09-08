@@ -10,7 +10,8 @@ export const addTag = createAction({
   props: {
     chatlogId: Property.ShortText({
       displayName: 'Chatlog Id',
-      description: 'The ID of your current chat session for conversation continuity',
+      description:
+        'The ID of your chat session (can be found under Chatlog Details section, labeled as "ID")',
       required: true,
     }),
     tags: Property.Array({
@@ -22,7 +23,7 @@ export const addTag = createAction({
 
   async run({ auth, propsValue }) {
     const apiKey = auth;
-    const { chatlogId, tags } = propsValue
+    const { chatlogId, tags } = propsValue;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,

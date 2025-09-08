@@ -10,9 +10,10 @@ export const removeTag = createAction({
   props: {
     chatlogId: Property.ShortText({
       displayName: 'Chatlog Id',
-      description: 'The ID of your current chat session for conversation continuity',
+      description:
+        'The ID of your chat session (can be found under Chatlog Details section, labeled as "ID")',
       required: true,
-  }),
+    }),
     tags: Property.Array({
       displayName: 'Tags',
       description: 'List of tags to remove',
@@ -22,12 +23,12 @@ export const removeTag = createAction({
 
   async run({ auth, propsValue }) {
     const apiKey = auth;
-    const { chatlogId, tags } = propsValue
+    const { chatlogId, tags } = propsValue;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://app.wonderchat.io/api/v1/delete-tags-from-chatlog',
-      headers: { 'Content-Type': 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: {
         apiKey,
         chatlogId,

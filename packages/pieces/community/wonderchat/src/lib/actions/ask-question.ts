@@ -11,7 +11,7 @@ export const askQuestion = createAction({
   props: {
     chatbotId: Property.ShortText({
       displayName: 'Chatbot Id',
-      description: 'The ID of the chatbot you want to chat with.',
+      description: 'The ID of your chatbot (can be found in the URL when viewing your bot: /bot/YOUR_BOT_ID)',
       required: true,
     }),
     question: Property.LongText({
@@ -21,7 +21,8 @@ export const askQuestion = createAction({
     }),
     chatlogId: Property.ShortText({
       displayName: 'Chatlog Id',
-      description: 'The ID of your current chat session for conversation continuity',
+      description:
+        'The ID of your chat session (can be found under Chatlog Details section, labeled as "ID")',
       required: false,
     }),
     context: Property.LongText({
@@ -39,17 +40,25 @@ export const askQuestion = createAction({
   async run({propsValue}) {
     const { chatbotId, question, chatlogId, context, contextUrl } = propsValue;
 
+    const requestbody: any = {
+      chatbotId,
+      question,
+    };
+    if (chatlogId) {
+      requestbody.chatlogId = chatlogId;
+    }
+    if (context) {
+      requestbody.context = context;
+    }
+    if (contextUrl) {
+      requestbody.contextUrl = contextUrl;
+    }
+
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://app.wonderchat.io/api/v1/chat',
       headers: { 'Content-Type': 'application/json' },
-      body: {
-        chatbotId,
-        question,
-        chatlogId,
-        context,
-        contextUrl,
-      },
+      body: requestbody,
     });
     return response.body;
   },

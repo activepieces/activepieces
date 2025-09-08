@@ -10,12 +10,12 @@ export const addPage = createAction({
   props: {
     chatbotId: Property.ShortText({
       displayName: 'Chatbot Id',
-      description: 'The ID of the chatbot you want to chat with.',
+      description: 'The ID of your chatbot (can be found in the URL when viewing your bot: /bot/YOUR_BOT_ID)',
       required: true,
     }),
     urls: Property.Array({
       displayName: 'URLs',
-      description: 'List of URLs to add to your chatbot',
+      description: 'List of webpage URLs to add to your chatbot\'s knowledge base (e.g., "https://wonderchat.io")',
       required: false,
     }),
     sessionCookie: Property.LongText({
@@ -26,18 +26,23 @@ export const addPage = createAction({
   },
   async run({ auth, propsValue }) {
     const apiKey = auth;
-    const { chatbotId, urls, sessionCookie } = propsValue
-
+    const { chatbotId, urls, sessionCookie } = propsValue;
+    
+    const requestbody: any = {
+      apiKey,
+      chatbotId,  
+    };
+    if (sessionCookie) {
+      requestbody.sessionCookie = sessionCookie;
+    }
+    if (urls) {
+      requestbody.urls = urls;
+    }
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://app.wonderchat.io/api/v1/add-pages',
       headers: { 'Content-Type': 'application/json'},
-      body: {
-        apiKey,
-        chatbotId,
-        urls,
-        sessionCookie,
-      },
+      body: requestbody,
     });
     return response.body;
   },

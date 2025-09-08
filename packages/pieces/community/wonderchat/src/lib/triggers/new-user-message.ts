@@ -58,9 +58,10 @@ export const newUserMessage = createTrigger({
   props: {
     chatlogId: Property.ShortText({
       displayName: 'Chatlog ID',
-      description: 'The ID of the chatlog to monitor for new user messages.',
-      required: true
-    })
+      description:
+        'The ID of your chat session (can be found under Chatlog Details section, labeled as "ID")',
+      required: true,
+    }),
   },
   sampleData: {
     content: 'I would want to now more about the products pricing strategy',
