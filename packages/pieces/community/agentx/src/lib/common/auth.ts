@@ -8,7 +8,7 @@ export const AgentXAuth = PieceAuth.SecretText({
 ---
 ### How to obtain your API key
 1. Visit [AgentX](https://www.agentx.so/) and log in.
-2. Click on your avatar (top-right corner).
+2. Click on your avatar (bottom-left corner).
 3. Copy your API Key from the popup window.
 4. Paste it here.
 

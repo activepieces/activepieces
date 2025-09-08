@@ -2,7 +2,7 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { HttpMethod } from "@activepieces/pieces-common";
 import { makeRequest } from "../common/client";
 import { AgentXAuth } from "../common/auth";
-import { AgentIdDropdown } from "../common/dropdown";
+import { AgentIdDropdown, ConversationIdDropdown } from "../common/dropdown";
 
 type Message = {
   id: string;
@@ -25,11 +25,7 @@ export const findMessage = createAction({
 
   props: {
     agentId: AgentIdDropdown,
-    conversationId: Property.ShortText({
-      displayName: "Conversation ID",
-      description: "The ID of the conversation to search within.",
-      required: true,
-    }),
+    conversationId: ConversationIdDropdown,
     searchTerm: Property.ShortText({
       displayName: "Search Term",
       description:

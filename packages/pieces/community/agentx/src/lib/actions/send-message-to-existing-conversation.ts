@@ -2,6 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { AgentXAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { ConversationIdDropdown } from '../common/dropdown';
+import { AgentIdDropdown } from '../common/dropdown';
 
 export const sendMessageToExistingConversation = createAction({
   auth: AgentXAuth,
@@ -9,11 +11,8 @@ export const sendMessageToExistingConversation = createAction({
   displayName: 'Send Message to Existing Conversation',
   description: 'Send a message to an existing conversation with an agent.',
   props: {
-    conversationId: Property.ShortText({
-      displayName: "Conversation ID",
-      description: "The ID of the conversation to send the message to.",
-      required: true,
-    }),
+      agentId: AgentIdDropdown,
+    conversationId: ConversationIdDropdown,
     agentMode: Property.StaticDropdown({
       displayName: "Agent Mode",
       description: "Choose how the agent should respond",
