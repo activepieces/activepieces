@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import {
   ChevronDown,
   EllipsisVertical,
-  Loader2,
   Plus,
   Workflow,
 } from 'lucide-react';
@@ -29,6 +28,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarGroupContent,
+  SidebarSkeleton,
 } from '@/components/ui/sidebar-shadcn';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { CreateFolderDialog } from '@/features/folders/component/create-folder-dialog';
@@ -110,21 +110,21 @@ export function FoldersSection() {
 
   if (foldersLoading || flowsLoading) {
     return (
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton disabled className="px-2">
-            <Loader2 className="animate-spin w-4 h-4 mr-1" />
-            {t('Loading...')}
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
+      <SidebarGroup>
+          <SidebarGroupLabel>
+            {t("Flows")}
+          </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarSkeleton numOfItems={6} />
+        </SidebarGroupContent>
+      </SidebarGroup>
     );
   }
 
   return (
     <SidebarGroup className="max-h-[50%] pb-2">
       <SidebarGroupLabel className="flex px-0 justify-between items-center w-full mb-1">
-        {t('Folders')}
+        {t('Flows')}
         <PermissionNeededTooltip
           hasPermission={userHasPermissionToUpdateFolders}
         >
@@ -132,7 +132,7 @@ export function FoldersSection() {
             refetchFolders={refetchFolders}
             updateSearchParams={() => {}}
           >
-            <Button variant="ghost" size="icon" className="w-6 h-6">
+            <Button variant="ghost" size="icon" className="size-9">
               <Plus />
             </Button>
           </CreateFolderDialog>
@@ -189,7 +189,7 @@ function DefaultFolder({
     <Collapsible defaultOpen={shouldBeOpen} className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton className="px-2 mb-1 group/item pr-0">
+          <SidebarMenuButton className="px-2 group/item pr-0">
             <ChevronDown className="w-4 h-4 transition-transform group-data-[state=closed]/collapsible:rotate-[-90deg]" />
             <span>{t('Uncategorized')}</span>
 
@@ -246,7 +246,7 @@ function RegularFolder({
     >
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton className="px-2 pr-0 group/item mb-1 ">
+          <SidebarMenuButton className="px-2 pr-0 group/item">
             <ChevronDown className="w-4 h-4 transition-transform group-data-[state=closed]/collapsible:rotate-[-90deg]" />
             <span className="truncate">{folder.displayName}</span>
             <div className="flex items-center justify-center ml-auto">
@@ -291,7 +291,7 @@ function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
     <SidebarMenuSubItem className="cursor-pointer group/item">
       <SidebarMenuSubButton
         onClick={onClick}
-        className={cn(isActive && 'bg-sidebar-accent', 'px-0')}
+        className={cn(isActive && 'bg-sidebar-accent', 'pr-0 pl-2')}
       >
         <span className="size-5 flex mr-1 items-center justify-center rounded-sm bg-sidebar-accent">
           <Workflow className="w-3 h-3 !text-muted-foreground" />

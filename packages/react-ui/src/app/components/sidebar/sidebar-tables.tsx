@@ -2,7 +2,6 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   EllipsisVertical,
-  Loader2,
   Plus,
   Table as TableIcon,
 } from 'lucide-react';
@@ -13,13 +12,12 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarGroupContent,
+  SidebarSkeleton,
 } from '@/components/ui/sidebar-shadcn';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
 import { tableHooks } from '@/features/tables/lib/table-hooks';
@@ -55,14 +53,14 @@ export function TablesSection() {
 
   if (isTablesLoading) {
     return (
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton disabled className="px-2">
-            <Loader2 className="animate-spin w-4 h-4 mr-1" />
-            {t('Loading...')}
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
+      <SidebarGroup>
+          <SidebarGroupLabel>
+            {t("Tables")}
+          </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarSkeleton numOfItems={6} />
+        </SidebarGroupContent>
+      </SidebarGroup>
     );
   }
 
@@ -75,7 +73,7 @@ export function TablesSection() {
             onClick={() => createTable({ name: t('New Table') })}
             size="icon"
             variant="ghost"
-            className="w-6 h-6"
+            className="size-9"
             disabled={!userHasTableWritePermission || isCreatingTable}
           >
             <Plus className="h-4 w-4" />
