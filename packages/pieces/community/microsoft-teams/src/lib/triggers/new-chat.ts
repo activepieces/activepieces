@@ -7,11 +7,11 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
-import { Chat } from '@microsoft/microsoft-graph-types';
+import { Chat, ChatType } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 
 type Props = {
-	chatType?: 'oneOnOne' | 'group';
+	chatType?: ChatType;
 };
 
 export const newChatTrigger = createTrigger({
@@ -37,21 +37,21 @@ export const newChatTrigger = createTrigger({
 		await pollingHelper.onEnable(polling, {
 			auth: context.auth,
 			store: context.store,
-			propsValue: context.propsValue,
+			propsValue: context.propsValue as Props,
 		});
 	},
 	async onDisable(context) {
 		await pollingHelper.onDisable(polling, {
 			auth: context.auth,
 			store: context.store,
-			propsValue: context.propsValue,
+			propsValue: context.propsValue as Props,
 		});
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return await pollingHelper.test(polling, context as any);
 	},
 	async run(context) {
-		return await pollingHelper.poll(polling, context);
+		return await pollingHelper.poll(polling, context as any);
 	},
 	sampleData: {
 		id: '19:example_chat_id@unq.gbl.spaces',
@@ -109,5 +109,3 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftTeamsAuth>, Props> =
 		});
 	},
 };
-
-
