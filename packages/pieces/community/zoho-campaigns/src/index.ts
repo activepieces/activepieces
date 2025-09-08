@@ -15,14 +15,16 @@
     import { newCampaign } from './lib/triggers/new-campaign';
     import { unsubscribedContact } from './lib/triggers/unsubscribed-contact';
     import { newContact } from './lib/triggers/new-contact';
+    import { PieceCategory } from '@activepieces/shared';
 
     export const zohoCampaigns = createPiece({
       displayName: "Zoho Campaigns",
       description: 'Email marketing and campaign management',
-      auth: zohoCampaignsAuth,
-      minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/zoho-campaigns.png",
+      minimumSupportedRelease: '0.36.1',
+      categories: [PieceCategory.MARKETING],
       authors: [],
+      auth: zohoCampaignsAuth,
       actions: [
         createCampaign,
         cloneCampaign,
@@ -52,4 +54,6 @@
         newContact,
       ],
     });
+    
+    export { zohoCampaignsAuth } from './lib/common/auth';
     

@@ -12,7 +12,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { zohoCampaignsAuth } from '../..';
+import { zohoCampaignsAuth } from '../common/auth';
 
 export const newContact = createTrigger({
   auth: zohoCampaignsAuth,
@@ -102,7 +102,6 @@ const polling: Polling<OAuth2PropertyValue, unknown> = {
         range: '200',
       },
       headers: { Authorization: `Zoho-oauthtoken ${access_token}` },
-      authentication: { type: AuthenticationType.NONE },
     });
 
     const body = resp.body as any;

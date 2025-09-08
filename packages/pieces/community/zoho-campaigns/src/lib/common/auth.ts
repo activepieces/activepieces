@@ -20,8 +20,8 @@ export const zohoCampaignsAuth = PieceAuth.OAuth2({
 	},
 	description: 'Authentication for Zoho Campaigns',
 	scope: [
-		// Adjust scopes as needed; starting broad for Campaigns API usage
 		'ZohoCampaigns.campaign.ALL',
+		'ZohoCampaigns.contact.ALL',
 	],
 	authUrl: 'https://accounts.{location}/oauth/v2/auth',
 	tokenUrl: 'https://accounts.{location}/oauth/v2/token',

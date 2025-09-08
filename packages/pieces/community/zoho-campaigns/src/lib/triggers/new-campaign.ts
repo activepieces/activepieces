@@ -13,7 +13,7 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 
-import { zohoCampaignsAuth } from '../..';
+import { zohoCampaignsAuth } from '../common/auth';
 
 export const newCampaign = createTrigger({
 	auth: zohoCampaignsAuth,
@@ -22,6 +22,11 @@ export const newCampaign = createTrigger({
 	displayName: 'New Campaign',
 	description: 'Fires when a new campaign is created',
 	type: TriggerStrategy.POLLING,
+	sampleData: {
+		campaign_name: 'Sample Campaign',
+		email_subject: 'Welcome!',
+		created_time: '1700000000000',
+	},
 	props: {
 		status: Property.StaticDropdown({
 			displayName: 'Status Filter',
@@ -89,8 +94,9 @@ const polling: Polling<OAuth2PropertyValue, unknown> = {
 			fromindex: '1',
 			range: '5',
 		};
-		if (propsValue?.status) {
-			query['status'] = propsValue.status as string;
+		const status = (propsValue as any)?.status as string | undefined;
+		if (status) {
+			query['status'] = status;
 		}
 
 		const response = await httpClient.sendRequest<{ recent_campaigns?: any[] } | any>({

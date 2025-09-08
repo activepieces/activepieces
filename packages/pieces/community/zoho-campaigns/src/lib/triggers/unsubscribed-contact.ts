@@ -12,7 +12,7 @@ import {
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { zohoCampaignsAuth } from '../..';
+import { zohoCampaignsAuth } from '../common/auth';
 
 type ListItem = {
 	listname?: string;
@@ -26,6 +26,10 @@ export const unsubscribedContact = createTrigger({
 	displayName: 'Unsubscribe',
 	description: 'Fires when a contact is removed from a mailing list or unsubscribed.',
 	type: TriggerStrategy.POLLING,
+	sampleData: {
+		contact_email: 'john.doe@example.com',
+		listkey: '3c20ad524dfa4af86216a5be13e238ed',
+	},
 	props: {
 		listkey: Property.Dropdown({
 			displayName: 'Mailing List',
