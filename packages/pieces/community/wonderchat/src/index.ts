@@ -27,10 +27,8 @@ export const wonderchat = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/wonderchat.png',
   categories: [
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
-    PieceCategory.DEVELOPER_TOOLS,
-    PieceCategory.COMMUNICATION,
   ],
-  authors: ['devroy10'],
+  authors: ['devroy10', 'sanket-a11y'],
   actions: [askQuestion, addPage, addTag, removeTag],
   triggers: [newUserMessage],
 });
