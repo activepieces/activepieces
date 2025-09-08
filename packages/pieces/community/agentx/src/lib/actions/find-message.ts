@@ -2,46 +2,65 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { agentxAuth } from "../common";
 
+
+type Message = {
+    text: string;
+    [key: string]: unknown;
+};
+
+
+type ConversationDetail = {
+    messages: Message[];
+    [key: string]: unknown;
+};
+
 export const findMessage = createAction({
     name: 'find_message',
     auth: agentxAuth,
     displayName: 'Find Message',
-    description: 'Gets the detailed trace information for a specific message by its ID.',
+    description: 'Searches for specific messages within a conversation.',
     props: {
-        messageId: Property.ShortText({
-            displayName: 'Message ID',
-            description: 'The ID of the message to find.',
+        agentId: Property.ShortText({
+            displayName: 'Agent ID',
+            description: 'The ID of the agent who owns the conversation.',
             required: true,
         }),
+        conversationId: Property.ShortText({
+            displayName: 'Conversation ID',
+            description: 'The ID of the conversation to search within.',
+            required: true,
+        }),
+        searchTerm: Property.ShortText({
+            displayName: 'Search Term',
+            description: 'The text to search for in the message content. Leave blank to get all messages.',
+            required: false,
+        })
     },
     async run(context) {
-        const { messageId } = context.propsValue;
+        const { agentId, conversationId, searchTerm } = context.propsValue;
         const apiKey = context.auth;
 
-        // Step 1: Get the Trace ID from the Message ID
-        const traceIdResponse = await httpClient.sendRequest<{ id: string }>({
+        const response = await httpClient.sendRequest<ConversationDetail>({
             method: HttpMethod.GET,
-            url: `https://api.agentx.so/api/v1/access/messages/${messageId}/trace`,
+            url: `https://api.agentx.so/api/v1/access/agents/${agentId}/conversations/${conversationId}`,
             headers: {
                 'x-api-key': apiKey,
             },
         });
 
-        const traceId = traceIdResponse.body.id;
+        
+        const allMessages = response.body.messages || [];
 
-        if (!traceId) {
-            throw new Error(`Could not find a Trace ID for Message ID: ${messageId}`);
+        if (!searchTerm) {
+            return allMessages;
         }
 
-        // Step 2: Use the Trace ID to get the detailed trace information
-        const traceDetailsResponse = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `https://api.agentx.so/api/v1/access/traces/${traceId}`,
-            headers: {
-                'x-api-key': apiKey,
-            },
-        });
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        
+        const filteredMessages = allMessages.filter(message =>
+            message.text && message.text.toLowerCase().includes(lowerCaseSearchTerm)
+        );
 
-        return traceDetailsResponse.body;
+        return filteredMessages;
     },
 });

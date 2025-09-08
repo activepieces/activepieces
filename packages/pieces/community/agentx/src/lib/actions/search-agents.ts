@@ -28,13 +28,12 @@ export const searchAgents = createAction({
 
         const allAgents = response.body;
 
-        // If no search term is provided, return all agents
+       
         if (!searchTerm) {
             return allAgents;
         }
 
-        // The API returns a full list, so we filter the results here.
-        // This allows for partial, case-insensitive matching on name or ID.
+        
         const lowerCaseSearchTerm = searchTerm.toLowerCase();
         const filteredAgents = allAgents.filter(agent =>
             (agent.name && agent.name.toLowerCase().includes(lowerCaseSearchTerm)) ||

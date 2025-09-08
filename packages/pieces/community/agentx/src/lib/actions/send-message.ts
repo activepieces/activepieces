@@ -36,7 +36,7 @@ export const sendMessage = createAction({
         }),
     },
     async run(context) {
-        // FIX: The 'context' property is renamed to 'memoryContext' to avoid conflict
+        
         const { conversationId, message, agentMode, context: memoryContext } = context.propsValue;
         const apiKey = context.auth;
 
@@ -49,7 +49,7 @@ export const sendMessage = createAction({
             message: message,
         };
 
-        // Only include the context in the body if the user has provided a value
+        
         if (memoryContext !== undefined && memoryContext !== null) {
             requestBody.context = memoryContext;
         }

@@ -1,23 +1,28 @@
 import { Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
-// Helper function to fetch agents, can be used by the dropdown
-const getAgents = async (apiKey: string): Promise<{ id: string; name: string; }[]> => {
-    const response = await httpClient.sendRequest<{ id: string; name: string; }[]>({
+type Agent = {
+    _id: string;
+    name: string;
+};
+
+const getAgents = async (apiKey: string): Promise<Agent[]> => {
+    const timestamp = Date.now();
+    const response = await httpClient.sendRequest<Agent[]>({
         method: HttpMethod.GET,
-        url: `https://api.agentx.so/api/v1/access/agents`,
+        url: `https://api.agentx.so/api/v1/access/agents?timestamp=${timestamp}`,
         headers: {
             'x-api-key': apiKey,
         },
     });
-    return response.body;
+    return response.body || [];
 };
 
 export const agentIdDropdown = Property.Dropdown({
     displayName: 'Agent',
     description: 'The agent to monitor.',
     required: true,
-    refreshers: [],
+    refreshers: ['auth'],
     options: async ({ auth }) => {
         if (!auth) {
             return {
@@ -26,15 +31,31 @@ export const agentIdDropdown = Property.Dropdown({
                 options: [],
             };
         }
-        const agents = await getAgents(auth as string);
-        return {
-            disabled: false,
-            options: agents.map((agent) => {
+        
+        try {
+            const agents = await getAgents(auth as string);
+            
+            if (agents.length === 0) {
                 return {
-                    label: agent.name,
-                    value: agent.id,
+                    disabled: true,
+                    placeholder: 'No agents found in your account.',
+                    options: [],
                 };
-            }),
-        };
+            }
+
+            return {
+                disabled: false,
+                options: agents.map((agent) => ({
+                    label: agent.name,
+                    value: agent._id, 
+                })),
+            };
+        } catch (error) {
+            return {
+                disabled: true,
+                placeholder: `Error fetching agents: ${error}`,
+                options: [],
+            };
+        }
     },
 });
