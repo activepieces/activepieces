@@ -35,7 +35,6 @@ export const createConversationWithSingleAgent = createAction({
       HttpMethod.POST,
       `/agents/${agentId}/conversations/new`,
       {
-        agentId,
         type
       }
     )

@@ -15,7 +15,7 @@ export const agentx = createPiece({
   auth: AgentXAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/agentx.png",
-  authors: [],
+  authors: ['Niket2035'],
   actions: [createConversationWithSingleAgent, sendMessageToExistingConversation, findMessage, searchAgents,findConversation],
   triggers: [newAgent,newConversation],
 });

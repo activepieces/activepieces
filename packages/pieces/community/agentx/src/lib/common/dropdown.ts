@@ -6,8 +6,8 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const AgentIdDropdown = Property.Dropdown<string>({
   displayName: "Agent",
   description: "Select an AgentX agent",
-  required: true,
-  refreshers: [],
+  required: true, // ensures the value is always a string, not undefined
+  refreshers: ["auth"],
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -20,19 +20,11 @@ export const AgentIdDropdown = Property.Dropdown<string>({
     try {
       const agents = await makeRequest(auth as string, HttpMethod.GET, "/agents");
 
-      if (!Array.isArray(agents)) {
-        return {
-          disabled: true,
-          placeholder: "No agents found",
-          options: [],
-        };
-      }
-
       return {
         disabled: false,
         options: agents.map((agent: any) => ({
           label: agent.name || `Agent ${agent.id}`,
-          value: agent.id,
+          value: agent._id, // must be string
         })),
       };
     } catch (error: any) {

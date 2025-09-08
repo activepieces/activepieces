@@ -36,7 +36,7 @@ const polling: Polling<
     const conversations = (await makeRequest(
       auth,
       HttpMethod.GET,
-      `/access/agents/${agentId}/conversations`
+      `/agents/${agentId}/conversations`
     )) as Conversation[];
 
     return conversations.map((conv) => ({
