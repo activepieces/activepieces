@@ -24,10 +24,10 @@ import { StatusCodes } from 'http-status-codes'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
-import { triggerSourceService } from '../trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun, webhookHandler } from '../../webhooks/webhook-handler'
 import { jobQueue } from '../../workers/queue'
 import { JobType } from '../../workers/queue/queue-manager'
+import { triggerSourceService } from '../trigger-source/trigger-source-service'
 import { appEventRoutingService } from './app-event-routing.service'
 
 const appWebhooks: Record<string, Piece> = {

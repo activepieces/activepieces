@@ -1,4 +1,4 @@
-import { DelayedJobData, ExecutionType, isNil, JobData, ProgressUpdateType } from '@activepieces/shared'
+import { DelayedJobData, ExecutionType, JobData, ProgressUpdateType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { JobPreHandler, PreHandlerResult } from './index'
@@ -16,19 +16,13 @@ async function resumeRunIfExists(delayedJob: DelayedJobData, log: FastifyBaseLog
         id: runId,
         projectId: delayedJob.projectId,
     })
-    await flowRunService(log).start({
+    await flowRunService(log).resume({
         payload: null,
-        existingFlowRunId: flowRun.id,
-        executeTrigger: false,
-        synchronousHandlerId: delayedJob.synchronousHandlerId ?? undefined,
-        projectId: delayedJob.projectId,
-        flowVersionId: delayedJob.flowVersionId,
-        executionType: ExecutionType.RESUME,
-        httpRequestId: delayedJob.httpRequestId,
-        environment: delayedJob.environment,
+        flowRunId: flowRun.id,
+        requestId: delayedJob.httpRequestId,
         progressUpdateType: delayedJob.progressUpdateType ?? ProgressUpdateType.NONE,
-        parentRunId: flowRun.parentRunId,
-        failParentOnFailure: flowRun.failParentOnFailure,
+        executionType: ExecutionType.RESUME,
+        checkRequestId: false,
     })
     return {
         shouldSkip: true,
