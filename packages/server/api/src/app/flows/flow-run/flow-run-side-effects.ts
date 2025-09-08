@@ -92,10 +92,10 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
             executionType,
         }, '[FlowRunSideEffects#start]')
         let logsUploadUrl: string | undefined
-        let logsFileId: string | undefined
+        let logsFileId: string | undefined = flowRun.logsFileId ?? undefined
         if (USE_SIGNED_URL) {
             const logsUploadResult = await createLogsUploadUrl({
-                flowRunId: flowRun.id,
+                flowRun,
                 projectId: flowRun.projectId,
             }, log)
             logsUploadUrl = logsUploadResult.uploadUrl
@@ -179,6 +179,10 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
 })
 
 const createLogsUploadUrl = async (params: CreateLogsUploadUrlParams, log: FastifyBaseLogger): Promise<{ uploadUrl: string, fileId: string }> => {
+    if (!isNil(params.flowRun.logsFileId)) {
+        const uploadUrl = await s3Helper(log).putS3SignedUrl(params.flowRun.logsFileId)
+        return { uploadUrl, fileId: params.flowRun.logsFileId }
+    }
     const file = await fileService(log).save({
         projectId: params.projectId,
         data: null,
@@ -186,7 +190,7 @@ const createLogsUploadUrl = async (params: CreateLogsUploadUrlParams, log: Fasti
         type: FileType.FLOW_RUN_LOG,
         compression: FileCompression.NONE,
         metadata: {
-            flowRunId: params.flowRunId,
+            flowRunId: params.flowRun.id,
             projectId: params.projectId,
         },
     })
@@ -198,6 +202,6 @@ const createLogsUploadUrl = async (params: CreateLogsUploadUrlParams, log: Fasti
 
 
 type CreateLogsUploadUrlParams = {
-    flowRunId: string
+    flowRun: FlowRun
     projectId: string
 }
