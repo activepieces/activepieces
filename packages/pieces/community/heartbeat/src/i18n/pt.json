@@ -1,5 +1,4 @@
 {
-  "Heartbeat": "Heartbeat",
   "Monitoring and alerting made easy": "Monitoramento e alerta facilitados",
   "\n  1. Login to your Heartbeat account\n  2. On the bottom-left, click on 'Admin Settings'\n  3. On the left panel, click on 'API Keys'\n  5. Click on 'Create API Key'\n  6. On the popup form, Enter the 'Label' to name the Key\n  7. Copy the API key and paste it below.\n": "\n  1. Entre na sua conta Heartbeat\n  2. No canto inferior esquerdo, clique em 'Configurações Administrativas'\n  3. No painel esquerdo, clique em 'Chaves de API'\n  5. Clique em 'Criar chave de API'\n  6. No formulário pop-up, digite o 'rótulo' para nomear a chave\n  7. Copie a chave da API e cole abaixo.\n",
   "Create User": "Criar Usuário",
