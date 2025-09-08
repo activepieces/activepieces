@@ -10,7 +10,7 @@ export const removeLeadFromUnsubscribeList = createAction({
   props: {
     email: Property.ShortText({
       displayName: 'Lead Email',
-      description: 'The email of the lead to remove from the unsubscribe list',
+      description: 'The email of the lead to remove from the unsubscribe list.',
       required: true,
     }),
   },

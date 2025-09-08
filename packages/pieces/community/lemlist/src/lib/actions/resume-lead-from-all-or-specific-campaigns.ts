@@ -12,7 +12,7 @@ export const resumeLeadFromAllOrSpecificCampaigns = createAction({
     campaignId: campaignsDropdown({ refreshers: ['auth'], required: false }),
     email: Property.ShortText({
       displayName: 'Lead Email',
-      description: 'The email of the lead to resume',
+      description: 'The email of the lead to resume.',
       required: true,
     }),
   },

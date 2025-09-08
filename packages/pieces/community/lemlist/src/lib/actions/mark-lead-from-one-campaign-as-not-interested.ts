@@ -7,12 +7,12 @@ export const markLeadFromOneCampaignAsNotInterested = createAction({
   auth: lemlistAuth,
   name: 'markLeadFromOneCampaignAsNotInterested',
   displayName: 'Mark Lead From One Campaign as Not Interested',
-  description: 'Mark a lead in a campaign as not interested',
+  description: 'Mark a lead in a campaign as not interested.',
   props: {
     campaignId: campaignsDropdown({ refreshers: ['auth'] }),
     email: Property.ShortText({
       displayName: 'Lead Email',
-      description: 'The email of the lead to mark as not interested',
+      description: 'The email of the lead to mark as not interested.',
       required: true,
     }),
   },

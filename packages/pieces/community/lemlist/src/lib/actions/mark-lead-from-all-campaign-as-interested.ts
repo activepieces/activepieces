@@ -11,7 +11,7 @@ export const markLeadFromAllCampaignAsInterested = createAction({
   props: {
     email: Property.ShortText({
       displayName: 'Lead Email',
-      description: 'The email of the lead to mark as interested',
+      description: 'The email of the lead to mark as interested.',
       required: true,
     }),
   },

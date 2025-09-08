@@ -12,7 +12,7 @@ export const unsubscribeALead	 = createAction({
     campaignId: campaignsDropdown({ refreshers: ['auth'] }),
     email: Property.ShortText({
       displayName: 'Lead Email',
-      description: 'The email of the lead to unsubscribe',
+      description: 'The email of the lead to unsubscribe.',
       required: true,
     }),
   },

@@ -8,12 +8,12 @@ export const updateLeadFromCampaign = createAction({
   name: 'updateLeadFromCampaign',
   displayName: 'Update Lead From Campaign',
   description:
-    'Update lead fields (name, icebreaker, screenshot URL, etc.) in a campaign. Supports enrichment flags.',
+    'Updates a lead in a specific campaign.',
   props: {
     campaignId: campaignsDropdown({ refreshers: ['auth'] }),
     email: Property.ShortText({
       displayName: 'Lead Email',
-      description: 'The email of the lead to update',
+      description: 'The email of the lead to update.',
       required: true,
     }),
     firstName: Property.ShortText({
