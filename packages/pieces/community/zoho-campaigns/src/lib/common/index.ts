@@ -70,7 +70,7 @@ export const zohoCampaignsAuth = PieceAuth.OAuth2({
 });
 
 export const zohoCampaignsCommon = {
-  baseUrl: (location: string = 'zoho.com') => {
+  baseUrl: (location = 'zoho.com') => {
     return `https://campaigns.${location}/api/v1.1`;
   },
   endpoints: {
