@@ -18,6 +18,12 @@ export const activityTypeCategory = Property.StaticDropdown({
   },
 });
 
+export const activityTypeId = Property.ShortText({
+    displayName: 'Activity Type ID',
+    description: 'The ID of the Activity Type.',
+    required: false,
+});
+
 export const activityParentId = Property.Number({
   displayName: 'Parent Resource ID',
   description: 'The ID of the resource (Person, Lead, Company, etc.) this Activity belongs to.',
@@ -52,4 +58,23 @@ export const activityNewValue = Property.Json({
   displayName: 'New Value (JSON)',
   description: 'When applicable, the value of a resource\'s property after this Activity took place, as a JSON object.',
   required: false,
+});
+
+export const findActivityFullResultFlag = Property.Checkbox({
+    displayName: 'Full Result (Admin API Key)',
+    description: 'If set to true, search performance improves but duplicate activity logs may be returned. Requires an administrator API key.',
+    required: false,
+    defaultValue: false,
+});
+
+export const findActivityMaximumDate = Property.DateTime({
+    displayName: 'Maximum Activity Date',
+    description: 'The latest activity date to include in the search (will be converted to Unix timestamp).',
+    required: false,
+});
+
+export const findActivityMinimumDate = Property.DateTime({
+    displayName: 'Minimum Activity Date',
+    description: 'The earliest activity date to include in the search (will be converted to Unix timestamp).',
+    required: false,
 });
