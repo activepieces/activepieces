@@ -1,8 +1,8 @@
 {
-  "Agent": "エージェント",
   "Let an AI assistant help you with tasks using tools.": "AIアシスタントがツールを使用してタスクを支援します。",
   "Run Agent": "エージェントを実行",
   "Run the AI assistant to complete your task.": "AIアシスタントを実行してタスクを完了します。",
+  "Agent": "エージェント",
   "Prompt": "Prompt",
   "Select agent created": "エージェントを選択してください",
   "Describe what you want the assistant to do.": "アシスタントに何をさせたいのか説明してください。"
