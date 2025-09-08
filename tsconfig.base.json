@@ -1099,6 +1099,9 @@
       "@activepieces/piece-whatsapp": [
         "packages/pieces/community/whatsapp/src/index.ts"
       ],
+      "@activepieces/piece-wonderchat": [
+        "packages/pieces/community/wonderchat/src/index.ts"
+      ],
       "@activepieces/piece-woocommerce": [
         "packages/pieces/community/woocommerce/src/index.ts"
       ],
