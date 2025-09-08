@@ -21,7 +21,7 @@ export const generateVideoFromImage = createAction({
         ...propsValue,
         promptImage,
         model: 'gen3a_turbo',
-        ratio: propsValue.ratio as unknown as '1280:768' | '768:1280',
+        ratio: propsValue.ratio['ratio'] as '1280:768' | '768:1280',
         duration:
           propsValue.duration === 5 || propsValue.duration === 10
             ? propsValue.duration
@@ -39,15 +39,13 @@ export const generateVideoFromImage = createAction({
         apiKey,
         ...propsValue,
         promptImage,
-        ratio: propsValue.ratio as unknown as
+        ratio: propsValue.ratio['ratio'] as
           | '1280:720'
           | '720:1280'
           | '1104:832'
           | '832:1104'
           | '960:960'
-          | '1584:672'
-          | '1280:768'
-          | '768:1280',
+          | '1584:672',
         model: 'gen4_turbo',
         duration:
           propsValue.duration === 5 || propsValue.duration === 10

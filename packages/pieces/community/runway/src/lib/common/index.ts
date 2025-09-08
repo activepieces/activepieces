@@ -39,6 +39,7 @@ export const runwayCommon = {
     ...imageParams
   }: GenerateImageFromTextParams) => {
     const client = runwayCommon.getRunwayClient(apiKey);
+    console.info("Generating image with params:", imageParams);
     return await client.textToImage.create(imageParams);
   },
   generateVideoFromImage: async ({

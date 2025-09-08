@@ -37,10 +37,8 @@ export const generateImageFromText = createAction({
         | '960:720'
         | '720:960'
         | '1680:720',
-      ...(referenceImages && {
-        referenceImages:
-          referenceImages as Array<TextToImageCreateParams.ReferenceImage>,
-      }),
+      referenceImages:
+        referenceImages as Array<TextToImageCreateParams.ReferenceImage>,
       ...rest,
     });
   },

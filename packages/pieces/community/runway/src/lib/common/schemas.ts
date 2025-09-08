@@ -29,7 +29,15 @@ export const generateImageFromText = {
     '720:960',
     '1680:720',
   ]),
-  referenceImages: z.array(z.string().url()).max(3).optional(),
+  referenceImages: z
+    .array(
+      z.object({
+        uri: z.string().url(),
+        tag: z.string().optional(),
+      })
+    )
+    .min(1)
+    .max(3),
   publicFigureThreshold: publicFigureThreshold.optional(),
   seed: seed.optional(),
 };
@@ -39,7 +47,7 @@ export const generateVideoFromImageGen3aTurbo = {
   promptImage: z.object({
     images: z.string().url(),
   }),
-  ratio: z.enum(['1280:768', '768:1280']),
+  ratio: z.object({ ratio: z.enum(['1280:768', '768:1280']) }),
   publicFigureThreshold: publicFigureThreshold.optional(),
   duration: z.literal(5).or(z.literal(10)).optional(),
   promptText: promptText.optional(),
@@ -58,16 +66,16 @@ export const generateVideoFromImageGen4Turbo = {
       )
       .max(2),
   }),
-  ratio: z.enum([
-    '1280:720',
-    '720:1280',
-    '1104:832',
-    '832:1104',
-    '960:960',
-    '1584:672',
-    '1280:768',
-    '768:1280',
-  ]),
+  ratio: z.object({
+    ratio: z.enum([
+      '1280:720',
+      '720:1280',
+      '1104:832',
+      '832:1104',
+      '960:960',
+      '1584:672',
+    ]),
+  }),
   publicFigureThreshold: publicFigureThreshold.optional(),
   duration: z.literal(5).or(z.literal(10)).optional(),
   promptText: promptText.optional(),
@@ -75,9 +83,9 @@ export const generateVideoFromImageGen4Turbo = {
 };
 
 export const getTaskDetails = {
-    taskId: z.string().min(1),
+  taskId: z.string().min(1),
 };
 
 export const cancelOrDeleteATask = {
-    taskId: z.string().min(1),
+  taskId: z.string().min(1),
 };

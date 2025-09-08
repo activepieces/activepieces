@@ -80,9 +80,9 @@ export const generateImageFromText = {
     displayName: 'Reference Images',
     description:
       'An array of up to three images to be used as references for the generated image output.',
-    required: false,
+    required: true,
     properties: {
-      url: Property.ShortText({
+      uri: Property.ShortText({
         displayName: 'Image URL',
         description:
           'A HTTPS URL or data URI containing an encoded image to be used as reference for the generated output image.',
@@ -137,7 +137,7 @@ export const generateVideoFromImage = {
                 displayName: 'Position',
                 description:
                   'The position of the image in the output video. "first" will use the image as the first frame of the video, "last" will use the image as the last frame of the video. "last" is currently supported for gen3a_turbo only.',
-                required: false,
+                required: true,
                 options: {
                   options: [
                     { label: 'First', value: 'first' },
@@ -180,8 +180,6 @@ export const generateVideoFromImage = {
                 { label: '832:1104', value: '832:1104' },
                 { label: '960:960', value: '960:960' },
                 { label: '1584:672', value: '1584:672' },
-                { label: '1280:768', value: '1280:768' },
-                { label: '768:1280', value: '768:1280' },
               ],
             },
           }),
@@ -194,8 +192,8 @@ export const generateVideoFromImage = {
             required: true,
             options: {
               options: [
-                { label: '1280:720', value: '1280:720' },
-                { label: '720:1280', value: '720:1280' },
+                { label: '1280:768', value: '1280:768' },
+                { label: '768:1280', value: '768:1280' },
               ],
             },
           }),
