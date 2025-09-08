@@ -9,6 +9,9 @@ import { jobQueue } from '../../../workers/queue'
 import { JobType } from '../../../workers/queue/queue-manager'
 import { stripeHelper } from '../platform-plan/stripe-helper'
 import { adminPlatformService } from './admin-platform.service'
+import { fileRepo } from '../../../file/file.service'
+import { s3Helper } from '../../../file/s3-helper'
+import { FastifyBaseLogger } from 'fastify'
 
 export const adminPlatformModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(adminPlatformController, { prefix: '/v1/admin/platforms' })
@@ -33,7 +36,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         const results = await Promise.all(
             gifts.map(gift => stripeHelper(req.log).giftTrialForCustomer({ email: gift.email, trialPeriod: gift.trialPeriod, plan: gift.trialPlan as StripePlanName })),
         )
-        
+
         const errors = results.filter(result => !isNil(result))
         if (errors.length === 0) {
             return res.status(StatusCodes.OK).send({ message: 'All gifts processed successfully' })
@@ -44,7 +47,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 
     app.post('/runs/:runId/refill-delayed', RefillDelayedRunRequest, async (req, res) => {
         const { runId } = req.params
-        
+
         const flowRun = await flowRunRepo().findOneBy({ id: runId })
         if (!flowRun) {
             return res.status(StatusCodes.NOT_FOUND).send({ message: 'Flow run not found' })
@@ -60,6 +63,12 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 
         const delayInMilliSeconds = dayjs(flowRun.pauseMetadata.resumeDateTime).diff(dayjs())
         const delay = delayInMilliSeconds < 0 ? 0 : delayInMilliSeconds
+
+        const oldestLogFileId = await getOldestLogFile(flowRun.id, flowRun.projectId, req.log)
+
+        if (oldestLogFileId) {
+            await flowRunRepo().update(flowRun.id, { logsFileId: oldestLogFileId })
+        }
 
         await jobQueue(req.log).add({
             id: 'delayed_' + flowRun.id,
@@ -80,9 +89,33 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
             delay,
         })
 
-        return res.status(StatusCodes.OK).send({ message: 'Delayed run added to queue successfully' })
+        return res.status(StatusCodes.OK).send({
+            message: 'Delayed run added to queue successfully',
+            logsFileId: oldestLogFileId,
+        })
     })
 }
+
+async function getOldestLogFile(flowRunId: string, projectId: string, log: FastifyBaseLogger): Promise<string | null> {
+    const files = await fileRepo().find({
+        where: {
+            projectId,
+            metadata: {
+                flowRunId,
+            },
+        },
+        order: {
+            created: 'DESC',
+        },
+    })
+    for (const file of files) {
+        if (file.s3Key && await s3Helper(log).exists(file.s3Key)) {
+            return file.id
+        }
+    }
+    return null
+}
+
 
 const AdminRetryRunsRequest = {
     schema: {
