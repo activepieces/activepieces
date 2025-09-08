@@ -1,17 +1,15 @@
 import { apAxios, GetRunForWorkerRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
-import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { stepRunProgressHandler } from '../flows/flow-run/step-run-progress.handler'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { system } from '../helper/system/system'
 import { triggerRunService } from '../trigger/trigger-run/trigger-run.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from './engine-response-watcher'
@@ -50,22 +48,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-
-    app.post('/notify-frontend', NotifyFrontendParams, async (request) => {
-        const { type, data } = request.body
-        if (data.testSingleStepMode) {
-            const response = await stepRunProgressHandler(request.log).extractStepResponse({
-                runId: data.runId,
-            })
-            if (!isNil(response)) {
-                app.io.to(request.principal.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
-            }
-        }
-        app.io.to(request.principal.projectId).emit(type, data)
-    })
-
     app.post('/update-run', UpdateRunProgress, async (request, reply) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId, executionStateContentLength, executionStateBuffer, failedStepName: failedStepName, logsFileId } = request.body
+        const { runId, workerHandlerId, runDetails, httpRequestId, executionStateContentLength, executionStateBuffer, failedStepName: failedStepName, logsFileId, testSingleStepMode } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
@@ -118,8 +102,18 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 log: request.log,
             })
         }
-        app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, { runId })
+        app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, {
+            runId,
+        })
 
+        if (testSingleStepMode) {
+            const response = await stepRunProgressHandler(request.log).extractStepResponse({
+                runId,
+            })
+            if (!isNil(response)) {
+                app.io.to(request.principal.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
+            }
+        }
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
 
@@ -156,22 +150,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
     })
 
-    app.get('/check-task-limit', CheckTaskLimitParams, async (request) => {
-        const edition = system.getEdition()
-        if (edition === ApEdition.COMMUNITY) {
-            return {}
-        }
-        const exceededLimit = await projectLimitsService(request.log).checkTasksExceededLimit(request.principal.projectId)
-        if (exceededLimit) {
-            throw new ActivepiecesError({
-                code: ErrorCode.QUOTA_EXCEEDED,
-                params: {
-                    metric: PlatformUsageMetric.TASKS,
-                },
-            })
-        }
-        return {}
-    })
 
     app.get('/flows', GetLockedVersionRequest, async (request) => {
         const populatedFlow = await getFlow(request.principal.projectId, request.query, request.log)
@@ -294,12 +272,7 @@ const GetAllFlowsByProjectParams = {
         querystring: Type.Omit(ListFlowsRequest, ['projectId']),
     },
 }
-const CheckTaskLimitParams = {
-    config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
-    },
-    schema: {},
-}
+
 const GetFileRequestParams = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE],
@@ -311,14 +284,6 @@ const GetFileRequestParams = {
     },
 }
 
-const NotifyFrontendParams = {
-    config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
-    },
-    schema: {
-        body: NotifyFrontendRequest,
-    },
-}
 
 const UpdateRunProgress = {
     config: {

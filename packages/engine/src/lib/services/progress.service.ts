@@ -117,6 +117,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             progressUpdateType: engineConstants.progressUpdateType,
             failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
             logsFileId: engineConstants.logsFileId,
+            testSingleStepMode: engineConstants.testSingleStepMode,
         }
         const requestHash = crypto.createHash('sha256').update(JSON.stringify(request)).digest('hex')
         if (requestHash === lastRequestHash) {
@@ -156,16 +157,6 @@ const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): 
     })
 }
 
-const notifyFrontend = async (engineConstants: EngineConstants, request: NotifyFrontendRequest): Promise<void> => {
-    await fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/notify-frontend`).toString(), {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${engineConstants.engineToken}`,
-        },
-        body: JSON.stringify(request),
-    })
-}
 
 type UpdateStepProgressParams = {
     engineConstants: EngineConstants
