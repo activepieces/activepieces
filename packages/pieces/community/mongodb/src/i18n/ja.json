@@ -1,5 +1,4 @@
 {
-  "MongoDB": "MongoDB",
   "Host": "ホスト",
   "Use MongoDB Atlas URL Format": "MongoDBアトラスのURL形式を使用する",
   "Database": "データベース",

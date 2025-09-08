@@ -1,5 +1,4 @@
 {
-  "MCP": "MCP",
   "Connect to your hosted MCP Server using any MCP client to communicate with tools": "Maak verbinding met uw gehoste MCP-Server met behulp van een MCP-client om te communiceren met tools",
   "Reply to MCP Client": "Antwoord op MCP-client",
   "Return a response to the MCP client that called the tool.": "Geeft een antwoord aan de MCP-client die de tool noemde.",

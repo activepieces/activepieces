@@ -1,5 +1,4 @@
 {
-  "Hugging Face": "Visage d'embrassage",
   "Run inference on 100,000+ open ML models for NLP, vision, and audio tasks": "Exécuter l'inférence sur plus de 100 000 modèles ML ouverts pour les tâches NLP, vision et audio",
   "Your Hugging Face API token (get it from https://huggingface.co/settings/tokens)": "Votre jeton d'API Face (récupérez-le depuis https://huggingface.co/settings/tokens)",
   "Document Question Answering": "Répondre aux questions du document",

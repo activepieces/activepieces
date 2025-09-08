@@ -1,5 +1,4 @@
 {
-  "Devin AI": "Devin AI",
   "AI-powered engineering assistant for automating development tasks, code generation, and technical conversations.": "Assistant d'ingénierie propulsé par l'IA pour automatiser les tâches de développement, la génération de code et les conversations techniques.",
   "Your Devin API key (used in the Authorization header).": "Votre clé API Devin (utilisée dans l'en-tête Authorization header).",
   "Create Session": "Créer une session",

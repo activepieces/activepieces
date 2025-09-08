@@ -1,5 +1,4 @@
 {
-  "HTTP (OAuth2)": "HTTP (OAuth2)",
   "Authorize URL": "URL を承認",
   "Token URL": "トークンURL",
   "Scopes (whitespace separated)": "スコープ (空白文字で区切る)",
