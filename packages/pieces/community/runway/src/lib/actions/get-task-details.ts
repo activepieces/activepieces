@@ -4,12 +4,12 @@ import { runwayAuth, runwayRequest } from '../common';
 
 type TaskResponse = {
 	id: string;
-	status: string;
-	created_at: string;
-	updated_at?: string;
-	outputs?: Array<{ url: string; type?: string }>;
-	failure_code?: string;
-	failure_message?: string;
+	status: 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'PENDING' | 'CANCELLED' | 'THROTTLED';
+	createdAt: string;
+	failure?: string;
+	failureCode?: string;
+	output?: string[];
+	progress?: number;
 };
 
 export const getTaskDetails = createAction({
@@ -27,20 +27,19 @@ export const getTaskDetails = createAction({
 			apiKey,
 			method: HttpMethod.GET,
 			resource: `/v1/tasks/${encodeURIComponent(propsValue.taskId as string)}`,
-			versionHeader: '2024-06-01',
 		});
-		let outputs = task.outputs || [];
+		const outputs = task.output || [];
 		let artifacts: Array<any> = [];
 		if (propsValue.downloadOutput && outputs.length > 0) {
-			for (const [index, o] of outputs.entries()) {
+			for (const [index, url] of outputs.entries()) {
 				const res = await httpClient.sendRequest<ArrayBuffer>({
 					method: HttpMethod.GET,
-					url: o.url,
+					url,
 					responseType: 'arraybuffer',
 					authentication: { type: AuthenticationType.BEARER_TOKEN, token: apiKey },
 					timeout: 120000,
 				});
-				const extension = (o.type && o.type.includes('video')) ? 'mp4' : (o.type && o.type.includes('png') ? 'png' : 'jpg');
+				const extension = 'mp4';
 				const file = await files.write({
 					fileName: `runway-output-${index + 1}.${extension}`,
 					data: Buffer.from(res.body as any),
@@ -51,12 +50,12 @@ export const getTaskDetails = createAction({
 		return {
 			id: task.id,
 			status: task.status,
-			createdAt: task.created_at,
-			updatedAt: task.updated_at,
+			createdAt: task.createdAt,
 			outputs,
 			artifacts,
-			failureCode: task.failure_code,
-			failureMessage: task.failure_message,
+			failureCode: task.failureCode,
+			failureMessage: task.failure,
+			progress: task.progress,
 		};
 	},
 });

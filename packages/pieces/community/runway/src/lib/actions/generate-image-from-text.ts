@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { runwayAuth, runwayRequest, runwayModelProperty } from '../common';
+import { runwayAuth, runwayRequest } from '../common';
 
 type TextToImageResponse = {
 	id: string;
@@ -15,36 +15,73 @@ export const generateImageFromText = createAction({
 	displayName: 'Generate Image From Text',
 	description: 'Create a text-to-image generation task',
 	props: {
-		model: runwayModelProperty,
+		model: Property.StaticDropdown({
+			displayName: 'Model',
+			required: true,
+			options: {
+				options: [
+					{ label: 'gen4_image', value: 'gen4_image' },
+					{ label: 'gen4_image_turbo', value: 'gen4_image_turbo' },
+				],
+			},
+		}),
 		promptText: Property.LongText({ displayName: 'Prompt', required: true }),
 		ratio: Property.StaticDropdown({
 			displayName: 'Ratio',
-			required: false,
+			required: true,
 			options: {
 				options: [
-					{ label: '1:1', value: '1:1' },
-					{ label: '16:9', value: '16:9' },
-					{ label: '9:16', value: '9:16' },
-					{ label: '4:3', value: '4:3' },
+					{ label: '1920:1080', value: '1920:1080' },
+					{ label: '1080:1920', value: '1080:1920' },
+					{ label: '1024:1024', value: '1024:1024' },
+					{ label: '1360:768', value: '1360:768' },
+					{ label: '1080:1080', value: '1080:1080' },
+					{ label: '1168:880', value: '1168:880' },
+					{ label: '1440:1080', value: '1440:1080' },
+					{ label: '1080:1440', value: '1080:1440' },
+					{ label: '1808:768', value: '1808:768' },
+					{ label: '2112:912', value: '2112:912' },
+					{ label: '1280:720', value: '1280:720' },
+					{ label: '720:1280', value: '720:1280' },
+					{ label: '720:720', value: '720:720' },
+					{ label: '960:720', value: '960:720' },
+					{ label: '720:960', value: '720:960' },
+					{ label: '1680:720', value: '1680:720' },
 				],
 			},
 		}),
 		seed: Property.Number({ displayName: 'Seed', required: false }),
-		references: Property.Array({
-			displayName: 'Reference Image URLs',
+		referenceImages: Property.Array({
+			displayName: 'Reference Images',
 			required: false,
-			properties: { url: Property.ShortText({ displayName: 'URL', required: true }) },
+			properties: {
+				uri: Property.ShortText({ displayName: 'Image URI', required: true }),
+				tag: Property.ShortText({ displayName: 'Tag', required: false }),
+			},
+		}),
+		contentModerationPublicFigureThreshold: Property.StaticDropdown({
+			displayName: 'Content Moderation: Public Figure Threshold',
+			required: false,
+			options: {
+				options: [
+					{ label: 'auto', value: 'auto' },
+					{ label: 'low', value: 'low' },
+				],
+			},
 		}),
 	},
 	async run({ auth, propsValue }) {
 		const apiKey = auth as string;
 		const body: Record<string, unknown> = {
 			model: propsValue.model,
-			prompt: propsValue.promptText,
-			...('ratio' in propsValue && propsValue.ratio ? { ratio: propsValue.ratio } : {}),
+			promptText: propsValue.promptText,
+			ratio: propsValue.ratio,
 			...('seed' in propsValue && propsValue.seed ? { seed: Number(propsValue.seed) } : {}),
-			...('references' in propsValue && propsValue.references
-				? { references: (propsValue.references as Array<{ url: string }>).map((r) => r.url) }
+			...('referenceImages' in propsValue && propsValue.referenceImages
+				? { referenceImages: propsValue.referenceImages }
+				: {}),
+			...('contentModerationPublicFigureThreshold' in propsValue && propsValue.contentModerationPublicFigureThreshold
+				? { contentModeration: { publicFigureThreshold: propsValue.contentModerationPublicFigureThreshold } }
 				: {}),
 		};
 		const data = await runwayRequest<TextToImageResponse>({
@@ -52,7 +89,6 @@ export const generateImageFromText = createAction({
 			method: HttpMethod.POST,
 			resource: '/v1/text_to_image',
 			body,
-			versionHeader: '2024-06-01',
 		});
 		return { taskId: data.id, status: data.status, createdAt: data.created_at, metadata: data.metadata };
 	},

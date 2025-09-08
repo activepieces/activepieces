@@ -2,8 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { runwayAuth, runwayRequest, runwayTaskIdProperty } from '../common';
 
-type TaskStatusResponse = { id: string; status: string };
-
 export const cancelOrDeleteTask = createAction({
 	auth: runwayAuth,
 	name: 'cancel_or_delete_task',
@@ -15,28 +13,20 @@ export const cancelOrDeleteTask = createAction({
 	async run({ auth, propsValue }) {
 		const apiKey = auth as string;
 		const taskId = propsValue.taskId as string;
-		const status = await runwayRequest<TaskStatusResponse>({
-			apiKey,
-			method: HttpMethod.GET,
-			resource: `/v1/tasks/${encodeURIComponent(taskId)}`,
-			versionHeader: '2024-06-01',
-		});
-		if (['pending', 'running', 'throttled'].includes(status.status)) {
-			const r = await runwayRequest<TaskStatusResponse>({
+		try {
+			await runwayRequest<void>({
 				apiKey,
-				method: HttpMethod.POST,
-				resource: `/v1/tasks/${encodeURIComponent(taskId)}/cancel`,
-				versionHeader: '2024-06-01',
+				method: HttpMethod.DELETE,
+				resource: `/v1/tasks/${encodeURIComponent(taskId)}`,
 			});
-			return { id: r.id, status: r.status };
+			return { id: taskId, success: true };
+		} catch (e: any) {
+			const status = e?.response?.status as number | undefined;
+			if (status === 404) {
+				return { id: taskId, success: true };
+			}
+			throw e;
 		}
-		const r = await runwayRequest<TaskStatusResponse>({
-			apiKey,
-			method: HttpMethod.DELETE,
-			resource: `/v1/tasks/${encodeURIComponent(taskId)}`,
-			versionHeader: '2024-06-01',
-		});
-		return { id: r.id, status: r.status };
 	},
 });
 

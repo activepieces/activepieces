@@ -2,6 +2,7 @@ import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common
 
 const BASE_URL = 'https://api.dev.runwayml.com';
 const DEFAULT_TIMEOUT = 120000;
+const RUNWAY_API_VERSION = '2024-11-06';
 
 export async function runwayRequest<T = any>({
 	apiKey,
@@ -26,9 +27,7 @@ export async function runwayRequest<T = any>({
 		Authorization: `Bearer ${apiKey}`,
 		'Content-Type': 'application/json',
 	};
-	if (versionHeader) {
-		headers['X-Runway-Version'] = versionHeader;
-	}
+	headers['X-Runway-Version'] = versionHeader || RUNWAY_API_VERSION;
 	const request: HttpRequest = {
 		method,
 		url: `${BASE_URL}${resource}`,
