@@ -1,6 +1,6 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { agentxAuth } from "../common";
+import { AgentXAuth } from "../common";
 
 
 type Message = {
@@ -16,7 +16,7 @@ type ConversationDetail = {
 
 export const findMessage = createAction({
     name: 'find_message',
-    auth: agentxAuth,
+    auth: AgentXAuth,
     displayName: 'Find Message',
     description: 'Searches for specific messages within a conversation.',
     props: {

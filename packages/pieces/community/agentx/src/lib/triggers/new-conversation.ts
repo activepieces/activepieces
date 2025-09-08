@@ -11,7 +11,7 @@ import {
     httpClient,
 } from "@activepieces/pieces-common";
 import dayjs from "dayjs"; 
-import { agentxAuth } from "../common";
+import { AgentXAuth } from "../common";
 import { agentIdDropdown } from "../common/props";
 
 
@@ -55,7 +55,7 @@ const polling: Polling<
 
 export const newConversationTrigger = createTrigger({
     name: 'new_conversation',
-    auth: agentxAuth,
+    auth: AgentXAuth,
     displayName: 'New Conversation',
     description: 'Triggers when a new conversation begins with a specific agent.',
     type: TriggerStrategy.POLLING,

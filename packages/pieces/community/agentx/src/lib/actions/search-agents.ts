@@ -1,10 +1,10 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { agentxAuth } from "../common";
+import { AgentXAuth } from "../common";
 
 export const searchAgents = createAction({
     name: 'search_agents',
-    auth: agentxAuth,
+    auth: AgentXAuth,
     displayName: 'Search Agents',
     description: 'Finds an agent by its ID or name.',
     props: {

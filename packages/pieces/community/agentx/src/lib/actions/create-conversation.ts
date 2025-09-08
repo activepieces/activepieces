@@ -1,18 +1,15 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { agentxAuth } from "../common";
+import { AgentXAuth } from "../common";
+import { agentIdDropdown } from "../common/props";
 
 export const createConversation = createAction({
     name: 'create_conversation',
-    auth: agentxAuth,
+    auth: AgentXAuth,
     displayName: 'Create Conversation With Single Agent',
     description: 'Starts a new conversation session with an AgentX agent, with no existing context.',
     props: {
-        agentId: Property.ShortText({
-            displayName: 'Agent ID',
-            description: 'The ID of the agent to start a conversation with.',
-            required: true,
-        }),
+        agentId: agentIdDropdown,
         conversationType: Property.StaticDropdown({
             displayName: 'Conversation Type',
             description: 'The type of conversation to initiate.',

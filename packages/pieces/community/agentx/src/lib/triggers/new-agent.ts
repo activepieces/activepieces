@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { agentxAuth } from "../common";
+import { AgentXAuth } from "../common";
 
 
 type Agent = {
@@ -10,7 +10,7 @@ type Agent = {
 
 export const newAgentTrigger = createTrigger({
     name: 'new_agent',
-    auth: agentxAuth,
+    auth: AgentXAuth,
     displayName: 'New Agent',
     description: 'Triggers when a new AgentX agent is created.',
     type: TriggerStrategy.POLLING,

@@ -1,10 +1,10 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { agentxAuth } from "../common";
+import { AgentXAuth } from "../common";
 
 export const sendMessage = createAction({
     name: 'send_message_to_conversation',
-    auth: agentxAuth,
+    auth: AgentXAuth,
     displayName: 'Send Message to Existing Conversation',
     description: 'Posts a message in an already active conversation.',
     props: {

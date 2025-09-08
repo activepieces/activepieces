@@ -1,10 +1,10 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { agentxAuth } from "../common";
+import { AgentXAuth } from "../common";
 
 export const findConversation = createAction({
     name: 'find_conversation',
-    auth: agentxAuth,
+    auth: AgentXAuth,
     displayName: 'Find Conversation',
     description: 'Looks up existing conversations by Agent ID.',
     props: {
