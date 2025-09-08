@@ -16,11 +16,11 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Static, Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
+import { communityTemplates } from '../../flows/templates/community-flow-template.module'
 import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { flowTemplateService } from './flow-template.service'
-import { communityTemplates } from '../../flows/templates/community-flow-template.module'
 
 const edition = system.getEdition()
 export const platformFlowTemplateModule: FastifyPluginAsyncTypebox = async (app) => {

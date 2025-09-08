@@ -26,12 +26,12 @@ import {
     EngineHelperResponse,
     EngineHelperTriggerResult,
 } from 'server-worker'
-import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { jobQueue } from '../../workers/queue'
 import { JobType } from '../../workers/queue/queue-manager'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
+import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 
 const environment = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
