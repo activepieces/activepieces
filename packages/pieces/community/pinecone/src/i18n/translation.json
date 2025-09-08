@@ -1,5 +1,4 @@
 {
-  "Pinecone": "Pinecone",
   "Manage vector databases, store embeddings, and perform similarity searches": "Manage vector databases, store embeddings, and perform similarity searches",
   "API Key": "API Key",
   "Enter your Pinecone API key. You can create a new API key in the Pinecone console for your target project.": "Enter your Pinecone API key. You can create a new API key in the Pinecone console for your target project.",
