@@ -1,7 +1,12 @@
 import { StripePlanName } from '@activepieces/ee-shared'
-import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, GiftTrialByEmailRequestBody, isNil, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { AdminRetryRunsRequestBody, ApId, ApplyLicenseKeyByEmailRequestBody, FlowRunStatus, GiftTrialByEmailRequestBody, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PauseType, PrincipalType, ProgressUpdateType, WorkerJobType } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import dayjs from 'dayjs'
+import { flowRunRepo } from '../../../flows/flow-run/flow-run-service'
+import { projectService } from '../../../project/project-service'
+import { jobQueue } from '../../../workers/queue'
+import { JobType } from '../../../workers/queue/queue-manager'
 import { stripeHelper } from '../platform-plan/stripe-helper'
 import { adminPlatformService } from './admin-platform.service'
 
@@ -36,6 +41,47 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 
         return res.status(StatusCodes.PARTIAL_CONTENT).send({ errors })
     })
+
+    app.post('/runs/:runId/refill-delayed', RefillDelayedRunRequest, async (req, res) => {
+        const { runId } = req.params
+        
+        const flowRun = await flowRunRepo().findOneBy({ id: runId })
+        if (!flowRun) {
+            return res.status(StatusCodes.NOT_FOUND).send({ message: 'Flow run not found' })
+        }
+
+        if (flowRun.status !== FlowRunStatus.PAUSED) {
+            return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Flow run is not paused' })
+        }
+
+        if (flowRun.pauseMetadata?.type !== PauseType.DELAY) {
+            return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Flow run is not a delayed run' })
+        }
+
+        const delayInMilliSeconds = dayjs(flowRun.pauseMetadata.resumeDateTime).diff(dayjs())
+        const delay = delayInMilliSeconds < 0 ? 0 : delayInMilliSeconds
+
+        await jobQueue(req.log).add({
+            id: 'delayed_' + flowRun.id,
+            type: JobType.ONE_TIME,
+            data: {
+                projectId: flowRun.projectId,
+                platformId: await projectService.getPlatformId(flowRun.projectId),
+                environment: flowRun.environment,
+                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                flowVersionId: flowRun.flowVersionId,
+                flowId: flowRun.flowId,
+                runId: flowRun.id,
+                httpRequestId: flowRun.pauseMetadata?.requestIdToReply ?? undefined,
+                synchronousHandlerId: flowRun.pauseMetadata.handlerId ?? null,
+                progressUpdateType: flowRun.pauseMetadata.progressUpdateType ?? ProgressUpdateType.NONE,
+                jobType: WorkerJobType.DELAYED_FLOW,
+            },
+            delay,
+        })
+
+        return res.status(StatusCodes.OK).send({ message: 'Delayed run added to queue successfully' })
+    })
 }
 
 const AdminRetryRunsRequest = {
@@ -59,6 +105,17 @@ const ApplyLicenseKeyByEmailRequest = {
 const GiftTrialByEmailRequest = {
     schema: {
         body: GiftTrialByEmailRequestBody,
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.SUPER_USER],
+    },
+}
+
+const RefillDelayedRunRequest = {
+    schema: {
+        params: Type.Object({
+            runId: Type.String(),
+        }),
     },
     config: {
         allowedPrincipals: [PrincipalType.SUPER_USER],
