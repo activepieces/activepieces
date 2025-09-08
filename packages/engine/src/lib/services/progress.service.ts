@@ -112,7 +112,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             workerHandlerId: engineConstants.serverHandlerId ?? null,
             httpRequestId: engineConstants.httpRequestId ?? null,
             runDetails: runDetailsWithoutSteps,
-            executionStateBuffer: (!isNil(engineConstants.logsUploadUrl) || USE_SIGNED_URL) ? undefined : executionState.toString(),
+            executionStateBuffer: !isNil(engineConstants.logsUploadUrl) ? undefined : executionState.toString(),
             executionStateContentLength: executionState.byteLength,
             progressUpdateType: engineConstants.progressUpdateType,
             failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
