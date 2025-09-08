@@ -34,14 +34,11 @@ export const searchAgents = createAction({
       let matches = true;
 
       if (id) {
-        matches = matches && agent.id === id;
+        matches = matches && agent._id === id;
       }
 
-      if (name) {
-        matches =
-          matches &&
-          agent.name &&
-          agent.name.toLowerCase().includes(name.toLowerCase());
+      if (name && agent.name) {
+        matches = matches && agent.name.toLowerCase().includes(name.toLowerCase());
       }
 
       return matches;

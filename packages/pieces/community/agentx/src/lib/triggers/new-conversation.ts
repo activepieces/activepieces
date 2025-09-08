@@ -16,9 +16,9 @@ import { AgentIdDropdown } from "../common/dropdown";
 
 
 type Conversation = {
-  id: string;
+  _id: string;
   type?: string;
-  created_at: string;
+  createdAt: string;
 };
 
 const polling: Polling<
@@ -30,19 +30,28 @@ const polling: Polling<
     const { agentId } = propsValue;
 
     if (!agentId) {
-      return []; // no agent selected, nothing to poll
+      return []; 
     }
 
-    const conversations = (await makeRequest(
-      auth,
-      HttpMethod.GET,
-      `/agents/${agentId}/conversations`
-    )) as Conversation[];
+    try {
+      const conversations = (await makeRequest(
+        auth,
+        HttpMethod.GET,
+        `/agents/${agentId}/conversations`
+      )) as Conversation[];
 
-    return conversations.map((conv) => ({
-      epochMilliSeconds: dayjs(conv.created_at).valueOf(),
-      data: conv,
-    }));
+      const sortedConversations = conversations.sort((a, b) => 
+        dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()
+      );
+
+      return sortedConversations.map((conv) => ({
+        epochMilliSeconds: dayjs(conv.createdAt).valueOf(),
+        data: conv,
+      }));
+    } catch (error) {
+      console.error(`Error fetching conversations for agent ${agentId}:`, error);
+      throw error;
+    }
   },
 };
 
@@ -50,7 +59,7 @@ export const newConversation = createTrigger({
   auth: AgentXAuth,
   name: "new_conversation",
   displayName: "New Conversation",
-  description: "Triggers when a new conversation begins with a specific Agent.",
+  description: "Triggers when a new conversation begins with a specific Agent. Only detects conversations created after the trigger is enabled.",
   type: TriggerStrategy.POLLING,
 
   props: {

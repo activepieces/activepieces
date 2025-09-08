@@ -8,7 +8,7 @@ import { AgentXAuth } from "../common/auth";
 type Agent = {
   id: string;
   name?: string;
-  created_at: string;
+  createdAt: string;
 };
 
 const polling: Polling<
@@ -17,11 +17,14 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
-    
     const agents = (await makeRequest(auth, HttpMethod.GET, "/agents")) as Agent[];
+    
+    const sortedAgents = agents.sort((a, b) => 
+      dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()
+    );
 
-    return agents.map((agent) => ({
-      epochMilliSeconds: dayjs(agent.created_at).valueOf(),
+    return sortedAgents.map((agent) => ({
+      epochMilliSeconds: dayjs(agent.createdAt).valueOf(),
       data: agent,
     }));
   },
@@ -34,7 +37,7 @@ export const newAgent = createTrigger({
   description: "Triggers when a new AgentX agent is created.",
   props: {},
   sampleData: {
-    id: "agt_1234567890abcdef",
+    _id: "agt_1234567890abcdef",
     name: "Customer Support Bot",
     created_at: "2025-09-08T10:00:00Z",
   },
