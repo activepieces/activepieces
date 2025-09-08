@@ -1,0 +1,37 @@
+{
+  "name": "pieces-runway",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/runway/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/runway",
+        "tsConfig": "packages/pieces/community/runway/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/runway/package.json",
+        "main": "packages/pieces/community/runway/src/index.ts",
+        "assets": [
+          "packages/pieces/community/runway/*.md",
+          {
+            "input": "packages/pieces/community/runway/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  },
+  "tags": []
+}
