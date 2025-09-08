@@ -5,7 +5,7 @@ export const runwareAuth = PieceAuth.SecretText({
   description: `Create or retrieve your API key from the Runware dashboard.`,
   required: true,
   validate: async ({ auth }) => {
-    const response = await fetch('https://api.runware.com/v1/me', {
+    const response = await fetch('https://api.runware.com/v1', {
       headers: {
         'Authorization': `Bearer ${auth}`,
       },
