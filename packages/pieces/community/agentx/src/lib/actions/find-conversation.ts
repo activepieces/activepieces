@@ -8,12 +8,12 @@ export const findConversation = createAction({
   auth: AgentXAuth,
   name: "find_conversation",
   displayName: "Find Conversation",
-  description: "Looks up an existing conversation by Agent ID.",
+  description: "Looks up an existing conversation by Agent ID (optionally by conversation ID).",
   props: {
     agentId: AgentIdDropdown,
     conversationId: Property.ShortText({
       displayName: "Conversation ID",
-      description: "Optionally filter by a specific Conversation ID.",
+      description: "If provided, fetch only this specific conversation.",
       required: false,
     }),
   },
@@ -21,20 +21,26 @@ export const findConversation = createAction({
   async run({ auth, propsValue }) {
     const { agentId, conversationId } = propsValue;
 
-    const conversations = await makeRequest(
-      auth,
-      HttpMethod.GET,
-      `/agents/${agentId}/conversations`
-    );
-
-    if (!Array.isArray(conversations)) {
-      throw new Error("Unexpected response from AgentX API: expected an array of conversations.");
-    }
-
     if (conversationId) {
-      return conversations.filter((c: any) => c.id === conversationId);
-    }
+      const conversation = await makeRequest(
+        auth,
+        HttpMethod.GET,
+        `/agents/${agentId}/conversations/${conversationId}`
+      );
+      return conversation;
+    } else {
+     
+      const conversations = await makeRequest(
+        auth,
+        HttpMethod.GET,
+        `/agents/${agentId}/conversations`
+      );
 
-    return conversations;
+      if (!Array.isArray(conversations)) {
+        throw new Error("Unexpected response from AgentX API: expected an array of conversations.");
+      }
+
+      return conversations;
+    }
   },
 });
