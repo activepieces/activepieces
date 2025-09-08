@@ -1,6 +1,6 @@
 import { createPiece } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
-import { agentxAuth } from "./lib/common";
+import { Agent, PieceCategory } from "@activepieces/shared";
+import { AgentXAuth  } from "./lib/common";
 import { createConversation } from "./lib/actions/create-conversation";
 import { sendMessage } from "./lib/actions/send-message";
 import { searchAgents } from "./lib/actions/search-agents";
@@ -11,7 +11,7 @@ import { newConversationTrigger } from "./lib/triggers/new-conversation";
 
 export const agentx = createPiece({
     displayName: "AgentX",
-    auth: agentxAuth,
+    auth: AgentXAuth ,
     minimumSupportedRelease: '0.20.0',
     logoUrl: "https://cdn.activepieces.com/pieces/agentx.png",
     authors: [
