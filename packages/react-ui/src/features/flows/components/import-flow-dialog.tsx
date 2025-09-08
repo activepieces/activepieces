@@ -40,7 +40,6 @@ import {
 
 import { FormError } from '../../../components/ui/form';
 import { flowsApi } from '../lib/flows-api';
-import { flowsUtils } from '../lib/flows-utils';
 
 export type ImportFlowDialogProps =
   | {
@@ -112,13 +111,12 @@ const ImportFlowDialog = (
                   : selectedFolderName,
             });
 
-        const migratedTemplate = flowsUtils.migrateFlowTemplate(template);
         return await flowsApi.update(flow.id, {
           type: FlowOperationType.IMPORT_FLOW,
           request: {
             displayName: template.name,
-            trigger: migratedTemplate.template.trigger,
-            schemaVersion: migratedTemplate.template.schemaVersion,
+            trigger: template.template.trigger,
+            schemaVersion: template.template.schemaVersion,
           },
         });
       });
