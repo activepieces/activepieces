@@ -7,8 +7,6 @@ import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { ProgressUpdateError } from '../helper/execution-errors'
 
-const FILE_STORAGE_LOCATION = process.env.AP_FILE_STORAGE_LOCATION as FileLocation
-const USE_SIGNED_URL = (process.env.AP_S3_USE_SIGNED_URLS === 'true') && FILE_STORAGE_LOCATION === FileLocation.S3
 
 let lastScheduledUpdateId: NodeJS.Timeout | null = null
 let lastActionExecutionTime: number | undefined = undefined
@@ -146,6 +144,7 @@ const sendProgressUpdate = async (engineConstants: EngineConstants, request: Upd
 }
 
 const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): Promise<void> => {
+
     await fetchWithRetry(uploadUrl, {
         method: 'PUT',
         body: executionState,

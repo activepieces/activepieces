@@ -8,6 +8,7 @@ import {
     ErrorCode,
     ExecutionType,
     ExecutioOutputFile,
+    File,
     FileCompression,
     FileType,
     FlowId,
@@ -547,26 +548,38 @@ function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: st
 
 
 const createLogsUploadUrl = async (params: CreateLogsUploadUrlParams, log: FastifyBaseLogger): Promise<{ uploadUrl: string, fileId: string }> => {
-    if (!isNil(params.flowRun.logsFileId)) {
-        const uploadUrl = await s3Helper(log).putS3SignedUrl(params.flowRun.logsFileId)
-        return { uploadUrl, fileId: params.flowRun.logsFileId }
-    }
-    const file = await fileService(log).save({
-        projectId: params.projectId,
-        data: null,
-        size: 0,
-        type: FileType.FLOW_RUN_LOG,
-        compression: FileCompression.NONE,
-        metadata: {
-            flowRunId: params.flowRun.id,
-            projectId: params.projectId,
-        },
-    })
-
+    const file = await getOrCreateLogsFile(params, log)
     assertNotNullOrUndefined(file.s3Key, 's3Key')
     const uploadUrl = await s3Helper(log).putS3SignedUrl(file.s3Key)
     return { uploadUrl, fileId: file.id }
 }
+
+async function getOrCreateLogsFile(params: GetOrCreateLogsFileParams, log: FastifyBaseLogger): Promise<File> { 
+    if (isNil(params.flowRun.logsFileId)) {
+        return fileService(log).save({
+            projectId: params.projectId,
+            data: null,
+            size: 0,
+            type: FileType.FLOW_RUN_LOG,
+            compression: FileCompression.NONE,
+            metadata: {
+                flowRunId: params.flowRun.id,
+                projectId: params.projectId,
+            },
+        })
+    }
+    return fileService(log).getFileOrThrow({
+        projectId: params.projectId,
+        fileId: params.flowRun.logsFileId,
+        type: FileType.FLOW_RUN_LOG,
+    })
+}
+
+type GetOrCreateLogsFileParams = {
+    flowRun: FlowRun
+    projectId: ProjectId
+}
+
 
 async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Promise<FlowRun> {
     let logsUploadUrl: string | undefined
