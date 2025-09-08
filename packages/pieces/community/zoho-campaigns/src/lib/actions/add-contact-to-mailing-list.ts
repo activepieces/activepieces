@@ -8,13 +8,15 @@ export const addContactToMailingList = createAction({
   displayName: 'Add Contact to Mailing List',
   description: 'Add contacts to your mailing lists.',
   props: zohoCampaignsCommon.addContactToMailingListProperties(),
-  async run({ auth: { access_token: accessToken }, propsValue }) {
+  async run({ auth, propsValue }) {
+    const { access_token: accessToken, location } = auth as any;
     await propsValidation.validateZod(
       propsValue,
       zohoCampaignsCommon.addContactToMailingListSchema
     );
     return await zohoCampaignsCommon.addContactToMailingList({
       accessToken,
+      location,
       listkey: String(propsValue.listkey),
       emailids: propsValue.emails.join(','),
     });

@@ -7,30 +7,42 @@ export const findCampaign = createAction({
   name: 'findCampaign',
   displayName: 'Find Campaign',
   description: 'Locate an existing campaign by campaign name.',
-  props: zohoCampaignsCommon.findCampaignProperties,
-  async run({ auth: { access_token: accessToken }, propsValue }) {
+  props: zohoCampaignsCommon.findCampaignProperties(),
+  async run({ auth, propsValue }) {
+    const { access_token: accessToken, location } = auth as any;
     await propsValidation.validateZod(
       propsValue,
       zohoCampaignsCommon.findCampaignSchema
     );
-    const { campaignName } = propsValue;
-    const campaigns = await zohoCampaignsCommon.listCampaigns({
-      accessToken,
-    });
+    const { campaignName, status, sort, fromindex, range } = propsValue;
 
+    const searchParams: any = {
+      accessToken,
+    };
+
+    if (status) searchParams.status = status;
+    if (sort) searchParams.sort = sort;
+    if (fromindex) searchParams.fromindex = fromindex;
+    if (range) searchParams.range = range;
+
+    const campaigns = await zohoCampaignsCommon.listCampaigns({
+      ...searchParams,
+      location
+    });
     const needle = (campaignName ?? '').trim().toLowerCase();
 
     // Try to find case-insensitive and partial match
-    const campaign = campaigns.filter((campaign) =>
+    const matchingCampaigns = campaigns.filter((campaign) =>
       (campaign.campaign_name ?? '').toLowerCase().includes(needle)
     );
 
-    if (campaign.length === 0) {
+    if (matchingCampaigns.length === 0) {
+      const statusText = status ? ` with status "${status}"` : '';
       throw new Error(
-        `No campaign found with a name containing "${campaignName}" in the selected account.`
+        `No campaign found with a name containing "${campaignName}"${statusText} in the selected account.`
       );
     }
 
-    return campaign;
+    return matchingCampaigns;
   },
 });

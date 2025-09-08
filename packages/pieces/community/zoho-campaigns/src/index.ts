@@ -21,7 +21,7 @@ export const zohoCampaigns = createPiece({
   auth: zohoCampaignsAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-campaigns.png',
-  authors: ['LuizDMM'],
+  authors: ['LuizDMM', 'onyedikachi-david'],
   actions: [
     // Write Actions
     createCampaign,

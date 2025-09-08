@@ -15,16 +15,21 @@ import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
 // replace auth with piece auth variable
 const polling: Polling<
   PiecePropValueSchema<typeof zohoCampaignsAuth>,
-  StaticPropsValue<{ listkey: any }>
+  StaticPropsValue<any>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth: { access_token: accessToken }, propsValue }) => {
-    // implement the logic to fetch the items
+    const { listkey, status = 'unsub' } = propsValue;
+
+    if (!listkey) {
+      throw new Error('Mailing list is required');
+    }
+
     const items = await zohoCampaignsCommon.listContacts({
       accessToken,
-      listkey: propsValue.listkey,
+      listkey,
       sort: 'desc',
-      status: 'unsub'
+      status
     });
     return items.map((item) => ({
       epochMilliSeconds: dayjs(item.added_time).valueOf(),
@@ -40,7 +45,15 @@ export const unsubscribe = createTrigger({
   description:
     'Fires when a contact is removed from a mailing list or unsubscribed.',
   props: zohoCampaignsCommon.unsubscribeProperties(),
-  sampleData: {},
+  sampleData: {
+    contact_email: 'unsubscribed@example.com',
+    firstname: 'John',
+    lastname: 'Doe',
+    phone: '+1-555-123-4567',
+    companyname: 'Acme Corp',
+    zuid: '12345678',
+    added_time: '1699123456789'
+  },
   type: TriggerStrategy.POLLING,
   async test(context) {
     return await pollingHelper.test(polling, context);
