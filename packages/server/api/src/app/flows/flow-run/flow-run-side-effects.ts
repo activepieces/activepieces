@@ -154,7 +154,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
             case PauseType.DELAY: {
                 const platformId = await projectService.getPlatformId(flowRun.projectId)
                 await jobQueue(log).add({
-                    id: flowRun.id,
+                    id: 'delayed_' + flowRun.id,
                     type: JobType.ONE_TIME,
                     data: {
                         jobType: WorkerJobType.DELAYED_FLOW,

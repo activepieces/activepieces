@@ -12,26 +12,24 @@ export const delayedJobPreHandler: JobPreHandler = {
 
 async function resumeRunIfExists(delayedJob: DelayedJobData, log: FastifyBaseLogger): Promise<PreHandlerResult> {
     const { runId } = delayedJob
-    const flowRun = await flowRunService(log).getOne({
+    const flowRun = await flowRunService(log).getOneOrThrow({
         id: runId,
         projectId: delayedJob.projectId,
     })
-    if (!isNil(flowRun)) {
-        await flowRunService(log).start({
-            payload: null,
-            existingFlowRunId: flowRun.id,
-            executeTrigger: false,
-            synchronousHandlerId: delayedJob.synchronousHandlerId ?? undefined,
-            projectId: delayedJob.projectId,
-            flowVersionId: delayedJob.flowVersionId,
-            executionType: ExecutionType.RESUME,
-            httpRequestId: delayedJob.httpRequestId,
-            environment: delayedJob.environment,
-            progressUpdateType: delayedJob.progressUpdateType ?? ProgressUpdateType.NONE,
-            parentRunId: flowRun.parentRunId,
-            failParentOnFailure: flowRun.failParentOnFailure,
-        })
-    }
+    await flowRunService(log).start({
+        payload: null,
+        existingFlowRunId: flowRun.id,
+        executeTrigger: false,
+        synchronousHandlerId: delayedJob.synchronousHandlerId ?? undefined,
+        projectId: delayedJob.projectId,
+        flowVersionId: delayedJob.flowVersionId,
+        executionType: ExecutionType.RESUME,
+        httpRequestId: delayedJob.httpRequestId,
+        environment: delayedJob.environment,
+        progressUpdateType: delayedJob.progressUpdateType ?? ProgressUpdateType.NONE,
+        parentRunId: flowRun.parentRunId,
+        failParentOnFailure: flowRun.failParentOnFailure,
+    })
     return {
         shouldSkip: true,
         reason: 'Delayed jobs are handled by the app',
