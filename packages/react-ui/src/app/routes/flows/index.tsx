@@ -168,11 +168,10 @@ export const CreateFlowDropdown = ({
     void
   >({
     mutationFn: async () => {
+      const effectiveFolderId = folderId ?? searchParams.get(folderIdParamName);
       const folder =
-        (folderId ?? searchParams.get(folderIdParamName)) !== 'NULL'
-          ? await foldersApi.get(
-              folderId ?? searchParams.get(folderIdParamName)!,
-            )
+        effectiveFolderId && effectiveFolderId !== "NULL"
+          ? await foldersApi.get(effectiveFolderId)
           : undefined;
       const flow = await flowsApi.create({
         projectId: authenticationSession.getProjectId()!,
