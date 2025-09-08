@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { flowsUtils } from '@/features/flows/lib/flows-utils';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowActionType,
@@ -128,13 +129,13 @@ export const LinkedFlowsSection = ({ agent }: LinkedFlowsSectionProps) => {
         `"${agent.externalId}"`,
       );
       const updatedTemplate = JSON.parse(updatedTemplateStr);
-
+      const migratedTemplate = flowsUtils.migrateFlowTemplate(updatedTemplate);
       const updatedFlow = await flowsApi.update(flow.id, {
         type: FlowOperationType.IMPORT_FLOW,
         request: {
           displayName: template.template.displayName,
-          trigger: updatedTemplate.trigger,
-          schemaVersion: template.template.schemaVersion,
+          trigger: migratedTemplate.template.trigger,
+          schemaVersion: migratedTemplate.template.schemaVersion,
         },
       });
 

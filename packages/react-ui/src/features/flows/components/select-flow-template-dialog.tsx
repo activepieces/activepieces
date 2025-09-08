@@ -39,6 +39,7 @@ import {
 } from '@activepieces/shared';
 
 import { flowsApi } from '../lib/flows-api';
+import { flowsUtils } from '../lib/flows-utils';
 
 type TemplateCardProps = {
   template: FlowTemplate;
@@ -61,12 +62,13 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
         displayName: template.name,
         projectId: authenticationSession.getProjectId()!,
       });
+      const migratedTemplate = flowsUtils.migrateFlowTemplate(template);
       return await flowsApi.update(newFlow.id, {
         type: FlowOperationType.IMPORT_FLOW,
         request: {
           displayName: template.name,
-          trigger: template.template.trigger,
-          schemaVersion: template.template.schemaVersion,
+          trigger: migratedTemplate.template.trigger,
+          schemaVersion: migratedTemplate.template.schemaVersion,
         },
       });
     },

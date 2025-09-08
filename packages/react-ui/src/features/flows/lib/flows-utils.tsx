@@ -4,7 +4,13 @@ import JSZip from 'jszip';
 import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
 
 import { downloadFile } from '@/lib/utils';
-import { PopulatedFlow, FlowTriggerType } from '@activepieces/shared';
+import {
+  PopulatedFlow,
+  FlowTriggerType,
+  FlowTemplate,
+  flowMigrations,
+  FlowVersionState,
+} from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
 
@@ -72,5 +78,20 @@ export const flowsUtils = {
         return <TriangleAlert className="h-4 w-4 text-destructive" />;
       }
     }
+  },
+  migrateFlowTemplate: (flowTemplate: FlowTemplate): FlowTemplate => {
+    const migratedFlowVersion = flowMigrations.apply({
+      ...flowTemplate.template,
+      flowId: '',
+      id: '',
+      created: '',
+      updated: '',
+      state: FlowVersionState.DRAFT,
+      valid: false,
+    });
+    return {
+      ...flowTemplate,
+      template: migratedFlowVersion,
+    };
   },
 };
