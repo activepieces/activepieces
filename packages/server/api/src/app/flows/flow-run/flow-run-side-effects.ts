@@ -98,8 +98,8 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                 flowRunId: flowRun.id,
                 projectId: flowRun.projectId,
             }, log)
-            logsUploadUrl = logsUploadResult?.uploadUrl
-            logsFileId = logsUploadResult?.fileId
+            logsUploadUrl = logsUploadResult.uploadUrl
+            logsFileId = logsUploadResult.fileId
         }
         const platformId = await projectService.getPlatformId(flowRun.projectId)
 
@@ -178,7 +178,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
     },
 })
 
-const createLogsUploadUrl = async (params: CreateLogsUploadUrlParams, log: FastifyBaseLogger): Promise<{ uploadUrl: string, fileId: string } | undefined> => {
+const createLogsUploadUrl = async (params: CreateLogsUploadUrlParams, log: FastifyBaseLogger): Promise<{ uploadUrl: string, fileId: string }> => {
     const file = await fileService(log).save({
         projectId: params.projectId,
         data: null,
