@@ -540,6 +540,9 @@
       "@activepieces/piece-lead-connector": [
         "packages/pieces/community/lead-connector/src/index.ts"
       ],
+      "@activepieces/piece-lemlist": [
+        "packages/pieces/community/lemlist/src/index.ts"
+      ],
       "@activepieces/piece-line": [
         "packages/pieces/community/line/src/index.ts"
       ],
@@ -798,7 +801,7 @@
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
       ],
-        "@activepieces/piece-retell-ai": [
+      "@activepieces/piece-retell-ai": [
         "packages/pieces/community/retell-ai/src/index.ts"
       ],
       "@activepieces/piece-retune": [
@@ -811,6 +814,9 @@
         "packages/pieces/community/robolly/src/index.ts"
       ],
       "@activepieces/piece-rss": ["packages/pieces/community/rss/src/index.ts"],
+      "@activepieces/piece-runway": [
+        "packages/pieces/community/runway/src/index.ts"
+      ],
       "@activepieces/piece-saastic": [
         "packages/pieces/community/saastic/src/index.ts"
       ],
