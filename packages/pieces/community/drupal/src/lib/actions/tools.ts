@@ -73,11 +73,48 @@ export const drupalCallToolAction = createAction({
         const fields: Record<string, any> = {};
         const items = tool['config'] as DrupalToolConfig[];
         items.forEach((config: any) => {
-          fields[config.key] = Property.ShortText({
-            displayName: config.label,
-            description: config.description,
-            required: config.required,
-          });
+          if (config.type === 'boolean') {
+            fields[config.key] = Property.Checkbox({
+              displayName: config.label,
+              description: config.description,
+              required: config.required,
+              defaultValue: config.default_value,
+            });
+          } else if (config.type === 'integer' || config.type === 'float') {
+            fields[config.key] = Property.Number({
+              displayName: config.label,
+              description: config.description,
+              required: config.required,
+              defaultValue: config.default_value,
+            });
+          } else if (config.type === 'timestamp' || config.type === 'datetime_iso8601') {
+            fields[config.key] = Property.DateTime({
+              displayName: config.label,
+              description: config.description,
+              required: config.required,
+              defaultValue: config.default_value,
+            });
+          } else if (config.options.length > 0) {
+            fields[config.key] = Property.StaticDropdown({
+              displayName: config.label,
+              description: config.description,
+              required: config.required,
+              defaultValue: config.default_value,
+              options: {
+                options: config.options.map((option: any) => ({
+                  label: option.name,
+                  value: option.key,
+                }))},
+            });
+          } else {
+
+            fields[config.key] = Property.ShortText({
+              displayName: config.label,
+              description: config.description,
+              required: config.required,
+              defaultValue: config.default_value,
+            });
+          }
         });
         console.debug('Field for this tool', fields);
         return fields;
@@ -122,4 +159,8 @@ interface DrupalToolConfig {
   label: string;
   description: string;
   required: boolean;
+  type: string;
+  default_value: string;
+  options: string[];
+  editable: boolean;
 }
