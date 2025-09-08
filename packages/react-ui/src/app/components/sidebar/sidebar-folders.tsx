@@ -287,6 +287,9 @@ interface FlowItemProps {
 }
 
 function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
+  const { flowId } = useParams()
+  const navigate = useNavigate()
+
   return (
     <SidebarMenuSubItem className="cursor-pointer group/item">
       <SidebarMenuSubButton
@@ -308,10 +311,16 @@ function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
           onMoveTo={() => {
             refetch();
           }}
-          onDuplicate={() => {
-            refetch();
-          }}
           onDelete={() => {
+            if (flowId === flow.id) {
+              navigate(
+                authenticationSession.appendProjectRoutePrefix('/flows'),
+              );
+            } else {
+              refetch();
+            } 
+          }}
+          onDuplicate={() => {
             refetch();
           }}
         >
