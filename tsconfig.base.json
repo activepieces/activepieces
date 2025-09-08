@@ -247,6 +247,9 @@
       "@activepieces/piece-coda": [
         "packages/pieces/community/coda/src/index.ts"
       ],
+      "@activepieces/piece-cody": [
+        "packages/pieces/community/cody/src/index.ts"
+      ],
       "@activepieces/piece-cognito-forms": [
         "packages/pieces/community/cognito-forms/src/index.ts"
       ],
@@ -317,11 +320,14 @@
       "@activepieces/piece-discord": [
         "packages/pieces/community/discord/src/index.ts"
       ],
-      "@activepieces/piece-dittofeed":[
-        "packages/pieces/community/dittofeed/src/index.ts"
-      ],
       "@activepieces/piece-discourse": [
         "packages/pieces/community/discourse/src/index.ts"
+      ],
+      "@activepieces/piece-docsbot": [
+        "packages/pieces/community/docsbot/src/index.ts"
+      ],
+      "@activepieces/piece-dittofeed": [
+        "packages/pieces/community/dittofeed/src/index.ts"
       ],
       "@activepieces/piece-docusign": [
         "packages/pieces/community/docusign/src/index.ts"
@@ -555,6 +561,9 @@
       "@activepieces/piece-lead-connector": [
         "packages/pieces/community/lead-connector/src/index.ts"
       ],
+      "@activepieces/piece-lemlist": [
+        "packages/pieces/community/lemlist/src/index.ts"
+      ],
       "@activepieces/piece-line": [
         "packages/pieces/community/line/src/index.ts"
       ],
@@ -673,6 +682,9 @@
       ],
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
+      ],
+      "@activepieces/piece-murf-api": [
+        "packages/pieces/community/murf-api/src/index.ts"
       ],
       "@activepieces/piece-mysql": [
         "packages/pieces/community/mysql/src/index.ts"
@@ -1086,6 +1098,9 @@
       ],
       "@activepieces/piece-whatsapp": [
         "packages/pieces/community/whatsapp/src/index.ts"
+      ],
+      "@activepieces/piece-wonderchat": [
+        "packages/pieces/community/wonderchat/src/index.ts"
       ],
       "@activepieces/piece-woocommerce": [
         "packages/pieces/community/woocommerce/src/index.ts"
