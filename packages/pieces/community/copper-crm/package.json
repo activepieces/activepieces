@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/copper-crm",
-  "version": "0.2.5"
+  "version": "0.2.5",
+  "dependencies": {
+    "tslib": "^2.6.2"
+  }
 }
