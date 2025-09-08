@@ -97,17 +97,13 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 }
 
 async function getOldestLogFile(flowRunId: string, projectId: string, log: FastifyBaseLogger): Promise<string | null> {
-    const files = await fileRepo().find({
-        where: {
-            projectId,
-            metadata: {
-                flowRunId,
-            },
-        },
-        order: {
-            created: 'DESC',
-        },
-    })
+    const files = await fileRepo()
+        .createQueryBuilder('file')
+        .where('file.projectId = :projectId', { projectId })
+        .andWhere("file.metadata->>'flowRunId' = :flowRunId", { flowRunId })
+        .orderBy('file.created', 'DESC')
+        .getMany();
+
     for (const file of files) {
         if (file.s3Key && await s3Helper(log).exists(file.s3Key)) {
             return file.id
