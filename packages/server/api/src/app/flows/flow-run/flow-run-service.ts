@@ -568,7 +568,7 @@ async function getOrCreateLogsFile(params: GetOrCreateLogsFileParams, log: Fasti
             },
         })
     }
-    return await fileService(log).getFileOrThrow({
+    return fileService(log).getFileOrThrow({
         projectId: params.projectId,
         fileId: params.flowRun.logsFileId,
         type: FileType.FLOW_RUN_LOG,
