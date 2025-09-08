@@ -7,7 +7,7 @@ export const sendMessageToExistingConversation = createAction({
   auth: AgentXAuth,
   name: 'sendMessageToExistingConversation',
   displayName: 'Send Message to Existing Conversation',
-  description: '',
+  description: 'Send a message to an existing conversation with an agent.',
   props: {
     conversationId: Property.ShortText({
       displayName: "Conversation ID",

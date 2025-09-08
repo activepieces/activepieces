@@ -9,7 +9,7 @@ export const createConversationWithSingleAgent = createAction({
   auth: AgentXAuth,
   name: 'createConversationWithSingleAgent',
   displayName: 'Create Conversation With Single Agent',
-  description: '',
+  description: 'Create a new conversation with a specific Agent by ID.',
   props: {
     agentId: AgentIdDropdown,
     type: Property.StaticDropdown({
