@@ -101,7 +101,7 @@ async function getOldestLogFile(flowRunId: string, projectId: string, log: Fasti
         .createQueryBuilder('file')
         .where('file.projectId = :projectId', { projectId })
         .andWhere("file.metadata->>'flowRunId' = :flowRunId", { flowRunId })
-        .orderBy('file.created', 'DESC')
+        .orderBy('file.created', 'ASC')
         .getMany();
 
     for (const file of files) {

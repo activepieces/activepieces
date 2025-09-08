@@ -99,11 +99,18 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             throw error
         }
     },
-    exists(s3Key: string): Promise<boolean> {
-        return getS3Client().headObject({
-            Bucket: getS3BucketName(),
-            Key: s3Key,
-        }).then(() => true).catch(() => false)
+    async exists(s3Key: string): Promise<boolean> {
+        try {
+            const response = await getS3Client().headObject({
+                Bucket: getS3BucketName(),
+                Key: s3Key,
+            })
+            // Check if the object exists and has content (ContentLength > 0)
+            return response.ContentLength !== undefined && response.ContentLength > 0
+        }
+        catch (error) {
+            return false
+        }
     },
     async validateS3Configuration(): Promise<void> {
         const client = getS3Client()
