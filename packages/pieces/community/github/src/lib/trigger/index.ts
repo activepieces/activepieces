@@ -1,5 +1,10 @@
 import { Trigger } from '@activepieces/pieces-framework';
 import { githubRegisterTrigger } from './register-trigger';
+import { githubNewBranchTrigger } from './new-branch';
+import { githubNewCollaboratorTrigger } from './new-collaborator';
+import { githubNewLabelTrigger } from './new-label';
+import { githubNewMilestoneTrigger } from './new-milestone';
+import { githubNewReleaseTrigger } from './new-release';
 
 export enum GithubEventType {
   PULL_REQUEST = 'pull_request',
@@ -13,10 +18,14 @@ export enum GithubEventType {
   LABEL = 'label',
   MILESTONE = 'milestone',
   RELEASE = 'release',
-  REPOSITORY = 'repository',
 }
 
 export const registered = [
+  githubNewBranchTrigger,
+  githubNewCollaboratorTrigger,
+  githubNewLabelTrigger,
+  githubNewMilestoneTrigger,
+  githubNewReleaseTrigger,
   {
     name: GithubEventType.CREATE,
     displayName: 'New Branch',
@@ -340,63 +349,6 @@ export const registered = [
         created_at: '2011-01-26T19:01:12Z',
         updated_at: '2011-01-26T19:14:43Z',
         pushed_at: '2011-01-26T19:06:43Z',
-      },
-      sender: {
-        login: 'octocat',
-        id: 1,
-        node_id: 'MDQ6VXNlcjE=',
-        avatar_url: 'https://github.com/images/error/octocat_happy.gif',
-        url: 'https://api.github.com/users/octocat',
-        html_url: 'https://github.com/octocat',
-        type: 'User',
-        site_admin: false,
-      },
-    },
-  },
-  {
-    name: GithubEventType.REPOSITORY,
-    displayName: 'New Repository',
-    description: 'Fires when a new repository is created.',
-    sampleData: {
-      action: 'created',
-      repository: {
-        id: 1296270,
-        node_id: 'MDEwOlJlcG9zaXRvcnkxMjk2Mjcw',
-        name: 'New-Repo',
-        full_name: 'octocat/New-Repo',
-        private: false,
-        owner: {
-          login: 'octocat',
-          id: 1,
-          node_id: 'MDQ6VXNlcjE=',
-          avatar_url: 'https://github.com/images/error/octocat_happy.gif',
-          url: 'https://api.github.com/users/octocat',
-          html_url: 'https://github.com/octocat',
-          type: 'User',
-          site_admin: false,
-        },
-        html_url: 'https://github.com/octocat/New-Repo',
-        description: 'This is a newly created repository.',
-        fork: false,
-        url: 'https://api.github.com/repos/octocat/New-Repo',
-        created_at: '2025-09-09T04:00:00Z',
-        updated_at: '2025-09-09T04:05:00Z',
-        pushed_at: '2025-09-09T04:10:00Z',
-        homepage: null,
-        size: 0,
-        stargazers_count: 0,
-        watchers_count: 0,
-        language: null,
-        has_issues: true,
-        has_projects: true,
-        has_downloads: true,
-        has_wiki: true,
-        has_pages: false,
-        forks_count: 0,
-        archived: false,
-        disabled: false,
-        visibility: 'public',
-        default_branch: 'main',
       },
       sender: {
         login: 'octocat',

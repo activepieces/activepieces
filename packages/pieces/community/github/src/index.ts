@@ -22,6 +22,7 @@ import { findIssue } from './lib/actions/find-issue';
 import { findUser } from './lib/actions/find-user';
 import { updateIssue } from './lib/actions/update-issue';
 import { createBranch } from './lib/actions/create-branch';
+import { githubNewRepositoryTrigger } from './lib/trigger/new-repository';
 
 export const githubAuth = PieceAuth.OAuth2({
   required: true,
@@ -72,5 +73,5 @@ export const github = createPiece({
     'abuaboud',
     'tintinthedev',
   ],
-  triggers: githubTriggers,
+  triggers: [...githubTriggers, githubNewRepositoryTrigger],
 });
