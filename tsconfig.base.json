@@ -462,6 +462,9 @@
       "@activepieces/piece-google-tasks": [
         "packages/pieces/community/google-tasks/src/index.ts"
       ],
+      "@activepieces/piece-googlechat": [
+        "packages/pieces/community/googlechat/src/index.ts"
+      ],
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
