@@ -12,7 +12,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { ShowPoweredBy } from '../../../components/show-powered-by';
 import { platformHooks } from '../../../hooks/platform-hooks';
 import { ApDashboardSidebarHeader } from '../ap-dashboard-sidebar-header';
-import { HelpAndFeedback } from '../help-and-feedback';
 
 import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
 import { SidebarUser } from './sidebar-user';
@@ -231,9 +230,6 @@ export function SidebarComponent({
                 </ScrollArea>
               </div>
               <SidebarFooter className="pb-4 flex-shrink-0">
-                <SidebarMenu>
-                  <HelpAndFeedback />
-                </SidebarMenu>
                 {showProjectUsage && (
                   <SidebarMenu>
                     <UsageLimitsButton />

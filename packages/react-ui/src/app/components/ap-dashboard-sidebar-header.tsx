@@ -1,3 +1,4 @@
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Link } from 'react-router-dom';
 
@@ -13,9 +14,6 @@ import { ProjectSwitcher } from '@/features/projects/components/project-switcher
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
-
-import ProjectSettingsDropdownMenu from './project-settings-dropdown-menu';
 
 const ApDashboardSidebarHeader = ({
   isHomeDashboard,
@@ -77,10 +75,6 @@ const ApDashboardSidebarHeader = ({
           <div className="grow">
             <ProjectSwitcher />
           </div>
-        )}
-
-        {isHomeDashboard && !embedState.hideProjectSettings && (
-          <ProjectSettingsDropdownMenu />
         )}
       </div>
     </SidebarHeader>
