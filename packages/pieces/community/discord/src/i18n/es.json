@@ -1,5 +1,4 @@
 {
-  "Discord": "Discordia",
   "Instant messaging and VoIP social platform": "Plataforma social de mensajería instantánea y VoIP",
   "\nTo obtain a token, follow these steps:\n1. Go to https://discord.com/developers/applications\n2. Click on Application (or create one if you don't have one)\n3. Click on Bot\n4. Copy the token\n": "\nPara obtener un token, sigue estos pasos:\n1. Ve a https://discord.com/developeropers/applications\n2. Haga clic en Aplicación (o cree una si no tiene una)\n3. Haga clic en Bot\n4. Copie el token\n",
   "Send Message with Bot": "Enviar mensaje con boot",

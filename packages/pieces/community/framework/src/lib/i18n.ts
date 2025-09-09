@@ -47,7 +47,6 @@ export const pieceTranslation = {
   },
 
   pathsToValuesToTranslate: [
-    "displayName",
     "description",
     "auth.username.displayName",
     "auth.username.description",

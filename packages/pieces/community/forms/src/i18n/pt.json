@@ -1,5 +1,4 @@
 {
-  "Human Input": "Entrada humana",
   "Trigger a flow through human input.": "Aciona um fluxo através de entrada humana.",
   "Respond on UI": "Responder na interface",
   "Return a file or text (markdown) as a response.": "Retornar um arquivo ou texto (markdown) como uma resposta.",

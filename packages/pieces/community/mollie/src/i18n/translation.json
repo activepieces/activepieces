@@ -1,5 +1,4 @@
 {
-  "Mollie": "Mollie",
   "Automate Mollie payments, orders, refunds, customers, and invoices. Triggers on payment events and statuses.": "Automate Mollie payments, orders, refunds, customers, and invoices. Triggers on payment events and statuses.",
   "Enter your Mollie API key (starts with live_ or test_)": "Enter your Mollie API key (starts with live_ or test_)",
   "Create Order": "Create Order",
