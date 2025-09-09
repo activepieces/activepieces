@@ -53,16 +53,17 @@ export const fileService = (log: FastifyBaseLogger) => ({
                 return saveFileToDb(baseFile, params.data)
             }
             case FileLocation.S3: {
-                try {                    
-                    const s3Key = s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
+                try {
+                    const s3Key = await s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
                     if (!isNil(params.data)) {
                         await s3Helper(log).uploadFile(s3Key, params.data)
                     }
-                    return (await fileRepo().save({
+                    const savedFile = await fileRepo().save({
                         ...baseFile,
                         location: FileLocation.S3,
                         s3Key,
-                    }))
+                    })
+                    return savedFile
                 }
                 catch (error) {
                     exceptionHandler.handle(error, log)
