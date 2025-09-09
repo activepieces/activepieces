@@ -1,5 +1,4 @@
 {
-  "SendGrid": "SendGrid",
   "Email delivery service for sending transactional and marketing emails": "Email delivery service for sending transactional and marketing emails",
   "API key acquired from your SendGrid settings": "API key acquired from your SendGrid settings",
   "Send Email": "Send Email",

@@ -1,5 +1,4 @@
 {
-  "Ninox": "Ninox",
   "**Enter your Ninox Personal Access Token (API key).**\n\n---\n\n### How to obtain your API key\n\n1. Visit [ninox.com](https://ninox.com) and log in.\n2. Click the **Start Ninox** button to open the web app.\n3. In the top-right corner, click the **Actions** gear icon.\n4. Select **Integrations** from the drop-down menu.\n5. In the pop-up window, click the **Generate** button.\n6. Copy the API key to your clipboard and paste it here.\n": "**Digite sua Token de Acesso Pessoal Ninox (chave de API).**\n\n---\n\n### Como obter sua chave de API\n\n1. Visite [ninox.com](https://ninox.com) e entre nele.\n2. Clique no botão **Iniciar Ninox** para abrir o aplicativo web.\n3. No canto superior direito, clique no ícone de engrenagem **Ações**.\n4. Selecione **integrações** no menu suspenso.\n5. Na janela pop-up, clique no botão **Gerar**.\n6. Copie a chave da API para a sua área de transferência e cole-o aqui.\n",
   "Create Record": "Criar Registro",
   "Update Record": "Atualizar Registro",
