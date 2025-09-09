@@ -185,7 +185,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }, log)
         }
         await flowRunSideEffects(log).onResume(flowRunToResume)
-        return null
+        return flowRunToResume
     },
     updateRunStatusAsync({ flowRunId, status }: UpdateRunStatusParams): void {
         rejectedPromiseHandler(flowRunRepo().update(flowRunId, { status }), log)
@@ -358,11 +358,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
         const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
 
-        
+
 
         switch (pauseMetadata.type) {
             case PauseType.DELAY: {
                 const platformId = await projectService.getPlatformId(flowRun.projectId)
+                // Todo(@amrdb): please make this not hacky
+                const MINIMUM_DELAY_IN_MILLISECONDS_UNTIL_FIRST_JOB_IS_MARKED_AS_COMPLETED = dayjs.duration(60, 'seconds').asMilliseconds()
                 await jobQueue(log).add({
                     id: 'delayed_' + flowRun.id,
                     type: JobType.ONE_TIME,
@@ -378,7 +380,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                         environment: flowRun.environment,
                         flowVersionId: flowRun.flowVersionId,
                     },
-                    delay: Math.max(0, dayjs(pauseMetadata.resumeDateTime).diff(dayjs(), 'ms')),
+                    delay: Math.max(MINIMUM_DELAY_IN_MILLISECONDS_UNTIL_FIRST_JOB_IS_MARKED_AS_COMPLETED, dayjs(pauseMetadata.resumeDateTime).diff(dayjs(), 'ms')),
                 })
                 break
             }

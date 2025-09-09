@@ -6,26 +6,22 @@ import { JobPreHandler, PreHandlerResult } from './index'
 export const delayedJobPreHandler: JobPreHandler = {
     handle: async (job: JobData, _attemptsStarted: number, log: FastifyBaseLogger): Promise<PreHandlerResult> => {
         const delayedJob = job as DelayedJobData
-        return resumeRunIfExists(delayedJob, log)
+        const { runId } = delayedJob
+        const flowRun = await flowRunService(log).getOneOrThrow({
+            id: runId,
+            projectId: delayedJob.projectId,
+        })
+        await flowRunService(log).resume({
+            payload: null,
+            flowRunId: flowRun.id,
+            requestId: delayedJob.httpRequestId,
+            progressUpdateType: delayedJob.progressUpdateType ?? ProgressUpdateType.NONE,
+            executionType: ExecutionType.RESUME,
+            checkRequestId: false,
+        })
+        return {
+            shouldSkip: true,
+            reason: 'Delayed jobs are handled by the app',
+        }
     },
-}
-
-async function resumeRunIfExists(delayedJob: DelayedJobData, log: FastifyBaseLogger): Promise<PreHandlerResult> {
-    const { runId } = delayedJob
-    const flowRun = await flowRunService(log).getOneOrThrow({
-        id: runId,
-        projectId: delayedJob.projectId,
-    })
-    await flowRunService(log).resume({
-        payload: null,
-        flowRunId: flowRun.id,
-        requestId: delayedJob.httpRequestId,
-        progressUpdateType: delayedJob.progressUpdateType ?? ProgressUpdateType.NONE,
-        executionType: ExecutionType.RESUME,
-        checkRequestId: false,
-    })
-    return {
-        shouldSkip: true,
-        reason: 'Delayed jobs are handled by the app',
-    }
 }
