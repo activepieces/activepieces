@@ -1,10 +1,3 @@
-import { RedirectPage } from '@/app/routes/redirect';
-import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
-import { useEmbedding } from '@/components/embed-provider';
-import { VerifyEmail } from '@/features/authentication/components/verify-email';
-import { Error } from '@/features/billing/components/error';
-import { Success } from '@/features/billing/components/success';
-import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 import { Permission } from '@activepieces/shared';
 import {
   Navigate,
@@ -29,9 +22,6 @@ import { FormPage } from '../routes/forms';
 import McpServersPage from '../routes/mcp-servers';
 import McpPage from '../routes/mcp-servers/id';
 import SettingsBilling from '../routes/platform/billing';
-import SettingsHealthPage from '../routes/platform/infra/health';
-import TriggerHealthPage from '../routes/platform/infra/triggers';
-import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
 import ProjectsPage from '../routes/platform/projects';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
@@ -57,6 +47,7 @@ import {
   projectSettingsRoutes,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+
 import { PageTitle } from '@/app/components/page-title';
 import { ChatPage } from '@/app/routes/chat';
 import { EmbedPage } from '@/app/routes/embed';
@@ -66,6 +57,13 @@ import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
 import { SSOPage } from '@/app/routes/platform/security/sso';
 import AIProvidersPage from '@/app/routes/platform/setup/ai';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
+import { RedirectPage } from '@/app/routes/redirect';
+import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
+import { useEmbedding } from '@/components/embed-provider';
+import { VerifyEmail } from '@/features/authentication/components/verify-email';
+import { Error } from '@/features/billing/components/error';
+import { Success } from '@/features/billing/components/success';
+import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -434,36 +432,6 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="API Keys">
           <ApiKeysPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/infrastructure/workers',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="Workers">
-          <SettingsWorkersPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/infrastructure/health',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="System Health">
-          <SettingsHealthPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/infrastructure/triggers',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="Trigger Health">
-          <TriggerHealthPage />
         </PageTitle>
       </PlatformAdminContainer>
     ),

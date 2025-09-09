@@ -1,12 +1,11 @@
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useEffect, useMemo, useState } from 'react';
-import semver from 'semver';
+import { useMemo, useState } from 'react';
 
 import { useSocket } from '@/components/socket-provider';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 export interface Message {
   title: string;
@@ -31,44 +30,10 @@ export const notificationHooks = {
       queryFn: () => aiProviderApi.list(),
     });
 
-    const [messages, setMessages] = useState<Message[]>([]);
-
-    useEffect(() => {
-      socket.on('connect_error', (err) => {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            title: t('Websocket Connection Error'),
-            description: t(
-              `We encountered an error trying to connect to the websocket: ${
-                err.message || 'Unknown error'
-              }. Please check your network or server.`,
-            ),
-            actionText: t('Retry Connection'),
-            actionLink: '/platform/infrastructure/health',
-            type: 'destructive',
-          },
-        ]);
-      });
-
-      return () => {
-        socket.off('connect_error');
-      };
-    }, [socket]);
+    const [messages] = useState<Message[]>([]);
 
     const notifications = useMemo(() => {
       const allMessages: Message[] = [];
-
-      const isVersionUpToDate = semver.gte(currentVersion!, latestVersion!);
-
-      if (!isVersionUpToDate) {
-        allMessages.push({
-          title: t('Update Available'),
-          description: `Version ${latestVersion} is now available. Update to get the latest features and security improvements.`,
-          actionText: t('Update Now'),
-          actionLink: '/platform/infrastructure/health',
-        });
-      }
 
       if (
         !(providers && providers.data.length > 0) &&

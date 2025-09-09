@@ -1,13 +1,6 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  LayoutGrid,
-  LineChart,
-  Server,
-  Shield,
-  Users,
-  Wrench,
-} from 'lucide-react';
+import { LayoutGrid, LineChart, Shield, Users, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
@@ -28,7 +21,7 @@ export function PlatformAdminContainer({
 }: PlatformAdminContainerProps) {
   const [setupOpen, setSetupOpen] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
-  const [infrastructureOpen, setInfrastructureOpen] = useState(false);
+
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
@@ -148,38 +141,6 @@ export function PlatformAdminContainer({
           type: 'link',
           to: '/platform/security/api-keys',
           label: t('API Keys'),
-          isSubItem: true,
-          show: true,
-        },
-      ],
-    },
-    {
-      type: 'group',
-      label: t('Infrastructure'),
-      icon: Server,
-      defaultOpen: false,
-      open: infrastructureOpen,
-      setOpen: setInfrastructureOpen,
-      isActive: (pathname: string) => pathname.includes('/infrastructure'),
-      items: [
-        {
-          type: 'link',
-          to: '/platform/infrastructure/workers',
-          label: t('Workers'),
-          isSubItem: true,
-          show: true,
-        },
-        {
-          type: 'link',
-          to: '/platform/infrastructure/health',
-          label: t('Health'),
-          isSubItem: true,
-          show: true,
-        },
-        {
-          type: 'link',
-          to: '/platform/infrastructure/triggers',
-          label: t('Triggers'),
           isSubItem: true,
           show: true,
         },
