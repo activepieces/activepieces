@@ -1,5 +1,4 @@
 {
-  "Nifty": "Nifty",
   "Project management made simple": "プロジェクト管理をシンプルにしました",
   "\n# How to add a new connection\n1. Login to your nifty account at https://niftypm.com/\n2. From your account settings, click on App Center\n3. After that click on Integrate with API\n4. Then Create a new app\n5. Select the Name and Description you want\n6. copy the redirect url from the piece and fill the url field ( without https:// )\n7. check out Milestones , Subtasks , Projects , Statuses , Tasks and Portfolios\n8. copy the client id and client secret and paste them in the piece\n": "\n# How to add a new connection\n1. Login to your nifty account at https://niftypm.com/\n2. From your account settings, click on App Center\n3. After that click on Integrate with API\n4. Then Create a new app\n5. Select the Name and Description you want\n6. copy the redirect url from the piece and fill the url field ( without https:// )\n7. check out Milestones , Subtasks , Projects , Statuses , Tasks and Portfolios\n8. copy the client id and client secret and paste them in the piece\n",
   "Create Task": "タスクを作成",

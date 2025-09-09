@@ -1,8 +1,8 @@
 {
-  "Agent": "Representante",
   "Let an AI assistant help you with tasks using tools.": "Deixe um assistente de IA ajudá-lo com tarefas usando ferramentas.",
   "Run Agent": "Executar Agente",
   "Run the AI assistant to complete your task.": "Execute o assistente de IA para concluir sua tarefa.",
+  "Agent": "Representante",
   "Prompt": "Aviso",
   "Select agent created": "Selecione o agente criado",
   "Describe what you want the assistant to do.": "Descreva o que você quer que o assistente faça."
