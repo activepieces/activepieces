@@ -1,0 +1,6 @@
+{
+  "name": "@activepieces/piece-runway",
+  "sourceRoot": "packages/pieces/community/runway/src",
+  "projectType": "library"
+}
+
