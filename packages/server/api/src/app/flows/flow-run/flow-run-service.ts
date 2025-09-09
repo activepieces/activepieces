@@ -185,7 +185,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }, log)
         }
         await flowRunSideEffects(log).onResume(flowRunToResume)
-        return null
+        return flowRunToResume
     },
     updateRunStatusAsync({ flowRunId, status }: UpdateRunStatusParams): void {
         rejectedPromiseHandler(flowRunRepo().update(flowRunId, { status }), log)
@@ -378,7 +378,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                         environment: flowRun.environment,
                         flowVersionId: flowRun.flowVersionId,
                     },
-                    delay: Math.max(0, dayjs(pauseMetadata.resumeDateTime).diff(dayjs(), 'ms')),
+                    // 30 seconds so the first job is marked as completed
+                    delay: Math.max(30*1000, dayjs(pauseMetadata.resumeDateTime).diff(dayjs(), 'ms')),
                 })
                 break
             }
