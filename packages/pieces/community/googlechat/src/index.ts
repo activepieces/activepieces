@@ -17,7 +17,7 @@ export const googlechat = createPiece({
   description: 'Google Chat is a messaging app that allows you to send and receive messages, create spaces, and more.',
   logoUrl: 'https://cdn.activepieces.com/pieces/googlechat.png',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ["gs03-dev"],
+  authors: ["gs03-dev", "onyedikachi-david"],
   actions: [
     sendAMessage,
     getDirectMessageDetails,
