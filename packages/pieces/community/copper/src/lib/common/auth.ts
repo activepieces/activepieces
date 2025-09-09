@@ -1,4 +1,4 @@
-import { PieceAuth } from "@activepieces/pieces-framework";
+import { PieceAuth, Property } from "@activepieces/pieces-framework";
 
 export const copperAuth = PieceAuth.CustomAuth({
   description: `
@@ -18,7 +18,7 @@ export const copperAuth = PieceAuth.CustomAuth({
       description: "Your Copper API key",
       required: true,
     }),
-    userEmail: PieceAuth.SecretText({
+    userEmail: Property.ShortText({
       displayName: "User Email",
       description: "The email address of the user who generated the API key",
       required: true,
