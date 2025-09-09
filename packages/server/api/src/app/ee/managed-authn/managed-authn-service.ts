@@ -20,7 +20,6 @@ import { projectService } from '../../project/project-service'
 import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import { userService } from '../../user/user-service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
-import { projectLimitsService } from '../projects/project-plan/project-plan.service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
 
 export const managedAuthnService = (log: FastifyBaseLogger) => ({
@@ -108,22 +107,6 @@ const updateProjectLimits = async (
     { platformId, projectId, piecesTags, piecesFilterType, tasks, aiCredits, log, isNewProject }:
     UpdateProjectLimitsParams,
 ): Promise<void> => {
-    const pieces = await getPiecesList({
-        platformId,
-        projectId,
-        piecesTags,
-        piecesFilterType,
-    })
-    const includedTasks = isNewProject ? (tasks ?? 1000) : tasks
-    const aiCreditsLimit = isNewProject ? (aiCredits ?? 200) : aiCredits
-    await projectLimitsService(log).upsert({
-        nickname: 'default-embeddings-limit',
-        tasks: includedTasks,
-        aiCredits: aiCreditsLimit,
-
-        pieces,
-        piecesFilterType,
-    }, projectId)
 }
 
 const getOrCreateUser = async (

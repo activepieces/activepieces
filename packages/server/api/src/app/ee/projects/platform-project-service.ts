@@ -7,7 +7,7 @@ import {
     Cursor,
     ErrorCode,
     FlowStatus,
-    isNil,
+    PiecesFilterType,
     PlatformId,
     Project,
     ProjectId,
@@ -25,7 +25,6 @@ import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
-import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -33,7 +32,6 @@ import { platformPlanService } from '../platform/platform-plan/platform-plan.ser
 import { platformUsageService } from '../platform/platform-usage-service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
 import { ProjectMemberEntity } from './project-members/project-member.entity'
-import { projectLimitsService } from './project-plan/project-plan.service'
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
@@ -58,21 +56,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         request,
     }: UpdateParams): Promise<ProjectWithLimits> {
         await projectService.update(projectId, request)
-        if (!isNil(request.plan)) {
-            const project = await projectService.getOneOrThrow(projectId)
-            const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
-            if (platform.plan.manageProjectsEnabled) {
-                await projectLimitsService(log).upsert(
-                    {
-                        ...spreadIfDefined('pieces', request.plan.pieces),
-                        ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
-                        tasks: request.plan.tasks ?? null,
-                        aiCredits: request.plan.aiCredits ?? null,
-                    },
-                    projectId,
-                )
-            }
-        }
+        
         return this.getWithPlanAndUsageOrThrow(projectId)
     },
     async getWithPlanAndUsageOrThrow(
@@ -198,9 +182,18 @@ async function enrichProject(
     const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'ai_credits', startDate, endDate })
     return {
         ...project,
-        plan: await projectLimitsService(log).getPlanWithPlatformLimits(
-            project.id,
-        ),
+        plan: {
+            id: 'id',
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            projectId: project.id,
+            name: 'name',
+            aiCredits: 0,
+            locked: false,
+            pieces: [],
+            piecesFilterType: PiecesFilterType.NONE,
+            tasks: 0,
+        },
         usage: {
             aiCredits: projectAICreditUsage,
             tasks: projectTasksUsage,

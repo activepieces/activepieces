@@ -1,12 +1,11 @@
 import { Writable } from 'stream'
 import { AI_USAGE_AGENT_ID_HEADER, AI_USAGE_FEATURE_HEADER, AI_USAGE_MCP_ID_HEADER, AIUsageFeature, AIUsageMetadata, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/common-ai'
 import { exceptionHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PrincipalType } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { platformUsageService } from '../ee/platform/platform-usage-service'
-import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { aiProviderController } from './ai-provider-controller'
 import { aiProviderService } from './ai-provider-service'
 import { StreamingParser, Usage } from './providers/types'
@@ -139,18 +138,6 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
 
             const provider = (request.params as { provider: string }).provider
             aiProviderService.validateRequest(provider, request)
-
-            const projectId = request.principal.projectId
-            const videoModelRequestCost = aiProviderService.getVideoModelCost({ provider, request })
-            const exceededLimit = await projectLimitsService(request.log).checkAICreditsExceededLimit({ projectId, requestCostBeforeFiring: videoModelRequestCost })
-            if (exceededLimit) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.QUOTA_EXCEEDED,
-                    params: {
-                        metric: PlatformUsageMetric.AI_CREDITS,
-                    },
-                })
-            }
            
 
             const userPlatformId = request.principal.platform.id

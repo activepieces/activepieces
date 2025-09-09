@@ -2,7 +2,6 @@ import { ApEdition, FilteredPieceBehavior, isNil, PiecesFilterType, Platform } f
 import { system } from '../../../helper/system/system'
 import { PieceMetadataSchema } from '../../../pieces/piece-metadata-entity'
 import { platformService } from '../../../platform/platform.service'
-import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 
 export const enterpriseFilteringUtils = {
     async filter(params: FilterParams): Promise<PieceMetadataSchema[]> {
@@ -52,19 +51,7 @@ async function filterBasedOnProject(
     projectId: string,
     pieces: PieceMetadataSchema[],
 ): Promise<PieceMetadataSchema[]> {
-    const { pieces: allowedPieces, piecesFilterType } = await projectLimitsService(system.globalLogger()).getOrCreateDefaultPlan(projectId)
-
-    const filterPredicate: Record<
-    PiecesFilterType,
-    (p: PieceMetadataSchema) => boolean
-    > = {
-        [PiecesFilterType.NONE]: () => true,
-        [PiecesFilterType.ALLOWED]: (p) =>
-            allowedPieces.includes(p.name),
-    }
-
-    const predicate = filterPredicate[piecesFilterType]
-    return pieces.slice().filter(predicate)
+    return pieces
 }
 
 /*

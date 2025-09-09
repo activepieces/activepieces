@@ -6,7 +6,6 @@ import { flowService } from '../../../flows/flow/flow.service'
 import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
-import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 
@@ -52,14 +51,10 @@ export const PROJECT_PRICE_IDS = [
 
 export const PlatformPlanHelper = {
     checkQuotaOrThrow: async (params: QuotaCheckParams): Promise<void> => {
-        const { platformId, projectId, metric } = params
+        const { platformId, metric } = params
 
         if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)) {
             return
-        }
-
-        if (!isNil(projectId)) {
-            await projectLimitsService(system.globalLogger()).ensureProjectUnlockedAndGetPlatformPlan(projectId)
         }
 
         const plan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
@@ -234,17 +229,7 @@ function getPriceIdFor(price: PRICE_NAMES): Record<BillingCycle, string> {
 }
 
 async function handleProjects(projectIds: string[], currentUsage: number, newLimit?: number | null): Promise<void> {
-    if (isNil(newLimit)) return 
-
-    if (currentUsage > newLimit) {
-        const projectsToLock = projectIds.slice(newLimit)
-        const lockProjects = projectsToLock.map(id => projectLimitsService(system.globalLogger()).upsert({ locked: true }, id))
-        await Promise.all(lockProjects)
-        return
-    }
-
-    const unlockProjects = projectIds.map(id => projectLimitsService(system.globalLogger()).upsert({ locked: false }, id))
-    await Promise.all(unlockProjects)
+    return
 }
 
 async function handleActiveFlows(

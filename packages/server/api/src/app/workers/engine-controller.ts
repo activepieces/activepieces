@@ -1,11 +1,10 @@
 import { apAxios, AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, NotifyFrontendRequest, PauseType, PlatformUsageMetric, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
-import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
@@ -188,15 +187,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         if (edition === ApEdition.COMMUNITY) {
             return {}
         }
-        const exceededLimit = await projectLimitsService(request.log).checkTasksExceededLimit(request.principal.projectId)
-        if (exceededLimit) {
-            throw new ActivepiecesError({
-                code: ErrorCode.QUOTA_EXCEEDED,
-                params: {
-                    metric: PlatformUsageMetric.TASKS,
-                },
-            })
-        }
+
         return {}
     })
 
