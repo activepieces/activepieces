@@ -97,6 +97,32 @@ export const githubCommon = {
         };
       },
     }),
+  branchDropdown: (p0: boolean) =>
+    Property.Dropdown<string>({
+      displayName: 'Branch',
+      description: 'Select a branch',
+      required: true,
+      refreshers: ['repository'],
+      options: async ({ auth, repository }) => {
+        if (!auth || !repository) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'please authenticate first and select repo',
+          };
+        }
+        const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+        const { owner, repo } = repository as RepositoryProp;
+        const branches = await getBranches(authProp, owner, repo);
+        return {
+          disabled: false,
+          options: branches.map((branch) => ({
+            label: branch.name,
+            value: branch.name,
+          })),
+        };
+      },
+    }),
 };
 
 async function getUserRepo(authProp: OAuth2PropertyValue) {
@@ -108,6 +134,18 @@ async function getUserRepo(authProp: OAuth2PropertyValue) {
     accessToken: authProp.access_token,
     method: HttpMethod.GET,
     resourceUri: '/user/repos',
+  });
+  return response;
+}
+async function getBranches(
+  authProp: OAuth2PropertyValue,
+  owner: string,
+  repo: string
+) {
+  const response = await githubPaginatedApiCall<{ name: string }>({
+    accessToken: authProp.access_token,
+    method: HttpMethod.GET,
+    resourceUri: `/repos/${owner}/${repo}/branches`,
   });
   return response;
 }

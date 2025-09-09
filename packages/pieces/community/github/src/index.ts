@@ -15,6 +15,13 @@ import { githubRawGraphqlQuery } from './lib/actions/raw-graphql-query';
 import { githubCreatePullRequestReviewCommentAction } from './lib/actions/create-pull-request-review-comment';
 import { githubCreateCommitCommentAction } from './lib/actions/create-commit-comment';
 import { githubCreateDiscussionCommentAction } from './lib/actions/create-discussion-comment';
+import { addLabelsToIssue } from './lib/actions/add-labels-to-issue';
+import { deleteBranch } from './lib/actions/delete-branch';
+import { findBranch } from './lib/actions/find-branch';
+import { findIssue } from './lib/actions/find-issue';
+import { findUser } from './lib/actions/find-user';
+import { updateIssue } from './lib/actions/update-issue';
+import { createBranch } from './lib/actions/create-branch';
 
 export const githubAuth = PieceAuth.OAuth2({
   required: true,
@@ -33,6 +40,13 @@ export const github = createPiece({
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: githubAuth,
   actions: [
+    addLabelsToIssue,
+    createBranch,
+    deleteBranch,
+    findBranch,
+    findIssue,
+    findUser,
+    updateIssue,
     githubCreateIssueAction,
     githubGetIssueInformation,
     githubCreateCommentOnAIssue,
