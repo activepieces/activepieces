@@ -10,7 +10,7 @@ export const githubDeleteBranchAction = createAction({
   description: 'Deletes a branch from a repository.',
   props: {
     repository: githubCommon.repositoryDropdown,
-    branch: githubCommon.branchDropdown(),
+    branch: githubCommon.branchDropdown('Branch', '', true),
   },
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue.repository!;
@@ -19,10 +19,10 @@ export const githubDeleteBranchAction = createAction({
     const response = await githubApiCall({
       accessToken: auth.access_token,
       method: HttpMethod.DELETE,
-   
+
       resourceUri: `/repos/${owner}/${repo}/git/refs/heads/${branchName}`,
     });
 
-    return response.body;
+    return response;
   },
 });

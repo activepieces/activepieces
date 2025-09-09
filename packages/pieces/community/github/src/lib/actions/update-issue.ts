@@ -13,13 +13,10 @@ export const githubUpdateIssueAction = createAction({
     issue_number: githubCommon.issueDropdown(),
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The new title for the issue. Leave blank to keep unchanged.',
       required: false,
     }),
     body: Property.LongText({
       displayName: 'Body',
-      description:
-        'The new contents of the issue body. Leave blank to keep unchanged.',
       required: false,
     }),
     state: Property.StaticDropdown({
@@ -43,7 +40,7 @@ export const githubUpdateIssueAction = createAction({
           { label: 'Completed', value: 'completed' },
           { label: 'Not Planned', value: 'not_planned' },
           { label: 'Reopened', value: 'reopened' },
-          { label: 'Duplicate', value: 'duplicate'},
+          { label: 'Duplicate', value: 'duplicate' },
         ],
       },
     }),
@@ -54,15 +51,17 @@ export const githubUpdateIssueAction = createAction({
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue.repository!;
 
-    
     const body: Record<string, unknown> = {};
     if (propsValue.title !== undefined) body.title = propsValue.title;
     if (propsValue.body !== undefined) body.body = propsValue.body;
     if (propsValue.state !== undefined) body.state = propsValue.state;
-    if (propsValue.state_reason !== undefined) body.state_reason = propsValue.state_reason;
-    if (propsValue.assignees !== undefined) body.assignees = propsValue.assignees;
+    if (propsValue.state_reason !== undefined)
+      body.state_reason = propsValue.state_reason;
+    if (propsValue.assignees !== undefined)
+      body.assignees = propsValue.assignees;
     if (propsValue.labels !== undefined) body.labels = propsValue.labels;
-    if (propsValue.milestone !== undefined) body.milestone = propsValue.milestone;
+    if (propsValue.milestone !== undefined)
+      body.milestone = propsValue.milestone;
 
     const response = await githubApiCall({
       accessToken: auth.access_token,
@@ -71,6 +70,6 @@ export const githubUpdateIssueAction = createAction({
       body: body,
     });
 
-    return response.body;
+    return response;
   },
 });

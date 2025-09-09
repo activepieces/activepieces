@@ -13,30 +13,30 @@ export const newMilestoneTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_milestone',
   displayName: 'New Milestone',
-  description: 'Fires when a new milestone is created.',
+  description: 'Triggers when a new milestone is created.',
   props: {
     repository: githubCommon.repositoryDropdown,
   },
   sampleData: {
-    "action": "created",
-    "milestone": {
-      "url": "https://api.github.com/repos/octocat/Hello-World/milestones/1",
-      "html_url": "https://github.com/octocat/Hello-World/milestones/v1.0",
-      "id": 1002604,
-      "number": 1,
-      "title": "v1.0",
-      "description": "Tracking milestone for version 1.0",
-      "creator": { "login": "octocat" },
-      "open_issues": 0,
-      "closed_issues": 0,
-      "state": "open",
-      "created_at": "2011-04-10T20:09:31Z",
-      "updated_at": "2011-04-10T20:09:31Z",
-      "due_on": "2012-10-09T23:39:01Z",
-      "closed_at": null
+    action: 'created',
+    milestone: {
+      url: 'https://api.github.com/repos/octocat/Hello-World/milestones/1',
+      html_url: 'https://github.com/octocat/Hello-World/milestones/v1.0',
+      id: 1002604,
+      number: 1,
+      title: 'v1.0',
+      description: 'Tracking milestone for version 1.0',
+      creator: { login: 'octocat' },
+      open_issues: 0,
+      closed_issues: 0,
+      state: 'open',
+      created_at: '2011-04-10T20:09:31Z',
+      updated_at: '2011-04-10T20:09:31Z',
+      due_on: '2012-10-09T23:39:01Z',
+      closed_at: null,
     },
-    "repository": { "full_name": "octocat/Hello-World" },
-    "sender": { "login": "octocat" }
+    repository: { full_name: 'octocat/Hello-World' },
+    sender: { login: 'octocat' },
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -58,11 +58,14 @@ export const newMilestoneTrigger = createTrigger({
       },
     });
 
-    await context.store.put<WebhookInformation>('github_new_milestone_trigger', {
-      webhookId: response.body.id,
-      repo: repo,
-      owner: owner,
-    });
+    await context.store.put<WebhookInformation>(
+      'github_new_milestone_trigger',
+      {
+        webhookId: response.body.id,
+        repo: repo,
+        owner: owner,
+      }
+    );
   },
   async onDisable(context) {
     const webhook = await context.store.get<WebhookInformation>(

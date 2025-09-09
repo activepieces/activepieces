@@ -68,16 +68,16 @@ export const githubCommon = {
           options: milestones.map((milestone) => {
             return {
               label: milestone.title,
-              value: milestone.number, // The API requires the milestone number
+              value: milestone.number,
             };
           }),
         };
       },
     }),
-   branchDropdown: (required = true) =>
+  branchDropdown: (displayName: string, desc: string, required = true) =>
     Property.Dropdown({
-      displayName: 'Branch',
-      description: 'The name of the branch.',
+      displayName,
+      description: desc,
       required,
       refreshers: ['repository'],
       options: async ({ auth, repository }) => {
@@ -106,7 +106,7 @@ export const githubCommon = {
       },
     }),
 
-   issueDropdown: (required = true) =>
+  issueDropdown: (required = true) =>
     Property.Dropdown({
       displayName: 'Issue',
       description: 'The issue to select.',
@@ -125,6 +125,7 @@ export const githubCommon = {
         const issues = await githubPaginatedApiCall<{
           number: number;
           title: string;
+          pull_request?: Record<string, any>;
         }>({
           accessToken: (auth as OAuth2PropertyValue).access_token,
           method: HttpMethod.GET,
@@ -135,17 +136,19 @@ export const githubCommon = {
         });
         return {
           disabled: false,
-          options: issues.map((issue) => {
-            return {
-              label: `#${issue.number} - ${issue.title}`,
-              value: issue.number, // The API requires the issue number
-            };
-          }),
+          options: issues
+            .filter((issue) => !issue.pull_request)
+            .map((issue) => {
+              return {
+                label: `#${issue.number} - ${issue.title}`,
+                value: issue.number,
+              };
+            }),
         };
       },
     }),
 
-    assigneeSingleDropdown: (required = false) =>
+  assigneeSingleDropdown: (required = false) =>
     Property.Dropdown({
       displayName: 'Assignee',
       description: 'Filter issues by a specific assignee.',

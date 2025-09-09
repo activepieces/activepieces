@@ -13,26 +13,26 @@ export const newReleaseTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_release',
   displayName: 'New Release',
-  description: 'Fires when a new release is published.',
+  description: 'Triggers when a new release is added.',
   props: {
     repository: githubCommon.repositoryDropdown,
   },
   sampleData: {
-    "action": "published",
-    "release": {
-      "url": "https://api.github.com/repos/octocat/Hello-World/releases/1",
-      "html_url": "https://github.com/octocat/Hello-World/releases/v1.0.0",
-      "id": 1,
-      "tag_name": "v1.0.0",
-      "target_commitish": "master",
-      "name": "v1.0.0",
-      "body": "Description of the release",
-      "draft": false,
-      "prerelease": false,
-      "author": { "login": "octocat" }
+    action: 'published',
+    release: {
+      url: 'https://api.github.com/repos/octocat/Hello-World/releases/1',
+      html_url: 'https://github.com/octocat/Hello-World/releases/v1.0.0',
+      id: 1,
+      tag_name: 'v1.0.0',
+      target_commitish: 'master',
+      name: 'v1.0.0',
+      body: 'Description of the release',
+      draft: false,
+      prerelease: false,
+      author: { login: 'octocat' },
     },
-    "repository": { "full_name": "octocat/Hello-World" },
-    "sender": { "login": "octocat" }
+    repository: { full_name: 'octocat/Hello-World' },
+    sender: { login: 'octocat' },
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -45,7 +45,7 @@ export const newReleaseTrigger = createTrigger({
       body: {
         name: 'web',
         active: true,
-        events: ['release'], 
+        events: ['release'],
         config: {
           url: context.webhookUrl,
           content_type: 'json',
@@ -75,8 +75,7 @@ export const newReleaseTrigger = createTrigger({
   async run(context) {
     const payload = context.payload.body as { action?: string };
 
-
-    if (payload.action === 'published') {
+    if (payload.action === 'created') {
       return [context.payload.body];
     }
 

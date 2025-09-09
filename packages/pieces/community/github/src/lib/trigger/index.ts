@@ -5,7 +5,6 @@ import { newCollaboratorTrigger } from './new-collaborator';
 import { newLabelTrigger } from './new-label';
 import { newMilestoneTrigger } from './new-milestone';
 import { newReleaseTrigger } from './new-release';
-import { newRepositoryTrigger } from './new-repository';
 
 export enum GithubEventType {
   PULL_REQUEST = 'pull_request',
@@ -1473,5 +1472,4 @@ export const githubTriggers: Trigger[] = [
   newLabelTrigger,
   newMilestoneTrigger,
   newReleaseTrigger,
-  newRepositoryTrigger,
 ];

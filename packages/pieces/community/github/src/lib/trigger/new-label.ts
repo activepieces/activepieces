@@ -13,27 +13,27 @@ export const newLabelTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_label',
   displayName: 'New Label',
-  description: 'Fires when a new label is created in a repository.',
+  description: 'Triggers when a new label is created in a repository.',
   props: {
     repository: githubCommon.repositoryDropdown,
   },
   sampleData: {
-    "action": "created",
-    "label": {
-      "id": 4858888116,
-      "node_id": "LA_kwDOAnG2fM7ma3_Q",
-      "url": "https://api.github.com/repos/octocat/Hello-World/labels/new-label",
-      "name": "new-label",
-      "color": "f29513",
-      "default": false,
-      "description": "A new label for issues"
+    action: 'created',
+    label: {
+      id: 4858888116,
+      node_id: 'LA_kwDOAnG2fM7ma3_Q',
+      url: 'https://api.github.com/repos/octocat/Hello-World/labels/new-label',
+      name: 'new-label',
+      color: 'f29513',
+      default: false,
+      description: 'A new label for issues',
     },
-    "repository": {
-      "full_name": "octocat/Hello-World",
+    repository: {
+      full_name: 'octocat/Hello-World',
     },
-    "sender": {
-      "login": "octocat",
-    }
+    sender: {
+      login: 'octocat',
+    },
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -46,7 +46,7 @@ export const newLabelTrigger = createTrigger({
       body: {
         name: 'web',
         active: true,
-        events: ['label'], 
+        events: ['label'],
         config: {
           url: context.webhookUrl,
           content_type: 'json',
@@ -75,7 +75,6 @@ export const newLabelTrigger = createTrigger({
   },
   async run(context) {
     const payload = context.payload.body as { action?: string };
-
 
     if (payload.action === 'created') {
       return [context.payload.body];

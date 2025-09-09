@@ -1,19 +1,23 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubAuth } from '../../index';
-import { githubCommon, githubPaginatedApiCall, RequestParams } from '../common';
+import { githubApiCall, githubCommon, RequestParams } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const githubFindIssueAction = createAction({
   auth: githubAuth,
   name: 'find_issue',
   displayName: 'Find Issue',
-  description: 'Locate an issue by search filters (state, label, etc.).',
+  description: 'Finds an issue based title.',
   props: {
     repository: githubCommon.repositoryDropdown,
+    title: Property.ShortText({
+      displayName: 'Title',
+      required: true,
+    }),
     state: Property.StaticDropdown({
       displayName: 'State',
       description: 'Filter issues by their state.',
-      required: false,
+      required: true,
       options: {
         options: [
           { label: 'Open', value: 'open' },
@@ -22,41 +26,34 @@ export const githubFindIssueAction = createAction({
         ],
       },
     }),
-    labels: githubCommon.labelDropDown(false),
-    assignee: githubCommon.assigneeSingleDropdown(false),
-    creator: Property.ShortText({
-        displayName: 'Creator',
-        description: 'Filter issues created by this user (username).',
-        required: false,
-    }),
-    mentioned: Property.ShortText({
-        displayName: 'Mentioned User',
-        description: 'Filter issues that mention this user (username).',
-        required: false,
-    }),
   },
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue.repository!;
-
-
+    const { state, title } = propsValue;
     const query: RequestParams = {};
     if (propsValue.state) query.state = propsValue.state;
-    if (propsValue.assignee) query.assignee = propsValue.assignee;
-    if (propsValue.creator) query.creator = propsValue.creator;
-    if (propsValue.mentioned) query.mentioned = propsValue.mentioned;
-    if (propsValue.labels && propsValue.labels.length > 0) {
 
-      query.labels = propsValue.labels.join(',');
+    let q = `repo:${owner}/${repo} is:issue in:title`;
+    if (title) {
+      q += ` "${title}"`;
+    }
+    if (state && state !== 'all') {
+      q += ` state:${state}`;
     }
 
-    
-    const issues = await githubPaginatedApiCall({
+    const response = await githubApiCall<{
+      total_count: number;
+      items: Array<{ id: number }>;
+    }>({
       accessToken: auth.access_token,
       method: HttpMethod.GET,
-      resourceUri: `/repos/${owner}/${repo}/issues`,
-      query: query,
+      resourceUri: `/search/issues`,
+      query: { q, per_page: 1 },
     });
 
-    return issues;
+    return {
+      found: response.body.total_count > 0,
+      result: response.body.items,
+    };
   },
 });

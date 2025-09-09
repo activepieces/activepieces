@@ -13,29 +13,29 @@ export const newCollaboratorTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_collaborator',
   displayName: 'New Collaborator',
-  description: 'Fires when a new collaborator is added to a repository.',
+  description: 'Triggers when a new collaborator is added to a repository.',
   props: {
     repository: githubCommon.repositoryDropdown,
   },
   sampleData: {
-    "action": "added",
-    "member": {
-      "login": "octocat",
-      "id": 1,
-      "node_id": "MDQ6VXNlcjE=",
-      "avatar_url": "https://github.com/images/error/octocat_happy.gif",
-      "gravatar_id": "",
-      "url": "https://api.github.com/users/octocat",
-      "html_url": "https://github.com/octocat",
-      "type": "User",
-      "site_admin": false
+    action: 'added',
+    member: {
+      login: 'octocat',
+      id: 1,
+      node_id: 'MDQ6VXNlcjE=',
+      avatar_url: 'https://github.com/images/error/octocat_happy.gif',
+      gravatar_id: '',
+      url: 'https://api.github.com/users/octocat',
+      html_url: 'https://github.com/octocat',
+      type: 'User',
+      site_admin: false,
     },
-    "repository": {
-      "full_name": "octocat/Hello-World",
+    repository: {
+      full_name: 'octocat/Hello-World',
     },
-    "sender": {
-      "login": "admin-user",
-    }
+    sender: {
+      login: 'admin-user',
+    },
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -57,11 +57,14 @@ export const newCollaboratorTrigger = createTrigger({
       },
     });
 
-    await context.store.put<WebhookInformation>('github_new_collaborator_trigger', {
-      webhookId: response.body.id,
-      repo: repo,
-      owner: owner,
-    });
+    await context.store.put<WebhookInformation>(
+      'github_new_collaborator_trigger',
+      {
+        webhookId: response.body.id,
+        repo: repo,
+        owner: owner,
+      }
+    );
   },
   async onDisable(context) {
     const webhook = await context.store.get<WebhookInformation>(
@@ -77,7 +80,6 @@ export const newCollaboratorTrigger = createTrigger({
   },
   async run(context) {
     const payload = context.payload.body as { action?: string };
-
 
     if (payload.action === 'added') {
       return [context.payload.body];
