@@ -49,16 +49,37 @@ export const googleChatAPIService = {
     spaceId,
     text,
     thread,
+    messageReplyOption,
+    customMessageId,
+    isPrivate,
+    privateMessageViewer,
   }: {
     accessToken: string;
     spaceId: string;
     text: string;
     thread?: string;
+    messageReplyOption?: string;
+    customMessageId?: string;
+    isPrivate?: boolean;
+    privateMessageViewer?: string;
   }) {
     const body: any = { text };
 
     if (thread) {
       body.thread = { name: thread };
+    }
+
+    if (messageReplyOption) {
+      body.messageReplyOption = messageReplyOption;
+    }
+
+    if (customMessageId) {
+      const cleanId = customMessageId.toLowerCase().replace(/[^a-z0-9-]/g, '');
+      body.messageId = `client-${cleanId}`;
+    }
+
+    if (isPrivate && privateMessageViewer) {
+      body.privateMessageViewer = { name: privateMessageViewer };
     }
 
     return await fireHttpRequest({
@@ -156,6 +177,27 @@ export const googleChatAPIService = {
     });
 
     return response.spaces;
+  },
+  async fetchThreads(accessToken: string, spaceId: string) {
+    const response = await fireHttpRequest({
+      method: HttpMethod.GET,
+      path: `/v1/${spaceId}/messages?pageSize=50`,
+      entity: 'chat',
+      accessToken,
+    });
+
+    const threads = new Map();
+    response.messages?.forEach((message: any) => {
+      if (message.thread && message.thread.name && !message.threadReply) {
+        threads.set(message.thread.name, {
+          name: message.thread.name,
+          displayName: message.text?.substring(0, 50) + (message.text?.length > 50 ? '...' : ''),
+          lastActivity: message.createTime,
+        });
+      }
+    });
+
+    return Array.from(threads.values());
   },
   async fetchSpaceMembers(accessToken: string, spaceId: string) {
     const response = await fireHttpRequest({

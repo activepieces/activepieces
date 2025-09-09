@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleChatApiAuth } from '../common/constants';
+import { propsValidation } from '@activepieces/pieces-common';
+import { googleChatApiAuth, googleChatCommon } from '../common';
 import { allSpacesDropdown } from '../common/props';
 import { googleChatAPIService } from '../common/requests';
 
@@ -23,6 +24,8 @@ export const searchMessages = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, googleChatCommon.searchMessagesSchema);
+
     const { spaceId, keyword, limit } = propsValue;
 
     const response = await googleChatAPIService.listMessages(

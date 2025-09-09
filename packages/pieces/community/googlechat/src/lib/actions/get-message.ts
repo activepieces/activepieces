@@ -1,26 +1,28 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleChatApiAuth } from '../common/constants';
+import { propsValidation } from '@activepieces/pieces-common';
+import { googleChatApiAuth, googleChatCommon } from '../common';
 import { googleChatAPIService } from '../common/requests';
 
-export const getMessage = createAction({
+export const getMessageDetails = createAction({
   auth: googleChatApiAuth,
-  name: 'getMessage',
-  displayName: 'Get Message',
-  description: 'Retrieve details of message.',
+  name: 'getMessageDetails',
+  displayName: 'Get Message Details',
+  description: 'Retrieve details of a specific message by ID. Supports both system-generated and custom message IDs.',
   props: {
-    messageResourceName: Property.ShortText({
+    name: Property.ShortText({
       displayName: 'Message Resource Name',
-      description:
-        'The full resource name of the message, e.g. spaces/AAAAMpdlehY/messages/ABCDE12345',
+      description: 'The full resource name of the message. Format: spaces/{space}/messages/{message}',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
-    const { messageResourceName } = propsValue;
+    await propsValidation.validateZod(propsValue, googleChatCommon.getMessageSchema);
+
+    const { name } = propsValue;
 
     const message = await googleChatAPIService.getMessage(
       auth.access_token,
-      messageResourceName
+      name
     );
 
     return message;

@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleChatApiAuth } from '../common/constants';
+import { propsValidation } from '@activepieces/pieces-common';
+import { googleChatApiAuth, googleChatCommon } from '../common';
 import { directMessagesDropdown, spacesDropdown } from '../common/props';
 import { googleChatAPIService } from '../common/requests';
 
@@ -12,6 +13,8 @@ export const getDirectMessageDetails = createAction({
     directMessageId: directMessagesDropdown({ refreshers: ['auth'], required: true }),
   },
   async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, googleChatCommon.getDirectMessageDetailsSchema);
+
     const { directMessageId } = propsValue;
 
     const response = await googleChatAPIService.getSpace({

@@ -1,5 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { googleChatApiAuth } from '../common/constants';
+import { propsValidation } from '@activepieces/pieces-common';
+import { googleChatApiAuth, googleChatCommon } from '../common';
 import { projectsDropdown, spacesDropdown, spacesMembersDropdown } from '../common/props';
 import { googleChatAPIService } from '../common/requests';
 
@@ -16,6 +17,8 @@ export const newMention = createTrigger({
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable({ auth, propsValue, webhookUrl, store }) {
+    await propsValidation.validateZod(propsValue, googleChatCommon.newMentionTriggerSchema);
+
     const { projectId, spaceId } = propsValue;
     const accessToken = auth.access_token;
 

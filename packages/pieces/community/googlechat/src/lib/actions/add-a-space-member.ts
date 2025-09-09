@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleChatApiAuth } from '../common/constants';
+import { propsValidation } from '@activepieces/pieces-common';
+import { googleChatApiAuth, googleChatCommon } from '../common';
 import { peoplesDropdown, spacesDropdown, spacesMembersDropdown } from '../common/props';
 import { googleChatAPIService } from '../common/requests';
 
@@ -13,10 +14,12 @@ export const addASpaceMember = createAction({
     personId: peoplesDropdown(['auth']),
   },
   async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, googleChatCommon.addSpaceMemberSchema);
+
     const { spaceId, personId } = propsValue;
 
     const userId = (personId as string).replace('people', 'users');
-    
+
     const response = await googleChatAPIService.AddASpaceMember({
       accessToken: auth.access_token,
       spaceId: spaceId as string,

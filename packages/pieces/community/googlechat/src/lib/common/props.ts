@@ -258,3 +258,67 @@ export const peoplesDropdown = (refreshers: string[]) =>
       }
     },
   });
+
+export const threadsDropdown = ({
+  refreshers,
+  required = false,
+}: {
+  refreshers: string[];
+  required?: boolean;
+}) =>
+  Property.Dropdown({
+    displayName: 'Thread',
+    description: `Select a thread to reply to${required ? '' : ', leave empty for new thread'}`,
+    required,
+    refreshers,
+    async options({ auth, spaceId }: any) {
+      if (!auth) {
+        return {
+          disabled: true,
+          placeholder: 'Connect your Google account first',
+          options: [],
+        };
+      }
+
+      if (!spaceId) {
+        return {
+          disabled: true,
+          placeholder: 'Please select a space first',
+          options: [],
+        };
+      }
+
+      if (!spaceId.startsWith('spaces/')) {
+        return {
+          disabled: true,
+          placeholder: 'Invalid space ID format. Please select a valid space.',
+          options: [],
+        };
+      }
+
+      try {
+        const threads = await googleChatAPIService.fetchThreads(
+          auth.access_token,
+          spaceId
+        );
+
+        const options = threads.map((thread: any) => ({
+          label: thread.displayName || thread.name,
+          value: thread.name,
+        }));
+
+        options.unshift({
+          label: 'Start new thread',
+          value: '',
+        });
+
+        return { options };
+      } catch (e) {
+        console.error('Failed to fetch threads', e);
+        return {
+          options: [],
+          placeholder: 'Unable to load threads',
+        };
+      }
+    },
+  });
