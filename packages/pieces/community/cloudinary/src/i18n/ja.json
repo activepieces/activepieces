@@ -1,5 +1,4 @@
 {
-  "Cloudinary": "Clodinary",
   "Cloudinary is a cloud-based image and video management platform that allows you to upload, store, manage, and deliver your media assets. It provides a range of features for image and video optimization, transformation, and delivery.": "Clodinaryは、メディア資産のアップロード、保存、管理、および配信を可能にするクラウドベースの画像およびビデオ管理プラットフォームです。 画像とビデオの最適化、変換、配信のためのさまざまな機能を提供します。",
   "API Key": "API キー",
   "API Secret": "APIシークレット",

@@ -1,5 +1,4 @@
 {
-  "Hugging Face": "抱きしめる顔",
   "Run inference on 100,000+ open ML models for NLP, vision, and audio tasks": "NLP、ビジョン、およびオーディオタスクの100,000以上のオープンMLモデルで推論を実行する",
   "Your Hugging Face API token (get it from https://huggingface.co/settings/tokens)": "Hugging Face API トークン (https://huggingface.co/settings/tokensから入手)",
   "Document Question Answering": "質問への回答をドキュメント",

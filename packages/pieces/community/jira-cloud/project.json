@@ -24,6 +24,32 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
+      },
+      "dependsOn": ["prebuild", "^build"]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/jira-cloud",
+        "command": "npm ci"
+      }
+    },
+    "build-with-deps": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run pieces-jira-cloud:prebuild",
+          "nx run pieces-jira-cloud:build",
+          "nx run pieces-jira-cloud:postbuild"
+        ],
+        "parallel": false
+      }
+    },
+    "postbuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "dist/packages/pieces/community/jira-cloud",
+        "command": "npm install"
       }
     },
     "publish": {
@@ -37,6 +63,13 @@
       "outputs": [
         "{options.outputFile}"
       ]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/pieces/community/jira-cloud/jest.config.ts"
+      }
     }
   },
   "tags": []
