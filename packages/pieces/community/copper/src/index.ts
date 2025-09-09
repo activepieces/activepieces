@@ -20,6 +20,17 @@ import { searchLead } from './lib/actions/search-for-a-lead';
 import { searchCompany } from './lib/actions/search-for-a-company';
 import { searchOpportunity } from './lib/actions/search-for-a-opportunity';
 import { searchProject } from './lib/actions/search-for-a-project';
+import { newActivity } from './lib/triggers/new-activity';
+import { newPerson } from './lib/triggers/new-person';
+import { newLead } from './lib/triggers/new-lead';
+import { newTask } from './lib/triggers/new-task';
+import { updatedLead } from './lib/triggers/updated-lead';
+import { updatedTask } from './lib/triggers/updated-task';
+import { updatedOpportunity } from './lib/triggers/updated-opportunity';
+import { updatedOpportunityStatus } from './lib/triggers/updated-opportunity-status';
+import { updatedOpportunityStage } from './lib/triggers/updated-opportunity-stage';
+import { updatedProject } from './lib/triggers/updated-project';
+import { updatedLeadStatus } from './lib/triggers/updated-lead-status';
 
 export const copper = createPiece({
   displayName: "Copper",
@@ -56,5 +67,17 @@ export const copper = createPiece({
       }),
     }),
   ],
-  triggers: [],
+  triggers: [
+    newActivity,
+    newPerson,
+    newLead,
+    newTask,
+    updatedLead,
+    updatedTask,
+    updatedOpportunity,
+    updatedOpportunityStatus,
+    updatedOpportunityStage,
+    updatedProject,
+    updatedLeadStatus,
+  ],
 });
