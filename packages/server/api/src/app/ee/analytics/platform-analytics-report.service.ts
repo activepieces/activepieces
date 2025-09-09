@@ -1,8 +1,6 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
 import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, apId, flowPieceUtil, FlowStatus, isNil, PieceCategory, PlatformAnalyticsReport, PlatformId, PopulatedFlow, ProjectId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { In, MoreThan } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
@@ -11,7 +9,6 @@ import { distributedLock } from '../../helper/lock'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
 import { userRepo } from '../../user/user-service'
-import { auditLogRepo } from '../audit-logs/audit-event-service'
 import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entity'
 export const platformAnalyticsReportRepo = repoFactory(PlatformAnalyticsReportEntity)
 export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
@@ -168,16 +165,7 @@ async function analyzeUsers(platformId: PlatformId) {
         platformId,
     })
     const activeUsersPromises = users.map(async (user) => {
-        const lastLoggined = await auditLogRepo().createQueryBuilder('audit_event')
-            .where('audit_event."userId" = :userId', { userId: user.id })
-            .andWhere({
-                action: In([ApplicationEventName.USER_SIGNED_IN, ApplicationEventName.USER_SIGNED_UP]),
-            })
-            .andWhere({
-                created: MoreThan(dayjs().subtract(1, 'month').toISOString()),
-            })
-            .getCount()
-        return lastLoggined > 0
+        return true
     })
 
     const activeUsersResults = await Promise.all(activeUsersPromises)

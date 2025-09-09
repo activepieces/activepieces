@@ -1,5 +1,4 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
@@ -11,7 +10,6 @@ import {
 } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { eventsHooks } from '../helper/application-events'
 import { system } from '../helper/system/system'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
@@ -29,18 +27,6 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
             platformId: platformId ?? null,
         })
 
-        eventsHooks.get(request.log).sendUserEvent({
-            platformId: signUpResponse.platformId!,
-            userId: signUpResponse.id,
-            projectId: signUpResponse.projectId,
-            ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_UP,
-            data: {
-                source: 'credentials',
-            },
-        })
-
         return signUpResponse
     })
 
@@ -55,15 +41,6 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
 
         const responsePlatformId = response.platformId
         assertNotNullOrUndefined(responsePlatformId, 'Platform ID is required')
-        eventsHooks.get(request.log).sendUserEvent({
-            platformId: responsePlatformId,
-            userId: response.id,
-            projectId: response.projectId,
-            ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_IN,
-            data: {},
-        })
 
         return response
     })

@@ -1,4 +1,3 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
 import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -12,7 +11,6 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { eventsHooks } from '../../helper/application-events'
 import { jobQueue } from '../../workers/queue'
 import { JOB_PRIORITY } from '../../workers/queue/queue-manager'
 import { flowRunHooks } from './flow-run-hooks'
@@ -55,12 +53,6 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
             return
         }
         await flowRunHooks(log).onFinish(flowRun)
-        eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
-            action: ApplicationEventName.FLOW_RUN_FINISHED,
-            data: {
-                flowRun,
-            },
-        })
     },
     async start({
         flowRun,
@@ -96,12 +88,6 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                 progressUpdateType,
                 stepNameToTest,
                 sampleData,
-            },
-        })
-        eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
-            action: ApplicationEventName.FLOW_RUN_STARTED,
-            data: {
-                flowRun,
             },
         })
     },

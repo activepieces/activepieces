@@ -47,7 +47,6 @@ import TriggerHealthPage from '../routes/platform/infra/triggers';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
 import ProjectsPage from '../routes/platform/projects';
-import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
 import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
@@ -502,16 +501,6 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="API Keys">
           <ApiKeysPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/security/audit-logs',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="Audit Logs">
-          <AuditLogsPage />
         </PageTitle>
       </PlatformAdminContainer>
     ),

@@ -20,7 +20,6 @@ import { PlatformAnalyticsReportEntity } from '../ee/analytics/platform-analytic
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
-import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
 import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
@@ -124,7 +123,6 @@ function getEntities(): EntitySchema<unknown>[] {
                 ApiKeyEntity,
                 FlowTemplateEntity,
                 GitRepoEntity,
-                AuditEventEntity,
                 ProjectReleaseEntity,
                 PlatformAnalyticsReportEntity,
                 // CLOUD

@@ -1,8 +1,6 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
 import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { eventsHooks } from '../../../helper/application-events'
 import { platformService } from '../../../platform/platform.service'
 import { projectReleaseService } from './project-release.service'
 
@@ -34,12 +32,6 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
             log: req.log,
         })
 
-        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
-            action: ApplicationEventName.PROJECT_RELEASE_CREATED,
-            data: {
-                release,
-            },
-        })
         return release
     })
 

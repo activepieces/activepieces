@@ -1,7 +1,29 @@
-import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectReleaseEvent, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
+import {
+
+    GitRepoWithoutSensitiveData,
+    ProjectMember,
+} from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { AppSystemProp, exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, McpWithTools, ProjectRelease, ProjectWithLimits, spreadIfDefined, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
+import {
+    AppSystemProp,
+    exceptionHandler,
+    rejectedPromiseHandler,
+} from '@activepieces/server-shared'
+import {
+    ApEdition,
+    ApEnvironment,
+    AppConnectionWithoutSensitiveData,
+    Flow,
+    FlowRun,
+    FlowTemplate,
+    Folder,
+    McpWithTools,
+    ProjectRelease,
+    ProjectWithLimits,
+    spreadIfDefined,
+    UserInvitation,
+    UserWithMetaInformation,
+} from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
@@ -24,8 +46,6 @@ import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { appSumoModule } from './ee/appsumo/appsumo.module'
-import { auditEventModule } from './ee/audit-logs/audit-event-module'
-import { auditLogService } from './ee/audit-logs/audit-event-service'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import { otpModule } from './ee/authentication/otp/otp-module'
@@ -63,7 +83,6 @@ import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { issuesModule } from './flows/issues/issues-module'
-import { eventsHooks } from './helper/application-events'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { QueueMode, system } from './helper/system/system'
 import { systemJobsSchedule } from './helper/system-jobs'
@@ -91,8 +110,9 @@ import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
 
-export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
-
+export const setupApp = async (
+    app: FastifyInstance,
+): Promise<FastifyInstance> => {
     await app.register(swagger, {
         hideUntagged: true,
         openapi: {
@@ -111,25 +131,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     },
                 },
                 schemas: {
-                    [ApplicationEventName.FLOW_CREATED]: FlowCreatedEvent,
-                    [ApplicationEventName.FLOW_DELETED]: FlowDeletedEvent,
-                    [ApplicationEventName.CONNECTION_UPSERTED]: ConnectionEvent,
-                    [ApplicationEventName.CONNECTION_DELETED]: ConnectionEvent,
-                    [ApplicationEventName.FOLDER_CREATED]: FolderEvent,
-                    [ApplicationEventName.FOLDER_UPDATED]: FolderEvent,
-                    [ApplicationEventName.FOLDER_DELETED]: FolderEvent,
-                    [ApplicationEventName.FLOW_RUN_STARTED]: FlowRunEvent,
-                    [ApplicationEventName.FLOW_RUN_FINISHED]: FlowRunEvent,
-                    [ApplicationEventName.USER_SIGNED_UP]: SignUpEvent,
-                    [ApplicationEventName.USER_SIGNED_IN]: AuthenticationEvent,
-                    [ApplicationEventName.USER_PASSWORD_RESET]: AuthenticationEvent,
-                    [ApplicationEventName.USER_EMAIL_VERIFIED]: AuthenticationEvent,
-                    [ApplicationEventName.SIGNING_KEY_CREATED]: SigningKeyEvent,
-                    [ApplicationEventName.PROJECT_ROLE_CREATED]: ProjectRoleEvent,
-                    [ApplicationEventName.PROJECT_RELEASE_CREATED]: ProjectReleaseEvent,
                     'flow-template': FlowTemplate,
-                    'folder': Folder,
-                    'user': UserWithMetaInformation,
+                    folder: Folder,
+                    user: UserWithMetaInformation,
                     'user-invitation': UserInvitation,
                     'project-member': ProjectMember,
                     project: ProjectWithLimits,
@@ -140,7 +144,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     'git-repo': GitRepoWithoutSensitiveData,
                     'project-release': ProjectRelease,
                     'global-connection': AppConnectionWithoutSensitiveData,
-                    'mcp': McpWithTools,
+                    mcp: McpWithTools,
                 },
             },
             info: {
@@ -154,13 +158,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         },
     })
 
-
     await app.register(rateLimitModule)
 
-
     app.addHook('onResponse', async (request, reply) => {
-        // eslint-disable-next-line
-        reply.header('x-request-id', request.id)
+    // eslint-disable-next-line
+    reply.header('x-request-id', request.id);
     })
     app.addHook('onRequest', async (request, reply) => {
         const route = app.hasRoute({
@@ -191,8 +193,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(openapiModule)
     await app.register(appEventRoutingModule)
     await app.register(authenticationModule)
-    await app.register(copilotModule),
-    await app.register(triggerModule)
+    await app.register(copilotModule), await app.register(triggerModule)
     await app.register(platformModule)
     await app.register(humanInputModule)
     await app.register(tagsModule)
@@ -213,7 +214,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(todoActivityModule)
     await app.register(agentRunsModule)
     await app.register(solutionsModule)
-    
+
     app.get(
         '/redirect',
         async (
@@ -251,15 +252,22 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             .catch(() => next(new Error('Authentication error')))
     })
 
-    app.io.on('connection', (socket: Socket) => rejectedPromiseHandler(websocketService.init(socket, app.log), app.log))
-    app.io.on('disconnect', (socket: Socket) => rejectedPromiseHandler(websocketService.onDisconnect(socket), app.log))
+    app.io.on('connection', (socket: Socket) =>
+        rejectedPromiseHandler(websocketService.init(socket, app.log), app.log),
+    )
+    app.io.on('disconnect', (socket: Socket) =>
+        rejectedPromiseHandler(websocketService.onDisconnect(socket), app.log),
+    )
 
     await validateEnvPropsOnStartup(app.log)
 
     const edition = system.getEdition()
-    app.log.info({
-        edition,
-    }, 'Activepieces Edition')
+    app.log.info(
+        {
+            edition,
+        },
+        'Activepieces Edition',
+    )
     switch (edition) {
         case ApEdition.CLOUD:
             await app.register(appCredentialModule)
@@ -281,16 +289,17 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(apiKeyModule)
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
-            await app.register(auditEventModule)
             await app.register(platformAnalyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
-            eventsHooks.set(auditLogService)
             flagHooks.set(enterpriseFlagsHooks)
-            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
+            systemJobHandlers.registerJobHandler(
+                SystemJobName.ISSUES_REMINDER,
+                emailService(app.log).sendReminderJobHandler,
+            )
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
@@ -309,15 +318,16 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(apiKeyModule)
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
-            await app.register(auditEventModule)
             await app.register(platformAnalyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
-            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
+            systemJobHandlers.registerJobHandler(
+                SystemJobName.ISSUES_REMINDER,
+                emailService(app.log).sendReminderJobHandler,
+            )
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
-            eventsHooks.set(auditLogService)
             flagHooks.set(enterpriseFlagsHooks)
             break
         case ApEdition.COMMUNITY:
@@ -337,8 +347,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     return app
 }
 
-
-
 async function getAdapter() {
     const queue = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
     switch (queue) {
@@ -353,9 +361,7 @@ async function getAdapter() {
     }
 }
 
-
 export async function appPostBoot(app: FastifyInstance): Promise<void> {
-
     app.log.info(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
     /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
@@ -364,7 +370,9 @@ export async function appPostBoot(app: FastifyInstance): Promise<void> {
  / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
-The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, as specified by the AP_FRONTEND_URL variables.`)
+The application started on ${await domainHelper.getPublicApiUrl({
+        path: '',
+    })}, as specified by the AP_FRONTEND_URL variables.`)
 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const piecesSource = system.getOrThrow(AppSystemProp.PIECES_SOURCE)

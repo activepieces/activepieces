@@ -1,5 +1,5 @@
 
-import { ApplicationEventName, GitPushOperationType } from '@activepieces/ee-shared'
+import { GitPushOperationType } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -37,7 +37,6 @@ import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/author
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
 import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
-import { eventsHooks } from '../../helper/application-events'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -49,13 +48,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         const newFlow = await flowService(request.log).create({
             projectId: request.principal.projectId,
             request: request.body,
-        })
-
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.FLOW_CREATED,
-            data: {
-                flow: newFlow,
-            },
         })
 
         return reply.status(StatusCodes.CREATED).send(newFlow)
@@ -82,13 +74,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             })
         }
         await assertThatFlowIsNotBeingUsed(flow, userId)
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.FLOW_UPDATED,
-            data: {
-                request: request.body,
-                flowVersion: flow.version,
-            },
-        })
         const updatedFlow = await flowService(request.log).update({
             id: request.params.id,
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
@@ -142,13 +127,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,
             projectId: request.principal.projectId,
-        })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.FLOW_DELETED,
-            data: {
-                flow,
-                flowVersion: flow.version,
-            },
         })
         await gitRepoService(request.log).onDeleted({
             type: GitPushOperationType.DELETE_FLOW,

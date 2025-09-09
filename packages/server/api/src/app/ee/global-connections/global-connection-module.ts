@@ -1,4 +1,3 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
     apId,
     ApId,
@@ -15,7 +14,6 @@ import {
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
-import { eventsHooks } from '../../helper/application-events'
 import { securityHelper } from '../../helper/security-helper'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
@@ -37,12 +35,6 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             pieceName: request.body.pieceName,
             ownerId: await securityHelper.getUserIdFromRequest(request),
             scope: AppConnectionScope.PLATFORM,
-        })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.CONNECTION_UPSERTED,
-            data: {
-                connection: appConnection,
-            },
         })
         await reply
             .status(StatusCodes.CREATED)
@@ -95,12 +87,6 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             platformId: request.principal.platform.id,
             scope: AppConnectionScope.PLATFORM,
             projectId: null,
-        })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.CONNECTION_DELETED,
-            data: {
-                connection,
-            },
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })

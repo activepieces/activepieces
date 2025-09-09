@@ -1,4 +1,3 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
     ApId,
     AppConnectionOwners,
@@ -19,7 +18,6 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { eventsHooks } from '../helper/application-events'
 import { securityHelper } from '../helper/security-helper'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
@@ -36,12 +34,6 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             ownerId: await securityHelper.getUserIdFromRequest(request),
             scope: AppConnectionScope.PROJECT,
             metadata: request.body.metadata,
-        })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.CONNECTION_UPSERTED,
-            data: {
-                connection: appConnection,
-            },
         })
         await reply
             .status(StatusCodes.CREATED)
@@ -111,17 +103,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
     })
 
     app.delete('/:id', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
-        const connection = await appConnectionService(request.log).getOneOrThrowWithoutValue({
-            id: request.params.id,
-            platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
-        })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.CONNECTION_DELETED,
-            data: {
-                connection,
-            },
-        })
+     
         await appConnectionService(request.log).delete({
             id: request.params.id,
             platformId: request.principal.platform.id,
