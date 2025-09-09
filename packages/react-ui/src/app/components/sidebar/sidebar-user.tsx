@@ -2,7 +2,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LogOut } from 'lucide-react';
 
-import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { SidebarMenu, SidebarMenuItem } from '@/components/ui/sidebar-shadcn';
 import {
@@ -15,10 +14,9 @@ import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 export function SidebarUser() {
-  const { embedState } = useEmbedding();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
-  if (!user || embedState.isEmbedded) {
+  if (!user) {
     return null;
   }
   return (

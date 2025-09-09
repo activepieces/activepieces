@@ -1,8 +1,7 @@
+import { CustomProperty as CustomPropertyType } from '@activepieces/pieces-framework';
 import { useEffect, useId } from 'react';
 
-import { useEmbedding } from '@/components/embed-provider';
 import { projectHooks } from '@/hooks/project-hooks';
-import { CustomProperty as CustomPropertyType } from '@activepieces/pieces-framework';
 const CUSTOM_PROPERTY_CONTAINER_ID = 'custom-property-container';
 
 type CustomPropertyParams = {
@@ -29,7 +28,6 @@ const CustomProperty = ({
   property,
 }: CustomPropertyParams) => {
   const { project } = projectHooks.useCurrentProject();
-  const { embedState } = useEmbedding();
   const id = useId();
   const containerId = CUSTOM_PROPERTY_CONTAINER_ID + '-' + id;
   useEffect(() => {
@@ -38,7 +36,6 @@ const CustomProperty = ({
         containerId,
         value,
         onChange,
-        isEmbedded: embedState.isEmbedded,
         projectId: project.id,
         disabled,
         property,

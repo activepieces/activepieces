@@ -10,7 +10,6 @@ import { flowsHooks } from './flows-hooks';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { BulkAction } from '@/components/ui/data-table';
 import { LoadingSpinner } from '@/components/ui/spinner';
@@ -36,7 +35,6 @@ export const useFlowsBulkActions = ({
   const userHasPermissionToWriteFolder = useAuthorization().checkAccess(
     Permission.WRITE_FOLDER,
   );
-  const { embedState } = useEmbedding();
   const { mutate: exportFlows, isPending: isExportPending } =
     flowsHooks.useExportFlows();
   return useMemo(() => {
@@ -45,9 +43,8 @@ export const useFlowsBulkActions = ({
         render: (_, resetSelection) => {
           return (
             <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-              {!embedState.hideFolders &&
-                (userHasPermissionToUpdateFlow ||
-                  userHasPermissionToWriteFolder) &&
+              {(userHasPermissionToUpdateFlow ||
+                userHasPermissionToWriteFolder) &&
                 selectedRows.length > 0 && (
                   <PermissionNeededTooltip
                     hasPermission={
@@ -133,7 +130,6 @@ export const useFlowsBulkActions = ({
     userHasPermissionToWriteFolder,
     selectedRows,
     refresh,
-    embedState.hideFolders,
     exportFlows,
     isExportPending,
     setRefresh,

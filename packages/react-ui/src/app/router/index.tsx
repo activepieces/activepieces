@@ -3,7 +3,6 @@ import {
   Navigate,
   RouterProvider,
   createBrowserRouter,
-  createMemoryRouter,
   useLocation,
 } from 'react-router-dom';
 
@@ -15,7 +14,6 @@ import NotFoundPage from '../routes/404-page';
 import { AgentsPage } from '../routes/agents';
 import AuthenticatePage from '../routes/authenticate';
 import { AppConnectionsPage } from '../routes/connections';
-import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
 import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { FormPage } from '../routes/forms';
@@ -50,7 +48,6 @@ import {
 
 import { PageTitle } from '@/app/components/page-title';
 import { ChatPage } from '@/app/routes/chat';
-import { EmbedPage } from '@/app/routes/embed';
 import AnalyticsPage from '@/app/routes/platform/analytics';
 import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
 import { SSOPage } from '@/app/routes/platform/security/sso';
@@ -58,7 +55,6 @@ import AIProvidersPage from '@/app/routes/platform/setup/ai';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
 import { RedirectPage } from '@/app/routes/redirect';
 import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
-import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { Error } from '@/features/billing/components/error';
 import { Success } from '@/features/billing/components/success';
@@ -74,14 +70,6 @@ const SettingsRerouter = () => {
 };
 
 const routes = [
-  {
-    path: '/embed',
-    element: <EmbedPage></EmbedPage>,
-  },
-  {
-    path: '/embed/connections',
-    element: <EmbeddedConnectionDialog></EmbeddedConnectionDialog>,
-  },
   {
     path: '/authenticate',
     element: <AuthenticatePage />,
@@ -537,13 +525,10 @@ const routes = [
   },
 ];
 
-export const memoryRouter = createMemoryRouter(routes);
 const browserRouter = createBrowserRouter(routes);
 
 const ApRouter = () => {
-  const { embedState } = useEmbedding();
-  const router = embedState.isEmbedded ? memoryRouter : browserRouter;
-  return <RouterProvider router={router}></RouterProvider>;
+  return <RouterProvider router={browserRouter}></RouterProvider>;
 };
 
 export { ApRouter };

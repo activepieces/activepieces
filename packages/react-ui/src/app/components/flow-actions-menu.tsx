@@ -23,7 +23,6 @@ import { flowsApi } from '../../features/flows/lib/flows-api';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { useEmbedding } from '@/components/embed-provider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,7 +71,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     insideBuilder: true,
     flowId: flow.id,
   };
-  const { embedState } = useEmbedding();
   const [open, setOpen] = useState(false);
 
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
@@ -154,51 +152,46 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           </>
         )}
 
-        {!embedState.hideFolders && (
-          <PermissionNeededTooltip
-            hasPermission={
-              userHasPermissionToUpdateFlow || userHasPermissionToWriteFolder
-            }
-          >
-            <MoveFlowDialog flows={[flow]} onMoveTo={onMoveTo}>
-              <DropdownMenuItem
-                disabled={
-                  !userHasPermissionToUpdateFlow ||
-                  !userHasPermissionToWriteFolder
-                }
-                onSelect={(e) => e.preventDefault()}
-              >
-                <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                  <CornerUpLeft className="h-4 w-4" />
-                  <span>{t('Move To')}</span>
-                </div>
-              </DropdownMenuItem>
-            </MoveFlowDialog>
-          </PermissionNeededTooltip>
-        )}
-        {!embedState.hideDuplicateFlow && (
-          <PermissionNeededTooltip
-            hasPermission={userHasPermissionToUpdateFlow}
-          >
+        <PermissionNeededTooltip
+          hasPermission={
+            userHasPermissionToUpdateFlow || userHasPermissionToWriteFolder
+          }
+        >
+          <MoveFlowDialog flows={[flow]} onMoveTo={onMoveTo}>
             <DropdownMenuItem
-              disabled={!userHasPermissionToUpdateFlow}
-              onClick={() => duplicateFlow()}
+              disabled={
+                !userHasPermissionToUpdateFlow ||
+                !userHasPermissionToWriteFolder
+              }
+              onSelect={(e) => e.preventDefault()}
             >
               <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                {isDuplicatePending ? (
-                  <LoadingSpinner />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-                <span>
-                  {isDuplicatePending ? t('Duplicating') : t('Duplicate')}
-                </span>
+                <CornerUpLeft className="h-4 w-4" />
+                <span>{t('Move To')}</span>
               </div>
             </DropdownMenuItem>
-          </PermissionNeededTooltip>
-        )}
+          </MoveFlowDialog>
+        </PermissionNeededTooltip>
 
-        {!readonly && insideBuilder && !embedState.hideExportAndImportFlow && (
+        <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFlow}>
+          <DropdownMenuItem
+            disabled={!userHasPermissionToUpdateFlow}
+            onClick={() => duplicateFlow()}
+          >
+            <div className="flex cursor-pointer  flex-row gap-2 items-center">
+              {isDuplicatePending ? (
+                <LoadingSpinner />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              <span>
+                {isDuplicatePending ? t('Duplicating') : t('Duplicate')}
+              </span>
+            </div>
+          </DropdownMenuItem>
+        </PermissionNeededTooltip>
+
+        {!readonly && insideBuilder && (
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}
           >
@@ -216,62 +209,57 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           </PermissionNeededTooltip>
         )}
 
-        {!embedState.hideExportAndImportFlow && (
-          <DropdownMenuItem onClick={() => exportFlow([flow])}>
+        <DropdownMenuItem onClick={() => exportFlow([flow])}>
+          <div className="flex cursor-pointer  flex-row gap-2 items-center">
+            {isExportPending ? (
+              <LoadingSpinner />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            <span>{isExportPending ? t('Exporting') : t('Export')}</span>
+          </div>
+        </DropdownMenuItem>
+
+        <ShareTemplateDialog flowId={flow.id} flowVersionId={flowVersion.id}>
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
             <div className="flex cursor-pointer  flex-row gap-2 items-center">
-              {isExportPending ? (
-                <LoadingSpinner />
-              ) : (
-                <Download className="h-4 w-4" />
-              )}
-              <span>{isExportPending ? t('Exporting') : t('Export')}</span>
+              <Share2 className="h-4 w-4" />
+              <span>{t('Share')}</span>
             </div>
           </DropdownMenuItem>
-        )}
-        {!embedState.isEmbedded && (
-          <ShareTemplateDialog flowId={flow.id} flowVersionId={flowVersion.id}>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                <Share2 className="h-4 w-4" />
-                <span>{t('Share')}</span>
-              </div>
-            </DropdownMenuItem>
-          </ShareTemplateDialog>
-        )}
-        {!readonly &&
-          (!embedState.isEmbedded ||
-            !embedState.disableNavigationInBuilder ||
-            !insideBuilder) && (
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToUpdateFlow}
+        </ShareTemplateDialog>
+
+        {!readonly && !insideBuilder && (
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToUpdateFlow}
+          >
+            <ConfirmationDeleteDialog
+              title={`${t('Delete')} ${flowVersion.displayName}`}
+              message={
+                <div>
+                  {t(
+                    'Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs.',
+                  )}
+                </div>
+              }
+              mutationFn={async () => {
+                await flowsApi.delete(flow.id);
+                onDelete();
+              }}
+              entityName={t('flow')}
             >
-              <ConfirmationDeleteDialog
-                title={`${t('Delete')} ${flowVersion.displayName}`}
-                message={
-                  <div>
-                    {t(
-                      'Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs.',
-                    )}
-                  </div>
-                }
-                mutationFn={async () => {
-                  await flowsApi.delete(flow.id);
-                  onDelete();
-                }}
-                entityName={t('flow')}
+              <DropdownMenuItem
+                disabled={!userHasPermissionToUpdateFlow}
+                onSelect={(e) => e.preventDefault()}
               >
-                <DropdownMenuItem
-                  disabled={!userHasPermissionToUpdateFlow}
-                  onSelect={(e) => e.preventDefault()}
-                >
-                  <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                    <span className="text-destructive">{t('Delete')}</span>
-                  </div>
-                </DropdownMenuItem>
-              </ConfirmationDeleteDialog>
-            </PermissionNeededTooltip>
-          )}
+                <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                  <span className="text-destructive">{t('Delete')}</span>
+                </div>
+              </DropdownMenuItem>
+            </ConfirmationDeleteDialog>
+          </PermissionNeededTooltip>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

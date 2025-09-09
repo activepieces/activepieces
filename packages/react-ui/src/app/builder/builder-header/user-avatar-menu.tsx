@@ -11,16 +11,14 @@ import {
 } from '../../../components/ui/dropdown-menu';
 import { TextWithIcon } from '../../../components/ui/text-with-icon';
 
-import { useEmbedding } from '@/components/embed-provider';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 export function UserAvatarMenu() {
-  const { embedState } = useEmbedding();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
-  if (!user || embedState.isEmbedded) {
+  if (!user) {
     return null;
   }
 

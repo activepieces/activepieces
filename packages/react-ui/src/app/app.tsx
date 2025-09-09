@@ -1,4 +1,10 @@
 import {
+  ErrorCode,
+  isNil,
+  QuotaExceededParams,
+  ResourceLockedParams,
+} from '@activepieces/shared';
+import {
   DefaultErrorFunction,
   SetErrorFunction,
 } from '@sinclair/typebox/errors';
@@ -10,7 +16,10 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { EmbeddingProvider } from '@/components/embed-provider';
+import { ChangelogProvider } from './components/changelog-provider';
+import { InitialDataGuard } from './components/initial-data-guard';
+import { ApRouter } from './router';
+
 import { ThemeProvider } from '@/components/theme-provider';
 import { SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { Toaster } from '@/components/ui/toaster';
@@ -23,17 +32,6 @@ import {
 import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { RefreshAnalyticsProvider } from '@/features/platform-admin/components/refresh-analytics-provider';
 import { api } from '@/lib/api';
-import {
-  ErrorCode,
-  isNil,
-  QuotaExceededParams,
-  ResourceLockedParams,
-} from '@activepieces/shared';
-
-import { ChangelogProvider } from './components/changelog-provider';
-import { EmbeddingFontLoader } from './components/embedding-font-loader';
-import { InitialDataGuard } from './components/initial-data-guard';
-import { ApRouter } from './router';
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
@@ -67,23 +65,19 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <RefreshAnalyticsProvider>
-        <EmbeddingProvider>
-          <InitialDataGuard>
-            <EmbeddingFontLoader>
-                <TooltipProvider>
-                  <React.Fragment key={i18n.language}>
-                    <ThemeProvider storageKey="vite-ui-theme">
-                      <SidebarProvider>
-                        <ApRouter />
-                        <Toaster />
-                        <ChangelogProvider />
-                      </SidebarProvider>
-                    </ThemeProvider>
-                  </React.Fragment>
-                </TooltipProvider>
-            </EmbeddingFontLoader>
-          </InitialDataGuard>
-        </EmbeddingProvider>
+        <InitialDataGuard>
+          <TooltipProvider>
+            <React.Fragment key={i18n.language}>
+              <ThemeProvider storageKey="vite-ui-theme">
+                <SidebarProvider>
+                  <ApRouter />
+                  <Toaster />
+                  <ChangelogProvider />
+                </SidebarProvider>
+              </ThemeProvider>
+            </React.Fragment>
+          </TooltipProvider>
+        </InitialDataGuard>
       </RefreshAnalyticsProvider>
     </QueryClientProvider>
   );

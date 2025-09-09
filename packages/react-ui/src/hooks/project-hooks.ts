@@ -1,13 +1,3 @@
-import { useQuery, QueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { HttpStatusCode } from 'axios';
-import { t } from 'i18next';
-import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-
-import { useEmbedding } from '@/components/embed-provider';
-import { useToast } from '@/components/ui/use-toast';
-import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import {
   ApEdition,
@@ -16,10 +6,19 @@ import {
   ProjectWithLimits,
   ProjectWithLimitsWithPlatform,
 } from '@activepieces/shared';
+import { useQuery, QueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { HttpStatusCode } from 'axios';
+import { t } from 'i18next';
+import { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
 import { projectApi } from '../lib/project-api';
 
 import { flagsHooks } from './flags-hooks';
+
+import { useToast } from '@/components/ui/use-toast';
+import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const projectHooks = {
   useCurrentProject: () => {
@@ -56,14 +55,12 @@ export const projectHooks = {
     });
   },
   useReloadPageIfProjectIdChanged: (projectId: string) => {
-    const { embedState } = useEmbedding();
     useEffect(() => {
       const handleVisibilityChange = () => {
         const currentProjectId = authenticationSession.getProjectId();
         if (
           currentProjectId !== projectId &&
-          document.visibilityState === 'visible' &&
-          !embedState.isEmbedded
+          document.visibilityState === 'visible'
         ) {
           window.location.reload();
         }
@@ -75,7 +72,7 @@ export const projectHooks = {
           handleVisibilityChange,
         );
       };
-    }, [projectId, embedState.isEmbedded]);
+    }, [projectId]);
   },
   useSwitchToProjectInParams: () => {
     const { projectId: projectIdFromParams } = useParams<{

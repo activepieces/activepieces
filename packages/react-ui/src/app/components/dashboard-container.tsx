@@ -1,10 +1,14 @@
+import { ApEdition, ApFlagId, isNil, Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Bot, ListTodo, Package, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
+import { authenticationSession } from '../../lib/authentication-session';
+
+import { SidebarComponent, SidebarItem, SidebarLink } from './sidebar';
+
 import { McpSvg } from '@/assets/img/custom/mcp';
-import { useEmbedding } from '@/components/embed-provider';
 import { AiCreditsLimitAlert } from '@/features/billing/components/ai-credits-limit-alert';
 import { ProjectLockedAlert } from '@/features/billing/components/project-locked-alert';
 import { TaskLimitAlert } from '@/features/billing/components/task-limit-alert';
@@ -14,11 +18,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { ApEdition, ApFlagId, isNil, Permission } from '@activepieces/shared';
-
-import { authenticationSession } from '../../lib/authentication-session';
-
-import { SidebarComponent, SidebarItem, SidebarLink } from './sidebar';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
@@ -42,7 +41,6 @@ export const CloseTaskLimitAlertContext = createContext({
 export function DashboardContainer({ children }: DashboardContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { project } = projectHooks.useCurrentProject();
-  const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -93,7 +91,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/mcps'),
     label: t('MCP'),
-    show: platform.plan.mcpsEnabled || !embedState.isEmbedded,
+    show: platform.plan.mcpsEnabled,
     icon: <McpSvg className="size-4" />,
     hasPermission: checkAccess(Permission.READ_MCP),
     isSubItem: false,
@@ -105,7 +103,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     to: authenticationSession.appendProjectRoutePrefix('/agents'),
     label: t('Agents'),
     icon: <Bot />,
-    show: platform.plan.agentsEnabled || !embedState.isEmbedded,
+    show: platform.plan.agentsEnabled,
     hasPermission: true,
     isSubItem: false,
     tutorialTab: 'agents',
@@ -115,7 +113,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/tables'),
     label: t('Tables'),
-    show: platform.plan.tablesEnabled || !embedState.isEmbedded,
+    show: platform.plan.tablesEnabled,
     icon: <Table2 />,
     hasPermission: checkAccess(Permission.READ_TABLE),
     isSubItem: false,
@@ -126,7 +124,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/todos'),
     label: t('Todos'),
-    show: platform.plan.todosEnabled || !embedState.isEmbedded,
+    show: platform.plan.todosEnabled,
     icon: <ListTodo />,
     hasPermission: checkAccess(Permission.READ_TODOS),
     isSubItem: false,
@@ -150,11 +148,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
           setIsAlertClosed,
         }}
       >
-        <SidebarComponent
-          isHomeDashboard={true}
-          items={items}
-          hideSideNav={embedState.hideSideNav}
-        >
+        <SidebarComponent isHomeDashboard={true} items={items}>
           <>
             <>
               <ProjectLockedAlert />

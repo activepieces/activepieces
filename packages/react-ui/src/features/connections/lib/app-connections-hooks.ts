@@ -1,12 +1,3 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { UseFormReturn } from 'react-hook-form';
-
-import { useEmbedding } from '@/components/embed-provider';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { projectMembersApi } from '@/features/team/lib/project-members-api';
-import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import {
   ApErrorParams,
   AppConnectionScope,
@@ -17,6 +8,9 @@ import {
   ReplaceAppConnectionsRequestBody,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { UseFormReturn } from 'react-hook-form';
 
 import { appConnectionsApi } from './api/app-connections';
 import { globalConnectionsApi } from './api/global-connections';
@@ -25,6 +19,10 @@ import {
   NoProjectSelected,
   isConnectionNameUnique,
 } from './utils';
+
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 type UseReplaceConnectionsProps = {
   setDialogOpen: (isOpen: boolean) => void;
@@ -263,7 +261,6 @@ export const appConnectionsQueries = {
 
   useConnectionsOwners: () => {
     const projectId = authenticationSession.getProjectId() ?? '';
-    const isEmbedding = useEmbedding().embedState.isEmbedded;
 
     return useQuery({
       queryKey: ['app-connections-owners', projectId],
@@ -271,19 +268,6 @@ export const appConnectionsQueries = {
         const { data: owners } = await appConnectionsApi.getOwners({
           projectId,
         });
-        const { data: projectMembers } = await projectMembersApi.list({
-          projectId,
-        });
-        if (isEmbedding) {
-          return owners.filter(
-            (owner) =>
-              !isNil(
-                projectMembers.find(
-                  (member) => member.user.email === owner.email,
-                ),
-              ),
-          );
-        }
 
         return owners;
       },

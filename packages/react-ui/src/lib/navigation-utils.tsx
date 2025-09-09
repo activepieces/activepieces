@@ -1,24 +1,12 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useEmbedding } from '../components/embed-provider';
-
 export const useNewWindow = () => {
-  const { embedState } = useEmbedding();
-  const navigate = useNavigate();
-  if (embedState.isEmbedded) {
-    return (route: string, searchParams?: string) =>
-      navigate({
-        pathname: route,
-        search: searchParams,
-      });
-  } else {
-    return (route: string, searchParams?: string) =>
-      window.open(
-        `${route}${searchParams ? '?' + searchParams : ''}`,
-        '_blank',
-        'noopener noreferrer',
-      );
-  }
+  return (route: string, searchParams?: string) =>
+    window.open(
+      `${route}${searchParams ? '?' + searchParams : ''}`,
+      '_blank',
+      'noopener noreferrer',
+    );
 };
 
 export const FROM_QUERY_PARAM = 'from';

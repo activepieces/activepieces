@@ -1,16 +1,15 @@
+import { isNil, Changelog, ApFlagId } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { X } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { toast as sonnerToast } from 'sonner';
 
-import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { SonnerToaster } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { changelogApi } from '@/lib/changelog-api';
-import { isNil, Changelog, ApFlagId } from '@activepieces/shared';
 
 interface ChangelogToastProps {
   id: string | number;
@@ -87,7 +86,6 @@ function showChangelogToast(props: Omit<ChangelogToastProps, 'id'>) {
 }
 
 export const ChangelogProvider = () => {
-  const isEmbedding = useEmbedding().embedState.isEmbedded;
   const { data: user } = userHooks.useCurrentUser();
   const { data: showChangelog } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_CHANGELOG,
@@ -147,7 +145,7 @@ export const ChangelogProvider = () => {
     }
   };
 
-  if (isNil(user) || isError || !showChangelog || isEmbedding) {
+  if (isNil(user) || isError || !showChangelog) {
     return null;
   }
 

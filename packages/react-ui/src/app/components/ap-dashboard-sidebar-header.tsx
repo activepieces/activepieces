@@ -2,7 +2,6 @@ import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Link } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { SidebarHeader } from '@/components/ui/sidebar-shadcn';
 import {
@@ -22,12 +21,10 @@ const ApDashboardSidebarHeader = ({
 }) => {
   const branding = flagsHooks.useWebsiteBranding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { embedState } = useEmbedding();
+
   const isInPlatformAdmin = window.location.pathname.includes('platform');
   const showProjectSwitcher =
-    edition !== ApEdition.COMMUNITY &&
-    !embedState.isEmbedded &&
-    !isInPlatformAdmin;
+    edition !== ApEdition.COMMUNITY && !isInPlatformAdmin;
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
 
@@ -36,7 +33,7 @@ const ApDashboardSidebarHeader = ({
       <div
         className={cn('flex items-center justify-between grow gap-1', {
           'justify-start': !isHomeDashboard,
-          'justify-center': embedState.hideProjectSettings,
+          'justify-center': false,
         })}
       >
         <Button

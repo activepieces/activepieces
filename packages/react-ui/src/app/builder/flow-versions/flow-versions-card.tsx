@@ -1,3 +1,8 @@
+import {
+  FlowVersionMetadata,
+  FlowVersionState,
+  Permission,
+} from '@activepieces/shared';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import { Eye, EyeIcon, Pencil } from 'lucide-react';
@@ -9,7 +14,6 @@ import {
 } from '@/app/builder/builder-hooks';
 import { CardListItem } from '@/components/custom/card-list';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -38,11 +42,6 @@ import { FlowVersionStateDot } from '@/features/flows/components/flow-version-st
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { formatUtils } from '@/lib/utils';
-import {
-  FlowVersionMetadata,
-  FlowVersionState,
-  Permission,
-} from '@activepieces/shared';
 
 type UseAsDraftOptionProps = {
   versionNumber: number;
@@ -144,11 +143,9 @@ const FlowVersionDetailsCard = React.memo(
       setDropdownMenuOpen(false);
     };
 
-    const showAvatar = !useEmbedding().embedState.isEmbedded;
-
     return (
       <CardListItem interactive={false}>
-        {showAvatar && flowVersion.updatedByUser && (
+        {flowVersion.updatedByUser && (
           <UserAvatar
             size={28}
             name={

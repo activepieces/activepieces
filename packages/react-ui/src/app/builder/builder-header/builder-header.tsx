@@ -1,3 +1,10 @@
+import {
+  ApFlagId,
+  FlowOperationType,
+  FlowVersionState,
+  Permission,
+  supportUrl,
+} from '@activepieces/shared';
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import { ChevronDown, History, Logs } from 'lucide-react';
@@ -9,11 +16,15 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 
+import FlowActionMenu from '../../components/flow-actions-menu';
+import { BuilderFlowStatusSection } from '../builder-flow-status-section';
+
+import { UserAvatarMenu } from './user-avatar-menu';
+
 import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';
@@ -29,18 +40,6 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
-import {
-  ApFlagId,
-  FlowOperationType,
-  FlowVersionState,
-  Permission,
-  supportUrl,
-} from '@activepieces/shared';
-
-import FlowActionMenu from '../../components/flow-actions-menu';
-import { BuilderFlowStatusSection } from '../builder-flow-status-section';
-
-import { UserAvatarMenu } from './user-avatar-menu';
 
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
@@ -71,8 +70,6 @@ export const BuilderHeader = () => {
     state.applyOperation,
   ]);
 
-  const { embedState } = useEmbedding();
-
   const { data: folderData } = foldersHooks.useFolder(flow.folderId ?? 'NULL');
 
   const isLatestVersion =
@@ -90,77 +87,69 @@ export const BuilderHeader = () => {
         <div className="flex items-center gap-2">
           <HomeButton />
           <div className="flex gap-2 items-center">
-            {!embedState.hideFolders &&
-              !embedState.disableNavigationInBuilder && (
-                <>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger
-                        onClick={() =>
-                          navigate({
-                            pathname:
-                              authenticationSession.appendProjectRoutePrefix(
-                                '/flows',
-                              ),
-                            search: createSearchParams({
-                              folderId: folderData?.id ?? 'NULL',
-                            }).toString(),
-                          })
-                        }
-                      >
-                        {folderName}
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <span>
-                          {t('Go to folder')} {folderName}
-                        </span>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  {' / '}
-                </>
-              )}
-            {!embedState.hideFlowNameInBuilder && (
-              <EditableText
-                className="font-semibold hover:cursor-text"
-                value={flowVersion.displayName}
-                readonly={!isLatestVersion}
-                onValueChange={(value) =>
-                  applyOperation({
-                    type: FlowOperationType.CHANGE_NAME,
-                    request: {
-                      displayName: value,
-                    },
-                  })
-                }
-                isEditing={isEditingFlowName}
-                setIsEditing={setIsEditingFlowName}
-                tooltipContent={isLatestVersion ? t('Edit Flow Name') : ''}
-              />
-            )}
-          </div>
-          {!embedState.hideFlowNameInBuilder && (
-            <FlowActionMenu
-              insideBuilder={true}
-              flow={flow}
-              flowVersion={flowVersion}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger
+                  onClick={() =>
+                    navigate({
+                      pathname:
+                        authenticationSession.appendProjectRoutePrefix(
+                          '/flows',
+                        ),
+                      search: createSearchParams({
+                        folderId: folderData?.id ?? 'NULL',
+                      }).toString(),
+                    })
+                  }
+                >
+                  {folderName}
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span>
+                    {t('Go to folder')} {folderName}
+                  </span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {' / '}
+
+            <EditableText
+              className="font-semibold hover:cursor-text"
+              value={flowVersion.displayName}
               readonly={!isLatestVersion}
-              onDelete={() => {
-                navigate(
-                  authenticationSession.appendProjectRoutePrefix('/flows'),
-                );
-              }}
-              onRename={() => {
-                setIsEditingFlowName(true);
-              }}
-              onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
-              onDuplicate={() => {}}
-            >
-              <Button variant="ghost" size="icon">
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </FlowActionMenu>
-          )}
+              onValueChange={(value) =>
+                applyOperation({
+                  type: FlowOperationType.CHANGE_NAME,
+                  request: {
+                    displayName: value,
+                  },
+                })
+              }
+              isEditing={isEditingFlowName}
+              setIsEditing={setIsEditingFlowName}
+              tooltipContent={isLatestVersion ? t('Edit Flow Name') : ''}
+            />
+          </div>
+          <FlowActionMenu
+            insideBuilder={true}
+            flow={flow}
+            flowVersion={flowVersion}
+            readonly={!isLatestVersion}
+            onDelete={() => {
+              navigate(
+                authenticationSession.appendProjectRoutePrefix('/flows'),
+              );
+            }}
+            onRename={() => {
+              setIsEditingFlowName(true);
+            }}
+            onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
+            onDuplicate={() => {}}
+          >
+            <Button variant="ghost" size="icon">
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </FlowActionMenu>
         </div>
 
         <div className="grow"></div>

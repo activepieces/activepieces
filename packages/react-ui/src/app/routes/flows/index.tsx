@@ -1,3 +1,4 @@
+import { Permission, PopulatedFlow } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -11,9 +12,11 @@ import {
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { FlowsTable } from './flows-table';
+import { IssuesTable } from './issues-table';
+
 import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -32,10 +35,6 @@ import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
-import { Permission, PopulatedFlow } from '@activepieces/shared';
-
-import { FlowsTable } from './flows-table';
-import { IssuesTable } from './issues-table';
 
 export enum FlowsPageTabs {
   HISTORY = 'history',
@@ -66,8 +65,6 @@ const FlowsPage = () => {
   useEffect(() => {
     setActiveTab(determineActiveTab());
   }, [location.pathname]);
-
-  const { embedState } = useEmbedding();
 
   const handleTabChange = (value: FlowsPageTabs) => {
     setActiveTab(value);
@@ -100,33 +97,30 @@ const FlowsPage = () => {
         onValueChange={(v) => handleTabChange(v as FlowsPageTabs)}
         className="w-full"
       >
-        {!embedState.hideFlowsPageNavbar ? (
-          <TabsList variant="outline">
-            <TabsTrigger value={FlowsPageTabs.FLOWS} variant="outline">
-              <Workflow className="h-4 w-4 mr-2" />
-              {t('Flows')}
+        <TabsList variant="outline">
+          <TabsTrigger value={FlowsPageTabs.FLOWS} variant="outline">
+            <Workflow className="h-4 w-4 mr-2" />
+            {t('Flows')}
+          </TabsTrigger>
+          {checkAccess(Permission.READ_RUN) && (
+            <TabsTrigger value={FlowsPageTabs.HISTORY} variant="outline">
+              <History className="h-4 w-4 mr-2" />
+              {t('Runs')}
             </TabsTrigger>
-            {checkAccess(Permission.READ_RUN) && (
-              <TabsTrigger value={FlowsPageTabs.HISTORY} variant="outline">
-                <History className="h-4 w-4 mr-2" />
-                {t('Runs')}
-              </TabsTrigger>
-            )}
-            {checkAccess(Permission.READ_ISSUES) && (
-              <TabsTrigger value={FlowsPageTabs.ISSUES} variant="outline">
-                <CircleAlert className="h-4 w-4 mr-2" />
-                <span className="flex items-center gap-2">
-                  {t('Issues')}
-                  {showIssuesNotification && (
-                    <span className="ml-1 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
-                  )}
-                </span>
-              </TabsTrigger>
-            )}
-          </TabsList>
-        ) : (
-          <></>
-        )}
+          )}
+          {checkAccess(Permission.READ_ISSUES) && (
+            <TabsTrigger value={FlowsPageTabs.ISSUES} variant="outline">
+              <CircleAlert className="h-4 w-4 mr-2" />
+              <span className="flex items-center gap-2">
+                {t('Issues')}
+                {showIssuesNotification && (
+                  <span className="ml-1 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
+                )}
+              </span>
+            </TabsTrigger>
+          )}
+        </TabsList>
+
         <TabsContent value={FlowsPageTabs.FLOWS}>
           <FlowsTable />
         </TabsContent>
@@ -153,7 +147,6 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
   const [refresh, setRefresh] = useState(0);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { embedState } = useEmbedding();
   const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
     PopulatedFlow,
     Error,
@@ -214,23 +207,21 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
             </DropdownMenuItem>
           </SelectFlowTemplateDialog>
 
-          {!embedState.hideExportAndImportFlow && (
-            <ImportFlowDialog
-              insideBuilder={false}
-              onRefresh={() => {
-                setRefresh(refresh + 1);
-                if (refetch) refetch();
-              }}
+          <ImportFlowDialog
+            insideBuilder={false}
+            onRefresh={() => {
+              setRefresh(refresh + 1);
+              if (refetch) refetch();
+            }}
+          >
+            <DropdownMenuItem
+              onSelect={(e) => e.preventDefault()}
+              disabled={!doesUserHavePermissionToWriteFlow}
             >
-              <DropdownMenuItem
-                onSelect={(e) => e.preventDefault()}
-                disabled={!doesUserHavePermissionToWriteFlow}
-              >
-                <Upload className="h-4 w-4 me-2" />
-                {t('From local file')}
-              </DropdownMenuItem>
-            </ImportFlowDialog>
-          )}
+              <Upload className="h-4 w-4 me-2" />
+              {t('From local file')}
+            </DropdownMenuItem>
+          </ImportFlowDialog>
         </DropdownMenuContent>
       </DropdownMenu>
     </PermissionNeededTooltip>

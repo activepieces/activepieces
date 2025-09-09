@@ -1,25 +1,23 @@
+import { PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 import { LogOut, Shield } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { notificationHooks } from '../../routes/platform/notifications/hooks/notifications-hooks';
+
 import { Dot } from '@/components/ui/dot';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
-import { PlatformRole } from '@activepieces/shared';
-
-import { notificationHooks } from '../../routes/platform/notifications/hooks/notifications-hooks';
 
 export function SidebarPlatformAdminButton() {
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
-  const { embedState } = useEmbedding();
   const location = useLocation();
   const isInPlatformAdmin = location.pathname.startsWith('/platform');
   const messages = notificationHooks.useNotifications();
   const platformRole = userHooks.getCurrentUserPlatformRole();
 
-  if (embedState.isEmbedded || !showPlatformAdminDashboard) {
+  if (!showPlatformAdminDashboard) {
     return null;
   }
 
