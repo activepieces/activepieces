@@ -1,5 +1,4 @@
 {
-  "Kallabot": "Kallabot",
   "AI-powered voice agents and conversational interfaces.": "Agentes de voz impulsados por la AI y interfaces de conversación.",
   "\nFollow these steps to obtain your Kallbot API Key:\n\n1. Go to [Kallabot](https://kallabot.com/) and log in to your account.\n2. Click on your profile picture in the top right corner.\n3. Select **Settings** from the dropdown menu.\n4. Navigate to the **API & Integrations** tab.\n5. Copy the generated API key and paste it here.\n": "\nSigue estos pasos para obtener tu clave API de Kallbot:\n\n1. Ve a [Kallabot](https://kallabot.com/) e inicia sesión en tu cuenta.\n2. Haz clic en tu foto de perfil en la esquina superior derecha.\n3. Seleccione **Ajustes** del menú desplegable.\n4. Navegue a la pestaña **API e integraciones**.\n5. Copia la clave API generada y pégala aquí.\n",
   "Make Call": "Hacer Llamada",

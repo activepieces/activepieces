@@ -1,5 +1,4 @@
 {
-  "MongoDB": "MongoDB",
   "Host": "Hôte",
   "Use MongoDB Atlas URL Format": "Utiliser le format d'URL de l'Atlas MongoDB",
   "Database": "Base de données",

@@ -1,11 +1,10 @@
 {
-  "PredictLeads": "Previsões",
   "Company Intelligence Data Source": "Fonte dos Dados Inteligentes da Empresa",
   "API Key": "Chave de API",
   "API Token": "API Token",
   "The key of the Predict Leads account.": "A chave da conta de Leads Preditos.",
   "The token of the Predict Leads account.": "O token da conta de Predição lidera .",
-  "\n    To obtain your Predict Leads tokens, follow these steps:\n\n    1. Have a PredictLeads account - Create a new user here: [PredictLeads](https://predictleads.com/sign_up).\n    2. Go to: [Subscriptions](https://predictleads.com/subscriptions).\n    3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.\n    ": "\n    To obtain your Predict Leads tokens, follow these steps:\n\n    1. Have a PredictLeads account - Create a new user here: [PredictLeads](https://predictleads.com/sign_up).\n    2. Go to: [Subscriptions](https://predictleads.com/subscriptions).\n    3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.\n    ",
+  "\n    To obtain your PredictLeads tokens, follow these steps:\n\n    1. Have a PredictLeads account - Create a new user here: https://predictleads.com/sign_up.\n    2. Go to: https://predictleads.com/subscriptions.\n    3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.\n    ": "\n    To obtain your PredictLeads tokens, follow these steps:\n\n    1. Have a PredictLeads account - Create a new user here: https://predictleads.com/sign_up.\n    2. Go to: https://predictleads.com/subscriptions.\n    3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.\n    ",
   "List Companies": "Listar Empresas",
   "Retrieve a company": "Recuperar uma empresa",
   "List Job Openings": "Listar Vagas de Trabalho",

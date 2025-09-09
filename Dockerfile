@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         procps && \
     yarn config set python /usr/bin/python3 && \
     npm install -g node-gyp
-RUN npm i -g npm@9.9.3 pnpm@9.15.0
+RUN npm i -g npm@9.9.3 pnpm@9.15.0 pm2@6.0.10
 
 # Set the locale
 ENV LANG en_US.UTF-8

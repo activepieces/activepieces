@@ -1,5 +1,4 @@
 {
-  "Retable": "Retable",
   "Turn your spreadsheets into smart database apps": "Turn your spreadsheets into smart database apps",
   "\nTo obtain your API key, follow these steps:\n\n1. Go to Account Overview by clicking your profile-pic (top-right).\n2. Go to API section and enable API key.\n3. Copy API key.": "\nTo obtain your API key, follow these steps:\n\n1. Go to Account Overview by clicking your profile-pic (top-right).\n2. Go to API section and enable API key.\n3. Copy API key.",
   "Create Retable Record": "Create Retable Record",
@@ -18,6 +17,7 @@
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
   "Workspace": "Workspace",
   "Project": "项目",
+  "Retable": "Retable",
   "Fields": "Fields",
   "Workspace Name": "Workspace Name",
   "Workspace Description": "Workspace Description",

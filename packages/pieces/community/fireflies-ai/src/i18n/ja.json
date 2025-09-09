@@ -1,5 +1,4 @@
 {
-  "Fireflies.ai": "Fireflies.ai",
   "Meeting assistant that automatically records, transcribes, and analyzes conversations": "自動的に会話を記録、転写、分析するミーティングアシスタント",
   "\nTo use Fireflies.ai, you need to get an API key:\n1. Login to your account at https://fireflies.ai.\n2. Navigate to Settings > Developer Settings in the left sidebar.\n3. Copy the API key from the API Key section.\n": "\nTo use Fireflies.ai, you need to get an API key:\n1. Login to your account at https://fireflies.ai.\n2. Navigate to Settings > Developer Settings in the left sidebar.\n3. Copy the API key from the API Key section.\n",
   "Find Meeting by ID": "IDでミーティングを見つける",

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-podio",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
