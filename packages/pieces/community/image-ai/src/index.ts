@@ -5,7 +5,7 @@ import { generateImageAction } from './lib/actions/generate-image';
 export const imageAi = createPiece({
   displayName: 'Image AI',
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.66.7',
+  minimumSupportedRelease: '0.68.3',
   logoUrl: 'https://cdn.activepieces.com/pieces/image-ai.svg',
   categories: [
     PieceCategory.ARTIFICIAL_INTELLIGENCE,

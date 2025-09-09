@@ -183,6 +183,21 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
                         }),
                     }
                 }
+                if(provider === 'google' && model.modelId === 'gemini-2.5-flash-image-preview') {
+                    options = {
+                        image: Property.Array({
+                            displayName: 'Images',
+                            required:false,
+                            properties: {
+                                file: Property.File({
+                                    displayName: 'Image File',
+                                    required: true,
+                                }),
+                            },
+                            description: 'The image(s) you want to edit/merge',
+                        })
+                }
+            }
             } else if (modelType === 'video') {
                 if (provider === 'google') {
                     if (model.modelId === 'veo-2.0-generate-001') {
