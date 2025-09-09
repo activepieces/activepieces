@@ -1,9 +1,3 @@
-import { VideoIcon } from 'lucide-react';
-
-import { Button } from '../ui/button';
-
-import TutorialsDialog from './tutorials-dialog';
-
 import { BetaBadge } from '@/components/custom/beta-badge';
 
 export const DashboardPageHeader = ({
@@ -24,13 +18,6 @@ export const DashboardPageHeader = ({
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-semibold">{title}</h1>
-          {tutorialTab && (
-            <TutorialsDialog location="table-title" initialTab={tutorialTab}>
-              <Button variant="outline-primary" size="icon">
-                <VideoIcon className="size-4"></VideoIcon>
-              </Button>
-            </TutorialsDialog>
-          )}
           {beta && (
             <div className="flex items-center">
               <BetaBadge />

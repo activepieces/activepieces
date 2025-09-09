@@ -5,7 +5,6 @@ import {
   ChevronUpIcon,
   Link2,
   LockKeyhole,
-  VideoIcon,
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -21,8 +20,6 @@ import { SidebarUser } from './sidebar-user';
 import UsageLimitsButton from './usage-limits-button';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
-import TutorialsDialog from '@/components/custom/tutorials-dialog';
-import { Button } from '@/components/ui/button';
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -113,20 +110,6 @@ export const CustomTooltipLink = ({
               <span className="text-sm">{label}</span>
             </div>
             <div className="grow"></div>
-            {tutorialTab && (
-              <TutorialsDialog
-                location="small-button-inside-sidebar-item"
-                initialTab={tutorialTab}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="p-1 size-6 group-hover/link:opacity-100 opacity-0 transition-all duration-150 ease-in-out"
-                >
-                  <VideoIcon className="size-4"></VideoIcon>
-                </Button>
-              </TutorialsDialog>
-            )}
             {label === 'Agents' && <BetaBadge showTooltip={false} />}
           </div>
           {locked && (
@@ -201,7 +184,6 @@ export function SidebarComponent({
   const showConnectionsLink =
     location.pathname.startsWith('/project') &&
     checkAccess(Permission.READ_APP_CONNECTION);
-  const showTutorials = location.pathname.startsWith('/project');
   return (
     <div className="flex h-screen w-full overflow-hidden">
       <div className="flex h-screen w-full">
@@ -241,21 +223,6 @@ export function SidebarComponent({
                                 Icon={<Link2 className="size-4" />}
                                 isSubItem={false}
                               />
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        )}
-                        {showTutorials && (
-                          <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
-                              <TutorialsDialog
-                                location="tutorials-sidebar-item"
-                                showTooltip={false}
-                              >
-                                <div className="flex items-center gap-2 text-sm px-2 py-1.5 cursor-pointer hover:bg-sidebar-accent rounded-sm transition-colors">
-                                  <VideoIcon className="size-4"></VideoIcon>
-                                  <span>{t('Tutorials')}</span>
-                                </div>
-                              </TutorialsDialog>
                             </SidebarMenuButton>
                           </SidebarMenuItem>
                         )}
