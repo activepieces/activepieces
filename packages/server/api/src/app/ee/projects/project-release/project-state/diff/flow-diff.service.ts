@@ -1,4 +1,5 @@
 import { assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, FlowActionType, flowPieceUtil, FlowProjectOperationType, flowStructureUtil, FlowTriggerType, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectState, Step } from '@activepieces/shared'
+import deepEqual from 'deep-equal'
 import semver from 'semver'
 
 export const flowDiffService = {
@@ -105,7 +106,7 @@ async function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow)
     })
 
     return normalizedFromFlow.displayName !== normalizedTargetFlow.displayName
-        || JSON.stringify(normalizedFromFlow.trigger, Object.keys(normalizedFromFlow.trigger).sort()) !== JSON.stringify(normalizedTargetFlow.trigger, Object.keys(normalizedTargetFlow.trigger).sort() ) || !isMatched
+        || !deepEqual(normalizedFromFlow.trigger, normalizedTargetFlow.trigger) || !isMatched
 }
 
 async function normalize(flowVersion: FlowVersion): Promise<FlowVersion> {

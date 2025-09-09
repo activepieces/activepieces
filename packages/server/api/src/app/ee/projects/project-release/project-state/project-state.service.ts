@@ -128,11 +128,13 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             switch (operation.type) {
                 case FlowProjectOperationType.UPDATE_FLOW: {
                     const flowUpdated = await projectStateHelper(log).updateFlowInProject(operation.flowState, operation.newFlowState, projectId)
-                    publishJobs.push(projectStateHelper(log).republishFlow({ flow: flowUpdated, projectId }))
+                    // preserve the status of the flow
+                    publishJobs.push(projectStateHelper(log).republishFlow({ flow: flowUpdated, projectId, status: operation.flowState.status }))
                     break
                 }
                 case FlowProjectOperationType.CREATE_FLOW: {
                     const flowCreated = await projectStateHelper(log).createFlowInProject(operation.flowState, projectId)
+                    // always enable new flows
                     publishJobs.push(projectStateHelper(log).republishFlow({ flow: flowCreated, projectId }))
                     break
                 }
