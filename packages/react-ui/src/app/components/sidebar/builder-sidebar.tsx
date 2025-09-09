@@ -17,7 +17,6 @@ export function BuilderNavigationSidebar() {
     !embedState.isEmbedded && (
       <Sidebar variant="inset">
         <AppSidebarHeader />
-
         <SidebarContent className="gap-y-0">
           <FoldersSection />
           <TablesSection />

@@ -8,7 +8,9 @@ import {
   Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
+import { buttonVariants } from '@/components/ui/button';
 import {
   Sidebar,
   SidebarContent,
@@ -18,13 +20,16 @@ import {
   SidebarGroup,
   SidebarMenuButton,
 } from '@/components/ui/sidebar-shadcn';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { cn, determineDefaultRoute } from '@/lib/utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { ApSidebareGroup, SidebarGeneralItemType } from './ap-sidebar-group';
 import { ApSidebarItem } from './ap-sidebar-item';
 import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
+import { SidebarUser } from './sidebar-user';
 
 export function PlatformSidebar() {
   const [setupOpen, setSetupOpen] = useState(false);
@@ -32,6 +37,8 @@ export function PlatformSidebar() {
   const [infrastructureOpen, setInfrastructureOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { checkAccess } = useAuthorization();
+  const defaultRoute = determineDefaultRoute(checkAccess);
   const branding = flagsHooks.useWebsiteBranding();
 
   const items: SidebarGeneralItemType[] = [
@@ -195,13 +202,16 @@ export function PlatformSidebar() {
     <Sidebar variant="inset">
       <SidebarHeader>
         <div className="w-full py-2 flex items-center gap-2">
-          <div className="flex aspect-square size-8 border items-center justify-center rounded-lg">
+          <Link
+            to={defaultRoute}
+            className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }))}
+          >
             <img
               src={branding.logos.logoIconUrl}
               alt={t('home')}
               className="h-5 w-5 object-contain"
             />
-          </div>
+          </Link>
           <h1 className="truncate font-semibold">{branding.websiteName}</h1>
         </div>
       </SidebarHeader>
@@ -225,6 +235,7 @@ export function PlatformSidebar() {
             <SidebarPlatformAdminButton />
           </SidebarMenuButton>
         </SidebarMenu>
+        <SidebarUser />
       </SidebarFooter>
     </Sidebar>
   );

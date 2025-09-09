@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { LogOut, Shield } from 'lucide-react';
+import { ArrowLeft, Shield } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -38,7 +38,7 @@ export function SidebarPlatformAdminButton({
       <div className={`w-full flex items-center gap-2`}>
         {isInPlatformAdmin ? (
           <>
-            <LogOut className="size-4" />
+            <ArrowLeft className="size-4" />
             <span className={`text-sm`}>{t('Exit Platform Admin')}</span>
           </>
         ) : (

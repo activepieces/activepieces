@@ -15,6 +15,11 @@ import {
   SidebarGroupContent,
   SidebarSkeleton,
 } from '@/components/ui/sidebar-shadcn';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
 import { tableHooks } from '@/features/tables/lib/table-hooks';
 import { tablesApi } from '@/features/tables/lib/tables-api';
@@ -60,18 +65,26 @@ export function TablesSection() {
 
   return (
     <SidebarGroup className="max-h-[50%] pb-2">
-      <SidebarGroupLabel className="flex px-0 justify-between items-center w-full mb-1">
-        {t('Tables')}
+      <SidebarGroupLabel className="flex px-0 pl-2 justify-between items-center w-full mb-1">
+        <div className="flex gap-2 items-center justify-start">
+          <TableIcon className="w-3 h-3 !text-muted-foreground" />
+          {t('Tables')}
+        </div>
         <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-          <Button
-            onClick={() => createTable({ name: t('New Table') })}
-            size="icon"
-            variant="ghost"
-            className="size-9"
-            disabled={!userHasTableWritePermission || isCreatingTable}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                onClick={() => createTable({ name: t('New Table') })}
+                size="icon"
+                variant="ghost"
+                className="size-9"
+                disabled={!userHasTableWritePermission || isCreatingTable}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{t('New table')}</TooltipContent>
+          </Tooltip>
         </PermissionNeededTooltip>
       </SidebarGroupLabel>
       <ScrollArea scrollHideDelay={2}>
@@ -101,6 +114,9 @@ interface FlowItemProps {
 }
 
 function TableItem({ table, isActive, onClick, refetch }: FlowItemProps) {
+  const { tableId } = useParams();
+  const navigate = useNavigate();
+
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
       await Promise.all(ids.map((id) => tablesApi.delete(id)));
@@ -116,15 +132,19 @@ function TableItem({ table, isActive, onClick, refetch }: FlowItemProps) {
         onClick={onClick}
         className={cn(isActive && 'bg-sidebar-accent', 'pl-2 pr-0')}
       >
-        <span className="size-5 flex mr-1 items-center justify-center rounded-sm bg-sidebar-accent">
-          <TableIcon className="w-3 h-3 !text-muted-foreground" />
-        </span>
         <span className="truncate">{table.name}</span>
 
         <ApTableActionsMenu
           table={table}
           refetch={refetch}
           deleteMutation={bulkDeleteMutation}
+          onDelete={() => {
+            if (table.id === tableId) {
+              navigate(
+                authenticationSession.appendProjectRoutePrefix('/tables'),
+              );
+            }
+          }}
         >
           <Button
             variant="ghost"

@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronsUpDown, LogOut, Settings, UserPlus } from 'lucide-react';
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
@@ -33,10 +34,14 @@ export function SidebarUser() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { embedState } = useEmbedding();
+  const location = useLocation();
   const { project } = projectHooks.useCurrentProject();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
   const { reset } = useTelemetry();
+
+  const isInPlatformAdmin = location.pathname.startsWith('/platform');
+
   if (!user || embedState.isEmbedded) {
     return null;
   }
@@ -97,14 +102,19 @@ export function SidebarUser() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            {!isInPlatformAdmin && (
+              <>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <SidebarPlatformAdminButton />
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+              </>
+            )}
+
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <SidebarPlatformAdminButton />
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              {!embedState.hideProjectSettings && (
+              {(!embedState.hideProjectSettings && !isInPlatformAdmin) && (
                 <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
                   <Settings className="w-4 h-4 mr-2" />
                   {t('Project Settings')}

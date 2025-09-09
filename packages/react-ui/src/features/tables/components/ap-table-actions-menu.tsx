@@ -24,10 +24,12 @@ const ApTableActionsMenu = ({
   table,
   refetch,
   deleteMutation,
+  onDelete,
   children,
 }: {
   table: Table;
   refetch: (() => void) | null;
+  onDelete?: () => void;
   deleteMutation: UseMutationResult<void, Error, string[], unknown>;
   children: React.ReactNode;
 }) => {
@@ -52,6 +54,7 @@ const ApTableActionsMenu = ({
             <DropdownMenuItem
               disabled={!userHasPermissionToUpdateTable}
               onSelect={(e) => e.preventDefault()}
+              onClick={(e) => e.stopPropagation()}
             >
               <PermissionNeededTooltip
                 hasPermission={userHasPermissionToUpdateTable}
@@ -66,11 +69,11 @@ const ApTableActionsMenu = ({
         </PermissionNeededTooltip>
 
         <DropdownMenuItem
+          onSelect={(e) => e.preventDefault()}
           onClick={async (e) => {
             const exportedTable = await tablesApi.export(table.id);
             tablesUtils.exportTables([exportedTable]);
             e.stopPropagation();
-            e.preventDefault();
           }}
         >
           <div className="flex gap-2 items-center">
@@ -84,6 +87,7 @@ const ApTableActionsMenu = ({
             <DropdownMenuItem
               disabled={!userHasPermissionToPushToGit}
               onSelect={(e) => e.preventDefault()}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="flex cursor-pointer flex-row gap-2 items-center">
                 <UploadCloud className="h-4 w-4" />
@@ -97,6 +101,7 @@ const ApTableActionsMenu = ({
           <DropdownMenuItem
             disabled={!userHasPermissionToUpdateTable}
             onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.stopPropagation()}
           >
             <ConfirmationDeleteDialog
               title={`${t('Delete')} ${table.name}`}
@@ -106,6 +111,7 @@ const ApTableActionsMenu = ({
               entityName={table.name}
               mutationFn={async () => {
                 await deleteMutation.mutateAsync([table.id]);
+                onDelete?.();
                 refetch?.();
               }}
             >

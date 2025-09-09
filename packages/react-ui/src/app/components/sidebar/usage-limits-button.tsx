@@ -113,7 +113,7 @@ const UsageLimitsButton = React.memo(() => {
   }
 
   return (
-    <div className="flex flex-col gap-2 w-full p-3  rounded-md border ">
+    <div className="flex flex-col gap-2 w-full p-3 bg-background rounded-md border ">
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-4">
           <UsageProgress

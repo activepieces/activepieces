@@ -207,7 +207,7 @@ const BuilderPage = () => {
           maxSize={39}
           order={1}
           ref={leftHandleRef}
-          className={cn('min-w-0 bg-background z-20  overflow-visible', {
+          className={cn('min-w-0 bg-background z-50  overflow-visible', {
             [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
             [animateResizeClassName]: !isDraggingHandle,
           })}
@@ -224,13 +224,14 @@ const BuilderPage = () => {
           withHandle={leftSidebar !== LeftSideBarType.NONE}
           onDragging={setIsDraggingHandle}
           className={
-            leftSidebar === LeftSideBarType.NONE ? 'bg-transparent' : 'z-50'
+            leftSidebar === LeftSideBarType.NONE
+              ? 'bg-transparent'
+              : 'z-[999999]'
           }
         />
 
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
-            <div className="absolute left-0 top-0 h-full w-full z-10 "></div>
             <FlowCanvas
               setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
               lefSideBarContainerWidth={
@@ -258,44 +259,44 @@ const BuilderPage = () => {
           </div>
         </ResizablePanel>
 
-        <>
-          <ResizableHandle
-            disabled={rightSidebar === RightSideBarType.NONE}
-            withHandle={rightSidebar !== RightSideBarType.NONE}
-            onDragging={setIsDraggingHandle}
-            className="z-50"
-          />
+        <ResizableHandle
+          disabled={rightSidebar === RightSideBarType.NONE}
+          withHandle={rightSidebar !== RightSideBarType.NONE}
+          onDragging={setIsDraggingHandle}
+          className={
+            rightSidebar === RightSideBarType.NONE ? 'bg-transparent' : 'z-50'
+          }
+        />
 
-          <ResizablePanel
-            ref={rightHandleRef}
-            id="right-sidebar"
-            defaultSize={0}
-            minSize={0}
-            maxSize={60}
-            order={3}
-            className={cn('min-w-0 bg-background z-30', {
-              [minWidthOfSidebar]: rightSidebar !== RightSideBarType.NONE,
-              [animateResizeClassName]: !isDraggingHandle,
-            })}
-          >
-            <div ref={rightSidePanelRef} className="h-full w-full">
-              {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-                memorizedSelectedStep && (
-                  <StepSettingsProvider
-                    pieceModel={pieceModel}
-                    selectedStep={memorizedSelectedStep}
-                    key={
-                      containerKey +
-                      (pieceModel?.name ?? '') +
-                      memorizedSelectedStep.type
-                    }
-                  >
-                    <StepSettingsContainer />
-                  </StepSettingsProvider>
-                )}
-            </div>
-          </ResizablePanel>
-        </>
+        <ResizablePanel
+          ref={rightHandleRef}
+          id="right-sidebar"
+          defaultSize={0}
+          minSize={0}
+          maxSize={60}
+          order={3}
+          className={cn('min-w-0 bg-background z-30', {
+            [minWidthOfSidebar]: rightSidebar !== RightSideBarType.NONE,
+            [animateResizeClassName]: !isDraggingHandle,
+          })}
+        >
+          <div ref={rightSidePanelRef} className="h-full w-full">
+            {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
+              memorizedSelectedStep && (
+                <StepSettingsProvider
+                  pieceModel={pieceModel}
+                  selectedStep={memorizedSelectedStep}
+                  key={
+                    containerKey +
+                    (pieceModel?.name ?? '') +
+                    memorizedSelectedStep.type
+                  }
+                >
+                  <StepSettingsContainer />
+                </StepSettingsProvider>
+              )}
+          </div>
+        </ResizablePanel>
       </ResizablePanelGroup>
       {edition === ApEdition.CLOUD && <UpgradeDialog />}
       <ChatDrawer />

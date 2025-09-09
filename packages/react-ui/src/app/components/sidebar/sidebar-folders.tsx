@@ -1,6 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, EllipsisVertical, Plus, Workflow } from 'lucide-react';
+import {
+  EllipsisVertical,
+  Folder,
+  FolderOpen,
+  Plus,
+  Workflow,
+} from 'lucide-react';
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -25,6 +31,11 @@ import {
   SidebarGroupContent,
   SidebarSkeleton,
 } from '@/components/ui/sidebar-shadcn';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { CreateFolderDialog } from '@/features/folders/component/create-folder-dialog';
 import { FolderActions } from '@/features/folders/component/folder-actions';
@@ -116,8 +127,11 @@ export function FoldersSection() {
 
   return (
     <SidebarGroup className="max-h-[50%] pb-2">
-      <SidebarGroupLabel className="flex px-0 justify-between items-center w-full mb-1">
-        {t('Flows')}
+      <SidebarGroupLabel className="flex px-0 pl-2 justify-between items-center w-full mb-1">
+        <div className="flex gap-2 items-center justify-start">
+          <Workflow className="w-3 h-3 !text-muted-foreground" />
+          {t('Folders')}
+        </div>
         <PermissionNeededTooltip
           hasPermission={userHasPermissionToUpdateFolders}
         >
@@ -125,9 +139,14 @@ export function FoldersSection() {
             refetchFolders={refetchFolders}
             updateSearchParams={() => {}}
           >
-            <Button variant="ghost" size="icon" className="size-9">
-              <Plus />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger>
+                <Button variant="ghost" size="icon" className="size-9">
+                  <Plus />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{t('New folder')}</TooltipContent>
+            </Tooltip>
           </CreateFolderDialog>
         </PermissionNeededTooltip>
       </SidebarGroupLabel>
@@ -180,10 +199,10 @@ function DefaultFolder({
     <Collapsible defaultOpen={shouldBeOpen} className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton className="px-2 group/item mb-1 pr-0">
-            <ChevronDown className="w-4 h-4 transition-transform group-data-[state=closed]/collapsible:rotate-[-90deg]" />
+          <SidebarMenuButton className="px-2 group/item pr-0">
+            <Folder className="w-4 h-4 group-data-[state=open]/collapsible:hidden" />
+            <FolderOpen className="w-4 h-4 hidden group-data-[state=open]/collapsible:block" />
             <span>{t('Uncategorized')}</span>
-
             <div className="ml-auto relative">
               <span className="text-xs w-9 h-9 flex items-center justify-center text-muted-foreground font-semibold absolute group-hover/item:hidden">
                 {flows.length}
@@ -239,8 +258,9 @@ function RegularFolder({
     >
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton className="px-2 pr-0 group/item mb-1">
-            <ChevronDown className="w-4 h-4 transition-transform group-data-[state=closed]/collapsible:rotate-[-90deg]" />
+          <SidebarMenuButton className="px-2 pr-0 group/item">
+            <Folder className="w-4 h-4 group-data-[state=open]/collapsible:hidden" />
+            <FolderOpen className="w-4 h-4 hidden group-data-[state=open]/collapsible:block" />
             <span className="truncate">{folder.displayName}</span>
             <div className="flex items-center justify-center ml-auto">
               <CreateFlowDropdown
@@ -289,9 +309,6 @@ function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
         onClick={onClick}
         className={cn(isActive && 'bg-sidebar-accent', 'pr-0 pl-2')}
       >
-        <span className="size-5 flex mr-1 items-center justify-center rounded-sm bg-sidebar-accent">
-          <Workflow className="w-3 h-3 !text-muted-foreground" />
-        </span>
         <span className="truncate">{flow.version.displayName}</span>
         <FlowActionMenu
           insideBuilder={false}

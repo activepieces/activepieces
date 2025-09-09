@@ -17,7 +17,6 @@ import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';
-import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
 import {
   Tooltip,
@@ -85,16 +84,11 @@ export const BuilderHeader = () => {
   }, []);
 
   return (
-    <div className="border-b select-none">
+    <div className="border-b-[2px] select-none">
       <div className="relative items-center flex h-[55px] w-full p-4">
         <div className="flex items-center gap-2">
-          {!embedState.isEmbedded && (
-            <>
-              <SidebarTrigger className="size-9" />
-              <Separator orientation="vertical" className="h-5" />
-            </>
-          )}
-          <HomeButton route={'/flows'} />
+          {!embedState.isEmbedded && <SidebarTrigger className="size-9" />}
+          {embedState.isEmbedded && <HomeButton />}
           <div className="flex gap-2 items-center">
             {!embedState.hideFolders &&
               !embedState.disableNavigationInBuilder && (
