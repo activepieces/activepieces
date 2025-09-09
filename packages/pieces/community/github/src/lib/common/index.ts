@@ -40,6 +40,34 @@ export const githubCommon = {
       };
     },
   }),
+  organizationDropdown: Property.Dropdown<{ org: string; id: number }>({
+    displayName: 'Organization',
+    refreshers: [],
+    required: true,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'please authenticate first',
+        };
+      }
+      const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+      const organizations = await getUserOrgs(authProp);
+      return {
+        disabled: false,
+        options: organizations.map((org) => {
+          return {
+            label: org.login,
+            value: {
+              org: org.login,
+              id: org.id,
+            },
+          };
+        }),
+      };
+    },
+  }),
   assigneeDropDown: (required = false) =>
     Property.MultiSelectDropdown({
       displayName: 'Assignees',
@@ -108,6 +136,18 @@ async function getUserRepo(authProp: OAuth2PropertyValue) {
     accessToken: authProp.access_token,
     method: HttpMethod.GET,
     resourceUri: '/user/repos',
+  });
+  return response;
+}
+
+async function getUserOrgs(authProp: OAuth2PropertyValue) {
+  const response = await githubPaginatedApiCall<{
+    id: number;
+    login: string;
+  }>({
+    accessToken: authProp.access_token,
+    method: HttpMethod.GET,
+    resourceUri: '/user/orgs',
   });
   return response;
 }

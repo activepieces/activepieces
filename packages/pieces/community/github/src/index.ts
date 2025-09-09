@@ -15,12 +15,17 @@ import { githubRawGraphqlQuery } from './lib/actions/raw-graphql-query';
 import { githubCreatePullRequestReviewCommentAction } from './lib/actions/create-pull-request-review-comment';
 import { githubCreateCommitCommentAction } from './lib/actions/create-commit-comment';
 import { githubCreateDiscussionCommentAction } from './lib/actions/create-discussion-comment';
+import { githubFindBranch } from './lib/actions/find-branch';
+import { githubFindUser } from './lib/actions/find-user';
+import { githubUpdateIssue } from './lib/actions/update-issue';
+import { githubFindIssue } from './lib/actions/find-issue';
+import { githubAddLabelsToIssue } from './lib/actions/add-labels-to-issue';
 
 export const githubAuth = PieceAuth.OAuth2({
   required: true,
   authUrl: 'https://github.com/login/oauth/authorize',
   tokenUrl: 'https://github.com/login/oauth/access_token',
-  scope: ['admin:repo_hook', 'admin:org', 'repo'],
+  scope: ['admin:repo_hook', 'admin:org', 'repo', 'user:email'],
 });
 
 export const github = createPiece({
@@ -42,6 +47,11 @@ export const github = createPiece({
     githubCreatePullRequestReviewCommentAction,
     githubCreateCommitCommentAction,
     githubCreateDiscussionCommentAction,
+    githubFindBranch,
+    githubFindUser,
+    githubUpdateIssue,
+    githubFindIssue,
+    githubAddLabelsToIssue,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.github.com',
       auth: githubAuth,
