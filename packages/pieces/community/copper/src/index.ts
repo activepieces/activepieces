@@ -29,6 +29,7 @@ import { searchForALead } from './lib/actions/search-for-a-lead';
 import { searchForACompany } from './lib/actions/search-for-a-company';
 import { searchForAnOpportunity } from './lib/actions/search-for-an-opportunity';
 import { searchForAProject } from './lib/actions/search-for-a-project';
+import { newActivity } from './lib/triggers/new-activity';
 
 export const copper = createPiece({
   displayName: 'Copper',
@@ -58,6 +59,7 @@ export const copper = createPiece({
     searchForAProject,
   ],
   triggers: [
+    newActivity,
     newPerson,
     newLead,
     newTask,

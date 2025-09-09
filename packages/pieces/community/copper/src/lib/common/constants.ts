@@ -54,3 +54,16 @@ export const isNonEmptyStr = (v: any) => typeof v === 'string' && v.trim().lengt
 
 export const toUnix = (iso?: string | null) =>
   iso ? Math.floor(new Date(iso).getTime() / 1000) : undefined;
+
+export type CopperActivity = {
+  id: number;
+  name?: string;
+  details?: string;
+  assignee_id?: number;
+  custom_activity_type_id?: number;
+  parent?: { type: 'person'|'company'|'lead'|'opportunity'|'project'; id: number };
+  activity_date?: number;  // unix seconds
+  date_created: number;    // unix seconds
+  date_modified?: number;  // unix seconds
+  tags?: string[];
+};
