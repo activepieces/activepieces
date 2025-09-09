@@ -1,8 +1,18 @@
+import {
+  ApEdition,
+  ApFlagId,
+  AuthenticationResponse,
+  ErrorCode,
+  isNil,
+  SignUpRequest,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
+
+import { passwordValidation } from '../lib/password-validation-utils';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,7 +30,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
 import { PasswordValidator } from '@/features/authentication/components/password-validator';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
@@ -28,17 +37,6 @@ import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn, formatUtils } from '@/lib/utils';
-import { OtpType } from '@activepieces/ee-shared';
-import {
-  ApEdition,
-  ApFlagId,
-  AuthenticationResponse,
-  ErrorCode,
-  isNil,
-  SignUpRequest,
-} from '@activepieces/shared';
-
-import { passwordValidation } from '../lib/password-validation-utils';
 
 type SignUpSchema = {
   email: string;
@@ -179,14 +177,7 @@ const SignUpForm = ({
   const [isPasswordFocused, setPasswordFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  return showCheckYourEmailNote ? (
-    <div className="pt-6">
-      <CheckEmailNote
-        email={form.getValues().email.trim().toLowerCase()}
-        type={OtpType.EMAIL_VERIFICATION}
-      />
-    </div>
-  ) : (
+  return showCheckYourEmailNote ? null : (
     <>
       <Form {...form}>
         <form className="grid space-y-4">

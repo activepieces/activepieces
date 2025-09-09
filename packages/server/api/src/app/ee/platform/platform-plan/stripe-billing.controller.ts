@@ -10,7 +10,6 @@ import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { SystemJobName } from '../../../helper/system-jobs/common'
-import { emailService } from '../../helper/email/email-service'
 import { platformUsageService } from '../platform-usage-service'
 import { ACTIVE_FLOW_PRICE_IDS, AI_CREDIT_PRICE_IDS, BUSINESS_PLAN_PRICE_IDS, PlatformPlanHelper, PLUS_PLAN_PRICE_IDS, PROJECT_PRICE_IDS, USER_SEAT_PRICE_IDS } from './platform-plan-helper'
 import { platformPlanRepo, platformPlanService } from './platform-plan.service'
@@ -149,12 +148,6 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             },
                         })
 
-                        await emailService(request.log).sendTrialReminder({
-                            platformId: platformPlan.platformId,
-                            firstName: user?.firstName,
-                            customerEmail: customer.email as string,
-                            templateName: '1-day-left-on-trial',
-                        })
                         break
                     }
                     default:
@@ -184,12 +177,7 @@ const WebhookRequest = {
 
 async function sendTrialRelatedEmails(customerEmail: string, platformId: string, log: FastifyBaseLogger) {
     const user = await userIdentityService(system.globalLogger()).getIdentityByEmail(customerEmail)
-    await emailService(log).sendTrialReminder({
-        platformId,
-        customerEmail,
-        templateName: 'welcome-to-trial',
-        firstName: user?.firstName,
-    })
+
     await systemJobsSchedule(log).upsertJob({
         job: {
             name: SystemJobName.SEVEN_DAYS_IN_TRIAL,

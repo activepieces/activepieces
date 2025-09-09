@@ -1,6 +1,4 @@
-import { api } from '@/lib/api';
 import {
-  CreateOtpRequestBody,
   ResetPasswordRequestBody,
   VerifyEmailRequestBody,
 } from '@activepieces/ee-shared';
@@ -16,6 +14,8 @@ import {
   ThirdPartyAuthnProviderEnum,
   UserIdentity,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const authenticationApi = {
   signIn(request: SignInRequest) {
@@ -43,9 +43,6 @@ export const authenticationApi = {
       '/v1/authn/federated/claim',
       request,
     );
-  },
-  sendOtpEmail(request: CreateOtpRequestBody) {
-    return api.post<void>('/v1/otp', request);
   },
   resetPassword(request: ResetPasswordRequestBody) {
     return api.post<void>('/v1/authn/local/reset-password', request);

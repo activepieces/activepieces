@@ -32,12 +32,10 @@ import ProjectSettingsLayout from '../components/project-settings-layout';
 import NotFoundPage from '../routes/404-page';
 import { AgentsPage } from '../routes/agents';
 import AuthenticatePage from '../routes/authenticate';
-import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
 import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
 import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
-import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import McpServersPage from '../routes/mcp-servers';
 import McpPage from '../routes/mcp-servers/id';
@@ -252,22 +250,6 @@ const routes = [
       </DashboardContainer>
     ),
   }),
-  {
-    path: '/forget-password',
-    element: (
-      <PageTitle title="Forget Password">
-        <ResetPasswordPage />
-      </PageTitle>
-    ),
-  },
-  {
-    path: '/reset-password',
-    element: (
-      <PageTitle title="Reset Password">
-        <ChangePasswordPage />
-      </PageTitle>
-    ),
-  },
   {
     path: '/sign-in',
     element: (

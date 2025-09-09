@@ -3,10 +3,8 @@ import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
-import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
-import { emailService } from '../../helper/email/email-service'
 import { AI_CREDIT_PRICE_ID } from './platform-plan-helper'
 import { platformPlanController } from './platform-plan.controller'
 import { platformPlanService } from './platform-plan.service'
@@ -80,13 +78,5 @@ async function handleEmailReminder(log: FastifyBaseLogger, platformId: string, c
         return
     }
 
-
-    const user = await userIdentityService(log).getIdentityByEmail(customerEmail)
-    await emailService(log).sendTrialReminder({
-        platformId,
-        firstName: user?.firstName,
-        customerEmail,
-        templateName,
-    })
     log.info(`Sent ${templateName} email for platfrom, ${platformId}`)
 }

@@ -1,15 +1,12 @@
-import { OtpType } from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
-import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { authenticationUtils } from './authentication-utils'
 import { userIdentityService } from './user-identity/user-identity-service'
 
@@ -33,10 +30,6 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             return createUserAndPlatform(userIdentity, log)
         }
 
-        await authenticationUtils.assertUserIsInvitedToPlatformOrProject(log, {
-            email: params.email,
-            platformId: params.platformId,
-        })
         const userIdentity = await userIdentityService(log).create({
             ...params,
             verified: true,
@@ -45,9 +38,6 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             identityId: userIdentity.id,
             platformRole: PlatformRole.MEMBER,
             platformId: params.platformId,
-        })
-        await userInvitationsService(log).provisionUserInvitation({
-            email: params.email,
         })
 
         return authenticationUtils.getProjectAndToken({
@@ -119,9 +109,6 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 password: await cryptoUtils.generateRandomPassword(),
             })
         }
-        await userInvitationsService(log).provisionUserInvitation({
-            email: params.email,
-        })
         const user = await userService.getOneByIdentityAndPlatform({
             identityId: userIdentity.id,
             platformId,
@@ -219,11 +206,6 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
     const cloudEdition = system.getEdition()
     switch (cloudEdition) {
         case ApEdition.CLOUD:
-            await otpService(log).createAndSend({
-                platformId: platform.id,
-                email: userIdentity.email,
-                type: OtpType.EMAIL_VERIFICATION,
-            })
             break
         case ApEdition.COMMUNITY:
         case ApEdition.ENTERPRISE:

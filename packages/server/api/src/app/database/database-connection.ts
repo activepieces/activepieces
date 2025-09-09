@@ -20,7 +20,6 @@ import { PlatformAnalyticsReportEntity } from '../ee/analytics/platform-analytic
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
-import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
@@ -59,7 +58,6 @@ import { TriggerEventEntity } from '../trigger/trigger-events/trigger-event.enti
 import { TriggerRunEntity } from '../trigger/trigger-run/trigger-run.entity'
 import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-entity'
 import { UserEntity } from '../user/user-entity'
-import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
@@ -87,7 +85,6 @@ function getEntities(): EntitySchema<unknown>[] {
         TagEntity,
         PieceTagEntity,
         IssueEntity,
-        UserInvitationEntity,
         WorkerMachineEntity,
         AIProviderEntity,
         ProjectRoleEntity,
@@ -118,7 +115,6 @@ function getEntities(): EntitySchema<unknown>[] {
                 CustomDomainEntity,
                 SigningKeyEntity,
                 OAuthAppEntity,
-                OtpEntity,
                 ApiKeyEntity,
                 FlowTemplateEntity,
                 ProjectReleaseEntity,

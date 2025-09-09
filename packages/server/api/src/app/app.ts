@@ -44,9 +44,7 @@ import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { appSumoModule } from './ee/appsumo/appsumo.module'
-import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
-import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
@@ -55,7 +53,6 @@ import { domainHelper } from './ee/custom-domains/domain-helper'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
-import { emailService } from './ee/helper/email/email-service'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
@@ -83,8 +80,6 @@ import { issuesModule } from './flows/issues/issues-module'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { QueueMode, system } from './helper/system/system'
 import { systemJobsSchedule } from './helper/system-jobs'
-import { SystemJobName } from './helper/system-jobs/common'
-import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { mcpModule } from './mcp/mcp-module'
 import { pieceModule } from './pieces/base-piece-module'
@@ -100,7 +95,6 @@ import { todoActivityModule } from './todos/activity/todos-activity.module'
 import { todoModule } from './todos/todo.module'
 import { triggerModule } from './trigger/trigger.module'
 import { platformUserModule } from './user/platform/platform-user-module'
-import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
@@ -197,7 +191,6 @@ export const setupApp = async (
     await pieceSyncService(app.log).setup()
     await app.register(platformUserModule)
     await app.register(issuesModule)
-    await app.register(invitationModule)
     await app.register(workerModule)
     await app.register(aiProviderModule)
     await app.register(licenseKeysModule)
@@ -279,8 +272,6 @@ export const setupApp = async (
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
-            await app.register(otpModule)
-            await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
             await app.register(platformFlowTemplateModule)
@@ -291,10 +282,6 @@ export const setupApp = async (
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
-            systemJobHandlers.registerJobHandler(
-                SystemJobName.ISSUES_REMINDER,
-                emailService(app.log).sendReminderJobHandler,
-            )
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
@@ -307,8 +294,6 @@ export const setupApp = async (
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
-            await app.register(otpModule)
-            await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
             await app.register(platformFlowTemplateModule)
@@ -316,10 +301,6 @@ export const setupApp = async (
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
-            systemJobHandlers.registerJobHandler(
-                SystemJobName.ISSUES_REMINDER,
-                emailService(app.log).sendReminderJobHandler,
-            )
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
