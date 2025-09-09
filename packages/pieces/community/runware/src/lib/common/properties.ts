@@ -1,19 +1,21 @@
 import { Property } from '@activepieces/pieces-framework';
 
 // Common Properties
-const height = Property.Number({
-  displayName: 'Height',
-  description:
-    'Used to define the height dimension of the generated image. Certain models perform better with specific dimensions.',
-  required: false,
-});
+const height = ({ required = true }) =>
+  Property.Number({
+    displayName: 'Height',
+    description:
+      'Used to define the height dimension of the generated image. Certain models perform better with specific dimensions.',
+    required: required,
+  });
 
-const width = Property.Number({
-  displayName: 'Width',
-  description:
-    'Used to define the width dimension of the generated image. Certain models perform better with specific dimensions.',
-  required: false,
-});
+const width = ({ required = true }) =>
+  Property.Number({
+    displayName: 'Width',
+    description:
+      'Used to define the width dimension of the generated image. Certain models perform better with specific dimensions.',
+    required: required,
+  });
 
 const model = Property.ShortText({
   displayName: 'Model',
@@ -59,11 +61,11 @@ const negativePrompt = Property.LongText({
 // Action Properties
 
 export const generateImagesFromText = {
+  model,
   positivePrompt,
   negativePrompt,
-  model,
-  height,
-  width,
+  height: height({ required: true }),
+  width: width({ required: true }),
   steps,
   CFGScale,
   scheduler,
@@ -93,17 +95,17 @@ export const generateImagesFromExistingImage = {
     description: 'A URL for the seed image to base the generation on.',
     required: true,
   }),
-  positivePrompt,
-  negativePrompt,
   model,
+  positivePrompt,
+  height: height({ required: true }),
+  width: width({ required: true }),
+  negativePrompt,
   strength: Property.Number({
     displayName: 'Strength',
     description:
       'A value between 0 and 1 that indicates how much to transform the seed image. A value of 0 will keep the image as is, while a value of 1 will completely transform it according to the prompt.',
     required: false,
   }),
-  height,
-  width,
   steps,
   CFGScale,
   scheduler,
@@ -138,7 +140,7 @@ export const generateVideoFromText = {
   outputQuality: Property.Number({
     displayName: 'Output Quality',
     description:
-    'Sets the compression quality of the output video. Higher values preserve more quality but increase file size, lower values reduce file size but decrease quality.',
+      'Sets the compression quality of the output video. Higher values preserve more quality but increase file size, lower values reduce file size but decrease quality.',
     required: false,
   }),
   uploadEndpoint: Property.ShortText({
@@ -147,12 +149,12 @@ export const generateVideoFromText = {
       'Specifies a URL where the generated content will be automatically uploaded using the HTTP PUT method. The raw binary data of the media file is sent directly as the request body. For secure uploads to cloud storage, use presigned URLs that include temporary authentication credentials.',
     required: false,
   }),
-   numberResults: Property.Number({
+  numberResults: Property.Number({
     displayName: 'Number of Results',
     description:
       'Specifies how many videos to generate for the given parameters. Each video will have the same parameters but different seeds, resulting in variations of the same concept.',
     required: false,
-   })
+  }),
 };
 
 export const imageBackgroundRemoval = {
@@ -162,7 +164,7 @@ export const imageBackgroundRemoval = {
     required: true,
   }),
   model,
-   outputFormat: Property.StaticDropdown({
+  outputFormat: Property.StaticDropdown({
     displayName: 'Output Format',
     description: 'The format of the output image with the background removed.',
     required: false,
