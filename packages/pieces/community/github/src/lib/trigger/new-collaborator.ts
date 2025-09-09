@@ -3,7 +3,6 @@ import { githubAuth } from '../../index';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-// A helper interface for what we store about the webhook
 interface WebhookInformation {
   webhookId: number;
   repo: string;
@@ -49,7 +48,7 @@ export const newCollaboratorTrigger = createTrigger({
       body: {
         name: 'web',
         active: true,
-        events: ['member'], // Subscribe to the 'member' event
+        events: ['member'],
         config: {
           url: context.webhookUrl,
           content_type: 'json',
@@ -79,8 +78,7 @@ export const newCollaboratorTrigger = createTrigger({
   async run(context) {
     const payload = context.payload.body as { action?: string };
 
-    // The 'member' event also fires for "edited" and "removed".
-    // We only want to trigger when a collaborator is "added".
+
     if (payload.action === 'added') {
       return [context.payload.body];
     }

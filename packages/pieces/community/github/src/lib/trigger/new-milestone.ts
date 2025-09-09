@@ -49,7 +49,7 @@ export const newMilestoneTrigger = createTrigger({
       body: {
         name: 'web',
         active: true,
-        events: ['milestone'], // Subscribe to the 'milestone' event
+        events: ['milestone'],
         config: {
           url: context.webhookUrl,
           content_type: 'json',
@@ -79,8 +79,6 @@ export const newMilestoneTrigger = createTrigger({
   async run(context) {
     const payload = context.payload.body as { action?: string };
 
-    // The 'milestone' event also fires for "closed", "opened", "edited", and "deleted".
-    // We only want to trigger when a milestone is "created".
     if (payload.action === 'created') {
       return [context.payload.body];
     }

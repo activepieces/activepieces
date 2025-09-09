@@ -20,7 +20,7 @@ export const githubCreateBranchAction = createAction({
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue.repository!;
     
-    // 1. Get the SHA of the source branch's latest commit
+
     const sourceBranchInfo = await githubApiCall<{ commit: { sha: string } }>({
         accessToken: auth.access_token,
         method: HttpMethod.GET,
@@ -28,7 +28,7 @@ export const githubCreateBranchAction = createAction({
     });
     const sourceSha = sourceBranchInfo.body.commit.sha;
 
-    // 2. Create the new branch by creating a new git ref
+   
     const response = await githubApiCall({
       accessToken: auth.access_token,
       method: HttpMethod.POST,
@@ -39,7 +39,7 @@ export const githubCreateBranchAction = createAction({
       },
     });
 
-    // The API returns a 201 Created status on success
+
     return response.body;
   },
 });

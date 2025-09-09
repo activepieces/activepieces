@@ -54,7 +54,7 @@ export const githubUpdateIssueAction = createAction({
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue.repository!;
 
-    // Construct the body with only the provided fields
+    
     const body: Record<string, unknown> = {};
     if (propsValue.title !== undefined) body.title = propsValue.title;
     if (propsValue.body !== undefined) body.body = propsValue.body;

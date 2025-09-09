@@ -8,13 +8,12 @@ import { githubAuth } from '../../index';
 import { githubApiCall, githubPaginatedApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-// Helper interface for storing webhook information
 interface OrgWebhookInformation {
   webhookId: number;
   org: string;
 }
 
-// Dynamic dropdown to list organizations the user belongs to
+
 const organizationDropdown = Property.Dropdown({
   displayName: 'Organization',
   required: true,
@@ -70,7 +69,7 @@ export const newRepositoryTrigger = createTrigger({
   async onEnable(context) {
     const org = context.propsValue.organization!;
 
-    // Create a webhook at the organization level
+
     const response = await githubApiCall<{ id: number }>({
       accessToken: context.auth.access_token,
       method: HttpMethod.POST,
@@ -78,7 +77,7 @@ export const newRepositoryTrigger = createTrigger({
       body: {
         name: 'web',
         active: true,
-        events: ['repository'], // Subscribe to the 'repository' event
+        events: ['repository'], 
         config: {
           url: context.webhookUrl,
           content_type: 'json',
@@ -97,7 +96,7 @@ export const newRepositoryTrigger = createTrigger({
       'github_new_repository_trigger'
     );
     if (webhook) {
-      // Delete the organization-level webhook
+
       await githubApiCall({
         accessToken: context.auth.access_token,
         method: HttpMethod.DELETE,
@@ -108,8 +107,7 @@ export const newRepositoryTrigger = createTrigger({
   async run(context) {
     const payload = context.payload.body as { action?: string };
 
-    // The 'repository' event fires for many actions.
-    // We only want to trigger when a repository is "created".
+
     if (payload.action === 'created') {
       return [context.payload.body];
     }

@@ -38,18 +38,18 @@ export const githubFindIssueAction = createAction({
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue.repository!;
 
-    // Construct query parameters from the provided filters
+
     const query: RequestParams = {};
     if (propsValue.state) query.state = propsValue.state;
     if (propsValue.assignee) query.assignee = propsValue.assignee;
     if (propsValue.creator) query.creator = propsValue.creator;
     if (propsValue.mentioned) query.mentioned = propsValue.mentioned;
     if (propsValue.labels && propsValue.labels.length > 0) {
-      // The API expects a comma-separated string for labels
+
       query.labels = propsValue.labels.join(',');
     }
 
-    // Use the paginated call to get all matching issues
+    
     const issues = await githubPaginatedApiCall({
       accessToken: auth.access_token,
       method: HttpMethod.GET,

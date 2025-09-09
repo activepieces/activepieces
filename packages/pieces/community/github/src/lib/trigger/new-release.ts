@@ -45,7 +45,7 @@ export const newReleaseTrigger = createTrigger({
       body: {
         name: 'web',
         active: true,
-        events: ['release'], // Subscribe to the 'release' event
+        events: ['release'], 
         config: {
           url: context.webhookUrl,
           content_type: 'json',
@@ -75,8 +75,7 @@ export const newReleaseTrigger = createTrigger({
   async run(context) {
     const payload = context.payload.body as { action?: string };
 
-    // The 'release' event fires for many actions (e.g., created, edited, deleted).
-    // We only want to trigger when a release is "published".
+
     if (payload.action === 'published') {
       return [context.payload.body];
     }

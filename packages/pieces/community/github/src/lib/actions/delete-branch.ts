@@ -19,12 +19,10 @@ export const githubDeleteBranchAction = createAction({
     const response = await githubApiCall({
       accessToken: auth.access_token,
       method: HttpMethod.DELETE,
-      // The API requires the branch reference to be prefixed with 'heads/'
+   
       resourceUri: `/repos/${owner}/${repo}/git/refs/heads/${branchName}`,
     });
 
-    // On success, the API returns a 204 No Content status.
-    // We return the (empty) body for consistency.
     return response.body;
   },
 });

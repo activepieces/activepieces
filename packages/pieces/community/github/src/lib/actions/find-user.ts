@@ -4,7 +4,7 @@ import { githubApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const githubFindUserAction = createAction({
-  // Auth is still required for the API call helper, even for public data
+  
   auth: githubAuth,
   name: 'find_user',
   displayName: 'Find User',

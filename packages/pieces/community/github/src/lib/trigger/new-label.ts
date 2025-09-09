@@ -46,7 +46,7 @@ export const newLabelTrigger = createTrigger({
       body: {
         name: 'web',
         active: true,
-        events: ['label'], // Subscribe to the 'label' event
+        events: ['label'], 
         config: {
           url: context.webhookUrl,
           content_type: 'json',
@@ -76,8 +76,7 @@ export const newLabelTrigger = createTrigger({
   async run(context) {
     const payload = context.payload.body as { action?: string };
 
-    // The 'label' event also fires for "edited" and "deleted".
-    // We only want to trigger when a label is "created".
+
     if (payload.action === 'created') {
       return [context.payload.body];
     }

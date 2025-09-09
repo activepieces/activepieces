@@ -3,7 +3,7 @@ import { githubAuth } from '../../index';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-// A helper interface for what we store about the webhook
+
 interface WebhookInformation {
   webhookId: number;
   repo: string;
@@ -26,18 +26,18 @@ export const newBranchTrigger = createTrigger({
     "pusher_type": "user",
     "repository": {
       "full_name": "activepieces/activepieces",
-      // ... other repository data
+      
     },
     "sender": {
       "login": "Logan",
-      // ... other sender data
+      
     }
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const { repo, owner } = context.propsValue.repository!;
 
-    // This API call creates the webhook on the selected repository
+
     const response = await githubApiCall<{ id: number }>({
       accessToken: context.auth.access_token,
       method: HttpMethod.POST,
@@ -45,7 +45,7 @@ export const newBranchTrigger = createTrigger({
       body: {
         name: 'web',
         active: true,
-        events: ['create'], // Subscribe to the 'create' event for branches and tags
+        events: ['create'], 
         config: {
           url: context.webhookUrl,
           content_type: 'json',
@@ -54,7 +54,7 @@ export const newBranchTrigger = createTrigger({
       },
     });
 
-    // Store the webhook ID to be able to disable it later
+
     await context.store.put<WebhookInformation>('github_new_branch_trigger', {
       webhookId: response.body.id,
       repo: repo,
@@ -66,7 +66,7 @@ export const newBranchTrigger = createTrigger({
       'github_new_branch_trigger'
     );
     if (webhook !== null && webhook !== undefined) {
-      // This API call deletes the webhook
+
       await githubApiCall({
         accessToken: context.auth.access_token,
         method: HttpMethod.DELETE,
@@ -77,8 +77,7 @@ export const newBranchTrigger = createTrigger({
   async run(context) {
     const payloadBody = context.payload.body as { ref_type?: string };
 
-    // The 'create' event fires for new branches AND new tags.
-    // We must filter the webhook events to only return the ones for branches.
+
     if (payloadBody.ref_type === 'branch') {
       return [context.payload.body];
     }
