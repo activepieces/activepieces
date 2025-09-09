@@ -72,15 +72,23 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             logsFileId,
         })
 
-        const updateLogs = !isNil(executionStateContentLength) && executionStateContentLength > 0
-        if (updateLogs) {
-            await flowRunService(request.log).updateLogs({
-                flowRunId: runId,
-                logsFileId: runWithoutSteps.logsFileId ?? undefined,
-                projectId: request.principal.projectId,
-                executionStateString: executionStateBuffer,
-                executionStateContentLength: executionStateContentLength,
-            })
+        if (!isNil(executionStateContentLength)) {
+            const updateSizeOnlyForSignedUrl = isNil(executionStateBuffer) && !isNil(logsFileId)
+            const uploadTheLogs = !isNil(executionStateBuffer)
+            if (uploadTheLogs) {
+                await flowRunService(request.log).updateLogs({
+                    flowRunId: runId,
+                    logsFileId: runWithoutSteps.logsFileId ?? undefined,
+                    projectId: request.principal.projectId,
+                    executionStateString: executionStateBuffer,
+                    executionStateContentLength: executionStateContentLength,
+                })
+            } else if (updateSizeOnlyForSignedUrl) {
+                await fileService(request.log).updateSize({
+                    fileId: runWithoutSteps.logsFileId!,
+                    size: executionStateContentLength,
+                })
+            }
         }
         if (runDetails.status === FlowRunStatus.PAUSED) {
             await flowRunService(request.log).pause({
