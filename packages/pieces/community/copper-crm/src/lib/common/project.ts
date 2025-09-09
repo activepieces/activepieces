@@ -65,7 +65,3 @@ export const projectCustomFields = Property.Array({
         }),
     },
 });
-
-export const projectDateCreated = Property.DateTime({
-    displayName: 'Date Created',
-    description: 'A Unix timestamp representing the time
