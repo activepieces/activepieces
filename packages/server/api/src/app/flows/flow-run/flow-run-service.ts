@@ -358,7 +358,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
         const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
 
-        
+
 
         switch (pauseMetadata.type) {
             case PauseType.DELAY: {
@@ -378,8 +378,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                         environment: flowRun.environment,
                         flowVersionId: flowRun.flowVersionId,
                     },
-                    // 30 seconds so the first job is marked as completed
-                    delay: Math.max(30*1000, dayjs(pauseMetadata.resumeDateTime).diff(dayjs(), 'ms')),
+                    // 60 seconds so the first job is marked as completed
+                    delay: Math.max(dayjs.duration(60, 'seconds').asMilliseconds(), dayjs(pauseMetadata.resumeDateTime).diff(dayjs(), 'ms')),
                 })
                 break
             }
