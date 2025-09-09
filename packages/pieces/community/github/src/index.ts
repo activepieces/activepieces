@@ -24,7 +24,6 @@ import { githubFindBranchAction } from './lib/actions/find-branch';
 import { githubFindIssueAction } from './lib/actions/find-issue';
 import { githubFindUserAction } from './lib/actions/find-user';
 
-import { newBranchTrigger } from './lib/trigger/new-branch';
 export const githubAuth = PieceAuth.OAuth2({
   required: true,
   authUrl: 'https://github.com/login/oauth/authorize',
