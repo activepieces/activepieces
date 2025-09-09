@@ -8,7 +8,7 @@ import { system } from './system/system'
 
 const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 
-const analytics = new Analytics({ writeKey: '42TtMD2Fh9PEIcDO2CagCGFmtoPwOmqK' })
+const analytics = new Analytics({ writeKey: 'KOEkEwBpW1yOw75Evcfg06H0DidqJXzd' })
 
 export const telemetry = (log: FastifyBaseLogger) => ({
     async identify(user: User, identity: UserIdentity, projectId: ProjectId): Promise<void> {

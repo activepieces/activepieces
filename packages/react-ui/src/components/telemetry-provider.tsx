@@ -62,7 +62,7 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     }
     console.log('Telemetry enabled');
     const newAnalytics = AnalyticsBrowser.load({
-      writeKey: 'Znobm6clOFLZNdMFpZ1ncf6VDmlCVSmj',
+      writeKey: 'LzmO14emO8lqm0ANNGi9rwBpaazHvFbo',
     });
 
     newAnalytics.addSourceMiddleware(({ payload, next }) => {
