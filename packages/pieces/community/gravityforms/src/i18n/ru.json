@@ -1,8 +1,0 @@
-{
-  "Gravity Forms": "Формы гравитации",
-  "Build and publish your WordPress forms": "Создать и опубликовать ваши формы WordPress",
-  "New Submission": "Новая заявка",
-  "Triggers when form receives a new submission": "Триггеры, когда форма получает новую справку",
-  "Markdown": "Markdown",
-  "\n- Go to the \"Plugins\" section.\n- Find and click on the \"Webhook\" plugin to activate it.\n- Now, locate the form where you want the trigger to occur.\n- Add a webhook to that form.\n- In the webhook settings, paste this URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n- Keep the other settings unchanged (default).\n": "\n- перейдите в раздел \"Плагины\".\n- Найдите и нажмите на плагин \"Webhook\" для его активации.\n- Теперь найдите форму, в которой вы хотите, чтобы произошел триггер.\n- Добавить вебхук к этой форме.\n- В настройках webhook, вставьте этот URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n- Держите остальные настройки неизменными (по умолчанию).\n"
-}

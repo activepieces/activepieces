@@ -1,7 +1,0 @@
-{
-  "Build and publish your WordPress forms": "WordPressのフォームを構築して公開する",
-  "New Submission": "新しい提出",
-  "Triggers when form receives a new submission": "フォームが新しい提出物を受け取ったときにトリガー",
-  "Markdown": "Markdown",
-  "\n- Go to the \"Plugins\" section.\n- Find and click on the \"Webhook\" plugin to activate it.\n- Now, locate the form where you want the trigger to occur.\n- Add a webhook to that form.\n- In the webhook settings, paste this URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n- Keep the other settings unchanged (default).\n": "\n- Go to the \"Plugins\" section.\n- Find and click on the \"Webhook\" plugin to activate it.\n- Now, locate the form where you want the trigger to occur.\n- Add a webhook to that form.\n- In the webhook settings, paste this URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n- Keep the other settings unchanged (default).\n"
-}

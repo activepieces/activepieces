@@ -1,8 +1,0 @@
-{
-  "Tally": "Décalage",
-  "Receive form submissions from Tally forms": "Recevoir des soumissions de formulaires à partir de formulaires de consignation",
-  "New Submission": "Nouvelle soumission",
-  "Triggers when form receives a new submission": "Déclenche lorsque le formulaire reçoit une nouvelle soumission",
-  "Markdown": "Markdown",
-  "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Integrations\" section.\n4. Find the \"Webhooks\" integration and click on \"Connect\" to activate it.\n5. In the webhook settings, paste the following URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n  \n6. Click on \"Submit\".\n": "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Integrations\" section.\n4. Find the \"Webhooks\" integration and click on \"Connect\" to activate it.\n5. In the webhook settings, paste the following URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n  \n6. Click on \"Submit\".\n"
-}

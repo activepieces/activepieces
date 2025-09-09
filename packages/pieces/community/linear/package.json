@@ -1,7 +1,0 @@
-{
-  "name": "@activepieces/piece-linear",
-  "version": "0.1.15",
-  "dependencies": {
-    "@linear/sdk": "7.0.1"
-  }
-}

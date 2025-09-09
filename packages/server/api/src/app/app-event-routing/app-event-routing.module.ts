@@ -1,7 +1,3 @@
-import { facebookLeads } from '@activepieces/piece-facebook-leads'
-import { intercom } from '@activepieces/piece-intercom'
-import { slack } from '@activepieces/piece-slack'
-import { square } from '@activepieces/piece-square'
 import { Piece } from '@activepieces/pieces-framework'
 import {
     JobType,
@@ -30,10 +26,6 @@ import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
 
 const appWebhooks: Record<string, Piece> = {
-    slack,
-    square,
-    'facebook-leads': facebookLeads,
-    intercom,
 }
 const pieceNames: Record<string, string> = {
     slack: '@activepieces/piece-slack',
