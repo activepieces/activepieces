@@ -35,7 +35,6 @@ import {
   FlowOperationType,
   FlowTemplate,
   PopulatedFlow,
-  TelemetryEventName,
 } from '@activepieces/shared';
 
 import { FormError } from '../../../components/ui/form';
@@ -125,16 +124,6 @@ const ImportFlowDialog = (
     },
 
     onSuccess: (flows: PopulatedFlow[]) => {
-      capture({
-        name: TelemetryEventName.FLOW_IMPORTED_USING_FILE,
-        payload: {
-          location: props.insideBuilder
-            ? 'inside the builder'
-            : 'inside dashboard',
-          multiple: flows.length > 1,
-        },
-      });
-
       toast({
         title: t(`flowsImported`, {
           flowsCount: flows.length,
