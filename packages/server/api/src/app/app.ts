@@ -19,7 +19,6 @@ import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { getRedisConnection } from './database/redis-connection'
-import { alertsModule } from './ee/alerts/alerts-module'
 import { platformAnalyticsModule } from './ee/analytics/platform-analytics.module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
@@ -201,7 +200,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await pieceSyncService(app.log).setup()
     await app.register(platformUserModule)
     await app.register(issuesModule)
-    await app.register(alertsModule)
     await app.register(invitationModule)
     await app.register(workerModule)
     await app.register(aiProviderModule)

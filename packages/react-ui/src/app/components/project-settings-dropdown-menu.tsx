@@ -63,12 +63,6 @@ const ProjectSettingsDropdownMenu = () => {
       icon: <Puzzle className="h-4 w-4" />,
     },
     {
-      title: t('Alerts'),
-      href: authenticationSession.appendProjectRoutePrefix('/settings/alerts'),
-      icon: <Bell className="h-4 w-4" />,
-      hasPermission: checkAccess(Permission.READ_ALERT),
-    },
-    {
       title: t('Environments'),
       href: authenticationSession.appendProjectRoutePrefix(
         '/settings/environments',

@@ -1,10 +1,10 @@
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 export type FeatureKey =
   | 'PROJECTS'
@@ -20,7 +20,6 @@ export type FeatureKey =
   | 'ENVIRONMENT'
   | 'ISSUES'
   | 'ANALYTICS'
-  | 'ALERTS'
   | 'ENTERPRISE_PIECES'
   | 'UNIVERSAL_AI'
   | 'SIGNING_KEYS'

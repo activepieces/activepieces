@@ -1,12 +1,10 @@
-import { AlertChannel, OtpType } from '@activepieces/ee-shared'
+import { OtpType } from '@activepieces/ee-shared'
 import { ApEdition, assertNotNullOrUndefined, InvitationType, UserIdentity, UserInvitation } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { issuesService } from '../../../flows/issues/issues-service'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
-import { alertsService } from '../../alerts/alerts-service'
 import { domainHelper } from '../../custom-domains/domain-helper'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
@@ -14,7 +12,6 @@ import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
 const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
-const MAX_ISSUES_EMAIL_LIMT = 50
 
 export const emailService = (log: FastifyBaseLogger) => ({
     async sendInvitation({ userInvitation, invitationLink }: SendInvitationArgs): Promise<void> {
@@ -61,23 +58,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
             flowName,
             createdAt,
         })
-
-        const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        
-        await emailSender(log).send({
-            emails,
-            platformId,
-            templateData: {
-                name: 'issue-created',
-                vars: {
-                    flowName,
-                    createdAt,
-                    isIssue: isIssue.toString(),
-                    issueUrl: issueOrRunsPath,
-                },
-            },
-        })
     },
     async sendQuotaAlert({ projectId, resetDate, templateName }: SendQuotaAlertArgs): Promise<void> {
         if (EDITION_IS_NOT_CLOUD) {
@@ -92,20 +72,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             return
         }
 
-        // TODO remove the hardcoded limit
-        const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
 
-        await emailSender(log).send({
-            emails,
-            platformId: project.platformId,
-            templateData: {
-                name: templateName,
-                vars: {
-                    resetDate,
-                },
-            },
-        })
     },
 
     async sendOtp({ platformId, userIdentity, otp, type }: SendOtpArgs): Promise<void> {
@@ -165,34 +132,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
         if (issues.data.length === 0) {
             return
         }
-
-        const alerts = await alertsService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        
-        const issuesUrl = await domainHelper.getPublicUrl({
-            platformId: job.platformId,
-            path: 'runs?limit=10#Issues',
-        })
-
-        const issuesWithFormattedDate = issues.data.map((issue) => ({ 
-            ...issue, 
-            created: dayjs(issue.created).format('MMM D, h:mm a'),
-            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM D, h:mm a'), 
-        }))
-
-        await emailSender(log).send({
-            emails,
-            platformId: job.platformId,
-            templateData: {
-                name: 'issues-reminder',
-                vars: {
-                    issuesUrl,
-                    issuesCount: issues.data.length.toString(),
-                    projectName: job.projectName,
-                    issues: JSON.stringify(issuesWithFormattedDate),
-                },
-            },
-        })
     },
 
     async sendTrialReminder({ platformId, firstName, customerEmail, templateName }: SendTrialReminderArgs): Promise<void> {
@@ -211,21 +150,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
     },
 
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
-        const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        const project = await projectService.getOneOrThrow(projectId)
-        
-        await emailSender(log).send({
-            emails,
-            platformId: project.platformId,
-            templateData: {
-                name: 'trigger-failure',
-                vars: {
-                    flowName,
-                    projectName: project.displayName,
-                },
-            },
-        })
     },
 
 })

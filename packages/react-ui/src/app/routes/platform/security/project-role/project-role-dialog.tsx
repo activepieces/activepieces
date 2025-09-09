@@ -56,12 +56,6 @@ const initialPermissions = [
     write: [Permission.READ_ISSUES, Permission.WRITE_ISSUES],
   },
   {
-    name: 'Alerts',
-    description: 'Read and write alerts',
-    read: [Permission.READ_ALERT],
-    write: [Permission.READ_ALERT, Permission.WRITE_ALERT],
-  },
-  {
     name: 'Folders',
     description: 'Read and write folders',
     read: [Permission.READ_FOLDER],

@@ -56,7 +56,6 @@ import UsersPage from '../routes/platform/users';
 import { ProjectReleasesPage } from '../routes/project-release';
 import ViewRelease from '../routes/project-release/view-release';
 import { FlowRunPage } from '../routes/runs/id';
-import AlertsPage from '../routes/settings/alerts';
 import { EnvironmentPage } from '../routes/settings/environment';
 import ProjectMembersPage from '../routes/settings/project-members';
 import { SignInPage } from '../routes/sign-in';
@@ -317,20 +316,6 @@ const routes = [
       </PageTitle>
     ),
   },
-  ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.alerts,
-    element: (
-      <DashboardContainer>
-        <RoutePermissionGuard permission={Permission.READ_ALERT}>
-          <PageTitle title="Alerts">
-            <ProjectSettingsLayout>
-              <AlertsPage />
-            </ProjectSettingsLayout>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </DashboardContainer>
-    ),
-  }),
 
   ...ProjectRouterWrapper({
     path: projectSettingsRoutes.pieces,
