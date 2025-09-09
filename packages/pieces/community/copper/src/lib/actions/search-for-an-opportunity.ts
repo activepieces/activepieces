@@ -49,7 +49,7 @@ export const searchForAnOpportunity = createAction({
         ],
       },
     }),
-    priority_ids: Property.StaticMultiSelectDropdown({
+    priorities: Property.StaticMultiSelectDropdown({
       displayName: 'Priority',
       required: false,
       options: {
@@ -320,7 +320,7 @@ export const searchForAnOpportunity = createAction({
       page_number,
       sort_by,
       sort_direction,
-      priority_ids,
+      priorities,
       minimum_interaction_count,
       maximum_interaction_count,
       minimum_interaction_date,
@@ -336,7 +336,7 @@ export const searchForAnOpportunity = createAction({
       maximum_close_date,
       maximum_stage_change_date,
       primary_contact_ids,
-      loss_reason_ids
+      loss_reason_ids,
     } = context.propsValue;
 
     const payload = {
@@ -353,7 +353,7 @@ export const searchForAnOpportunity = createAction({
       primary_contact_ids,
       loss_reason_ids,
       tags,
-      priority_ids,
+      priorities,
       followed,
       page_size,
       page_number,

@@ -148,7 +148,7 @@ export const createTask = createAction({
       name,
       details,
       custom_activity_type_id: custom_activity_type.id,
-      assignee_id: assigneeId,
+      ...(assigneeId ? {assignee_id: assigneeId}: {}),
       due_date: toUnix(due_date),
       reminder_date: toUnix(reminder_date),
       priority,
