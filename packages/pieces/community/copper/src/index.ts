@@ -34,11 +34,11 @@ import { updatedLeadStatus } from './lib/triggers/updated-lead-status';
 
 export const copper = createPiece({
   displayName: "Copper",
-  description: "CRM and sales pipeline management platform",
+  description: "CRM and sales pipeline management",
   auth: copperAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.20.0',
   logoUrl: "https://cdn.activepieces.com/pieces/copper.png",
-  authors: [],
+  authors: ["kishanprmr", "MoShizzle", "abuaboud"],
   actions: [
     createPerson,
     updatePerson,
@@ -62,12 +62,15 @@ export const copper = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.copper.com/developer_api/v1',
       auth: copperAuth,
-      authMapping: async (auth) => ({
-        'X-PW-AccessToken': auth.apiKey as string,
-        'X-PW-Application': 'developer_api',
-        'X-PW-UserEmail': auth.userEmail as string,
-        'Content-Type': 'application/json',
-      }),
+      authMapping: async (auth: unknown) => {
+        const authData = auth as { apiKey: string; userEmail: string };
+        return {
+          'X-PW-AccessToken': authData.apiKey,
+          'X-PW-Application': 'developer_api',
+          'X-PW-UserEmail': authData.userEmail,
+          'Content-Type': 'application/json',
+        };
+      },
     }),
   ],
   triggers: [
