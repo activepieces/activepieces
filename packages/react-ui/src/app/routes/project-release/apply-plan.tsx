@@ -1,12 +1,5 @@
-import {
-  DiffReleaseRequest,
-  isNil,
-  ProjectReleaseType,
-} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
-import { useState, ReactNode, useEffect } from 'react';
-
-import { CreateReleaseDialog } from './create-release-dialog';
+import { useState, ReactNode } from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -14,6 +7,13 @@ import { ConnectGitDialog } from '@/features/git-sync/components/connect-git-dia
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import {
+  DiffReleaseRequest,
+  isNil,
+  ProjectReleaseType,
+} from '@activepieces/shared';
+
+import { CreateReleaseDialog } from './create-release-dialog';
 
 type ApplyButtonProps = ButtonProps & {
   request: DiffReleaseRequest;
