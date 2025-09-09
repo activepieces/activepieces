@@ -191,7 +191,7 @@ const JsonViewer = React.memo(
                   </pre>
                 )}
                 {typeof json === 'object' && (
-                  <div className='max-w-96'>
+                  <div className="max-w-96">
                     <ReactJson
                       style={{
                         overflowX: 'auto',

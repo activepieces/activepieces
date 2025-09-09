@@ -114,7 +114,7 @@ export function SidebarUser() {
             )}
 
             <DropdownMenuGroup>
-              {(!embedState.hideProjectSettings && !isInPlatformAdmin) && (
+              {!embedState.hideProjectSettings && !isInPlatformAdmin && (
                 <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
                   <Settings className="w-4 h-4 mr-2" />
                   {t('Project Settings')}
