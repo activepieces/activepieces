@@ -52,7 +52,6 @@ import { PageTitle } from '@/app/components/page-title';
 import { ChatPage } from '@/app/routes/chat';
 import { EmbedPage } from '@/app/routes/embed';
 import AnalyticsPage from '@/app/routes/platform/analytics';
-import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
 import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
 import { SSOPage } from '@/app/routes/platform/security/sso';
 import AIProvidersPage from '@/app/routes/platform/setup/ai';
@@ -422,16 +421,6 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="AI">
           <AIProvidersPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/security/api-keys',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="API Keys">
-          <ApiKeysPage />
         </PageTitle>
       </PlatformAdminContainer>
     ),

@@ -137,13 +137,6 @@ export function PlatformAdminContainer({
           isSubItem: true,
           show: true,
         },
-        {
-          type: 'link',
-          to: '/platform/security/api-keys',
-          label: t('API Keys'),
-          isSubItem: true,
-          show: true,
-        },
       ],
     },
   ];
