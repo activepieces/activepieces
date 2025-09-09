@@ -22,8 +22,8 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_WEBHOOK:
         case WorkerJobType.EXECUTE_AGENT:
         case WorkerJobType.DELAYED_FLOW:
-            return 'medium'
         case WorkerJobType.EXECUTE_TOOL:
+            return 'medium'
         case WorkerJobType.EXECUTE_PROPERTY:
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
         case WorkerJobType.EXECUTE_VALIDATION:
