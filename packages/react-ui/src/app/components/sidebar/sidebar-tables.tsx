@@ -1,10 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  EllipsisVertical,
-  Plus,
-  Table as TableIcon,
-} from 'lucide-react';
+import { EllipsisVertical, Plus, Table as TableIcon } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -54,9 +50,7 @@ export function TablesSection() {
   if (isTablesLoading) {
     return (
       <SidebarGroup>
-          <SidebarGroupLabel>
-            {t("Tables")}
-          </SidebarGroupLabel>
+        <SidebarGroupLabel>{t('Tables')}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarSkeleton numOfItems={6} />
         </SidebarGroupContent>

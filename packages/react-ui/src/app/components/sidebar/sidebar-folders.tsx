@@ -1,11 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  ChevronDown,
-  EllipsisVertical,
-  Plus,
-  Workflow,
-} from 'lucide-react';
+import { ChevronDown, EllipsisVertical, Plus, Workflow } from 'lucide-react';
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -111,9 +106,7 @@ export function FoldersSection() {
   if (foldersLoading || flowsLoading) {
     return (
       <SidebarGroup>
-          <SidebarGroupLabel>
-            {t("Flows")}
-          </SidebarGroupLabel>
+        <SidebarGroupLabel>{t('Flows')}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarSkeleton numOfItems={6} />
         </SidebarGroupContent>
@@ -141,15 +134,13 @@ export function FoldersSection() {
       <ScrollArea>
         <SidebarGroupContent>
           <SidebarMenu>
-            {defaultFolderFlows.length > 0 && (
-              <DefaultFolder
-                refetchFlows={refetchFlows}
-                flows={defaultFolderFlows}
-                onFlowClick={handleFlowClick}
-                isFlowActive={isFlowActive}
-                shouldBeOpen={currentFlowFolderId === 'default'}
-              />
-            )}
+            <DefaultFolder
+              refetchFlows={refetchFlows}
+              flows={defaultFolderFlows}
+              onFlowClick={handleFlowClick}
+              isFlowActive={isFlowActive}
+              shouldBeOpen={currentFlowFolderId === 'default'}
+            />
 
             {sortedFolders.map((folder) => (
               <RegularFolder
@@ -189,7 +180,7 @@ function DefaultFolder({
     <Collapsible defaultOpen={shouldBeOpen} className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton className="px-2 group/item pr-0">
+          <SidebarMenuButton className="px-2 group/item mb-1 pr-0">
             <ChevronDown className="w-4 h-4 transition-transform group-data-[state=closed]/collapsible:rotate-[-90deg]" />
             <span>{t('Uncategorized')}</span>
 
@@ -206,19 +197,21 @@ function DefaultFolder({
             </div>
           </SidebarMenuButton>
         </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            {flows.map((flow) => (
-              <FlowItem
-                key={flow.id}
-                flow={flow}
-                isActive={isFlowActive(flow.id)}
-                onClick={() => onFlowClick(flow.id)}
-                refetch={refetchFlows}
-              />
-            ))}
-          </SidebarMenuSub>
-        </CollapsibleContent>
+        {flows.length > 0 && (
+          <CollapsibleContent>
+            <SidebarMenuSub>
+              {flows.map((flow) => (
+                <FlowItem
+                  key={flow.id}
+                  flow={flow}
+                  isActive={isFlowActive(flow.id)}
+                  onClick={() => onFlowClick(flow.id)}
+                  refetch={refetchFlows}
+                />
+              ))}
+            </SidebarMenuSub>
+          </CollapsibleContent>
+        )}
       </SidebarMenuItem>
     </Collapsible>
   );
@@ -246,7 +239,7 @@ function RegularFolder({
     >
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton className="px-2 pr-0 group/item">
+          <SidebarMenuButton className="px-2 pr-0 group/item mb-1">
             <ChevronDown className="w-4 h-4 transition-transform group-data-[state=closed]/collapsible:rotate-[-90deg]" />
             <span className="truncate">{folder.displayName}</span>
             <div className="flex items-center justify-center ml-auto">
@@ -287,8 +280,8 @@ interface FlowItemProps {
 }
 
 function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
-  const { flowId } = useParams()
-  const navigate = useNavigate()
+  const { flowId } = useParams();
+  const navigate = useNavigate();
 
   return (
     <SidebarMenuSubItem className="cursor-pointer group/item">
@@ -318,7 +311,7 @@ function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
               );
             } else {
               refetch();
-            } 
+            }
           }}
           onDuplicate={() => {
             refetch();
