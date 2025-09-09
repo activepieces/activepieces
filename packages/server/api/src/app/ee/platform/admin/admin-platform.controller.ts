@@ -62,13 +62,8 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         }
 
         const delayInMilliSeconds = dayjs(flowRun.pauseMetadata.resumeDateTime).diff(dayjs())
-        const delay = delayInMilliSeconds < 0 ? 0 : delayInMilliSeconds
+        const delay = Math.max(delayInMilliSeconds, 60000)
 
-        const oldestLogFileId = await getOldestLogFile(flowRun.id, flowRun.projectId, req.log)
-
-        if (oldestLogFileId) {
-            await flowRunRepo().update(flowRun.id, { logsFileId: oldestLogFileId })
-        }
 
         await jobQueue(req.log).add({
             id: 'delayed_' + flowRun.id,
@@ -91,7 +86,6 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 
         return res.status(StatusCodes.OK).send({
             message: 'Delayed run added to queue successfully',
-            logsFileId: oldestLogFileId,
         })
     })
 }
