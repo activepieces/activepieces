@@ -1,11 +1,10 @@
-import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, TelemetryEventName } from '@activepieces/shared'
+import { AppSystemProp } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity } from '@activepieces/shared'
 import { PlanName } from '@ee/shared/src/lib/billing'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../helper/system/system'
-import { telemetry } from '../../helper/telemetry.utils'
 import { platformService } from '../../platform/platform.service'
 import { PlatformPlanHelper } from '../platform/platform-plan/platform-plan-helper'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
@@ -57,15 +56,6 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             if (!response.ok) {
                 const errorMessage = JSON.stringify(await response.json())
                 handleUnexpectedSecretsManagerError(log, errorMessage)
-            }
-            if (request.platformId) {
-                rejectedPromiseHandler(telemetry(log).trackPlatform(request.platformId, {
-                    name: TelemetryEventName.KEY_ACTIVATED,
-                    payload: {
-                        date: dayjs().toISOString(),
-                        key: request.key,
-                    },
-                }), log)
             }
         }
         catch (e) {

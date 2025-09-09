@@ -1,3 +1,4 @@
+import { ApEdition, ApFlagId, Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ChevronDownIcon,
@@ -9,8 +10,18 @@ import {
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { ShowPoweredBy } from '../../../components/show-powered-by';
+import { platformHooks } from '../../../hooks/platform-hooks';
+import { ApDashboardSidebarHeader } from '../ap-dashboard-sidebar-header';
+import { HelpAndFeedback } from '../help-and-feedback';
+
+import { SidebarInviteUserButton } from './sidebar-invite-user';
+import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
+import { SidebarUser } from './sidebar-user';
+import UsageLimitsButton from './usage-limits-button';
+
 import { BetaBadge } from '@/components/custom/beta-badge';
-import TutorialsDialog, { TabType } from '@/components/custom/tutorials-dialog';
+import TutorialsDialog from '@/components/custom/tutorials-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Collapsible,
@@ -37,17 +48,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { ApEdition, ApFlagId, Permission } from '@activepieces/shared';
-
-import { ShowPoweredBy } from '../../../components/show-powered-by';
-import { platformHooks } from '../../../hooks/platform-hooks';
-import { ApDashboardSidebarHeader } from '../ap-dashboard-sidebar-header';
-import { HelpAndFeedback } from '../help-and-feedback';
-
-import { SidebarInviteUserButton } from './sidebar-invite-user';
-import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
-import { SidebarUser } from './sidebar-user';
-import UsageLimitsButton from './usage-limits-button';
 
 type Link = {
   icon: React.ReactNode;
@@ -66,7 +66,7 @@ type CustomTooltipLinkProps = {
   newWindow?: boolean;
   isActive?: (pathname: string) => boolean;
   isSubItem: boolean;
-  tutorialTab?: TabType;
+  tutorialTab?: string;
 };
 export const CustomTooltipLink = ({
   to,
@@ -173,7 +173,7 @@ export type SidebarLink = {
   isActive?: (pathname: string) => boolean;
   separatorBefore?: boolean;
   separatorAfter?: boolean;
-  tutorialTab?: TabType;
+  tutorialTab?: string;
 };
 
 export type SidebarItem = SidebarLink | SidebarGroup;

@@ -217,12 +217,7 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
         id: ApFlagId.USER_CREATED,
         value: true,
     })
-    await authenticationUtils.sendTelemetry({
-        identity: userIdentity,
-        user,
-        project: defaultProject,
-        log,
-    })
+    
     await authenticationUtils.saveNewsLetterSubscriber(user, platform.id, userIdentity, log)
 
     return authenticationUtils.getProjectAndToken({

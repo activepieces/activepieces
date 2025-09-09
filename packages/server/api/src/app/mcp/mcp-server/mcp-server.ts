@@ -1,5 +1,4 @@
 import { AIUsageFeature, createAIModel } from '@activepieces/common-ai'
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     EngineResponseStatus,
     isNil,
@@ -9,7 +8,6 @@ import {
     mcpToolNaming,
     McpToolType,
     McpTrigger,
-    TelemetryEventName,
 } from '@activepieces/shared'       
 import { openai } from '@ai-sdk/openai'
 import { LanguageModelV2 } from '@ai-sdk/provider'
@@ -20,7 +18,6 @@ import { z } from 'zod'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
-import { telemetry } from '../../helper/telemetry.utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
@@ -145,7 +142,6 @@ async function addPieceToServer(
                     platformId,
                 })
 
-                trackToolCall({ mcpId: mcpTool.mcpId, toolName: toolActionName, projectId, logger })
                 const success = result.status === EngineResponseStatus.OK && result.result.success
 
                 await mcpRunService(logger).create({
@@ -281,7 +277,6 @@ async function addFlowToServer(
                 failParentOnFailure: false,
             })
 
-            trackToolCall({ mcpId, toolName, projectId, logger })
             const success = isOkSuccess(response.status)
 
             await mcpRunService(logger).create({
@@ -323,25 +318,6 @@ async function addFlowToServer(
 
 function isOkSuccess(status: number) {
     return Math.floor(status / 100) === 2
-}
-
-function trackToolCall({ mcpId, toolName, projectId, logger }: TrackToolCallParams) {
-    rejectedPromiseHandler(telemetry(logger).trackProject(projectId, {
-        name: TelemetryEventName.MCP_TOOL_CALLED,
-        payload: {
-            mcpId,
-            toolName,
-        },
-    }), logger)
-}
-
-
-
-type TrackToolCallParams = {
-    mcpId: string
-    toolName: string
-    projectId: string
-    logger: FastifyBaseLogger
 }
 
 type CreateMcpServerRequest = {

@@ -11,7 +11,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { EmbeddingProvider } from '@/components/embed-provider';
-import TelemetryProvider from '@/components/telemetry-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { Toaster } from '@/components/ui/toaster';
@@ -71,7 +70,6 @@ export function App() {
         <EmbeddingProvider>
           <InitialDataGuard>
             <EmbeddingFontLoader>
-              <TelemetryProvider>
                 <TooltipProvider>
                   <React.Fragment key={i18n.language}>
                     <ThemeProvider storageKey="vite-ui-theme">
@@ -83,7 +81,6 @@ export function App() {
                     </ThemeProvider>
                   </React.Fragment>
                 </TooltipProvider>
-              </TelemetryProvider>
             </EmbeddingFontLoader>
           </InitialDataGuard>
         </EmbeddingProvider>

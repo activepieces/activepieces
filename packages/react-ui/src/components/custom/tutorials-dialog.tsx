@@ -1,3 +1,4 @@
+import { ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Bot,
@@ -11,16 +12,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { McpSvg } from '@/assets/img/custom/mcp';
-import { Tabs, TabsTrigger, TabsList } from '@/components/ui/tabs';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import {
-  ApFlagId,
-  ClickedTutorialTelemetryParams,
-  TelemetryEventName,
-} from '@activepieces/shared';
-
-import { useTelemetry } from '../telemetry-provider';
 import { Button } from '../ui/button';
 import {
   Dialog,
@@ -33,27 +24,29 @@ import {
 import { Separator } from '../ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
-export type TabType = ClickedTutorialTelemetryParams['tab'];
+import { McpSvg } from '@/assets/img/custom/mcp';
+import { Tabs, TabsTrigger, TabsList } from '@/components/ui/tabs';
+import { flagsHooks } from '@/hooks/flags-hooks';
+
 const TutorialsDialog = ({
   initialTab,
   children,
   showTooltip = true,
   location,
 }: {
-  initialTab?: TabType;
+  initialTab?: string;
   children?: React.ReactNode;
   showTooltip?: boolean;
-  location: ClickedTutorialTelemetryParams['location'];
+  location: string;
 }) => {
-  const [selectedTab, setSelectedTab] = useState<TabType>(
+  const [selectedTab, setSelectedTab] = useState<string>(
     initialTab ?? 'gettingStarted',
   );
-  const { capture } = useTelemetry();
   const { data: showTutorials } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_TUTORIALS,
   );
   const tabs: Record<
-    TabType,
+    string,
     { icon: React.ReactNode; name: string; description: string; link: string }
   > = {
     gettingStarted: {
@@ -102,14 +95,7 @@ const TutorialsDialog = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <DialogTrigger asChild>
-            <div
-              onClick={() => {
-                capture({
-                  name: TelemetryEventName.CLICKED_TUTORIAL,
-                  payload: { tab: initialTab ?? 'gettingStarted', location },
-                });
-              }}
-            >
+            <div>
               {children ? (
                 children
               ) : (
@@ -152,7 +138,7 @@ const TutorialsDialog = ({
           <div className="flex flex-col grow">
             <Tabs
               value={selectedTab}
-              onValueChange={(value) => setSelectedTab(value as TabType)}
+              onValueChange={(value) => setSelectedTab(value as string)}
               className="overflow-x-auto  w-[70vw] max-w-[1280px]"
             >
               <TabsList className="bg-background  p-0 justify-start rounded-none ">

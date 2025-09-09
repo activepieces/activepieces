@@ -1,5 +1,5 @@
-import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, FAILED_STATES, FlowRun, FlowRunStatus, flowStructureUtil, FlowVersion, isNil, Issue, IssueStatus, ListIssuesParams, PopulatedIssue, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
+import { AppSystemProp } from '@activepieces/server-shared'
+import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, FAILED_STATES, FlowRun, FlowRunStatus, flowStructureUtil, FlowVersion, isNil, Issue, IssueStatus, ListIssuesParams, PopulatedIssue, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, LessThan } from 'typeorm'
@@ -7,7 +7,6 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
-import { telemetry } from '../../helper/telemetry.utils'
 import { FlowRunEntity } from '../flow-run/flow-run-entity'
 import { flowRunRepo } from '../flow-run/flow-run-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
@@ -103,12 +102,6 @@ export const issuesService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        rejectedPromiseHandler(telemetry(log).trackProject(flowIssue.projectId, {
-            name: TelemetryEventName.FLOW_ISSUE_RESOLVED,
-            payload: {
-                flowId: flowIssue.flowId,
-            },
-        }), log)
         await repo().update({
             id,
         }, {

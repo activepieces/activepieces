@@ -1,8 +1,7 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, ErrorCode, isNil, Principal, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, ErrorCode, isNil, Principal, PrincipalType, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
-import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
@@ -114,31 +113,6 @@ export const authenticationUtils = {
         }
     },
 
-    async sendTelemetry({
-        user,
-        identity,
-        project,
-        log,
-    }: SendTelemetryParams): Promise<void> {
-        try {
-            await telemetry(log).identify(user, identity, project.id)
-
-            await telemetry(log).trackProject(project.id, {
-                name: TelemetryEventName.SIGNED_UP,
-                payload: {
-                    userId: identity.id,
-                    email: identity.email,
-                    firstName: identity.firstName,
-                    lastName: identity.lastName,
-                    projectId: project.id,
-                },
-            })
-        }
-        catch (e) {
-            log.warn({ name: 'AuthenticationService#sendTelemetry', error: e })
-        }
-    },
-
     async saveNewsLetterSubscriber(user: User, platformId: string, identity: UserIdentity, log: FastifyBaseLogger): Promise<void> {
         const platform = await platformService.getOneWithPlanOrThrow(platformId)
         const environment = system.get(AppSystemProp.ENVIRONMENT)
@@ -175,13 +149,6 @@ export const authenticationUtils = {
         const project = await projectService.getOneOrThrow(principal.projectId)
         return project.ownerId
     },
-}
-
-type SendTelemetryParams = {
-    identity: UserIdentity
-    user: User
-    project: Project
-    log: FastifyBaseLogger
 }
 
 type AssertDomainIsAllowedParams = {

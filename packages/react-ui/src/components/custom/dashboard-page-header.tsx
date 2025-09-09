@@ -1,10 +1,10 @@
 import { VideoIcon } from 'lucide-react';
 
-import { BetaBadge } from '@/components/custom/beta-badge';
-
 import { Button } from '../ui/button';
 
-import TutorialsDialog, { TabType } from './tutorials-dialog';
+import TutorialsDialog from './tutorials-dialog';
+
+import { BetaBadge } from '@/components/custom/beta-badge';
 
 export const DashboardPageHeader = ({
   title,
@@ -17,7 +17,7 @@ export const DashboardPageHeader = ({
   children?: React.ReactNode;
   description?: React.ReactNode;
   beta?: boolean;
-  tutorialTab?: TabType;
+  tutorialTab?: string;
 }) => {
   return (
     <div className="w-full flex items-center justify-between border-b absolute left-0 top-0 bg-background py-3 px-6 z-30">

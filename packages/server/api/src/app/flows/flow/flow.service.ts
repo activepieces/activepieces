@@ -21,7 +21,7 @@ import {
     PlatformId,
     PopulatedFlow,
     ProjectId,
-    SeekPage, TelemetryEventName, UserId,
+    SeekPage, UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -31,7 +31,6 @@ import { AddAPArrayContainsToQueryBuilder } from '../../database/database-connec
 import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
@@ -60,16 +59,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 displayName: request.displayName,
             },
         )
-
-        telemetry(log).trackProject(savedFlow.projectId, {
-            name: TelemetryEventName.CREATED_FLOW,
-            payload: {
-                flowId: savedFlow.id,
-            },
-        })
-            .catch((e) =>
-                log.error(e, '[FlowService#create] telemetry.trackProject'),
-            )
 
         return {
             ...savedFlow,

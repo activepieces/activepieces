@@ -2,12 +2,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LogOut } from 'lucide-react';
 
-import { useEmbedding } from '@/components/embed-provider';
-import { useTelemetry } from '@/components/telemetry-provider';
-import { UserAvatar } from '@/components/ui/user-avatar';
-import { userHooks } from '@/hooks/user-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,8 +11,12 @@ import {
 } from '../../../components/ui/dropdown-menu';
 import { TextWithIcon } from '../../../components/ui/text-with-icon';
 
+import { useEmbedding } from '@/components/embed-provider';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { userHooks } from '@/hooks/user-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
+
 export function UserAvatarMenu() {
-  const { reset } = useTelemetry();
   const { embedState } = useEmbedding();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
@@ -46,7 +44,6 @@ export function UserAvatarMenu() {
           onClick={() => {
             userHooks.invalidateCurrentUser(queryClient);
             authenticationSession.logOut();
-            reset();
           }}
           className="cursor-pointer"
         >

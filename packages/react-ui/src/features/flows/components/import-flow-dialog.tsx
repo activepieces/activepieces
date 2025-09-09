@@ -1,3 +1,8 @@
+import {
+  FlowOperationType,
+  FlowTemplate,
+  PopulatedFlow,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
@@ -6,7 +11,9 @@ import { TriangleAlert } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useTelemetry } from '@/components/telemetry-provider';
+import { FormError } from '../../../components/ui/form';
+import { flowsApi } from '../lib/flows-api';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -31,15 +38,6 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  FlowOperationType,
-  FlowTemplate,
-  PopulatedFlow,
-  TelemetryEventName,
-} from '@activepieces/shared';
-
-import { FormError } from '../../../components/ui/form';
-import { flowsApi } from '../lib/flows-api';
 
 export type ImportFlowDialogProps =
   | {
@@ -77,7 +75,6 @@ const readTemplateJson = async (
 const ImportFlowDialog = (
   props: ImportFlowDialogProps & { children: React.ReactNode },
 ) => {
-  const { capture } = useTelemetry();
   const [templates, setTemplates] = useState<FlowTemplate[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -125,16 +122,6 @@ const ImportFlowDialog = (
     },
 
     onSuccess: (flows: PopulatedFlow[]) => {
-      capture({
-        name: TelemetryEventName.FLOW_IMPORTED_USING_FILE,
-        payload: {
-          location: props.insideBuilder
-            ? 'inside the builder'
-            : 'inside dashboard',
-          multiple: flows.length > 1,
-        },
-      });
-
       toast({
         title: t(`flowsImported`, {
           flowsCount: flows.length,
