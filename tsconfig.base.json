@@ -326,11 +326,11 @@
       "@activepieces/piece-discourse": [
         "packages/pieces/community/discourse/src/index.ts"
       ],
-      "@activepieces/piece-docsbot": [
-        "packages/pieces/community/docsbot/src/index.ts"
-      ],
       "@activepieces/piece-dittofeed": [
         "packages/pieces/community/dittofeed/src/index.ts"
+      ],
+      "@activepieces/piece-docsbot": [
+        "packages/pieces/community/docsbot/src/index.ts"
       ],
       "@activepieces/piece-docusign": [
         "packages/pieces/community/docusign/src/index.ts"
@@ -847,6 +847,9 @@
         "packages/pieces/community/robolly/src/index.ts"
       ],
       "@activepieces/piece-rss": ["packages/pieces/community/rss/src/index.ts"],
+      "@activepieces/piece-runware": [
+        "packages/pieces/community/runware/src/index.ts"
+      ],
       "@activepieces/piece-saastic": [
         "packages/pieces/community/saastic/src/index.ts"
       ],
