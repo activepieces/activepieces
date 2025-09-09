@@ -10,7 +10,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/client';
 
 export const murfApi = createPiece({
-  displayName: "Murf API",
+  displayName: "Murf AI",
   auth: murfAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/murf-api.png',

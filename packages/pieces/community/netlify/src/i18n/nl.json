@@ -1,5 +1,4 @@
 {
-  "Netlify": "Netlificeren",
   "Netlify is a platform for building and deploying websites and apps.": "Netlify is een platform voor het bouwen en implementeren van websites en apps.",
   "\nTo authenticate with Netlify:\n\n1. Go to your Netlify user settings\n2. Navigate to \"Applications\" → \"OAuth applications\"\n3. Click \"New OAuth application\"\n4. Add https://cloud.activepieces.com/redirect to authorized redirect URIs\n5. Copy the Client ID and Client Secret\n6. Use the OAuth2 flow below\n\n**Note:** If your team uses SAML SSO, you must grant access to the team when generating your token.\n": "\nOm te verifiëren met Netlify:\n\n1. Ga naar uw Netlify gebruikersinstellingen\n2. Navigeer naar \"Applicaties\" → \"OAuth applicaties\"\n3. Klik op \"Nieuwe OAuth applicatie\"\n4. Voeg https://cloud.activepieces toe. om/redirect naar toestemming voor redirect URIs\n5. Kopieer de Client-ID en Client-geheim\n6. Gebruik de OAuth2 stroom onder\n\n**Opmerking:** Als je team SAML SSO gebruikt, moet je bij het genereren van je token toegang verlenen aan het team.\n",
   "Start Deploy": "Start Implementeren",

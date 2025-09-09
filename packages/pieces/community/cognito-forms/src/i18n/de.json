@@ -1,5 +1,4 @@
 {
-  "Cognito Forms": "Cognito Formulare",
   "\n  1. Click your organization's name in the top left corner and then click Settings.\n  2. Go to the Integrations section and select + New API Key.\n  3. Make sure to copy and store your API key, as it cannot be retrieved later.\n  ": "\n  1. Klicken Sie auf den Namen Ihrer Organisation in der oberen linken Ecke und klicken Sie dann auf Einstellungen.\n  2. Gehen Sie zum Abschnitt Integrationen und wählen Sie + Neuer API-Schlüssel.\n  3. Kopieren und speichern Sie Ihren API-Schlüssel, da er später nicht abgerufen werden kann.\n  ",
   "Create Entry": "Eintrag erstellen",
   "Update Entry": "Eintrag aktualisieren",

@@ -9,7 +9,7 @@ export const voiceChange = createAction({
   auth: murfAuth,
   name: "voice-changer-convert",
   displayName: "Voice Changer",
-  description: "Convert an input audio file to a different voice using Murf Voice Changer",
+  description: "Convert an input audio file to a different voice using Murf Voice Changer.",
   props: {
     language: murfCommon.language,
     voiceId: murfCommon.voiceId,

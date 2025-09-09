@@ -3,8 +3,8 @@ import { makeRequest } from "./client";
 import { HttpMethod } from "@activepieces/pieces-common";
 
 export const murfAuth = PieceAuth.SecretText({
-  displayName: "Murf API Key",
-  description: "Enter your Murf API key from https://murf.ai",
+  displayName: "API Key",
+  description: "Enter your API key from https://murf.ai",
   required: true,
   validate: async ({ auth }) => {
     if (!auth) {

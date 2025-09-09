@@ -8,7 +8,7 @@ export const translateText = createAction({
   auth: murfAuth,
   name: "translateText",
   displayName: "Translate Text",
-  description: "Translate one or more texts to the target language using Murf Translate API",
+  description: "Translate one or more texts to the target language.",
   props: {
     targetLanguage: murfCommon.language,
     texts: Property.Array({
