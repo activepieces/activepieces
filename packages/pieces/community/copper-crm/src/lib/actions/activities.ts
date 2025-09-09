@@ -1,6 +1,6 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { copperAuth } from "../common/auth";
-import { activityParentId, activityTypeCategory, activityTypeId, findActivityFullResultFlag, findActivityMaximumDate, findActivityMinimumDate } from "../common/activities";
+import { activityParentId, activityTypeCategory, activityTypeId, findActivityFullResultFlag, findActivityMaximumDate, findActivityMinimumDate } from "../common/activity";
 import { makeCopperRequest } from "../common/request";
 import { HttpMethod } from "@activepieces/pieces-common";
 import { ACTIVITIES_API_ENDPOINT } from "../common/constants";
