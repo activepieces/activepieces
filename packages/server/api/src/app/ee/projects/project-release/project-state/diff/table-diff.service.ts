@@ -11,7 +11,8 @@ export const tableDiffService = {
 function isTableChanged(stateOne: TableState, stateTwo: TableState): boolean {
     const { id: _, ...restOne } = stateOne
     const { id: __, ...restTwo } = stateTwo
-    return JSON.stringify(restOne) !== JSON.stringify(restTwo)
+
+    return JSON.stringify(restOne, Object.keys(restOne).sort()) !== JSON.stringify(restTwo, Object.keys(restTwo).sort())
 }
 
 function findTablesToUpdate(currentState: ProjectState, newState: ProjectState): TableOperation[] {
