@@ -1,3 +1,4 @@
+import { Permission, Table } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -18,7 +19,6 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
 import { tableHooks } from '@/features/tables/lib/table-hooks';
 import { tablesApi } from '@/features/tables/lib/tables-api';
@@ -27,7 +27,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
-import { Permission, Table } from '@activepieces/shared';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
@@ -180,24 +179,6 @@ const ApTablesPage = () => {
                 </Button>
               )}
             </ConfirmationDeleteDialog>
-          </div>
-        ),
-      },
-      {
-        render: (_) => (
-          <div onClick={(e) => e.stopPropagation()}>
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToPushToGit}
-            >
-              <PushToGitDialog type="table" tables={selectedRows}>
-                {selectedRows.length > 0 && (
-                  <Button className="w-full mr-2" size="sm" variant="outline">
-                    <UploadCloud className="mr-2 w-4" />
-                    {`${t('Push to Git')} (${selectedRows.length})`}
-                  </Button>
-                )}
-              </PushToGitDialog>
-            </PermissionNeededTooltip>
           </div>
         ),
       },

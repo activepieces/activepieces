@@ -1,5 +1,4 @@
 export * from './lib/billing'
-export * from './lib/git-repo'
 export * from './lib/api-key'
 export * from './lib/billing'
 export * from './lib/project/project-requests'

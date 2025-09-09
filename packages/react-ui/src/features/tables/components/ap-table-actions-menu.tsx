@@ -1,3 +1,4 @@
+import { Permission, Table } from '@activepieces/shared';
 import { UseMutationResult } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -5,8 +6,12 @@ import {
   EllipsisVertical,
   PencilIcon,
   TrashIcon,
-  UploadCloud,
 } from 'lucide-react';
+
+import { tablesApi } from '../lib/tables-api';
+import { tablesUtils } from '../lib/utils';
+
+import RenameTableDialog from './rename-table-dialog';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -16,14 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Permission, Table } from '@activepieces/shared';
-
-import { tablesApi } from '../lib/tables-api';
-import { tablesUtils } from '../lib/utils';
-
-import RenameTableDialog from './rename-table-dialog';
 
 const ApTableActionsMenu = ({
   table,
@@ -85,20 +83,6 @@ const ApTableActionsMenu = ({
             {t('Export')}
           </div>
         </DropdownMenuItem>
-
-        <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
-          <PushToGitDialog type="table" tables={[table]}>
-            <DropdownMenuItem
-              disabled={!userHasPermissionToPushToGit}
-              onSelect={(e) => e.preventDefault()}
-            >
-              <div className="flex cursor-pointer flex-row gap-2 items-center">
-                <UploadCloud className="h-4 w-4" />
-                <span>{t('Push to Git')}</span>
-              </div>
-            </DropdownMenuItem>
-          </PushToGitDialog>
-        </PermissionNeededTooltip>
 
         <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateTable}>
           <DropdownMenuItem

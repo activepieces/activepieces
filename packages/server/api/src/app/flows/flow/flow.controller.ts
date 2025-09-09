@@ -1,5 +1,4 @@
 
-import { GitPushOperationType } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -36,7 +35,6 @@ import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
 import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
-import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -124,18 +122,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.delete('/:id', DeleteFlowRequestOptions, async (request, reply) => {
-        const flow = await flowService(request.log).getOnePopulatedOrThrow({
-            id: request.params.id,
-            projectId: request.principal.projectId,
-        })
-        await gitRepoService(request.log).onDeleted({
-            type: GitPushOperationType.DELETE_FLOW,
-            externalId: flow.externalId,
-            userId: request.principal.id,
-            projectId: request.principal.projectId,
-            platformId: request.principal.platform.id,
-            log: request.log,
-        })
         await flowService(request.log).delete({
             id: request.params.id,
             projectId: request.principal.projectId,

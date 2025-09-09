@@ -52,10 +52,7 @@ import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
-import { ProjectReleasesPage } from '../routes/project-release';
-import ViewRelease from '../routes/project-release/view-release';
 import { FlowRunPage } from '../routes/runs/id';
-import { EnvironmentPage } from '../routes/settings/environment';
 import ProjectMembersPage from '../routes/settings/project-members';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
@@ -192,16 +189,6 @@ const routes = [
     ),
   },
   ...ProjectRouterWrapper({
-    path: '/releases/:releaseId',
-    element: (
-      <DashboardContainer>
-        <PageTitle title="Releases">
-          <ViewRelease />
-        </PageTitle>
-      </DashboardContainer>
-    ),
-  }),
-  ...ProjectRouterWrapper({
     path: '/tables',
     element: (
       <DashboardContainer>
@@ -236,16 +223,6 @@ const routes = [
             <AppConnectionsPage />
           </PageTitle>
         </RoutePermissionGuard>
-      </DashboardContainer>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: '/releases',
-    element: (
-      <DashboardContainer>
-        <PageTitle title="Releases">
-          <ProjectReleasesPage />
-        </PageTitle>
       </DashboardContainer>
     ),
   }),
@@ -346,20 +323,6 @@ const routes = [
     path: '/team',
     element: <Navigate to={projectSettingsRoutes.team} replace></Navigate>,
   },
-  ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.environments,
-    element: (
-      <DashboardContainer>
-        <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>
-          <PageTitle title="Environments">
-            <ProjectSettingsLayout>
-              <EnvironmentPage />
-            </ProjectSettingsLayout>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </DashboardContainer>
-    ),
-  }),
 
   ...ProjectRouterWrapper({
     path: '/mcps',

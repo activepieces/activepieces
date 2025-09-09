@@ -2,7 +2,6 @@ import { Static, Type } from '@sinclair/typebox'
 import { DiscriminatedUnion, Nullable } from '../common'
 
 export enum ProjectReleaseType {
-    GIT = 'GIT',
     PROJECT = 'PROJECT',
     ROLLBACK = 'ROLLBACK',
 }
@@ -13,12 +12,6 @@ const BaseProjectReleaseRequestBody = {
     selectedFlowsIds: Nullable(Type.Array(Type.String())),
     projectId: Type.String(),
 }
-
-export const CreateProjectReleaseFromGitRequestBody = Type.Object({
-    type: Type.Literal(ProjectReleaseType.GIT),
-    ...BaseProjectReleaseRequestBody,
-})
-
 
 export const CreateProjectReleaseFromRollbackRequestBody = Type.Object({
     type: Type.Literal(ProjectReleaseType.ROLLBACK),
@@ -35,7 +28,6 @@ export const CreateProjectReleaseFromProjectRequestBody = Type.Object({
 export const CreateProjectReleaseRequestBody = DiscriminatedUnion('type', [
     CreateProjectReleaseFromRollbackRequestBody,
     CreateProjectReleaseFromProjectRequestBody,
-    CreateProjectReleaseFromGitRequestBody,
 ])
 
 export type CreateProjectReleaseRequestBody = Static<typeof CreateProjectReleaseRequestBody>
@@ -49,9 +41,6 @@ export const DiffReleaseRequest = Type.Union([
     Type.Object({
         type: Type.Literal(ProjectReleaseType.ROLLBACK),
         projectReleaseId: Type.String(),
-    }),
-    Type.Object({
-        type: Type.Literal(ProjectReleaseType.GIT),
     }),
 ])
 

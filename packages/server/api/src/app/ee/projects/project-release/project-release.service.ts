@@ -5,7 +5,6 @@ import { repoFactory } from '../../../core/db/repo-factory'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { userService } from '../../../user/user-service'
-import { gitRepoService } from './git-sync/git-sync.service'
 import { ProjectReleaseEntity } from './project-release.entity'
 import { projectDiffService } from './project-state/project-diff.service'
 import { projectStateService } from './project-state/project-state.service'
@@ -152,10 +151,6 @@ async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
 }
 async function getStateFromCreateRequest(projectId: string, ownerId: ApId, request: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectState> {
     switch (request.type) {
-        case ProjectReleaseType.GIT: {
-            const gitRepo = await gitRepoService(log).getOneByProjectOrThrow({ projectId })
-            return gitRepoService(log).getState({ gitRepo, userId: ownerId, log })
-        }
         case ProjectReleaseType.PROJECT: {
             return projectStateService(log).getCurrentState(request.targetProjectId, log)
         }

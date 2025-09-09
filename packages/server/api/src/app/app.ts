@@ -1,6 +1,4 @@
 import {
-
-    GitRepoWithoutSensitiveData,
     ProjectMember,
 } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
@@ -68,7 +66,6 @@ import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.mo
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
-import { gitRepoModule } from './ee/projects/project-release/git-sync/git-sync.module'
 import { projectReleaseModule } from './ee/projects/project-release/project-release.module'
 import { projectRoleModule } from './ee/projects/project-role/project-role.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
@@ -141,7 +138,6 @@ export const setupApp = async (
                     'flow-run': FlowRun,
                     'app-connection': AppConnectionWithoutSensitiveData,
                     piece: PieceMetadata,
-                    'git-repo': GitRepoWithoutSensitiveData,
                     'project-release': ProjectRelease,
                     'global-connection': AppConnectionWithoutSensitiveData,
                     mcp: McpWithTools,
@@ -288,7 +284,6 @@ export const setupApp = async (
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
             await app.register(platformFlowTemplateModule)
-            await app.register(gitRepoModule)
             await app.register(platformAnalyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
@@ -317,7 +312,6 @@ export const setupApp = async (
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
             await app.register(platformFlowTemplateModule)
-            await app.register(gitRepoModule)
             await app.register(platformAnalyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)

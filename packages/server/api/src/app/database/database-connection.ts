@@ -28,7 +28,6 @@ import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { PlatformPlanEntity } from '../ee/platform/platform-plan/platform-plan.entity'
 import { ProjectMemberEntity } from '../ee/projects/project-members/project-member.entity'
 import { ProjectPlanEntity } from '../ee/projects/project-plan/project-plan.entity'
-import { GitRepoEntity } from '../ee/projects/project-release/git-sync/git-sync.entity'
 import { ProjectReleaseEntity } from '../ee/projects/project-release/project-release.entity'
 import { ProjectRoleEntity } from '../ee/projects/project-role/project-role.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
@@ -122,7 +121,6 @@ function getEntities(): EntitySchema<unknown>[] {
                 OtpEntity,
                 ApiKeyEntity,
                 FlowTemplateEntity,
-                GitRepoEntity,
                 ProjectReleaseEntity,
                 PlatformAnalyticsReportEntity,
                 // CLOUD

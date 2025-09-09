@@ -1,3 +1,9 @@
+import {
+  FlowOperationType,
+  FlowVersion,
+  Permission,
+  PopulatedFlow,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -8,9 +14,12 @@ import {
   Pencil,
   Share2,
   Trash2,
-  UploadCloud,
 } from 'lucide-react';
 import React, { useState } from 'react';
+
+import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
+import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
+import { flowsApi } from '../../features/flows/lib/flows-api';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -28,25 +37,9 @@ import {
 } from '@/features/flows/components/import-flow-dialog';
 import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
-import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { GitBranchType } from '@activepieces/ee-shared';
-import {
-  FlowOperationType,
-  FlowVersion,
-  FlowVersionState,
-  Permission,
-  PopulatedFlow,
-} from '@activepieces/shared';
-
-import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
-import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
-import { flowsApi } from '../../features/flows/lib/flows-api';
 
 interface FlowActionMenuProps {
   flow: PopulatedFlow;
@@ -71,29 +64,16 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onDelete,
   insideBuilder,
 }) => {
-  const { platform } = platformHooks.useCurrentPlatform();
   const openNewWindow = useNewWindow();
-  const { gitSync } = gitSyncHooks.useGitSync(
-    authenticationSession.getProjectId()!,
-    platform.plan.environmentsEnabled,
-  );
   const { checkAccess } = useAuthorization();
   const userHasPermissionToWriteFolder = checkAccess(Permission.WRITE_FOLDER);
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
-  const userHasPermissionToPushToGit = checkAccess(
-    Permission.WRITE_PROJECT_RELEASE,
-  );
   const importFlowProps: ImportFlowDialogProps = {
     insideBuilder: true,
     flowId: flow.id,
   };
   const { embedState } = useEmbedding();
-  const isDevelopmentBranch =
-    gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
   const [open, setOpen] = useState(false);
-  const allowPush =
-    flow.publishedVersionId !== null &&
-    flow.version.state === FlowVersionState.LOCKED;
 
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
     mutationFn: async () => {
@@ -173,21 +153,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             )}
           </>
         )}
-        <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
-          <PublishedNeededTooltip allowPush={allowPush}>
-            <PushToGitDialog type="flow" flows={[flow]}>
-              <DropdownMenuItem
-                disabled={!userHasPermissionToPushToGit || !allowPush}
-                onSelect={(e) => e.preventDefault()}
-              >
-                <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                  <UploadCloud className="h-4 w-4" />
-                  <span>{t('Push to Git')}</span>
-                </div>
-              </DropdownMenuItem>
-            </PushToGitDialog>
-          </PublishedNeededTooltip>
-        </PermissionNeededTooltip>
 
         {!embedState.hideFolders && (
           <PermissionNeededTooltip
@@ -283,20 +248,11 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               <ConfirmationDeleteDialog
                 title={`${t('Delete')} ${flowVersion.displayName}`}
                 message={
-                  <>
-                    <div>
-                      {t(
-                        'Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs.',
-                      )}
-                    </div>
-                    {isDevelopmentBranch && (
-                      <div className="font-bold mt-2">
-                        {t(
-                          'You are on a development branch, this will also delete the flow from the remote repository.',
-                        )}
-                      </div>
+                  <div>
+                    {t(
+                      'Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs.',
                     )}
-                  </>
+                  </div>
                 }
                 mutationFn={async () => {
                   await flowsApi.delete(flow.id);
