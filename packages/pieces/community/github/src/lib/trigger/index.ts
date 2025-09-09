@@ -8,6 +8,12 @@ export enum GithubEventType {
   PUSH = 'push',
   DISCUSSION = 'discussion',
   DISCUSSION_COMMENT = 'discussion_comment',
+  CREATE = 'create',
+  MEMBER = 'member',
+  LABEL = 'label',
+  MILESTONE = 'milestone',
+  RELEASE = 'release',
+  REPOSITORY = 'repository',
 }
 
 export const registered = [
@@ -272,6 +278,79 @@ export const registered = [
         type: 'User',
         site_admin: false,
       },
+    },
+  },
+  {
+    name: GithubEventType.CREATE,
+    displayName: 'New Branch',
+    description: 'Triggers when a new branch is created in a repository.',
+    sampleData: {
+      ref: 'feature/new-feature',
+      ref_type: 'branch',
+      master_branch: 'main',
+      description: 'Repository description',
+      pusher_type: 'user',
+      repository: {
+        full_name: 'owner/repo',
+      },
+      sender: {
+        login: 'octocat',
+      },
+    },
+  },
+  {
+    name: GithubEventType.MEMBER,
+    displayName: 'New Collaborator',
+    description: 'Triggers when a collaborator is added to the repository.',
+    sampleData: {
+      action: 'added',
+      member: { login: 'new-collaborator' },
+      repository: { full_name: 'owner/repo' },
+      sender: { login: 'octocat' },
+    },
+  },
+  {
+    name: GithubEventType.LABEL,
+    displayName: 'New Label',
+    description: 'Triggers when a label is created.',
+    sampleData: {
+      action: 'created',
+      label: { name: 'bug', color: 'd73a4a' },
+      repository: { full_name: 'owner/repo' },
+      sender: { login: 'octocat' },
+    },
+  },
+  {
+    name: GithubEventType.MILESTONE,
+    displayName: 'New Milestone',
+    description: 'Triggers when a milestone is created.',
+    sampleData: {
+      action: 'created',
+      milestone: { title: 'v1.0', state: 'open' },
+      repository: { full_name: 'owner/repo' },
+      sender: { login: 'octocat' },
+    },
+  },
+  {
+    name: GithubEventType.RELEASE,
+    displayName: 'New Release',
+    description: 'Triggers when a release is published.',
+    sampleData: {
+      action: 'published',
+      release: { tag_name: 'v1.0.0', draft: false, prerelease: false },
+      repository: { full_name: 'owner/repo' },
+      sender: { login: 'octocat' },
+    },
+  },
+  {
+    name: GithubEventType.REPOSITORY,
+    displayName: 'New Repository',
+    description: 'Triggers when a repository is created (requires proper webhook scope).',
+    sampleData: {
+      action: 'created',
+      repository: { full_name: 'owner/new-repo' },
+      organization: { login: 'my-org' },
+      sender: { login: 'octocat' },
     },
   },
   {
