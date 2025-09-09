@@ -113,13 +113,13 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/flows/:flowId',
     element: (
-      <BuilderLayout>
-        <RoutePermissionGuard permission={Permission.READ_FLOW}>
+      <RoutePermissionGuard permission={Permission.READ_FLOW}>
+        <BuilderLayout>
           <PageTitle title="Builder">
             <FlowBuilderPage />
           </PageTitle>
-        </RoutePermissionGuard>
-      </BuilderLayout>
+        </BuilderLayout>
+      </RoutePermissionGuard>
     ),
   }),
   ...ProjectRouterWrapper({
@@ -156,9 +156,11 @@ const routes = [
     path: '/runs/:runId',
     element: (
       <RoutePermissionGuard permission={Permission.READ_RUN}>
-        <PageTitle title="Flow Run">
-          <FlowRunPage />
-        </PageTitle>
+        <BuilderLayout>
+          <PageTitle title="Flow Run">
+            <FlowRunPage />
+          </PageTitle>
+        </BuilderLayout>
       </RoutePermissionGuard>
     ),
   }),
@@ -219,15 +221,15 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/tables/:tableId',
     element: (
-      <BuilderLayout>
-        <RoutePermissionGuard permission={Permission.READ_TABLE}>
+      <RoutePermissionGuard permission={Permission.READ_TABLE}>
+        <BuilderLayout>
           <PageTitle title="Table">
             <ApTableStateProvider>
               <ApTableEditorPage />
             </ApTableStateProvider>
           </PageTitle>
-        </RoutePermissionGuard>
-      </BuilderLayout>
+        </BuilderLayout>
+      </RoutePermissionGuard>
     ),
   }),
   ...ProjectRouterWrapper({
@@ -662,3 +664,4 @@ const ApRouter = () => {
 };
 
 export { ApRouter };
+
