@@ -1,0 +1,69 @@
+{
+  "name": "pieces-copper",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/copper/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/copper",
+        "tsConfig": "packages/pieces/community/copper/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/copper/package.json",
+        "main": "packages/pieces/community/copper/src/index.ts",
+        "assets": [
+          "packages/pieces/community/copper/*.md",
+          {
+            "input": "packages/pieces/community/copper/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      },
+      "dependsOn": ["prebuild", "^build"]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/copper",
+        "command": "npm ci"
+      }
+    },
+    "build-with-deps": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run pieces-copper:prebuild",
+          "nx run pieces-copper:build",
+          "nx run pieces-copper:postbuild"
+        ],
+        "parallel": false
+      }
+    },
+    "postbuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "dist/packages/pieces/community/copper",
+        "command": "npm install"
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-copper {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  },
+  "tags": []
+}
