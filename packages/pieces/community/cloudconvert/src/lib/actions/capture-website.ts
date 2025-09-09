@@ -156,10 +156,17 @@ const captureWebsiteProps = {
         description: 'Choose a filename (including extension) for the output file',
         required: false,
     }),
-    engine: Property.ShortText({
+    engine: Property.StaticDropdown({
         displayName: 'Engine',
-        description: 'Use a specific engine for the conversion',
+        description: 'Use a specific engine for the website capture',
         required: false,
+        options: {
+            options: [
+                { label: 'Chrome/Puppeteer (Default)', value: 'chrome' },
+                { label: 'Firefox', value: 'firefox' },
+                { label: 'WebKit', value: 'webkit' },
+            ]
+        }
     }),
     engine_version: Property.ShortText({
         displayName: 'Engine Version',
@@ -253,8 +260,8 @@ export const captureWebsite = createAction({
             const exportTask = await client.createExportTask(captureTask.id);
 
             const tasks: Record<string, string> = {
-                'capture-website': captureTask.id,
-                'export-capture': exportTask.id,
+                'capture/website': captureTask.id,
+                'export/url': exportTask.id,
             };
 
             const job = await client.createJob(tasks, `capture-${Date.now()}`);
@@ -303,5 +310,30 @@ export const captureWebsite = createAction({
             }
             throw new Error(`Website capture failed: ${String(error)}`);
         }
+    },
+
+    async test(context) {
+        // For testing, return mock data to simulate successful website capture
+        return {
+            url: 'https://example.com',
+            output_format: 'pdf',
+            pages: '1-3',
+            zoom: 1,
+            page_width: 12,
+            page_height: 15,
+            page_format: 'a4',
+            page_orientation: 'portrait',
+            margin_top: 2,
+            margin_bottom: 2,
+            margin_left: 2,
+            margin_right: 2,
+            print_background: true,
+            display_header_footer: false,
+            wait_until: 'load',
+            filename: 'websitetest.pdf',
+            engine: 'chrome',
+            wait_for_completion: true,
+            message: 'Test successful - website capture simulation completed'
+        };
     },
 });

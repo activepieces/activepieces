@@ -51,6 +51,22 @@ export class CloudConvertClient {
         return response.body.data;
     }
 
+    async createUploadTask(filename: string) {
+        const response = await this.apiCall({
+            method: HttpMethod.POST,
+            resourceUri: '/import/upload',
+            body: {
+                filename
+            }
+        });
+
+        if (response.status !== 201) {
+            throw new Error(`Failed to create upload task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+        }
+
+        return response.body.data;
+    }
+
     async createArchiveTask(input: string | string[], outputFormat: string, options?: {
         filename?: string;
         engine?: string;
@@ -116,7 +132,7 @@ export class CloudConvertClient {
     }) {
         const response = await this.apiCall({
             method: HttpMethod.POST,
-            resourceUri: '/capture-website',
+            resourceUri: '/capture/website',
             body: options
         });
 

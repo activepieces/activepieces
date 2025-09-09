@@ -3,14 +3,32 @@ import {
     Property,
     ActionContext,
 } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { cloudconvertAuth } from '../common/auth';
 import { CloudConvertClient } from '../common/client';
 
 const optimizeFileProps = {
+    import_method: Property.StaticDropdown({
+        displayName: 'Import Method',
+        description: 'How to import the file for optimization',
+        required: true,
+        options: {
+            options: [
+                { label: 'File Upload', value: 'upload' },
+                { label: 'File URL', value: 'url' },
+            ]
+        },
+        defaultValue: 'upload'
+    }),
+    file: Property.File({
+        displayName: 'File',
+        description: 'File to upload and optimize (select from your device)',
+        required: false,
+    }),
     url: Property.ShortText({
         displayName: 'File URL',
         description: 'URL of the file to optimize',
-        required: true,
+        required: false,
     }),
     input_format: Property.StaticDropdown({
         displayName: 'Input Format',
@@ -28,6 +46,7 @@ const optimizeFileProps = {
         displayName: 'Optimization Profile',
         description: 'Optimization profile for specific target needs',
         required: false,
+        defaultValue: 'web',
         options: {
             options: [
                 { label: 'Web - Remove redundant data for the web', value: 'web' },
@@ -61,15 +80,27 @@ const optimizeFileProps = {
         displayName: 'Filename',
         description: 'Choose a filename (including extension) for the output file',
         required: false,
+        defaultValue: 'optimized-document.pdf'
     }),
-    engine: Property.ShortText({
+    engine: Property.StaticDropdown({
         displayName: 'Engine',
-        description: 'Use a specific engine for the conversion',
+        description: 'Use a specific engine for the optimization',
         required: false,
+        options: {
+            options: [
+                { label: '3-Heights (Default)', value: '3heights' },
+                { label: 'PDFTron', value: 'pdftron' },
+                { label: 'MuPDF', value: 'mupdf' },
+                { label: 'ImageMagick', value: 'imagemagick' },
+                { label: 'GraphicsMagick', value: 'graphicsmagick' },
+                { label: 'Poppler', value: 'poppler' },
+                { label: 'Chrome/Puppeteer', value: 'chrome' },
+            ]
+        }
     }),
     engine_version: Property.ShortText({
         displayName: 'Engine Version',
-        description: 'Use a specific engine version for the conversion',
+        description: 'Use a specific engine version for the optimization',
         required: false,
     }),
     timeout: Property.Number({
@@ -95,12 +126,61 @@ export const optimizeFile = createAction({
     requireAuth: true,
     props: optimizeFileProps,
     async run(context: OptimizeFileContext) {
-        const { url, input_format, profile, flatten_signatures, colorspace, filename, engine, engine_version, timeout, wait_for_completion } = context.propsValue;
+        const { import_method, url, file, input_format, profile, flatten_signatures, colorspace, filename, engine, engine_version, timeout, wait_for_completion } = context.propsValue;
 
         const client = new CloudConvertClient(context.auth);
 
         try {
-            const importTask = await client.createImportTask(url, filename);
+            let importTask;
+
+            if (import_method === 'url') {
+                if (!url) {
+                    throw new Error('File URL is required when using URL import method');
+                }
+                importTask = await client.createImportTask(url, filename);
+            } else if (import_method === 'upload') {
+                if (!file || !file.base64) {
+                    throw new Error('Please select a file to upload from your device');
+                }
+
+                // Create upload task
+                const uploadTask = await client.createUploadTask(file.filename || 'uploaded-file');
+
+                // Get upload URL and parameters
+                const uploadUrl = uploadTask.result.form.url;
+                const uploadForm = uploadTask.result.form.parameters;
+
+                // Prepare form data for upload
+                const formData = new FormData();
+
+                // Add form parameters
+                Object.entries(uploadForm).forEach(([key, value]) => {
+                    formData.append(key, value as string);
+                });
+
+                // Add the file
+                if (file.base64) {
+                    // Convert base64 to buffer for upload
+                    const buffer = Buffer.from(file.base64, 'base64');
+                    const blob = new Blob([buffer], { type: file.extension ? `application/${file.extension}` : 'application/octet-stream' });
+                    formData.append('file', blob, file.filename);
+                }
+
+                // Upload the file
+                const uploadResponse = await httpClient.sendRequest({
+                    method: HttpMethod.POST,
+                    url: uploadUrl,
+                    body: formData,
+                });
+
+                if (uploadResponse.status < 200 || uploadResponse.status >= 300) {
+                    throw new Error(`Failed to upload file: HTTP ${uploadResponse.status} - ${uploadResponse.body?.message || 'Upload failed'}`);
+                }
+
+                importTask = uploadTask;
+            } else {
+                throw new Error('Invalid import method selected');
+            }
 
             const optimizeBody: any = {
                 input: importTask.id,
@@ -120,9 +200,9 @@ export const optimizeFile = createAction({
             const exportTask = await client.createExportTask(optimizeTask.id);
 
             const tasks: Record<string, string> = {
-                'import-file': importTask.id,
-                'optimize-file': optimizeTask.id,
-                'export-file': exportTask.id,
+                [import_method === 'url' ? 'import/url' : 'import/upload']: importTask.id,
+                'optimize': optimizeTask.id,
+                'export/url': exportTask.id,
             };
 
             const job = await client.createJob(tasks, `optimize-${Date.now()}`);
@@ -172,5 +252,22 @@ export const optimizeFile = createAction({
             }
             throw new Error(`File optimization failed: ${String(error)}`);
         }
+    },
+
+    async test(context) {
+        // For testing, return mock data to simulate successful file upload
+        return {
+            import_method: 'upload',
+            file: {
+                filename: 'test-sample.pdf',
+                base64: 'JVBERi0xLjcKCjEgMCBvYmogCjw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+CmVuZG9iag==',
+                extension: 'pdf'
+            },
+            profile: 'web',
+            filename: 'optimized-document.pdf',
+            engine: '3heights',
+            wait_for_completion: true,
+            message: 'Test successful - file upload simulation completed'
+        };
     },
 });

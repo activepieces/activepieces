@@ -32,9 +32,6 @@ export const jobFinished = createTrigger({
           name: 'import-my-file',
           operation: 'import/url',
           status: 'finished',
-          credits: 0,
-          message: null,
-          code: null,
           created_at: '2018-09-19T14:42:58+00:00',
           started_at: '2018-09-19T14:42:58+00:00',
           ended_at: '2018-09-19T14:42:59+00:00',
@@ -52,9 +49,6 @@ export const jobFinished = createTrigger({
           name: 'convert-my-file',
           operation: 'convert',
           status: 'finished',
-          credits: 1,
-          message: null,
-          code: null,
           created_at: '2018-09-19T14:42:58+00:00',
           started_at: '2018-09-19T14:42:59+00:00',
           ended_at: '2018-09-19T14:43:08+00:00',
@@ -75,9 +69,6 @@ export const jobFinished = createTrigger({
           name: 'export-my-file',
           operation: 'export/url',
           status: 'finished',
-          credits: 0,
-          message: null,
-          code: null,
           created_at: '2018-09-19T14:42:58+00:00',
           started_at: '2018-09-19T14:43:08+00:00',
           ended_at: '2018-09-19T14:43:08+00:00',
@@ -93,6 +84,10 @@ export const jobFinished = createTrigger({
         }
       ]
     }
+  },
+
+  async test(context) {
+    return [this.sampleData];
   },
 
   onEnable: async (context) => {

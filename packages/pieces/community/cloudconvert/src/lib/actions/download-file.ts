@@ -94,4 +94,18 @@ export const downloadFile = createAction({
             throw new Error(`Download failed: ${String(error)}`);
         }
     },
+
+    async test(context) {
+        // For testing, return mock data to simulate successful file download
+        return {
+            job_id: 'job_123456789',
+            task_id: 'task_987654321',
+            filename: 'converted-document.pdf',
+            size: 204800,
+            download_url: 'https://storage.cloudconvert.com/example/converted-document.pdf',
+            file_index: 0,
+            total_files: 1,
+            message: 'Test successful - file download simulation completed'
+        };
+    },
 });

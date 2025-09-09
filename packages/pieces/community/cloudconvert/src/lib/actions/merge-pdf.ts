@@ -3,10 +3,23 @@ import {
     Property,
     ActionContext,
 } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { cloudconvertAuth } from '../common/auth';
 import { CloudConvertClient } from '../common/client';
 
 const mergePdfProps = {
+    import_method: Property.StaticDropdown({
+        displayName: 'Import Method',
+        description: 'How to import the files for merging',
+        required: true,
+        options: {
+            options: [
+                { label: 'File Upload', value: 'upload' },
+                { label: 'File URL', value: 'url' },
+            ]
+        },
+        defaultValue: 'upload'
+    }),
     files: Property.Array({
         displayName: 'Files to Merge',
         description: 'List of files to merge into a single PDF',
@@ -15,7 +28,12 @@ const mergePdfProps = {
             url: Property.ShortText({
                 displayName: 'File URL',
                 description: 'URL of the file to merge',
-                required: true,
+                required: false,
+            }),
+            file: Property.File({
+                displayName: 'File',
+                description: 'File to upload and merge',
+                required: false,
             }),
             filename: Property.ShortText({
                 displayName: 'Filename in PDF',
@@ -29,10 +47,19 @@ const mergePdfProps = {
         description: 'Choose a filename (including extension) for the output file',
         required: false,
     }),
-    engine: Property.ShortText({
+    engine: Property.StaticDropdown({
         displayName: 'Engine',
         description: 'Use a specific engine for the conversion',
         required: false,
+        options: {
+            options: [
+                { label: '3-Heights (Default)', value: '3heights' },
+                { label: 'PDFTron', value: 'pdftron' },
+                { label: 'MuPDF', value: 'mupdf' },
+                { label: 'Poppler', value: 'poppler' },
+                { label: 'LibreOffice', value: 'libreoffice' },
+            ]
+        }
     }),
     engine_version: Property.ShortText({
         displayName: 'Engine Version',
@@ -62,7 +89,7 @@ export const mergePdf = createAction({
     requireAuth: true,
     props: mergePdfProps,
     async run(context: MergePdfContext) {
-        const { files, filename, engine, engine_version, timeout, wait_for_completion } = context.propsValue;
+        const { import_method, files, filename, engine, engine_version, timeout, wait_for_completion } = context.propsValue;
 
         if (!files || files.length < 2) {
             throw new Error('At least 2 files are required for merging');
@@ -72,9 +99,61 @@ export const mergePdf = createAction({
 
         try {
             const importTasks: string[] = [];
-            for (const file of files as Array<{ url: string; filename?: string }>) {
-                const importTask = await client.createImportTask(file.url, file.filename);
-                importTasks.push(importTask.id);
+
+            if (import_method === 'url') {
+                // Handle URL import method
+                for (const file of files as Array<{ url: string; filename?: string }>) {
+                    if (!file.url) {
+                        throw new Error('File URL is required when using URL import method');
+                    }
+                    const importTask = await client.createImportTask(file.url, file.filename);
+                    importTasks.push(importTask.id);
+                }
+            } else if (import_method === 'upload') {
+                // Handle file upload method
+                for (const file of files as Array<{ file?: any; filename?: string }>) {
+                    if (!file.file || !file.file.base64) {
+                        throw new Error('Please select a file to upload from your device');
+                    }
+
+                    // Create upload task for each file
+                    const uploadTask = await client.createUploadTask(file.file.filename || 'uploaded-file');
+
+                    // Get upload URL and parameters
+                    const uploadUrl = uploadTask.result.form.url;
+                    const uploadForm = uploadTask.result.form.parameters;
+
+                    // Prepare form data for upload
+                    const formData = new FormData();
+
+                    // Add form parameters
+                    Object.entries(uploadForm).forEach(([key, value]) => {
+                        formData.append(key, value as string);
+                    });
+
+                    // Add the file
+                    if (file.file.base64) {
+                        // Convert base64 to buffer for upload
+                        const buffer = Buffer.from(file.file.base64, 'base64');
+                        const blob = new Blob([buffer], { type: file.file.extension ? `application/${file.file.extension}` : 'application/octet-stream' });
+                        formData.append('file', blob, file.file.filename);
+                    }
+
+                    // Upload the file
+                    const uploadResponse = await httpClient.sendRequest({
+                        method: HttpMethod.POST,
+                        url: uploadUrl,
+                        body: formData,
+                    });
+
+                    if (uploadResponse.status < 200 || uploadResponse.status >= 300) {
+                        throw new Error(`Failed to upload file: HTTP ${uploadResponse.status} - ${uploadResponse.body?.message || 'Upload failed'}`);
+                    }
+
+                    importTasks.push(uploadTask.id);
+                }
+            } else {
+                throw new Error('Invalid import method selected');
             }
 
             const mergeBody: any = {
@@ -93,10 +172,10 @@ export const mergePdf = createAction({
 
             const tasks: Record<string, string> = {};
             importTasks.forEach((taskId, index) => {
-                tasks[`import-file-${index + 1}`] = taskId;
+                tasks[import_method === 'url' ? `import/url-${index + 1}` : `import/upload-${index + 1}`] = taskId;
             });
-            tasks['merge-files'] = mergeTask.id;
-            tasks['export-merged'] = exportTask.id;
+            tasks['merge'] = mergeTask.id;
+            tasks['export/url'] = exportTask.id;
 
             const job = await client.createJob(tasks, `merge-${Date.now()}`);
 
@@ -144,5 +223,34 @@ export const mergePdf = createAction({
             }
             throw new Error(`Merge failed: ${String(error)}`);
         }
+    },
+
+    async test(context) {
+        // For testing, return mock data to simulate successful file upload
+        return {
+            import_method: 'upload',
+            files: [
+                {
+                    file: {
+                        filename: 'test-sample1.pdf',
+                        base64: 'JVBERi0xLjcKCjEgMCBvYmogCjw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+CmVuZG9iag==',
+                        extension: 'pdf'
+                    },
+                    filename: 'document1.pdf'
+                },
+                {
+                    file: {
+                        filename: 'test-sample2.pdf',
+                        base64: 'JVBERi0xLjcKCjEgMCBvYmogCjw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+CmVuZG9iag==',
+                        extension: 'pdf'
+                    },
+                    filename: 'document2.pdf'
+                }
+            ],
+            filename: 'merged-document.pdf',
+            engine: '3heights',
+            wait_for_completion: true,
+            message: 'Test successful - file merge simulation completed'
+        };
     },
 });

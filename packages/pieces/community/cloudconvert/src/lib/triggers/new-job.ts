@@ -32,42 +32,36 @@ export const newJob = createTrigger({
           name: 'import-my-file',
           operation: 'import/s3',
           status: 'waiting',
-          credits: null,
           created_at: '2018-09-19T14:42:58+00:00',
           started_at: null,
-          ended_at: null,
-          depends_on_tasks: {}
+          ended_at: null
         },
         {
           id: '7a142bd0-fa20-493e-abf5-99cc9b5fd7e9',
           name: 'convert-my-file',
           operation: 'convert',
           status: 'waiting',
-          credits: null,
           created_at: '2018-09-19T14:42:58+00:00',
           started_at: null,
           ended_at: null,
           engine: 'office',
-          engine_version: '2016',
-          depends_on_tasks: {
-            'import-my-file': 'u0HON3MJDk'
-          }
+          engine_version: '2016'
         },
         {
           id: '36af6f54-1c01-45cc-bcc3-97dd23d2f93d',
           name: 'export-my-file',
           operation: 'export/s3',
           status: 'waiting',
-          credits: null,
           created_at: '2018-09-19T14:42:58+00:00',
           started_at: null,
-          ended_at: null,
-          depends_on_tasks: {
-            'convert-my-file': 'KPpekWbRRq'
-          }
+          ended_at: null
         }
       ]
     }
+  },
+
+  async test(context) {
+    return [this.sampleData];
   },
 
   onEnable: async (context) => {
