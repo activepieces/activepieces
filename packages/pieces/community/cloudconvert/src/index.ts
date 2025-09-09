@@ -4,6 +4,9 @@ import { cloudconvertAuth } from './lib/common/auth';
 import { convertFileAction } from './lib/actions/convert-file';
 import { captureWebsiteAction } from './lib/actions/capture-website';
 import { downloadFileAction } from './lib/actions/download-file';
+import { cloudconvertNewJobEvent } from './lib/triggers/new-job-event';
+import { cloudconvertJobFinished } from './lib/triggers/job-finished';
+import { cloudconvertJobFailed } from './lib/triggers/job-failed';
 
 export const cloudconvert = createPiece({
   displayName: 'CloudConvert',
@@ -14,6 +17,5 @@ export const cloudconvert = createPiece({
   authors: ['Ripasco'],
   auth: cloudconvertAuth,
   actions: [convertFileAction, captureWebsiteAction, downloadFileAction],
-  triggers: [],
+  triggers: [cloudconvertNewJobEvent, cloudconvertJobFinished, cloudconvertJobFailed],
 });
-
