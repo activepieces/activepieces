@@ -337,26 +337,28 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }, '[FlowRunService] pausing flow run')
 
         const { flowRunId, pauseMetadata } = params
-        await flowRunRepo().update(flowRunId, {
-            status: FlowRunStatus.PAUSED,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            pauseMetadata: pauseMetadata as any,
-        })
-
-        const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
 
         log.info(
-            `[FlowRunSideEffects#pause] flowRunId=${flowRun.id} pauseType=${flowRun.pauseMetadata?.type}`,
+            `[FlowRunSideEffects#pause] flowRunId=${flowRunId} pauseType=${pauseMetadata?.type}`,
         )
 
         if (isNil(pauseMetadata)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: `pauseMetadata is undefined flowRunId=${flowRun.id}`,
+                    message: `pauseMetadata is undefined flowRunId=${flowRunId}`,
                 },
             })
         }
+
+        await flowRunRepo().update(flowRunId, {
+            status: FlowRunStatus.PAUSED,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            pauseMetadata: pauseMetadata as any,
+        })
+        const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
+
+        
 
         switch (pauseMetadata.type) {
             case PauseType.DELAY: {
@@ -546,7 +548,7 @@ const createLogsUploadUrl = async (params: CreateLogsUploadUrlParams, log: Fasti
     return { uploadUrl, fileId: file.id }
 }
 
-async function getOrCreateLogsFile(params: GetOrCreateLogsFileParams, log: FastifyBaseLogger): Promise<File> { 
+async function getOrCreateLogsFile(params: GetOrCreateLogsFileParams, log: FastifyBaseLogger): Promise<File> {
     if (isNil(params.flowRun.logsFileId)) {
         return fileService(log).save({
             projectId: params.projectId,
