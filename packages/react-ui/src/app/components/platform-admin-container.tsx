@@ -1,3 +1,4 @@
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   LayoutGrid,
@@ -10,14 +11,13 @@ import {
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
+import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
+import { SidebarComponent, SidebarItem } from './sidebar';
+
 import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
-
-import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
-import { SidebarComponent, SidebarItem } from './sidebar';
 
 type PlatformAdminContainerProps = {
   children: React.ReactNode;
@@ -74,13 +74,6 @@ export function PlatformAdminContainer({
           type: 'link',
           to: '/platform/setup/ai',
           label: t('AI'),
-          isSubItem: true,
-          show: true,
-        },
-        {
-          type: 'link',
-          to: '/platform/setup/branding',
-          label: t('Branding'),
           isSubItem: true,
           show: true,
         },

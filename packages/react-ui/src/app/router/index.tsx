@@ -1,21 +1,3 @@
-import {
-  Navigate,
-  RouterProvider,
-  createBrowserRouter,
-  createMemoryRouter,
-  useLocation,
-} from 'react-router-dom';
-
-import { PageTitle } from '@/app/components/page-title';
-import { ChatPage } from '@/app/routes/chat';
-import { EmbedPage } from '@/app/routes/embed';
-import AnalyticsPage from '@/app/routes/platform/analytics';
-import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
-import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
-import { SSOPage } from '@/app/routes/platform/security/sso';
-import AIProvidersPage from '@/app/routes/platform/setup/ai';
-import { BrandingPage } from '@/app/routes/platform/setup/branding';
-import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
 import { RedirectPage } from '@/app/routes/redirect';
 import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
@@ -24,6 +6,13 @@ import { Error } from '@/features/billing/components/error';
 import { Success } from '@/features/billing/components/success';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 import { Permission } from '@activepieces/shared';
+import {
+  Navigate,
+  RouterProvider,
+  createBrowserRouter,
+  createMemoryRouter,
+  useLocation,
+} from 'react-router-dom';
 
 import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
 import { DashboardContainer } from '../components/dashboard-container';
@@ -68,6 +57,15 @@ import {
   projectSettingsRoutes,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import { PageTitle } from '@/app/components/page-title';
+import { ChatPage } from '@/app/routes/chat';
+import { EmbedPage } from '@/app/routes/embed';
+import AnalyticsPage from '@/app/routes/platform/analytics';
+import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
+import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
+import { SSOPage } from '@/app/routes/platform/security/sso';
+import AIProvidersPage from '@/app/routes/platform/setup/ai';
+import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -406,16 +404,6 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="Templates">
           <TemplatesPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/setup/branding',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="Branding">
-          <BrandingPage />
         </PageTitle>
       </PlatformAdminContainer>
     ),
