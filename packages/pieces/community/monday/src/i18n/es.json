@@ -1,5 +1,4 @@
 {
-  "monday.com": "monday.com",
   "Work operating system for businesses": "Sistema operativo de trabajo para empresas",
   "\n1.Log into your monday.com account.\n\n2.Click on your avatar/profile picture in the top right corner.\n\n3.Select **Administration** (this requires you to have admin permissions).\n\n4.Go to the **API** section.\n\n5.Copy your personal token": "\n1. Inicie sesión en su cuenta de monday.com.\n\n2. Haga clic en su foto de avatar/perfil en la esquina superior derecha.\n\n3. Elige **Administración** (esto requiere que tengas permisos de administración).\n\n4. Ve a la sección **API**.\n\n5.Copia tu token personal",
   "Create Column": "Crear Columna",

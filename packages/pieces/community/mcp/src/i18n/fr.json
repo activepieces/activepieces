@@ -1,5 +1,4 @@
 {
-  "MCP": "MCP",
   "Connect to your hosted MCP Server using any MCP client to communicate with tools": "Connectez-vous à votre serveur MCP hébergé en utilisant n'importe quel client MCP pour communiquer avec les outils",
   "Reply to MCP Client": "Répondre au client MCP",
   "Return a response to the MCP client that called the tool.": "Retourne une réponse au client MCP qui a appelé l'outil.",

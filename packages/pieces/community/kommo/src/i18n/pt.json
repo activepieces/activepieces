@@ -1,5 +1,4 @@
 {
-  "Kommo": "Kommo",
   "Subdomain": "Subdomínio",
   "Token": "Identificador",
   "\nPlease follow [Generate Long Live Token](https://developers.kommo.com/docs/long-lived-token) guide for generating token.\n\nYour Kommo account subdomain (e.g., \"mycompany\" if your URL is mycompany.kommo.com).\n\n": "\nPor favor, siga [Gerar um Token de Vida](https://developers.kommo.com/docs/long-lived-token) guia para geração de token.\n\nSeu subdomínio da conta Kommo (ex: \"minhaempresa\" se a URL for minhaempresa.kommo.com).\n\n",

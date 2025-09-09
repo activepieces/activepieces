@@ -1,5 +1,4 @@
 {
-  "OpenAI": "OpenAI",
   "Use the many tools ChatGPT has to offer.": "Nutzen Sie die vielen Tools, die ChatGPT zu bieten hat.",
   "Follow these instructions to get your OpenAI API Key:\n\n1. Visit the following website: https://platform.openai.com/account/api-keys.\n2. Once on the website, locate and click on the option to obtain your OpenAI API Key.\n\nIt is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.\n": "Folgen Sie diesen Anweisungen, um Ihren OpenAI-API-Schlüssel zu erhalten:\n\n1. Besuchen Sie die folgende Webseite: https://platform.openai. om/account/api-keys.\n2. Sobald Sie auf der Website sind, suchen und klicken Sie auf die Option, um Ihren OpenAI API Key zu erhalten.\n\nEs wird dringend empfohlen, dass Sie Ihre Kreditkarteninformationen zu Ihrem OpenAI-Konto hinzufügen und **vorher** zum bezahlten Tarif upgraden und den API-Schlüssel generieren. Dies hilft Ihnen, 429 Fehler zu vermeiden.\n",
   "Ask ChatGPT": "ChatGPT fragen",
