@@ -105,6 +105,9 @@
       "@activepieces/piece-autocalls": [
         "packages/pieces/community/autocalls/src/index.ts"
       ],
+      "@activepieces/piece-avoma": [
+        "packages/pieces/community/avoma/src/index.ts"
+      ],
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
       ],
@@ -156,6 +159,9 @@
       ],
       "@activepieces/piece-browse-ai": [
         "packages/pieces/community/browse-ai/src/index.ts"
+      ],
+      "@activepieces/piece-browserless": [
+        "packages/pieces/community/browserless/src/index.ts"
       ],
       "@activepieces/piece-bubble": [
         "packages/pieces/community/bubble/src/index.ts"
@@ -662,6 +668,9 @@
       "@activepieces/piece-mysql": [
         "packages/pieces/community/mysql/src/index.ts"
       ],
+      "@activepieces/piece-netlify": [
+        "packages/pieces/community/netlify/src/index.ts"
+      ],
       "@activepieces/piece-netsuite": [
         "packages/pieces/community/netsuite/src/index.ts"
       ],
@@ -747,6 +756,9 @@
       "@activepieces/piece-posthog": [
         "packages/pieces/community/posthog/src/index.ts"
       ],
+      "@activepieces/piece-predict-leads": [
+        "packages/pieces/community/predict-leads/src/index.ts"
+      ],
       "@activepieces/piece-pushover": [
         "packages/pieces/community/pushover/src/index.ts"
       ],
@@ -798,7 +810,7 @@
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
       ],
-        "@activepieces/piece-retell-ai": [
+      "@activepieces/piece-retell-ai": [
         "packages/pieces/community/retell-ai/src/index.ts"
       ],
       "@activepieces/piece-retune": [
@@ -991,6 +1003,9 @@
       "@activepieces/piece-todos": [
         "packages/pieces/community/todos/src/index.ts"
       ],
+      "@activepieces/piece-toggl-track": [
+        "packages/pieces/community/toggl-track/src/index.ts"
+      ],
       "@activepieces/piece-totalcms": [
         "packages/pieces/community/totalcms/src/index.ts"
       ],
@@ -1032,6 +1047,9 @@
       ],
       "@activepieces/piece-vtiger": [
         "packages/pieces/community/vtiger/src/index.ts"
+      ],
+      "@activepieces/piece-wealthbox": [
+        "packages/pieces/community/wealthbox/src/index.ts"
       ],
       "@activepieces/piece-webflow": [
         "packages/pieces/community/webflow/src/index.ts"

@@ -167,7 +167,8 @@ export const pieceHelper = {
         const { pieceName, pieceVersion } = params
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, pieceSource })
         const pieceAlias = pieceLoader.getPackageAlias({ pieceName, pieceVersion, pieceSource })
-        const i18n = await pieceTranslation.initializeI18n({ pieceName: pieceAlias, pieceSource })
+        const pieceFolderPath = await pieceLoader.getPiecePath({ packageName: pieceAlias, pieceSource })
+        const i18n = await pieceTranslation.initializeI18n(pieceFolderPath)
         const fullMetadata = piece.metadata()
         return {
             ...fullMetadata,

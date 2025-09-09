@@ -1,9 +1,7 @@
-import { CategorizedLanguageModelPricing, FlatLanguageModelPricing, TieredLanguageModelPricing } from '@activepieces/common-ai'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, Usage } from './types'
 import { calculateTokensCost, calculateWebSearchCost, getProviderConfig } from './utils'
-
 export const googleProvider: AIProviderStrategy = {
     extractModelId: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null => {
         // https://generativelanguage.googleapis.com/v1beta/{model=models/*}:streamGenerateContent
@@ -13,6 +11,7 @@ export const googleProvider: AIProviderStrategy = {
     },
 
     calculateUsage: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage | null => {
+
         const apiResponse = response as {
             usageMetadata: {
                 promptTokenCount: number
@@ -36,45 +35,64 @@ export const googleProvider: AIProviderStrategy = {
         const providerConfig = getProviderConfig(provider)!
         const languageModelConfig = providerConfig.languageModels.find((m) => m.instance.modelId === model)
         const videoModelConfig = providerConfig.videoModels.find((m) => m.instance.modelId === model)
-        
+        const imageModelConfig = providerConfig.imageModels.find((m) => m.instance.modelId === model)
         let cost = 0
-        
-        if (languageModelConfig && 'usageMetadata' in apiResponse) {
+ 
+        if ('usageMetadata' in apiResponse) {
             const { promptTokenCount, candidatesTokenCount, promptTokensDetails, thoughtsTokenCount } = apiResponse.usageMetadata
-            const pricing = languageModelConfig.pricing
-            if (typeof pricing.input === 'object') {
-                if ('audio' in pricing.input) {
-                    const { input, output: outputCost } = pricing as CategorizedLanguageModelPricing
-                    cost += calculateTokensCost(candidatesTokenCount + (thoughtsTokenCount ?? 0), outputCost)
-    
-                    promptTokensDetails.forEach((detail) => {
-                        const inputCost = detail.modality === 'AUDIO' ? input.audio : input.default
-                        cost += calculateTokensCost(detail.tokenCount, inputCost)
-                    })
+            if (languageModelConfig) {
+                switch (languageModelConfig.pricing.type) {
+                    case 'categorized':
+                    {
+                        const { input, output: outputCost } = languageModelConfig.pricing
+                        cost += calculateTokensCost(candidatesTokenCount + (thoughtsTokenCount ?? 0), outputCost)
+        
+                        promptTokensDetails.forEach((detail) => {
+                            const inputCost = detail.modality === 'AUDIO' ? input.audio : input.default
+                            cost += calculateTokensCost(detail.tokenCount, inputCost)
+                        })
+                        break
+                    }
+                    case 'tiered':{
+                        const { input, output, promptThreshold } = languageModelConfig.pricing
+        
+                        const isUnderThreshold = promptTokenCount <= promptThreshold
+                        const inputCost = isUnderThreshold ? input.underThresholdRate : input.overThresholdRate
+                        const outputCost = isUnderThreshold ? output.underThresholdRate : output.overThresholdRate
+                        cost += calculateTokensCost(promptTokenCount, inputCost) + calculateTokensCost(candidatesTokenCount + (thoughtsTokenCount ?? 0), outputCost)
+                        break
+                    }
+                    case 'flat':
+                    {
+                        
+                        cost += calculateTokensCost(promptTokenCount, languageModelConfig.pricing.input) + calculateTokensCost(candidatesTokenCount + (thoughtsTokenCount ?? 0), languageModelConfig.pricing.output)
+
+                    }
                 }
-                else {
-                    const { input, output, promptThreshold } = pricing as TieredLanguageModelPricing
     
-                    const isUnderThreshold = promptTokenCount <= promptThreshold
-                    const inputCost = isUnderThreshold ? input.underThresholdRate : input.overThresholdRate
-                    const outputCost = isUnderThreshold ? output.underThresholdRate : output.overThresholdRate
-                    cost += calculateTokensCost(promptTokenCount, inputCost) + calculateTokensCost(candidatesTokenCount + (thoughtsTokenCount ?? 0), outputCost)
+                const webSearchCost = languageModelConfig.webSearchCost ?? 0
+                const webSearchCalls = apiResponse.candidates.some(candidate => candidate.groundingMetadata?.webSearchQueries?.length ?? 0 > 0) ? 1 : 0
+                cost += calculateWebSearchCost(webSearchCalls, webSearchCost)
+    
+                return {
+                    cost,
+                    model,
                 }
             }
-            else {
-                const { input: inputCost, output: outputCost } = pricing as FlatLanguageModelPricing
-                cost += calculateTokensCost(promptTokenCount, inputCost) + calculateTokensCost(candidatesTokenCount + (thoughtsTokenCount ?? 0), outputCost)
-            }
-
-            const webSearchCost = languageModelConfig.webSearchCost ?? 0
-            const webSearchCalls = apiResponse.candidates.some(candidate => candidate.groundingMetadata?.webSearchQueries?.length ?? 0 > 0) ? 1 : 0
-            cost += calculateWebSearchCost(webSearchCalls, webSearchCost)
-
-            return {
-                cost,
-                model,
+            if (imageModelConfig) {
+                if (typeof imageModelConfig.pricing !== 'number' && imageModelConfig.pricing.type === 'GPTImage1') {
+                    cost += calculateTokensCost(promptTokenCount, imageModelConfig.pricing.input.image) + calculateTokensCost(candidatesTokenCount + (thoughtsTokenCount ?? 0), imageModelConfig.pricing.output)
+                }
+                else throw new ActivepiecesError({
+                    code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
+                    params: {
+                        provider,
+                        model,
+                    },
+                })
             }
         }
+      
 
         let videoOperationId
         if (videoModelConfig && request.url.includes(':predictLongRunning') && 'name' in apiResponse) {
@@ -82,7 +100,7 @@ export const googleProvider: AIProviderStrategy = {
             cost = videoModelConfig.pricing.costPerSecond * videoModelConfig.minimumDurationInSeconds   
             videoOperationId = name.split('/').pop()
         }
-
+      
         return {
             cost,
             model,
@@ -115,3 +133,5 @@ export const googleProvider: AIProviderStrategy = {
         }
     },
 } 
+
+

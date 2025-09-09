@@ -21,6 +21,13 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 pieceTrigger,
                 simulate,
             })
+
+            await triggerSourceRepo().softDelete({
+                flowId: flowVersion.flowId,
+                projectId,
+                simulate,
+            })
+
             const triggerSource: Omit<TriggerSource, 'created' | 'updated'> = {
                 id: apId(),
                 type: pieceTrigger.type,

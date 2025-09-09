@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEnvironment, UserIdentityProvider } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, UserIdentityProvider } from '@activepieces/shared'
 import { authenticationService } from '../../authentication/authentication.service'
 import { FlagEntity } from '../../flags/flag.entity'
 import { system } from '../../helper/system/system'
@@ -11,7 +11,8 @@ const log = system.globalLogger()
 
 const currentEnvIsNotDev = (): boolean => {
     const env = system.get(AppSystemProp.ENVIRONMENT)
-    return env !== ApEnvironment.DEVELOPMENT
+    const edition = system.get(AppSystemProp.EDITION)
+    return env !== ApEnvironment.DEVELOPMENT  || edition === ApEdition.ENTERPRISE
 }
 
 const devDataAlreadySeeded = async (): Promise<boolean> => {
