@@ -1,0 +1,6 @@
+{
+  "name": "@activepieces/piece-cloudconvert",
+  "sourceRoot": "packages/pieces/community/cloudconvert/src",
+  "projectType": "library"
+}
+
