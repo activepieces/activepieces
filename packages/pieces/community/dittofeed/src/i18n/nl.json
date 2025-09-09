@@ -1,0 +1,19 @@
+{
+  "Customer data platform for user analytics and tracking": "Platform voor klantgegevens voor gebruikersanalyses en het volgen van gegevens",
+  "API Key": "API Sleutel",
+  "Base URL": "Basis URL",
+  "Your API key of Dittofeed.": "Je API-sleutel van Dittofeed.",
+  "The base URL of your Dittofeed instance.": "De basis-URL van je Dittofeed instantie.",
+  "Identify User": "Identificeer gebruiker",
+  "Track Event": "Volg Evenement",
+  "Screen Event": "Scherm Evenement",
+  "Identify a user in Dittofeed.": "Identificeer een gebruiker in Dittofeed.",
+  "Track an event for a user.": "Volg een gebeurtenis voor een gebruiker.",
+  "Track a screen view event.": "Houd een schermweergave gebeurtenis bij.",
+  "User ID": "Gebruiker ID",
+  "User Traits": "Gebruiker Eigenschappen",
+  "Event Name": "Naam van gebeurtenis",
+  "Event Properties": "Evenement eigenschappen",
+  "Screen Name": "Schermnaam",
+  "Screen Properties": "Scherm Eigenschappen"
+}

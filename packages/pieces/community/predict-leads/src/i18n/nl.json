@@ -1,11 +1,10 @@
 {
-  "PredictLeads": "Vooruitgangsposities",
   "Company Intelligence Data Source": "Bron voor bedrijfsinformatie",
   "API Key": "API Sleutel",
   "API Token": "API Token",
   "The key of the Predict Leads account.": "De sleutel van de Predict Leads account.",
   "The token of the Predict Leads account.": "Het token van de Predict Leads account.",
-  "\n    To obtain your Predict Leads tokens, follow these steps:\n\n    1. Have a PredictLeads account - Create a new user here: [PredictLeads](https://predictleads.com/sign_up).\n    2. Go to: [Subscriptions](https://predictleads.com/subscriptions).\n    3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.\n    ": "\n    Om je Predict Leads Tokens te krijgen, volg je deze stappen:\n\n    1. Heb hier een PredictLeads account - Maak hier een nieuwe gebruiker aan: [PredictLeads](https://predictleads.com/sign_up).\n    2. Ga naar: [Subscriptions](https://predictleads.com/subscriptions).\n    3. Zoek in de abonnementspagina de sectie van de API Key en Tokens waar u het gebruik ook kunt vinden.\n    ",
+  "\n    To obtain your PredictLeads tokens, follow these steps:\n\n    1. Have a PredictLeads account - Create a new user here: https://predictleads.com/sign_up.\n    2. Go to: https://predictleads.com/subscriptions.\n    3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.\n    ": "\n    Om je PredictLeads tokens te krijgen, volg je deze stappen:\n\n    1. Heb een PredictLeads account - Maak hier een nieuwe gebruiker aan: https://predictleads.com/sign_up.\n    2. Ga naar: https://predictleads.com/abonnementen.\n    3. Zoek in de abonnementspagina de sectie van de API Key en Tokens waar u het gebruik ook kunt vinden.\n    ",
   "List Companies": "Bedrijven weergeven",
   "Retrieve a company": "Bedrijf ophalen",
   "List Job Openings": "Lijst vacature openingen",

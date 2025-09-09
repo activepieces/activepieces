@@ -1,5 +1,4 @@
 {
-  "AnyHook GraphQL": "GraphQL AnyHook",
   "AnyHook GraphQL enables real-time communication through AnyHook proxy server by allowing you to subscribe and listen to GraphQL subscription events": "AnyHook GraphQL permet la communication en temps réel via le serveur proxy AnyHook en vous permettant de vous abonner et d'écouter les événements d'abonnement GraphQL",
   "AnyHook Server URL": "URL du serveur AnyHook",
   "The URL of your AnyHook server": "L'URL de votre serveur AnyHook",

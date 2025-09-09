@@ -1,5 +1,4 @@
 {
-  "Checkout.com": "Checkout.com",
   "Your Checkout.com secret key. Use sandbox key (sk_sbox_...) for testing or production key (sk_...) for live transactions. You can find it in the Checkout.com dashboard under Developers > API keys.": "Sua chave secreta Checkout.com. Use a chave sandbox (sk_sbox_...) para teste ou chave de produção (sk_... para transações ao vivo. Você pode encontrá-lo no painel Checkout.com sob as chaves API de desenvolvedores.",
   "Create Customer": "Criar Cliente",
   "Update Customer": "Atualizar Cliente",

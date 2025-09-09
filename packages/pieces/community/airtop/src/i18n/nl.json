@@ -1,5 +1,4 @@
 {
-  "Airtop": "Airtop",
   "\n\t\tEnter your Airtop API key. You can get your API key from the [Airtop Dashboard](https://portal.airtop.ai/api-keys).\n\t\t\n\t\t**How to get your API key:**\n\t\t1. Go to the [Airtop Dashboard](https://portal.airtop.ai/api-keys)\n\t\t2. Sign in to your account\n\t\t3. Navigate to API Keys section\n\t\t4. Create a new API key or copy an existing one\n\t\t5. Paste the key here\n\t": "\n\t\t→enter your Airtop API key. You can get your API key from [Airtop Dashboard](https://portal.airtop.ai/api-keys).\n\t\t・\t\t\n\t\t½ **Hoe je je API-sleutel te verkrijgen:**\n\t\t・1. Ga naar het Airtop Dashboard](https://portal.airtop.ai/api-keys)\n\t\tgithub2. Meld u aan op uw account\n\t\t~~3. Navigeer naar de API Keys sectie\n\t\t・4. Maak een nieuwe API sleutel of kopieer een bestaande\n\t\tľ5. Plak de key hier\n\t",
   "Create Session": "Sessie aanmaken",
   "Terminate Session": "Sessie beëindigen",

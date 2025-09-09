@@ -1,30 +1,27 @@
-import { isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { repoFactory } from '../../../core/db/repo-factory'
+import { distributedStore } from '../../../helper/keyvalue'
 import { PieceMetadataEntity, PieceMetadataSchema } from '../../piece-metadata-entity'
 
-let cache: PieceMetadataSchema[] = []
+const cacheKey = 'cachePieceUpdated'
 
 const repo = repoFactory(PieceMetadataEntity)
 const lock: Mutex = new Mutex()
-
-type State = {
-    recentUpdate: string | undefined
-    count: string
-}
+let cache: PieceMetadataSchema[] = []
 
 export const localPieceCache = (log: FastifyBaseLogger) => ({
     async getSortedbyNameAscThenVersionDesc(): Promise<PieceMetadataSchema[]> {
-        const updatedRequired = await requireUpdate()
+        const updatedRequired = await requireUpdate(log)
         if (!updatedRequired) {
             return cache
         }
         log.info({ time: dayjs().toISOString(), file: 'localPieceCache' }, 'Syncing pieces')
-        cache = await executeWithLock(async () => {
-            const updatedRequiredSecondCheck = await requireUpdate()
+        cache = await lock.runExclusive(async () => {
+            const updatedRequiredSecondCheck = await requireUpdate(log)
             if (!updatedRequiredSecondCheck) {
                 return cache
             }
@@ -39,26 +36,30 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
         })
         return cache
     },
+    async updateCacheState(): Promise<State> {
+        const newestState: State | undefined = await repo().createQueryBuilder().select('MAX(updated)', 'recentUpdate').addSelect('count(*)', 'count').getRawOne()
+        assertNotNullOrUndefined(newestState, 'newestState is undefined')
+        await distributedStore().put(cacheKey, newestState)
+        return newestState
+    },
 })
 
-async function requireUpdate(): Promise<boolean> {
-    const newestState: State | undefined = await repo().createQueryBuilder().select('MAX(updated)', 'recentUpdate').addSelect('count(*)', 'count').getRawOne()
+async function getCacheState(log: FastifyBaseLogger): Promise<State> {
+    const newestState: State | null = await distributedStore().get(cacheKey)
     if (isNil(newestState)) {
-        return false
+        log.info('Cache state not found, updating cache state')
+        return localPieceCache(log).updateCacheState()
     }
-    const newestInCache = cache.reduce((acc, piece) => {
-        return Math.max(dayjs(piece.updated).unix(), acc)
-    }, 0)
+    return newestState
+}
+
+async function requireUpdate(log: FastifyBaseLogger): Promise<boolean> {
+    const newestState: State = await getCacheState(log)
+    const newestInCache = cache.reduce((acc, piece) => Math.max(dayjs(piece.updated).unix(), acc), 0)
     return dayjs(newestState.recentUpdate).unix() !== newestInCache || Number(newestState.count) !== cache.length
 }
 
-const executeWithLock = async <T>(methodToExecute: () => Promise<T>): Promise<T> => {
-    const releaseLock = await lock.acquire()
-
-    try {
-        return await methodToExecute()
-    }
-    finally {
-        releaseLock()
-    }
+type State = {
+    recentUpdate: string | undefined
+    count: string
 }
