@@ -25,14 +25,27 @@
         "packageJson": "packages/pieces/community/cometapi/package.json",
         "main": "packages/pieces/community/cometapi/src/index.ts",
         "assets": [
-          "packages/pieces/community/cometapi/*.md"
-        ]
+          "packages/pieces/community/cometapi/*.md",
+          {
+            "input": "packages/pieces/community/cometapi/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "nx-release-publish": {
       "options": {
         "packageRoot": "dist/{projectRoot}"
       }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
     }
   }
 }

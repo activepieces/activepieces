@@ -6,8 +6,9 @@ import {
   httpClient,
   propsValidation,
 } from '@activepieces/pieces-common';
-import { cometApiAuth } from '../auth';
+import { cometApiAuth } from '../common/auth';
 import { z } from 'zod';
+import { modelIdDropdown } from '../common/props';
 
 interface CometApiChatResponse {
   id: string;
@@ -37,16 +38,10 @@ interface ChatMessage {
 export const askCometApiAction = createAction({
   name: 'ask-cometapi',
   displayName: 'Ask CometAPI',
-  description: 'Send a prompt to any AI model supported by CometAPI.',
+  description: 'Sends a prompt to any AI model supported by CometAPI.',
   auth: cometApiAuth,
   props: {
-    model: Property.ShortText({
-      displayName: 'Model',
-      description:
-        'The AI model ID to use (e.g., gpt-5-mini, gemini-2.5-flash, deepseek-v3.1)',
-      required: true,
-      defaultValue: 'gpt-5-mini',
-    }),
+    model: modelIdDropdown,
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
@@ -143,7 +138,6 @@ export const askCometApiAction = createAction({
         response: responseContent.trim(),
         model: response.body.model,
         usage: response.body.usage,
-        fullResponse: response.body,
       };
     } catch (error: unknown) {
       // Detailed error handling
