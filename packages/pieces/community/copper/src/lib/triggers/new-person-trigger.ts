@@ -1,19 +1,20 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { copperAuth, CopperAuth } from '../common/auth';
-import { copperRequest } from '../common/http';
+import { copperAuth } from '../../index';
+import { copperRequest } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-const polling: Polling<CopperAuth, Record<string, never>> = {
+const polling: Polling<{ api_key: string; email: string }, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     const lastFetchDate = new Date(lastFetchEpochMS);
+    
     const response = await copperRequest({
       auth,
       method: HttpMethod.POST,
       url: '/people/search',
       body: {
-        minimum_date_created: lastFetchDate.toISOString(),
+        minimum_date_created: Math.floor(lastFetchDate.getTime() / 1000),
         page_size: 200,
         sort_by: 'date_created',
         sort_direction: 'desc',
@@ -33,6 +34,7 @@ export const newPersonTrigger = createTrigger({
   name: 'copper_new_person',
   displayName: 'New Person',
   description: 'Fires when a new person/contact is created.',
+  props: {},
   type: TriggerStrategy.POLLING,
   sampleData: {
     id: 12345,

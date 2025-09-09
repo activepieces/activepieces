@@ -1,40 +1,70 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { copperAuth } from '../../index';
+import { copperRequest } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { copperAuth } from '../common/auth';
-import { copperRequest } from '../common/http';
 
 export const updateProject = createAction({
   auth: copperAuth,
   name: 'copper_update_project',
   displayName: 'Update Project',
-  description: 'Updates an existing project in Copper.',
+  description: 'Update an existing project in Copper',
   props: {
-    project_id: Property.Number({ displayName: 'Project ID', required: true }),
-    name: Property.ShortText({ displayName: 'Project Name', required: false }),
-    details: Property.LongText({ displayName: 'Details', required: false }),
-    status: Property.Dropdown({
-      displayName: 'Status',
+    project_id: Property.ShortText({
+      displayName: 'Project ID',
+      description: 'ID of the project to update',
+      required: true,
+    }),
+    name: Property.ShortText({
+      displayName: 'Project Name',
+      description: 'Name of the project',
       required: false,
-      options: async () => ({
-        options: [
-          { label: 'Open', value: 'Open' },
-          { label: 'Completed', value: 'Completed' },
-        ],
-      }),
+    }),
+    details: Property.LongText({
+      displayName: 'Details',
+      description: 'Project description and details',
+      required: false,
+    }),
+    assignee_id: Property.ShortText({
+      displayName: 'Assignee ID',
+      description: 'ID of the user assigned to the project',
+      required: false,
+    }),
+    company_id: Property.ShortText({
+      displayName: 'Company ID',
+      description: 'ID of the associated company',
+      required: false,
+    }),
+    related_resource: Property.Json({
+      displayName: 'Related Resource',
+      description: 'Related resource (opportunity, person, etc.) as JSON object',
+      required: false,
     }),
   },
-  async run(ctx) {
-    const body: Record<string, unknown> = {};
-    
-    if (ctx.propsValue.name) body.name = ctx.propsValue.name;
-    if (ctx.propsValue.details) body.details = ctx.propsValue.details;
-    if (ctx.propsValue.status) body.status = ctx.propsValue.status;
+  async run(context) {
+    const { 
+      project_id,
+      name, 
+      details, 
+      assignee_id, 
+      company_id, 
+      related_resource
+    } = context.propsValue;
 
-    return await copperRequest({
-      auth: ctx.auth,
+    const body: any = {};
+
+    if (name) body.name = name;
+    if (details) body.details = details;
+    if (assignee_id) body.assignee_id = assignee_id;
+    if (company_id) body.company_id = company_id;
+    if (related_resource) body.related_resource = related_resource;
+
+    const response = await copperRequest({
+      auth: context.auth,
       method: HttpMethod.PUT,
-      url: `/projects/${ctx.propsValue.project_id}`,
+      url: `/projects/${project_id}`,
       body,
     });
+
+    return response;
   },
 });

@@ -1,8 +1,10 @@
-import { createPiece } from '@activepieces/pieces-framework';
+
+import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
-import { copperAuth } from './lib/common/auth';
+// Actions
+import { testConnection } from './lib/actions/test-connection';
 
 // Write Actions
 import { createPerson } from './lib/actions/create-person';
@@ -28,25 +30,77 @@ import { searchProject } from './lib/actions/search-project';
 import { searchActivity } from './lib/actions/search-activity';
 
 // Triggers
-import { newPersonTrigger } from './lib/triggers/new-person';
-import { newLeadTrigger } from './lib/triggers/new-lead';
-import { newTaskTrigger } from './lib/triggers/new-task';
-import { newActivityTrigger } from './lib/triggers/new-activity';
-import { updatedLeadTrigger } from './lib/triggers/updated-lead';
-import { updatedTaskTrigger } from './lib/triggers/updated-task';
-import { updatedOpportunityTrigger } from './lib/triggers/updated-opportunity';
-import { updatedProjectTrigger } from './lib/triggers/updated-project';
+import { newPersonTrigger } from './lib/triggers/new-person-trigger';
+import { newLeadTrigger } from './lib/triggers/new-lead-trigger';
+import { newActivityTrigger } from './lib/triggers/new-activity-trigger';
+import { updatedLeadTrigger } from './lib/triggers/updated-lead-trigger';
+
+const markdownDescription = `
+To obtain your Copper API credentials:
+
+1. Login to your Copper account
+2. Go to Settings > API
+3. Copy your API Key
+4. Your User Email is your Copper login email
+`;
+
+export const copperAuth = PieceAuth.CustomAuth({
+  description: markdownDescription,
+  required: true,
+  props: {
+    api_key: PieceAuth.SecretText({
+      displayName: 'API Key',
+      required: true,
+      description: 'Your Copper API Key',
+    }),
+    email: Property.ShortText({
+      displayName: 'User Email',
+      required: true,
+      description: 'Your Copper account email',
+    }),
+  },
+  validate: async ({ auth }) => {
+    try {
+      const response = await fetch('https://api.copper.com/developer_api/v1/account', {
+        method: 'GET',
+        headers: {
+          'X-PW-AccessToken': auth.api_key,
+          'X-PW-UserEmail': auth.email,
+          'X-PW-Application': 'developer_api',
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        return {
+          valid: false,
+          error: 'Invalid API credentials',
+        };
+      }
+      
+      return {
+        valid: true,
+      };
+    } catch (error) {
+      return {
+        valid: false,
+        error: 'Failed to validate credentials',
+      };
+    }
+  },
+});
 
 export const copper = createPiece({
-  displayName: 'Copper',
-  description:
-    'Copper is a CRM for Google Workspace. Automate contacts, leads, opportunities, projects, tasks, and activities.',
+  displayName: "Copper",
+  description: 'Copper is a CRM for Google Workspace. Automate contacts, leads, opportunities, projects, tasks, and activities.',
   auth: copperAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/copper.png',
+  logoUrl: "https://cdn.activepieces.com/pieces/copper.png",
+  authors: ['activepieces'],
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ['gpt-5-assistant'],
   actions: [
+    testConnection,
+    
     // Write Actions
     createPerson,
     updatePerson,
@@ -86,14 +140,8 @@ export const copper = createPiece({
   triggers: [
     newPersonTrigger,
     newLeadTrigger,
-    newTaskTrigger,
     newActivityTrigger,
     updatedLeadTrigger,
-    updatedTaskTrigger,
-    updatedOpportunityTrigger,
-    updatedProjectTrigger,
   ],
 });
-
-export default copper;
-
+    

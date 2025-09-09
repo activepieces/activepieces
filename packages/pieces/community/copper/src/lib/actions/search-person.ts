@@ -1,40 +1,66 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { copperAuth } from '../../index';
+import { copperRequest } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { copperAuth } from '../common/auth';
-import { copperRequest } from '../common/http';
 
 export const searchPerson = createAction({
   auth: copperAuth,
   name: 'copper_search_person',
-  displayName: 'Search for a Person',
-  description: 'Lookup a person using search criteria.',
+  displayName: 'Search Person',
+  description: 'Search for people in Copper',
   props: {
-    name: Property.ShortText({ displayName: 'Name', required: false }),
-    email: Property.ShortText({ displayName: 'Email', required: false }),
-    company_id: Property.Number({ displayName: 'Company ID', required: false }),
-    title: Property.ShortText({ displayName: 'Title', required: false }),
-    page_size: Property.Number({
-      displayName: 'Page Size',
+    search_term: Property.ShortText({
+      displayName: 'Search Term',
+      description: 'Name, email, or other identifier to search for',
+      required: false,
+    }),
+    email: Property.ShortText({
+      displayName: 'Email',
+      description: 'Search by specific email address',
+      required: false,
+    }),
+    company_name: Property.ShortText({
+      displayName: 'Company Name',
+      description: 'Search by company name',
+      required: false,
+    }),
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'Maximum number of results to return (default: 20)',
       required: false,
       defaultValue: 20,
     }),
   },
-  async run(ctx) {
-    const body: Record<string, unknown> = {
-      page_size: ctx.propsValue.page_size || 20,
-    };
-    
-    // Build search criteria
-    if (ctx.propsValue.name) body.name = ctx.propsValue.name;
-    if (ctx.propsValue.email) body.emails = [{ email: ctx.propsValue.email }];
-    if (ctx.propsValue.company_id) body.company_id = ctx.propsValue.company_id;
-    if (ctx.propsValue.title) body.title = ctx.propsValue.title;
+  async run(context) {
+    const { search_term, email, company_name, limit } = context.propsValue;
 
-    return await copperRequest({
-      auth: ctx.auth,
+    const body: any = {
+      page_size: limit || 20,
+    };
+
+    // Build search criteria
+    if (search_term) {
+      body.name = search_term;
+    }
+
+    if (email) {
+      body.emails = [{
+        email: email,
+        category: 'work'
+      }];
+    }
+
+    if (company_name) {
+      body.company_name = company_name;
+    }
+
+    const response = await copperRequest({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url: `/people/search`,
+      url: '/people/search',
       body,
     });
+
+    return response;
   },
 });

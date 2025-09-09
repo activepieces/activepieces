@@ -1,57 +1,83 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { copperAuth } from '../../index';
+import { copperRequest } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { copperAuth } from '../common/auth';
-import { copperRequest } from '../common/http';
 
 export const createCompany = createAction({
   auth: copperAuth,
   name: 'copper_create_company',
   displayName: 'Create Company',
-  description: 'Adds a new company in Copper.',
+  description: 'Create a new company in Copper',
   props: {
-    name: Property.ShortText({ displayName: 'Company Name', required: true }),
-    email_domain: Property.ShortText({ displayName: 'Email Domain', required: false }),
-    phone_numbers: Property.Array({
-      displayName: 'Phone Numbers',
+    name: Property.ShortText({
+      displayName: 'Company Name',
+      description: 'Name of the company',
+      required: true,
+    }),
+    address: Property.Json({
+      displayName: 'Address',
+      description: 'Company address as JSON object with street, city, state, postal_code, country',
       required: false,
     }),
-    website: Property.ShortText({ displayName: 'Website', required: false }),
-    details: Property.LongText({ displayName: 'Details', required: false }),
-    street: Property.ShortText({ displayName: 'Street Address', required: false }),
-    city: Property.ShortText({ displayName: 'City', required: false }),
-    state: Property.ShortText({ displayName: 'State', required: false }),
-    postal_code: Property.ShortText({ displayName: 'Postal Code', required: false }),
-    country: Property.ShortText({ displayName: 'Country', required: false }),
+    phone_numbers: Property.Array({
+      displayName: 'Phone Numbers',
+      description: 'Phone numbers for the company',
+      required: false,
+      properties: {
+        number: Property.ShortText({
+          displayName: 'Phone Number',
+          required: true,
+        }),
+        category: Property.StaticDropdown({
+          displayName: 'Category',
+          required: false,
+          defaultValue: 'work',
+          options: {
+            options: [
+              { label: 'Work', value: 'work' },
+              { label: 'Fax', value: 'fax' },
+              { label: 'Other', value: 'other' },
+            ],
+          },
+        }),
+      },
+    }),
+    website: Property.ShortText({
+      displayName: 'Website',
+      description: 'Company website URL',
+      required: false,
+    }),
+    details: Property.LongText({
+      displayName: 'Details',
+      description: 'Additional details about the company',
+      required: false,
+    }),
+    email_domain: Property.ShortText({
+      displayName: 'Email Domain',
+      description: 'Primary email domain for the company',
+      required: false,
+    }),
   },
-  async run(ctx) {
-    const body: Record<string, unknown> = {
-      name: ctx.propsValue.name,
-      details: ctx.propsValue.details,
-      email_domain: ctx.propsValue.email_domain,
-      website: ctx.propsValue.website,
-    };
-    
-    if (ctx.propsValue.phone_numbers) {
-      body.phone_numbers = (ctx.propsValue.phone_numbers as string[]).map(
-        (p) => ({ number: p, category: 'work' })
-      );
-    }
-    
-    if (ctx.propsValue.street || ctx.propsValue.city || ctx.propsValue.state || ctx.propsValue.postal_code || ctx.propsValue.country) {
-      body.address = {
-        street: ctx.propsValue.street,
-        city: ctx.propsValue.city,
-        state: ctx.propsValue.state,
-        postal_code: ctx.propsValue.postal_code,
-        country: ctx.propsValue.country,
-      };
-    }
+  async run(context) {
+    const { name, address, phone_numbers, website, details, email_domain } = context.propsValue;
 
-    return await copperRequest({
-      auth: ctx.auth,
+    const body: any = {
+      name,
+    };
+
+    if (address) body.address = address;
+    if (phone_numbers && phone_numbers.length > 0) body.phone_numbers = phone_numbers;
+    if (website) body.website = website;
+    if (details) body.details = details;
+    if (email_domain) body.email_domain = email_domain;
+
+    const response = await copperRequest({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url: `/companies`,
+      url: '/companies',
       body,
     });
+
+    return response;
   },
 });

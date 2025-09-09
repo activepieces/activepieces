@@ -3,6 +3,16 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/copper/src",
   "projectType": "library",
+  "release": {
+    "version": {
+      "manifestRootsToUpdate": [
+        "dist/{projectRoot}"
+      ],
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk"
+    }
+  },
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -24,39 +34,12 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      },
-      "dependsOn": ["prebuild", "^build"]
-    },
-    "prebuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "packages/pieces/community/copper",
-        "command": "npm ci"
       }
     },
-    "build-with-deps": {
-      "executor": "nx:run-commands",
+    "nx-release-publish": {
       "options": {
-        "commands": [
-          "nx run pieces-copper:prebuild",
-          "nx run pieces-copper:build",
-          "nx run pieces-copper:postbuild"
-        ],
-        "parallel": false
+        "packageRoot": "dist/{projectRoot}"
       }
-    },
-    "postbuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "dist/packages/pieces/community/copper",
-        "command": "npm install"
-      }
-    },
-    "publish": {
-      "command": "node tools/scripts/publish.mjs pieces-copper {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
@@ -64,6 +47,5 @@
         "{options.outputFile}"
       ]
     }
-  },
-  "tags": []
+  }
 }

@@ -1,46 +1,108 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { copperAuth } from '../../index';
+import { copperRequest } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { copperAuth } from '../common/auth';
-import { copperRequest } from '../common/http';
 
 export const createPerson = createAction({
   auth: copperAuth,
   name: 'copper_create_person',
   displayName: 'Create Person',
-  description: 'Adds a new person/contact in Copper.',
+  description: 'Create a new person/contact in Copper',
   props: {
-    name: Property.ShortText({ displayName: 'Name', required: true }),
-    email: Property.ShortText({ displayName: 'Email', required: false }),
+    name: Property.ShortText({
+      displayName: 'Name',
+      description: 'The full name of the person',
+      required: true,
+    }),
+    emails: Property.Array({
+      displayName: 'Email Addresses',
+      description: 'Email addresses for the person',
+      required: false,
+      properties: {
+        email: Property.ShortText({
+          displayName: 'Email',
+          required: true,
+        }),
+        category: Property.StaticDropdown({
+          displayName: 'Category',
+          required: false,
+          defaultValue: 'work',
+          options: {
+            options: [
+              { label: 'Work', value: 'work' },
+              { label: 'Personal', value: 'personal' },
+              { label: 'Other', value: 'other' },
+            ],
+          },
+        }),
+      },
+    }),
     phone_numbers: Property.Array({
       displayName: 'Phone Numbers',
+      description: 'Phone numbers for the person',
+      required: false,
+      properties: {
+        number: Property.ShortText({
+          displayName: 'Phone Number',
+          required: true,
+        }),
+        category: Property.StaticDropdown({
+          displayName: 'Category',
+          required: false,
+          defaultValue: 'work',
+          options: {
+            options: [
+              { label: 'Work', value: 'work' },
+              { label: 'Mobile', value: 'mobile' },
+              { label: 'Home', value: 'home' },
+              { label: 'Other', value: 'other' },
+            ],
+          },
+        }),
+      },
+    }),
+    title: Property.ShortText({
+      displayName: 'Title',
+      description: 'Job title or position',
       required: false,
     }),
-    details: Property.LongText({ displayName: 'Details', required: false }),
-    title: Property.ShortText({ displayName: 'Title', required: false }),
-    company_id: Property.Number({ displayName: 'Company ID', required: false }),
+    company_name: Property.ShortText({
+      displayName: 'Company Name',
+      description: 'Name of the company they work for',
+      required: false,
+    }),
+    details: Property.LongText({
+      displayName: 'Details',
+      description: 'Additional details about the person',
+      required: false,
+    }),
   },
-  async run(ctx) {
-    const body: Record<string, unknown> = {
-      name: ctx.propsValue.name,
-      details: ctx.propsValue.details,
-      title: ctx.propsValue.title,
-      company_id: ctx.propsValue.company_id,
+  async run(context) {
+    const { name, emails, phone_numbers, title, company_name, details } = context.propsValue;
+
+    const body: any = {
+      name,
     };
-    if (ctx.propsValue.email) {
-      body.emails = [{ email: ctx.propsValue.email, category: 'work' }];
-    }
-    if (ctx.propsValue.phone_numbers) {
-      body.phone_numbers = (ctx.propsValue.phone_numbers as string[]).map(
-        (p) => ({ number: p, category: 'work' })
-      );
+
+    if (emails && emails.length > 0) {
+      body.emails = emails;
     }
 
-    return await copperRequest({
-      auth: ctx.auth,
+    if (phone_numbers && phone_numbers.length > 0) {
+      body.phone_numbers = phone_numbers;
+    }
+
+    if (title) body.title = title;
+    if (company_name) body.company_name = company_name;
+    if (details) body.details = details;
+
+    const response = await copperRequest({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url: `/people`,
+      url: '/people',
       body,
     });
+
+    return response;
   },
 });
-

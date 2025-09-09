@@ -1,55 +1,94 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { copperAuth } from '../../index';
+import { copperRequest } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { copperAuth } from '../common/auth';
-import { copperRequest } from '../common/http';
 
 export const updateLead = createAction({
   auth: copperAuth,
   name: 'copper_update_lead',
   displayName: 'Update Lead',
-  description: 'Updates an existing lead in Copper.',
+  description: 'Update an existing lead in Copper',
   props: {
-    lead_id: Property.Number({ displayName: 'Lead ID', required: true }),
-    name: Property.ShortText({ displayName: 'Name', required: false }),
-    email: Property.ShortText({ displayName: 'Email', required: false }),
-    phone_number: Property.ShortText({ displayName: 'Phone Number', required: false }),
-    title: Property.ShortText({ displayName: 'Title', required: false }),
-    company_name: Property.ShortText({ displayName: 'Company Name', required: false }),
-    details: Property.LongText({ displayName: 'Details', required: false }),
-    monetary_value: Property.Number({ displayName: 'Monetary Value', required: false }),
-    status: Property.Dropdown({
-      displayName: 'Status',
+    lead_id: Property.ShortText({
+      displayName: 'Lead ID',
+      description: 'ID of the lead to update',
+      required: true,
+    }),
+    name: Property.ShortText({
+      displayName: 'Name',
+      description: 'The name of the lead',
       required: false,
-      options: async () => ({
-        options: [
-          { label: 'New', value: 'New' },
-          { label: 'Qualified', value: 'Qualified' },
-          { label: 'Unqualified', value: 'Unqualified' },
-        ],
-      }),
+    }),
+    email: Property.ShortText({
+      displayName: 'Email',
+      description: 'Email address of the lead',
+      required: false,
+    }),
+    phone_number: Property.ShortText({
+      displayName: 'Phone Number',
+      description: 'Phone number of the lead',
+      required: false,
+    }),
+    company_name: Property.ShortText({
+      displayName: 'Company Name',
+      description: 'Company name associated with the lead',
+      required: false,
+    }),
+    title: Property.ShortText({
+      displayName: 'Title',
+      description: 'Job title of the lead',
+      required: false,
+    }),
+    details: Property.LongText({
+      displayName: 'Details',
+      description: 'Additional details about the lead',
+      required: false,
+    }),
+    monetary_value: Property.Number({
+      displayName: 'Monetary Value',
+      description: 'Potential monetary value of the lead',
+      required: false,
     }),
   },
-  async run(ctx) {
-    const body: Record<string, unknown> = {};
-    
-    if (ctx.propsValue.name) body.name = ctx.propsValue.name;
-    if (ctx.propsValue.details) body.details = ctx.propsValue.details;
-    if (ctx.propsValue.title) body.title = ctx.propsValue.title;
-    if (ctx.propsValue.company_name) body.company_name = ctx.propsValue.company_name;
-    if (ctx.propsValue.monetary_value) body.monetary_value = ctx.propsValue.monetary_value;
-    if (ctx.propsValue.status) body.status = ctx.propsValue.status;
-    if (ctx.propsValue.email) {
-      body.email = { email: ctx.propsValue.email, category: 'work' };
-    }
-    if (ctx.propsValue.phone_number) {
-      body.phone_number = { number: ctx.propsValue.phone_number, category: 'work' };
-    }
+  async run(context) {
+    const { 
+      lead_id,
+      name, 
+      email, 
+      phone_number, 
+      company_name, 
+      title, 
+      details, 
+      monetary_value 
+    } = context.propsValue;
 
-    return await copperRequest({
-      auth: ctx.auth,
+    const body: any = {};
+
+    if (name) body.name = name;
+    if (email) {
+      body.email = {
+        email: email,
+        category: 'work'
+      };
+    }
+    if (phone_number) {
+      body.phone_number = {
+        number: phone_number,
+        category: 'work'
+      };
+    }
+    if (company_name) body.company_name = company_name;
+    if (title) body.title = title;
+    if (details) body.details = details;
+    if (monetary_value) body.monetary_value = monetary_value;
+
+    const response = await copperRequest({
+      auth: context.auth,
       method: HttpMethod.PUT,
-      url: `/leads/${ctx.propsValue.lead_id}`,
+      url: `/leads/${lead_id}`,
       body,
     });
+
+    return response;
   },
 });

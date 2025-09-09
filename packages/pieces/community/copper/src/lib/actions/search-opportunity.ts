@@ -1,54 +1,62 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { copperAuth } from '../../index';
+import { copperRequest } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { copperAuth } from '../common/auth';
-import { copperRequest } from '../common/http';
 
 export const searchOpportunity = createAction({
   auth: copperAuth,
   name: 'copper_search_opportunity',
-  displayName: 'Search for an Opportunity',
-  description: 'Lookup an opportunity using search criteria.',
+  displayName: 'Search Opportunity',
+  description: 'Search for opportunities in Copper',
   props: {
-    name: Property.ShortText({ displayName: 'Opportunity Name', required: false }),
-    pipeline_id: Property.Number({ displayName: 'Pipeline ID', required: false }),
-    pipeline_stage_id: Property.Number({ displayName: 'Pipeline Stage ID', required: false }),
-    status: Property.Dropdown({
-      displayName: 'Status',
+    search_term: Property.ShortText({
+      displayName: 'Search Term',
+      description: 'Opportunity name or other identifier to search for',
       required: false,
-      options: async () => ({
-        options: [
-          { label: 'Open', value: 'Open' },
-          { label: 'Won', value: 'Won' },
-          { label: 'Lost', value: 'Lost' },
-          { label: 'Abandoned', value: 'Abandoned' },
-        ],
-      }),
     }),
-    company_id: Property.Number({ displayName: 'Company ID', required: false }),
-    primary_contact_id: Property.Number({ displayName: 'Primary Contact ID', required: false }),
-    page_size: Property.Number({
-      displayName: 'Page Size',
+    company_id: Property.ShortText({
+      displayName: 'Company ID',
+      description: 'Search by associated company ID',
+      required: false,
+    }),
+    assignee_id: Property.ShortText({
+      displayName: 'Assignee ID',
+      description: 'Search by assigned user ID',
+      required: false,
+    }),
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'Maximum number of results to return (default: 20)',
       required: false,
       defaultValue: 20,
     }),
   },
-  async run(ctx) {
-    const body: Record<string, unknown> = {
-      page_size: ctx.propsValue.page_size || 20,
-    };
-    
-    if (ctx.propsValue.name) body.name = ctx.propsValue.name;
-    if (ctx.propsValue.pipeline_id) body.pipeline_id = ctx.propsValue.pipeline_id;
-    if (ctx.propsValue.pipeline_stage_id) body.pipeline_stage_id = ctx.propsValue.pipeline_stage_id;
-    if (ctx.propsValue.status) body.status = ctx.propsValue.status;
-    if (ctx.propsValue.company_id) body.company_id = ctx.propsValue.company_id;
-    if (ctx.propsValue.primary_contact_id) body.primary_contact_id = ctx.propsValue.primary_contact_id;
+  async run(context) {
+    const { search_term, company_id, assignee_id, limit } = context.propsValue;
 
-    return await copperRequest({
-      auth: ctx.auth,
+    const body: any = {
+      page_size: limit || 20,
+    };
+
+    if (search_term) {
+      body.name = search_term;
+    }
+
+    if (company_id) {
+      body.company_id = company_id;
+    }
+
+    if (assignee_id) {
+      body.assignee_id = assignee_id;
+    }
+
+    const response = await copperRequest({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url: `/opportunities/search`,
+      url: '/opportunities/search',
       body,
     });
+
+    return response;
   },
 });

@@ -1,22 +1,21 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { copperAuth, CopperAuth } from '../common/auth';
-import { copperRequest } from '../common/http';
+import { copperAuth } from '../../index';
+import { copperRequest } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-const polling: Polling<CopperAuth, Record<string, never>> = {
+const polling: Polling<{ api_key: string; email: string }, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     const lastFetchDate = new Date(lastFetchEpochMS);
+    
     const response = await copperRequest({
       auth,
       method: HttpMethod.POST,
       url: '/activities/search',
       body: {
-        minimum_activity_date: lastFetchDate.toISOString(),
+        minimum_activity_date: Math.floor(lastFetchDate.getTime() / 1000),
         page_size: 200,
-        sort_by: 'activity_date',
-        sort_direction: 'desc',
       },
     });
     
@@ -33,16 +32,17 @@ export const newActivityTrigger = createTrigger({
   name: 'copper_new_activity',
   displayName: 'New Activity',
   description: 'Fires when a new activity is logged (e.g., call, email, note).',
+  props: {},
   type: TriggerStrategy.POLLING,
   sampleData: {
     id: 12345,
-    type: 'call',
-    details: 'Discussed project requirements',
-    activity_date: '2023-01-01T10:30:00Z',
+    type: 'note',
+    details: 'Called to discuss project requirements',
+    activity_date: '2023-01-01T00:00:00Z',
     parent: { type: 'person', id: 67890 },
-    user_id: 111,
-    date_created: '2023-01-01T10:30:00Z',
-    date_modified: '2023-01-01T10:30:00Z',
+    user_id: 123,
+    date_created: '2023-01-01T00:00:00Z',
+    date_modified: '2023-01-01T00:00:00Z',
   },
   async test(context) {
     return await pollingHelper.test(polling, context);

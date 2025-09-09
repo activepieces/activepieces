@@ -1,49 +1,65 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { copperAuth } from '../../index';
+import { copperRequest } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { copperAuth } from '../common/auth';
-import { copperRequest } from '../common/http';
 
 export const searchLead = createAction({
   auth: copperAuth,
   name: 'copper_search_lead',
-  displayName: 'Search for a Lead',
-  description: 'Lookup a lead using search criteria.',
+  displayName: 'Search Lead',
+  description: 'Search for leads in Copper',
   props: {
-    name: Property.ShortText({ displayName: 'Name', required: false }),
-    email: Property.ShortText({ displayName: 'Email', required: false }),
-    company_name: Property.ShortText({ displayName: 'Company Name', required: false }),
-    status: Property.Dropdown({
-      displayName: 'Status',
+    search_term: Property.ShortText({
+      displayName: 'Search Term',
+      description: 'Name, email, or other identifier to search for',
       required: false,
-      options: async () => ({
-        options: [
-          { label: 'New', value: 'New' },
-          { label: 'Qualified', value: 'Qualified' },
-          { label: 'Unqualified', value: 'Unqualified' },
-        ],
-      }),
     }),
-    page_size: Property.Number({
-      displayName: 'Page Size',
+    email: Property.ShortText({
+      displayName: 'Email',
+      description: 'Search by specific email address',
+      required: false,
+    }),
+    company_name: Property.ShortText({
+      displayName: 'Company Name',
+      description: 'Search by company name',
+      required: false,
+    }),
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'Maximum number of results to return (default: 20)',
       required: false,
       defaultValue: 20,
     }),
   },
-  async run(ctx) {
-    const body: Record<string, unknown> = {
-      page_size: ctx.propsValue.page_size || 20,
-    };
-    
-    if (ctx.propsValue.name) body.name = ctx.propsValue.name;
-    if (ctx.propsValue.email) body.email = { email: ctx.propsValue.email };
-    if (ctx.propsValue.company_name) body.company_name = ctx.propsValue.company_name;
-    if (ctx.propsValue.status) body.status = ctx.propsValue.status;
+  async run(context) {
+    const { search_term, email, company_name, limit } = context.propsValue;
 
-    return await copperRequest({
-      auth: ctx.auth,
+    const body: any = {
+      page_size: limit || 20,
+    };
+
+    if (search_term) {
+      body.name = search_term;
+    }
+
+    if (email) {
+      body.email = {
+        email: email,
+        category: 'work'
+      };
+    }
+
+    if (company_name) {
+      body.company_name = company_name;
+    }
+
+    const response = await copperRequest({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url: `/leads/search`,
+      url: '/leads/search',
       body,
     });
+
+    return response;
   },
 });
