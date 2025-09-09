@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { copperAuth } from '../common/auth';
 
 export const createPerson = createAction({
@@ -52,6 +52,16 @@ export const createPerson = createAction({
         ],
       },
     }),
+    title: Property.ShortText({
+      displayName: 'Title',
+      description: 'Job title or position',
+      required: false,
+    }),
+    companyId: Property.Number({
+      displayName: 'Company ID',
+      description: 'ID of the company this person belongs to',
+      required: false,
+    }),
     street: Property.ShortText({
       displayName: 'Street Address',
       description: 'Street address',
@@ -77,6 +87,11 @@ export const createPerson = createAction({
       description: 'Country',
       required: false,
     }),
+    tags: Property.Array({
+      displayName: 'Tags',
+      description: 'Tags associated with this person',
+      required: false,
+    }),
   },
   async run(context) {
     const {
@@ -85,14 +100,16 @@ export const createPerson = createAction({
       emailCategory,
       phoneNumber,
       phoneCategory,
+      title,
+      companyId,
       street,
       city,
       state,
       postalCode,
       country,
+      tags,
     } = context.propsValue;
 
-    // Build the request body
     const requestBody: any = {
       name: name,
     };
@@ -117,6 +134,11 @@ export const createPerson = createAction({
       ];
     }
 
+    // Add other fields if provided
+    if (title) requestBody.title = title;
+    if (companyId) requestBody.company_id = companyId;
+    if (tags && tags.length > 0) requestBody.tags = tags;
+
     // Add address if any address field is provided
     if (street || city || state || postalCode || country) {
       requestBody.address = {
@@ -132,9 +154,11 @@ export const createPerson = createAction({
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://api.copper.com/developer_api/v1/people',
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.access_token,
+        headers: {
+          'X-PW-AccessToken': context.auth.apiKey,
+          'X-PW-Application': 'developer_api',
+          'X-PW-UserEmail': context.auth.userEmail,
+          'Content-Type': 'application/json',
         },
         body: requestBody,
       });
@@ -145,7 +169,7 @@ export const createPerson = createAction({
         throw new Error(`Bad request: ${JSON.stringify(error.response.body)}`);
       }
       if (error.response?.status === 401) {
-        throw new Error('Authentication failed. Please check your credentials.');
+        throw new Error('Authentication failed. Please check your API key and user email.');
       }
       if (error.response?.status === 403) {
         throw new Error('Access forbidden. Please check your permissions.');

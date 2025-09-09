@@ -1,4 +1,4 @@
-import { createPiece, OAuth2PropertyValue } from "@activepieces/pieces-framework";
+import { createPiece } from "@activepieces/pieces-framework";
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { copperAuth } from './lib/common/auth';
 import { createPerson } from './lib/actions/create-person';
@@ -63,7 +63,10 @@ export const copper = createPiece({
       baseUrl: () => 'https://api.copper.com/developer_api/v1',
       auth: copperAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        'X-PW-AccessToken': auth.apiKey as string,
+        'X-PW-Application': 'developer_api',
+        'X-PW-UserEmail': auth.userEmail as string,
+        'Content-Type': 'application/json',
       }),
     }),
   ],

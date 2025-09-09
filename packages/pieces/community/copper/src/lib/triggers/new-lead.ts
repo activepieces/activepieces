@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { copperAuth } from '../common/auth';
 
 const CACHE_KEY = 'copper_new_lead_webhook';
@@ -63,9 +63,11 @@ export const newLead = createTrigger({
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://api.copper.com/developer_api/v1/webhooks',
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.access_token,
+        headers: {
+          'X-PW-AccessToken': context.auth.apiKey,
+          'X-PW-Application': 'developer_api',
+          'X-PW-UserEmail': context.auth.userEmail,
+          'Content-Type': 'application/json',
         },
         body: webhookData,
       });
@@ -81,7 +83,7 @@ export const newLead = createTrigger({
         throw new Error(`Bad request: ${JSON.stringify(error.response.body)}`);
       }
       if (error.response?.status === 401) {
-        throw new Error('Authentication failed. Please check your credentials.');
+        throw new Error('Authentication failed. Please check your API key and user email.');
       }
       if (error.response?.status === 403) {
         throw new Error('Access forbidden. Please check your permissions.');
@@ -97,9 +99,11 @@ export const newLead = createTrigger({
       await httpClient.sendRequest({
         method: HttpMethod.DELETE,
         url: `https://api.copper.com/developer_api/v1/webhooks/${webhookId}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.access_token,
+        headers: {
+          'X-PW-AccessToken': context.auth.apiKey,
+          'X-PW-Application': 'developer_api',
+          'X-PW-UserEmail': context.auth.userEmail,
+          'Content-Type': 'application/json',
         },
       });
 

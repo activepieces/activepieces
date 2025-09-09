@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { copperAuth } from '../common/auth';
 
 export const convertLead = createAction({
@@ -176,9 +176,11 @@ export const convertLead = createAction({
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: `https://api.copper.com/developer_api/v1/leads/${leadId}/convert`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.access_token,
+        headers: {
+          'X-PW-AccessToken': context.auth.apiKey,
+          'X-PW-Application': 'developer_api',
+          'X-PW-UserEmail': context.auth.userEmail,
+          'Content-Type': 'application/json',
         },
         body: requestBody,
       });
@@ -189,7 +191,7 @@ export const convertLead = createAction({
         throw new Error(`Bad request: ${JSON.stringify(error.response.body)}`);
       }
       if (error.response?.status === 401) {
-        throw new Error('Authentication failed. Please check your credentials.');
+        throw new Error('Authentication failed. Please check your API key and user email.');
       }
       if (error.response?.status === 403) {
         throw new Error('Access forbidden. Please check your permissions.');
