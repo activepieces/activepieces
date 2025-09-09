@@ -1,0 +1,27 @@
+{
+  "name": "@activepieces/piece-copper",
+  "version": "0.0.1",
+  "description": "Copper CRM piece for Activepieces",
+  "main": "src/index.ts",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc && node dist/index.js"
+  },
+  "dependencies": {
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/pieces-common": "*",
+    "@activepieces/shared": "*"
+  },
+  "files": [
+    "dist"
+  ]
+}

@@ -274,6 +274,9 @@
       "@activepieces/piece-copy-ai": [
         "packages/pieces/community/copy-ai/src/index.ts"
       ],
+      "@activepieces/piece-copper": [
+        "packages/pieces/community/copper/src/index.ts"
+      ],
       "@activepieces/piece-crisp": [
         "packages/pieces/community/crisp/src/index.ts"
       ],
