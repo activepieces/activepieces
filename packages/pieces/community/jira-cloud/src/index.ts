@@ -19,6 +19,7 @@ import { findUserAction } from './lib/actions/find-user';
 import { addWatcherToIssueAction } from './lib/actions/add-watcher-to-issue';
 import { linkIssuesAction } from './lib/actions/link-issues';
 import { getIssueAttachmentAction } from './lib/actions/get-issue-attachment';
+import { markdownToJiraFormat } from './lib/actions/markdown-to-jira-format';
 
 export const jiraCloud = createPiece({
 	displayName: 'Jira Cloud',
@@ -43,6 +44,7 @@ export const jiraCloud = createPiece({
 		linkIssuesAction,
 		listIssueCommentsAction,
 		deleteIssueCommentAction,
+		markdownToJiraFormat,
 		createCustomApiCallAction({
 			baseUrl: (auth) => {
 				return `${(auth as JiraAuth).instanceUrl}/rest/api/3`;

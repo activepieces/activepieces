@@ -259,6 +259,9 @@
       "@activepieces/piece-cognito-forms": [
         "packages/pieces/community/cognito-forms/src/index.ts"
       ],
+      "@activepieces/piece-cometapi": [
+        "packages/pieces/community/cometapi/src/index.ts"
+      ],
       "@activepieces/piece-comfyicu": [
         "packages/pieces/community/comfyicu/src/index.ts"
       ],
@@ -464,6 +467,9 @@
       ],
       "@activepieces/piece-google-tasks": [
         "packages/pieces/community/google-tasks/src/index.ts"
+      ],
+      "@activepieces/piece-googlechat": [
+        "packages/pieces/community/googlechat/src/index.ts"
       ],
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"

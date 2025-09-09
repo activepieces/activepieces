@@ -1,6 +1,6 @@
 {
-  "name": "@activepieces/piece-bika",
-  "version": "0.0.4",
+  "name": "@activepieces/piece-googlechat",
+  "version": "0.0.1",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",

@@ -64,7 +64,7 @@ export const BikaCommon = {
 		displayName: 'Fields',
 		description: 'The fields to add to the record.',
 		required: true,
-		refreshers: ['auth', 'database_id'],
+		refreshers: ['auth', 'space_id', 'database_id'],
 		props: async ({ auth, space_id, database_id }) => {
 			if(!auth || !space_id || !database_id) return {};
 			
