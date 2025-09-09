@@ -36,8 +36,6 @@ async function findFlowsToUpdate({ newState, currentState }: DiffParams): Promis
         return !isNil(flow)
     })
 
-    newStateFiles.map((flow) => flowMigrations.apply(flow.version))
-
     const operations = await Promise.all(newStateFiles.map(async (flowFromNewState) => {
         const os = searchInFlowForFlowByIdOrExternalId(currentState.flows, flowFromNewState.externalId)
         assertNotNullOrUndefined(os, `Could not find target flow for source flow ${flowFromNewState.externalId}`)

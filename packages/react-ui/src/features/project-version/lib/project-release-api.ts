@@ -21,11 +21,9 @@ export const projectReleaseApi = {
     return await api.delete<void>(`/v1/project-releases/${id}`);
   },
   async diff(request: DiffReleaseRequest) {
-    const result = await api.post<ProjectSyncPlan>(
+    return await api.post<ProjectSyncPlan>(
       `/v1/project-releases/diff`,
       request,
     );
-    console.log('result', result);
-    return result;
   },
 };

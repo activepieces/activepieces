@@ -69,7 +69,6 @@ const CreateReleaseDialogContent = ({
   setOpen,
   refetch,
 }: CreateReleaseDialogContentProps) => {
-  console.log('plan', plan)
   const isThereAnyChanges =
     (plan?.flows && plan?.flows.length > 0) ||
     (plan?.tables && plan?.tables.length > 0) ||
