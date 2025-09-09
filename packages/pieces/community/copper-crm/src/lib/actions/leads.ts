@@ -5,7 +5,7 @@ import { makeCopperRequest } from "../common/request";
 import { HttpMethod } from "@activepieces/pieces-common";
 import { LEADS_API_ENDPOINT } from "../common/constants";
 import { companyId, companyName } from "../common/company";
-import { personAssigneeId, personContactTypeId, personName } from "../common/people";
+import { personAssigneeId, personContactTypeId, personName } from "../common/person";
 import { opportunityAssigneeId, opportunityMonetaryValue, opportunityName, opportunityPipelineId } from "../common/opportunity";
 
 export const createLead = createAction({

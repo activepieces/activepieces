@@ -7,7 +7,7 @@ import {
     personSocials, 
     personTitle, 
     personTags, personDetails, personContactTypeId, personCompanyId, personCompanyName, personEmails, personName, personAssigneeId, personPhoneNumbers, 
-    personId} from "../common/people";
+    personId} from "../common/person";
 import { HttpMethod, propsValidation } from "@activepieces/pieces-common";
 import { makeCopperRequest } from "../common/request";
 import { PEOPLE_API_ENDPOINT } from "../common/constants";
