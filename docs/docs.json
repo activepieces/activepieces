@@ -190,6 +190,7 @@
               "embedding/customize-pieces",
               "embedding/embed-connections",
               "embedding/navigation",
+              "embedding/flow-progress",
               "embedding/predefined-connection",
               "embedding/sdk-changelog",
               "embedding/sdk-server-requests"

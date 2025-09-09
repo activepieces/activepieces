@@ -11,6 +11,7 @@ export enum ActivepiecesClientEventName {
   CLIENT_CONFIGURATION_FINISHED = 'CLIENT_CONFIGURATION_FINISHED',
   CLIENT_CONNECTION_PIECE_NOT_FOUND = 'CLIENT_CONNECTION_PIECE_NOT_FOUND',
   CLIENT_BUILDER_HOME_BUTTON_CLICKED = 'CLIENT_BUILDER_HOME_BUTTON_CLICKED',
+  CLIENT_FLOW_PROGRESS_UPDATE = 'CLIENT_FLOW_PROGRESS_UPDATE',
 }
 export interface ActivepiecesClientInit {
   type: ActivepiecesClientEventName.CLIENT_INIT;
@@ -64,6 +65,13 @@ export interface ActivepiecesBuilderHomeButtonClicked {
   };
 }
 
+export interface ActivepiecesClientFlowProgressUpdate {
+  type: ActivepiecesClientEventName.CLIENT_FLOW_PROGRESS_UPDATE;
+  data: {
+    runId: string;
+  };
+}
+
 type IframeWithWindow = HTMLIFrameElement & { contentWindow: Window };
 
 export const NEW_CONNECTION_QUERY_PARAMS = {
@@ -74,7 +82,8 @@ export const NEW_CONNECTION_QUERY_PARAMS = {
 
 export type ActivepiecesClientEvent =
   | ActivepiecesClientInit
-  | ActivepiecesClientRouteChanged;
+  | ActivepiecesClientRouteChanged
+  | ActivepiecesClientFlowProgressUpdate;
 
 export enum ActivepiecesVendorEventName {
   VENDOR_INIT = 'VENDOR_INIT',
@@ -145,7 +154,10 @@ type EmbeddingParam = {
   hideFolders?: boolean;
   navigation?: {
     handler?: (data: { route: string }) => void;
-  }
+  };
+  flowProgress?: {
+    handler?: (data: { runId: string }) => void;
+  };
 }
 type ConfigureParams = {
   instanceUrl: string;
@@ -156,7 +168,7 @@ type ConfigureParams = {
 
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.7.0";
+  readonly _sdkVersion = "0.8.1";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -219,6 +231,7 @@ class ActivepiecesEmbedded {
             this._dashboardAndBuilderIframeWindow = iframeWindow;
             this._checkForClientRouteChanges(iframeWindow);
             this._checkForBuilderHomeButtonClicked(iframeWindow);
+            this._checkForFlowProgressUpdates(iframeWindow);
           }
           else {
             reject({
@@ -437,6 +450,14 @@ class ActivepiecesEmbedded {
     window.addEventListener('message', (event: MessageEvent<ActivepiecesBuilderHomeButtonClicked>) => {
       if (event.data.type === ActivepiecesClientEventName.CLIENT_BUILDER_HOME_BUTTON_CLICKED && event.source === source) {
         this._embeddingState?.builder?.homeButtonClickedHandler?.(event.data.data);
+      }
+    });
+  }
+
+  private _checkForFlowProgressUpdates = (source: Window) => {
+    window.addEventListener('message', (event: MessageEvent<ActivepiecesClientFlowProgressUpdate>) => {
+      if (event.data.type === ActivepiecesClientEventName.CLIENT_FLOW_PROGRESS_UPDATE && event.source === source) {
+        this._embeddingState?.flowProgress?.handler?.(event.data.data);
       }
     });
   }
