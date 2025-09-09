@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { LogOut, Shield } from 'lucide-react';
+import { ArrowLeft, Shield } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -11,7 +11,11 @@ import { PlatformRole } from '@activepieces/shared';
 
 import { notificationHooks } from '../../routes/platform/notifications/hooks/notifications-hooks';
 
-export function SidebarPlatformAdminButton() {
+export function SidebarPlatformAdminButton({
+  className,
+}: {
+  className?: string;
+}) {
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   const { embedState } = useEmbedding();
   const location = useLocation();
@@ -27,19 +31,20 @@ export function SidebarPlatformAdminButton() {
     <Link
       to={isInPlatformAdmin ? '/' : '/platform'}
       className={cn(
-        'w-full relative flex items-center justify-between hover:bg-accent rounded-sm transition-colors',
+        'w-full flex items-center justify-center relative',
+        className,
       )}
     >
-      <div className={`w-full flex items-center gap-2 px-2 py-1.5`}>
+      <div className={`w-full flex items-center gap-2`}>
         {isInPlatformAdmin ? (
           <>
-            <LogOut className="size-4" />
+            <ArrowLeft className="size-4" />
             <span className={`text-sm`}>{t('Exit Platform Admin')}</span>
           </>
         ) : (
           <>
             <Shield className="size-4" />
-            <span className={`text-sm`}>{t('Enter Platform Admin')}</span>
+            <span className={`text-sm`}>{t('Platform Admin')}</span>
           </>
         )}
       </div>

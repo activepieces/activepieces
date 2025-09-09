@@ -17,6 +17,7 @@ import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';
+import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
 import {
   Tooltip,
   TooltipContent,
@@ -39,8 +40,6 @@ import {
 
 import FlowActionMenu from '../../components/flow-actions-menu';
 import { BuilderFlowStatusSection } from '../builder-flow-status-section';
-
-import { UserAvatarMenu } from './user-avatar-menu';
 
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
@@ -85,10 +84,11 @@ export const BuilderHeader = () => {
   }, []);
 
   return (
-    <div className="bg-background select-none">
-      <div className="relative items-center flex h-[55px] w-full p-4 bg-muted/30">
+    <div className="border-b-[2px] select-none">
+      <div className="relative items-center flex h-[55px] w-full p-4">
         <div className="flex items-center gap-2">
-          <HomeButton />
+          {!embedState.isEmbedded && <SidebarTrigger className="size-9" />}
+          {embedState.isEmbedded && <HomeButton />}
           <div className="flex gap-2 items-center">
             {!embedState.hideFolders &&
               !embedState.disableNavigationInBuilder && (
@@ -198,7 +198,6 @@ export const BuilderHeader = () => {
           )}
 
           <BuilderFlowStatusSection></BuilderFlowStatusSection>
-          <UserAvatarMenu></UserAvatarMenu>
         </div>
       </div>
     </div>
