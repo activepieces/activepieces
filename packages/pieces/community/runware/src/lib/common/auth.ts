@@ -14,15 +14,21 @@ export const runwareAuth = PieceAuth.SecretText({
   description: markdownDescription,
   required: true,
   validate: async ({ auth }) => {
+    // The 'auth' prop here is the raw API key string
     try {
       await httpClient.sendRequest({
         url: 'https://api.runware.ai/v1',
         method: HttpMethod.POST,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${auth}`,
         },
-        body: [],
+        // 👇 CHANGE IS HERE: Send a specific authentication task instead of an empty array.
+        body: [
+          {
+            taskType: 'authentication',
+            apiKey: auth,
+          },
+        ],
       });
       return {
         valid: true,
