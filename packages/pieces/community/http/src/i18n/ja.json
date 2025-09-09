@@ -1,5 +1,4 @@
 {
-  "HTTP": "HTTP",
   "Sends HTTP requests and return responses": "HTTPリクエストとレスポンスを送信する",
   "Send HTTP request": "HTTPリクエストを送信",
   "Method": "方法",

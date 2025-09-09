@@ -1,5 +1,4 @@
 {
-  "DocsBot": "DocsBot",
   "DocsBot AI allows you to build AI-powered chatbots that pull answers from your existing documentation and content. This integration enables workflows to ask DocsBot questions and update its training sources dynamically.": "DocsBot AI laat je toe om AI-powered chatbots te bouwen die antwoorden van je bestaande documentatie en inhoud trekken. Deze integratie maakt het mogelijk om workflows vragen te stellen aan DocsBot en zijn trainingsbronnen dynamisch bij te werken.",
   "The API key for authenticating with DocsBot.": "De API-sleutel voor authenticatie met DocsBot.",
   "Ask Question": "Vraag stellen",

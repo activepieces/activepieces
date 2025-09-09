@@ -1,5 +1,4 @@
 {
-  "AI Answer": "AI antwoord",
   "\n      To obtain your AiAnswer API access token, follow these steps below:\n      1. Log in to your AiAnswer account at https://app.aianswer.us .\n      2. Navigate to Settings < API Key.\n      3. Click on Copy icon to copy your existing Key or click on New API Key to create a new one.\n      4. Copy the API Key and paste it below in \"AiAnswer API Key\".\n    ": "\n      Om je AiAnswer API-toegangstoken te verkrijgen, volg deze stappen hieronder:\n      1. Log in op je AiAnswer account op https://app.aianswer.us .\n      2. Navigeer naar Instellingen < API Key.\n      3. Klik op het pictogram kopiëren van uw bestaande sleutel of klik op de Nieuwe API-sleutel om een nieuwe te maken.\n      4. Kopieer de API-sleutel en plak deze hieronder in \"AiAnswer API-sleutel\".\n    ",
   "Gmail get list of Agents": "Gmail krijgt lijst van agenten",
   "Create Phone Call": "Telefoongesprek aanmaken",

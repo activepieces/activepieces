@@ -1,5 +1,4 @@
 {
-  "Attio": "Attio",
   "Modern, collaborative CRM platform built to be fully customizable and real-time.": "Plataforma CRM moderna y colaborativa construida para ser totalmente personalizable y en tiempo real.",
   "\nTo use Attio, you need to generate an Access Token:\n1. Login to your Attio account at https://app.attio.com.\n2. From the dropdown beside your workspace name, click Workspace settings.\n3. Click the Developers tab.\n4. Click on the \"New Access Token\" button.\n5. Set the appropriate Scopes for the integration.\n6. Copy the generated Access Token.\n": "\nTo use Attio, you need to generate an Access Token:\n1. Login to your Attio account at https://app.attio.com.\n2. From the dropdown beside your workspace name, click Workspace settings.\n3. Click the Developers tab.\n4. Click on the \"New Access Token\" button.\n5. Set the appropriate Scopes for the integration.\n6. Copy the generated Access Token.\n",
   "Create Record": "Crear registro",
