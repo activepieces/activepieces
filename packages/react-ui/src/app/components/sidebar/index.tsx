@@ -14,7 +14,6 @@ import { platformHooks } from '../../../hooks/platform-hooks';
 import { ApDashboardSidebarHeader } from '../ap-dashboard-sidebar-header';
 import { HelpAndFeedback } from '../help-and-feedback';
 
-import { SidebarInviteUserButton } from './sidebar-invite-user';
 import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
 import { SidebarUser } from './sidebar-user';
 import UsageLimitsButton from './usage-limits-button';
@@ -232,9 +231,6 @@ export function SidebarComponent({
                 </ScrollArea>
               </div>
               <SidebarFooter className="pb-4 flex-shrink-0">
-                <SidebarMenu>
-                  <SidebarInviteUserButton />
-                </SidebarMenu>
                 <SidebarMenu>
                   <HelpAndFeedback />
                 </SidebarMenu>

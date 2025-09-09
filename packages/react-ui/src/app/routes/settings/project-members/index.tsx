@@ -1,3 +1,4 @@
+import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { t } from 'i18next';
 import { LoaderIcon } from 'lucide-react';
 
@@ -11,13 +12,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { InvitationCard } from '@/features/team/component/invitation-card';
-import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 import { ProjectMemberCard } from '@/features/team/component/project-member-card';
 import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
-import { userInvitationsHooks } from '@/features/team/lib/user-invitations-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
 export default function ProjectMembersPage() {
   const {
@@ -25,8 +22,6 @@ export default function ProjectMembersPage() {
     isLoading: projectMembersIsPending,
     refetch: refetchProjectMembers,
   } = projectMembersHooks.useProjectMembers();
-  const { invitations, isLoading: invitationsIsPending } =
-    userInvitationsHooks.useInvitations();
 
   const { platform } = platformHooks.useCurrentPlatform();
 
@@ -78,28 +73,6 @@ export default function ProjectMembersPage() {
             <CardTitle className="text-xl">
               {t('Pending Invitations')}
             </CardTitle>
-            <div className="flex min-h-[35px] flex-col gap-4">
-              {invitationsIsPending && (
-                <div className="flex justify-center animate-spin">
-                  <LoaderIcon></LoaderIcon>
-                </div>
-              )}
-              {invitations && invitations.length === 0 && (
-                <div className="text-center">{t('No pending invitation.')}</div>
-              )}
-              {Array.isArray(invitations) &&
-                invitations.map((invitation) => (
-                  <InvitationCard
-                    key={invitation.id}
-                    invitation={invitation}
-                  ></InvitationCard>
-                ))}
-            </div>
-            <div className="mt-4 flex items-center  space-x-2">
-              <div className="flex-grow">
-                <InviteUserDialog></InviteUserDialog>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>
