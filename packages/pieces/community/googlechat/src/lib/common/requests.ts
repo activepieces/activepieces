@@ -137,7 +137,7 @@ export const googleChatAPIService = {
   async listMessages(
     accessToken: string,
     spaceId: string,
-    pageSize: number = 50
+    pageSize = 50
   ) {
     return await fireHttpRequest({
       method: HttpMethod.GET,

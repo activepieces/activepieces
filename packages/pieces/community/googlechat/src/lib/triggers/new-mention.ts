@@ -62,7 +62,17 @@ export const newMention = createTrigger({
     });
   },
   async onDisable({ auth, propsValue: { projectId }, store }) {
+    const accessToken = auth.access_token;
 
+    await googleChatAPIService
+      .cleanupWebhookResources({
+        accessToken,
+        event_type: 'google.workspace.chat.message.v1.created',
+        projectId: projectId as string,
+      })
+      .catch((err) => {
+        console.log('Error cleaning up webhook resources during disable', err);
+      });
   },
   async run(context) {
     const messageData = JSON.parse(
