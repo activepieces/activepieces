@@ -1,4 +1,4 @@
-import { AgentOperationType, AgentState, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, flowMigrations, FlowProjectOperationType, FlowState, FlowSyncError, isNil, McpState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, Table, TableOperationType, TableState } from '@activepieces/shared'
+import { AgentOperationType, AgentState, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, flowMigrations, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, McpState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, Table, TableOperationType, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { agentsService } from '../../../../agents/agents-service'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
@@ -128,12 +128,14 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             switch (operation.type) {
                 case FlowProjectOperationType.UPDATE_FLOW: {
                     const flowUpdated = await projectStateHelper(log).updateFlowInProject(operation.flowState, operation.newFlowState, projectId)
-                    publishJobs.push(projectStateHelper(log).republishFlow({ flow: flowUpdated, projectId }))
+                    const keepOriginalState = projectStateHelper(log).republishFlow({ flow: flowUpdated, projectId, status: operation.flowState.status })
+                    publishJobs.push(keepOriginalState)
                     break
                 }
                 case FlowProjectOperationType.CREATE_FLOW: {
                     const flowCreated = await projectStateHelper(log).createFlowInProject(operation.flowState, projectId)
-                    publishJobs.push(projectStateHelper(log).republishFlow({ flow: flowCreated, projectId }))
+                    const alwaysEnableNewFlow = projectStateHelper(log).republishFlow({ flow: flowCreated, projectId, status: FlowStatus.ENABLED })
+                    publishJobs.push(alwaysEnableNewFlow)
                     break
                 }
                 case FlowProjectOperationType.DELETE_FLOW: {
@@ -240,7 +242,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 projectId,
             })
         }))
-        
+
         const connections: ConnectionState[] = await appConnectionService(log).getManyConnectionStates({
             projectId,
         })
