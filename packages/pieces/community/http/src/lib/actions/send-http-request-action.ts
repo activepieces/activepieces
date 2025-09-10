@@ -211,6 +211,7 @@ export const httpSendRequestAction = createAction({
     failureMode: Property.StaticDropdown({
       displayName: 'On Failure',
       required: false,
+      defaultValue:'continue_none',
       options: {
         disabled: false,
         options: [
