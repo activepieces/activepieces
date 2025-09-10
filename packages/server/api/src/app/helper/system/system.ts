@@ -65,7 +65,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
     [AppSystemProp.AGENT_TIMEOUT_SECONDS]: '600',
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
-    [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: '60',
+    [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: '120',
     [AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS]: '30',
     [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: '100000',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
