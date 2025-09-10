@@ -25,6 +25,7 @@ import {
     SampleDataFileType,
     SeekPage,
     spreadIfDefined,
+    TelemetryEventName,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -40,6 +41,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
+import { telemetry } from '../../helper/telemetry.utils'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { getJobPriority } from '../../workers/queue/queue-manager'
 import { flowService } from '../flow/flow.service'
@@ -543,7 +545,7 @@ async function getOrCreate({
         })
     }
 
-    return flowRunRepo().save({
+    const flowRun = await flowRunRepo().save({
         id: apId(),
         projectId,
         flowId,
@@ -556,6 +558,21 @@ async function getOrCreate({
         status: FlowRunStatus.QUEUED,
         stepNameToTest,
     })
+
+    telemetry(log).trackProject(flowRun.projectId, {
+        name: TelemetryEventName.FLOW_RUN_CREATED,
+        payload: {
+            flowId: flowRun.flowId,
+            runId: flowRun.id,
+            platformId: flowRun.projectId,
+            environment: flowRun.environment,
+            projectId: flowRun.projectId,
+        },
+    })  .catch((e) =>
+        log.error(e, '[FlowRunService#getOrCreate] telemetry.trackProject'),
+    )
+
+    return flowRun
 }
 
 type UpdateLogs = {

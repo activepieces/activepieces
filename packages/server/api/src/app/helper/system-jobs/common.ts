@@ -8,7 +8,6 @@ export enum SystemJobName {
     TRIAL_TRACKER = 'trial-tracker',
     FILE_CLEANUP_TRIGGER = 'file-cleanup-trigger',
     ISSUES_REMINDER = 'issue-reminder',
-    RUN_TELEMETRY = 'run-telemetry',
     AI_USAGE_REPORT = 'ai-usage-report',
     SEVEN_DAYS_IN_TRIAL = 'seven-days-in-trial',
     ONE_DAY_LEFT_ON_TRIAL = 'one-day-left-on-trial',
@@ -50,7 +49,6 @@ type SystemJobDataMap = {
     [SystemJobName.PIECES_SYNC]: Record<string, never>
     [SystemJobName.TRIAL_TRACKER]: Record<string, never>
     [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>
-    [SystemJobName.RUN_TELEMETRY]: Record<string, never>
     [SystemJobName.SEVEN_DAYS_IN_TRIAL]: SevenDaysInTrialEmailSystemJobData
     [SystemJobName.ONE_DAY_LEFT_ON_TRIAL]: OneDayLeftOnTrialEmailSystemJobData
 }

@@ -23,6 +23,8 @@ export const telemetry = (log: FastifyBaseLogger) => ({
                 lastName: identity.lastName,
                 projectId,
                 firstSeenAt: user.created,
+                provider: identity.provider,
+                platformId: user.platformId,
                 ...(await getMetadata()),
             },
         }

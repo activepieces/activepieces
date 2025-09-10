@@ -141,7 +141,6 @@ export const authenticationUtils = {
     }: SendTelemetryParams): Promise<void> {
         try {
             await telemetry(log).identify(user, identity, project.id)
-
             await telemetry(log).trackProject(project.id, {
                 name: TelemetryEventName.SIGNED_UP,
                 payload: {
@@ -150,6 +149,8 @@ export const authenticationUtils = {
                     firstName: identity.firstName,
                     lastName: identity.lastName,
                     projectId: project.id,
+                    platformId: project.platformId,
+                    provider: identity.provider,
                 },
             })
         }

@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { useSocket } from '@/components/socket-provider';
+import { useTelemetry } from '@/components/telemetry-provider';
 import { toast } from '@/components/ui/use-toast';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
@@ -22,6 +23,7 @@ import {
   PopulatedFlow,
   FlowTrigger,
   FlowTriggerType,
+  TelemetryEventName,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -54,7 +56,7 @@ export const flowsHooks = {
     const { data: enableFlowOnPublish } = flagsHooks.useFlag<boolean>(
       ApFlagId.ENABLE_FLOW_ON_PUBLISH,
     );
-
+    const { capture } = useTelemetry();
     return useMutation({
       mutationFn: async () => {
         setIsPublishing(true);
@@ -75,6 +77,15 @@ export const flowsHooks = {
         setFlow(flow);
         setVersion(flow.version);
         setIsPublishing(false);
+        capture({
+          name: TelemetryEventName.FLOW_PUBLISHED,
+          payload: {
+            flowId: flow.id,
+            projectId: flow.projectId,
+            userId: authenticationSession.getCurrentUserId()!,
+            platformId: authenticationSession.getPlatformId()!,
+          },
+        });
       },
       onError: (err: Error) => {
         toast({

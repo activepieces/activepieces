@@ -6,7 +6,6 @@ import { TriangleAlert } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useTelemetry } from '@/components/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -76,7 +75,6 @@ const readTemplateJson = async (
 const ImportFlowDialog = (
   props: ImportFlowDialogProps & { children: React.ReactNode },
 ) => {
-  const { capture } = useTelemetry();
   const [templates, setTemplates] = useState<FlowTemplate[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
