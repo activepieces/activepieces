@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { cloudconvertAuth } from '../common/auth';
-import { CloudConvertJob, CloudConvertTask } from '../common/types';
+import { cloudConvertApiService } from '../common/api';
 
 export const captureWebsite = createAction({
   auth: cloudconvertAuth,
@@ -28,56 +27,12 @@ export const captureWebsite = createAction({
     }),
   },
 
-  async run(context) {
-    const { url, output_format } = context.propsValue;
+  async run({ auth, propsValue }) {
+    const { url, output_format } = propsValue;
 
-    const createJobResponse = await httpClient.sendRequest<{
-      data: CloudConvertJob;
-    }>({
-      method: HttpMethod.POST,
-      url: 'https://api.cloudconvert.com/v2/jobs',
-      headers: { Authorization: `Bearer ${context.auth}` },
-      body: {
-        tasks: {
-          'capture-task': {
-            operation: 'capture-website',
-            url: url,
-            output_format: output_format,
-          },
-          'export-file': {
-            operation: 'export/url',
-            input: 'capture-task',
-          },
-        },
-      },
+    return await cloudConvertApiService.capture(auth, {
+      url: url as string,
+      output_format: output_format as string,
     });
-    const job = createJobResponse.body.data;
-
-    let updatedJob = job;
-    while (updatedJob.status !== 'finished' && updatedJob.status !== 'error') {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-      const getJobResponse = await httpClient.sendRequest<{
-        data: CloudConvertJob;
-      }>({
-        method: HttpMethod.GET,
-        url: `https://api.cloudconvert.com/v2/jobs/${job.id}`,
-        headers: { Authorization: `Bearer ${context.auth}` },
-      });
-      updatedJob = getJobResponse.body.data;
-    }
-
-    if (updatedJob.status === 'error') {
-      const failedTask = updatedJob.tasks.find(
-        (task: CloudConvertTask) => task.status === 'error'
-      );
-      throw new Error(
-        `Website capture failed: ${failedTask?.message || 'Unknown error'}`
-      );
-    }
-
-    const exportTask = updatedJob.tasks.find(
-      (task: CloudConvertTask) => task.operation === 'export/url'
-    );
-    return exportTask?.result?.files?.[0];
   },
 });

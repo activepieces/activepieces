@@ -1,7 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { cloudconvertAuth } from '../common/auth'; 
-import { CloudConvertJob, CloudConvertTask } from '../common/types';
+import { createAction, Property, ApFile } from '@activepieces/pieces-framework';
+import { cloudconvertAuth } from '../common/auth';
+import { cloudConvertApiService } from '../common/api'; 
 
 export const optimizeFile = createAction({
   auth: cloudconvertAuth,
@@ -38,74 +37,13 @@ export const optimizeFile = createAction({
     }),
   },
 
-  async run(context) {
-    const { file, engine, profile } = context.propsValue;
+  async run({ auth, propsValue }) {
+    const { file, profile, engine } = propsValue;
 
-    const createJobResponse = await httpClient.sendRequest<{
-      data: CloudConvertJob;
-    }>({
-      method: HttpMethod.POST,
-      url: 'https://api.cloudconvert.com/v2/jobs',
-      headers: { Authorization: `Bearer ${context.auth}` },
-      body: {
-        tasks: {
-          'import-file': {
-            operation: 'import/upload',
-          },
-          'optimize-task': {
-            operation: 'optimize',
-            input: 'import-file',
-            engine: engine || undefined,
-            profile: profile || undefined,
-          },
-          'export-file': {
-            operation: 'export/url',
-            input: 'optimize-task',
-          },
-        },
-      },
+    return await cloudConvertApiService.optimize(auth, {
+      file: file as ApFile,
+      profile: profile as string | undefined,
+      engine: engine as string | undefined,
     });
-    const job = createJobResponse.body.data;
-    const uploadTask = job.tasks.find(
-      (task) => task.operation === 'import/upload'
-    );
-
-    if (!uploadTask?.result?.form?.url) {
-      throw new Error('Could not retrieve file upload URL from CloudConvert.');
-    }
-
-    await httpClient.sendRequest({
-      method: HttpMethod.PUT,
-      url: uploadTask.result.form.url,
-      body: file.data,
-      headers: { 'Content-Type': 'application/octet-stream' },
-    });
-
-    let updatedJob = job;
-    while (updatedJob.status !== 'finished' && updatedJob.status !== 'error') {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-      const getJobResponse = await httpClient.sendRequest<{
-        data: CloudConvertJob;
-      }>({
-        method: HttpMethod.GET,
-        url: `https://api.cloudconvert.com/v2/jobs/${job.id}`,
-        headers: { Authorization: `Bearer ${context.auth}` },
-      });
-      updatedJob = getJobResponse.body.data;
-    }
-
-    if (updatedJob.status === 'error') {
-      const failedTask = updatedJob.tasks.find(
-        (task: CloudConvertTask) => task.status === 'error'
-      );
-      throw new Error(
-        `File optimization failed: ${failedTask?.message || 'Unknown error'}`
-      );
-    }
-
-    const exportTask = updatedJob.tasks.find(
-      (task: CloudConvertTask) => task.operation === 'export/url'
-    );
-    return exportTask?.result?.files?.[0];
   },
 });

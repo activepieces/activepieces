@@ -1,4 +1,5 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const cloudconvertAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -12,4 +13,24 @@ export const cloudconvertAuth = PieceAuth.SecretText({
   4. Click **Create** and paste the generated API Key below.
   `,
   required: true,
+
+  validate: async ({ auth }) => {
+    try {
+      await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: 'https://api.cloudconvert.com/v2/users/me',
+        headers: {
+          Authorization: `Bearer ${auth}`,
+        },
+      });
+      return {
+        valid: true,
+      };
+    } catch (e) {
+      return {
+        valid: false,
+        error: 'Invalid API key. Please check the key and permissions.',
+      };
+    }
+  },
 });
