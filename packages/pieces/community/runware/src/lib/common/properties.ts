@@ -20,7 +20,7 @@ const width = ({ required = true }) =>
 const model = Property.ShortText({
   displayName: 'Model',
   description:
-    'We make use of the AIR (Artificial Intelligence Resource) system to identify models. This identifier is a unique string that represents a specific model.',
+   `You can find model in the Model Explorer (https://my.runware.ai/models/all) tool.`,
   required: true,
 });
 
