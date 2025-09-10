@@ -26,6 +26,19 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             throw new Error('Either platformId or projectId must be provided')
         }
     },
+    async exists(s3Key: string): Promise<boolean> {
+        try {
+            const response = await getS3Client().headObject({
+                Bucket: getS3BucketName(),
+                Key: s3Key,
+            })
+            // Check if the object exists and has content (ContentLength > 0)
+            return response.ContentLength !== undefined && response.ContentLength > 0
+        }
+        catch (error) {
+            return false
+        }
+    },
     async uploadFile(s3Key: string, data: Buffer): Promise<string> {
         log.info({
             s3Key,
