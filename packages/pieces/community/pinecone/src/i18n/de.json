@@ -1,5 +1,4 @@
 {
-  "Pinecone": "Kieferkegel",
   "Manage vector databases, store embeddings, and perform similarity searches": "Vektordatenbanken verwalten, Einbettungen speichern und Ähnlichkeitsrecherchen durchführen",
   "API Key": "API-Schlüssel",
   "Enter your Pinecone API key. You can create a new API key in the Pinecone console for your target project.": "Geben Sie Ihren Pinecone API-Schlüssel ein. Sie können einen neuen API-Schlüssel in der Pinecone Konsole für Ihr Zielprojekt erstellen.",

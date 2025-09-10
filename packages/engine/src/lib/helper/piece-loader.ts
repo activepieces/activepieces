@@ -13,7 +13,6 @@ export const pieceLoader = {
             pieceVersion,
             pieceSource,
         })
-
         const piecePath = await pieceLoader.getPiecePath({ packageName, pieceSource })
         const module = await import(piecePath)
 
@@ -148,13 +147,12 @@ export const pieceLoader = {
 
 async function loadPieceFromDistFolder(packageName: string): Promise<string | null> {
     const distPath = path.resolve('dist/packages/pieces')
-    const entries = await utils.walk(distPath)
-    for await (const entry of entries) {
+    const entries = (await utils.walk(distPath)).filter((entry) => entry.name === 'package.json')
+    for (const entry of entries) {
         try {
             const packageJsonPath = entry.path
             const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8')
             const packageJson = JSON.parse(packageJsonContent)
-
             if (packageJson.name === packageName) {
                 return path.dirname(packageJsonPath)
             }

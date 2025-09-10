@@ -1,5 +1,4 @@
 {
-  "Airtable": "Airtable",
   "Low‒code platform to build apps.": "アプリを構築するためのプラットフォームをローコードします。",
   "\n    To obtain your personal token, follow these steps:\n\n    1. Log in to your Airtable account.\n    2. Visit https://airtable.com/create/tokens/ to create one\n    3. Click on \"+ Add a base\" and select the base you want to use or all bases.\n    4. Click on \"+ Add a scope\" and select \"data.records.read\", \"data.records.write\" and \"schema.bases.read\".\n    5. Click on \"Create token\" and copy the token.\n    ": "\n    To obtain your personal token, follow these steps:\n\n    1. Log in to your Airtable account.\n    2. Visit https://airtable.com/create/tokens/ to create one\n    3. Click on \"+ Add a base\" and select the base you want to use or all bases.\n    4. Click on \"+ Add a scope\" and select \"data.records.read\", \"data.records.write\" and \"schema.bases.read\".\n    5. Click on \"Create token\" and copy the token.\n    ",
   "Create Airtable Record": "対応可能な記録を作成",
