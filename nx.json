@@ -35,6 +35,9 @@
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
+    },
+    "e2e": {
+      "cache": true
     }
   },
   "namedInputs": {
@@ -101,12 +104,7 @@
   ],
   "tasksRunnerOptions": {
     "default": {
-      "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["lint", "test", "e2e"],
-        "parallel": 3,
-        "useDaemonProcess": false,
-        "cacheDirectory": ".nx/cache",
         "runtimeCacheInputs": ["node -v"]
       }
     }
@@ -116,5 +114,7 @@
       "preVersionCommand": "npx nx run-many -t build"
     }
   },
-  "useLegacyCache": true
+  "useDaemonProcess": false,
+  "parallel": 3,
+  "cacheDirectory": ".nx/cache"
 }

@@ -1013,7 +1013,7 @@
   "Save Limit": "Save Limit",
   "$1 per 1000 additional credits beyond plan limit": "$1 per 1000 additional credits beyond plan limit",
   "When a project AI credits limit is reached, all flows using universal AI pieces or agents and MCP servers will fail.": "When a project AI credits limit is reached, all flows using universal AI pieces or agents and MCP servers will fail.",
-  "Ai Credits Usage Exceeded": "Ai Credits Usage Exceeded",
+  "AI Credits Usage Exceeded": "",
   "of the Allowed Limit.": "of the Allowed Limit.",
   "Date": "Date",
   "Model": "Model",

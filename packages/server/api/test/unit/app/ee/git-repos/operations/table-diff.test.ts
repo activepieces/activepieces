@@ -59,9 +59,7 @@ describe('Table Diff Service', () => {
             },
             {
                 type: 'DELETE_TABLE',
-                tableState: {
-                    externalId: tableTwo.externalId,
-                },
+                tableState: tableTwo,
             },
         ])
     })
@@ -194,7 +192,9 @@ describe('Table Diff Service', () => {
     it('should detect dropdown field changes', async () => {
         const tableOne = tableGenerator.tableWithDropdown()
         const tableOneDist = tableGenerator.tableWithDropdown(tableOne.externalId)
-        tableOneDist.fields[1].data!.options.push({ value: 'Pending' })
+        if (tableOneDist.fields[1].data) {
+            tableOneDist.fields[1].data.options.push({ value: 'Pending' })
+        }
 
         const diff = await projectDiffService.diff({
             currentState: {
@@ -208,5 +208,86 @@ describe('Table Diff Service', () => {
         })
         expect(diff.tables.length).toBe(1)
         expect(diff.tables[0].type).toBe('UPDATE_TABLE')
+    })
+
+    it('should not detect table as changed when only id field differs', async () => {
+        const tableOne = tableGenerator.simpleTable()
+        const tableTwo = tableGenerator.simpleTable(tableOne.externalId)
+
+        // Ensure all fields are identical
+        tableTwo.name = tableOne.name
+        tableTwo.fields = tableOne.fields
+
+        const diff = await projectDiffService.diff({
+            currentState: {
+                flows: [],
+                tables: [tableOne],
+            },
+            newState: {
+                flows: [],
+                tables: [tableTwo],
+            },
+        })
+
+        expect(diff.tables.length).toBe(0)
+    })
+
+    it('should not detect table as changed when properties are in different order', async () => {
+        const tableOne = tableGenerator.simpleTable()
+        
+        // Create table with same content but different property ordering
+        // This tests that deepEqual correctly handles property order independence
+        const tableTwo = {
+            fields: tableOne.fields, // fields first
+            externalId: tableOne.externalId, // externalId second  
+            name: tableOne.name, // name third
+            id: tableOne.id, // id last
+        }
+
+        // Also test with fields in different order but same content
+        const tableThree = {
+            ...tableOne,
+            fields: [
+                {
+                    externalId: tableOne.fields[0].externalId, // externalId first
+                    type: tableOne.fields[0].type, // type second
+                    name: tableOne.fields[0].name, // name last
+                },
+                {
+                    type: tableOne.fields[1].type, // type first
+                    name: tableOne.fields[1].name, // name second
+                    externalId: tableOne.fields[1].externalId, // externalId last
+                },
+            ],
+        }
+
+        // Test tableOne vs tableTwo (different top-level property order)
+        const diff1 = await projectDiffService.diff({
+            currentState: {
+                flows: [],
+                tables: [tableOne],
+            },
+            newState: {
+                flows: [],
+                tables: [tableTwo],
+            },
+        })
+
+        // Test tableOne vs tableThree (different field property order)
+        const diff2 = await projectDiffService.diff({
+            currentState: {
+                flows: [],
+                tables: [tableOne],
+            },
+            newState: {
+                flows: [],
+                tables: [tableThree],
+            },
+        })
+
+        // Both should detect no changes despite different property ordering
+        // This validates that deepEqual is working correctly for property order independence
+        expect(diff1.tables.length).toBe(0)
+        expect(diff2.tables.length).toBe(0)
     })
 }) 

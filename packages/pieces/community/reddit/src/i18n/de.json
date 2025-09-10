@@ -1,5 +1,4 @@
 {
-  "Reddit": "Reddit",
   "Interact with Reddit - fetch and submit posts.": "Interagiere mit Reddit - hole und sende Beiträge.",
   "\nTo obtain your Reddit API credentials:\n\n1. Go to https://www.reddit.com/prefs/apps.\n2. Click \"create another app...\" at the bottom.\n3. Select \"script\" as the app type.\n4. Fill in the required information:\n   - name: Your app name\n   - description: Brief description\n   - about url: Can be left blank\n   - redirect uri: as shown in Redirect URL field\n5. Click \"create app\".\n6. Note down the client ID (under the app name) and client secret.\n": "\nUm Ihre Reddit API-Zugangsdaten zu erhalten:\n. Gehe zu https://www.reddit.com/prefs/apps.\n2. Klicken Sie unten auf \"Erstelle eine weitere App...\".\n3. Wählen Sie \"script\" als App-Typ.\n4. Füllen Sie die erforderlichen Informationen ein:\n   - Name: Ihr App-Name\n   - Beschreibung: Kurze Beschreibung\n   - über Url: Kann leer gelassen werden\n   - Weiterleitung uri: wie im Redirect URL-Feld\nangezeigt. Klicke auf \"App erstellen\".\n6. Beachte die Client-ID (unter dem App-Namen) und das Client-Geheimnis. \n",
   "Retrieve Post": "Beitrag abrufen",

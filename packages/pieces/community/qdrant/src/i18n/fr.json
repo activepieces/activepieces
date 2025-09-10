@@ -1,5 +1,4 @@
 {
-  "Qdrant": "Qdrant",
   "Make any action on your qdrant vector database": "Effectuez une action sur votre base de données vectorielle qdrant",
   "Server Address": "Adresse du serveur",
   "API KEY": "CLÉ DE L'API",
@@ -25,7 +24,7 @@
   "Embeddings Ids": "Intégrer les identifiants",
   "Calculation Method of distance": "Méthode de calcul de la distance",
   "Additional Payload": "Charge supplémentaire",
-  "Storage": "Stockage",
+  "Storage": "Storage",
   "Choose Points By": "Choisir les points par",
   "By ids or filtering": "Par ids ou filtrage",
   "Embedding": "Embedding",

@@ -1,4 +1,5 @@
 import { isNil, ProjectState, TableOperation, TableOperationType, TableState } from '@activepieces/shared'
+import deepEqual from 'deep-equal'
 
 export const tableDiffService = {
     diff({ newState, currentState }: DiffParams): TableOperation[] {
@@ -8,9 +9,11 @@ export const tableDiffService = {
         return [...updates, ...creates, ...deletes]
     },
 }
-
 function isTableChanged(stateOne: TableState, stateTwo: TableState): boolean {
-    return JSON.stringify(stateOne) !== JSON.stringify(stateTwo)
+    const { id: _, ...restOne } = stateOne
+    const { id: __, ...restTwo } = stateTwo
+
+    return !deepEqual(restOne, restTwo)
 }
 
 function findTablesToUpdate(currentState: ProjectState, newState: ProjectState): TableOperation[] {

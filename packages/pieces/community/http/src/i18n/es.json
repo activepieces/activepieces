@@ -1,5 +1,4 @@
 {
-  "HTTP": "HTTP",
   "Sends HTTP requests and return responses": "Enviar peticiones HTTP y devolver respuestas",
   "Send HTTP request": "Enviar solicitud HTTP",
   "Method": "Método",

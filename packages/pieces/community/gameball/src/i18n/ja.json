@@ -1,5 +1,4 @@
 {
-  "Gameball": "ゲームボール",
   "Please use your gameball api key. visit [help center](https://help.gameball.co/en/articles/3467114-get-your-account-integration-details-api-key-and-transaction-key) for more information": "Please use your gameball api key. visit [help center](https://help.gameball.co/en/articles/3467114-get-your-account-integration-details-api-key-and-transaction-key) for more information",
   "Send event": "イベントを送信",
   "Send an event to gameball": "ゲームボールにイベントを送信する",

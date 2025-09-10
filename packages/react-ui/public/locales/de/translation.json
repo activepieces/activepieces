@@ -1013,7 +1013,7 @@
   "Save Limit": "Speicherlimit",
   "$1 per 1000 additional credits beyond plan limit": "$1 pro 1000 zusätzliches Guthaben über das Planlimit hinaus",
   "When a project AI credits limit is reached, all flows using universal AI pieces or agents and MCP servers will fail.": "Wenn das AI-Guthaben für ein Projekt aufgebraucht ist, schlagen alle Abläufe fehl, die universelle AI-Elemente oder -Agenten und MCP-Server verwenden.",
-  "Ai Credits Usage Exceeded": "Ai Credits-Nutzung überschritten",
+  "AI Credits Usage Exceeded": "",
   "of the Allowed Limit.": "des erlaubten Limit.",
   "Date": "Datum",
   "Model": "Modell",

@@ -1,5 +1,4 @@
 {
-  "Anthropic Claude": "Claude Antrópico",
   "Follow these instructions to get your Claude API Key:\n\n1. Visit the following website: https://console.anthropic.com/settings/keys.\n2. Once on the website, locate and click on the option to obtain your Claude API Key.\n": "Sigue estas instrucciones para obtener tu Claude API Key:\n\n1. Visita el siguiente sitio web: https://console.anthropic. om/ajustes/llaves.\n2. Una vez en el sitio web, localiza y haz clic en la opción para obtener tu Claude API Key.\n",
   "Ask Claude": "Preguntar a Claude",
   "Extract Structured Data": "Extraer datos estructurados",
