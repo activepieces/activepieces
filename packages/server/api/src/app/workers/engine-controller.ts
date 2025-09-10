@@ -81,9 +81,10 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                     logsFileId: runWithoutSteps.logsFileId ?? undefined,
                     projectId: request.principal.projectId,
                     executionStateString: executionStateBuffer,
-                    executionStateContentLength: executionStateContentLength,
+                    executionStateContentLength,
                 })
-            } else if (updateSizeOnlyForSignedUrl) {
+            }
+            else if (updateSizeOnlyForSignedUrl) {
                 await fileService(request.log).updateSize({
                     fileId: runWithoutSteps.logsFileId!,
                     size: executionStateContentLength,

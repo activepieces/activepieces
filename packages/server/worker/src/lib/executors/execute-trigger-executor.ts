@@ -1,11 +1,11 @@
 import { assertNotNullOrUndefined, ConsumeJobResponse, ConsumeJobResponseStatus, PollingJobData, ProgressUpdateType, RunEnvironment, TriggerPayload, TriggerRunStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowWorkerCache } from '../cache/flow-worker-cache'
 import { workerApiService } from '../api/server-api.service'
+import { flowWorkerCache } from '../cache/flow-worker-cache'
 import { triggerHooks } from '../utils/trigger-utils'
 
 export const executeTriggerExecutor = (log: FastifyBaseLogger) => ({
-    async executeTrigger({ jobId, data, engineToken, workerToken }: ExecuteTriggerParams): Promise<ConsumeJobResponse> {
+    async executeTrigger({ jobId, data, engineToken, workerToken, timeoutInSeconds }: ExecuteTriggerParams): Promise<ConsumeJobResponse> {
         const { flowVersionId } = data
 
         const populatedFlow = await flowWorkerCache.getFlow({
@@ -21,6 +21,7 @@ export const executeTriggerExecutor = (log: FastifyBaseLogger) => ({
             payload: {} as TriggerPayload,
             simulate: false,
             jobId,
+            timeoutInSeconds,
         })
         if (status === TriggerRunStatus.INTERNAL_ERROR) {
             return {
@@ -46,4 +47,5 @@ type ExecuteTriggerParams = {
     data: PollingJobData
     engineToken: string
     workerToken: string
+    timeoutInSeconds: number
 }

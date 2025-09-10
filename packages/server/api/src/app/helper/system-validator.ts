@@ -48,6 +48,7 @@ const systemPropValidators: {
     [AppSystemProp.LOG_PRETTY]: booleanValidator,
     [AppSystemProp.ENVIRONMENT]: enumValidator(Object.values(ApEnvironment)),
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
+    [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.AGENT_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,

@@ -35,13 +35,16 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                     message: 'Acquired worker id',
                     workerId,
                 })
-                const jobTimeout = dayjs.duration(jobConsumer(log).getTimeoutForWorkerJob(jobData.jobType), 'milliseconds').add(1, 'minutes').asMilliseconds()
+
+                const workerTimeout = jobConsumer(log).getTimeoutForWorkerJob(jobData.jobType)
+                const jobTimeout = dayjs.duration(workerTimeout, 'milliseconds').add(1, 'minutes').asMilliseconds()
 
                 const request: ConsumeJobRequest = {
                     jobId,
                     jobData,
                     attempsStarted,
                     engineToken,
+                    timeoutInSeconds: workerTimeout,
                 }
                 const response: ConsumeJobResponse[] | undefined = await app!.io.to(workerId).timeout(jobTimeout).emitWithAck(WebsocketClientEvent.CONSUME_JOB_REQUEST, request)
                 log.info({
@@ -63,15 +66,17 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
             const triggerTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS)
             const flowTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS)
             const agentTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.AGENT_TIMEOUT_SECONDS)
+            const triggerHooksTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS)
             switch (jobType) {
+                case WorkerJobType.EXECUTE_TRIGGER_HOOK:
+                case WorkerJobType.RENEW_WEBHOOK:
+                    return dayjs.duration(triggerHooksTimeoutSandbox, 'seconds').asMilliseconds()
                 case WorkerJobType.EXECUTE_WEBHOOK:
                 case WorkerJobType.DELAYED_FLOW:
                 case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
                 case WorkerJobType.EXECUTE_TOOL:
                 case WorkerJobType.EXECUTE_PROPERTY:
-                case WorkerJobType.EXECUTE_TRIGGER_HOOK:
                 case WorkerJobType.EXECUTE_VALIDATION:
-                case WorkerJobType.RENEW_WEBHOOK:
                 case WorkerJobType.EXECUTE_POLLING:
                     return dayjs.duration(triggerTimeoutSandbox, 'seconds').asMilliseconds()
                 case WorkerJobType.EXECUTE_FLOW:

@@ -10,8 +10,8 @@ import {
     WebhookJobData,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowWorkerCache } from '../cache/flow-worker-cache'
 import { workerApiService } from '../api/server-api.service'
+import { flowWorkerCache } from '../cache/flow-worker-cache'
 import { triggerHooks } from '../utils/trigger-utils'
 import { webhookUtils } from '../utils/webhook-utils'
 
@@ -21,6 +21,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         data: WebhookJobData,
         engineToken: string,
         workerToken: string,
+        timeoutInSeconds: number,
     ): Promise<ConsumeJobResponse> {
         const webhookLogger = pinoLogging.createWebhookContextLog({
             log,
@@ -37,12 +38,12 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
 
         if (isNil(populatedFlowToRun)) {
             return {
-                status: ConsumeJobResponseStatus.OK
+                status: ConsumeJobResponseStatus.OK,
             }
         }
 
         if (saveSampleData) {
-            await handleSampleData(jobId, populatedFlowToRun, engineToken, workerToken, webhookLogger, payload)
+            await handleSampleData(jobId, populatedFlowToRun, engineToken, workerToken, webhookLogger, payload, timeoutInSeconds)
         }
 
         const onlySaveSampleData = !execute
@@ -57,6 +58,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             payload,
             projectId: populatedFlowToRun.projectId,
             simulate: saveSampleData,
+            timeoutInSeconds,
         })
 
         if (status === TriggerRunStatus.INTERNAL_ERROR) {
@@ -90,6 +92,7 @@ async function handleSampleData(
     workerToken: string,
     log: FastifyBaseLogger,
     payload: EventPayload,
+    timeoutInSeconds: number,
 ): Promise<void> {
     const { payloads } = await triggerHooks(log).extractPayloads(engineToken, {
         jobId,
@@ -97,6 +100,7 @@ async function handleSampleData(
         payload,
         projectId: latestFlowVersion.projectId,
         simulate: true,
+        timeoutInSeconds,
     })
     webhookUtils(log).savePayloadsAsSampleData({
         flowVersion: latestFlowVersion.version,

@@ -1,15 +1,15 @@
 import { exceptionHandler, pinoLogging } from '@activepieces/server-shared'
 import { ActivepiecesError, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, isNil, OneTimeJobData, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowWorkerCache } from '../cache/flow-worker-cache'
 import { engineApiService } from '../api/server-api.service'
+import { flowWorkerCache } from '../cache/flow-worker-cache'
 import { engineRunner } from '../runner'
 import { workerMachine } from '../utils/machine'
 
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
 
-async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, attempsStarted: number, engineToken: string): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {
+async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, attempsStarted: number, engineToken: string, timeoutInSeconds: number): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {
     switch (jobData.executionType) {
         case ExecutionType.BEGIN: {
             const flowRun = (jobData.executionType === ExecutionType.BEGIN && attempsStarted > 1) ? await engineApiService(engineToken).getRun({
@@ -34,6 +34,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 stepNameToTest: jobData.stepNameToTest ?? null,
                 logsUploadUrl: jobData.logsUploadUrl,
                 logsFileId: jobData.logsFileId,
+                timeoutInSeconds,
             }
         }
         case ExecutionType.RESUME: {
@@ -58,6 +59,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 stepNameToTest: jobData.stepNameToTest ?? null,
                 logsUploadUrl: jobData.logsUploadUrl,
                 logsFileId: jobData.logsFileId,
+                timeoutInSeconds,
             }
         }
     }
@@ -116,7 +118,7 @@ async function handleInternalError(jobData: OneTimeJobData, engineToken: string,
 }
 
 export const flowJobExecutor = (log: FastifyBaseLogger) => ({
-    async executeFlow(jobData: OneTimeJobData, attempsStarted: number, engineToken: string): Promise<void> {
+    async executeFlow(jobData: OneTimeJobData, attempsStarted: number, engineToken: string, timeoutInSeconds: number): Promise<void> {
         try {
 
             const flow = await flowWorkerCache.getFlow({
@@ -135,7 +137,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             })
 
 
-            const input = await prepareInput(flow.version, jobData, attempsStarted, engineToken)
+            const input = await prepareInput(flow.version, jobData, attempsStarted, engineToken, timeoutInSeconds)
             const { result } = await engineRunner(runLog).executeFlow(engineToken, input)
 
             if (result.status === FlowRunStatus.INTERNAL_ERROR) {

@@ -43,6 +43,7 @@ export type WorkerMachineWithStatus = Static<typeof WorkerMachineWithStatus>
 export const ConsumeJobRequest = Type.Object({
     jobId: Type.String(),
     jobData: JobData,
+    timeoutInSeconds: Type.Number(),
     attempsStarted: Type.Number(),
     engineToken: Type.String(),
 })
