@@ -1,5 +1,4 @@
 {
-  "Kizeo Forms": "Kizeo Forms",
   "Create custom mobile forms": "Create custom mobile forms",
   "\nTo connect to Kizeo Forms, you need an API Token provided by their support team.\n": "\nTo connect to Kizeo Forms, you need an API Token provided by their support team.\n",
   "Get Data Definition": "Get Data Definition",
@@ -41,6 +40,7 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "The ID of the item you want to retrieve from the list": "The ID of the item you want to retrieve from the list",
@@ -52,6 +52,7 @@
   "The ID of the item to edit": "The ID of the item to edit",
   "The ID of the item to delete": "The ID of the item to delete",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "GET": "GET",
   "POST": "POST",
   "PATCH": "PATCH",

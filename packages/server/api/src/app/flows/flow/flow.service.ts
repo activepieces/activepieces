@@ -124,7 +124,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }
 
         if (externalIds !== undefined) {
-            queryBuilder.andWhere('ff.externalId IN (:...externalIds)', { externalIds })
+            queryBuilder.andWhere('ff."externalId" IN (:...externalIds)', { externalIds })
         }
 
         if (connectionExternalIds !== undefined) {
@@ -261,7 +261,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const flowLock = lock
             ? await distributedLock.acquireLock({
                 key: id,
-                timeout: 30000,
+                timeout: 120000,
                 log,
             })
             : null

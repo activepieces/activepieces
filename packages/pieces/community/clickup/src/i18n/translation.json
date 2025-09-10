@@ -1,5 +1,4 @@
 {
-  "ClickUp": "ClickUp",
   "All-in-one productivity platform": "All-in-one productivity platform",
   "Create Task": "Create Task",
   "Create Task From Template": "Create Task From Template",
@@ -126,6 +125,7 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "The ID of the ClickUp workspace": "The ID of the ClickUp workspace",
@@ -198,6 +198,7 @@
   "The ID of the ClickUp custom field": "The ID of the ClickUp custom field",
   "The new value to be set": "The new value to be set",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "Urgent": "Urgent",
   "High": "High",
   "Normal": "Normal",

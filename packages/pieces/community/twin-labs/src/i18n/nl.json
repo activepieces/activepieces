@@ -1,0 +1,10 @@
+{
+  "Twin Web Agent": "Dubbel Web Agent",
+  "Please use ***your-twin-labs-api-key*** as value for API Key": "Gebruik ***uw-twin-labs-api-sleutel*** als waarde voor API-sleutel",
+  "Browse": "Bladeren",
+  "Browse the internet with an AI web navigation agent that can find information for you": "Blader door het internet met een AI webnavigatieagent die informatie voor u kan vinden",
+  "startUrl": "startUrl",
+  "Goal": "Doel",
+  "The URL where the browsing task should begin": "De URL waar de surftaak moet beginnen",
+  "The goal or objective of the browsing task": "Het doel of doel van de surftaak"
+}

@@ -1,5 +1,4 @@
 {
-  "GhostCMS": "GhostCMS",
   "Publishing platform for professional bloggers": "プロブロガー向けのパブリッシングプラットフォーム",
   "API URL": "API URL",
   "Admin API Key": "管理者APIキー",
@@ -36,9 +35,11 @@
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
   "Body": "本文",
+  "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
+  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
   "Draft": "下書き",
   "Published": "公開済み",
   "Scheduled": "スケジュール済み",

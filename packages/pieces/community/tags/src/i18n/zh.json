@@ -1,9 +1,9 @@
 {
-  "Tags": "標籤",
-  "Add custom tags to your run for filtration": "添加自訂標籤以便過濾運行",
-  "Add Tag": "添加標籤",
-  "Add a tag to the current execution": "為當前執行添加標籤",
-  "Markdown": "標記語言",
-  "Tag Name": "標籤名稱",
-  "\nThis action add a tag to the current execution, this tag can be used to filter the execution in the **API** only at this moment.\n<br>\n<br>\n**Note:** If you are looking to use it in the user interface, please open a feature request.\n": "\n此操作將標籤添加到當前執行中，目前該標籤僅能在 **API** 中用於篩選執行。\n<br>\n<br>\n**注意:** 如果您希望在用戶界面中使用它，請提出功能請求。\n"
+  "Tags": "标签",
+  "Add custom tags to your run for filtration": "Add custom tags to your run for filtration",
+  "Add Tag": "Add Tag",
+  "Add a tag to the current execution": "Add a tag to the current execution",
+  "Markdown": "Markdown",
+  "Tag Name": "Tag Name",
+  "\nThis action add a tag to the current execution, this tag can be used to filter the execution in the **API** only at this moment.\n<br>\n<br>\n**Note:** If you are looking to use it in the user interface, please open a feature request.\n": "\nThis action add a tag to the current execution, this tag can be used to filter the execution in the **API** only at this moment.\n<br>\n<br>\n**Note:** If you are looking to use it in the user interface, please open a feature request.\n"
 }

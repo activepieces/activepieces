@@ -4,11 +4,76 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import {
 	pipedriveApiCall,
 	pipedriveCommon,
-	pipedrivePaginatedApiCall,
+	pipedrivePaginatedV1ApiCall,
 	pipedriveTransformCustomFields,
 } from '../common';
-import { GetDealResponse, GetField, LeadListResponse } from '../common/types';
+import { GetField } from '../common/types';
 import { isNil } from '@activepieces/shared';
+import { ORGANIZATION_OPTIONAL_FIELDS } from '../common/constants';
+
+interface PipedriveOrganizationV2 {
+	id: number;
+	name: string;
+	owner_id: number;
+	add_time: string;
+	update_time: string;
+	is_deleted: boolean;
+	visible_to: number;
+	picture_id: number | null;
+	label_ids: number[];
+	address: {
+		value: string | null;
+		street_number: string | null;
+		route: string | null;
+		sublocality: string | null;
+		locality: string | null;
+		admin_area_level_1: string | null;
+		admin_area_level_2: string | null;
+		country: string | null;
+		postal_code: string | null;
+		formatted_address: string | null;
+	} | null;
+	custom_fields: Record<string, unknown>;
+	next_activity_id?: number | null;
+	last_activity_id?: number | null;
+	open_deals_count?: number;
+	related_open_deals_count?: number;
+	closed_deals_count?: number;
+	related_closed_deals_count?: number;
+	participant_open_deals_count?: number;
+	participant_closed_deals_count?: number;
+	email_messages_count?: number;
+	activities_count?: number;
+	done_activities_count?: number;
+	undone_activities_count?: number;
+	files_count?: number;
+	notes_count?: number;
+	followers_count?: number;
+	won_deals_count?: number;
+	related_won_deals_count?: number;
+	lost_deals_count?: number;
+	related_lost_deals_count?: number;
+	last_incoming_mail_time?: string | null;
+	last_outgoing_mail_time?: string | null;
+	marketing_status?: string;
+	doi_status?: string;
+}
+
+interface OrganizationListResponseV2 {
+	data: PipedriveOrganizationV2[];
+	additional_data?: {
+		pagination?: {
+			start: number;
+			limit: number;
+			more_items_in_collection: boolean;
+			next_cursor?: string;
+		};
+	};
+}
+
+interface GetOrganizationResponseV2 {
+	data: PipedriveOrganizationV2;
+}
 
 export const updatedOrganizationTrigger = createTrigger({
 	auth: pipedriveAuth,
@@ -20,46 +85,45 @@ export const updatedOrganizationTrigger = createTrigger({
 	async onEnable(context) {
 		const webhook = await pipedriveCommon.subscribeWebhook(
 			'organization',
-			'updated',
+			'change',
 			context.webhookUrl!,
 			context.auth.data['api_domain'],
 			context.auth.access_token,
 		);
-		await context.store?.put<{
-			webhookId: string;
-		}>('_updated_organization_trigger', {
-			webhookId: webhook.data.id,
-		});
+		await context.store?.put<string>('_updated_organization_trigger', webhook.data.id);
 	},
 	async onDisable(context) {
-		const response = await context.store?.get<{
-			webhookId: string;
-		}>('_updated_organization_trigger');
-		if (response !== null && response !== undefined) {
+		const webhookId = await context.store.get<string>('_updated_organization_trigger');
+		if (webhookId !== null && webhookId !== undefined) {
 			await pipedriveCommon.unsubscribeWebhook(
-				response.webhookId,
+				webhookId,
 				context.auth.data['api_domain'],
 				context.auth.access_token,
 			);
 		}
 	},
 	async test(context) {
-		const response = await pipedriveApiCall<LeadListResponse>({
+		const response = await pipedriveApiCall<OrganizationListResponseV2>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/organizations',
-			query: { limit: 10, sort: 'update_time DESC' },
+			resourceUri: '/v2/organizations',
+			query: {
+				limit: 10,
+				sort_by: 'update_time',
+				sort_direction: 'desc',
+				include_fields: ORGANIZATION_OPTIONAL_FIELDS.join(','),
+			},
 		});
 
 		if (isNil(response.data)) {
 			return [];
 		}
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+		const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/organizationFields',
+			resourceUri: '/v1/organizationFields',
 		});
 
 		const result = [];
@@ -73,22 +137,25 @@ export const updatedOrganizationTrigger = createTrigger({
 	},
 	async run(context) {
 		const payloadBody = context.payload.body as {
-			current: Record<string, unknown>;
-			previous: Record<string, unknown>;
+			data: Record<string, any>;
+			previous: Record<string, any>;
 		};
 
-		const orgResponse = await pipedriveApiCall<GetDealResponse>({
+		const orgResponse = await pipedriveApiCall<GetOrganizationResponseV2>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: `/organizations/${payloadBody.current.id}`,
+			resourceUri: `/v2/organizations/${payloadBody.data.id}`,
+			query: {
+				include_fields: ORGANIZATION_OPTIONAL_FIELDS.join(','),
+			},
 		});
 
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+		const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/organizationFields',
+			resourceUri: '/v1/organizationFields',
 		});
 
 		const updatedOrgProperties = pipedriveTransformCustomFields(
@@ -100,60 +167,25 @@ export const updatedOrganizationTrigger = createTrigger({
 	},
 	sampleData: {
 		id: 1,
-		company_id: 13937255,
-		owner_id: {
-			id: 22701301,
-			name: 'john',
-			email: 'john@test.com',
-			has_pic: 0,
-			pic_hash: null,
-			active_flag: true,
-			value: 22701301,
-		},
-		name: 'Pipedrive',
-		open_deals_count: 3,
-		related_open_deals_count: 1,
-		closed_deals_count: 0,
-		related_closed_deals_count: 0,
-		email_messages_count: 0,
-		people_count: 3,
-		activities_count: 1,
-		done_activities_count: 0,
-		undone_activities_count: 1,
-		files_count: 0,
-		notes_count: 4,
-		followers_count: 1,
-		won_deals_count: 0,
-		related_won_deals_count: 0,
-		lost_deals_count: 0,
-		related_lost_deals_count: 0,
-		active_flag: true,
+		owner_id: 22701301,
+		name: 'Pipedrive Sample Org',
+		add_time: '2024-12-04T03:49:06Z',
+		update_time: '2024-12-14T11:03:19Z',
+		is_deleted: false,
+		visible_to: 3,
 		picture_id: null,
-		country_code: null,
-		first_char: 'a',
-		update_time: '2024-12-14 11:03:19',
-		delete_time: null,
-		add_time: '2024-12-04 03:49:06',
-		visible_to: '3',
-		next_activity_date: '2024-12-04',
-		next_activity_time: null,
-		next_activity_id: 4,
-		last_activity_id: null,
-		last_activity_date: null,
-		label: null,
 		label_ids: [],
-		address: null,
-		address_subpremise: null,
-		address_street_number: null,
-		address_route: null,
-		address_sublocality: null,
-		address_locality: null,
-		address_admin_area_level_1: null,
-		address_admin_area_level_2: null,
-		address_country: null,
-		address_postal_code: null,
-		address_formatted_address: null,
-		owner_name: 'John',
-		cc_email: null,
+		address: {
+			value: 'Mustamäe tee 3, Tallinn, Estonia',
+			street_number: '3',
+			route: 'Mustamäe tee',
+			sublocality: 'Kristiine',
+			locality: 'Tallinn',
+			admin_area_level_1: 'Harju maakond',
+			admin_area_level_2: null,
+			country: 'Estonia',
+			postal_code: '10616',
+			formatted_address: 'Mustamäe tee 3, 10616 Tallinn, Estonia',
+		},
 	},
 });

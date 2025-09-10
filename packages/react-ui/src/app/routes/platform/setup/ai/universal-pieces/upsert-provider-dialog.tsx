@@ -26,9 +26,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
-  SupportedAIProvider,
   CreateAIProviderRequest,
-} from '@activepieces/shared';
+  SupportedAIProvider,
+} from '@activepieces/common-ai';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
 

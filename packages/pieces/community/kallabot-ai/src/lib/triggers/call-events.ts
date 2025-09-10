@@ -42,40 +42,43 @@ export const callEventsTrigger = createTrigger({
     }),
   },
   sampleData: {
-    call_sid: 'CA1234567890abcdef1234567890abcdef',
-    agent_id: 'agent-123e4567-e89b-12d3-a456-426614174000',
-    agent_name: 'Customer Service Bot',
-    account_id: 'account-123e4567-e89b-12d3-a456-426614174000',
-    from_number: '+1234567890',
-    to_number: '+0987654321',
-    duration: 120,
-    cost: 0.25,
-    status: 'completed',
-    call_type: 'outbound',
-    recording_url:
-      'https://api.twilio.com/2010-04-01/Accounts/AC123/Recordings/RE123.wav',
-    recording_sid: 'RE1234567890abcdef1234567890abcdef',
-    transcription: {
-      conversation: [
-        {
-          speaker: 'agent',
-          message:
-            'Hello! This is regarding your recent order cancellation. How can I help you today?',
-          timestamp: '2024-01-15T10:30:05Z',
-        },
-        {
-          speaker: 'customer',
-          message:
-            'Hi, yes I cancelled my order because I found a better price elsewhere.',
-          timestamp: '2024-01-15T10:30:15Z',
-        },
-      ],
-      sentiment: 'neutral',
-      summary:
-        'Customer cancelled order due to price. Interested in price matching discussion.',
+    "event_type": "call_completed",
+    "call_sid": "CAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "status": "completed",
+    "call_type": "inbound",
+    "from_number": "+1234567890",
+    "to_number": "+1987654321",
+    "duration": 125.5,
+    "cost": 1.25,
+    "created_at": "2024-01-15T10:30:00Z",
+    "agent": {
+      "agent_id": "agent_123456789",
+      "name": "Customer Service Agent"
     },
-    created_at: '2024-01-15T10:30:00Z',
-    webhook_url: 'https://your-webhook-url.com/endpoint',
+    "recording": {
+      "url": "https://kallabot-s3-amazon.com/recordings/recording_123.wav",
+      "sid": "RExxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    "transcription": {
+      "conversation": [
+        {
+          "speaker": "agent",
+          "text": "Hello, thank you for calling. How can I help you today?",
+          "timestamp": "2024-01-15T10:30:05Z"
+        },
+        {
+          "speaker": "customer",
+          "text": "Hi, I need help with my account.",
+          "timestamp": "2024-01-15T10:30:10Z"
+        }
+      ]
+    },
+    "transfer": {
+      "transferred": false,
+      "department": null,
+      "number": null,
+      "time": null
+    }
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable() {

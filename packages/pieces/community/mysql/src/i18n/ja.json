@@ -1,10 +1,9 @@
 {
-  "MySQL": "MySQL",
   "The world's most popular open-source database": "世界で最も人気のあるオープンソースデータベース",
   "Host": "ホスト",
   "Port": "ポート",
   "Username": "ユーザー名",
-  "Password": "パスワード",
+  "Password": "Password",
   "Database": "データベース",
   "The hostname or address of the mysql server": "mysql サーバーのホスト名またはアドレス",
   "The port to use for connecting to the mysql server": "mysqlサーバーへの接続に使用するポート",

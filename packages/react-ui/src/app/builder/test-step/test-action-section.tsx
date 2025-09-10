@@ -104,7 +104,7 @@ const TestStepSectionImplementation = React.memo(
         setConsoleLogs,
         onSuccess: () => {
           form.setValue(
-            `settings.inputUiInfo.lastTestDate`,
+            `settings.sampleData.lastTestDate`,
             dayjs().toISOString(),
           );
         },
@@ -117,7 +117,7 @@ const TestStepSectionImplementation = React.memo(
 
     const { data: todo, isLoading: isLoadingTodo } = todosHooks.useTodo(todoId);
 
-    const lastTestDate = currentStep.settings.inputUiInfo?.lastTestDate;
+    const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
 
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 

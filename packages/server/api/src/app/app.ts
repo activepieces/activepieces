@@ -53,6 +53,7 @@ import { gitRepoModule } from './ee/projects/project-release/git-sync/git-sync.m
 import { projectReleaseModule } from './ee/projects/project-release/project-release.module'
 import { projectRoleModule } from './ee/projects/project-role/project-role.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
+import { solutionsModule } from './ee/solutions/solutions.module'
 import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
@@ -157,28 +158,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     await app.register(rateLimitModule)
 
-    await app.register(fastifySocketIO, {
-        cors: {
-            origin: '*',
-        },
-        ...spreadIfDefined('adapter', await getAdapter()),
-        transports: ['websocket'],
-    })
-
-    app.io.use((socket: Socket, next: (err?: Error) => void) => {
-        websocketService
-            .verifyPrincipal(socket)
-            .then(() => {
-                next()
-            })
-            .catch(() => {
-                next(new Error('Authentication error'))
-            })
-    })
-
-    app.io.on('connection', (socket: Socket) => {
-        rejectedPromiseHandler(websocketService.init(socket, app.log), app.log)
-    })
 
     app.addHook('onResponse', async (request, reply) => {
         // eslint-disable-next-line
@@ -235,6 +214,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(agentModule)
     await app.register(todoActivityModule)
     await app.register(agentRunsModule)
+    await app.register(solutionsModule)
     
     app.get(
         '/redirect',
@@ -259,6 +239,22 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             }
         },
     )
+    await app.register(fastifySocketIO, {
+        cors: {
+            origin: '*',
+        },
+        ...spreadIfDefined('adapter', await getAdapter()),
+        transports: ['websocket'],
+    })
+    app.io.use((socket: Socket, next: (err?: Error) => void) => {
+        websocketService
+            .verifyPrincipal(socket)
+            .then(() => next())
+            .catch(() => next(new Error('Authentication error')))
+    })
+
+    app.io.on('connection', (socket: Socket) => rejectedPromiseHandler(websocketService.init(socket, app.log), app.log))
+    app.io.on('disconnect', (socket: Socket) => rejectedPromiseHandler(websocketService.onDisconnect(socket), app.log))
 
     await validateEnvPropsOnStartup(app.log)
 

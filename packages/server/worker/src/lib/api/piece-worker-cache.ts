@@ -1,13 +1,12 @@
 import path from 'path'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { PiecesSource } from '@activepieces/server-shared'
+import { GLOBAL_CACHE_PIECES_PATH, PiecesSource } from '@activepieces/server-shared'
 import { isNil, ProjectId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
 import { workerMachine } from '../utils/machine'
 import { engineApiService } from './server-api.service'
 
-const globalCachePiecePath = path.resolve('cache', 'pieces')
 
 export const pieceWorkerCache = (log: FastifyBaseLogger) => ({
     async getPiece({ engineToken, pieceName, pieceVersion, projectId }: GetPieceRequestQueryWorker): Promise<PieceMetadataModel> {
@@ -22,8 +21,9 @@ export const pieceWorkerCache = (log: FastifyBaseLogger) => ({
         return pieceMetadata
     },
     async writePieceToCacheIfCachable({ pieceName, pieceVersion, projectId }: PieceCacheKey, piece: PieceMetadataModel): Promise<void> {
-        const pieceCache = getCacheForPiece({ pieceName, pieceVersion, projectId })
-        await pieceCache.setCache(getCacheKeyForPiece({ pieceName, pieceVersion, projectId }), JSON.stringify(piece))
+        const cacheKey = getCacheKey({ pieceName, pieceVersion, projectId })
+        const pieceCache = getCacheForPiece(cacheKey)
+        await pieceCache.setCache(cacheKey, JSON.stringify(piece))
     },
 })
 
@@ -33,16 +33,20 @@ async function getPieceFromCache({ pieceName, pieceVersion, projectId }: GetPiec
         return null
     }
     try {
-        const pieceCache = getCacheForPiece({ pieceName, pieceVersion, projectId })
-        const cachedPiece = await pieceCache.cacheCheckState(getCacheKeyForPiece({ pieceName, pieceVersion, projectId }))
-        return cachedPiece ? JSON.parse(cachedPiece) as PieceMetadataModel : null
+        const cacheKey = getCacheKey({ pieceName, pieceVersion, projectId })
+        const pieceCache = getCacheForPiece(cacheKey)
+        const cachedPiece = await pieceCache.cacheCheckState(cacheKey)
+        if (!isNil(cachedPiece)) {
+            return JSON.parse(cachedPiece) as PieceMetadataModel
+        }
+        return null
     }
     catch (error) {
         return null
     }
 }
 
-function getCacheKeyForPiece({ pieceName, pieceVersion, projectId }: PieceCacheKey) {
+function getCacheKey({ pieceName, pieceVersion, projectId }: PieceCacheKeyWithType) {
     return `${pieceName}-${pieceVersion}-${projectId}`
 }
 
@@ -56,6 +60,8 @@ type PieceCacheKey = {
     projectId: ProjectId
 }
 
-function getCacheForPiece({ pieceName, pieceVersion, projectId }: PieceCacheKey) {
-    return cacheState(path.join(globalCachePiecePath, getCacheKeyForPiece({ pieceName, pieceVersion, projectId })))
+type PieceCacheKeyWithType = PieceCacheKey
+
+function getCacheForPiece(cacheKey: string) {
+    return cacheState(path.join(GLOBAL_CACHE_PIECES_PATH, cacheKey))
 } 

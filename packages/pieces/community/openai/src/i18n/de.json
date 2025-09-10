@@ -1,5 +1,4 @@
 {
-  "OpenAI": "OpenAI",
   "Use the many tools ChatGPT has to offer.": "Nutzen Sie die vielen Tools, die ChatGPT zu bieten hat.",
   "Follow these instructions to get your OpenAI API Key:\n\n1. Visit the following website: https://platform.openai.com/account/api-keys.\n2. Once on the website, locate and click on the option to obtain your OpenAI API Key.\n\nIt is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.\n": "Folgen Sie diesen Anweisungen, um Ihren OpenAI-API-Schlüssel zu erhalten:\n\n1. Besuchen Sie die folgende Webseite: https://platform.openai. om/account/api-keys.\n2. Sobald Sie auf der Website sind, suchen und klicken Sie auf die Option, um Ihren OpenAI API Key zu erhalten.\n\nEs wird dringend empfohlen, dass Sie Ihre Kreditkarteninformationen zu Ihrem OpenAI-Konto hinzufügen und **vorher** zum bezahlten Tarif upgraden und den API-Schlüssel generieren. Dies hilft Ihnen, 429 Fehler zu vermeiden.\n",
   "Ask ChatGPT": "ChatGPT fragen",
@@ -48,6 +47,7 @@
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
   "Body": "Körper",
+  "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
   "The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.": "Das Modell, das die Vervollständigung generiert. Einige Modelle eignen sich für Aufgaben der natürlichen Sprache, andere sind auf Code spezialisiert.",
@@ -77,6 +77,7 @@
   "Language of the audio file the default is en (English).": "Language of the audio file the default is de (german).",
   "Audio file to translate": "Zu übersetzende Audiodatei",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
+  "Enable for files like PDFs, images, etc..": "Aktivieren für Dateien wie PDFs, Bilder, etc..",
   "tts-1": "tts-1",
   "tts-1-hd": "tts-1-hd",
   "alloy": "alloy",

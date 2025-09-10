@@ -1,5 +1,5 @@
+import { AIUsage } from '@activepieces/common-ai'
 import {
-    AIUsage,
     AppConnection,
     Cell,
     Field,

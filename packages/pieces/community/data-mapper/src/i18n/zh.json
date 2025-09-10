@@ -1,8 +1,7 @@
 {
-  "Data Mapper": "數據映射器",
-  "tools to manipulate data structure": "操作數據結構的工具",
-  "Advanced Mapping": "高級映射",
-  "Map data from one format to another": "將數據從一種格式映射到另一種格式",
-  "Mapping": "映射",
-  "The mapping to use": "使用的映射"
+  "tools to manipulate data structure": "tools to manipulate data structure",
+  "Advanced Mapping": "Advanced Mapping",
+  "Map data from one format to another": "Map data from one format to another",
+  "Mapping": "Mapping",
+  "The mapping to use": "The mapping to use"
 }

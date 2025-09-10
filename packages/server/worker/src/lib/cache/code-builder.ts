@@ -1,4 +1,4 @@
-import fs, { rmdir } from 'node:fs/promises'
+import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { cryptoUtils, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
 import { ExecutionMode } from '@activepieces/shared'
@@ -69,7 +69,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
 
             const codeNeedCleanUp = await fileExists(codePath)
             if (codeNeedCleanUp) {
-                await rmdir(codePath, { recursive: true })
+                await rm(codePath, { recursive: true })
             }
 
             await threadSafeMkdir(codePath)
@@ -124,7 +124,7 @@ const installDependencies = async ({
         },
         {
             alias: 'typescript',
-            spec: '4.8.4',
+            spec: '4.9.4',
         },
     ]
 

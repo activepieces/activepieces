@@ -1,7 +1,9 @@
+import { AIProvider } from '@activepieces/common-ai'
 import {
     ApiKey,
     ApplicationEvent,
     ApplicationEventName,
+    BillingCycle,
     CustomDomain,
     CustomDomainStatus,
     GitBranchType,
@@ -16,7 +18,6 @@ import {
 } from '@activepieces/ee-shared'
 import {
     AiOverageState,
-    AIProvider,
     apId,
     assertNotNullOrUndefined,
     File,
@@ -200,7 +201,8 @@ export const createMockGitRepo = (gitRepo?: Partial<GitRepo>): GitRepo => {
 
 export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): PlatformPlan => {
     return {
-        eligibleForTrial: platformPlan?.eligibleForTrial ?? false,
+        eligibleForTrial: platformPlan?.eligibleForTrial ?? null,
+        stripeBillingCycle: platformPlan?.stripeBillingCycle ?? BillingCycle.MONTHLY,
         id: platformPlan?.id ?? apId(),
         created: platformPlan?.created ?? faker.date.recent().toISOString(),
         updated: platformPlan?.updated ?? faker.date.recent().toISOString(),
@@ -560,6 +562,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
             customRolesEnabled: true,
             manageProjectsEnabled: true,
             customDomainsEnabled: true,
+            includedAiCredits: 1000,
             ...params?.plan,
         })
         await databaseConnection().getRepository('platform_plan').upsert(mockPlatformPlan, ['platformId'])

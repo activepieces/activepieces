@@ -1,11 +1,10 @@
 import path from 'path'
+import { GLOBAL_CACHE_FLOWS_PATH } from '@activepieces/server-shared'
 import { FlowVersionId, FlowVersionState, isNil, LATEST_SCHEMA_VERSION, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
 import { ApAxiosClient } from './ap-axios'
 import { engineApiService } from './server-api.service'
-
-const globalCacheFlowPath = path.resolve('cache', 'flows')
 
 export const flowWorkerCache = (log: FastifyBaseLogger) => ({
     async writeFileToCacheIfCachable(flowVersionId: FlowVersionId, flow: PopulatedFlow | null): Promise<void> {
@@ -61,5 +60,5 @@ async function getFlowFromCache(flowVersionId: FlowVersionId): Promise<Populated
 }
 
 function getCacheForFlow(flowVersionId: string) {
-    return cacheState(path.join(globalCacheFlowPath, flowVersionId))
+    return cacheState(path.join(GLOBAL_CACHE_FLOWS_PATH, flowVersionId))
 } 

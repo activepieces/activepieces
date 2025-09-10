@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PauseType, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
-import { CallableFlowRequest, CallableFlowResponse, listEnabledFlowsWithSubflowTrigger } from '../common';
+import { CallableFlowRequest, CallableFlowResponse, findFlowByExternalIdOrThrow, listEnabledFlowsWithSubflowTrigger } from '../common';
 
 type FlowValue = {
   externalId: string;
@@ -93,50 +93,13 @@ export const callFlow = createAction({
       required: false,
       defaultValue: false,
     }),
-    testingProps: Property.DynamicProperties({
-      description: '',
-      displayName: '',
-      required: true,
-      refreshers: ['waitForResponse', 'mode'],
-      props: async (propsValue) => {
-        const fields: DynamicPropsValue = {};
-        if (!propsValue['waitForResponse']) {
-          return fields;
-        }
-
-        const mode = propsValue['mode'] as unknown as string;
-
-        if (mode === 'simple') {
-            fields['data'] = Property.Object({
-            displayName: 'Example Response (For Testing)',
-            required: true,
-            description: 'This data will be returned when testing this step, and is necessary to proceed with building the flow',
-            defaultValue: {},
-          });
-        } else {
-          fields['data'] = Property.Json({
-            displayName: 'Example Response (For Testing)',
-            required: true,
-            description: 'This data will be returned when testing this step, and is necessary to proceed with building the flow',
-            defaultValue: {},
-          });
-        }
-
-        return fields;
-      }
-    })
-  },
-  async test(context) {
-    return {
-      data: context.propsValue?.testingProps?.['data'] ?? {}
-    };
   },
   async run(context) {
     if (context.executionType === ExecutionType.RESUME) {
       const response = context.resumePayload.body as CallableFlowResponse;
       const shouldFailParentRun = response.status === 'error' && context.propsValue.waitForResponse
       if (shouldFailParentRun) {
-        throw new Error(JSON.stringify(response.data))
+        throw new Error(JSON.stringify(response.data, null, 2))
       }
       return {
         status: response.status,
@@ -144,20 +107,10 @@ export const callFlow = createAction({
       }
     }
     const payload = context.propsValue.flowProps['payload'];
-    const externalIds = [context.propsValue.flow?.externalId].filter((id) => !isNil(id))
-    const allFlows = await listEnabledFlowsWithSubflowTrigger({
+    const flow = await findFlowByExternalIdOrThrow({
       flowsContext: context.flows,
-      params: {
-        externalIds
-      }
+      externalId: context.propsValue.flow?.externalId,
     });
-    if (allFlows.length === 0) {
-      throw new Error(JSON.stringify({
-        message: 'Flow not found',
-        externalId: context.propsValue.flow?.externalId,
-      }));
-    }
-    const flow = allFlows[0];
 
     const response = await httpClient.sendRequest<CallableFlowRequest>({
       method: HttpMethod.POST,

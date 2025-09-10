@@ -131,10 +131,7 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
             <img
               alt={stepMetadata?.displayName}
               className="w-6 h-6 object-contain"
-              src={
-                step.settings?.inputUiInfo?.customizedInputs?.logoUrl ??
-                stepMetadata?.logoUrl
-              }
+              src={step?.settings?.customLogoUrl ?? stepMetadata?.logoUrl}
             />
             <div className="break-all truncate min-w-0 grow-1 shrink-1">{`${
               stepIndex + 1

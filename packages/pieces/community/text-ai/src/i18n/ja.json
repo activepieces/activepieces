@@ -8,6 +8,9 @@
   "Conversation Key": "会話キー",
   "Creativity": "クリエイティブ度",
   "Max Tokens": "最大トークン",
+  "Web Search": "ウェブ検索",
+  "Web Search Options": "ウェブ検索オプション",
   "Text": "テキスト",
-  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "AIレスポンスの創造性をコントロールする 価値が高いほど、AIはより創造的になり、価値が低いほどより決定的になります。"
+  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "AIレスポンスの創造性をコントロールする 価値が高いほど、AIはより創造的になり、価値が低いほどより決定的になります。",
+  "Whether to use web search to find information for the AI to use in its response.": "Web検索を使用してAIが応答に使用する情報を見つけるかどうか。"
 }

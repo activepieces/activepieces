@@ -76,13 +76,12 @@ export const searchRecords = createAction({
 
       const filtered = records.filter((record) => {
         return Object.entries(propsValue['fields']).every(([key, value]) => {
+          const recordValue = record[key];
           if (typeof value === 'string') {
-            return (record[key] as unknown as string)
-              .toLowerCase()
-              .includes(value.toLowerCase());
-          } else {
-            return record[key] === value.toLowerCase();
+            const rv = typeof recordValue === 'string' ? recordValue : String(recordValue ?? '');
+            return rv.toLowerCase().includes(value.toLowerCase());
           }
+          return recordValue === value;
         });
       });
 

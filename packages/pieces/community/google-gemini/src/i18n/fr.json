@@ -1,5 +1,4 @@
 {
-  "Google Gemini": "Google Gemini",
   "Use the new Gemini models from Google": "Utiliser les nouveaux modèles Gemini de Google",
   "\nFollow these instructions to get your API Key:\n1. Visit the following website: https://makersuite.google.com/app/apikey\n2. Once on the website, locate and click on the option to obtain your API Key.\nPlease note this piece uses a API in the beta phase that may change at any time.\n": "\nFollow these instructions to get your API Key:\n1. Visit the following website: https://makersuite.google.com/app/apikey\n2. Once on the website, locate and click on the option to obtain your API Key.\nPlease note this piece uses a API in the beta phase that may change at any time.\n",
   "Generate Content": "Générer du contenu",
@@ -18,6 +17,7 @@
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
   "Body": "Corps",
+  "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
   "The prompt to generate content from.": "L'invite à générer du contenu.",
@@ -25,6 +25,7 @@
   "The image to generate content from.": "L'image à partir de laquelle générer du contenu.",
   "A memory key that will keep the chat history. Keep it empty to leave Gemini without memory of previous messages.": "Une clé de mémoire qui conservera l'historique du tchat. Gardez-la vide pour laisser Gemini sans mémoire pour les messages précédents.",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "GET": "OBTENIR",
   "POST": "POSTER",
   "PATCH": "PATCH",

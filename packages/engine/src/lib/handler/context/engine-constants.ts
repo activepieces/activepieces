@@ -1,10 +1,30 @@
-import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, isNil, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
     maxAttempts: number
     retryExponential: number
     retryInterval: number
+}
+
+type EngineConstantsParams = {
+    flowId: string
+    flowVersionId: string
+    flowVersionState: FlowVersionState
+    triggerPieceName: string
+    flowRunId: string
+    publicApiUrl: string
+    internalApiUrl: string
+    retryConstants: RetryConstants
+    engineToken: string
+    projectId: ProjectId
+    propsResolver: PropsResolver
+    progressUpdateType: ProgressUpdateType
+    serverHandlerId: string | null
+    httpRequestId: string | null
+    resumePayload?: ResumePayload
+    runEnvironment?: RunEnvironment
+    testSingleStepMode?: boolean
 }
 
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
@@ -23,6 +43,23 @@ export class EngineConstants {
     public static readonly PIECE_SOURCES = process.env.AP_PIECES_SOURCE ?? 'FILE'
     public static readonly TEST_MODE = process.env.AP_TEST_MODE === 'true'
 
+    public readonly flowId: string
+    public readonly flowVersionId: string
+    public readonly flowVersionState: FlowVersionState
+    public readonly triggerPieceName: string
+    public readonly flowRunId: string
+    public readonly publicApiUrl: string
+    public readonly internalApiUrl: string
+    public readonly retryConstants: RetryConstants
+    public readonly engineToken: string
+    public readonly projectId: ProjectId
+    public readonly propsResolver: PropsResolver
+    public readonly progressUpdateType: ProgressUpdateType
+    public readonly serverHandlerId: string | null
+    public readonly httpRequestId: string | null
+    public readonly resumePayload?: ResumePayload
+    public readonly runEnvironment?: RunEnvironment
+    public readonly testSingleStepMode?: boolean
 
     private project: Project | null = null
 
@@ -38,148 +75,135 @@ export class EngineConstants {
         return EngineConstants.PIECE_SOURCES
     }
 
-    public constructor(
-        public readonly flowId: string,
-        public readonly flowVersionId: string,
-        public readonly flowVersionState: FlowVersionState,
-        public readonly flowRunId: string,
-        public readonly publicApiUrl: string,
-        public readonly internalApiUrl: string,
-        public readonly retryConstants: RetryConstants,
-        public readonly engineToken: string,
-        public readonly projectId: ProjectId,
-        public readonly propsResolver: PropsResolver,
-        public readonly testSingleStepMode: boolean,
-        public readonly progressUpdateType: ProgressUpdateType,
-        public readonly serverHandlerId: string | null,
-        public readonly httpRequestId: string | null,
-        public readonly resumePayload?: ResumePayload,
-        public readonly runEnvironment?: RunEnvironment,
-    ) {
-        if (!publicApiUrl.endsWith('/api/')) {
-            throw new Error('Public URL must end with a slash, got: ' + publicApiUrl)
+    public constructor(params: EngineConstantsParams) {
+        if (!params.publicApiUrl.endsWith('/api/')) {
+            throw new Error('Public URL must end with a slash, got: ' + params.publicApiUrl)
         }
-        if (!internalApiUrl.endsWith('/')) {
-            throw new Error('Internal API URL must end with a slash, got: ' + internalApiUrl)
+        if (!params.internalApiUrl.endsWith('/')) {
+            throw new Error('Internal API URL must end with a slash, got: ' + params.internalApiUrl)
         }
+
+        this.flowId = params.flowId
+        this.flowVersionId = params.flowVersionId
+        this.flowVersionState = params.flowVersionState
+        this.flowRunId = params.flowRunId
+        this.publicApiUrl = params.publicApiUrl
+        this.internalApiUrl = params.internalApiUrl
+        this.retryConstants = params.retryConstants
+        this.triggerPieceName = params.triggerPieceName
+        this.engineToken = params.engineToken
+        this.projectId = params.projectId
+        this.propsResolver = params.propsResolver
+        this.progressUpdateType = params.progressUpdateType
+        this.serverHandlerId = params.serverHandlerId
+        this.httpRequestId = params.httpRequestId
+        this.resumePayload = params.resumePayload
+        this.runEnvironment = params.runEnvironment
+        this.testSingleStepMode = params.testSingleStepMode
     }
 
     public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
-        return new EngineConstants(
-            input.flowVersion.flowId,
-            input.flowVersion.id,
-            input.flowVersion.state,
-            input.flowRunId,
-            input.publicApiUrl,
-            input.internalApiUrl,
-            DEFAULT_RETRY_CONSTANTS,
-            input.engineToken,
-            input.projectId,
-            createPropsResolver({
+        return new EngineConstants({
+            flowId: input.flowVersion.flowId,
+            flowVersionId: input.flowVersion.id,
+            flowVersionState: input.flowVersion.state,
+            triggerPieceName: input.flowVersion.trigger.settings.pieceName,
+            flowRunId: input.flowRunId,
+            publicApiUrl: input.publicApiUrl,
+            internalApiUrl: input.internalApiUrl,
+            retryConstants: DEFAULT_RETRY_CONSTANTS,
+            engineToken: input.engineToken,
+            projectId: input.projectId,
+            propsResolver: createPropsResolver({
                 projectId: input.projectId,
                 engineToken: input.engineToken,
                 apiUrl: input.internalApiUrl,
             }),
-            false,
-            input.progressUpdateType,
-            input.serverHandlerId ?? null,
-            input.httpRequestId ?? null,
-            input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
-            input.runEnvironment,
-        )
+            progressUpdateType: input.progressUpdateType,
+            serverHandlerId: input.serverHandlerId ?? null,
+            httpRequestId: input.httpRequestId ?? null,
+            resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
+            runEnvironment: input.runEnvironment,
+            testSingleStepMode: !isNil(input.stepNameToTest),
+        })
     }
 
     public static fromExecuteActionInput(input: ExecuteToolOperation): EngineConstants {
-        return new EngineConstants(
-            DEFAULT_MCP_DATA.flowId,
-            DEFAULT_MCP_DATA.flowVersionId,
-            DEFAULT_MCP_DATA.flowVersionState,
-            DEFAULT_MCP_DATA.flowRunId,
-            input.publicApiUrl,
-            addTrailingSlashIfMissing(input.internalApiUrl),
-            DEFAULT_RETRY_CONSTANTS,
-            input.engineToken,
-            input.projectId,
-            createPropsResolver({
+        return new EngineConstants({
+            flowId: DEFAULT_MCP_DATA.flowId,
+            flowVersionId: DEFAULT_MCP_DATA.flowVersionId,
+            flowVersionState: DEFAULT_MCP_DATA.flowVersionState,
+            triggerPieceName: DEFAULT_MCP_DATA.triggerPieceName,
+            flowRunId: DEFAULT_MCP_DATA.flowRunId,
+            publicApiUrl: input.publicApiUrl,
+            internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
+            retryConstants: DEFAULT_RETRY_CONSTANTS,
+            engineToken: input.engineToken,
+            projectId: input.projectId,
+            propsResolver: createPropsResolver({
                 projectId: input.projectId,
                 engineToken: input.engineToken,
                 apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
             }),
-            true,
-            ProgressUpdateType.NONE,
-            null,
-            null,
-        )
-    }
-    public static fromExecuteStepInput(input: ExecuteStepOperation): EngineConstants {
-        return new EngineConstants(
-            input.flowVersion.flowId,
-            input.flowVersion.id,
-            input.flowVersion.state,
-            'test-run',
-            input.publicApiUrl,
-            addTrailingSlashIfMissing(input.internalApiUrl),
-            DEFAULT_RETRY_CONSTANTS,
-            input.engineToken,
-            input.projectId,
-            createPropsResolver({
-                projectId: input.projectId,
-                engineToken: input.engineToken,
-                apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
-            }),
-            true,
-            ProgressUpdateType.NONE,
-            null,
-            input.requestId ?? null,
-            undefined,
-            input.runEnvironment,
-        )
+            progressUpdateType: ProgressUpdateType.NONE,
+            serverHandlerId: null,
+            httpRequestId: null,
+            resumePayload: undefined,
+            runEnvironment: undefined,
+            testSingleStepMode: false,
+        })
     }
 
     public static fromExecutePropertyInput(input: ExecutePropsOptions): EngineConstants {
-        return new EngineConstants(
-            input.flowVersion?.flowId ?? DEFAULT_MCP_DATA.flowId,
-            input.flowVersion?.id ?? DEFAULT_MCP_DATA.flowVersionId,
-            input.flowVersion?.state ?? DEFAULT_MCP_DATA.flowVersionState,
-            DEFAULT_EXECUTE_PROPERTY,
-            input.publicApiUrl,
-            addTrailingSlashIfMissing(input.internalApiUrl),
-            DEFAULT_RETRY_CONSTANTS,
-            input.engineToken,
-            input.projectId,
-            createPropsResolver({
+        return new EngineConstants({
+            flowId: input.flowVersion?.flowId ?? DEFAULT_MCP_DATA.flowId,
+            flowVersionId: input.flowVersion?.id ?? DEFAULT_MCP_DATA.flowVersionId,
+            flowVersionState: input.flowVersion?.state ?? DEFAULT_MCP_DATA.flowVersionState,
+            triggerPieceName: input.flowVersion?.trigger?.settings.pieceName ?? DEFAULT_MCP_DATA.triggerPieceName,
+            flowRunId: DEFAULT_EXECUTE_PROPERTY,
+            publicApiUrl: input.publicApiUrl,
+            internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
+            retryConstants: DEFAULT_RETRY_CONSTANTS,
+            engineToken: input.engineToken,
+            projectId: input.projectId,
+            propsResolver: createPropsResolver({
                 projectId: input.projectId,
                 engineToken: input.engineToken,
                 apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
             }),
-            true,
-            ProgressUpdateType.NONE,
-            null,
-            null,
-        )
+            progressUpdateType: ProgressUpdateType.NONE,
+            serverHandlerId: null,
+            httpRequestId: null,
+            resumePayload: undefined,
+            runEnvironment: undefined,
+            testSingleStepMode: false,
+        })
     }
 
     public static fromExecuteTriggerInput(input: ExecuteTriggerOperation<TriggerHookType>): EngineConstants {
-        return new EngineConstants(
-            input.flowVersion.flowId,
-            input.flowVersion.id,
-            input.flowVersion.state,
-            DEFAULT_TRIGGER_EXECUTION,
-            input.publicApiUrl,
-            addTrailingSlashIfMissing(input.internalApiUrl),
-            DEFAULT_RETRY_CONSTANTS,
-            input.engineToken,
-            input.projectId,
-            createPropsResolver({
+        return new EngineConstants({
+            flowId: input.flowVersion.flowId,
+            flowVersionId: input.flowVersion.id,
+            flowVersionState: input.flowVersion.state,
+            triggerPieceName: input.flowVersion.trigger.settings.pieceName,
+            flowRunId: DEFAULT_TRIGGER_EXECUTION,
+            publicApiUrl: input.publicApiUrl,
+            internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
+            retryConstants: DEFAULT_RETRY_CONSTANTS,
+            engineToken: input.engineToken,
+            projectId: input.projectId,
+            propsResolver: createPropsResolver({
                 projectId: input.projectId,
                 engineToken: input.engineToken,
                 apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
             }),
-            true,
-            ProgressUpdateType.NONE,
-            null,
-            null,
-        )
+            progressUpdateType: ProgressUpdateType.NONE,
+            serverHandlerId: null,
+            httpRequestId: null,
+            resumePayload: undefined,
+            runEnvironment: undefined,
+            testSingleStepMode: false,
+        })
     }
 
     private async getProject(): Promise<Project> {

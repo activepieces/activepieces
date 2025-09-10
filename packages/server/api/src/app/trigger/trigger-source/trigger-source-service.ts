@@ -1,6 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, FlowVersion, isNil, TriggerSource } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { flowTriggerSideEffect } from './flow-trigger-side-effect'
@@ -22,11 +21,19 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 pieceTrigger,
                 simulate,
             })
+
+            await triggerSourceRepo().softDelete({
+                flowId: flowVersion.flowId,
+                projectId,
+                simulate,
+            })
+
             const triggerSource: Omit<TriggerSource, 'created' | 'updated'> = {
                 id: apId(),
                 type: pieceTrigger.type,
                 projectId,
                 flowId: flowVersion.flowId,
+                triggerName: pieceTrigger.name,
                 flowVersionId: flowVersion.id,
                 pieceName: flowVersion.trigger.settings.pieceName,
                 pieceVersion: flowVersion.trigger.settings.pieceVersion,
@@ -42,7 +49,6 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 where: {
                     id,
                     projectId,
-                    deleted: IsNull(),
                 },
             })
         },
@@ -52,7 +58,6 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 where: {
                     flowId,
                     simulate,
-                    deleted: IsNull(),
                 },
             })
         },
@@ -61,7 +66,6 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 where: {
                     id,
                     projectId,
-                    deleted: IsNull(),
                 },
             })
             if (isNil(triggerSource)) {
@@ -80,7 +84,6 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
             return triggerSourceRepo().existsBy({
                 flowId,
                 simulate,
-                deleted: IsNull(),
             })
         },
         async disable(params: DisableTriggerParams): Promise<void> {
@@ -89,7 +92,6 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 flowId,
                 projectId,
                 simulate,
-                deleted: IsNull(),
             })
             if (isNil(triggerSource)) {
                 return

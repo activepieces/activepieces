@@ -15,13 +15,11 @@ import {
     UpdateTableRequest,
 } from '@activepieces/shared'
 import { ILike, In } from 'typeorm'
-import { agentsService } from '../../agents/agents-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
 import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
@@ -37,7 +35,6 @@ export const tableService = {
         projectId,
         request,
     }: CreateParams): Promise<Table> {
-
         const platformId = await projectService.getPlatformId(projectId)
         await PlatformPlanHelper.checkQuotaOrThrow({
             platformId,
@@ -52,13 +49,6 @@ export const tableService = {
             projectId,
         })
         return table
-    },
-    async getAllAgentIds({ projectId }: GetAllAgentIdsParams): Promise<string[]> {
-        const tables = await tableRepo().find({
-            where: { projectId },
-            select: ['agentId'],
-        })
-        return tables.map((table) => table.agentId)
     },
     async list({ projectId, cursor, limit, name, externalIds }: ListParams): Promise<SeekPage<Table>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
@@ -90,7 +80,6 @@ export const tableService = {
         projectId,
         id,
     }: GetByIdParams): Promise<Table> {
-        await ensureAgentExists({ tableId: id, projectId })
         const table = await tableRepo().findOne({
             where: { projectId, id },
         })
@@ -103,19 +92,31 @@ export const tableService = {
                 },
             })
         }
-        return {
-            ...table,
-            agent: await agentsService(system.globalLogger()).getOneOrThrow({
-                id: table.agentId,
-                projectId,
-            }),
+        return table
+    },
+
+    async getOneByExternalIdOrThrow({
+        projectId,
+        externalId,
+    }: GetOneByExternalIdParams): Promise<Table> {
+        const table = await tableRepo().findOneBy({ projectId, externalId })
+        if (isNil(table)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'Table',
+                    entityId: externalId,
+                },
+            })
         }
+        return table
     },
 
     async delete({
         projectId,
         id,
     }: DeleteParams): Promise<void> {
+
         await tableRepo().delete({
             projectId,
             id,
@@ -208,34 +209,6 @@ export const tableService = {
 
 }
 
-type GetAllAgentIdsParams = {
-    projectId: string
-}
-
-async function ensureAgentExists({ tableId, projectId }: EnsureAgentExistsParams): Promise<void> {
-    const table = await tableRepo().findOneBy({
-        id: tableId,
-        projectId,
-    })
-    if (isNil(table) || !isNil(table.agentId)) {
-        return
-    }
-    const platformId = await projectService.getPlatformId(projectId)
-    const agent = await agentsService(system.globalLogger()).create({
-        projectId,
-        displayName: `${table.name} Agent`,
-        systemPrompt: '',
-        description: '',
-        platformId,
-    })
-    await tableRepo().update({ id: tableId, projectId }, { agentId: agent.id })
-}
-
-type EnsureAgentExistsParams = {
-    tableId: string
-    projectId: string
-}
-
 type CreateParams = {
     projectId: string
     request: CreateTableRequest
@@ -252,6 +225,11 @@ type ListParams = {
 type GetByIdParams = {
     projectId: string
     id: string
+}
+
+type GetOneByExternalIdParams = {
+    projectId: string
+    externalId: string
 }
 
 type DeleteParams = {

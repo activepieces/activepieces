@@ -20,7 +20,7 @@ export const fileModule: FastifyPluginAsyncTypebox = async (app) => {
         },
         schedule: {
             type: 'repeated',
-            cron: '0 */1 * * *',
+            cron: '30 */1 * * *',
         },
     })
     await app.register(stepFileController, { prefix: '/v1/step-files' })

@@ -1,5 +1,4 @@
 {
-  "LinkedIn": "LinkedIn",
   "Connect and network with professionals": "プロとネットワークを接続する",
   "Create Share Update": "共有アップデートを作成",
   "Create Company Update": "会社の更新を作成",
@@ -18,9 +17,11 @@
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
   "Body": "本文",
+  "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
+  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
   "GET": "取得",
   "POST": "POST",
   "PATCH": "PATCH",

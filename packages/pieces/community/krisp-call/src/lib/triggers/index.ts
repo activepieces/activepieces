@@ -83,7 +83,7 @@ export const triggers = [
         async onEnable(context) {
             const response = await httpClient.sendRequest({
                 method: HttpMethod.POST,
-                url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/subscribe',
+                url: 'https://app.krispcall.com/api/v3/platform/activepiece/subscribe',
                 body: {
                     hookUrl: context.webhookUrl,
                     action: trigger.action,
@@ -98,7 +98,7 @@ export const triggers = [
             const webhookId = await context.store.get<string>('_webhook_id');
             await httpClient.sendRequest({
                 method: HttpMethod.DELETE,
-                url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/unsubscribe',
+                url: 'https://app.krispcall.com/api/v3/platform/activepiece/unsubscribe',
                 body: {
                     hookUrl: webhookId,
                 },

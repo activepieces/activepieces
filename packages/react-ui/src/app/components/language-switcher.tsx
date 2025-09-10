@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn, localesMap } from '@/lib/utils';
-import { ApFlagId, LocalesEnum } from '@activepieces/shared';
+import { ApFlagId } from '@activepieces/shared';
 
 import { flagsHooks } from '../../hooks/flags-hooks';
 
@@ -33,11 +33,8 @@ export function LanguageSwitcher() {
   const { data: showCommunity } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
-  const languageWithoutLocale = i18n.language?.includes('-')
-    ? i18n.language.split('-')[0]
-    : i18n.language;
   const [selectedLanguage, setSelectedLanguage] = useState<string | undefined>(
-    languageWithoutLocale ?? 'en',
+    i18n.language ?? 'en',
   );
 
   const { mutate, isPending } = useMutation({
@@ -64,8 +61,8 @@ export function LanguageSwitcher() {
             )}
           >
             {selectedLanguage
-              ? localesMap[selectedLanguage as LocalesEnum]
-              : i18n.t('Select language')}
+              ? localesMap[selectedLanguage as keyof typeof localesMap]
+              : t('Select language')}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>

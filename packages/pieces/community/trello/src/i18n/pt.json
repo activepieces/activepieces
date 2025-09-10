@@ -28,6 +28,14 @@
   "Bottom": "Inferior",
   "Card Moved to list": "Cartão movido para a lista",
   "New Card": "Novo cartão",
+  "Card Deadline": "Data limite do cartão",
   "Trigger when a card is moved to the list specified": "Aciona quando um cartão é movido para a lista especificada",
-  "Trigger when a new card is created": "Ativar quando um novo cartão for criado"
+  "Trigger when a new card is created": "Ativar quando um novo cartão for criado",
+  "Triggers at a specified time before a card deadline.": "Dispara em um determinado tempo antes do prazo de uma carta.",
+  "Time unit": "Unidade de tempo",
+  "Time before due": "Tempo antes do vencimento",
+  "Select unit for time before due": "Selecione a unidade para o tempo antes do vencimento",
+  "How long before the due date the trigger should run (use with time unit)": "Quanto tempo antes da data de vencimento, o gatilho deve ser executado (usar com a unidade de tempo)",
+  "Minutes": "minutos",
+  "Hours": "horas"
 }

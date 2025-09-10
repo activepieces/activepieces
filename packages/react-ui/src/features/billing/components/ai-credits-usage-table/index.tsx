@@ -8,7 +8,7 @@ import {
   CURSOR_QUERY_PARAM,
 } from '@/components/ui/data-table';
 import { billingQueries } from '@/features/billing/lib/billing-hooks';
-import { ListAICreditsUsageRequest } from '@activepieces/shared';
+import { ListAICreditsUsageRequest } from '@activepieces/common-ai';
 
 import { aiCreditUsageTableColumns } from './columns';
 

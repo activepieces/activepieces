@@ -9,6 +9,7 @@ import {
     PackageType,
     PieceType,
     ProgressUpdateType,
+    PropertyExecutionType,
     RunEnvironment,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
@@ -88,7 +89,11 @@ describe('flow execution', () => {
                         run_on_weekends: false,
                     },
                     triggerName: 'every_hour',
-                    inputUiInfo: {},
+                    propertySettings: {
+                        'run_on_weekends': {
+                            type: PropertyExecutionType.MANUAL,
+                        },
+                    },
                 },
                 valid: true,
                 name: 'webhook',
@@ -98,7 +103,6 @@ describe('flow execution', () => {
                     displayName: 'Echo Step',
                     type: FlowActionType.CODE,
                     settings: {
-                        inputUiInfo: {},
                         input: {
                             key: '{{ 1 + 2 }}',
                         },
@@ -116,13 +120,17 @@ describe('flow execution', () => {
                         displayName: 'Datamapper',
                         type: FlowActionType.PIECE,
                         settings: {
-                            inputUiInfo: {},
                             pieceName: '@activepieces/piece-data-mapper',
                             pieceVersion: '0.3.0',
                             actionName: 'advanced_mapping',
                             input: {
                                 mapping: {
                                     key: '{{ 1 + 2 }}',
+                                },
+                            },
+                            propertySettings: {
+                                'mapping': {
+                                    type: PropertyExecutionType.MANUAL,
                                 },
                             },
                         },

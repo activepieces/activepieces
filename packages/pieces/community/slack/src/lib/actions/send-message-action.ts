@@ -32,11 +32,17 @@ export const slackSendMessageAction = createAction({
       required: false,
     }),
     threadTs,
+    replyBroadcast: Property.Checkbox({
+      displayName: 'Broadcast reply to channel',
+      description: 'When replying to a thread, also make the message visible to everyone in the channel (only applicable when Thread Timestamp is provided)',
+      required: false,
+      defaultValue: false,
+    }),
     blocks,
   },
   async run(context) {
     const token = context.auth.access_token;
-    const { text, channel, username, profilePicture, threadTs, file,blocks } =
+    const { text, channel, username, profilePicture, threadTs, file, blocks, replyBroadcast } =
       context.propsValue;
 
     const blockList = blocks ?[{ type: 'section', text: { type: 'mrkdwn', text } }, ...(blocks as unknown as (KnownBlock | Block)[])] :undefined
@@ -50,6 +56,7 @@ export const slackSendMessageAction = createAction({
       threadTs: threadTs ? processMessageTimestamp(threadTs) : undefined,
       file,
       blocks: blockList,
+      replyBroadcast,
     });
   },
 });

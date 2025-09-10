@@ -1,6 +1,6 @@
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import { AgentJobData, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
-import { DelayPauseMetadata, FlowRun, FlowRunStatus, FlowTriggerType, isNil, PauseType, PopulatedFlow, ProgressUpdateType, RunEnvironment, TriggerSourceScheduleType } from '@activepieces/shared'
+import { FlowRun, FlowRunStatus, FlowTriggerType, isNil, PauseType, PopulatedFlow, ProgressUpdateType, RunEnvironment, TriggerSourceScheduleType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -95,7 +95,7 @@ async function addDelayedRun(log: FastifyBaseLogger): Promise<void> {
     })
     flowRuns.forEach((flowRun: FlowRun) => {
         if (flowRun.pauseMetadata?.type === PauseType.DELAY) {
-            const delayPauseMetadata = flowRun.pauseMetadata as DelayPauseMetadata
+            const delayPauseMetadata = flowRun.pauseMetadata
             const delay = Math.max(
                 0,
                 dayjs(delayPauseMetadata.resumeDateTime).diff(dayjs(), 'ms'),
@@ -111,6 +111,7 @@ async function addDelayedRun(log: FastifyBaseLogger): Promise<void> {
                     schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                     flowVersionId: flowRun.flowVersionId,
                     flowId: flowRun.flowId,
+                    httpRequestId: flowRun.pauseMetadata?.requestIdToReply ?? undefined,
                     jobType: RepeatableJobType.DELAYED_FLOW,
                     synchronousHandlerId: delayPauseMetadata.handlerId ?? null,
                     progressUpdateType: delayPauseMetadata.progressUpdateType ?? ProgressUpdateType.NONE,

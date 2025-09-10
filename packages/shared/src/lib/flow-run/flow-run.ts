@@ -44,6 +44,7 @@ export const FlowRun = Type.Object({
     // or if the run is older than AP_EXECUTION_DATA_RETENTION_DAYS and its execution data has been purged.
     steps: Nullable(Type.Record(Type.String(), Type.Unknown())),
     failedStepName: Type.Optional(Type.String()),
+    stepNameToTest: Type.Optional(Type.String()),
 })
 
 export type FlowRun = Static<typeof FlowRun> & ExecutionState

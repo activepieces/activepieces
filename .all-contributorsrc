@@ -2021,6 +2021,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "thejaachi",
+      "name": "Jaachịmmá Anyatọnwụ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/173014495?v=4",
+      "profile": "https://jaachiwrites.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "LuizDMM",
+      "name": "Luiz D. M. Mainart",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55499897?v=4",
+      "profile": "http://luizmainart.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

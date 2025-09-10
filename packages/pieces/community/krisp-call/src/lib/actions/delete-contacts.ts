@@ -17,7 +17,7 @@ export const deleteContacts = createAction({
   async run({ auth, propsValue }) {
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.DELETE,
-      url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/delete-contacts',
+      url: 'https://app.krispcall.com/api/v3/platform/activepiece/delete-contacts',
       headers: {
         'X-API-KEY': auth.apiKey,
       },

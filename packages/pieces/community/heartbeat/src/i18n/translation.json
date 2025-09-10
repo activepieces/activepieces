@@ -1,5 +1,4 @@
 {
-  "Heartbeat": "Heartbeat",
   "Monitoring and alerting made easy": "Monitoring and alerting made easy",
   "\n  1. Login to your Heartbeat account\n  2. On the bottom-left, click on 'Admin Settings'\n  3. On the left panel, click on 'API Keys'\n  5. Click on 'Create API Key'\n  6. On the popup form, Enter the 'Label' to name the Key\n  7. Copy the API key and paste it below.\n": "\n  1. Login to your Heartbeat account\n  2. On the bottom-left, click on 'Admin Settings'\n  3. On the left panel, click on 'API Keys'\n  5. Click on 'Create API Key'\n  6. On the popup form, Enter the 'Label' to name the Key\n  7. Copy the API key and paste it below.\n",
   "Create User": "Create User",
@@ -21,6 +20,7 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "The user's full name": "The user's full name",
@@ -35,6 +35,7 @@
   "A link to the user's Instagram profile": "A link to the user's Instagram profile",
   "If true and a value for bio is provided, an introduction thread for the user will be created in the channel designated for introductions in your community settings.": "If true and a value for bio is provided, an introduction thread for the user will be created in the channel designated for introductions in your community settings.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "GET": "GET",
   "POST": "POST",
   "PATCH": "PATCH",

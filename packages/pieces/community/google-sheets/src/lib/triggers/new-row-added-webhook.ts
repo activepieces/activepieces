@@ -21,7 +21,6 @@ import {
 
 import { googleSheetsAuth } from '../..';
 import { commonProps } from '../common/props';
-import { isNil } from '@activepieces/shared';
 import { areSheetIdsValid } from '../common/common';
 
 export const newRowAddedTrigger = createTrigger({
@@ -74,7 +73,13 @@ export const newRowAddedTrigger = createTrigger({
 	async onDisable(context) {
 		const webhook = await context.store.get<WebhookInformation>(`googlesheets_new_row_added`);
 		if (webhook != null && webhook.id != null && webhook.resourceId != null) {
+			try
+			{
 			await deleteFileNotification(context.auth, webhook.id, webhook.resourceId);
+			}
+			catch(err){
+  				console.debug("deleteFileNotification failed :",JSON.stringify(err));
+			}
 		}
 	},
 	async run(context) {

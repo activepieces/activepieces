@@ -59,7 +59,7 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       return (
         <div className="text-left">
           {formatUtils.formatNumber(row.original.usage.tasks)} /{' '}
-          {row.original.plan.tasks
+          {!isNil(row.original.plan.tasks)
             ? formatUtils.formatNumber(row.original.plan.tasks)
             : t('Unlimited')}
         </div>
@@ -75,7 +75,7 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       return (
         <div className="text-left">
           {formatUtils.formatNumber(row.original.usage.aiCredits)} /{' '}
-          {row.original.plan.aiCredits
+          {!isNil(row.original.plan.aiCredits)
             ? formatUtils.formatNumber(row.original.plan.aiCredits)
             : '-'}
         </div>

@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { ArrowLeftIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -42,7 +43,7 @@ const PiecesSearchInput = ({
         </Button>
       )}
       <SearchInput
-        placeholder="Search"
+        placeholder={t('Search')}
         value={searchQuery}
         ref={searchInputRef}
         onChange={(e) => {

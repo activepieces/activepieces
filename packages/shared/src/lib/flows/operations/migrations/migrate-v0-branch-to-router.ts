@@ -28,12 +28,10 @@ export const migrateBranchToRouter: Migration = {
                             },
                         ],
                         executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
-                        inputUiInfo: {
+                        sampleData: {
                             sampleDataFileId: undefined,
                             sampleDataInputFileId: undefined,
                             lastTestDate: undefined,
-                            customizedInputs: undefined,
-                            currentSelectedData: undefined,
                         },
                     },
                     nextAction: step.nextAction,

@@ -673,10 +673,6 @@ export const wedofCommon = {
     options: {
       options: [
         {
-          label: 'Aucune période',
-          value: null,
-        },
-        {
           label: 'Personnalisée',
           value: 'custom',
         },

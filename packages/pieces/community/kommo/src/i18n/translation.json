@@ -1,5 +1,4 @@
 {
-  "Kommo": "Kommo",
   "Subdomain": "Subdomain",
   "Token": "Token",
   "\nPlease follow [Generate Long Live Token](https://developers.kommo.com/docs/long-lived-token) guide for generating token.\n\nYour Kommo account subdomain (e.g., \"mycompany\" if your URL is mycompany.kommo.com).\n\n": "\nPlease follow [Generate Long Live Token](https://developers.kommo.com/docs/long-lived-token) guide for generating token.\n\nYour Kommo account subdomain (e.g., \"mycompany\" if your URL is mycompany.kommo.com).\n\n",
@@ -40,6 +39,7 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "Search query (Searches through the filled fields of the lead).": "Search query (Searches through the filled fields of the lead).",
@@ -49,6 +49,7 @@
   "Search query (Searches through the filled fields of the contact).": "Search query (Searches through the filled fields of the contact).",
   "Search query (Searches through the filled fields of the company).": "Search query (Searches through the filled fields of the company).",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "GET": "GET",
   "POST": "POST",
   "PATCH": "PATCH",

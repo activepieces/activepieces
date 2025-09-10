@@ -77,6 +77,12 @@ export const flowsHooks = {
         setIsPublishing(false);
       },
       onError: (err: Error) => {
+        toast({
+          title: t('Error'),
+          description: t('Failed to publish flow, please contact support.'),
+          variant: 'destructive',
+        });
+        console.error('Failed to publish flow', err);
         setIsPublishing(false);
       },
     });

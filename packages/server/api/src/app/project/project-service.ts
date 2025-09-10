@@ -47,7 +47,6 @@ export const projectService = {
         return projectRepo().findOneBy({
             ownerId: params.ownerId,
             platformId: params.platformId,
-            deleted: IsNull(),
         })
     },
 
@@ -58,7 +57,6 @@ export const projectService = {
 
         return projectRepo().findOneBy({
             id: projectId,
-            deleted: IsNull(),
         })
     },
 
@@ -69,7 +67,6 @@ export const projectService = {
             },
             where: {
                 platformId,
-                deleted: IsNull(),
             },
         })
 
@@ -83,7 +80,6 @@ export const projectService = {
         await projectRepo().update(
             {
                 id: projectId,
-                deleted: IsNull(),
             },
             {
                 ...spreadIfDefined('externalId', externalId),
@@ -162,7 +158,6 @@ export const projectService = {
     async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
         const query = {
             id: projectId,
-            deleted: IsNull(),
         }
 
         const update = {
@@ -179,7 +174,6 @@ export const projectService = {
         return projectRepo().findOneBy({
             platformId,
             externalId,
-            deleted: IsNull(),
         })
     },
 }
@@ -193,7 +187,6 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
     if (isPrivilegedUser) {
         // Platform admins and operators can see all projects in their platform
         return [{
-            deleted: IsNull(),
             platformId: params.platformId,
             ...displayNameFilter,
         }]
@@ -207,7 +200,6 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
     
     // Regular members can only see projects they're members of
     return [{
-        deleted: IsNull(),
         platformId: params.platformId,
         id: In(projectIds),
         ...displayNameFilter,
@@ -218,7 +210,6 @@ async function assertExternalIdIsUnique(externalId: string | undefined | null, p
         const externalIdAlreadyExists = await projectRepo().existsBy({
             id: Not(projectId),
             externalId,
-            deleted: IsNull(),
         })
 
         if (externalIdAlreadyExists) {

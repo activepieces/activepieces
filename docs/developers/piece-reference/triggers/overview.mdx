@@ -28,19 +28,19 @@ export const createNewIssue = createTrigger({
     name: string, // Unique name across the piece.
     displayName: string, // Display name on the interface.
 	description: string, // Description for the action
-    triggerType: POLLING | WEBHOOK,
+    sampleData: null,
+    type: TriggerStrategy.WEBHOOK | TriggerStrategy.POLLING | TriggerStrategy.APP_WEBHOOK,
 
     props: {}; // Required properties from the user.
     // Run when the user enable or publish the flow.
 
-	onEnable: (ctx) => {};
+	onEnable: (ctx) => {},
     // Run when the user disable the flow or
     // the old flow is deleted after new one is published.
-	onDisable: (ctx) => {};
+	onDisable: (ctx) => {},
 
     // Trigger implementation, It takes context as parameter.
     // should returns an array of payload, each payload considered
-    // a separate flow run.
     run: async run(ctx): unknown[] => {}
 })
 ```

@@ -1,5 +1,4 @@
 {
-  "monday.com": "monday.com",
   "Work operating system for businesses": "企業向けの作業用オペレーティング システム",
   "\n1.Log into your monday.com account.\n\n2.Click on your avatar/profile picture in the top right corner.\n\n3.Select **Administration** (this requires you to have admin permissions).\n\n4.Go to the **API** section.\n\n5.Copy your personal token": "\n1.Log into your monday.com account.\n\n2.Click on your avatar/profile picture in the top right corner.\n\n3.Select **Administration** (this requires you to have admin permissions).\n\n4.Go to the **API** section.\n\n5.Copy your personal token",
   "Create Column": "列を作成",
@@ -57,7 +56,7 @@
   "Phone": "電話番号",
   "Progress Tracking": "進行状況の追跡",
   "Rating": "評価",
-  "Status": "Status",
+  "Status": "ステータス",
   "Tags": "タグ",
   "Text": "テキスト",
   "Timeline": "タイムライン",

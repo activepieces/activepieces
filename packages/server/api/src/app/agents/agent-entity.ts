@@ -30,10 +30,6 @@ export const AgentEntity = new EntitySchema<AgentSchema>({
             type: String,
             nullable: false,
         },
-        testPrompt: {
-            type: String,
-            nullable: false,
-        },
         systemPrompt: {
             type: String,
             nullable: false,

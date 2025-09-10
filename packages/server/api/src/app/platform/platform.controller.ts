@@ -29,7 +29,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
             id: req.params.id,
             ...req.body,
         })
-        return platformService.getOneWithPlanOrThrow(req.params.id)
+        return platformService.getOneWithPlanAndUsageOrThrow(req.params.id)
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
@@ -39,7 +39,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
             'userPlatformId',
             'paramId',
         )
-        return platformService.getOneWithPlanOrThrow(req.params.id)
+        return platformService.getOneWithPlanAndUsageOrThrow(req.params.id)
     })
 }
 

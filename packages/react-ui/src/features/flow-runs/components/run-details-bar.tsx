@@ -4,7 +4,7 @@ import React from 'react';
 
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { cn } from '@/lib/utils';
+import { cn, formatUtils } from '@/lib/utils';
 import {
   ApFlagId,
   FlowRun,
@@ -76,36 +76,53 @@ const RunDetailsBar = React.memo(
     }
 
     return (
-      <div
-        className="fixed bottom-4 p-4 left-1/2 transform -translate-x-1/2 w-[400px] bg-background shadow-lg border h-16 flex items-center justify-start 
-       rounded-lg z-[9999]"
-      >
-        <Icon
-          className={cn('w-6 h-6 mr-3', {
-            'text-foreground': variant === 'default',
-            'text-success': variant === 'success',
-            'text-destructive': variant === 'error',
-          })}
-        />
-        <div className="flex-col flex flex-grow text-foreground gap-0">
-          <div className="text-sm">
-            {getStatusText(run.status, timeoutSeconds ?? -1, memoryLimit ?? -1)}
+      <div className="fixed bottom-4 p-4 left-1/2 transform -translate-x-1/2 w-[480px] bg-background shadow-lg border rounded-lg z-[9999]">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <Icon
+              className={cn('w-6 h-6 flex-shrink-0', {
+                'text-foreground': variant === 'default',
+                'text-success': variant === 'success',
+                'text-destructive': variant === 'error',
+              })}
+            />
+            <div className="flex flex-col gap-1 min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-sm font-medium text-foreground truncate">
+                    {getStatusText(
+                      run.status,
+                      timeoutSeconds ?? -1,
+                      memoryLimit ?? -1,
+                    )}
+                  </span>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-md font-medium flex-shrink-0">
+                    {run.tasks} tasks
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground flex-shrink-0">
+                  {formatUtils.formatDate(new Date(run.created))}
+                </span>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {run?.id ?? t('Unknown')}
+              </div>
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground">
-            {run?.id ?? t('Unknown')}
-          </div>
+          {canExitRun && (
+            <Button
+              variant={'outline'}
+              size="sm"
+              onClick={() => exitRun(userHasPermissionToEditFlow)}
+              loading={isLoading}
+              onKeyboardShortcut={() => exitRun(userHasPermissionToEditFlow)}
+              keyboardShortcut="Esc"
+              className="flex-shrink-0"
+            >
+              {t('Exit Run')}
+            </Button>
+          )}
         </div>
-        {canExitRun && (
-          <Button
-            variant={'outline'}
-            onClick={() => exitRun(userHasPermissionToEditFlow)}
-            loading={isLoading}
-            onKeyboardShortcut={() => exitRun(userHasPermissionToEditFlow)}
-            keyboardShortcut="Esc"
-          >
-            {t('Exit Run')}
-          </Button>
-        )}
       </div>
     );
   },

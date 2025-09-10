@@ -1,6 +1,8 @@
+import { GitPushOperationType } from '@activepieces/ee-shared'
 import { Agent,  CreateAgentRequest, EnhanceAgentPrompt, EnhancedAgentPrompt,  ListAgentsQueryParams,  PrincipalType, SeekPage, UpdateAgentRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { gitRepoService } from '../ee/projects/project-release/git-sync/git-sync.service'
 import { agentsService } from './agents-service'
 
 const DEFAULT_LIMIT = 100
@@ -12,6 +14,7 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
             limit: limit ?? DEFAULT_LIMIT,
             cursorRequest: cursor ?? null,
+            externalIds: request.query.externalIds,
         })
     })
 
@@ -30,6 +33,7 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
             description: request.body.description,
             projectId: request.principal.projectId,
             platformId: request.principal.platform.id,
+            enhancePrompt: true,
         })
     })
 
@@ -44,13 +48,12 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', UpdateAgentRequest, async (request) => {
         const { id } = request.params
-        const { displayName, systemPrompt, description, testPrompt, outputType, outputFields } = request.body
+        const { displayName, systemPrompt, description, outputType, outputFields } = request.body
         return agentsService(request.log).update({
             id,
             displayName,
             systemPrompt,
             description,
-            testPrompt,
             outputType,
             outputFields,
             projectId: request.principal.projectId,
@@ -58,6 +61,18 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.delete('/:id', DeleteAgentRequest, async (request) => {
+        const agent = await agentsService(request.log).getOneOrThrow({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+        })
+        await gitRepoService(request.log).onDeleted({
+            type: GitPushOperationType.DELETE_AGENT,
+            externalId: agent.externalId,
+            userId: request.principal.id,
+            projectId: request.principal.projectId,
+            platformId: request.principal.platform.id,
+            log: request.log,
+        })
         const { id } = request.params
         await agentsService(request.log).delete({
             id, 

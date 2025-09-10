@@ -1,5 +1,4 @@
 {
-  "Airtable": "Airtable",
   "Low‒code platform to build apps.": "LowØ code platform om apps te bouwen.",
   "\n    To obtain your personal token, follow these steps:\n\n    1. Log in to your Airtable account.\n    2. Visit https://airtable.com/create/tokens/ to create one\n    3. Click on \"+ Add a base\" and select the base you want to use or all bases.\n    4. Click on \"+ Add a scope\" and select \"data.records.read\", \"data.records.write\" and \"schema.bases.read\".\n    5. Click on \"Create token\" and copy the token.\n    ": "\n    Om je persoonlijke token te krijgen, volg je deze stappen:\n\n    1. Log in op uw Airtable account.\n    2. Bezoek https://airtable.com/create/tokens/ om een\n    3 aan te maken. Klik op \"+ Voeg een basis toe\" en selecteer de basis die je wilt gebruiken of alle basissen.\n    4. Klik op \"+ Een scope toevoegen\" en selecteer \"gegevens\" ecords.read\", \"data.records.write\" en \"schema.bases.read\".\n    5. Klik op \"Maak token\" en kopieer het token.\n    ",
   "Create Airtable Record": "Airtable Record Maken",
@@ -28,6 +27,7 @@
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
   "Body": "Lichaam",
+  "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
   "The ID of the record you want to update. You can find the record ID by clicking on the record and then clicking on the share button. The ID will be in the URL.": "De ID van het record dat u wilt bijwerken. U kunt het opname-ID vinden door te klikken op het record en vervolgens te klikken op de deel-knop. Het ID staat in de URL.",
@@ -36,6 +36,7 @@
   "Specifies the MIME type of the file being uploaded (e.g., 'image/png', 'application/pdf').": "Geeft het MIME-type op van het bestand dat wordt geüpload (bijv. 'image/png', 'application/pdf').",
   "The name of the file as it should appear after upload.": "De naam van het bestand zoals het moet worden weergegeven na uploaden.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "GET": "KRIJG",
   "POST": "POSTE",
   "PATCH": "BEKIJK",

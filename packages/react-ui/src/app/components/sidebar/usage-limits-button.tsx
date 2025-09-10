@@ -4,7 +4,7 @@ import { ClipboardCheck, Sparkles, Clock, Rocket } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress-circle';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -116,7 +116,7 @@ const UsageLimitsButton = React.memo(() => {
   return (
     <div className="flex flex-col gap-2 w-full px-2">
       <Separator className="my-1.5" />
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-4">
           <UsageProgress
             name={t('Tasks')}
@@ -130,27 +130,34 @@ const UsageLimitsButton = React.memo(() => {
             max={project.plan.aiCredits}
             icon={<Sparkles className="w-4 h-4  mr-1" />}
           />
-
           {isTrial &&
             platform.plan.stripeSubscriptionEndDate &&
             platform.plan.stripeSubscriptionStartDate && (
-              <div className="flex flex-col gap-4">
-                <TrialProgress
-                  trialEndDate={platform.plan.stripeSubscriptionEndDate}
-                  trialStartDate={platform.plan.stripeSubscriptionStartDate}
-                />
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => openDialog()}
-                >
-                  <Rocket className="w-4 h-4 mr-2" />
-                  {t('Upgrade Plan')}
-                </Button>
-              </div>
+              <TrialProgress
+                trialEndDate={platform.plan.stripeSubscriptionEndDate}
+                trialStartDate={platform.plan.stripeSubscriptionStartDate}
+              />
             )}
         </div>
+        {isTrial && (
+          <div className="flex flex-col gap-3">
+            <Button size="sm" className="w-full" onClick={() => openDialog()}>
+              <Rocket className="w-4 h-4 mr-2" />
+              {t('Upgrade Plan')}
+            </Button>
+            <FlagGuard flag={ApFlagId.SHOW_BILLING}>
+              <Link
+                to={'/platform/setup/billing'}
+                className={cn(
+                  buttonVariants({ variant: 'outline', size: 'sm' }),
+                  'w-full',
+                )}
+              >
+                {t('Manage Billing')}
+              </Link>
+            </FlagGuard>
+          </div>
+        )}
         {!isTrial && (
           <div className="text-xs text-muted-foreground flex justify-between w-full">
             <span>

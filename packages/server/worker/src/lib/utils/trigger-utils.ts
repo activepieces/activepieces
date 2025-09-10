@@ -1,10 +1,10 @@
+import { inspect } from 'util'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
     FlowTriggerType,
     FlowVersion,
-    isNil,
     ProjectId,
     TriggerHookType,
     TriggerPayload,
@@ -49,7 +49,7 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
             flowId: flowVersion.flowId,
             simulate,
             jobId,
-            error: !isNil(error) && typeof error === 'string' ? error : JSON.stringify(error),
+            error: inspect(error),
         }), log)
 
         return payloads
@@ -118,13 +118,13 @@ async function getTriggerPayloadsAndStatus(
             return {
                 payloads: [],
                 status: TriggerRunStatus.TIMED_OUT,
-                error: e,
+                error: inspect(e),
             }
         }
         return {
             payloads: [],
             status: TriggerRunStatus.INTERNAL_ERROR,
-            error: e,
+            error: inspect(e),
         }
     }
 }
