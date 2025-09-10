@@ -142,7 +142,7 @@ export const authenticationUtils = {
         try {
             await telemetry(log).identify(user, identity, project.id)
             await telemetry(log).trackProject(project.id, {
-                name: TelemetryEventName.SIGNED_UP,
+                name: TelemetryEventName.USER_SIGNED_UP,
                 payload: {
                     userId: identity.id,
                     email: identity.email,

@@ -70,15 +70,14 @@ type McpToolCalled = {
 }
 
 export enum TelemetryEventName {
-    SIGNED_UP = 'signed.up',
-    KEY_ACTIVATED = 'key.activated',
-    FLOW_ISSUE_CLICKED = 'flow.issue.clicked',
-    FLOW_ISSUE_RESOLVED = 'flow.issue.resolved',
-    CREATED_FLOW = 'flow.created',
-    FLOW_RUN_CREATED = 'run.created',
-    MCP_TOOL_CALLED = 'mcp.tool.called',
-    CLICKED_TUTORIAL = 'clicked.tutorial',
-    FLOW_PUBLISHED = 'flow.published',
+    USER_SIGNED_UP = 'user_signed_up',
+    KEY_ACTIVATED = 'key_activated',
+    FLOW_ISSUE_RESOLVED = 'flow_issue_resolved',
+    FLOW_CREATED = 'flow_created',
+    FLOW_RUN_CREATED = 'flow_run_created',
+    MCP_TOOL_CALLED = 'mcp_tool_called',
+    TUTORIAL_CLICKED = 'tutorial_clicked',
+    FLOW_PUBLISHED = 'flow_published',
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -87,7 +86,7 @@ type BaseTelemetryEvent<T, P> = {
 }
 
 export type TelemetryEvent =
-  | BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, SignedUp>
+  | BaseTelemetryEvent<TelemetryEventName.USER_SIGNED_UP, SignedUp>
   | BaseTelemetryEvent<TelemetryEventName.KEY_ACTIVATED, KeyActivated>
   | BaseTelemetryEvent<
   TelemetryEventName.FLOW_ISSUE_RESOLVED,
@@ -95,6 +94,6 @@ export type TelemetryEvent =
   >
   | BaseTelemetryEvent<TelemetryEventName.FLOW_RUN_CREATED, RunCreated>
   | BaseTelemetryEvent<TelemetryEventName.FLOW_PUBLISHED, FlowPublished>
-  | BaseTelemetryEvent<TelemetryEventName.CREATED_FLOW, FlowCreated>
+  | BaseTelemetryEvent<TelemetryEventName.FLOW_CREATED, FlowCreated>
   | BaseTelemetryEvent<TelemetryEventName.MCP_TOOL_CALLED, McpToolCalled>
-  | BaseTelemetryEvent<TelemetryEventName.CLICKED_TUTORIAL, ClickedTutorialTelemetryParams>
+  | BaseTelemetryEvent<TelemetryEventName.TUTORIAL_CLICKED, ClickedTutorialTelemetryParams>

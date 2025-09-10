@@ -33,7 +33,7 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   const { data: flagEnvironment } = flagsHooks.useFlag<string>(
     ApFlagId.ENVIRONMENT,
   );
-
+  const { data: flagEdition } = flagsHooks.useFlag<string>(ApFlagId.EDITION);
   useEffect(() => {
     const handleStorageChange = (_event: StorageEvent) => {
       setUser(currentUser ?? null);
@@ -65,6 +65,7 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
       writeKey: 'LzmO14emO8lqm0ANNGi9rwBpaazHvFbo',
     });
 
+    // ignore the /embed path because it includes the jwt token in the url
     newAnalytics.addSourceMiddleware(({ payload, next }) => {
       const path = payload?.obj?.properties?.['path'];
       const ignoredPaths = ['/embed'];
@@ -81,9 +82,10 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      activepiecesVersion: currentVersion,
+      version: currentVersion,
       activepiecesEnvironment: environment,
-      ui: 'react',
+      platformId: user.platformId,
+      activepiecesEdition: flagEdition,
     });
 
     newAnalytics.ready(() => {

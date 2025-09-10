@@ -105,7 +105,7 @@ const TutorialsDialog = ({
             <div
               onClick={() => {
                 capture({
-                  name: TelemetryEventName.CLICKED_TUTORIAL,
+                  name: TelemetryEventName.TUTORIAL_CLICKED,
                   payload: { tab: initialTab ?? 'gettingStarted', location },
                 });
               }}

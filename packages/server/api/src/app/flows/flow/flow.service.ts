@@ -62,7 +62,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         )
 
         telemetry(log).trackProject(savedFlow.projectId, {
-            name: TelemetryEventName.CREATED_FLOW,
+            name: TelemetryEventName.FLOW_CREATED,
             payload: {
                 flowId: savedFlow.id,
             },
