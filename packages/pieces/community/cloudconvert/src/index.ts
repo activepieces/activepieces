@@ -1,5 +1,6 @@
 
-    import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+    import { createPiece } from "@activepieces/pieces-framework";
+    import { cloudconvertAuth } from './lib/common/auth';
     import { jobFinished } from './lib/triggers/job-finished.trigger';
     import { newJobEvent } from './lib/triggers/new-job-event';
     import { jobFailed } from './lib/triggers/job-failed';
@@ -12,7 +13,7 @@
 
     export const cloudconvert = createPiece({
       displayName: 'Cloudconvert',
-      auth: PieceAuth.None(),
+      auth: cloudconvertAuth,
       minimumSupportedRelease: '0.36.1',
       logoUrl: 'https://cdn.activepieces.com/pieces/cloudconvert.png',
       authors: ['Prabhukiran161'],
