@@ -31,7 +31,7 @@ export type EngineOperation =
     | ExecuteFlowOperation
     | ExecutePropsOptions
     | ExecuteTriggerOperation<TriggerHookType>
-    | ExecuteExtractPieceMetadata
+    | ExecuteExtractPieceMetadataOperation
     | ExecuteValidateAuthOperation
 
 export const enum EngineSocketEvent {
@@ -61,6 +61,7 @@ export type BaseEngineOperation = {
     engineToken: string
     internalApiUrl: string
     publicApiUrl: string
+    timeoutInSeconds: number
 }
 
 export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {
@@ -70,6 +71,8 @@ export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'
 }
 
 export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }
+
+export type ExecuteExtractPieceMetadataOperation = ExecuteExtractPieceMetadata & { timeoutInSeconds: number }
 
 export type ExecuteToolOperation = BaseEngineOperation & {
     actionName: string

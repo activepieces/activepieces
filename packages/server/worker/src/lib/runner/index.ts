@@ -1,17 +1,18 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PackageType, PieceActionSettings, PieceTriggerSettings, TriggerHookType } from '@activepieces/shared'
+import { BeginExecuteFlowOperation, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PackageType, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { pieceWorkerCache } from '../cache/piece-worker-cache'
 import { executionFiles } from '../cache/execution-files'
+import { pieceWorkerCache } from '../cache/piece-worker-cache'
 import { pieceEngineUtil } from '../utils/flow-engine-util'
 import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
-import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from './engine-runner-types'
+import { EngineHelperActionResult, EngineHelperExtractPieceInformation, EngineHelperFlowResult, EngineHelperPropResult, EngineHelperResponse, EngineHelperResult, EngineHelperTriggerResult, EngineHelperValidateAuthResult, engineRunnerUtils } from './engine-runner-types'
 import { engineProcessManager } from './process/engine-process-manager'
 
+type EngineConstants = 'publicApiUrl' | 'internalApiUrl' | 'engineToken'
 
-export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
-    async executeFlow(engineToken, operation) {
+export const engineRunner = (log: FastifyBaseLogger) => ({
+    async executeFlow(engineToken: string, operation: Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>): Promise<EngineHelperResponse<EngineHelperFlowResult>> {
         log.debug({
             flowVersion: operation.flowVersion.id,
             projectId: operation.projectId,
@@ -25,9 +26,9 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             internalApiUrl: workerMachine.getInternalApiUrl(),
         }
 
-        return execute(log, input, EngineOperationType.EXECUTE_FLOW)
+        return execute(log, input, EngineOperationType.EXECUTE_FLOW, operation.timeoutInSeconds)
     },
-    async executeTrigger(engineToken, operation) {
+    async executeTrigger<T extends TriggerHookType>(engineToken: string, operation: Omit<ExecuteTriggerOperation<T>, EngineConstants>): Promise<EngineHelperResponse<EngineHelperTriggerResult<T>>> {
         log.debug({
             hookType: operation.hookType,
             projectId: operation.projectId,
@@ -54,15 +55,16 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             internalApiUrl: workerMachine.getInternalApiUrl(),
             webhookSecret: await webhookSecretsUtils.getWebhookSecret(lockedVersion),
             engineToken,
+            timeoutInSeconds: operation.timeoutInSeconds,
         }
         await executionFiles(log).provision({
             pieces: [triggerPiece],
             codeSteps: [],
             customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
         })
-        return execute(log, input, EngineOperationType.EXECUTE_TRIGGER_HOOK)
+        return execute(log, input, EngineOperationType.EXECUTE_TRIGGER_HOOK, operation.timeoutInSeconds)
     },
-    async extractPieceMetadata(engineToken, operation) {
+    async extractPieceMetadata(engineToken: string, operation: ExecuteExtractPieceMetadataOperation): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>> {
         log.debug({ operation }, '[threadEngineRunner#extractPieceMetadata]')
 
         const lockedPiece = await pieceEngineUtil.enrichPieceWithArchive(engineToken, {
@@ -77,9 +79,9 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             codeSteps: [],
             customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
         })
-        return execute(log, operation, EngineOperationType.EXTRACT_PIECE_METADATA)
+        return execute(log, operation, EngineOperationType.EXTRACT_PIECE_METADATA, operation.timeoutInSeconds)
     },
-    async executeValidateAuth(engineToken, operation) {
+    async executeValidateAuth(engineToken: string, operation: Omit<ExecuteValidateAuthOperation, EngineConstants>): Promise<EngineHelperResponse<EngineHelperValidateAuthResult>> {
 
         log.debug({ ...operation.piece, platformId: operation.platformId }, '[threadEngineRunner#executeValidateAuth]')
 
@@ -96,9 +98,9 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             internalApiUrl: workerMachine.getInternalApiUrl(),
             engineToken,
         }
-        return execute(log, input, EngineOperationType.EXECUTE_VALIDATE_AUTH)
+        return execute(log, input, EngineOperationType.EXECUTE_VALIDATE_AUTH, operation.timeoutInSeconds)
     },
-    async executeProp(engineToken, operation) {
+    async executeProp(engineToken: string, operation: Omit<ExecutePropsOptions, EngineConstants>): Promise<EngineHelperResponse<EngineHelperPropResult>> {
         log.debug({
             piece: operation.piece,
             propertyName: operation.propertyName,
@@ -120,9 +122,9 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             internalApiUrl: workerMachine.getInternalApiUrl(),
             engineToken,
         }
-        return execute(log, input, EngineOperationType.EXECUTE_PROPERTY)
+        return execute(log, input, EngineOperationType.EXECUTE_PROPERTY, operation.timeoutInSeconds)
     },
-    async excuteTool(engineToken, operation) {
+    async excuteTool(engineToken: string, operation: Omit<ExecuteToolOperation, EngineConstants>): Promise<EngineHelperResponse<EngineHelperActionResult>> {
         log.debug({ operation }, '[threadEngineRunner#excuteTool]')
 
         const lockedPiece = await pieceEngineUtil.resolveExactVersion(engineToken, operation)
@@ -137,9 +139,9 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             internalApiUrl: workerMachine.getInternalApiUrl(),
             engineToken,
         }
-        return execute(log, input, EngineOperationType.EXECUTE_TOOL)
+        return execute(log, input, EngineOperationType.EXECUTE_TOOL, operation.timeoutInSeconds)
     },
-    async shutdownAllWorkers() {
+    async shutdownAllWorkers(): Promise<void> {
         await engineProcessManager.shutdown()
     },
 })
@@ -164,10 +166,9 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
     })
 }
 
-
-async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger, operation: EngineOperation, operationType: EngineOperationType): Promise<EngineHelperResponse<Result>> {
+async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger, operation: EngineOperation, operationType: EngineOperationType, timeoutInSeconds: number): Promise<EngineHelperResponse<Result>> {
     const startTime = Date.now()
-    const { engine, stdError, stdOut } = await engineProcessManager.executeTask(operationType, operation, log)
+    const { engine, stdError, stdOut } = await engineProcessManager.executeTask(operationType, operation, log, timeoutInSeconds)
     return engineRunnerUtils(log).readResults({
         timeInSeconds: (Date.now() - startTime) / 1000,
         verdict: engine.status,

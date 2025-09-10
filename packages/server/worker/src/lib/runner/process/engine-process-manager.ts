@@ -1,5 +1,5 @@
 import { ChildProcess } from 'child_process'
-import { ApSemaphore, getEngineTimeout } from '@activepieces/server-shared'
+import { ApSemaphore } from '@activepieces/server-shared'
 import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, EngineStderr, EngineStdout, ExecuteFlowOperation, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionMode, isNil, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -52,7 +52,7 @@ export const engineProcessManager = {
         return processes.length
     },
 
-    async executeTask(operationType: EngineOperationType, operation: EngineOperation, log: FastifyBaseLogger): Promise<WorkerResult> {
+    async executeTask(operationType: EngineOperationType, operation: EngineOperation, log: FastifyBaseLogger, timeout: number): Promise<WorkerResult> {
         log.trace({
             operationType,
             operation,
@@ -98,7 +98,7 @@ export const engineProcessManager = {
                 }, 'Worker connected')
             }
 
-            const result = await processTask(workerIndex, operationType, operation, log)
+            const result = await processTask(workerIndex, operationType, operation, log, timeout)
             // Keep an await so finally does not run before the task is finished
             return result
         }
@@ -124,10 +124,9 @@ export const engineProcessManager = {
     },
 }
 
-async function processTask(workerIndex: number, operationType: EngineOperationType, operation: EngineOperation, log: FastifyBaseLogger): Promise<WorkerResult> {
+async function processTask(workerIndex: number, operationType: EngineOperationType, operation: EngineOperation, log: FastifyBaseLogger, timeout: number): Promise<WorkerResult> {
     const worker = processes[workerIndex]
     assertNotNullOrUndefined(worker, 'Worker should not be undefined')
-    const timeout = getEngineTimeout(operationType, workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, workerMachine.getSettings().TRIGGER_TIMEOUT_SECONDS)
     let didTimeout = false
     const workerId = processIds[workerIndex]
     let timeoutWorker: NodeJS.Timeout | undefined

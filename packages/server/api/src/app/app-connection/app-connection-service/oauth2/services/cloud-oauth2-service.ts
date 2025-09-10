@@ -30,7 +30,7 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
         }
         const response = (
             await apAxios.post('https://secrets.activepieces.com/refresh', requestBody, {
-                timeout: 10000,
+                timeout: 20000,
             })
         ).data
         return {

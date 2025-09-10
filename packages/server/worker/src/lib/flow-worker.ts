@@ -127,19 +127,19 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
 
 
 async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): Promise<ConsumeJobResponse> {
-    const { jobId, jobData, attempsStarted, engineToken } = request
+    const { jobId, jobData, attempsStarted, engineToken, timeoutInSeconds } = request
     switch (jobData.jobType) {
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
         case WorkerJobType.EXECUTE_PROPERTY:
         case WorkerJobType.EXECUTE_TOOL:
         case WorkerJobType.EXECUTE_VALIDATION:
         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
-            await userInteractionJobExecutor(log).execute(jobData, engineToken, workerToken)
+            await userInteractionJobExecutor(log).execute(jobData, engineToken, workerToken, timeoutInSeconds)
             return {
                 status: ConsumeJobResponseStatus.OK,
             }
         case WorkerJobType.EXECUTE_FLOW:
-            await flowJobExecutor(log).executeFlow(jobData, attempsStarted, engineToken)
+            await flowJobExecutor(log).executeFlow(jobData, attempsStarted, engineToken, timeoutInSeconds)
             return {
                 status: ConsumeJobResponseStatus.OK,
             }
@@ -149,23 +149,26 @@ async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): P
                 data: jobData,
                 engineToken,
                 workerToken,
+                timeoutInSeconds,
             })
         case WorkerJobType.RENEW_WEBHOOK:
             return renewWebhookExecutor(log).renewWebhook({
                 data: jobData,
                 engineToken,
+                timeoutInSeconds,
             })
         case WorkerJobType.DELAYED_FLOW: {
             throw new Error('Delayed flow is handled by the app')
         }
         case WorkerJobType.EXECUTE_WEBHOOK: {
-            return webhookExecutor(log).consumeWebhook(jobId, jobData, engineToken, workerToken)
+            return webhookExecutor(log).consumeWebhook(jobId, jobData, engineToken, workerToken, timeoutInSeconds)
         }
         case WorkerJobType.EXECUTE_AGENT: {
             await agentJobExecutor(log).executeAgent({
                 jobData,
                 engineToken,
-                workerToken,
+                workerToken, 
+                timeoutInSeconds,
             })
             return {
                 status: ConsumeJobResponseStatus.OK,

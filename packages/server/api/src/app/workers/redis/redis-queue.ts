@@ -90,6 +90,7 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
                 backoff: {
                     type: 'exponential',
                     delay: EIGHT_MINUTES_IN_MILLISECONDS,
+                    jitter: 0.5,
                 },
                 removeOnComplete: true,
                 removeOnFail: {

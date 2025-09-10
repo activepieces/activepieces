@@ -17,20 +17,6 @@ import { workerMachine } from './machine'
 import { webhookUtils } from './webhook-utils'
 
 export const triggerHooks = (log: FastifyBaseLogger) => ({
-    renewWebhook: async (params: RenewParams): Promise<void> => {
-        const { flowVersion, projectId, simulate } = params
-        await engineRunner(log).executeTrigger(params.engineToken, {
-            hookType: TriggerHookType.RENEW,
-            flowVersion,
-            webhookUrl: await webhookUtils(log).getWebhookUrl({
-                flowId: flowVersion.flowId,
-                simulate,
-                publicApiUrl: workerMachine.getPublicApiUrl(),
-            }),
-            test: simulate,
-            projectId,
-        })
-    },
     extractPayloads: async (
         engineToken: string,
         params: ExecuteTrigger,
@@ -76,13 +62,7 @@ type ExecuteTrigger = {
     projectId: ProjectId
     simulate: boolean
     payload: TriggerPayload
-}
-
-type RenewParams = {
-    engineToken: string
-    flowVersion: FlowVersion
-    projectId: ProjectId
-    simulate: boolean
+    timeoutInSeconds: number
 }
 
 async function getTriggerPayloadsAndStatus(
@@ -90,7 +70,7 @@ async function getTriggerPayloadsAndStatus(
     log: FastifyBaseLogger,
     params: ExecuteTrigger,
 ): Promise<ExtractPayloadsResult> {
-    const { payload, flowVersion, projectId, simulate } = params
+    const { payload, flowVersion, projectId, simulate, timeoutInSeconds } = params
     try {
         const { result } = await engineRunner(log).executeTrigger(engineToken, {
             hookType: TriggerHookType.RUN,
@@ -103,6 +83,7 @@ async function getTriggerPayloadsAndStatus(
             }),
             projectId,
             test: simulate,
+            timeoutInSeconds,
         })
 
         if (result.success) {

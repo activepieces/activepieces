@@ -1,10 +1,12 @@
-import { assertNotNullOrUndefined, ConsumeJobResponse, ConsumeJobResponseStatus, RenewWebhookJobData } from '@activepieces/shared'
+import { assertNotNullOrUndefined, ConsumeJobResponse, ConsumeJobResponseStatus, RenewWebhookJobData, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowWorkerCache } from '../cache/flow-worker-cache'
-import { triggerHooks } from '../utils/trigger-utils'
+import { engineRunner } from '../runner'
+import { workerMachine } from '../utils/machine'
+import { webhookUtils } from '../utils/webhook-utils'
 
 export const renewWebhookExecutor = (log: FastifyBaseLogger) => ({
-    async renewWebhook({ data, engineToken }: RenewWebhookParams): Promise<ConsumeJobResponse> {
+    async renewWebhook({ data, engineToken, timeoutInSeconds }: RenewWebhookParams): Promise<ConsumeJobResponse> {
         const { flowVersionId } = data
 
         const populatedFlow = await flowWorkerCache.getFlow({
@@ -15,11 +17,18 @@ export const renewWebhookExecutor = (log: FastifyBaseLogger) => ({
         assertNotNullOrUndefined(flowVersion, 'flowVersion')
 
         log.info({ flowVersionId: data.flowVersionId }, '[FlowQueueConsumer#consumeRenewWebhookJob]')
-        await triggerHooks(log).renewWebhook({
-            engineToken,
+        const simulate = false
+        await engineRunner(log).executeTrigger(engineToken, {
+            hookType: TriggerHookType.RENEW,
             flowVersion,
+            webhookUrl: await webhookUtils(log).getWebhookUrl({
+                flowId: flowVersion.flowId,
+                simulate,
+                publicApiUrl: workerMachine.getPublicApiUrl(),
+            }),
+            test: simulate,
             projectId: data.projectId,
-            simulate: false,
+            timeoutInSeconds,
         })
         return {
             status: ConsumeJobResponseStatus.OK,
@@ -30,4 +39,5 @@ export const renewWebhookExecutor = (log: FastifyBaseLogger) => ({
 type RenewWebhookParams = {
     data: RenewWebhookJobData
     engineToken: string
+    timeoutInSeconds: number
 }

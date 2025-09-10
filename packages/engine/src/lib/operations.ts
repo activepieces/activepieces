@@ -6,6 +6,7 @@ import {
     EngineResponseStatus,
     ExecuteActionResponse,
     ExecuteExtractPieceMetadata,
+    ExecuteExtractPieceMetadataOperation,
     ExecuteFlowOperation,
     ExecutePropsOptions,
     ExecuteToolOperation,
@@ -195,7 +196,7 @@ async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Pr
 export async function execute(operationType: EngineOperationType, operation: EngineOperation): Promise<EngineResponse<unknown>> {
     switch (operationType) {
         case EngineOperationType.EXTRACT_PIECE_METADATA: {
-            const input = operation as ExecuteExtractPieceMetadata
+            const input = operation as ExecuteExtractPieceMetadataOperation
             const output = await pieceHelper.extractPieceMetadata({
                 params: input,
                 pieceSource: EngineConstants.PIECE_SOURCES,

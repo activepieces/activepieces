@@ -7,13 +7,14 @@ import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
 
 export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
-    async execute(jobData: UserInteractionJobData, engineToken: string, workerToken: string): Promise<void> {
+    async execute(jobData: UserInteractionJobData, engineToken: string, workerToken: string, timeoutInSeconds: number): Promise<void> {
         let response: EngineHelperResponse<EngineHelperResult>
         switch (jobData.jobType) {
             case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
                 response = await engineRunner(log).extractPieceMetadata(engineToken, {
                     ...jobData.piece,
                     platformId: jobData.platformId,
+                    timeoutInSeconds,
                 })
                 break
             case WorkerJobType.EXECUTE_VALIDATION:
@@ -21,6 +22,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                     platformId: jobData.platformId,
                     auth: jobData.connectionValue as AppConnectionValue,
                     piece: jobData.piece,
+                    timeoutInSeconds,
                 })
                 break
             case WorkerJobType.EXECUTE_TRIGGER_HOOK:
@@ -35,6 +37,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                     triggerPayload: jobData.triggerPayload,
                     projectId: jobData.projectId,
                     test: jobData.test,
+                    timeoutInSeconds,
                 })
                 break
             case WorkerJobType.EXECUTE_TOOL:
@@ -44,6 +47,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                     pieceVersion: jobData.pieceVersion,
                     input: jobData.input,
                     projectId: jobData.projectId,
+                    timeoutInSeconds,
                 })
                 break
             case WorkerJobType.EXECUTE_PROPERTY:
@@ -56,6 +60,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                     sampleData: jobData.sampleData,
                     projectId: jobData.projectId,
                     searchValue: jobData.searchValue,
+                    timeoutInSeconds,
                 })
                 break
         }
