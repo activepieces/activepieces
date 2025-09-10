@@ -53,19 +53,22 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
             return res.status(StatusCodes.NOT_FOUND).send({ message: 'Flow run not found' })
         }
 
-        if (flowRun.status !== FlowRunStatus.PAUSED) {
-            return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Flow run is not paused' })
-        }
-
-        if (flowRun.pauseMetadata?.type !== PauseType.DELAY) {
-            return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Flow run is not a delayed run' })
-        }
+        let updatedLogs = false;
 
         const oldestLogFile = await getOldestLogFile(flowRun.id, flowRun.projectId, req.log)
         if (!isNil(oldestLogFile) && oldestLogFile !== flowRun.logsFileId) {
             await flowRunRepo().update(flowRun.id, {
                 logsFileId: oldestLogFile,
             })
+            updatedLogs = true;
+        }
+
+        if (flowRun.status !== FlowRunStatus.PAUSED) {
+            return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Flow run is not paused', updatedLogs })
+        }
+
+        if (flowRun.pauseMetadata?.type !== PauseType.DELAY) {
+            return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Flow run is not a delayed run', updatedLogs })
         }
 
         const delayInMilliSeconds = dayjs(flowRun.pauseMetadata.resumeDateTime).diff(dayjs())
@@ -93,6 +96,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 
         return res.status(StatusCodes.OK).send({
             message: 'Delayed run added to queue successfully',
+            updatedLogs,
         })
     })
 }
