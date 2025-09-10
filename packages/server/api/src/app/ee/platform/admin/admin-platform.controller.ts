@@ -55,14 +55,22 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 
         let updatedLogs = false;
 
-        const oldestLogFile = await getOldestLogFile(flowRun.id, flowRun.projectId, req.log)
-        if (!isNil(oldestLogFile) && oldestLogFile !== flowRun.logsFileId) {
-            await flowRunRepo().update(flowRun.id, {
-                logsFileId: oldestLogFile,
+        if (!isNil(flowRun.logsFileId)) {
+            const existedFile = await fileRepo().findOneBy({
+                projectId: flowRun.projectId,
+                id: flowRun.logsFileId,
             })
-            updatedLogs = true;
+            const existedInS3 = isNil(existedFile?.s3Key) ? false : await s3Helper(req.log).exists(existedFile?.s3Key)
+            if (!existedInS3) {
+                const oldestLogFile = await getOldestLogFile(flowRun.id, flowRun.projectId, req.log)
+                if (!isNil(oldestLogFile) && oldestLogFile !== flowRun.logsFileId && existedFile?.id !== oldestLogFile) {
+                    await flowRunRepo().update(flowRun.id, {
+                        logsFileId: oldestLogFile,
+                    })
+                    updatedLogs = true;
+                }
+            }
         }
-
         if (flowRun.status !== FlowRunStatus.PAUSED) {
             return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Flow run is not paused', updatedLogs })
         }
