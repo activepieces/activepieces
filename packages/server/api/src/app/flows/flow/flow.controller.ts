@@ -6,12 +6,14 @@ import {
     CountFlowsRequest,
     CreateFlowRequest,
     ErrorCode,
+    flowMigrations,
     FlowOperationRequest,
     FlowOperationType,
     FlowStatus,
     flowStructureUtil,
     FlowTemplateWithoutProjectInformation,
     FlowTrigger,
+    FlowVersionState,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
     isNil,
@@ -28,6 +30,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
+import { preValidationHookHandler, RawReplyDefaultExpression, RawRequestDefaultExpression, RawServerBase, RouteGenericInterface } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
@@ -41,7 +44,7 @@ const DEFAULT_PAGE_SIZE = 10
 
 export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-
+    app.addHook('preValidation', migrateTemplatesHook)
     app.post('/', CreateFlowRequestOptions, async (request, reply) => {
         const newFlow = await flowService(request.log).create({
             projectId: request.principal.projectId,
@@ -330,4 +333,36 @@ const DeleteFlowRequestOptions = {
             [StatusCodes.NO_CONTENT]: Type.Never(),
         },
     },
+}
+
+
+type FlowOperationRouteGeneric = {
+    Body: FlowOperationRequest
+} & RouteGenericInterface
+export const migrateTemplatesHook: preValidationHookHandler<RawServerBase, RawRequestDefaultExpression, RawReplyDefaultExpression, FlowOperationRouteGeneric> = (request, _, done) => {
+
+
+    if (request.method === 'POST' && request.routeOptions.url === '/v1/flows/:id' && request.body?.type === FlowOperationType.IMPORT_FLOW) {
+        const migratedFlowVersion = flowMigrations.apply({
+            agentIds: [],
+            connectionIds: [],
+            created: new Date().toISOString(),
+            displayName: '',
+            flowId: '',
+            id: '',
+            updated: new Date().toISOString(),
+            updatedBy: '',
+            valid: false,
+            trigger: request.body.request.trigger,
+            state: FlowVersionState.DRAFT,
+        })
+        request.log.trace(
+            { schemaVersionBefore: request.body.request.schemaVersion, schemaVersionAfter: migratedFlowVersion.schemaVersion },
+            'migrateTemplatesHook',
+        )
+        request.body.request.trigger = migratedFlowVersion.trigger
+        request.body.request.schemaVersion = migratedFlowVersion.schemaVersion
+    }
+
+    done()
 }
