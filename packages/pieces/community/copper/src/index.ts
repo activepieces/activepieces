@@ -1,5 +1,9 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { CopperAuth } from './lib/common/constants';
+import {
+  createPiece,
+  PieceAuth,
+  PiecePropValueSchema,
+} from '@activepieces/pieces-framework';
+import { BASE_URL, CopperAuth } from './lib/common/constants';
 import { newPerson } from './lib/triggers/new-person';
 import { newLead } from './lib/triggers/new-lead';
 import { newTask } from './lib/triggers/new-task';
@@ -30,6 +34,8 @@ import { searchForACompany } from './lib/actions/search-for-a-company';
 import { searchForAnOpportunity } from './lib/actions/search-for-an-opportunity';
 import { searchForAProject } from './lib/actions/search-for-a-project';
 import { newActivity } from './lib/triggers/new-activity';
+import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const copper = createPiece({
   displayName: 'Copper',
@@ -37,6 +43,7 @@ export const copper = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/copper.png',
   authors: ['gs03-dev'],
+  categories: [PieceCategory.SALES_AND_CRM, PieceCategory.PRODUCTIVITY],
   actions: [
     createPerson,
     updatePerson,
@@ -57,6 +64,20 @@ export const copper = createPiece({
     searchForACompany,
     searchForAnOpportunity,
     searchForAProject,
+    createCustomApiCallAction({
+      auth: CopperAuth,
+      baseUrl: () => BASE_URL,
+      authMapping: async (auth) => {
+        const authValue = auth as PiecePropValueSchema<typeof CopperAuth>;
+        return {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-PW-AccessToken': authValue.apiKey,
+          'X-PW-Application': 'developer_api',
+          'X-PW-UserEmail': authValue.email,
+        };
+      },
+    }),
   ],
   triggers: [
     newActivity,

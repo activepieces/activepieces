@@ -27,8 +27,9 @@ const polling: Polling<
     const collected: CopperActivity[] = [];
     const pageSize = 100;
     let page = 1;
+    let hasMore = true;
 
-    while (true) {
+    while (hasMore) {
       const batch = await CopperApiService.fetchActivities(auth, {
         minimum_activity_date: minCreatedUnix,
         page_size: pageSize,
@@ -37,7 +38,7 @@ const polling: Polling<
       if (!batch.length) break;
 
       collected.push(...batch);
-      if (batch.length < pageSize) break;
+      if (batch.length < pageSize) hasMore=false;
       page += 1;
     }
 
