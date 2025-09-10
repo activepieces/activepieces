@@ -167,8 +167,7 @@ async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): P
             await agentJobExecutor(log).executeAgent({
                 jobData,
                 engineToken,
-                workerToken, 
-                timeoutInSeconds,
+                workerToken,
             })
             return {
                 status: ConsumeJobResponseStatus.OK,
