@@ -10,8 +10,27 @@ export const enrichPersonBasicBulk = createAction({
   props: {
     identifiers: Property.Array({
       displayName: 'Identifiers',
-      description: 'Array of identifier objects (max 10). Each object should have one of: village_id, linkedin_url, or email',
+      description: 'Add people to enrich (max 10)',
+      properties: {
+        identifierType: Property.StaticDropdown({
+          displayName: 'Identifier Type',
+          required: true,
+          options: {
+            options: [
+              { label: 'Village ID', value: 'village_id' },
+              { label: 'LinkedIn URL', value: 'linkedin_url' },
+              { label: 'Email', value: 'email' },
+            ],
+          },
+        }),
+        identifierValue: Property.ShortText({
+          displayName: 'Identifier Value',
+          description: 'Enter the Village ID, LinkedIn URL, or Email',
+          required: true,
+        }),
+      },
       required: true,
+      defaultValue: [],
     }),
     user_identifier: Property.ShortText({
       displayName: 'User Identifier',
@@ -30,6 +49,11 @@ export const enrichPersonBasicBulk = createAction({
       throw new Error('Maximum of 10 identifiers allowed per request');
     }
     
+    // Transform the array data to match API format
+    const formattedIdentifiers = identifiers.map((item: any) => ({
+      [item.identifierType]: item.identifierValue
+    }));
+    
     const headers: Record<string, string> = {
       'secret-key': context.auth,
     };
@@ -43,7 +67,7 @@ export const enrichPersonBasicBulk = createAction({
       url: 'https://api.village.do/v1/people/enrich/basic/bulk',
       headers,
       body: {
-        identifiers,
+        identifiers: formattedIdentifiers,
       },
     });
     
