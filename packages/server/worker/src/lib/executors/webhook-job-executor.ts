@@ -37,8 +37,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
 
         if (isNil(populatedFlowToRun)) {
             return {
-                status: ConsumeJobResponseStatus.INTERNAL_ERROR,
-                errorMessage: 'Flow not found',
+                status: ConsumeJobResponseStatus.OK
             }
         }
 
