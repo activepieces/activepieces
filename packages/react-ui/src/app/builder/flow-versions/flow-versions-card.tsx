@@ -1,6 +1,6 @@
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { Eye, EyeIcon, Pencil } from 'lucide-react';
+import { Eye, EyeIcon, Pencil, GitCompare } from 'lucide-react';
 import React, { useState } from 'react';
 
 import {
@@ -43,6 +43,26 @@ import {
   FlowVersionState,
   Permission,
 } from '@activepieces/shared';
+
+type CompareVersionOptionProps = {
+  version: FlowVersionMetadata;
+  onCompare: (version: FlowVersionMetadata) => void;
+};
+
+const CompareVersionDropdownMenuOption = ({
+  version,
+  onCompare,
+}: CompareVersionOptionProps) => {
+  return (
+    <DropdownMenuItem
+      onClick={() => onCompare(version)}
+      className="w-full"
+    >
+      <GitCompare className="mr-2 h-4 w-4" />
+      <span>{t('Compare')}</span>
+    </DropdownMenuItem>
+  );
+};
 
 type UseAsDraftOptionProps = {
   versionNumber: number;
@@ -104,6 +124,7 @@ type FlowVersionDetailsCardProps = {
   selected: boolean;
   published: boolean;
   flowVersionNumber: number;
+  onCompare?: (version: FlowVersionMetadata) => void;
 };
 const FlowVersionDetailsCard = React.memo(
   ({
@@ -111,6 +132,7 @@ const FlowVersionDetailsCard = React.memo(
     flowVersionNumber,
     selected,
     published,
+    onCompare,
   }: FlowVersionDetailsCardProps) => {
     const { checkAccess } = useAuthorization();
     const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
@@ -216,6 +238,12 @@ const FlowVersionDetailsCard = React.memo(
                 <Eye className="mr-2 h-4 w-4" />
                 <span>{t('View')}</span>
               </DropdownMenuItem>
+              {onCompare && (
+                <CompareVersionDropdownMenuOption
+                  version={flowVersion}
+                  onCompare={onCompare}
+                />
+              )}
               {flowVersion.state !== FlowVersionState.DRAFT && (
                 <UseAsDraftDropdownMenuOption
                   versionNumber={flowVersionNumber}
