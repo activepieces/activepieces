@@ -1,8 +1,8 @@
 {
-  "Read connections dynamically": "动态读取连接",
-  "Read Connection": "读取连接",
-  "Fetch connection by name": "通过名称获取连接",
+  "Read connections dynamically": "Read connections dynamically",
+  "Read Connection": "Read Connection",
+  "Fetch connection by name": "Fetch connection by name",
   "Markdown": "Markdown",
-  "Connection External ID": "连接外部ID",
+  "Connection External ID": "Connection External ID",
   "\n**Advanced Piece**\n<br>\nUse this piece if you are unsure which connection to use beforehand, such as when the connection external ID is sent through a webhook message.\n\n**Notes:**\n- You can retrieve the external ID from the connection settings page by hovering over the connection name.\n- Use this action to retrieve connection values by their external IDs from this project.\n- After testing the step, you can use the dynamic value in the piece by clicking (X) and referring to this step.\n": "\n**Advanced Piece**\n<br>\nUse this piece if you are unsure which connection to use beforehand, such as when the connection external ID is sent through a webhook message.\n\n**Notes:**\n- You can retrieve the external ID from the connection settings page by hovering over the connection name.\n- Use this action to retrieve connection values by their external IDs from this project.\n- After testing the step, you can use the dynamic value in the piece by clicking (X) and referring to this step.\n"
 }
