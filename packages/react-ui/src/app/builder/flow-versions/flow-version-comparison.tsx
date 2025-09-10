@@ -1,3 +1,9 @@
+import {
+  FlowVersion,
+  FlowVersionMetadata,
+  flowStructureUtil,
+  Step,
+} from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ArrowLeft, GitCompare, Plus, Minus, Edit } from 'lucide-react';
@@ -14,12 +20,6 @@ import { Separator } from '@/components/ui/separator';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { formatUtils } from '@/lib/utils';
-import {
-  FlowVersion,
-  FlowVersionMetadata,
-  flowStructureUtil,
-  Step,
-} from '@activepieces/shared';
 
 type StepChangeType = 'added' | 'deleted' | 'modified' | 'unchanged';
 
@@ -44,8 +44,10 @@ const FlowVersionComparison: React.FC<FlowVersionComparisonProps> = ({
     state.setLeftSidebar,
   ]);
 
-  const [selectedVersion1, setSelectedVersion1] = useState<FlowVersionMetadata>(version1);
-  const [selectedVersion2, setSelectedVersion2] = useState<FlowVersionMetadata>(version2);
+  const [selectedVersion1, setSelectedVersion1] =
+    useState<FlowVersionMetadata>(version1);
+  const [selectedVersion2, setSelectedVersion2] =
+    useState<FlowVersionMetadata>(version2);
 
   // Fetch full flow version data for both versions
   const { data: flowVersion1, isLoading: isLoading1 } = useQuery<FlowVersion>({
@@ -77,11 +79,11 @@ const FlowVersionComparison: React.FC<FlowVersionComparisonProps> = ({
     const steps2 = flowStructureUtil.getAllSteps(flowVersion2.trigger);
 
     const changes: StepChange[] = [];
-    const stepMap1 = new Map(steps1.map(step => [step.name, step]));
-    const stepMap2 = new Map(steps2.map(step => [step.name, step]));
+    const stepMap1 = new Map(steps1.map((step) => [step.name, step]));
+    const stepMap2 = new Map(steps2.map((step) => [step.name, step]));
 
     // Find added and modified steps
-    steps2.forEach(step2 => {
+    steps2.forEach((step2) => {
       const step1 = stepMap1.get(step2.name);
       if (!step1) {
         changes.push({ step: step2, changeType: 'added' });
@@ -93,7 +95,7 @@ const FlowVersionComparison: React.FC<FlowVersionComparisonProps> = ({
     });
 
     // Find deleted steps
-    steps1.forEach(step1 => {
+    steps1.forEach((step1) => {
       if (!stepMap2.has(step1.name)) {
         changes.push({ step: step1, changeType: 'deleted' });
       }
@@ -188,7 +190,8 @@ const FlowVersionComparison: React.FC<FlowVersionComparisonProps> = ({
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">
-                {t('Version')} {formatUtils.formatDate(new Date(selectedVersion1.created))}
+                {t('Version')}{' '}
+                {formatUtils.formatDate(new Date(selectedVersion1.created))}
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
@@ -201,7 +204,8 @@ const FlowVersionComparison: React.FC<FlowVersionComparisonProps> = ({
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">
-                {t('Version')} {formatUtils.formatDate(new Date(selectedVersion2.created))}
+                {t('Version')}{' '}
+                {formatUtils.formatDate(new Date(selectedVersion2.created))}
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">

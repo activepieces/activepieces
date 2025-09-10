@@ -1,3 +1,8 @@
+import {
+  FlowVersionMetadata,
+  FlowVersionState,
+  Permission,
+} from '@activepieces/shared';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import { Eye, EyeIcon, Pencil, GitCompare } from 'lucide-react';
@@ -38,11 +43,6 @@ import { FlowVersionStateDot } from '@/features/flows/components/flow-version-st
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { formatUtils } from '@/lib/utils';
-import {
-  FlowVersionMetadata,
-  FlowVersionState,
-  Permission,
-} from '@activepieces/shared';
 
 type CompareVersionOptionProps = {
   version: FlowVersionMetadata;
@@ -54,10 +54,7 @@ const CompareVersionDropdownMenuOption = ({
   onCompare,
 }: CompareVersionOptionProps) => {
   return (
-    <DropdownMenuItem
-      onClick={() => onCompare(version)}
-      className="w-full"
-    >
+    <DropdownMenuItem onClick={() => onCompare(version)} className="w-full">
       <GitCompare className="mr-2 h-4 w-4" />
       <span>{t('Compare')}</span>
     </DropdownMenuItem>

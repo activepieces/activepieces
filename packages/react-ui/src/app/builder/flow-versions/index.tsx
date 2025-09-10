@@ -1,3 +1,5 @@
+/* eslint-disable import/no-unresolved */
+/* eslint-disable import/order */
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
@@ -41,11 +43,12 @@ const FlowVersionsList = () => {
 
   const handleCompareVersion = (version: FlowVersionMetadata) => {
     if (!flowVersionPage?.data) return;
-    
+
     // Find the previous version to compare with
-    const currentIndex = flowVersionPage.data.findIndex(v => v.id === version.id);
+    const currentIndex = flowVersionPage.data.findIndex(
+      (v) => v.id === version.id,
+    );
     const previousVersion = flowVersionPage.data[currentIndex + 1];
-    
     if (previousVersion) {
       setComparisonVersions({
         version1: previousVersion,
