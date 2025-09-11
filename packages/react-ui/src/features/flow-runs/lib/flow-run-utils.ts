@@ -1,3 +1,6 @@
+/* eslint-disable prettier/prettier */
+/* eslint-disable import/no-unresolved */
+/* eslint-disable import/order */
 import {
   Check,
   CircleCheck,
@@ -149,13 +152,23 @@ function findLoopsState(
     : null;
 
   return loops.reduce(
-    (res, step) => ({
-      ...res,
-      [step.name]:
-        failedStep && flowStructureUtil.isChildOf(step, failedStep)
-          ? Number.MAX_SAFE_INTEGER
-          : currentLoopsState[step.name] ?? 0,
-    }),
+    (res, step) => {
+      const currentIndex = currentLoopsState[step.name];
+
+      // If there's a failed child step, show all iterations
+      if (failedStep && flowStructureUtil.isChildOf(step, failedStep)) {
+        return {
+          ...res,
+          [step.name]: Number.MAX_SAFE_INTEGER,
+        };
+      }
+
+      // Preserve current loop index if it exists, otherwise default to 0
+      return {
+        ...res,
+        [step.name]: currentIndex !== undefined ? currentIndex : 0,
+      };
+    },
     currentLoopsState,
   );
 }
