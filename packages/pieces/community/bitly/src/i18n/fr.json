@@ -1,5 +1,4 @@
 {
-  "Bitly": "Bitte",
   "URL shortening and link management platform with analytics.": "Plateforme de raccourcissement des URL et de gestion des liens avec des analyses.",
   "Access Token": "Jeton d'accès",
   "\n  To get your Access Token:\n  1. Log in to your Bitly account.\n  2. Click your profile icon in the top right corner.\n  3. Go to **Profile Settings**.\n  4. Navigate to the **Developer settings** section.\n  5. Click on **API**.\n  6. Click the **Generate token** button and enter your password to get your access token.\n  ": "\n  To get your Access Token:\n  1. Log in to your Bitly account.\n  2. Click your profile icon in the top right corner.\n  3. Go to **Profile Settings**.\n  4. Navigate to the **Developer settings** section.\n  5. Click on **API**.\n  6. Click the **Generate token** button and enter your password to get your access token.\n  ",

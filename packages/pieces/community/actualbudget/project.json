@@ -5,19 +5,16 @@
   "projectType": "library",
   "release": {
     "version": {
-      "generatorOptions": {
-        "packageRoot": "dist/{projectRoot}",
-        "currentVersionResolver": "git-tag"
-      }
+      "currentVersionResolver": "git-tag",
+      "preserveLocalDependencyProtocols": false,
+      "manifestRootsToUpdate": ["dist/{projectRoot}"]
     }
   },
   "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/community/actualbudget",
         "tsConfig": "packages/pieces/community/actualbudget/tsconfig.lib.json",
@@ -34,31 +31,31 @@
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       },
-        "dependsOn": ["prebuild", "^build"]
-      },
-      "prebuild": {
-        "executor": "nx:run-commands",
-        "options": {
-          "cwd": "packages/pieces/community/actualbudget",
-          "command": "npm ci"
-        }
-      },
-      "build-with-deps": {
-        "executor": "nx:run-commands",
-        "options": {
-          "commands": [
-            "nx run pieces-actualbudget:prebuild",
-            "nx run pieces-actualbudget:build",
-            "nx run pieces-actualbudget:postbuild"
-          ],
-          "parallel": false
-        }
-      },
-      "postbuild": {
-        "executor": "nx:run-commands",
-        "options": {
-          "cwd": "dist/packages/pieces/community/actualbudget",
-          "command": "npm install"
+      "dependsOn": ["prebuild", "^build"]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/actualbudget",
+        "command": "npm ci"
+      }
+    },
+    "build-with-deps": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run pieces-actualbudget:prebuild",
+          "nx run pieces-actualbudget:build",
+          "nx run pieces-actualbudget:postbuild"
+        ],
+        "parallel": false
+      }
+    },
+    "postbuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "dist/packages/pieces/community/actualbudget",
+        "command": "npm install"
       }
     },
     "nx-release-publish": {
@@ -68,9 +65,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
+      "outputs": ["{options.outputFile}"]
     }
   }
 }
