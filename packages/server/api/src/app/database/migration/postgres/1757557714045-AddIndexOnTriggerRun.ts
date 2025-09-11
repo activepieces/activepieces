@@ -20,6 +20,9 @@ export class AddIndexOnTriggerRun1757557714045 implements MigrationInterface {
             ALTER TABLE "trigger_run"
             ADD CONSTRAINT "fk_trigger_run_payload_file_id" FOREIGN KEY ("payloadFileId") REFERENCES "file"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
+        await queryRunner.query(`
+            CREATE INDEX "idx_trigger_run_payload_file_id" ON "trigger_run" ("payloadFileId")
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -41,6 +44,9 @@ export class AddIndexOnTriggerRun1757557714045 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "trigger_run"
             ADD CONSTRAINT "fk_trigger_run_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+        `)
+        await queryRunner.query(`
+            DROP INDEX "idx_trigger_run_payload_file_id"
         `)
     }
 
