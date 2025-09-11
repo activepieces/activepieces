@@ -161,7 +161,8 @@ export const httpSendRequestAction = createAction({
     }),
     response_is_binary: Property.Checkbox({
       displayName: 'Response is Binary',
-      description: 'Enable for files like PDFs, images, etc. A base64 body will be returned.',
+      description:
+        'Enable for files like PDFs, images, etc. A base64 body will be returned.',
       required: false,
       defaultValue: false,
     }),
@@ -210,19 +211,27 @@ export const httpSendRequestAction = createAction({
     failureMode: Property.StaticDropdown({
       displayName: 'On Failure',
       required: false,
+      defaultValue:'continue_none',
       options: {
         disabled: false,
         options: [
-          { label: 'Retry on all errors (4xx, 5xx)', value: 'all' },
-          { label: 'Continue flow', value: 'continue' },
-          { label: 'Retry on internal errors (5xx)', value: '5xx' },
+          { label: 'Retry on all errors (4xx, 5xx)', value: 'retry_all' },
+          { label: 'Retry on internal errors (5xx)', value: 'retry_5xx' },
+          { label: 'Do not retry', value: 'retry_none' },
+          { label: 'Continue flow on all errors', value: 'continue_all' },
+          { label: 'Continue flow on 4xx errors', value: 'continue_4xx' },
+          { label: 'Do not continue (stop the flow)', value: 'continue_none' },
         ],
       },
     }),
+    stopFlow: Property.Checkbox({
+      displayName: 'Stop the flow on Failure ?',
+      required: false,
+    }),
   },
   errorHandlingOptions: {
-    continueOnFailure: { hide: true },
-    retryOnFailure: { defaultValue: true },
+    continueOnFailure: { hide: true, defaultValue: false },
+    retryOnFailure: { hide: true, defaultValue: false },
   },
   async run(context) {
     const {
@@ -238,6 +247,7 @@ export const httpSendRequestAction = createAction({
       use_proxy,
       authType,
       authFields,
+      stopFlow,
     } = context.propsValue;
 
     assertNotNullOrUndefined(method, 'Method');
@@ -290,7 +300,7 @@ export const httpSendRequestAction = createAction({
       }
     }
 
-    try {
+    const apiRequest = async () => {
       if (use_proxy) {
         const proxySettings = context.propsValue.proxy_settings;
         assertNotNullOrUndefined(proxySettings, 'Proxy Settings');
@@ -309,36 +319,71 @@ export const httpSendRequestAction = createAction({
           httpsAgent,
         });
 
-        const proxied_response = await httpClient.sendRequest(request, axiosClient);
+        return await httpClient.sendRequest(request, axiosClient);
+      }
+      return await httpClient.sendRequest(request);
+    };
+
+    let attempts = 0;
+
+    while (attempts < 3) {
+      try {
+        const response = await apiRequest();
         return handleBinaryResponse(
-          proxied_response.body,
-          proxied_response.status,
-          proxied_response.headers as HttpHeaders,
+          response.body,
+          response.status,
+          response.headers,
           response_is_binary
         );
-      }
-      const response = await httpClient.sendRequest(request);
-      return handleBinaryResponse(
-        response.body,
-        response.status,
-        response.headers,
-        response_is_binary,
-      );
-    } catch (error) {
-      switch (failureMode) {
-        case 'all': {
-          throw error;
-        } case '5xx':
-          if ((error as HttpError).response.status >= 500 && (error as HttpError).response.status < 600) {
+      } catch (error) {
+        attempts++;
+
+        if (stopFlow) {
+          context.run.stop({
+            response: (error as HttpError).response,
+          });
+          return (error as HttpError).response;
+        }
+
+        switch (failureMode) {
+          case 'retry_all': {
+            if (attempts < 3) continue;
             throw error;
           }
-          return (error as HttpError).errorMessage();
-        case 'continue':
-          return (error as HttpError).errorMessage();
-        default:
-          throw error;
+          case 'retry_5xx': {
+            if (
+              (error as HttpError).response.status >= 500 &&
+              (error as HttpError).response.status < 600
+            ) {
+              if (attempts < 3) continue;
+              throw error; // after 3 tries, throw
+            }
+            return (error as HttpError).errorMessage(); //throw error; // non 5xxx error
+          }
+
+          case 'continue_all':
+            return (error as HttpError).errorMessage();
+          case 'continue_4xx':
+            if (
+              (error as HttpError).response?.status >= 400 &&
+              (error as HttpError).response?.status < 500
+            ) {
+              return (error as HttpError).errorMessage();
+            }
+            if (attempts < 3) continue;
+            throw error;
+          case 'continue_none':
+            context.run.stop({
+              response: (error as HttpError).response,
+            });
+            return (error as HttpError).response;
+          default:
+            throw error;
+        }
       }
     }
+
+    throw new Error('Unexpected error occured');
   },
 });
 

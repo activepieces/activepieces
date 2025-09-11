@@ -26,6 +26,7 @@ import { DeprecateApproval1748648340742 } from './migration/common/1748648340742
 import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
 import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1752004202722-SplitUpPieceMetadataIntoTools'
 import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
+import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -306,6 +307,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveAgentRelationToTablesSqlite1755954639833,
         AddIndexToIssues1756775080449,
         AddTriggerNameToTriggerSourceSqlite1757018637559,
+        AddFlowIndexToTriggerSource1757555419075,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
