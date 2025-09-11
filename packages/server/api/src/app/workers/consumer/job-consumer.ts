@@ -36,15 +36,15 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                     workerId,
                 })
 
-                const workerTimeout = jobConsumer(log).getTimeoutForWorkerJob(jobData.jobType)
-                const jobTimeout = dayjs.duration(workerTimeout, 'milliseconds').add(1, 'minutes').asMilliseconds()
+                const workerTimeoutInMs = jobConsumer(log).getTimeoutForWorkerJob(jobData.jobType)
+                const jobTimeout = dayjs.duration(workerTimeoutInMs, 'milliseconds').add(1, 'minutes').asMilliseconds()
 
                 const request: ConsumeJobRequest = {
                     jobId,
                     jobData,
                     attempsStarted,
                     engineToken,
-                    timeoutInSeconds: workerTimeout,
+                    timeoutInSeconds: dayjs.duration(workerTimeoutInMs, 'milliseconds').asSeconds(),
                 }
                 const response: ConsumeJobResponse[] | undefined = await app!.io.to(workerId).timeout(jobTimeout).emitWithAck(WebsocketClientEvent.CONSUME_JOB_REQUEST, request)
                 log.info({
