@@ -1,4 +1,5 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { PieceCategory } from '@activepieces/shared';
 import { makePhoneCall } from "./lib/actions/make-phone-call";
 import { phoneCallEnded } from "./lib/triggers/phone-call-ended";
 import { addLead } from "./lib/actions/add-lead";
@@ -51,8 +52,9 @@ export const famulor = createPiece({
   auth:famulorAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/famulor.png",
-  description: "Automate phone calls using our AI calling platform.",
-  authors: ['Zebi15'],
+  description: "AI-powered calling and SMS platform. Automate outbound campaigns, manage leads, and get real-time call analytics.",
+  authors: ['Zebi15', 'onyedikachi-david'],
+  categories: [PieceCategory.SALES_AND_CRM],
   actions: [addLead,sendSms,campaignControl,makePhoneCall,deleteLead],
   triggers: [phoneCallEnded,getAssistants,inboundCall],
 });
