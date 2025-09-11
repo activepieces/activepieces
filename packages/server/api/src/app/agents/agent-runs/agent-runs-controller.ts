@@ -1,4 +1,3 @@
-import { AgentJobSource } from '@activepieces/server-shared'
 import { ListAgentRunsQueryParams, PrincipalType, RunAgentRequestBody, UpdateAgentRunRequestBody, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { agentsService } from '../agents-service'
@@ -31,7 +30,6 @@ export const agentRunsController: FastifyPluginAsyncTypebox = async (app) => {
             agentId: agent.id,
             projectId: request.principal.projectId,
             prompt: request.body.prompt,
-            source: AgentJobSource.DIRECT,
         })
     })
 

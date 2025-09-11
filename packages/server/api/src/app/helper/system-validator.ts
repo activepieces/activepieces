@@ -48,6 +48,7 @@ const systemPropValidators: {
     [AppSystemProp.LOG_PRETTY]: booleanValidator,
     [AppSystemProp.ENVIRONMENT]: enumValidator(Object.values(ApEnvironment)),
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
+    [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.AGENT_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
@@ -141,9 +142,7 @@ const systemPropValidators: {
     [AppSystemProp.PERPLEXITY_BASE_URL]: urlValidator,
 
     // AppSystemProp
-    [WorkerSystemProp.FLOW_WORKER_CONCURRENCY]: numberValidator,
-    [WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY]: numberValidator,
-    [WorkerSystemProp.AGENTS_WORKER_CONCURRENCY]: numberValidator,
+    [WorkerSystemProp.WORKER_CONCURRENCY]: numberValidator,
 
     // Cloud
     [AppSystemProp.GOOGLE_CLIENT_ID]: stringValidator,

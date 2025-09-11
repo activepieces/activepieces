@@ -13,24 +13,12 @@ export const UpdateRunProgressRequest = Type.Object({
     workerHandlerId: Nullable(Type.String()),
     httpRequestId: Nullable(Type.String()),
     failedStepName: Type.Optional(Type.String()),
+    logsFileId: Type.Optional(Type.String()),
+    testSingleStepMode: Type.Optional(Type.Boolean()),
 })
 
 export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>
 
-export const UpdateRunProgressResponse = Type.Object({
-    uploadUrl: Type.Optional(Type.String()),
-})
-export type UpdateRunProgressResponse = Static<typeof UpdateRunProgressResponse>
-
-
-export const NotifyFrontendRequest = Type.Object({
-    type: Type.Literal(WebsocketClientEvent.FLOW_RUN_PROGRESS),
-    data: Type.Object({
-        runId: Type.String(),
-        testSingleStepMode: Type.Optional(Type.Boolean()),
-    }),
-})
-export type NotifyFrontendRequest = Static<typeof NotifyFrontendRequest>
 
 export const SendFlowResponseRequest = Type.Object({
     workerHandlerId: Type.String(),
