@@ -1,3 +1,4 @@
+import { DialogTitle } from '@radix-ui/react-dialog';
 import { BellIcon, EyeNoneIcon, EyeOpenIcon } from '@radix-ui/react-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -36,7 +37,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import {
   Form,
   FormField,
@@ -59,7 +60,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
@@ -138,13 +138,13 @@ const AlertOption = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      'flex items-start gap-3 p-4 h-auto justify-start w-full rounded-lg border transition-all hover:shadow-sm',
+      'flex items-center gap-3 p-4 h-auto justify-start w-full rounded-lg border transition-all',
       isActive
-        ? 'bg-primary/10 border-primary text-primary shadow-sm'
-        : 'border-border hover:border-primary/30 hover:bg-muted/30',
+        ? 'bg-muted border-primary text-primary'
+        : 'border-border hover:border-primary/30 hover:bg-muted',
     )}
   >
-    <div className="shrink-0 p-1.5 rounded-md bg-background">{icon}</div>
+    <div className="shrink-0">{icon}</div>
     <div className="text-left">
       <div className="font-medium text-sm mb-1">{title}</div>
       <div className="text-xs text-muted-foreground leading-relaxed">
@@ -356,7 +356,7 @@ const GeneralSettings = ({
   });
 
   return (
-    <div className="space-y-6">
+    <>
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -542,7 +542,7 @@ const GeneralSettings = ({
           </Form>
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 };
 
@@ -556,11 +556,10 @@ const TeamSettings = () => {
     userInvitationsHooks.useInvitations();
 
   return (
-    <div className="space-y-6">
+    <>
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Users className="w-4 h-4 text-green-600" />
             {t('Project Members')}
           </CardTitle>
           <CardDescription className="text-sm">
@@ -594,41 +593,42 @@ const TeamSettings = () => {
                 ))}
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          <Separator className="my-6" />
-
-          <div>
-            <h4 className="text-sm font-medium mb-4 flex items-center gap-2">
-              <Bell className="w-4 h-4 text-orange-500" />
-              {t('Pending Invitations')}
-            </h4>
-            <div className="min-h-[100px]">
-              {invitationsIsPending && (
-                <div className="flex justify-center py-8">
-                  <LoadingSpinner className="w-6 h-6" />
-                </div>
-              )}
-              {invitations && invitations.length === 0 && (
-                <div className="text-center text-muted-foreground py-8 text-sm">
-                  {t('No pending invitation.')}
-                </div>
-              )}
-              <div className="space-y-3">
-                {Array.isArray(invitations) &&
-                  invitations.map((invitation) => (
-                    <div
-                      key={invitation.id}
-                      className="p-3 border rounded-lg hover:shadow-sm transition-shadow"
-                    >
-                      <InvitationCard invitation={invitation} />
-                    </div>
-                  ))}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            {t('Pending Invitations')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="min-h-[100px]">
+            {invitationsIsPending && (
+              <div className="flex justify-center py-8">
+                <LoadingSpinner className="w-6 h-6" />
               </div>
+            )}
+            {invitations && invitations.length === 0 && (
+              <div className="text-center text-muted-foreground py-8 text-sm">
+                {t('No pending invitation.')}
+              </div>
+            )}
+            <div className="space-y-3">
+              {Array.isArray(invitations) &&
+                invitations.map((invitation) => (
+                  <div
+                    key={invitation.id}
+                    className="p-3 border rounded-lg hover:shadow-sm transition-shadow"
+                  >
+                    <InvitationCard invitation={invitation} />
+                  </div>
+                ))}
             </div>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 };
 
@@ -676,133 +676,123 @@ const AlertsSettings = () => {
     checkAccess(Permission.WRITE_PROJECT);
 
   return (
-    <div className="space-y-6">
-      <ScrollArea className="h-[600px]">
-        <div className="space-y-6 pr-3">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Bell className="w-4 h-4 text-orange-600" />
-                {t('Alert Frequency')}
-              </CardTitle>
-              <CardDescription className="text-sm">
-                {t('Choose what you want to be notified about.')}
-              </CardDescription>
-              {writeAlertPermission === false && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
-                  <p className="text-xs text-amber-700">
-                    <span className="font-medium">⚠️ Limited Access:</span>{' '}
-                    {t(
-                      'Project and alert permissions are required to change this setting.',
-                    )}
-                  </p>
-                </div>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <AlertOption
-                title={t('Every Failed Run')}
-                description={t('Get an email alert when a flow fails.')}
-                onClick={() => onChangeStatus(NotificationStatus.ALWAYS)}
-                icon={<BellIcon className="w-4 h-4" />}
-                isActive={project?.notifyStatus === NotificationStatus.ALWAYS}
-                disabled={writeAlertPermission === false}
-              />
-              <AlertOption
-                title={t('First Seen')}
-                description={t(
-                  'Get an email alert when a new issue is created.',
+    <>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            {t('Alert Frequency')}
+          </CardTitle>
+          <CardDescription className="text-sm">
+            {t('Choose what you want to be notified about.')}
+          </CardDescription>
+          {writeAlertPermission === false && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+              <p className="text-xs text-amber-700">
+                <span className="font-medium">⚠️ Limited Access:</span>{' '}
+                {t(
+                  'Project and alert permissions are required to change this setting.',
                 )}
-                onClick={() => onChangeStatus(NotificationStatus.NEW_ISSUE)}
-                icon={<EyeOpenIcon className="w-4 h-4" />}
-                isActive={
-                  project?.notifyStatus === NotificationStatus.NEW_ISSUE
-                }
-                disabled={writeAlertPermission === false}
-              />
-              <AlertOption
-                title={t('Never')}
-                description={t('Turn off email notifications.')}
-                onClick={() => onChangeStatus(NotificationStatus.NEVER)}
-                icon={<EyeNoneIcon className="w-4 h-4" />}
-                isActive={project?.notifyStatus === NotificationStatus.NEVER}
-                disabled={writeAlertPermission === false}
-              />
-            </CardContent>
-          </Card>
+              </p>
+            </div>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <AlertOption
+            title={t('Every Failed Run')}
+            description={t('Get an email alert when a flow fails.')}
+            onClick={() => onChangeStatus(NotificationStatus.ALWAYS)}
+            icon={<BellIcon className="w-4 h-4" />}
+            isActive={project?.notifyStatus === NotificationStatus.ALWAYS}
+            disabled={writeAlertPermission === false}
+          />
+          <AlertOption
+            title={t('First Seen')}
+            description={t('Get an email alert when a new issue is created.')}
+            onClick={() => onChangeStatus(NotificationStatus.NEW_ISSUE)}
+            icon={<EyeOpenIcon className="w-4 h-4" />}
+            isActive={project?.notifyStatus === NotificationStatus.NEW_ISSUE}
+            disabled={writeAlertPermission === false}
+          />
+          <AlertOption
+            title={t('Never')}
+            description={t('Turn off email notifications.')}
+            onClick={() => onChangeStatus(NotificationStatus.NEVER)}
+            icon={<EyeNoneIcon className="w-4 h-4" />}
+            isActive={project?.notifyStatus === NotificationStatus.NEVER}
+            disabled={writeAlertPermission === false}
+          />
+        </CardContent>
+      </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Bell className="w-4 h-4 text-red-600" />
-                {t('Alert Emails')}
-              </CardTitle>
-              <CardDescription className="text-sm">
-                {t('Add email addresses to receive alerts.')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="min-h-[100px]">
-                {alertsLoading && (
-                  <div className="flex items-center justify-center py-8">
-                    <LoadingSpinner className="w-6 h-6" />
-                  </div>
-                )}
-                {alertsError && (
-                  <div className="text-center text-destructive py-8 text-sm">
-                    {t('Error, please try again.')}
-                  </div>
-                )}
-                {alertsData && alertsData.length === 0 && (
-                  <div className="text-center text-muted-foreground py-8 text-sm">
-                    {t('No emails added yet.')}
-                  </div>
-                )}
-                <div className="space-y-2">
-                  {Array.isArray(alertsData) &&
-                    alertsData.map((alert: Alert) => (
-                      <div
-                        className="flex items-center justify-between p-3 border rounded-lg hover:shadow-sm transition-all"
-                        key={alert.id}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-red-100 rounded-md flex items-center justify-center">
-                            <Bell className="w-4 h-4 text-red-600" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {alert.receiver}
-                            </p>
-                          </div>
-                        </div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 hover:bg-red-50"
-                              onClick={() => deleteAlert(alert)}
-                              disabled={writeAlertPermission === false}
-                            >
-                              <Trash className="w-4 h-4 text-red-500" />
-                            </Button>
-                          </TooltipTrigger>
-                          {writeAlertPermission === false && (
-                            <TooltipContent side="bottom">
-                              {t('Only project admins can do this')}
-                            </TooltipContent>
-                          )}
-                        </Tooltip>
-                      </div>
-                    ))}
-                </div>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            {t('Alert Emails')}
+          </CardTitle>
+          <CardDescription className="text-sm">
+            {t('Add email addresses to receive alerts.')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="min-h-[100px]">
+            {alertsLoading && (
+              <div className="flex items-center justify-center py-8">
+                <LoadingSpinner className="w-6 h-6" />
               </div>
-              <AddAlertEmailDialog />
-            </CardContent>
-          </Card>
-        </div>
-      </ScrollArea>
-    </div>
+            )}
+            {alertsError && (
+              <div className="text-center text-destructive py-8 text-sm">
+                {t('Error, please try again.')}
+              </div>
+            )}
+            {alertsData && alertsData.length === 0 && (
+              <div className="text-center text-muted-foreground py-8 text-sm">
+                {t('No emails added yet.')}
+              </div>
+            )}
+            <div className="space-y-2">
+              {Array.isArray(alertsData) &&
+                alertsData.map((alert: Alert) => (
+                  <div
+                    className="flex items-center justify-between p-3 border rounded-lg hover:shadow-sm transition-all"
+                    key={alert.id}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-red-100 rounded-md flex items-center justify-center">
+                        <Bell className="w-4 h-4 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {alert.receiver}
+                        </p>
+                      </div>
+                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 hover:bg-red-50"
+                          onClick={() => deleteAlert(alert)}
+                          disabled={writeAlertPermission === false}
+                        >
+                          <Trash className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </TooltipTrigger>
+                      {writeAlertPermission === false && (
+                        <TooltipContent side="bottom">
+                          {t('Only project admins can do this')}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </div>
+                ))}
+            </div>
+          </div>
+          <AddAlertEmailDialog />
+        </CardContent>
+      </Card>
+    </>
   );
 };
 
@@ -873,8 +863,14 @@ export function ProjectSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl w-full max-h-[90vh] h-[650px] pt-12 pb-4">
-        <div className="flex h-full">
+      <DialogContent className="max-w-5xl w-full max-h-[90vh] h-fit pb-4 flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="font-semibold">
+            {t('Project Settings')}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="flex h-[600px]">
           <div className="w-56 pr-4">
             <nav className="space-y-1">
               {tabs.map((tab) => (
@@ -897,8 +893,11 @@ export function ProjectSettingsDialog({
               ))}
             </nav>
           </div>
-
-          <div className="flex-1 overflow-y-auto">{renderTabContent()}</div>
+          <div className="flex-1">
+            <ScrollArea className="h-full">
+              <div className="space-y-6 pr-4">{renderTabContent()}</div>
+            </ScrollArea>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import {
+  ArrowLeft,
   LayoutGrid,
   LineChart,
   Server,
@@ -8,7 +9,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { buttonVariants } from '@/components/ui/button';
 import {
@@ -26,15 +27,15 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
-import { ApSidebareGroup, SidebarGeneralItemType } from './ap-sidebar-group';
-import { ApSidebarItem } from './ap-sidebar-item';
-import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
-import { SidebarUser } from './sidebar-user';
+import { ApSidebareGroup, SidebarGeneralItemType } from '../ap-sidebar-group';
+import { ApSidebarItem } from '../ap-sidebar-item';
+import { SidebarUser } from '../sidebar-user';
 
 export function PlatformSidebar() {
   const [setupOpen, setSetupOpen] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
   const [infrastructureOpen, setInfrastructureOpen] = useState(false);
+  const navigate = useNavigate();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { checkAccess } = useAuthorization();
@@ -231,8 +232,12 @@ export function PlatformSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuButton className="!py-0 !px-2 h-10">
-            <SidebarPlatformAdminButton />
+          <SidebarMenuButton
+            onClick={() => navigate('/')}
+            className="py-5 px-2"
+          >
+            <ArrowLeft />
+            {t('Exit platform admin')}
           </SidebarMenuButton>
         </SidebarMenu>
         <SidebarUser />

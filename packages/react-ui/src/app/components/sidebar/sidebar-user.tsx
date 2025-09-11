@@ -1,11 +1,19 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronsUpDown, LogOut, Settings, UserPlus } from 'lucide-react';
+import {
+  ChevronsUpDown,
+  LogOut,
+  Settings,
+  Shield,
+  UserPlus,
+} from 'lucide-react';
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
+import { notificationHooks } from '@/app/routes/platform/notifications/hooks/notifications-hooks';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
+import { Dot } from '@/components/ui/dot';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,13 +30,13 @@ import {
 } from '@/components/ui/sidebar-shadcn';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
+import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { PlatformRole } from '@activepieces/shared';
 
 import { ProjectSettingsDialog } from '../project-settings-dialog';
-
-import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
 
 export function SidebarUser() {
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -104,11 +112,7 @@ export function SidebarUser() {
             <DropdownMenuSeparator />
             {!isInPlatformAdmin && (
               <>
-                <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <SidebarPlatformAdminButton />
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
+                <SidebarPlatformAdminButton />
                 <DropdownMenuSeparator />
               </>
             )}
@@ -146,5 +150,37 @@ export function SidebarUser() {
         }}
       />
     </SidebarMenu>
+  );
+}
+
+function SidebarPlatformAdminButton() {
+  const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
+  const { embedState } = useEmbedding();
+  const navigate = useNavigate();
+  const messages = notificationHooks.useNotifications();
+  const platformRole = userHooks.getCurrentUserPlatformRole();
+
+  if (embedState.isEmbedded || !showPlatformAdminDashboard) {
+    return null;
+  }
+
+  return (
+    <DropdownMenuGroup>
+      <DropdownMenuItem
+        onClick={() => navigate('/platform')}
+        className="w-full flex items-center justify-center relative"
+      >
+        <div className={`w-full flex items-center gap-2`}>
+          <Shield className="size-4" />
+          <span className={`text-sm`}>{t('Platform Admin')}</span>
+        </div>
+        {messages.length > 0 && platformRole === PlatformRole.ADMIN && (
+          <Dot
+            variant="primary"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 size-2 rounded-full"
+          />
+        )}
+      </DropdownMenuItem>
+    </DropdownMenuGroup>
   );
 }

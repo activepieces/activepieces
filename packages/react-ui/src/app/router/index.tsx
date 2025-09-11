@@ -26,10 +26,10 @@ import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 import { Permission } from '@activepieces/shared';
 
 import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
-import { BuilderLayout } from '../components/builder-layout';
 import { PlatformLayout } from '../components/platform-layout';
 import { ProjectDashboardLayout } from '../components/project-dashboard-layout';
 import ProjectSettingsLayout from '../components/project-settings-layout';
+import { BuilderNavigationSidebar } from '../components/sidebar/builder';
 import NotFoundPage from '../routes/404-page';
 import { AgentsPage } from '../routes/agents';
 import AuthenticatePage from '../routes/authenticate';
@@ -114,11 +114,11 @@ const routes = [
     path: '/flows/:flowId',
     element: (
       <RoutePermissionGuard permission={Permission.READ_FLOW}>
-        <BuilderLayout>
-          <PageTitle title="Builder">
+        <PageTitle title="Builder">
+          <BuilderNavigationSidebar>
             <FlowBuilderPage />
-          </PageTitle>
-        </BuilderLayout>
+          </BuilderNavigationSidebar>
+        </PageTitle>
       </RoutePermissionGuard>
     ),
   }),
@@ -156,11 +156,11 @@ const routes = [
     path: '/runs/:runId',
     element: (
       <RoutePermissionGuard permission={Permission.READ_RUN}>
-        <BuilderLayout>
-          <PageTitle title="Flow Run">
+        <PageTitle title="Flow Run">
+          <BuilderNavigationSidebar>
             <FlowRunPage />
-          </PageTitle>
-        </BuilderLayout>
+          </BuilderNavigationSidebar>
+        </PageTitle>
       </RoutePermissionGuard>
     ),
   }),
@@ -222,13 +222,13 @@ const routes = [
     path: '/tables/:tableId',
     element: (
       <RoutePermissionGuard permission={Permission.READ_TABLE}>
-        <BuilderLayout>
-          <PageTitle title="Table">
+        <PageTitle title="Table">
+          <BuilderNavigationSidebar>
             <ApTableStateProvider>
               <ApTableEditorPage />
             </ApTableStateProvider>
-          </PageTitle>
-        </BuilderLayout>
+          </BuilderNavigationSidebar>
+        </PageTitle>
       </RoutePermissionGuard>
     ),
   }),
@@ -664,4 +664,3 @@ const ApRouter = () => {
 };
 
 export { ApRouter };
-

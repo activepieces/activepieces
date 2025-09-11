@@ -22,6 +22,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { RunsTable } from '@/features/flow-runs/components/runs-table';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
@@ -188,28 +193,33 @@ export const CreateFlowDropdown = ({
   return (
     <PermissionNeededTooltip hasPermission={doesUserHavePermissionToWriteFlow}>
       <DropdownMenu modal={false}>
-        <DropdownMenuTrigger
-          disabled={!doesUserHavePermissionToWriteFlow}
-          asChild
-          className={cn(className)}
-        >
-          <Button
-            disabled={!doesUserHavePermissionToWriteFlow}
-            variant={variant === 'small' ? 'ghost' : 'default'}
-            size={variant === 'small' ? 'icon' : 'default'}
-            loading={isCreateFlowPending}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {variant === 'small' ? (
-              <Plus className="h-4 w-4" />
-            ) : (
-              <>
-                <span>{t('Create flow')}</span>
-                <ChevronDown className="h-4 w-4 ml-2 " />
-              </>
-            )}
-          </Button>
-        </DropdownMenuTrigger>
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger
+              disabled={!doesUserHavePermissionToWriteFlow}
+              asChild
+              className={cn(className)}
+            >
+              <Button
+                disabled={!doesUserHavePermissionToWriteFlow}
+                variant={variant === 'small' ? 'ghost' : 'default'}
+                size={variant === 'small' ? 'icon' : 'default'}
+                loading={isCreateFlowPending}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {variant === 'small' ? (
+                  <Plus className="h-4 w-4" />
+                ) : (
+                  <>
+                    <span>{t('Create flow')}</span>
+                    <ChevronDown className="h-4 w-4 ml-2 " />
+                  </>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>{t('New flow')}</TooltipContent>
+        </Tooltip>
         <DropdownMenuContent>
           <DropdownMenuItem
             onSelect={(e) => {

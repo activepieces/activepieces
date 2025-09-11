@@ -38,13 +38,12 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { isNil, Permission } from '@activepieces/shared';
 
-import { HelpAndFeedback } from '../help-and-feedback';
-
-import { SidebarGeneralItemType } from './ap-sidebar-group';
-import { ApSidebarItem, SidebarItemType } from './ap-sidebar-item';
-import { AppSidebarHeader } from './sidebar-header';
-import { SidebarUser } from './sidebar-user';
-import UsageLimitsButton from './usage-limits-button';
+import { HelpAndFeedback } from '../../help-and-feedback';
+import { SidebarGeneralItemType } from '../ap-sidebar-group';
+import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
+import { AppSidebarHeader } from '../sidebar-header';
+import { SidebarUser } from '../sidebar-user';
+import SidebarUsageLimits from '../sidebare-usage-limits';
 
 export function ProjectDashboardSidebar() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -225,7 +224,7 @@ export function ProjectDashboardSidebar() {
         </SidebarContent>
         <SidebarFooter>
           <HelpAndFeedback />
-          <UsageLimitsButton />
+          <SidebarUsageLimits />
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>

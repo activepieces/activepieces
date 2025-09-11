@@ -1,9 +1,9 @@
-import { useMutation } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { EllipsisVertical, Plus, Table as TableIcon } from 'lucide-react';
+import { EllipsisVertical, Plus } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -22,15 +22,15 @@ import {
 } from '@/components/ui/tooltip';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
 import { tableHooks } from '@/features/tables/lib/table-hooks';
-import { tablesApi } from '@/features/tables/lib/tables-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { Permission, Table } from '@activepieces/shared';
 
-export function TablesSection() {
+export function TablesNavigation() {
   const navigate = useNavigate();
   const { tableId: currentTableId } = useParams();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
@@ -40,9 +40,39 @@ export function TablesSection() {
     data: tables,
     isLoading: isTablesLoading,
     refetch,
-  } = tableHooks.useTables(1000000);
+  } = tableHooks.useTables(999999);
   const { mutate: createTable, isPending: isCreatingTable } =
     tableHooks.useCreateTable();
+
+  useEffect(() => {
+    if (!currentTableId || isTablesLoading) return;
+
+    const timeoutId = setTimeout(() => {
+      const selectedTableElement = document.querySelector(
+        `[data-table-id="${currentTableId}"]`,
+      );
+      if (selectedTableElement && scrollAreaRef.current) {
+        const scrollContainer = scrollAreaRef.current.querySelector(
+          '[data-radix-scroll-area-viewport]',
+        )!;
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const elementRect = selectedTableElement.getBoundingClientRect();
+
+        if (
+          elementRect.top < containerRect.top ||
+          elementRect.bottom > containerRect.bottom
+        ) {
+          selectedTableElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest',
+          });
+        }
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [currentTableId, isTablesLoading]);
 
   const handleTableClick = (tableId: string) => {
     navigate(
@@ -64,32 +94,27 @@ export function TablesSection() {
   }
 
   return (
-    <SidebarGroup className="max-h-[50%] pb-2">
-      <SidebarGroupLabel className="flex px-0 pl-2 justify-between items-center w-full mb-1">
-        <div className="flex gap-2 items-center justify-start">
-          <TableIcon className="w-3 h-3 !text-muted-foreground" />
-          {t('Tables')}
-        </div>
-        <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-          <Tooltip>
-            <TooltipTrigger>
-              <Button
-                onClick={() => createTable({ name: t('New Table') })}
-                size="icon"
-                variant="ghost"
-                className="size-9"
-                disabled={!userHasTableWritePermission || isCreatingTable}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{t('New table')}</TooltipContent>
-          </Tooltip>
-        </PermissionNeededTooltip>
+    <SidebarGroup className="pb-2 max-h-[calc(50%-10px)] pr-0">
+      <SidebarGroupLabel className="flex px-2 text-sm text-foreground font-semibold justify-between items-center w-full mb-1">
+        {t('Tables')}
+        <Tooltip>
+          <TooltipTrigger>
+            <Button
+              onClick={() => createTable({ name: t('New Table') })}
+              size="icon"
+              variant="ghost"
+              className="size-9"
+              disabled={!userHasTableWritePermission || isCreatingTable}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">{t('New table')}</TooltipContent>
+        </Tooltip>
       </SidebarGroupLabel>
-      <ScrollArea scrollHideDelay={2}>
+      <ScrollArea ref={scrollAreaRef} scrollHideDelay={2}>
         <SidebarGroupContent>
-          <SidebarMenu>
+          <SidebarMenu className="pr-2">
             {tables?.data.map((table) => (
               <TableItem
                 key={table.id}
@@ -115,19 +140,13 @@ interface FlowItemProps {
 
 function TableItem({ table, isActive, onClick, refetch }: FlowItemProps) {
   const { tableId } = useParams();
-  const navigate = useNavigate();
-
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await Promise.all(ids.map((id) => tablesApi.delete(id)));
-    },
-    onSuccess: () => {
-      refetch();
-    },
-  });
+  const queryClient = useQueryClient();
 
   return (
-    <SidebarMenuSubItem className="cursor-pointer group/item">
+    <SidebarMenuSubItem
+      className="cursor-pointer group/item"
+      data-table-id={table.id}
+    >
       <SidebarMenuSubButton
         onClick={onClick}
         className={cn(isActive && 'bg-sidebar-accent', 'pl-2 pr-0')}
@@ -137,12 +156,9 @@ function TableItem({ table, isActive, onClick, refetch }: FlowItemProps) {
         <ApTableActionsMenu
           table={table}
           refetch={refetch}
-          deleteMutation={bulkDeleteMutation}
           onDelete={() => {
             if (table.id === tableId) {
-              navigate(
-                authenticationSession.appendProjectRoutePrefix('/tables'),
-              );
+              queryClient.invalidateQueries({ queryKey: ['table', tableId] });
             }
           }}
         >

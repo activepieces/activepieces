@@ -11,7 +11,7 @@ import { ApFlagId, isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
-import { ProjectDashboardSidebar } from './sidebar/project-dashboard-sidebar';
+import { ProjectDashboardSidebar } from './sidebar/dashboard';
 
 const ProjectChangedRedirector = ({
   currentProjectId,

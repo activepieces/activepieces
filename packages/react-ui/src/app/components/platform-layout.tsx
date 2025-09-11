@@ -8,7 +8,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
-import { PlatformSidebar } from './sidebar/platform-sidebar';
+import { PlatformSidebar } from './sidebar/platform';
 
 export function PlatformLayout({ children }: { children: React.ReactNode }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);

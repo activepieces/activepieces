@@ -60,7 +60,7 @@ const getTrialProgress = (trialStartDate: number, trialEndDate: number) => {
   return Math.min(100, Math.max(0, (elapsedDays / totalDays) * 100));
 };
 
-const UsageLimitsButton = React.memo(() => {
+const SidebarUsageLimits = React.memo(() => {
   const openDialog = useManagePlanDialogStore((state) => state.openDialog);
 
   const { project, isPending } = projectHooks.useCurrentProject();
@@ -230,5 +230,5 @@ const UsageProgress = ({ value, max, name, variant }: UsageProgressProps) => {
   );
 };
 
-UsageLimitsButton.displayName = 'UsageLimitsButton';
-export default UsageLimitsButton;
+SidebarUsageLimits.displayName = 'UsageLimitsButton';
+export default SidebarUsageLimits;

@@ -1,17 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  EllipsisVertical,
-  Folder,
-  FolderOpen,
-  Plus,
-  Workflow,
-} from 'lucide-react';
-import { useMemo } from 'react';
+import { EllipsisVertical, Folder, FolderOpen } from 'lucide-react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { CreateFlowDropdown } from '@/app/routes/flows';
-import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
 import {
   Collapsible,
@@ -31,33 +24,28 @@ import {
   SidebarGroupContent,
   SidebarSkeleton,
 } from '@/components/ui/sidebar-shadcn';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { CreateFolderDialog } from '@/features/folders/component/create-folder-dialog';
 import { FolderActions } from '@/features/folders/component/folder-actions';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { FolderDto, Permission, PopulatedFlow } from '@activepieces/shared';
-
-import FlowActionMenu from '../flow-actions-menu';
+import { FolderDto, PopulatedFlow } from '@activepieces/shared';
+import FlowActionMenu from '../../flow-actions-menu';
 
 interface FlowsByFolder {
   [folderId: string]: PopulatedFlow[];
 }
 
-export function FoldersSection() {
+export function FlowsNavigation() {
   const navigate = useNavigate();
-  const { checkAccess } = useAuthorization();
   const { project } = projectHooks.useCurrentProject();
-  const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FOLDER);
   const { flowId: currentFlowId } = useParams();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
+  const [previousFlowCount, setPreviousFlowCount] = useState<number>(0);
 
   const {
     folders,
@@ -76,7 +64,7 @@ export function FoldersSection() {
       return flowsApi.list({
         projectId: project.id,
         cursor: undefined,
-        limit: 100000,
+        limit: 99999,
       });
     },
   });
@@ -94,17 +82,61 @@ export function FoldersSection() {
 
   const currentFlowFolderId = useMemo(() => {
     if (!currentFlowId || !flowsData.length) return null;
-
     const currentFlow = flowsData.find((flow) => flow.id === currentFlowId);
-    if (!currentFlow) return null;
-
-    return currentFlow.folderId || 'default';
+    return currentFlow ? currentFlow.folderId || 'default' : null;
   }, [currentFlowId, flowsData]);
 
-  const sortedFolders =
-    folders?.sort((a, b) => a.displayName.localeCompare(b.displayName)) || [];
+  useEffect(() => {
+    if (currentFlowFolderId && !flowsLoading) {
+      setOpenFolders((prev) => new Set([...prev, currentFlowFolderId]));
+    }
+  }, [currentFlowFolderId, flowsLoading]);
 
-  const defaultFolderFlows = flowsByFolder['default'] || [];
+  useEffect(() => {
+    if (flowsLoading) return;
+
+    const currentFlowCount = flowsData.length;
+
+    if (currentFlowCount > previousFlowCount && previousFlowCount > 0) {
+      const newFlow = flowsData[flowsData.length - 1];
+      if (newFlow) {
+        const newFlowFolderId = newFlow.folderId || 'default';
+        setOpenFolders((prev) => new Set([...prev, newFlowFolderId]));
+      }
+    }
+
+    setPreviousFlowCount(currentFlowCount);
+  }, [flowsData.length, previousFlowCount, flowsLoading, flowsData]);
+
+  useEffect(() => {
+    if (!currentFlowId || foldersLoading || flowsLoading) return;
+
+    const timeoutId = setTimeout(() => {
+      const selectedFlowElement = document.querySelector(
+        `[data-flow-id="${currentFlowId}"]`,
+      );
+      if (selectedFlowElement && scrollAreaRef.current) {
+        const scrollContainer = scrollAreaRef.current.querySelector(
+          '[data-radix-scroll-area-viewport]',
+        )!;
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const elementRect = selectedFlowElement.getBoundingClientRect();
+
+        if (
+          elementRect.top < containerRect.top ||
+          elementRect.bottom > containerRect.bottom
+        ) {
+          selectedFlowElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest',
+          });
+        }
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [currentFlowId, foldersLoading, flowsLoading, currentFlowFolderId]);
 
   const handleFlowClick = (flowId: string) => {
     navigate(
@@ -112,7 +144,21 @@ export function FoldersSection() {
     );
   };
 
-  const isFlowActive = (flowId: string) => currentFlowId === flowId;
+  const handleFolderToggle = (folderId: string, isOpen: boolean) => {
+    setOpenFolders((prev) => {
+      const newSet = new Set(prev);
+      if (isOpen) {
+        newSet.add(folderId);
+      } else {
+        newSet.delete(folderId);
+      }
+      return newSet;
+    });
+  };
+
+  const sortedFolders =
+    folders?.sort((a, b) => a.displayName.localeCompare(b.displayName)) || [];
+  const defaultFolderFlows = flowsByFolder['default'] || [];
 
   if (foldersLoading || flowsLoading) {
     return (
@@ -126,51 +172,37 @@ export function FoldersSection() {
   }
 
   return (
-    <SidebarGroup className="max-h-[50%] pb-2">
-      <SidebarGroupLabel className="flex px-0 pl-2 justify-between items-center w-full mb-1">
-        <div className="flex gap-2 items-center justify-start">
-          <Workflow className="w-3 h-3 !text-muted-foreground" />
-          {t('Folders')}
-        </div>
-        <PermissionNeededTooltip
-          hasPermission={userHasPermissionToUpdateFolders}
-        >
-          <CreateFolderDialog
-            refetchFolders={refetchFolders}
-            updateSearchParams={() => {}}
-          >
-            <Tooltip>
-              <TooltipTrigger>
-                <Button variant="ghost" size="icon" className="size-9">
-                  <Plus />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">{t('New folder')}</TooltipContent>
-            </Tooltip>
-          </CreateFolderDialog>
-        </PermissionNeededTooltip>
+    <SidebarGroup className="pb-2 max-h-[calc(50%-10px)] pr-0">
+      <SidebarGroupLabel className="flex px-2 font-semibold text-foreground text-sm justify-between items-center w-full mb-1">
+        {t('Flows')}
+        <CreateFolderDialog
+          refetchFolders={refetchFolders}
+          updateSearchParams={() => {}}
+        />
       </SidebarGroupLabel>
-      <ScrollArea>
+      <ScrollArea ref={scrollAreaRef}>
         <SidebarGroupContent>
-          <SidebarMenu>
+          <SidebarMenu className="pr-2">
             <DefaultFolder
-              refetchFlows={refetchFlows}
               flows={defaultFolderFlows}
               onFlowClick={handleFlowClick}
-              isFlowActive={isFlowActive}
-              shouldBeOpen={currentFlowFolderId === 'default'}
+              isFlowActive={(flowId) => currentFlowId === flowId}
+              isOpen={openFolders.has('default')}
+              onToggle={(isOpen) => handleFolderToggle('default', isOpen)}
+              refetch={refetchFlows}
             />
 
             {sortedFolders.map((folder) => (
               <RegularFolder
                 key={folder.id}
-                refetchFolders={refetchFolders}
-                refetchFlows={refetchFlows}
                 folder={folder}
                 flows={flowsByFolder[folder.id] || []}
                 onFlowClick={handleFlowClick}
-                isFlowActive={isFlowActive}
-                shouldBeOpen={currentFlowFolderId === folder.id}
+                isFlowActive={(flowId) => currentFlowId === flowId}
+                isOpen={openFolders.has(folder.id)}
+                onToggle={(isOpen) => handleFolderToggle(folder.id, isOpen)}
+                refetch={refetchFlows}
+                refetchFolders={refetchFolders}
               />
             ))}
           </SidebarMenu>
@@ -182,32 +214,37 @@ export function FoldersSection() {
 
 interface FolderProps {
   flows: PopulatedFlow[];
-  refetchFlows: () => void;
   onFlowClick: (flowId: string) => void;
   isFlowActive: (flowId: string) => boolean;
-  shouldBeOpen: boolean;
+  isOpen: boolean;
+  onToggle: (isOpen: boolean) => void;
+  refetch: () => void;
 }
 
 function DefaultFolder({
   flows,
   onFlowClick,
   isFlowActive,
-  refetchFlows,
-  shouldBeOpen,
+  isOpen,
+  onToggle,
+  refetch,
 }: FolderProps) {
   return (
-    <Collapsible defaultOpen={shouldBeOpen} className="group/collapsible">
+    <Collapsible
+      open={isOpen}
+      onOpenChange={onToggle}
+      className="group/collapsible"
+    >
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton className="px-2 group/item pr-0">
-            <Folder className="w-4 h-4 group-data-[state=open]/collapsible:hidden" />
-            <FolderOpen className="w-4 h-4 hidden group-data-[state=open]/collapsible:block" />
+          <SidebarMenuButton className="px-2 group/item mb-1 pr-0">
+            <Folder className="!size-3.5 group-data-[state=open]/collapsible:hidden" />
+            <FolderOpen className="!size-3.5 hidden group-data-[state=open]/collapsible:block" />
             <span>{t('Uncategorized')}</span>
             <div className="ml-auto relative">
               <span className="text-xs w-9 h-9 flex items-center justify-center text-muted-foreground font-semibold absolute group-hover/item:hidden">
                 {flows.length}
               </span>
-
               <CreateFlowDropdown
                 folderId="NULL"
                 variant="small"
@@ -225,7 +262,7 @@ function DefaultFolder({
                   flow={flow}
                   isActive={isFlowActive(flow.id)}
                   onClick={() => onFlowClick(flow.id)}
-                  refetch={refetchFlows}
+                  refetch={refetch}
                 />
               ))}
             </SidebarMenuSub>
@@ -245,22 +282,23 @@ function RegularFolder({
   folder,
   flows,
   onFlowClick,
-  refetchFlows,
-  refetchFolders,
   isFlowActive,
-  shouldBeOpen,
+  isOpen,
+  onToggle,
+  refetch,
+  refetchFolders,
 }: RegularFolderProps) {
   return (
     <Collapsible
-      key={folder.id}
-      defaultOpen={shouldBeOpen}
+      open={isOpen}
+      onOpenChange={onToggle}
       className="group/collapsible"
     >
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton className="px-2 pr-0 group/item">
-            <Folder className="w-4 h-4 group-data-[state=open]/collapsible:hidden" />
-            <FolderOpen className="w-4 h-4 hidden group-data-[state=open]/collapsible:block" />
+          <SidebarMenuButton className="px-2 group/item mb-1 pr-0">
+            <Folder className="!size-3.5 group-data-[state=open]/collapsible:hidden" />
+            <FolderOpen className="!size-3.5 hidden group-data-[state=open]/collapsible:block" />
             <span className="truncate">{folder.displayName}</span>
             <div className="flex items-center justify-center ml-auto">
               <CreateFlowDropdown
@@ -281,7 +319,7 @@ function RegularFolder({
                   flow={flow}
                   isActive={isFlowActive(flow.id)}
                   onClick={() => onFlowClick(flow.id)}
-                  refetch={refetchFlows}
+                  refetch={refetch}
                 />
               ))}
             </SidebarMenuSub>
@@ -301,10 +339,13 @@ interface FlowItemProps {
 
 function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
   const { flowId } = useParams();
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   return (
-    <SidebarMenuSubItem className="cursor-pointer group/item">
+    <SidebarMenuSubItem
+      className="cursor-pointer group/item"
+      data-flow-id={flow.id}
+    >
       <SidebarMenuSubButton
         onClick={onClick}
         className={cn(isActive && 'bg-sidebar-accent', 'pr-0 pl-2')}
@@ -315,24 +356,21 @@ function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
           flow={flow}
           readonly={false}
           flowVersion={flow.version}
-          onRename={() => {
-            refetch();
-          }}
-          onMoveTo={() => {
-            refetch();
-          }}
+          onRename={refetch}
+          onMoveTo={refetch}
           onDelete={() => {
             if (flowId === flow.id) {
-              navigate(
-                authenticationSession.appendProjectRoutePrefix('/flows'),
-              );
-            } else {
-              refetch();
+              queryClient.invalidateQueries({
+                queryKey: [
+                  'flow',
+                  flowId,
+                  authenticationSession.getProjectId(),
+                ],
+              });
             }
-          }}
-          onDuplicate={() => {
             refetch();
           }}
+          onDuplicate={refetch}
         >
           <Button
             variant="ghost"

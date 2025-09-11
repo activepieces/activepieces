@@ -136,11 +136,7 @@ const ApTablesPage = () => {
             }}
             className="flex items-center justify-end w-full"
           >
-            <ApTableActionsMenu
-              table={row.original}
-              refetch={refetch}
-              deleteMutation={bulkDeleteMutation}
-            >
+            <ApTableActionsMenu table={row.original} refetch={refetch}>
               <Button variant="ghost" size="icon">
                 <EllipsisVertical />
               </Button>

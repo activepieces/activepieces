@@ -1,4 +1,3 @@
-import { UseMutationResult } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Download, PencilIcon, TrashIcon, UploadCloud } from 'lucide-react';
 import React from 'react';
@@ -23,14 +22,12 @@ import RenameTableDialog from './rename-table-dialog';
 const ApTableActionsMenu = ({
   table,
   refetch,
-  deleteMutation,
   onDelete,
   children,
 }: {
   table: Table;
   refetch: (() => void) | null;
   onDelete?: () => void;
-  deleteMutation: UseMutationResult<void, Error, string[], unknown>;
   children: React.ReactNode;
 }) => {
   const userHasPermissionToUpdateTable = useAuthorization().checkAccess(
@@ -110,7 +107,7 @@ const ApTableActionsMenu = ({
               )}
               entityName={table.name}
               mutationFn={async () => {
-                await deleteMutation.mutateAsync([table.id]);
+                await tablesApi.delete(table.id);
                 onDelete?.();
                 refetch?.();
               }}

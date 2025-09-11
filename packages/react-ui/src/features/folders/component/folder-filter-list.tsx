@@ -4,7 +4,6 @@ import {
   ArrowDownZA,
   ArrowUpAz,
   Folder,
-  PlusIcon,
   Shapes,
   TableProperties,
 } from 'lucide-react';
@@ -162,16 +161,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
             <CreateFolderDialog
               refetchFolders={refetchFolders}
               updateSearchParams={updateSearchParams}
-            >
-              <Button
-                variant="ghost"
-                disabled={!userHasPermissionToUpdateFolders}
-                size="icon"
-                className="mr-1"
-              >
-                <PlusIcon size={18} />
-              </Button>
-            </CreateFolderDialog>
+            />
           </PermissionNeededTooltip>
         </div>
       </div>
