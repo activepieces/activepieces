@@ -146,6 +146,7 @@ import { AddJobIdToTriggerRun1754510243053 } from './migration/sqlite/1754510243
 import { RemoveAgentTestPromptSqlite1754863757450 } from './migration/sqlite/1754863757450-RemoveAgentTestPromptSqlite'
 import { RemoveAgentRelationToTablesSqlite1755954639833 } from './migration/sqlite/1755954639833-RemoveAgentRelationToTablesSqlite'
 import { AddTriggerNameToTriggerSourceSqlite1757018637559 } from './migration/sqlite/1757018637559-AddTriggerNameToTriggerSourceSqlite'
+import { AddIndexOnTriggerRunSqlite1757557982053 } from './migration/sqlite/1757557982053-AddIndexOnTriggerRunSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -308,6 +309,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIndexToIssues1756775080449,
         AddTriggerNameToTriggerSourceSqlite1757018637559,
         AddFlowIndexToTriggerSource1757555419075,
+        AddIndexOnTriggerRunSqlite1757557982053,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
