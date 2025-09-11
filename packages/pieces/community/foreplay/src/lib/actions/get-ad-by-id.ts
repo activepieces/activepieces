@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+// FIX: Removed the non-existent 'ErrorMessages' import
+import { HttpMethod, httpClient, HttpError } from '@activepieces/pieces-common';
 import { foreplayAuth } from '../common/auth';
 
 export const getAdById = createAction({
@@ -15,17 +16,32 @@ export const getAdById = createAction({
         }),
     },
     async run(context) {
-        const { ad_id } = context.propsValue;
+        const ad_id = context.propsValue['ad_id'] as string;
         const { apiKey } = context.auth;
 
-        const response = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `https://public.api.foreplay.co/api/ad/${ad_id}`,
-            headers: {
-                'Authorization': apiKey
-            }
-        });
+        if (!ad_id || ad_id.trim() === '') {
+            throw new Error('Ad ID is required. Please provide a valid Ad ID.');
+        }
 
-        return response.body['data'];
+        try {
+            const response = await httpClient.sendRequest({
+                method: HttpMethod.GET,
+                url: `https://public.api.foreplay.co/api/ad/${ad_id}`,
+                headers: {
+                    'Authorization': apiKey
+                }
+            });
+            return response.body['data'];
+        } catch (error) {
+            const httpError = error as HttpError;
+            
+            // FIX: Cast the 'unknown' body to 'any' before accessing its properties
+            const errorBody = httpError.response.body as any;
+            
+            // Use optional chaining to safely access the nested error message
+            const errorMessage = errorBody?.error?.message ?? `An unexpected error occurred: ${httpError.response.status}`;
+            
+            throw new Error(errorMessage);
+        }
     },
 });

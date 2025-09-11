@@ -82,15 +82,23 @@ export const findAds = createAction({
 
         const brands = brandsResponse.body['data'] || [];
         if (brands.length === 0) {
-            return []; 
+            return [];
         }
         const brand_ids = brands.map((brand: { id: string }) => brand.id);
 
         const queryParams: Record<string, any> = { brand_ids };
 
         if (props['live'] !== undefined) queryParams['live'] = String(props['live']);
-        if (props['display_format']) queryParams['display_format'] = props['display_format'];
-        if (props['publisher_platform']) queryParams['publisher_platform'] = props['publisher_platform'];
+        
+        // FIX: Check if the array has a length greater than 0
+        if (props['display_format'] && (props['display_format'] as string[]).length > 0) {
+            queryParams['display_format'] = props['display_format'];
+        }
+        // FIX: Apply the same check to the other multi-select dropdown
+        if (props['publisher_platform'] && (props['publisher_platform'] as string[]).length > 0) {
+            queryParams['publisher_platform'] = props['publisher_platform'];
+        }
+
         if (props['start_date']) queryParams['start_date'] = props['start_date'];
         if (props['end_date']) queryParams['end_date'] = props['end_date'];
         if (props['order']) queryParams['order'] = props['order'];

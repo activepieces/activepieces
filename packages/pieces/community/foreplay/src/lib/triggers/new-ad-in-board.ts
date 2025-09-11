@@ -9,7 +9,7 @@ export const newAdInBoard = createTrigger({
     displayName: 'New Ad in Board',
     description: 'Triggers when a new ad is added to a user board.',
     props: {
-        board_id: foreplayCommon.board_id(foreplayAuth),
+        board_id: foreplayCommon.board_id(),
     },
     sampleData: {
         "id": "ad_987654321",

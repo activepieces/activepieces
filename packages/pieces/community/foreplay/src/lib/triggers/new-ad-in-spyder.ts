@@ -9,7 +9,7 @@ export const newAdInSpyder = createTrigger({
     displayName: 'New Ad in Spyder',
     description: 'Triggers when a new ad is added to a tracked brand in Spyder.',
     props: {
-        brand_id: foreplayCommon.spyderBrand_id(foreplayAuth),
+        brand_id: foreplayCommon.spyderBrand_id(),
     },
     sampleData: {
         "id": "ad_123456789",

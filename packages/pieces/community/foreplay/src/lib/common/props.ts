@@ -2,8 +2,7 @@ import { Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 export const foreplayCommon = {
-
-    page_id: (auth: any) => Property.Dropdown({
+    page_id: () => Property.Dropdown({
         displayName: 'Facebook Page',
         description: 'Select the Facebook Page to retrieve ads from.',
         required: true,
@@ -11,9 +10,8 @@ export const foreplayCommon = {
         options: async (context) => {
             if (!context['auth'] || !context['domain']) {
                 return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Please enter a domain above first.',
+                    disabled: true, options: [],
+                    placeholder: 'Please provide authentication and a domain first.',
                 };
             }
             const response = await httpClient.sendRequest<any>({
@@ -23,14 +21,14 @@ export const foreplayCommon = {
                     domain: context['domain'] as string,
                 },
                 headers: {
-                    'Authorization': (auth as { apiKey: string }).apiKey,
+                    // FIX: Get the apiKey from the context object
+                    'Authorization': (context['auth'] as { apiKey: string }).apiKey,
                 }
             });
             const brands = response.body['data'] || [];
             if (brands.length === 0) {
-                 return {
-                    disabled: true,
-                    options: [],
+                return {
+                    disabled: true, options: [],
                     placeholder: 'No brands found for this domain.',
                 };
             }
@@ -43,16 +41,15 @@ export const foreplayCommon = {
             };
         }
     }),
-    board_id: (auth: any) => Property.Dropdown({
+    board_id: () => Property.Dropdown({
         displayName: 'Board',
         description: 'Select the board.',
         required: true,
         refreshers: [],
         options: async (context) => {
-             if (!context['auth']) {
+            if (!context['auth']) {
                 return {
-                    disabled: true,
-                    options: [],
+                    disabled: true, options: [],
                     placeholder: 'Please authenticate first.',
                 };
             }
@@ -60,7 +57,8 @@ export const foreplayCommon = {
                 method: HttpMethod.GET,
                 url: `https://public.api.foreplay.co/api/boards`,
                 headers: {
-                    'Authorization': (auth as { apiKey: string }).apiKey,
+                    // FIX: Get the apiKey from the context object
+                    'Authorization': (context['auth'] as { apiKey: string }).apiKey,
                 }
             });
             const boards = response.body['data'] || [];
@@ -73,8 +71,7 @@ export const foreplayCommon = {
             };
         }
     }),
-
-    spyderBrand_id: (auth: any) => Property.Dropdown({
+    spyderBrand_id: () => Property.Dropdown({
         displayName: 'Spyder Brand',
         description: 'Select the Spyder brand to monitor for new ads.',
         required: true,
@@ -82,8 +79,7 @@ export const foreplayCommon = {
         options: async (context) => {
             if (!context['auth']) {
                 return {
-                    disabled: true,
-                    options: [],
+                    disabled: true, options: [],
                     placeholder: 'Please authenticate first.',
                 };
             }
@@ -91,7 +87,8 @@ export const foreplayCommon = {
                 method: HttpMethod.GET,
                 url: `https://public.api.foreplay.co/api/spyder/brands`,
                 headers: {
-                    'Authorization': (auth as { apiKey: string }).apiKey,
+                    // FIX: Get the apiKey from the context object
+                    'Authorization': (context['auth'] as { apiKey: string }).apiKey,
                 }
             });
             const brands = response.body['data'] || [];

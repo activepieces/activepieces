@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, QueryParams } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { foreplayAuth } from '../common/auth';
 import { foreplayCommon } from '../common/props';
 
@@ -14,7 +14,8 @@ export const getAdsByPage = createAction({
             description: 'Enter a domain name to find associated Facebook Pages.',
             required: true,
         }),
-        page_id: foreplayCommon.page_id(foreplayAuth),
+        // FIX: Remove the 'foreplayAuth' argument from the function call
+        page_id: foreplayCommon.page_id(),
         live: Property.StaticDropdown({
             displayName: 'Live Status',
             required: false,
@@ -25,15 +26,14 @@ export const getAdsByPage = createAction({
                 ]
             }
         }),
+        //... (rest of the props are correct)
         display_format: Property.StaticMultiSelectDropdown({
             displayName: 'Display Format',
             required: false,
             options: {
                 options: [
-                    { label: 'Video', value: 'video' },
-                    { label: 'Carousel', value: 'carousel' },
-                    { label: 'Image', value: 'image' },
-                    { label: 'DCO', value: 'dco' },
+                    { label: 'Video', value: 'video' }, { label: 'Carousel', value: 'carousel' },
+                    { label: 'Image', value: 'image' }, { label: 'DCO', value: 'dco' },
                     { label: 'DPA', value: 'dpa' },
                 ]
             }
@@ -43,10 +43,8 @@ export const getAdsByPage = createAction({
             required: false,
             options: {
                 options: [
-                    { label: 'Facebook', value: 'facebook' },
-                    { label: 'Instagram', value: 'instagram' },
-                    { label: 'Audience Network', value: 'audience_network' },
-                    { label: 'Messenger', value: 'messenger' },
+                    { label: 'Facebook', value: 'facebook' }, { label: 'Instagram', value: 'instagram' },
+                    { label: 'Audience Network', value: 'audience_network' }, { label: 'Messenger', value: 'messenger' },
                 ]
             }
         }),
@@ -56,8 +54,7 @@ export const getAdsByPage = createAction({
             defaultValue: 'newest',
             options: {
                 options: [
-                    { label: 'Newest', value: 'newest' },
-                    { label: 'Oldest', value: 'oldest' },
+                    { label: 'Newest', value: 'newest' }, { label: 'Oldest', value: 'oldest' },
                     { label: 'Longest Running', value: 'longest_running' },
                 ]
             }
@@ -71,6 +68,7 @@ export const getAdsByPage = createAction({
     async run(context) {
         const { apiKey } = context.auth;
         const props = context.propsValue;
+
         const queryParams: Record<string, string | string[]> = {};
         
         queryParams['page_id'] = props['page_id'] as string;
@@ -78,11 +76,10 @@ export const getAdsByPage = createAction({
         if (props['live'] !== undefined) {
             queryParams['live'] = String(props['live']);
         }
-        if (props['display_format']) {
-
+        if (props['display_format'] && (props['display_format'] as string[]).length > 0) {
             queryParams['display_format'] = props['display_format'] as string[];
         }
-        if (props['publisher_platform']) {
+        if (props['publisher_platform'] && (props['publisher_platform'] as string[]).length > 0) {
             queryParams['publisher_platform'] = props['publisher_platform'] as string[];
         }
         if (props['order']) {
