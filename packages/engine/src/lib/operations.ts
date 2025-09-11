@@ -5,7 +5,6 @@ import {
     EngineResponse,
     EngineResponseStatus,
     ExecuteActionResponse,
-    ExecuteExtractPieceMetadata,
     ExecuteExtractPieceMetadataOperation,
     ExecuteFlowOperation,
     ExecutePropsOptions,
