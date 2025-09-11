@@ -5,8 +5,12 @@ export class AddIndexOnTriggerRun1757557714045 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DELETE FROM "trigger_run"
-        `)
+          DELETE FROM "trigger_run"
+            WHERE ctid IN (
+            SELECT ctid
+            FROM "trigger_run"
+            FOR UPDATE SKIP LOCKED
+        )`)
         await queryRunner.query(`
             ALTER TABLE "trigger_run" DROP CONSTRAINT "fk_trigger_run_flow_id"
         `)

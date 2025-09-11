@@ -241,6 +241,9 @@
       "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
+      "@activepieces/piece-cloudconvert": [
+        "packages/pieces/community/cloudconvert/src/index.ts"
+      ],
       "@activepieces/piece-cloudinary": [
         "packages/pieces/community/cloudinary/src/index.ts"
       ],
