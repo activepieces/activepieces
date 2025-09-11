@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, ErrorCode, isNil, Principal, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, ErrorCode, isNil, Principal, PrincipalType, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
@@ -136,20 +136,21 @@ export const authenticationUtils = {
     async sendTelemetry({
         user,
         identity,
-        project,
+        projectId,
+        platformId,
         log,
     }: SendTelemetryParams): Promise<void> {
         try {
-            await telemetry(log).identify(user, identity, project.id)
-            await telemetry(log).trackProject(project.id, {
+            await telemetry(log).identify(user, identity, projectId)
+            await telemetry(log).trackProject(projectId, {
                 name: TelemetryEventName.USER_SIGNED_UP,
                 payload: {
                     userId: identity.id,
                     email: identity.email,
                     firstName: identity.firstName,
                     lastName: identity.lastName,
-                    projectId: project.id,
-                    platformId: project.platformId,
+                    projectId,
+                    platformId,
                     provider: identity.provider,
                 },
             })
@@ -200,7 +201,8 @@ export const authenticationUtils = {
 type SendTelemetryParams = {
     identity: UserIdentity
     user: User
-    project: Project
+    projectId: string
+    platformId: string
     log: FastifyBaseLogger
 }
 

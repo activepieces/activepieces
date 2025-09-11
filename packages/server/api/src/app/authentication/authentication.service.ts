@@ -49,12 +49,19 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         await userInvitationsService(log).provisionUserInvitation({
             email: params.email,
         })
-
-        return authenticationUtils.getProjectAndToken({
+        const projectAndToken =  await authenticationUtils.getProjectAndToken({
             userId: user.id,
             platformId: params.platformId,
             projectId: null,
         })
+        await authenticationUtils.sendTelemetry({
+            identity: userIdentity,
+            user,
+            projectId: projectAndToken.projectId,
+            platformId: params.platformId,
+            log,
+        })
+        return projectAndToken
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResponse> {
         const identity = await userIdentityService(log).verifyIdentityPassword(params)
@@ -89,7 +96,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResponse> {
         const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForFederatedAuthn(params.email, log) : params.predefinedPlatformId
         const userIdentity = await userIdentityService(log).getIdentityByEmail(params.email)
-
+        log.info('federatedAuthn', { platformId, userIdentity })
         if (isNil(platformId)) {
             if (!isNil(userIdentity)) {
                 // User already exists, create a new personal platform and return token
@@ -235,19 +242,21 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
         id: ApFlagId.USER_CREATED,
         value: true,
     })
-    await authenticationUtils.sendTelemetry({
-        identity: userIdentity,
-        user,
-        project: defaultProject,
-        log,
-    })
     await authenticationUtils.saveNewsLetterSubscriber(user, platform.id, userIdentity, log)
 
-    return authenticationUtils.getProjectAndToken({
+    const projectAndToken =  await authenticationUtils.getProjectAndToken({
         userId: user.id,
         platformId: platform.id,
         projectId: defaultProject.id,
     })
+    await authenticationUtils.sendTelemetry({
+        identity: userIdentity,
+        user,
+        projectId: projectAndToken.projectId,
+        platformId: platform.id,
+        log,
+    })
+    return projectAndToken
 }
 
 async function getPersonalPlatformIdForFederatedAuthn(email: string, log: FastifyBaseLogger): Promise<string | null> {

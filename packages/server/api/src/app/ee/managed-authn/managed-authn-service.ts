@@ -13,6 +13,7 @@ import {
     UserIdentityProvider,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { authenticationUtils } from '../../authentication/authentication-utils'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { platformService } from '../../platform/platform.service'
@@ -53,7 +54,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             isNewProject,
         })
 
-        const user = await getOrCreateUser(externalPrincipal, log)
+        const user = await getOrCreateUser({ ...externalPrincipal, projectId: project.id }, log)
 
         await projectMemberService(log).upsert({
             projectId: project.id,
@@ -145,6 +146,13 @@ const getOrCreateUser = async (
         identityId: identity.id,
         platformRole: PlatformRole.MEMBER,
     })
+    await authenticationUtils.sendTelemetry({
+        identity,
+        user,
+        projectId: params.projectId,
+        platformId: params.platformId,
+        log,
+    })
     return user
 }
 
@@ -232,6 +240,7 @@ type GetOrCreateUserParams = {
     externalProjectId: string
     externalFirstName: string
     externalLastName: string
+    projectId: string
 }
 
 type GetOrCreateProjectParams = {
