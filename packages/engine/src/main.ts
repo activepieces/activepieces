@@ -1,15 +1,16 @@
 import {
     assertNotNullOrUndefined,
-    EngineError,
     EngineOperation,
     EngineOperationType,
-    EngineResult,
+    EngineResponse,
+    EngineResponseStatus,
     EngineSocketEvent,
     EngineStderr,
     EngineStdout,
     isNil } from '@activepieces/shared'
 import WebSocket from 'ws'
 import { execute } from './lib/operations'
+import { utils } from './lib/utils'
 
 const WORKER_ID = process.env.WORKER_ID
 const WS_URL = 'ws://127.0.0.1:12345/worker/ws'
@@ -18,26 +19,12 @@ process.title = `engine-${WORKER_ID}`
 let socket: WebSocket | undefined
 
 async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
-    try {
-        const result = await execute(operationType, operation)
-        const resultParsed = JSON.parse(JSON.stringify(result))
-        const engineResult: EngineResult = {
-            result: resultParsed,
-        }
-        socket?.send(JSON.stringify({
-            type: EngineSocketEvent.ENGINE_RESULT,
-            data: engineResult,
-        }))
-    }
-    catch (error) {
-        const engineError: EngineError = {
-            error: error instanceof Error ? error.message : error,
-        }
-        socket?.send(JSON.stringify({
-            type: EngineSocketEvent.ENGINE_ERROR,
-            data: engineError,
-        }))
-    }
+    const result = await execute(operationType, operation)
+    const resultParsed = JSON.parse(JSON.stringify(result))
+    socket?.send(JSON.stringify({
+        type: EngineSocketEvent.ENGINE_RESPONSE,
+        data: resultParsed,
+    }))
 }
 
 function setupSocket() {
@@ -79,13 +66,12 @@ function setupSocket() {
             const message = JSON.parse(data)
             if (message.type === EngineSocketEvent.ENGINE_OPERATION) {
                 executeFromSocket(message.data.operation, message.data.operationType).catch(e => {
-                    const engineError: EngineError = {
-                        error: e instanceof Error ? e.message : e,
+                    const engineError: EngineResponse = {
+                        response: undefined,
+                        status: EngineResponseStatus.INTERNAL_ERROR,
+                        error: utils.formatError(e),
                     }
-                    socket?.send(JSON.stringify({
-                        type: EngineSocketEvent.ENGINE_ERROR,
-                        data: engineError,
-                    }))
+                    socket?.send(JSON.stringify(engineError))
                 })
             }
         }

@@ -1,5 +1,4 @@
 {
-  "Shopify": "Shopify",
   "Ecommerce platform for online stores": "Ecommerce platform for online stores",
   "Shop Name": "Shop Name",
   "Admin Token": "Admin Token",
@@ -71,6 +70,7 @@
   "Last Name": "名字",
   "Phone Number": "Phone Number",
   "Tags": "标签",
+  "Accepts Marketing ?": "Accepts Marketing ?",
   "Product Variant": "Product Variant",
   "Title": "标题",
   "Quantity": "Quantity",

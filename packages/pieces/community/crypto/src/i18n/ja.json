@@ -1,5 +1,4 @@
 {
-  "Crypto": "Crypto",
   "Generate random passwords and hash existing text": "ランダムなパスワードを生成し、既存のテキストをハッシュする",
   "Text to Hash": "ハッシュへのテキスト",
   "Generate HMAC Signature": "HMAC 署名の生成",

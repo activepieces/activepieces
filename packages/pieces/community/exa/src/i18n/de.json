@@ -1,5 +1,4 @@
 {
-  "Exa": "Exa",
   "AI-powered search and content extraction from the web.": "KI-gestützte Suche und Inhaltsextraktion aus dem Internet.",
   "Obtain your API key from [Dashboard Setting](https://dashboard.exa.ai/api-keys).": "Erhalten Sie Ihre API-Taste über [Dashboard-Einstellung](https://dashboard.exa.ai/api-keys).",
   "Get Contents": "Inhalte abrufen",
@@ -80,6 +79,7 @@
   "Fallback": "Fallback",
   "Always": "Immer",
   "Auto": "Auto",
+  "Exa": "Exa",
   "Exa Pro": "Exa Pro",
   "Keyword": "Keyword",
   "Neural": "Neurral",

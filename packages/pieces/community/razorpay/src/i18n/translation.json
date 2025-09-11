@@ -1,5 +1,4 @@
 {
-  "Razorpay": "Razorpay",
   "Key ID": "Key ID",
   "Key Secret": "Key Secret",
   "\n          Enter your Key ID and Key Secret\n\n          Login to your Dashboard with appropriate credentials.\n          Select the mode (Test or Live) for which you want to generate the API key\n          Navigate to Settings > API Keys > Generate Key to generate keys for the selected mode.\n\n          The Key ID and Key Secret appear in a pop-out window.\n        ": "\n          Enter your Key ID and Key Secret\n\n          Login to your Dashboard with appropriate credentials.\n          Select the mode (Test or Live) for which you want to generate the API key\n          Navigate to Settings > API Keys > Generate Key to generate keys for the selected mode.\n\n          The Key ID and Key Secret appear in a pop-out window.\n        ",

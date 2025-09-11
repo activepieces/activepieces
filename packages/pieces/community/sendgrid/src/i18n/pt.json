@@ -1,5 +1,4 @@
 {
-  "SendGrid": "Grade",
   "Email delivery service for sending transactional and marketing emails": "Serviço de entrega de e-mail para envio de e-mails de transacção e marketing",
   "API key acquired from your SendGrid settings": "Chave API adquirida das suas configurações do SendGrid",
   "Send Email": "Enviar e-mail",
