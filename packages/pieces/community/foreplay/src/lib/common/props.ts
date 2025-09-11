@@ -21,7 +21,6 @@ export const foreplayCommon = {
                     domain: context['domain'] as string,
                 },
                 headers: {
-                    // FIX: Get the apiKey from the context object
                     'Authorization': (context['auth'] as { apiKey: string }).apiKey,
                 }
             });

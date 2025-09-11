@@ -35,10 +35,10 @@ export const getAdById = createAction({
         } catch (error) {
             const httpError = error as HttpError;
             
-            // FIX: Cast the 'unknown' body to 'any' before accessing its properties
+            
             const errorBody = httpError.response.body as any;
             
-            // Use optional chaining to safely access the nested error message
+            
             const errorMessage = errorBody?.error?.message ?? `An unexpected error occurred: ${httpError.response.status}`;
             
             throw new Error(errorMessage);

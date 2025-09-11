@@ -14,7 +14,7 @@ export const getAdsByPage = createAction({
             description: 'Enter a domain name to find associated Facebook Pages.',
             required: true,
         }),
-        // FIX: Remove the 'foreplayAuth' argument from the function call
+        
         page_id: foreplayCommon.page_id(),
         live: Property.StaticDropdown({
             displayName: 'Live Status',
@@ -26,7 +26,7 @@ export const getAdsByPage = createAction({
                 ]
             }
         }),
-        //... (rest of the props are correct)
+        
         display_format: Property.StaticMultiSelectDropdown({
             displayName: 'Display Format',
             required: false,
