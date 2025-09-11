@@ -6,10 +6,10 @@ import { sendSms } from "./lib/actions/send-sms";
 import { inboundCall } from "./lib/triggers/inbound-call";
 import { getAssistants } from "./lib/triggers/get-assistants";
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { baseApiUrl } from './lib/common';
 import { campaignControl } from "./lib/actions/campaign-control";
 import { deleteLead } from "./lib/actions/delete-lead";
 
-export const baseApiUrl = 'https://app.famulor.de./';
 
 export const famulorAuth =  PieceAuth.SecretText({
     displayName: 'API Key',

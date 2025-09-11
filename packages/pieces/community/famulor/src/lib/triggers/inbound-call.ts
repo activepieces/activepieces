@@ -1,88 +1,89 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { famulorAuth, baseApiUrl } from '../..';
+import { famulorAuth } from '../..';
+import { famulorCommon } from '../common';
+
+const inboundAssistantDropdown = () =>
+  Property.Dropdown({
+    displayName: 'Inbound Assistant',
+    description: 'Select an inbound assistant to receive webhook notifications for',
+    required: true,
+    refreshers: ['auth'],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          placeholder: 'Please authenticate first',
+          options: [],
+        };
+      }
+
+      try {
+        // Filter for inbound assistants only
+        const assistants = await famulorCommon.listAllAssistants({ 
+          auth: auth as string, 
+          type: 'inbound',
+          per_page: 100
+        });
+        
+        if (!assistants.data || assistants.data.length === 0) {
+          return {
+            disabled: true,
+            placeholder: 'No inbound assistants found. Create one first.',
+            options: [],
+          };
+        }
+
+        return {
+          options: assistants.data.map((assistant: any) => ({
+            label: `${assistant.name} (${assistant.status})`,
+            value: assistant.id,
+          })),
+        };
+      } catch (error) {
+        return {
+          disabled: true,
+          placeholder: 'Failed to fetch assistants',
+          options: [],
+        };
+      }
+    },
+  });
 
 export const inboundCall = createTrigger({
-    auth:famulorAuth,
+    auth: famulorAuth,
     name: 'inboundCall',
-    displayName: 'Inbound Call',
-    description: 'Triggers for variables before connecting an inbound call.',
+    displayName: 'Inbound Call Received',
+    description: 'Triggers when an inbound call is received by your AI assistant. Webhook must be enabled for the selected assistant.',
     props: {
-        assistant: Property.Dropdown({
-            displayName: 'Assistant',
-            description: 'Select an assistant',
-            required: true,
-            refreshers: ['auth'],
-            refreshOnSearch: false,
-            options: async ({ auth }) => {
-                const res = await httpClient.sendRequest({
-                    method: HttpMethod.GET,
-                    url: baseApiUrl + 'api/user/assistants',
-                    headers: {
-                        Authorization: "Bearer " + auth,
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                });
-
-                if (res.status !== 200) {
-                    return {
-                        disabled: true,
-                        placeholder: 'Error fetching assistants',
-                        options: [],
-                    };
-                } else if (res.body.length === 0) {
-                    return {
-                        disabled: true,
-                        placeholder: 'No assistants found. Create one first.',
-                        options: [],
-                    };
-                }
-
-                return {
-                    options: res.body.map((assistant: any) => ({
-                        value: assistant.id,
-                        label: assistant.name,
-                    })),
-                };
-            }
-        }),
+        assistant_id: inboundAssistantDropdown(),
     },
     sampleData: {
+        assistant_id: 123,
         customer_phone: '+16380991171',
         assistant_phone: '+16380991171',
+        call_id: "call_abc123",
+        timestamp: "2024-01-15T10:30:00Z",
+        status: "incoming",
+        variables: {
+            customer_name: "John Doe",
+            caller_id: "+16380991171"
+        }
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
-        await httpClient.sendRequest({
-            method: HttpMethod.POST,
-            url: baseApiUrl + 'api/user/assistants/enable-inbound-webhook',
-            body: {
-                assistant_id: context.propsValue['assistant'],
-                webhook_url: context.webhookUrl,
-            },
-            headers: {
-                Authorization: "Bearer " + context.auth,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
+        await famulorCommon.enableInboundWebhook({
+            auth: context.auth as string,
+            assistant_id: context.propsValue.assistant_id as number,
+            webhook_url: context.webhookUrl,
         });
     },
     async onDisable(context) {
-        await httpClient.sendRequest({
-            method: HttpMethod.POST,
-            url: baseApiUrl + 'api/user/assistants/disable-inbound-webhook',
-            body: {
-                assistant_id: context.propsValue['assistant'],
-            },
-            headers: {
-                Authorization: "Bearer " + context.auth,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
+        await famulorCommon.disableInboundWebhook({
+            auth: context.auth as string,
+            assistant_id: context.propsValue.assistant_id as number,
         });
     },
     async run(context) {
-        return [context.payload.body]
+        return [context.payload.body];
     }
 })
