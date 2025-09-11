@@ -12,24 +12,27 @@ export class AddIndexOnTriggerRun1757557714045 implements MigrationInterface {
             message: 'up',
         })
         await queryRunner.query(`
-            ALTER TABLE "trigger_run" DROP CONSTRAINT "fk_trigger_run_flow_id"
+            ALTER TABLE "trigger_run" DROP CONSTRAINT IF EXISTS "fk_trigger_run_flow_id";
         `)
         await queryRunner.query(`
-            ALTER TABLE "trigger_run" DROP CONSTRAINT "fk_trigger_run_payload_file_id"
+            ALTER TABLE "trigger_run" DROP CONSTRAINT IF EXISTS "fk_trigger_run_payload_file_id";
         `)
         await queryRunner.query(`
-            ALTER TABLE "trigger_run" DROP COLUMN "flowId"
+            ALTER TABLE "trigger_run" DROP COLUMN IF EXISTS "flowId";
         `)
 
         await queryRunner.query(`
             ALTER TABLE "trigger_run"
-            ADD CONSTRAINT "fk_trigger_run_payload_file_id" FOREIGN KEY ("payloadFileId") REFERENCES "file"("id") ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID
+            ADD CONSTRAINT "fk_trigger_run_payload_file_id" FOREIGN KEY ("payloadFileId") REFERENCES "file"("id") ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID;
         `)
         await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY "idx_trigger_run_trigger_source_id" ON "trigger_run" ("triggerSourceId")
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_trigger_run_trigger_source_id" 
+            ON "trigger_run" ("triggerSourceId");
         `)
+
         await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY "idx_trigger_run_payload_file_id" ON "trigger_run" ("payloadFileId")
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_trigger_run_payload_file_id" 
+            ON "trigger_run" ("payloadFileId");
         `)
         system.globalLogger().info({
             name: 'AddIndexOnTriggerRun1757557714045',
