@@ -136,6 +136,7 @@ const systemPropValidators: {
     [AppSystemProp.STRIPE_WEBHOOK_SECRET]: stringValidator,
     [AppSystemProp.CLOUD_PLATFORM_ID]: stringValidator,
     [AppSystemProp.INTERNAL_URL]: stringValidator,
+    [AppSystemProp.PM2_ENABLED]: booleanValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
     [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
     // Copilot
