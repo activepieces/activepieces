@@ -77,7 +77,7 @@ export const getTaskDetails = createAction({
 		}
 
 		const outputs = task.output || [];
-		let artifacts: Array<any> = [];
+		const artifacts: Array<any> = [];
 		
 		// Download output files if requested and available
 		if (propsValue.downloadOutput && outputs.length > 0) {
