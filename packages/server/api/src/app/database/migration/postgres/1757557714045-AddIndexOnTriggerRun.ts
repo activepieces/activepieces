@@ -1,16 +1,16 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class AddIndexOnTriggerRun1757557714045 implements MigrationInterface {
     name = 'AddIndexOnTriggerRun1757557714045'
 
+    transaction = false
+
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-          DELETE FROM "trigger_run"
-            WHERE ctid IN (
-            SELECT ctid
-            FROM "trigger_run"
-            FOR UPDATE SKIP LOCKED
-        )`)
+        system.globalLogger().info({
+            name: 'AddIndexOnTriggerRun1757557714045',
+            message: 'up',
+        })
         await queryRunner.query(`
             ALTER TABLE "trigger_run" DROP CONSTRAINT "fk_trigger_run_flow_id"
         `)
@@ -20,16 +20,21 @@ export class AddIndexOnTriggerRun1757557714045 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "trigger_run" DROP COLUMN "flowId"
         `)
-        await queryRunner.query(`
-            CREATE INDEX "idx_trigger_run_trigger_source_id" ON "trigger_run" ("triggerSourceId")
-        `)
+
         await queryRunner.query(`
             ALTER TABLE "trigger_run"
-            ADD CONSTRAINT "fk_trigger_run_payload_file_id" FOREIGN KEY ("payloadFileId") REFERENCES "file"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+            ADD CONSTRAINT "fk_trigger_run_payload_file_id" FOREIGN KEY ("payloadFileId") REFERENCES "file"("id") ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_trigger_run_payload_file_id" ON "trigger_run" ("payloadFileId")
+            CREATE INDEX CONCURRENTLY "idx_trigger_run_trigger_source_id" ON "trigger_run" ("triggerSourceId")
         `)
+        await queryRunner.query(`
+            CREATE INDEX CONCURRENTLY "idx_trigger_run_payload_file_id" ON "trigger_run" ("payloadFileId")
+        `)
+        system.globalLogger().info({
+            name: 'AddIndexOnTriggerRun1757557714045',
+            message: 'completed',
+        })
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
