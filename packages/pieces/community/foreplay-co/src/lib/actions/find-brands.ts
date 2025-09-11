@@ -27,21 +27,21 @@ export const findBrands = createAction({
           { label: 'Most Ranked', value: 'most_ranked' },
           { label: 'Least Ranked', value: 'least_ranked' },
         ],
-        defaultValue: 'most_ranked',
       },
     }),
   },
   async run({ auth, propsValue }) {
-    const queryParams: Record<string, string | number | boolean> = {
-      domain: propsValue.domain,
+    const values = propsValue as Record<string, any>;
+    const queryParams: Record<string, string> = {
+      domain: String(values['domain']),
     };
 
     // Add optional parameters if provided
-    if (propsValue.limit) {
-      queryParams.limit = propsValue.limit;
+    if (values['limit']) {
+      queryParams['limit'] = String(values['limit']);
     }
-    if (propsValue.order) {
-      queryParams.order = propsValue.order;
+    if (values['order']) {
+      queryParams['order'] = String(values['order']);
     }
 
     const response = await foreplayCoApiCall({

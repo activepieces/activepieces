@@ -1,6 +1,41 @@
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
 import { foreplayCoApiCall } from "../common";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { HttpMethod, Polling, DedupeStrategy, pollingHelper } from "@activepieces/pieces-common";
+
+const polling: Polling<string, { brand_id: string }> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+    const { brand_id } = propsValue;
+
+    console.log(`[New Ad in Spyder Polling] Fetching ads for brand: ${brand_id}, lastFetch: ${new Date(lastFetchEpochMS || 0).toISOString()}`);
+
+    const response = await foreplayCoApiCall({
+      apiKey: auth,
+      method: HttpMethod.GET,
+      resourceUri: '/api/spyder/brand/ads',
+      queryParams: {
+        brand_id: brand_id,
+        limit: String(100),
+        order: 'newest'
+      },
+    });
+
+    const responseBody = response.body;
+
+    if (!responseBody.metadata || !responseBody.metadata.success) {
+      console.log(`[New Ad in Spyder Polling] API call failed:`, responseBody);
+      return [];
+    }
+
+    const ads = responseBody.data || [];
+    console.log(`[New Ad in Spyder Polling] Found ${ads.length} ads for brand ${brand_id}`);
+
+    return ads.map((ad: any) => ({
+      epochMilliSeconds: new Date(ad.created_at).getTime(),
+      data: ad,
+    }));
+  }
+};
 
 export const newAdInSpyder = createTrigger({
   name: 'newAdInSpyder',
@@ -36,117 +71,54 @@ export const newAdInSpyder = createTrigger({
     }),
   },
 
+  async test(context) {
+    return await pollingHelper.test(polling, {
+      auth: context.auth as string,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
+  },
+
   async onEnable(context) {
-    // Initialize storage for tracking seen ad IDs
-    const seenAds = context.store.get('seenAds') || [];
-    await context.store.put('seenAds', seenAds);
+    await pollingHelper.onEnable(polling, {
+      auth: context.auth as string,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
   },
 
   async onDisable(context) {
-    // Clean up if needed
-    await context.store.delete('seenAds');
+    await pollingHelper.onDisable(polling, {
+      store: context.store,
+      propsValue: context.propsValue,
+      auth: context.auth as string,
+    });
   },
 
   async run(context) {
-    const brandId = context.propsValue['brand_id'];
-    const pollingInterval = context.propsValue['polling_interval'] || 5;
+    const result = await pollingHelper.poll(polling, {
+      auth: context.auth as string,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
 
-    try {
-      // Get previously seen ad IDs
-      const seenAds = context.store.get('seenAds') || [];
-
-      // Fetch current ads for the brand
-      const response = await foreplayCoApiCall({
-        apiKey: context.auth as string,
-        method: HttpMethod.GET,
-        resourceUri: '/api/spyder/brand/ads',
-        queryParams: {
-          brand_id: brandId,
-          limit: 100, // Get a reasonable number to check for new ads
-          order: 'newest'
-        },
-      });
-
-      const responseBody = response.body;
-
-      if (!responseBody.metadata || !responseBody.metadata.success) {
-        return [];
-      }
-
-      const currentAds = responseBody.data || [];
-      const currentAdIds = currentAds.map((ad: any) => ad.id);
-
-      // Find new ads that haven't been seen before
-      const newAds = currentAds.filter((ad: any) => !seenAds.includes(ad.id));
-
-      // Update the seen ads list with all current ad IDs
-      await context.store.put('seenAds', currentAdIds);
-
-      // Return new ads as trigger events
-      return newAds.map((ad: any) => ({
-        id: ad.id,
-        brand_id: ad.brand_id,
-        title: ad.title,
-        description: ad.description,
-        live: ad.live,
-        display_format: ad.display_format,
-        publisher_platform: ad.publisher_platform,
-        niches: ad.niches,
-        market_target: ad.market_target,
-        languages: ad.languages,
-        created_at: ad.created_at,
-        updated_at: ad.updated_at,
-        // Include metadata for reference
-        metadata: responseBody.metadata
-      }));
-
-    } catch (error) {
-      console.error('Error polling for new ads:', error);
-      return [];
-    }
-  },
-
-  async test(context) {
-    const brandId = context.propsValue['brand_id'];
-
-    try {
-      const response = await foreplayCoApiCall({
-        apiKey: context.auth as string,
-        method: HttpMethod.GET,
-        resourceUri: '/api/spyder/brand/ads',
-        queryParams: {
-          brand_id: brandId,
-          limit: 5,
-          order: 'newest'
-        },
-      });
-
-      const responseBody = response.body;
-
-      if (!responseBody.metadata || !responseBody.metadata.success) {
-        return [];
-      }
-
-      const ads = responseBody.data || [];
-      return ads.slice(0, 1).map((ad: any) => ({
-        id: ad.id,
-        brand_id: ad.brand_id,
-        title: ad.title,
-        description: ad.description,
-        live: ad.live,
-        display_format: ad.display_format,
-        publisher_platform: ad.publisher_platform,
-        niches: ad.niches,
-        market_target: ad.market_target,
-        languages: ad.languages,
-        created_at: ad.created_at,
-        updated_at: ad.updated_at,
-        metadata: responseBody.metadata
-      }));
-
-    } catch (error) {
-      console.error('Error testing trigger:', error);
-      return [];
-    }
+    // Transform the result to match our expected format
+    return result.map((item: any) => ({
+      id: item.data.id,
+      brand_id: item.data.brand_id,
+      title: item.data.title,
+      description: item.data.description,
+      live: item.data.live,
+      display_format: item.data.display_format,
+      publisher_platform: item.data.publisher_platform,
+      niches: item.data.niches,
+      market_target: item.data.market_target,
+      languages: item.data.languages,
+      created_at: item.data.created_at,
+      updated_at: item.data.updated_at,
+      metadata: { success: true, message: 'New ad detected' }
+    }));
   }
 });

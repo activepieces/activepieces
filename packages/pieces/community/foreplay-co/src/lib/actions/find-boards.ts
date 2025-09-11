@@ -22,15 +22,17 @@ export const findBoards = createAction({
   },
   async run({ auth, propsValue }) {
     const values = propsValue as Record<string, any>;
-    const queryParams: Record<string, string | number | boolean> = {};
+    const queryParams: Record<string, string> = {};
 
     // Add optional parameters if provided
     if (values['offset'] !== undefined) {
-      queryParams['offset'] = values['offset'];
+      queryParams['offset'] = String(values['offset']);
     }
     if (values['limit'] !== undefined) {
-      queryParams['limit'] = values['limit'];
+      queryParams['limit'] = String(values['limit']);
     }
+
+    console.log(`[Find Boards] Making API call with params:`, queryParams);
 
     const response = await foreplayCoApiCall({
       apiKey: auth as string,
@@ -38,6 +40,8 @@ export const findBoards = createAction({
       resourceUri: '/api/boards',
       queryParams,
     });
+
+    console.log(`[Find Boards] API response:`, JSON.stringify(response.body, null, 2));
 
     const responseBody = response.body;
 

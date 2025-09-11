@@ -161,22 +161,22 @@ export const getAdsByPage = createAction({
   },
   async run({ auth, propsValue }) {
     const values = propsValue as Record<string, any>;
-    const queryParams: Record<string, string | number | boolean> = {
-      page_id: values['page_id'],
+    const queryParams: Record<string, string> = {
+      page_id: String(values['page_id']),
     };
 
     // Add optional parameters if provided
     if (values['start_date']) {
-      queryParams['start_date'] = values['start_date'];
+      queryParams['start_date'] = String(values['start_date']);
     }
     if (values['end_date']) {
-      queryParams['end_date'] = values['end_date'];
+      queryParams['end_date'] = String(values['end_date']);
     }
     if (values['order']) {
-      queryParams['order'] = values['order'];
+      queryParams['order'] = String(values['order']);
     }
     if (values['live']) {
-      queryParams['live'] = values['live'] === 'true';
+      queryParams['live'] = String(values['live'] === 'true');
     }
 
     // Handle array parameters - repeat parameter name for each value
@@ -199,10 +199,10 @@ export const getAdsByPage = createAction({
     }
 
     if (values['cursor']) {
-      queryParams['cursor'] = values['cursor'];
+      queryParams['cursor'] = String(values['cursor']);
     }
     if (values['limit']) {
-      queryParams['limit'] = values['limit'];
+      queryParams['limit'] = String(values['limit']);
     }
 
     const response = await foreplayCoApiCall({

@@ -4,7 +4,7 @@ export interface ForeplayCoApiCallProps {
   apiKey: string;
   method: HttpMethod;
   resourceUri: string;
-  queryParams?: Record<string, string | number | boolean>;
+  queryParams?: Record<string, string>;
   body?: any;
 }
 

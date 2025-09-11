@@ -1,6 +1,38 @@
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
 import { foreplayCoApiCall } from "../common";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { HttpMethod, Polling, DedupeStrategy, pollingHelper } from "@activepieces/pieces-common";
+
+const polling: Polling<string, {}> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+    console.log(`[New Swipefile Ad Polling] Fetching swipefile ads, lastFetch: ${new Date(lastFetchEpochMS || 0).toISOString()}`);
+
+    const response = await foreplayCoApiCall({
+      apiKey: auth,
+      method: HttpMethod.GET,
+      resourceUri: '/api/swipefile/ads',
+      queryParams: {
+        limit: String(100),
+        order: 'newest'
+      },
+    });
+
+    const responseBody = response.body;
+
+    if (!responseBody.metadata || !responseBody.metadata.success) {
+      console.log(`[New Swipefile Ad Polling] API call failed:`, responseBody);
+      return [];
+    }
+
+    const ads = responseBody.data || [];
+    console.log(`[New Swipefile Ad Polling] Found ${ads.length} swipefile ads`);
+
+    return ads.map((ad: any) => ({
+      epochMilliSeconds: new Date(ad.created_at).getTime(),
+      data: ad,
+    }));
+  }
+};
 
 export const newSwipefileAd = createTrigger({
   name: 'newSwipefileAd',
@@ -38,120 +70,58 @@ export const newSwipefileAd = createTrigger({
     }),
   },
 
+  async test(context) {
+    return await pollingHelper.test(polling, {
+      auth: context.auth as string,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
+  },
+
   async onEnable(context) {
-    // Initialize storage for tracking seen swipefile ad IDs
-    const seenSwipefileAds = context.store.get('seenSwipefileAds') || [];
-    await context.store.put('seenSwipefileAds', seenSwipefileAds);
+    await pollingHelper.onEnable(polling, {
+      auth: context.auth as string,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
   },
 
   async onDisable(context) {
-    // Clean up if needed
-    await context.store.delete('seenSwipefileAds');
+    await pollingHelper.onDisable(polling, {
+      store: context.store,
+      propsValue: context.propsValue,
+      auth: context.auth as string,
+    });
   },
 
   async run(context) {
-    const pollingInterval = context.propsValue['polling_interval'] || 5;
+    const result = await pollingHelper.poll(polling, {
+      auth: context.auth as string,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
 
-    try {
-      // Get previously seen swipefile ad IDs
-      const seenSwipefileAds = context.store.get('seenSwipefileAds') || [];
-
-      // Fetch current swipefile ads
-      const response = await foreplayCoApiCall({
-        apiKey: context.auth as string,
-        method: HttpMethod.GET,
-        resourceUri: '/api/swipefile/ads',
-        queryParams: {
-          limit: 100, // Get a reasonable number to check for new ads
-          order: 'newest'
-        },
-      });
-
-      const responseBody = response.body;
-
-      if (!responseBody.metadata || !responseBody.metadata.success) {
-        return [];
-      }
-
-      const currentSwipefileAds = responseBody.data || [];
-      const currentAdIds = currentSwipefileAds.map((ad: any) => ad.id);
-
-      // Find new ads that haven't been seen before
-      const newSwipefileAds = currentSwipefileAds.filter((ad: any) => !seenSwipefileAds.includes(ad.id));
-
-      // Update the seen ads list with all current ad IDs
-      await context.store.put('seenSwipefileAds', currentAdIds);
-
-      // Return new swipefile ads as trigger events
-      return newSwipefileAds.map((ad: any) => ({
-        id: ad.id,
-        brand_id: ad.brand_id,
-        brand_name: ad.brand_name,
-        title: ad.title,
-        description: ad.description,
-        live: ad.live,
-        display_format: ad.display_format,
-        publisher_platform: ad.publisher_platform,
-        niches: ad.niches,
-        market_target: ad.market_target,
-        languages: ad.languages,
-        created_at: ad.created_at,
-        updated_at: ad.updated_at,
-        media_urls: ad.media_urls,
-        ad_library_id: ad.ad_library_id,
-        ad_library_url: ad.ad_library_url,
-        // Include metadata for reference
-        metadata: responseBody.metadata
-      }));
-
-    } catch (error) {
-      console.error('Error polling for new swipefile ads:', error);
-      return [];
-    }
-  },
-
-  async test(context) {
-    try {
-      const response = await foreplayCoApiCall({
-        apiKey: context.auth as string,
-        method: HttpMethod.GET,
-        resourceUri: '/api/swipefile/ads',
-        queryParams: {
-          limit: 5,
-          order: 'newest'
-        },
-      });
-
-      const responseBody = response.body;
-
-      if (!responseBody.metadata || !responseBody.metadata.success) {
-        return [];
-      }
-
-      const ads = responseBody.data || [];
-      return ads.slice(0, 1).map((ad: any) => ({
-        id: ad.id,
-        brand_id: ad.brand_id,
-        brand_name: ad.brand_name,
-        title: ad.title,
-        description: ad.description,
-        live: ad.live,
-        display_format: ad.display_format,
-        publisher_platform: ad.publisher_platform,
-        niches: ad.niches,
-        market_target: ad.market_target,
-        languages: ad.languages,
-        created_at: ad.created_at,
-        updated_at: ad.updated_at,
-        media_urls: ad.media_urls,
-        ad_library_id: ad.ad_library_id,
-        ad_library_url: ad.ad_library_url,
-        metadata: responseBody.metadata
-      }));
-
-    } catch (error) {
-      console.error('Error testing swipefile trigger:', error);
-      return [];
-    }
+    // Transform the result to match our expected format
+    return result.map((item: any) => ({
+      id: item.data.id,
+      brand_id: item.data.brand_id,
+      brand_name: item.data.brand_name,
+      title: item.data.title,
+      description: item.data.description,
+      live: item.data.live,
+      display_format: item.data.display_format,
+      publisher_platform: item.data.publisher_platform,
+      niches: item.data.niches,
+      market_target: item.data.market_target,
+      languages: item.data.languages,
+      created_at: item.data.created_at,
+      updated_at: item.data.updated_at,
+      media_urls: item.data.media_urls,
+      ad_library_id: item.data.ad_library_id,
+      ad_library_url: item.data.ad_library_url,
+      metadata: { success: true, message: 'New ad detected' }
+    }));
   }
 });
