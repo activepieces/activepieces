@@ -2,7 +2,7 @@ import { UserIdentityProvider } from '../authentication/user-identity'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
 import { McpId } from '../mcp/mcp'
-import { PlatformId } from '../platform'
+import { PlatformId, PlatformPlanLimits } from '../platform'
 import { ProjectId } from '../project/project'
 import { UserId } from '../user/user'
 
@@ -78,6 +78,20 @@ export enum TelemetryEventName {
     MCP_TOOL_CALLED = 'mcp_tool_called',
     TUTORIAL_CLICKED = 'tutorial_clicked',
     FLOW_PUBLISHED = 'flow_published',
+    USER_UPDATED_PLAN = 'user_updated_plan',
+    USER_DELTED_SUBSCRIPTION = 'user_delted_subscription',
+    USER_UPGRADE_TO_PAID_PLAN = 'user_upgrade_to_paid_plan',
+}
+
+
+type PlanEvent = {
+    plan: string
+    cycle: string
+    stripeSubscriptionId: string | undefined
+    limits: Partial<PlatformPlanLimits>
+}
+type UpdatedPlanEvent = PlanEvent & {
+    isUpgradeFromLastPlan: boolean
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -97,3 +111,6 @@ export type TelemetryEvent =
   | BaseTelemetryEvent<TelemetryEventName.FLOW_CREATED, FlowCreated>
   | BaseTelemetryEvent<TelemetryEventName.MCP_TOOL_CALLED, McpToolCalled>
   | BaseTelemetryEvent<TelemetryEventName.TUTORIAL_CLICKED, ClickedTutorialTelemetryParams>
+  | BaseTelemetryEvent<TelemetryEventName.USER_UPDATED_PLAN, UpdatedPlanEvent>
+  | BaseTelemetryEvent<TelemetryEventName.USER_DELTED_SUBSCRIPTION, PlanEvent>
+  | BaseTelemetryEvent<TelemetryEventName.USER_UPGRADE_TO_PAID_PLAN, PlanEvent>

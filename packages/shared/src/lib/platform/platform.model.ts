@@ -111,6 +111,7 @@ export const PlatformPlan = Type.Object({
     globalConnectionsEnabled: Type.Boolean(),
     customRolesEnabled: Type.Boolean(),
     apiKeysEnabled: Type.Boolean(),
+    /**the plan we allow the user to trial with*/
     eligibleForTrial: Nullable(Type.String()),
     ssoEnabled: Type.Boolean(),
     licenseKey: Type.Optional(Type.String()),

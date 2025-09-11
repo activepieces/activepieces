@@ -116,6 +116,7 @@ export enum PRICE_NAMES {
 }
 
 export const getPlanLimits = (planName: PlanName): Partial<PlatformPlanLimits> => {
+    // addons will be added to these plans so always return a new object
     switch (planName) {
         case PlanName.FREE:
             return { ...FREE_CLOUD_PLAN }
