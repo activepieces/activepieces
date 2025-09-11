@@ -7,12 +7,12 @@
   "Remove": "Retirer",
   "Add To List": "Ajouter à la liste",
   "Remove from List": "Retirer de la liste",
-  "Get a value from storage": "Récupérer une valeur depuis le stockage",
-  "Put a value in storage": "Définir une valeur dans le stockage",
-  "Append to a value in storage": "Rajouter à une valeur dans le stockage",
+  "Get a value from storage": "Récupérer la valeur stockée pour une clé",
+  "Put a value in storage": "Définir ou écraser la valeur stockée pour une clé",
+  "Append to a value in storage": "Ajouter une valeur derrière la valeur stockée",
   "Remove a value from storage": "Retirer une valeur du stockage",
   "Add Items to a list.": "Ajouter des éléments à une liste.",
-  "Remove Item from a list": "Retirer l'élément d'une liste",
+  "Remove Item from a list": "Retirer des éléments d'une liste",
   "Key": "Clé",
   "Default Value": "Valeur par défaut",
   "Store Scope": "Périmètre du stockage",
@@ -21,7 +21,7 @@
   "Ignore if value exists": "Ignorer si la valeur existe",
   "The storage scope of the value.": "Le périmètre de stockage de la valeur.",
   "Separator between added values, use \\n for newlines": "Séparateur entre les valeurs ajoutées, utilisez \\n pour les nouvelles lignes",
-  "Project": "Projet",
-  "Flow": "Flow",
-  "Run": "Exécution"
+  "Project": "Votre compte",
+  "Flow": "Votre Flow",
+  "Run": "Exécution de votre Flow"
 }

@@ -1,4 +1,5 @@
 import { assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, FlowActionType, flowPieceUtil, FlowProjectOperationType, flowStructureUtil, FlowTriggerType, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectState, Step } from '@activepieces/shared'
+import deepEqual from 'deep-equal'
 import semver from 'semver'
 
 export const flowDiffService = {
@@ -35,7 +36,7 @@ async function findFlowsToUpdate({ newState, currentState }: DiffParams): Promis
         const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, state.externalId)
         return !isNil(flow)
     })
-    
+
     const operations = await Promise.all(newStateFiles.map(async (flowFromNewState) => {
         const os = searchInFlowForFlowByIdOrExternalId(currentState.flows, flowFromNewState.externalId)
         assertNotNullOrUndefined(os, `Could not find target flow for source flow ${flowFromNewState.externalId}`)
@@ -105,7 +106,7 @@ async function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow)
     })
 
     return normalizedFromFlow.displayName !== normalizedTargetFlow.displayName
-        || JSON.stringify(normalizedFromFlow.trigger) !== JSON.stringify(normalizedTargetFlow.trigger) || !isMatched
+        || !deepEqual(normalizedFromFlow.trigger, normalizedTargetFlow.trigger) || !isMatched
 }
 
 async function normalize(flowVersion: FlowVersion): Promise<FlowVersion> {
