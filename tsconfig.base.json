@@ -45,6 +45,9 @@
       "@activepieces/piece-agent": [
         "packages/pieces/community/agent/src/index.ts"
       ],
+      "@activepieces/piece-agentx": [
+        "packages/pieces/community/agentx/src/index.ts"
+      ],
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],
@@ -253,6 +256,9 @@
       "@activepieces/piece-cognito-forms": [
         "packages/pieces/community/cognito-forms/src/index.ts"
       ],
+      "@activepieces/piece-cometapi": [
+        "packages/pieces/community/cometapi/src/index.ts"
+      ],
       "@activepieces/piece-comfyicu": [
         "packages/pieces/community/comfyicu/src/index.ts"
       ],
@@ -273,6 +279,9 @@
       ],
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
+      ],
+      "@activepieces/piece-copper": [
+        "packages/pieces/community/copper/src/index.ts"
       ],
       "@activepieces/piece-copy-ai": [
         "packages/pieces/community/copy-ai/src/index.ts"
@@ -458,6 +467,9 @@
       ],
       "@activepieces/piece-google-tasks": [
         "packages/pieces/community/google-tasks/src/index.ts"
+      ],
+      "@activepieces/piece-googlechat": [
+        "packages/pieces/community/googlechat/src/index.ts"
       ],
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"

@@ -1,5 +1,4 @@
 {
-  "Devin AI": "Devin AI",
   "AI-powered engineering assistant for automating development tasks, code generation, and technical conversations.": "開発タスク、コード生成、および技術的な会話を自動化するためのAIを搭載したエンジニアリングアシスタント。",
   "Your Devin API key (used in the Authorization header).": "あなたの Devin API キー (Authorization ヘッダーで使用)",
   "Create Session": "セッションを作成",

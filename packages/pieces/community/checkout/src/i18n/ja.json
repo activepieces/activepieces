@@ -1,5 +1,4 @@
 {
-  "Checkout.com": "Checkout.com",
   "Your Checkout.com secret key. Use sandbox key (sk_sbox_...) for testing or production key (sk_...) for live transactions. You can find it in the Checkout.com dashboard under Developers > API keys.": "Checkout.comの秘密鍵。テストまたはプロダクションキー(sk_... を参照してください。Checkout.comダッシュボードの「開発者>APIキー」から確認できます。",
   "Create Customer": "顧客を作成",
   "Update Customer": "顧客情報の更新",

@@ -1,5 +1,4 @@
 {
-  "AnyHook Websocket": "AnyHookウェブソケット",
   "AnyHook Websocket enables real-time communication through AnyHook proxy server by allowing you to subscribe and listen to websocket events": "AnyHookのWebSocketは、WebSocketイベントを購読してリッスンできるようにすることで、AnyHookプロキシサーバーを介してリアルタイムで通信できます。",
   "AnyHook Server URL": "AnyHookサーバーのURL",
   "The URL of your AnyHook server": "AnyHookサーバーのURL",

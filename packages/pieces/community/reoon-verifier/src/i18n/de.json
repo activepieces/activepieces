@@ -1,5 +1,4 @@
 {
-  "Reoon Email Verifier": "E-Mail-Verifikator für Wiederholung",
   "Email validation service that cleans invalid, temporary & unsafe email addresses.": "E-Mail-Validierungsdienst, der ungültige, temporäre und unsichere E-Mail-Adressen bereinigt.",
   "\nTo obtain a Reoon API key, follow these steps:\n1. Navigate to [API Setting](https://emailverifier.reoon.com/api-settings).\n2. Click on the **Create New API Key** button.\n3. Enter a valid title and copy the API key.\n": "\nUm einen Reoon API-Schlüssel zu erhalten, folgen Sie diesen Schritten:\n1. Navigieren Sie zu [API Einstellung](https://emailverifier.reoon.com/api-settings).\n2. Klicken Sie auf den **Neuen API-Schlüssel erstellen** Button.\n3. Geben Sie einen gültigen Titel ein und kopieren Sie den API-Schlüssel.\n",
   "Verify Email": "E-Mail bestätigen",
