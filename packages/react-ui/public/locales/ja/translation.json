@@ -523,6 +523,7 @@
   "CPU Usage": "CPU 使用率",
   "Disk Usage": "ディスクの使用量",
   "RAM Usage": "RAM Usage",
+  "Sandboxes Free": "",
   "Last Contact": "前回の連絡先",
   "Configs": "構成",
   "Environment Variables": "環境変数",

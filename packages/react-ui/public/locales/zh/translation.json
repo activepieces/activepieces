@@ -523,6 +523,7 @@
   "CPU Usage": "CPU 使用",
   "Disk Usage": "磁盘使用",
   "RAM Usage": "RAM Usage",
+  "Sandboxes Free": "",
   "Last Contact": "上次联系人",
   "Configs": "配置",
   "Environment Variables": "环境变量",

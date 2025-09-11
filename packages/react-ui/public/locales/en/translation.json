@@ -523,6 +523,7 @@
   "CPU Usage": "CPU Usage",
   "Disk Usage": "Disk Usage",
   "RAM Usage": "RAM Usage",
+  "Sandboxes Free": "",
   "Last Contact": "Last Contact",
   "Configs": "Configs",
   "Environment Variables": "Environment Variables",
