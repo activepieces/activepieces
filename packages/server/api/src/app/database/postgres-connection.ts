@@ -267,6 +267,7 @@ import { EligibileForTrial1754852385518 } from './migration/postgres/17548523855
 import { RemoveAgentTestPrompt1754863565929 } from './migration/postgres/1754863565929-RemoveAgentTestPrompt'
 import { RemoveAgentRelationToTables1755954192258 } from './migration/postgres/1755954192258-RemoveAgentRelationToTables'
 import { AddTriggerNameToTriggerSource1757018269905 } from './migration/postgres/1757018269905-AddTriggerNameToTriggerSource'
+import { AddIndexOnTriggerRun1757557714045 } from './migration/postgres/1757557714045-AddIndexOnTriggerRun'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -455,6 +456,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIndexToIssues1756775080449,
         AddTriggerNameToTriggerSource1757018269905,
         AddFlowIndexToTriggerSource1757555419075,
+        AddIndexOnTriggerRun1757557714045,
     ]
 
     const edition = system.getEdition()
