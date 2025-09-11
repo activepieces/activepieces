@@ -1,12 +1,23 @@
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 
-const CLOUDCONVERT_API_BASE_URL = 'https://api.cloudconvert.com/v2';
-
 export class CloudConvertClient {
-    private readonly apiKey: string;
+    private readonly auth: any;
+    private readonly baseUrl: string;
 
-    constructor(apiKey: string) {
-        this.apiKey = apiKey;
+    constructor(auth: any) {
+        this.auth = auth;
+
+        const region = auth.region || 'auto';
+        switch (region) {
+            case 'eu-central':
+                this.baseUrl = 'https://eu-central.api.cloudconvert.com/v2';
+                break;
+            case 'us-east':
+                this.baseUrl = 'https://us-east.api.cloudconvert.com/v2';
+                break;
+            default:
+                this.baseUrl = 'https://api.cloudconvert.com/v2';
+        }
     }
 
     async apiCall({
@@ -20,15 +31,18 @@ export class CloudConvertClient {
         body?: any;
         queryParams?: Record<string, string>;
     }) {
+        // OAuth2 authentication
+        const authConfig = {
+            type: AuthenticationType.BEARER_TOKEN as const,
+            token: this.auth.access_token,
+        };
+
         const response = await httpClient.sendRequest({
             method: method,
-            url: `${CLOUDCONVERT_API_BASE_URL}${resourceUri}`,
+            url: `${this.baseUrl}${resourceUri}`,
             body,
             queryParams,
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: this.apiKey,
-            }
+            authentication: authConfig
         });
 
         return response;
@@ -62,6 +76,23 @@ export class CloudConvertClient {
 
         if (response.status !== 201) {
             throw new Error(`Failed to create upload task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+        }
+
+        return response.body.data;
+    }
+
+    async createImportBase64Task(fileContent: string, filename: string) {
+        const response = await this.apiCall({
+            method: HttpMethod.POST,
+            resourceUri: '/import/base64',
+            body: {
+                file: fileContent,
+                filename
+            }
+        });
+
+        if (response.status !== 201) {
+            throw new Error(`Failed to create base64 import task: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
         }
 
         return response.body.data;
@@ -132,7 +163,7 @@ export class CloudConvertClient {
     }) {
         const response = await this.apiCall({
             method: HttpMethod.POST,
-            resourceUri: '/capture/website',
+            resourceUri: '/capture-website',
             body: options
         });
 
@@ -229,7 +260,7 @@ export class CloudConvertClient {
         return response.body.data;
     }
 
-    async createJob(tasks: Record<string, string>, tag?: string) {
+    async createJob(tasks: Record<string, any>, tag?: string) {
         const response = await this.apiCall({
             method: HttpMethod.POST,
             resourceUri: '/jobs',
@@ -259,10 +290,11 @@ export class CloudConvertClient {
         return response.body.data;
     }
 
-    async getTask(taskId: string) {
+    async getTask(taskId: string, queryParams?: Record<string, string>) {
         const response = await this.apiCall({
             method: HttpMethod.GET,
-            resourceUri: `/tasks/${taskId}`
+            resourceUri: `/tasks/${taskId}`,
+            queryParams
         });
 
         if (response.status !== 200) {
@@ -271,13 +303,56 @@ export class CloudConvertClient {
 
         return response.body.data;
     }
+
+    async getSupportedFormats(options?: {
+        inputFormat?: string;
+        outputFormat?: string;
+        engine?: string;
+        include?: string[];
+    }) {
+        const queryParams: Record<string, string> = {};
+
+        if (options?.inputFormat) {
+            queryParams['filter[input_format]'] = options.inputFormat;
+        }
+        if (options?.outputFormat) {
+            queryParams['filter[output_format]'] = options.outputFormat;
+        }
+        if (options?.engine) {
+            queryParams['filter[engine]'] = options.engine;
+        }
+        if (options?.include) {
+            queryParams['include'] = options.include.join(',');
+        }
+
+        const response = await this.apiCall({
+            method: HttpMethod.GET,
+            resourceUri: '/convert/formats',
+            queryParams
+        });
+
+        if (response.status !== 200) {
+            throw new Error(`Failed to get supported formats: HTTP ${response.status} - ${response.body?.message || 'Unknown error'}`);
+        }
+
+        return response.body.data || [];
+    }
 }
 
 export const cloudconvertCommon = {
-    baseUrl: CLOUDCONVERT_API_BASE_URL,
+    baseUrl: (region = 'auto') => {
+        switch (region) {
+            case 'eu-central':
+                return 'https://eu-central.api.cloudconvert.com/v2';
+            case 'us-east':
+                return 'https://us-east.api.cloudconvert.com/v2';
+            default:
+                return 'https://api.cloudconvert.com/v2';
+        }
+    },
 
-    createClient(apiKey: string) {
-        return new CloudConvertClient(apiKey);
+    createClient(auth: any) {
+        return new CloudConvertClient(auth);
     },
 
     async apiCall({
@@ -287,7 +362,7 @@ export const cloudconvertCommon = {
         body = undefined,
         queryParams = undefined,
     }: {
-        auth: string;
+        auth: any;
         method: HttpMethod;
         resourceUri: string;
         body?: any;

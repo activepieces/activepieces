@@ -1,106 +1,116 @@
-import {
-    createAction,
-    Property,
-    ActionContext,
-} from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { cloudconvertAuth } from '../common/auth';
-import { CloudConvertClient } from '../common/client';
+import { createAction } from '@activepieces/pieces-framework';
+import { propsValidation, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { cloudconvertAuth, CloudConvertClient, archiveFileSchema } from '../common';
+import { Property } from '@activepieces/pieces-framework';
 
-const archiveFileProps = {
-    import_method: Property.StaticDropdown({
-        displayName: 'Import Method',
-        description: 'How to import the files for archiving',
-        required: true,
-        options: {
-            options: [
-                { label: 'File Upload', value: 'upload' },
-                { label: 'File URL', value: 'url' },
-            ]
-        },
-        defaultValue: 'upload'
-    }),
-    files: Property.Array({
-        displayName: 'Files to Archive',
-        description: 'List of files to include in the archive',
-        required: true,
-        properties: {
-            url: Property.ShortText({
-                displayName: 'File URL',
-                required: false,
-            }),
-            file: Property.File({
-                displayName: 'File',
-                description: 'File to upload and archive',
-                required: false,
-            }),
-            filename: Property.ShortText({
-                displayName: 'Filename in Archive',
-                required: false,
-            })
-        }
-    }),
-    output_format: Property.StaticDropdown({
-        displayName: 'Archive Format',
-        required: true,
-        options: {
-            options: [
-                { label: 'ZIP', value: 'zip' },
-                { label: 'RAR', value: 'rar' },
-                { label: '7Z', value: '7z' },
-                { label: 'TAR', value: 'tar' },
-                { label: 'TAR.GZ', value: 'targz' },
-                { label: 'TAR.BZ2', value: 'tarbz2' },
-            ]
-        }
-    }),
-    filename: Property.ShortText({
-        displayName: 'Archive Filename',
-        description: 'Name for the archive file (including extension)',
+const archiveFileProps = () => ({
+  import_method: Property.StaticDropdown({
+    displayName: 'Import Method',
+    description: 'How to import the files for archiving',
+    required: true,
+    options: {
+      options: [
+        { label: 'File Upload', value: 'upload' },
+        { label: 'File URL', value: 'url' },
+        { label: 'Stored File ID', value: 'stored_file' },
+      ]
+    },
+    defaultValue: 'upload'
+  }),
+  files: Property.Array({
+    displayName: 'Files to Archive',
+    description: 'List of files to include in the archive',
+    required: true,
+    properties: {
+      url: Property.ShortText({
+        displayName: 'File URL',
+        description: 'URL of the file to archive',
         required: false,
-    }),
-    engine: Property.StaticDropdown({
-        displayName: 'Engine',
-        description: 'Archive engine to use',
+      }),
+      file: Property.File({
+        displayName: 'File',
+        description: 'File to upload and archive',
         required: false,
-        options: {
-            options: [
-                { label: '7-Zip (Default)', value: '7z' },
-                { label: 'Zip', value: 'zip' },
-                { label: 'Tar', value: 'tar' },
-                { label: 'RAR', value: 'rar' },
-            ]
-        }
-    }),
-    engine_version: Property.ShortText({
-        displayName: 'Engine Version',
-        description: 'Specific engine version to use',
+      }),
+      stored_file_id: Property.ShortText({
+        displayName: 'Stored File ID',
+        description: 'ID of a previously stored file in Activepieces to archive',
         required: false,
-    }),
-    timeout: Property.Number({
-        displayName: 'Timeout (seconds)',
-        description: 'Timeout in seconds after which the task will be cancelled',
+      }),
+      filename: Property.ShortText({
+        displayName: 'Filename in Archive',
+        description: 'Optional filename for this file within the archive',
         required: false,
-    }),
-    wait_for_completion: Property.Checkbox({
-        displayName: 'Wait for Completion',
-        description: 'Wait for the archive creation to complete',
-        required: true,
-        defaultValue: true,
-    }),
-} as const;
-
-type ArchiveFileContext = ActionContext<typeof cloudconvertAuth, typeof archiveFileProps>;
+      })
+    }
+  }),
+  output_format: Property.StaticDropdown({
+    displayName: 'Archive Format',
+    description: 'The archive format to create',
+    required: true,
+    options: {
+      options: [
+        { label: 'ZIP', value: 'zip' },
+        { label: 'RAR', value: 'rar' },
+        { label: '7Z', value: '7z' },
+        { label: 'TAR', value: 'tar' },
+        { label: 'TAR.GZ', value: 'targz' },
+        { label: 'TAR.BZ2', value: 'tarbz2' },
+      ]
+    },
+    defaultValue: 'zip'
+  }),
+  filename: Property.ShortText({
+    displayName: 'Archive Filename',
+    description: 'Choose a filename (including extension) for the archive file',
+    required: false,
+    defaultValue: 'archive.zip'
+  }),
+  engine: Property.StaticDropdown({
+    displayName: 'Engine',
+    description: 'Use a specific engine for the archiving',
+    required: false,
+    options: {
+      options: [
+        { label: '7-Zip', value: '7z' },
+        { label: 'Archive Tool (Default)', value: 'archivetool' },
+      ]
+    }
+  }),
+  engine_version: Property.ShortText({
+    displayName: 'Engine Version',
+    description: 'Use a specific engine version for the archiving',
+    required: false,
+  }),
+  timeout: Property.Number({
+    displayName: 'Timeout (seconds)',
+    description: 'Timeout in seconds after which the task will be cancelled',
+    required: false,
+  }),
+  wait_for_completion: Property.Checkbox({
+    displayName: 'Wait for Completion',
+    description: 'Wait for the archive creation to complete before returning',
+    required: true,
+    defaultValue: true,
+  }),
+  store_file: Property.Checkbox({
+    displayName: 'Store File',
+    description: 'Download and store the created archive in Activepieces',
+    required: false,
+    defaultValue: true,
+  }),
+});
 
 export const archiveFile = createAction({
-    name: 'archive_file',
-    displayName: 'Create Archive',
-    description: 'Creates a ZIP, RAR, 7Z, TAR, TAR.GZ or TAR.BZ2 archive',
-    auth: cloudconvertAuth,
-    requireAuth: true,
-    props: archiveFileProps,
-    async run(context: ArchiveFileContext) {
-        const { import_method, files, output_format, filename, engine, engine_version, timeout, wait_for_completion } = context.propsValue;
+  name: 'archive_file',
+  displayName: 'Archive File',
+  description: 'Creates a ZIP, RAR, 7Z, TAR, TAR.GZ or TAR.BZ2 archive',
+  auth: cloudconvertAuth,
+  requireAuth: true,
+  props: archiveFileProps(),
+  async run(context) {
+    await archiveFileSchema.parseAsync(context.propsValue);
+        const { import_method, files, output_format, filename, engine, engine_version, timeout, wait_for_completion, store_file } = context.propsValue;
 
         if (!files || files.length === 0) {
             throw new Error('At least one file is required to create an archive');
@@ -109,85 +119,76 @@ export const archiveFile = createAction({
         const client = new CloudConvertClient(context.auth);
 
         try {
-            const importTasks: string[] = [];
+            const jobTasks: Record<string, any> = {};
 
-            if (import_method === 'url') {
-                // Handle URL import method
-                for (const file of files as Array<{ url: string; filename?: string }>) {
+            files.forEach((file: any, index: number) => {
+                const taskName = `import-file-${index + 1}`;
+
+                if (import_method === 'url') {
                     if (!file.url) {
-                        throw new Error('File URL is required when using URL import method');
+                        throw new Error(`File URL is required for file ${index + 1} when using URL import method`);
                     }
-                    const importTask = await client.createImportTask(file.url, file.filename);
-                    importTasks.push(importTask.id);
-                }
-            } else if (import_method === 'upload') {
-                // Handle file upload method
-                for (const file of files as Array<{ file?: any; filename?: string }>) {
+                    jobTasks[taskName] = {
+                        operation: 'import/url',
+                        url: file.url,
+                        ...(file.filename && { filename: file.filename })
+                    };
+                } else if (import_method === 'stored_file') {
+                    if (!file.stored_file_id) {
+                        throw new Error(`Stored File ID is required for file ${index + 1} when using stored file import method`);
+                    }
+                    if (!context.server?.apiUrl) {
+                        throw new Error('Server API URL is not available. Please check your Activepieces server configuration.');
+                    }
+                    const baseUrl = context.server.apiUrl.replace(/\/$/, '');
+                    const fileUrl = `${baseUrl}/v1/step-files/${file.stored_file_id}`;
+
+                    try {
+                        new URL(fileUrl);
+                    } catch (urlError) {
+                        throw new Error(`Invalid file URL constructed: ${fileUrl}. URL Error: ${urlError instanceof Error ? urlError.message : String(urlError)}`);
+                    }
+                    jobTasks[taskName] = {
+                        operation: 'import/url',
+                        url: fileUrl,
+                        ...(file.filename && { filename: file.filename })
+                    };
+                } else if (import_method === 'upload') {
                     if (!file.file || !file.file.base64) {
-                        throw new Error('Please select a file to upload from your device');
+                        throw new Error(`Please select a file to upload for file ${index + 1}`);
                     }
-
-                    // Create upload task for each file
-                    const uploadTask = await client.createUploadTask(file.file.filename || 'uploaded-file');
-
-                    // Get upload URL and parameters
-                    const uploadUrl = uploadTask.result.form.url;
-                    const uploadForm = uploadTask.result.form.parameters;
-
-                    // Prepare form data for upload
-                    const formData = new FormData();
-
-                    // Add form parameters
-                    Object.entries(uploadForm).forEach(([key, value]) => {
-                        formData.append(key, value as string);
-                    });
-
-                    // Add the file
-                    if (file.file.base64) {
-                        // Convert base64 to buffer for upload
-                        const buffer = Buffer.from(file.file.base64, 'base64');
-                        const blob = new Blob([buffer], { type: file.file.extension ? `application/${file.file.extension}` : 'application/octet-stream' });
-                        formData.append('file', blob, file.file.filename);
-                    }
-
-                    // Upload the file
-                    const uploadResponse = await httpClient.sendRequest({
-                        method: HttpMethod.POST,
-                        url: uploadUrl,
-                        body: formData,
-                    });
-
-                    if (uploadResponse.status < 200 || uploadResponse.status >= 300) {
-                        throw new Error(`Failed to upload file: HTTP ${uploadResponse.status} - ${uploadResponse.body?.message || 'Upload failed'}`);
-                    }
-
-                    importTasks.push(uploadTask.id);
+                    throw new Error('Upload method for multiple files is not yet supported with the new job format. Please use URL or stored file methods.');
+                } else {
+                    throw new Error('Invalid import method selected');
                 }
-            } else {
-                throw new Error('Invalid import method selected');
-            }
-
-            const archiveTask = await client.createArchiveTask(
-                importTasks,
-                output_format,
-                {
-                    filename,
-                    engine,
-                    engineVersion: engine_version,
-                    timeout,
-                }
-            );
-
-            const exportTask = await client.createExportTask(archiveTask.id);
-
-            const tasks: Record<string, string> = {};
-            importTasks.forEach((taskId, index) => {
-                tasks[import_method === 'url' ? `import/url-${index + 1}` : `import/upload-${index + 1}`] = taskId;
             });
-            tasks['archive'] = archiveTask.id;
-            tasks['export/url'] = exportTask.id;
 
-            const job = await client.createJob(tasks, `archive-${Date.now()}`);
+            // Collect all import task names
+            const importTaskNames = files.map((_, index) => `import-file-${index + 1}`);
+
+            // Archive task
+            const archiveOptions: any = {
+                input: importTaskNames.length === 1 ? importTaskNames[0] : importTaskNames,
+                output_format,
+            };
+
+            if (filename) archiveOptions.filename = filename;
+            if (engine) archiveOptions.engine = engine;
+            if (engine_version) archiveOptions.engine_version = engine_version;
+            if (timeout) archiveOptions.timeout = timeout;
+
+            jobTasks['archive-files'] = {
+                operation: 'archive',
+                ...archiveOptions
+            };
+
+            // Export task
+            jobTasks['export-file'] = {
+                operation: 'export/url',
+                input: 'archive-files'
+            };
+
+            const job = await client.createJob(jobTasks, `archive-${Date.now()}`);
 
             if (wait_for_completion) {
                 let attempts = 0;
@@ -197,17 +198,44 @@ export const archiveFile = createAction({
                     const currentJob = await client.getJob(job.id);
 
                     if (currentJob.status === 'finished') {
-                        const exportTaskData = await client.getTask(exportTask.id);
+                        // Find the export task by name in the job
+                        const exportTaskData = currentJob.tasks?.find((task: any) => task.name === 'export-file');
+                        const downloadUrl = exportTaskData?.result?.files?.[0]?.url;
+                        const outputFilename = exportTaskData?.result?.files?.[0]?.filename || `archive.${output_format}`;
+
+                        let storedFileId: string | undefined;
+                        if (store_file && downloadUrl) {
+                            try {
+                                const fileResponse = await httpClient.sendRequest({
+                                    method: HttpMethod.GET,
+                                    url: downloadUrl,
+                                });
+
+                                if (fileResponse.status === 200 && fileResponse.body) {
+                                    let fileData: Buffer;
+                                    if (typeof fileResponse.body === 'string') {
+                                        fileData = Buffer.from(fileResponse.body, 'binary');
+                                    } else {
+                                        fileData = Buffer.from(fileResponse.body as ArrayBuffer);
+                                    }
+                                    storedFileId = await context.files.write({
+                                        data: fileData,
+                                        fileName: outputFilename,
+                                    });
+                                }
+                            } catch (error) {
+                                // Continue without throwing
+                            }
+                        }
 
                         return {
                             job: currentJob,
-                            archive_task: archiveTask,
-                            export_task: exportTaskData,
-                            download_url: exportTaskData.result?.files?.[0]?.url,
-                            filename: exportTaskData.result?.files?.[0]?.filename,
+                            download_url: downloadUrl,
+                            filename: outputFilename,
+                            stored_file_id: storedFileId,
                             file_count: files.length,
                             output_format,
-                            size: exportTaskData.result?.files?.[0]?.size || 0
+                            size: exportTaskData?.result?.files?.[0]?.size || 0
                         };
                     } else if (currentJob.status === 'error') {
                         throw new Error(`Archive job failed: ${currentJob.message || 'Unknown error'}`);
@@ -222,8 +250,6 @@ export const archiveFile = createAction({
 
             return {
                 job,
-                archive_task: archiveTask,
-                export_task: exportTask,
                 file_count: files.length,
                 output_format,
                 status: 'processing'
@@ -236,25 +262,5 @@ export const archiveFile = createAction({
         }
     },
 
-    async test(context) {
-        // For testing, return mock data to simulate successful file upload
-        return {
-            import_method: 'upload',
-            files: [
-                {
-                    file: {
-                        filename: 'test-sample.pdf',
-                        base64: 'JVBERi0xLjcKCjEgMCBvYmogCjw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+CmVuZG9iag==',
-                        extension: 'pdf'
-                    },
-                    filename: 'sample.pdf'
-                }
-            ],
-            output_format: 'zip',
-            filename: 'archive.zip',
-            engine: '7z',
-            wait_for_completion: true,
-            message: 'Test successful - file archive simulation completed'
-        };
-    },
+    
 });

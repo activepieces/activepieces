@@ -1,14 +1,14 @@
-import { cloudconvertAuth } from '../common/auth';
 import {
   HttpMethod,
   HttpRequest,
   httpClient,
+  AuthenticationType,
 } from '@activepieces/pieces-common';
 import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { cloudconvertCommon } from '../common/client';
+import { cloudconvertAuth, cloudconvertCommon } from '../common';
 
 export const jobFinished = createTrigger({
   name: 'job_finished',
@@ -94,14 +94,16 @@ export const jobFinished = createTrigger({
     const webhookUrl = context.webhookUrl;
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${cloudconvertCommon.baseUrl}/webhooks`,
+      url: `${cloudconvertCommon.baseUrl((context.auth as any).region || 'auto')}/webhooks`,
       body: {
         url: webhookUrl,
-        events: ['job.finished'],
-        active: true
+        events: ['job.finished']
+      },
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.auth.access_token,
       },
       headers: {
-        Authorization: `Bearer ${context.auth}`,
         'Content-Type': 'application/json',
       },
     };
@@ -118,9 +120,10 @@ export const jobFinished = createTrigger({
     // First, find the webhook by URL
     const listRequest: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${cloudconvertCommon.baseUrl}/webhooks`,
-      headers: {
-        Authorization: `Bearer ${context.auth}`,
+      url: `${cloudconvertCommon.baseUrl((context.auth as any).region || 'auto')}/users/me/webhooks`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.auth.access_token,
       },
     };
 
@@ -131,16 +134,17 @@ export const jobFinished = createTrigger({
         if (webhook) {
           const deleteRequest: HttpRequest = {
             method: HttpMethod.DELETE,
-            url: `${cloudconvertCommon.baseUrl}/webhooks/${webhook.id}`,
-            headers: {
-              Authorization: `Bearer ${context.auth}`,
+            url: `${cloudconvertCommon.baseUrl((context.auth as any).region || 'auto')}/webhooks/${webhook.id}`,
+            authentication: {
+              type: AuthenticationType.BEARER_TOKEN,
+              token: context.auth.access_token,
             },
           };
           await httpClient.sendRequest(deleteRequest);
         }
       }
     } catch (error) {
-      console.warn('Failed to unregister webhook:', error);
+      // Continue silently
     }
   },
 
