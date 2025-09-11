@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddIndexOnTriggerRunSqlite1757557982053 implements MigrationInterface {
-    name = 'AddIndexOnTriggerRunSqlite1757557982053'
+export class AddIndexOnTriggerRunSqlite1757560231246 implements MigrationInterface {
+    name = 'AddIndexOnTriggerRunSqlite1757560231246'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -34,37 +34,7 @@ export class AddIndexOnTriggerRunSqlite1757557982053 implements MigrationInterfa
                 CONSTRAINT "fk_trigger_run_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
-            INSERT INTO "temporary_trigger_run"(
-                    "id",
-                    "created",
-                    "updated",
-                    "payloadFileId",
-                    "pieceName",
-                    "pieceVersion",
-                    "error",
-                    "status",
-                    "triggerSourceId",
-                    "projectId",
-                    "platformId",
-                    "flowId",
-                    "jobId"
-                )
-            SELECT "id",
-                "created",
-                "updated",
-                "payloadFileId",
-                "pieceName",
-                "pieceVersion",
-                "error",
-                "status",
-                "triggerSourceId",
-                "projectId",
-                "platformId",
-                "flowId",
-                "jobId"
-            FROM "trigger_run"
-        `)
+
         await queryRunner.query(`
             DROP TABLE "trigger_run"
         `)
@@ -110,35 +80,7 @@ export class AddIndexOnTriggerRunSqlite1757557982053 implements MigrationInterfa
                 CONSTRAINT "fk_trigger_run_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
-            INSERT INTO "temporary_trigger_run"(
-                    "id",
-                    "created",
-                    "updated",
-                    "payloadFileId",
-                    "pieceName",
-                    "pieceVersion",
-                    "error",
-                    "status",
-                    "triggerSourceId",
-                    "projectId",
-                    "platformId",
-                    "jobId"
-                )
-            SELECT "id",
-                "created",
-                "updated",
-                "payloadFileId",
-                "pieceName",
-                "pieceVersion",
-                "error",
-                "status",
-                "triggerSourceId",
-                "projectId",
-                "platformId",
-                "jobId"
-            FROM "trigger_run"
-        `)
+
         await queryRunner.query(`
             DROP TABLE "trigger_run"
         `)
@@ -159,6 +101,9 @@ export class AddIndexOnTriggerRunSqlite1757557982053 implements MigrationInterfa
             CREATE INDEX "idx_trigger_run_trigger_source_id" ON "trigger_run" ("triggerSourceId")
         `)
         await queryRunner.query(`
+            CREATE INDEX "idx_trigger_run_payload_file_id" ON "trigger_run" ("payloadFileId")
+        `)
+        await queryRunner.query(`
             DROP INDEX "idx_trigger_run_job_id"
         `)
         await queryRunner.query(`
@@ -169,6 +114,9 @@ export class AddIndexOnTriggerRunSqlite1757557982053 implements MigrationInterfa
         `)
         await queryRunner.query(`
             DROP INDEX "idx_trigger_run_trigger_source_id"
+        `)
+        await queryRunner.query(`
+            DROP INDEX "idx_trigger_run_payload_file_id"
         `)
         await queryRunner.query(`
             CREATE TABLE "temporary_trigger_run" (
@@ -191,35 +139,7 @@ export class AddIndexOnTriggerRunSqlite1757557982053 implements MigrationInterfa
                 CONSTRAINT "fk_trigger_run_payload_file_id" FOREIGN KEY ("payloadFileId") REFERENCES "file" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
-            INSERT INTO "temporary_trigger_run"(
-                    "id",
-                    "created",
-                    "updated",
-                    "payloadFileId",
-                    "pieceName",
-                    "pieceVersion",
-                    "error",
-                    "status",
-                    "triggerSourceId",
-                    "projectId",
-                    "platformId",
-                    "jobId"
-                )
-            SELECT "id",
-                "created",
-                "updated",
-                "payloadFileId",
-                "pieceName",
-                "pieceVersion",
-                "error",
-                "status",
-                "triggerSourceId",
-                "projectId",
-                "platformId",
-                "jobId"
-            FROM "trigger_run"
-        `)
+
         await queryRunner.query(`
             DROP TABLE "trigger_run"
         `)
@@ -239,9 +159,15 @@ export class AddIndexOnTriggerRunSqlite1757557982053 implements MigrationInterfa
         await queryRunner.query(`
             CREATE INDEX "idx_trigger_run_trigger_source_id" ON "trigger_run" ("triggerSourceId")
         `)
+        await queryRunner.query(`
+            CREATE INDEX "idx_trigger_run_payload_file_id" ON "trigger_run" ("payloadFileId")
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
+            DROP INDEX "idx_trigger_run_payload_file_id"
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_trigger_run_trigger_source_id"
         `)
@@ -311,6 +237,9 @@ export class AddIndexOnTriggerRunSqlite1757557982053 implements MigrationInterfa
             DROP TABLE "temporary_trigger_run"
         `)
         await queryRunner.query(`
+            CREATE INDEX "idx_trigger_run_payload_file_id" ON "trigger_run" ("payloadFileId")
+        `)
+        await queryRunner.query(`
             CREATE INDEX "idx_trigger_run_trigger_source_id" ON "trigger_run" ("triggerSourceId")
         `)
         await queryRunner.query(`
@@ -321,6 +250,9 @@ export class AddIndexOnTriggerRunSqlite1757557982053 implements MigrationInterfa
         `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_trigger_run_job_id" ON "trigger_run" ("jobId")
+        `)
+        await queryRunner.query(`
+            DROP INDEX "idx_trigger_run_payload_file_id"
         `)
         await queryRunner.query(`
             DROP INDEX "idx_trigger_run_trigger_source_id"

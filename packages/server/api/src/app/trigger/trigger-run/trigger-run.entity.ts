@@ -65,6 +65,11 @@ export const TriggerRunEntity = new EntitySchema<TriggerRunSchema>({
             columns: ['triggerSourceId'],
             unique: false,
         },
+        {
+            name: 'idx_trigger_run_payload_file_id',
+            columns: ['payloadFileId'],
+            unique: false,
+        },
     ],
     relations: {
         triggerSource: {
