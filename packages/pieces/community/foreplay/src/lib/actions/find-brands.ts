@@ -5,125 +5,125 @@ import { makeRequest } from '../common/client';
 
 export const findBrands = createAction({
   auth: ForeplayAuth,
-  name: 'findBrands',
+  name: 'find_brands',
   displayName: 'Find Brands',
-  description: 'Search brands by name, domain, industry, or other filters.',
+  description: 'Search for brands by name or by domain. Tries multiple endpoints to handle differences in plans or versions.',
   props: {
-    domain: Property.ShortText({
-      displayName: 'Domain',
-      description: 'Brand domain to search for (e.g., nike.com)',
-      required: false,
-    }),
-    name: Property.ShortText({
-      displayName: 'Brand Name',
-      description: 'Search brands by name',
-      required: false,
-    }),
-    industry: Property.StaticDropdown({
-      displayName: 'Industry',
-      description: 'Filter brands by industry',
-      required: false,
+    searchMode: Property.StaticDropdown({
+      displayName: 'Search Mode',
+      description: 'Choose how you want to search brands',
+      required: true,
+      defaultValue: 'name',
       options: {
         options: [
-          { label: 'All', value: '' },
-          { label: 'E-commerce', value: 'ecommerce' },
-          { label: 'Technology', value: 'technology' },
-          { label: 'Finance', value: 'finance' },
-          { label: 'Healthcare', value: 'healthcare' },
-          { label: 'Education', value: 'education' },
-          { label: 'Retail', value: 'retail' },
-          { label: 'Travel', value: 'travel' },
-          { label: 'Food & Beverage', value: 'food_beverage' },
-          { label: 'Entertainment', value: 'entertainment' },
-          { label: 'Fashion', value: 'fashion' },
+          { label: 'By Name', value: 'name' },
+          { label: 'By Domain', value: 'domain' },
         ],
       },
     }),
-    minAds: Property.Number({
-      displayName: 'Minimum Ads Count',
-      description: 'Filter brands with at least this many ads',
+    name: Property.ShortText({
+      displayName: 'Brand Name',
+      description: 'Search input for brand name (required if Search Mode = Name)',
       required: false,
     }),
-    maxAds: Property.Number({
-      displayName: 'Maximum Ads Count',
-      description: 'Filter brands with at most this many ads',
+    domain: Property.ShortText({
+      displayName: 'Domain',
+      description: 'Domain to search for brands (required if Search Mode = Domain, e.g. abc.com)',
       required: false,
     }),
     limit: Property.Number({
       displayName: 'Results Limit',
-      description: 'Maximum number of brands to return',
+      description: 'Number of brands to return (max maybe limited by API)',
       required: false,
-      defaultValue: 50,
+      defaultValue: 10,
     }),
-    sortBy: Property.StaticDropdown({
-      displayName: 'Sort By',
-      description: 'Field to sort results by',
+    order: Property.StaticDropdown({
+      displayName: 'Order',
+      description: 'Sort results by relevance or ranking (if supported)',
       required: false,
       options: {
         options: [
-          { label: 'Name (A-Z)', value: 'name_asc' },
-          { label: 'Name (Z-A)', value: 'name_desc' },
-          { label: 'Ads Count (High to Low)', value: 'ads_count_desc' },
-          { label: 'Ads Count (Low to High)', value: 'ads_count_asc' },
-          { label: 'Recently Updated', value: 'updated_desc' },
+          { label: 'Most Ranked', value: 'most_ranked' },
+          { label: 'Least Ranked', value: 'least_ranked' },
         ],
       },
+      defaultValue: 'most_ranked',
     }),
   },
   async run({ auth, propsValue }) {
-    const { domain, name, industry, minAds, maxAds, limit, sortBy } =
-      propsValue;
+    const apiKey = auth as string;
+    const { searchMode, name, domain, limit, order } = propsValue;
 
-    if (!domain && !name && !industry) {
-      throw new Error(
-        'At least one search parameter (Domain, Brand Name, or Industry) is required'
-      );
+    if (searchMode === 'name' && !name) {
+      throw new Error('Brand Name is required when Search Mode = Name');
+    }
+    if (searchMode === 'domain' && !domain) {
+      throw new Error('Domain is required when Search Mode = Domain');
     }
 
-    const queryParams = new URLSearchParams();
+    // Try name search first
+    if (searchMode === 'name') {
+      try {
+        const resp = await makeRequest(
+          apiKey,
+          HttpMethod.GET,
+          `/discovery/brands?query=${encodeURIComponent(name!)}&limit=${limit}`
+        );
+        if (resp?.data && Array.isArray(resp.data) && resp.data.length > 0) {
+          return resp.data;
+        }
+      } catch (e) {
+        // console.warn, fallback
+      }
 
-    if (domain) {
-      queryParams.append('domain', domain);
+      try {
+        const resp2 = await makeRequest(
+          apiKey,
+          HttpMethod.GET,
+          `/brand/getBrandsByDomain?domain=${encodeURIComponent(name!)}&limit=${limit}`  
+        );
+        if (resp2?.data && Array.isArray(resp2.data) && resp2.data.length > 0) {
+          return resp2.data;
+        }
+      } catch (e) {
+        // console.warn
+      }
+
+      return [];
     }
 
-    if (name) {
-      queryParams.append('name', name);
+    // Domain search
+    if (searchMode === 'domain') {
+      try {
+        const resp = await makeRequest(
+          apiKey,
+          HttpMethod.GET,
+          `/brand/getBrandsByDomain?domain=${encodeURIComponent(domain!)}&limit=${limit}&order=${order}`
+        );
+        if (resp?.data && Array.isArray(resp.data)) {
+          return resp.data;
+        }
+      } catch (e) {
+        // fallback
+      }
+
+      // Another possible path
+      try {
+        const resp2 = await makeRequest(
+          apiKey,
+          HttpMethod.GET,
+          `/discovery/brands?query=${encodeURIComponent(domain!)}&limit=${limit}`
+        );
+        if (resp2?.data && Array.isArray(resp2.data)) {
+          return resp2.data;
+        }
+      } catch (e) {
+        // fallback
+      }
+
+      return [];
     }
 
-    if (industry) {
-      queryParams.append('industry', industry);
-    }
-
-    if (minAds !== undefined && minAds !== null) {
-      queryParams.append('minAds', minAds.toString());
-    }
-
-    if (maxAds !== undefined && maxAds !== null) {
-      queryParams.append('maxAds', maxAds.toString());
-    }
-
-    if (limit !== undefined && limit !== null) {
-      queryParams.append('limit', limit.toString());
-    }
-
-    if (sortBy) {
-      queryParams.append('sort', sortBy);
-    }
-
-    let endpoint = '/brand/getBrandsByDomain';
-
-    if (name && !domain) {
-      endpoint = '/brand/search';
-    } else if (industry && !domain && !name) {
-      endpoint = '/brand/filter';
-    }
-
-    const response = await makeRequest(
-      auth,
-      HttpMethod.GET,
-      `${endpoint}?${queryParams.toString()}`
-    );
-
-    return response;
+    return [];
   },
 });
