@@ -1,165 +1,21 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction } from "@activepieces/pieces-framework";
 import { foreplayCoApiCall } from "../common";
 import { HttpMethod } from "@activepieces/pieces-common";
+import { getAdsByPage as getAdsByPageProperties } from "../properties";
+import { getAdsByPageSchema } from "../schemas";
 
 export const getAdsByPage = createAction({
   name: 'getAdsByPage',
   displayName: 'Get Ads by Page',
   description: 'Retrieve all ads belonging to a given Facebook Page ID with optional filtering and pagination. Returns structured response with metadata and ad data.',
-  props: {
-    page_id: Property.ShortText({
-      displayName: 'Page ID',
-      description: 'Facebook page ID to search for. This should be the numeric ID of the Facebook page.',
-      required: true,
-    }),
-    start_date: Property.DateTime({
-      displayName: 'Start Date',
-      description: 'Start date (inclusive). Format: YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS',
-      required: false,
-    }),
-    end_date: Property.DateTime({
-      displayName: 'End Date',
-      description: 'End date (inclusive). Format: YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS',
-      required: false,
-    }),
-    order: Property.StaticDropdown({
-      displayName: 'Order',
-      description: 'Order of results: newest (default), oldest, longest_running, or most_relevant',
-      required: false,
-      options: {
-        options: [
-          { label: 'Newest', value: 'newest' },
-          { label: 'Oldest', value: 'oldest' },
-          { label: 'Longest Running', value: 'longest_running' },
-          { label: 'Most Relevant', value: 'most_relevant' },
-        ],
-      },
-    }),
-    live: Property.StaticDropdown({
-      displayName: 'Live Status',
-      description: 'Filter ads by live status. true means currently active ads, false means inactive ads.',
-      required: false,
-      options: {
-        options: [
-          { label: 'Active Only', value: 'true' },
-          { label: 'Inactive Only', value: 'false' },
-        ],
-      },
-    }),
-    display_format: Property.MultiSelectDropdown({
-      displayName: 'Display Format',
-      description: 'Filter by one or more display formats',
-      required: false,
-      refreshers: [],
-      options: async () => ({
-        options: [
-          { label: 'Video', value: 'video' },
-          { label: 'Carousel', value: 'carousel' },
-          { label: 'Image', value: 'image' },
-          { label: 'DCO', value: 'dco' },
-          { label: 'DPA', value: 'dpa' },
-          { label: 'Multi Images', value: 'multi_images' },
-          { label: 'Multi Videos', value: 'multi_videos' },
-          { label: 'Multi Medias', value: 'multi_medias' },
-          { label: 'Event', value: 'event' },
-          { label: 'Text', value: 'text' },
-        ],
-      }),
-    }),
-    publisher_platform: Property.MultiSelectDropdown({
-      displayName: 'Publisher Platform',
-      description: 'Filter by one or more publisher platforms',
-      required: false,
-      refreshers: [],
-      options: async () => ({
-        options: [
-          { label: 'Facebook', value: 'facebook' },
-          { label: 'Instagram', value: 'instagram' },
-          { label: 'Audience Network', value: 'audience_network' },
-          { label: 'Messenger', value: 'messenger' },
-          { label: 'TikTok', value: 'tiktok' },
-          { label: 'YouTube', value: 'youtube' },
-          { label: 'LinkedIn', value: 'linkedin' },
-          { label: 'Threads', value: 'threads' },
-        ],
-      }),
-    }),
-    niches: Property.MultiSelectDropdown({
-      displayName: 'Niches',
-      description: 'Filter by one or more niches',
-      required: false,
-      refreshers: [],
-      options: async () => ({
-        options: [
-          { label: 'Accessories', value: 'accessories' },
-          { label: 'App/Software', value: 'app/software' },
-          { label: 'Beauty', value: 'beauty' },
-          { label: 'Business/Professional', value: 'business/professional' },
-          { label: 'Education', value: 'education' },
-          { label: 'Entertainment', value: 'entertainment' },
-          { label: 'Fashion', value: 'fashion' },
-          { label: 'Finance', value: 'finance' },
-          { label: 'Food', value: 'food' },
-          { label: 'Health', value: 'health' },
-          { label: 'Home', value: 'home' },
-          { label: 'Pets', value: 'pets' },
-          { label: 'Sports', value: 'sports' },
-          { label: 'Technology', value: 'technology' },
-          { label: 'Travel', value: 'travel' },
-          { label: 'Automotive', value: 'automotive' },
-          { label: 'Other', value: 'other' },
-        ],
-      }),
-    }),
-    market_target: Property.MultiSelectDropdown({
-      displayName: 'Market Target',
-      description: 'Filter by market target',
-      required: false,
-      refreshers: [],
-      options: async () => ({
-        options: [
-          { label: 'B2B (Business-to-Business)', value: 'b2b' },
-          { label: 'B2C (Business-to-Consumer)', value: 'b2c' },
-        ],
-      }),
-    }),
-    languages: Property.MultiSelectDropdown({
-      displayName: 'Languages',
-      description: 'Filter by languages. Accepts various language formats.',
-      required: false,
-      refreshers: [],
-      options: async () => ({
-        options: [
-          { label: 'English', value: 'english' },
-          { label: 'French', value: 'french' },
-          { label: 'German', value: 'german' },
-          { label: 'Italian', value: 'italian' },
-          { label: 'Dutch/Flemish', value: 'dutch, flemish' },
-          { label: 'Spanish', value: 'spanish' },
-          { label: 'Portuguese', value: 'portuguese' },
-          { label: 'Romanian', value: 'romanian' },
-          { label: 'Russian', value: 'russian' },
-          { label: 'Chinese', value: 'chinese' },
-          { label: 'Japanese', value: 'japanese' },
-          { label: 'Korean', value: 'korean' },
-          { label: 'Arabic', value: 'arabic' },
-          { label: 'Hindi', value: 'hindi' },
-        ],
-      }),
-    }),
-    cursor: Property.ShortText({
-      displayName: 'Cursor',
-      description: 'Cursor for pagination. Use the cursor value from the previous response.',
-      required: false,
-    }),
-    limit: Property.Number({
-      displayName: 'Limit',
-      description: 'Pagination limit (default 10, max 250). Controls the number of ads returned per request.',
-      required: false,
-      defaultValue: 10,
-    }),
-  },
+  props: getAdsByPageProperties(),
   async run({ auth, propsValue }) {
+    // Validate props using Zod schema
+    const validation = getAdsByPageSchema.safeParse(propsValue);
+    if (!validation.success) {
+      throw new Error(`Validation failed: ${validation.error.message}`);
+    }
+
     const values = propsValue as Record<string, any>;
     const queryParams: Record<string, string> = {
       page_id: String(values['page_id']),

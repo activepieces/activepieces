@@ -1,6 +1,8 @@
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
 import { foreplayCoApiCall } from "../common";
 import { HttpMethod, Polling, DedupeStrategy, pollingHelper } from "@activepieces/pieces-common";
+import { newSwipefileAd as newSwipefileAdProperties } from "../properties";
+import { newSwipefileAdSchema } from "../schemas";
 
 const polling: Polling<string, {}> = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -61,16 +63,15 @@ export const newSwipefileAd = createTrigger({
     ad_library_url: "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=US&view_all_page_id=123456789"
   },
 
-  props: {
-    polling_interval: Property.Number({
-      displayName: 'Polling Interval (minutes)',
-      description: 'How often to check for new swipefile ads (in minutes).',
-      required: false,
-      defaultValue: 5,
-    }),
-  },
+  props: newSwipefileAdProperties(),
 
   async test(context) {
+    // Validate props using Zod schema
+    const validation = newSwipefileAdSchema.safeParse(context.propsValue);
+    if (!validation.success) {
+      throw new Error(`Validation failed: ${validation.error.message}`);
+    }
+
     return await pollingHelper.test(polling, {
       auth: context.auth as string,
       store: context.store,
@@ -96,6 +97,12 @@ export const newSwipefileAd = createTrigger({
   },
 
   async run(context) {
+    // Validate props using Zod schema
+    const validation = newSwipefileAdSchema.safeParse(context.propsValue);
+    if (!validation.success) {
+      throw new Error(`Validation failed: ${validation.error.message}`);
+    }
+
     const result = await pollingHelper.poll(polling, {
       auth: context.auth as string,
       store: context.store,

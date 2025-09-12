@@ -1,6 +1,8 @@
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
 import { foreplayCoApiCall } from "../common";
 import { HttpMethod, Polling, DedupeStrategy, pollingHelper } from "@activepieces/pieces-common";
+import { newAdInSpyder as newAdInSpyderProperties } from "../properties";
+import { newAdInSpyderSchema } from "../schemas";
 
 const polling: Polling<string, { brand_id: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -57,21 +59,15 @@ export const newAdInSpyder = createTrigger({
     updated_at: "2024-01-15T10:30:00Z"
   },
 
-  props: {
-    brand_id: Property.ShortText({
-      displayName: 'Brand ID',
-      description: 'The brand ID to monitor for new ads. User must have access to this brand.',
-      required: true,
-    }),
-    polling_interval: Property.Number({
-      displayName: 'Polling Interval (minutes)',
-      description: 'How often to check for new ads (in minutes).',
-      required: false,
-      defaultValue: 5,
-    }),
-  },
+  props: newAdInSpyderProperties(),
 
   async test(context) {
+    // Validate props using Zod schema
+    const validation = newAdInSpyderSchema.safeParse(context.propsValue);
+    if (!validation.success) {
+      throw new Error(`Validation failed: ${validation.error.message}`);
+    }
+
     return await pollingHelper.test(polling, {
       auth: context.auth as string,
       store: context.store,
@@ -97,6 +93,12 @@ export const newAdInSpyder = createTrigger({
   },
 
   async run(context) {
+    // Validate props using Zod schema
+    const validation = newAdInSpyderSchema.safeParse(context.propsValue);
+    if (!validation.success) {
+      throw new Error(`Validation failed: ${validation.error.message}`);
+    }
+
     const result = await pollingHelper.poll(polling, {
       auth: context.auth as string,
       store: context.store,
