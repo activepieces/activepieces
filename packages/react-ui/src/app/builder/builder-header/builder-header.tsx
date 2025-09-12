@@ -1,4 +1,5 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronDown, History, Logs } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -13,6 +14,7 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
@@ -40,12 +42,11 @@ import {
 import FlowActionMenu from '../../components/flow-actions-menu';
 import { BuilderFlowStatusSection } from '../builder-flow-status-section';
 
-import { UserAvatarMenu } from './user-avatar-menu';
-
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const openNewWindow = useNewWindow();
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
@@ -85,10 +86,11 @@ export const BuilderHeader = () => {
   }, []);
 
   return (
-    <div className="bg-background select-none">
-      <div className="relative items-center flex h-[55px] w-full p-4 bg-muted/30">
+    <div className="border-b select-none">
+      <div className="relative items-center flex h-[55px] w-full p-4">
         <div className="flex items-center gap-2">
-          <HomeButton />
+          {!embedState.isEmbedded && <ApSidebarToggle />}
+          {embedState.isEmbedded && <HomeButton />}
           <div className="flex gap-2 items-center">
             {!embedState.hideFolders &&
               !embedState.disableNavigationInBuilder && (
@@ -146,9 +148,13 @@ export const BuilderHeader = () => {
               flowVersion={flowVersion}
               readonly={!isLatestVersion}
               onDelete={() => {
-                navigate(
-                  authenticationSession.appendProjectRoutePrefix('/flows'),
-                );
+                queryClient.invalidateQueries({
+                  queryKey: [
+                    'flow',
+                    flow.id,
+                    authenticationSession.getProjectId(),
+                  ],
+                });
               }}
               onRename={() => {
                 setIsEditingFlowName(true);
@@ -198,7 +204,6 @@ export const BuilderHeader = () => {
           )}
 
           <BuilderFlowStatusSection></BuilderFlowStatusSection>
-          <UserAvatarMenu></UserAvatarMenu>
         </div>
       </div>
     </div>
