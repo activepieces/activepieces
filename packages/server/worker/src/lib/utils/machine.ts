@@ -75,7 +75,7 @@ export const workerMachine = {
             execArgv: [
                 `--max-old-space-size=${memoryLimit}`,
                 `--max-semi-space-size=${memoryLimit}`,
-                `--stack-size=${memoryLimit * 1024}`,
+                `--stack-size=${memoryLimit}`,
             ],
         }, log)
         exceptionHandler.initializeSentry(settings.SENTRY_DSN)
