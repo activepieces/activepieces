@@ -10,4 +10,5 @@ To obtain your API key:
 3. Look for the API section and generate a new key
 `,
     required: true,
+    
 });

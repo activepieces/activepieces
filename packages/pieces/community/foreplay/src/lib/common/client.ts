@@ -3,11 +3,12 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 export const BASE_URL = `https://public.api.foreplay.co/api`;
 
 export async function makeRequest(
-    api_key: string,
+    auth: string | { data: string },
     method: HttpMethod,
     path: string,
     body?: unknown
 ) {
+     const api_key = typeof auth === 'string' ? auth : auth.data;
     try {
         const response = await httpClient.sendRequest({
             method,

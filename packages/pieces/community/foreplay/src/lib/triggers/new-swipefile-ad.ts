@@ -1,4 +1,3 @@
-
 import {
   createTrigger,
   TriggerStrategy,
@@ -20,7 +19,6 @@ interface Props {
   platform?: string;
 }
 
-// Define interface for ad objects
 interface ForeplayAd {
   id: string;
   created_at?: string;
@@ -34,14 +32,13 @@ interface ForeplayAd {
   [key: string]: string | number | boolean | object | undefined;
 }
 
-// Define interface for API response
 interface SwipefileAdsResponse {
-  ads: ForeplayAd[];
+  data: ForeplayAd[];
   count?: number;
   total?: number;
   page?: number;
   pageSize?: number;
-  [key: string]: ForeplayAd[] | number | string | boolean | object | undefined;
+  [key: string]: any;
 }
 
 const polling: Polling<PiecePropValueSchema<typeof ForeplayAuth>, Props> = {
@@ -49,38 +46,28 @@ const polling: Polling<PiecePropValueSchema<typeof ForeplayAuth>, Props> = {
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const { limit, platform } = propsValue;
 
-    // Build query parameters
     const queryParams = new URLSearchParams();
+    if (limit) queryParams.append('limit', limit.toString());
+    if (platform) queryParams.append('platform', platform);
 
-    if (limit) {
-      queryParams.append('limit', limit.toString());
-    }
-    
-    if (platform) {
-      queryParams.append('platform', platform);
-    }
-
-    // Get ads from Swipefile API
-    const response = await makeRequest(
+    const response = (await makeRequest(
       auth,
       HttpMethod.GET,
       `/swipefile/ads${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
-    ) as SwipefileAdsResponse;
+    )) as SwipefileAdsResponse;
 
-    // Extract ads from response
-    const ads = response.ads || [];
+    const ads: ForeplayAd[] = Array.isArray(response.data) ? response.data : [];
 
-    // Filter by lastFetchEpochMS if available
     const newAds = lastFetchEpochMS
       ? ads.filter((ad: ForeplayAd) => {
-          const createdAt = dayjs(
-            ad.created_at || ad.createdAt || ad.date
-          ).valueOf();
-          return createdAt > lastFetchEpochMS;
-        })
+        const createdAt = dayjs(
+          ad.created_at || ad.createdAt || ad.date
+        ).valueOf();
+        return createdAt > lastFetchEpochMS;
+      })
       : ads;
 
-    // Map to the expected format
+
     return newAds.map((ad: ForeplayAd) => ({
       epochMilliSeconds: dayjs(
         ad.created_at || ad.createdAt || ad.date
@@ -139,9 +126,7 @@ export const newSwipefileAd = createTrigger({
   async onDisable(context) {
     await pollingHelper.onDisable(polling, context);
   },
-  
   async run(context) {
     return await pollingHelper.poll(polling, context);
   },
-
 });

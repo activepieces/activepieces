@@ -25,7 +25,7 @@ const polling: Polling<PiecePropValueSchema<typeof ForeplayAuth>, Props> = {
     const { brandId, limit } = propsValue;
 
     const queryParams = new URLSearchParams();
-    queryParams.append('brandId', brandId);
+    queryParams.append('brand_id', brandId);
 
     if (limit) {
       queryParams.append('limit', limit.toString());
@@ -37,15 +37,15 @@ const polling: Polling<PiecePropValueSchema<typeof ForeplayAuth>, Props> = {
       `/spyder/brand/ads?${queryParams.toString()}`
     );
 
-    const ads = response.ads || [];
+    const ads = response.data || [];
 
     const newAds = lastFetchEpochMS
       ? ads.filter((ad: any) => {
-          const createdAt = dayjs(
-            ad.created_at || ad.createdAt || ad.date
-          ).valueOf();
-          return createdAt > lastFetchEpochMS;
-        })
+        const createdAt = dayjs(
+          ad.created_at || ad.createdAt || ad.date
+        ).valueOf();
+        return createdAt > lastFetchEpochMS;
+      })
       : ads;
 
     return newAds.map((ad: any) => ({
@@ -77,7 +77,7 @@ export const newAdInSpyder = createTrigger({
   },
   sampleData: {
     id: 'ad_12345',
-    brandId: 'brand_987',
+    brand_id: 'brand_987',
     platform: 'facebook',
     createdAt: '2025-08-15T10:30:00Z',
     headline: 'Summer Sale - 50% Off Everything!',

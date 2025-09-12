@@ -21,9 +21,6 @@ interface Props {
     live?: string;
     display_format?: string[];
     publisher_platform?: string[];
-    niches?: string[];
-    market_target?: string[];
-    languages?: string[];
 }
 
 interface ForeplayAd {
@@ -35,9 +32,6 @@ interface ForeplayAd {
     live?: boolean;
     display_format?: string;
     publisher_platform?: string[];
-    niches?: string[];
-    market_target?: string;
-    languages?: string[];
     created_at?: string;
     createdAt?: string;
     date?: string;
@@ -59,42 +53,32 @@ const polling: Polling<PiecePropValueSchema<typeof ForeplayAuth>, Props> = {
         const boardId = propsValue.boardId;
         const limit = propsValue.limit;
 
-
         const queryParams = new URLSearchParams();
-        queryParams.append('board_id', boardId);
         queryParams.append('limit', limit?.toString() || '250');
         queryParams.append('order', 'newest');
 
-        if (propsValue.live !== undefined) {
-            queryParams.append('live', propsValue.live === 'true' ? 'true' : 'false');
+        if (propsValue.live) {
+            queryParams.append('live', propsValue.live);
         }
         if (propsValue.display_format?.length) {
-            queryParams.append('display_format', propsValue.display_format.join(','));
+            propsValue.display_format.forEach((df) =>
+                queryParams.append('display_format', df)
+            );
         }
         if (propsValue.publisher_platform?.length) {
-            queryParams.append('publisher_platform', propsValue.publisher_platform.join(','));
-        }
-        if (propsValue.niches?.length) {
-            queryParams.append('niches', propsValue.niches.join(','));
-        }
-        if (propsValue.market_target?.length) {
-            queryParams.append('market_target', propsValue.market_target.join(','));
-        }
-        if (propsValue.languages?.length) {
-            queryParams.append('languages', propsValue.languages.join(','));
+            propsValue.publisher_platform.forEach((pp) =>
+                queryParams.append('publisher_platform', pp)
+            );
         }
 
-        const response = await makeRequest(
+        const response = (await makeRequest(
             auth,
             HttpMethod.GET,
-            `/api/board/ads?${queryParams.toString()}`
-        ) as BoardAdsResponse;
+            `/board/ads?board_id=${boardId}&${queryParams.toString()}`
 
-        if (!response.metadata?.success) {
-            console.log(`[New Ad in Board] API call failed:`, response);
-            return [];
-        }
+        )) as BoardAdsResponse;
 
+       
         const ads = response.data || [];
         const newAds = lastFetchEpochMS
             ? ads.filter((ad) => {
@@ -129,6 +113,7 @@ export const newAdInBoard = createTrigger({
             required: false,
             options: {
                 options: [
+                    { label: 'All', value: '' },
                     { label: 'Active Only', value: 'true' },
                     { label: 'Inactive Only', value: 'false' },
                 ],
@@ -158,72 +143,8 @@ export const newAdInBoard = createTrigger({
                 options: [
                     { label: 'Facebook', value: 'facebook' },
                     { label: 'Instagram', value: 'instagram' },
-                    { label: 'TikTok', value: 'tiktok' },
-                    { label: 'YouTube', value: 'youtube' },
-                    { label: 'Google', value: 'google' },
-                ],
-            }),
-        }),
-        niches: Property.MultiSelectDropdown({
-            displayName: 'Niches',
-            description: 'Filter by niches',
-            required: false,
-            refreshers: [],
-            options: async () => ({
-                options: [
-                    { label: 'Accessories', value: 'accessories' },
-                    { label: 'App/Software', value: 'app/software' },
-                    { label: 'Beauty', value: 'beauty' },
-                    { label: 'Business/Professional', value: 'business/professional' },
-                    { label: 'Education', value: 'education' },
-                    { label: 'Entertainment', value: 'entertainment' },
-                    { label: 'Fashion', value: 'fashion' },
-                    { label: 'Finance', value: 'finance' },
-                    { label: 'Food', value: 'food' },
-                    { label: 'Health', value: 'health' },
-                    { label: 'Home', value: 'home' },
-                    { label: 'Pets', value: 'pets' },
-                    { label: 'Sports', value: 'sports' },
-                    { label: 'Technology', value: 'technology' },
-                    { label: 'Travel', value: 'travel' },
-                    { label: 'Automotive', value: 'automotive' },
-                    { label: 'Other', value: 'other' },
-                ],
-            }),
-        }),
-        market_target: Property.MultiSelectDropdown({
-            displayName: 'Market Target',
-            description: 'Filter by market target',
-            required: false,
-            refreshers: [],
-            options: async () => ({
-                options: [
-                    { label: 'B2B', value: 'b2b' },
-                    { label: 'B2C', value: 'b2c' },
-                ],
-            }),
-        }),
-        languages: Property.MultiSelectDropdown({
-            displayName: 'Languages',
-            description: 'Filter by ad languages',
-            required: false,
-            refreshers: [],
-            options: async () => ({
-                options: [
-                    { label: 'English', value: 'english' },
-                    { label: 'French', value: 'french' },
-                    { label: 'German', value: 'german' },
-                    { label: 'Italian', value: 'italian' },
-                    { label: 'Dutch/Flemish', value: 'dutch, flemish' },
-                    { label: 'Spanish', value: 'spanish' },
-                    { label: 'Portuguese', value: 'portuguese' },
-                    { label: 'Romanian', value: 'romanian' },
-                    { label: 'Russian', value: 'russian' },
-                    { label: 'Chinese', value: 'chinese' },
-                    { label: 'Japanese', value: 'japanese' },
-                    { label: 'Korean', value: 'korean' },
-                    { label: 'Arabic', value: 'arabic' },
-                    { label: 'Hindi', value: 'hindi' },
+                    { label: 'Audience Network', value: 'audience_network' },
+                    { label: 'Messenger', value: 'messenger' },
                 ],
             }),
         }),
