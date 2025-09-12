@@ -1,0 +1,6 @@
+{
+  "name": "@activepieces/piece-vimeo",
+  "sourceRoot": "packages/pieces/community/vimeo/src",
+  "projectType": "library"
+}
+
