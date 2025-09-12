@@ -36,7 +36,7 @@ import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { PlatformRole } from '@activepieces/shared';
 
-import { ProjectSettingsDialog } from '../project-settings-dialog';
+import { ProjectSettingsDialog } from '../project-settings';
 
 export function SidebarUser() {
   const [inviteOpen, setInviteOpen] = useState(false);

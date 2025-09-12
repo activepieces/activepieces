@@ -14,7 +14,6 @@ import { SidebarUser } from '../sidebar-user';
 
 import { FlowsNavigation } from './flows-navigation';
 import { TablesNavigation } from './tables-navigation';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function BuilderNavigationSidebar({
   children,
