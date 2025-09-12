@@ -168,7 +168,7 @@ async function handleWebhookTrigger({ flowVersion, projectId, pieceTrigger, log 
     }
     return {
         scheduleOptions: undefined,
-        webhookHandshakeConfiguration: undefined,
+        webhookHandshakeConfiguration: pieceTrigger.handshakeConfiguration,
     }
 }
 
