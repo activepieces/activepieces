@@ -2,132 +2,74 @@ import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-f
 import { foreplayCoApiCall } from "../common";
 import { HttpMethod, Polling, DedupeStrategy, pollingHelper } from "@activepieces/pieces-common";
 
-const polling: Polling<string, {}> = {
+const polling: Polling<string, Record<string, any>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    console.log(`[New Ad in User Brands Polling] Fetching user brands, lastFetch: ${new Date(lastFetchEpochMS || 0).toISOString()}`);
+    const { board_id } = propsValue;
 
-    // Get all boards the user has access to
-    const boardsResponse = await foreplayCoApiCall({
+    console.log(`[New Ad in Board Polling] Fetching ads for board: ${board_id}, lastFetch: ${new Date(lastFetchEpochMS || 0).toISOString()}`);
+
+    const queryParams: Record<string, string> = {
+      board_id: board_id,
+      limit: String(250), // Max limit to get more ads
+      order: 'newest'
+    };
+
+    // Add optional filters if provided
+    if (propsValue['live'] !== undefined) {
+      queryParams['live'] = String(propsValue['live'] === 'true');
+    }
+    if (propsValue['display_format'] && propsValue['display_format'].length > 0) {
+      (queryParams as any).display_format = propsValue['display_format'];
+    }
+    if (propsValue['publisher_platform'] && propsValue['publisher_platform'].length > 0) {
+      (queryParams as any).publisher_platform = propsValue['publisher_platform'];
+    }
+    if (propsValue['niches'] && propsValue['niches'].length > 0) {
+      (queryParams as any).niches = propsValue['niches'];
+    }
+    if (propsValue['market_target'] && propsValue['market_target'].length > 0) {
+      (queryParams as any).market_target = propsValue['market_target'];
+    }
+    if (propsValue['languages'] && propsValue['languages'].length > 0) {
+      (queryParams as any).languages = propsValue['languages'];
+    }
+
+    const response = await foreplayCoApiCall({
       apiKey: auth,
       method: HttpMethod.GET,
-      resourceUri: '/api/boards',
-      queryParams: {
-        limit: String(50),
-      },
+      resourceUri: '/api/board/ads',
+      queryParams,
     });
 
-    const boardsResponseBody = boardsResponse.body;
+    const responseBody = response.body;
 
-    if (!boardsResponseBody.metadata || !boardsResponseBody.metadata.success) {
-      console.log(`[New Ad in User Brands Polling] Boards API call failed:`, boardsResponseBody);
+    if (!responseBody.metadata || !responseBody.metadata.success) {
+      console.log(`[New Ad in Board Polling] API call failed:`, responseBody);
       return [];
     }
 
-    const boards = boardsResponseBody.data || [];
-    console.log(`[New Ad in User Brands Polling] Found ${boards.length} boards`);
+    const ads = responseBody.data || [];
+    console.log(`[New Ad in Board Polling] Found ${ads.length} ads for board ${board_id}`);
 
-    const allNewAds: any[] = [];
-
-    // For each board, discover brands and get their ads
-    for (const board of boards) {
-      try {
-        console.log(`[New Ad in User Brands Polling] Processing board: ${board.id}`);
-
-        // Discover brands through discovery endpoint
-        const discoveryResponse = await foreplayCoApiCall({
-          apiKey: auth,
-          method: HttpMethod.GET,
-          resourceUri: '/api/discovery/ads',
-          queryParams: {
-            limit: String(20),
-            order: 'newest'
-          },
-        });
-
-        const discoveryResponseBody = discoveryResponse.body;
-
-        if (!discoveryResponseBody.metadata || !discoveryResponseBody.metadata.success) {
-          console.log(`[New Ad in User Brands Polling] Discovery API call failed:`, discoveryResponseBody);
-          continue;
-        }
-
-        const discoveryAds = discoveryResponseBody.data || [];
-        console.log(`[New Ad in User Brands Polling] Found ${discoveryAds.length} ads in discovery`);
-
-        // Group ads by brand_id
-        const adsByBrand: Record<string, any[]> = {};
-        discoveryAds.forEach((ad: any) => {
-          if (ad.brand_id) {
-            if (!adsByBrand[ad.brand_id]) {
-              adsByBrand[ad.brand_id] = [];
-            }
-            adsByBrand[ad.brand_id].push(ad);
-          }
-        });
-
-        console.log(`[New Ad in User Brands Polling] Found ${Object.keys(adsByBrand).length} brands with ads`);
-
-        // Process each brand we discovered
-        for (const [brandId, brandAds] of Object.entries(adsByBrand)) {
-          try {
-            console.log(`[New Ad in User Brands Polling] Processing brand: ${brandId}`);
-
-            // Get current ads for this brand using spyder
-            const adsResponse = await foreplayCoApiCall({
-              apiKey: auth,
-              method: HttpMethod.GET,
-              resourceUri: '/api/spyder/brand/ads',
-              queryParams: {
-                brand_id: brandId,
-                limit: String(20),
-                order: 'newest'
-              },
-            });
-
-            const adsResponseBody = adsResponse.body;
-
-            if (!adsResponseBody.metadata || !adsResponseBody.metadata.success) {
-              console.log(`[New Ad in User Brands Polling] Spyder API call failed for brand ${brandId}:`, adsResponseBody);
-              continue;
-            }
-
-            const currentAds = adsResponseBody.data || [];
-            console.log(`[New Ad in User Brands Polling] Found ${currentAds.length} ads for brand ${brandId}`);
-
-            // Add all ads with their timestamps for deduplication
-            currentAds.forEach((ad: any) => {
-              allNewAds.push({
-                epochMilliSeconds: new Date(ad.created_at).getTime(),
-                data: ad,
-              });
-            });
-
-          } catch (brandError) {
-            console.error(`Error checking ads for brand ${brandId}:`, brandError);
-          }
-        }
-
-      } catch (boardError) {
-        console.error(`Error processing board ${board.id}:`, boardError);
-      }
-    }
-
-    console.log(`[New Ad in User Brands Polling] Returning ${allNewAds.length} total ads for deduplication`);
-    return allNewAds;
+    return ads.map((ad: any) => ({
+      epochMilliSeconds: new Date(ad.created_at).getTime(),
+      data: ad,
+    }));
   }
 };
 
 export const newAdInBoard = createTrigger({
   name: 'newAdInBoard',
-  displayName: 'New Ad in User Brands',
-  description: 'Triggers when a new ad is added to any brand that the user has access to.',
+  displayName: 'New Ad in Board',
+  description: 'Triggers when a new ad is added to a specific board that the user has access to.',
   type: TriggerStrategy.POLLING,
   sampleData: {
+    id: "ad_789",
+    board_id: "board_456",
     brand_id: "brand_456",
-    ad_id: "ad_789",
-    ad_title: "New Campaign Ad",
-    ad_description: "Latest marketing campaign",
+    title: "New Campaign Ad",
+    description: "Latest marketing campaign",
     live: true,
     display_format: "video",
     publisher_platform: ["facebook"],
@@ -139,11 +81,124 @@ export const newAdInBoard = createTrigger({
   },
 
   props: {
+    board_id: Property.ShortText({
+      displayName: 'Board ID',
+      description: 'The board ID to monitor for new ads. User must have access to this board.',
+      required: true,
+    }),
     polling_interval: Property.Number({
       displayName: 'Polling Interval (minutes)',
       description: 'How often to check for new ads (in minutes).',
       required: false,
       defaultValue: 5,
+    }),
+    live: Property.StaticDropdown({
+      displayName: 'Live Status',
+      description: 'Filter ads by live status. true means currently active ads, false means inactive ads.',
+      required: false,
+      options: {
+        options: [
+          { label: 'Active Only', value: 'true' },
+          { label: 'Inactive Only', value: 'false' },
+        ],
+      },
+    }),
+    display_format: Property.MultiSelectDropdown({
+      displayName: 'Display Format',
+      description: 'Filter by one or more display formats',
+      required: false,
+      refreshers: [],
+      options: async () => ({
+        options: [
+          { label: 'Carousel', value: 'carousel' },
+          { label: 'DCO', value: 'dco' },
+          { label: 'DPA', value: 'dpa' },
+          { label: 'Event', value: 'event' },
+          { label: 'Image', value: 'image' },
+          { label: 'Video', value: 'video' },
+        ],
+      }),
+    }),
+    publisher_platform: Property.MultiSelectDropdown({
+      displayName: 'Publisher Platform',
+      description: 'Filter by one or more publisher platforms',
+      required: false,
+      refreshers: [],
+      options: async () => ({
+        options: [
+          { label: 'Facebook', value: 'facebook' },
+          { label: 'Instagram', value: 'instagram' },
+          { label: 'Audience Network', value: 'audience_network' },
+          { label: 'Messenger', value: 'messenger' },
+          { label: 'TikTok', value: 'tiktok' },
+          { label: 'YouTube', value: 'youtube' },
+          { label: 'LinkedIn', value: 'linkedin' },
+          { label: 'Threads', value: 'threads' },
+        ],
+      }),
+    }),
+    niches: Property.MultiSelectDropdown({
+      displayName: 'Niches',
+      description: 'Filter by one or more niches',
+      required: false,
+      refreshers: [],
+      options: async () => ({
+        options: [
+          { label: 'Accessories', value: 'accessories' },
+          { label: 'App/Software', value: 'app/software' },
+          { label: 'Beauty', value: 'beauty' },
+          { label: 'Business/Professional', value: 'business/professional' },
+          { label: 'Education', value: 'education' },
+          { label: 'Entertainment', value: 'entertainment' },
+          { label: 'Fashion', value: 'fashion' },
+          { label: 'Finance', value: 'finance' },
+          { label: 'Food', value: 'food' },
+          { label: 'Health', value: 'health' },
+          { label: 'Home', value: 'home' },
+          { label: 'Pets', value: 'pets' },
+          { label: 'Sports', value: 'sports' },
+          { label: 'Technology', value: 'technology' },
+          { label: 'Travel', value: 'travel' },
+          { label: 'Automotive', value: 'automotive' },
+          { label: 'Other', value: 'other' },
+        ],
+      }),
+    }),
+    market_target: Property.MultiSelectDropdown({
+      displayName: 'Market Target',
+      description: 'Filter by market target',
+      required: false,
+      refreshers: [],
+      options: async () => ({
+        options: [
+          { label: 'B2B (Business-to-Business)', value: 'b2b' },
+          { label: 'B2C (Business-to-Consumer)', value: 'b2c' },
+        ],
+      }),
+    }),
+    languages: Property.MultiSelectDropdown({
+      displayName: 'Languages',
+      description: 'Filter by languages. Accepts various language formats.',
+      required: false,
+      refreshers: [],
+      options: async () => ({
+        options: [
+          { label: 'English', value: 'english' },
+          { label: 'French', value: 'french' },
+          { label: 'German', value: 'german' },
+          { label: 'Italian', value: 'italian' },
+          { label: 'Dutch/Flemish', value: 'dutch, flemish' },
+          { label: 'Spanish', value: 'spanish' },
+          { label: 'Portuguese', value: 'portuguese' },
+          { label: 'Romanian', value: 'romanian' },
+          { label: 'Russian', value: 'russian' },
+          { label: 'Chinese', value: 'chinese' },
+          { label: 'Japanese', value: 'japanese' },
+          { label: 'Korean', value: 'korean' },
+          { label: 'Arabic', value: 'arabic' },
+          { label: 'Hindi', value: 'hindi' },
+        ],
+      }),
     }),
   },
 
@@ -182,10 +237,11 @@ export const newAdInBoard = createTrigger({
 
     // Transform the result to match our expected format
     return result.map((item: any) => ({
+      id: item.data.id,
+      board_id: context.propsValue.board_id,
       brand_id: item.data.brand_id,
-      ad_id: item.data.id,
-      ad_title: item.data.title || item.data.name,
-      ad_description: item.data.description,
+      title: item.data.title || item.data.name,
+      description: item.data.description,
       live: item.data.live,
       display_format: item.data.display_format,
       publisher_platform: item.data.publisher_platform,
