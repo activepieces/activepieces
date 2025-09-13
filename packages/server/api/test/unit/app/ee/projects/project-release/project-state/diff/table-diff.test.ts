@@ -1,11 +1,13 @@
 import { nanoid } from 'nanoid'
-import { projectDiffService } from '../../../../../../src/app/ee/projects/project-release/project-state/project-diff.service'
-import { tableGenerator } from '../../../../../helpers/table-generator'
+import { projectDiffService } from '../../../../../../../../src/app/ee/projects/project-release/project-state/project-diff.service'
+import { projectStateService } from '../../../../../../../../src/app/ee/projects/project-release/project-state/project-state.service'
+import { system } from '../../../../../../../../src/app/helper/system/system'
+import { tableGenerator } from '../../../../../../../helpers/table-generator'
 
 describe('Table Diff Service', () => {
 
     it('should return the table to delete', async () => {
-        const tableTwo = tableGenerator.simpleTable()
+        const tableTwo = tableGenerator.simpleTable({})
         const diff = await projectDiffService.diff({
             currentState: {
                 flows: [],
@@ -22,7 +24,7 @@ describe('Table Diff Service', () => {
     })
 
     it('should return the table to create', async () => {
-        const tableTwo = tableGenerator.simpleTable()
+        const tableTwo = tableGenerator.simpleTable({})
         const diff = await projectDiffService.diff({
             currentState: {
                 flows: [],
@@ -39,8 +41,8 @@ describe('Table Diff Service', () => {
     })
 
     it('should return the table to create if the mapping is invalid', async () => {
-        const tableOne = tableGenerator.simpleTable(nanoid())
-        const tableTwo = tableGenerator.simpleTable()
+        const tableOne = tableGenerator.simpleTable({ externalId: nanoid() })
+        const tableTwo = tableGenerator.simpleTable({})
         const diff = await projectDiffService.diff({
             currentState: {
                 flows: [],
@@ -65,8 +67,8 @@ describe('Table Diff Service', () => {
     })
 
     it('should return the table to update', async () => {
-        const tableTwo = tableGenerator.simpleTable()
-        const tableOne = tableGenerator.simpleTable(tableTwo.externalId)
+        const tableTwo = tableGenerator.simpleTable({})
+        const tableOne = tableGenerator.simpleTable({ externalId: tableTwo.externalId })
         tableOne.name = 'Updated Table Name'
 
         const diff = await projectDiffService.diff({
@@ -88,8 +90,8 @@ describe('Table Diff Service', () => {
     })
 
     it('should skip the table to update if the table is not changed', async () => {
-        const tableOne = tableGenerator.simpleTable()
-        const tableOneDist = tableGenerator.simpleTable(tableOne.externalId)
+        const tableOne = tableGenerator.simpleTable({})
+        const tableOneDist = tableGenerator.simpleTable({ externalId: tableOne.externalId })
         tableOneDist.name = tableOne.name
 
         const diff = await projectDiffService.diff({
@@ -112,10 +114,10 @@ describe('Table Diff Service', () => {
     })
 
     it('should return the table to create, update and delete', async () => {
-        const tableOne = tableGenerator.simpleTable()
-        const tableTwo = tableGenerator.simpleTable()
-        const tableThree = tableGenerator.simpleTable()
-        const tableOneDist = tableGenerator.simpleTable(tableOne.externalId)
+        const tableOne = tableGenerator.simpleTable({})
+        const tableTwo = tableGenerator.simpleTable({})
+        const tableThree = tableGenerator.simpleTable({})
+        const tableOneDist = tableGenerator.simpleTable({ externalId: tableOne.externalId })
         tableOneDist.name = 'Updated Table One'
 
         const diff = await projectDiffService.diff({
@@ -166,13 +168,9 @@ describe('Table Diff Service', () => {
     })
 
     it('should detect field changes in table update', async () => {
-        const tableOne = tableGenerator.simpleTable()
-        const tableOneDist = tableGenerator.simpleTable(tableOne.externalId)
-        tableOneDist.fields.push({
-            name: 'New Field',
-            type: 'TEXT',
-            externalId: nanoid(),
-        })
+        const tableOne = tableGenerator.simpleTable({})
+        const tableOneDist = tableGenerator.simpleTable({ externalId: tableOne.externalId })
+        tableOneDist.fields.push(tableGenerator.generateRandomField(tableOneDist.id))
 
         const diff = await projectDiffService.diff({
             currentState: {
@@ -190,11 +188,26 @@ describe('Table Diff Service', () => {
     })
 
     it('should detect dropdown field changes', async () => {
-        const tableOne = tableGenerator.tableWithDropdown()
-        const tableOneDist = tableGenerator.tableWithDropdown(tableOne.externalId)
-        if (tableOneDist.fields[1].data) {
-            tableOneDist.fields[1].data.options.push({ value: 'Pending' })
+        const dropdownField = tableGenerator.generateRandomDropdownField()
+        const tableOne = projectStateService(system.globalLogger()).getTableState(tableGenerator.simpleTable({}))
+        tableOne.fields.push(dropdownField)
+        const tableOneDist = {
+            ...tableOne,
+            fields: [
+                ...tableOne.fields,
+                {
+                    ...dropdownField,
+                    data: {
+                        ...dropdownField.data,
+                        options: [
+                            ...dropdownField.data!.options,
+                            { value: 'Pending' },
+                        ],
+                    },
+                },
+            ],
         }
+
 
         const diff = await projectDiffService.diff({
             currentState: {
@@ -211,8 +224,8 @@ describe('Table Diff Service', () => {
     })
 
     it('should not detect table as changed when only id field differs', async () => {
-        const tableOne = tableGenerator.simpleTable()
-        const tableTwo = tableGenerator.simpleTable(tableOne.externalId)
+        const tableOne = tableGenerator.simpleTable({})
+        const tableTwo = tableGenerator.simpleTable({ externalId: tableOne.externalId })
 
         // Ensure all fields are identical
         tableTwo.name = tableOne.name
@@ -233,7 +246,7 @@ describe('Table Diff Service', () => {
     })
 
     it('should not detect table as changed when properties are in different order', async () => {
-        const tableOne = tableGenerator.simpleTable()
+        const tableOne = tableGenerator.simpleTable({})
         
         // Create table with same content but different property ordering
         // This tests that deepEqual correctly handles property order independence

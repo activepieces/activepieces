@@ -2,7 +2,18 @@ import { Static, Type } from '@sinclair/typebox'
 import { VersionType } from '../../pieces'
 import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
-import { PieceTriggerSettings } from '../triggers/trigger'
+
+export const PieceActionOrTriggerSettings = Type.Object({
+    sampleData: Type.Optional(SampleDataSetting),
+    propertySettings: Type.Record(Type.String(), PropertySettings),
+    customLogoUrl: Type.Optional(Type.String()),
+    pieceName: Type.String({}),
+    pieceVersion: VersionType,
+    triggerName: Type.Optional(Type.String({})),
+    input: Type.Record(Type.String({}), Type.Any()),
+})
+
+export type PieceActionOrTriggerSettings = Static<typeof PieceActionOrTriggerSettings>
 
 export enum FlowActionType {
     CODE = 'CODE',
@@ -345,7 +356,7 @@ export type CodeAction = Static<typeof CodeActionSchema> & {
 export type StepSettings =
   | CodeActionSettings
   | PieceActionSettings
-  | PieceTriggerSettings
+  | PieceActionOrTriggerSettings
   | RouterActionSettings
   | LoopOnItemsActionSettings
 

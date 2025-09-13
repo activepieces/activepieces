@@ -1,5 +1,5 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { assertEqual, CodeAction, EXACT_VERSION_REGEX, FlowAction, FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, Step } from '@activepieces/shared'
+import { assertEqual, CodeAction, EXACT_VERSION_REGEX, FlowAction, FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion, isNil, PackageType, PieceActionSettings, PiecePackage, PieceActionOrTriggerSettings, Step } from '@activepieces/shared'
 import { engineApiService } from '../api/server-api.service'
 import { CodeArtifact } from '../runner/engine-runner-types'
 
@@ -59,7 +59,7 @@ export const pieceEngineUtil = {
         }
     },
     async getExactPieceForStep(engineToken: string, step: FlowAction | FlowTrigger): Promise<PiecePackage> {
-        const pieceSettings = step.settings as PieceTriggerSettings | PieceActionSettings
+        const pieceSettings = step.settings as PieceActionOrTriggerSettings | PieceActionSettings
         const { pieceName, pieceVersion } = pieceSettings
         return this.resolveExactVersion(engineToken, {
             pieceName,
