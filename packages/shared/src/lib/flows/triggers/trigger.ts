@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { VersionType } from '../../pieces'
-import { CodeActionSettings, FlowAction, LoopOnItemsActionSettings, PieceActionSettings, RouterActionSettings } from '../actions/action'
+import { CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings, RouterActionSettings } from '../actions/action'
 import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
 
