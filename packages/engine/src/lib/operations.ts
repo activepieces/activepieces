@@ -1,3 +1,4 @@
+import { inspect } from 'util'
 import {
     BeginExecuteFlowOperation,
     EngineOperation,
@@ -33,7 +34,6 @@ import { flowExecutor } from './handler/flow-executor'
 import { pieceHelper } from './helper/piece-helper'
 import { triggerHelper } from './helper/trigger-helper'
 import { progressService } from './services/progress.service'
-import { inspect } from 'util'
 
 const executeFlow = async (input: ExecuteFlowOperation): Promise<EngineResponse<Pick<FlowRunResponse, 'status' | 'error'>>> => {
     const constants = EngineConstants.fromExecuteFlowInput(input)
@@ -272,7 +272,8 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                 }
             }
         }
-    } catch (e) {
+    }
+    catch (e) {
         return {
             status: EngineResponseStatus.INTERNAL_ERROR,
             response: {},
