@@ -266,6 +266,7 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
         pieceSource,
     })
 
+    console.log("prepareTriggerExecution 1")
     const { resolvedInput } = await createPropsResolver({
         apiUrl,
         projectId,
@@ -275,11 +276,20 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
         executionState: FlowExecutorContext.empty(),
     })
 
+
+    console.log("prepareTriggerExecution 2")
+
     const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceTrigger.props, piece.auth, pieceTrigger.requireAuth, propertySettings)
 
+
+
+    console.log("prepareTriggerExecution 3")
     if (Object.keys(errors).length > 0) {
         throw new Error(JSON.stringify(errors, null, 2))
     }
+
+
+    console.log("prepareTriggerExecution 4")
 
     return { piece, pieceTrigger, processedInput }
 }

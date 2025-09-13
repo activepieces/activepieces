@@ -6,6 +6,7 @@ export const createConnectionService = ({ projectId, engineToken, apiUrl }: Crea
     return {
         async obtain(externalId: string): Promise<ConnectionValue> {
             const url = `${apiUrl}v1/worker/app-connections/${encodeURIComponent(externalId)}?projectId=${projectId}`
+            console.log("obtain 1 " + url)
 
             try {
                 const response = await fetch(url, {
@@ -15,6 +16,7 @@ export const createConnectionService = ({ projectId, engineToken, apiUrl }: Crea
                     },
                 })
 
+                console.log("obtain 2 " + response.status)
                 if (!response.ok) {
                     return handleResponseError({
                         externalId,
@@ -28,6 +30,7 @@ export const createConnectionService = ({ projectId, engineToken, apiUrl }: Crea
                 return getConnectionValue(connection)
             }
             catch (e) {
+                console.log("obtain 3")
                 if (e instanceof ExecutionError) {
                     throw e
                 }
