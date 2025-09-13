@@ -1,8 +1,8 @@
 import { Static, Type } from '@sinclair/typebox'
+import { VersionType } from '../../pieces'
 import { CodeActionSettings, FlowAction, LoopOnItemsActionSettings, PieceActionSettings, RouterActionSettings } from '../actions/action'
 import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
-import { VersionType } from '../../pieces'
 
 export const AUTHENTICATION_PROPERTY_NAME = 'auth'
 
