@@ -1,5 +1,5 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { BeginExecuteFlowOperation, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PackageType, PieceActionOrTriggerSettings, PieceActionSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
+import { BeginExecuteFlowOperation, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PackageType, PieceTriggerSettings, PieceActionSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { executionFiles } from '../cache/execution-files'
 import { pieceWorkerCache } from '../cache/piece-worker-cache'
@@ -149,7 +149,7 @@ export const engineRunner = (log: FastifyBaseLogger) => ({
 async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion, projectId: string): Promise<void> {
     const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
     const pieces = steps.filter((step) => step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE).map(async (step) => {
-        const { pieceName, pieceVersion } = step.settings as PieceActionOrTriggerSettings | PieceActionSettings
+        const { pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
         const pieceMetadata = await pieceWorkerCache.getPiece({
             engineToken,
             pieceName,

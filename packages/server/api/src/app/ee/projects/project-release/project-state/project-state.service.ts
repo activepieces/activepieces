@@ -274,7 +274,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             connections,
             tables: populatedTables,
             agents: agents.data,
-            projectId,
             log,
         })
     },

@@ -9,7 +9,7 @@ import {
     FlowTriggerType,
     isNil,
     LoopOnItemsActionSettings,
-    PieceActionOrTriggerSettings,
+    PieceTriggerSettings,
     PieceActionSettings,
     PlatformId,
     ProjectId,
@@ -167,7 +167,7 @@ async function validateAction(
 }
 
 async function validateTrigger(
-    settings: PieceActionOrTriggerSettings,
+    settings: PieceTriggerSettings,
     projectId: ProjectId,
     platformId: PlatformId,
     log: FastifyBaseLogger,
