@@ -48,13 +48,13 @@ async function getPieceFromCache({ pieceName, pieceVersion, projectId }: GetPiec
 function skipCache() {
     const environment = environmentVariables.getEnvironment(AppSystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
-        return true;
+        return true
     }
     const piecesSource = workerMachine.getSettings().PIECES_SOURCE
     if (piecesSource === PiecesSource.FILE) {
         return true
     }
-    return false;
+    return false
 }
 
 function getCacheKey({ pieceName, pieceVersion, projectId }: PieceCacheKeyWithType) {
