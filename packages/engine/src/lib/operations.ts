@@ -262,6 +262,13 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                 response: output,
             }
         }
+        default: {
+            return {
+                status: EngineResponseStatus.INTERNAL_ERROR,
+                response: {},
+                error: `Unsupported operation type: ${operationType}`,
+            }
+        }
     }
 }
 
