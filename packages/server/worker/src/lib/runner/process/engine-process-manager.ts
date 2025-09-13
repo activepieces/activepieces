@@ -188,8 +188,8 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                             status: EngineResponseStatus.TIMEOUT,
                             response: {},
                         },
-                        stdError: '',
-                        stdOut: '',
+                        stdError,
+                        stdOut,
                     })
                 }
                 else if (isRamIssue) {
