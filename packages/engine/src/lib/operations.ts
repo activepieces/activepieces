@@ -33,6 +33,7 @@ import { flowExecutor } from './handler/flow-executor'
 import { pieceHelper } from './helper/piece-helper'
 import { triggerHelper } from './helper/trigger-helper'
 import { progressService } from './services/progress.service'
+import { inspect } from 'util'
 
 const executeFlow = async (input: ExecuteFlowOperation): Promise<EngineResponse<Pick<FlowRunResponse, 'status' | 'error'>>> => {
     const constants = EngineConstants.fromExecuteFlowInput(input)
@@ -193,83 +194,92 @@ async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Pr
 }
 
 export async function execute(operationType: EngineOperationType, operation: EngineOperation): Promise<EngineResponse<unknown>> {
-    switch (operationType) {
-        case EngineOperationType.EXTRACT_PIECE_METADATA: {
-            const input = operation as ExecuteExtractPieceMetadataOperation
-            const output = await pieceHelper.extractPieceMetadata({
-                params: input,
-                pieceSource: EngineConstants.PIECE_SOURCES,
-            })
-            return {
-                status: EngineResponseStatus.OK,
-                response: output,
+    try {
+        switch (operationType) {
+            case EngineOperationType.EXTRACT_PIECE_METADATA: {
+                const input = operation as ExecuteExtractPieceMetadataOperation
+                const output = await pieceHelper.extractPieceMetadata({
+                    params: input,
+                    pieceSource: EngineConstants.PIECE_SOURCES,
+                })
+                return {
+                    status: EngineResponseStatus.OK,
+                    response: output,
+                }
             }
-        }
-        case EngineOperationType.EXECUTE_FLOW: {
-            const input = operation as ExecuteFlowOperation
+            case EngineOperationType.EXECUTE_FLOW: {
+                const input = operation as ExecuteFlowOperation
 
-            const output = await executeFlow(input)
-            return output
-        }
-        case EngineOperationType.EXECUTE_PROPERTY: {
-            const input = operation as ExecutePropsOptions
-            const output = await pieceHelper.executeProps({
-                params: input,
-                pieceSource: EngineConstants.PIECE_SOURCES,
-                executionState: await testExecutionContext.stateFromFlowVersion({
-                    apiUrl: input.internalApiUrl,
-                    flowVersion: input.flowVersion,
-                    projectId: input.projectId,
-                    engineToken: input.engineToken,
-                    sampleData: input.sampleData,
-                }),
-                searchValue: input.searchValue,
-                constants: EngineConstants.fromExecutePropertyInput(input),
-            })
-            return {
-                status: EngineResponseStatus.OK,
-                response: output,
+                const output = await executeFlow(input)
+                return output
             }
-        }
-        case EngineOperationType.EXECUTE_TRIGGER_HOOK: {
-            const input = operation as ExecuteTriggerOperation<TriggerHookType>
-            const output = await triggerHelper.executeTrigger({
-                params: input,
-                constants: EngineConstants.fromExecuteTriggerInput(input),
-            })
-            return {
-                status: EngineResponseStatus.OK,
-                response: output,
+            case EngineOperationType.EXECUTE_PROPERTY: {
+                const input = operation as ExecutePropsOptions
+                const output = await pieceHelper.executeProps({
+                    params: input,
+                    pieceSource: EngineConstants.PIECE_SOURCES,
+                    executionState: await testExecutionContext.stateFromFlowVersion({
+                        apiUrl: input.internalApiUrl,
+                        flowVersion: input.flowVersion,
+                        projectId: input.projectId,
+                        engineToken: input.engineToken,
+                        sampleData: input.sampleData,
+                    }),
+                    searchValue: input.searchValue,
+                    constants: EngineConstants.fromExecutePropertyInput(input),
+                })
+                return {
+                    status: EngineResponseStatus.OK,
+                    response: output,
+                }
             }
-        }
-        case EngineOperationType.EXECUTE_TOOL: {
-            const input = operation as ExecuteToolOperation
-            const output = await executeActionForTool(input)
-            return {
-                status: EngineResponseStatus.OK,
-                response: output,
+            case EngineOperationType.EXECUTE_TRIGGER_HOOK: {
+                const input = operation as ExecuteTriggerOperation<TriggerHookType>
+                const output = await triggerHelper.executeTrigger({
+                    params: input,
+                    constants: EngineConstants.fromExecuteTriggerInput(input),
+                })
+                return {
+                    status: EngineResponseStatus.OK,
+                    response: output,
+                }
             }
-        }
-        case EngineOperationType.EXECUTE_VALIDATE_AUTH: {
-            const input = operation as ExecuteValidateAuthOperation
-            const output = await pieceHelper.executeValidateAuth({
-                params: input,
-                pieceSource: EngineConstants.PIECE_SOURCES,
-            })
+            case EngineOperationType.EXECUTE_TOOL: {
+                const input = operation as ExecuteToolOperation
+                const output = await executeActionForTool(input)
+                return {
+                    status: EngineResponseStatus.OK,
+                    response: output,
+                }
+            }
+            case EngineOperationType.EXECUTE_VALIDATE_AUTH: {
+                const input = operation as ExecuteValidateAuthOperation
+                const output = await pieceHelper.executeValidateAuth({
+                    params: input,
+                    pieceSource: EngineConstants.PIECE_SOURCES,
+                })
 
-            return {
-                status: EngineResponseStatus.OK,
-                response: output,
+                return {
+                    status: EngineResponseStatus.OK,
+                    response: output,
+                }
+            }
+            default: {
+                return {
+                    status: EngineResponseStatus.INTERNAL_ERROR,
+                    response: {},
+                    error: `Unsupported operation type: ${operationType}`,
+                }
             }
         }
-        default: {
-            return {
-                status: EngineResponseStatus.INTERNAL_ERROR,
-                response: {},
-                error: `Unsupported operation type: ${operationType}`,
-            }
+    } catch (e) {
+        return {
+            status: EngineResponseStatus.INTERNAL_ERROR,
+            response: {},
+            error: inspect(e),
         }
     }
+}
 }
 
 
