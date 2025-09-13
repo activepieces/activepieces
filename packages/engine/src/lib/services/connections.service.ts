@@ -1,6 +1,7 @@
 import { AppConnection, AppConnectionStatus, AppConnectionType, BasicAuthConnectionValue, CloudOAuth2ConnectionValue, OAuth2ConnectionValueWithApp } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '../helper/execution-errors'
+import { inspect } from 'util'
 
 export const createConnectionService = ({ projectId, engineToken, apiUrl }: CreateConnectionServiceParams): ConnectionService => {
     return {
@@ -30,7 +31,7 @@ export const createConnectionService = ({ projectId, engineToken, apiUrl }: Crea
                 return getConnectionValue(connection)
             }
             catch (e) {
-                console.log("obtain 3")
+                console.log("obtain 3 " + inspect(e))
                 if (e instanceof ExecutionError) {
                     throw e
                 }
