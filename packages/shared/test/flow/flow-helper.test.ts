@@ -121,7 +121,7 @@ const flowVersionWithBranching: FlowVersion = {
                     },
                     displayName: 'Send Message Webhook',
                 },
-            ]
+            ],
         },
         displayName: 'Cron Expression',
     },
