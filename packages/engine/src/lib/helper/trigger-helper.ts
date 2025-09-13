@@ -66,9 +66,12 @@ export const triggerHelper = {
     },
 
     async executeTrigger({ params, constants }: ExecuteTriggerParams): Promise<ExecuteTriggerResponse<TriggerHookType>> {
+       
+        console.log("executeTrigger 1")
         const { pieceName, pieceVersion, triggerName, input, propertySettings } = (params.flowVersion.trigger as PieceTrigger).settings
         assertNotNullOrUndefined(triggerName, 'triggerName is required')
 
+        console.log("executeTrigger")
         const { piece, pieceTrigger, processedInput } = await prepareTriggerExecution({
             pieceName,
             pieceVersion,
@@ -142,12 +145,14 @@ export const triggerHelper = {
                     listeners: appListeners,
                     scheduleOptions: pieceTrigger.type === TriggerStrategy.POLLING ? scheduleOptions : undefined,
                 }
-            case TriggerHookType.RENEW:
+            case TriggerHookType.RENEW:{
+                console.log("executeTrigger 3")
                 assertEqual(pieceTrigger.type, TriggerStrategy.WEBHOOK, 'triggerType', 'WEBHOOK')
                 await pieceTrigger.onRenew(context)
                 return {
                     success: true,
                 }
+            }
             case TriggerHookType.HANDSHAKE: {
                 try {
                     const response = await pieceTrigger.onHandshake(context)

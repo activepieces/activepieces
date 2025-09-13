@@ -64,6 +64,7 @@ function setupSocket() {
     socket.on('message', (data: string) => {
         try {
             const message = JSON.parse(data)
+            console.log('message', message)
             if (message.type === EngineSocketEvent.ENGINE_OPERATION) {
                 executeFromSocket(message.data.operation, message.data.operationType).catch(e => {
                     const engineError: EngineResponse = {

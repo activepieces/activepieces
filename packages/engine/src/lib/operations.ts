@@ -193,6 +193,8 @@ async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Pr
 }
 
 export async function execute(operationType: EngineOperationType, operation: EngineOperation): Promise<EngineResponse<unknown>> {
+    console.log('operationType', operationType)
+    console.log('operation', operation)
     switch (operationType) {
         case EngineOperationType.EXTRACT_PIECE_METADATA: {
             const input = operation as ExecuteExtractPieceMetadataOperation
