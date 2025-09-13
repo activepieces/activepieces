@@ -141,7 +141,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         switch (request.type) {
             case GitPushOperationType.PUSH_EVERYTHING: {
                 const gitRepo = await gitRepoService(log).getOrThrow({ id })
-                const projectState = await projectStateService(log).getCurrentState(gitRepo.projectId, log)
+                const projectState = await projectStateService(log).getProjectState(gitRepo.projectId, log)
                 const operations: PushGitRepoRequest[] = []
                 if (!isNil(projectState.flows)) {
                     operations.push({

@@ -2,7 +2,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import { GitRepo } from '@activepieces/ee-shared'
 import { fileExists } from '@activepieces/server-shared'
-import { AgentState, AppConnectionScope, ConnectionState, flowMigrations, FlowState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
+import { AgentState, AppConnectionScope, ConnectionState, FlowState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SimpleGit } from 'simple-git'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
@@ -99,26 +99,18 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
                 folderPath: connectionsFolderPath,
             })
         }))
-        
+
         await gitHelper.commitAndPush(git, gitRepo, 'chore: update and remove unused connections')
     },
-    
+
 })
 
 async function readFlowsFromGit(flowFolderPath: string, log: FastifyBaseLogger): Promise<FlowState[]> {
     const flowFiles = await fs.readdir(flowFolderPath)
     const flows: FlowState[] = []
     for (const file of flowFiles) {
-        const flow: PopulatedFlow = JSON.parse(
-            await fs.readFile(path.join(flowFolderPath, file), 'utf-8'),
-        )
-        const migratedFlowVersion = flowMigrations.apply(flow.version)
-        const populatedMigratedFlow = {
-            ...flow,
-            externalId: flow.externalId ?? flow.id,
-            version: migratedFlowVersion,
-        }
-        const flowState = projectStateService(log).getFlowState(populatedMigratedFlow)
+        const flow: PopulatedFlow = JSON.parse(await fs.readFile(path.join(flowFolderPath, file), 'utf-8'))
+        const flowState = projectStateService(log).getFlowState(flow)
         flows.push(flowState)
     }
     return flows

@@ -1,9 +1,9 @@
 import { faker } from '@faker-js/faker'
 import { nanoid } from 'nanoid'
-import { projectDiffService } from '../../../../../../src/app/ee/projects/project-release/project-state/project-diff.service'
-import { projectStateService } from '../../../../../../src/app/ee/projects/project-release/project-state/project-state.service'
-import { system } from '../../../../../../src/app/helper/system/system'
-import { flowGenerator } from '../../../../../helpers/flow-generator'
+import { projectDiffService } from '../../../../../../../../src/app/ee/projects/project-release/project-state/project-diff.service'
+import { projectStateService } from '../../../../../../../../src/app/ee/projects/project-release/project-state/project-state.service'
+import { system } from '../../../../../../../../src/app/helper/system/system'
+import { flowGenerator } from '../../../../../../../helpers/flow-generator'
 
 const logger = system.globalLogger()
 describe('Flow Diff Service', () => {
@@ -132,6 +132,45 @@ describe('Flow Diff Service', () => {
             },
         ])
     })
+
+    it('should compare piece version only based on major and minor version', async () => {
+        const flowOne = flowGenerator.simpleActionAndTrigger()
+        const flowTwo = JSON.parse(JSON.stringify(flowOne))
+        flowTwo.version.trigger.settings.pieceVersion = '0.1.1'
+        flowOne.version.trigger.settings.pieceVersion = '0.1.0'
+        const diff = await projectDiffService.diff({
+            currentState: {
+                flows: [flowOne],
+            },
+            newState: {
+                flows: [flowTwo],
+            },
+        })
+        expect(diff.flows).toEqual([])
+    })
+
+    it('should detect major piece version change', async () => {
+        const flowOne = flowGenerator.simpleActionAndTrigger()
+        const flowTwo = JSON.parse(JSON.stringify(flowOne))
+        flowTwo.version.trigger.settings.pieceVersion = '0.2.1'
+        flowOne.version.trigger.settings.pieceVersion = '0.1.0'
+        const diff = await projectDiffService.diff({
+            currentState: {
+                flows: [flowOne],
+            },
+            newState: {
+                flows: [flowTwo],
+            },
+        })
+        expect(diff.flows).toEqual([
+            {
+                type: 'UPDATE_FLOW',
+                flowState: flowOne,
+                newFlowState: flowTwo,
+            },
+        ])
+    })
+
 
     it('should not detect flow as changed when trigger properties are in different order', async () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()

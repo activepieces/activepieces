@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, FlowActionType, flowPieceUtil, FlowProjectOperationType, flowStructureUtil, FlowTriggerType, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectState, Step } from '@activepieces/shared'
+import { assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, FlowActionType, flowPieceUtil, FlowProjectOperationType, FlowState, flowStructureUtil, FlowTriggerType, FlowVersion, isNil, ProjectOperation, ProjectState, Step } from '@activepieces/shared'
 import deepEqual from 'deep-equal'
 import semver from 'semver'
 
@@ -54,7 +54,7 @@ async function findFlowsToUpdate({ newState, currentState }: DiffParams): Promis
     return operations.filter((op): op is ProjectOperation => op !== null)
 }
 
-function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], externalId: string): PopulatedFlow | undefined {
+function searchInFlowForFlowByIdOrExternalId(flows: FlowState[], externalId: string): FlowState | undefined {
     return flows.find((flow) => flow.externalId === externalId)
 }
 
@@ -78,20 +78,17 @@ function isSameVersion(versionOne: string, versionTwo: string): boolean {
     }
 }
 
-async function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): Promise<boolean> {
-    const normalizedFromFlow = await normalize(fromFlow.version)
-    const normalizedTargetFlow = await normalize(targetFlow.version)
-
+async function isFlowChanged(fromFlow: FlowState, targetFlow: FlowState): Promise<boolean> {
     const versionSetOne = new Map<string, string>()
     const versionSetTwo = new Map<string, string>()
 
-    flowStructureUtil.getAllSteps(normalizedFromFlow.trigger).forEach((step) => {
+    flowStructureUtil.getAllSteps(fromFlow.version.trigger).forEach((step) => {
         if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {
             versionSetOne.set(step.name, step.settings.pieceVersion)
         }
     })
 
-    flowStructureUtil.getAllSteps(normalizedTargetFlow.trigger).forEach((step) => {
+    flowStructureUtil.getAllSteps(targetFlow.version.trigger).forEach((step) => {
         if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {
             versionSetTwo.set(step.name, step.settings.pieceVersion)
         }
@@ -105,6 +102,8 @@ async function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow)
         return isSameVersion(versionTwo, value)
     })
 
+    const normalizedFromFlow = await normalize(fromFlow.version)
+    const normalizedTargetFlow = await normalize(targetFlow.version)
     return normalizedFromFlow.displayName !== normalizedTargetFlow.displayName
         || !deepEqual(normalizedFromFlow.trigger, normalizedTargetFlow.trigger) || !isMatched
 }

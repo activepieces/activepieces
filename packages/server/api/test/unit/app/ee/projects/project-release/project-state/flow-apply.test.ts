@@ -1,9 +1,9 @@
 import { DiffState, FlowProjectOperationType, FlowStatus, FlowSyncError } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
-import { projectStateHelper } from '../../../../../src/app/ee/projects/project-release/project-state/project-state-helper'
-import { projectStateService } from '../../../../../src/app/ee/projects/project-release/project-state/project-state.service'
-import { system } from '../../../../../src/app/helper/system/system'
-import { flowGenerator } from '../../../../helpers/flow-generator'
+import { projectStateHelper } from '../../../../../../../src/app/ee/projects/project-release/project-state/project-state-helper'
+import { projectStateService } from '../../../../../../../src/app/ee/projects/project-release/project-state/project-state.service'
+import { system } from '../../../../../../../src/app/helper/system/system'
+import { flowGenerator } from '../../../../../../helpers/flow-generator'
 
 // Mock the project state helper
 jest.mock('../../../../../../../src/app/ee/projects/project-release/project-state/project-state-helper')

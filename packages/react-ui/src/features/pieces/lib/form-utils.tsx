@@ -19,7 +19,6 @@ import {
   PieceActionSchema,
   PieceActionSettings,
   PieceTrigger,
-  PieceTriggerSettings,
   isNil,
   spreadIfDefined,
   RouterActionSchema,
@@ -39,6 +38,7 @@ import {
   FlowTrigger,
   PropertyExecutionType,
   PropertySettings,
+  PieceTriggerSettings,
 } from '@activepieces/shared';
 
 function addAuthToPieceProps(
