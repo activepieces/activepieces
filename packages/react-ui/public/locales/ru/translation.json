@@ -1384,5 +1384,6 @@
 "EXECUTE_TRIGGER_HOOK": "Выполнить триггер",
 "EXECUTE_PROPERTY": "Выполнить свойство",
 "EXECUTE_EXTRACT_PIECE_INFORMATION": "Извлечь информацию о компоненте",
-"EXECUTE_TOOL": "Выполнить инструмент"
+"EXECUTE_TOOL": "Выполнить инструмент",
+"Jobs": "Задачи"
 }

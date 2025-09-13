@@ -1408,5 +1408,6 @@
   "EXECUTE_TRIGGER_HOOK": "Executar Gatilho Hook",
   "EXECUTE_PROPERTY": "Executar Propriedade",
   "EXECUTE_EXTRACT_PIECE_INFORMATION": "Extrair Informação da Peça",
-  "EXECUTE_TOOL": "Executar Ferramenta"
+  "EXECUTE_TOOL": "Executar Ferramenta",
+  "Jobs": "Tarefas"
 }

@@ -1408,5 +1408,6 @@
   "EXECUTE_TRIGGER_HOOK": "Execute Trigger Hook",
   "EXECUTE_PROPERTY": "Execute Property",
   "EXECUTE_EXTRACT_PIECE_INFORMATION": "Extract Piece Information",
-  "EXECUTE_TOOL": "Execute Tool"
+  "EXECUTE_TOOL": "Execute Tool",
+  "Jobs": "Jobs"
 }

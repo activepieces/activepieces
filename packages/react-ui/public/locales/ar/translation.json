@@ -1234,5 +1234,6 @@
   "EXECUTE_TRIGGER_HOOK": "تنفيذ خطاف التشغيل",
   "EXECUTE_PROPERTY": "تنفيذ الخاصية",
   "EXECUTE_EXTRACT_PIECE_INFORMATION": "استخراج معلومات القطعة",
-  "EXECUTE_TOOL": "تنفيذ الأداة"
+  "EXECUTE_TOOL": "تنفيذ الأداة",
+  "Jobs": "المهام"
 }

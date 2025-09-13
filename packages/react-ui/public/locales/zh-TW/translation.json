@@ -1408,5 +1408,6 @@
   "EXECUTE_TRIGGER_HOOK": "執行觸發器掛鉤",
   "EXECUTE_PROPERTY": "執行屬性",
   "EXECUTE_EXTRACT_PIECE_INFORMATION": "擷取片段資訊",
-  "EXECUTE_TOOL": "執行工具"
+  "EXECUTE_TOOL": "執行工具",
+  "Jobs": "任務"
 }

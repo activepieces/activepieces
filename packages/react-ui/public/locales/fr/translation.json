@@ -1408,5 +1408,6 @@
   "EXECUTE_TRIGGER_HOOK": "Exécuter le Déclencheur Hook",
   "EXECUTE_PROPERTY": "Exécuter la Propriété",
   "EXECUTE_EXTRACT_PIECE_INFORMATION": "Extraire les Informations de la Pièce",
-  "EXECUTE_TOOL": "Exécuter l'Outil"
+  "EXECUTE_TOOL": "Exécuter l'Outil",
+  "Jobs": "Tâches"
 }

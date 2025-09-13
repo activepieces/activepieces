@@ -1408,5 +1408,6 @@
   "EXECUTE_TRIGGER_HOOK": "Ejecutar Disparador Hook",
   "EXECUTE_PROPERTY": "Ejecutar Propiedad",
   "EXECUTE_EXTRACT_PIECE_INFORMATION": "Extraer Información de Pieza",
-  "EXECUTE_TOOL": "Ejecutar Herramienta"
+  "EXECUTE_TOOL": "Ejecutar Herramienta",
+  "Jobs": "Tareas"
 }

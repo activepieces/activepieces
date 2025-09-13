@@ -1408,5 +1408,6 @@
   "EXECUTE_TRIGGER_HOOK": "トリガーフックの実行",
   "EXECUTE_PROPERTY": "プロパティの実行",
   "EXECUTE_EXTRACT_PIECE_INFORMATION": "ピース情報の抽出",
-  "EXECUTE_TOOL": "ツールの実行"
+  "EXECUTE_TOOL": "ツールの実行",
+  "Jobs": "タスク"
 }

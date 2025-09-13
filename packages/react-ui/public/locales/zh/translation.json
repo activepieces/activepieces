@@ -1408,5 +1408,6 @@
   "EXECUTE_TRIGGER_HOOK": "执行触发器挂钩",
   "EXECUTE_PROPERTY": "执行属性",
   "EXECUTE_EXTRACT_PIECE_INFORMATION": "提取片段信息",
-  "EXECUTE_TOOL": "执行工具"
+  "EXECUTE_TOOL": "执行工具",
+  "Jobs": "任务"
 }

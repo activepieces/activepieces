@@ -1408,5 +1408,6 @@
   "EXECUTE_TRIGGER_HOOK": "Trigger Hook uitvoeren",
   "EXECUTE_PROPERTY": "Eigenschap uitvoeren",
   "EXECUTE_EXTRACT_PIECE_INFORMATION": "Stukinformatie extraheren",
-  "EXECUTE_TOOL": "Tool uitvoeren"
+  "EXECUTE_TOOL": "Tool uitvoeren",
+  "Jobs": "Taken"
 }
