@@ -181,7 +181,7 @@ export function FlowsNavigation() {
           updateSearchParams={() => {}}
         />
       </SidebarGroupLabel>
-      <ScrollArea ref={scrollAreaRef}>
+      <ScrollArea ref={scrollAreaRef} showGradient>
         <SidebarGroupContent>
           <SidebarMenu className="pr-2">
             <DefaultFolder
@@ -304,7 +304,11 @@ function RegularFolder({
                 variant="small"
                 className="group-hover/item:opacity-100 opacity-0"
               />
-              <FolderActions hideFlowCount={true} refetch={refetchFolders} folder={folder} />
+              <FolderActions
+                hideFlowCount={true}
+                refetch={refetchFolders}
+                folder={folder}
+              />
             </div>
           </SidebarMenuButton>
         </CollapsibleTrigger>

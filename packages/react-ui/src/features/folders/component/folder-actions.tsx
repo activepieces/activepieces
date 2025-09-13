@@ -25,7 +25,11 @@ type FolderActionsProps = {
   refetch: () => void;
 };
 
-export const FolderActions = ({ folder, refetch, hideFlowCount }: FolderActionsProps) => {
+export const FolderActions = ({
+  folder,
+  refetch,
+  hideFlowCount,
+}: FolderActionsProps) => {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FOLDER);
@@ -45,10 +49,11 @@ export const FolderActions = ({ folder, refetch, hideFlowCount }: FolderActionsP
             'text-muted-foreground !text-xs !font-semibold self-end transition-opacity duration-150',
             buttonVariants({ size: 'icon', variant: 'ghost' }),
             {
-              'opacity-100 group-hover/item:opacity-0': hasOverlayBehavior && !isActionMenuOpen,
+              'opacity-100 group-hover/item:opacity-0':
+                hasOverlayBehavior && !isActionMenuOpen,
               'opacity-0': hasOverlayBehavior && isActionMenuOpen,
               'opacity-100': !hasOverlayBehavior,
-            }
+            },
           )}
         >
           {folder.numberOfFlows}
@@ -65,16 +70,20 @@ export const FolderActions = ({ folder, refetch, hideFlowCount }: FolderActionsP
                 'transition-opacity duration-150',
                 hasOverlayBehavior ? 'absolute inset-0' : '',
                 {
-                  'opacity-0 group-hover/item:opacity-100': hasOverlayBehavior && !isActionMenuOpen || !hasOverlayBehavior,
+                  'opacity-0 group-hover/item:opacity-100':
+                    (hasOverlayBehavior && !isActionMenuOpen) ||
+                    !hasOverlayBehavior,
                   'opacity-100': hasOverlayBehavior && isActionMenuOpen,
-                }
+                },
               )}
             >
               <EllipsisVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFolders}>
+            <PermissionNeededTooltip
+              hasPermission={userHasPermissionToUpdateFolders}
+            >
               <RenameFolderDialog
                 folderId={folder.id}
                 name={folder.displayName}
@@ -91,8 +100,10 @@ export const FolderActions = ({ folder, refetch, hideFlowCount }: FolderActionsP
                 </DropdownMenuItem>
               </RenameFolderDialog>
             </PermissionNeededTooltip>
-            
-            <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFolders}>
+
+            <PermissionNeededTooltip
+              hasPermission={userHasPermissionToUpdateFolders}
+            >
               <ConfirmationDeleteDialog
                 title={t('Delete {folderName}', {
                   folderName: folder.displayName,
