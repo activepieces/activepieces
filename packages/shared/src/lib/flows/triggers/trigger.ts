@@ -29,7 +29,7 @@ const commonProps = {
     name: Type.String({}),
     valid: Type.Boolean({}),
     displayName: Type.String({}),
-    nextAction: Type.Optional(FlowAction),
+    nextAction: Type.Optional(Type.Any()),
 }
 
 

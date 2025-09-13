@@ -1,4 +1,4 @@
-import { AgentOperationType, AgentState, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, flowMigrations, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, McpState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
+import { AgentOperationType, AgentState, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, flowMigrations, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, McpState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
 import { Value } from '@sinclair/typebox/value'
 import { FastifyBaseLogger } from 'fastify'
 import { agentsService } from '../../../../agents/agents-service'
@@ -305,8 +305,9 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             externalId: flow.externalId ?? flow.id,
             version: flowMigrations.apply(flow.version),
         }
-        return Value.Clean(FlowState, flowState) as FlowState
-
+        const cleanedFlowState = Value.Clean(FlowState, flowState) as FlowState
+        cleanedFlowState.version.trigger.nextAction = isNil(cleanedFlowState.version.trigger.nextAction) ? undefined : Value.Clean(FlowAction, cleanedFlowState.version.trigger.nextAction)
+        return cleanedFlowState
     },
     getTableState(table: PopulatedTable): TableState {
         const fields: FieldState[] = table.fields.map((field) => ({
