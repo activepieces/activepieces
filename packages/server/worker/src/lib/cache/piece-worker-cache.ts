@@ -1,7 +1,7 @@
 import path from 'path'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { PiecesSource } from '@activepieces/server-shared'
-import { isNil, ProjectId } from '@activepieces/shared'
+import { AppSystemProp, environmentVariables, PiecesSource } from '@activepieces/server-shared'
+import { ApEnvironment, isNil, ProjectId } from '@activepieces/shared'
 import { engineApiService } from '../api/server-api.service'
 import { workerMachine } from '../utils/machine'
 import { cacheState } from './cache-state'
@@ -28,8 +28,7 @@ export const pieceWorkerCache = {
 }
 
 async function getPieceFromCache({ pieceName, pieceVersion, projectId }: GetPieceRequestQueryWorker): Promise<PieceMetadataModel | null> {
-    const piecesSource = workerMachine.getSettings().PIECES_SOURCE
-    if (piecesSource === PiecesSource.FILE) {
+    if (skipCache()) {
         return null
     }
     try {
@@ -44,6 +43,18 @@ async function getPieceFromCache({ pieceName, pieceVersion, projectId }: GetPiec
     catch (error) {
         return null
     }
+}
+
+function skipCache() {
+    const environment = environmentVariables.getEnvironment(AppSystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.TESTING) {
+        return true
+    }
+    const piecesSource = workerMachine.getSettings().PIECES_SOURCE
+    if (piecesSource === PiecesSource.FILE) {
+        return true
+    }
+    return false
 }
 
 function getCacheKey({ pieceName, pieceVersion, projectId }: PieceCacheKeyWithType) {

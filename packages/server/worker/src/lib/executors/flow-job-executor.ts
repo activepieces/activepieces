@@ -118,7 +118,7 @@ async function handleInternalError(jobData: OneTimeJobData, engineToken: string,
 }
 
 export const flowJobExecutor = (log: FastifyBaseLogger) => ({
-    async executeFlow(jobData: OneTimeJobData, attempsStarted: number, engineToken: string, timeoutInSeconds: number): Promise<void> {
+    async executeFlow({ jobData, attempsStarted, engineToken, timeoutInSeconds }: ExecuteFlowOptions): Promise<void> {
         try {
 
             const flow = await flowWorkerCache.getFlow({
@@ -166,3 +166,10 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
         }
     },
 })
+
+type ExecuteFlowOptions = {
+    jobData: OneTimeJobData
+    attempsStarted: number
+    engineToken: string
+    timeoutInSeconds: number
+}
