@@ -1,5 +1,5 @@
 import { AIUsageFeature, createAIModel } from '@activepieces/common-ai'
-import { rejectedPromiseHandler, UserInteractionJobType } from '@activepieces/server-shared'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     EngineResponseStatus,
     ExecuteActionResponse,
@@ -11,6 +11,7 @@ import {
     McpToolType,
     McpTrigger,
     TelemetryEventName,
+    WorkerJobType,
 } from '@activepieces/shared'       
 import { openai } from '@ai-sdk/openai'
 import { LanguageModelV2 } from '@ai-sdk/provider'
@@ -151,7 +152,8 @@ async function addPieceToServer(
 
                 const result = await userInteractionWatcher(logger)
                     .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
-                    jobType: UserInteractionJobType.EXECUTE_TOOL,
+                    jobType: WorkerJobType.EXECUTE_TOOL,
+                    platformId,
                     actionName: toolPieceMetadata.actionName,
                     pieceName: toolPieceMetadata.pieceName,
                     pieceVersion: toolPieceMetadata.pieceVersion,
