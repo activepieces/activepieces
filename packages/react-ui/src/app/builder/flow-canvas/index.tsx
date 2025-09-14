@@ -206,7 +206,7 @@ export const FlowCanvas = React.memo(
     return (
       <div
         ref={containerRef}
-        className="size-full relative overflow-hidden z-50"
+        className="size-full relative overflow-hidden z-30"
       >
         <FlowDragLayer
           cursorPosition={cursorPosition}

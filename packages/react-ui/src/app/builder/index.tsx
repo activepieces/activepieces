@@ -207,7 +207,7 @@ const BuilderPage = () => {
           maxSize={39}
           order={1}
           ref={leftHandleRef}
-          className={cn('min-w-0 bg-background z-50  overflow-visible', {
+          className={cn('min-w-0 bg-background z-20  overflow-visible', {
             [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
             [animateResizeClassName]: !isDraggingHandle,
           })}
@@ -224,9 +224,7 @@ const BuilderPage = () => {
           withHandle={leftSidebar !== LeftSideBarType.NONE}
           onDragging={setIsDraggingHandle}
           className={
-            leftSidebar === LeftSideBarType.NONE
-              ? 'bg-transparent'
-              : 'z-[999999]'
+            leftSidebar === LeftSideBarType.NONE ? 'bg-transparent' : ''
           }
         />
 
@@ -264,7 +262,7 @@ const BuilderPage = () => {
           withHandle={rightSidebar !== RightSideBarType.NONE}
           onDragging={setIsDraggingHandle}
           className={
-            rightSidebar === RightSideBarType.NONE ? 'bg-transparent' : 'z-50'
+            rightSidebar === RightSideBarType.NONE ? 'bg-transparent' : ''
           }
         />
 
