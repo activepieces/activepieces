@@ -67,10 +67,9 @@ export const sendText = createAction({
         const { to, from, message, attachments } = context.propsValue;
 
         const body: any = { to, message };
-
         if (from) body.from = from;
         if (attachments?.length) {
-            body.attachments = attachments.map(attachment => attachment.url);
+            body.attachments = attachments.map(attachment => (attachment as {url: string}).url);
         }
 
         return await _fetch({
