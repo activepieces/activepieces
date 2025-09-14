@@ -3,7 +3,6 @@ import { HttpMethod } from "@activepieces/pieces-common";
 import { magicalApiAuth } from "../common/auth";
 import { makeRequest } from "../common/client";
 
-
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const getCompanyData = createAction({
@@ -50,15 +49,24 @@ export const getCompanyData = createAction({
             initialBody
         );
 
-        const requestId = initialResponse.data?.request_id;
-        if (!requestId) {
-            throw new Error('Failed to start company data request. No request_id received.');
+        // This check for an immediate response is correct and a great practice.
+        if (initialResponse.company_name) {
+            return initialResponse;
         }
 
-        const maxAttempts = 20; 
-        const pollInterval = 3000; 
+        const requestId = initialResponse.data?.request_id;
+        if (!requestId) {
+            // Improved error message for clarity.
+            throw new Error('Failed to start company data request. API did not return a request_id or the final data.');
+        }
+
+        const maxAttempts = 20;
+        const pollInterval = 3000;
 
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            // Wait *before* polling to give the API time and prevent instant retries.
+            await sleep(pollInterval);
+
             const pollResponse = await makeRequest(
                 apiKey,
                 HttpMethod.POST,
@@ -67,12 +75,13 @@ export const getCompanyData = createAction({
             );
 
             if (pollResponse.company_name) {
-                return pollResponse; 
+                return pollResponse;
             }
-
-            await sleep(pollInterval);
         }
 
-        throw new Error('Timeout: Company data retrieval took too long to complete.');
+
+        throw new Error(
+            'Timeout: Company data retrieval is taking longer than expected. You can check the status later using this Request ID: ' + requestId
+        );
     },
 });
