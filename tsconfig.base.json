@@ -549,6 +549,9 @@
       "@activepieces/piece-jira-cloud": [
         "packages/pieces/community/jira-cloud/src/index.ts"
       ],
+      "@activepieces/piece-jogg-ai": [
+        "packages/pieces/community/jogg-ai/src/index.ts"
+      ],
       "@activepieces/piece-jotform": [
         "packages/pieces/community/jotform/src/index.ts"
       ],
