@@ -218,7 +218,9 @@ export const CreateFlowDropdown = ({
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent>{t('New flow')}</TooltipContent>
+          <TooltipContent side={variant === 'small' ? 'right' : 'bottom'}>
+            {t('New flow')}
+          </TooltipContent>
         </Tooltip>
         <DropdownMenuContent>
           <DropdownMenuItem
