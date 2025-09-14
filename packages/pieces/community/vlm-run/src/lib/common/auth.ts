@@ -15,7 +15,6 @@ export const vlmRunAuth = PieceAuth.SecretText({
             };
         }
         try {
-
             await makeRequest(auth as string, HttpMethod.GET, "/models");
             return {
                 valid: true,

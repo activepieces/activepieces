@@ -1,6 +1,5 @@
 import { HttpMethod, httpClient, HttpRequest } from "@activepieces/pieces-common";
 
-
 export const BASE_URL = "https://api.vlm.run/v1";
 
 /**
@@ -21,7 +20,7 @@ export async function makeRequest<T = any>(
         method,
         url: `${BASE_URL}${path}`,
         headers: {
-            // VLM-run likely uses a Bearer token for authorization.
+            // Corrected to use Bearer token authorization
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
         },
@@ -32,7 +31,6 @@ export async function makeRequest<T = any>(
         const response = await httpClient.sendRequest<T>(request);
         return response.body;
     } catch (error: any) {
-
         throw new Error(
             `Error making API request: ${JSON.stringify(error?.response?.body || error?.message || error)}`
         );
