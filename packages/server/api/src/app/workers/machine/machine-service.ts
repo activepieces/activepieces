@@ -118,6 +118,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                 }),
                 FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
                 S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
+                EDITION: system.getOrThrow(AppSystemProp.EDITION),
             }
 
             await machineService(log).updateConcurrency()
