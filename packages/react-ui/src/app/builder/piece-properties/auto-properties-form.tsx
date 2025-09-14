@@ -55,6 +55,11 @@ const AutoPropertiesFormComponent = React.memo(
     onValueChange,
   }: AutoFormProps) => {
     const form = useFormContext();
+    const autoFields = Object.entries(props).filter(([propertyName]) => {
+      const property = props[propertyName];
+      const propertySettings = form.getValues().settings?.propertySettings?.[propertyName];
+      return property && propertySettings?.type === PropertyExecutionType.AUTO;
+    });
 
     return (
       Object.keys(props).length > 0 && (
@@ -94,6 +99,7 @@ const AutoPropertiesFormComponent = React.memo(
               />
             );
           })}
+          {autoFields.length > 0 && (
           <Accordion type="single" collapsible>
             <AccordionItem value="auto" className="border-none">
               <AccordionTrigger>
@@ -156,6 +162,7 @@ const AutoPropertiesFormComponent = React.memo(
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+          )}
         </div>
       )
     );
