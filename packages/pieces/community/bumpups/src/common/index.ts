@@ -14,13 +14,13 @@ export const bumpupsAuth = PieceAuth.SecretText({
 
 const baseRequestProperties = {
     url: Property.ShortText({
-        displayName: 'URL',
+        displayName: 'Video URL',
         description: 'The YouTube video URL.',
         required: true,
     }),
     model: Property.StaticDropdown({
         displayName: 'Model',
-        description: 'The model used for generating the description.',
+        description: 'The model used for generating the output.',
         required: false,
         defaultValue: 'bump-1.0',
         options: {
@@ -113,8 +113,8 @@ export const bumpupsCommon = {
             required: false,
             options: {
                 options: [
-                    { label: 'Text', value: 'text' },
-                    { label: 'Mardown', value: 'markdown' },
+                    { label: 'Hashtags', value: 'hashtags' },
+                    { label: 'Keywords', value: 'keywords' },
                 ],
             },
         }),

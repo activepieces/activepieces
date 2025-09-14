@@ -14,17 +14,10 @@ export const generateCreatorTakeaways = createAction({
 
     const requestbody: any = {
       url,
+      ...(model && { model }),
+      ...(language && { language }),
+      ...(emojis_enabled && { emojis_enabled }),
     };
-
-    if (model) {
-      requestbody.contextUrl = model;
-    }
-    if (language) {
-      requestbody.contextUrl = language;
-    }
-    if (emojis_enabled) {
-      requestbody.contextUrl = emojis_enabled;
-    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,

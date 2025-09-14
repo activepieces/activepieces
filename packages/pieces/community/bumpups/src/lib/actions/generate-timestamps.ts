@@ -14,17 +14,10 @@ export const generateTimestamps = createAction({
 
     const requestbody: any = {
       url,
+      ...(model && { model }),
+      ...(language && { language }),
+      ...(timestamps_style && { timestamps_style }),
     };
-
-    if (model) {
-      requestbody.contextUrl = model;
-    }
-    if (language) {
-      requestbody.contextUrl = language;
-    }
-    if (timestamps_style) {
-      requestbody.contextUrl = timestamps_style;
-    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,

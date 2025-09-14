@@ -14,14 +14,9 @@ export const generateCreatorTitles = createAction({
 
     const requestbody: any = {
       url,
+      ...(model && { model }),
+      ...(language && { language }),
     };
-
-    if (model) {
-      requestbody.contextUrl = model;
-    }
-    if (language) {
-      requestbody.contextUrl = language;
-    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,

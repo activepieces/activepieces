@@ -14,17 +14,10 @@ export const generateCreatorHashtags = createAction({
 
     const requestbody: any = {
       url,
+      ...(model && { model }),
+      ...(language && { language }),
+      ...(output_format && { output_format }),
     };
-
-    if (model) {
-      requestbody.contextUrl = model;
-    }
-    if (language) {
-      requestbody.contextUrl = language;
-    }
-    if (output_format) {
-      requestbody.contextUrl = output_format;
-    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
