@@ -1087,6 +1087,9 @@
       "@activepieces/piece-village": [
         "packages/pieces/community/village/src/index.ts"
       ],
+      "@activepieces/piece-vlm-run": [
+        "packages/pieces/community/vlm-run/src/index.ts"
+      ],
       "@activepieces/piece-vtex": [
         "packages/pieces/community/vtex/src/index.ts"
       ],
