@@ -11,6 +11,7 @@ import {
     ProgressUpdateType,
     PropertyExecutionType,
     RunEnvironment,
+    WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { flowJobExecutor, flowWorker } from 'server-worker'
@@ -161,22 +162,29 @@ describe('flow execution', () => {
         })
 
         await flowJobExecutor(mockLog).executeFlow({
-            flowVersionId: mockFlowVersion.id,
-            projectId: mockProject.id,
-            environment: RunEnvironment.PRODUCTION,
-            runId: mockFlowRun.id,
-            payload: {},
-            synchronousHandlerId: null,
-            progressUpdateType: ProgressUpdateType.NONE,
-            executionType: ExecutionType.BEGIN,
-        }, 1, engineToken)
+            jobData: {
+                flowVersionId: mockFlowVersion.id,
+                projectId: mockProject.id,
+                platformId: mockPlatform.id,
+                jobType: WorkerJobType.EXECUTE_FLOW,
+                environment: RunEnvironment.PRODUCTION,
+                runId: mockFlowRun.id,
+                payload: {},
+                synchronousHandlerId: null,
+                progressUpdateType: ProgressUpdateType.NONE,
+                executionType: ExecutionType.BEGIN,
+            },
+            attempsStarted: 1,
+            engineToken,
+            timeoutInSeconds: 1000,
+        })
 
         const flowRun = await databaseConnection()
             .getRepository('flow_run')
             .findOneByOrFail({
                 id: mockFlowRun.id,
             })
-      
+
         expect(flowRun.status).toEqual(FlowRunStatus.SUCCEEDED)
 
         const file = await databaseConnection()
