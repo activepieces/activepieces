@@ -1,12 +1,37 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
+import { bumpupsAuth, bumpupsCommon } from '../../common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const generateCreatorTitles = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'generateCreatorTitles',
   displayName: 'Generate Creator Titles',
   description: 'Generate several optimized video titles based on a video URL using AI model.',
-  props: {},
-  async run() {
-    // Action logic here
+  auth: bumpupsAuth,
+  props: bumpupsCommon.generateCreatorTitlesProperties,
+  async run({ auth, propsValue }) {
+    const apiKey = auth;
+    const { url, model, language } = propsValue;
+
+    const requestbody: any = {
+      url,
+    };
+
+    if (model) {
+      requestbody.contextUrl = model;
+    }
+    if (language) {
+      requestbody.contextUrl = language;
+    }
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `${bumpupsCommon.baseUrl}${bumpupsCommon.endpoints.generateCreatorTitles}`,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': apiKey,
+      },
+      body: requestbody,
+    });
+    return response.body;
   },
 });
