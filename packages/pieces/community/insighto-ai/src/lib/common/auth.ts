@@ -10,7 +10,7 @@ export const insightoAiAuth = PieceAuth.SecretText({
     try {
       await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: 'https://api.insighto.ai/v1/user',
+        url: 'https://api.insighto.ai/api/v1/user',
         headers: {
           Authorization: `Bearer ${auth}`,
         },
