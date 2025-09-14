@@ -3,7 +3,6 @@ import { HttpMethod } from "@activepieces/pieces-common";
 import { magicalApiAuth } from "../common/auth";
 import { makeRequest } from "../common/client";
 
-
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const scoreResume = createAction({
@@ -14,56 +13,65 @@ export const scoreResume = createAction({
     props: {
         url: Property.ShortText({
             displayName: 'Resume URL',
-            description: 'The direct, publicly accessible URL to the resume file (PDF, DOC, or DOCX).',
-            required: true,
+            description: 'To start a new request, provide a direct URL to a publicly accessible resume file (PDF, DOC, or DOCX).',
+            required: false, // Changed to false to allow using request_id instead
         }),
         job_description: Property.LongText({
             displayName: 'Job Description',
-            description: 'The job description to score the resume against.',
-            required: true,
+            description: 'To start a new request, provide the job description to score the resume against.',
+            required: false, // Changed to false to allow using request_id instead
+        }),
+        request_id: Property.ShortText({
+            displayName: 'Request ID (for retries)',
+            description: "If a previous run timed out, paste the Request ID here to get the result.",
+            required: false,
         }),
     },
     async run(context) {
-        const RESUME_SCORE_ENDPOINT = '/resume-score';
+        const { url, job_description, request_id } = context.propsValue;
         const apiKey = context.auth;
-        const { url, job_description } = context.propsValue;
+        const RESUME_SCORE_ENDPOINT = '/resume-score';
+        let requestIdToPoll = request_id;
+        let response;
 
-
-        const initialResponse = await makeRequest(
-            apiKey,
-            HttpMethod.POST,
-            RESUME_SCORE_ENDPOINT,
-            { 
-                url: url,
-                job_description: job_description 
+        // If no request_id is provided, start a new job.
+        if (!requestIdToPoll) {
+            if (!url || !job_description) {
+                throw new Error("To start a new request, you must provide both a Resume URL and a Job Description.");
             }
-        );
-
-        const requestId = initialResponse.data?.request_id;
-        if (!requestId) {
-            throw new Error('Failed to start resume scoring. No request_id received.');
+            response = await makeRequest(apiKey, HttpMethod.POST, RESUME_SCORE_ENDPOINT, { url, job_description });
+        } else {
+            // If an ID is provided, poll immediately for the result.
+            response = await makeRequest(apiKey, HttpMethod.POST, RESUME_SCORE_ENDPOINT, { request_id: requestIdToPoll });
         }
 
+        // Check if the first response already contains the final data (fast path).
+        if (response.data?.score !== undefined) {
+            return response.data;
+        }
 
+        requestIdToPoll = response.data?.request_id;
+        if (!requestIdToPoll) {
+            throw new Error('Failed to start or retrieve the request. The API did not return a request_id or the final data.');
+        }
+
+        // Polling logic for long-running requests.
         const maxAttempts = 20;
-        const pollInterval = 3000; 
-
+        const pollInterval = 3000;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            const pollResponse = await makeRequest(
-                apiKey,
-                HttpMethod.POST,
-                RESUME_SCORE_ENDPOINT,
-                { request_id: requestId }
-            );
-
-            if (pollResponse.score !== undefined) {
-                return pollResponse; 
-            }
-
-            
             await sleep(pollInterval);
+            const pollResponse = await makeRequest(apiKey, HttpMethod.POST, RESUME_SCORE_ENDPOINT, { request_id: requestIdToPoll });
+
+            // **THE FIX**: Check for the 'score' inside the `data` object.
+            if (pollResponse.data?.score !== undefined) {
+                // **THE FIX**: Return the nested `data` object for cleaner output.
+                return pollResponse.data;
+            }
         }
 
-        throw new Error('Timeout: Resume scoring took too long to complete.');
+        // Provide a helpful error message with the ID for retries.
+        throw new Error(
+            'Timeout: Resume scoring is taking longer than expected. You can check the status later with this Request ID: ' + requestIdToPoll
+        );
     },
 });

@@ -13,75 +13,77 @@ export const getCompanyData = createAction({
     props: {
         company_name: Property.ShortText({
             displayName: 'Company Name',
-            description: "The legal name of the company (e.g., 'Microsoft'). One identifier is required.",
+            description: "To start a new request, provide the company's legal name (e.g., 'Microsoft').",
             required: false,
         }),
         company_username: Property.ShortText({
             displayName: 'Company LinkedIn Username',
-            description: "The username from the company's LinkedIn URL (e.g., 'microsoft' from 'linkedin.com/company/microsoft/'). One identifier is required.",
+            description: "To start a new request, provide the username from the company's LinkedIn URL (e.g., 'microsoft').",
             required: false,
         }),
         company_website: Property.ShortText({
             displayName: 'Company Website',
-            description: "The official website URL of the company (e.g., 'https://www.microsoft.com'). One identifier is required.",
+            description: "To start a new request, provide the company's official website URL.",
+            required: false,
+        }),
+        request_id: Property.ShortText({
+            displayName: 'Request ID (for retries)',
+            description: "If a previous run timed out, paste the Request ID here to get the result.",
             required: false,
         }),
     },
     async run(context) {
-        const { company_name, company_username, company_website } = context.propsValue;
-
-        if (!company_name && !company_username && !company_website) {
-            throw new Error("You must provide at least one identifier: Company Name, Company LinkedIn Username, or Company Website.");
-        }
-
-        const initialBody: { [key: string]: string } = {};
-        if (company_name) initialBody['company_name'] = company_name;
-        if (company_username) initialBody['company_username'] = company_username;
-        if (company_website) initialBody['company_website'] = company_website;
-
-        const COMPANY_DATA_ENDPOINT = '/company-data';
+        const { company_name, company_username, company_website, request_id } = context.propsValue;
         const apiKey = context.auth;
+        const COMPANY_DATA_ENDPOINT = '/company-data';
+        let requestIdToPoll = request_id;
+        let response;
 
-        const initialResponse = await makeRequest(
-            apiKey,
-            HttpMethod.POST,
-            COMPANY_DATA_ENDPOINT,
-            initialBody
-        );
+        // If no request_id is provided, start a new job.
+        if (!requestIdToPoll) {
+            if (!company_name && !company_username && !company_website) {
+                throw new Error("To start a new request, you must provide a Company Name, LinkedIn Username, or Website.");
+            }
 
-        // This check for an immediate response is correct and a great practice.
-        if (initialResponse.company_name) {
-            return initialResponse;
+            const initialBody: { [key: string]: string } = {};
+            if (company_name) initialBody['company_name'] = company_name;
+            if (company_username) initialBody['company_username'] = company_username;
+            if (company_website) initialBody['company_website'] = company_website;
+
+            response = await makeRequest(apiKey, HttpMethod.POST, COMPANY_DATA_ENDPOINT, initialBody);
+        } else {
+            // If an ID is provided, poll immediately for the result.
+            response = await makeRequest(apiKey, HttpMethod.POST, COMPANY_DATA_ENDPOINT, { request_id: requestIdToPoll });
         }
 
-        const requestId = initialResponse.data?.request_id;
-        if (!requestId) {
-            // Improved error message for clarity.
-            throw new Error('Failed to start company data request. API did not return a request_id or the final data.');
+        // **THE FIX**: Check for the result inside the `data` object.
+        if (response.data?.company_name) {
+            // **THE FIX**: Return the nested `data` object for cleaner output.
+            return response.data;
         }
 
+        requestIdToPoll = response.data?.request_id;
+        if (!requestIdToPoll) {
+            throw new Error('Failed to start or retrieve the request. The API did not return a request_id or the final data.');
+        }
+
+        // Polling logic for long-running requests.
         const maxAttempts = 20;
         const pollInterval = 3000;
-
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            // Wait *before* polling to give the API time and prevent instant retries.
             await sleep(pollInterval);
+            const pollResponse = await makeRequest(apiKey, HttpMethod.POST, COMPANY_DATA_ENDPOINT, { request_id: requestIdToPoll });
 
-            const pollResponse = await makeRequest(
-                apiKey,
-                HttpMethod.POST,
-                COMPANY_DATA_ENDPOINT,
-                { request_id: requestId }
-            );
-
-            if (pollResponse.company_name) {
-                return pollResponse;
+            // **THE FIX**: Check for the result inside the `data` object.
+            if (pollResponse.data?.company_name) {
+                // **THE FIX**: Return the nested `data` object for cleaner output.
+                return pollResponse.data;
             }
         }
 
-
+        // Provide a helpful error message with the ID for retries.
         throw new Error(
-            'Timeout: Company data retrieval is taking longer than expected. You can check the status later using this Request ID: ' + requestId
+            'Timeout: The request is still processing. You can try again later with this Request ID: ' + requestIdToPoll
         );
     },
 });

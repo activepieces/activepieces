@@ -3,7 +3,6 @@ import { HttpMethod } from "@activepieces/pieces-common";
 import { magicalApiAuth } from "../common/auth";
 import { makeRequest } from "../common/client";
 
-
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const getProfileData = createAction({
@@ -14,48 +13,54 @@ export const getProfileData = createAction({
     props: {
         profile_name: Property.ShortText({
             displayName: 'LinkedIn Profile Username',
-            description: "The username from the LinkedIn profile URL (e.g., 'williamhgates' from 'linkedin.com/in/williamhgates/').",
-            required: true,
+            description: "To start a new request, provide the username from the LinkedIn profile URL (e.g., 'williamhgates').",
+            required: false,
+        }),
+        request_id: Property.ShortText({
+            displayName: 'Request ID (for retries)',
+            description: "If a previous run timed out, paste the Request ID here to get the result.",
+            required: false,
         }),
     },
     async run(context) {
-        const PROFILE_DATA_ENDPOINT = '/profile-data';
+        const { profile_name, request_id } = context.propsValue;
         const apiKey = context.auth;
-        const profileName = context.propsValue.profile_name;
+        const PROFILE_DATA_ENDPOINT = '/profile-data';
+        let requestIdToPoll = request_id;
+        let response;
 
-
-        const initialResponse = await makeRequest(
-            apiKey,
-            HttpMethod.POST,
-            PROFILE_DATA_ENDPOINT,
-            { profile_name: profileName }
-        );
-
-        const requestId = initialResponse.data?.request_id;
-        if (!requestId) {
-            throw new Error('Failed to start profile data request. No request_id received.');
-        }
-
-
-        const maxAttempts = 20; 
-        const pollInterval = 3000; 
-
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            const pollResponse = await makeRequest(
-                apiKey,
-                HttpMethod.POST,
-                PROFILE_DATA_ENDPOINT,
-                { request_id: requestId }
-            );
-
-            
-            if (pollResponse.profile) {
-                return pollResponse; 
+        if (!requestIdToPoll) {
+            // Start a new request if no ID is provided
+            if (!profile_name) {
+                throw new Error("To start a new request, you must provide a LinkedIn Profile Username.");
             }
-
-            await sleep(pollInterval);
+            response = await makeRequest(apiKey, HttpMethod.POST, PROFILE_DATA_ENDPOINT, { profile_name });
+        } else {
+            // If an ID is provided, poll immediately
+            response = await makeRequest(apiKey, HttpMethod.POST, PROFILE_DATA_ENDPOINT, { request_id });
         }
 
-        throw new Error('Timeout: Profile data retrieval took too long to complete.');
+        if (response.data?.profile) {
+            return response.data;
+        }
+
+        requestIdToPoll = response.data?.request_id;
+        if (!requestIdToPoll) {
+            throw new Error('Failed to start or retrieve the request. The API did not return a request_id or the final data.');
+        }
+
+        // Polling logic
+        const maxAttempts = 20;
+        const pollInterval = 3000;
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            await sleep(pollInterval);
+            const pollResponse = await makeRequest(apiKey, HttpMethod.POST, PROFILE_DATA_ENDPOINT, { request_id: requestIdToPoll });
+
+            if (pollResponse.data?.profile) {
+                return pollResponse.data; // Return the nested data object
+            }
+        }
+
+        throw new Error('Timeout: The request is still processing. You can try again later with this Request ID: ' + requestIdToPoll);
     },
 });
