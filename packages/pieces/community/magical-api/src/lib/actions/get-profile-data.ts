@@ -30,13 +30,13 @@ export const getProfileData = createAction({
         let response;
 
         if (!requestIdToPoll) {
-            // Start a new request if no ID is provided
+        
             if (!profile_name) {
                 throw new Error("To start a new request, you must provide a LinkedIn Profile Username.");
             }
             response = await makeRequest(apiKey, HttpMethod.POST, PROFILE_DATA_ENDPOINT, { profile_name });
         } else {
-            // If an ID is provided, poll immediately
+
             response = await makeRequest(apiKey, HttpMethod.POST, PROFILE_DATA_ENDPOINT, { request_id });
         }
 
@@ -49,7 +49,7 @@ export const getProfileData = createAction({
             throw new Error('Failed to start or retrieve the request. The API did not return a request_id or the final data.');
         }
 
-        // Polling logic
+
         const maxAttempts = 20;
         const pollInterval = 3000;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -57,7 +57,7 @@ export const getProfileData = createAction({
             const pollResponse = await makeRequest(apiKey, HttpMethod.POST, PROFILE_DATA_ENDPOINT, { request_id: requestIdToPoll });
 
             if (pollResponse.data?.profile) {
-                return pollResponse.data; // Return the nested data object
+                return pollResponse.data; 
             }
         }
 

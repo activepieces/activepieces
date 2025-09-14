@@ -14,12 +14,12 @@ export const scoreResume = createAction({
         url: Property.ShortText({
             displayName: 'Resume URL',
             description: 'To start a new request, provide a direct URL to a publicly accessible resume file (PDF, DOC, or DOCX).',
-            required: false, // Changed to false to allow using request_id instead
+            required: false, 
         }),
         job_description: Property.LongText({
             displayName: 'Job Description',
             description: 'To start a new request, provide the job description to score the resume against.',
-            required: false, // Changed to false to allow using request_id instead
+            required: false, 
         }),
         request_id: Property.ShortText({
             displayName: 'Request ID (for retries)',
@@ -34,18 +34,18 @@ export const scoreResume = createAction({
         let requestIdToPoll = request_id;
         let response;
 
-        // If no request_id is provided, start a new job.
+
         if (!requestIdToPoll) {
             if (!url || !job_description) {
                 throw new Error("To start a new request, you must provide both a Resume URL and a Job Description.");
             }
             response = await makeRequest(apiKey, HttpMethod.POST, RESUME_SCORE_ENDPOINT, { url, job_description });
         } else {
-            // If an ID is provided, poll immediately for the result.
+
             response = await makeRequest(apiKey, HttpMethod.POST, RESUME_SCORE_ENDPOINT, { request_id: requestIdToPoll });
         }
 
-        // Check if the first response already contains the final data (fast path).
+
         if (response.data?.score !== undefined) {
             return response.data;
         }
@@ -55,21 +55,20 @@ export const scoreResume = createAction({
             throw new Error('Failed to start or retrieve the request. The API did not return a request_id or the final data.');
         }
 
-        // Polling logic for long-running requests.
+
         const maxAttempts = 20;
         const pollInterval = 3000;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
             await sleep(pollInterval);
             const pollResponse = await makeRequest(apiKey, HttpMethod.POST, RESUME_SCORE_ENDPOINT, { request_id: requestIdToPoll });
 
-            // **THE FIX**: Check for the 'score' inside the `data` object.
             if (pollResponse.data?.score !== undefined) {
-                // **THE FIX**: Return the nested `data` object for cleaner output.
+
                 return pollResponse.data;
             }
         }
 
-        // Provide a helpful error message with the ID for retries.
+
         throw new Error(
             'Timeout: Resume scoring is taking longer than expected. You can check the status later with this Request ID: ' + requestIdToPoll
         );

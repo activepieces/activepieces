@@ -39,7 +39,6 @@ export const getCompanyData = createAction({
         let requestIdToPoll = request_id;
         let response;
 
-        // If no request_id is provided, start a new job.
         if (!requestIdToPoll) {
             if (!company_name && !company_username && !company_website) {
                 throw new Error("To start a new request, you must provide a Company Name, LinkedIn Username, or Website.");
@@ -52,13 +51,12 @@ export const getCompanyData = createAction({
 
             response = await makeRequest(apiKey, HttpMethod.POST, COMPANY_DATA_ENDPOINT, initialBody);
         } else {
-            // If an ID is provided, poll immediately for the result.
             response = await makeRequest(apiKey, HttpMethod.POST, COMPANY_DATA_ENDPOINT, { request_id: requestIdToPoll });
         }
 
-        // **THE FIX**: Check for the result inside the `data` object.
+
         if (response.data?.company_name) {
-            // **THE FIX**: Return the nested `data` object for cleaner output.
+
             return response.data;
         }
 
@@ -67,21 +65,21 @@ export const getCompanyData = createAction({
             throw new Error('Failed to start or retrieve the request. The API did not return a request_id or the final data.');
         }
 
-        // Polling logic for long-running requests.
+
         const maxAttempts = 20;
         const pollInterval = 3000;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
             await sleep(pollInterval);
             const pollResponse = await makeRequest(apiKey, HttpMethod.POST, COMPANY_DATA_ENDPOINT, { request_id: requestIdToPoll });
 
-            // **THE FIX**: Check for the result inside the `data` object.
+           
             if (pollResponse.data?.company_name) {
-                // **THE FIX**: Return the nested `data` object for cleaner output.
+
                 return pollResponse.data;
             }
         }
 
-        // Provide a helpful error message with the ID for retries.
+
         throw new Error(
             'Timeout: The request is still processing. You can try again later with this Request ID: ' + requestIdToPoll
         );
