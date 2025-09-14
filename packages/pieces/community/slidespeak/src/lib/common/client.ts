@@ -14,6 +14,7 @@ export async function makeRequest(
 
     const headers: Record<string, string> = {
       'X-API-Key': api_key,
+      
     };
 
     if (!isFormData) {

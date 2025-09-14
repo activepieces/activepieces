@@ -29,7 +29,7 @@ export const generatePresentation = createAction({
     language: Property.StaticDropdown({
       displayName: "Language",
       required: true,
-      defaultValue: "english",
+      defaultValue: "ORIGINAL",
       options: {
         disabled: false,
         options: [
@@ -51,17 +51,19 @@ export const generatePresentation = createAction({
     fetch_images: Property.Checkbox({
       displayName: "Fetch Stock Images",
       description: "Include stock images in slides. Default: true",
+      defaultValue: true,
       required: false,
     }),
     use_document_images: Property.Checkbox({
       displayName: "Use Document Images",
-      description: "Include images from the provided documents. Requires document_uuids. Default: true",
+      description: "Include images from the provided documents. Requires document_uuids. Default: true", defaultValue: true,
       required: false,
     }),
     tone: Property.StaticDropdown({
       displayName: "Tone",
       description: "Select the tone of the presentation text.",
       required: false,
+      defaultValue:'default',
       options: {
         options: [
           { label: "Default", value: "default" },
@@ -77,6 +79,7 @@ export const generatePresentation = createAction({
       displayName: "Verbosity",
       description: "Select how verbose the text should be.",
       required: false,
+      defaultValue:'standard',
       options: {
         options: [
           { label: "Concise", value: "concise" },

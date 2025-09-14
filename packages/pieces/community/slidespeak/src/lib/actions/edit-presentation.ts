@@ -13,17 +13,28 @@ export const editPresentation = createAction({
       description: "Upload the PPTX file you want to edit",
       required: true,
     }),
-    config: Property.Json({
-      displayName: "Config",
-      description:
-        "JSON object containing replacements. Example: { \"replacements\": [{\"shape_name\": \"TARGET_TITLE\", \"content\": \"New Title\"}] }",
+    replacements: Property.Array({
+      displayName: 'Replacements',
+      description: 'A list of shapes to replace and their new content.',
       required: true,
+      properties: {
+        shape_name: Property.ShortText({
+          displayName: 'Shape Name',
+          description: 'The name of the shape in the presentation to target.',
+          required: true,
+        }),
+        content: Property.LongText({
+          displayName: 'New Content',
+          description: 'The new text or image URL for the shape.',
+          required: true,
+        }),
+      }
     }),
   },
   async run({ auth, propsValue }) {
     const form = new FormData();
     form.append("pptx_file", propsValue.pptx_file as any);
-    form.append("config", JSON.stringify(propsValue.config));
+    form.append("config", JSON.stringify(propsValue.replacements));
 
     const response = await makeRequest(
       auth as string,
