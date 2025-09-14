@@ -934,6 +934,9 @@
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"
       ],
+      "@activepieces/piece-slidespeak": [
+        "packages/pieces/community/slidespeak/src/index.ts"
+      ],
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"
       ],
