@@ -133,7 +133,6 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
       {!embedState.hideFolders && (
         <FolderFilterList key="folder-filter" refresh={refresh} />
       )}
-      {/* Overflow hidden prevents the child from overgrowing the parent, and forces the child content to scroll*/}
       <div className="overflow-hidden ">
         <DataTable
           emptyStateTextTitle={t('No flows found')}
