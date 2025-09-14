@@ -181,7 +181,7 @@ export function FlowsNavigation() {
           updateSearchParams={() => {}}
         />
       </SidebarGroupLabel>
-      <ScrollArea ref={scrollAreaRef}>
+      <ScrollArea ref={scrollAreaRef} showGradient>
         <SidebarGroupContent>
           <SidebarMenu className="pr-2">
             <DefaultFolder
@@ -243,9 +243,6 @@ function DefaultFolder({
             <FolderOpen className="!size-3.5 hidden group-data-[state=open]/collapsible:block" />
             <span>{t('Uncategorized')}</span>
             <div className="ml-auto relative">
-              <span className="text-xs w-9 h-9 flex items-center justify-center text-muted-foreground font-semibold absolute group-hover/item:hidden">
-                {flows.length}
-              </span>
               <CreateFlowDropdown
                 folderId="NULL"
                 variant="small"
@@ -307,7 +304,11 @@ function RegularFolder({
                 variant="small"
                 className="group-hover/item:opacity-100 opacity-0"
               />
-              <FolderActions refetch={refetchFolders} folder={folder} />
+              <FolderActions
+                hideFlowCount={true}
+                refetch={refetchFolders}
+                folder={folder}
+              />
             </div>
           </SidebarMenuButton>
         </CollapsibleTrigger>

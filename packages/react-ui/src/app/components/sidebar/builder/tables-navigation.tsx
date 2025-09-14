@@ -112,7 +112,7 @@ export function TablesNavigation() {
           <TooltipContent side="right">{t('New table')}</TooltipContent>
         </Tooltip>
       </SidebarGroupLabel>
-      <ScrollArea ref={scrollAreaRef} scrollHideDelay={2}>
+      <ScrollArea ref={scrollAreaRef} scrollHideDelay={2} showGradient>
         <SidebarGroupContent>
           <SidebarMenu className="pr-2">
             {tables?.data.map((table) => (

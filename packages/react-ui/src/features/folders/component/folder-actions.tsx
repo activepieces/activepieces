@@ -21,44 +21,59 @@ import { RenameFolderDialog } from './rename-folder-dialog';
 
 type FolderActionsProps = {
   folder: FolderDto;
+  hideFlowCount?: boolean;
   refetch: () => void;
 };
 
-export const FolderActions = ({ folder, refetch }: FolderActionsProps) => {
+export const FolderActions = ({
+  folder,
+  refetch,
+  hideFlowCount,
+}: FolderActionsProps) => {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FOLDER);
+
+  const showFlowCount = !hideFlowCount;
+  const showDropdown = userHasPermissionToUpdateFolders;
+  const hasOverlayBehavior = showFlowCount && showDropdown;
 
   return (
     <div
       onClick={(e) => e.stopPropagation()}
       className="flex items-center justify-center relative ml-auto"
     >
-      <span
-        className={cn(
-          'text-muted-foreground !text-xs !font-semibold self-end transition-opacity duration-150',
-          buttonVariants({ size: 'icon', variant: 'ghost' }),
-          {
-            'opacity-100': !userHasPermissionToUpdateFolders,
-            'opacity-100 group-hover/item:opacity-0':
-              userHasPermissionToUpdateFolders && !isActionMenuOpen,
-            'opacity-0': userHasPermissionToUpdateFolders && isActionMenuOpen,
-          },
-        )}
-      >
-        {folder.numberOfFlows}
-      </span>
-      {userHasPermissionToUpdateFolders && (
+      {showFlowCount && (
+        <span
+          className={cn(
+            'text-muted-foreground !text-xs !font-semibold self-end transition-opacity duration-150',
+            buttonVariants({ size: 'icon', variant: 'ghost' }),
+            {
+              'opacity-100 group-hover/item:opacity-0':
+                hasOverlayBehavior && !isActionMenuOpen,
+              'opacity-0': hasOverlayBehavior && isActionMenuOpen,
+              'opacity-100': !hasOverlayBehavior,
+            },
+          )}
+        >
+          {folder.numberOfFlows}
+        </span>
+      )}
+
+      {showDropdown && (
         <DropdownMenu onOpenChange={setIsActionMenuOpen} modal={true}>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
               className={cn(
-                'absolute inset-0 transition-opacity duration-150',
+                'transition-opacity duration-150',
+                hasOverlayBehavior ? 'absolute inset-0' : '',
                 {
-                  'opacity-0 group-hover/item:opacity-100': !isActionMenuOpen,
-                  'opacity-100': isActionMenuOpen,
+                  'opacity-0 group-hover/item:opacity-100':
+                    (hasOverlayBehavior && !isActionMenuOpen) ||
+                    !hasOverlayBehavior,
+                  'opacity-100': hasOverlayBehavior && isActionMenuOpen,
                 },
               )}
             >
@@ -85,6 +100,7 @@ export const FolderActions = ({ folder, refetch }: FolderActionsProps) => {
                 </DropdownMenuItem>
               </RenameFolderDialog>
             </PermissionNeededTooltip>
+
             <PermissionNeededTooltip
               hasPermission={userHasPermissionToUpdateFolders}
             >
