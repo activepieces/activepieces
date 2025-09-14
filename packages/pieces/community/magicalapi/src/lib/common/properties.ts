@@ -132,7 +132,7 @@ export const getCompanyData = {
           company_name: Property.ShortText({
             displayName: 'Company Name',
             description: 'Name of the company',
-            required: true,
+            required: false,
           }),
           company_username: Property.ShortText({
             displayName: 'Company Username',

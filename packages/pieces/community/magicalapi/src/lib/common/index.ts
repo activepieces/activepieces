@@ -3,11 +3,11 @@ import { PieceAuth } from '@activepieces/pieces-framework';
 import * as properties from './properties';
 import * as schemas from './schemas';
 import {
-    GetCompanyDataParams,
-    GetProfileDataParams,
-    ParseResumeParams,
-    ReviewResumeParams,
-    ScoreResumeParams,
+  GetCompanyDataParams,
+  GetProfileDataParams,
+  ParseResumeParams,
+  ReviewResumeParams,
+  ScoreResumeParams,
 } from './types';
 
 export const magicalapiAuth = PieceAuth.SecretText({
@@ -48,7 +48,7 @@ export const magicalapiCommon = {
     reviewResume: '/resume-review',
     getProfileData: '/profile-data',
     getCompanyData: '/company-data',
-    scoreResume: '/resume-scoring',
+    scoreResume: '/resume-score',
   },
 
   // Properties
