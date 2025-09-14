@@ -42,6 +42,7 @@ import { cn, useElementSize } from '../../lib/utils';
 import { BuilderHeader } from './builder-header/builder-header';
 import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
+import { LEFT_SIDEBAR_ID } from './flow-canvas/utils/consts';
 import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
@@ -141,7 +142,6 @@ const BuilderPage = () => {
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const rightHandleRef = useAnimateSidebar(rightSidebar);
   const leftHandleRef = useAnimateSidebar(leftSidebar);
-  const leftSidePanelRef = useRef<HTMLDivElement>(null);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
 
   const { pieceModel, refetch: refetchPiece } =
@@ -212,7 +212,7 @@ const BuilderPage = () => {
             [animateResizeClassName]: !isDraggingHandle,
           })}
         >
-          <div ref={leftSidePanelRef} className="w-full h-full">
+          <div id={LEFT_SIDEBAR_ID} className="w-full h-full">
             {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
             {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
             {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
@@ -232,9 +232,6 @@ const BuilderPage = () => {
           <div ref={middlePanelRef} className="relative h-full w-full">
             <FlowCanvas
               setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
-              lefSideBarContainerWidth={
-                leftSidePanelRef.current?.clientWidth || 0
-              }
             ></FlowCanvas>
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
