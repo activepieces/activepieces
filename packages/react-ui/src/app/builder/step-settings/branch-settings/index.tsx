@@ -3,7 +3,10 @@ import React from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 
 import { BranchConditionGroup } from '@/app/builder/step-settings/branch-settings/branch-condition-group';
-import { emptyCondition } from '@activepieces/shared';
+import { emptyCondition, PropertyExecutionType } from '@activepieces/shared';
+import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
+import { propertyUtils } from '../../piece-properties/property-utils';
+import { Sparkles } from 'lucide-react';
 
 type BranchSettingsProps = {
   readonly: boolean;
@@ -50,7 +53,18 @@ const BranchSettings = React.memo(
 
     return (
       <div className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
-        <div className="text-md ">{t('Execute If')}</div>
+        <div className="text-md justify-between flex items-center">
+          <span>{t('Execute If')}</span>
+          <ButtonWithTooltip
+            tooltip={
+              t('Auto Fill by AI')
+            }
+            onClick={()=>{}}
+            icon={
+              <Sparkles className="h-4 w-4" />
+            }
+          />
+        </div>
         {fields.map((fieldGroup, groupIndex) => (
           <BranchConditionGroup
             key={fieldGroup.id}

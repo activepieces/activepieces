@@ -16,7 +16,7 @@ import {
   PropertyType,
   ArraySubProps,
 } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil, PropertyExecutionType } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
@@ -28,6 +28,11 @@ import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
+import { Sparkles, X, FormInput } from 'lucide-react';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
+import { propertyUtils } from './property-utils';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
@@ -50,10 +55,15 @@ const AutoPropertiesFormComponent = React.memo(
     onValueChange,
   }: AutoFormProps) => {
     const form = useFormContext();
+
     return (
       Object.keys(props).length > 0 && (
         <div className="flex flex-col gap-4 w-full">
-          {Object.entries(props).map(([propertyName]) => {
+          {Object.entries(props).filter(([propertyName]) => {
+            const property = props[propertyName];
+            const propertySettings = form.getValues().settings?.propertySettings?.[propertyName];
+            return property && propertySettings?.type !== PropertyExecutionType.AUTO;
+          }).map(([propertyName]) => {
             return (
               <FormField
                 key={propertyName}
@@ -84,6 +94,68 @@ const AutoPropertiesFormComponent = React.memo(
               />
             );
           })}
+          <Accordion type="single" collapsible>
+            <AccordionItem value="auto" className="border-none">
+              <AccordionTrigger>
+                <div className="flex flex-col items-start gap-1 w-full">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="size-4 text-primary" />
+                    <span>{t('Auto filled by AI')}</span>
+                  </div>
+                  {(() => {
+                    const autoFields = Object.entries(props).filter(([propertyName]) => {
+                      const property = props[propertyName];
+                      const propertySettings = form.getValues().settings?.propertySettings?.[propertyName];
+                      return property && propertySettings?.type === PropertyExecutionType.AUTO;
+                    });
+                    
+                    if (autoFields.length === 0) return null;
+                    
+                    const firstFourFields = autoFields.slice(0, 4);
+                    const remainingCount = autoFields.length - 4;
+                    const fieldNames = firstFourFields.map(([propertyName]) => t(propertyName)).join(', ');
+                    
+                    return (
+                      <div className="text-xs text-muted-foreground ml-6">
+                        {fieldNames}
+                        {remainingCount > 0 && ` + ${remainingCount} more`}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="flex flex-col gap-1">
+                  {Object.entries(props).filter(([propertyName]) => {
+                    const property = props[propertyName];
+                    const propertySettings = form.getValues().settings?.propertySettings?.[propertyName];
+                    return property && propertySettings?.type === PropertyExecutionType.AUTO;
+                  }).map(([propertyName]) => {
+                    return (
+                      <div key={propertyName} className="flex items-center justify-between hover:bg-muted py-1 px-2 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <FormInput className="h-4 w-4 text-muted-foreground" />
+                          <p>{t(propertyName)}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                        <ButtonWithTooltip
+                          tooltip={
+                            t('Enter Manually')
+                          }
+                          disabled={disabled}
+                          onClick={()=>{propertyUtils.handleDynamicValueToggleChange(form, PropertyExecutionType.MANUAL, propertyName, `${prefixValue}.${propertyName}`); }}
+                          icon={
+                            <X className="h-4 w-4" />
+                          }
+                        />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       )
     );
