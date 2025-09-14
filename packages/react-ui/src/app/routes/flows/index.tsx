@@ -211,14 +211,16 @@ export const CreateFlowDropdown = ({
                   <Plus className="h-4 w-4" />
                 ) : (
                   <>
-                    <span>{t('Create flow')}</span>
+                    <span>{t('New Flow')}</span>
                     <ChevronDown className="h-4 w-4 ml-2 " />
                   </>
                 )}
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent>{t('New flow')}</TooltipContent>
+          <TooltipContent side={variant === 'small' ? 'right' : 'bottom'}>
+            {t('New flow')}
+          </TooltipContent>
         </Tooltip>
         <DropdownMenuContent>
           <DropdownMenuItem

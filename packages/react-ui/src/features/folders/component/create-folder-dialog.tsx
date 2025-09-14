@@ -117,7 +117,7 @@ export const CreateFolderDialog = ({
             </Button>
           </DialogTrigger>
         </TooltipTrigger>
-        <TooltipContent side="right">{t('Create folder')}</TooltipContent>
+        <TooltipContent side="right">{t('New folder')}</TooltipContent>
       </Tooltip>
 
       <DialogContent>
@@ -151,6 +151,7 @@ export const CreateFolderDialog = ({
               <Button
                 variant={'outline'}
                 onClick={() => setIsDialogOpen(false)}
+                type="button"
               >
                 {t('Cancel')}
               </Button>
