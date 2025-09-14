@@ -387,10 +387,10 @@ export const formUtils = {
           existingInput: includeCurrentInput ? input : {},
           propertySettings: selectedStep.settings.propertySettings ?? {},
         });
-       const propertySettings = createPropertySettingsForStep({
-        propertySettings: selectedStep.settings.propertySettings ?? {},
-        values: defaultValues,
-       });
+        const propertySettings = createPropertySettingsForStep({
+          propertySettings: selectedStep.settings.propertySettings ?? {},
+          values: defaultValues,
+        });
         return {
           ...selectedStep,
           settings: {
