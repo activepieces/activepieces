@@ -15,7 +15,7 @@ export const contiguity = createPiece({
   auth: contigAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/contiguity.png',
-  authors: ["Owlcept","Ozak93","kishanprmr","MoShizzle","abuaboud"],
+  authors: ["Owlcept","Ozak93","kishanprmr","MoShizzle","abuaboud", "Contiguity"],
   categories: [PieceCategory.MARKETING],
   actions: [
     sendSMS,
