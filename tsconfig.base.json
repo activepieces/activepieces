@@ -241,6 +241,9 @@
       "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
+      "@activepieces/piece-cloudconvert": [
+        "packages/pieces/community/cloudconvert/src/index.ts"
+      ],
       "@activepieces/piece-cloudinary": [
         "packages/pieces/community/cloudinary/src/index.ts"
       ],
@@ -279,6 +282,9 @@
       ],
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
+      ],
+      "@activepieces/piece-copper": [
+        "packages/pieces/community/copper/src/index.ts"
       ],
       "@activepieces/piece-copy-ai": [
         "packages/pieces/community/copy-ai/src/index.ts"
@@ -853,6 +859,9 @@
         "packages/pieces/community/robolly/src/index.ts"
       ],
       "@activepieces/piece-rss": ["packages/pieces/community/rss/src/index.ts"],
+      "@activepieces/piece-runway": [
+        "packages/pieces/community/runway/src/index.ts"
+      ],
       "@activepieces/piece-saastic": [
         "packages/pieces/community/saastic/src/index.ts"
       ],

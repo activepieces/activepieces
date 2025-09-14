@@ -164,7 +164,7 @@ export function FlowsNavigation() {
   if (foldersLoading || flowsLoading) {
     return (
       <SidebarGroup>
-        <SidebarGroupLabel>{t('Flows')}</SidebarGroupLabel>
+        <SidebarGroupLabel>{t('Flows Folders')}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarSkeleton numOfItems={6} />
         </SidebarGroupContent>
@@ -175,7 +175,7 @@ export function FlowsNavigation() {
   return (
     <SidebarGroup className="pb-2 max-h-[calc(50%-10px)] pr-0">
       <SidebarGroupLabel className="flex px-2 font-semibold text-foreground text-sm justify-between items-center w-full mb-1">
-        {t('Flows')}
+        {t('Flow Folders')}
         <CreateFolderDialog
           refetchFolders={refetchFolders}
           updateSearchParams={() => {}}

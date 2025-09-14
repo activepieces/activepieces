@@ -1,3 +1,4 @@
+import { BUILDER_NAVIGATION_SIDEBAR_ID } from '@/app/builder/flow-canvas/utils/consts';
 import { useEmbedding } from '@/components/embed-provider';
 import {
   Sidebar,
@@ -26,7 +27,7 @@ export function BuilderNavigationSidebar({
     <AllowOnlyLoggedInUserOnlyGuard>
       <SidebarProvider>
         {!embedState.isEmbedded && (
-          <Sidebar variant="inset">
+          <Sidebar id={BUILDER_NAVIGATION_SIDEBAR_ID} variant="inset">
             <AppSidebarHeader />
             <SidebarContent className="gap-y-0">
               <FlowsNavigation />

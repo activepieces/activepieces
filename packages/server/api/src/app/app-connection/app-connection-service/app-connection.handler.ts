@@ -76,7 +76,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
     }) {
         const refreshLock = await distributedLock.acquireLock({
             key: `${projectId}_${externalId}`,
-            timeout: 20000,
+            timeout: 60000,
             log,
         })
 
