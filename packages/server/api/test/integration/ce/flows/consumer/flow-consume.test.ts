@@ -26,6 +26,7 @@ import {
     createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../../helpers/mocks'
+import { workerMachine } from 'packages/server/worker/src/lib/utils/machine'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -161,6 +162,9 @@ describe('flow execution', () => {
             workerToken: await accessTokenManager.generateWorkerToken(),
         })
 
+        await waitForSocketConnection()
+        
+
         await flowJobExecutor(mockLog).executeFlow({
             jobData: {
                 flowVersionId: mockFlowVersion.id,
@@ -234,3 +238,25 @@ describe('flow execution', () => {
         })
     }, 60000)
 })
+
+
+async function waitForSocketConnection(maxAttempts: number = 60, intervalMs: number = 1000): Promise<void> {
+    let attempts = 0
+    while (attempts < maxAttempts) {
+        try {
+            const settings = workerMachine.getSettings()
+            if (settings) {
+                break
+            }
+        } catch (error) {
+            // Settings not ready yet
+        }
+        await new Promise(resolve => setTimeout(resolve, intervalMs))
+        attempts++
+    }
+    
+    if (attempts >= maxAttempts) {
+        throw new Error(`Worker settings not initialized after ${maxAttempts} seconds`)
+    }
+}
+
