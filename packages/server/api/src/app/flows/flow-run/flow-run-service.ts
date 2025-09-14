@@ -27,6 +27,7 @@ import {
     SampleDataFileType,
     SeekPage,
     spreadIfDefined,
+    TelemetryEventName,
     WorkerJobType,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -52,6 +53,8 @@ import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
+import { run } from 'node:test'
+import { telemetry } from '../../helper/telemetry.utils'
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 
@@ -285,6 +288,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             stepNameToTest,
             flowDisplayName: flowVersion.displayName,
             environment,
+            log
         })
         await addToQueue({
             flowRun: newFlowRun,
@@ -317,6 +321,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             parentRunId,
             failParentOnFailure: undefined,
             stepNameToTest,
+            log
         })
         return addToQueue({
             flowRun,
@@ -618,7 +623,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
 
 
 async function create(params: CreateParams): Promise<FlowRun> {
-    return flowRunRepo().save({
+    const flowRun= await flowRunRepo().save({
         id: apId(),
         projectId: params.projectId,
         flowId: params.flowId,
@@ -631,6 +636,17 @@ async function create(params: CreateParams): Promise<FlowRun> {
         status: FlowRunStatus.QUEUED,
         stepNameToTest: params.stepNameToTest,
     })
+    telemetry(params.log).trackProject(flowRun.projectId, {
+        name: TelemetryEventName.FLOW_RUN_CREATED,
+        payload: {
+            flowId: flowRun.flowId,
+            count: 1,
+            platformId: flowRun.projectId,
+            environment: flowRun.environment,
+            projectId: flowRun.projectId,
+        },
+    })
+    return flowRun;
 }
 
 type CreateLogsUploadUrlParams = {
@@ -671,6 +687,7 @@ type CreateParams = {
     flowId: FlowId
     flowDisplayName: string
     environment: RunEnvironment
+    log: FastifyBaseLogger
 }
 
 type ListParams = {

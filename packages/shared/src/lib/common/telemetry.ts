@@ -14,8 +14,8 @@ type RunCreated = {
     projectId: ProjectId
     flowId: FlowId
     environment: RunEnvironment
-    runId: FlowRunId
-    platformId: PlatformId
+    platformId: PlatformId,
+    count: number
 }
 
 type FlowPublished = {
