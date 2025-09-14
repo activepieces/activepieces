@@ -1,5 +1,4 @@
 {
-  "GhostCMS": "GhostCMS",
   "Publishing platform for professional bloggers": "Plateforme de publication pour les blogueurs professionnels",
   "API URL": "API URL",
   "Admin API Key": "Clé API Admin",
@@ -30,7 +29,7 @@
   "Content (HTML)": "Contenu (HTML)",
   "Custom Excerpt": "Extrait personnalisé",
   "Author": "Auteur",
-  "Featured": "Populaire",
+  "Featured": "Populaires",
   "Tags": "Tags",
   "Method": "Méthode",
   "Headers": "En-têtes",

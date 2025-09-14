@@ -2,6 +2,7 @@
 import { EndpointScope, Permission, Principal, PrincipalType } from '@activepieces/shared'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import fastify from 'fastify'
+import { Server } from 'socket.io'
 
 declare module 'fastify' {
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -13,7 +14,7 @@ declare module 'fastify' {
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
     export interface FastifyInstance {
-        io: Server<{ hello: string }>
+        io: Server
     }
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
     export interface FastifyContextConfig {

@@ -1,5 +1,4 @@
 {
-  "ActiveCampaign": "Aktiv-Kampagne",
   "Email marketing, marketing automation, and CRM tools you need to create incredible customer experiences.": "E-Mail-Marketing, Marketing-Automatisierung und CRM-Tools benötigen Sie, um unglaubliche Kundenerlebnisse zu schaffen.",
   "API URL": "API URL",
   "API Key": "API-Schlüssel",
@@ -46,7 +45,7 @@
   "Triggers when a deal task has been completed.": "Löst aus, wenn eine Deal-Aufgabe erledigt wurde.",
   "Triggers when a new contact note is added.": "Wird ausgelöst, wenn eine neue Kontakt-Notiz hinzugefügt wird.",
   "Triggers when a new contact task is added.": "Wird ausgelöst, wenn eine neue Kontaktaufgabe hinzugefügt wird.",
-  "Triggers when a new deal is created or existing deal is updated.": "Wird ausgelöst, wenn ein neues Deal erstellt oder ein bestehendes Deal aktualisiert wird.",
+  "Triggers when a new deal is created or existing deal is updated.": "Wird ausgelöst, wenn einen neuen Deal erstellt oder ein bestehender Deal aktualisiert wird.",
   "Triggers when a new account is added or an existing account’s details are updated": "Wird ausgelöst, wenn ein neues Konto hinzugefügt wird oder die Daten eines bestehenden Kontos aktualisiert werden",
   "Triggers when a new deal note is created.": "Wird ausgelöst, wenn ein neuer Deal-Hinweis erstellt wird.",
   "Triggers when a new deal task is created.": "Wird ausgelöst, wenn eine neue Deal-Aufgabe erstellt wird.",

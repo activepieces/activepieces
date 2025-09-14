@@ -32,6 +32,7 @@ export enum ApplicationEventName {
     FLOW_CREATED = 'flow.created',
     FLOW_DELETED = 'flow.deleted',
     FLOW_UPDATED = 'flow.updated',
+    FLOW_RUN_RESUMED = 'flow.run.resumed',
     FLOW_RUN_STARTED = 'flow.run.started',
     FLOW_RUN_FINISHED = 'flow.run.finished',
     FOLDER_CREATED = 'folder.created',
@@ -102,6 +103,7 @@ export const FlowRunEvent = Type.Object({
     action: Type.Union([
         Type.Literal(ApplicationEventName.FLOW_RUN_STARTED),
         Type.Literal(ApplicationEventName.FLOW_RUN_FINISHED),
+        Type.Literal(ApplicationEventName.FLOW_RUN_RESUMED),
     ]),
     data: Type.Object({
         flowRun: Type.Pick(FlowRun, [
@@ -266,6 +268,9 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `Flow run ${event.data.flowRun.id} is started`
         case ApplicationEventName.FLOW_RUN_FINISHED: {
             return `Flow run ${event.data.flowRun.id} is finished`
+        }
+        case ApplicationEventName.FLOW_RUN_RESUMED: {
+            return `Flow run ${event.data.flowRun.id} is resumed`
         }
         case ApplicationEventName.FLOW_CREATED:
             return `Flow ${event.data.flow.id} is created`

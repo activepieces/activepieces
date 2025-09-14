@@ -1,9 +1,8 @@
 {
-  "Flow Helper": "Flow-Helfer",
   "Get Run Info": "Starte Infos",
   "Fail Flow": "Fehlschlag",
   "Stop Flow": "Flow stoppen",
-  "Fails the flow execution with a custom message.": "Fehler bei der Ausführung des Flusses mit einer benutzerdefinierten Nachricht.",
+  "Fails the flow execution with a custom message.": "Fehler bei der Ausführung des Workflows mit einer benutzerdefinierten Nachricht.",
   "Stops the flow immediately this step is reached.": "Stoppt den Fluss sofort wird dieser Schritt erreicht.",
   "Error Message": "Fehlermeldung",
   "The error message to show when the flow fails.": "Die Fehlermeldung, die angezeigt wird, wenn der Fluss fehlschlägt."

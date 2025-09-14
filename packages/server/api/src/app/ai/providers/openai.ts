@@ -25,7 +25,7 @@ export const openaiProvider: AIProviderStrategy = {
         } 
         const { provider } = request.params as { provider: string }
 
-        if (openaiProvider.isModerationRequest?.(request)) {
+        if (openaiProvider.isNonUsageRequest?.(request)) {
             return {
                 cost: 0,
                 model: body.model,
@@ -171,7 +171,7 @@ export const openaiProvider: AIProviderStrategy = {
         return originalUrl
     },
 
-    isModerationRequest: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean => {
+    isNonUsageRequest: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean => {
         return request.url.includes('/moderations') && (request.body as { model: string }).model === 'omni-moderation-latest'
     },
 }

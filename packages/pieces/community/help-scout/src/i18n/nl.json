@@ -1,5 +1,4 @@
 {
-  "Help Scout": "Help Scout",
   "\n  1. Click on your profile icon at the top right and select **Your Profile**.\n  2. Go to **My Apps** and click on **Create App**.\n  3. Provide **App Name** and use below redirect URL.\n  4. Copy the **App ID** and **App Secret**, and provide them as the **Client ID** and **Client Secret**, respectively.": "\n  1. Klik op het profielpictogram rechtsboven en selecteer **jouw profiel**.\n  2. Ga naar **Mijn Apps** en klik op **Creëer App**.\n  3. Geef **App Naam** op en gebruik hieronder de redirect URL.\n  4. Kopieer de **App ID** en **App Secret**, en geef ze aan als **Client ID** en **Client Secret**.",
   "Create Conversation": "Gesprek aanmaken",
   "Send Reply": "Stuur antwoord",

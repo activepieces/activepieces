@@ -1,5 +1,4 @@
 {
-  "Queue": "Wachtrij",
   "A piece that allows you to push items into a queue, providing a way to throttle requests or process data in a First-In-First-Out (FIFO) manner.": "Een stuk dat je toelaat om items in een wachtrij te duwen en een manier biedt om verzoeken af te zwakken of gegevens te verwerken op een eerste-In-First-Out (FIFO) manier.",
   "Push to Queue": "Push naar wachtrij",
   "Pull items from queue": "Trek items uit de wachtrij",

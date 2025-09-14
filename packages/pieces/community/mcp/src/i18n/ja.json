@@ -1,5 +1,4 @@
 {
-  "MCP": "MCP",
   "Connect to your hosted MCP Server using any MCP client to communicate with tools": "任意の MCP クライアントを使用して、ホストされた MCP サーバーに接続してツールと通信します。",
   "Reply to MCP Client": "MCP クライアントに返信",
   "Return a response to the MCP client that called the tool.": "ツールを呼び出した MCP クライアントに応答を返します。",

@@ -1,5 +1,4 @@
 {
-  "BambooHR": "Bambu",
   "Company domain": "Domínio da empresa",
   "API key": "Chave da API",
   "The subdomain used to access BambooHR. If you access BambooHR at https://mycompany.bamboohr.com, then the companyDomain is \"mycompany\"": "O subdomínio usado para acessar BambooHR. Se você acessar BambooHR em https://mycompany.bamboohr.com, então o Domínio de Empresa é \"minhaempresa\"",

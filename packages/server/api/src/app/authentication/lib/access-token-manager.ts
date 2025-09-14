@@ -15,7 +15,7 @@ export const accessTokenManager = {
         })
     },
 
-    async generateEngineToken({ jobId, projectId, queueToken, platformId }: GenerateEngineTokenParams): Promise<string> {
+    async generateEngineToken({ jobId, projectId, platformId }: GenerateEngineTokenParams): Promise<string> {
         const enginePrincipal: EnginePrincipal = {
             id: jobId ?? apId(),
             type: PrincipalType.ENGINE,
@@ -23,7 +23,6 @@ export const accessTokenManager = {
             platform: {
                 id: platformId,
             },
-            queueToken,
         }
 
         const secret = await jwtUtils.getJwtSecret()
@@ -95,7 +94,6 @@ async function assertUserSession(decoded: Principal): Promise<void> {
 
 type GenerateEngineTokenParams = {
     projectId: ProjectId
-    queueToken?: string
     jobId?: string
     platformId: PlatformId
 }

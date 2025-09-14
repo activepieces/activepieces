@@ -17,9 +17,14 @@ export class FlowsPage extends BasePage {
     mutedForegroundSpans: (page: Page) => page.locator('span.text-muted-foreground'),
     deleteButton: (page: Page) => page.locator('td:nth-child(7)').first(),
     removeButton: (page: Page) => page.getByRole('button', { name: 'Remove' }),
+    pageTitle: (page: Page) => page.locator('h1:has-text("Flows")'),  
   };
 
   actions = {
+    waitFor: async (page: Page) => {
+      await page.waitForURL('**/flows');
+      await this.getters.pageTitle(page).waitFor({ state: 'visible' });
+    },
     navigate: async (page: Page) => {
       await this.getters.sidebarFlowsLink(page).click();
       await page.waitForTimeout(2000);

@@ -46,7 +46,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             pieceName: action.settings.pieceName,
             pieceVersion: action.settings.pieceVersion,
             actionName: action.settings.actionName,
-            piecesSource: constants.piecesSource,
+            pieceSource: constants.piecesSource,
         })
 
         const { resolvedInput } = await constants.propsResolver.resolve<StaticPropsValue<PiecePropertyMap>>({
@@ -89,12 +89,9 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         const isPaused = executionState.isPaused({ stepName: action.name })
         if (!isPaused) {
-            progressService.sendUpdate({
+            await progressService.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
-                updateImmediate: true,
-            }).catch((e) => {
-                console.error('error sending update', e)
             })
         }
         const context: ActionContext = {
