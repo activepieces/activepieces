@@ -40,11 +40,10 @@ export const getProfileData = createAction({
       payload
     );
 
-    
-    if (response.request_id && !response.profile) {
+    if (response.data.request_id && !response.data.profile) {
       let attempts = 0;
-      const maxAttempts = 5;
-      const pollingInterval = 1000;
+      const maxAttempts = 15;
+      const pollingInterval = 3000;
 
       while (attempts < maxAttempts) {
         await new Promise((resolve) => setTimeout(resolve, pollingInterval));
@@ -53,20 +52,20 @@ export const getProfileData = createAction({
           auth,
           HttpMethod.POST,
           '/profile-data',
-          { request_id: response.request_id }
+          { request_id: response.data.request_id }
         );
 
-        if (response.profile) {
+        if (response.data.profile) {
           break;
         }
 
         attempts++;
       }
 
-      if (!response.profile) {
+      if (!response.data.profile) {
         throw new Error(
           'Profile data retrieval is taking longer than expected. Please try again with the request_id: ' +
-            response.request_id
+            response.data.request_id
         );
       }
     }

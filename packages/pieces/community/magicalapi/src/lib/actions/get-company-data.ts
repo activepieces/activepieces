@@ -34,6 +34,7 @@ export const getCompanyData = createAction({
     const { company_name, company_username, company_website, request_id } = context.propsValue;
     const auth = context.auth;
 
+    // Prepare the request payload
     const payload: Record<string, string> = {};
     
     if (request_id) {
@@ -53,11 +54,11 @@ export const getCompanyData = createAction({
       payload
     );
 
-    
-    if (response.request_id && !response.company_name) {
+         
+    if (response.data.request_id && !response.data.company_name) {
       let attempts = 0;
-      const maxAttempts = 5;
-      const pollingInterval = 1000;
+      const maxAttempts = 15;
+      const pollingInterval = 3000;
 
       while (attempts < maxAttempts) {
         await new Promise((resolve) => setTimeout(resolve, pollingInterval));
@@ -66,20 +67,20 @@ export const getCompanyData = createAction({
           auth,
           HttpMethod.POST,
           '/company-data',
-          { request_id: response.request_id }
+          { request_id: response.data.request_id }
         );
 
-        if (response.company_name) {
+        if (response.data.company_name) {
           break;
         }
 
         attempts++;
       }
 
-      if (!response.company_name) {
+      if (!response.data.company_name) {
         throw new Error(
           'Company data retrieval is taking longer than expected. Please try again with the request_id: ' +
-            response.request_id
+            response.data.request_id
         );
       }
     }

@@ -41,10 +41,10 @@ export const reviewResume = createAction({
       payload
     );
 
-    if (response.request_id && !response.score) {
+    if (response.data.request_id && !response.data.score) {
       let attempts = 0;
-      const maxAttempts = 5;
-      const pollingInterval = 1000;
+      const maxAttempts = 15;
+      const pollingInterval = 3000;
 
       while (attempts < maxAttempts) {
         await new Promise((resolve) => setTimeout(resolve, pollingInterval));
@@ -53,20 +53,20 @@ export const reviewResume = createAction({
           auth,
           HttpMethod.POST,
           '/resume-review',
-          { request_id: response.request_id }
+          { request_id: response.data.request_id }
         );
 
-        if (response.score !== undefined) {
+        if (response.data.score !== undefined) {
           break;
         }
 
         attempts++;
       }
 
-      if (response.score === undefined) {
+      if (response.data.score === undefined) {
         throw new Error(
           'Resume review is taking longer than expected. Please try again with the request_id: ' +
-            response.request_id
+          response.data.request_id
         );
       }
     }

@@ -35,7 +35,6 @@ export const parseResume = createAction({
     } else {
       throw new Error('Either URL or Request ID is required');
     }
-
     let response = await makeRequest(
       auth,
       HttpMethod.POST,
@@ -43,29 +42,29 @@ export const parseResume = createAction({
       payload
     );
 
-    if (response.request_id && !response.basic) {
+    if (response.data.request_id && !response.data.basic) {
       let attempts = 0;
-      const maxAttempts = 5;
-      const pollingInterval = 1000;
+      const maxAttempts = 15;
+      const pollingInterval = 3000;
 
       while (attempts < maxAttempts) {
         await new Promise((resolve) => setTimeout(resolve, pollingInterval));
 
         response = await makeRequest(auth, HttpMethod.POST, '/resume-parser', {
-          request_id: response.request_id,
+          request_id: response.data.request_id,
         });
 
-        if (response.basic) {
+        if (response.data.basic) {
           break;
         }
-
+       
         attempts++;
       }
 
-      if (!response.basic) {
+      if (!response.data.basic) {
         throw new Error(
           'Resume parsing is taking longer than expected. Please try again with the request_id: ' +
-          response.request_id
+          response.data.request_id
         );
       }
     }
