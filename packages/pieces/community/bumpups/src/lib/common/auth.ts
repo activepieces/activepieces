@@ -13,21 +13,5 @@ export const BumpupsAuth = PieceAuth.SecretText({
 4. Copy and paste it here.
 `,
     required: true,
-    validate: async ({ auth }) => {
-        if (auth) {
-            try {
-                await makeRequest(auth as string, HttpMethod.GET, '/models');
-                return { valid: true };
-            } catch (error) {
-                return {
-                    valid: false,
-                    error: 'Invalid API Key',
-                };
-            }
-        }
-        return {
-            valid: false,
-            error: 'Invalid API Key',
-        };
-    },
+    
 });

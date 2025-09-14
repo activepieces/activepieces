@@ -7,7 +7,7 @@ export const generateTimestamps = createAction({
   auth: BumpupsAuth,
   name: 'generateTimestamps',
   displayName: 'Generate Timestamps',
-  description: '',
+  description: 'Generates detailed timestamps for a YouTube video based on its content.',
   props: {
     videoUrl: Property.ShortText({
       displayName: 'Video URL',

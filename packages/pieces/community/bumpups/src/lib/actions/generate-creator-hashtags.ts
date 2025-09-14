@@ -51,8 +51,8 @@ export const generateCreatorHashtags = createAction({
       options: {
         disabled: false,
         options: [
-          { label: 'Text', value: 'text' },
-          { label: 'Markdown', value: 'markdown' },
+          { label: 'Hashtags', value: 'hashtags' },
+          { label: 'Keywords', value: 'keywords' },
         ],
       },
     }),
@@ -68,7 +68,7 @@ export const generateCreatorHashtags = createAction({
     const response = await makeRequest(
       auth as string,
       HttpMethod.POST,
-      '/creator/hashtags ',
+      '/creator/hashtags',
       body
     );
 
