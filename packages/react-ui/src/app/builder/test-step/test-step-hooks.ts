@@ -69,7 +69,7 @@ export const testStepHooks = {
         }
 
         if (response.success) {
-          //so when the user refreshes they still see the sample data
+          //if the output is undefined it will fail to save sample data unless we stringify it
           const output = isNil(response.output)
             ? stringifyNullOrUndefined(response.output)
             : response.output;
