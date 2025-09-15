@@ -37,22 +37,6 @@ export const send_iMessage = createAction({
             description: 'Fallback to SMS/RCS when iMessage fails or unsupported',
             required: false,
             defaultValue: false,
-            // properties: {
-            //     when: Property.StaticMultiSelectDropdownMultiSelectDropdown({
-            //         displayName: 'When to Fallback',
-            //         description: 'Conditions that trigger SMS/RCS fallback',
-            //         required: true,
-            //         options: [
-            //             { label: 'iMessage Unsupported', value: 'imessage_unsupported' },
-            //             { label: 'iMessage Fails', value: 'imessage_fails' },
-            //         ],
-            //     }),
-            //     from: Property.ShortText({
-            //         displayName: 'Fallback From Number',
-            //         description: 'SMS/RCS number for fallback',
-            //         required: false,
-            //     }),
-            // },
         }),
         fallback_when: Property.DynamicProperties({
             displayName: "When to fallback",
@@ -107,10 +91,10 @@ export const send_iMessage = createAction({
             to: z.string().regex(/^\+\d{1,4}\d+$/, 'Invalid E.164 format'),
             from: z.string().regex(/^\+\d{1,4}\d+$/, 'Must be E.164 format').optional(),
             message: z.string().min(1, 'Message cannot be empty'),
-            // fallback: z.object({
-            //     when: z.array(z.enum(['imessage_unsupported', 'imessage_fails'])).min(1, 'Select at least one fallback condition'),
-            //     from: z.string().regex(/^\+\d{1,4}\d+$/, 'Must be E.164 format').optional(),
-            // }).optional(),
+            fallback: z.object({
+                when: z.array(z.enum(['imessage_unsupported', 'imessage_fails'])).min(1, 'Select at least one fallback condition'),
+                from: z.string().regex(/^\+\d{1,4}\d+$/, 'Must be E.164 format').optional(),
+            }).optional(),
             attachments: z.array(
                 z.object({
                     url: z.string()
