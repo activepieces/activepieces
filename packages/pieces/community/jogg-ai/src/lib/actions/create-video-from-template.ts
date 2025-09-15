@@ -24,8 +24,8 @@ export const createVideoFromTemplate = createAction({
       displayName: 'Template',
       description: 'Select a template to use',
       required: true,
-      refreshers: ['template_type'],
-      async options({ auth, template_type }) {
+      refreshers: [],
+      async options({ auth }) {
         if (!auth) {
           return {
             disabled: true,
@@ -34,20 +34,10 @@ export const createVideoFromTemplate = createAction({
           };
         }
 
-        if (!template_type) {
-          return {
-            disabled: true,
-            placeholder: 'Select template type first',
-            options: [],
-          };
-        }
-
         try {
-          const endpoint = template_type === 'user' ? '/templates/custom' : '/templates';
-
           const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
-            url: `https://api.jogg.ai/v1${endpoint}`,
+            url: 'https://api.jogg.ai/v1/templates',
             headers: {
               'x-api-key': auth as string,
             },
@@ -75,26 +65,75 @@ export const createVideoFromTemplate = createAction({
       required: true,
       defaultValue: 'english',
     }),
-    variables: Property.LongText({
-      displayName: 'Variables (JSON)',
-      description: 'Variables to replace in the template as JSON array',
-      required: true,
-      defaultValue: '[{"type":"text","name":"variable_name","properties":{"content":"replacement text"}}]',
+    variables: Property.Array({
+      displayName: 'Variables',
+      description: 'Variables to replace in the template',
+      required: false,
+      defaultValue: [],
+      properties: {
+        type: Property.StaticDropdown({
+          displayName: 'Variable Type',
+          description: 'Type of variable content',
+          required: true,
+          options: {
+            options: [
+              { label: 'Text content', value: 'text' },
+              { label: 'Image content', value: 'image' },
+              { label: 'Video content', value: 'video' },
+              { label: 'Script content', value: 'script' },
+            ],
+          },
+        }),
+        name: Property.ShortText({
+          displayName: 'Variable Name',
+          description: 'Name of the variable to replace',
+          required: true,
+        }),
+        properties: Property.LongText({
+          displayName: 'Properties (JSON)',
+          description: 'Properties for the variable as JSON object',
+          required: true,
+          defaultValue: '{"content": "replacement text"}',
+        }),
+      },
     }),
-    avatar_id: Property.Number({
+    avatar_id: Property.Dropdown({
       displayName: 'Avatar ID',
-      description: 'Digital person ID (optional)',
+      description: 'Select an avatar to use',
       required: false,
-    }),
-    avatar_type: Property.StaticDropdown({
-      displayName: 'Avatar Type',
-      description: 'Avatar source type',
-      required: false,
-      options: {
-        options: [
-          { label: 'Public avatars', value: 0 },
-          { label: 'Custom avatars', value: 1 },
-        ],
+      refreshers: [],
+      async options({ auth }) {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Connect your Jogg AI account first',
+            options: [],
+          };
+        }
+
+        try {
+          const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: 'https://api.jogg.ai/v1/avatars',
+            headers: {
+              'x-api-key': auth as string,
+            },
+          });
+
+          const avatars = response.body.data?.avatars || [];
+          return {
+            options: avatars.map((avatar: any) => ({
+              label: avatar.name,
+              value: avatar.avatar_id,
+            })),
+          };
+        } catch (error) {
+          console.error('Failed to fetch avatars', error);
+          return {
+            options: [],
+            placeholder: 'Unable to load avatars',
+          };
+        }
       },
     }),
     voice_id: Property.ShortText({
@@ -127,7 +166,6 @@ export const createVideoFromTemplate = createAction({
       lang,
       variables,
       avatar_id,
-      avatar_type,
       voice_id,
       caption,
       music_id,
@@ -138,30 +176,32 @@ export const createVideoFromTemplate = createAction({
     await propsValidation.validateZod(propsValue, {
       template_id: z.number().min(1, 'Template ID is required'),
       lang: z.string().min(1, 'Language is required'),
-      variables: z.string().min(1, 'Variables are required'),
+      variables: z.array(z.object({
+        type: z.enum(['text', 'image', 'video', 'script']),
+        name: z.string().min(1, 'Variable name is required'),
+        properties: z.string().min(1, 'Properties are required'),
+      })).optional(),
     });
 
-    // Parse variables JSON
-    let parsedVariables;
-    try {
-      parsedVariables = JSON.parse(variables);
-    } catch (error) {
-      throw new Error('Variables must be valid JSON');
-    }
+    // Parse properties JSON for each variable
+    const processedVariables = (variables && variables.length > 0)
+      ? variables.map((variable: any) => ({
+          type: variable.type,
+          name: variable.name,
+          properties: JSON.parse(variable.properties),
+        }))
+      : [];
 
     const requestBody: any = {
       template_id,
       lang,
       template_type,
-      variables: parsedVariables,
+      variables: processedVariables,
     };
 
     // Add optional parameters if provided
     if (avatar_id !== undefined) {
       requestBody.avatar_id = avatar_id;
-    }
-    if (avatar_type !== undefined) {
-      requestBody.avatar_type = avatar_type;
     }
     if (voice_id) {
       requestBody.voice_id = voice_id;

@@ -21,23 +21,12 @@ export const createAvatarVideo = createAction({
         ],
       },
     }),
-    avatar_type: Property.StaticDropdown({
-      displayName: 'Avatar Type',
-      description: 'Source type of the avatar',
-      required: true,
-      options: {
-        options: [
-          { label: 'Jogg avatar (Library)', value: 0 },
-          { label: 'Your avatar (Custom)', value: 1 },
-        ],
-      },
-    }),
     avatar_id: Property.Dropdown({
       displayName: 'Avatar',
       description: 'Select an avatar to use',
       required: true,
-      refreshers: ['avatar_type'],
-      async options({ auth, avatar_type }) {
+      refreshers: [],
+      async options({ auth }) {
         if (!auth) {
           return {
             disabled: true,
@@ -46,21 +35,10 @@ export const createAvatarVideo = createAction({
           };
         }
 
-        if (avatar_type === undefined) {
-          return {
-            disabled: true,
-            placeholder: 'Select avatar type first',
-            options: [],
-          };
-        }
-
         try {
-          // Choose endpoint based on avatar_type
-          const endpoint = avatar_type === 1 ? '/avatars/custom' : '/avatars';
-
           const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
-            url: `https://api.jogg.ai/v1${endpoint}`,
+            url: 'https://api.jogg.ai/v1/avatars',
             headers: {
               'x-api-key': auth as string,
             },
@@ -82,6 +60,17 @@ export const createAvatarVideo = createAction({
         }
       },
     }),
+    avatar_type: Property.StaticDropdown({
+      displayName: 'Avatar Type',
+      description: 'Source type of the avatar',
+      required: true,
+      options: {
+        options: [
+          { label: 'Jogg avatar', value: 0 },
+          { label: 'Your avatar', value: 1 },
+        ],
+      },
+    }),
     voice_id: Property.Dropdown({
       displayName: 'Voice',
       description: 'Select a voice to use',
@@ -99,7 +88,7 @@ export const createAvatarVideo = createAction({
         try {
           const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
-            url: 'https://api.jogg.ai/v1/voices/custom',
+            url: 'https://api.jogg.ai/v1/voices',
             headers: {
               'x-api-key': auth as string,
             },
@@ -108,7 +97,7 @@ export const createAvatarVideo = createAction({
           const voices = response.body.data?.voices || [];
           return {
             options: voices.map((voice: any) => ({
-              label: `${voice.name} (${voice.language})`,
+              label: `${voice.name} (${voice.language}, ${voice.gender}, ${voice.age})`,
               value: voice.voice_id,
             })),
           };

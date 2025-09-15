@@ -3,10 +3,10 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { joggAiAuth } from '../..';
 
-export const createProductManually = createAction({
-  name: 'createProductManually',
-  displayName: 'Create Product Manually',
-  description: 'Creates a product by providing all product details manually',
+export const createProductFromProductInfo = createAction({
+  name: 'createProductFromProductInfo',
+  displayName: 'Create Product from Product Info',
+  description: 'Creates a product from product info',
   auth: joggAiAuth,
   props: {
     name: Property.ShortText({
@@ -26,7 +26,7 @@ export const createProductManually = createAction({
     }),
     media: Property.Array({
       displayName: 'Media',
-      description: 'Media resources for the product (images/videos)',
+      description: 'Media resources for the product (must provide at least 3)',
       properties: {
         type: Property.StaticDropdown({
           displayName: 'Media Type',
@@ -72,7 +72,7 @@ export const createProductManually = createAction({
         name: z.string().min(1, 'Media name is required'),
         url: z.string().url('Media URL must be a valid URL'),
         description: z.string().optional(),
-      })).min(1, 'At least one media item is required'),
+      })).min(3, 'At least 3 media items are required'),
     });
 
     const requestBody: any = {
