@@ -1,16 +1,16 @@
 {
-  "IMAP": "IMAP",
-  "Receive new email trigger": "Receive new email trigger",
+  "\n**Emails Filtering:**\n\nAdd a Router Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**Filtratge de correus:**\n\nAfegeix un element Enrutador per filtrar correus basats en l'assumpte, destinatari, remitent, CC o altres camps.\n",
+  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=ca)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=ca)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n",
+  "Enable TLS certificate validation (recommended for production).": "Activar la validació de certificats TLS (recomanat per a producció).",
   "Host": "Host",
-  "Username": "Username",
-  "Password": "Password",
+  "Mailbox": "Bústia",
+  "New Email": "Nou correu electrònic",
+  "Password": "Contrasenya",
   "Port": "Port",
-  "Use TLS": "Use TLS",
-  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n",
-  "New Email": "New Email",
-  "Trigger when a new email is received.": "Trigger when a new email is received.",
-  "Mailbox": "Mailbox",
-  "Markdown": "Markdown",
-  "Select the mailbox to search": "Select the mailbox to search",
-  "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n"
+  "Receive new email trigger": "Activador de nou correu electrònic",
+  "Select the mailbox to search.": "Selecciona la bústia per cercar.",
+  "Trigger when a new email is received": "S'activa quan es rep un nou correu electrònic",
+  "Use TLS": "Usar TLS",
+  "Username": "Nom d'usuari",
+  "Validate TLS Certificates": "Validar certificats TLS"
 }
