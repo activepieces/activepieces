@@ -11,6 +11,7 @@ export const generateTimestamps = createAction({
   props: {
     videoUrl: Property.ShortText({
       displayName: 'Video URL',
+      description: 'The YouTube video URL.',
       required: true,
     }),
     model: Property.StaticDropdown({

@@ -7,10 +7,12 @@ export const generateCreatorHashtags = createAction({
   auth: BumpupsAuth,
   name: 'generateCreatorHashtags',
   displayName: 'Generate Creator Hashtags',
-  description: 'Generates relevant hashtags for a YouTube video based on its content.',
+  description:
+    'Generates relevant hashtags for a YouTube video based on its content.',
   props: {
     videoUrl: Property.ShortText({
       displayName: 'Video URL',
+      description: 'The YouTube video URL.',
       required: true,
     }),
     model: Property.StaticDropdown({
@@ -19,9 +21,7 @@ export const generateCreatorHashtags = createAction({
       defaultValue: 'bump-1.0',
       options: {
         disabled: false,
-        options: [
-          { label: 'bump-1.0', value: 'bump-1.0' },
-        ],
+        options: [{ label: 'bump-1.0', value: 'bump-1.0' }],
       },
     }),
     language: Property.StaticDropdown({

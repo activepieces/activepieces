@@ -7,10 +7,12 @@ export const generateCreatorTakeaways = createAction({
   auth: BumpupsAuth,
   name: 'generateCreatorTakeaways',
   displayName: 'Generate Creator Takeaways',
-  description: 'Generates key takeaways for a YouTube video based on its content.',
+  description:
+    'Generates key takeaways for a YouTube video based on its content.',
   props: {
     videoUrl: Property.ShortText({
       displayName: 'Video URL',
+      description: 'The YouTube video URL.',
       required: true,
     }),
     model: Property.StaticDropdown({
@@ -19,9 +21,7 @@ export const generateCreatorTakeaways = createAction({
       defaultValue: 'bump-1.0',
       options: {
         disabled: false,
-        options: [
-          { label: 'bump-1.0', value: 'bump-1.0' },
-        ],
+        options: [{ label: 'bump-1.0', value: 'bump-1.0' }],
       },
     }),
     language: Property.StaticDropdown({
@@ -50,10 +50,9 @@ export const generateCreatorTakeaways = createAction({
       required: false,
       defaultValue: false,
     }),
-
   },
   async run({ auth, propsValue }) {
-    const body = {
+    const body: any = {
       url: propsValue.videoUrl,
       model: propsValue.model,
       language: propsValue.language || 'en',
