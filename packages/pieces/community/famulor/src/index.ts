@@ -52,7 +52,7 @@ export const famulor = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/famulor.png",
   description: "Automate phone calls using our AI calling platform.",
-  authors: ['Zebi15'],
+  authors: ['bekservice'],
   actions: [addLead,sendSms,campaignControl,makePhoneCall,deleteLead],
   triggers: [phoneCallEnded,getAssistants,inboundCall],
 });
