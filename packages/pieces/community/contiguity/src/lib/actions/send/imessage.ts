@@ -4,6 +4,7 @@ import {
 } from '@activepieces/pieces-common';
 import { contiguityAuth } from '../../..';
 import {
+    InputPropertyMap,
     Property,
     createAction,
 } from '@activepieces/pieces-framework';
@@ -31,27 +32,63 @@ export const send_iMessage = createAction({
             description: 'iMessage content',
             required: true,
         }),
-        // fallback: Property.Object({
-        //     displayName: 'SMS/RCS Fallback',
-        //     description: 'Fallback to SMS/RCS when iMessage fails or unsupported',
-        //     required: false,
-        //     properties: {
-        //         when: Property.StaticMultiSelectDropdownMultiSelectDropdown({
-        //             displayName: 'When to Fallback',
-        //             description: 'Conditions that trigger SMS/RCS fallback',
-        //             required: true,
-        //             options: [
-        //                 { label: 'iMessage Unsupported', value: 'imessage_unsupported' },
-        //                 { label: 'iMessage Fails', value: 'imessage_fails' },
-        //             ],
-        //         }),
-        //         from: Property.ShortText({
-        //             displayName: 'Fallback From Number',
-        //             description: 'SMS/RCS number for fallback',
-        //             required: false,
-        //         }),
-        //     },
-        //}),
+        fallback: Property.Checkbox({
+            displayName: 'SMS/RCS Fallback',
+            description: 'Fallback to SMS/RCS when iMessage fails or unsupported',
+            required: false,
+            defaultValue: false,
+            // properties: {
+            //     when: Property.StaticMultiSelectDropdownMultiSelectDropdown({
+            //         displayName: 'When to Fallback',
+            //         description: 'Conditions that trigger SMS/RCS fallback',
+            //         required: true,
+            //         options: [
+            //             { label: 'iMessage Unsupported', value: 'imessage_unsupported' },
+            //             { label: 'iMessage Fails', value: 'imessage_fails' },
+            //         ],
+            //     }),
+            //     from: Property.ShortText({
+            //         displayName: 'Fallback From Number',
+            //         description: 'SMS/RCS number for fallback',
+            //         required: false,
+            //     }),
+            // },
+        }),
+        fallback_when: Property.DynamicProperties({
+            displayName: "When to fallback",
+            description: 'Conditions that trigger SMS/RCS fallback',
+            required: true,
+            refreshers: ['fallback'],
+            props: async (propsValue): Promise<InputPropertyMap> => {
+                const fallback = propsValue['fallback'] as unknown as boolean;
+
+                if (!fallback){
+                    return{}
+                }
+                
+                if (fallback){
+                    return{
+                        fallback_options: Property.StaticMultiSelectDropdown({
+                            displayName: "When to fallback",
+                            description: "Conditions that trigger SMS/RCS fallback",
+                            required: true,
+                            options: {
+                                options:[
+                                    { label: 'iMessage Unsupported', value: 'imessage_unsupported' },
+                                    { label: 'iMessage Fails', value: 'imessage_fails' },
+                                ]
+                            }
+                        }),
+                        from: Property.ShortText({
+                            displayName: 'Fallback From Number',
+                            description: 'SMS/RCS number for fallback',
+                            required: false,
+                        }),
+                    };
+                }
+                return{};
+            },
+        }),
         attachments: Property.Array({
             displayName: 'Attachments',
             description: 'File URLs (max 10, 50MB total, HTTPS required)',
