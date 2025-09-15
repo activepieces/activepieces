@@ -17,21 +17,19 @@ export const upsertContactAction = createAction({
     email: Property.ShortText({
       displayName: 'Email',
       description: 'Email address of the contact',
-      required: false,
+      required: true,
     }),
     phone_number: Property.ShortText({
       displayName: 'Phone Number',
       description: 'Phone number of the contact including the country code. For ex: 16501111234',
-      required: false,
+      required: true,
     }),
   },
   async run(context) {
-    const {
-      first_name,
-      last_name,
-      email,
-      phone_number,
-    } = context.propsValue;
+    const first_name = context.propsValue['first_name'];
+    const last_name = context.propsValue['last_name'];
+    const email = context.propsValue['email'];
+    const phone_number = context.propsValue['phone_number'];
 
     const apiKey = context.auth as string;
 

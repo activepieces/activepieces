@@ -21,16 +21,73 @@ export const createCampaignAction = createAction({
     }),
     start_time: Property.DateTime({
       displayName: 'Start Time',
+      description: 'The date and time when the campaign should start. Format: YYYY-MM-DD HH:MM:SS',
       required: true,
     }),
     interval: Property.Number({
       displayName: 'Interval',
+      description: 'The interval between campaign executions in minutes. For example: 60 for hourly, 1440 for daily',
       required: true,
     }),
-    widget_id: Property.ShortText({
-      displayName: 'Widget ID',
-      description: 'The UUID of the widget',
+    widget_id: Property.Dropdown({
+      displayName: 'Widget',
+      description: 'Select the widget to associate with this campaign',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first'
+          };
+        }
+
+        try {
+          const apiKey = auth as string;
+          const url = `https://api.insighto.ai/api/v1/widget`;
+
+          const queryParams: Record<string, string> = {
+            api_key: apiKey,
+            page: '1',
+            size: '100', // Get more widgets for better UX
+          };
+
+          const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url,
+            queryParams,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          const data = response.body.data;
+          if (!data || !data.items) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'No widgets found'
+            };
+          }
+
+          const options = data.items.map((item: any) => ({
+            label: `${item.name || item.display_name || 'Unnamed'} (${item.widget_type} - ${item.widget_provider || 'No Provider'})`,
+            value: item.id,
+          }));
+
+          return {
+            disabled: false,
+            options,
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load widgets'
+          };
+        }
+      },
     }),
     attributes: Property.Object({
       displayName: 'Attributes',
@@ -77,20 +134,18 @@ export const createCampaignAction = createAction({
     }),
   },
   async run(context) {
-    const {
-      name,
-      type,
-      start_time,
-      interval,
-      widget_id,
-      attributes,
-      status,
-      execution_weekdays,
-      time_window_start,
-      time_window_end,
-      time_zone,
-      enabled,
-    } = context.propsValue;
+    const name = context.propsValue['name'];
+    const type = context.propsValue['type'];
+    const start_time = context.propsValue['start_time'];
+    const interval = context.propsValue['interval'];
+    const widget_id = context.propsValue['widget_id'];
+    const attributes = context.propsValue['attributes'];
+    const status = context.propsValue['status'];
+    const execution_weekdays = context.propsValue['execution_weekdays'];
+    const time_window_start = context.propsValue['time_window_start'];
+    const time_window_end = context.propsValue['time_window_end'];
+    const time_zone = context.propsValue['time_zone'];
+    const enabled = context.propsValue['enabled'];
 
     const apiKey = context.auth as string;
 

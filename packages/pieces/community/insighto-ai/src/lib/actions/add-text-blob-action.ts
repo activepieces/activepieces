@@ -6,10 +6,65 @@ export const addTextBlobAction = createAction({
   displayName: 'Add Text Blob Into Data Source',
   description: 'Inserts a large text blob into an existing data source',
   props: {
-    datasource_id: Property.ShortText({
-      displayName: 'Data Source ID',
-      description: 'The UUID of the data source',
+    datasource_id: Property.Dropdown({
+      displayName: 'Data Source',
+      description: 'Select the data source to add the text blob to',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first'
+          };
+        }
+
+        try {
+          const apiKey = auth as string;
+          const url = `https://api.insighto.ai/api/v1/datasource`;
+
+          const queryParams: Record<string, string> = {
+            api_key: apiKey,
+            page: '1',
+            size: '100', // Get more data sources for better UX
+          };
+
+          const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url,
+            queryParams,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          const data = response.body.data;
+          if (!data || !data.items) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'No data sources found'
+            };
+          }
+
+          const options = data.items.map((item: any) => ({
+            label: `${item.name || 'Unnamed'} (${item.ds_type})`,
+            value: item.id,
+          }));
+
+          return {
+            disabled: false,
+            options,
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load data sources'
+          };
+        }
+      },
     }),
     ds_type: Property.StaticDropdown({
       displayName: 'Data Source Type',
@@ -46,14 +101,12 @@ export const addTextBlobAction = createAction({
     }),
   },
   async run(context) {
-    const {
-      datasource_id,
-      ds_type,
-      name,
-      description,
-      org_id,
-      text_content,
-    } = context.propsValue;
+    const datasource_id = context.propsValue['datasource_id'];
+    const ds_type = context.propsValue['ds_type'];
+    const name = context.propsValue['name'];
+    const description = context.propsValue['description'];
+    const org_id = context.propsValue['org_id'];
+    const text_content = context.propsValue['text_content'];
 
     const apiKey = context.auth as string;
 
