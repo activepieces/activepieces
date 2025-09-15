@@ -1,3 +1,4 @@
+export * from './lib/utils/machine'
 export * from './lib/piece-manager/development/pieces-builder'
 export * from './lib/runner/engine-runner-types'
 export * from './lib/executors/flow-job-executor'

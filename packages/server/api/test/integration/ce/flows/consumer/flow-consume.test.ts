@@ -14,7 +14,7 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import { flowJobExecutor, flowWorker } from 'server-worker'
+import { flowJobExecutor, flowWorker, workerMachine } from 'server-worker'
 import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
 import { initializeDatabase } from '../../../../../src/app/database'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
@@ -26,7 +26,6 @@ import {
     createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../../helpers/mocks'
-import { workerMachine } from 'packages/server/worker/src/lib/utils/machine'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -240,7 +239,7 @@ describe('flow execution', () => {
 })
 
 
-async function waitForSocketConnection(maxAttempts: number = 60, intervalMs: number = 1000): Promise<void> {
+async function waitForSocketConnection(maxAttempts = 60, intervalMs = 1000): Promise<void> {
     let attempts = 0
     while (attempts < maxAttempts) {
         try {
@@ -248,7 +247,8 @@ async function waitForSocketConnection(maxAttempts: number = 60, intervalMs: num
             if (settings) {
                 break
             }
-        } catch (error) {
+        }
+        catch (error) {
             // Settings not ready yet
         }
         await new Promise(resolve => setTimeout(resolve, intervalMs))
