@@ -41,7 +41,7 @@ function buildImapClient(auth: ImapAuth): ImapFlow {
 }
 
 async function confirmEmailExists(imapClient: ImapFlow, uid: number) {
-  const searchResult = await imapClient.search({ uid }, { uid: true });
+  const searchResult = await imapClient.search({ uid: uid.toString() }, { uid: true });
 
   if (!searchResult || searchResult.length === 0) {
     throw new ImapEmailNotFoundError();
