@@ -52,7 +52,7 @@ export const send_iMessage = createAction({
                 
                 if (fallback){
                     return{
-                        fallback_options: Property.StaticMultiSelectDropdown({
+                        when: Property.StaticMultiSelectDropdown({
                             displayName: "When to fallback",
                             description: "Conditions that trigger SMS/RCS fallback",
                             required: true,
