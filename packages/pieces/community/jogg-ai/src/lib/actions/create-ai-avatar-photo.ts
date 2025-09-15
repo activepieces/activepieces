@@ -1,4 +1,8 @@
-import { httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import {
+  httpClient,
+  HttpMethod,
+  propsValidation,
+} from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { joggAiAuth } from '../..';
@@ -112,12 +116,29 @@ export const createAiAvatarPhoto = createAction({
       model,
     } = propsValue;
 
-    // Zod validation
     await propsValidation.validateZod(propsValue, {
       image_url: z.string().url('Image URL must be a valid URL').optional(),
+      appearance: z
+        .string()
+        .min(1, 'Appearance description cannot be empty')
+        .optional(),
+      background: z
+        .string()
+        .min(1, 'Background description cannot be empty')
+        .optional(),
     });
 
-    const requestBody: any = {
+    const requestBody: {
+      age: string;
+      aspect_ratio: number;
+      avatar_style: string;
+      gender: string;
+      model: string;
+      appearance?: string;
+      background?: string;
+      ethnicity?: string;
+      image_url?: string;
+    } = {
       age,
       aspect_ratio,
       avatar_style,
@@ -125,7 +146,6 @@ export const createAiAvatarPhoto = createAction({
       model,
     };
 
-    // Add optional parameters if provided
     if (appearance) {
       requestBody.appearance = appearance;
     }
@@ -148,6 +168,21 @@ export const createAiAvatarPhoto = createAction({
       },
       body: requestBody,
     });
+
+    if (response.body.code !== 0) {
+      const errorMessages: Record<number, string> = {
+        10104: 'Record not found',
+        10105: 'Invalid API key',
+        18020: 'Insufficient credit',
+        18025: 'No permission to call APIs',
+        40000: 'Parameter error',
+        50000: 'System error',
+      };
+
+      const message =
+        errorMessages[response.body.code] || `API Error: ${response.body.msg}`;
+      throw new Error(message);
+    }
 
     return response.body;
   },

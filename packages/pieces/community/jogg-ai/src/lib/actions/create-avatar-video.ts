@@ -1,4 +1,8 @@
-import { httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import {
+  httpClient,
+  HttpMethod,
+  propsValidation,
+} from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { joggAiAuth } from '../..';
@@ -25,8 +29,8 @@ export const createAvatarVideo = createAction({
       displayName: 'Avatar',
       description: 'Select an avatar to use',
       required: true,
-      refreshers: [],
-      async options({ auth }) {
+      refreshers: ['avatar_type'],
+      async options({ auth, avatar_type }) {
         if (!auth) {
           return {
             disabled: true,
@@ -36,20 +40,42 @@ export const createAvatarVideo = createAction({
         }
 
         try {
+          let url = 'https://api.jogg.ai/v1/avatars';
+          if (avatar_type === 1) {
+            url = 'https://api.jogg.ai/v1/avatars/custom';
+          }
+
           const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
-            url: 'https://api.jogg.ai/v1/avatars',
+            url,
             headers: {
               'x-api-key': auth as string,
             },
           });
 
+          if (response.body.code !== 0) {
+            return {
+              options: [],
+              placeholder: `Error loading avatars: ${response.body.msg}`,
+            };
+          }
+
           const avatars = response.body.data?.avatars || [];
           return {
-            options: avatars.map((avatar: any) => ({
-              label: avatar.name,
-              value: avatar.avatar_id,
-            })),
+            options: avatars.map(
+              (avatar: {
+                avatar_id: number;
+                name: string;
+                status?: number;
+              }) => ({
+                label: `${avatar.name}${
+                  avatar.status !== undefined
+                    ? ` (${avatar.status === 1 ? 'Ready' : 'Processing'})`
+                    : ''
+                }`,
+                value: avatar.avatar_id,
+              })
+            ),
           };
         } catch (error) {
           console.error('Failed to fetch avatars', error);
@@ -86,20 +112,48 @@ export const createAvatarVideo = createAction({
         }
 
         try {
-          const response = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: 'https://api.jogg.ai/v1/voices',
-            headers: {
-              'x-api-key': auth as string,
-            },
-          });
+          let response;
+          try {
+            response = await httpClient.sendRequest({
+              method: HttpMethod.GET,
+              url: 'https://api.jogg.ai/v1/voices/custom',
+              headers: {
+                'x-api-key': auth as string,
+              },
+            });
+          } catch {
+            response = await httpClient.sendRequest({
+              method: HttpMethod.GET,
+              url: 'https://api.jogg.ai/v1/voices',
+              headers: {
+                'x-api-key': auth as string,
+              },
+            });
+          }
+
+          if (response.body.code !== 0) {
+            return {
+              options: [],
+              placeholder: `Error loading voices: ${response.body.msg}`,
+            };
+          }
 
           const voices = response.body.data?.voices || [];
           return {
-            options: voices.map((voice: any) => ({
-              label: `${voice.name} (${voice.language}, ${voice.gender}, ${voice.age})`,
-              value: voice.voice_id,
-            })),
+            options: voices.map(
+              (voice: {
+                name: string;
+                voice_id: string;
+                language?: string;
+                gender?: string;
+                age?: string;
+              }) => ({
+                label: voice.language
+                  ? `${voice.name} (${voice.language}, ${voice.gender}, ${voice.age})`
+                  : voice.name,
+                value: voice.voice_id,
+              })
+            ),
           };
         } catch (error) {
           console.error('Failed to fetch voices', error);
@@ -112,7 +166,8 @@ export const createAvatarVideo = createAction({
     }),
     script: Property.LongText({
       displayName: 'Script',
-      description: 'Script content for the avatar to speak. Must provide either script or audio_url',
+      description:
+        'Script content for the avatar to speak. Must provide either script or audio_url',
       required: false,
     }),
     audio_url: Property.ShortText({
@@ -159,28 +214,38 @@ export const createAvatarVideo = createAction({
       video_name,
     } = propsValue;
 
-    // Zod validation
     await propsValidation.validateZod(propsValue, {
       audio_url: z.string().url('Audio URL must be a valid URL').optional(),
-      script: z.string().optional(),
+      script: z.string().min(1, 'Script cannot be empty').optional(),
+      video_name: z.string().min(1, 'Video name cannot be empty').optional(),
     });
 
-    // Validate that either script or audio_url is provided, but not both
     const hasScript = !!script;
     const hasAudioUrl = !!audio_url;
 
     if ((hasScript && hasAudioUrl) || (!hasScript && !hasAudioUrl)) {
-      throw new Error('You must provide either a script or audio_url, but not both.');
+      throw new Error(
+        'You must provide either a script or audio_url, but not both.'
+      );
     }
 
-    const requestBody: any = {
+    const requestBody: {
+      screen_style: number;
+      avatar_id: number;
+      avatar_type: number;
+      voice_id: string;
+      script?: string;
+      audio_url?: string;
+      aspect_ratio?: number;
+      caption?: boolean;
+      video_name?: string;
+    } = {
       screen_style,
       avatar_id,
       avatar_type,
       voice_id,
     };
 
-    // Add the content source (script or audio_url)
     if (script) {
       requestBody.script = script;
     }
@@ -188,7 +253,6 @@ export const createAvatarVideo = createAction({
       requestBody.audio_url = audio_url;
     }
 
-    // Add optional parameters if provided
     if (aspect_ratio !== undefined) {
       requestBody.aspect_ratio = aspect_ratio;
     }
@@ -208,6 +272,21 @@ export const createAvatarVideo = createAction({
       },
       body: requestBody,
     });
+
+    if (response.body.code !== 0) {
+      const errorMessages: Record<number, string> = {
+        10104: 'Record not found',
+        10105: 'Invalid API key',
+        18020: 'Insufficient credit',
+        18025: 'No permission to call APIs',
+        40000: 'Parameter error',
+        50000: 'System error',
+      };
+
+      const message =
+        errorMessages[response.body.code] || `API Error: ${response.body.msg}`;
+      throw new Error(message);
+    }
 
     return response.body;
   },

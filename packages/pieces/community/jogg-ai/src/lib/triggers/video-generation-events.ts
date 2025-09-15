@@ -41,21 +41,48 @@ export const videoGeneratedSuccessfully = createTrigger({
         },
       });
 
+      if (response.body.code && response.body.code !== 0) {
+        const errorMessages: Record<number, string> = {
+          10104: 'Record not found',
+          10105: 'Invalid API key',
+          18020: 'Insufficient credit',
+          18025: 'No permission to call APIs',
+          40000: 'Parameter error',
+          50000: 'System error',
+        };
+
+        const message =
+          errorMessages[response.body.code] ||
+          `API Error: ${response.body.msg}`;
+        throw new Error(message);
+      }
+
       const webhookData = response.body;
-      if (webhookData.data?.endpoint_id) {
-        await context.store?.put<WebhookInfo>('_video_generation_success_webhook', {
-          endpoint_id: webhookData.data.endpoint_id,
-        });
+      if (webhookData.endpoint_id) {
+        await context.store?.put<WebhookInfo>(
+          '_video_generation_success_webhook',
+          {
+            endpoint_id: webhookData.endpoint_id,
+          }
+        );
+      } else {
+        throw new Error('Failed to get webhook endpoint ID from response');
       }
     } catch (error) {
       console.error('Failed to register webhook:', error);
-      throw new Error('Failed to register webhook with JoggAI');
+      throw new Error(
+        `Failed to register webhook with JoggAI: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
     }
   },
 
   async onDisable(context) {
     try {
-      const webhookInfo = await context.store?.get<WebhookInfo>('_video_generation_success_webhook');
+      const webhookInfo = await context.store?.get<WebhookInfo>(
+        '_video_generation_success_webhook'
+      );
       if (webhookInfo?.endpoint_id) {
         await httpClient.sendRequest({
           method: HttpMethod.DELETE,
@@ -67,19 +94,35 @@ export const videoGeneratedSuccessfully = createTrigger({
       }
     } catch (error) {
       console.error('Failed to unregister webhook:', error);
-      // Don't throw error on disable to avoid issues
     }
   },
 
   async run(context) {
-    const payload = context.payload.body as any;
+    const payload = context.payload.body as {
+      event_id: string;
+      event: string;
+      timestamp: number;
+      data: {
+        project_id: string;
+        video_url?: string;
+        duration?: number;
+      };
+    };
 
-    // Only process success events (additional safety check)
+    if (
+      !payload.event_id ||
+      !payload.event ||
+      !payload.timestamp ||
+      !payload.data?.project_id
+    ) {
+      console.warn('Invalid webhook payload received:', payload);
+      return [];
+    }
+
     if (payload.event === 'generated_video_success') {
       return [payload];
     }
 
-    // If somehow we received a non-success event, return empty array
     return [];
   },
 });
