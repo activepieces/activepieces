@@ -1,15 +1,16 @@
 {
-  "Receive new email trigger": "新しいメールトリガーを受信する",
+  "\n**Emails Filtering:**\n\nAdd a Router Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**メールフィルタリング：**\n\n件名、宛先、送信者、CCまたはその他のフィールドに基づいてメールをフィルタリングするためにルーターコンポーネントを追加してください。\n",
+  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Gmailユーザー:**\n<br><br>\n以下を確認してください:\n<br>\n* Gmail設定でIMAPが有効になっている (https://support.google.com/mail/answer/7126229?hl=ja)\n* ログイン用のアプリパスワードを作成している (https://support.google.com/accounts/answer/185833?hl=ja)\n* TLSを有効にし、ポートを993、ホストをimap.gmail.comに設定する\n",
+  "Enable TLS certificate validation (recommended for production).": "TLS 証明書の検証を有効にする（本番環境に推奨）。",
   "Host": "ホスト",
-  "Username": "ユーザー名",
+  "Mailbox": "受信箱",
+  "New Email": "新しいメール",
   "Password": "Password",
   "Port": "ポート",
+  "Receive new email trigger": "新しいメール受信トリガー",
+  "Select the mailbox to search.": "検索するメールボックスを選択してください。",
+  "Trigger when a new email is received": "新しいメールを受信したときにトリガーします",
   "Use TLS": "TLS を使用",
-  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n",
-  "New Email": "新しいメール",
-  "Trigger when a new email is received.": "新しいメールを受信したときにトリガーします。",
-  "Mailbox": "受信箱",
-  "Markdown": "Markdown",
-  "Select the mailbox to search": "検索するメールボックスを選択してください",
-  "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**メールのフィルター:**\n\n分岐点を追加して、件名、to、cc、その他のフィールドに基づいてメールをフィルターできます。\n"
+  "Username": "ユーザー名",
+  "Validate TLS Certificates": "TLS 証明書を検証"
 }
