@@ -199,11 +199,11 @@ export const AlertsSettings = () => {
                     key={alert.id}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-red-100 rounded-md flex items-center justify-center">
+                      <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center">
                         <Bell className="w-4 h-4 text-red-600" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-muted-foreground">
                           {alert.receiver}
                         </p>
                       </div>
