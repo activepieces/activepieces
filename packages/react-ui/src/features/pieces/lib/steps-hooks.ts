@@ -138,7 +138,18 @@ const getQueryKeyForStepMetadata = (
   const customLogoUrl =
     'customLogoUrl' in step ? step.customLogoUrl : undefined;
   const agentId = flowStructureUtil.getExternalAgentId(step);
-  const actionName =  step.type === FlowActionType.PIECE ? step.settings.actionName : undefined;
-  const triggerName =  step.type === FlowTriggerType.PIECE ? step.settings.triggerName : undefined;
-  return [actionName, triggerName, pieceName, pieceVersion, customLogoUrl, agentId, locale, step.type];
+  const actionName =
+    step.type === FlowActionType.PIECE ? step.settings.actionName : undefined;
+  const triggerName =
+    step.type === FlowTriggerType.PIECE ? step.settings.triggerName : undefined;
+  return [
+    actionName,
+    triggerName,
+    pieceName,
+    pieceVersion,
+    customLogoUrl,
+    agentId,
+    locale,
+    step.type,
+  ];
 };
