@@ -1,15 +1,6 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-
-interface FormItem {
-  id: string;
-  name?: string;
-  email?: string;
-  phone_number?: string;
-  created_at: string;
-  updated_at: string;
-  [key: string]: any;
-}
+import { FormItemSchema, FormItem } from '../schemas';
 
 export const newCapturedForm = createTrigger({
   name: 'new_captured_form',
@@ -72,6 +63,16 @@ export const newCapturedForm = createTrigger({
       return [];
     }
 
+    // Validate form items
+    const validatedForms = data.items.map((form: any) => {
+      try {
+        return FormItemSchema.parse(form);
+      } catch (error) {
+        console.warn('Invalid form item:', form, error);
+        return null;
+      }
+    }).filter(Boolean) as FormItem[];
+
     // Get previously seen form IDs
     const seenForms = (await context.store.get<string[]>('seen_forms')) || [];
 
@@ -79,7 +80,7 @@ export const newCapturedForm = createTrigger({
     const newForms: FormItem[] = [];
     const currentFormIds: string[] = [];
 
-    for (const form of data.items) {
+    for (const form of validatedForms) {
       const formId = form.id;
       currentFormIds.push(formId);
 

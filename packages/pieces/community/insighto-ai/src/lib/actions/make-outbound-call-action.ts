@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { WidgetItemSchema } from '../schemas';
 
 export const makeOutboundCallAction = createAction({
   name: 'make_outbound_call',
@@ -48,7 +49,18 @@ export const makeOutboundCallAction = createAction({
             };
           }
 
-          const options = data.items.map((item: any) => ({
+          // Validate the response data
+          const validatedItems: WidgetItem[] = [];
+          for (const item of data.items) {
+            try {
+              const parsedItem = WidgetItemSchema.parse(item);
+              validatedItems.push(parsedItem);
+            } catch (error) {
+              console.warn('Invalid widget item:', item, error);
+            }
+          }
+
+          const options = validatedItems.map((item) => ({
             label: `${item.name || item.display_name || 'Unnamed'} (${item.widget_type} - ${item.widget_provider || 'No Provider'})`,
             value: item.id,
           }));

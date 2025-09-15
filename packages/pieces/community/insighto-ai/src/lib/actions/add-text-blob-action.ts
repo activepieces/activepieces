@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { DataSourceItemSchema } from '../schemas';
 
 export const addTextBlobAction = createAction({
   name: 'add_text_blob',
@@ -48,7 +49,18 @@ export const addTextBlobAction = createAction({
             };
           }
 
-          const options = data.items.map((item: any) => ({
+          // Validate the response data
+          const validatedItems: DataSourceItem[] = [];
+          for (const item of data.items) {
+            try {
+              const parsedItem = DataSourceItemSchema.parse(item);
+              validatedItems.push(parsedItem);
+            } catch (error) {
+              console.warn('Invalid data source item:', item, error);
+            }
+          }
+
+          const options = validatedItems.map((item) => ({
             label: `${item.name || 'Unnamed'} (${item.ds_type})`,
             value: item.id,
           }));

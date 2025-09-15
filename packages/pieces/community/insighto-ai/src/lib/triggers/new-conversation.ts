@@ -11,27 +11,7 @@ import {
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-
-interface ConversationItem {
-  id: string;
-  widget_id: string;
-  assistant_id: string;
-  assistant_name?: string;
-  attributes?: string;
-  first_message?: string;
-  device_type?: string;
-  created_at: string;
-  updated_at: string;
-  chat_count: number;
-  includes_voice: boolean;
-  intent_name?: string;
-  contact_id: string;
-  contact_first_name?: string;
-  contact_last_name?: string;
-  summary?: string;
-  widget_type?: string;
-  widget_provider?: string;
-}
+import { ConversationItemSchema, ConversationItem, AssistantItemSchema, AssistantItem } from '../schemas';
 
 const props = {
   assistant_id: Property.Dropdown({
@@ -76,7 +56,18 @@ const props = {
           };
         }
 
-        const options = data.items.map((item: any) => ({
+        // Validate the response data
+        const validatedItems: AssistantItem[] = [];
+        for (const item of data.items) {
+          try {
+            const parsedItem = AssistantItemSchema.parse(item);
+            validatedItems.push(parsedItem);
+          } catch (error) {
+            console.warn('Invalid assistant item:', item, error);
+          }
+        }
+
+        const options = validatedItems.map((item) => ({
           label: `${item.name || 'Unnamed Assistant'} (${item.assistant_type} - ${item.llm_model})`,
           value: item.id,
         }));
@@ -153,7 +144,17 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
       return [];
     }
 
-    return data.items.map((conversation: ConversationItem) => ({
+    // Validate conversation items
+    const validatedConversations = data.items.map((conversation: any) => {
+      try {
+        return ConversationItemSchema.parse(conversation);
+      } catch (error) {
+        console.warn('Invalid conversation item:', conversation, error);
+        return null;
+      }
+    }).filter(Boolean) as ConversationItem[];
+
+    return validatedConversations.map((conversation) => ({
       id: conversation.id,
       data: conversation,
     }));

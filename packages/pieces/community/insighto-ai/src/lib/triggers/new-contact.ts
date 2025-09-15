@@ -1,23 +1,6 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-
-interface ContactItem {
-  id: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  channels?: Record<string, any>;
-  user_attributes?: Record<string, any>;
-  last_seen?: string;
-  last_sent?: string;
-  org_id?: string;
-  first_assistant_id?: string;
-  last_assistant_id?: string;
-  first_widget_id?: string;
-  last_widget_id?: string;
-  custom_fields?: Record<string, any>;
-  created_at: string;
-}
+import { ContactItemSchema, ContactItem } from '../schemas';
 
 export const newContact = createTrigger({
   name: 'new_contact',
@@ -89,6 +72,16 @@ export const newContact = createTrigger({
       return [];
     }
 
+    // Validate contact items
+    const validatedContacts = data.items.map((contact: any) => {
+      try {
+        return ContactItemSchema.parse(contact);
+      } catch (error) {
+        console.warn('Invalid contact item:', contact, error);
+        return null;
+      }
+    }).filter(Boolean) as ContactItem[];
+
     // Get previously seen contact IDs
     const seenContacts = (await context.store.get<string[]>('seen_contacts')) || [];
 
@@ -96,7 +89,7 @@ export const newContact = createTrigger({
     const newContacts: ContactItem[] = [];
     const currentContactIds: string[] = [];
 
-    for (const contact of data.items) {
+    for (const contact of validatedContacts) {
       const contactId = contact.id;
       currentContactIds.push(contactId);
 
