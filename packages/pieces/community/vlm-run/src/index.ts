@@ -7,7 +7,7 @@ import { analyzeDocumentAction } from "./lib/actions/analyze-document";
 import { analyzeImageAction } from "./lib/actions/analyze-image";
 import { analyzeVideoAction } from "./lib/actions/analyze-video";
 import { getFileAction } from "./lib/actions/get-file";
-import { listFilesAction } from "./lib/actions/list-files";
+
 
 
 export const vlmRun = createPiece({
@@ -23,7 +23,6 @@ export const vlmRun = createPiece({
       analyzeImageAction,
       analyzeVideoAction,
       getFileAction,
-      listFilesAction
     ],
     triggers: [],
 });
