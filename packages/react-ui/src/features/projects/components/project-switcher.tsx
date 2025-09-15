@@ -68,40 +68,40 @@ export function ProjectSwitcher() {
             <CommandInput placeholder="Search project..." />
             {allProjects &&
               allProjects.map((platform) => (
-                <CommandGroup
-                  key={platform.platformName}
-                  heading={platform.platformName}
-                >
-                  <ScrollArea viewPortClassName="max-h-[200px]">
-                    {platform.projects &&
-                      platform.projects.map((project) => (
-                        <CommandItem
-                          key={project.id}
-                          onSelect={() => {
-                            setCurrentProject(
-                              queryClient,
-                              project,
-                              location.pathname,
-                            );
-                          }}
-                          value={project.id}
-                          className="text-sm p-2 break-all"
-                        >
-                          {project.displayName}
-                          <CheckIcon
-                            className={cn(
-                              'ml-auto h-4 w-4 shrink-0',
-                              currentProject?.id === project.id
-                                ? 'opacity-100'
-                                : 'opacity-0',
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                  </ScrollArea>
+                <ScrollArea viewPortClassName="max-h-[200px]">
+                  <CommandGroup
+                    key={platform.platformName}
+                    heading={platform.platformName}
+                  >
+                      {platform.projects &&
+                        platform.projects.map((project) => (
+                          <CommandItem
+                            key={project.id}
+                            onSelect={() => {
+                              setCurrentProject(
+                                queryClient,
+                                project,
+                                location.pathname,
+                              );
+                            }}
+                            value={project.id}
+                            className="text-sm p-2 break-all"
+                          >
+                            {project.displayName}
+                            <CheckIcon
+                              className={cn(
+                                'ml-auto h-4 w-4 shrink-0',
+                                currentProject?.id === project.id
+                                  ? 'opacity-100'
+                                  : 'opacity-0',
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
 
-                  <CommandEmpty>{t('No projects found')}</CommandEmpty>
-                </CommandGroup>
+                    <CommandEmpty>{t('No projects found')}</CommandEmpty>
+                  </CommandGroup>
+                </ScrollArea>
               ))}
           </CommandList>
         </Command>
