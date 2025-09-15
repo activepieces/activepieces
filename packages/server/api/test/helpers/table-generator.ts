@@ -1,70 +1,47 @@
-import { apId, FieldType, TableState } from '@activepieces/shared'
+import { apId, Field, FieldState, FieldType, PopulatedTable, TableAutomationStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
 export const tableGenerator = {
-    simpleTable(externalId?: string): TableState {
+    simpleTable(table: Partial<PopulatedTable>): PopulatedTable {
+        const tableId = apId()
         return {
-            id: apId(),
+            id: tableId,
             name: faker.lorem.word(),
-            externalId: externalId ?? apId(),
-            fields: [
-                {
-                    name: 'Name',
-                    type: FieldType.TEXT,
-                    externalId: apId(),
-                },
-                {
-                    name: 'Age',
-                    type: FieldType.NUMBER,
-                    externalId: apId(),
-                },
+            externalId: table.externalId ?? apId(),
+            fields: table.fields ?? [
+                tableGenerator.generateRandomField(tableId),
+                tableGenerator.generateRandomField(tableId),
             ],
+            projectId: apId(),
+            created: faker.date.recent().toISOString(),
+            updated: faker.date.recent().toISOString(),
+            status: table.status ?? TableAutomationStatus.ENABLED,
+            trigger: table.trigger ?? null,
         }
     },
-
-    tableWithDropdown(externalId?: string): TableState {
+    generateRandomField(tableId: string): Field {
         return {
             id: apId(),
+            projectId: apId(),
+            created: faker.date.recent().toISOString(),
+            updated: faker.date.recent().toISOString(),
+            tableId,
             name: faker.lorem.word(),
-            externalId: externalId ?? apId(),
-            fields: [
-                {
-                    name: 'Name',
-                    type: FieldType.TEXT,
-                    externalId: apId(),
-                },
-                {
-                    name: 'Status',
-                    type: FieldType.STATIC_DROPDOWN,
-                    externalId: apId(),
-                    data: {
-                        options: [
-                            { value: 'Active' },
-                            { value: 'Inactive' },
-                        ],
-                    },
-                },
-            ],
+            type: FieldType.TEXT,
+            externalId: apId(),
         }
     },
-
-    tableWithDateField(externalId?: string): TableState {
+    generateRandomDropdownField(): FieldState {
         return {
-            id: apId(),
             name: faker.lorem.word(),
-            externalId: externalId ?? apId(),
-            fields: [
-                {
-                    name: 'Name',
-                    type: FieldType.TEXT,
-                    externalId: apId(),
-                },
-                {
-                    name: 'Created Date',
-                    type: FieldType.DATE,
-                    externalId: apId(),
-                },
-            ],
+            type: FieldType.STATIC_DROPDOWN,
+            externalId: apId(),
+            data: {
+                options: [
+                    { value: faker.lorem.word() },
+                    { value: faker.lorem.word() },
+                ],
+            },
         }
     },
 } 

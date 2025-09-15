@@ -130,6 +130,8 @@ export enum AppSystemProp {
     MAX_RECORDS_PER_TABLE = 'MAX_RECORDS_PER_TABLE',
     MAX_FIELDS_PER_TABLE = 'MAX_FIELDS_PER_TABLE',
 
+    PM2_ENABLED = 'PM2_ENABLED',
+
 }
 export enum PiecesSource {
     /**

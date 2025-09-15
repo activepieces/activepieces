@@ -178,6 +178,9 @@
       "@activepieces/piece-bubble": [
         "packages/pieces/community/bubble/src/index.ts"
       ],
+      "@activepieces/piece-bumpups": [
+        "packages/pieces/community/bumpups/src/index.ts"
+      ],
       "@activepieces/piece-cal-com": [
         "packages/pieces/community/cal-com/src/index.ts"
       ],
