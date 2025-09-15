@@ -13,7 +13,7 @@ const queryKeys = (searchParams: URLSearchParams, projectId: string) => {
   return ['tables', searchParams.toString(), projectId];
 };
 export const tableHooks = {
-  useTables: () => {
+  useTables: (limit?: number) => {
     const projectId = authenticationSession.getProjectId();
     const [searchParams] = useSearchParams();
     return useQuery({
@@ -21,7 +21,9 @@ export const tableHooks = {
       queryFn: () =>
         tablesApi.list({
           cursor: searchParams.get('cursor') ?? undefined,
-          limit: searchParams.get('limit')
+          limit: limit
+            ? limit
+            : searchParams.get('limit')
             ? parseInt(searchParams.get('limit')!)
             : undefined,
           name: searchParams.get('name') ?? undefined,

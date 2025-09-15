@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.68.3",
-  "rcVersion": "0.68.0-rc.0",
+  "version": "0.69.0",
+  "rcVersion": "0.69.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -105,6 +105,7 @@
     "@radix-ui/react-toggle": "1.1.0",
     "@radix-ui/react-tooltip": "1.1.2",
     "@rollup/wasm-node": "4.21.2",
+    "@runware/sdk-js": "1.1.44",
     "@segment/analytics-next": "1.72.0",
     "@segment/analytics-node": "2.2.0",
     "@sendgrid/mail": "8.0.0",
@@ -431,7 +432,7 @@
     "ts-node": "10.9.1",
     "typescript": "5.5.4",
     "verdaccio": "6.1.6",
-    "vite": "6.3.5",
+    "vite": "6.3.6",
     "vite-plugin-checker": "0.7.2",
     "vite-plugin-html": "3.2.2",
     "vitest": "3.0.8",

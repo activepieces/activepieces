@@ -12,12 +12,12 @@ import { agentRunsModule } from './agents/agent-runs/agent-runs-module'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
-import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { changelogModule } from './changelog/changelog.module'
 import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
+import { websocketService } from './core/websockets.service'
 import { getRedisConnection } from './database/redis-connection'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { platformAnalyticsModule } from './ee/analytics/platform-analytics.module'
@@ -58,12 +58,12 @@ import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
-import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { issuesModule } from './flows/issues/issues-module'
+import { communityFlowTemplateModule } from './flows/templates/community-flow-template.module'
 import { eventsHooks } from './helper/application-events'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { QueueMode, system } from './helper/system/system'
@@ -75,22 +75,22 @@ import { mcpModule } from './mcp/mcp-module'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceSyncService } from './pieces/piece-sync-service'
+import { tagsModule } from './pieces/tags/tags-module'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
-import { tagsModule } from './tags/tags-module'
 import { todoActivityModule } from './todos/activity/todos-activity.module'
 import { todoModule } from './todos/todo.module'
+import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
 import { triggerModule } from './trigger/trigger.module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
-import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
-import { workerModule } from './workers/worker-module'
+import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -215,7 +215,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(todoActivityModule)
     await app.register(agentRunsModule)
     await app.register(solutionsModule)
-    
+
     app.get(
         '/redirect',
         async (
@@ -243,6 +243,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         cors: {
             origin: '*',
         },
+        maxHttpBufferSize: 1e8,
         ...spreadIfDefined('adapter', await getAdapter()),
         transports: ['websocket'],
     })
@@ -350,7 +351,9 @@ async function getAdapter() {
         case QueueMode.REDIS: {
             const sub = getRedisConnection().duplicate()
             const pub = getRedisConnection().duplicate()
-            return createAdapter(pub, sub)
+            return createAdapter(pub, sub, {
+                requestsTimeout: 30000,
+            })
         }
     }
 }
@@ -372,10 +375,12 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const piecesSource = system.getOrThrow(AppSystemProp.PIECES_SOURCE)
     const pieces = process.env.AP_DEV_PIECES
 
-    app.log.warn(
-        `[WARNING]: Pieces will be loaded from source type ${piecesSource}`,
-    )
+    await migrateQueuesAndRunConsumers(app)
+    app.log.info('Queues migrated and consumers run')
     if (environment === ApEnvironment.DEVELOPMENT) {
+        app.log.warn(
+            `[WARNING]: Pieces will be loaded from source type ${piecesSource}`,
+        )
         app.log.warn(
             `[WARNING]: The application is running in ${environment} mode.`,
         )

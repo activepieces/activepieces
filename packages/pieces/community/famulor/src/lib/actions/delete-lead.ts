@@ -1,65 +1,20 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { famulorAuth, baseApiUrl } from '../..';
+import { createAction } from '@activepieces/pieces-framework';
+import { propsValidation } from '@activepieces/pieces-common';
+import { famulorAuth } from '../..';
+import { famulorCommon } from '../common';
 
 export const deleteLead = createAction({
-  auth:famulorAuth,
+  auth: famulorAuth,
   name: 'deleteLead',
   displayName: 'Delete Lead',
-  description: "Delete a lead from a campaign.",
-  props: {
-    lead: Property.Dropdown({
-      displayName: 'Lead',
-      description: 'Select a lead to delete',
-      required: true,
-      refreshers: ['auth'],
-      refreshOnSearch: false,
-      options: async ({ auth }) => {
-        const res = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url: baseApiUrl + 'api/user/leads',
-          headers: {
-            Authorization: "Bearer " + auth,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-        });
+  description: '⚠️ Permanently delete a lead from the system. This action cannot be undone and will abort any ongoing calls.',
+  props: famulorCommon.deleteLeadProperties(),
+  async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, famulorCommon.deleteLeadSchema);
 
-        if (res.status !== 200) {
-          return {
-            disabled: true,
-            placeholder: 'Error fetching leads',
-            options: [],
-          };
-        } else if (res.body.length === 0) {
-          return {
-            disabled: true,
-            placeholder: 'No leads found.',
-            options: [],
-          };
-        }
-
-        return {
-          options: res.body.map((lead: any) => ({
-            value: lead.id,
-            label: `${lead.phone_number} - ${lead.campaign.name}`,
-          })),
-        };
-      }
-    })
-  },
-  async run(context) {
-    const leadId = context.propsValue['lead'];
-    
-    const res = await httpClient.sendRequest<string[]>({
-      method: HttpMethod.DELETE,
-      url: baseApiUrl + 'api/user/leads/' + leadId,
-      headers: {
-        Authorization: "Bearer " + context.auth,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
+    return await famulorCommon.deleteLead({
+      auth: auth as string,
+      lead_id: propsValue.lead_id as number,
     });
-    return res.body;
   },
 });

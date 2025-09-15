@@ -1,12 +1,11 @@
-import { AgentJobSource } from '@activepieces/server-shared'
 import { Agent, agentbuiltInToolsNames, AgentOutputFieldType, AgentOutputType, isNil, McpWithTools } from '@activepieces/shared'
 import { experimental_createMCPClient, tool } from 'ai'
 import { z, ZodRawShape, ZodSchema } from 'zod'
 
-export const agentTools = async <T extends AgentJobSource>(params: AgentToolsParams<T>) => {
+export const agentTools = async (params: AgentToolsParams) => {
     const mcpClient = await getMcpClient(params)
     const builtInTools = await buildInternalTools(params)
-    const mcpTools = isNil(await mcpClient?.tools()) ? {} : await mcpClient?.tools()
+    const mcpTools = isNil(mcpClient) ? {} : await mcpClient.tools()
     const tools = {
         ...builtInTools,
         ...mcpTools,
@@ -22,7 +21,7 @@ export const agentTools = async <T extends AgentJobSource>(params: AgentToolsPar
     }
 }
 
-async function buildInternalTools<T extends AgentJobSource>(params: AgentToolsParams<T>) {
+async function buildInternalTools(params: AgentToolsParams) {
     return {
         [agentbuiltInToolsNames.markAsComplete]: tool({
             description: 'Mark the todo as complete',
@@ -36,7 +35,7 @@ async function buildInternalTools<T extends AgentJobSource>(params: AgentToolsPa
     }
 }
 
-async function getMcpClient<T extends AgentJobSource>(params: AgentToolsParams<T>) {
+async function getMcpClient(params: AgentToolsParams) {
     const mcpServer = params.mcp
     if (mcpServer.tools.length === 0) {
         return null
@@ -74,10 +73,9 @@ async function getStructuredOutput(agent: Agent): Promise<ZodSchema> {
     return z.object(shape)
 }   
 
-type AgentToolsParams<T extends AgentJobSource> = {
+type AgentToolsParams = {
     publicUrl: string
     token: string
     mcp: McpWithTools
     agent: Agent
-    source: T
 }

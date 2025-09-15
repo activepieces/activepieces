@@ -1,113 +1,116 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { famulorAuth, baseApiUrl } from '../..';
+import { famulorAuth } from '../..';
+import { famulorCommon } from '../common';
+
+const assistantDropdownForWebhook = () =>
+  Property.Dropdown({
+    displayName: 'Assistant',
+    description: 'Select an assistant to receive post-call webhook notifications for',
+    required: true,
+    refreshers: ['auth'],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          placeholder: 'Please authenticate first',
+          options: [],
+        };
+      }
+
+      try {
+        // Get all assistants (both inbound and outbound can make calls)
+        const assistants = await famulorCommon.listAllAssistants({ 
+          auth: auth as string, 
+          per_page: 100
+        });
+        
+        if (!assistants.data || assistants.data.length === 0) {
+          return {
+            disabled: true,
+            placeholder: 'No assistants found. Create one first.',
+            options: [],
+          };
+        }
+
+        return {
+          options: assistants.data.map((assistant: any) => ({
+            label: `${assistant.name} (${assistant.type} - ${assistant.status})`,
+            value: assistant.id,
+          })),
+        };
+      } catch (error) {
+        return {
+          disabled: true,
+          placeholder: 'Failed to fetch assistants',
+          options: [],
+        };
+      }
+    },
+  });
 
 export const phoneCallEnded = createTrigger({
-    auth:famulorAuth,
+    auth: famulorAuth,
     name: 'phoneCallEnded',
-    displayName: 'Phone Call Ended',
-    description: 'Triggers when a phone call ends, with extracted variables.',
+    displayName: 'Phone Call Completed',
+    description: 'Triggers when a phone call is completed, providing full call transcript, extracted variables, and call metadata.',
     props: {
-        assistant: Property.Dropdown({
-            displayName: 'Assistant',
-            description: 'Select an assistant',
-            required: true,
-            refreshers: ['auth'],
-            refreshOnSearch: false,
-            options: async ({ auth }) => {
-                const res = await httpClient.sendRequest({
-                    method: HttpMethod.GET,
-                    url: baseApiUrl + 'api/user/assistants',
-                    headers: {
-                        Authorization: "Bearer " + auth,
-                    },
-                });
-
-                if (res.status !== 200) {
-                    return {
-                        disabled: true,
-                        placeholder: 'Error fetching assistants',
-                        options: [],
-                    };
-                } else if (res.body.length === 0) {
-                    return {
-                        disabled: true,
-                        placeholder: 'No assistants found. Create one first.',
-                        options: [],
-                    };
-                }
-
-                return {
-                    options: res.body.map((assistant: {id:number,name:string}) => ({
-                        value: assistant.id,
-                        label: assistant.name,
-                    })),
-                };
-            }
-        }),
+        assistant_id: assistantDropdownForWebhook(),
     },
     sampleData: {
-        customer_phone: '+16380991171',
-        assistant_phone: '+16380991171',
-        duration: 120,
-        status: 'completed',
+        id: 480336,
+        customer_phone: "+4915123456789",
+        assistant_phone: "+4912345678",
+        duration: 180,
+        status: "completed",
         extracted_variables: {
-            status: false,
-            summary: 'Call ended without clear objective being met.'
+            customer_interested: true,
+            appointment_scheduled: false,
+            contact_reason: "product_inquiry",
+            follow_up_needed: true,
+            customer_budget: "10000-50000",
+            decision_maker: true,
+            next_contact_date: "2024-02-15"
         },
         input_variables: {
-            customer_name: 'John'
+            customer_name: "Max Mustermann",
+            company: "Beispiel GmbH"
         },
-        transcript: [
-            {
-                sender: 'bot',
-                timestamp: 1722347063.574402,
-                text: 'Hi! How are you, John?'
+        transcript: "Assistent: Guten Tag, Herr Mustermann! Ich bin...",
+        recording_url: "https://recordings.famulor.de/call-480336.mp3",
+        created_at: "2024-01-15T10:30:00Z",
+        finished_at: "2024-01-15T10:33:00Z",
+        lead: {
+            id: 12345,
+            phone_number: "+4915123456789",
+            variables: {
+                customer_name: "Max Mustermann",
+                company: "Beispiel GmbH",
+                source: "website"
             },
-            {
-                sender: 'human',
-                timestamp: 1722347068.886166,
-                text: 'Im fine. How about you?'
-            },
-            {
-                sender: 'bot',
-                timestamp: 1722347069.76683,
-                text: 'Im doing well, thank you for asking.'
-            },
-            {
-                sender: 'bot',
-                timestamp: 1722347071.577889,
-                text: 'How can I assist you today?'
-            },
-        ]
+            status: "contacted",
+            created_at: "2024-01-14T09:00:00Z",
+            updated_at: "2024-01-15T10:33:00Z"
+        },
+        campaign: {
+            id: 123,
+            name: "Q1 Sales Campaign"
+        }
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
-        await httpClient.sendRequest({
-            method: HttpMethod.POST,
-            url: baseApiUrl + 'api/user/assistants/enable-webhook',
-            body: {
-                assistant_id: context.propsValue['assistant'],
-                webhook_url: context.webhookUrl,
-            },
-            headers: {
-                Authorization: "Bearer " + context.auth,
-            },
+        await famulorCommon.enablePostCallWebhook({
+            auth: context.auth as string,
+            assistant_id: context.propsValue.assistant_id as number,
+            webhook_url: context.webhookUrl,
         });
     },
     async onDisable(context) {
-        await httpClient.sendRequest({
-            method: HttpMethod.POST,
-            url: baseApiUrl + 'api/user/assistants/disable-webhook',
-            body: {
-                assistant_id: context.propsValue['assistant'],
-            },
-            headers: {
-                Authorization: "Bearer " + context.auth,
-            },
+        await famulorCommon.disablePostCallWebhook({
+            auth: context.auth as string,
+            assistant_id: context.propsValue.assistant_id as number,
         });
     },
     async run(context) {
-        return [context.payload.body]
+        return [context.payload.body];
     }
 })

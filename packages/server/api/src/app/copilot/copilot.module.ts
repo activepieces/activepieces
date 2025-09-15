@@ -1,6 +1,6 @@
 import { AskCopilotRequest, AskCopilotResponse, Principal, PrincipalType, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { websocketService } from '../websockets/websockets.service'
+import { websocketService } from '../core/websockets.service'
 import { copilotService } from './copilot.service'
 
 export const copilotModule: FastifyPluginAsyncTypebox = async (fastify) => {

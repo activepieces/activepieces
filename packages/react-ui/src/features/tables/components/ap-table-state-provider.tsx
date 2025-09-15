@@ -1,15 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { FileX } from 'lucide-react';
 import { createContext, useContext, useRef } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
+import { buttonVariants } from '@/components/ui/button';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import {
   TableState,
   ApTableStore,
   createApTableStore,
 } from '@/features/tables/lib/store/ap-tables-client-state';
-import { Field, Table, PopulatedRecord } from '@activepieces/shared';
+import { cn } from '@/lib/utils';
+import { Field, Table, PopulatedRecord, isNil } from '@activepieces/shared';
 
 import { fieldsApi } from '../lib/fields-api';
 import { recordsApi } from '../lib/records-api';
@@ -81,7 +85,7 @@ export function ApTableStateProvider({
     queryFn: () =>
       recordsApi.list({
         tableId: tableId!,
-        limit: 99999999, // TODO: we should implement pagination in ui.
+        limit: 99999999,
         cursor: undefined,
       }),
     refetchOnWindowFocus: true,
@@ -89,9 +93,7 @@ export function ApTableStateProvider({
     staleTime: 0,
     gcTime: 0,
   });
-  if (tableError || fieldsError || recordsError) {
-    return <Navigate to="/tables" />;
-  }
+
   if (isTableLoading || isFieldsLoading || isRecordsLoading) {
     return (
       <div className="flex justify-center items-center h-full w-full pb-6">
@@ -99,9 +101,40 @@ export function ApTableStateProvider({
       </div>
     );
   }
-  if (!table || !fields || !records) {
-    return <Navigate to="/tables" />;
+
+  if (
+    tableError ||
+    fieldsError ||
+    recordsError ||
+    isNil(table) ||
+    isNil(fields) ||
+    isNil(records)
+  ) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+        <div className="rounded-full bg-muted p-4">
+          <FileX className="h-10 w-10 text-muted-foreground" />
+        </div>
+
+        <div>
+          <h2 className="text-lg font-semibold">{t('Table not available')}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t(
+              'We couldn’t load this table. It may have been removed or is unavailable.',
+            )}
+          </p>
+        </div>
+
+        <Link
+          className={cn(buttonVariants({ variant: 'outline' }))}
+          to="/tables"
+        >
+          {t('Go to Tables')}
+        </Link>
+      </div>
+    );
   }
+
   return (
     <TableStateProviderWithTable
       table={table}

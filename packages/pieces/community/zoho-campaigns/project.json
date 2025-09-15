@@ -1,0 +1,51 @@
+{
+  "name": "pieces-zoho-campaigns",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/zoho-campaigns/src",
+  "projectType": "library",
+  "release": {
+    "version": {
+      "manifestRootsToUpdate": [
+        "dist/{projectRoot}"
+      ],
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk"
+    }
+  },
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/zoho-campaigns",
+        "tsConfig": "packages/pieces/community/zoho-campaigns/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/zoho-campaigns/package.json",
+        "main": "packages/pieces/community/zoho-campaigns/src/index.ts",
+        "assets": [
+          "packages/pieces/community/zoho-campaigns/*.md",
+          {
+            "input": "packages/pieces/community/zoho-campaigns/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  }
+}

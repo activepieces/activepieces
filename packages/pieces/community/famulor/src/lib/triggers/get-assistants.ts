@@ -1,58 +1,41 @@
 import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { famulorAuth, baseApiUrl } from '../..';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { famulorAuth } from '../..';
+import { famulorCommon } from '../common';
 import dayjs from 'dayjs';
 
-const polling: Polling<PiecePropValueSchema<any>, { start?: string; end?: string }> = {
+const polling: Polling<PiecePropValueSchema<any>, { type?: string; per_page?: number }> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue }) => {
-    const res = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: baseApiUrl + 'api/user/assistants',
-      headers: {
-        Authorization: 'Bearer ' + auth,
-      },
-    });
+    const perPage = propsValue['per_page'] || 10;
+    const type = propsValue['type'];
+    
+    // Get all assistants with pagination
+    let allAssistants: any[] = [];
+    let currentPage = 1;
+    let hasMorePages = true;
 
-    if (res.status !== 200) {
-      throw new Error(`Failed to fetch assistants. Status: ${res.status}`);
+    while (hasMorePages) {
+      const assistants = await famulorCommon.listAllAssistants({ 
+        auth: auth as string, 
+        per_page: perPage,
+        page: currentPage,
+        type
+      });
+      
+      if (assistants.data && assistants.data.length > 0) {
+        allAssistants = allAssistants.concat(assistants.data);
+        hasMorePages = currentPage < assistants.last_page;
+        currentPage++;
+      } else {
+        hasMorePages = false;
+      }
     }
 
-    const assistants =
-      (res.body as Array<{
-        id: number;
-        created_at: string;
-        updated_at: string;
-      }>) || [];
-
-    const filteredAssistants = assistants.filter((assistant) => {
-      const assistantDate = assistant.created_at
-        ? dayjs(assistant.created_at)
-        : dayjs(assistant.updated_at);
-
-      // Check start date filter
-      if (propsValue['start']) {
-        const startDate = dayjs(propsValue['start']);
-        if (assistantDate.isBefore(startDate)) {
-          return false;
-        }
-      }
-
-      // Check end date filter
-      if (propsValue['end']) {
-        const endDate = dayjs(propsValue['end']);
-        if (assistantDate.isAfter(endDate)) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    return filteredAssistants.map((assistant) => {
-      const assistantDate = assistant.created_at
-        ? dayjs(assistant.created_at)
-        : dayjs(assistant.updated_at);
+    return allAssistants.map((assistant) => {
+      const assistantDate = assistant.updated_at
+        ? dayjs(assistant.updated_at)
+        : dayjs(assistant.created_at);
       return {
         epochMilliSeconds: assistantDate.valueOf(),
         data: assistant,
@@ -62,34 +45,53 @@ const polling: Polling<PiecePropValueSchema<any>, { start?: string; end?: string
 };
 
 export const getAssistants = createTrigger({
-    auth:famulorAuth,
-name: 'getAssistants',
-    displayName: 'Updated Assistant',
-    description: 'Triggers when assistants are fetched or updated in your Famulor account.',
-props: {
-        start: Property.DateTime({
-            displayName: 'Start Date',
-            description: 'Filter assistants created after this date. Example: 2024-01-15T10:30:00Z',
+    auth: famulorAuth,
+    name: 'getAssistants',
+    displayName: 'New or Updated Assistant',
+    description: 'Triggers when AI assistants are created or updated in your Famulor account.',
+    props: {
+        type: Property.StaticDropdown({
+            displayName: 'Assistant Type',
+            description: 'Filter assistants by type',
             required: false,
+            options: {
+                options: [
+                    { label: 'All Types', value: '' },
+                    { label: 'Inbound', value: 'inbound' },
+                    { label: 'Outbound', value: 'outbound' },
+                ],
+            },
         }),
-        end: Property.DateTime({
-            displayName: 'End Date', 
-            description: 'Filter assistants created before this date. Example: 2024-12-31T23:59:59Z',
+        per_page: Property.Number({
+            displayName: 'Items Per Page',
+            description: 'Number of assistants to fetch per page (1-100, default: 10)',
             required: false,
+            defaultValue: 10,
         }),
     },
     sampleData: {
-        id: "assistant_123",
+        id: 123,
+        user_id: 456,
         name: "Customer Support Assistant",
-        description: "Handles customer inquiries and support requests",
+        type: "inbound",
         status: "active",
+        phone_number_id: 789,
+        voice_id: 101,
+        language_id: 1,
+        language: "en-US",
+        timezone: "UTC",
+        initial_message: "Hello! How can I help you today?",
+        system_prompt: "You are a helpful customer support assistant.",
+        max_duration: 1800,
+        record: true,
         created_at: "2024-01-15T10:30:00Z",
         updated_at: "2024-01-15T14:20:00Z",
-        settings: {
-            voice: "en-US-female",
-            language: "en-US",
-            max_duration: 300
-        }
+        variable: {
+            company_name: "ACME Corp",
+            support_email: "support@acme.com"
+        },
+        is_webhook_active: true,
+        webhook_url: "https://api.example.com/webhook"
     },
 type: TriggerStrategy.POLLING,
 async test(context) {
