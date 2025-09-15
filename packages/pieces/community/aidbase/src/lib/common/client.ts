@@ -8,7 +8,7 @@ import {
   CreateReplyParams,
 } from './types';
 
-const API_BASE_URL = 'https://api.aidbase.ai/v1';
+export const API_BASE_URL = 'https://api.aidbase.ai/v1';
 
 function getHeaders(apiKey: string) {
   return {

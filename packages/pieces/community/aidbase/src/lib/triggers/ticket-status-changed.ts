@@ -24,6 +24,7 @@ export const ticketStatusChanged = createTrigger({
         options: [
           { label: 'Open', value: 'OPEN' },
           { label: 'Assigned', value: 'ASSIGNED' },
+          { label: 'Need More Info', value: 'NEED_MORE_INFO' },
           { label: 'Resolved', value: 'RESOLVED' },
           { label: 'Closed', value: 'CLOSED' },
         ],
@@ -66,7 +67,7 @@ export const ticketStatusChanged = createTrigger({
       data: { ticket_form_id: string };
     };
     const { ticket_form_id, status } = context.propsValue;
-
+    console.log(payloadBody)
     if (payloadBody.type !== 'ticket.status.changed') {
       return [];
     }

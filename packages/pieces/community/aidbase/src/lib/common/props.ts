@@ -63,7 +63,7 @@ export const ticketFormDropdown = Property.Dropdown({
 
     const response = await httpClient.sendRequest<{
       success: boolean;
-      data: { items: { id: string; title: string }[] };
+      data: { items: { public_id: string; title: string }[] };
     }>({
       method: HttpMethod.GET,
       url: 'https://api.aidbase.ai/v1/ticket-forms',
@@ -77,7 +77,7 @@ export const ticketFormDropdown = Property.Dropdown({
         disabled: false,
         options: response.body.data.items.map((form) => ({
           label: form.title,
-          value: form.id,
+          value: form.public_id,
         })),
       };
     }

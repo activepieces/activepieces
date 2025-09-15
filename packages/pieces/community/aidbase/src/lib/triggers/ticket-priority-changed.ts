@@ -25,7 +25,6 @@ export const ticketPriorityChanged = createTrigger({
           { label: 'Low', value: 'LOW' },
           { label: 'Medium', value: 'MEDIUM' },
           { label: 'High', value: 'HIGH' },
-          { label: 'Urgent', value: 'URGENT' },
         ],
       },
     }),

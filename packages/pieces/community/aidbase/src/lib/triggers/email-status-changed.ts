@@ -24,6 +24,7 @@ export const emailStatusChanged = createTrigger({
         options: [
           { label: 'Opened', value: 'OPEN' },
           { label: 'Assigned', value: 'ASSIGNED' },
+          { label: 'Need More Info', value: 'NEED_MORE_INFO' },
           { label: 'Resolved', value: 'RESOLVED' },
           { label: 'Closed', value: 'CLOSED' },
         ],
