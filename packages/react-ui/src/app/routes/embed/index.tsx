@@ -1,4 +1,16 @@
+import { WebsocketClientEvent } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
+import {
+  ActivepiecesClientAuthenticationFailed,
+  ActivepiecesClientAuthenticationSuccess,
+  ActivepiecesClientConfigurationFinished,
+  ActivepiecesClientEventName,
+  ActivepiecesClientInit,
+  ActivepiecesClientFlowProgressUpdate,
+  ActivepiecesVendorEventName,
+  ActivepiecesVendorInit,
+  ActivepiecesVendorRouteChanged,
+} from 'ee-embed-sdk';
 import React from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -6,21 +18,12 @@ import { useEffectOnce } from 'react-use';
 
 import { memoryRouter } from '@/app/router';
 import { useEmbedding } from '@/components/embed-provider';
+import { useSocket } from '@/components/socket-provider';
 import { useTheme } from '@/components/theme-provider';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
 import { combinePaths, parentWindow } from '@/lib/utils';
-import {
-  ActivepiecesClientAuthenticationFailed,
-  ActivepiecesClientAuthenticationSuccess,
-  ActivepiecesClientConfigurationFinished,
-  ActivepiecesClientEventName,
-  ActivepiecesClientInit,
-  ActivepiecesVendorEventName,
-  ActivepiecesVendorInit,
-  ActivepiecesVendorRouteChanged,
-} from 'ee-embed-sdk';
 
 const notifyVendorPostAuthentication = () => {
   const authenticationSuccessEvent: ActivepiecesClientAuthenticationSuccess = {
@@ -33,6 +36,19 @@ const notifyVendorPostAuthentication = () => {
     data: {},
   };
   parentWindow.postMessage(configurationFinishedEvent, '*');
+};
+
+const handleFlowProgressUpdates = (data: { runId: string }) => {
+  const runId = data?.runId;
+  if (runId) {
+    const flowProgressEvent: ActivepiecesClientFlowProgressUpdate = {
+      type: ActivepiecesClientEventName.CLIENT_FLOW_PROGRESS_UPDATE,
+      data: {
+        runId,
+      },
+    };
+    parentWindow.postMessage(flowProgressEvent, '*');
+  }
 };
 
 const handleVendorNavigation = ({ projectId }: { projectId: string }) => {
@@ -83,6 +99,8 @@ const handleClientNavigation = () => {
 
 const EmbedPage = React.memo(() => {
   const { setEmbedState, embedState } = useEmbedding();
+  const socket = useSocket();
+
   const { mutateAsync } = useMutation({
     mutationFn: async ({
       externalAccessToken,
@@ -100,6 +118,21 @@ const EmbedPage = React.memo(() => {
   });
   const { setTheme } = useTheme();
   const { i18n } = useTranslation();
+
+  React.useEffect(() => {
+    socket.on(
+      WebsocketClientEvent.FLOW_RUN_PROGRESS,
+      handleFlowProgressUpdates,
+    );
+
+    return () => {
+      socket.off(
+        WebsocketClientEvent.FLOW_RUN_PROGRESS,
+        handleFlowProgressUpdates,
+      );
+    };
+  }, [socket]);
+
   const initState = (event: MessageEvent<ActivepiecesVendorInit>) => {
     if (
       event.source === parentWindow &&
