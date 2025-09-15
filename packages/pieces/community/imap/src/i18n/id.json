@@ -1,16 +1,16 @@
 {
-  "IMAP": "IMAP",
-  "Receive new email trigger": "Receive new email trigger",
+  "\n**Emails Filtering:**\n\nAdd a Router Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**Penyaringan email:**\n\nTambahkan komponen Router untuk menyaring email berdasarkan subjek, penerima, pengirim, CC atau bidang lainnya.\n",
+  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Pengguna Gmail:**\n<br><br>\nPastikan hal-hal berikut:\n<br>\n* IMAP telah diaktifkan di pengaturan Gmail Anda (https://support.google.com/mail/answer/7126229?hl=id)\n* Anda telah membuat Kata Sandi Aplikasi untuk login (https://support.google.com/accounts/answer/185833?hl=id)\n* Aktifkan TLS dan atur port ke 993 dan host ke imap.gmail.com\n",
+  "Enable TLS certificate validation (recommended for production).": "Aktifkan validasi sertifikat TLS (disarankan untuk produksi).",
   "Host": "Host",
-  "Username": "Username",
-  "Password": "Password",
+  "Mailbox": "Kotak Surat",
+  "New Email": "Email Baru",
+  "Password": "Kata Sandi",
   "Port": "Port",
-  "Use TLS": "Use TLS",
-  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n",
-  "New Email": "New Email",
-  "Trigger when a new email is received.": "Trigger when a new email is received.",
-  "Mailbox": "Mailbox",
-  "Markdown": "Markdown",
-  "Select the mailbox to search": "Select the mailbox to search",
-  "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n"
+  "Receive new email trigger": "Pemicu email baru",
+  "Select the mailbox to search.": "Pilih kotak surat untuk dicari.",
+  "Trigger when a new email is received": "Dipicu ketika email baru diterima",
+  "Use TLS": "Gunakan TLS",
+  "Username": "Nama Pengguna",
+  "Validate TLS Certificates": "Validasi sertifikat TLS"
 }

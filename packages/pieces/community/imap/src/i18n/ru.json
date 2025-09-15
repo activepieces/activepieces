@@ -1,16 +1,16 @@
 {
-  "IMAP": "IMAP",
-  "Receive new email trigger": "Получать новый email триггер",
+  "\n**Emails Filtering:**\n\nAdd a Router Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**Фильтрация писем:**\n\nДобавьте элемент Маршрутизатор для фильтрации писем по теме, получателю, отправителю, копии или другим полям.\n",
+  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Пользователи Gmail:**\n<br><br>\nУбедитесь в следующем:\n<br>\n* IMAP включен в настройках Gmail (https://support.google.com/mail/answer/7126229?hl=ru)\n* Вы создали пароль приложения для входа в систему (https://support.google.com/accounts/answer/185833?hl=ru)\n* Включите TLS и установите порт 993 и хост imap.gmail.com\n",
+  "Enable TLS certificate validation (recommended for production).": "Включить проверку TLS-сертификатов (рекомендуется для продакшн).",
   "Host": "Хост",
-  "Username": "Имя пользователя",
+  "Mailbox": "Почтовый ящик",
+  "New Email": "Новое письмо",
   "Password": "Пароль",
   "Port": "Порт",
+  "Receive new email trigger": "Триггер нового письма",
+  "Select the mailbox to search.": "Выберите почтовый ящик для поиска.",
+  "Trigger when a new email is received": "Срабатывать при получении нового письма",
   "Use TLS": "Использовать TLS",
-  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Пользователи Gmail:**\n<br><br>\nБудьте уверены:\n<br>\n* IMAP включен в настройках Gmail (https://support. шерсть. om/mail/answer/7126229?hl=en)\n* Вы создали пароль приложения для входа в систему (https://support.google. om/accounts/answer/185833?hl=en)\n* Включить TLS и установить порт на 993 и хост на imap.gmail.com\n",
-  "New Email": "Новое письмо",
-  "Trigger when a new email is received.": "Срабатывать при получении нового письма.",
-  "Mailbox": "Почтовый ящик",
-  "Markdown": "Markdown",
-  "Select the mailbox to search": "Выберите почтовый ящик для поиска",
-  "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**Filter Email:**\n\nВы можете добавить ветку для фильтрации электронных писем на основе предмета, см, cc или других полей.\n"
+  "Username": "Имя пользователя",
+  "Validate TLS Certificates": "Проверить TLS-сертификаты"
 }

@@ -1,15 +1,16 @@
 {
-  "Receive new email trigger": "Recevoir un nouvel e-mail de déclenchement",
+  "\n**Emails Filtering:**\n\nAdd a Router Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**Filtrage des e-mails :**\n\nAjoutez une pièce Routeur pour filtrer les e-mails selon l'objet, le destinataire, l'expéditeur, la copie ou d'autres champs.\n",
+  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Utilisateurs Gmail :**\n<br><br>\nAssurez vous de ce qui suit :\n<br>\n* IMAP est activé dans vos paramètres Gmail (https://support.google.com/mail/answer/7126229?hl=fr)\n* Vous avez créé un mot de passe pour vous connecter avec (https://support.google.com/accounts/answer/185833?hl=fr)\n* Activez TLS et réglez le port sur 993 et l'hôte sur imap.gmail.com\n",
+  "Enable TLS certificate validation (recommended for production).": "Activer la validation des certificats TLS (recommandé pour la production).",
   "Host": "Hôte",
-  "Username": "Nom d'utilisateur",
-  "Password": "Password",
-  "Port": "Port",
-  "Use TLS": "Utiliser TLS",
-  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Utilisateurs Gmail :**\n<br><br>\nAssurez vous de ce qui suit :\n<br>\n* IMAP est activé dans vos paramètres Gmail (https://support. oignon. om/mail/answer/7126229?hl=fr)\n* Vous avez créé un mot de passe pour vous connecter avec (https://support.google. om/accounts/answer/185833?hl=fr)\n* Activez TLS et réglez le port sur 993 et l'hôte sur imap.gmail.com\n",
-  "New Email": "Nouvel e-mail",
-  "Trigger when a new email is received.": "Déclencher quand un nouvel e-mail est reçu.",
   "Mailbox": "Boîte aux lettres",
-  "Markdown": "Markdown",
-  "Select the mailbox to search": "Sélectionnez la boîte aux lettres à rechercher",
-  "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n"
+  "New Email": "Nouvel e-mail",
+  "Password": "Mot de passe",
+  "Port": "Port",
+  "Receive new email trigger": "Déclencheur de nouveau e-mail",
+  "Select the mailbox to search.": "Sélectionnez la boîte aux lettres à rechercher.",
+  "Trigger when a new email is received": "Déclencher quand un nouvel e-mail est reçu",
+  "Use TLS": "Utiliser TLS",
+  "Username": "Nom d'utilisateur",
+  "Validate TLS Certificates": "Valider les certificats TLS"
 }

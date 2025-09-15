@@ -1,73 +1,94 @@
 import {
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
+} from '@activepieces/pieces-common';
+import {
   FilesService,
+  PiecePropValueSchema,
   Property,
+  StaticPropsValue,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { imapAuth } from '../..';
-import { convertAttachment, imapCommon } from '../common';
-import { ParsedMail } from 'mailparser';
+
+import {
+  type Attachment,
+  type Message,
+  imapAuth,
+  mailboxDropdown,
+  fetchEmails,
+} from '../common';
 
 const filterInstructions = `
-**Filter Emails:**
+**Emails Filtering:**
 
-You can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.
+Add a Router Piece to filter emails based on the subject, to, from, cc or other fields.
 `;
+
+const props = {
+  mailbox: mailboxDropdown({
+    displayName: 'Mailbox',
+    description: 'Select the mailbox to search.',
+    required: true,
+  }),
+  filterInstructions: Property.MarkDown({
+    value: filterInstructions,
+  }),
+};
+
+const polling: Polling<
+  PiecePropValueSchema<typeof imapAuth>,
+  StaticPropsValue<typeof props>
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, propsValue, lastFetchEpochMS: lastPoll }) => {
+    const { mailbox } = propsValue;
+    const records = await fetchEmails({
+      auth,
+      lastPoll,
+      mailbox: mailbox as string,
+    });
+
+    return records.map((record) => ({
+      epochMilliSeconds: record.epochMilliSeconds,
+      data: record,
+    }));
+  },
+};
 
 export const newEmail = createTrigger({
   auth: imapAuth,
   name: 'new_email',
   displayName: 'New Email',
-  description: 'Trigger when a new email is received.',
-  props: {
-    mailbox: imapCommon.mailbox,
-    filterInstructions: Property.MarkDown({
-      value: filterInstructions,
-    }),
-  },
+  description: 'Trigger when a new email is received',
+  props,
   type: TriggerStrategy.POLLING,
-  onEnable: async (context) => {
-    await context.store.put('lastPoll', Date.now());
+
+  async test(context) {
+    const messages = await pollingHelper.test(polling, context);
+    return enrichAttachments(messages as Message[], context.files);
   },
-  onDisable: async (context) => {
-    await context.store.delete('lastPoll');
-    return;
+
+  async onEnable(context) {
+    const { store, auth, propsValue } = context;
+    await pollingHelper.onEnable(polling, { store, auth, propsValue });
   },
-  run: async (context) => {
-    const { auth, store, propsValue, files } = context;
-    const mailbox = propsValue.mailbox;
-    const lastEpochMilliSeconds = (await store.get<number>('lastPoll')) ?? 0;
-    const items = await imapCommon.fetchEmails({
-      auth,
-      lastEpochMilliSeconds,
-      mailbox,
-      files,
-    });
-    const newLastEpochMilliSeconds = items.reduce(
-      (acc, item) => Math.max(acc, item.epochMilliSeconds),
-      lastEpochMilliSeconds
-    );
-    await store.put('lastPoll', newLastEpochMilliSeconds);
-    const filteredEmail = items
-      .filter((f) => f.epochMilliSeconds > lastEpochMilliSeconds);
-    return enrichAttachments(filteredEmail, files);
+
+  async onDisable(context) {
+    const { store, auth, propsValue } = context;
+    await pollingHelper.onDisable(polling, { store, auth, propsValue });
   },
-  test: async (context) => {
-    const { auth, propsValue, files } = context;
-    const mailbox = propsValue.mailbox;
-    const lastEpochMilliSeconds = 0;
-    const items = await imapCommon.fetchEmails({
-      auth,
-      lastEpochMilliSeconds,
-      mailbox,
-      files,
-    });
-    const filteredEmails = getFirstFiveOrAll(items);
-    return enrichAttachments(filteredEmails, files);
+
+  async run(context) {
+    const messages = await pollingHelper.poll(polling, context);
+    return enrichAttachments(messages as Message[], context.files);
   },
+
   sampleData: {
-    html: 'My email body',
+    html: '<p>My email body</p>',
     text: 'My email body',
+    attachments: [],
     textAsHtml: '<p>My email body</p>',
     subject: 'Email Subject',
     date: '2023-06-18T11:30:09.000Z',
@@ -97,28 +118,37 @@ export const newEmail = createTrigger({
     },
     messageId:
       '<CxE49ifJT5YZN9OE2O6j6Ef+BYgkKWq7X-deg483GkM1ui1xj3g@mail.gmail.com>',
+    uid: 123,
   },
 });
 
-async function enrichAttachments(item: {
-  data: ParsedMail;
-  epochMilliSeconds: number;
-}[], files: FilesService) {
-  return Promise.all(item.map(async (item) => {
+export async function convertAttachment(
+  attachments: Attachment[],
+  files: FilesService
+) {
+  const promises = attachments.map(async (attachment) => {
+    return files.write({
+      fileName: attachment.filename ?? `attachment-${Date.now()}`,
+      data: attachment.content,
+    });
+  });
 
-    const { attachments, ...rest } = item.data
-    return {
-      data:{...rest},
-      epochMilliSeconds: item.epochMilliSeconds,
-      attachments: await convertAttachment(item.data.attachments, files),
-    }
-
-  }));
+  return Promise.all(promises);
 }
-function getFirstFiveOrAll<T>(array: T[]) {
-  if (array.length <= 5) {
-    return array;
-  } else {
-    return array.slice(0, 5);
-  }
+
+async function enrichAttachments(items: Message[], files: FilesService) {
+  return Promise.all(
+    items.map(async (item) => {
+      const { attachments, ...rest } = item.data;
+      const convertedAttachments = attachments
+        ? await convertAttachment(attachments, files)
+        : [];
+
+      return {
+        data: { ...rest },
+        epochMilliSeconds: item.epochMilliSeconds,
+        attachments: convertedAttachments,
+      };
+    })
+  );
 }
