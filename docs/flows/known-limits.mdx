@@ -4,14 +4,6 @@ icon: "ban"
 description: "Technical limits for Activepieces execution"
 ---
 
-### Overview
-
-<Warning>
-These limits apply to the **Activepieces Cloud**.  
-For self-hosted instances, some values can be configured using environment variables.
-</Warning>
-
----
 
 ### Execution Limits
 
@@ -21,7 +13,7 @@ For self-hosted instances, some values can be configured using environment varia
 
 - **Memory Usage**  
   Maximum: **1 GB RAM**  
-  (Configured via `AP_SANDBOX_MEMORY_LIMIT`)
+  (Self hosted can be configured via `AP_SANDBOX_MEMORY_LIMIT`)
 
 <Note>
 The memory usage is measured for the entire Node.js process running the flow. There is approximately 300 MB of overhead for a warm process with pieces already loaded.
