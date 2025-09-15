@@ -19,7 +19,7 @@ export const emailInboxDropdown = Property.Dropdown({
 
     const response = await httpClient.sendRequest<{
       success: boolean;
-      data: { id: string; title: string }[];
+      data: { items: { id: string; title: string }[] };
     }>({
       method: HttpMethod.GET,
       url: 'https://api.aidbase.ai/v1/email-inboxes',
@@ -31,7 +31,7 @@ export const emailInboxDropdown = Property.Dropdown({
     if (response.body.success) {
       return {
         disabled: false,
-        options: response.body.data.map((inbox) => ({
+        options: response.body.data.items.map((inbox) => ({
           label: inbox.title,
           value: inbox.id,
         })),
@@ -63,7 +63,7 @@ export const ticketFormDropdown = Property.Dropdown({
 
     const response = await httpClient.sendRequest<{
       success: boolean;
-      data: { id: string; title: string }[];
+      data: { items: { id: string; title: string }[] };
     }>({
       method: HttpMethod.GET,
       url: 'https://api.aidbase.ai/v1/ticket-forms',
@@ -75,7 +75,7 @@ export const ticketFormDropdown = Property.Dropdown({
     if (response.body.success) {
       return {
         disabled: false,
-        options: response.body.data.map((form) => ({
+        options: response.body.data.items.map((form) => ({
           label: form.title,
           value: form.id,
         })),

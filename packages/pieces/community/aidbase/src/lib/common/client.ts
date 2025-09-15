@@ -133,7 +133,7 @@ async function createFaq(apiKey: string, params: CreateFaqParams) {
 async function listChatbots(apiKey: string): Promise<ListChatbotsResponse> {
   const response = await httpClient.sendRequest<{
     success: boolean;
-    data?: ListChatbotsResponse; 
+    data?: { items: Chatbot[] };
     message?: string;
   }>({
     method: HttpMethod.GET,
@@ -141,8 +141,8 @@ async function listChatbots(apiKey: string): Promise<ListChatbotsResponse> {
     headers: getHeaders(apiKey),
   });
 
-  if (response.body.success && response.body.data) {
-    return { items: response.body.data as unknown as Chatbot[] };
+  if (response.body.success && response.body.data?.items) {
+    return { items: response.body.data.items };
   } else {
     throw new Error(
       response.body.message || 'Failed to list chatbots from Aidbase.'
