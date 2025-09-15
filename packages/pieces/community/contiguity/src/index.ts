@@ -2,6 +2,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { sendText } from './lib/actions/send/text';
+import { send_iMessage } from './lib/actions/send/imessage';
 
 export const contiguityAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -19,6 +20,7 @@ export const contiguity = createPiece({
   categories: [PieceCategory.MARKETING],
   actions: [
     sendText,
+    send_iMessage,
   ],
   triggers: [],
 });

@@ -89,7 +89,7 @@ export const send_iMessage = createAction({
 
         if (from) body.from = from;
         if (attachments?.length) {
-            body.attachments = attachments.map(attachment => attachment.url);
+            body.attachments = attachments.map(attachment => (attachment as {url: string}).url);
         }
 
         return await _fetch({
