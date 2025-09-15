@@ -1,7 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { HttpMethod } from "@activepieces/pieces-common";
-import { vlmRunAuth } from "../common/auth";
-import { makeRequest } from "../common/client";
+import { vlmRunAuth, vlmRunCommon } from "../common/common";
 
 export const analyzeImageAction = createAction({
     auth: vlmRunAuth,
@@ -68,12 +66,6 @@ export const analyzeImageAction = createAction({
             config: config || undefined,
         };
 
-
-        return await makeRequest(
-            context.auth,
-            HttpMethod.POST,
-            '/image/generate',
-            requestBody
-        );
+        return await vlmRunCommon.analyzeImage(context.auth, requestBody);
     },
 });

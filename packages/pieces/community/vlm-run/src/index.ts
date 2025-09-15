@@ -1,12 +1,13 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { PieceCategory } from "@activepieces/shared";
-import { vlmRunAuth } from "./lib/common/auth";
+import { vlmRunAuth } from "./lib/common/common";
 
 import { analyzeAudioAction } from "./lib/actions/analyze-audio";
 import { analyzeDocumentAction } from "./lib/actions/analyze-document";
 import { analyzeImageAction } from "./lib/actions/analyze-image";
 import { analyzeVideoAction } from "./lib/actions/analyze-video";
 import { getFileAction } from "./lib/actions/get-file";
+import { listFilesAction } from "./lib/actions/list-files";
 
 
 export const vlmRun = createPiece({
@@ -21,7 +22,8 @@ export const vlmRun = createPiece({
       analyzeDocumentAction,
       analyzeImageAction,
       analyzeVideoAction,
-      getFileAction
+      getFileAction,
+      listFilesAction
     ],
     triggers: [],
 });

@@ -1,7 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { HttpMethod } from "@activepieces/pieces-common";
-import { vlmRunAuth } from "../common/auth";
-import { makeRequest } from "../common/client";
+import { vlmRunAuth, vlmRunCommon } from "../common/common";
 
 export const analyzeVideoAction = createAction({
     auth: vlmRunAuth,
@@ -60,7 +58,6 @@ export const analyzeVideoAction = createAction({
     async run(context) {
         const { domain, url, file_id, batch, callback_url, metadata, config } = context.propsValue;
 
-
         if (!url && !file_id) {
             throw new Error("Validation Error: You must provide a 'Video URL' or a 'File ID'.");
         }
@@ -75,12 +72,6 @@ export const analyzeVideoAction = createAction({
             config: config || undefined,
         };
 
-
-        return await makeRequest(
-            context.auth,
-            HttpMethod.POST,
-            '/video/generate',
-            requestBody
-        );
+        return await vlmRunCommon.analyzeVideo(context.auth, requestBody);
     },
 });

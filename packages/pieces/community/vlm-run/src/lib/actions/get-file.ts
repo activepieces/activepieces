@@ -1,7 +1,5 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { HttpMethod } from "@activepieces/pieces-common";
-import { vlmRunAuth } from "../common/auth";
-import { makeRequest } from "../common/client";
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { vlmRunAuth, vlmRunCommon } from '../common/common';
 
 export const getFileAction = createAction({
     auth: vlmRunAuth,
@@ -9,21 +7,17 @@ export const getFileAction = createAction({
     displayName: 'Get File',
     description: "Gets a file's metadata by its ID.",
     props: {
-        file_id: Property.ShortText({
+        fileId: Property.ShortText({
             displayName: 'File ID',
-            description: 'The unique identifier of the file to retrieve.',
+            description: 'The ID of the file to retrieve. You can get this from the "List Files" action.',
             required: true,
         }),
     },
-    async run(context) {
-        const { file_id } = context.propsValue;
-
-        const path = `/files/${file_id}`;
-
-        return await makeRequest(
-            context.auth,
-            HttpMethod.GET,
-            path
-        );
+    
+    async run({ auth, propsValue }) {
+        return await vlmRunCommon.getFile({
+            apiKey: auth,
+            file_id: propsValue.fileId,
+        });
     },
 });
