@@ -14,6 +14,7 @@
     "@sinclair/typebox": "0.34.11",
     "pino": "9.7.0",
     "pino-loki": "2.1.3",
+    "@logtail/pino": "0.5.6",
     "async-mutex": "0.4.0",
     "@activepieces/import-fresh-webpack": "3.3.0",
     "clear-module": "4.1.2",

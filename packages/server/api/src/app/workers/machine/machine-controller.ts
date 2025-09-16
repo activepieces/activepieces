@@ -9,7 +9,7 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.MACHINE_HEARTBEAT, (socket) => {
         return async (request: WorkerMachineHealthcheckRequest, _principal: Principal, callback?: (data: WorkerMachineHealthcheckResponse) => void) => {
             const response = await machineService(app.log).onHeartbeat({
-                ...request, 
+                ...request,
                 socket,
             })
             callback?.(response)
