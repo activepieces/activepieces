@@ -8,7 +8,7 @@ import {
   Upload,
   Workflow,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
@@ -22,6 +22,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { RunsTable } from '@/features/flow-runs/components/runs-table';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
@@ -31,7 +36,7 @@ import { foldersApi } from '@/features/folders/lib/folders-api';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
+import { cn, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import { Permission, PopulatedFlow } from '@activepieces/shared';
 
 import { FlowsTable } from './flows-table';
@@ -145,9 +150,17 @@ export { FlowsPage };
 
 type CreateFlowDropdownProps = {
   refetch?: () => void;
+  variant?: 'default' | 'small';
+  className?: string;
+  folderId?: string;
 };
 
-const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
+export const CreateFlowDropdown = ({
+  refetch,
+  variant = 'default',
+  className,
+  folderId,
+}: CreateFlowDropdownProps) => {
   const { checkAccess } = useAuthorization();
   const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
   const [refresh, setRefresh] = useState(0);
@@ -160,10 +173,10 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
     void
   >({
     mutationFn: async () => {
-      const folderId = searchParams.get(folderIdParamName);
+      const effectiveFolderId = folderId ?? searchParams.get(folderIdParamName);
       const folder =
-        folderId && folderId !== 'NULL'
-          ? await foldersApi.get(folderId)
+        effectiveFolderId && effectiveFolderId !== 'NULL'
+          ? await foldersApi.get(effectiveFolderId)
           : undefined;
       const flow = await flowsApi.create({
         projectId: authenticationSession.getProjectId()!,
@@ -180,19 +193,35 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
   return (
     <PermissionNeededTooltip hasPermission={doesUserHavePermissionToWriteFlow}>
       <DropdownMenu modal={false}>
-        <DropdownMenuTrigger
-          disabled={!doesUserHavePermissionToWriteFlow}
-          asChild
-        >
-          <Button
-            disabled={!doesUserHavePermissionToWriteFlow}
-            variant="default"
-            loading={isCreateFlowPending}
-          >
-            <span>{t('Create flow')}</span>
-            <ChevronDown className="h-4 w-4 ml-2 " />
-          </Button>
-        </DropdownMenuTrigger>
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger
+              disabled={!doesUserHavePermissionToWriteFlow}
+              asChild
+              className={cn(className)}
+            >
+              <Button
+                disabled={!doesUserHavePermissionToWriteFlow}
+                variant={variant === 'small' ? 'ghost' : 'default'}
+                size={variant === 'small' ? 'icon' : 'default'}
+                loading={isCreateFlowPending}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {variant === 'small' ? (
+                  <Plus className="h-4 w-4" />
+                ) : (
+                  <>
+                    <span>{t('New Flow')}</span>
+                    <ChevronDown className="h-4 w-4 ml-2 " />
+                  </>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent side={variant === 'small' ? 'right' : 'bottom'}>
+            {t('New flow')}
+          </TooltipContent>
+        </Tooltip>
         <DropdownMenuContent>
           <DropdownMenuItem
             onSelect={(e) => {

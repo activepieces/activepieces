@@ -66,6 +66,10 @@ jobs:
         run: |
           ssh pre-prod -t -t 'bash -ic "cd activepieces && IMAGE_TAG=testing docker compose pull && IMAGE_TAG=testing docker compose up -d --force-recreate activepieces; exit"' 
 
+      - name: Clean up unused Docker images
+        run: |
+          ssh pre-prod -t -t 'bash -ic "docker image prune -a -f; exit"'
+
       - name: Docker system prune
         run: docker system prune -a -f
 

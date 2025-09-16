@@ -1,5 +1,5 @@
 import { IncomingMessage } from 'http'
-import { assertNotNullOrUndefined, EngineError, EngineResult, EngineSocketEvent, EngineStderr, EngineStdout, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { WebSocket, WebSocketServer } from 'ws'
 
@@ -119,8 +119,7 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
 
         subscribe(
             workerId: string,
-            onResult: (result: EngineResult) => void,
-            onError: (error: EngineError) => void,
+            onResult: (result: EngineResponse<unknown>) => void,
             onStdout: (stdout: EngineStdout) => void,
             onStderr: (stderr: EngineStderr) => void,
         ): void {
@@ -134,11 +133,8 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                 try {
                     const message = JSON.parse(data)
                     switch (message.type) {
-                        case EngineSocketEvent.ENGINE_RESULT:
+                        case EngineSocketEvent.ENGINE_RESPONSE:
                             onResult(message.data)
-                            break
-                        case EngineSocketEvent.ENGINE_ERROR:
-                            onError(message.data)
                             break
                         case EngineSocketEvent.ENGINE_STDOUT:
                             onStdout(message.data)
