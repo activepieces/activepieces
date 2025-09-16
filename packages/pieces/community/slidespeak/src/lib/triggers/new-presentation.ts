@@ -47,5 +47,7 @@ export const newPresentationTrigger = createTrigger({
   async run(context) {
     return [context.payload.body];
   },
-  sampleData: {},
+  sampleData: {
+    url: 'https://slidespeak-files.s3.us-east-2.amazonaws.com/e9c29f9f-0676-49ac-a550.pptx',
+  },
 });
