@@ -1,5 +1,4 @@
 {
-  "Heartbeat": "Heartbeat",
   "Monitoring and alerting made easy": "Monitoring and alerting made easy",
   "\n  1. Login to your Heartbeat account\n  2. On the bottom-left, click on 'Admin Settings'\n  3. On the left panel, click on 'API Keys'\n  5. Click on 'Create API Key'\n  6. On the popup form, Enter the 'Label' to name the Key\n  7. Copy the API key and paste it below.\n": "\n  1. Login to your Heartbeat account\n  2. On the bottom-left, click on 'Admin Settings'\n  3. On the left panel, click on 'API Keys'\n  5. Click on 'Create API Key'\n  6. On the popup form, Enter the 'Label' to name the Key\n  7. Copy the API key and paste it below.\n",
   "Create User": "Create User",

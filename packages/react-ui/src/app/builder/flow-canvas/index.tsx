@@ -86,10 +86,8 @@ const createGraphKey = (flowVersion: FlowVersion) => {
 export const FlowCanvas = React.memo(
   ({
     setHasCanvasBeenInitialised,
-    lefSideBarContainerWidth,
   }: {
     setHasCanvasBeenInitialised: (value: boolean) => void;
-    lefSideBarContainerWidth: number;
   }) => {
     const { theme } = useTheme();
     const [
@@ -206,12 +204,9 @@ export const FlowCanvas = React.memo(
     return (
       <div
         ref={containerRef}
-        className="size-full relative overflow-hidden z-50"
+        className="size-full relative overflow-hidden z-30"
       >
-        <FlowDragLayer
-          cursorPosition={cursorPosition}
-          lefSideBarContainerWidth={lefSideBarContainerWidth}
-        >
+        <FlowDragLayer cursorPosition={cursorPosition}>
           <CanvasContextMenu contextMenuType={contextMenuType}>
             <ReactFlow
               onContextMenu={onContextMenu}

@@ -1,5 +1,4 @@
 {
-  "Clarifai": "Clarifai",
   "AI-powered visual recognition": "Visuele herkenning op AI-aangedreven",
   "\nFollow these instructions to get your Clarifai (Personal Access Token) PAT Key:\n1. Go to the [security tab](https://clarifai.com/settings/security) in your Clarifai account and generate a new PAT token.\n2. Copy the PAT token and paste it in the PAT Key field.\n": "\nVolg deze instructies om je Clarifai (Personale Toegang Token) PAT Key:\n1 te krijgen. Ga naar het [security tab](https://clarifai.com/settings/security) in je Clarifai account en genereer een nieuwe PAT token.\n2. Kopieer de PAT token en plak het in het PAT Key veld.\n",
   "Ask LLM": "Vraag LLLM",

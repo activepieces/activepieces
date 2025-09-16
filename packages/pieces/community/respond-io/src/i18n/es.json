@@ -1,5 +1,4 @@
 {
-  "Respond.io": "Respond.io",
   "API Token": "API Token",
   "Your Respond.io API v2 Token.": "Su token de Respond.io API v2.",
   "\n  Please follow these steps to get your Respond.io API token:\n  \n  1. Log in to your Respond.io account.\n  2. In the left sidebar, navigate to Settings.\n  3. Under Workspace Settings, click on Integrations.\n  4. Locate and click on the Developer API option.\n  5. Within the Developer API section, find your API key or generate a new one if needed.": "\n  Por favor siga estos pasos para obtener su token de la API de Respond.io:\n  \n  1. Inicie sesión en su cuenta Respond.io.\n  2. En la barra lateral izquierda, vaya a Configuración.\n  3. Bajo Configuración de Espacio de Trabajo, haga clic en Integraciones.\n  4. Localice y haga clic en la opción API del desarrollador.\n  5. Dentro de la sección API de Desarrollador, encuentre su clave API o genere una nueva si es necesario.",

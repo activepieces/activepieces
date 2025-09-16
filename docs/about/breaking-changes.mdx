@@ -4,6 +4,14 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+## 0.69.0
+
+### What has changed?
+- `AP_FLOW_WORKER_CONCURRENCY` and `AP_SCHEDULED_WORKER_CONCURRENCY` are now deprecated all jobs have single queue and replaced with `AP_WORKER_CONCURRENCY`
+
+### When is action necessary?
+
+- If you are using `AP_FLOW_WORKER_CONCURRENCY` or `AP_SCHEDULED_WORKER_CONCURRENCY`, you should replace them with `AP_WORKER_CONCURRENCY`
 
 ## 0.66.0
 

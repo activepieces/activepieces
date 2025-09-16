@@ -1,11 +1,10 @@
 {
-  "PredictLeads": "PredictLeads",
   "Company Intelligence Data Source": "会社インテリジェンスデータ ソース",
   "API Key": "API キー",
   "API Token": "API Token",
   "The key of the Predict Leads account.": "予測リードアカウントのキー。",
   "The token of the Predict Leads account.": "Predict Leadsアカウントのトークン。",
-  "\n    To obtain your Predict Leads tokens, follow these steps:\n\n    1. Have a PredictLeads account - Create a new user here: [PredictLeads](https://predictleads.com/sign_up).\n    2. Go to: [Subscriptions](https://predictleads.com/subscriptions).\n    3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.\n    ": "\n    To obtain your Predict Leads tokens, follow these steps:\n\n    1. Have a PredictLeads account - Create a new user here: [PredictLeads](https://predictleads.com/sign_up).\n    2. Go to: [Subscriptions](https://predictleads.com/subscriptions).\n    3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.\n    ",
+  "\n    To obtain your PredictLeads tokens, follow these steps:\n\n    1. Have a PredictLeads account - Create a new user here: https://predictleads.com/sign_up.\n    2. Go to: https://predictleads.com/subscriptions.\n    3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.\n    ": "\n    To obtain your PredictLeads tokens, follow these steps:\n\n    1. Have a PredictLeads account - Create a new user here: https://predictleads.com/sign_up.\n    2. Go to: https://predictleads.com/subscriptions.\n    3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.\n    ",
   "List Companies": "会社一覧",
   "Retrieve a company": "会社を取得する",
   "List Job Openings": "作業の開始を一覧にする",

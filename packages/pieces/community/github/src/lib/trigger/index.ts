@@ -1,5 +1,10 @@
 import { Trigger } from '@activepieces/pieces-framework';
 import { githubRegisterTrigger } from './register-trigger';
+import { newBranchTrigger } from './new-branch';
+import { newCollaboratorTrigger } from './new-collaborator';
+import { newLabelTrigger } from './new-label';
+import { newMilestoneTrigger } from './new-milestone';
+import { newReleaseTrigger } from './new-release';
 
 export enum GithubEventType {
   PULL_REQUEST = 'pull_request',
@@ -1460,6 +1465,11 @@ export const registered = [
   },
 ];
 
-export const githubTriggers: Trigger[] = registered.map((def) =>
-  githubRegisterTrigger(def)
-);
+export const githubTriggers: Trigger[] = [
+  ...registered.map((def) => githubRegisterTrigger(def)),
+  newBranchTrigger,
+  newCollaboratorTrigger,
+  newLabelTrigger,
+  newMilestoneTrigger,
+  newReleaseTrigger,
+];
