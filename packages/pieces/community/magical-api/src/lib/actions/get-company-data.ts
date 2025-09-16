@@ -13,17 +13,17 @@ export const getCompanyData = createAction({
     props: {
         company_name: Property.ShortText({
             displayName: 'Company Name',
-            description: "To start a new request, provide the company's legal name (e.g., 'Microsoft').",
+            description: "Provide the company's legal name (e.g., 'Microsoft').",
             required: false,
         }),
         company_username: Property.ShortText({
             displayName: 'Company LinkedIn Username',
-            description: "To start a new request, provide the username from the company's LinkedIn URL (e.g., 'microsoft').",
+            description: "Provide the username from the company's LinkedIn URL (e.g., 'microsoft').",
             required: false,
         }),
         company_website: Property.ShortText({
             displayName: 'Company Website',
-            description: "To start a new request, provide the company's official website URL.",
+            description: "Provide the company's official website URL.",
             required: false,
         }),
         request_id: Property.ShortText({

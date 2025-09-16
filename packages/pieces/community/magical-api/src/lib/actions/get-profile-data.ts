@@ -13,7 +13,7 @@ export const getProfileData = createAction({
     props: {
         profile_name: Property.ShortText({
             displayName: 'LinkedIn Profile Username',
-            description: "To start a new request, provide the username from the LinkedIn profile URL (e.g., 'williamhgates').",
+            description: "Provide the username from the LinkedIn profile URL (e.g., 'williamhgates').",
             required: false,
         }),
         request_id: Property.ShortText({

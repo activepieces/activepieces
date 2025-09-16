@@ -13,7 +13,7 @@ export const parseResume = createAction({
     props: {
         url: Property.ShortText({
             displayName: 'Resume URL',
-            description: 'To start a new request, provide a direct URL to a publicly accessible resume file (PDF, DOC, or DOCX).',
+            description: 'Provide the direct link to a publicly accessible resume file (PDF, DOC, or DOCX)',
             required: false, 
         }),
         request_id: Property.ShortText({

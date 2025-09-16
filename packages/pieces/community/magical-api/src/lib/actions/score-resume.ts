@@ -13,12 +13,12 @@ export const scoreResume = createAction({
     props: {
         url: Property.ShortText({
             displayName: 'Resume URL',
-            description: 'To start a new request, provide a direct URL to a publicly accessible resume file (PDF, DOC, or DOCX).',
+            description: 'Provide a direct URL to a publicly accessible resume file (PDF, DOC, or DOCX).',
             required: false, 
         }),
         job_description: Property.LongText({
             displayName: 'Job Description',
-            description: 'To start a new request, provide the job description to score the resume against.',
+            description: 'Provide the job description to score the resume against.',
             required: false, 
         }),
         request_id: Property.ShortText({
