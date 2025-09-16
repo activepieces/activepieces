@@ -37,8 +37,10 @@ const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
 
 const CommandInput = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Input>,
-  React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
->(({ className, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input> & {
+    rightContent?: React.ReactNode;
+  }
+>(({ className, rightContent, ...props }, ref) => (
   // eslint-disable-next-line react/no-unknown-property -- temp fix while using wrong cmdk package
   <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
     <Search className="mr-2 size-4 shrink-0 opacity-50" />
@@ -51,6 +53,11 @@ const CommandInput = React.forwardRef<
       )}
       {...props}
     />
+    {rightContent && (
+      <div className="ml-2 flex items-center">
+        {rightContent}
+      </div>
+    )}
   </div>
 ));
 

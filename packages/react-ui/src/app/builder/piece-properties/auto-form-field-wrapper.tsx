@@ -26,6 +26,7 @@ import { TextInputWithMentions } from './text-input-with-mentions';
 import { Toggle } from '@/components/ui/toggle';
 import { cn } from '@/lib/utils';
 import { propertyUtils } from './property-utils';
+import { AutoDynamicFields } from './auto-dynamic-fields';
 
 
 type AutoFormFieldWrapperProps = {
@@ -58,14 +59,23 @@ const AutoFormFieldWrapper = ({
   const isManuallyMode = inputMode === PropertyExecutionType.MANUAL;
   const isDynamicMode = inputMode === PropertyExecutionType.DYNAMIC;
   const isAutoMode = inputMode === PropertyExecutionType.AUTO;
+  const isAuthProperty = property.type === PropertyType.OAUTH2 || property.type === PropertyType.CUSTOM_AUTH || property.type === PropertyType.BASIC_AUTH;
   const edition = flags?.[ApFlagId.EDITION];
 
   const isArrayProperty = property.type === PropertyType.ARRAY;
 
   return (
-    <FormItem className="flex flex-col gap-1">
-      <FormLabel className="flex items-center gap-1 " skipError={isAutoMode}>
-        {placeBeforeLabelText && isManuallyMode && children}
+    <FormItem className="flex flex-col">
+      <FormLabel className="flex items-center gap-1 text-sm" skipError={isAutoMode}>
+        {!isAuthProperty && (
+          <div className="pt-1">
+            <span>{t(property.displayName)}</span>{' '}
+            {property.required && <span className="text-destructive">*</span>}
+          </div>
+        )}
+
+        <span className="grow"></span>
+
         {(property.type === PropertyType.FILE ||
           property.type === PropertyType.DATE_TIME) && (
           <Tooltip>
@@ -86,80 +96,7 @@ const AutoFormFieldWrapper = ({
             </TooltipContent>
           </Tooltip>
         )}
-        <div className="pt-1">
-          <span>{t(property.displayName)}</span>{' '}
-          {property.required && <span className="text-destructive">*</span>}
-        </div>
-        
-        <span className="grow"></span>
-
-        {allowDynamicValues && (
-          <div className="flex items-center">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Toggle
-                  pressed={isDynamicMode}
-                  onPressedChange={(e) => {
-                    const newMode = e
-                      ? PropertyExecutionType.DYNAMIC
-                      : PropertyExecutionType.MANUAL;
-                    propertyUtils.handleDynamicValueToggleChange(
-                      form,
-                      newMode,
-                      propertyName,
-                      inputName,
-                    );
-                  }}
-                  disabled={disabled}
-                  className='p-2'
-                >
-                  <SquareFunction
-                    className={cn('size-5', {
-                      'text-foreground': isDynamicMode,
-                      'text-muted-foreground': !isDynamicMode,
-                    })}
-                  />
-                </Toggle>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="bg-background">
-                {t('Dynamic value')}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Toggle
-                  pressed={isAutoMode}
-                  onPressedChange={(e) => {
-                    const newMode = e
-                      ? PropertyExecutionType.AUTO
-                      : isDynamicMode
-                      ? PropertyExecutionType.DYNAMIC
-                      : PropertyExecutionType.MANUAL;
-                    propertyUtils.handleDynamicValueToggleChange(
-                      form,
-                      newMode,
-                      propertyName,
-                      inputName,
-                    );
-                  }}
-                  disabled={disabled}
-                  className='p-2'
-                >
-                  <Sparkles
-                    className={cn('size-5', {
-                      'text-primary': isAutoMode,
-                      'text-muted-foreground': !isAutoMode,
-                    })}
-                  />
-                </Toggle>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="bg-background">
-                {t('Auto filled by AI')}
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        )}
-
+        {placeBeforeLabelText && isManuallyMode && children}
       </FormLabel>
 
       {isDynamicMode && !isArrayProperty && (
@@ -167,10 +104,19 @@ const AutoFormFieldWrapper = ({
           disabled={disabled}
           onChange={field.onChange}
           initialValue={field.value ?? property.defaultValue ?? null}
+          rightContent={
+            <AutoDynamicFields
+              allowDynamicValues={allowDynamicValues}
+              propertyName={propertyName}
+              inputName={inputName}
+              property={property}
+              disabled={disabled}
+            />
+          }
         />
       )}
 
-      {isArrayProperty && isDynamicMode && (
+      {isDynamicMode && isArrayProperty && (
         <ArrayPiecePropertyInInlineItemMode
           disabled={disabled}
           arrayProperties={property.properties}

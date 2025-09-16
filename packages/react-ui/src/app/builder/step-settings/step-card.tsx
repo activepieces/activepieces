@@ -14,6 +14,12 @@ import {
 } from '@activepieces/shared';
 
 import { EditAgentInFlowBuilderButton } from './edit-agent-inside-flow-builder-button';
+import { Info } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 type StepCardProps = {
   step: FlowAction | FlowTrigger;
@@ -34,19 +40,19 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
     stepMetadata?.actionOrTriggerOrAgentDisplayName;
   const modifiedTitle = stepMetadata
     ? `${stepMetadata?.displayName} ${
-        actionOrTriggerDisplayName ? `(${actionOrTriggerDisplayName})` : ''
+        actionOrTriggerDisplayName ? ` > ${actionOrTriggerDisplayName}` : ''
       }`
     : null;
   const externalAgentId = flowStructureUtil.getExternalAgentId(step);
 
   return (
-    <div className="flex items-center justify-center gap-4 min-h-[48px]">
-      <div className="flex h-full min-w-[48px] items-center justify-center">
+    <div className="flex items-center justify-center gap-2">
+      <div className="flex h-full items-center justify-center">
         {stepMetadata?.logoUrl && (
           <ImageWithFallback
             src={stepMetadata.logoUrl}
             alt={modifiedTitle ?? ''}
-            className="w-12 h-12"
+            className="w-5 h-5"
           />
         )}
       </div>
@@ -54,18 +60,22 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
         <div className="text-base flex flex-col grow gap-1">
           <div className="flex-grow">
             {!isNil(modifiedTitle) ? (
-              modifiedTitle
+              <div className="text-sm flex items-center gap-1">
+                {modifiedTitle}
+                {stepMetadata?.description && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-4 h-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {stepMetadata.description}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {!stepMetadata?.description && <Info className="w-4 h-4" />}
+              </div>
             ) : (
               <Skeleton className="h-3 w-32 rounded" />
-            )}
-          </div>
-          <div className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
-            {!isNil(stepMetadata?.description) ? (
-              stepMetadata.description
-            ) : (
-              <div className="flex flex-col gap-1">
-                <Skeleton className="h-2 w-48 rounded" />
-              </div>
             )}
           </div>
         </div>

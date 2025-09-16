@@ -27,7 +27,7 @@ const ActionErrorHandlingForm = React.memo(
     const form = useFormContext<FlowAction | FlowTrigger>();
 
     return (
-      <div className="grid gap-4">
+      <div className="grid gap-6">
         {hideContinueOnFailure !== true && (
           <FormField
             name="settings.errorHandlingOptions.continueOnFailure.value"
@@ -36,8 +36,11 @@ const ActionErrorHandlingForm = React.memo(
               <FormItem className="flex flex-col items-start justify-between">
                 <FormLabel
                   htmlFor="continueOnFailure"
-                  className="flex items-center justify-center"
+                  className="flex w-full items-center justify-between"
                 >
+                  <span className="flex-grow">
+                    {t('Continue on Failure')}
+                  </span>
                   <FormControl>
                     <Switch
                       disabled={disabled}
@@ -46,9 +49,6 @@ const ActionErrorHandlingForm = React.memo(
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <span className="ml-3 flex-grow">
-                    {t('Continue on Failure')}
-                  </span>
                 </FormLabel>
                 <ReadMoreDescription
                   text={t(
@@ -67,8 +67,9 @@ const ActionErrorHandlingForm = React.memo(
               <FormItem className="flex flex-col items-start justify-between">
                 <FormLabel
                   htmlFor="retryOnFailure"
-                  className="flex items-center justify-center"
+                  className="flex w-full items-center justify-between"
                 >
+                  <span className="flex-grow">{t('Retry on Failure')}</span>
                   <FormControl>
                     <Switch
                       disabled={disabled}
@@ -77,7 +78,6 @@ const ActionErrorHandlingForm = React.memo(
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <span className="ml-3 grow">{t('Retry on Failure')}</span>
                 </FormLabel>
                 <ReadMoreDescription
                   text={t(

@@ -33,6 +33,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import { Button } from '@/components/ui/button';
 import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
 import { propertyUtils } from './property-utils';
+import { AutoDynamicFields } from './auto-dynamic-fields';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
@@ -63,7 +64,7 @@ const AutoPropertiesFormComponent = React.memo(
 
     return (
       Object.keys(props).length > 0 && (
-        <div className="flex flex-col gap-4 w-full">
+        <div className="flex flex-col gap-6 w-full">
           {Object.entries(props).filter(([propertyName]) => {
             const property = props[propertyName];
             const propertySettings = form.getValues().settings?.propertySettings?.[propertyName];
@@ -273,6 +274,15 @@ const selectFormComponentForProperty = ({
             disabled={disabled}
             placeholder={property.options.placeholder ?? t('Select an option')}
             showDeselect={!property.required}
+            rightContent={
+              <AutoDynamicFields
+                allowDynamicValues={allowDynamicValues}
+                propertyName={propertyName}
+                inputName={inputName}
+                property={property}
+                disabled={disabled}
+              />
+            }
           ></SearchableSelect>
         </AutoFormFieldWrapper>
       );
@@ -340,6 +350,9 @@ const selectFormComponentForProperty = ({
             multiple={property.type === PropertyType.MULTI_SELECT_DROPDOWN}
             showDeselect={!property.required}
             shouldRefreshOnSearch={property.refreshOnSearch ?? false}
+            allowDynamicValues={allowDynamicValues}
+            inputName={inputName}
+            property={property}
           ></DynamicDropdownPieceProperty>
         </AutoFormFieldWrapper>
       );
