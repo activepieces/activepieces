@@ -1,13 +1,13 @@
-import { FlowRunStatus, JobData, OneTimeJobData } from '@activepieces/shared'
+import { ExecuteFlowJobData, FlowRunStatus, JobData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { projectLimitsService } from '../../../ee/projects/project-plan/project-plan.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../../flows/flow-version/flow-version.service'
 import { JobPreHandler, PreHandlerResult } from './index'
 
-export const oneTimeJobPreHandler: JobPreHandler = {
+export const flowJobPreHandler: JobPreHandler = {
     handle: async (job: JobData, attemptsStarted: number, log: FastifyBaseLogger): Promise<PreHandlerResult> => {
-        const oneTimeJob = job as OneTimeJobData
+        const oneTimeJob = job as ExecuteFlowJobData
         const { runId, projectId } = oneTimeJob
         
         flowRunService(log).updateRunStatusAsync({
@@ -42,7 +42,7 @@ export const oneTimeJobPreHandler: JobPreHandler = {
     },
 } 
 
-async function saveTriggerPayloadAndMarkQuotaExceeded(oneTimeJob: OneTimeJobData, log: FastifyBaseLogger): Promise<void> {
+async function saveTriggerPayloadAndMarkQuotaExceeded(oneTimeJob: ExecuteFlowJobData, log: FastifyBaseLogger): Promise<void> {
     const { runId, projectId, flowVersionId } = oneTimeJob
     const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
     const savedRun = await flowRunService(log).updateRun({
