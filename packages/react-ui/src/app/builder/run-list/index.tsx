@@ -58,10 +58,13 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
       <CardList>
         {isLoading ||
           (isRefetching && <CardListItemSkeleton numberOfCards={10} />)}
+
         {isError && <div>{t('Error, please try again.')}</div>}
-        {flowPage && flowPage.data.length === 0 && (
-          <CardListEmpty message={t('No runs found')} />
-        )}
+
+        {flowPage &&
+          flowPage.data.length === 0 &&
+          !isLoading &&
+          !isRefetching && <CardListEmpty message={t('No runs found')} />}
 
         <ScrollArea className="w-full h-full">
           {!isRefetching &&

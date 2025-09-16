@@ -52,13 +52,13 @@ export type DALLE3PricingPerImage = TableData<
 'standard' | 'hd',
 '1024x1024' | '1024x1792' | '1792x1024',
 number
->
+> & {type: 'DALLE3'}
 
 export type DALLE2PricingPerImage = TableData<
 'standard',
 '256x256' | '512x512' | '1024x1024',
 number
->
+> & {type: 'DALLE2'}
 
 export type GPTImage1PricingPerImage = {
     input: {
@@ -66,14 +66,15 @@ export type GPTImage1PricingPerImage = {
         text: number
     }
     output: number
-}
+} & {type: 'GPTImage1'}
 
-type ImageModelPricing = DALLE3PricingPerImage | DALLE2PricingPerImage | GPTImage1PricingPerImage | number
+type ImageModelPricing = DALLE3PricingPerImage | DALLE2PricingPerImage | GPTImage1PricingPerImage | number 
 
 // $ per million tokens
 export type FlatLanguageModelPricing = {
     input: number
     output: number
+    type: 'flat'
 }
 
 export type TieredLanguageModelPricing = {
@@ -86,6 +87,7 @@ export type TieredLanguageModelPricing = {
         underThresholdRate: number
         overThresholdRate: number
     }
+    type: 'tiered'
 }
 
 export type CategorizedLanguageModelPricing = {
@@ -94,6 +96,7 @@ export type CategorizedLanguageModelPricing = {
         audio: number
     }
     output: number
+    type: 'categorized'
 }
 
 
@@ -130,6 +133,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 1.25,
                     output: 10.00,
+                    type: 'flat',
                 },
                 webSearchCost: 0.01,
             },
@@ -140,6 +144,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 1.25,
                     output: 10.00,
+                    type: 'flat',
                 },
                 webSearchCost: 0.01,
             },
@@ -150,6 +155,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 0.25,
                     output: 2.00,
+                    type: 'flat',
                 },
                 webSearchCost: 0.01,
             },
@@ -160,6 +166,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 0.05,
                     output: 0.40,
+                    type: 'flat',
                 },
                 webSearchCost: 0.01,
             },
@@ -169,7 +176,8 @@ It is strongly recommended that you add your credit card information to your Ope
                 functionCalling: true,
                 pricing: {
                     input: 2.50,
-                    output: 10.00,
+                    output: 10.00,  
+                    type: 'flat',
                 },
                 webSearchCost: 0.025,
             },
@@ -179,7 +187,8 @@ It is strongly recommended that you add your credit card information to your Ope
                 functionCalling: true,
                 pricing: {
                     input: 0.40,
-                    output: 1.60,
+                    output: 1.60,   
+                    type: 'flat',
                 },
                 webSearchCost: 0.025,
             },
@@ -189,7 +198,8 @@ It is strongly recommended that you add your credit card information to your Ope
                 functionCalling: true,
                 pricing: {
                     input: 2.00,
-                    output: 8.00,
+                    output: 8.00,   
+                    type: 'flat',
                 },
                 webSearchCost: 0.025,
             },
@@ -199,7 +209,8 @@ It is strongly recommended that you add your credit card information to your Ope
                 functionCalling: true,
                 pricing: {
                     input: 0.40,
-                    output: 1.60,
+                    output: 1.60,   
+                    type: 'flat',
                 },
                 webSearchCost: 0.025,
             },
@@ -210,6 +221,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 0.10,
                     output: 0.40,
+                    type: 'flat',
                 },
             },
             {
@@ -218,7 +230,8 @@ It is strongly recommended that you add your credit card information to your Ope
                 functionCalling: true,
                 pricing: {
                     input: 1.10,
-                    output: 4.40,
+                    output: 4.40,   
+                    type: 'flat',
                 },
                 webSearchCost: 0.01,
             },
@@ -228,7 +241,8 @@ It is strongly recommended that you add your credit card information to your Ope
                 functionCalling: true,
                 pricing: {
                     input: 2.00,
-                    output: 8.00,
+                    output: 8.00,       
+                    type: 'flat',
                 },
                 webSearchCost: 0.01,
             },
@@ -238,7 +252,8 @@ It is strongly recommended that you add your credit card information to your Ope
                 functionCalling: true,
                 pricing: {
                     input: 1.10,
-                    output: 4.40,
+                    output: 4.40,   
+                    type: 'flat',
                 },
                 webSearchCost: 0.01,
             },
@@ -248,7 +263,8 @@ It is strongly recommended that you add your credit card information to your Ope
                 functionCalling: true,
                 pricing: {
                     input: 10.00,
-                    output: 30.00,
+                    output: 30.00,  
+                    type: 'flat',
                 },
             },
             {
@@ -258,6 +274,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 0.50,
                     output: 1.50,
+                    type: 'flat',
                 },
             },
         ],
@@ -271,6 +288,7 @@ It is strongly recommended that you add your credit card information to your Ope
                         text: 5.00,
                     },
                     output: 40.00,
+                    type: 'GPTImage1',
                 },
             },
             {
@@ -327,6 +345,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 3.00,
                     output: 15.00,
+                    type: 'flat',
                 },
             },
             {
@@ -337,6 +356,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 0.80,
                     output: 4.00,
+                    type: 'flat',
                 },
             },
             {
@@ -347,6 +367,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 15.00,
                     output: 75.00,
+                    type: 'flat',
                 },
             },
             {
@@ -357,6 +378,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 3.00,
                     output: 15.00,
+                    type: 'flat',
                 },
             },
             {
@@ -367,6 +389,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 3.00,
                     output: 15.00,
+                    type: 'flat',
                 },
             },
             {
@@ -376,6 +399,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 3.00,
                     output: 15.00,
+                    type: 'flat',
                 },
             },
             {
@@ -385,6 +409,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 15.00,
                     output: 75.00,
+                    type: 'flat',
                 },
             },
             {
@@ -394,6 +419,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 3.00,
                     output: 15.00,
+                    type: 'flat',
                 },
             },
             {
@@ -403,6 +429,7 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 0.25,
                     output: 1.25,
+                    type: 'flat',
                 },
             },
         ],
@@ -473,7 +500,8 @@ It is strongly recommended that you add your credit card information to your Ope
                     output: {
                         underThresholdRate: 10.00,
                         overThresholdRate: 15.00,
-                    },
+                    },  
+                    type: 'tiered',
                 },
             },
             {
@@ -487,6 +515,7 @@ It is strongly recommended that you add your credit card information to your Ope
                         audio: 1.00,
                     },
                     output: 2.50,
+                    type: 'categorized',
                 },
             },
             {
@@ -499,7 +528,8 @@ It is strongly recommended that you add your credit card information to your Ope
                         default: 0.10,
                         audio: 0.50,
                     },
-                    output: 0.40,
+                    output: 0.40,   
+                    type: 'categorized',
                 },
             },
             {
@@ -510,10 +540,22 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 0.075,
                     output: 0.30,
+                    type: 'flat',
                 },
             },
         ],
-        imageModels: [],
+        imageModels: [ {
+            displayName: 'Gemini 2.5 Flash Image Preview (Nano Banana)',
+            instance: google.image('gemini-2.5-flash-image-preview'),
+            pricing: {
+                input: {
+                    image: 0.30,
+                    text: 0.30
+                },
+                output: 30.0,
+                type: 'GPTImage1',
+            }
+        }],
         videoModels: [
             {
                 displayName: 'VEO 3 Preview',
