@@ -271,7 +271,7 @@ export const GeneralSettings = ({
 
   return (
     <>
-      <Card>
+      {/*<Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             {t('Appearance')}
@@ -286,7 +286,7 @@ export const GeneralSettings = ({
             <LanguageSwitcher />
           </div>
         </CardContent>
-      </Card>
+      </Card>*/}
 
       <Card>
         <CardHeader className="pb-3">
@@ -294,7 +294,8 @@ export const GeneralSettings = ({
             {t('Project Configuration')}
           </CardTitle>
           <CardDescription className="text-sm">
-            {t('Manage your project settings and limits.')}
+            {/*{t('Manage your project settings and limits.')}*/}
+            {t('Manage your project settings.')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -321,7 +322,7 @@ export const GeneralSettings = ({
                 )}
               />
 
-              {platform.plan.manageProjectsEnabled && (
+              {false && platform.plan.manageProjectsEnabled && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     name="tasks"

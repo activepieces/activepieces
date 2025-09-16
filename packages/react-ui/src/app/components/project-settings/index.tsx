@@ -11,7 +11,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { cn } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 
-import { AlertsSettings } from './alerts';
+// import { AlertsSettings } from './alerts';
 import { GeneralSettings } from './general';
 import { TeamSettings } from './team';
 
@@ -72,13 +72,13 @@ export function ProjectSettingsDialog({
       id: 'team' as TabId,
       label: t('Team'),
       icon: <Users className="w-4 h-4" />,
-      disabled: !checkAccess(Permission.READ_PROJECT_MEMBER),
+      disabled: true || !checkAccess(Permission.READ_PROJECT_MEMBER),
     },
     {
       id: 'alerts' as TabId,
       label: t('Alerts'),
       icon: <Bell className="w-4 h-4" />,
-      disabled: !checkAccess(Permission.READ_ALERT),
+      disabled: true || !checkAccess(Permission.READ_ALERT),
     },
   ].filter((tab) => !tab.disabled);
 
@@ -94,8 +94,8 @@ export function ProjectSettingsDialog({
         );
       case 'team':
         return <TeamSettings />;
-      case 'alerts':
-        return <AlertsSettings />;
+      // case 'alerts':
+      //   return <AlertsSettings />;
       default:
         return null;
     }
