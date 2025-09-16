@@ -1,42 +1,51 @@
 ---
-title: "Technical limits"
-icon: 'ban'
-description: "technical limits for Activepieces execution"
+title: "Technical Limits"
+icon: "ban"
+description: "Technical limits for Activepieces execution"
 ---
 
-### Overview
 
-<Warning>
-This Limits applies for the **Activepieces Cloud**, and can be configured via environment variables for self-hosted instances.
-</Warning>
+### Execution Limits
 
-### Flow Limits
+- **Flow Execution Time**  
+  Maximum: **600 seconds (10 minutes)**  
+  Flows exceeding this limit will be marked as timed out.
 
-- **Execution Time**: Each flow has a maximum execution time of **600 seconds (10 minutes)**. Flows exceeding this limit will be marked as a timeout.
-- **Memory Usage**: During execution, a flow should not use more than **128 MB of RAM**.
+- **Memory Usage**  
+  Maximum: **1 GB RAM**  
+  (Self hosted can be configured via `AP_SANDBOX_MEMORY_LIMIT`)
+
+<Note>
+The memory usage is measured for the entire Node.js process running the flow. There is approximately 300 MB of overhead for a warm process with pieces already loaded.
+</Note>
 
 <Tip>
-**Friendly Tip #1:** Flow run in a paused state, such as Wait for Approval or Delay, do not count toward the 600 seconds.
+**Note 1:** Flows paused by steps like **Wait for Approval** or **Delay** do **not** count toward the 600-second limit.
 </Tip>
 
 <Tip>
-**Friendly Tip #2:** The execution time limit can be worked around by splitting the flows into multiple ones, such as by having one flow call another flow using a webhook, or by having each flow process a small batch of items.
+**Note 2:** To handle longer processes, split them into multiple flows.  
+For example:  
+- Have one flow call another via **webhook**.  
+- Process smaller **batches of items** in separate flows.
 </Tip>
+
+---
 
 ### File Storage Limits
+
 <Info>
-The files from actions or triggers are stored in the database / S3 to support retries from certain steps.
+Files from actions or triggers are stored in the database/S3 to support retries for certain steps.
 </Info>
 
-- **Maximum File Size**: 10 MB 
+- **Maximum File Size**: **10 MB**  
+  (Configurable via `AP_MAX_FILE_SIZE_MB`, default: **4 MB**)
 
-### Data Storage Limits
+---
 
-Some pieces utilize the built-in Activepieces key store, such as the Store Piece and Queue Piece.
+### Key / Value Storage Limits
 
-The storage limits are as follows:
+Some pieces use the built-in Activepieces key store (e.g., **Store Piece**, **Queue Piece**).
 
-- **Maximum Key Length**: 128 characters
-- **Maximum Value Size**: 512 KB
-
-
+- **Maximum Key Length**: **128 characters**  
+- **Maximum Value Size**: **512 KB**

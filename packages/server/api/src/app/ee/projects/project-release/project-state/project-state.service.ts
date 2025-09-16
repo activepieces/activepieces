@@ -1,4 +1,5 @@
-import { AgentOperationType, AgentState, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, flowMigrations, FlowProjectOperationType, FlowState, FlowSyncError, isNil, McpState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, Table, TableOperationType, TableState } from '@activepieces/shared'
+import { AgentOperationType, AgentState, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, flowMigrations, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, McpState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
+import { Value } from '@sinclair/typebox/value'
 import { FastifyBaseLogger } from 'fastify'
 import { agentsService } from '../../../../agents/agents-service'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
@@ -128,12 +129,14 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             switch (operation.type) {
                 case FlowProjectOperationType.UPDATE_FLOW: {
                     const flowUpdated = await projectStateHelper(log).updateFlowInProject(operation.flowState, operation.newFlowState, projectId)
-                    publishJobs.push(projectStateHelper(log).republishFlow({ flow: flowUpdated, projectId }))
+                    const keepOriginalState = projectStateHelper(log).republishFlow({ flow: flowUpdated, projectId, status: operation.flowState.status })
+                    publishJobs.push(keepOriginalState)
                     break
                 }
                 case FlowProjectOperationType.CREATE_FLOW: {
                     const flowCreated = await projectStateHelper(log).createFlowInProject(operation.flowState, projectId)
-                    publishJobs.push(projectStateHelper(log).republishFlow({ flow: flowCreated, projectId }))
+                    const alwaysEnableNewFlow = projectStateHelper(log).republishFlow({ flow: flowCreated, projectId, status: FlowStatus.ENABLED })
+                    publishJobs.push(alwaysEnableNewFlow)
                     break
                 }
                 case FlowProjectOperationType.DELETE_FLOW: {
@@ -206,7 +209,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         }
     },
     async save(projectId: ProjectId, name: string, log: FastifyBaseLogger): Promise<FileId> {
-        const fileToSave: ProjectState = await this.getCurrentState(projectId, log)
+        const fileToSave: ProjectState = await this.getProjectState(projectId, log)
 
         const fileData = Buffer.from(JSON.stringify(fileToSave))
 
@@ -228,7 +231,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         })
         return JSON.parse(file.data.toString()) as ProjectState
     },
-    async getCurrentState(projectId: ProjectId, log: FastifyBaseLogger): Promise<ProjectState> {
+    async getProjectState(projectId: ProjectId, log: FastifyBaseLogger): Promise<ProjectState> {
         const flows = await flowRepo().find({
             where: {
                 projectId,
@@ -240,7 +243,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 projectId,
             })
         }))
-        
+
         const connections: ConnectionState[] = await appConnectionService(log).getManyConnectionStates({
             projectId,
         })
@@ -252,6 +255,13 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             name: undefined,
             externalIds: undefined,
         })
+        const populatedTables = await Promise.all(tables.data.map(async (table) => {
+            const fields = await fieldService.getAll({
+                projectId,
+                tableId: table.id,
+            })
+            return { ...table, fields }
+        }))
 
         const agents = await agentsService(log).list({
             projectId,
@@ -262,9 +272,9 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         return toProjectState({
             flows: allPopulatedFlows,
             connections,
-            tables: tables.data,
+            tables: populatedTables,
             agents: agents.data,
-            projectId,
+            log,
         })
     },
 
@@ -287,23 +297,17 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             maxSteps: agent.maxSteps,
             runCompleted: agent.runCompleted,
         }
-        return agentState
+        return Value.Clean(AgentState, agentState) as AgentState
     },
     getFlowState(flow: PopulatedFlow): FlowState {
         const flowState: FlowState = {
-            id: flow.id,
+            ...flow,
             externalId: flow.externalId ?? flow.id,
             version: flowMigrations.apply(flow.version),
-            created: flow.created,
-            updated: flow.updated,
-            folderId: flow.folderId,
-            publishedVersionId: flow.publishedVersionId,
-            metadata: flow.metadata,
-            projectId: flow.projectId,
-            status: flow.status,
-            triggerSource: flow.triggerSource,
         }
-        return flowState
+        const cleanedFlowState = Value.Clean(FlowState, flowState) as FlowState
+        cleanedFlowState.version.trigger.nextAction = isNil(cleanedFlowState.version.trigger.nextAction) ? undefined : Value.Clean(FlowAction, cleanedFlowState.version.trigger.nextAction)
+        return cleanedFlowState
     },
     getTableState(table: PopulatedTable): TableState {
         const fields: FieldState[] = table.fields.map((field) => ({
@@ -318,7 +322,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             name: table.name,
             fields,
         }
-        return tableState
+        return Value.Clean(TableState, tableState) as TableState
     },
 })
 
@@ -355,79 +359,12 @@ async function handleCreateField(projectId: ProjectId, field: FieldState, tableI
     }
 }
 
-async function toProjectState({ flows, connections, tables, agents, projectId }: ToProjectStateParams): Promise<ProjectState> {
-    const flowsInProjectState: FlowState[] = flows.map((flow) => {
-        const flowState: FlowState = {
-            id: flow.id,
-            projectId: flow.projectId,
-            created: flow.created,
-            status: flow.status,
-            updated: flow.updated,
-            version: flow.version,
-            externalId: flow.externalId,
-            folderId: flow.folderId,
-            metadata: flow.metadata,
-            publishedVersionId: flow.publishedVersionId,
-            triggerSource: flow.triggerSource,
-        }
-        return flowState
-    })
+async function toProjectState({ flows, connections, tables, agents, log }: ToProjectStateParams): Promise<ProjectState> {
+    const flowsInProjectState: FlowState[] = flows.map((flow) => projectStateService(log).getFlowState(flow))
 
-    const tablesInProjectState: TableState[] = await Promise.all(tables.map(async (table) => {
-        const fields = await fieldService.getAll({
-            projectId,
-            tableId: table.id,
-        })
-        const tableState: TableState = {
-            id: table.id,
-            name: table.name,
-            externalId: table.externalId,
-            fields: fields.map((field) => {
-                switch (field.type) {
-                    case FieldType.STATIC_DROPDOWN: {
-                        return {
-                            name: field.name,
-                            type: field.type,
-                            externalId: field.externalId,
-                            data: field.data,
-                        }
-                    }
-                    case FieldType.DATE:
-                    case FieldType.NUMBER:
-                    case FieldType.TEXT: {
-                        return {
-                            name: field.name,
-                            type: field.type,
-                            externalId: field.externalId,
-                        }
-                    }
-                }
-            }),
-        }
-        return tableState
-    }))
+    const tablesInProjectState: TableState[] = tables.map((table) => projectStateService(log).getTableState(table))
 
-    const agentsProjectState = agents.map((agent) => {
-        const mcpState: McpState = {
-            token: agent.mcp.token,
-            externalId: agent.mcp.externalId,
-            name: agent.mcp.name,
-            tools: agent.mcp.tools,
-        }
-        const agentState: AgentState = {
-            displayName: agent.displayName,
-            externalId: agent.externalId,
-            outputType: agent.outputType,
-            outputFields: agent.outputFields,
-            mcp: mcpState,
-            systemPrompt: agent.systemPrompt,
-            description: agent.description,
-            profilePictureUrl: agent.profilePictureUrl,
-            maxSteps: agent.maxSteps,
-            runCompleted: agent.runCompleted,
-        }
-        return agentState
-    })
+    const agentsProjectState = agents.map((agent) => projectStateService(log).getAgentState(agent))
 
     return {
         flows: flowsInProjectState,
@@ -447,7 +384,7 @@ type ApplyProjectStateRequest = {
 type ToProjectStateParams = {
     flows: PopulatedFlow[]
     connections: ConnectionState[]
-    tables: Table[]
+    tables: PopulatedTable[]
     agents: PopulatedAgent[]
-    projectId: ProjectId
+    log: FastifyBaseLogger
 }

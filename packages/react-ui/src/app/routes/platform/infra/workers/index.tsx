@@ -26,6 +26,7 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
     created: '2024-11-23T18:51:30.000Z',
     updated: dayjs().subtract(10, 'seconds').toISOString(),
     information: {
+      workerId: 'hbAcAzqbOEQLzvIi6PMCF',
       diskInfo: {
         total: 337374281728,
         free: 220669583360,
@@ -33,14 +34,14 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
         percentage: 34.59205537845069,
       },
       workerProps: {
-        FLOW_WORKER_CONCURRENCY: '8',
-        POLLING_POOL_SIZE: '4',
-        SCHEDULED_WORKER_CONCURRENCY: '8',
+        WORKER_CONCURRENCY: '8',
       },
       cpuUsagePercentage: 2.335817759768149,
       ramUsagePercentage: 52.699635773121855,
       totalAvailableRamInBytes: 33364979712,
       ip: '172.16.254.1',
+      totalSandboxes: 8,
+      freeSandboxes: 8,
     },
     status: WorkerMachineStatus.ONLINE,
   },
@@ -49,6 +50,7 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
     created: '2024-11-23T19:12:45.000Z',
     updated: dayjs().subtract(1, 'minute').toISOString(),
     information: {
+      workerId: 'kpMnBxRtYuWvZsQi9NLCJ',
       diskInfo: {
         total: 536870912000,
         free: 322122547200,
@@ -56,14 +58,14 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
         percentage: 40.0,
       },
       workerProps: {
-        FLOW_WORKER_CONCURRENCY: '8',
-        POLLING_POOL_SIZE: '4',
-        SCHEDULED_WORKER_CONCURRENCY: '8',
+        WORKER_CONCURRENCY: '8',
       },
       cpuUsagePercentage: 5.6,
       ramUsagePercentage: 45.2,
       totalAvailableRamInBytes: 42949672960,
       ip: '192.168.1.100',
+      totalSandboxes: 8,
+      freeSandboxes: 8,
     },
     status: WorkerMachineStatus.ONLINE,
   },
@@ -204,6 +206,27 @@ export default function WorkersPage() {
               return (
                 <div className="flex items-center">
                   {formattedUsedRam} / {formattedTotalRam}
+                </div>
+              );
+            },
+          },
+          {
+            accessorKey: 'information.sandboxes',
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('Sandboxes Free')}
+              />
+            ),
+            cell: ({ row }) => {
+              const freeSandboxes = row.original.information.freeSandboxes ?? 0;
+              const totalSandboxes =
+                row.original.information.totalSandboxes ?? 0;
+              return (
+                <div className="flex items-center">
+                  <span>
+                    {freeSandboxes} / {totalSandboxes}
+                  </span>
                 </div>
               );
             },

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-bigin-by-zoho",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
