@@ -19,7 +19,7 @@ export const engineInstaller = (log: FastifyBaseLogger) => ({
     async install({ path }: InstallParams): Promise<void> {
         const isDev = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
 
-        return await fileSystemUtils.runExclusive(path, `engineInstaller`, async () => {
+        return fileSystemUtils.runExclusive(path, 'engineInstaller', async () => {
             log.debug({ path }, '[engineInstaller#install]')
             const cache = cacheState(path)
             const isEngineInstalled = await cache.cacheCheckState(ENGINE_INSTALLED) === ENGINE_CACHE_ID

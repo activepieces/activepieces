@@ -58,7 +58,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
             codePath,
         })
 
-        return await fileSystemUtils.runExclusive(GLOBAL_CACHE_PATH_LATEST_VERSION, `code-builder-${flowVersionId}-${name}`, async () => {
+        return fileSystemUtils.runExclusive(GLOBAL_CACHE_PATH_LATEST_VERSION, `code-builder-${flowVersionId}-${name}`, async () => {
             try {
                 const cache = cacheState(codePath)
                 const cachedHash = await cache.cacheCheckState(codePath)

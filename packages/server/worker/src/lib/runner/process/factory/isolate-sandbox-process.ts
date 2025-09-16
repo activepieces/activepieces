@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { arch } from 'node:process'
-import { execPromise, PiecesSource, fileSystemUtils } from '@activepieces/server-shared'
+import { execPromise, fileSystemUtils, PiecesSource } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from '../../../cache/worker-cache'

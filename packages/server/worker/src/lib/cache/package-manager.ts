@@ -83,7 +83,7 @@ export const packageManager = (log: FastifyBaseLogger) => ({
     },
 
     async init({ path }: InitParams): Promise<PackageManagerOutput> {
-        return await fileSystemUtils.runExclusive(GLOBAL_CACHE_PATH_LATEST_VERSION, `pnpm-init-${path}`, async () => {
+        return fileSystemUtils.runExclusive(GLOBAL_CACHE_PATH_LATEST_VERSION, `pnpm-init-${path}`, async () => {
             const fExists = await fileSystemUtils.fileExists(fsPath.join(path, 'package.json'))
             if (fExists) {
                 return {
