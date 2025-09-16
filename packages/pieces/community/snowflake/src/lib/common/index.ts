@@ -12,16 +12,25 @@ const DEFAULT_QUERY_TIMEOUT = 30000;
 export function configureConnection(
   auth: PiecePropValueSchema<typeof snowflakeAuth>
 ) {
-  return snowflake.createConnection({
+  const connectionOptions: snowflake.ConnectionOptions = {
     application: DEFAULT_APPLICATION_NAME,
     timeout: DEFAULT_QUERY_TIMEOUT,
     username: auth.username,
-    password: auth.password,
     role: auth.role,
     database: auth.database,
     warehouse: auth.warehouse,
     account: auth.account,
-  });
+  };
+
+  if (auth.privateKey) {
+    const sanitizedPrivateKey = auth.privateKey.replace(/\\n/g, '\n').trim();
+    connectionOptions.privateKey = sanitizedPrivateKey;
+    connectionOptions.authenticator = 'SNOWFLAKE_JWT';
+  } else {
+    connectionOptions.password = auth.password;
+  }
+
+  return snowflake.createConnection(connectionOptions);
 }
 
 export async function connect(conn: snowflake.Connection) {
