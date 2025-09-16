@@ -11,7 +11,7 @@ export const anthropicProvider: AIProviderStrategy = {
     },
 
     calculateUsage: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage => {
-        const apiResponse = response as { usage: { input_tokens: number, output_tokens: number, server_tool_use: { web_search_requests: number } } }
+        const apiResponse = response as { usage: { input_tokens: number, output_tokens: number, server_tool_use?: { web_search_requests: number } } }
         const { provider } = request.params as { provider: string }
 
         const providerConfig = getProviderConfig(provider)!
@@ -30,9 +30,10 @@ export const anthropicProvider: AIProviderStrategy = {
 
         const { input: inputCost, output: outputCost } = languageModelConfig.pricing as FlatLanguageModelPricing
         const webSearchCost = languageModelConfig.webSearchCost ?? 0
-        const { input_tokens, output_tokens, server_tool_use: { web_search_requests } } = apiResponse.usage
+        const { input_tokens, output_tokens, server_tool_use } = apiResponse.usage
+        const webSearchRequests = server_tool_use?.web_search_requests ?? 0
         return {
-            cost: calculateTokensCost(input_tokens, inputCost) + calculateTokensCost(output_tokens, outputCost) + calculateWebSearchCost(web_search_requests, webSearchCost),
+            cost: calculateTokensCost(input_tokens, inputCost) + calculateTokensCost(output_tokens, outputCost) + calculateWebSearchCost(webSearchRequests, webSearchCost),
             model,
         }
     },

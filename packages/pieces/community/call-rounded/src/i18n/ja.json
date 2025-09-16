@@ -1,5 +1,4 @@
 {
-  "Call-rounded": "通話を丸め",
   "Please enter the API Key obtained from Call Rounded.": "通話中に取得したAPIキーを入力してください。",
   "Custom API Call": "カスタムAPI通話",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",

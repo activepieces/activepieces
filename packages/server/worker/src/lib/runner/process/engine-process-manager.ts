@@ -1,6 +1,6 @@
 import { ChildProcess } from 'child_process'
-import { ApSemaphore, getEngineTimeout } from '@activepieces/server-shared'
-import { ApEnvironment, assertNotNullOrUndefined, EngineError, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, EngineResult, EngineStderr, EngineStdout, ExecuteFlowOperation, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionMode, isNil, TriggerHookType } from '@activepieces/shared'
+import { ApSemaphore } from '@activepieces/server-shared'
+import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, EngineStderr, EngineStdout, ExecuteFlowOperation, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionMode, isNil, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import treeKill from 'tree-kill'
@@ -16,219 +16,232 @@ export type WorkerResult = {
     stdError: string
 }
 
+let processes: (ChildProcess | undefined)[] = []
+let availableProcessIndexes: number[] = []
+let processIds: string[] = []
+let options: EngineProcessOptions
+let lock: ApSemaphore
+let engineSocketServer: ReturnType<typeof engineRunnerSocket>
+let initialized = false
 
-export class EngineProcessManager {
-    processes: (ChildProcess | undefined)[]
-    availableWorkerIndexes: number[]
-    workerIds: string[]
-    log: FastifyBaseLogger
-    options: EngineProcessOptions
-    lock: ApSemaphore
-    engineSocketServer: ReturnType<typeof engineRunnerSocket>
+export const engineProcessManager = {
+    init(_maxWorkers: number, _options: EngineProcessOptions, log: FastifyBaseLogger) {
 
-    constructor(log: FastifyBaseLogger, maxWorkers: number, options: EngineProcessOptions) {
-        this.log = log
-        this.options = options
-        this.processes = []
-        this.availableWorkerIndexes = []
-        this.lock = new ApSemaphore(maxWorkers)
-        this.engineSocketServer = engineRunnerSocket(this.log)
-        this.workerIds = []
+        if (initialized) {
+            return
+        }
+        options = _options
+        processes = []
+        availableProcessIndexes = []
+        lock = new ApSemaphore(_maxWorkers)
+        engineSocketServer = engineRunnerSocket(log)
+        processIds = []
         // Create the initial workers
-        for (let i = 0; i < maxWorkers; i++) {
-            this.processes.push(undefined)
-            this.availableWorkerIndexes.push(i)
-            this.workerIds.push(nanoid())
+        for (let i = 0; i < _maxWorkers; i++) {
+            processes.push(undefined)
+            availableProcessIndexes.push(i)
+            processIds.push(nanoid())
         }
-    }
+        initialized = true
+    },
 
-    private async processTask(workerIndex: number, operationType: EngineOperationType, operation: EngineOperation): Promise<WorkerResult> {
-        const worker = this.processes[workerIndex]
-        assertNotNullOrUndefined(worker, 'Worker should not be undefined')
-        const timeout = getEngineTimeout(operationType, workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, workerMachine.getSettings().TRIGGER_TIMEOUT_SECONDS)
-        let didTimeout = false
-        const workerId = this.workerIds[workerIndex]
-        let timeoutWorker: NodeJS.Timeout | undefined
-        try {
+    getFreeSandboxes(): number {
+        return availableProcessIndexes.length
+    },
+    getTotalSandboxes(): number {
+        return processes.length
+    },
 
-            const result = await new Promise<WorkerResult>((resolve, reject) => {
-                let stdError = ''
-                let stdOut = ''
-
-                // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                timeoutWorker = setTimeout(async () => {
-                    didTimeout = true
-                    await forceTerminate(worker, this.log)
-                    this.processes[workerIndex] = undefined
-                }, timeout * 1000)
-
-
-                const onResult = (result: EngineResult) => {
-
-                    resolve({
-                        engine: result.result as EngineResponse<unknown>,
-                        stdOut,
-                        stdError,
-                    })
-                }
-                const onError = (error: EngineError) => {
-                    reject({ status: EngineResponseStatus.ERROR, response: error.error })
-                }
-                const onStdout = (stdout: EngineStdout) => {
-                    stdOut += stdout.message
-                }
-                const onStderr = (stderr: EngineStderr) => {
-                    stdError += stderr.message
-                }
-
-                this.engineSocketServer.subscribe(workerId, onResult, onError, onStdout, onStderr)
-
-                worker.on('error', (error) => {
-                    this.log.info({
-                        error,
-                    }, 'Worker returned something in stderr')
-                    reject({ status: EngineResponseStatus.ERROR, response: error })
-                })
-
-                worker.on('exit', (code, signal) => {
-                    const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || (code === 134 || signal === 'SIGABRT' || signal === 'SIGKILL')
-
-                    this.log.error({
-                        stdError,
-                        stdOut,
-                        workerIndex,
-                        code,
-                        isRamIssue,
-                        signal,
-                    }, 'Worker exited')
-
-
-                    if (didTimeout) {
-                        resolve({
-                            engine: {
-                                status: EngineResponseStatus.TIMEOUT,
-                                response: {},
-                            },
-                            stdError: '',
-                            stdOut: '',
-                        })
-                    }
-                    else if (isRamIssue) {
-                        resolve({
-                            engine: {
-                                status: EngineResponseStatus.MEMORY_ISSUE,
-                                response: {},
-                            },
-                            stdError,
-                            stdOut,
-                        })
-                    }
-                    else {
-                        reject({ status: EngineResponseStatus.ERROR, response: 'Worker exited with code ' + code + ' and signal ' + signal })
-                    }
-                })
-                this.log.debug({
-                    workerIndex,
-                }, 'Sending operation to worker')
-                this.engineSocketServer.send(workerId, { operation, operationType })
-            })
-            return result
-        }
-        catch (error) {
-            this.log.error({
-                error,
-            }, 'Worker throw unexpected error')
-            throw error
-        }
-        finally {
-            this.engineSocketServer.unsubscribe(workerId)
-            worker.removeAllListeners('exit')
-            worker.removeAllListeners('error')
-            worker.removeAllListeners('message')
-            if (!isNil(timeoutWorker)) {
-                clearTimeout(timeoutWorker)
-            }
-            if (isWorkerNotResuable()) {
-                if (!isNil(this.processes[workerIndex])) {
-                    await forceTerminate(this.processes[workerIndex], this.log)
-                }
-                this.processes[workerIndex] = undefined
-                this.workerIds[workerIndex] = nanoid()
-            }
-            this.log.debug({
-                workerIndex,
-            }, 'Releasing worker')
-        }
-    }
-
-    async executeTask(operationType: EngineOperationType, operation: EngineOperation): Promise<WorkerResult> {
-        this.log.trace({
+    async executeTask(operationType: EngineOperationType, operation: EngineOperation, log: FastifyBaseLogger, timeout: number): Promise<WorkerResult> {
+        log.trace({
             operationType,
             operation,
         }, 'Executing operation')
-        await this.lock.acquire()
-        const workerIndex = this.availableWorkerIndexes.pop()
-        assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
+        await lock.acquire()
+        const workerIndex = availableProcessIndexes.pop()
 
         try {
-            this.log.debug({
+            log.debug({
                 workerIndex,
             }, 'Acquired worker')
             assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
 
-
-            const workerIsDead = isNil(this.processes[workerIndex]) || !this.processes[workerIndex]?.connected || isWorkerNotResuable()
+            const workerIsDead = isNil(processes[workerIndex]) || !processes[workerIndex]?.connected || isWorkerNotResuable()
             if (workerIsDead) {
-                this.log.info({
+                log.info({
                     workerIndex,
                 }, 'Worker is not available, creating a new one')
-                if (!isNil(this.processes[workerIndex])) {
-                    await forceTerminate(this.processes[workerIndex], this.log)
-                    this.workerIds[workerIndex] = nanoid()
+                if (!isNil(processes[workerIndex])) {
+                    await forceTerminate(processes[workerIndex], log)
+                    processIds[workerIndex] = nanoid()
                 }
 
-                const workerId = this.workerIds[workerIndex]
+                const workerId = processIds[workerIndex]
 
-                this.processes[workerIndex] = await engineProcessFactory(this.log).create({
+                processes[workerIndex] = await engineProcessFactory(log).create({
                     workerId,
                     workerIndex,
-                    customPiecesPath: executionFiles(this.log).getCustomPiecesPath(operation),
+                    customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
                     flowVersionId: getFlowVersionId(operation, operationType),
-                    options: this.options,
+                    options,
                 })
-                const connection = await this.engineSocketServer.waitForConnect(workerId)
+                const connection = await engineSocketServer.waitForConnect(workerId)
                 if (!connection) {
-                    this.log.error({
+                    log.error({
                         workerIndex,
                     }, 'Worker connection failed')
                     throw new Error('Worker connection failed')
                 }
-                this.log.info({
+                log.info({
                     workerIndex,
                 }, 'Worker connected')
             }
 
-            const result = await this.processTask(workerIndex, operationType, operation)
+            const result = await processTask(workerIndex, operationType, operation, log, timeout)
             // Keep an await so finally does not run before the task is finished
             return result
         }
         catch (error) {
-            this.log.error({
+            log.error({
                 error,
             }, 'Error executing task')
             throw error
         }
         finally {
-            this.availableWorkerIndexes.push(workerIndex)
-            this.lock.release()
+            if (!isNil(workerIndex)) {
+                availableProcessIndexes.push(workerIndex)
+            }
+            lock.release()
         }
-    }
+    },
 
     async shutdown(): Promise<void> {
-        this.log.info('Sending shutdown signal to all workers')
-        for (const worker of this.processes) {
+        if (!initialized) {
+            return
+        }
+        for (const worker of processes) {
             worker?.kill()
         }
+    },
+}
+
+async function processTask(workerIndex: number, operationType: EngineOperationType, operation: EngineOperation, log: FastifyBaseLogger, timeout: number): Promise<WorkerResult> {
+    const worker = processes[workerIndex]
+    assertNotNullOrUndefined(worker, 'Worker should not be undefined')
+    let didTimeout = false
+    const workerId = processIds[workerIndex]
+    let timeoutWorker: NodeJS.Timeout | undefined
+    try {
+
+        const result = await new Promise<WorkerResult>((resolve, reject) => {
+            let stdError = ''
+            let stdOut = ''
+
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            timeoutWorker = setTimeout(async () => {
+                didTimeout = true
+                await forceTerminate(worker, log)
+                processes[workerIndex] = undefined
+            }, timeout * 1000)
+
+
+            const onResult = (result: EngineResponse<unknown>) => {
+
+                resolve({
+                    engine: result,
+                    stdOut,
+                    stdError,
+                })
+            }
+            const onStdout = (stdout: EngineStdout) => {
+                stdOut += stdout.message
+            }
+            const onStderr = (stderr: EngineStderr) => {
+                stdError += stderr.message
+            }
+
+            engineSocketServer.subscribe(workerId, onResult, onStdout, onStderr)
+
+            worker.on('error', (error) => {
+                log.info({
+                    error,
+                }, 'Worker returned something in stderr')
+                reject({ status: EngineResponseStatus.INTERNAL_ERROR, error })
+            })
+
+            worker.on('exit', (code, signal) => {
+                const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || (code === 134 || signal === 'SIGABRT' || signal === 'SIGKILL')
+
+                log.error({
+                    stdError,
+                    stdOut,
+                    workerIndex,
+                    code,
+                    isRamIssue,
+                    signal,
+                }, 'Worker exited')
+
+
+                if (didTimeout) {
+                    resolve({
+                        engine: {
+                            status: EngineResponseStatus.TIMEOUT,
+                            response: {},
+                        },
+                        stdError,
+                        stdOut,
+                    })
+                }
+                else if (isRamIssue) {
+                    resolve({
+                        engine: {
+                            status: EngineResponseStatus.MEMORY_ISSUE,
+                            response: {},
+                        },
+                        stdError,
+                        stdOut,
+                    })
+                }
+                else {
+                    reject({
+                        status: EngineResponseStatus.INTERNAL_ERROR,
+                        error: 'Worker exited with code ' + code + ' and signal ' + signal,
+                        stdError,
+                        stdOut,
+                    })
+                }
+            })
+            log.debug({
+                workerIndex,
+            }, 'Sending operation to worker')
+            engineSocketServer.send(workerId, { operation, operationType })
+        })
+        return result
+    }
+    catch (error) {
+        log.error({
+            error,
+        }, 'Worker throw unexpected error')
+        throw error
+    }
+    finally {
+        engineSocketServer.unsubscribe(workerId)
+        worker.removeAllListeners('exit')
+        worker.removeAllListeners('error')
+        worker.removeAllListeners('message')
+        if (!isNil(timeoutWorker)) {
+            clearTimeout(timeoutWorker)
+        }
+        if (isWorkerNotResuable()) {
+            if (!isNil(processes[workerIndex])) {
+                await forceTerminate(processes[workerIndex], log)
+            }
+            processes[workerIndex] = undefined
+            processIds[workerIndex] = nanoid()
+        }
+        log.debug({
+            workerIndex,
+        }, 'Releasing worker')
     }
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-simpliroute",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "SimpliRoute piece for Activepieces - Last mile delivery optimization platform integration",
   "type": "commonjs",
   "main": "./src/index.js",

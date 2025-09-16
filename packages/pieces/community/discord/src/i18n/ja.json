@@ -1,5 +1,4 @@
 {
-  "Discord": "Discord",
   "Instant messaging and VoIP social platform": "インスタントメッセージングとVoIPソーシャルプラットフォーム",
   "\nTo obtain a token, follow these steps:\n1. Go to https://discord.com/developers/applications\n2. Click on Application (or create one if you don't have one)\n3. Click on Bot\n4. Copy the token\n": "\nTo obtain a token, follow these steps:\n1. Go to https://discord.com/developers/applications\n2. Click on Application (or create one if you don't have one)\n3. Click on Bot\n4. Copy the token\n",
   "Send Message with Bot": "ボットでメッセージを送信",

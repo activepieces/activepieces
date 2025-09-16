@@ -1,5 +1,4 @@
 {
-  "Discord": "Discord",
   "Instant messaging and VoIP social platform": "Instant Messaging und VoIP soziale Plattform",
   "\nTo obtain a token, follow these steps:\n1. Go to https://discord.com/developers/applications\n2. Click on Application (or create one if you don't have one)\n3. Click on Bot\n4. Copy the token\n": "\nUm ein Token zu erhalten, folgen Sie diesen Schritten:\n1. Gehen Sie zu https://discord.com/developers/applications\n2. Klicken Sie auf Anwendung (oder erstellen Sie eine Anwendung, wenn Sie keine haben)\n3. Klicken Sie auf Bot\n4. Kopieren Sie den Token\n",
   "Send Message with Bot": "Nachricht mit Bot senden",
