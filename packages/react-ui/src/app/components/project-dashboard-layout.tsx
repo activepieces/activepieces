@@ -55,7 +55,7 @@ export function ProjectDashboardLayout({
       >
         <SidebarProvider>
           <ProjectDashboardSidebar />
-          <SidebarInset className={`relative overflow-hidden px-4 pb-4`}>
+          <SidebarInset className={`px-4 pb-4`}>
             <TaskLimitAlert />
             {children}
           </SidebarInset>
