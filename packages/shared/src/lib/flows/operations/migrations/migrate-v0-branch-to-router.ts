@@ -1,5 +1,5 @@
 
-import { BranchExecutionType, FlowAction, FlowActionType, RouterAction, RouterExecutionType } from '../../actions/action'
+import { BranchExecutionType, ConditionType, FlowAction, FlowActionType, RouterAction, RouterExecutionType } from '../../actions/action'
 import { FlowVersion } from '../../flow-version'
 import { flowStructureUtil } from '../../util/flow-structure-util'
 import { Migration } from '.'
@@ -20,6 +20,7 @@ export const migrateBranchToRouter: Migration = {
                             {
                                 branchName: 'Branch 1',
                                 conditions: step.settings.conditions,
+                                prompt: '',
                                 branchType: BranchExecutionType.CONDITION,
                             },
                             {
@@ -28,6 +29,7 @@ export const migrateBranchToRouter: Migration = {
                             },
                         ],
                         executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+                        conditionType: ConditionType.TEXT,
                         sampleData: {
                             sampleDataFileId: undefined,
                             sampleDataInputFileId: undefined,

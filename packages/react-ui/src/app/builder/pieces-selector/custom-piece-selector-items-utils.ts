@@ -23,6 +23,7 @@ import {
   RouterExecutionType,
   StepLocationRelativeToParent,
   TodoType,
+  ConditionType,
 } from '@activepieces/shared';
 
 import { BuilderState } from '../builder-hooks';
@@ -73,6 +74,7 @@ export const createRouterStep = ({
             },
           ],
         ],
+        prompt: '',
         branchType: BranchExecutionType.CONDITION,
         branchName: 'Accepted',
       },
@@ -82,6 +84,7 @@ export const createRouterStep = ({
       },
     ],
     executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+    conditionType: ConditionType.TEXT,
   };
   return handleAddingOrUpdatingStep({
     pieceSelectorItem: {

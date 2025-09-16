@@ -56,6 +56,7 @@ export const AddBranchRequest = Type.Object({
     branchIndex: Type.Number(),
     stepName: Type.String(),
     conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
+    prompt: Type.Optional(Type.String()),
     branchName: Type.String(),
 })
 export const MoveBranchRequest = Type.Object({

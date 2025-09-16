@@ -22,10 +22,11 @@ import {
   isNil,
   flowStructureUtil,
   StepSettings,
-  RouterActionSettingsWithValidation,
   FlowTriggerType,
   PropertyExecutionType,
   DEFAULT_SAMPLE_DATA_SETTINGS,
+  ConditionType,
+  RouterActionSettingsValidation,
 } from '@activepieces/shared';
 
 import { formUtils } from './form-utils';
@@ -108,7 +109,7 @@ const isStepInitiallyValid = (
       if (overrideDefaultSettings) {
         const errors = Array.from(
           Value.Errors(
-            RouterActionSettingsWithValidation,
+            RouterActionSettingsValidation,
             overrideDefaultSettings,
           ),
         );
@@ -202,6 +203,7 @@ const getDefaultStepValues = ({
           type: FlowActionType.ROUTER,
           settings: overrideDefaultSettings ?? {
             executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+            conditionType: ConditionType.LOGICAL,
             branches: [
               {
                 conditions: [
@@ -214,6 +216,7 @@ const getDefaultStepValues = ({
                     },
                   ],
                 ],
+                prompt: '',
                 branchType: BranchExecutionType.CONDITION,
                 branchName: 'Branch 1',
               },

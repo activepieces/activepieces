@@ -13,7 +13,7 @@ import {
     PieceTriggerSettings,
     PlatformId,
     ProjectId,
-    RouterActionSettingsWithValidation,
+    RouterActionSettingsValidation,
 } from '@activepieces/shared'
 import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
@@ -25,7 +25,7 @@ const loopSettingsValidator = TypeCompiler.Compile(Type.Intersect([LoopOnItemsAc
         minLength: 1,
     }),
 })]))
-const routerSettingsValidator = TypeCompiler.Compile(RouterActionSettingsWithValidation)
+const routerSettingsValidator = TypeCompiler.Compile(RouterActionSettingsValidation)
 
 type ValidationResult = {
     valid: boolean

@@ -46,6 +46,7 @@ function _duplicateBranch(
             branchIndex: childIndex + 1,
             stepName: routerName,
             conditions: clonedRouter.settings.branches[childIndex].branchType === BranchExecutionType.CONDITION ? clonedRouter.settings.branches[childIndex].conditions : undefined,
+            prompt: clonedRouter.settings.branches[childIndex].branchType === BranchExecutionType.CONDITION ? clonedRouter.settings.branches[childIndex].prompt : undefined,
         },
     }]
 

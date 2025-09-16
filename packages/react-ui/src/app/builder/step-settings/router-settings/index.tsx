@@ -13,6 +13,7 @@ import {
   isNil,
   RouterAction,
   RouterExecutionType,
+  ConditionType,
 } from '@activepieces/shared';
 
 import { FormField, FormItem } from '../../../../components/ui/form';
@@ -24,6 +25,7 @@ import {
   SelectContent,
   SelectItem,
 } from '../../../../components/ui/select';
+import { Switch } from '../../../../components/ui/switch';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasUtils } from '../../flow-canvas/utils/flow-canvas-utils';
 import { BranchSettings } from '../branch-settings';
@@ -110,10 +112,11 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
           } else {
             insert(
               updatedStep.settings.branches.length - 1,
-              flowStructureUtil.createBranch(
-                `Branch ${updatedStep.settings.branches.length}`,
-                undefined,
-              ),
+              flowStructureUtil.createBranch({
+                branchName: `Branch ${updatedStep.settings.branches.length}`,
+                conditions: undefined,
+                prompt: undefined,
+              }),
             );
           }
           form.trigger();
@@ -165,6 +168,34 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                   </SelectItem>
                 </SelectContent>
               </Select>
+            </FormItem>
+          )}
+        ></FormField>
+      )}
+
+    {isNil(selectedBranchIndex) && (
+        <FormField
+          control={control}
+          name="settings.conditionType"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>{t('AI Routing')}</Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {t('Let AI decide the best path')}
+                  </p>
+                </div>
+                <Switch
+                  checked={field.value === ConditionType.TEXT}
+                  onCheckedChange={(checked) => {
+                    setValue(`settings.conditionType`, checked ? ConditionType.TEXT : ConditionType.LOGICAL, {
+                      shouldValidate: true,
+                    });
+                  }}
+                  disabled={field.disabled}
+                />
+              </div>
             </FormItem>
           )}
         ></FormField>
@@ -248,7 +279,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
       {!isNil(selectedBranchIndex) && (
         <BranchSettings
           readonly={readonly}
-          key={`settings.branches[${selectedBranchIndex}].conditions`}
+          key={`settings.branches[${selectedBranchIndex}].${form.watch(`settings.conditionType`) === ConditionType.TEXT ? 'prompt' : 'conditions'}`}
           branchIndex={selectedBranchIndex}
         ></BranchSettings>
       )}

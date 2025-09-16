@@ -44,3 +44,9 @@ export const ResolveToolInputsRequest = Type.Object({
     flowVersionId: Type.String(),
 })
 export type ResolveToolInputsRequest = Static<typeof ResolveToolInputsRequest>
+
+export const ResolveAIConditionRequest = Type.Object({
+    previousStepsResults: Type.Record(Type.String(), Type.Any()),
+    prompts: Type.Array(Type.String()),
+})
+export type ResolveAIConditionRequest = Static<typeof ResolveAIConditionRequest>
