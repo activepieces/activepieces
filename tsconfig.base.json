@@ -399,6 +399,9 @@
       "@activepieces/piece-flow-helper": [
         "packages/pieces/community/flow-helper/src/index.ts"
       ],
+      "@activepieces/piece-foreplay-co": [
+        "packages/pieces/community/foreplay-co/src/index.ts"
+      ],
       "@activepieces/piece-flowise": [
         "packages/pieces/community/flowise/src/index.ts"
       ],
