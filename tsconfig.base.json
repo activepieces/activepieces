@@ -420,6 +420,9 @@
       "@activepieces/piece-gameball": [
         "packages/pieces/community/gameball/src/index.ts"
       ],
+      "@activepieces/piece-gamma": [
+        "packages/pieces/community/gamma/src/index.ts"
+      ],
       "@activepieces/piece-gcloud-pubsub": [
         "packages/pieces/community/gcloud-pubsub/src/index.ts"
       ],
