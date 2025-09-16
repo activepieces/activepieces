@@ -70,7 +70,7 @@ export const webhookService = {
                 webhookRequestId,
             }, 'Handshake request completed')
             return {
-                status: StatusCodes.OK,
+                status: response.status,
                 body: response.body,
                 headers: response.headers ?? {},
             }

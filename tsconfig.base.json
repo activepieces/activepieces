@@ -51,6 +51,9 @@
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],
+      "@activepieces/piece-aidbase": [
+        "packages/pieces/community/aidbase/src/index.ts"
+      ],
       "@activepieces/piece-aircall": [
         "packages/pieces/community/aircall/src/index.ts"
       ],
@@ -177,6 +180,9 @@
       ],
       "@activepieces/piece-bubble": [
         "packages/pieces/community/bubble/src/index.ts"
+      ],
+      "@activepieces/piece-bumpups": [
+        "packages/pieces/community/bumpups/src/index.ts"
       ],
       "@activepieces/piece-cal-com": [
         "packages/pieces/community/cal-com/src/index.ts"
@@ -1086,6 +1092,9 @@
       ],
       "@activepieces/piece-village": [
         "packages/pieces/community/village/src/index.ts"
+      ],
+      "@activepieces/piece-vlm-run": [
+        "packages/pieces/community/vlm-run/src/index.ts"
       ],
       "@activepieces/piece-vtex": [
         "packages/pieces/community/vtex/src/index.ts"

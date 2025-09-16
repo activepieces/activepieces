@@ -128,6 +128,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
             compression: file.compression,
         })
         return {
+            metadata: file.metadata,
             data,
             fileName: file.fileName,
         }
@@ -170,6 +171,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
 })
 
 type GetDataResponse = {
+    metadata?: Record<string, string>
     data: Buffer
     fileName?: string
 }

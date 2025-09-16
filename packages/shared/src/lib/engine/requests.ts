@@ -1,7 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../common'
 import { FlowRunResponse } from '../flow-run/execution/flow-execution'
-import { WebsocketClientEvent } from '../websocket'
 import { ProgressUpdateType } from './engine-operation'
 
 export const UpdateRunProgressRequest = Type.Object({

@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, ConsumeJobResponse, ConsumeJobResponseStatus, RenewWebhookJobData, TriggerHookType } from '@activepieces/shared'
+import { ConsumeJobResponse, ConsumeJobResponseStatus, isNil, RenewWebhookJobData, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowWorkerCache } from '../cache/flow-worker-cache'
 import { engineRunner } from '../runner'
@@ -13,8 +13,12 @@ export const renewWebhookExecutor = (log: FastifyBaseLogger) => ({
             engineToken,
             flowVersionId,
         })
-        const flowVersion = populatedFlow?.version ?? null
-        assertNotNullOrUndefined(flowVersion, 'flowVersion')
+        const flowVersion = populatedFlow?.version
+        if (isNil(flowVersion)) {
+            return {
+                status: ConsumeJobResponseStatus.OK,
+            }
+        }
 
         log.info({ flowVersionId: data.flowVersionId }, '[FlowQueueConsumer#consumeRenewWebhookJob]')
         const simulate = false

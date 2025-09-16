@@ -59,7 +59,6 @@ export const engineProcessManager = {
         }, 'Executing operation')
         await lock.acquire()
         const workerIndex = availableProcessIndexes.pop()
-        assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
 
         try {
             log.debug({
@@ -109,7 +108,9 @@ export const engineProcessManager = {
             throw error
         }
         finally {
-            availableProcessIndexes.push(workerIndex)
+            if (!isNil(workerIndex)) {
+                availableProcessIndexes.push(workerIndex)
+            }
             lock.release()
         }
     },
@@ -187,8 +188,8 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                             status: EngineResponseStatus.TIMEOUT,
                             response: {},
                         },
-                        stdError: '',
-                        stdOut: '',
+                        stdError,
+                        stdOut,
                     })
                 }
                 else if (isRamIssue) {
@@ -202,7 +203,12 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                     })
                 }
                 else {
-                    reject({ status: EngineResponseStatus.INTERNAL_ERROR, error: 'Worker exited with code ' + code + ' and signal ' + signal })
+                    reject({
+                        status: EngineResponseStatus.INTERNAL_ERROR,
+                        error: 'Worker exited with code ' + code + ' and signal ' + signal,
+                        stdError,
+                        stdOut,
+                    })
                 }
             })
             log.debug({
