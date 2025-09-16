@@ -43,6 +43,9 @@ import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import { AppSidebarHeader } from '../sidebar-header';
 import { SidebarUser } from '../sidebar-user';
+import { SidebarPlatformAdminButton } from '../sidebar-platform-admin-button';
+import { SidebarInviteUserButton } from '../sidebar-invite-user-button';
+import { SidebarProjectSettingsButton } from '../sidebar-project-settings-button';
 // import SidebarUsageLimits from '../sidebare-usage-limits';
 
 export function ProjectDashboardSidebar() {
@@ -225,6 +228,9 @@ export function ProjectDashboardSidebar() {
         <SidebarFooter>
           {/*<HelpAndFeedback />*/}
           {/*<SidebarUsageLimits />*/}
+          <SidebarProjectSettingsButton />
+          <SidebarInviteUserButton />
+          <SidebarPlatformAdminButton />
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>

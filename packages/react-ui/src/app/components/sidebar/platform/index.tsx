@@ -45,15 +45,15 @@ export function PlatformSidebar() {
   const isCloudPlatform = platformHooks.useIsCloudPlatform();
 
   const items: SidebarGeneralItemType[] = [
-    {
-      type: 'link',
-      to: '/platform/analytics',
-      label: t('Overview'),
-      icon: LineChart,
-      locked: !platform.plan.analyticsEnabled,
-      isSubItem: false,
-      show: true,
-    },
+    // {
+    //   type: 'link',
+    //   to: '/platform/analytics',
+    //   label: t('Overview'),
+    //   icon: LineChart,
+    //   locked: !platform.plan.analyticsEnabled,
+    //   isSubItem: false,
+    //   show: true,
+    // },
     {
       type: 'link',
       to: '/platform/projects',
