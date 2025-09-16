@@ -5,7 +5,7 @@ import { vlmRunCommon } from '.';
 export const analyzeAudioProperties = {
   audio: Property.File({
     displayName: 'Audio File',
-    description: 'The audio file to get the transcription from.',
+    description: 'The audio file to get the transcription from. Only MP3 supported.',
     required: true,
   }),
 };

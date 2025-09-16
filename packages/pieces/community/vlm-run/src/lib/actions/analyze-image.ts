@@ -17,10 +17,12 @@ export const analyzeImage = createAction({
     const { image, domain } = propsValue;
 
 
-    return await vlmRunCommon.analyzeImage({
+    const response = await vlmRunCommon.analyzeImage({
       apiKey,
       images: [image],
       domain,
     });
+
+    return await vlmRunCommon.getresponse(apiKey, response.id, response.status);
   },
 });

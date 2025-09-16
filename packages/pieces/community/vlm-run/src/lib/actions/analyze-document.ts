@@ -21,10 +21,12 @@ export const analyzeDocument = createAction({
       file: document,
     });
 
-    return await vlmRunCommon.analyzeDocument({
+    const response = await vlmRunCommon.analyzeDocument({
       apiKey,
       file_id: uploadResponse.id,
       domain,
     });
+
+    return await vlmRunCommon.getresponse(apiKey, response.id, response.status);
   },
 });

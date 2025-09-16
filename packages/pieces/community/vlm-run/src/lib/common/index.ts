@@ -30,10 +30,33 @@ export const vlmRunCommon = {
     analyzeImage: '/image/generate',
     analyzeDocument: '/document/generate',
     analyzeVideo: '/video/generate',
+    getresponse: '/predictions',
     getFile: (fileId: string) => `/files/${fileId}`,
   },
 
   // Methods
+  getresponse: async (apiKey: string, requestId: string, status: string) => {
+    let statusnow = status;
+    const timeoutAt = Date.now() + 5 * 60 * 1000;
+
+    while (statusnow !== 'completed' && Date.now() < timeoutAt) {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+
+      const pollRes = await httpClient.sendRequest<any>({
+        method: HttpMethod.GET,
+        url: `${vlmRunCommon.baseUrl}${vlmRunCommon.endpoints.getresponse}/${requestId}`,
+        headers: vlmRunCommon.baseHeaders(apiKey),
+      });
+
+      statusnow = pollRes.body?.status;
+      console.log('first', statusnow);
+      if (statusnow === 'completed') {
+        return pollRes.body.response;
+      }
+    }
+
+    throw new Error('generation timed out or failed.');
+  },
   uploadFile: async ({ apiKey, file }: UploadFileParams) => {
     const formData = new FormData();
     formData.append('file', file.data, { filename: file.filename });

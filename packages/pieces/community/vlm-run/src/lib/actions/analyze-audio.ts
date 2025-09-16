@@ -19,9 +19,11 @@ export const analyzeAudio = createAction({
       file: propsValue.audio,
     });
 
-    return await vlmRunCommon.analyzeAudio({
+    const response = await vlmRunCommon.analyzeAudio({
       apiKey,
       file_id: uploadResponse.id,
     });
+
+    return await vlmRunCommon.getresponse(apiKey, response.id, response.status);
   },
 });

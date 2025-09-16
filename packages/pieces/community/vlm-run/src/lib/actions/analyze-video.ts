@@ -21,10 +21,12 @@ export const analyzeVideo = createAction({
       file: video,
     });
 
-    return await vlmRunCommon.analyzeVideo({
+    const response = await vlmRunCommon.analyzeVideo({
       apiKey,
       file_id: uploadResponse.id,
       domain,
     });
+
+    return await vlmRunCommon.getresponse(apiKey, response.id, response.status);
   },
 });
