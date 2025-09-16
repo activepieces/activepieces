@@ -1,4 +1,4 @@
-import { AppSystemProp, UserInteractionJobType } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -28,6 +28,7 @@ import {
     spreadIfDefined,
     UpsertAppConnectionRequestBody,
     UserId,
+    WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperResponse, EngineHelperValidateAuthResult } from 'server-worker'
@@ -518,7 +519,7 @@ const engineValidateAuth = async (
         projectId,
         platformId,
         connectionValue: auth,
-        jobType: UserInteractionJobType.EXECUTE_VALIDATION,
+        jobType: WorkerJobType.EXECUTE_VALIDATION,
     })
 
     if (engineResponse.status !== EngineResponseStatus.OK) {

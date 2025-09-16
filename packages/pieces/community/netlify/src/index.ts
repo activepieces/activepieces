@@ -9,13 +9,16 @@
     import { newDeploySucceeded } from "./lib/triggers/new-deploy-succeeded";
     import { newDeployFailed } from "./lib/triggers/new-deploy-failed";
     import { newFormSubmission } from "./lib/triggers/new-form-submission";
+import { PieceCategory } from "@activepieces/shared";
 
     export const netlify = createPiece({
       displayName: "Netlify",
       auth: netlifyAuth,
       minimumSupportedRelease: '0.36.1',
+      description: "Netlify is a platform for building and deploying websites and apps.",
       logoUrl: "https://cdn.activepieces.com/pieces/netlify.png",
-      authors: [],
+      authors: ["sparkybug"],
+      categories: [PieceCategory.DEVELOPER_TOOLS],
       actions: [
         startDeploy,
         getSite,

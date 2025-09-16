@@ -9,6 +9,7 @@ import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
+import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
 import { AddPgLocaleCollation1740031341436 } from './migration/postgres/1740031341436-add-pg-locale-collation'
 import { InitialPg1740031656104 } from './migration/postgres/1740031656104-initial-pg'
 import { AddFlowTemplate1741587483735 } from './migration/postgres/1741587483735-add-flow-template'
@@ -80,6 +81,8 @@ import { AddTriggerSource1754478770608 } from './migration/postgres/175447877060
 import { AddJobIdToTriggerRun1754510611628 } from './migration/postgres/1754510611628-AddJobIdToTriggerRun'
 import { RemoveAgentTestPrompt1754863565929 } from './migration/postgres/1754863565929-RemoveAgentTestPrompt'
 import { RemoveAgentRelationToTables1755954192258 } from './migration/postgres/1755954192258-RemoveAgentRelationToTables'
+import { AddTriggerNameToTriggerSource1757018269905 } from './migration/postgres/1757018269905-AddTriggerNameToTriggerSource'
+import { AddIndexOnTriggerRun1757557714045 } from './migration/postgres/1757557714045-AddIndexOnTriggerRun'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -93,6 +96,9 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AddFlowIndexToTriggerSource1757555419075,
+        AddIndexOnTriggerRun1757557714045,
+        AddTriggerNameToTriggerSource1757018269905,
         AddIndexToIssues1756775080449,
         RemoveAgentRelationToTables1755954192258,
         AddStepNameToTestInFlowRunEntity1754330492027,

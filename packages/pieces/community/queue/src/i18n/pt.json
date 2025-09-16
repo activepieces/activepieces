@@ -1,5 +1,4 @@
 {
-  "Queue": "Fila",
   "A piece that allows you to push items into a queue, providing a way to throttle requests or process data in a First-In-First-Out (FIFO) manner.": "Uma peça que permite a você colocar itens em uma fila, fornecendo uma maneira de acelerar solicitações ou processar dados de uma maneira de First-In-First-Out (FIFO).",
   "Push to Queue": "Enviar para a fila",
   "Pull items from queue": "Puxar itens da fila",

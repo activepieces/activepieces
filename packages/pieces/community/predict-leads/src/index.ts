@@ -10,16 +10,15 @@ import { makeClient } from './lib/common';
 import { findTechnologiesByCompanyAction, findCompaniesByTechnologyIdAction } from './lib/actions/technology';
 import { findNewsEventByIdAction, findNewsEventsByDomainAction } from './lib/actions/news-events';
 import { findConnectionsAction, findConnectionsByDomainAction } from './lib/actions/connections';
-import { prepareQuery } from './lib/common/client';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const PredictLeadsAuth = PieceAuth.CustomAuth({
   required: true,
   description: `
-    To obtain your Predict Leads tokens, follow these steps:
+    To obtain your PredictLeads tokens, follow these steps:
 
-    1. Have a PredictLeads account - Create a new user here: [PredictLeads](https://predictleads.com/sign_up).
-    2. Go to: [Subscriptions](https://predictleads.com/subscriptions).
+    1. Have a PredictLeads account - Create a new user here: https://predictleads.com/sign_up.
+    2. Go to: https://predictleads.com/subscriptions.
     3. In the subscription page, locate the API Key and Tokens section where you can also find the usage.
     `,
   props: {
@@ -39,9 +38,7 @@ export const PredictLeadsAuth = PieceAuth.CustomAuth({
       const client = makeClient(
         auth as PiecePropValueSchema<typeof PredictLeadsAuth>
       );
-      await client.findJobOpenings(prepareQuery({
-        limit: 1
-      }));
+      await client.findCompanyByDomain("google.com");
       return {
         valid: true,
       };

@@ -63,7 +63,8 @@ export const RequestTrial = ({
   const handleClick = () =>
     selfHosted
       ? window.open(
-          `https://www.activepieces.com/sales?${createQueryParams()}`,
+          // `https://www.activepieces.com/sales?${createQueryParams()}`,
+          `https://promptxai.com/promptx/contact.html?${createQueryParams()}`,
           '_blank',
           'noopener noreferrer',
         )

@@ -1,0 +1,37 @@
+{
+  "name": "pieces-simpliroute",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/simpliroute/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/simpliroute",
+        "tsConfig": "packages/pieces/community/simpliroute/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/simpliroute/package.json",
+        "main": "packages/pieces/community/simpliroute/src/index.ts",
+        "assets": [
+          "packages/pieces/community/simpliroute/*.md",
+          {
+            "input": "packages/pieces/community/simpliroute/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  },
+  "tags": []
+}

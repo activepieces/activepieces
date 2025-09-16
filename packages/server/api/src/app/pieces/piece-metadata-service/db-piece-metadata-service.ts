@@ -6,12 +6,11 @@ import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-// import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
-import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import {
     PieceMetadataEntity,
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
+import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { localPieceCache } from './helper/local-piece-cache'
 import { PieceMetadataService } from './piece-metadata-service'
 import { pieceListUtils } from './utils'
@@ -45,7 +44,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 pieces: translatedPieces,
                 suggestionType: params.suggestionType,
             })
-           
+
             return toPieceMetadataModelSummary(filteredPieces, piecesWithTags, params.suggestionType)
         },
         async get({ projectId, platformId, version, name }): Promise<PieceMetadataModel | undefined> {
