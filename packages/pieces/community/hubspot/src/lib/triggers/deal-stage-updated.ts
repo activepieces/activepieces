@@ -61,6 +61,11 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 								operator: FilterOperatorEnum.Eq,
 								value: propsValue.stageId,
 							},
+							{
+								propertyName: 'hs_v2_date_entered_current_stage',
+								operator: FilterOperatorEnum.Gt,
+								value: lastFetchEpochMS.toString(),
+							},
 						],
 					},
 				],
