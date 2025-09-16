@@ -150,7 +150,7 @@ export const generateGamma = createAction({
       method: HttpMethod.POST,
       url: 'https://public-api.gamma.app/v0.2/generations',
       headers: {
-        'X-API-KEY': context.auth as string, 
+        'X-API-KEY': context.auth.apiKey, 
         'Content-Type': 'application/json',
       },
       body: body,
