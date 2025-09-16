@@ -10,11 +10,13 @@ const DEFAULT_APPLICATION_NAME = 'ActivePieces';
 const DEFAULT_QUERY_TIMEOUT = 30000;
 
 export function configureConnection(
-  auth: PiecePropValueSchema<typeof snowflakeAuth>
+  auth: PiecePropValueSchema<typeof snowflakeAuth>,
+  application = DEFAULT_APPLICATION_NAME,
+  timeout = DEFAULT_QUERY_TIMEOUT
 ) {
   const connectionOptions: snowflake.ConnectionOptions = {
-    application: DEFAULT_APPLICATION_NAME,
-    timeout: DEFAULT_QUERY_TIMEOUT,
+    application: application,
+    timeout: timeout,
     username: auth.username,
     role: auth.role,
     database: auth.database,
