@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { GitRepo } from '@activepieces/ee-shared'
-import { fileExists } from '@activepieces/server-shared'
+import { fileSystemUtils } from '@activepieces/server-shared'
 import { AgentState, AppConnectionScope, ConnectionState, FlowState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SimpleGit } from 'simple-git'
@@ -64,7 +64,7 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
 
     async deleteFromGit({ fileName, folderPath }: DeleteFromProjectParams): Promise<boolean> {
         const jsonPath = path.join(folderPath, `${fileName}.json`)
-        const exists = await fileExists(jsonPath)
+        const exists = await fileSystemUtils.fileExists(jsonPath)
         if (exists) {
             await fs.unlink(jsonPath)
         }
