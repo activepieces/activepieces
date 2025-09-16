@@ -1,206 +1,73 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-  StaticPropsValue,
-} from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { ConversationItemSchema, ConversationItem, AssistantItemSchema, AssistantItem } from '../schemas';
-
-const props = {
-  assistant_id: Property.Dropdown({
-    displayName: 'Assistant',
-    description: 'Select the assistant to monitor for new conversations',
-    required: true,
-    refreshers: [],
-    options: async ({ auth }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please authenticate first'
-        };
-      }
-
-      try {
-        const apiKey = auth as string;
-        const url = `https://api.insighto.ai/api/v1/assistant`;
-
-        const queryParams: Record<string, string> = {
-          api_key: apiKey,
-          page: '1',
-          size: '100', // Get more assistants for better UX
-        };
-
-        const response = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url,
-          queryParams,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        const data = response.body.data;
-        if (!data || !data.items) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'No assistants found'
-          };
-        }
-
-        // Validate the response data
-        const validatedItems: AssistantItem[] = [];
-        for (const item of data.items) {
-          try {
-            const parsedItem = AssistantItemSchema.parse(item);
-            validatedItems.push(parsedItem);
-          } catch (error) {
-            console.warn('Invalid assistant item:', item, error);
-          }
-        }
-
-        const options = validatedItems.map((item) => ({
-          label: `${item.name || 'Unnamed Assistant'} (${item.assistant_type} - ${item.llm_model})`,
-          value: item.id,
-        }));
-
-        return {
-          disabled: false,
-          options,
-        };
-      } catch (error) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Failed to load assistants'
-        };
-      }
-    },
-  }),
-  date_from: Property.DateTime({
-    displayName: 'Date From',
-    description: 'Start date for conversation filtering (ISO format)',
-    required: true,
-  }),
-  date_to: Property.DateTime({
-    displayName: 'Date To',
-    description: 'End date for conversation filtering (ISO format)',
-    required: true,
-  }),
-  page: Property.Number({
-    displayName: 'Page',
-    description: 'Page number to start checking from',
-    required: false,
-    defaultValue: 1,
-  }),
-  size: Property.Number({
-    displayName: 'Page Size',
-    description: 'Number of conversations to check per page (max 100)',
-    required: false,
-    defaultValue: 50,
-  }),
-};
-
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
-  strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, propsValue }) => {
-    const apiKey = auth as string;
-    const assistantId = propsValue.assistant_id as unknown as string;
-    const dateFrom = propsValue.date_from as unknown as string;
-    const dateTo = propsValue.date_to as unknown as string;
-    const page = propsValue.page || 1;
-    const size = propsValue.size || 50;
-
-    const url = `https://api.insighto.ai/api/v1/conversation`;
-
-    const queryParams: Record<string, string> = {
-      api_key: apiKey,
-      assistant_id: assistantId,
-      date_from: new Date(dateFrom).toISOString().split('T')[0], // Convert to YYYY-MM-DD format
-      date_to: new Date(dateTo).toISOString().split('T')[0], // Convert to YYYY-MM-DD format
-      page: page.toString(),
-      size: size.toString(),
-    };
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url,
-      queryParams,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const data = response.body.data;
-    if (!data || !data.items) {
-      return [];
-    }
-
-    // Validate conversation items
-    const validatedConversations = data.items.map((conversation: any) => {
-      try {
-        return ConversationItemSchema.parse(conversation);
-      } catch (error) {
-        console.warn('Invalid conversation item:', conversation, error);
-        return null;
-      }
-    }).filter(Boolean) as ConversationItem[];
-
-    return validatedConversations.map((conversation) => ({
-      id: conversation.id,
-      data: conversation,
-    }));
-  },
-};
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { ConversationWebhookSchema, ConversationWebhook } from '../schemas';
 
 export const newConversation = createTrigger({
   name: 'new_conversation',
   displayName: 'New Conversation',
-  description: 'Fires when a new conversation is created (requires Assistant ID)',
-  props,
+  description: 'Fires when an existing conversation is updated with a new message',
+  props: {},
   sampleData: {
     id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
-    widget_id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
-    assistant_id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
-    assistant_name: 'Customer Support Assistant',
-    attributes: '{}',
-    first_message: 'Hello, I need help with my order',
-    device_type: 'web',
+    object: 'event',
+    event: 'conversation.updated',
     created_at: '2023-11-07T05:31:56Z',
-    updated_at: '2023-11-07T05:31:56Z',
-    chat_count: 5,
-    includes_voice: false,
-    intent_name: 'order_support',
-    contact_id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
-    contact_first_name: 'John',
-    contact_last_name: 'Doe',
-    summary: 'Customer inquired about order status',
-    widget_type: 'chat',
-    widget_provider: 'web'
+    data: {
+      conversation_id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
+      widget_id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
+      assistant_id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
+      device_type: 'mobile',
+      contact_id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
+      chat_count: 5,
+      transcript: [
+        {
+          conversation_id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
+          sender_type: 'user',
+          message_type: 'text',
+          text: 'Hello, I need help with my order',
+          voice_base64: null,
+          data_sources: [],
+          id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
+          updated_at: '2023-11-07T05:31:56Z',
+          created_at: '2023-11-07T05:31:56Z',
+          char_count: 30
+        },
+        {
+          conversation_id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
+          sender_type: 'bot',
+          message_type: 'text',
+          text: 'I\'d be happy to help you with your order. Could you please provide your order number?',
+          voice_base64: null,
+          data_sources: null,
+          id: '3c90c3cc-0d44-4b50-8888-8dd25736052b',
+          updated_at: '2023-11-07T05:32:10Z',
+          created_at: '2023-11-07T05:32:10Z',
+          char_count: 85
+        }
+      ],
+      attributes: {}
+    }
   },
-  type: TriggerStrategy.POLLING,
+  type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth: auth as string, propsValue });
+    // Note: Insighto.ai webhooks may need to be configured manually in their dashboard
+    // or they may provide webhook management APIs. For now, we'll assume manual configuration.
+    // If webhook registration APIs exist, they should be implemented here.
+    await context.store.put('conversation_webhook_enabled', true);
   },
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth: auth as string, propsValue });
+    // Clean up webhook configuration if needed
+    await context.store.delete('conversation_webhook_enabled');
   },
   async run(context) {
-    const { store, auth, propsValue, files } = context;
-    return await pollingHelper.poll(polling, { store, auth: auth as string, propsValue, files });
-  },
-  async test(context) {
-    const { store, auth, propsValue, files } = context;
-    return await pollingHelper.test(polling, { store, auth: auth as string, propsValue, files });
+    const payload = context.payload.body;
+
+    try {
+      // Validate webhook payload
+      const validatedPayload = ConversationWebhookSchema.parse(payload);
+      return [validatedPayload];
+    } catch (error) {
+      console.warn('Invalid webhook payload:', payload, error);
+      return [];
+    }
   },
 });

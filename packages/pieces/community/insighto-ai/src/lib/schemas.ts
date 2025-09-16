@@ -57,6 +57,57 @@ export const FormItemSchema = z.object({
 
 export type FormItem = z.infer<typeof FormItemSchema>;
 
+// Webhook payload schema for captured_form.created event
+export const CapturedFormWebhookSchema = z.object({
+  id: z.string().uuid(),
+  object: z.literal("event"),
+  event: z.literal("captured_form.created"),
+  created_at: z.string(),
+  data: z.object({
+    captured_form_id: z.string().uuid(),
+    form_id: z.string().uuid(),
+    conversation_id: z.string().uuid(),
+    widget_id: z.string().uuid(),
+    assistant_id: z.string().uuid(),
+    form_name: z.string(),
+    field_values: z.record(z.any()),
+    attributes: z.record(z.any()),
+  }),
+});
+
+export type CapturedFormWebhook = z.infer<typeof CapturedFormWebhookSchema>;
+
+// Webhook payload schema for conversation.updated event
+export const ConversationWebhookSchema = z.object({
+  id: z.string().uuid(),
+  object: z.literal("event"),
+  event: z.literal("conversation.updated"),
+  created_at: z.string(),
+  data: z.object({
+    conversation_id: z.string().uuid(),
+    widget_id: z.string().uuid(),
+    assistant_id: z.string().uuid(),
+    device_type: z.enum(["mobile", "native", "desktop", "tablet", "phone"]),
+    contact_id: z.string().uuid(),
+    chat_count: z.number(),
+    transcript: z.array(z.object({
+      conversation_id: z.string().uuid().nullable(),
+      sender_type: z.enum(["bot", "agent", "user", "tool"]).nullable(),
+      message_type: z.enum(["voice", "text"]).nullable(),
+      text: z.string(),
+      voice_base64: z.string().nullable(),
+      data_sources: z.array(z.any()).nullable(),
+      id: z.string().uuid(),
+      updated_at: z.string().nullable(),
+      created_at: z.string().nullable(),
+      char_count: z.number().nullable(),
+    })),
+    attributes: z.record(z.any()),
+  }),
+});
+
+export type ConversationWebhook = z.infer<typeof ConversationWebhookSchema>;
+
 // Assistant schema for dropdown options
 export const AssistantItemSchema = z.object({
   id: z.string(),

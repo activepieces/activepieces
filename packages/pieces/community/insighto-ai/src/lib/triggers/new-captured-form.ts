@@ -1,97 +1,52 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { FormItemSchema, FormItem } from '../schemas';
+import { CapturedFormWebhookSchema, CapturedFormWebhook } from '../schemas';
 
 export const newCapturedForm = createTrigger({
   name: 'new_captured_form',
   displayName: 'New Captured Form',
   description: 'Fires when a new form submission is captured in Insighto.ai',
-  props: {
-    page: Property.Number({
-      displayName: 'Page',
-      description: 'Page number to start checking from',
-      required: false,
-      defaultValue: 1,
-    }),
-    size: Property.Number({
-      displayName: 'Page Size',
-      description: 'Number of forms to check per page (max 100)',
-      required: false,
-      defaultValue: 50,
-    }),
-  },
+  props: {},
   sampleData: {
-    id: '123e4567-e89b-12d3-a456-426614174000',
-    name: 'John Doe',
-    email: 'john@example.com',
-    phone_number: '+1234567890',
+    id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
+    object: 'event',
+    event: 'captured_form.created',
     created_at: '2023-11-07T05:31:56Z',
-    updated_at: '2023-11-07T05:31:56Z'
+    data: {
+      captured_form_id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
+      form_id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
+      conversation_id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
+      widget_id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
+      assistant_id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
+      form_name: 'Contact Form',
+      field_values: {
+        first_name: 'Joe',
+        last_name: 'Doe'
+      },
+      attributes: {}
+    }
   },
-  type: TriggerStrategy.POLLING,
+  type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    // Initialize with empty seen forms
-    await context.store.put('seen_forms', []);
+    // Note: Insighto.ai webhooks may need to be configured manually in their dashboard
+    // or they may provide webhook management APIs. For now, we'll assume manual configuration.
+    // If webhook registration APIs exist, they should be implemented here.
+    await context.store.put('webhook_enabled', true);
   },
   async onDisable(context) {
-    await context.store.delete('seen_forms');
+    // Clean up webhook configuration if needed
+    await context.store.delete('webhook_enabled');
   },
   async run(context) {
-    const apiKey = context.auth as string;
-    const page = context.propsValue['page'] || 1;
-    const size = context.propsValue['size'] || 50;
+    const payload = context.payload.body;
 
-    const url = `https://api.insighto.ai/api/v1/form/list`;
-
-    const queryParams: Record<string, string> = {
-      api_key: apiKey,
-      page: page.toString(),
-      size: size.toString(),
-    };
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url,
-      queryParams,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const data = response.body.data;
-    if (!data || !data.items) {
+    try {
+      // Validate webhook payload
+      const validatedPayload = CapturedFormWebhookSchema.parse(payload);
+      return [validatedPayload];
+    } catch (error) {
+      console.warn('Invalid webhook payload:', payload, error);
       return [];
     }
-
-    // Validate form items
-    const validatedForms = data.items.map((form: any) => {
-      try {
-        return FormItemSchema.parse(form);
-      } catch (error) {
-        console.warn('Invalid form item:', form, error);
-        return null;
-      }
-    }).filter(Boolean) as FormItem[];
-
-    // Get previously seen form IDs
-    const seenForms = (await context.store.get<string[]>('seen_forms')) || [];
-
-    // Find new forms that haven't been seen before
-    const newForms: FormItem[] = [];
-    const currentFormIds: string[] = [];
-
-    for (const form of validatedForms) {
-      const formId = form.id;
-      currentFormIds.push(formId);
-
-      if (!seenForms.includes(formId)) {
-        newForms.push(form);
-      }
-    }
-
-    // Update the store with all current form IDs (to avoid processing old forms again)
-    await context.store.put('seen_forms', currentFormIds);
-
-    return newForms;
   },
 });
