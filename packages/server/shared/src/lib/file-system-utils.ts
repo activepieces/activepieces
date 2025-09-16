@@ -25,7 +25,8 @@ export const fileSystemUtils = {
     threadSafeMkdir: async (path: string): Promise<void> => {
         try {
             await mkdir(path, { recursive: true })
-        } catch (e) {
+        }
+        catch (e) {
             const castedError = e as Error
             if ('code' in castedError && castedError.code === 'EEXIST') {
                 return
@@ -38,7 +39,7 @@ export const fileSystemUtils = {
         const lockFolderPath = join(directory, 'activepieces-locks')
         const encodedKey = Buffer.from(key).toString('base64').replace(/[/+=]/g, '_')
         const lockPathFile = join(lockFolderPath, `${encodedKey}.lock`)
-        let release;
+        let release
         try {
             await fileSystemUtils.threadSafeMkdir(lockFolderPath)
             release = await lockfile.lock(lockPathFile, {
@@ -58,5 +59,5 @@ export const fileSystemUtils = {
                 await release()
             }
         }
-    }
+    },
 }

@@ -18,7 +18,7 @@ export const memoryLock = {
         return {
             release: async () => {
                 release()
-            }
+            },
         }
     },
     isTimeoutError: (e: unknown): boolean => {
