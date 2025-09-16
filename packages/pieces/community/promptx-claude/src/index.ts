@@ -5,9 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { askClaude } from './lib/actions/ask-claude';
 import {
-  baseUrlMap,
-  Production,
-  Test,
+  baseUrlMap
 } from './lib/common/common';
 import { extractStructuredDataAction } from './lib/actions/extract-structured-data';
 import { PieceCategory } from '@activepieces/shared';
@@ -20,17 +18,17 @@ export const promptxAuth = PieceAuth.CustomAuth({
       options: {
         options: [
           {
-            label: Production,
-            value: Production,
+            label: 'Production',
+            value: 'production',
           },
           {
-            label: Test,
-            value: Test,
+            label: 'Test',
+            value: 'staging',
           },
         ],
       },
       required: true,
-      defaultValue: Production,
+      defaultValue: 'production',
     }),
     username: Property.ShortText({
       displayName: 'Username',
@@ -51,16 +49,24 @@ export const promptxAuth = PieceAuth.CustomAuth({
         error: 'Empty Username or Password',
       };
     }
-    const response = await fetch(baseUrlMap[auth.server]['loginUrl'], {
+    
+    const loginUrl = baseUrlMap[auth.server].loginUrl;
+    const isStaging = auth.server === 'staging';
+    const body = isStaging
+      ? new URLSearchParams({ username, password }).toString()
+      : JSON.stringify({ username, password });
+    const headers = {
+      'Content-Type': isStaging
+        ? 'application/x-www-form-urlencoded'
+        : 'application/json',
+    };
+
+    const response = await fetch(loginUrl, {
       method: 'POST',
-      body: new URLSearchParams({
-        username: username,
-        password: password,
-      }).toString(),
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      body,
+      headers,
     });
+
     if (response.status === 200) {
       return {
         valid: true,
