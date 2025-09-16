@@ -35,10 +35,11 @@
       document.addEventListener('DOMContentLoaded', function (event) {
         window.onmessage = function (e) {
           try {
-            const payload = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+            const payload = e.data && e.data === 'string' ? JSON.parse(e.data) : e.data;
 
             if (!payload) {
-              throw new Error('Payload is empty');
+              console.warn('Event payload from parent container is empty');
+              return;
             }
 
             console.log('Payload received', payload)
