@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { gauzyAuth } from '../../../index';
-import { getAuthHeaders, getBaseUrl, LanguagesEnum } from '../../common';
+import { getAuthHeaders, getBaseUrl, LanguagesEnum, dynamicProps } from '../../common';
 
 export const createEmployee = createAction({
   auth: gauzyAuth,
@@ -9,29 +9,27 @@ export const createEmployee = createAction({
   displayName: 'Create Employee',
   description: 'Create a new employee in Gauzy',
   props: {
+    organizationId: dynamicProps.organizations,
     email: Property.ShortText({
       displayName: 'Email',
       required: true,
-    }),
-    roleId: Property.ShortText({
-      displayName: 'Role ID',
-      required: false,
-    }),
-    role: Property.ShortText({
-      displayName: 'Role',
-      required: false,
+      description: 'Employee email address',
     }),
     firstName: Property.ShortText({
       displayName: 'First Name',
       required: true,
+      description: 'Employee first name',
     }),
     lastName: Property.ShortText({
       displayName: 'Last Name',
       required: true,
+      description: 'Employee last name',
     }),
+    roleId: dynamicProps.roles,
     imageUrl: Property.ShortText({
-      displayName: 'Image URL',
+      displayName: 'Profile Image URL',
       required: false,
+      description: 'URL to employee profile picture',
     }),
     preferredLanguage: Property.StaticDropdown({
       displayName: 'Preferred Language',
@@ -44,13 +42,10 @@ export const createEmployee = createAction({
         })),
       },
     }),
-    userId: Property.ShortText({
-      displayName: 'User ID',
-      required: false,
-    }),
     password: Property.ShortText({
       displayName: 'Password',
       required: false,
+      description: 'Initial password for the employee account (optional)',
     }),
   },
   async run(context) {
@@ -60,15 +55,14 @@ export const createEmployee = createAction({
     const body = {
       user: {
         email: context.propsValue.email,
-        roleId: context.propsValue.roleId,
-        role: context.propsValue.role,
         firstName: context.propsValue.firstName,
         lastName: context.propsValue.lastName,
         imageUrl: context.propsValue.imageUrl,
         preferredLanguage: context.propsValue.preferredLanguage || LanguagesEnum.ENGLISH,
+        ...(context.propsValue.roleId ? { roleId: context.propsValue.roleId } : {}),
       },
-      userId: context.propsValue.userId,
-      password: context.propsValue.password,
+      organizationId: context.propsValue.organizationId,
+      ...(context.propsValue.password ? { password: context.propsValue.password } : {}),
     };
 
     const response = await httpClient.sendRequest({

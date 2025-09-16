@@ -71,7 +71,7 @@ export const newTask = createTrigger({
       context.auth,
       context.webhookUrl,
       context.propsValue.tenantId,
-      context.propsValue.organizationId || '',
+      (context.propsValue.organizationId as string) || '',
       ['task.created'],
       eventFilter
     );

@@ -41,7 +41,7 @@ export const newEmployee = createTrigger({
       context.auth,
       context.webhookUrl,
       context.propsValue.tenantId,
-      context.propsValue.organizationId || '',
+      (context.propsValue.organizationId as string) || '',
       ['employee.created']
     );
     

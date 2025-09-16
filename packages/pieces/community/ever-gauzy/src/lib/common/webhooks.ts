@@ -2,13 +2,10 @@ import { Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { getAuthHeaders, getBaseUrl } from './auth';
+import { dynamicProps } from './dynamic-props';
 
 export const gauzyWebhookCommon = {
-  organizationId: Property.ShortText({
-    displayName: 'Organization ID',
-    required: false,
-    description: 'The ID of the organization to monitor for events',
-  }),
+  organizationId: dynamicProps.organizations,
 
   tenantId: Property.ShortText({
     displayName: 'Tenant ID',

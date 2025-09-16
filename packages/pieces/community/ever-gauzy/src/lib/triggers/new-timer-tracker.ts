@@ -53,7 +53,7 @@ export const newTimeTrack = createTrigger({
             context.auth,
             context.webhookUrl,
             context.propsValue.tenantId,
-            context.propsValue.organizationId || '',
+            (context.propsValue.organizationId as string) || '',
             ['timesheet.time-log.created'],
             eventFilter
         );
