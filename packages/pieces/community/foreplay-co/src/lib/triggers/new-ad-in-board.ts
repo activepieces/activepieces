@@ -90,7 +90,7 @@ const polling: Polling<string, Record<string, any>> = {
 export const newAdInBoard = createTrigger({
   name: 'newAdInBoard',
   displayName: 'New Ad in Board',
-  description: 'Triggers when a new ad is added to a specific board that the user has access to.',
+  description: 'Triggers when a new ad is added to the selected board.',
   type: TriggerStrategy.POLLING,
   sampleData: {
     id: "ad_789",

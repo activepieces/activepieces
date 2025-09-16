@@ -4,19 +4,47 @@ import { HttpMethod, Polling, DedupeStrategy, pollingHelper } from "@activepiece
 import { newSwipefileAd as newSwipefileAdProperties } from "../properties";
 import { newSwipefileAdSchema } from "../schemas";
 
-const polling: Polling<string, {}> = {
+const polling: Polling<string, Record<string, any>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     console.log(`[New Swipefile Ad Polling] Fetching swipefile ads, lastFetch: ${new Date(lastFetchEpochMS || 0).toISOString()}`);
+
+    const queryParams: Record<string, string> = {
+      limit: String(250), // Max limit to get more ads
+      order: 'newest'
+    };
+
+    // Add optional filters if provided
+    if (propsValue['start_date']) {
+      queryParams['start_date'] = propsValue['start_date'];
+    }
+    if (propsValue['end_date']) {
+      queryParams['end_date'] = propsValue['end_date'];
+    }
+    if (propsValue['live'] !== undefined) {
+      queryParams['live'] = String(propsValue['live'] === 'true');
+    }
+    if (propsValue['display_format'] && propsValue['display_format'].length > 0) {
+      (queryParams as any).display_format = propsValue['display_format'];
+    }
+    if (propsValue['publisher_platform'] && propsValue['publisher_platform'].length > 0) {
+      (queryParams as any).publisher_platform = propsValue['publisher_platform'];
+    }
+    if (propsValue['niches'] && propsValue['niches'].length > 0) {
+      (queryParams as any).niches = propsValue['niches'];
+    }
+    if (propsValue['market_target'] && propsValue['market_target'].length > 0) {
+      (queryParams as any).market_target = propsValue['market_target'];
+    }
+    if (propsValue['languages'] && propsValue['languages'].length > 0) {
+      (queryParams as any).languages = propsValue['languages'];
+    }
 
     const response = await foreplayCoApiCall({
       apiKey: auth,
       method: HttpMethod.GET,
       resourceUri: '/api/swipefile/ads',
-      queryParams: {
-        limit: String(100),
-        order: 'newest'
-      },
+      queryParams,
     });
 
     const responseBody = response.body;
@@ -39,7 +67,7 @@ const polling: Polling<string, {}> = {
 export const newSwipefileAd = createTrigger({
   name: 'newSwipefileAd',
   displayName: 'New Swipefile Ad',
-  description: 'Triggers when a new ad is added to the user\'s swipefile collection.',
+  description: 'Triggers when a new ad is added to your swipefile collection.',
   type: TriggerStrategy.POLLING,
   sampleData: {
     id: "ad_123456789",

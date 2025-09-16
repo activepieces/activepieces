@@ -1,62 +1,103 @@
-import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
-import { foreplayCoApiCall } from "../common";
-import { HttpMethod, Polling, DedupeStrategy, pollingHelper } from "@activepieces/pieces-common";
-import { newAdInSpyder as newAdInSpyderProperties } from "../properties";
-import { newAdInSpyderSchema } from "../schemas";
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { foreplayCoApiCall } from '../common';
+import {
+  HttpMethod,
+  Polling,
+  DedupeStrategy,
+  pollingHelper,
+} from '@activepieces/pieces-common';
+import { newAdInSpyder as newAdInSpyderProperties } from '../properties';
+import { newAdInSpyderSchema } from '../schemas';
 
-const polling: Polling<string, { brand_id: string }> = {
+const polling: Polling<string, any> = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+  items: async ({ auth, propsValue }) => {
     const { brand_id } = propsValue;
 
-    console.log(`[New Ad in Spyder Polling] Fetching ads for brand: ${brand_id}, lastFetch: ${new Date(lastFetchEpochMS || 0).toISOString()}`);
+    // Build query parameters with user's filter preferences
+    const queryParams = new URLSearchParams();
+    queryParams.append('brand_id', brand_id);
+    queryParams.append('limit', String(50)); // Reasonable default for polling
+    queryParams.append('order', 'newest');
+
+    // Add optional filters if provided
+    if (propsValue['live']) {
+      queryParams.append('live', String(propsValue['live']));
+    }
+    if (
+      propsValue['display_format'] &&
+      propsValue['display_format'].length > 0
+    ) {
+      propsValue['display_format'].forEach((format: unknown) => {
+        queryParams.append('display_format', String(format));
+      });
+    }
+    if (
+      propsValue['publisher_platform'] &&
+      propsValue['publisher_platform'].length > 0
+    ) {
+      propsValue['publisher_platform'].forEach((platform: unknown) => {
+        queryParams.append('publisher_platform', String(platform));
+      });
+    }
+    if (propsValue['niches'] && propsValue['niches'].length > 0) {
+      propsValue['niches'].forEach((niche: unknown) => {
+        queryParams.append('niches', String(niche));
+      });
+    }
+    if (propsValue['market_target'] && propsValue['market_target'].length > 0) {
+      propsValue['market_target'].forEach((target: unknown) => {
+        queryParams.append('market_target', String(target));
+      });
+    }
+    if (propsValue['languages'] && propsValue['languages'].length > 0) {
+      propsValue['languages'].forEach((language: unknown) => {
+        queryParams.append('languages', String(language));
+      });
+    }
+
+    const queryString = queryParams.toString();
+    const fullUrl = `/api/spyder/brand/ads?${queryString}`;
 
     const response = await foreplayCoApiCall({
       apiKey: auth,
       method: HttpMethod.GET,
-      resourceUri: '/api/spyder/brand/ads',
-      queryParams: {
-        brand_id: brand_id,
-        limit: String(100),
-        order: 'newest'
-      },
+      resourceUri: fullUrl,
     });
 
     const responseBody = response.body;
 
     if (!responseBody.metadata || !responseBody.metadata.success) {
-      console.log(`[New Ad in Spyder Polling] API call failed:`, responseBody);
       return [];
     }
 
     const ads = responseBody.data || [];
-    console.log(`[New Ad in Spyder Polling] Found ${ads.length} ads for brand ${brand_id}`);
 
     return ads.map((ad: any) => ({
       epochMilliSeconds: new Date(ad.created_at).getTime(),
       data: ad,
     }));
-  }
+  },
 };
 
 export const newAdInSpyder = createTrigger({
   name: 'newAdInSpyder',
   displayName: 'New Ad in Spyder',
-  description: 'Triggers when a new brand ad is added in Spyder for a specific brand.',
+  description: 'Triggers when new ads are added for a brand in Spyder.',
   type: TriggerStrategy.POLLING,
   sampleData: {
-    id: "ad_123456789",
-    brand_id: "brand_987654321",
-    title: "New Summer Sale Ad",
-    description: "A great summer sale ad.",
+    id: 'ad_123456789',
+    brand_id: 'brand_987654321',
+    title: 'New Summer Sale Ad',
+    description: 'A great summer sale ad.',
     live: true,
-    display_format: "video",
-    publisher_platform: ["facebook"],
-    niches: ["fashion"],
-    market_target: "b2c",
-    languages: ["en"],
-    created_at: "2024-01-15T10:30:00Z",
-    updated_at: "2024-01-15T10:30:00Z"
+    display_format: 'video',
+    publisher_platform: ['facebook'],
+    niches: ['fashion'],
+    market_target: 'b2c',
+    languages: ['en'],
+    created_at: '2024-01-15T10:30:00Z',
+    updated_at: '2024-01-15T10:30:00Z',
   },
 
   props: newAdInSpyderProperties(),
@@ -106,21 +147,7 @@ export const newAdInSpyder = createTrigger({
       files: context.files,
     });
 
-    // Transform the result to match our expected format
-    return result.map((item: any) => ({
-      id: item.data.id,
-      brand_id: item.data.brand_id,
-      title: item.data.title,
-      description: item.data.description,
-      live: item.data.live,
-      display_format: item.data.display_format,
-      publisher_platform: item.data.publisher_platform,
-      niches: item.data.niches,
-      market_target: item.data.market_target,
-      languages: item.data.languages,
-      created_at: item.data.created_at,
-      updated_at: item.data.updated_at,
-      metadata: { success: true, message: 'New ad detected' }
-    }));
-  }
+    // Return clean ad data for automation workflows
+    return result.map((item: any) => item.data);
+  },
 });

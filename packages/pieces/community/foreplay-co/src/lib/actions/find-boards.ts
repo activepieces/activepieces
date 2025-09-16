@@ -1,27 +1,22 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { foreplayCoApiCall } from "../common";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { createAction } from '@activepieces/pieces-framework';
+import { foreplayCoApiCall } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { findBoards as findBoardsProperties } from '../properties';
+import { findBoardsSchema } from '../schemas';
 
 export const findBoards = createAction({
   name: 'findBoards',
   displayName: 'Find Boards',
-  description: 'Finds all boards associated with the authenticated user. Supports pagination with offset and limit parameters.',
-  props: {
-    offset: Property.Number({
-      displayName: 'Offset',
-      description: 'The offset for pagination (default 0).',
-      required: false,
-      defaultValue: 0,
-    }),
-    limit: Property.Number({
-      displayName: 'Limit',
-      description: 'The limit for pagination (default 10, max 10).',
-      required: false,
-      defaultValue: 10,
-    }),
-  },
+  description: 'Get all boards for the authenticated user with pagination.',
+  props: findBoardsProperties(),
   async run({ auth, propsValue }) {
-    const values = propsValue as Record<string, any>;
+    // Validate props using Zod schema
+    const validation = findBoardsSchema.safeParse(propsValue);
+    if (!validation.success) {
+      throw new Error(`Validation failed: ${validation.error.message}`);
+    }
+
+    const values = propsValue;
     const queryParams: Record<string, string> = {};
 
     // Add optional parameters if provided
@@ -32,8 +27,6 @@ export const findBoards = createAction({
       queryParams['limit'] = String(values['limit']);
     }
 
-    console.log(`[Find Boards] Making API call with params:`, queryParams);
-
     const response = await foreplayCoApiCall({
       apiKey: auth as string,
       method: HttpMethod.GET,
@@ -41,32 +34,19 @@ export const findBoards = createAction({
       queryParams,
     });
 
-    console.log(`[Find Boards] API response:`, JSON.stringify(response.body, null, 2));
-
     const responseBody = response.body;
 
     // Check if the response is successful
     if (responseBody.metadata && responseBody.metadata.success === true) {
-      // Return the structured response with both metadata and data
-      return {
-        success: true,
-        metadata: responseBody.metadata,
-        data: responseBody.data,
-        // Also include top-level fields for easy access
-        boards: responseBody.data,
-        statusCode: responseBody.metadata.status_code,
-        message: responseBody.metadata.message
-      };
+      // Return just the boards data for clean automation workflows
+      return responseBody.data;
     } else {
-      // Handle error responses
-      return {
-        success: false,
-        metadata: responseBody.metadata,
-        error: responseBody.error,
-        data: responseBody.data || null,
-        statusCode: responseBody.metadata?.status_code || response.status,
-        message: responseBody.metadata?.message || 'Request failed'
-      };
+      // Handle error responses by throwing an error
+      const errorMessage =
+        responseBody.error ||
+        responseBody.metadata?.message ||
+        'Failed to retrieve boards';
+      throw new Error(`Foreplay.co API Error: ${errorMessage}`);
     }
   },
 });
