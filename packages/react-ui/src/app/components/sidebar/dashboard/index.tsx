@@ -38,12 +38,12 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { isNil, Permission } from '@activepieces/shared';
 
-import { HelpAndFeedback } from '../../help-and-feedback';
+// import { HelpAndFeedback } from '../../help-and-feedback';
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import { AppSidebarHeader } from '../sidebar-header';
 import { SidebarUser } from '../sidebar-user';
-import SidebarUsageLimits from '../sidebare-usage-limits';
+// import SidebarUsageLimits from '../sidebare-usage-limits';
 
 export function ProjectDashboardSidebar() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -146,7 +146,7 @@ export function ProjectDashboardSidebar() {
       label: t('Environments'),
       icon: GitBranch,
       type: 'link',
-      show: checkAccess(Permission.READ_PROJECT_RELEASE),
+      show: false && checkAccess(Permission.READ_PROJECT_RELEASE),
     },
   ];
 
@@ -223,8 +223,8 @@ export function ProjectDashboardSidebar() {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          <HelpAndFeedback />
-          <SidebarUsageLimits />
+          {/*<HelpAndFeedback />*/}
+          {/*<SidebarUsageLimits />*/}
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>

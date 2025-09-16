@@ -34,9 +34,10 @@ import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { PlatformRole } from '@activepieces/shared';
+import { ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
 
 import { ProjectSettingsDialog } from '../project-settings';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 export function SidebarUser() {
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -48,7 +49,14 @@ export function SidebarUser() {
   const queryClient = useQueryClient();
   const { reset } = useTelemetry();
 
+  const { data: loginUrl } = flagsHooks.useFlag<string>(ApFlagId.LOGIN_URL);
+  const isExternalLogin = !isNil(loginUrl);
+
   const isInPlatformAdmin = location.pathname.startsWith('/platform');
+
+  if (isExternalLogin) {
+    return null;
+  }
 
   if (!user || embedState.isEmbedded) {
     return null;

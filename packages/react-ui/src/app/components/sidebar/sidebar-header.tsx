@@ -19,7 +19,7 @@ export const AppSidebarHeader = () => {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const branding = flagsHooks.useWebsiteBranding();
   const showSwitcher =
-    edition !== ApEdition.COMMUNITY && !embedState.isEmbedded;
+    true || (edition !== ApEdition.COMMUNITY && !embedState.isEmbedded);
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
 
