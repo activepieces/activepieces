@@ -1,7 +1,7 @@
 import { microsoftTeamsAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { Client } from '@microsoft/microsoft-graph-client';
 import { microsoftTeamsCommon } from '../common';
-import { createGraphClient, withGraphRetry } from '../common/graph';
 
 export const sendChannelMessageAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -37,7 +37,11 @@ export const sendChannelMessageAction = createAction({
 	async run(context) {
 		const { teamId, channelId, contentType, content } = context.propsValue;
 
-		const client = createGraphClient(context.auth.access_token);
+		const client = Client.initWithMiddleware({
+			authProvider: {
+				getAccessToken: () => Promise.resolve(context.auth.access_token),
+			},
+		});
 
 		//https://learn.microsoft.com/en-us/graph/api/channel-post-messages?view=graph-rest-1.0&tabs=http
 		const chatMessage = {
@@ -47,6 +51,6 @@ export const sendChannelMessageAction = createAction({
 			},
 		};
 
-		return await withGraphRetry(() => client.api(`/teams/${teamId}/channels/${channelId}/messages`).post(chatMessage));
+		return await client.api(`/teams/${teamId}/channels/${channelId}/messages`).post(chatMessage);
 	},
 });

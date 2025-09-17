@@ -1,7 +1,7 @@
 import { microsoftTeamsAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { Client } from '@microsoft/microsoft-graph-client';
 import { microsoftTeamsCommon } from '../common';
-import { createGraphClient, withGraphRetry } from '../common/graph';
 
 export const createChannelAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -22,13 +22,17 @@ export const createChannelAction = createAction({
 	async run(context) {
 		const { teamId, channelDescription, channelDisplayName } = context.propsValue;
 
-		const client = createGraphClient(context.auth.access_token);
+		const client = Client.initWithMiddleware({
+			authProvider: {
+				getAccessToken: () => Promise.resolve(context.auth.access_token),
+			},
+		});
 
 		const channel = {
 			displayName: channelDisplayName,
 			description: channelDescription,
 		};
 
-		return await withGraphRetry(() => client.api(`/teams/${teamId}/channels`).post(channel));
+		return await client.api(`/teams/${teamId}/channels`).post(channel);
 	},
 });
