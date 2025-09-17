@@ -10,11 +10,15 @@ export const airtableGetRecordByIdAction = createAction({
   props: {
     base: airtableCommon.base,
     tableId: airtableCommon.tableId,
-    recordId: airtableCommon.recordId,
+    recordId: airtableCommon.recordIdDropdown,
   },
   async run(context) {
     const personalToken = context.auth;
     const { base: baseId, tableId, recordId } = context.propsValue;
+
+    if (!baseId || !tableId || !recordId) {
+      throw new Error('Base, Table, and Record must be selected.');
+    }
 
     return await airtableCommon.getRecordById({
       personalToken,

@@ -10,7 +10,7 @@ export const airtableAddCommentToRecordAction = createAction({
   props: {
     base: airtableCommon.base,
     tableId: airtableCommon.tableId,
-    recordId: airtableCommon.recordId,
+    recordId: airtableCommon.recordIdDropdown,
     text: Property.LongText({
       displayName: 'Comment Text',
       description:
@@ -33,6 +33,10 @@ export const airtableAddCommentToRecordAction = createAction({
       text,
       parentCommentId,
     } = context.propsValue;
+
+    if (!baseId || !tableId || !recordId) {
+      throw new Error('Base, Table, and Record must be selected.');
+    }
 
     return await airtableCommon.createComment({
       personalToken,

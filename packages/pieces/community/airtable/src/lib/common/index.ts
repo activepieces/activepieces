@@ -4,7 +4,12 @@ import {
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import {
+  DynamicPropsValue,
+  Property,
+  DropdownOption,
+  DropdownState,
+} from '@activepieces/pieces-framework';
 import Airtable from 'airtable';
 import {
   AirtableBase,
@@ -275,6 +280,65 @@ export const airtableCommon = {
           value: field.name,
         })),
       };
+    },
+  }),
+
+  recordIdDropdown: Property.Dropdown({
+    displayName: 'Record',
+    required: true,
+    refreshers: ['base', 'tableId'],
+    options: async ({
+      auth,
+      base,
+      tableId,
+    }): Promise<DropdownState<string>> => {
+      if (!auth || !base || !tableId) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a Base and Table first.',
+        };
+      }
+      try {
+        const table = await airtableCommon.fetchTable({
+          token: auth as string,
+          baseId: base as string,
+          tableId: tableId as string,
+        });
+        const primaryField = table.fields.find(
+          (f: AirtableField) => f.id === table.primaryFieldId
+        );
+        const primaryFieldName = primaryField?.name || 'ID';
+
+        const records: AirtableRecord[] = await airtableCommon.listRecords({
+          personalToken: auth as string,
+          baseId: base as string,
+          tableId: tableId as string,
+        });
+
+        const options: DropdownOption<string>[] = records.map(
+          (record: AirtableRecord) => {
+            const recordValue = record.fields[primaryFieldName] as string;
+            const label = recordValue || record.id;
+            return {
+              label: label,
+              value: record.id,
+            };
+          }
+        );
+
+        return {
+          disabled: false,
+          options: options,
+        };
+      } catch (e) {
+        console.debug(e);
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Error fetching records. Check permissions.',
+        };
+      }
     },
   }),
 
@@ -674,6 +738,28 @@ export const airtableCommon = {
     } while (offset);
 
     return allBases;
+  },
+
+  async listRecords({
+    personalToken: token,
+    baseId,
+    tableId,
+  }: Params): Promise<AirtableRecord[]> {
+    if (!baseId || !tableId) {
+      throw new Error('Base ID and Table ID must be provided to list records.');
+    }
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+    };
+    const response = await httpClient.sendRequest<{
+      records: AirtableRecord[];
+    }>(request);
+    return response.body.records;
   },
 };
 
