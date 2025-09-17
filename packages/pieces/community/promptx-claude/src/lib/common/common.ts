@@ -85,33 +85,33 @@ export const getAccessToken = async (
   password: string
 ): Promise<string | null> => {
   const isStaging = server === 'staging';
-    const body = isStaging
-      ? new URLSearchParams({ username, password }).toString()
-      : JSON.stringify({ username, password });
+  const body = isStaging
+    ? new URLSearchParams({ username, password }).toString()
+    : JSON.stringify({ username, password });
 
-    const headers = {
-      'Content-Type': isStaging
-        ? 'application/x-www-form-urlencoded'
-        : 'application/json',
-    };
+  const headers = {
+    'Content-Type': isStaging
+      ? 'application/x-www-form-urlencoded'
+      : 'application/json',
+  };
 
-    const response = await fetch(baseUrlMap[server].loginUrl, {
-      method: 'POST',
-      body,
-      headers,
-    });
+  const response = await fetch(baseUrlMap[server].loginUrl, {
+    method: 'POST',
+    body,
+    headers,
+  });
 
-    const data: AccessTokenResponse = await response.json();
+  const data: AccessTokenResponse = await response.json();
 
-    if (response.status !== 200) {
-      throw new Error(data?.error || data?.message);
-    }
+  if (response.status !== 200) {
+    throw new Error(data?.error || data?.message);
+  }
 
-    if (!data.access_token) {
-      throw new Error(data?.error || data?.message);
-    }
+  if (!data.access_token) {
+    throw new Error(data?.error || data?.message);
+  }
 
-    return data.access_token;
+  return data.access_token;
 };
 
 export const addTokenUsage = async (
