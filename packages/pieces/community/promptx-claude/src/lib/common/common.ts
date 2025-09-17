@@ -58,7 +58,7 @@ type AccessTokenResponse = {
 };
 
 export const baseUrlMap: Record<string, UrlConfig> = {
-  ['production']: {
+  production: {
     loginUrl: 'https://centerapp.io/center/auth/login',
     quotaCheckUrl:
       'https://promptxai.com/zero-service/pmtx-ai-token-api/v1/quota-check',
@@ -68,7 +68,7 @@ export const baseUrlMap: Record<string, UrlConfig> = {
     getAIKeyUrl:
       'https://promptxai.com/zero-service/pmtx-ai-token-api/v1/api-key?key=claudeKey',
   },
-  ['staging']: {
+  staging: {
     loginUrl: 'https://test.oneweb.tech/zero-service/pmtx/login',
     quotaCheckUrl:
       'https://test.oneweb.tech/zero-service/pmtx-ai-token-api/v1/quota-check',
@@ -88,29 +88,29 @@ export const getAccessToken = async (
     const body = isStaging
       ? new URLSearchParams({ username, password }).toString()
       : JSON.stringify({ username, password });
-  
+
     const headers = {
       'Content-Type': isStaging
         ? 'application/x-www-form-urlencoded'
         : 'application/json',
     };
-  
+
     const response = await fetch(baseUrlMap[server].loginUrl, {
       method: 'POST',
       body,
       headers,
     });
-  
+
     const data: AccessTokenResponse = await response.json();
-  
+
     if (response.status !== 200) {
       throw new Error(data?.error || data?.message);
     }
-  
+
     if (!data.access_token) {
       throw new Error(data?.error || data?.message);
     }
-  
+
     return data.access_token;
 };
 
