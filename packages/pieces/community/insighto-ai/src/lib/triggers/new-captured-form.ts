@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { CapturedFormWebhookSchema, CapturedFormWebhook } from '../schemas';
+import { CapturedFormWebhookSchema } from '../schemas';
 
 export const newCapturedForm = createTrigger({
   name: 'new_captured_form',
@@ -64,6 +64,7 @@ export const newCapturedForm = createTrigger({
         queryParams: { api_key: apiKey },
       });
     } catch {
+      // Webhook deletion failed, ignore error
     }
 
     await context.store.delete('webhook_id');

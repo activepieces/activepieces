@@ -1,4 +1,4 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { ContactItemSchema, ContactItem } from '../schemas';
 

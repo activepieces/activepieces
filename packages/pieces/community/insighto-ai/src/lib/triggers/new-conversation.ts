@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ConversationWebhookSchema, ConversationWebhook } from '../schemas';
+import { ConversationWebhookSchema } from '../schemas';
 
 export const newConversation = createTrigger({
   name: 'new_conversation',
@@ -86,6 +86,7 @@ export const newConversation = createTrigger({
         queryParams: { api_key: apiKey },
       });
     } catch {
+      // Webhook deletion failed, ignore error
     }
 
     await context.store.delete('webhook_id');
