@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/volubile/package.json",
         "main": "packages/pieces/community/volubile/src/index.ts",
         "assets": [
-          "packages/pieces/community/volubile/*.md"
+          "packages/pieces/community/volubile/*.md",
+            {
+                "input": "packages/pieces/community/volubile/src/i18n",
+                "output": "./src/i18n",
+                "glob": "**/!(i18n.json)"
+            }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
