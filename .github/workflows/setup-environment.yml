@@ -27,14 +27,30 @@ jobs:
           SSH_USER: ${{ secrets.PRE_PROD_USERNAME }}
           SSH_KEY: ${{ secrets.PRE_PROD_SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.PRE_PROD_HOST }}
+
+      - name: Check if PR has preview label
+        id: check-label
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const hasPreviewLabel = labels.some(label => label.name === 'preview');
+            core.setOutput('has-preview-label', hasPreviewLabel);
+            return hasPreviewLabel;
           
       - name: Setup Environment
         id: setup
+        if: steps.check-label.outputs.has-preview-label == 'true'
         run: |
           ssh preview-server -t -t 'bash -ic "cd /root/environments && node index.js setup ${{ github.head_ref }}; exit"'
           echo "environment_url=https://${{ github.head_ref }}.preview.example.com" >> $GITHUB_OUTPUT
 
       - name: Comment on PR
+        if: steps.check-label.outputs.has-preview-label == 'true'
         uses: actions/github-script@v6
         with:
           script: |
