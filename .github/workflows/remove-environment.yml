@@ -21,10 +21,10 @@ jobs:
             StrictHostKeyChecking no
           END
         env:
-          SSH_USER: ${{ secrets.PREVIEW_USERNAME }}
-          SSH_KEY: ${{ secrets.DEVOPS_SSH_PRIVATE_KEY }}
+          SSH_USER: ${{ secrets.PRE_PROD_USERNAME }}
+          SSH_KEY: ${{ secrets.PREVIEW_SSH_KEY }}
           SSH_HOST: ${{ secrets.PREVIEW_HOST }}
-          
+
       - name: Remove Environment
         run: |
           ssh preview-server -t -t 'bash -ic "cd /root/environments && node index.js remove ${{ github.head_ref }}; exit"'
