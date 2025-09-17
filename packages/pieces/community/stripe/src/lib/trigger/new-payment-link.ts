@@ -1,5 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { stripeCommon, StripeWebhookInformation } from '../common';
+import { stripeCommon } from '../common';
+import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
 
 type StripeWebhookPayload = {
