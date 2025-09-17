@@ -10,6 +10,7 @@ import { stripeNewPayment } from './lib/trigger/new-payment';
 import { stripeNewSubscription } from './lib/trigger/new-subscription';
 import { stripePaymentFailed } from './lib/trigger/payment-failed';
 import { stripeSearchSubscriptions } from './lib/actions/search-subscriptions';
+import { stripeNewCharge } from './lib/trigger/new-charge';
 
 export const stripeAuth = PieceAuth.SecretText({
   displayName: 'Secret API Key',
@@ -23,7 +24,16 @@ export const stripe = createPiece({
 
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
-  authors: ["lldiegon","doskyft","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: [
+    'lldiegon',
+    'doskyft',
+    'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+    'Prabhukiran161',
+  ],
   categories: [PieceCategory.COMMERCE, PieceCategory.PAYMENT_PROCESSING],
   auth: stripeAuth,
   actions: [
@@ -45,5 +55,6 @@ export const stripe = createPiece({
     stripeNewCustomer,
     stripePaymentFailed,
     stripeNewSubscription,
+    stripeNewCharge,
   ],
 });

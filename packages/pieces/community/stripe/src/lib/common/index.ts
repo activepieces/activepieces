@@ -49,3 +49,7 @@ export const stripeCommon = {
     return await httpClient.sendRequest(request);
   },
 };
+
+export interface StripeWebhookInformation {
+  webhookId: string;
+}
