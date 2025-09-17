@@ -1,0 +1,30 @@
+name: Remove Environment
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  Remove-Preview-Environment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/preview-server.key
+          chmod 600 ~/.ssh/preview-server.key
+          cat >>~/.ssh/config <<END
+          Host preview-server
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/preview-server.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.PREVIEW_USERNAME }}
+          SSH_KEY: ${{ secrets.DEVOPS_SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.PREVIEW_HOST }}
+          
+      - name: Remove Environment
+        run: |
+          ssh preview-server -t -t 'bash -ic "cd /root/environments && node index.js remove ${{ github.head_ref }}; exit"'
