@@ -3,9 +3,9 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import {
 	createTrigger,
 	PiecePropValueSchema,
-	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/shared';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { Chat, ChatType } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
@@ -18,20 +18,8 @@ export const newChatTrigger = createTrigger({
 	auth: microsoftTeamsAuth,
 	name: 'new-chat',
 	displayName: 'New Chat',
-	description: 'Triggers when a new 1-on-1 or group chat is created.',
-	props: {
-		chatType: Property.StaticDropdown({
-			displayName: 'Chat Type (optional filter)',
-			required: false,
-			options: {
-				disabled: false,
-				options: [
-					{ label: 'One-on-one', value: 'oneOnOne' },
-					{ label: 'Group', value: 'group' },
-				],
-			},
-		}),
-	},
+	description: 'Triggers when a new chat is created.',
+	props: {},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, {
@@ -65,39 +53,36 @@ export const newChatTrigger = createTrigger({
 
 const polling: Polling<PiecePropValueSchema<typeof microsoftTeamsAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, propsValue, lastFetchEpochMS }) {
+	async items({ auth, lastFetchEpochMS }) {
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(auth.access_token),
 			},
 		});
+		const lastFetchDate = dayjs(lastFetchEpochMS).toISOString();
 
 		const chats: Chat[] = [];
-		const filterType = propsValue.chatType;
+		const filter =
+			lastFetchEpochMS === 0
+				? '$top=10'
+				: `$filter=createdDateTime gt ${lastFetchDate}`;
 
-		if (lastFetchEpochMS === 0) {
-			let response: PageCollection = await client.api('/chats').top(5).get();
-			if (Array.isArray(response.value)) {
-				for (const chat of response.value as Chat[]) {
-					if (filterType && chat.chatType !== filterType) continue;
-					chats.push(chat);
+		let response: PageCollection = await client.api(`/chats?${filter}`).get();
+
+		console.log('RESPONE');
+		console.log(JSON.stringify(response))
+
+		while (response.value && response.value.length > 0) {
+			for (const channel of response.value as Chat[]) {
+				if (isNil(channel.createdDateTime)) {
+					continue;
 				}
+				chats.push(channel);
 			}
-		} else {
-			let response: PageCollection = await client.api('/chats').get();
-			while (response.value && response.value.length > 0) {
-				for (const chat of response.value as Chat[]) {
-					if (filterType && chat.chatType !== filterType) continue;
-					if (!chat.createdDateTime) continue;
-					if (dayjs(chat.createdDateTime).valueOf() > lastFetchEpochMS) {
-						chats.push(chat);
-					}
-				}
-				if (response['@odata.nextLink']) {
-					response = await client.api(response['@odata.nextLink']).get();
-				} else {
-					break;
-				}
+			if (lastFetchEpochMS !== 0 && response['@odata.nextLink']) {
+				response = await client.api(response['@odata.nextLink']).get();
+			} else {
+				break;
 			}
 		}
 

@@ -1,6 +1,9 @@
 import { microsoftTeamsAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { microsoftTeamsCommon } from '../common';
+import { isNil } from '@activepieces/shared';
+import { Chat } from '@microsoft/microsoft-graph-types';
 
 export const createChatAndSendMessageAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -8,40 +11,8 @@ export const createChatAndSendMessageAction = createAction({
 	displayName: 'Create Chat & Send Message',
 	description: 'Start a new chat and send an initial message.',
 	props: {
-		chatType: Property.StaticDropdown({
-			displayName: 'Chat Type',
-			required: true,
-			defaultValue: 'oneOnOne',
-			options: {
-				disabled: false,
-				options: [
-					{ label: 'One-on-one', value: 'oneOnOne' },
-					{ label: 'Group', value: 'group' },
-				],
-			},
-		}),
-		topic: Property.ShortText({
-			displayName: 'Topic (for group chats)',
-			required: false,
-		}),
-		memberIdType: Property.StaticDropdown({
-			displayName: 'Member Identifier Type',
-			required: true,
-			defaultValue: 'email',
-			options: {
-				disabled: false,
-				options: [
-					{ label: 'Email (UPN)', value: 'email' },
-					{ label: 'Microsoft Entra ID (GUID)', value: 'id' },
-				],
-			},
-		}),
-		members: Property.LongText({
-			displayName: 'Chat Members (comma or newline separated, exclude yourself)',
-			required: true,
-			description:
-				"Provide the other participant(s) as emails or IDs based on 'Member Identifier Type'. For one-on-one, specify exactly one.",
-		}),
+		teamId: microsoftTeamsCommon.teamId,
+		members:microsoftTeamsCommon.memberIds(true),
 		contentType: Property.StaticDropdown({
 			displayName: 'Message Content Type',
 			required: true,
@@ -60,7 +31,12 @@ export const createChatAndSendMessageAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { chatType, topic, memberIdType, members, contentType, content } = context.propsValue;
+		const { members, contentType, content } = context.propsValue;
+
+		
+		if (isNil(members)) {
+			throw new Error('For one-on-one chats, provide exactly one other member.');
+		}
 
 		const client = Client.initWithMiddleware({
 			authProvider: {
@@ -73,21 +49,8 @@ export const createChatAndSendMessageAction = createAction({
 		const currentUserBind = `https://graph.microsoft.com/v1.0/users('${me.id}')`;
 
 		// Parse provided members
-		const otherMembersRaw: string[] = String(members)
-			.split(/\n|,/)
-			.map((m) => m.trim())
-			.filter((m) => m.length > 0);
+		const otherMembersRaw: string[] = members.map((member)=>`https://graph.microsoft.com/v1.0/users('${member}')`)
 
-		if (chatType === 'oneOnOne' && otherMembersRaw.length !== 1) {
-			throw new Error('For one-on-one chats, provide exactly one other member.');
-		}
-
-		const toUserBind = (value: string) => {
-			if (memberIdType === 'email') {
-				return `https://graph.microsoft.com/v1.0/users('${value}')`;
-			}
-			return `https://graph.microsoft.com/v1.0/users('${value}')`;
-		};
 
 		const membersPayload = [
 			{
@@ -98,17 +61,14 @@ export const createChatAndSendMessageAction = createAction({
 			...otherMembersRaw.map((m) => ({
 				'@odata.type': '#microsoft.graph.aadUserConversationMember',
 				roles: ['owner'],
-				'user@odata.bind': toUserBind(m),
+				'user@odata.bind': m,
 			})),
 		];
 
-		const chatBody: any = {
-			chatType,
+		const chatBody: Chat = {
+			chatType: otherMembersRaw.length ===1 ? 'oneOnOne':'group',
 			members: membersPayload,
 		};
-		if (chatType === 'group' && topic) {
-			chatBody.topic = topic;
-		}
 
 		// Create or get existing chat
 		const chat = await client.api('/chats').post(chatBody);

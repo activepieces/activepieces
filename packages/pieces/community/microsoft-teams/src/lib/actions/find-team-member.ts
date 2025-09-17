@@ -22,49 +22,33 @@ export const findTeamMemberAction = createAction({
 				],
 			},
 		}),
-		query: Property.ShortText({
-			displayName: 'Query',
+		searchValue: Property.ShortText({
+			displayName: 'searchValue',
 			required: true,
 			description: 'Email address or name to search for.',
 		}),
 	},
 	async run(context) {
-		const { teamId, searchBy, query } = context.propsValue as { teamId: string; searchBy: 'email'|'name'; query: string };
+		const { teamId, searchBy, searchValue } = context.propsValue 
 
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(context.auth.access_token),
 			},
-		});
+		})
 
-		const normalizedQuery = String(query).trim().toLowerCase();
-		const matches: any[] = [];
+		const filter = searchBy == 'email' ?`microsoft.graph.aadUserConversationMember/email eq '${searchValue}'`:`microsoft.graph.aadUserConversationMember/displayName eq  '${searchValue}'`;
 
-		// List team members with pagination
-		// https://learn.microsoft.com/graph/api/team-list-members?view=graph-rest-1.0
-		let response: PageCollection = await client.api(`/teams/${teamId}/members`).get();
-		while (response.value && response.value.length > 0) {
-			for (const member of response.value as any[]) {
-				const displayName: string = (member.displayName ?? '').toLowerCase();
-				const email: string = (member.email ?? '').toLowerCase();
-				const isMatch = searchBy === 'email'
-					? email === normalizedQuery || email.includes(normalizedQuery)
-					: displayName === normalizedQuery || displayName.includes(normalizedQuery);
-				if (isMatch) {
-					matches.push(member);
-				}
-			}
-			if (response['@odata.nextLink']) {
-				response = await client.api(response['@odata.nextLink']).get();
-			} else {
-				break;
-			}
-		}
+		const response: PageCollection = await client
+			.api(`/teams/${teamId}/members`)
+			.filter(filter)
+			.get();
 
 		return {
-			bestMatch: matches[0] ?? null,
-			matches,
+			found: response.value.length > 0,
+			result: response.value,
 		};
+		
 	},
 });
 

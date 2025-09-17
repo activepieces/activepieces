@@ -14,7 +14,6 @@ import { newChannelMessageTrigger } from './lib/triggers/new-channel-message';
 import { newChannelTrigger } from './lib/triggers/new-channel';
 import { newChatTrigger } from './lib/triggers/new-chat';
 import { newChatMessageTrigger } from './lib/triggers/new-chat-message';
-import { newTeamMemberTrigger } from './lib/triggers/new-team-member';
 import { createChatAndSendMessageAction } from './lib/actions/create-chat-and-send-message';
 import { createPrivateChannelAction } from './lib/actions/create-private-channel';
 import { getChatMessageAction } from './lib/actions/get-chat-message';
@@ -52,6 +51,7 @@ const authDesc = `
 	  - ChannelMessage.Read.All
 	  - User.ReadBasic.All
 	  - Presence.Read.All
+	  - TeamMember.Read.All
       - openid
       - email
       - profile
@@ -75,6 +75,7 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
 		'Team.ReadBasic.All',
 		'Chat.ReadWrite',
 		'ChannelMessage.Read.All',
+		'TeamMember.Read.All',
     'User.ReadBasic.All',
     'Presence.Read.All',
 	],
@@ -119,5 +120,5 @@ export const microsoftTeams = createPiece({
 			}),
 		}),
 	],
-	triggers: [newChannelMessageTrigger, newChannelTrigger, newChatTrigger, newChatMessageTrigger, newTeamMemberTrigger],
+	triggers: [newChannelMessageTrigger, newChannelTrigger, newChatTrigger, newChatMessageTrigger],
 });

@@ -64,26 +64,21 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftTeamsAuth>, Props> =
 				getAccessToken: () => Promise.resolve(auth.access_token),
 			},
 		});
+		const lastFetchDate = dayjs(lastFetchEpochMS).toISOString();
 
 		const channels: Channel[] = [];
+		const filter = lastFetchEpochMS === 0 ? '' : `?$filter=createdDateTime gt ${lastFetchDate}`;
 
-		let response: PageCollection = await client
-			.api(`/teams/${teamId}/channels`)
-			.get();
+		let response: PageCollection = await client.api(`/teams/${teamId}/channels${filter}`).get();
 
 		while (response.value && response.value.length > 0) {
 			for (const channel of response.value as Channel[]) {
 				if (isNil(channel.createdDateTime)) {
 					continue;
 				}
-				if (
-					lastFetchEpochMS === 0 ||
-					dayjs(channel.createdDateTime).valueOf() > lastFetchEpochMS
-				) {
-					channels.push(channel);
-				}
+				channels.push(channel);
 			}
-			if (response['@odata.nextLink']) {
+			if (lastFetchEpochMS !== 0 && response['@odata.nextLink']) {
 				response = await client.api(response['@odata.nextLink']).get();
 			} else {
 				break;
@@ -98,5 +93,3 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftTeamsAuth>, Props> =
 		});
 	},
 };
-
-

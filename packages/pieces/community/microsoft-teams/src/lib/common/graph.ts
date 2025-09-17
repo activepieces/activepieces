@@ -75,8 +75,7 @@ export const withGraphRetry = async <T>(
 	let attempt = 0;
 	let delayMs = initialDelayMs;
 
-	// eslint-disable-next-line no-constant-condition
-	while (true) {
+	while (attempt <= maxRetries) {
 		try {
 			return await requestFn();
 		} catch (e: any) {
@@ -94,6 +93,7 @@ export const withGraphRetry = async <T>(
 			throw new Error(buildGraphErrorMessage(e));
 		}
 	}
+	throw new Error("Unexpected error occured");
 };
 
 
