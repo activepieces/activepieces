@@ -588,7 +588,7 @@ export const airtableCommon = {
     if (!baseId) {
       throw new Error('Base ID must be provided to create a table.');
     }
-    
+
     if (!name) {
       throw new Error('Table Name must be provided to create a table.');
     }
@@ -601,8 +601,8 @@ export const airtableCommon = {
       description?: string;
       fields: AirtableFieldConfig[];
     } = {
-      name: name, 
-      fields: fieldsConfig, 
+      name: name,
+      fields: fieldsConfig,
     };
 
     if (description) {
@@ -620,6 +620,60 @@ export const airtableCommon = {
     };
     const response = await httpClient.sendRequest(request);
     return response.body;
+  },
+
+  async getRecordById({
+    personalToken: token,
+    baseId,
+    tableId,
+    recordId,
+  }: Params) {
+    if (!baseId || !tableId || !recordId) {
+      throw new Error('Base ID, Table ID, and Record ID must be provided.');
+    }
+
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `https://api.airtable.com/v0/${baseId}/${tableId}/${recordId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+    };
+
+    const response = await httpClient.sendRequest<AirtableRecord>(request);
+    return response.body;
+  },
+
+  async fetchAllBases({ token }: { token: string }): Promise<AirtableBase[]> {
+    const allBases: AirtableBase[] = [];
+    let offset: string | undefined = undefined;
+
+    do {
+      const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: 'https://api.airtable.com/v0/meta/bases',
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: token,
+        },
+        queryParams: offset ? { offset } : {},
+      };
+
+      const response = await httpClient.sendRequest<{
+        bases: AirtableBase[];
+        offset?: string;
+      }>(request);
+
+      if (response.status === 200) {
+        allBases.push(...response.body.bases);
+        offset = response.body.offset;
+      } else {
+        offset = undefined;
+      }
+    } while (offset);
+
+    return allBases;
   },
 };
 

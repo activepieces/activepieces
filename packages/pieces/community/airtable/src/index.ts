@@ -16,6 +16,11 @@ import { airtableUploadFileToColumnAction } from './lib/actions/upload-file-to-c
 import { airtableAddCommentToRecordAction } from './lib/actions/add-comment-to-record';
 import { airtableCreateBaseAction } from './lib/actions/create-base';
 import { airtableCreateTableAction } from './lib/actions/create-table';
+import { airtableGetRecordByIdAction } from './lib/actions/get-record-by-id';
+import { airtableFindTableAction } from './lib/actions/find-table';
+import { airtableFindTableByIdAction } from './lib/actions/find-table-by-id';
+import { airtableFindBaseAction } from './lib/actions/find-base';
+import { airtableGetBaseSchemaAction } from './lib/actions/get-base-schema';
 
 export const airtableAuth = PieceAuth.SecretText({
   displayName: 'Personal Access Token',
@@ -79,6 +84,11 @@ export const airtable = createPiece({
     airtableAddCommentToRecordAction,
     airtableCreateBaseAction,
     airtableCreateTableAction,
+    airtableGetRecordByIdAction,
+    airtableFindTableAction,
+    airtableFindTableByIdAction,
+    airtableFindBaseAction,
+    airtableGetBaseSchemaAction,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://api.airtable.com/v0';
