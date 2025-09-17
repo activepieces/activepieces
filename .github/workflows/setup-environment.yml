@@ -24,9 +24,9 @@ jobs:
             StrictHostKeyChecking no
           END
         env:
-          SSH_USER: ${{ secrets.PREVIEW_USERNAME }}
-          SSH_KEY: ${{ secrets.DEVOPS_SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.PREVIEW_HOST }}
+          SSH_USER: ${{ secrets.PRE_PROD_USERNAME }}
+          SSH_KEY: ${{ secrets.PRE_PROD_SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.PRE_PROD_HOST }}
           
       - name: Setup Environment
         id: setup
