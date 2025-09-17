@@ -1,6 +1,6 @@
 import { InfiniteData, useInfiniteQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import {
   LeftSideBarType,
@@ -11,18 +11,20 @@ import {
   CardListEmpty,
   CardListItemSkeleton,
 } from '@/components/custom/card-list';
+import { Button } from '@/components/ui/button';
+import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { FlowRun, SeekPage } from '@activepieces/shared';
+import { FlowRun, FlowRunStatus, SeekPage } from '@activepieces/shared';
 
 import { SidebarHeader } from '../sidebar-header';
 
 import { FLOW_CARD_HEIGHT, FlowRunCard } from './flow-run-card';
-import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
-import { Button } from '@/components/ui/button';
 
-
-const RunsList = React.memo( ()=> {
+type RunsListItem =
+  | { type: 'flowRun'; run: FlowRun }
+  | { type: 'loadMoreButton'; id: 'loadMoreButton' };
+const RunsList = React.memo(() => {
   const [flow, setLeftSidebar, run] = useBuilderStateContext((state) => [
     state.flow,
     state.setLeftSidebar,
@@ -37,8 +39,12 @@ const RunsList = React.memo( ()=> {
     isRefetching,
     fetchNextPage,
     hasNextPage,
-    isFetchingNextPage
-  } = useInfiniteQuery<SeekPage<FlowRun>, Error, InfiniteData<SeekPage<FlowRun>>>({
+    isFetchingNextPage,
+  } = useInfiniteQuery<
+    SeekPage<FlowRun>,
+    Error,
+    InfiniteData<SeekPage<FlowRun>>
+  >({
     queryKey: ['flow-runs', flow.id],
     getNextPageParam: (lastPage) => lastPage.next,
     initialPageParam: undefined,
@@ -46,21 +52,43 @@ const RunsList = React.memo( ()=> {
       flowRunsApi.list({
         flowId: [flow.id],
         projectId: authenticationSession.getProjectId()!,
-        limit: 20,
+        limit: 15,
         cursor: pageParam as string | undefined,
       }),
     refetchOnMount: true,
     staleTime: 15 * 1000,
+    refetchInterval: (query) => {
+      const allRuns = query.state.data?.pages.flatMap((page) => page.data);
+      const runningRuns = allRuns?.filter(
+        (run) =>
+          run.status === FlowRunStatus.RUNNING ||
+          run.status === FlowRunStatus.QUEUED,
+      );
+      return runningRuns?.length ? 15 * 1000 : false;
+    },
   });
 
+  const allViewedRuns: RunsListItem[] = useMemo(() => {
+    const allRuns = (runs?.pages.flatMap((page) => page.data) ?? []).map(
+      (run) => ({ type: 'flowRun' as const, run }),
+    );
+    if (hasNextPage) {
+      console.log('hasNextPage', hasNextPage);
+      return [
+        ...allRuns,
+        { type: 'loadMoreButton' as const, id: 'loadMoreButton' },
+      ];
+    }
+    return allRuns;
+  }, [runs, hasNextPage]);
+
   return (
-    <>
+    <div className="h-full w-full flex flex-col">
       <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
         {t('Recent Runs')}
       </SidebarHeader>
       <CardList>
-        {(isLoading ) &&
-           <CardListItemSkeleton numberOfCards={10} />}
+        {isLoading && <CardListItemSkeleton numberOfCards={10} />}
 
         {isError && <div>{t('Error, please try again.')}</div>}
 
@@ -68,36 +96,43 @@ const RunsList = React.memo( ()=> {
           runs.pages.flatMap((page) => page.data).length === 0 &&
           !isLoading &&
           !isRefetching && <CardListEmpty message={t('No runs found')} />}
-{
-            hasNextPage && <Button onClick={() => fetchNextPage()} loading={isFetchingNextPage}>Load more</Button>
-          }
-        {
-          runs && runs.pages.flatMap((page) => page.data).length > 0 && (
-            <>
-             <VirtualizedScrollArea
-            className="w-full h-full"
-            items={runs.pages.flatMap((page) => page.data)}
-            estimateSize={() => FLOW_CARD_HEIGHT}
-            getItemKey={(index) => runs.pages.flatMap((page) => page.data)[index].id}
-            renderItem={(item) =>
-              <FlowRunCard
-              refetchRuns={() => {
-                refetch();
-              }}
-              run={item}
-              key={item.id + item.status}
-              viewedRunId={run?.id}
-            ></FlowRunCard>
-            }
-          >
-          </VirtualizedScrollArea>
-          
 
-            </>
-          )
-        }
+        {runs && runs.pages.flatMap((page) => page.data).length > 0 && (
+          <VirtualizedScrollArea
+            className="w-full grow max-w-[calc(100%-6px)]"
+            items={allViewedRuns}
+            estimateSize={() => FLOW_CARD_HEIGHT}
+            getItemKey={(index) => index}
+            renderItem={(item) => {
+              if (item.type === 'flowRun') {
+                return (
+                  <FlowRunCard
+                    refetchRuns={() => {
+                      refetch();
+                    }}
+                    run={item.run}
+                    key={item.run.id + item.run.status}
+                    viewedRunId={run?.id}
+                  ></FlowRunCard>
+                );
+              }
+              return (
+                <div className="mx-5 h-full flex items-center ">
+                  <Button
+                    className="w-full"
+                    variant={'accent'}
+                    onClick={() => fetchNextPage()}
+                    loading={isFetchingNextPage}
+                  >
+                    {t('More...')}
+                  </Button>
+                </div>
+              );
+            }}
+          ></VirtualizedScrollArea>
+        )}
       </CardList>
-    </>
+    </div>
   );
 });
 

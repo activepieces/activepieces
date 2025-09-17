@@ -3,10 +3,10 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import * as React from 'react';
 
+import { cn } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { ScrollArea } from './scroll-area';
-import { cn } from '@/lib/utils';
 
 interface VirtualizedScrollAreaProps<T> {
   items: T[];
@@ -31,7 +31,7 @@ export interface VirtualizedScrollAreaRef {
   ) => void;
 }
 
-const VirtualizedScrollArea =<T,> ({
+const VirtualizedScrollArea = <T,>({
   items,
   renderItem,
   overscan = 5,

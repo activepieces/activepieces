@@ -150,12 +150,15 @@ type VirtualizedItem = {
   id: string;
   displayName: string;
   height: number;
-} & ({
-  isCategory: true;
-} | {
-  isCategory: false;
-  pieceMetadata: StepMetadataWithSuggestions;
-});
+} & (
+  | {
+      isCategory: true;
+    }
+  | {
+      isCategory: false;
+      pieceMetadata: StepMetadataWithSuggestions;
+    }
+);
 const transformPiecesMetadataToVirtualizedItems = (
   searchResult: CategorizedStepMetadataWithSuggestions[],
   showActionsOrTriggersInsidePiecesList: boolean,
