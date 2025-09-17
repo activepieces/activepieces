@@ -7,7 +7,7 @@ import { stripeProps } from '../common/props';
 export const stripeCreatePayment = createAction({
     name: 'create_payment',
     auth: stripeAuth,
-    displayName: 'Create Payment Link',
+    displayName: 'Create Payment',
     description: 'Creates a shareable, Stripe-hosted payment link.',
     props: {
         name: Property.ShortText({
@@ -38,11 +38,10 @@ export const stripeCreatePayment = createAction({
                     { label: "Singapore Dollar", value: "sgd" },
                 ]
             }
-        }),
-        customer: stripeProps.customer(false),
+        })
     },
     async run(context) {
-        const { name, amount, currency, customer } = context.propsValue;
+        const { name, amount, currency } = context.propsValue;
 
         // Stripe requires the amount in the smallest currency unit (e.g., cents).
         const unitAmount = Math.round(amount * 100);
@@ -55,10 +54,6 @@ export const stripeCreatePayment = createAction({
             'line_items[0][price_data][unit_amount]': unitAmount,
             'line_items[0][quantity]': 1,
         };
-
-        if (customer) {
-            body['customer'] = customer;
-        }
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
