@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { InfiniteData, useInfiniteQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
 
@@ -11,20 +11,18 @@ import {
   CardListEmpty,
   CardListItemSkeleton,
 } from '@/components/custom/card-list';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { FlowRun, SeekPage } from '@activepieces/shared';
 
 import { SidebarHeader } from '../sidebar-header';
 
-import { FlowRunCard } from './flow-run-card';
+import { FLOW_CARD_HEIGHT, FlowRunCard } from './flow-run-card';
+import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
+import { Button } from '@/components/ui/button';
 
-type FlowRunsListProps = {
-  recentRuns?: number;
-};
 
-const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
+const RunsList = React.memo( ()=> {
   const [flow, setLeftSidebar, run] = useBuilderStateContext((state) => [
     state.flow,
     state.setLeftSidebar,
@@ -32,19 +30,24 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
   ]);
 
   const {
-    data: flowPage,
+    data: runs,
     isLoading,
     isError,
     refetch,
     isRefetching,
-  } = useQuery<SeekPage<FlowRun>, Error>({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfiniteQuery<SeekPage<FlowRun>, Error, InfiniteData<SeekPage<FlowRun>>>({
     queryKey: ['flow-runs', flow.id],
-    queryFn: () =>
+    getNextPageParam: (lastPage) => lastPage.next,
+    initialPageParam: undefined,
+    queryFn: ({ pageParam }) =>
       flowRunsApi.list({
         flowId: [flow.id],
         projectId: authenticationSession.getProjectId()!,
-        limit: recentRuns,
-        cursor: undefined,
+        limit: 20,
+        cursor: pageParam as string | undefined,
       }),
     refetchOnMount: true,
     staleTime: 15 * 1000,
@@ -56,32 +59,43 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
         {t('Recent Runs')}
       </SidebarHeader>
       <CardList>
-        {isLoading ||
-          (isRefetching && <CardListItemSkeleton numberOfCards={10} />)}
+        {(isLoading ) &&
+           <CardListItemSkeleton numberOfCards={10} />}
 
         {isError && <div>{t('Error, please try again.')}</div>}
 
-        {flowPage &&
-          flowPage.data.length === 0 &&
+        {runs &&
+          runs.pages.flatMap((page) => page.data).length === 0 &&
           !isLoading &&
           !isRefetching && <CardListEmpty message={t('No runs found')} />}
-
-        <ScrollArea className="w-full h-full">
-          {!isRefetching &&
-            !isLoading &&
-            flowPage &&
-            flowPage.data.map((flowRun: FlowRun) => (
+{
+            hasNextPage && <Button onClick={() => fetchNextPage()} loading={isFetchingNextPage}>Load more</Button>
+          }
+        {
+          runs && runs.pages.flatMap((page) => page.data).length > 0 && (
+            <>
+             <VirtualizedScrollArea
+            className="w-full h-full"
+            items={runs.pages.flatMap((page) => page.data)}
+            estimateSize={() => FLOW_CARD_HEIGHT}
+            getItemKey={(index) => runs.pages.flatMap((page) => page.data)[index].id}
+            renderItem={(item) =>
               <FlowRunCard
-                refetchRuns={() => {
-                  refetch();
-                }}
-                run={flowRun}
-                key={flowRun.id + flowRun.status}
-                viewedRunId={run?.id}
-              ></FlowRunCard>
-            ))}
-          <ScrollBar />
-        </ScrollArea>
+              refetchRuns={() => {
+                refetch();
+              }}
+              run={item}
+              key={item.id + item.status}
+              viewedRunId={run?.id}
+            ></FlowRunCard>
+            }
+          >
+          </VirtualizedScrollArea>
+          
+
+            </>
+          )
+        }
       </CardList>
     </>
   );

@@ -39,6 +39,7 @@ type FlowRunCardProps = {
   refetchRuns: () => void;
 };
 
+export const FLOW_CARD_HEIGHT = 70;
 const FlowRunCard = React.memo(
   ({ run, viewedRunId, refetchRuns }: FlowRunCardProps) => {
     const { Icon, variant } = flowRunUtils.getStatusIcon(run.status);
@@ -116,6 +117,7 @@ const FlowRunCard = React.memo(
         className={cn('px-3', {
           'hover:bg-background': hoveringRetryButton,
         })}
+        style={{ height: `${FLOW_CARD_HEIGHT}px` }}
         onClick={() => {
           if (!isFetchingRun) {
             viewRun(run.id);
