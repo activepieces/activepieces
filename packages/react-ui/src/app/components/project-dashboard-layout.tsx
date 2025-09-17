@@ -2,6 +2,7 @@ import React, { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
+import { AiCreditsLimitAlert } from '@/features/billing/components/ai-credits-limit-alert';
 import { TaskLimitAlert } from '@/features/billing/components/task-limit-alert';
 import { WelcomeTrialDialog } from '@/features/billing/components/trial-dialog';
 import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
@@ -55,8 +56,12 @@ export function ProjectDashboardLayout({
       >
         <SidebarProvider>
           <ProjectDashboardSidebar />
-          <SidebarInset className={`relative overflow-hidden px-4 pb-4`}>
-            <TaskLimitAlert />
+          <SidebarInset className={`relative overflow-auto px-4 pb-4`}>
+            <div className="flex flex-col gap-2 mt-2">
+              <TaskLimitAlert />
+              <AiCreditsLimitAlert />
+            </div>
+
             {children}
           </SidebarInset>
         </SidebarProvider>

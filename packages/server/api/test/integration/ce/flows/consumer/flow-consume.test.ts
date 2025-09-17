@@ -14,7 +14,7 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import { flowJobExecutor, flowWorker } from 'server-worker'
+import { flowJobExecutor, flowWorker, workerMachine } from 'server-worker'
 import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
 import { initializeDatabase } from '../../../../../src/app/database'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
@@ -161,6 +161,9 @@ describe('flow execution', () => {
             workerToken: await accessTokenManager.generateWorkerToken(),
         })
 
+        await waitForSocketConnection()
+        
+
         await flowJobExecutor(mockLog).executeFlow({
             jobData: {
                 flowVersionId: mockFlowVersion.id,
@@ -234,3 +237,26 @@ describe('flow execution', () => {
         })
     }, 60000)
 })
+
+
+async function waitForSocketConnection(maxAttempts = 60, intervalMs = 1000): Promise<void> {
+    let attempts = 0
+    while (attempts < maxAttempts) {
+        try {
+            const settings = workerMachine.getSettings()
+            if (settings) {
+                break
+            }
+        }
+        catch (error) {
+            // Settings not ready yet
+        }
+        await new Promise(resolve => setTimeout(resolve, intervalMs))
+        attempts++
+    }
+    
+    if (attempts >= maxAttempts) {
+        throw new Error(`Worker settings not initialized after ${maxAttempts} seconds`)
+    }
+}
+

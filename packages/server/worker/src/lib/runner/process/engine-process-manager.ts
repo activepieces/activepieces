@@ -203,7 +203,12 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                     })
                 }
                 else {
-                    reject({ status: EngineResponseStatus.INTERNAL_ERROR, error: 'Worker exited with code ' + code + ' and signal ' + signal })
+                    reject({
+                        status: EngineResponseStatus.INTERNAL_ERROR,
+                        error: 'Worker exited with code ' + code + ' and signal ' + signal,
+                        stdError,
+                        stdOut,
+                    })
                 }
             })
             log.debug({

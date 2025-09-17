@@ -46,13 +46,6 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
 
         const startTime = Date.now()
         await runCommandWithLiveOutput(cmd)
-        log.info(
-            chalk.blueBright.bold(
-                '👀 Generating translation file. Waiting... 👀 ' + pieceProjectName,
-            ),
-        )
-        // TODO disable until we have a way to build with shared version bumped
-        //  await runCommandWithLiveOutput(postBuildCommand)
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
         const endTime = Date.now()
         const buildTime = (endTime - startTime) / 1000
