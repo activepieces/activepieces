@@ -11,6 +11,14 @@ import { stripeNewSubscription } from './lib/trigger/new-subscription';
 import { stripePaymentFailed } from './lib/trigger/payment-failed';
 import { stripeSearchSubscriptions } from './lib/actions/search-subscriptions';
 import { stripeNewCharge } from './lib/trigger/new-charge';
+import { stripeNewInvoice } from './lib/trigger/new-invoice';
+import { stripeInvoicePaymentFailed } from './lib/trigger/invoice-payment-failed';
+import { stripeCanceledSubscription } from './lib/trigger/canceled-subscription';
+import { stripeNewRefund } from './lib/trigger/new-refund';
+import { stripeNewDispute } from './lib/trigger/new-dispute';
+import { stripeNewPaymentLink } from './lib/trigger/new-payment-link';
+import { stripeUpdatedSubscription } from './lib/trigger/updated-subscription';
+import { stripeCheckoutSessionCompleted } from './lib/trigger/checkout-session-completed';
 
 export const stripeAuth = PieceAuth.SecretText({
   displayName: 'Secret API Key',
@@ -56,5 +64,13 @@ export const stripe = createPiece({
     stripePaymentFailed,
     stripeNewSubscription,
     stripeNewCharge,
+    stripeNewInvoice,
+    stripeInvoicePaymentFailed,
+    stripeCanceledSubscription,
+    stripeNewRefund,
+    stripeNewDispute,
+    stripeNewPaymentLink,
+    stripeUpdatedSubscription,
+    stripeCheckoutSessionCompleted,
   ],
 });
