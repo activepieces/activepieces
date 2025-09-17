@@ -47,7 +47,7 @@ jobs:
         if: steps.check-label.outputs.has-preview-label == 'true'
         run: |
           ssh preview-server -t -t 'bash -ic "cd /root/environments && node index.js setup ${{ github.head_ref }}; exit"'
-          echo "environment_url=https://${{ github.head_ref }}.preview.example.com" >> $GITHUB_OUTPUT
+          echo "environment_url=https://$(echo '${{ github.head_ref }}' | sed 's|/|-|g').preview.example.com" >> $GITHUB_OUTPUT
 
       - name: Comment on PR
         if: steps.check-label.outputs.has-preview-label == 'true'
