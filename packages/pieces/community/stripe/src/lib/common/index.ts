@@ -4,6 +4,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
+import { Property } from '@activepieces/pieces-framework';
 
 export const stripeCommon = {
   baseUrl: 'https://api.stripe.com/v1',
@@ -49,3 +50,228 @@ export const stripeCommon = {
     return await httpClient.sendRequest(request);
   },
 };
+
+
+export const customerIdDropdown = Property.Dropdown({
+  displayName: 'Customer ID',
+  description: 'Select the customr',
+  required: true,
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+    try {
+      const customers = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `https://api.stripe.com/v1/customers`,
+        headers: {
+          Authorization: 'Bearer ' + auth,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+
+      });
+      return {
+        disabled: false,
+        options: customers.body.data.map((customer: any) => ({
+          label: customer.name,
+          value: customer.id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading teams',
+      };
+    }
+  },
+})
+
+export const productidDropdown = Property.Dropdown({
+  displayName: 'Customer ID',
+  description: 'Select the customr',
+  required: true,
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+    try {
+      const products = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `https://api.stripe.com/v1/products`,
+        headers: {
+          Authorization: 'Bearer ' + auth,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+
+      });
+      return {
+        disabled: false,
+        options: products.body.data.map((product: any) => ({
+          label: product.name,
+          value: product.id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading teams',
+      };
+    }
+  },
+})
+
+export const subscriptionIdDropdown = Property.Dropdown({
+  displayName: 'Subscription ID',
+  description: 'Select the customr',
+  required: true,
+  refreshers: ['auth', 'customerid'],
+  options: async ({ auth, customerid }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+    if (!customerid) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please select customer first',
+      };
+    }
+
+    try {
+      const subscriptions = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `https://api.stripe.com/v1/subscriptions`,
+        headers: {
+          Authorization: 'Bearer ' + auth,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          status: "active",
+          customer: customerid
+        }
+
+      });
+      return {
+        disabled: false,
+        options: subscriptions.body.data.map((subscription: any) => ({
+          label: subscription.name,
+          value: subscription.id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading teams',
+      };
+    }
+  },
+})
+
+
+export const InvoiceIdDropdown = Property.Dropdown({
+  displayName: 'Invoice ID',
+  description: 'Select the Invoice',
+  required: true,
+  refreshers: ['auth',],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+
+    try {
+      const invoices = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `https://api.stripe.com/v1/invoices`,
+        headers: {
+          Authorization: 'Bearer ' + auth,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+
+
+      });
+      return {
+        disabled: false,
+        options: invoices.body.data.map((invoice: any) => ({
+          label: invoice.customer_name,
+          value: invoice.id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading teams',
+      };
+    }
+  },
+})
+
+
+
+export const payoutIdDropdown=Property.Dropdown({
+  displayName: 'payouts  ID',
+  description: 'Select the payouts ',
+  required: true,
+  refreshers: ['auth',],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+
+    try {
+      const payouts = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `https://api.stripe.com/v1/payouts`,
+        headers: {
+          Authorization: 'Bearer ' + auth,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+
+
+      });
+      return {
+        disabled: false,
+        options: payouts.body.data.map((payout: any) => ({
+          label: payout.id,
+          value: payout.id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading teams',
+      };
+    }
+  },
+})
+

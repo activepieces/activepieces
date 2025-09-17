@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
+import { customerIdDropdown } from '../common';
 
 export const createSubscription = createAction({
   auth: stripeAuth,
@@ -8,10 +9,7 @@ export const createSubscription = createAction({
   displayName: 'Create Subscription',
   description: 'Create a new subscription for a customer in Stripe.',
   props: {
-    customer: Property.ShortText({
-      displayName: 'Customer ID',
-      required: true,
-    }),
+    customer: customerIdDropdown,
     items: Property.Array({
       displayName: 'Subscription Items',
       required: true,

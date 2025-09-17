@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
+import { customerIdDropdown, subscriptionIdDropdown } from '../common';
 
 export const cancelSubscription = createAction({
   auth: stripeAuth,
@@ -8,24 +9,14 @@ export const cancelSubscription = createAction({
   displayName: 'Cancel Subscription',
   description: 'Cancel an existing subscription immediately or at period end.',
   props: {
-    subscriptionId: Property.ShortText({
-      displayName: 'Subscription ID',
-      required: true,
-    }),
-    at_period_end: Property.Checkbox({
-      displayName: 'Cancel at Period End',
-      required: false,
-      defaultValue: false,
-      description: 'If true, cancels at period end. If false, cancels immediately.',
-    }),
+    customerid: customerIdDropdown,
+    subscriptionId: subscriptionIdDropdown,
+
   },
   async run({ auth, propsValue }) {
-    const { subscriptionId, at_period_end } = propsValue;
+    const { subscriptionId, } = propsValue;
 
-    const body: Record<string, any> = {};
-    if (at_period_end !== undefined) {
-      body.at_period_end = at_period_end;
-    }
+
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.DELETE,
@@ -34,7 +25,7 @@ export const cancelSubscription = createAction({
         Authorization: `Bearer ${auth}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body,
+
     });
 
     return response.body;

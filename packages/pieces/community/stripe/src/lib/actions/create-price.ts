@@ -1,6 +1,7 @@
 import { stripeAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { productidDropdown } from '../common';
 
 export const createPrice = createAction({
   auth: stripeAuth,
@@ -8,10 +9,7 @@ export const createPrice = createAction({
   displayName: 'Create Price',
   description: 'Create a new price for a Stripe product.',
   props: {
-    product: Property.ShortText({
-      displayName: 'Product ID',
-      required: true,
-    }),
+    product: productidDropdown,
     unit_amount: Property.Number({
       displayName: 'Unit Amount (in cents)',
       required: true,

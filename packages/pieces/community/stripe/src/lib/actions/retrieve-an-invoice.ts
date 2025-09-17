@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
+import { InvoiceIdDropdown } from '../common';
 
 export const retrieveAnInvoice = createAction({
   auth: stripeAuth,
@@ -8,10 +9,7 @@ export const retrieveAnInvoice = createAction({
   displayName: 'Retrieve an Invoice',
   description: 'Retrieves an invoice by its ID.',
   props: {
-    invoiceId: Property.ShortText({
-      displayName: 'Invoice ID',
-      required: true,
-    }),
+    invoiceId: InvoiceIdDropdown,
   },
   async run({ auth, propsValue }) {
     const { invoiceId } = propsValue;

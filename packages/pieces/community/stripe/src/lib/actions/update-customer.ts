@@ -2,6 +2,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import Stripe from 'stripe';
+import { customerIdDropdown } from '../common';
 
 export const updateCustomer = createAction({
   auth: stripeAuth,
@@ -9,10 +10,7 @@ export const updateCustomer = createAction({
   displayName: 'Update Customer',
   description: 'Update a Stripe customer by ID.',
   props: {
-    customerId: Property.ShortText({
-      displayName: 'Customer ID',
-      required: true,
-    }),
+    customerId: customerIdDropdown,
     email: Property.ShortText({
       displayName: 'Email',
       required: false,
