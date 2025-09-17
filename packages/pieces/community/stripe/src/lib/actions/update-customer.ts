@@ -1,0 +1,53 @@
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { stripeAuth } from '../..';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import Stripe from 'stripe';
+
+export const updateCustomer = createAction({
+  auth: stripeAuth,
+  name: 'updateCustomer',
+  displayName: 'Update Customer',
+  description: 'Update a Stripe customer by ID.',
+  props: {
+    customerId: Property.ShortText({
+      displayName: 'Customer ID',
+      required: true,
+    }),
+    email: Property.ShortText({
+      displayName: 'Email',
+      required: false,
+    }),
+    name: Property.ShortText({
+      displayName: 'Name',
+      required: false,
+    }),
+    description: Property.ShortText({
+      displayName: 'Description',
+      required: false,
+    }),
+    metadata: Property.Object({
+      displayName: 'Metadata',
+      required: false,
+      description: 'Key-value pairs to attach to the customer.',
+    }),
+  },
+  async run({ auth, propsValue }) {
+    const { customerId, email, name, description, metadata } = propsValue;
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `https://api.stripe.com/v1/customers/${customerId}`,
+      headers: {
+        Authorization: 'Bearer ' + auth,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: {
+        email,
+        name,
+        description,
+        metadata: metadata as unknown as Stripe.MetadataParam,
+      },
+    });
+    return response.body;
+  },
+});
