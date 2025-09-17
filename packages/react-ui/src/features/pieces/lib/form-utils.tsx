@@ -19,7 +19,6 @@ import {
   PieceActionSchema,
   PieceActionSettings,
   PieceTrigger,
-  PieceTriggerSettings,
   isNil,
   spreadIfDefined,
   RouterActionSchema,
@@ -39,13 +38,14 @@ import {
   FlowTrigger,
   PropertyExecutionType,
   PropertySettings,
+  PieceTriggerSettings,
 } from '@activepieces/shared';
 
-function addAuthToPieceProps(
+const addAuthToPieceProps = (
   props: PiecePropertyMap,
   auth: PieceAuthProperty | undefined,
   requireAuth: boolean,
-): PiecePropertyMap {
+): PiecePropertyMap => {
   if (!requireAuth || isNil(auth)) {
     const newProps = Object.keys(props).reduce((acc, key) => {
       if (key !== 'auth') {
@@ -59,13 +59,13 @@ function addAuthToPieceProps(
     ...props,
     ...spreadIfDefined('auth', auth),
   };
-}
+};
 
-function buildInputSchemaForStep(
+const buildInputSchemaForStep = (
   type: FlowActionType | FlowTriggerType,
   piece: PieceMetadata | null,
   actionNameOrTriggerName: string,
-): TSchema {
+): TSchema => {
   switch (type) {
     case FlowActionType.PIECE: {
       if (
@@ -102,11 +102,90 @@ function buildInputSchemaForStep(
     default:
       throw new Error('Unsupported type: ' + type);
   }
-}
+};
 
-function buildConnectionSchema(
+const getDefaultValueForStep = ({
+  props,
+  existingInput,
+  propertySettings,
+}: {
+  props: PiecePropertyMap | OAuth2Props;
+  existingInput: Record<string, unknown>;
+  propertySettings?: Record<string, PropertySettings>;
+}): Record<string, unknown> => {
+  const defaultValues: Record<string, unknown> = {};
+  const entries = Object.entries(props);
+  for (const [name, property] of entries) {
+    switch (property.type) {
+      case PropertyType.CHECKBOX: {
+        defaultValues[name] =
+          existingInput[name] ?? property.defaultValue ?? false;
+        break;
+      }
+      case PropertyType.ARRAY: {
+        const isInlineInputArray =
+          !isNil(propertySettings) && propertySettings[name];
+        const existingValue = existingInput[name];
+        if (!isNil(existingValue)) {
+          defaultValues[name] = existingValue;
+        } else if (isInlineInputArray && !isNil(property.properties)) {
+          defaultValues[name] = {};
+        } else {
+          defaultValues[name] = property.defaultValue ?? [];
+        }
+        break;
+      }
+      case PropertyType.MARKDOWN:
+      case PropertyType.DATE_TIME:
+      case PropertyType.SHORT_TEXT:
+      case PropertyType.LONG_TEXT:
+      case PropertyType.FILE:
+      case PropertyType.STATIC_DROPDOWN:
+      case PropertyType.DROPDOWN:
+      case PropertyType.BASIC_AUTH:
+      case PropertyType.CUSTOM_AUTH:
+      case PropertyType.SECRET_TEXT:
+      case PropertyType.CUSTOM:
+      case PropertyType.COLOR:
+      case PropertyType.MULTI_SELECT_DROPDOWN:
+      case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
+      case PropertyType.JSON:
+      case PropertyType.NUMBER:
+      case PropertyType.OAUTH2: {
+        defaultValues[name] = existingInput[name] ?? property.defaultValue;
+        break;
+      }
+      case PropertyType.OBJECT:
+      case PropertyType.DYNAMIC:
+        defaultValues[name] =
+          existingInput[name] ?? property.defaultValue ?? {};
+        break;
+    }
+  }
+  return defaultValues;
+};
+
+const createPropertySettingsForStep = ({
+  propertySettings,
+  values,
+}: {
+  propertySettings: Record<string, PropertySettings>;
+  values: Record<string, unknown>;
+}) => {
+  return Object.fromEntries(
+    Object.entries(values).map(([key]) => [
+      key,
+      {
+        type: propertySettings[key]?.type ?? PropertyExecutionType.MANUAL,
+        schema: propertySettings[key]?.schema,
+      },
+    ]),
+  );
+};
+
+const buildConnectionSchema = (
   piece: PieceMetadataModelSummary | PieceMetadataModel,
-) {
+) => {
   const auth = piece.auth;
   if (isNil(auth)) {
     return Type.Object({
@@ -181,7 +260,7 @@ function buildConnectionSchema(
         ]),
       });
   }
-}
+};
 
 export const formUtils = {
   /**When we use deepEqual if one object has an undefined value and the other doesn't have the key, that's an unequality, so to be safe we remove undefined values */
@@ -266,28 +345,22 @@ export const formUtils = {
           string,
           unknown
         >;
-        const defaultValues = getDefaultValueForStep(
-          props ?? {},
-          includeCurrentInput ? input : {},
-          selectedStep.settings.propertySettings ?? {},
-        );
+        const defaultValues = getDefaultValueForStep({
+          props: props ?? {},
+          existingInput: includeCurrentInput ? input : {},
+          propertySettings: selectedStep.settings.propertySettings ?? {},
+        });
+        const propertySettings = createPropertySettingsForStep({
+          propertySettings: selectedStep.settings.propertySettings ?? {},
+          values: defaultValues,
+        });
         return {
           ...selectedStep,
           settings: {
             ...selectedStep.settings,
             input: defaultValues,
             errorHandlingOptions: defaultErrorOptions,
-            propertySettings: Object.fromEntries(
-              Object.entries(defaultValues).map(([key]) => [
-                key,
-                {
-                  type:
-                    selectedStep.settings.propertySettings?.[key]?.type ??
-                    PropertyExecutionType.MANUAL,
-                  schema: undefined,
-                },
-              ]),
-            ),
+            propertySettings,
           },
         };
       }
@@ -309,26 +382,21 @@ export const formUtils = {
           string,
           unknown
         >;
-        const defaultValues = getDefaultValueForStep(
-          props ?? {},
-          includeCurrentInput ? input : {},
-          selectedStep.settings.propertySettings ?? {},
-        );
-
+        const defaultValues = getDefaultValueForStep({
+          props: props ?? {},
+          existingInput: includeCurrentInput ? input : {},
+          propertySettings: selectedStep.settings.propertySettings ?? {},
+        });
+        const propertySettings = createPropertySettingsForStep({
+          propertySettings: selectedStep.settings.propertySettings ?? {},
+          values: defaultValues,
+        });
         return {
           ...selectedStep,
           settings: {
             ...selectedStep.settings,
             input: defaultValues,
-            propertySettings: Object.fromEntries(
-              Object.entries(defaultValues).map(([key]) => [
-                key,
-                {
-                  type: PropertyExecutionType.MANUAL,
-                  schema: undefined,
-                },
-              ]),
-            ),
+            propertySettings,
           },
         };
       }
@@ -547,62 +615,3 @@ export const formUtils = {
   getDefaultValueForStep,
   buildConnectionSchema,
 };
-
-export function getDefaultValueForStep(
-  props: PiecePropertyMap | OAuth2Props,
-  existingInput: Record<string, unknown>,
-  propertySettings?: Record<string, PropertySettings>,
-): Record<string, unknown> {
-  const defaultValues: Record<string, unknown> = {};
-  const entries = Object.entries(props);
-  for (const [name, property] of entries) {
-    switch (property.type) {
-      case PropertyType.CHECKBOX: {
-        defaultValues[name] =
-          existingInput[name] ?? property.defaultValue ?? false;
-        break;
-      }
-      case PropertyType.ARRAY: {
-        const isCustomizedArrayOfProperties =
-          !isNil(propertySettings) &&
-          propertySettings[name] &&
-          !isNil(property.properties);
-        const existingValue = existingInput[name];
-        if (!isNil(existingValue)) {
-          defaultValues[name] = existingValue;
-        } else if (isCustomizedArrayOfProperties) {
-          defaultValues[name] = {};
-        } else {
-          defaultValues[name] = property.defaultValue ?? [];
-        }
-        break;
-      }
-      case PropertyType.MARKDOWN:
-      case PropertyType.DATE_TIME:
-      case PropertyType.SHORT_TEXT:
-      case PropertyType.LONG_TEXT:
-      case PropertyType.FILE:
-      case PropertyType.STATIC_DROPDOWN:
-      case PropertyType.DROPDOWN:
-      case PropertyType.BASIC_AUTH:
-      case PropertyType.CUSTOM_AUTH:
-      case PropertyType.SECRET_TEXT:
-      case PropertyType.CUSTOM:
-      case PropertyType.COLOR:
-      case PropertyType.MULTI_SELECT_DROPDOWN:
-      case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-      case PropertyType.JSON:
-      case PropertyType.NUMBER:
-      case PropertyType.OAUTH2: {
-        defaultValues[name] = existingInput[name] ?? property.defaultValue;
-        break;
-      }
-      case PropertyType.OBJECT:
-      case PropertyType.DYNAMIC:
-        defaultValues[name] =
-          existingInput[name] ?? property.defaultValue ?? {};
-        break;
-    }
-  }
-  return defaultValues;
-}

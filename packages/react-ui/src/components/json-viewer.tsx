@@ -155,7 +155,7 @@ const JsonViewer = React.memo(
     }
 
     return (
-      <div className="rounded-lg border border-solid border-dividers overflow-hidden">
+      <div className="rounded-lg border border-solid border-dividers overflow-hidden relative">
         <div className="px-3 py-2 flex border-solid border-b border-dividers justify-center items-center">
           <div className="flex-grow justify-center items-center">
             <span className="text-md">{title}</span>
@@ -181,29 +181,32 @@ const JsonViewer = React.memo(
             ) : (
               <>
                 {typeof json !== 'string' && typeof json !== 'object' && (
-                  <pre className="text-sm whitespace-pre-wrap overflow-x-auto p-2">
+                  <pre className="text-sm whitespace-pre-wrap  break-all overflow-x-auto p-2">
                     {JSON.stringify(json)}
                   </pre>
                 )}
                 {typeof json === 'string' && (
-                  <pre className="text-sm whitespace-pre-wrap overflow-x-auto p-2">
+                  <pre className="text-sm whitespace-pre-wrap break-all overflow-x-auto p-2">
                     {json}
                   </pre>
                 )}
                 {typeof json === 'object' && (
-                  <ReactJson
-                    style={{
-                      overflowX: 'auto',
-                      padding: '0.5rem',
-                    }}
-                    theme={viewerTheme}
-                    enableClipboard={false}
-                    groupArraysAfterLength={20}
-                    displayDataTypes={false}
-                    name={false}
-                    quotesOnKeys={false}
-                    src={json}
-                  />
+                  <div className="max-w-full">
+                    <ReactJson
+                      style={{
+                        overflowX: 'auto',
+                        padding: '0.5rem',
+                        wordBreak: 'break-word',
+                      }}
+                      theme={viewerTheme}
+                      enableClipboard={false}
+                      groupArraysAfterLength={20}
+                      displayDataTypes={false}
+                      name={false}
+                      quotesOnKeys={false}
+                      src={json}
+                    />
+                  </div>
                 )}
               </>
             )}

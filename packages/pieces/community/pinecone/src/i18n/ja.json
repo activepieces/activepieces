@@ -1,5 +1,4 @@
 {
-  "Pinecone": "Pinecone",
   "Manage vector databases, store embeddings, and perform similarity searches": "ベクトルデータベースの管理、組み込みの保存、類似性検索の実行",
   "API Key": "API キー",
   "Enter your Pinecone API key. You can create a new API key in the Pinecone console for your target project.": "Pinecone API キーを入力します。ターゲット プロジェクトの Pinecone コンソールで新しい API キーを作成できます。",

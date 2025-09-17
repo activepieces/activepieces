@@ -5,9 +5,7 @@
   "projectType": "library",
   "release": {
     "version": {
-      "manifestRootsToUpdate": [
-        "dist/{projectRoot}"
-      ],
+      "manifestRootsToUpdate": ["dist/{projectRoot}"],
       "currentVersionResolver": "git-tag",
       "fallbackCurrentVersionResolver": "disk"
     }
@@ -16,9 +14,7 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/community/scrapeless",
         "tsConfig": "packages/pieces/community/scrapeless/tsconfig.lib.json",
@@ -36,9 +32,8 @@
         "updateBuildableProjectDepsInPackageJson": true
       },
       "dependsOn": ["prebuild", "^build"]
-
     },
-        "prebuild": {
+    "prebuild": {
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/pieces/community/scrapeless",
@@ -70,9 +65,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
+      "outputs": ["{options.outputFile}"]
     }
   }
 }

@@ -1,5 +1,4 @@
 {
-  "Help Scout": "偵察支援",
   "\n  1. Click on your profile icon at the top right and select **Your Profile**.\n  2. Go to **My Apps** and click on **Create App**.\n  3. Provide **App Name** and use below redirect URL.\n  4. Copy the **App ID** and **App Secret**, and provide them as the **Client ID** and **Client Secret**, respectively.": "\n  1. Click on your profile icon at the top right and select **Your Profile**.\n  2. Go to **My Apps** and click on **Create App**.\n  3. Provide **App Name** and use below redirect URL.\n  4. Copy the **App ID** and **App Secret**, and provide them as the **Client ID** and **Client Secret**, respectively.",
   "Create Conversation": "会話を作成",
   "Send Reply": "返信を送信",

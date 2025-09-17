@@ -1,5 +1,4 @@
 {
-  "Retell AI": "Retell AI",
   "API Key": "API-Schlüssel",
   "Your Retell AI API Key.": "Dein Retell KI API Key.",
   "\n  Please follow these steps to get your Retell AI API key:\n  \n  1. Log in to your Retell AI dashboard.\n  2. Navigate to the API section.\n  3. Generate a new API key or copy your existing one.\n  4. Use this API key to authenticate your requests.": "\n  Bitte befolge diese Schritte, um deinen Retell AI API-Schlüssel zu erhalten:\n  \n  1. Loggen Sie sich in Ihr Retell KI Dashboard ein.\n  2. Navigieren Sie zum API-Abschnitt.\n  3. Generieren Sie einen neuen API-Schlüssel oder kopieren Sie Ihren vorhandenen Schlüssel.\n  4. Verwenden Sie diesen API-Schlüssel, um Ihre Anfragen zu authentifizieren.",

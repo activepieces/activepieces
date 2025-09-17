@@ -1,7 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash2, Plus, CheckIcon, Table2, UploadCloud } from 'lucide-react';
+import {
+  Trash2,
+  Plus,
+  CheckIcon,
+  Table2,
+  UploadCloud,
+  EllipsisVertical,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -129,11 +136,11 @@ const ApTablesPage = () => {
             }}
             className="flex items-center justify-end w-full"
           >
-            <ApTableActionsMenu
-              table={row.original}
-              refetch={refetch}
-              deleteMutation={bulkDeleteMutation}
-            />
+            <ApTableActionsMenu table={row.original} refetch={refetch}>
+              <Button variant="ghost" size="icon">
+                <EllipsisVertical />
+              </Button>
+            </ApTableActionsMenu>
           </div>
         );
       },

@@ -163,6 +163,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               >
                 <DropdownMenuItem
                   onSelect={(e) => e.preventDefault()}
+                  onClick={(e) => e.stopPropagation()}
                   disabled={!userHasPermissionToUpdateFlow}
                 >
                   <div className="flex cursor-pointer flex-row gap-2 items-center">
@@ -180,6 +181,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               <DropdownMenuItem
                 disabled={!userHasPermissionToPushToGit || !allowPush}
                 onSelect={(e) => e.preventDefault()}
+                onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex cursor-pointer  flex-row gap-2 items-center">
                   <UploadCloud className="h-4 w-4" />
@@ -203,6 +205,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   !userHasPermissionToWriteFolder
                 }
                 onSelect={(e) => e.preventDefault()}
+                onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex cursor-pointer  flex-row gap-2 items-center">
                   <CornerUpLeft className="h-4 w-4" />
@@ -308,6 +311,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                 <DropdownMenuItem
                   disabled={!userHasPermissionToUpdateFlow}
                   onSelect={(e) => e.preventDefault()}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex cursor-pointer  flex-row gap-2 items-center">
                     <Trash2 className="h-4 w-4 text-destructive" />

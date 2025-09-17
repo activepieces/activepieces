@@ -10,6 +10,7 @@ import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
+import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
 import { InitialSqlite1740031972943 } from './migration/sqlite/1740031972943-initial-sqlite'
 import { AddFlowTemplate1741588702453 } from './migration/sqlite/1741588702453-add-flow-template'
 import { AddOauthApp1741683781609 } from './migration/sqlite/1741683781609-add-oauth-app'
@@ -69,6 +70,8 @@ import { AddTriggerSqlite1754477404726 } from './migration/sqlite/1754477404726-
 import { AddJobIdToTriggerRun1754510243053 } from './migration/sqlite/1754510243053-AddJobIdToTriggerRun'
 import { RemoveAgentTestPromptSqlite1754863757450 } from './migration/sqlite/1754863757450-RemoveAgentTestPromptSqlite'
 import { RemoveAgentRelationToTablesSqlite1755954639833 } from './migration/sqlite/1755954639833-RemoveAgentRelationToTablesSqlite'
+import { AddTriggerNameToTriggerSourceSqlite1757018637559 } from './migration/sqlite/1757018637559-AddTriggerNameToTriggerSourceSqlite'
+import { AddIndexOnTriggerRunSqlite1757560231246 } from './migration/sqlite/1757560231246-AddIndexOnTriggerRunSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -91,6 +94,9 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        AddFlowIndexToTriggerSource1757555419075,
+        AddIndexOnTriggerRunSqlite1757560231246,
+        AddTriggerNameToTriggerSourceSqlite1757018637559,
         AddIndexToIssues1756775080449,
         RemoveAgentRelationToTablesSqlite1755954639833,
         AddStepNameToTestInFlowRunEntitySqlite1754355397885,

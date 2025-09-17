@@ -267,7 +267,7 @@ export const UpgradeDialog: FC = () => {
     }
   };
 
-  if (isEnterprise) return null;
+  if (isEnterprise || edition === ApEdition.COMMUNITY) return null;
 
   const messages: Record<string, string> = {
     [PlatformUsageMetric.ACTIVE_FLOWS]: t(
