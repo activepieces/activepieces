@@ -14,6 +14,14 @@ import {
   AirtableRecord,
   AirtableTable,
   AirtableView,
+  AirtableCommentRequest,
+  AirtableCreateBaseRequest,
+  AirtableCreateTableRequest,
+  AirtableFindRecordRequest,
+  AirtableFindTableRequest,
+  AirtableFindTableByIdRequest,
+  AirtableFindBaseRequest,
+  AirtableGetBaseSchemaRequest,
 } from './models';
 import { isNil } from '@activepieces/shared';
 
@@ -195,9 +203,8 @@ export const airtableCommon = {
           const params = {
             displayName: field.name,
             description: ['date', 'dateTime'].includes(field.type)
-              ? `${
-                  field.description ? field.description : ''
-                }Expected format: mmmm d,yyyy`
+              ? `${field.description ? field.description : ''
+              }Expected format: mmmm d,yyyy`
               : field.description,
             required: false,
           };
@@ -508,6 +515,205 @@ export const airtableCommon = {
     }
 
     return response;
+  },
+
+  async addCommentToRecord({
+    personalToken,
+    baseId,
+    tableId,
+    recordId,
+    commentText,
+  }: AirtableCommentRequest) {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `https://api.airtable.com/v0/bases/${baseId}/tables/${tableId}/records/${recordId}/comments`,
+      body: { text: commentText },
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: personalToken,
+      },
+    });
+    return response.body;
+  },
+  async createBase({
+    personalToken,
+    workspaceId,
+    name,
+    tables,
+  }: AirtableCreateBaseRequest) {
+    const body: any = {
+      workspaceId,
+      name,
+    };
+
+    if (tables) {
+      // Map the tables spec to what Airtable expects
+      body.tables = tables.map((tbl) => {
+        const tblObj: any = {
+          name: tbl.name,
+          primaryField: {
+            name: tbl.primaryFieldName,
+            type: tbl.primaryFieldType,
+          },
+        };
+        if (tbl.description !== undefined) {
+          tblObj.description = tbl.description;
+        }
+        if (tbl.fields) {
+          tblObj.fields = tbl.fields.map((f) => {
+            const fObj: any = {
+              name: f.name,
+              type: f.type,
+            };
+            if (f.description !== undefined) {
+              fObj.description = f.description;
+            }
+            if (f.options !== undefined) {
+              fObj.options = f.options;
+            }
+            return fObj;
+          });
+        }
+        return tblObj;
+      });
+    }
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `https://api.airtable.com/v0/meta/bases`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: personalToken,
+      },
+      body: body,
+    });
+
+    return response.body;
+  },
+  async createTable({
+    personalToken,
+    baseId,
+    name,
+    primaryFieldName,
+    primaryFieldType,
+    description,
+    fields,
+  }: AirtableCreateTableRequest) {
+    const body: any = {
+      name,
+      primaryField: {
+        name: primaryFieldName,
+        type: primaryFieldType,
+      },
+    };
+
+    if (description) {
+      body.description = description;
+    }
+
+    if (fields && fields.length > 0) {
+      body.fields = fields.map((f) => {
+        const fieldObj: any = {
+          name: f.name,
+          type: f.type,
+        };
+        if (f.description) {
+          fieldObj.description = f.description;
+        }
+        if (f.options) {
+          fieldObj.options = f.options;
+        }
+        return fieldObj;
+      });
+    }
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `https://api.airtable.com/v0/bases/${baseId}/tables`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: personalToken,
+      },
+      body,
+    });
+
+    return response.body;
+  },
+  async findRecordById({ personalToken, baseId, tableId, recordId }: AirtableFindRecordRequest) {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `https://api.airtable.com/v0/${baseId}/${tableId}/${recordId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: personalToken,
+      },
+    });
+
+    return response.body;
+  },
+
+  async findTable({ personalToken, baseId, tableName }: AirtableFindTableRequest): Promise<AirtableTable | undefined> {
+    const response = await httpClient.sendRequest<{ tables: AirtableTable[] }>({
+      method: HttpMethod.GET,
+      url: `https://api.airtable.com/v0/meta/bases/${baseId}/tables`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: personalToken,
+      },
+    });
+
+    if (response.status !== 200) return undefined;
+
+    if (tableName) {
+      return response.body.tables.find((table) => table.name.toLowerCase() === tableName.toLowerCase());
+    }
+    return response.body.tables[0];
+  },
+  async findTableById({ personalToken, baseId, tableId }: AirtableFindTableByIdRequest): Promise<AirtableTable | undefined> {
+
+    const response = await httpClient.sendRequest<{ tables: AirtableTable[] }>({
+      method: HttpMethod.GET,
+      url: `https://api.airtable.com/v0/meta/bases/${baseId}/tables`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: personalToken,
+      },
+    });
+
+    if (response.status !== 200) return undefined;
+
+    return response.body.tables.find((table) => table.id === tableId);
+  },
+
+  async findBase({ personalToken, baseName }: AirtableFindBaseRequest): Promise<AirtableBase | undefined> {
+    const response = await httpClient.sendRequest<{ bases: AirtableBase[] }>({
+      method: HttpMethod.GET,
+      url: `https://api.airtable.com/v0/meta/bases`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: personalToken,
+      },
+    });
+
+    if (response.status !== 200) return undefined;
+
+    // Find the base by name or keyword (case-insensitive)
+    return response.body.bases.find(b => b.name.toLowerCase().includes(baseName.toLowerCase()));
+  },
+
+  async getBaseSchema({ personalToken, baseId }: AirtableGetBaseSchemaRequest): Promise<AirtableTable[] | undefined> {
+    const response = await httpClient.sendRequest<{ tables: AirtableTable[] }>({
+      method: HttpMethod.GET,
+      url: `https://api.airtable.com/v0/meta/bases/${baseId}/tables`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: personalToken,
+      },
+    });
+
+    if (response.status !== 200) return undefined;
+
+    return response.body.tables;
   },
 };
 
