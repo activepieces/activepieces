@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
-import { ApLock, filePiecesUtils, memoryLock } from '@activepieces/server-shared'
+import { ApLock, fileExists, filePiecesUtils, memoryLock } from '@activepieces/server-shared'
 import { assertEqual, assertNotNullOrUndefined, isEmpty, PackageType, PiecePackage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
@@ -21,7 +21,7 @@ export class LocalPieceManager extends PieceManager {
         })
         await super.install({ projectPath, pieces, log })
     }
-    
+
     protected override async installDependencies(
         params: InstallParams,
     ): Promise<void> {
@@ -90,9 +90,11 @@ const updatePackageJson = async (
 ): Promise<void> => {
     const packageJsonForPiece = join(directoryPath, 'package.json')
 
-    const packageJson = await readFile(packageJsonForPiece, 'utf-8').then(
-        JSON.parse,
-    )
+    const packageJsonExists = await fileExists(packageJsonForPiece)
+    if (!packageJsonExists) {
+        return
+    }
+    const packageJson = await readFile(packageJsonForPiece, 'utf-8').then(JSON.parse)
     for (const [key, value] of Object.entries(frameworkPackages)) {
         if (
             packageJson.dependencies &&
