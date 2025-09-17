@@ -130,7 +130,7 @@ const FlowRunDetails = React.memo(() => {
       {selectedStepOutput && (
         <>
           <ResizableHandle withHandle={true} />
-          <ResizablePanel defaultValue={25} className='min-h-[100px]'>
+          <ResizablePanel defaultValue={25} className="min-h-[100px]">
             <FlowStepIO stepDetails={selectedStepOutput}></FlowStepIO>
           </ResizablePanel>
         </>
