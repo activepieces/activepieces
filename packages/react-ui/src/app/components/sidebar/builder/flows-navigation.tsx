@@ -230,7 +230,7 @@ function DefaultFolder({
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton className="px-2 group/item mb-1 pr-0">
-           <Shapes className="!size-3.5" />
+            <Shapes className="!size-3.5" />
             <span>{t('Uncategorized')}</span>
             <div className="ml-auto relative">
               <CreateFlowDropdown

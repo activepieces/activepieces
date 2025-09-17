@@ -219,7 +219,7 @@ const BuilderPage = () => {
             {leftSidebar === LeftSideBarType.AI_COPILOT && <CopilotSidebar />}
           </div>
         </ResizablePanel>
-        
+
         <ResizableHandle
           disabled={leftSidebar === LeftSideBarType.NONE}
           withHandle={leftSidebar !== LeftSideBarType.NONE}

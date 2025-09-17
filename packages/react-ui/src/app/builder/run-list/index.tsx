@@ -7,7 +7,6 @@ import {
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import {
-  CardList,
   CardListEmpty,
   CardListItemSkeleton,
 } from '@/components/custom/card-list';
@@ -87,51 +86,49 @@ const RunsList = React.memo(() => {
       <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
         {t('Recent Runs')}
       </SidebarHeader>
-      <CardList>
-        {isLoading && <CardListItemSkeleton numberOfCards={10} />}
+      {isLoading && <CardListItemSkeleton numberOfCards={10} />}
 
-        {isError && <div>{t('Error, please try again.')}</div>}
+      {isError && <div>{t('Error, please try again.')}</div>}
 
-        {runs &&
-          runs.pages.flatMap((page) => page.data).length === 0 &&
-          !isLoading &&
-          !isRefetching && <CardListEmpty message={t('No runs found')} />}
+      {runs &&
+        runs.pages.flatMap((page) => page.data).length === 0 &&
+        !isLoading &&
+        !isRefetching && <CardListEmpty message={t('No runs found')} />}
 
-        {runs && runs.pages.flatMap((page) => page.data).length > 0 && (
-          <VirtualizedScrollArea
-            className="w-full grow max-w-[calc(100%-6px)]"
-            items={allViewedRuns}
-            estimateSize={() => FLOW_CARD_HEIGHT}
-            getItemKey={(index) => index}
-            renderItem={(item) => {
-              if (item.type === 'flowRun') {
-                return (
-                  <FlowRunCard
-                    refetchRuns={() => {
-                      refetch();
-                    }}
-                    run={item.run}
-                    key={item.run.id + item.run.status}
-                    viewedRunId={run?.id}
-                  ></FlowRunCard>
-                );
-              }
+      {runs && runs.pages.flatMap((page) => page.data).length > 0 && (
+        <VirtualizedScrollArea
+          className="w-full grow max-w-[calc(100%-6px)]"
+          items={allViewedRuns}
+          estimateSize={() => FLOW_CARD_HEIGHT}
+          getItemKey={(index) => index}
+          renderItem={(item) => {
+            if (item.type === 'flowRun') {
               return (
-                <div className="mx-5 h-full flex items-center ">
-                  <Button
-                    className="w-full"
-                    variant={'accent'}
-                    onClick={() => fetchNextPage()}
-                    loading={isFetchingNextPage}
-                  >
-                    {t('More...')}
-                  </Button>
-                </div>
+                <FlowRunCard
+                  refetchRuns={() => {
+                    refetch();
+                  }}
+                  run={item.run}
+                  key={item.run.id + item.run.status}
+                  viewedRunId={run?.id}
+                ></FlowRunCard>
               );
-            }}
-          ></VirtualizedScrollArea>
-        )}
-      </CardList>
+            }
+            return (
+              <div className="mx-5 h-full flex items-center ">
+                <Button
+                  className="w-full"
+                  variant={'accent'}
+                  onClick={() => fetchNextPage()}
+                  loading={isFetchingNextPage}
+                >
+                  {t('More...')}
+                </Button>
+              </div>
+            );
+          }}
+        ></VirtualizedScrollArea>
+      )}
     </div>
   );
 });
