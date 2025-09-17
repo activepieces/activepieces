@@ -1,14 +1,16 @@
 name: Setup Environment
 
 on:
-  push:
-    tags:
-      - 'preview'
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
   Setup-Preview-Environment:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
@@ -27,5 +29,18 @@ jobs:
           SSH_HOST: ${{ secrets.PREVIEW_HOST }}
           
       - name: Setup Environment
+        id: setup
         run: |
-          ssh preview-server -t -t 'bash -ic "cd /root/environments && node index.js setup ${{ github.ref_name }}; exit"'
+          ssh preview-server -t -t 'bash -ic "cd /root/environments && node index.js setup ${{ github.head_ref }}; exit"'
+          echo "environment_url=https://${{ github.head_ref }}.preview.example.com" >> $GITHUB_OUTPUT
+
+      - name: Comment on PR
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Preview environment has been set up!\n\n**Environment URL:** ${{ steps.setup.outputs.environment_url }}\n\nThe preview environment for branch `${{ github.head_ref }}` is now ready for testing.'
+            })
