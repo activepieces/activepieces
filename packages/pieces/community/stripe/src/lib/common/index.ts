@@ -8,7 +8,7 @@ import {
 export const stripeCommon = {
   baseUrl: 'https://api.stripe.com/v1',
   subscribeWebhook: async (
-    eventName: string,
+    eventNames: string[], // Changed from string to string[]
     webhookUrl: string,
     apiKey: string
   ) => {
@@ -19,7 +19,7 @@ export const stripeCommon = {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: {
-        enabled_events: [eventName],
+        enabled_events: eventNames, // Use the array directly
         url: webhookUrl,
       },
       authentication: {

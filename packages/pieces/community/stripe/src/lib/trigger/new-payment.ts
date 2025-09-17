@@ -108,7 +108,7 @@ export const stripeNewPayment = createTrigger({
   },
   async onEnable(context) {
     const webhook = await stripeCommon.subscribeWebhook(
-      'charge.succeeded',
+      ['charge.succeeded'],
       context.webhookUrl!,
       context.auth
     );

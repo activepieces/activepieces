@@ -155,7 +155,7 @@ export const stripePaymentFailed = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const webhook = await stripeCommon.subscribeWebhook(
-      'charge.failed',
+      ['charge.failed'],
       context.webhookUrl,
       context.auth
     );

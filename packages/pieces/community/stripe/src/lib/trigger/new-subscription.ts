@@ -150,7 +150,7 @@ export const stripeNewSubscription = createTrigger({
   },
   async onEnable(context) {
     const webhook = await stripeCommon.subscribeWebhook(
-      'customer.subscription.created',
+      ['customer.subscription.created'],
       context.webhookUrl!,
       context.auth
     );
