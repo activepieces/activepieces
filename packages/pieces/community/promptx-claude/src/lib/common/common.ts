@@ -50,11 +50,15 @@ interface AppUsageData {
   component: string;
   usage: Usage;
 }
-export const Production = 'PromptX';
-export const Test = 'Staging';
+
+type AccessTokenResponse = {
+  access_token?: string;
+  error?: string;
+  message?: string;
+};
 
 export const baseUrlMap: Record<string, UrlConfig> = {
-  [Production]: {
+  production: {
     loginUrl: 'https://centerapp.io/center/auth/login',
     quotaCheckUrl:
       'https://promptxai.com/zero-service/pmtx-ai-token-api/v1/quota-check',
@@ -64,7 +68,7 @@ export const baseUrlMap: Record<string, UrlConfig> = {
     getAIKeyUrl:
       'https://promptxai.com/zero-service/pmtx-ai-token-api/v1/api-key?key=claudeKey',
   },
-  [Test]: {
+  staging: {
     loginUrl: 'https://test.oneweb.tech/zero-service/pmtx/login',
     quotaCheckUrl:
       'https://test.oneweb.tech/zero-service/pmtx-ai-token-api/v1/quota-check',
@@ -80,22 +84,34 @@ export const getAccessToken = async (
   username: string,
   password: string
 ): Promise<string | null> => {
+  const isStaging = server === 'staging';
+  const body = isStaging
+    ? new URLSearchParams({ username, password }).toString()
+    : JSON.stringify({ username, password });
+
+  const headers = {
+    'Content-Type': isStaging
+      ? 'application/x-www-form-urlencoded'
+      : 'application/json',
+  };
+
   const response = await fetch(baseUrlMap[server].loginUrl, {
     method: 'POST',
-    body: new URLSearchParams({
-      username: username,
-      password: password,
-    }).toString(),
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+    body,
+    headers,
   });
-  const data = await response.json();
+
+  const data: AccessTokenResponse = await response.json();
+
   if (response.status !== 200) {
     throw new Error(data?.error || data?.message);
   }
 
-  return data?.access_token;
+  if (!data.access_token) {
+    throw new Error(data?.error || data?.message);
+  }
+
+  return data.access_token;
 };
 
 export const addTokenUsage = async (
