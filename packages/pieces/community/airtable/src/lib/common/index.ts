@@ -78,6 +78,34 @@ async function fetchAllBases({
   return allBases;
 }
 
+async function listRecords({
+  token,
+  baseId,
+  tableId,
+  pageSize = 50, // Limit to 50 records for a responsive dropdown
+}: {
+  token: string;
+  baseId: string;
+  tableId: string;
+  pageSize?: number;
+}): Promise<AirtableRecord[]> {
+  const response = await httpClient.sendRequest<{ records: AirtableRecord[] }>({
+    method: HttpMethod.GET,
+    url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token,
+    },
+    queryParams: {
+      pageSize: pageSize.toString(),
+    },
+  });
+  if (response.status === 200) {
+    return response.body.records;
+  }
+  return [];
+}
+
 async function fetchTableList({
   token,
   baseId,
@@ -562,6 +590,56 @@ export const airtableCommon = {
     },
   }),
 
+  recordIdDropdown: Property.Dropdown<string>({
+      displayName: 'Record',
+      required: true,
+      refreshers: ['base', 'tableId'],
+      options: async ({ auth, base, tableId }) => {
+        if (!auth || !base || !tableId) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please select a base and table first',
+          };
+        }
+
+        // Fetch table schema to find the primary field
+        const table = await fetchTable({
+          token: auth as string,
+          baseId: base as string,
+          tableId: tableId as string,
+        });
+        const primaryField = table.fields.find(
+          (f) => f.id === table.primaryFieldId
+        );
+        const primaryFieldName = primaryField?.name;
+
+        // Fetch records to populate the dropdown
+        const records = await listRecords({
+          token: auth as string,
+          baseId: base as string,
+          tableId: tableId as string,
+        });
+
+        // Create user-friendly labels from the primary field
+        const options = records.map((record) => {
+          let label = record.id; // Fallback to record ID
+          if (primaryFieldName && record.fields[primaryFieldName]) {
+            label = record.fields[primaryFieldName] as string;
+          }
+          return {
+            label: label,
+            value: record.id,
+          };
+        });
+
+        return {
+          disabled: false,
+          options: options,
+        };
+      },
+  }),
+
   fieldNames: Property.Dropdown({
     displayName: 'Search Field',
     required: true,
@@ -679,4 +757,5 @@ export const airtableCommon = {
   addCommentToRecord,
   createBase,
   createTable,
+  listRecords,
 };

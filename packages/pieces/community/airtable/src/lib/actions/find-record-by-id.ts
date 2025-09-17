@@ -10,7 +10,7 @@ export const airtableGetRecordByIdAction = createAction({
   props: {
     base: airtableCommon.base,
     tableId: airtableCommon.tableId,
-    recordId: airtableCommon.recordId,
+    recordId: airtableCommon.recordIdDropdown, // Changed to use the dropdown
   },
   async run(context) {
     const { auth: personalToken, propsValue } = context;

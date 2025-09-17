@@ -10,10 +10,11 @@ export const airtableAddCommentToRecordAction = createAction({
   props: {
     base: airtableCommon.base,
     tableId: airtableCommon.tableId,
-    recordId: airtableCommon.recordId,
+    recordId: airtableCommon.recordIdDropdown, // Use the new dropdown property here
     text: Property.LongText({
       displayName: 'Comment Text',
-      description: 'The content of the comment. To mention a user, use the format `@[userId]` or `@[userEmail]`.',
+      description:
+        'The content of the comment. To mention a user, use the format `@[userId]` or `@[userEmail]`.',
       required: true,
     }),
     parentCommentId: Property.ShortText({
