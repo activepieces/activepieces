@@ -13,6 +13,9 @@ import { airtableUpdateRecordAction } from './lib/actions/update-record';
 import { airtableNewRecordTrigger } from './lib/trigger/new-record.trigger';
 import { airtableUpdatedRecordTrigger } from './lib/trigger/update-record.trigger';
 import { airtableUploadFileToColumnAction } from './lib/actions/upload-file-to-column';
+import { airtableAddCommentToRecordAction } from './lib/actions/add-comment-to-record';
+import { airtableCreateBaseAction } from './lib/actions/create-base';
+import { airtableCreateTableAction } from './lib/actions/create-table';
 
 export const airtableAuth = PieceAuth.SecretText({
   displayName: 'Personal Access Token',
@@ -63,6 +66,7 @@ export const airtable = createPiece({
     'AbdulTheActivePiecer',
     'khaledmashaly',
     'abuaboud',
+    'Prabhukiran161',
   ],
   categories: [PieceCategory.PRODUCTIVITY],
   auth: airtableAuth,
@@ -72,6 +76,9 @@ export const airtable = createPiece({
     airtableUpdateRecordAction,
     airtableDeleteRecordAction,
     airtableUploadFileToColumnAction,
+    airtableAddCommentToRecordAction,
+    airtableCreateBaseAction,
+    airtableCreateTableAction,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://api.airtable.com/v0';

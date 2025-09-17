@@ -126,3 +126,16 @@ export const AirtableFieldMapping = {
   lastModifiedBy: Property.ShortText,
   externalSyncSource: Property.ShortText,
 };
+
+export interface AirtableFieldConfig {
+  name: string;
+  description?: string;
+  type: AirtableFieldType;
+  options?: Record<string, unknown>;
+}
+
+export interface AirtableTableConfig {
+  name: string;
+  description?: string;
+  fields: AirtableFieldConfig[];
+}

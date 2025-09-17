@@ -14,6 +14,8 @@ import {
   AirtableRecord,
   AirtableTable,
   AirtableView,
+  AirtableTableConfig,
+  AirtableFieldConfig,
 } from './models';
 import { isNil } from '@activepieces/shared';
 
@@ -307,7 +309,7 @@ export const airtableCommon = {
         } else if (
           ['multipleRecordLinks', 'multipleSelects'].includes(field.type)
         ) {
-          if (Array.isArray(fields[key]) && (fields[key] as any[]).length > 0) {
+          if (Array.isArray(fields[key]) && fields[key].length > 0) {
             newFields[key] = fields[key];
           }
         } else {
@@ -319,6 +321,12 @@ export const airtableCommon = {
   },
 
   async getTableSnapshot(params: Params) {
+    if (!params.baseId || !params.tableId) {
+      throw new Error(
+        'Base ID and Table ID must be provided to get a table snapshot.'
+      );
+    }
+
     Airtable.configure({
       apiKey: params.personalToken,
     });
@@ -371,7 +379,11 @@ export const airtableCommon = {
     tableId: string;
   }) {
     const response = await airtableCommon.fetchTableList({ token, baseId });
-    return response.find((t) => t.id === tableId)!;
+    const table = response.find((t) => t.id === tableId);
+    if (!table) {
+      throw new Error(`Table with ID ${tableId} not found in base ${baseId}`);
+    }
+    return table;
   },
 
   async fetchViews({
@@ -509,12 +521,112 @@ export const airtableCommon = {
 
     return response;
   },
+
+  async createComment({
+    personalToken: token,
+    baseId,
+    tableId,
+    recordId,
+    text,
+    parentCommentId,
+  }: Params) {
+    if (text === undefined || text === null) {
+      throw new Error('Comment text must be provided.');
+    }
+
+    const requestBody: { text: string; parentCommentId?: string } = {
+      text: text,
+    };
+    if (parentCommentId) {
+      requestBody.parentCommentId = parentCommentId;
+    }
+
+    const request: HttpRequest = {
+      method: HttpMethod.POST,
+      url: `https://api.airtable.com/v0/${baseId}/${tableId}/${recordId}/comments`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+      body: requestBody,
+    };
+
+    const response = await httpClient.sendRequest<AirtableRecord>(request);
+    return response.body;
+  },
+
+  async createBase({
+    personalToken: token,
+    workspaceId,
+    name,
+    tables,
+  }: Params) {
+    const request: HttpRequest = {
+      method: HttpMethod.POST,
+      url: `https://api.airtable.com/v0/meta/bases`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+      body: {
+        name,
+        workspaceId,
+        tables,
+      },
+    };
+    const response = await httpClient.sendRequest(request);
+    return response.body;
+  },
+
+  async createTable({
+    personalToken: token,
+    baseId,
+    name,
+    description,
+    fieldsConfig,
+  }: Params) {
+    if (!baseId) {
+      throw new Error('Base ID must be provided to create a table.');
+    }
+    
+    if (!name) {
+      throw new Error('Table Name must be provided to create a table.');
+    }
+    if (!fieldsConfig) {
+      throw new Error('Fields must be provided to create a table.');
+    }
+
+    const requestBody: {
+      name: string;
+      description?: string;
+      fields: AirtableFieldConfig[];
+    } = {
+      name: name, 
+      fields: fieldsConfig, 
+    };
+
+    if (description) {
+      requestBody.description = description;
+    }
+
+    const request: HttpRequest = {
+      method: HttpMethod.POST,
+      url: `https://api.airtable.com/v0/meta/bases/${baseId}/tables`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+      body: requestBody,
+    };
+    const response = await httpClient.sendRequest(request);
+    return response.body;
+  },
 };
 
 interface Params {
   personalToken: string;
-  baseId: string;
-  tableId: string;
+  baseId?: string;
+  tableId?: string;
   fields?: Record<string, unknown>;
   recordId?: string;
   searchValue?: string;
@@ -522,4 +634,11 @@ interface Params {
   fieldNames?: string[];
   limitToView?: string;
   sortField?: string;
+  text?: string;
+  parentCommentId?: string;
+  name?: string;
+  workspaceId?: string;
+  tables?: AirtableTableConfig[];
+  description?: string;
+  fieldsConfig?: AirtableFieldConfig[];
 }
