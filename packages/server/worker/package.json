@@ -7,7 +7,7 @@
   "dependencies": {
     "@activepieces/pieces-framework": "0.20.1",
     "@activepieces/server-shared": "0.0.2",
-    "@activepieces/shared": "0.21.0",
+    "@activepieces/shared": "0.22.0",
     "write-file-atomic": "5.0.1",
     "tslib": "2.6.2",
     "axios": "1.8.3",

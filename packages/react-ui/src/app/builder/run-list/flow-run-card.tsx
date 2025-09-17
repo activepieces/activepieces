@@ -1,7 +1,7 @@
 import { StopwatchIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronRight, Eye, Redo, RefreshCcw, RotateCw } from 'lucide-react';
+import { Eye, Redo, RefreshCcw, RotateCw } from 'lucide-react';
 import React, { useState } from 'react';
 
 import {
@@ -27,8 +27,9 @@ import { cn, formatUtils } from '@/lib/utils';
 import {
   FlowRetryStrategy,
   FlowRun,
+  FlowRunStatus,
   isFailedState,
-  isNil,
+  isFlowRunStateTerminal,
   Permission,
   PopulatedFlow,
 } from '@activepieces/shared';
@@ -39,6 +40,7 @@ type FlowRunCardProps = {
   refetchRuns: () => void;
 };
 
+export const FLOW_CARD_HEIGHT = 70;
 const FlowRunCard = React.memo(
   ({ run, viewedRunId, refetchRuns }: FlowRunCardProps) => {
     const { Icon, variant } = flowRunUtils.getStatusIcon(run.status);
@@ -46,8 +48,7 @@ const FlowRunCard = React.memo(
       Permission.WRITE_RUN,
     );
     const projectId = authenticationSession.getProjectId();
-    const [hoveringRetryButton, setHoveringRetryButton] =
-      useState<boolean>(false);
+
     const [setLeftSidebar, setRun] = useBuilderStateContext((state) => [
       state.setLeftSidebar,
       state.setRun,
@@ -76,6 +77,8 @@ const FlowRunCard = React.memo(
         refetchRuns();
       },
     });
+    const [isRetryDropdownOpen, setIsRetryDropdownOpen] =
+      useState<boolean>(false);
 
     const { mutate: retryRun, isPending: isRetryingRun } = useMutation<
       {
@@ -113,9 +116,8 @@ const FlowRunCard = React.memo(
 
     return (
       <CardListItem
-        className={cn('px-3', {
-          'hover:bg-background': hoveringRetryButton,
-        })}
+        className={'px-3 group'}
+        style={{ height: `${FLOW_CARD_HEIGHT}px` }}
         onClick={() => {
           if (!isFetchingRun) {
             viewRun(run.id);
@@ -138,18 +140,25 @@ const FlowRunCard = React.memo(
             {formatUtils.formatDate(new Date(run.startTime))}{' '}
             {run.id === viewedRunId && <Eye className="w-3.5 h-3.5"></Eye>}
           </div>
-          {run.finishTime && (
+          {isFlowRunStateTerminal({
+            status: run.status,
+            ignoreInternalError: false,
+          }) && (
             <p className="flex gap-1 text-xs text-muted-foreground">
               <StopwatchIcon className="h-3.5 w-3.5" />
               {t('Took')} {formatUtils.formatDuration(run.duration, false)}
             </p>
           )}
-          {isNil(run.finishTime) ||
-            (!run.finishTime && (
-              <p className="flex gap-1 text-xs text-muted-foreground">
-                {t('Running')}...
-              </p>
-            ))}
+          {run.status === FlowRunStatus.RUNNING && (
+            <p className="flex gap-1 text-xs text-muted-foreground">
+              {t('Running')}...
+            </p>
+          )}
+          {run.status === FlowRunStatus.QUEUED && (
+            <p className="flex gap-1 text-xs text-muted-foreground">
+              {t('Queued')}...
+            </p>
+          )}
         </div>
         <div className="ml-auto font-medium">
           {(isFetchingRun || isRetryingRun) && (
@@ -158,39 +167,32 @@ const FlowRunCard = React.memo(
             </Button>
           )}
 
-          {!isFetchingRun && !isRetryingRun && !isFailedState(run.status) && (
-            <Button variant="ghost">
-              <ChevronRight className="w-4 h-4"></ChevronRight>
-            </Button>
-          )}
-
           {!isFetchingRun && !isRetryingRun && isFailedState(run.status) && (
             <PermissionNeededTooltip
               hasPermission={userHasPermissionToRetryRun}
             >
-              <DropdownMenu modal={false}>
+              <DropdownMenu
+                modal={false}
+                open={isRetryDropdownOpen}
+                onOpenChange={setIsRetryDropdownOpen}
+              >
                 <DropdownMenuTrigger>
-                  <>
-                    <Button
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                    >
-                      {isFailedState(run.status) && (
-                        <RefreshCcw
-                          className="w-4 h-4"
-                          onMouseEnter={() => {
-                            setHoveringRetryButton(true);
-                          }}
-                          onMouseLeave={() => {
-                            setHoveringRetryButton(false);
-                          }}
-                        ></RefreshCcw>
-                      )}
-                    </Button>
-                  </>
+                  <Button
+                    variant="ghost"
+                    size={'icon'}
+                    className={cn(
+                      'group-hover:opacity-100 opacity-0 rounded-full bg-accent drop-shadow-md',
+                      {
+                        'opacity-100': isRetryDropdownOpen,
+                      },
+                    )}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  >
+                    <RefreshCcw className="w-4 h-4"></RefreshCcw>
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem

@@ -121,7 +121,10 @@ export type BuilderState = {
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
-  applyOperation: (operation: FlowOperationRequest) => void;
+  applyOperation: (
+    operation: FlowOperationRequest,
+    onSuccess?: () => void,
+  ) => void;
   removeStepSelection: () => void;
   selectStepByName: (stepName: string) => void;
   setActiveDraggingStep: (stepName: string | null) => void;
@@ -416,7 +419,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           };
         });
       },
-      applyOperation: (operation: FlowOperationRequest) =>
+      applyOperation: (
+        operation: FlowOperationRequest,
+        onSuccess?: () => void,
+      ) =>
         set((state) => {
           if (state.readonly) {
             console.warn('Cannot apply operation while readonly');
@@ -449,6 +455,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
                   saving: flowUpdatesQueue.size() !== 0,
                 };
               });
+              onSuccess?.();
             } catch (error) {
               console.error(error);
               flowUpdatesQueue.halt();
