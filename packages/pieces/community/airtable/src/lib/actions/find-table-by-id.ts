@@ -7,7 +7,7 @@ export const airtableFindTableByIdAction = createAction({
   auth: airtableAuth,
   name: 'airtable_find_table_by_id',
   displayName: 'Find Airtable Table by ID',
-  description: 'Fetches a table from a base using its unique table ID',
+  description: 'Fetches a table from a base using its unique table ID ',
   props: {
     baseId: airtableCommon.base,
     tableId: airtableCommon.tableId,
