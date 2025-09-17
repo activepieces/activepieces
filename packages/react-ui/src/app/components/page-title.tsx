@@ -17,6 +17,6 @@ const PageTitle = ({ title, children }: PageTitleProps) => {
   return children;
 };
 
-PageTitle.displayName = 'PageTitle';
+PageTitle.displayName = 'PageTitle1';
 
 export { PageTitle };
