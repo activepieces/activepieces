@@ -38,7 +38,6 @@ export const TriggerSource = Type.Object({
     projectId: Type.String(),
     flowId: Type.String(),
     triggerName: Type.String(),
-    handshakeConfiguration: Nullable(WebhookHandshakeConfiguration),
     schedule: Nullable(ScheduleOptions),
     flowVersionId: Type.String(),
     pieceName: Type.String(),
