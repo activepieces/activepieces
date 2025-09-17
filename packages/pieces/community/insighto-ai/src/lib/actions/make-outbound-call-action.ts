@@ -1,15 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { WidgetItemSchema } from '../schemas';
+import { WidgetItemSchema, WidgetItem } from '../schemas';
 
 export const makeOutboundCallAction = createAction({
   name: 'make_outbound_call',
   displayName: 'Make Outbound Call',
-  description: 'Makes outbound call to given a number',
+  description: 'Initiate an outbound call to a phone number using a configured widget',
   props: {
     widget_id: Property.Dropdown({
       displayName: 'Widget',
-      description: 'Select the widget to use for initiating the call. It must be connected to Twilio, Plivo or Telnyx.',
+      description: 'Widget connected to Twilio, Plivo, or Telnyx for making calls',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
@@ -55,8 +55,8 @@ export const makeOutboundCallAction = createAction({
             try {
               const parsedItem = WidgetItemSchema.parse(item);
               validatedItems.push(parsedItem);
-            } catch (error) {
-              console.warn('Invalid widget item:', item, error);
+            } catch {
+              continue;
             }
           }
 
@@ -69,8 +69,7 @@ export const makeOutboundCallAction = createAction({
             disabled: false,
             options,
           };
-        } catch (error) {
-          console.error('Error loading widgets:', error);
+        } catch {
           return {
             disabled: true,
             options: [],
@@ -81,54 +80,64 @@ export const makeOutboundCallAction = createAction({
     }),
     to: Property.ShortText({
       displayName: 'Phone Number',
-      description: 'The phone number to call. Must be in E.164 format. Ex: 16501234567',
+      description: 'Phone number in E.164 format (e.g., 16501234567)',
       required: true,
     }),
     prompt_dynamic_variables: Property.Object({
-      displayName: 'Prompt Dynamic Variables',
-      description: 'Dynamic variables to be used in the prompt. Ex: {\'name\': \'Bob\', \'appointment_day\': \'tomorrow\', \'reason\': \'for confirmation of appointment\'}',
+      displayName: 'Dynamic Variables',
+      description: 'Variables for call prompts (e.g., {"name": "Bob", "appointment": "tomorrow"})',
       required: false,
     }),
   },
   async run(context) {
-    const widget_id = context.propsValue['widget_id'];
-    const to = context.propsValue['to'];
-    const prompt_dynamic_variables = context.propsValue['prompt_dynamic_variables'];
+    try {
+      const widget_id = context.propsValue['widget_id'];
+      const to = context.propsValue['to'];
+      const prompt_dynamic_variables = context.propsValue['prompt_dynamic_variables'];
 
-    if (!widget_id) {
-      throw new Error('Widget ID is required. Please select a widget from the dropdown.');
+      if (!widget_id) {
+        throw new Error('Widget is required. Please select a widget from the dropdown.');
+      }
+
+      if (!to) {
+        throw new Error('Phone number is required.');
+      }
+
+      const apiKey = context.auth as string;
+      const url = `https://api.insighto.ai/api/v1/call/${widget_id}`;
+
+      const queryParams: Record<string, string> = {
+        api_key: apiKey,
+      };
+
+      const body: any = {
+        to,
+      };
+
+      if (prompt_dynamic_variables) {
+        body.prompt_dynamic_variables = prompt_dynamic_variables;
+      }
+
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url,
+        queryParams,
+        body,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.body) {
+        throw new Error('No response received from Insighto.ai API');
+      }
+
+      return response.body;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to make outbound call: ${error.message}`);
+      }
+      throw new Error('Failed to make outbound call');
     }
-
-    if (!to) {
-      throw new Error('Phone number is required.');
-    }
-
-    const apiKey = context.auth as string;
-
-    const url = `https://api.insighto.ai/api/v1/call/${widget_id}`;
-
-    const queryParams: Record<string, string> = {
-      api_key: apiKey,
-    };
-
-    const body: any = {
-      to,
-    };
-
-    if (prompt_dynamic_variables) {
-      body.prompt_dynamic_variables = prompt_dynamic_variables;
-    }
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url,
-      queryParams,
-      body,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    return response.body;
   },
 });

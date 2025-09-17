@@ -28,14 +28,45 @@ export const newCapturedForm = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    // Note: Insighto.ai webhooks may need to be configured manually in their dashboard
-    // or they may provide webhook management APIs. For now, we'll assume manual configuration.
-    // If webhook registration APIs exist, they should be implemented here.
-    await context.store.put('webhook_enabled', true);
+    const webhookUrl = context.webhookUrl;
+    const apiKey = context.auth as string;
+
+    try {
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: 'https://api.insighto.ai/api/v1/outbound_webhook',
+        queryParams: { api_key: apiKey },
+        body: {
+          endpoint: webhookUrl,
+          name: 'Activepieces Captured Form Webhook',
+          enabled: true,
+        },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      await context.store.put('webhook_id', response.body.data?.id);
+    } catch (error) {
+      throw new Error(`Failed to register webhook: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   },
   async onDisable(context) {
-    // Clean up webhook configuration if needed
-    await context.store.delete('webhook_enabled');
+    const webhookId = await context.store.get('webhook_id');
+    if (!webhookId) return;
+
+    const apiKey = context.auth as string;
+
+    try {
+      await httpClient.sendRequest({
+        method: HttpMethod.DELETE,
+        url: `https://api.insighto.ai/api/v1/outbound_webhook/${webhookId}`,
+        queryParams: { api_key: apiKey },
+      });
+    } catch {
+    }
+
+    await context.store.delete('webhook_id');
   },
   async run(context) {
     const payload = context.payload.body;
@@ -44,8 +75,7 @@ export const newCapturedForm = createTrigger({
       // Validate webhook payload
       const validatedPayload = CapturedFormWebhookSchema.parse(payload);
       return [validatedPayload];
-    } catch (error) {
-      console.warn('Invalid webhook payload:', payload, error);
+    } catch {
       return [];
     }
   },

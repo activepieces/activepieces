@@ -7,9 +7,11 @@
     import { newCapturedForm } from "./lib/triggers/new-captured-form";
     import { newConversation } from "./lib/triggers/new-conversation";
     import { newContact } from "./lib/triggers/new-contact";
+    import { PieceCategory } from "@activepieces/shared";
 
     export const insightoAi = createPiece({
-      displayName: "Insighto-ai",
+      displayName: "Insighto.ai",
+      description: "AI-powered platform for capturing forms, conversations, and data sources with automated processing and outbound communications",
       auth: PieceAuth.SecretText({
         displayName: "API Key",
         description: "Your Insighto.ai API key",
@@ -17,7 +19,8 @@
       }),
       minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/insighto-ai.png",
-      authors: [],
+      authors: ['fortunamide', 'onyedikachi-david'],
+      categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.COMMUNICATION],
       actions: [addTextBlobAction, upsertContactAction, makeOutboundCallAction, createCampaignAction],
       triggers: [newCapturedForm, newConversation, newContact],
     });

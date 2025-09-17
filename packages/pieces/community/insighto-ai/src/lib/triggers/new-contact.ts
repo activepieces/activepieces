@@ -5,21 +5,8 @@ import { ContactItemSchema, ContactItem } from '../schemas';
 export const newContact = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
-  description: 'Fires when a new contact is created',
-  props: {
-    page: Property.Number({
-      displayName: 'Page',
-      description: 'Page number to start checking from',
-      required: false,
-      defaultValue: 1,
-    }),
-    size: Property.Number({
-      displayName: 'Page Size',
-      description: 'Number of contacts to check per page (max 100)',
-      required: false,
-      defaultValue: 50,
-    }),
-  },
+  description: 'Triggers when a new contact is created',
+  props: {},
   sampleData: {
     id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
     first_name: 'John',
@@ -46,61 +33,61 @@ export const newContact = createTrigger({
     await context.store.delete('seen_contacts');
   },
   async run(context) {
-    const apiKey = context.auth as string;
-    const page = context.propsValue['page'] || 1;
-    const size = context.propsValue['size'] || 50;
+    try {
+      const apiKey = context.auth as string;
+      const url = `https://api.insighto.ai/api/v1/contact`;
 
-    const url = `https://api.insighto.ai/api/v1/contact`;
+      const queryParams: Record<string, string> = {
+        api_key: apiKey,
+        page: '1',
+        size: '100',
+      };
 
-    const queryParams: Record<string, string> = {
-      api_key: apiKey,
-      page: page.toString(),
-      size: size.toString(),
-    };
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url,
+        queryParams,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url,
-      queryParams,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const data = response.body.data;
-    if (!data || !data.items) {
-      return [];
-    }
-
-    // Validate contact items
-    const validatedContacts = data.items.map((contact: any) => {
-      try {
-        return ContactItemSchema.parse(contact);
-      } catch (error) {
-        console.warn('Invalid contact item:', contact, error);
-        return null;
+      const data = response.body.data;
+      if (!data || !data.items) {
+        return [];
       }
-    }).filter(Boolean) as ContactItem[];
 
-    // Get previously seen contact IDs
-    const seenContacts = (await context.store.get<string[]>('seen_contacts')) || [];
-
-    // Find new contacts that haven't been seen before
-    const newContacts: ContactItem[] = [];
-    const currentContactIds: string[] = [];
-
-    for (const contact of validatedContacts) {
-      const contactId = contact.id;
-      currentContactIds.push(contactId);
-
-      if (!seenContacts.includes(contactId)) {
-        newContacts.push(contact);
+      const validatedContacts: ContactItem[] = [];
+      for (const contact of data.items) {
+        try {
+          const validContact = ContactItemSchema.parse(contact);
+          validatedContacts.push(validContact);
+        } catch {
+          continue;
+        }
       }
+
+      const seenContacts = (await context.store.get<string[]>('seen_contacts')) || [];
+      const newContacts: ContactItem[] = [];
+      const allContactIds = validatedContacts.map(c => c.id);
+
+      for (const contact of validatedContacts) {
+        if (!seenContacts.includes(contact.id)) {
+          newContacts.push(contact);
+        }
+      }
+
+      if (newContacts.length > 0) {
+        const updatedSeenContacts = [...new Set([...seenContacts, ...allContactIds])];
+        await context.store.put('seen_contacts', updatedSeenContacts.slice(-1000));
+      }
+
+      return newContacts;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to fetch contacts: ${error.message}`);
+      }
+      throw new Error('Failed to fetch contacts');
     }
-
-    // Update the store with all current contact IDs (to avoid processing old contacts again)
-    await context.store.put('seen_contacts', currentContactIds);
-
-    return newContacts;
   },
 });

@@ -1,11 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { WidgetItemSchema } from '../schemas';
+import { WidgetItemSchema, WidgetItem } from '../schemas';
 
 export const createCampaignAction = createAction({
   name: 'create_campaign',
   displayName: 'Create Campaign',
-  description: 'Creates a new campaign',
+  description: 'Create a new outbound call campaign',
   props: {
     name: Property.ShortText({
       displayName: 'Campaign Name',
@@ -22,17 +22,17 @@ export const createCampaignAction = createAction({
     }),
     start_time: Property.DateTime({
       displayName: 'Start Time',
-      description: 'The date and time when the campaign should start. Format: YYYY-MM-DD HH:MM:SS',
+      description: 'When the campaign should start',
       required: true,
     }),
     interval: Property.Number({
-      displayName: 'Interval',
-      description: 'The interval between campaign executions in minutes. For example: 60 for hourly, 1440 for daily',
+      displayName: 'Interval (minutes)',
+      description: 'Time between executions (e.g., 60 for hourly, 1440 for daily)',
       required: true,
     }),
     widget_id: Property.Dropdown({
       displayName: 'Widget',
-      description: 'Select the widget to associate with this campaign',
+      description: 'Widget to associate with this campaign',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
@@ -78,8 +78,8 @@ export const createCampaignAction = createAction({
             try {
               const parsedItem = WidgetItemSchema.parse(item);
               validatedItems.push(parsedItem);
-            } catch (error) {
-              console.warn('Invalid widget item:', item, error);
+            } catch {
+              continue;
             }
           }
 
@@ -92,7 +92,7 @@ export const createCampaignAction = createAction({
             disabled: false,
             options,
           };
-        } catch (error) {
+        } catch {
           return {
             disabled: true,
             options: [],
@@ -103,6 +103,7 @@ export const createCampaignAction = createAction({
     }),
     attributes: Property.Object({
       displayName: 'Attributes',
+      description: 'Additional campaign attributes as key-value pairs',
       required: false,
     }),
     status: Property.StaticDropdown({
@@ -121,21 +122,22 @@ export const createCampaignAction = createAction({
     }),
     execution_weekdays: Property.Array({
       displayName: 'Execution Weekdays',
-      description: 'Array of integers representing weekdays (e.g., [1, 2, 3] for Mon, Tue, Wed)',
+      description: 'Weekdays as numbers (e.g., [1, 2, 3] for Mon, Tue, Wed)',
       required: false,
     }),
     time_window_start: Property.ShortText({
       displayName: 'Time Window Start',
-      description: 'Time in HH:MM format',
+      description: 'Start time in HH:MM format',
       required: false,
     }),
     time_window_end: Property.ShortText({
       displayName: 'Time Window End',
-      description: 'Time in HH:MM format',
+      description: 'End time in HH:MM format',
       required: false,
     }),
     time_zone: Property.ShortText({
       displayName: 'Time Zone',
+      description: 'Time zone (defaults to UTC)',
       required: false,
       defaultValue: 'UTC',
     }),
@@ -146,53 +148,79 @@ export const createCampaignAction = createAction({
     }),
   },
   async run(context) {
-    const name = context.propsValue['name'];
-    const type = context.propsValue['type'];
-    const start_time = context.propsValue['start_time'];
-    const interval = context.propsValue['interval'];
-    const widget_id = context.propsValue['widget_id'];
-    const attributes = context.propsValue['attributes'];
-    const status = context.propsValue['status'];
-    const execution_weekdays = context.propsValue['execution_weekdays'];
-    const time_window_start = context.propsValue['time_window_start'];
-    const time_window_end = context.propsValue['time_window_end'];
-    const time_zone = context.propsValue['time_zone'];
-    const enabled = context.propsValue['enabled'];
+    try {
+      const name = context.propsValue['name'];
+      const type = context.propsValue['type'];
+      const start_time = context.propsValue['start_time'];
+      const interval = context.propsValue['interval'];
+      const widget_id = context.propsValue['widget_id'];
+      const attributes = context.propsValue['attributes'];
+      const status = context.propsValue['status'];
+      const execution_weekdays = context.propsValue['execution_weekdays'];
+      const time_window_start = context.propsValue['time_window_start'];
+      const time_window_end = context.propsValue['time_window_end'];
+      const time_zone = context.propsValue['time_zone'];
+      const enabled = context.propsValue['enabled'];
 
-    const apiKey = context.auth as string;
+      if (!name) {
+        throw new Error('Campaign name is required');
+      }
 
-    const url = `https://api.insighto.ai/api/v1/campaign/create`;
+      if (!type) {
+        throw new Error('Campaign type is required');
+      }
 
-    const queryParams: Record<string, string> = {
-      api_key: apiKey,
-    };
+      if (!start_time) {
+        throw new Error('Start time is required');
+      }
 
-    const body: any = {
-      name,
-      type,
-      start_time,
-      interval,
-    };
+      if (!interval || interval <= 0) {
+        throw new Error('Interval must be a positive number');
+      }
 
-    if (widget_id) body.widget_id = widget_id;
-    if (attributes) body.attributes = attributes;
-    if (status) body.status = status;
-    if (execution_weekdays) body.execution_weekdays = execution_weekdays;
-    if (time_window_start) body.time_window_start = time_window_start;
-    if (time_window_end) body.time_window_end = time_window_end;
-    if (time_zone) body.time_zone = time_zone;
-    if (enabled !== undefined) body.enabled = enabled;
+      const apiKey = context.auth as string;
+      const url = `https://api.insighto.ai/api/v1/campaign/create`;
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url,
-      queryParams,
-      body,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+      const queryParams: Record<string, string> = {
+        api_key: apiKey,
+      };
 
-    return response.body;
+      const body: any = {
+        name,
+        type,
+        start_time,
+        interval,
+      };
+
+      if (widget_id) body.widget_id = widget_id;
+      if (attributes) body.attributes = attributes;
+      if (status) body.status = status;
+      if (execution_weekdays) body.execution_weekdays = execution_weekdays;
+      if (time_window_start) body.time_window_start = time_window_start;
+      if (time_window_end) body.time_window_end = time_window_end;
+      if (time_zone) body.time_zone = time_zone;
+      if (enabled !== undefined) body.enabled = enabled;
+
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url,
+        queryParams,
+        body,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.body) {
+        throw new Error('No response received from Insighto.ai API');
+      }
+
+      return response.body;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to create campaign: ${error.message}`);
+      }
+      throw new Error('Failed to create campaign');
+    }
   },
 });
