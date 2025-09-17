@@ -5,10 +5,10 @@ import { stripeCreateCustomer } from './lib/actions/create-customer';
 import { stripeCreateInvoice } from './lib/actions/create-invoice';
 import { stripeRetrieveCustomer } from './lib/actions/retrieve-customer';
 import { stripeSearchCustomer } from './lib/actions/search-customer';
-import { stripeNewCustomer } from './lib/trigger/new-customer';
-import { stripeNewPayment } from './lib/trigger/new-payment';
-import { stripeNewSubscription } from './lib/trigger/new-subscription';
-import { stripePaymentFailed } from './lib/trigger/payment-failed';
+import { stripeNewCustomer } from './lib/triggers/new-customer';
+import { stripeNewPayment } from './lib/triggers/new-payment';
+import { stripeNewSubscription } from './lib/triggers/new-subscription';
+import { stripePaymentFailed } from './lib/triggers/payment-failed';
 import { stripeSearchSubscriptions } from './lib/actions/search-subscriptions';
 
 export const stripeAuth = PieceAuth.SecretText({
