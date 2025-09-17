@@ -26,7 +26,7 @@ jobs:
         env:
           SSH_USER: ${{ secrets.PRE_PROD_USERNAME }}
           SSH_KEY: ${{ secrets.PRE_PROD_SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.PRE_PROD_HOST }}
+          SSH_HOST: ${{ secrets.PREVIEW_HOST }}
 
       - name: Check if PR has preview label
         id: check-label
