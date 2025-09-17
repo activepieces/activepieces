@@ -35,20 +35,39 @@ export const triggerUtils = (log: FastifyBaseLogger) => ({
         if (flowVersion.trigger.type !== FlowTriggerType.PIECE) {
             return null
         }
+        const { pieceName, pieceVersion, triggerName } = flowVersion.trigger.settings
+        if (isNil(triggerName)) {
+            return null
+        }
+        return this.getPieceTriggerByName({
+            pieceName,
+            pieceVersion,
+            triggerName,
+            projectId,
+        })
+    },
+    async getPieceTriggerByName({ pieceName, pieceVersion, triggerName, projectId }: GetPieceTriggerByNameParams): Promise<TriggerBase | null> {
         const platformId = await projectService.getPlatformId(projectId)
         const piece = await pieceMetadataService(log).get({
             projectId,
             platformId,
-            name: flowVersion.trigger.settings.pieceName,
-            version: flowVersion.trigger.settings.pieceVersion,
+            name: pieceName,
+            version: pieceVersion,
         })
-        if (isNil(piece) || isNil(flowVersion.trigger.settings.triggerName)) {
+        if (isNil(piece) || isNil(triggerName)) {
             return null
         }
-        const pieceTrigger = piece.triggers[flowVersion.trigger.settings.triggerName]
+        const pieceTrigger = piece.triggers[triggerName]
         return pieceTrigger
     },
 })
+
+type GetPieceTriggerByNameParams = {
+    pieceName: string
+    pieceVersion: string
+    triggerName: string
+    projectId: ProjectId
+}
 
 type GetPieceTriggerOrThrowParams = {
     flowVersion: FlowVersion
