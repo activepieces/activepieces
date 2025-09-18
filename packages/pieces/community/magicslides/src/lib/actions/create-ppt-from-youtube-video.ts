@@ -2,7 +2,6 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { MagicSlidesAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
-import { EmailType } from '@activepieces/shared';
 
 export const createPptFromYoutubeVideo = createAction({
   auth: MagicSlidesAuth,
@@ -15,10 +14,10 @@ export const createPptFromYoutubeVideo = createAction({
       required: true,
     }),
     email: Property.ShortText({
-         displayName: 'Email',
-         description: 'Your registered MagicSlides email address.',
-         required: false,
-       }),
+      displayName: 'Email',
+      description: 'Your registered MagicSlides email address.',
+      required: false,
+    }),
     template: Property.StaticDropdown({
       displayName: "Template",
       required: false,
@@ -90,12 +89,20 @@ export const createPptFromYoutubeVideo = createAction({
   },
   async run(context) {
     const {
-      youtubeURL, template, language,
-      slideCount, aiImages, imageForEachSlide, googleImage,
-      googleText, model, presentationFor,
-      watermark,email
+      youtubeURL,
+      template,
+      language,
+      slideCount,
+      aiImages,
+      imageForEachSlide,
+      googleImage,
+      googleText,
+      model,
+      presentationFor,
+      watermark,
+      email,
     } = context.propsValue;
-    const auth = context.auth
+    const auth = context.auth;
     const payload: any = {
       youtubeURL,
 
@@ -109,14 +116,9 @@ export const createPptFromYoutubeVideo = createAction({
       model,
       presentationFor,
       watermark,
-     email,
+      email,
       accessId: auth,
     };
-    return await makeRequest(
-
-      HttpMethod.POST,
-      '/ppt_from_youtube',
-      payload
-    );
+    return await makeRequest(HttpMethod.POST, '/ppt_from_youtube', payload);
   },
 });

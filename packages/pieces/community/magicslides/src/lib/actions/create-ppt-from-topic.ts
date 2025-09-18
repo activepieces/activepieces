@@ -74,6 +74,11 @@ export const createPptFromTopic = createAction({
         ],
       },
     }),
+    extraInfoSource: Property.ShortText({
+      displayName: "Extra Information Source",
+      description: "Provide a URL or text to give additional context for the presentation.",
+      required: false,
+    }),
     aiImages: Property.Checkbox({
       displayName: "Use AI Images",
       required: false,
@@ -124,6 +129,7 @@ export const createPptFromTopic = createAction({
       googleText,
       presentationFor,
       watermark,
+      extraInfoSource,
     } = context.propsValue;
 
     const auth = context.auth ;
@@ -142,7 +148,7 @@ export const createPptFromTopic = createAction({
       googleText,
       presentationFor,
       watermark,
-
+      extraInfoSource
     };
 
     const result = await makeRequest(
