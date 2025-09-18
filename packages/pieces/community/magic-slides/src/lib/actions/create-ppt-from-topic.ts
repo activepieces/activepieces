@@ -1,6 +1,6 @@
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { magicslidesAuth } from '../common/auth';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createPptFromTopic = createAction({
   auth: magicslidesAuth,
@@ -151,8 +151,9 @@ export const createPptFromTopic = createAction({
   async run(context) {
     const { auth: accessId, propsValue } = context;
     const { email, topic, ...optionalProps } = propsValue;
+
     const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
+      method: HttpMethod.POST, 
       url: 'https://api.magicslides.app/public/api/ppt_from_topic',
       body: {
         accessId: accessId,
