@@ -4,7 +4,6 @@ import { makeRequest } from "../common/client";
 import { HttpMethod } from "@activepieces/pieces-common";
 import { finetuneIdDropdown } from "../common/dropdown";
 
-
 export const deleteFinetune = createAction({
   name: 'delete_finetune',
   displayName: 'Delete Finetune Entry',
@@ -14,18 +13,22 @@ export const deleteFinetune = createAction({
     chatbotId: Property.ShortText({
       displayName: 'Chatbot ID',
       required: true,
-      description: 'ID of the chatbot for which to create the finetune (from your SiteSpeakAI account).',
+      description: 'Enter the ID of the chatbot for which to delete the finetune.',
     }),
     finetuneId: finetuneIdDropdown,
   },
   async run({ auth, propsValue }) {
+    const props = propsValue as { chatbotId: string; finetuneId: string };
 
     const response = await makeRequest(
       auth as string,
       HttpMethod.DELETE,
-      `/${propsValue.chatbotId}/finetunes/${propsValue.finetuneId}`
+      `/${props.chatbotId}/finetunes/${props.finetuneId}`
     );
 
-    return response;
+    return {
+      success: true,
+      data: response,
+    };
   },
 });

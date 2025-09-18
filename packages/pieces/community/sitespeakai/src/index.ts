@@ -4,10 +4,11 @@ import { sendQuery } from "./lib/actions/send-query";
 import { createFinetune } from "./lib/actions/create-finetune";
 import { deleteFinetune } from "./lib/actions/delete-finetune";
 import { newLead } from "./lib/triggers/new-lead";
+import { SiteSpeakAuth } from "./lib/common/auth";
 
 export const sitespeakai = createPiece({
   displayName: "Sitespeakai",
-  auth: PieceAuth.None(),
+  auth: SiteSpeakAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/sitespeakai.png",
   authors: ["Niket2035"],

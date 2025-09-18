@@ -7,9 +7,8 @@ export const conversationIdDropdown = Property.Dropdown<string>({
     description: 'Pick a conversation for context, or leave empty to start a new one.',
     required: false,
     refreshers: ['chatbotId'],
-    async options({ auth, propsValue }) {
-        const { chatbotId } = propsValue as { chatbotId?: string };
-
+    async options({ auth, chatbotId }) {
+    
         if (!auth || !chatbotId) {
             return {
                 disabled: true,
@@ -41,42 +40,51 @@ export const conversationIdDropdown = Property.Dropdown<string>({
         }
     },
 });
-
 export const finetuneIdDropdown = Property.Dropdown<string>({
-    displayName: 'Finetune Entry',
-    description: 'Select the finetune entry to delete.',
-    required: true,
-    refreshers: ['chatbotId'],
-    async options({ auth, propsValue }) {
-        const { chatbotId } = propsValue as { chatbotId?: string };
-        if (!auth || !chatbotId) {
-            return {
-                disabled: true,
-                options: [],
-                placeholder: "Select a chatbot first",
-            };
-        }
+  displayName: 'Finetune Entry',
+  description: 'Select the finetune entry to delete.',
+  required: true,
+  refreshers: ['chatbotId'],
+  async options({ auth, chatbotId }) {
+    
+    console.log("fwyutgfuwgfy")
+    console.log(chatbotId)
+    if (!auth || !chatbotId) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: "Please enter/select a chatbot ID first",
+      };
+    }
 
-        try {
-            const response = await makeRequest(
-                auth as string,
-                HttpMethod.GET,
-                `/${chatbotId}/finetunes`
-            );
+    try {
+      const response = await makeRequest(
+        auth as string,
+        HttpMethod.GET,
+        `/${chatbotId}/finetunes`
+      );
 
-            return {
-                disabled: false,
-                options: response.map((finetune: any) => ({
-                    label: finetune.question || finetune.id,
-                    value: finetune.id,
-                })),
-            };
-        } catch (e: any) {
-            return {
-                disabled: true,
-                options: [],
-                placeholder: "Failed to fetch finetune entries",
-            };
-        }
-    },
+      if (!response || response.length === 0) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "No finetune entries found for this chatbot",
+        };
+      }
+
+      return {
+        disabled: false,
+        options: response.map((item: any) => ({
+          label: item.question || item.id,
+          value: item.id,
+        })),
+      };
+    } catch (e: any) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: "Failed to fetch finetune entries",
+      };
+    }
+  },
 });

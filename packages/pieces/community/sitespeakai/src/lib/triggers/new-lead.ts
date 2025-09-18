@@ -3,7 +3,13 @@ import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepiece
 import dayjs from 'dayjs';
 import { makeRequest } from '../common/client';
 import { SiteSpeakAuth } from '../common/auth';
-
+const props = {
+    chatbotId: Property.ShortText({
+        displayName: 'Chatbot ID',
+        required: true,
+        description: 'ID of the chatbot for which to create the finetune (from your SiteSpeakAI account).',
+    }),
+}
 const polling: Polling<PiecePropValueSchema<typeof SiteSpeakAuth>, { chatbotId: string }> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue }) => {
@@ -13,7 +19,7 @@ const polling: Polling<PiecePropValueSchema<typeof SiteSpeakAuth>, { chatbotId: 
         const response = await makeRequest(
             auth as string,
             HttpMethod.GET,
-            `/v1/${propsValue.chatbotId}/leads`,
+            `/${propsValue.chatbotId}/leads`,
             undefined,
             {
                 Accept: 'application/json',
@@ -36,13 +42,7 @@ export const newLead = createTrigger({
     name: 'newLead',
     displayName: 'New Lead',
     description: 'Triggers when a new lead with an email address is created in SiteSpeakAI.',
-    props: {
-        chatbotId: Property.ShortText({
-            displayName: 'Chatbot ID',
-            required: true,
-            description: 'ID of the chatbot for which to create the finetune (from your SiteSpeakAI account).',
-        }),
-    },
+    props,
     sampleData: {
         id: 'lead_12345',
         chatbot_id: 'chatbot_6789',
