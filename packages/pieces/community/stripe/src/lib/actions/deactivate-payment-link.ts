@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
+import { paymentLinkIdDropdown } from '../common';
 
 export const deactivatePaymentLink = createAction({
   auth: stripeAuth,
@@ -8,10 +9,7 @@ export const deactivatePaymentLink = createAction({
   displayName: 'Deactivate Payment Link',
   description: 'Disable/deactivate a Payment Link so it can no longer be used.',
   props: {
-    paymentLinkId: Property.ShortText({
-      displayName: 'Payment Link ID',
-      required: true,
-    }),
+    paymentLinkId: paymentLinkIdDropdown,
   },
   async run({ auth, propsValue }) {
     const { paymentLinkId } = propsValue;

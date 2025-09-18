@@ -6,7 +6,7 @@ export const newCharge = createTrigger({
     auth: stripeAuth,
     name: 'newCharge',
     displayName: 'New Charge',
-    description: '',
+    description: 'Triggers when a charge is successfully completed.',
     props: {},
     sampleData:
     {

@@ -6,7 +6,7 @@ export const checkoutSessionCompleted = createTrigger({
     auth: stripeAuth,
     name: 'checkoutSessionCompleted',
     displayName: 'Checkout Session Completed',
-    description: '',
+    description: 'Triggers when a Stripe Checkout Session is successfully completed.',
     props: {},
     sampleData: {
         "id": "evt_1NyiAzLkdIwHu7ixPr7FzQtG",

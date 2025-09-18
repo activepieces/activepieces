@@ -12,10 +12,24 @@ export const createPayment = createAction({
       displayName: 'Amount (in cents)',
       required: true,
     }),
-    currency: Property.ShortText({
+    currency: Property.StaticDropdown({
       displayName: 'Currency',
+      description: 'The three-letter ISO code for the currency.',
       required: true,
-      defaultValue: 'usd',
+      options: {
+        options: [
+          { label: 'US Dollar', value: 'usd' },
+          { label: 'Euro', value: 'eur' },
+          { label: 'Pound Sterling', value: 'gbp' },
+          { label: 'Australian Dollar', value: 'aud' },
+          { label: 'Canadian Dollar', value: 'cad' },
+          { label: 'Swiss Franc', value: 'chf' },
+          { label: 'Chinese Yuan', value: 'cny' },
+          { label: 'Japanese Yen', value: 'jpy' },
+          { label: 'Indian Rupee', value: 'inr' },
+          { label: 'Singapore Dollar', value: 'sgd' },
+        ],
+      },
     }),
     payment_method: Property.ShortText({
       displayName: 'Payment Method ID',
@@ -41,6 +55,12 @@ export const createPayment = createAction({
       required: false,
       description: 'Key-value pairs to attach to the payment intent.',
     }),
+    receipt_email: Property.ShortText({
+      displayName: 'Receipt Email',
+      description:
+        "The email address to send a receipt to. This will override the customer's email address.",
+      required: false,
+    }),
   },
   async run({ auth, propsValue }) {
     const {
@@ -50,6 +70,7 @@ export const createPayment = createAction({
       confirmation_method,
       confirm,
       description,
+      receipt_email,
       metadata,
     } = propsValue;
 
@@ -60,6 +81,7 @@ export const createPayment = createAction({
       confirmation_method,
       confirm,
       description,
+      receipt_email,
     };
 
     if (metadata) {

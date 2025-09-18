@@ -6,7 +6,7 @@ export const newDispute = createTrigger({
     auth: stripeAuth,
     name: 'newDispute',
     displayName: 'New Dispute',
-    description: '',
+    description: 'Triggers when a customer disputes a charge.',
     props: {},
     sampleData: {
         "id": "evt_1NydkMLkdIwHu7ix0xYgkZSt",

@@ -19,11 +19,17 @@ export const createSubscription = createAction({
         quantity: Property.Number({ displayName: 'Quantity', required: false }),
       },
     }),
-    collection_method: Property.ShortText({
+    collection_method: Property.StaticDropdown({
       displayName: 'Collection Method',
+      description:
+        "How to collect payment. 'charge_automatically' will try to bill the default payment method. 'send_invoice' will email an invoice.",
       required: false,
-      defaultValue: 'charge_automatically',
-      description: 'charge_automatically or send_invoice',
+      options: {
+        options: [
+          { label: 'Charge Automatically', value: 'charge_automatically' },
+          { label: 'Send Invoice', value: 'send_invoice' },
+        ],
+      },
     }),
     trial_period_days: Property.Number({
       displayName: 'Trial Period Days',

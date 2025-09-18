@@ -23,6 +23,30 @@ export const updateCustomer = createAction({
       displayName: 'Description',
       required: false,
     }),
+    phone: Property.ShortText({
+      displayName: 'Phone',
+      required: false,
+    }),
+    line1: Property.ShortText({
+      displayName: 'Address Line 1',
+      required: false,
+    }),
+    postal_code: Property.ShortText({
+      displayName: 'Postal Code',
+      required: false,
+    }),
+    city: Property.ShortText({
+      displayName: 'City',
+      required: false,
+    }),
+    state: Property.ShortText({
+      displayName: 'State',
+      required: false,
+    }),
+    country: Property.ShortText({
+      displayName: 'Country',
+      required: false,
+    }),
     metadata: Property.Object({
       displayName: 'Metadata',
       required: false,
@@ -30,7 +54,19 @@ export const updateCustomer = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { customerId, email, name, description, metadata } = propsValue;
+    const {
+      customerId,
+      email,
+      name,
+      description,
+      phone,
+      line1,
+      postal_code,
+      city,
+      state,
+      country,
+      metadata,
+    } = propsValue;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -43,6 +79,14 @@ export const updateCustomer = createAction({
         email,
         name,
         description,
+        phone,
+        address: {
+          line1,
+          postal_code,
+          city,
+          state,
+          country,
+        },
         metadata: metadata as unknown as Stripe.MetadataParam,
       },
     });

@@ -6,7 +6,7 @@ export const canceledSubscription = createTrigger({
     auth: stripeAuth,
     name: 'canceledSubscription',
     displayName: 'Canceled Subscription',
-    description: '',
+    description: 'Triggers when a subscription is cancelled (by user or end of billing cycle). ',
     props: {},
     sampleData: {
         "id": "evt_1NyaWzLkdIwHu7ixH5qYnVcR",

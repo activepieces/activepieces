@@ -6,7 +6,7 @@ export const invoicePaymentFailed = createTrigger({
     auth: stripeAuth,
     name: 'invoicePaymentFailed',
     displayName: 'Invoice Payment Failed',
-    description: '',
+    description: 'Triggers when a payment against an invoice fails.',
     props: {},
     sampleData: {
         "id": "evt_1NyZ8rLkdIwHu7ixKjRt5sW9",

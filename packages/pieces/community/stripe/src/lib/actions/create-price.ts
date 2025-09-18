@@ -14,16 +14,40 @@ export const createPrice = createAction({
       displayName: 'Unit Amount (in cents)',
       required: true,
     }),
-    currency: Property.ShortText({
+    currency: Property.StaticDropdown({
       displayName: 'Currency',
+      description: 'The three-letter ISO code for the currency.',
       required: true,
-      defaultValue: 'usd',
+      options: {
+        options: [
+          { label: 'US Dollar', value: 'usd' },
+          { label: 'Euro', value: 'eur' },
+          { label: 'Pound Sterling', value: 'gbp' },
+          { label: 'Indian Rupee', value: 'inr' },
+          { label: 'Australian Dollar', value: 'aud' },
+          { label: 'Canadian Dollar', value: 'cad' },
+          { label: 'Swiss Franc', value: 'chf' },
+          { label: 'Chinese Yuan', value: 'cny' },
+          { label: 'Japanese Yen', value: 'jpy' },
+          { label: 'Singapore Dollar', value: 'sgd' },
+        ],
+      },
     }),
-    recurring_interval: Property.ShortText({
-      displayName: 'Recurring Interval',
-      required: false,
-      defaultValue: 'month',
-      description: 'One of day, week, month, or year.',
+     recurring_interval: Property.StaticDropdown({
+      displayName: 'Billing Interval',
+      description:
+        "Specify the billing frequency. Select 'One-Time' for a single, non-recurring payment.",
+      required: true,
+      defaultValue: 'one_time',
+      options: {
+        options: [
+          { label: 'One-Time', value: 'one_time' },
+          { label: 'Daily', value: 'day' },
+          { label: 'Weekly', value: 'week' },
+          { label: 'Monthly', value: 'month' },
+          { label: 'Yearly', value: 'year' },
+        ],
+      },
     }),
     recurring_interval_count: Property.Number({
       displayName: 'Recurring Interval Count',

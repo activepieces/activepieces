@@ -6,7 +6,7 @@ export const updatedSubscription = createTrigger({
     auth: stripeAuth,
     name: 'updatedSubscription',
     displayName: 'Updated Subscription',
-    description: '',
+    description: 'Triggers when an existing subscription is changed.',
     props: {},
     sampleData: {
         "id": "evt_1NygUELkdIwHu7ixXFYlcT4M",

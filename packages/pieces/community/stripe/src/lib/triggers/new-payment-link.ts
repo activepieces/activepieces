@@ -4,7 +4,7 @@ export const newPaymentLink = createTrigger({
     // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
     name: 'newPaymentLink',
     displayName: 'New Payment Link',
-    description: '',
+    description: 'Triggers when a new Payment Link is created.',
     props: {},
     sampleData: {},
     type: TriggerStrategy.WEBHOOK,

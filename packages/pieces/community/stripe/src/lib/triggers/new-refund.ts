@@ -6,7 +6,7 @@ export const newRefund = createTrigger({
     auth: stripeAuth,
     name: 'newRefund',
     displayName: 'New Refund',
-    description: '',
+    description: 'Triggers when a charge is refunded (full or partial).',
     props: {},
     sampleData: {
         "id": "evt_1NycK5LkdIwHu7ixQmTvPrbF",

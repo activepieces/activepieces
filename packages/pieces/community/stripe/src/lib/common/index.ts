@@ -275,3 +275,96 @@ export const payoutIdDropdown=Property.Dropdown({
   },
 })
 
+export const paymentLinkIdDropdown = Property.Dropdown({
+  displayName: 'Payment Link ID',
+  description: 'Select the Payment Link to deactivate',
+  required: true,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+    try {
+      const paymentLinks = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `https://api.stripe.com/v1/payment_links`,
+        headers: {
+          Authorization: 'Bearer ' + auth,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      return {
+        disabled: false,
+        options: paymentLinks.body.data.map((link: any) => ({
+          label: `${link.id}`,
+          value: link.id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading payment links',
+      };
+    }
+  },
+});
+
+export const chargeIdDropdown = Property.Dropdown({
+  displayName: 'Charge ID',
+  description: 'Select a charge to refund',
+  required: true,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+    try {
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `https://api.stripe.com/v1/charges?limit=50`,
+        headers: {
+          Authorization: `Bearer ${auth}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      return {
+        disabled: false,
+        options: response.body.data.map((charge: any) => {
+          const amount = (charge.amount / 100).toFixed(2) + " " + charge.currency.toUpperCase();
+          const customer = charge.billing_details?.name || charge.customer || "Unknown Customer";
+          const label = `${charge.id} - ${amount} (${customer})`;
+
+          return {
+            label,
+            value: charge.id,
+          };
+        }),
+        placeholder: 'Select a charge',
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading charges',
+      };
+    }
+  },
+});
+
+
+
+
+

@@ -6,7 +6,7 @@ export const newInvoice = createTrigger({
     auth: stripeAuth,
     name: 'newInvoice',
     displayName: 'New Invoice',
-    description: '',
+    description: 'Triggers when an invoice is created. Supports filters like status, customer, subscription.',
     props: {},
     sampleData: {
         "id": "evt_1NyWxcLkdIwHu7ixPQr4i2TC",
