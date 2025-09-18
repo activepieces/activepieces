@@ -3,7 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 // CHANGED: Import the specific dropdown you need
-import { chargeIdDropdown } from '../common/props';
+import { chargeIdDropdown } from '../common';
 
 export const stripeCreateRefund = createAction({
     name: 'create_refund',

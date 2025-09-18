@@ -1,119 +1,240 @@
-// src/common.ts
-
 import {
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
+    HttpRequest,
+    HttpMethod,
+    httpClient,
+    AuthenticationType, // Added for cleaner authentication
 } from '@activepieces/pieces-common';
-
-// The base URL for all Stripe API calls
-const baseUrl = 'https://api.stripe.com/v1';
-
-export const stripeCommon = {
-  baseUrl: baseUrl,
-
-  // Webhook subscription logic (as you had it)
-  subscribeWebhook: async (
-    eventNames: string[],
-    webhookUrl: string,
-    apiKey: string
-  ): Promise<{ id: string }> => {
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `${baseUrl}/webhook_endpoints`,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: {
-        enabled_events: eventNames,
-        url: webhookUrl,
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: apiKey,
-      },
-    };
-    const { body: webhook } = await httpClient.sendRequest<{ id:string }>(request);
-    return webhook;
-  },
-
-  // Webhook unsubscription logic (as you had it)
-  unsubscribeWebhook: async (webhookId: string, apiKey: string) => {
-    const request: HttpRequest = {
-      method: HttpMethod.DELETE,
-      url: `${baseUrl}/webhook_endpoints/${webhookId}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: apiKey,
-      },
-    };
-    return await httpClient.sendRequest(request);
-  },
-};
+import { Property, DropdownState } from '@activepieces/pieces-framework';
 
 // --- TYPE DEFINITIONS ---
-// Centralized types for Stripe API responses.
+// Added for type safety with Stripe API responses
+interface StripeCustomer { id: string; name: string | null; email: string | null; }
+interface StripeProduct { id: string; name: string; }
+interface StripeSubscription { id: string; }
+interface StripeInvoice { id: string; number: string; total: number; currency: string; customer: StripeCustomer | null; }
+interface StripePayout { id: string; amount: number; arrival_date: number; currency: string; status: string; }
+// --- END OF TYPES ---
 
-export interface StripeCustomer {
-  id: string;
-  name: string | null;
-  email: string | null;
-}
+export const stripeCommon = {
+    baseUrl: 'https://api.stripe.com/v1',
 
-export interface StripeProduct {
-  id: string;
-  name: string;
-}
+    async subscribeWebhook(events: string[], webhookUrl: string, auth: string) {
+        const request: HttpRequest = {
+            method: HttpMethod.POST,
+            url: `${this.baseUrl}/webhook_endpoints`,
+            headers: {
+                'Authorization': 'Bearer ' + auth,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: {
+                'enabled_events': events,
+                'url': webhookUrl,
+                'api_version': '2024-04-10',
+            },
+        };
+        const response = await httpClient.sendRequest<{ id: string }>(request);
+        return response.body;
+    },
 
-export interface StripePrice {
-  id: string;
-  nickname: string | null;
-  product: {
-    name: string;
-  };
-  unit_amount: number;
-  currency: string;
-}
+    async unsubscribeWebhook(webhookId: string, auth: string) {
+        const request: HttpRequest = {
+            method: HttpMethod.DELETE,
+            url: `${this.baseUrl}/webhook_endpoints/${webhookId}`,
+            headers: {
+                'Authorization': 'Bearer ' + auth,
+            },
+        };
+        return await httpClient.sendRequest(request);
+    },
+};
 
-export interface StripeSubscription {
-  id: string;
-  customer: {
-    name: string;
-    email: string;
-  };
-}
+// --- HIGH-PERFORMANCE DROPDOWNS ---
 
-export interface StripeInvoice {
-  id: string;
-  number: string | null;
-  customer: { name: string | null; email: string | null } | null;
-  total: number;
-  currency: string;
-}
+export const customerIdDropdown = Property.Dropdown({
+    displayName: 'Customer',
+    required: true,
+    refreshers: [],
+    options: async ({ auth, searchValue }): Promise<DropdownState<string>> => {
+        if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account' };
 
-export interface StripePaymentIntent {
-  id: string;
-  amount: number;
-  currency: string;
-  customer: { name: string | null; email: string | null } | null;
-}
+        const response = await httpClient.sendRequest<{ data: StripeCustomer[] }>({
+            method: HttpMethod.GET,
+            url: `${stripeCommon.baseUrl}/customers/search`,
+            authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+            queryParams: { query: `name~"${searchValue || ''}" OR email~"${searchValue || ''}"` },
+        });
 
-export interface StripePayout {
-  id: string;
-  amount: number;
-  currency: string;
-  arrival_date: number;
-  status: string;
-}
+        return {
+            disabled: false,
+            options: response.body.data.map((customer) => ({
+                value: customer.id,
+                label: `${customer.name || 'Untitled'} (${customer.email || 'No Email'})`,
+            })),
+        };
+    },
+});
 
-export interface StripePaymentLink {
-  id: string;
-  url: string;
-}
+export const productIdDropdown = Property.Dropdown({
+    displayName: 'Product',
+    required: true,
+    refreshers: [],
+    options: async ({ auth, searchValue }): Promise<DropdownState<string>> => {
+        if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account' };
 
-export interface StripeCharge {
-  id: string;
-  amount: number;
-  currency: string;
-  customer: { name: string | null; email: string | null } | null;
-  created: number; // This is a Unix timestamp
-}
+        const response = await httpClient.sendRequest<{ data: StripeProduct[] }>({
+            method: HttpMethod.GET,
+            url: `${stripeCommon.baseUrl}/products/search`,
+            authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+            queryParams: { query: `active:'true' AND name~"${searchValue || ''}"` },
+        });
+
+        return {
+            disabled: false,
+            options: response.body.data.map((prod) => ({
+                value: prod.id,
+                label: prod.name,
+            })),
+        };
+    },
+});
+
+export const subscriptionIdDropdown = Property.Dropdown({
+    displayName: 'Subscription',
+    required: true,
+    refreshers: ['customerId'],
+    options: async ({ auth, customerId }): Promise<DropdownState<string>> => {
+        if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account' };
+        if (!customerId) return { disabled: true, options: [], placeholder: 'Please select a customer first' };
+
+        const response = await httpClient.sendRequest<{ data: StripeSubscription[] }>({
+            method: HttpMethod.GET,
+            url: `${stripeCommon.baseUrl}/subscriptions`,
+            authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+            queryParams: {
+                limit: '100',
+                status: 'active',
+                customer: customerId as string
+            }
+        });
+
+        return {
+            disabled: false,
+            options: response.body.data.map((sub) => ({
+                value: sub.id,
+                label: `Subscription ID: ${sub.id}`,
+            })),
+        };
+    },
+});
+
+export const invoiceIdDropdown = Property.Dropdown({
+    displayName: "Invoice",
+    required: true,
+    refreshers: [],
+    options: async ({ auth, searchValue }): Promise<DropdownState<string>> => {
+        if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account' };
+
+        const response = await httpClient.sendRequest<{ data: StripeInvoice[] }>({
+            method: HttpMethod.GET,
+            url: `${stripeCommon.baseUrl}/invoices/search`,
+            authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+            queryParams: {
+                query: `status:'open' AND (customer.name~"${searchValue || ''}" OR number~"${searchValue || ''}")`,
+                'expand[0]': 'data.customer',
+            },
+        });
+
+        return {
+            disabled: false,
+            options: response.body.data.map((invoice) => {
+                const customerName = invoice.customer?.name || invoice.customer?.email || 'Unknown';
+                const amount = (invoice.total / 100).toFixed(2);
+                const label = `Invoice #${invoice.number || invoice.id} for ${customerName} (${amount} ${invoice.currency.toUpperCase()})`;
+                return { value: invoice.id, label };
+            }),
+        };
+    },
+});
+
+export const payoutIdDropdown = Property.Dropdown({
+    displayName: 'Payout',
+    required: true,
+    refreshers: [],
+    options: async ({ auth }): Promise<DropdownState<string>> => {
+        if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account' };
+
+        const response = await httpClient.sendRequest<{ data: StripePayout[] }>({
+            method: HttpMethod.GET,
+            url: `${stripeCommon.baseUrl}/payouts`,
+            authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+            queryParams: { limit: '100' },
+        });
+
+        return {
+            disabled: false,
+            options: response.body.data.map((payout) => {
+                const arrivalDate = new Date(payout.arrival_date * 1000).toLocaleDateString();
+                const amount = (payout.amount / 100).toFixed(2);
+                const label = `Payout on ${arrivalDate} - ${amount} ${payout.currency.toUpperCase()} (${payout.status})`;
+                return { value: payout.id, label };
+            }),
+        };
+    },
+});
+
+// ADDED: chargeIdDropdown
+export const chargeIdDropdown = Property.Dropdown({
+    displayName: 'Charge',
+    required: true,
+    refreshers: ['customerId'],
+    options: async ({ auth, customerId }): Promise<DropdownState<string>> => {
+        if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account' };
+        if (!customerId) return { disabled: true, options: [], placeholder: 'Please select a customer first' };
+
+        const response = await httpClient.sendRequest<{ data: { id: string, amount: number, currency: string, created: number }[] }>({
+            method: HttpMethod.GET,
+            url: `https://api.stripe.com/v1/charges`,
+            authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+            queryParams: {
+                limit: '100',
+                customer: customerId as string
+            }
+        });
+        return {
+            disabled: false,
+            options: response.body.data.map((charge) => {
+                const amount = (charge.amount / 100).toFixed(2);
+                const createdDate = new Date(charge.created * 1000).toLocaleDateString();
+                return {
+                    value: charge.id,
+                    label: `${amount} ${charge.currency.toUpperCase()} on ${createdDate}`,
+                };
+            }),
+        };
+    },
+});
+
+// ADDED: paymentLinkIdDropdown
+export const paymentLinkIdDropdown = Property.Dropdown({
+    displayName: 'Payment Link',
+    description: 'Select an active payment link.',
+    required: true,
+    refreshers: [],
+    options: async ({ auth }): Promise<DropdownState<string>> => {
+        if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account' };
+
+        const response = await httpClient.sendRequest<{ data: { id: string, url: string }[] }>({
+            method: HttpMethod.GET,
+            url: `https://api.stripe.com/v1/payment_links`,
+            authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth as string },
+            queryParams: { limit: '100', active: 'true' }
+        });
+        return {
+            disabled: false,
+            options: response.body.data.map((link) => ({
+                value: link.id,
+                label: link.url,
+            })),
+        };
+    },
+});

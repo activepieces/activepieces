@@ -5,7 +5,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 // CHANGED: Import the specific dropdown you need
-import { paymentLinkIdDropdown } from '../common/props';
+import { paymentLinkIdDropdown } from '../common';
 
 export const stripeDeactivatePaymentLink = createAction({
     name: 'deactivate_payment_link',

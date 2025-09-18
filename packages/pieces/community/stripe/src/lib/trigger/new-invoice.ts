@@ -2,7 +2,7 @@ import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-f
 import { stripeCommon } from '../common';
 import { stripeAuth } from '../..';
 // CHANGED: Import the specific dropdowns you need
-import { customerIdDropdown, subscriptionIdDropdown } from '../common/props';
+import { customerIdDropdown ,subscriptionIdDropdown } from '../common';
 
 export const stripeNewInvoice = createTrigger({
     auth: stripeAuth,
