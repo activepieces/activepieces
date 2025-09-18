@@ -14,7 +14,7 @@ export const stripeCreateSubscription = createAction({
   description:
     'Start a subscription for a customer with specified items/prices.',
   props: {
-    customer: stripeCommon.customer, 
+    customer: stripeCommon.customer,
     items: Property.Array({
       displayName: 'Subscription Items',
       description: 'A list of prices to subscribe the customer to.',
@@ -46,6 +46,12 @@ export const stripeCreateSubscription = createAction({
         ],
       },
     }),
+    days_until_due: Property.Number({
+      displayName: 'Days Until Due',
+      description:
+        "Number of days before an invoice is due. Required if Collection Method is 'Send Invoice'.",
+      required: false,
+    }),
     trial_period_days: Property.Number({
       displayName: 'Trial Period (Days)',
       description:
@@ -64,9 +70,30 @@ export const stripeCreateSubscription = createAction({
     }),
   },
   async run(context) {
-    const { items, ...props } = context.propsValue;
+    const {
+      customer,
+      items,
+      collection_method,
+      days_until_due, 
+      trial_period_days,
+      default_payment_method,
+      metadata,
+    } = context.propsValue;
 
-    const body: Record<string, unknown> = { ...props };
+    const body: Record<string, unknown> = {
+      customer,
+      collection_method,
+      days_until_due, 
+      trial_period_days,
+      default_payment_method,
+      metadata,
+    };
+
+    Object.keys(body).forEach((key) => {
+      if (body[key] === undefined || body[key] === null) {
+        delete body[key];
+      }
+    });
 
     if (items && Array.isArray(items)) {
       items.forEach((item, index) => {
@@ -84,6 +111,9 @@ export const stripeCreateSubscription = createAction({
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth,
+      },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: body,
     });

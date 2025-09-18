@@ -38,19 +38,25 @@ export const stripeCreatePaymentIntent = createAction({
         ],
       },
     }),
-    customer: stripeCommon.customer, 
+    customer: stripeCommon.customer,
     payment_method: Property.ShortText({
       displayName: 'Payment Method ID',
       description:
-        'The ID of the Payment Method to attach to this Payment Intent (e.g., `pm_...`). Required if you want to confirm the payment immediately.',
+        'The ID of the Payment Method to attach (e.g., `pm_...`). Required if you want to confirm the payment immediately.',
       required: false,
     }),
     confirm: Property.Checkbox({
-      displayName: 'Confirm Payment',
+      displayName: 'Confirm Payment Immediately',
       description:
-        'If true, Stripe will attempt to charge the provided payment method immediately. A `Payment Method ID` is required for this.',
+        'If true, Stripe will attempt to charge the provided payment method. A `Payment Method ID` is required.',
       required: false,
       defaultValue: false,
+    }),
+    return_url: Property.ShortText({
+      displayName: 'Return URL',
+      description:
+        'The URL to redirect your customer back to after they authenticate their payment. Required when confirming the payment.',
+      required: false,
     }),
     description: Property.LongText({
       displayName: 'Description',
@@ -70,6 +76,7 @@ export const stripeCreatePaymentIntent = createAction({
       customer,
       payment_method,
       confirm,
+      return_url,
       description,
       receipt_email,
     } = context.propsValue;
@@ -77,6 +84,11 @@ export const stripeCreatePaymentIntent = createAction({
     if (confirm && !payment_method) {
       throw new Error(
         "A Payment Method ID is required when 'Confirm Payment' is set to true."
+      );
+    }
+    if (confirm && !return_url) {
+      throw new Error(
+        "A Return URL is required when 'Confirm Payment' is set to true."
       );
     }
 
@@ -90,6 +102,7 @@ export const stripeCreatePaymentIntent = createAction({
     if (customer) body.customer = customer;
     if (payment_method) body.payment_method = payment_method;
     if (confirm) body.confirm = confirm;
+    if (return_url) body.return_url = return_url;
     if (description) body.description = description;
     if (receipt_email) body.receipt_email = receipt_email;
 
@@ -99,6 +112,9 @@ export const stripeCreatePaymentIntent = createAction({
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth,
+      },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: body,
     });

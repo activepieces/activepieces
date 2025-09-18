@@ -1,11 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
-import { stripeCommon } from '../common';
+import { getClient } from '../common';
+import { Stripe } from 'stripe';
 
 export const stripeCreatePaymentLink = createAction({
   name: 'create_payment_link',
@@ -74,51 +70,33 @@ export const stripeCreatePaymentLink = createAction({
     }),
   },
   async run(context) {
-    const {
-      line_items,
-      after_completion_type,
-      after_completion_redirect_url,
-      ...props
-    } = context.propsValue;
+    const client = getClient(context.auth);
+    const props = context.propsValue;
 
-    const body: { [key: string]: unknown } = { ...props };
+    const params: Stripe.PaymentLinkCreateParams = {
+      line_items: props.line_items as { price: string; quantity: number }[],
+      allow_promotion_codes: props.allow_promotion_codes,
+      billing_address_collection: props.billing_address_collection as
+        | 'auto'
+        | 'required'
+        | undefined,
+      metadata: props.metadata as Record<string, string> | undefined,
+    };
 
-    if (line_items && Array.isArray(line_items)) {
-      line_items.forEach((item, index) => {
-        const typedItem = item as { price: string; quantity: number };
-        body[`line_items[${index}][price]`] = typedItem.price;
-        body[`line_items[${index}][quantity]`] = typedItem.quantity;
-      });
-    }
-
-    if (after_completion_type) {
-      body['after_completion[type]'] = after_completion_type;
+    if (props.after_completion_type) {
+      params.after_completion = {
+        type: props.after_completion_type as 'hosted_confirmation' | 'redirect',
+      };
       if (
-        after_completion_type === 'redirect' &&
-        after_completion_redirect_url
+        props.after_completion_type === 'redirect' &&
+        props.after_completion_redirect_url
       ) {
-        body['after_completion[redirect][url]'] = after_completion_redirect_url;
+        params.after_completion.redirect = {
+          url: props.after_completion_redirect_url,
+        };
       }
     }
 
-    if (props.metadata && typeof props.metadata === 'object') {
-      Object.keys(props.metadata).forEach((key) => {
-        body[`metadata[${key}]`] = (props.metadata as Record<string, string>)[
-          key
-        ];
-      });
-    }
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${stripeCommon.baseUrl}/payment_links`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
-      },
-      body: body,
-    });
-
-    return response.body;
+    return await client.paymentLinks.create(params);
   },
 });

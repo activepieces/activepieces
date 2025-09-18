@@ -94,6 +94,9 @@ export const stripeCreatePrice = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth,
       },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
       body: body,
     });
 

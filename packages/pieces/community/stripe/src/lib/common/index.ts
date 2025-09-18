@@ -4,17 +4,27 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { Property, DropdownState } from '@activepieces/pieces-framework';
+import {
+  Property,
+  DropdownState,
+  PiecePropValueSchema
+} from '@activepieces/pieces-framework';
+import { Stripe } from 'stripe';
+import { stripeAuth } from '../..';
 import {
   StripeCustomerSearchResult,
-  StripeInvoiceSearchResult,
   StripePaymentIntentSearchResult,
-  StripePaymentLink,
   StripePayout,
   StripeProductSearchResult,
 } from './types';
 
 const baseUrl = 'https://api.stripe.com/v1';
+
+export const getClient = (apiKey: string): Stripe => {
+  return new Stripe(apiKey, {
+    apiVersion: '2025-05-28.basil',
+  });
+};
 
 export const stripeCommon = {
   baseUrl: baseUrl,
@@ -63,56 +73,54 @@ export const stripeCommon = {
     displayName: 'Invoice',
     required: true,
     refreshers: [],
-    options: async ({ auth, searchValue }): Promise<DropdownState<string>> => {
+    options: async ({ auth }): Promise<DropdownState<string>> => {
       if (!auth) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Please connect your Stripe account first',
         };
       }
-      const response = await httpClient.sendRequest<{
-        data: StripeInvoiceSearchResult[];
-      }>({
-        method: HttpMethod.GET,
-        url: `${baseUrl}/invoices/search`, 
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
-        },
-        queryParams: {
-          query: `status:'open' AND (customer.name~"${
-            searchValue || ''
-          }" OR number~"${searchValue || ''}")`,
-          expand: 'data.customer',
-        },
-      });
-      if (response.status === 200) {
+
+      try {
+        const client = getClient(
+          auth as PiecePropValueSchema<typeof stripeAuth>
+        );
+
+        const invoices = await client.invoices.list({
+          limit: 100,
+          expand: ['data.customer'],
+        });
+
         return {
           disabled: false,
-          options: response.body.data.map(
-            (invoice: StripeInvoiceSearchResult) => {
+          options: invoices.data
+            .map((invoice) => {
+              const customer = invoice.customer as Stripe.Customer | null;
               const customerName =
-                invoice.customer?.name ||
-                invoice.customer?.email ||
-                'Unknown Customer';
+                customer?.name || customer?.email || 'Unknown Customer';
               const amount = (invoice.total / 100).toFixed(2);
               const label = `Invoice #${
-                invoice.number
+                invoice.number || invoice.id
               } for ${customerName} (${amount} ${invoice.currency.toUpperCase()})`;
               return {
                 value: invoice.id,
                 label: label,
               };
-            }
-          ),
+            })
+            .filter(
+              (option): option is { value: string; label: string } =>
+                option.value !== undefined && option.value !== null
+            ),
+        };
+      } catch (error) {
+        console.error('Failed to load Stripe invoices:', error);
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Error loading invoices. Check connection.',
         };
       }
-      return {
-        disabled: true,
-        options: [],
-        placeholder: "Couldn't load invoices",
-      };
     },
   }),
 
@@ -129,32 +137,34 @@ export const stripeCommon = {
         };
       }
 
-      const response = await httpClient.sendRequest<{
-        data: StripeCustomerSearchResult[];
-      }>({
+      const request: HttpRequest = {
         method: HttpMethod.GET,
-        url: `${baseUrl}/customers/search`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: auth as string,
         },
-        queryParams: {
-          query: `name~"${searchValue || ''}" OR email~"${searchValue || ''}"`,
-        },
-      });
+        url: searchValue
+          ? `${baseUrl}/customers/search`
+          : `${baseUrl}/customers`,
+        queryParams: searchValue
+          ? { query: `name~"${searchValue}" OR email~"${searchValue}"` }
+          : { limit: '100' },
+      };
+
+      const response = await httpClient.sendRequest<{
+        data: StripeCustomerSearchResult[];
+      }>(request);
 
       if (response.status === 200) {
         return {
           disabled: false,
           options: response.body.data.map(
-            (customer: StripeCustomerSearchResult) => {
-              return {
-                value: customer.id,
-                label: `${customer.name || customer.id} (${
-                  customer.email || 'No Email'
-                })`,
-              };
-            }
+            (customer: StripeCustomerSearchResult) => ({
+              value: customer.id,
+              label: `${customer.name || customer.id} (${
+                customer.email || 'No Email'
+              })`,
+            })
           ),
         };
       }
@@ -180,29 +190,34 @@ export const stripeCommon = {
         };
       }
 
+      let query = "active:'true'";
+      if (searchValue) {
+        query += ` AND name~"${searchValue}"`;
+      }
+
       const response = await httpClient.sendRequest<{
         data: StripeProductSearchResult[];
       }>({
         method: HttpMethod.GET,
-        url: `${stripeCommon.baseUrl}/products/search`,
+        url: `${baseUrl}/products/search`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: auth as string,
         },
         queryParams: {
-          query: `active:'true' AND name~"${searchValue || ''}"`,
+          query: query,
         },
       });
 
       if (response.status === 200) {
         return {
           disabled: false,
-          options: response.body.data.map((prod: StripeProductSearchResult) => {
-            return {
+          options: response.body.data.map(
+            (prod: StripeProductSearchResult) => ({
               value: prod.id,
               label: prod.name,
-            };
-          }),
+            })
+          ),
         };
       }
 
@@ -272,47 +287,48 @@ export const stripeCommon = {
     displayName: 'Subscription',
     required: true,
     refreshers: [],
-    options: async ({ auth, searchValue }) => {
+    options: async ({ auth }): Promise<DropdownState<string>> => {
       if (!auth) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Please connect your account first',
         };
       }
-      const response = await httpClient.sendRequest<{
-        data: { id: string; customer: { name: string; email: string } }[];
-      }>({
-        method: HttpMethod.GET,
-        url: `${baseUrl}/subscriptions/search`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
-        },
-        queryParams: {
-          query: `status:'active' AND customer.name~"${searchValue || ''}"`,
-          expand: 'data.customer',
-        },
-      });
-      if (response.status === 200) {
+      try {
+        const client = getClient(
+          auth as PiecePropValueSchema<typeof stripeAuth>
+        );
+
+        const subscriptions = await client.subscriptions.list({
+          limit: 100,
+          status: 'active',
+          expand: ['data.customer'],
+        });
+
         return {
           disabled: false,
-          options: response.body.data.map((sub) => {
-            const customerInfo = sub.customer
-              ? `${sub.customer.name} (${sub.customer.email})`
-              : 'Unknown Customer';
+          options: subscriptions.data.map((sub) => {
+            const customer = sub.customer as Stripe.Customer | null;
+            const customerInfo =
+              customer?.name || customer?.email || 'Unknown Customer';
+
+            const label = `Subscription for ${customerInfo} (${sub.id})`;
+
             return {
               value: sub.id,
-              label: `Subscription for ${customerInfo}`,
+              label: label,
             };
           }),
         };
+      } catch (error) {
+        console.error('Failed to load Stripe subscriptions:', error);
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "Couldn't load subscriptions. See console.",
+        };
       }
-      return {
-        disabled: true,
-        options: [],
-        placeholder: "Couldn't load subscriptions",
-      };
     },
   }),
 
@@ -369,7 +385,7 @@ export const stripeCommon = {
     displayName: 'Payment Intent',
     required: true,
     refreshers: [],
-    options: async ({ auth, searchValue }) => {
+    options: async ({ auth, searchValue }): Promise<DropdownState<string>> => {
       if (!auth) {
         return {
           disabled: true,
@@ -377,6 +393,12 @@ export const stripeCommon = {
           placeholder: 'Please connect your account',
         };
       }
+
+      let query = "status:'succeeded'";
+      if (searchValue) {
+        query += ` AND customer.email~"${searchValue}"`;
+      }
+
       const response = await httpClient.sendRequest<{
         data: StripePaymentIntentSearchResult[];
       }>({
@@ -387,27 +409,28 @@ export const stripeCommon = {
           token: auth as string,
         },
         queryParams: {
-          query: `status:'succeeded' AND (customer.name~"${
-            searchValue || ''
-          }" OR customer.email~"${searchValue || ''}")`,
-          expand: 'data.customer',
+          query: query,
+          'expand[]': 'data.customer',
         },
       });
+
       if (response.status === 200) {
         return {
           disabled: false,
-          options: response.body.data.map((intent) => {
-            const customerInfo =
-              intent.customer?.name ||
-              intent.customer?.email ||
-              'Unknown Customer';
-            const amount = (intent.amount / 100).toFixed(2);
-            const label = `Payment from ${customerInfo} - ${amount} ${intent.currency.toUpperCase()}`;
-            return {
-              value: intent.id,
-              label: label,
-            };
-          }),
+          options: response.body.data.map(
+            (intent: StripePaymentIntentSearchResult) => {
+              const customerInfo =
+                intent.customer?.name ||
+                intent.customer?.email ||
+                'Unknown Customer';
+              const amount = (intent.amount / 100).toFixed(2);
+              const label = `Payment from ${customerInfo} - ${amount} ${intent.currency.toUpperCase()}`;
+              return {
+                value: intent.id,
+                label: label,
+              };
+            }
+          ),
         };
       }
       return {
@@ -430,36 +453,27 @@ export const stripeCommon = {
           placeholder: 'Please connect your account',
         };
       }
-      const response = await httpClient.sendRequest<{
-        data: StripePaymentLink[];
-      }>({
-        method: HttpMethod.GET,
-        url: `${baseUrl}/payment_links`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
-        },
-        queryParams: {
-          active: 'true',
-          limit: '100',
-        },
-      });
-      if (response.status === 200) {
+      try {
+        const client = getClient(auth as string);
+        const paymentLinks = await client.paymentLinks.list({
+          active: true,
+          limit: 100,
+        });
+
         return {
           disabled: false,
-          options: response.body.data.map((link) => {
-            return {
-              value: link.id,
-              label: link.url,
-            };
-          }),
+          options: paymentLinks.data.map((link) => ({
+            value: link.id,
+            label: link.url,
+          })),
+        };
+      } catch (e) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "Couldn't load payment links",
         };
       }
-      return {
-        disabled: true,
-        options: [],
-        placeholder: "Couldn't load payment links",
-      };
     },
   }),
 };
