@@ -311,3 +311,31 @@ export const linksMultiSelectDropdown = (props?: { displayName?: string, descrip
         };
     },
 });
+
+export const tagDropdown = Property.Dropdown({
+    displayName: 'Tag',
+    description: 'Select the tag to monitor.',
+    required: false,
+    refreshers: [],
+    options: async ({ auth }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                placeholder: 'Connect your account first',
+                options: [],
+            };
+        }
+        const response = await makeRequest<{ _results: FrontTag[] }>(
+            auth as string,
+            HttpMethod.GET,
+            '/tags'
+        );
+        return {
+            disabled: false,
+            options: response._results.map((tag) => ({
+                label: tag.name,
+                value: tag.id,
+            })),
+        };
+    },
+});
