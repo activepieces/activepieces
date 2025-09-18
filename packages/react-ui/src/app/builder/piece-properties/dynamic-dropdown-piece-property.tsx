@@ -1,18 +1,18 @@
+import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
+import { FlowAction, isNil, FlowTrigger } from '@activepieces/shared';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { SearchableSelect } from '@/components/custom/searchable-select';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
-import { FlowAction, isNil, FlowTrigger } from '@activepieces/shared';
-
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
 import { DynamicPropertiesContext } from './dynamic-properties-context';
+
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { SearchableSelect } from '@/components/custom/searchable-select';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 
 type SelectPiecePropertyProps = {
   refreshers: string[];

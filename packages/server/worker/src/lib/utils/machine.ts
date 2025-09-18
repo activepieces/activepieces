@@ -17,7 +17,6 @@ export const workerMachine = {
     getWorkerId: () => workerId,
     async getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
-
         const cpus = os.cpus()
         const cpuUsage = cpus.reduce((acc, cpu) => {
             const total = Object.values(cpu.times).reduce((acc, time) => acc + time, 0)
@@ -26,7 +25,7 @@ export const workerMachine = {
         }, 0) / cpus.length * 100
 
         const ip = (await networkUtils.getPublicIp()).ip
-        const diskInfo = await getDiskInfo()
+        const diskInfo = await getDiskInfo()        
 
         return {
             diskInfo,

@@ -9,8 +9,8 @@ import { ApMemoryQueue } from './ap-memory-queue'
 const workerJobsQueue = new ApMemoryQueue<JobData>(system.globalLogger(), QueueName.WORKER_JOBS)
 
 export const memoryQueue = (_log: FastifyBaseLogger): QueueManager => ({
-    async setConcurrency(): Promise<void> {
-        // no-op
+    async setConcurrency(queueName: QueueName, concurrency: number): Promise<void> {
+        await workerJobsQueue.setConcurrency(concurrency)
     },
     async removeRepeatingJob({ flowVersionId }): Promise<void> {
         await workerJobsQueue.remove(flowVersionId)

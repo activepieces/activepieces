@@ -1,8 +1,19 @@
+import { OtpType } from '@activepieces/ee-shared';
+import {
+  ApEdition,
+  ApFlagId,
+  AuthenticationResponse,
+  ErrorCode,
+  isNil,
+  SignUpRequest,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
+
+import { passwordValidation } from '../lib/password-validation-utils';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -28,17 +39,6 @@ import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn, formatUtils } from '@/lib/utils';
-import { OtpType } from '@activepieces/ee-shared';
-import {
-  ApEdition,
-  ApFlagId,
-  AuthenticationResponse,
-  ErrorCode,
-  isNil,
-  SignUpRequest,
-} from '@activepieces/shared';
-
-import { passwordValidation } from '../lib/password-validation-utils';
 
 type SignUpSchema = {
   email: string;
@@ -207,6 +207,7 @@ const SignUpForm = ({
                     type="text"
                     placeholder={'John'}
                     className="rounded-sm"
+                    data-testid="sign-up-first-name"
                   />
                   <FormMessage />
                 </FormItem>
@@ -228,6 +229,7 @@ const SignUpForm = ({
                     type="text"
                     placeholder={'Doe'}
                     className="rounded-sm"
+                    data-testid="sign-up-last-name"
                   />
                   <FormMessage />
                 </FormItem>
@@ -252,6 +254,7 @@ const SignUpForm = ({
                   type="email"
                   placeholder={'email@example.com'}
                   className="rounded-sm"
+                  data-testid="sign-up-email"
                 />
                 <FormMessage />
               </FormItem>
@@ -285,6 +288,7 @@ const SignUpForm = ({
                       placeholder={'********'}
                       className="rounded-sm"
                       ref={inputRef}
+                      data-testid="sign-up-password"
                       onChange={(e) => field.onChange(e)}
                     />
                   </PopoverTrigger>
@@ -327,6 +331,7 @@ const SignUpForm = ({
           <Button
             loading={isPending}
             onClick={(e) => form.handleSubmit(onSubmit)(e)}
+            data-testid="sign-up-button"
           >
             {t('Sign up')}
           </Button>

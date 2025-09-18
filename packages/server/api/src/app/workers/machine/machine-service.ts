@@ -8,7 +8,7 @@ import {
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
-import { LessThanOrEqual, MoreThan } from 'typeorm'
+import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { QueueMode, system } from '../../helper/system/system'
@@ -125,17 +125,18 @@ export const machineService = (log: FastifyBaseLogger) => {
             return response
         },
         async list(): Promise<WorkerMachineWithStatus[]> {
-            await workerRepo().delete({
-                updated: LessThanOrEqual(dayjs().subtract(OFFLINE_THRESHOLD, 'ms').toISOString()),
-            })
+            const offlineThreshold = dayjs().subtract(OFFLINE_THRESHOLD, 'ms').utc()
+            const allWorkers = await workerRepo().find()
+            const workersToDelete = allWorkers.filter(worker => dayjs(worker.updated).isBefore(offlineThreshold))
 
-            const workers = await workerRepo().find({
-                where: {
-                    updated: MoreThan(dayjs().subtract(OFFLINE_THRESHOLD, 'ms').toISOString()),
-                },
-            })
+            if (workersToDelete.length > 0) {
+                await workerRepo().delete({
+                    id: In(workersToDelete.map(worker => worker.id)),
+                })
+            }
 
-            return workers.map(worker => ({
+            const onlineWorkers = allWorkers.filter(worker => dayjs(worker.updated).isAfter(offlineThreshold))
+            return onlineWorkers.map(worker => ({
                 ...worker,
                 status: WorkerMachineStatus.ONLINE,
             }))
