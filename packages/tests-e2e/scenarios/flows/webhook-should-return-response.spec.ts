@@ -4,14 +4,11 @@ test.describe('Webhooks', () => {
   test('should handle webhook with return response', async ({ page, flowsPage, builderPage, users }) => {
     test.setTimeout(1200000);
 
-    const user = await users.apiSignUp();
-    console.log('user', user);
+    await users.apiSignUp();
 
     await flowsPage.visit();
 
     await flowsPage.newFlowFromScratch();
-
-    // await builderPage.waitFor();
 
     await builderPage.selectInitialTrigger({
       piece: 'Webhook',
