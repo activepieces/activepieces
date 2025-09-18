@@ -96,17 +96,17 @@ const RunDetailsBar = React.memo(
                       memoryLimit ?? -1,
                     )}
                   </span>
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-md font-medium flex-shrink-0">
-                    {run.tasks} tasks
-                  </span>
+                  {run.tasks && (
+                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-md font-medium flex-shrink-0">
+                      {run.tasks} {t('tasks')}
+                    </span>
+                  )}
                 </div>
                 <span className="text-xs text-muted-foreground flex-shrink-0">
                   {formatUtils.formatDate(new Date(run.created))}
                 </span>
               </div>
-              <div className="text-xs text-muted-foreground">
-                {run?.id ?? t('Unknown')}
-              </div>
+              <div className="text-xs text-muted-foreground">{run.id}</div>
             </div>
           </div>
           {canExitRun && (
