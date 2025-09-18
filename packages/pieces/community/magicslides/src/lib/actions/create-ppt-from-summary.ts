@@ -14,11 +14,6 @@ export const createPptFromSummary = createAction({
       displayName: "Summary Text",
       required: true,
     }),
-    email: Property.ShortText({
-      displayName: 'Email',
-      description: ' registered MagicSlides email address.',
-      required: true,
-    }),
     slideCount: Property.Number({
       displayName: "Number of Slides",
       required: false,
@@ -109,7 +104,7 @@ export const createPptFromSummary = createAction({
   async run(context) {
     const {
       msSummaryText,
-      email,
+     
       slideCount,
       language,
       template,
@@ -123,8 +118,8 @@ export const createPptFromSummary = createAction({
     } = context.propsValue;
 
     const payload: any = {
-      accessId: context.auth as string,
-      email,
+      accessId: context.auth.accessId,
+      email: context.auth.email,
       msSummaryText,
       slideCount,
       language,
