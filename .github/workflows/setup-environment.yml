@@ -32,29 +32,19 @@ jobs:
           SSH_KEY: ${{ secrets.PREVIEW_SSH_KEY }}
           SSH_HOST: ${{ secrets.PREVIEW_HOST }}
 
-      - name: Check if preview label was just added
+      - name: Check if PR has preview label
         id: check-label
         uses: actions/github-script@v6
         with:
           script: |
-            // Only proceed if this was triggered by a label event
-            if (context.payload.action !== 'labeled') {
-              console.log('Not a label event, skipping setup');
-              core.setOutput('should-setup', false);
-              return false;
-            }
+            const labels = context.payload.pull_request.labels.map(label => label.name);
+            const hasPreviewLabel = labels.includes('preview');
             
-            // Check if the added label is 'preview'
-            const addedLabel = context.payload.label;
-            if (addedLabel && addedLabel.name === 'preview') {
-              console.log('Preview label was just added');
-              core.setOutput('should-setup', true);
-              return true;
-            }
+            console.log('PR labels:', labels);
+            console.log('Has preview label:', hasPreviewLabel);
             
-            console.log('Preview label was not the one added');
-            core.setOutput('should-setup', false);
-            return false;
+            core.setOutput('should-setup', hasPreviewLabel);
+            return hasPreviewLabel;
           
       - name: Setup Environment
         id: setup
