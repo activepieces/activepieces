@@ -1,6 +1,6 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { EllipsisVertical, Folder, FolderOpen } from 'lucide-react';
+import { EllipsisVertical, Folder, FolderOpen, Shapes } from 'lucide-react';
 import { useMemo, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -24,11 +24,10 @@ import {
   SidebarGroupContent,
   SidebarSkeleton,
 } from '@/components/ui/sidebar-shadcn';
-import { flowsApi } from '@/features/flows/lib/flows-api';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { CreateFolderDialog } from '@/features/folders/component/create-folder-dialog';
 import { FolderActions } from '@/features/folders/component/folder-actions';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { FolderDto, PopulatedFlow } from '@activepieces/shared';
@@ -41,7 +40,6 @@ interface FlowsByFolder {
 
 export function FlowsNavigation() {
   const navigate = useNavigate();
-  const { project } = projectHooks.useCurrentProject();
   const { flowId: currentFlowId } = useParams();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -58,16 +56,9 @@ export function FlowsNavigation() {
     data: flows,
     isLoading: flowsLoading,
     refetch: refetchFlows,
-  } = useQuery({
-    queryKey: ['flow-table', project.id],
-    staleTime: 0,
-    queryFn: () => {
-      return flowsApi.list({
-        projectId: project.id,
-        cursor: undefined,
-        limit: 99999,
-      });
-    },
+  } = flowsHooks.useFlows({
+    cursor: undefined,
+    limit: 99999,
   });
 
   const flowsData = flows?.data || [];
@@ -175,7 +166,7 @@ export function FlowsNavigation() {
   return (
     <SidebarGroup className="pb-2 max-h-[calc(50%-10px)] pr-0">
       <SidebarGroupLabel className="flex px-2 font-semibold text-foreground text-sm justify-between items-center w-full mb-1">
-        {t('Flow Folders')}
+        {t('Flows')}
         <CreateFolderDialog
           refetchFolders={refetchFolders}
           updateSearchParams={() => {}}
@@ -239,8 +230,7 @@ function DefaultFolder({
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton className="px-2 group/item mb-1 pr-0">
-            <Folder className="!size-3.5 group-data-[state=open]/collapsible:hidden" />
-            <FolderOpen className="!size-3.5 hidden group-data-[state=open]/collapsible:block" />
+            <Shapes className="!size-3.5" />
             <span>{t('Uncategorized')}</span>
             <div className="ml-auto relative">
               <CreateFlowDropdown
@@ -362,13 +352,7 @@ function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
           onMoveTo={refetch}
           onDelete={() => {
             if (flowId === flow.id) {
-              queryClient.invalidateQueries({
-                queryKey: [
-                  'flow',
-                  flowId,
-                  authenticationSession.getProjectId(),
-                ],
-              });
+              flowsHooks.invalidateFlowsQuery(queryClient);
             }
             refetch();
           }}

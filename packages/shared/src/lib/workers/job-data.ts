@@ -63,7 +63,7 @@ export const DelayedJobData = Type.Object({
 })
 export type DelayedJobData = Static<typeof DelayedJobData>
 
-export const OneTimeJobData = Type.Object({
+export const ExecuteFlowJobData = Type.Object({
     projectId: Type.String(),
     platformId: Type.String(),
     jobType: Type.Literal(WorkerJobType.EXECUTE_FLOW),
@@ -81,7 +81,7 @@ export const OneTimeJobData = Type.Object({
     logsUploadUrl: Type.Optional(Type.String()),
     logsFileId: Type.Optional(Type.String()),
 })
-export type OneTimeJobData = Static<typeof OneTimeJobData>
+export type ExecuteFlowJobData = Static<typeof ExecuteFlowJobData>
 
 export const AgentJobData = Type.Object({
     jobType: Type.Literal(WorkerJobType.EXECUTE_AGENT),
@@ -198,7 +198,7 @@ export const JobData = Type.Union([
     PollingJobData,
     DelayedJobData,
     RenewWebhookJobData,
-    OneTimeJobData,
+    ExecuteFlowJobData,
     WebhookJobData,
     UserInteractionJobData,
     AgentJobData,

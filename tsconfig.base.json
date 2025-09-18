@@ -402,14 +402,14 @@
       "@activepieces/piece-flow-helper": [
         "packages/pieces/community/flow-helper/src/index.ts"
       ],
-      "@activepieces/piece-foreplay-co": [
-        "packages/pieces/community/foreplay-co/src/index.ts"
-      ],
       "@activepieces/piece-flowise": [
         "packages/pieces/community/flowise/src/index.ts"
       ],
       "@activepieces/piece-flowlu": [
         "packages/pieces/community/flowlu/src/index.ts"
+      ],
+      "@activepieces/piece-foreplay-co": [
+        "packages/pieces/community/foreplay-co/src/index.ts"
       ],
       "@activepieces/piece-formbricks": [
         "packages/pieces/community/formbricks/src/index.ts"
@@ -545,6 +545,9 @@
       ],
       "@activepieces/piece-imap": [
         "packages/pieces/community/imap/src/index.ts"
+      ],
+      "@activepieces/piece-insighto-ai": [
+        "packages/pieces/community/insighto-ai/src/index.ts"
       ],
       "@activepieces/piece-instagram-business": [
         "packages/pieces/community/instagram-business/src/index.ts"
@@ -951,6 +954,9 @@
       ],
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"
+      ],
+      "@activepieces/piece-slidespeak": [
+        "packages/pieces/community/slidespeak/src/index.ts"
       ],
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"

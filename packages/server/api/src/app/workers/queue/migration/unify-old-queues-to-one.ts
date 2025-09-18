@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { DelayedJobData, OneTimeJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { DelayedJobData, ExecuteFlowJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { jobQueue } from '..'
@@ -10,7 +10,7 @@ import { JobType } from '../queue-manager'
 
 const queueMode = system.getOrThrow(AppSystemProp.QUEUE_MODE)
 
-type LegacyOneTimeJobData = Pick<OneTimeJobData, 'runId' | 'projectId' | 'flowVersionId' | 'environment' | 'synchronousHandlerId' | 'httpRequestId' | 'payload' | 'executeTrigger' | 'executionType' | 'progressUpdateType' | 'stepNameToTest' | 'sampleData'>
+type LegacyOneTimeJobData = Pick<ExecuteFlowJobData, 'runId' | 'projectId' | 'flowVersionId' | 'environment' | 'synchronousHandlerId' | 'httpRequestId' | 'payload' | 'executeTrigger' | 'executionType' | 'progressUpdateType' | 'stepNameToTest' | 'sampleData'>
 type LegacyWebhookJobData = Pick<WebhookJobData, 'projectId' | 'schemaVersion' | 'requestId' | 'payload' | 'runEnvironment' | 'flowId' | 'saveSampleData' | 'flowVersionIdToRun' | 'execute' | 'parentRunId' | 'failParentOnFailure'>
 type LegacyDelayedJobData = Pick<DelayedJobData, 'projectId' | 'environment' | 'schemaVersion' | 'flowVersionId' | 'flowId' | 'runId' | 'httpRequestId' | 'synchronousHandlerId' | 'progressUpdateType' | 'jobType'>
 const migratedKey = 'unified_queue_migrated'
