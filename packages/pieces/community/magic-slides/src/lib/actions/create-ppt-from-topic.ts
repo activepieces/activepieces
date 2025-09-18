@@ -1,0 +1,167 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { magicslidesAuth } from '../common/auth';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+
+export const createPptFromTopic = createAction({
+  auth: magicslidesAuth,
+  name: 'create_ppt_from_topic',
+  displayName: 'Create PPT from Topic',
+  description: 'Creates a new presentation from a given topic.',
+  props: {
+    email: Property.ShortText({
+      displayName: 'Email',
+      description: 'Your registered MagicSlides email address.',
+      required: true,
+    }),
+    topic: Property.ShortText({
+      displayName: 'Topic',
+      description: 'The topic for the presentation (e.g., "The Future of AI").',
+      required: true,
+    }),
+    extraInfoSource: Property.LongText({
+      displayName: 'Additional Context',
+      description:
+        'Provide additional context or specific focus areas for the presentation.',
+      required: false,
+    }),
+    slideCount: Property.Number({
+      displayName: 'Number of Slides',
+      description: 'The desired number of slides for the presentation (1-50).',
+      required: false,
+    }),
+    presentationFor: Property.ShortText({
+      displayName: 'Target Audience',
+      description:
+        'The target audience for the presentation (e.g., "healthcare professionals").',
+      required: false,
+    }),
+    template: Property.StaticDropdown({
+      displayName: 'Template',
+      description: 'The visual style template for the presentation.',
+      required: false,
+      options: {
+        disabled: false,
+        placeholder: 'Default - bullet-point1',
+        options: [
+          { label: 'Editable - Bullet Point 1', value: 'ed-bullet-point1' },
+          { label: 'Editable - Bullet Point 2', value: 'ed-bullet-point2' },
+          { label: 'Editable - Bullet Point 4', value: 'ed-bullet-point4' },
+          { label: 'Editable - Bullet Point 5', value: 'ed-bullet-point5' },
+          { label: 'Editable - Bullet Point 6', value: 'ed-bullet-point6' },
+          { label: 'Editable - Bullet Point 7', value: 'ed-bullet-point7' },
+          { label: 'Editable - Bullet Point 9', value: 'ed-bullet-point9' },
+          { label: 'Editable - Custom 7', value: 'custom-ed-7' },
+          { label: 'Editable - Custom 8', value: 'custom-ed-8' },
+          { label: 'Editable - Custom 9', value: 'custom-ed-9' },
+          { label: 'Editable - Custom 10', value: 'custom-ed-10' },
+          { label: 'Editable - Custom 11', value: 'custom-ed-11' },
+          { label: 'Editable - Custom 12', value: 'custom-ed-12' },
+          { label: 'Custom Dark 1', value: 'custom Dark 1' },
+          { label: 'Custom Gold 1', value: 'Custom gold 1' },
+          { label: 'Custom Sync 1', value: 'custom sync 1' },
+          { label: 'Custom Sync 2', value: 'custom sync 2' },
+          { label: 'Custom Sync 3', value: 'custom sync 3' },
+          { label: 'Custom Sync 4', value: 'custom sync 4' },
+          { label: 'Custom Sync 5', value: 'custom sync 5' },
+          { label: 'Custom Sync 6', value: 'custom sync 6' },
+          { label: 'Pitch Deck Original', value: 'pitchdeckorignal' },
+          { label: 'Pitch Deck 2', value: 'pitch-deck-2' },
+          { label: 'Pitch Deck 3', value: 'pitch-deck-3' },
+          { label: 'Default - Bullet Point 1', value: 'bullet-point1' },
+          { label: 'Default - Bullet Point 2', value: 'bullet-point2' },
+          { label: 'Default - Bullet Point 4', value: 'bullet-point4' },
+          { label: 'Default - Bullet Point 5', value: 'bullet-point5' },
+          { label: 'Default - Bullet Point 6', value: 'bullet-point6' },
+          { label: 'Default - Bullet Point 7', value: 'bullet-point7' },
+          { label: 'Default - Bullet Point 8', value: 'bullet-point8' },
+          { label: 'Default - Bullet Point 9', value: 'bullet-point9' },
+          { label: 'Default - Bullet Point 10', value: 'bullet-point10' },
+          { label: 'Default - Custom 2', value: 'custom2' },
+          { label: 'Default - Custom 3', value: 'custom3' },
+          { label: 'Default - Custom 4', value: 'custom4' },
+          { label: 'Default - Custom 5', value: 'custom5' },
+          { label: 'Default - Custom 6', value: 'custom6' },
+          { label: 'Default - Custom 7', value: 'custom7' },
+          { label: 'Default - Custom 8', value: 'custom8' },
+          { label: 'Default - Custom 9', value: 'custom9' },
+          {
+            label: 'Default - Vertical Bullet Point 1',
+            value: 'verticalBulletPoint1',
+          },
+          { label: 'Default - Vertical Custom 1', value: 'verticalCustom1' },
+        ],
+      },
+    }),
+    model: Property.StaticDropdown({
+      displayName: 'AI Model',
+      description: 'The AI model to use for content generation.',
+      required: false,
+      options: {
+        placeholder: 'GPT-4 (Recommended)',
+        options: [
+          { label: 'GPT-4', value: 'gpt-4' },
+          { label: 'GPT-3.5', value: 'gpt-3.5-turbo' },
+        ],
+      },
+    }),
+    aiImages: Property.Checkbox({
+      displayName: 'Use AI Images',
+      description:
+        'Enable AI-generated images for the presentation. Overrides Google Images if both are true.',
+      required: false,
+      defaultValue: false,
+    }),
+    imageForEachSlide: Property.Checkbox({
+      displayName: 'Image For Each Slide',
+      description: 'Ensures every slide has an image, if possible.',
+      required: false,
+      defaultValue: true,
+    }),
+    googleImage: Property.Checkbox({
+      displayName: 'Use Google Images',
+      description:
+        'Use Google Images instead of the default library or AI images.',
+      required: false,
+      defaultValue: false,
+    }),
+    googleText: Property.Checkbox({
+      displayName: 'Enhance with Google Search',
+      description: 'Use Google search to enhance the text content.',
+      required: false,
+      defaultValue: false,
+    }),
+    language: Property.ShortText({
+      displayName: 'Language Code',
+      description:
+        'Target language for the presentation (e.g., "en", "es", "fr"). Defaults to "en".',
+      required: false,
+    }),
+    watermark: Property.Json({
+      displayName: 'Watermark',
+      description: 'Apply an image watermark on all slides.',
+      required: false,
+      defaultValue: {
+        width: '48',
+        height: '48',
+        brandURL: 'https://example.com/logo.png',
+        position: 'BottomRight',
+      },
+    }),
+  },
+  async run(context) {
+    const { auth: accessId, propsValue } = context;
+    const { email, topic, ...optionalProps } = propsValue;
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: 'https://api.magicslides.app/public/api/ppt_from_topic',
+      body: {
+        accessId: accessId,
+        email: email,
+        topic: topic,
+        ...optionalProps,
+      },
+    });
+
+    return response.body;
+  },
+});
