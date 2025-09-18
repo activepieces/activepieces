@@ -2,6 +2,8 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { stripeCommon } from '../common';
 import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { isEmpty } from '@activepieces/shared';
 
 type StripeWebhookPayload = {
   data: {
@@ -59,6 +61,23 @@ export const stripeNewPaymentLink = createTrigger({
         context.auth
       );
     }
+  },
+  async test(context) {
+    const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
+      method: HttpMethod.GET,
+      url: 'https://api.stripe.com/v1/checkout/payment_links',
+      headers: {
+        Authorization: 'Bearer ' + context.auth,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      queryParams: {
+        limit: '5',
+      },
+    });
+
+    if (isEmpty(response.body) || isEmpty(response.body.data)) return [];
+
+    return response.body.data;
   },
 
   async run(context) {

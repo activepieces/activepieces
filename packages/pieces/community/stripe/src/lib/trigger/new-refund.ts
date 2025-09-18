@@ -6,6 +6,8 @@ import {
 import { stripeCommon } from '../common';
 import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { isEmpty } from '@activepieces/shared';
 
 type StripeWebhookPayload = {
   data: {
@@ -72,7 +74,24 @@ export const stripeNewRefund = createTrigger({
       );
     }
   },
+  async test(context) {
+    const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
+      method: HttpMethod.GET,
+      url: 'https://api.stripe.com/v1/checkout/refunds',
+      headers: {
+        Authorization: 'Bearer ' + context.auth,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      queryParams: {
+        
+        limit: '5',
+      },
+    });
 
+    if (isEmpty(response.body) || isEmpty(response.body.data)) return [];
+
+    return response.body.data;
+  },
   async run(context) {
     const payloadBody = context.payload.body as StripeWebhookPayload;
     const refundObject = payloadBody.data.object;

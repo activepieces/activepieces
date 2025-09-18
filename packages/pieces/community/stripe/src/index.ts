@@ -53,7 +53,8 @@ export const stripe = createPiece({
     'AbdulTheActivePiecer',
     'khaledmashaly',
     'abuaboud',
-    'Prabhukiran161',
+    'Prabhukiran161', 
+    'sanket-a11y'
   ],
   categories: [PieceCategory.COMMERCE, PieceCategory.PAYMENT_PROCESSING],
   auth: stripeAuth,
