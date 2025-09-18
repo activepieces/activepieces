@@ -28,12 +28,12 @@ export const addTagToContact = createAction({
         const { list_id, email_address, tags } = context.propsValue;
         const client = new EmailOctopusClient(context.auth);
 
-        // The API requires an MD5 hash of the lowercase email to identify the contact.
+        
         const contactId = createHash('md5')
             .update(email_address.toLowerCase())
             .digest('hex');
 
-        // Convert the array of tags into the required object format, e.g., { "vip": true, "customer": true }
+        
         const tagsObject = Object.fromEntries(
             (tags as string[]).map(tag => [tag, true])
         );
@@ -42,7 +42,7 @@ export const addTagToContact = createAction({
             tags: tagsObject,
         };
 
-        // This calls the PUT /lists/{list_id}/contacts/{contact_id} endpoint.
+        
         return await client.makeRequest(
             HttpMethod.PUT,
             `/lists/${list_id}/contacts/${contactId}`,

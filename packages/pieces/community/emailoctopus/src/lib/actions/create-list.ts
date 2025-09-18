@@ -24,7 +24,7 @@ export const createList = createAction({
             name,
         };
 
-        // This calls the POST /lists endpoint.
+        
         return await client.makeRequest(
             HttpMethod.POST,
             `/lists`,

@@ -1,21 +1,19 @@
-import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
-import { PiecePropValueSchema } from "@activepieces/pieces-framework";
-import { emailOctopusAuth } from "./auth";
+import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 
-const emailOctopusApiUrl = 'https://api.emailoctopus.com/api/1.6';
+const emailOctopusApiUrl = 'https://emailoctopus.com/api/1.6';
 
 export class EmailOctopusClient {
-    constructor(private apiKey: string) { }
+    constructor(private apiKey: string) {}
 
     async makeRequest<T>(method: HttpMethod, url: string, body?: object): Promise<T> {
         const request: HttpRequest<object> = {
-            method: method,
-            url: `${emailOctopusApiUrl}${url}`,
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: this.apiKey,
-            },
+            method,
+            url: `${emailOctopusApiUrl}${url}?api_key=${this.apiKey}`,
             body: body,
+            headers: {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
         };
 
         const { body: responseBody } = await httpClient.sendRequest<T>(request);

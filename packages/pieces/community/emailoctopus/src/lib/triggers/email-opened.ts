@@ -43,12 +43,12 @@ export const emailOpened = createTrigger({
         const payloadBody = context.payload.body as { type: string; campaign_id: string };
         const campaignIdFilter = context.propsValue.campaign_id;
 
-        // Ensure the event is 'contact.opened'
+        
         if (payloadBody.type !== 'contact.opened') {
             return [];
         }
 
-        // If the user specified a campaign, ensure it matches
+       
         if (campaignIdFilter && payloadBody.campaign_id !== campaignIdFilter) {
             return [];
         }

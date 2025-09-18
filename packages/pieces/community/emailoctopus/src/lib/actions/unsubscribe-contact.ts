@@ -23,7 +23,7 @@ export const unsubscribeContact = createAction({
         const { list_id, email_address } = context.propsValue;
         const client = new EmailOctopusClient(context.auth);
 
-        // The API requires an MD5 hash of the lowercase email to identify the contact.
+        
         const contactId = createHash('md5')
             .update(email_address.toLowerCase())
             .digest('hex');
@@ -32,7 +32,7 @@ export const unsubscribeContact = createAction({
             status: 'UNSUBSCRIBED',
         };
 
-        // This calls the PUT /lists/{list_id}/contacts/{contact_id} endpoint.
+        
         return await client.makeRequest(
             HttpMethod.PUT,
             `/lists/${list_id}/contacts/${contactId}`,

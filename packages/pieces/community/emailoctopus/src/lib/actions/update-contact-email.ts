@@ -28,7 +28,7 @@ export const updateContactEmail = createAction({
         const { list_id, current_email_address, new_email_address } = context.propsValue;
         const client = new EmailOctopusClient(context.auth);
 
-        // The API requires an MD5 hash of the current lowercase email to identify the contact.
+        
         const contactId = createHash('md5')
             .update(current_email_address.toLowerCase())
             .digest('hex');
@@ -37,7 +37,7 @@ export const updateContactEmail = createAction({
             email_address: new_email_address,
         };
 
-        // This calls the PUT /lists/{list_id}/contacts/{contact_id} endpoint.
+        
         return await client.makeRequest(
             HttpMethod.PUT,
             `/lists/${list_id}/contacts/${contactId}`,

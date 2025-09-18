@@ -34,8 +34,7 @@ export const findContact = createAction({
                 `/lists/${list_id}/contacts/${contactId}`
             );
         } catch (error) {
-            // 👇 2. Check if the error is an instance of HttpError
-            // This safely narrows the type from 'unknown' and lets you access its properties.
+            
             if (error instanceof HttpError && error.response.status === 404) {
                 return null;
             }
