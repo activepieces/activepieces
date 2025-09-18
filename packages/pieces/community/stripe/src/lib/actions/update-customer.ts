@@ -2,7 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
-import { stripeProps } from '../common/props'; // Updated import path
+// CHANGED: Import the specific dropdown you need
+import { customerIdDropdown } from '../common/props';
 
 export const stripeUpdateCustomer = createAction({
     name: 'update_customer',
@@ -10,7 +11,8 @@ export const stripeUpdateCustomer = createAction({
     displayName: 'Update Customer',
     description: 'Modify an existing customer’s details',
     props: {
-        customer_id: stripeProps.customer(), 
+        // CHANGED: Use the imported dropdown directly
+        customer_id: customerIdDropdown, 
         email: Property.ShortText({
             displayName: 'Email',
             required: false,
@@ -52,7 +54,6 @@ export const stripeUpdateCustomer = createAction({
     async run(context) {
         const customerId = context.propsValue.customer_id;
 
-
         const body: { [key: string]: any } = {};
         if (context.propsValue.email) body['email'] = context.propsValue.email;
         if (context.propsValue.name) body['name'] = context.propsValue.name;
@@ -67,7 +68,11 @@ export const stripeUpdateCustomer = createAction({
         if (context.propsValue.country) address['country'] = context.propsValue.country;
 
         if (Object.keys(address).length > 0) {
-            body['address'] = address;
+            // Stripe expects address fields to be nested under an 'address' key
+            // and properly formatted for form-urlencoded requests.
+            Object.keys(address).forEach(key => {
+                body[`address[${key}]`] = address[key];
+            });
         }
 
         const response = await httpClient.sendRequest({

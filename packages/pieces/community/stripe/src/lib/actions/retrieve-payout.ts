@@ -2,7 +2,8 @@ import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
-import { stripeProps } from '../common/props';
+// CHANGED: Import the specific dropdown you need
+import { payoutIdDropdown } from '../common/props';
 
 export const stripeRetrievePayout = createAction({
     name: 'retrieve_payout',
@@ -10,7 +11,8 @@ export const stripeRetrievePayout = createAction({
     displayName: 'Retrieve Payout',
     description: 'Retrieves the details of an existing payout.',
     props: {
-        payout: stripeProps.payout(),
+        // CHANGED: Use the imported dropdown directly
+        payout: payoutIdDropdown,
     },
     async run(context) {
         const payoutId = context.propsValue.payout;

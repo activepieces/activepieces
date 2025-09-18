@@ -1,8 +1,11 @@
+// src/actions/cancel-subscription.ts
+
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
-import { stripeProps } from '../common/props';
+// CHANGED: Import the specific dropdown you need
+import { subscriptionIdDropdown } from '../common/props';
 
 export const stripeCancelSubscription = createAction({
     name: 'cancel_subscription',
@@ -10,24 +13,24 @@ export const stripeCancelSubscription = createAction({
     displayName: 'Cancel Subscription',
     description: 'Cancel an existing subscription (immediately or at period end).',
     props: {
-        subscription: stripeProps.subscription(),
+        // CHANGED: Use the imported dropdown directly
+        subscription: subscriptionIdDropdown,
         at_period_end: Property.Checkbox({
             displayName: 'Cancel at Period End',
             description: 'If checked, the subscription will remain active until the end of the current billing period. If unchecked, it will be canceled immediately.',
             required: false,
-            defaultValue: false,
+            defaultValue: true, 
         }),
     },
     async run(context) {
         const { subscription, at_period_end } = context.propsValue;
 
-        const body: Record<string, unknown> = {};
-        if (at_period_end !== undefined) {
-            body.cancel_at_period_end = at_period_end;
-        }
+        const body: Record<string, unknown> = {
+            cancel_at_period_end: at_period_end
+        };
 
         const response = await httpClient.sendRequest({
-            method: HttpMethod.DELETE,
+            method: HttpMethod.POST, // Stripe API uses POST to update/cancel subscriptions
             url: `${stripeCommon.baseUrl}/subscriptions/${subscription}`,
             headers: {
                 'Authorization': 'Bearer ' + context.auth,

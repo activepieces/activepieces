@@ -2,7 +2,8 @@ import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
-import { stripeProps } from '../common/props';
+// CHANGED: Import the specific dropdown you need
+import { invoiceIdDropdown } from '../common/props';
 
 export const stripeRetrieveInvoice = createAction({
     name: 'retrieve_invoice',
@@ -10,7 +11,8 @@ export const stripeRetrieveInvoice = createAction({
     displayName: 'Retrieve Invoice',
     description: 'Retrieves the details of an existing invoice.',
     props: {
-        invoice: stripeProps.invoice(),
+        // CHANGED: Use the imported dropdown directly
+        invoice: invoiceIdDropdown,
     },
     async run(context) {
         const invoiceId = context.propsValue.invoice;

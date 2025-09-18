@@ -1,8 +1,11 @@
+// src/actions/deactivate_payment_link.ts (This is the corrected file)
+
 import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
-import { stripeProps } from '../common/props';
+// CHANGED: Import the specific dropdown you need
+import { paymentLinkIdDropdown } from '../common/props';
 
 export const stripeDeactivatePaymentLink = createAction({
     name: 'deactivate_payment_link',
@@ -10,7 +13,8 @@ export const stripeDeactivatePaymentLink = createAction({
     displayName: 'Deactivate Payment Link',
     description: 'Disable/deactivate a Payment Link so it can no longer be used.',
     props: {
-        payment_link: stripeProps.paymentLink(),
+        // CHANGED: Use the imported dropdown directly
+        payment_link: paymentLinkIdDropdown,
     },
     async run(context) {
         const paymentLinkId = context.propsValue.payment_link;

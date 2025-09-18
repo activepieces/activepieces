@@ -2,7 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
-import { stripeProps } from '../common/props';
+// CHANGED: Import the specific dropdown you need
+import { chargeIdDropdown } from '../common/props';
 
 export const stripeCreateRefund = createAction({
     name: 'create_refund',
@@ -10,7 +11,8 @@ export const stripeCreateRefund = createAction({
     displayName: 'Create Refund',
     description: 'Create a full or partial refund for a charge.',
     props: {
-        charge: stripeProps.charge(),
+        // CHANGED: Use the imported dropdown directly
+        charge: chargeIdDropdown,
         amount: Property.Number({
             displayName: 'Amount',
             description: 'The amount to refund (e.g., 12.99). If left blank, a full refund will be issued.',

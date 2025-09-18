@@ -2,7 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
-import { stripeProps } from '../common/props';
+// CHANGED: Import the specific dropdown you need
+import { productIdDropdown } from '../common/props';
 
 export const stripeCreatePrice = createAction({
     name: 'create_price',
@@ -10,7 +11,8 @@ export const stripeCreatePrice = createAction({
     displayName: 'Create Price',
     description: 'Create a price (one-time or recurring), associated with a product.',
     props: {
-        product: stripeProps.product(),
+        // CHANGED: Use the imported dropdown directly
+        product: productIdDropdown,
         amount: Property.Number({
             displayName: 'Amount',
             description: 'The price amount, for example, 25.00 for $25.00.',

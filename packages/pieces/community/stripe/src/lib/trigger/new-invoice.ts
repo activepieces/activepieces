@@ -1,7 +1,8 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { stripeCommon } from '../common';
 import { stripeAuth } from '../..';
-import { stripeProps } from '../common/props';
+// CHANGED: Import the specific dropdowns you need
+import { customerIdDropdown, subscriptionIdDropdown } from '../common/props';
 
 export const stripeNewInvoice = createTrigger({
     auth: stripeAuth,
@@ -23,8 +24,15 @@ export const stripeNewInvoice = createTrigger({
                 ]
             }
         }),
-        customer: stripeProps.customer(false),
-        subscription: stripeProps.subscription(false),
+        // CHANGED: Use the imported dropdown and override the 'required' property
+        customer: {
+            ...customerIdDropdown,
+            required: false,
+        },
+        subscription: {
+            ...subscriptionIdDropdown,
+            required: false,
+        },
     },
     sampleData: {
         "id": "in_1OaG8y2eZvKYlo2CU90f8mBC",
@@ -70,7 +78,7 @@ export const stripeNewInvoice = createTrigger({
         const subscriptionFilter = context.propsValue.subscription;
 
         // If no filters are set, always trigger
-        if (!statusFilter && !customerFilter && !subscriptionFilter) {
+        if (!statusFilter?.length && !customerFilter && !subscriptionFilter) {
             return [invoice];
         }
 

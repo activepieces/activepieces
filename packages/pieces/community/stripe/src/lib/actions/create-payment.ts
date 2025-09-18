@@ -2,12 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
-import { stripeProps } from '../common/props';
+// REMOVED: This import is no longer needed as stripeProps does not exist.
 
 export const stripeCreatePayment = createAction({
     name: 'create_payment',
     auth: stripeAuth,
-    displayName: 'Create Payment',
+    displayName: 'Create Payment Link',
     description: 'Creates a shareable, Stripe-hosted payment link.',
     props: {
         name: Property.ShortText({

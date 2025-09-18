@@ -2,7 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
-import { stripeProps } from '../common/props';
+// CHANGED: Import the specific dropdown you need
+import { customerIdDropdown } from '../common/props';
 
 export const stripeCreateSubscription = createAction({
     name: 'create_subscription',
@@ -10,7 +11,8 @@ export const stripeCreateSubscription = createAction({
     displayName: 'Create Subscription',
     description: 'Start a subscription for a customer with specified items/prices.',
     props: {
-        customer: stripeProps.customer(),
+        // CHANGED: Use the imported dropdown directly
+        customer: customerIdDropdown,
         items: Property.Array({
             displayName: 'Subscription Items',
             description: 'A list of prices to subscribe the customer to.',
@@ -32,7 +34,6 @@ export const stripeCreateSubscription = createAction({
             displayName: 'Collection Method',
             description: "How to collect payment for the subscription. Defaults to 'charge_automatically'.",
             required: false,
-            defaultValue: 'charge_automatically',
             options: {
                 options: [
                     { label: 'Charge Automatically', value: 'charge_automatically' },
