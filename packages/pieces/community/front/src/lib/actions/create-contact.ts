@@ -9,6 +9,11 @@ export const createContact = createAction({
   displayName: 'Create Contact',
   description: 'Create a new contact in Front.',
   props: {
+    name: Property.ShortText({
+      displayName: 'Name',
+      description: 'The name of the contact.',
+      required: false,
+    }),
     description: Property.ShortText({
       displayName: 'Description',
       description: 'A description for the contact.',
@@ -32,12 +37,8 @@ export const createContact = createAction({
         }),
       },
     }),
-    name: Property.ShortText({
-      displayName: 'Name',
-      description: 'The name of the contact.',
-      required: false,
-    }),
-    avatar_url: Property.ShortText({
+
+    avatar_url: Property.File({
       displayName: 'Avatar URL',
       description: 'URL of the contact’s avatar image.',
       required: false,
@@ -53,9 +54,20 @@ export const createContact = createAction({
         }),
       },
     }),
+    group_names: Property.Array({
+      displayName: 'Group Names',
+      description: 'List of group names to associate with the contact.',
+      required: false,
+      properties: {
+        item: Property.ShortText({
+          displayName: 'Group Name',
+          required: true,
+        }),
+      },
+    }),
   },
   async run({ auth, propsValue }) {
-    const { description, handles, name, avatar_url, links } = propsValue;
+    const { description, handles, name, avatar_url, links, group_names } = propsValue;
     const body: Record<string, unknown> = {
       handles,
     };
@@ -63,7 +75,7 @@ export const createContact = createAction({
     if (name) body['name'] = name;
     if (avatar_url) body['avatar_url'] = avatar_url;
     if (links) body['links'] = links;
-
+    if (group_names) body['group_names'] = group_names;
     return await makeRequest(
       auth.access_token,
       HttpMethod.POST,

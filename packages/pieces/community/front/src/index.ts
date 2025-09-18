@@ -19,16 +19,18 @@ import { updateContact } from "./lib/actions/update-contact";
 import { updateConversation } from "./lib/actions/update-conversation";
 import { updateLink } from "./lib/actions/update-link";
 import { newComment } from "./lib/triggers/new-comment";
-import { newInboundMessage } from "./lib/triggers/new-inbound-message";
-import { newOutboundMessage } from "./lib/triggers/new-outbound-message";
-import { newTagAddedToMessage } from "./lib/triggers/new-tag-added-to-message";
+// import { newInboundMessage } from "./lib/triggers/new-inbound-message";
+// import { newOutboundMessage } from "./lib/triggers/new-outbound-message";
+// import { newTagAddedToMessage } from "./lib/triggers/new-tag-added-to-message";
 import { findAccount } from "./lib/actions/find-account";
 import { findContact } from "./lib/actions/find-contact";
 import { findConversation } from "./lib/actions/find-conversation";
+import { newConversationStateChange } from "./lib/triggers/new-conversation-state-change";
+import { frontAuth } from "./lib/common/auth";
 
 export const front = createPiece({
   displayName: "Front",
-  auth: PieceAuth.None(),
+  auth: frontAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/front.png",
   authors: ['Niket2035'],
@@ -58,8 +60,9 @@ export const front = createPiece({
   ],
   triggers: [
     newComment,
-    newInboundMessage,
-    newOutboundMessage,
-    newTagAddedToMessage
+    // newInboundMessage,
+    // newOutboundMessage,
+    // newTagAddedToMessage,
+    newConversationStateChange
   ],
 });

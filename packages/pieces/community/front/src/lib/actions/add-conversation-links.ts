@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { conversationIdDropdown } from '../common/dropdown';
 
 export const addConversationLinks = createAction({
   auth: frontAuth,
@@ -9,11 +10,7 @@ export const addConversationLinks = createAction({
   displayName: 'Add Conversation Links',
   description: 'Link external references (URLs) to a conversation.',
   props: {
-    conversation_id: Property.ShortText({
-      displayName: 'Conversation ID',
-      description: 'The ID of the conversation to link URLs to.',
-      required: true,
-    }),
+    conversation_id: conversationIdDropdown,
     links: Property.Array({
       displayName: 'Links',
       description: 'List of external URLs to link to the conversation.',

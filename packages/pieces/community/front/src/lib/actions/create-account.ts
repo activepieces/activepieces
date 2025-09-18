@@ -1,12 +1,56 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { frontAuth } from '../common/auth';
+import { makeRequest } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createAccount = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  auth: frontAuth,
   name: 'createAccount',
   displayName: 'Create Account',
-  description: '',
-  props: {},
-  async run() {
-    // Action logic here
+  description: 'Create a new account in Front.',
+  props: {
+    name: Property.ShortText({
+      displayName: 'Account Name',
+      description: 'The name of the account to create.',
+      required: true,
+    }),
+
+    description: Property.ShortText({
+      displayName: 'Description',
+      description: 'A description for the account.',
+      required: false,
+    }),
+    domains: Property.Array({
+      displayName: 'Domains',
+      description: 'List of domains associated with the account.',
+      required: false,
+      properties: {
+        item: Property.ShortText({
+          displayName: 'Domain',
+          description: 'A domain associated with the account.',
+          required: true,
+        }),
+      },
+    }),
+    external_id: Property.ShortText({
+      displayName: 'External ID',
+      description: 'An external identifier for the account.',
+      required: false,
+    }),
+  },
+  async run({ auth, propsValue }) {
+    const { name, description, domains, external_id } = propsValue;
+
+    const body: Record<string, unknown> = { name };
+    if (description) {
+      body['description'] = description;
+    }
+    if (domains) {
+      body['domains'] = domains;
+    }
+    if (external_id) {
+      body['external_id'] = external_id;
+    }
+    return await makeRequest(auth.access_token, HttpMethod.POST, `/accounts`, body);
   },
 });

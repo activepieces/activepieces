@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { channelIdDropdown } from '../common/dropdown';
 
 export const sendReply = createAction({
   auth: frontAuth,
@@ -29,11 +30,7 @@ export const sendReply = createAction({
       description: 'The subject of the reply (for email channels).',
       required: false,
     }),
-    channel_id: Property.ShortText({
-      displayName: 'Channel ID',
-      description: 'The channel to send the reply from (required for some channels).',
-      required: false,
-    }),
+    channel_id: channelIdDropdown,
     attachments: Property.Array({
       displayName: 'Attachments',
       description: 'List of attachment URLs.',

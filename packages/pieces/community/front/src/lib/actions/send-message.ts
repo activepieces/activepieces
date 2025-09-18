@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { channelIdDropdown, tagIdsDropdown } from '../common/dropdown';
 
 export const sendMessage = createAction({
   auth: frontAuth,
@@ -9,11 +10,7 @@ export const sendMessage = createAction({
   displayName: 'Send Message',
   description: 'Send a new message (starts a conversation) with subject, recipients, body, attachments, tags, etc.',
   props: {
-    channel_id: Property.ShortText({
-      displayName: 'Channel ID',
-      description: 'The channel to send the message from.',
-      required: true,
-    }),
+    channel_id: channelIdDropdown,
     to: Property.Array({
       displayName: 'To',
       description: 'List of recipient handles (email addresses, etc.).',
@@ -68,17 +65,7 @@ export const sendMessage = createAction({
         }),
       },
     }),
-    tag_ids: Property.Array({
-      displayName: 'Tag IDs',
-      description: 'List of tag IDs to add to the conversation.',
-      required: false,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'Tag ID',
-          required: true,
-        }),
-      }
-    }),
+    tag_ids: tagIdsDropdown,
   },
   async run({ auth, propsValue }) {
     const { channel_id, to, cc, bcc, subject, body, attachments, tag_ids } = propsValue;

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { contactIdDropdown } from '../common/dropdown';
 
 export const updateContact = createAction({
   auth: frontAuth,
@@ -9,11 +10,7 @@ export const updateContact = createAction({
   displayName: 'Update Contact',
   description: 'Update an existing contact in Front.',
   props: {
-    contact_id: Property.ShortText({
-      displayName: 'Contact ID',
-      description: 'The ID of the contact to update.',
-      required: true,
-    }),
+    contact_id: contactIdDropdown,
     name: Property.ShortText({
       displayName: 'Name',
       description: 'The new name for the contact.',

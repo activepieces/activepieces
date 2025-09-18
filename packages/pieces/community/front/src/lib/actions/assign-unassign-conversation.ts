@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { conversationIdDropdown, teammateIdDropdown } from '../common/dropdown';
 
 export const assignUnassignConversation = createAction({
   auth: frontAuth,
@@ -9,16 +10,8 @@ export const assignUnassignConversation = createAction({
   displayName: 'Assign/Unassign Conversation',
   description: 'Assign a conversation to a teammate or remove assignment.',
   props: {
-    conversation_id: Property.ShortText({
-      displayName: 'Conversation ID',
-      description: 'The ID of the conversation to assign or unassign.',
-      required: true,
-    }),
-    assignee_id: Property.ShortText({
-      displayName: 'Assignee ID',
-      description: 'The ID of the teammate to assign the conversation to. Leave empty to unassign.',
-      required: false,
-    }),
+    conversation_id: conversationIdDropdown,
+    assignee_id: teammateIdDropdown,
   },
   async run({ auth, propsValue }) {
     const { conversation_id, assignee_id } = propsValue;

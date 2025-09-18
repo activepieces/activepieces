@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { channelIdDropdown, conversationIdDropdown } from '../common/dropdown';
 
 export const createDraftReply = createAction({
   auth: frontAuth,
@@ -9,11 +10,7 @@ export const createDraftReply = createAction({
   displayName: 'Create Draft Reply',
   description: 'Create a draft reply to an existing conversation (subject/quote etc.) without sending immediately.',
   props: {
-    conversation_id: Property.ShortText({
-      displayName: 'Conversation ID',
-      description: 'The ID of the conversation to reply to.',
-      required: true,
-    }),
+    conversation_id: conversationIdDropdown,
     body: Property.LongText({
       displayName: 'Message Body',
       description: 'The content of the draft reply.',
@@ -29,11 +26,7 @@ export const createDraftReply = createAction({
       description: 'The ID of the teammate creating the draft reply.',
       required: false,
     }),
-    channel_id: Property.ShortText({
-      displayName: 'Channel ID',
-      description: 'The channel to send the draft reply from (required for some channels).',
-      required: false,
-    }),
+    channel_id: channelIdDropdown,
     attachments: Property.Array({
       displayName: 'Attachments',
       description: 'List of attachment URLs.',

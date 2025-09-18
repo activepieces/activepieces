@@ -19,10 +19,15 @@ export const createLink = createAction({
       description: 'The external URL for the link.',
       required: true,
     }),
+    pattern: Property.ShortText({
+      displayName: 'Pattern',
+      description: 'Optional pattern to match URLs (regex).',
+      required: false,
+    }),
   },
   async run({ auth, propsValue }) {
-    const { name, external_url } = propsValue;
-    const body = { name, external_url };
+    const { name, external_url, pattern } = propsValue;
+    const body = { name, external_url, pattern };
     return await makeRequest(auth.access_token, HttpMethod.POST, '/links', body);
   },
 });

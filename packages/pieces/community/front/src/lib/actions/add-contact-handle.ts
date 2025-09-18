@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { contactIdDropdown } from '../common/dropdown';
 
 export const addContactHandle = createAction({
   auth: frontAuth,
@@ -10,11 +11,7 @@ export const addContactHandle = createAction({
   description:
     'Add a handle (email, phone number, etc.) to an existing Contact.',
   props: {
-    contact_id: Property.ShortText({
-      displayName: 'Contact ID',
-      description: 'The ID of the contact to add the handle to.',
-      required: true,
-    }),
+    contact_id: contactIdDropdown,
     handle_type: Property.StaticDropdown({
       displayName: 'Handle Type',
       description: 'Type of handle to add.',
@@ -25,6 +22,9 @@ export const addContactHandle = createAction({
           { label: 'Phone', value: 'phone' },
           { label: 'Twitter', value: 'twitter' },
           { label: 'Facebook', value: 'facebook' },
+          { label: 'Intercom', value: 'intercom' },
+          { label: 'front_chat', value: 'front_chat' },
+          { label: 'custom', value: 'custom' },
         ],
       },
     }),

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { linkIdDropdown } from '../common/dropdown';
 
 export const updateLink = createAction({
   auth: frontAuth,
@@ -9,11 +10,7 @@ export const updateLink = createAction({
   displayName: 'Update Link',
   description: 'Update the name or external URL of a Link in Front.',
   props: {
-    link_id: Property.ShortText({
-      displayName: 'Link ID',
-      description: 'The ID of the link to update.',
-      required: true,
-    }),
+    link_id: linkIdDropdown,
     name: Property.ShortText({
       displayName: 'Name',
       description: 'The new name for the link.',

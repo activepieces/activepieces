@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { channelIdDropdown } from '../common/dropdown';
 
 export const createDraft = createAction({
   auth: frontAuth,
@@ -9,11 +10,7 @@ export const createDraft = createAction({
   displayName: 'Create Draft',
   description: 'Create a draft message in Front.',
   props: {
-    channel_id: Property.ShortText({
-      displayName: 'Channel ID',
-      description: 'The channel to send the draft from.',
-      required: true,
-    }),
+    channel_id: channelIdDropdown,
     to: Property.Array({
       displayName: 'To',
       description: 'List of recipient handles (email addresses, etc.).',

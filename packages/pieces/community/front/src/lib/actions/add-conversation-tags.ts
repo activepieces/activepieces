@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { conversationIdDropdown, tagIdsDropdown } from '../common/dropdown';
 
 export const addConversationTags = createAction({
   auth: frontAuth,
@@ -9,19 +10,8 @@ export const addConversationTags = createAction({
   displayName: 'Add Conversation Tags',
   description: 'Add one or more tags to a conversation.',
   props: {
-    conversation_id: Property.ShortText({
-      displayName: 'Conversation ID',
-      description: 'The ID of the conversation to tag.',
-      required: true,
-    }),
-    tag_ids: Property.Array({
-      displayName: 'Tag IDs',
-      description: 'List of tag IDs to add to the conversation.',
-      required: true,
-      properties: {
-        item: Property.ShortText({ displayName: 'Tag ID', required: true }),
-      },
-    }),
+    conversation_id: conversationIdDropdown,
+    tag_ids: tagIdsDropdown,
   },
   async run({ auth, propsValue }) {
     const { conversation_id, tag_ids } = propsValue;

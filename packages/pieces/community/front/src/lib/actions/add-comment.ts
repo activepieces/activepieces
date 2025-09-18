@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { conversationIdDropdown } from '../common/dropdown';
 
 export const addComment = createAction({
   auth: frontAuth,
@@ -9,11 +10,7 @@ export const addComment = createAction({
   displayName: 'Add Comment',
   description: 'Add a comment (internal note) to a conversation in Front.',
   props: {
-    conversation_id: Property.ShortText({
-      displayName: 'Conversation ID',
-      description: 'The ID of the conversation to add a comment to.',
-      required: true,
-    }),
+    conversation_id: conversationIdDropdown,
     author_id: Property.ShortText({
       displayName: 'Author ID',
       description: 'The ID of the teammate adding the comment.',

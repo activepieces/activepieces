@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { conversationIdDropdown, inboxIdDropdown, tagIdsDropdown, teammateIdDropdown } from '../common/dropdown';
 
 export const updateConversation = createAction({
   auth: frontAuth,
@@ -9,11 +10,7 @@ export const updateConversation = createAction({
   displayName: 'Update Conversation',
   description: 'Modify conversation properties: status, assignee, inbox, tags, etc.',
   props: {
-    conversation_id: Property.ShortText({
-      displayName: 'Conversation ID',
-      description: 'The ID of the conversation to update.',
-      required: true,
-    }),
+    conversation_id: conversationIdDropdown,
     status: Property.StaticDropdown({
       displayName: 'Status',
       description: 'The new status for the conversation.',
@@ -26,27 +23,9 @@ export const updateConversation = createAction({
         ],
       },
     }),
-    assignee_id: Property.ShortText({
-      displayName: 'Assignee ID',
-      description: 'The ID of the teammate to assign the conversation to.',
-      required: false,
-    }),
-    inbox_id: Property.ShortText({
-      displayName: 'Inbox ID',
-      description: 'The ID of the inbox to move the conversation to.',
-      required: false,
-    }),
-    tag_ids: Property.Array({
-      displayName: 'Tag IDs',
-      description: 'List of tag IDs to set on the conversation.',
-      required: false,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'Tag ID',
-          required: true,
-        }),
-      },
-    }),
+    assignee_id: teammateIdDropdown,
+    inbox_id: inboxIdDropdown,
+    tag_ids: tagIdsDropdown,
   },
   async run({ auth, propsValue }) {
     const { conversation_id, status, assignee_id, inbox_id, tag_ids } = propsValue;

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { accountIdDropdown } from '../common/dropdown';
 
 export const updateAccount = createAction({
   auth: frontAuth,
@@ -9,11 +10,7 @@ export const updateAccount = createAction({
   displayName: 'Update Account',
   description: 'Update an existing account in Front.',
   props: {
-    account_id: Property.ShortText({
-      displayName: 'Account ID',
-      description: 'The ID of the account to update.',
-      required: true,
-    }),
+    account_id: accountIdDropdown,
     name: Property.ShortText({
       displayName: 'Account Name',
       description: 'The new name for the account.',

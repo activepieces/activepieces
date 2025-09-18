@@ -2,31 +2,28 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { conversationIdDropdown } from '../common/dropdown';
 
-export const createAccount = createAction({
+export const removeConversationTags = createAction({
   auth: frontAuth,
-  name: 'createAccount',
-  displayName: 'Create Account',
-  description: 'Create a new account in Front.',
+  name: 'removeConversationTags',
+  displayName: 'Remove Conversation Tags',
+  description: 'Remove one or more tags from a conversation.',
   props: {
-    name: Property.ShortText({
-      displayName: 'Account Name',
-      description: 'The name of the account to create.',
+    conversation_id: conversationIdDropdown,
+    tag_ids: Property.Array({
+      displayName: 'Tag IDs',
+      description: 'List of tag IDs to remove from the conversation.',
       required: true,
-    }),
-    description: Property.ShortText({
-      displayName: 'Description',
-      description: 'A description for the account.',
-      required: false,
+      properties: {
+        item: Property.ShortText({ displayName: 'Tag ID', required: true }),
+      },
     }),
   },
   async run({ auth, propsValue }) {
-    const { name, description } = propsValue;
-    const path = `/accounts`;
-    const body: Record<string, unknown> = { name };
-    if (description) {
-      body['description'] = description;
-    }
-    return await makeRequest(auth.access_token, HttpMethod.POST, path, body);
+    const { conversation_id, tag_ids } = propsValue;
+    const path = `/conversations/${conversation_id}/tags`;
+    const body = { tag_ids };
+    return await makeRequest(auth.access_token, HttpMethod.DELETE, path, body);
   },
 });
