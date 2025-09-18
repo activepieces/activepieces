@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, edited, closed, labeled]
 
+concurrency:
+  group: setup-environment
+  cancel-in-progress: false
+
 jobs:
   Setup-Preview-Environment:
     runs-on: ubuntu-latest
@@ -28,29 +32,39 @@ jobs:
           SSH_KEY: ${{ secrets.PREVIEW_SSH_KEY }}
           SSH_HOST: ${{ secrets.PREVIEW_HOST }}
 
-      - name: Check if PR has preview label
+      - name: Check if preview label was just added
         id: check-label
         uses: actions/github-script@v6
         with:
           script: |
-            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-            const hasPreviewLabel = labels.some(label => label.name === 'preview');
-            core.setOutput('has-preview-label', hasPreviewLabel);
-            return hasPreviewLabel;
+            // Only proceed if this was triggered by a label event
+            if (context.payload.action !== 'labeled') {
+              console.log('Not a label event, skipping setup');
+              core.setOutput('should-setup', false);
+              return false;
+            }
+            
+            // Check if the added label is 'preview'
+            const addedLabel = context.payload.label;
+            if (addedLabel && addedLabel.name === 'preview') {
+              console.log('Preview label was just added');
+              core.setOutput('should-setup', true);
+              return true;
+            }
+            
+            console.log('Preview label was not the one added');
+            core.setOutput('should-setup', false);
+            return false;
           
       - name: Setup Environment
         id: setup
-        if: steps.check-label.outputs.has-preview-label == 'true'
+        if: steps.check-label.outputs.should-setup == 'true'
         run: |
           ssh preview-server -t -t 'bash -ic "cd /root/environments && node index.js setup ${{ github.head_ref }}; exit"'
           echo "environment_url=https://$(echo '${{ github.head_ref }}' | sed 's|/|-|g').preview.example.com" >> $GITHUB_OUTPUT
 
       - name: Comment on PR
-        if: steps.check-label.outputs.has-preview-label == 'true'
+        if: steps.check-label.outputs.should-setup == 'true'
         uses: actions/github-script@v6
         with:
           script: |
