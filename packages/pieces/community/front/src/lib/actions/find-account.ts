@@ -30,7 +30,7 @@ export const findAccount = createAction({
         const { search_by, search_value } = context.propsValue;
         const token = context.auth;
 
-        // Construct the resource alias for the lookup, e.g., alt:domain:frontapp.com
+
         const accountAlias = `alt:${search_by}:${search_value}`;
 
         return await makeRequest(

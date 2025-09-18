@@ -48,7 +48,7 @@ export const createDraftReply = createAction({
     const { conversation_id, ...body } = context.propsValue;
     const token = context.auth;
     
-    // Remove undefined/empty properties
+
     Object.keys(body).forEach(key => {
         const prop = body[key as keyof typeof body];
         if (prop === undefined || (Array.isArray(prop) && prop.length === 0)) {

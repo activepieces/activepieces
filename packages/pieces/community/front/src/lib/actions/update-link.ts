@@ -21,7 +21,6 @@ export const updateLink = createAction({
     const { link_id, name } = context.propsValue;
     const token = context.auth;
 
-    // The API returns a 204 No Content, so we don't expect a body back
     await makeRequest(
         token,
         HttpMethod.PATCH,

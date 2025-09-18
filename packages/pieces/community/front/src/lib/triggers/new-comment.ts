@@ -56,7 +56,7 @@ export const newComment = createTrigger({
     made_at: 1453770984.123,
   },
 
-  // Called when the trigger is enabled.
+  
   async onEnable(context) {
     const response = await makeRequest<{ id: string }>(
       context.auth.toString(),
@@ -73,7 +73,7 @@ export const newComment = createTrigger({
     });
   },
 
-  // Called when the trigger is disabled.
+
   async onDisable(context) {
     const webhook = await context.store.get<WebhookInformation>(
       '_new_comment_trigger'

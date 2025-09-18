@@ -109,15 +109,15 @@ export const newConversationStateChange = createTrigger({
         const stateFilter = context.propsValue.state;
         const inboxFilter = context.propsValue.inbox_id;
 
-        // The API uses 'deleted' for the 'trashed' state.
+
         const targetStatus = stateFilter === 'trashed' ? 'deleted' : stateFilter;
 
-        // If the resulting conversation status doesn't match the desired state, ignore it.
+
         if (payload.conversation.status !== targetStatus) {
             return [];
         }
 
-        // If an inbox is selected, only run for that inbox.
+
         if (inboxFilter && payload.conversation.inbox_id !== inboxFilter) {
             return [];
         }

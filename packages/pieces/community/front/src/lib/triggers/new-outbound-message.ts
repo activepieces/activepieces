@@ -78,7 +78,7 @@ export const newOutboundMessage = createTrigger({
             '/events',
             {
                 target_url: context.webhookUrl,
-                event_types: ['outbound_message', 'outbound_reply'], // Subscribe to both events
+                event_types: ['outbound_message', 'outbound_reply'], 
             }
         );
 
@@ -109,12 +109,11 @@ export const newOutboundMessage = createTrigger({
         const inboxFilter = context.propsValue.inbox_id;
         const teammateFilter = context.propsValue.teammate_id;
 
-        // Filter by inbox if specified
         if (inboxFilter && payload.conversation.inbox_id !== inboxFilter) {
             return [];
         }
 
-        // Filter by teammate if specified
+
         if (teammateFilter && payload.target.data.author?.id !== teammateFilter) {
             return [];
         }

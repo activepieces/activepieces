@@ -59,7 +59,7 @@ export const sendMessage = createAction({
         body['options'] = options;
     }
 
-    // Clean up empty array fields
+
     ['to', 'cc', 'bcc'].forEach(prop => {
         if (Array.isArray(body[prop]) && (body[prop] as unknown[]).length === 0) {
             delete body[prop];

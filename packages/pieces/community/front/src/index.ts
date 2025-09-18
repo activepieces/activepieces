@@ -37,7 +37,7 @@ export const front = createPiece({
   auth: frontAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/front.png",
-  authors: ['Your-GitHub-Username'],
+  authors: [],
   actions: [
     addContactHandle,
     removeContactHandle,

@@ -68,7 +68,6 @@ export const createContact = createAction({
     const token = context.auth;
     const body = { ...context.propsValue };
 
-    // Remove empty optional properties
     Object.keys(body).forEach(key => {
         const prop = body[key as keyof typeof body];
         if (prop === undefined || (Array.isArray(prop) && prop.length === 0)) {

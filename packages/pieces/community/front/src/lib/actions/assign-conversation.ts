@@ -25,7 +25,7 @@ export const assignConversation = createAction({
     assignee_id: teammateDropdown({
         displayName: 'Assignee',
         description: "The teammate to assign the conversation to. Required only if action is 'Assign'.",
-        required: false, // It's optional here, we check for it in the run function
+        required: false, 
     }),
   },
 
@@ -39,11 +39,11 @@ export const assignConversation = createAction({
             throw new Error("Assignee is required when the action is 'Assign'.");
         }
         requestBody = { assignee_id: assignee_id };
-    } else { // unassign
+    } else { 
         requestBody = { assignee_id: null };
     }
 
-    // This specific endpoint uses PUT
+
     await makeRequest(
         token,
         HttpMethod.PUT,

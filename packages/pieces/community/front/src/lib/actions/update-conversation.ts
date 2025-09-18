@@ -47,15 +47,13 @@ export const updateConversation = createAction({
   async run(context) {
     const { conversation_id, ...body } = context.propsValue;
     const token = context.auth;
-
-    // Remove undefined properties so we only send the fields the user wants to update
     Object.keys(body).forEach(key => {
         if (body[key as keyof typeof body] === undefined) {
             delete body[key as keyof typeof body];
         }
     });
 
-    // The API returns a 204 No Content, so we don't expect a body back
+
     await makeRequest(
         token,
         HttpMethod.PATCH,

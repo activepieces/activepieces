@@ -37,16 +37,14 @@ export const updateAccount = createAction({
     const token = context.auth;
     const body: Record<string, unknown> = {};
 
-    // Only add fields to the body if they were provided by the user
+
     if (name !== undefined) body['name'] = name;
     if (description !== undefined) body['description'] = description;
     if (domains !== undefined) body['domains'] = domains;
 
-    // --- Safe Custom Fields Update Logic ---
-    // If custom fields are provided, we must fetch the existing ones first
-    // to avoid accidentally deleting them, as per the API documentation.
+
     if (custom_fields && typeof custom_fields === 'object' && Object.keys(custom_fields).length > 0) {
-        // 1. Fetch the current account details
+
         const currentAccount = await makeRequest<{ custom_fields: Record<string, unknown> }>(
             token,
             HttpMethod.GET,
@@ -58,7 +56,6 @@ export const updateAccount = createAction({
         body['custom_fields'] = { ...existingCustomFields, ...custom_fields };
     }
 
-    // The API returns the updated account object on success
     return await makeRequest(
         token,
         HttpMethod.PATCH,

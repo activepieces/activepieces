@@ -5,7 +5,7 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 
-// The base URL for the Front API
+
 const frontApiUrl = 'https://api2.frontapp.com';
 
 /**

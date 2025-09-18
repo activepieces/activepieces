@@ -24,7 +24,7 @@ export const createLink = createAction({
     const { ...body } = context.propsValue;
     const token = context.auth;
 
-    // Clean up optional fields
+
     if (!body.name) {
         delete body.name;
     }

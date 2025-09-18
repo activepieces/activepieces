@@ -26,7 +26,6 @@ export const addComment = createAction({
     const { conversation_id, ...body } = context.propsValue;
     const token = context.auth;
 
-    // Remove author_id if it wasn't provided
     if (!body.author_id) {
         delete body.author_id;
     }

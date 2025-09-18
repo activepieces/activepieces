@@ -129,8 +129,7 @@ export const contactHandleDropdown = Property.Dropdown({
             HttpMethod.GET,
             `/contacts/${contact_id}`
         );
-        
-        // This part will now work correctly
+
         const options = response.handles.map((handle) => ({
             label: `${handle.handle} (${handle.source})`,
             value: JSON.stringify({ handle: handle.handle, source: handle.source }),

@@ -35,7 +35,6 @@ export const findContact = createAction({
     const { source, handle } = context.propsValue;
     const token = context.auth;
 
-    // Construct the resource alias for the lookup
     const contactAlias = `alt:${source}:${handle}`;
 
     return await makeRequest(

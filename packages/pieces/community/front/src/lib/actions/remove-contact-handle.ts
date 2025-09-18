@@ -11,7 +11,7 @@ export const removeContactHandle = createAction({
   description: 'Remove a handle from a contact.',
   props: {
     contact_id: contactDropdown,
-    handle_info: contactHandleDropdown, // Our new dynamic dropdown for handles
+    handle_info: contactHandleDropdown, 
     force: Property.Checkbox({
         displayName: 'Force',
         description: 'Force the deletion of the contact if this is their last handle.',
@@ -23,7 +23,6 @@ export const removeContactHandle = createAction({
     const { contact_id, handle_info, force } = context.propsValue;
     const token = context.auth;
 
-    // Parse the JSON string from the handle_info dropdown value
     const { handle, source } = JSON.parse(handle_info as string);
 
     await makeRequest(

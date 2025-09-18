@@ -50,13 +50,12 @@ export const sendReply = createAction({
         options['archive'] = true;
     }
 
-    // FIX 2: Explicitly type `body` as a flexible record.
+
     const body: Record<string, unknown> = { ...propsBody };
     if (Object.keys(options).length > 0) {
         body['options'] = options;
     }
 
-    // Clean up empty array fields
     ['to', 'cc', 'bcc'].forEach(prop => {
         if (Array.isArray(body[prop]) && (body[prop] as unknown[]).length === 0) {
             delete body[prop];

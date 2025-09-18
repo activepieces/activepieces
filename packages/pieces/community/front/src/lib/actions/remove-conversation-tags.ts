@@ -17,7 +17,6 @@ export const removeConversationTags = createAction({
     const { conversation_id, tag_ids } = context.propsValue;
     const token = context.auth;
 
-    // The Front API requires a body even for this DELETE request
     await makeRequest(
       token,
       HttpMethod.DELETE,

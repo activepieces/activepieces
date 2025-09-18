@@ -58,7 +58,7 @@ export const newTagAdded = createTrigger({
             '/events',
             {
                 target_url: context.webhookUrl,
-                event_types: ['conversation_tagged'], // Subscribe to tag events
+                event_types: ['conversation_tagged'], 
             }
         );
 
@@ -88,12 +88,11 @@ export const newTagAdded = createTrigger({
 
         const tagFilter = context.propsValue.tag_id;
 
-        // If a tag is selected, only run for that specific tag
+
         if (tagFilter && payload.target.data.id !== tagFilter) {
             return [];
         }
 
-        // Return a combined object with both tag and conversation details
         return [{
             tag: payload.target.data,
             conversation: payload.conversation

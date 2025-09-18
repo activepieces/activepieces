@@ -37,7 +37,7 @@ export const addContactHandle = createAction({
     const { contact_id, handle, source } = context.propsValue;
     const token = context.auth;
 
-    // The API returns a 204 No Content, so we don't expect a body back
+
     await makeRequest(
         token,
         HttpMethod.POST,

@@ -41,7 +41,6 @@ export const updateContact = createAction({
     const { contact_id, ...body } = context.propsValue;
     const token = context.auth;
 
-    // Remove undefined/empty properties so we only send the fields the user wants to update
     Object.keys(body).forEach(key => {
         const prop = body[key as keyof typeof body];
         if (prop === undefined || (Array.isArray(prop) && prop.length === 0)) {
@@ -49,7 +48,7 @@ export const updateContact = createAction({
         }
     });
 
-    // The API returns a 204 No Content on success
+
     await makeRequest(
         token,
         HttpMethod.PATCH,
