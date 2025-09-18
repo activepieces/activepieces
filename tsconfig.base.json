@@ -317,11 +317,11 @@
       "@activepieces/piece-discord": [
         "packages/pieces/community/discord/src/index.ts"
       ],
-      "@activepieces/piece-dittofeed":[
-        "packages/pieces/community/dittofeed/src/index.ts"
-      ],
       "@activepieces/piece-discourse": [
         "packages/pieces/community/discourse/src/index.ts"
+      ],
+      "@activepieces/piece-dittofeed": [
+        "packages/pieces/community/dittofeed/src/index.ts"
       ],
       "@activepieces/piece-docusign": [
         "packages/pieces/community/docusign/src/index.ts"
@@ -340,6 +340,9 @@
       ],
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
+      ],
+      "@activepieces/piece-emailoctopus": [
+        "packages/pieces/community/emailoctopus/src/index.ts"
       ],
       "@activepieces/piece-eth-name-service": [
         "packages/pieces/community/eth-name-service/src/index.ts"
@@ -398,6 +401,9 @@
       ],
       "@activepieces/piece-freshsales": [
         "packages/pieces/community/freshsales/src/index.ts"
+      ],
+      "@activepieces/piece-front": [
+        "packages/pieces/community/front/src/index.ts"
       ],
       "@activepieces/piece-gameball": [
         "packages/pieces/community/gameball/src/index.ts"
@@ -575,6 +581,9 @@
       ],
       "@activepieces/piece-lusha": [
         "packages/pieces/community/lusha/src/index.ts"
+      ],
+      "@activepieces/piece-magicslides": [
+        "packages/pieces/community/magicslides/src/index.ts"
       ],
       "@activepieces/piece-mailchain": [
         "packages/pieces/community/mailchain/src/index.ts"
