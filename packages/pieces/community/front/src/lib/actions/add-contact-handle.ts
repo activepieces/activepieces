@@ -1,0 +1,52 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { frontAuth } from '../common/auth';
+import { makeRequest } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common';
+
+export const addContactHandle = createAction({
+  auth: frontAuth,
+  name: 'addContactHandle',
+  displayName: 'Add Contact Handle',
+  description:
+    'Add a handle (email, phone number, etc.) to an existing Contact.',
+  props: {
+    contact_id: Property.ShortText({
+      displayName: 'Contact ID',
+      description: 'The ID of the contact to add the handle to.',
+      required: true,
+    }),
+    handle_type: Property.StaticDropdown({
+      displayName: 'Handle Type',
+      description: 'Type of handle to add.',
+      required: true,
+      options: {
+        options: [
+          { label: 'Email', value: 'email' },
+          { label: 'Phone', value: 'phone' },
+          { label: 'Twitter', value: 'twitter' },
+          { label: 'Facebook', value: 'facebook' },
+        ],
+      },
+    }),
+    handle_value: Property.ShortText({
+      displayName: 'Handle Value',
+      description:
+        'The value of the handle (e.g., email address, phone number).',
+      required: true,
+    }),
+  },
+  async run({ auth, propsValue }) {
+    const { contact_id, handle_type, handle_value } = propsValue;
+    const path = `/contacts/${contact_id}/handles`;
+    const body = {
+      handles: [
+        {
+          source: handle_type,
+          handle: handle_value,
+        },
+      ],
+    };
+
+    return await makeRequest(auth.access_token, HttpMethod.POST, path, body);
+  },
+});
