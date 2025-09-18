@@ -18,6 +18,13 @@ import { updateAccount } from "./lib/actions/update-account";
 import { updateContact } from "./lib/actions/update-contact";
 import { updateConversation } from "./lib/actions/update-conversation";
 import { updateLink } from "./lib/actions/update-link";
+import { newComment } from "./lib/triggers/new-comment";
+import { newInboundMessage } from "./lib/triggers/new-inbound-message";
+import { newOutboundMessage } from "./lib/triggers/new-outbound-message";
+import { newTagAddedToMessage } from "./lib/triggers/new-tag-added-to-message";
+import { findAccount } from "./lib/actions/find-account";
+import { findContact } from "./lib/actions/find-contact";
+import { findConversation } from "./lib/actions/find-conversation";
 
 export const front = createPiece({
   displayName: "Front",
@@ -36,6 +43,9 @@ export const front = createPiece({
     createDraft,
     createDraftReply,
     createLink,
+    findAccount,
+    findContact,
+    findConversation,
     removeContactHandle,
     removeConversationLinks,
     removeContactHandle,
@@ -46,5 +56,10 @@ export const front = createPiece({
     updateConversation,
     updateLink
   ],
-  triggers: [],
+  triggers: [
+    newComment,
+    newInboundMessage,
+    newOutboundMessage,
+    newTagAddedToMessage
+  ],
 });
