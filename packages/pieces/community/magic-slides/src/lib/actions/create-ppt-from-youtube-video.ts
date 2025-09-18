@@ -1,11 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { MagicSlidesClient } from '../common/client';
 import { magicslidesAuth } from '../common/auth';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { makeRequest } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createPptFromYoutubeVideo = createAction({
   auth: magicslidesAuth,
-  name: 'create_ppt_from_youtube_video',
+  name: 'createPptFromYoutubeVideo',
   displayName: 'Create PPT from YouTube Video',
   description: 'Creates a presentation from a given YouTube video URL.',
   props: {
@@ -143,38 +143,20 @@ export const createPptFromYoutubeVideo = createAction({
     }),
   },
   async run(context) {
-    const { auth: accessId, propsValue } = context;
-    const { email, videoUrl, ...optionalProps } = propsValue;
+    const { auth, propsValue } = context;
 
-    const response = await httpClient.sendRequest<{
-      success: boolean;
-      data: { presentation_id: string };
-      message: string;
-    }>({
-      method: HttpMethod.POST,
-      url: 'https://api.magicslides.app/public/api/ppt_from_youtube',
-      body: {
-        accessId: accessId,
-        email: email,
-        youtubeURL: videoUrl,
-        ...optionalProps,
-      },
-    });
+    const payload = {
+      ...propsValue,
+      accessId: auth as string,
+      youtubeURL: propsValue.videoUrl,
+    };
 
-    if (!response.body.success) {
-      throw new Error(
-        `Failed to start presentation generation: ${
-          response.body.message || 'Unknown error'
-        }`
-      );
-    }
-
-    const presentationId = response.body.data.presentation_id; 
-    const result = await MagicSlidesClient.pollForResult(
-      accessId,
-      presentationId
+    const response = await makeRequest(
+      HttpMethod.POST,
+      '/ppt_from_youtube',
+      payload
     );
 
-    return result;
+    return response;
   },
 });
