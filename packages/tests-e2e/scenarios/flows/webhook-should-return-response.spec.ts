@@ -30,7 +30,7 @@ test.describe('Webhooks', () => {
       action: 'Return Response'
     });
 
-     await page.locator('div.cm-activeLine.cm-line').fill(
+    await page.locator('div.cm-activeLine.cm-line').fill(
       '{"targetRunVersion": "{{trigger[\'queryParams\'][\'targetRunVersion\']}}"}'
     );
 
