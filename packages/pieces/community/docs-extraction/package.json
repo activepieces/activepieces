@@ -1,0 +1,10 @@
+{
+  "name": "@avalant/piece-docs-extraction",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "jszip": "^3.10.1"
+  }
+}
