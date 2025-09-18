@@ -1,5 +1,4 @@
-
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 
 interface EmailOctopusEvent {
   type: string;
@@ -14,7 +13,16 @@ export const contactUnsubscribes = createTrigger({
     name: 'contactUnsubscribes',
     displayName: 'Contact Unsubscribes',
     description: 'Fires when a contact unsubscribes from a list.',
-    props: {},
+    props: {
+         markdown: Property.MarkDown({
+              value: `To use webhooks, please manually set up on EmailOctopus Dashboard -> API & Integrations -> Webhooks
+              Put this url as the endpoint:
+                    \`\`\`
+                    {{webhookUrl}}
+                    \`\`\`
+                    `,
+            }),
+    },
     sampleData: {
             id: "42636763-73f9-463e-af8b-3f720bb3d889",
     type: "contact.created",
@@ -38,15 +46,15 @@ export const contactUnsubscribes = createTrigger({
     },
     async run(context){
         const events = context.payload.body;
-    
+
         if (Array.isArray(events)) {
             return events.filter((event: EmailOctopusEvent) => event.type === 'contact.unsubscribed');
         }
-            
+
         if ((events as EmailOctopusEvent)?.type === 'contact.unsubscribed') {
             return [events];
         }
-    
+
         return [];
     }
 })

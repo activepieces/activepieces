@@ -1,10 +1,19 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 
 export const emailBounced = createTrigger({
   name: 'emailBounced',
   displayName: 'Email Bounced',
   description: 'Fires when an email to a recipient bounces from a specific campaign.',
-  props: {},
+  props: {
+     markdown: Property.MarkDown({
+      value: `To use webhooks, please manually set up on EmailOctopus Dashboard -> API & Integrations -> Webhooks
+      Put this url as the endpoint:
+			\`\`\`
+			{{webhookUrl}}
+			\`\`\`
+			`,
+    }),
+  },
   sampleData: {
     id: "42636763-73f9-463e-af8b-3f720bb3d889",
     type: "contact.bounced",
@@ -27,16 +36,15 @@ export const emailBounced = createTrigger({
   },
   async run(context) {
     const events = context.payload.body;
-    
-    // Filter for bounce events only
+
     if (Array.isArray(events)) {
         return events.filter((event: EmailOctopusEvent) => event.type === 'contact.bounced');
     }
-    
+
     if ((events as EmailOctopusEvent)?.type === 'contact.bounced') {
         return [events];
     }
-    
+
     return [];
   }
 });

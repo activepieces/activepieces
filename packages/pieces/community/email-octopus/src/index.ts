@@ -7,6 +7,11 @@ import { findContact } from './lib/actions/find-contact';
 import { removeTagFromContact } from './lib/actions/remove-tag-from-contact';
 import { unsubscribeContact } from './lib/actions/unsubscribe-contact';
 import { updateContactEmailAddress } from './lib/actions/update-contact-email-address';
+import { emailBounced } from './lib/triggers/email-bounced';
+import { emailClicked } from './lib/triggers/email-clicked';
+import { emailOpened } from './lib/triggers/email-opened';
+import { newContact } from './lib/triggers/new-contact';
+import { contactUnsubscribes } from './lib/triggers/contact-unsubscribes';
 
 export const octopusauth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -49,5 +54,11 @@ export const emailOctopus = createPiece({
     unsubscribeContact,
     updateContactEmailAddress,
   ],
-  triggers: [],
+  triggers: [
+    emailBounced,
+    emailClicked,
+    emailOpened,
+    newContact,
+    contactUnsubscribes,
+  ],
 });

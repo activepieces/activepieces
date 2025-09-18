@@ -35,8 +35,8 @@ export const addOrUpdateContact = createAction({
       defaultValue: 'SUBSCRIBED',
       options: {
         options: [
-          { label: 'Subscribed', value: 'SUBSCRIBED' },
-          { label: 'Unsubscribed', value: 'UNSUBSCRIBED' },
+          { label: 'Subscribed', value: 'subscribed' },
+          { label: 'Unsubscribed', value: 'unsubscribed' },
         ],
       },
     }),
