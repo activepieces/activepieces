@@ -1,19 +1,8 @@
-import { OtpType } from '@activepieces/ee-shared';
-import {
-  ApEdition,
-  ApFlagId,
-  AuthenticationResponse,
-  ErrorCode,
-  isNil,
-  SignUpRequest,
-} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
-
-import { passwordValidation } from '../lib/password-validation-utils';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -39,6 +28,17 @@ import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn, formatUtils } from '@/lib/utils';
+import { OtpType } from '@activepieces/ee-shared';
+import {
+  ApEdition,
+  ApFlagId,
+  AuthenticationResponse,
+  ErrorCode,
+  isNil,
+  SignUpRequest,
+} from '@activepieces/shared';
+
+import { passwordValidation } from '../lib/password-validation-utils';
 
 type SignUpSchema = {
   email: string;

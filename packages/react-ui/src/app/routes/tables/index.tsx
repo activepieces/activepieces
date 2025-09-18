@@ -1,4 +1,3 @@
-import { Permission, Table } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -35,6 +34,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
+import { Permission, Table } from '@activepieces/shared';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();

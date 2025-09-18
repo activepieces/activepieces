@@ -1,12 +1,3 @@
-import { OtpType } from '@activepieces/ee-shared';
-import {
-  ApEdition,
-  ApFlagId,
-  AuthenticationResponse,
-  ErrorCode,
-  isNil,
-  SignInRequest,
-} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -14,8 +5,6 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, Navigate } from 'react-router-dom';
-
-import { CheckEmailNote } from './check-email-note';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -27,6 +16,17 @@ import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
+import { OtpType } from '@activepieces/ee-shared';
+import {
+  ApEdition,
+  ApFlagId,
+  AuthenticationResponse,
+  ErrorCode,
+  isNil,
+  SignInRequest,
+} from '@activepieces/shared';
+
+import { CheckEmailNote } from './check-email-note';
 
 const SignInSchema = Type.Object({
   email: Type.String({
