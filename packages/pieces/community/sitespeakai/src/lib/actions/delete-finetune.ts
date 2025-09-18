@@ -19,12 +19,11 @@ export const deleteFinetune = createAction({
     finetuneId: finetuneIdDropdown,
   },
   async run({ auth, propsValue }) {
-    const path = `/${propsValue.chatbotId}/finetunes/${propsValue.finetuneId}`;
 
     const response = await makeRequest(
       auth as string,
       HttpMethod.DELETE,
-      path
+      `/${propsValue.chatbotId}/finetunes/${propsValue.finetuneId}`
     );
 
     return response;
