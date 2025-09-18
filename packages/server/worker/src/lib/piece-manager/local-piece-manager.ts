@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
-import { ApLock, fileExists, filePiecesUtils, memoryLock } from '@activepieces/server-shared'
+import { ApLock, filePiecesUtils, fileSystemUtils, memoryLock } from '@activepieces/server-shared'
 import { assertEqual, assertNotNullOrUndefined, isEmpty, PackageType, PiecePackage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
@@ -90,7 +90,7 @@ const updatePackageJson = async (
 ): Promise<void> => {
     const packageJsonForPiece = join(directoryPath, 'package.json')
 
-    const packageJsonExists = await fileExists(packageJsonForPiece)
+    const packageJsonExists = await fileSystemUtils.fileExists(packageJsonForPiece)
     if (!packageJsonExists) {
         return
     }
