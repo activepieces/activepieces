@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, edited, closed, labeled]
 
+concurrency:
+  group: setup-environment
+  cancel-in-progress: false
+
 jobs:
   Setup-Preview-Environment:
     runs-on: ubuntu-latest
