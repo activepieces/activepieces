@@ -12,23 +12,5 @@ export const MagicSlidesAuth = PieceAuth.SecretText({
 3. Copy your **Access ID** and paste it here.
 `,
     required: true,
-    validate: async ({ auth }) => {
-        if (auth) {
-            try {
-                await makeRequest(auth as string, HttpMethod.GET, '/topic', {});
-                return {
-                    valid: true,
-                };
-            } catch (error) {
-                return {
-                    valid: false,
-                    error: 'Invalid API Key or unable to reach MagicSlides API',
-                };
-            }
-        }
-        return {
-            valid: false,
-            error: 'API Key is required',
-        };
-    },
+
 });

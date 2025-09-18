@@ -51,7 +51,7 @@ export const createPptFromSummary = createAction({
     const result = await makeRequest(
       context.auth as string,
       HttpMethod.POST,
-      '/text',
+      'ppt_from_summery',
       payload
     );
 

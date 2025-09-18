@@ -50,7 +50,7 @@ export const createPptFromTopic = createAction({
     const result = await makeRequest(
       context.auth as string,
       HttpMethod.POST,
-      '/topic',
+      '/ppt_from_topic',
       payload
     );
 

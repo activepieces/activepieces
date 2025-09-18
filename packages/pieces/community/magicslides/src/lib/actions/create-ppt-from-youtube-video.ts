@@ -50,7 +50,7 @@ export const createPptFromYoutubeVideo = createAction({
     const result = await makeRequest(
       context.auth as string,
       HttpMethod.POST,
-      '/youtube',
+      '/ppt_from_youtube',
       payload
     );
 

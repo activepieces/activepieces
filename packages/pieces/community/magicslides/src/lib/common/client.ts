@@ -1,6 +1,6 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-export const BASE_URL = `https://www.magicslides.app/api/v1`;
+export const BASE_URL = `https://api.magicslides.app/public/api`;
 
 export async function makeRequest(
   api_key: string,
