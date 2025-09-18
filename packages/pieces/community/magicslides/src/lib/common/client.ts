@@ -3,7 +3,6 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 export const BASE_URL = `https://api.magicslides.app/public/api`;
 
 export async function makeRequest(
-  api_key: string,
   method: HttpMethod,
   path: string,
   body?: unknown
@@ -13,7 +12,6 @@ export async function makeRequest(
       method,
       url: `${BASE_URL}${path}`,
       headers: {
-        'x-access-id': api_key,  // MagicSlides requires this
         'Content-Type': 'application/json',
       },
       body,
