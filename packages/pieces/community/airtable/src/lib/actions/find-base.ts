@@ -25,7 +25,7 @@ export const airtableFindBaseAction = createAction({
 
     const searchTerm = (baseName as string).toLowerCase();
 
-    // Filter bases for any that include the search term (case-insensitive)
+
     const foundBases = allBases.filter((base) =>
       base.name.toLowerCase().includes(searchTerm)
     );

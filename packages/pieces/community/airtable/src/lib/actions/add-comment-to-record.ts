@@ -10,7 +10,7 @@ export const airtableAddCommentToRecordAction = createAction({
   props: {
     base: airtableCommon.base,
     tableId: airtableCommon.tableId,
-    recordId: airtableCommon.recordIdDropdown, // Use the new dropdown property here
+    recordId: airtableCommon.recordIdDropdown, 
     text: Property.LongText({
       displayName: 'Comment Text',
       description:

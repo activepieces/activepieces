@@ -82,7 +82,7 @@ async function listRecords({
   token,
   baseId,
   tableId,
-  pageSize = 50, // Limit to 50 records for a responsive dropdown
+  pageSize = 50, 
 }: {
   token: string;
   baseId: string;
@@ -603,7 +603,7 @@ export const airtableCommon = {
           };
         }
 
-        // Fetch table schema to find the primary field
+
         const table = await fetchTable({
           token: auth as string,
           baseId: base as string,
@@ -614,16 +614,16 @@ export const airtableCommon = {
         );
         const primaryFieldName = primaryField?.name;
 
-        // Fetch records to populate the dropdown
+
         const records = await listRecords({
           token: auth as string,
           baseId: base as string,
           tableId: tableId as string,
         });
 
-        // Create user-friendly labels from the primary field
+
         const options = records.map((record) => {
-          let label = record.id; // Fallback to record ID
+          let label = record.id; 
           if (primaryFieldName && record.fields[primaryFieldName]) {
             label = record.fields[primaryFieldName] as string;
           }
@@ -681,7 +681,7 @@ export const airtableCommon = {
     },
   }),
   
-  // Standalone functions are now used instead of methods on this object
+
   createNewFields: async (
     auth: string,
     base: string,
@@ -744,7 +744,7 @@ export const airtableCommon = {
     return currentTableSnapshot;
   },
 
-  // Exposing the API call functions through the common object for actions to use
+
   createRecord,
   findRecord,
   updateRecord,
