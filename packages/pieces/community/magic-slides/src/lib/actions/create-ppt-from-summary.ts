@@ -4,10 +4,10 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 
 export const createPptFromSummary = createAction({
-  auth: magicslidesAuth, 
-  name: 'createPptFromSummary', 
-  displayName: 'Create PPT from Summary', 
-  description: 'Generates a PPT presentation from provided summary.', 
+  auth: magicslidesAuth,
+  name: 'createPptFromSummary',
+  displayName: 'Create PPT from Summary',
+  description: 'Generates a PPT presentation from provided summary.',
   props: {
     msSummaryText: Property.LongText({
       displayName: 'Summary Text',
@@ -15,7 +15,7 @@ export const createPptFromSummary = createAction({
     }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: ' registered MagicSlides email address.', 
+      description: ' registered MagicSlides email address.',
       required: true,
     }),
     slideCount: Property.Number({
@@ -24,7 +24,7 @@ export const createPptFromSummary = createAction({
       defaultValue: 10,
     }),
     presentationFor: Property.ShortText({
-      displayName: 'Presentation For (Audience)', 
+      displayName: 'Presentation For (Audience)',
       required: false,
     }),
     template: Property.StaticDropdown({
@@ -99,7 +99,7 @@ export const createPptFromSummary = createAction({
   async run(context) {
     const { propsValue, auth } = context;
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       ...propsValue,
       accessId: auth as string,
     };

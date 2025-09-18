@@ -113,7 +113,7 @@ export const createPptFromTopic = createAction({
   async run(context) {
     const { propsValue } = context;
     const auth = context.auth;
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       ...propsValue,
       accessId: auth as string,
     };
