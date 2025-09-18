@@ -615,6 +615,9 @@
       "@activepieces/piece-lusha": [
         "packages/pieces/community/lusha/src/index.ts"
       ],
+      "@activepieces/piece-magic-slides": [
+        "packages/pieces/community/magic-slides/src/index.ts"
+      ],
       "@activepieces/piece-magical-api": [
         "packages/pieces/community/magical-api/src/index.ts"
       ],
