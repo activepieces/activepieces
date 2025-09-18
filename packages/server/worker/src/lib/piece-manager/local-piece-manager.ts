@@ -21,7 +21,7 @@ export class LocalPieceManager extends PieceManager {
         })
         await super.install({ projectPath, pieces, log })
     }
-    
+
     protected override async installDependencies(
         params: InstallParams,
     ): Promise<void> {
