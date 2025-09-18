@@ -18,8 +18,8 @@ export const drupalWebhook = createTrigger({
   description: 'A webhook that the Drupal site can call to trigger a flow.',
   props: {
     id: Property.ShortText({
-      displayName: 'Webhook ID',
-      description: 'The ID of the webhook, make sure this is unique.',
+      displayName: 'Name',
+      description: 'This name identifies the webhook. It must be unique. It will be used to identify the webhook in the Drupal site, e.g. if you use ECA to call this webhook, you will find this name in the list of available webhooks.',
       required: true,
     }),
   },

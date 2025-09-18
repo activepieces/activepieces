@@ -46,8 +46,8 @@ export const drupalPolling = createTrigger({
   description: 'A trigger that polls the Drupal site.',
   props: {
     id: Property.ShortText({
-      displayName: 'Polling ID',
-      description: 'The ID of the polling, make sure this is unique.',
+      displayName: 'Name',
+      description: 'The name identifies the poll. It must be unique. It will be used to identify the poll in the Drupal site, e.g. if you use ECA to respond to this poll, you need to use the same name in the configuration of its poll event.',
       required: true,
     }),
   },
