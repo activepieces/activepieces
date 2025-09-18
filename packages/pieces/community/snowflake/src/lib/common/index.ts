@@ -9,6 +9,20 @@ import snowflake from 'snowflake-sdk';
 const DEFAULT_APPLICATION_NAME = 'ActivePieces';
 const DEFAULT_QUERY_TIMEOUT = 30000;
 
+function formatPrivateKey(privateKey: string): string {
+  const privateKeyLines = privateKey
+    .replace('-----BEGIN PRIVATE KEY-----', '')
+    .replace('-----END PRIVATE KEY-----', '')
+    .trim()
+    .split(' ');
+
+  return [
+    '-----BEGIN PRIVATE KEY-----',
+    ...privateKeyLines,
+    '-----END PRIVATE KEY-----',
+  ].join('\n');
+}
+
 export function configureConnection(
   auth: PiecePropValueSchema<typeof snowflakeAuth>,
   application = DEFAULT_APPLICATION_NAME,
@@ -25,8 +39,7 @@ export function configureConnection(
   };
 
   if (auth.privateKey) {
-    const sanitizedPrivateKey = auth.privateKey.replace(/\\n/g, '\n').trim();
-    connectionOptions.privateKey = sanitizedPrivateKey;
+    connectionOptions.privateKey = formatPrivateKey(auth.privateKey);
     connectionOptions.authenticator = 'SNOWFLAKE_JWT';
   } else {
     connectionOptions.password = auth.password;
