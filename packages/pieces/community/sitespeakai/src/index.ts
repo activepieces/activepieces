@@ -8,7 +8,7 @@ import { SiteSpeakAuth } from "./lib/common/auth";
 import { PieceCategory } from "@activepieces/shared";
 
 export const sitespeakai = createPiece({
-  displayName: "Sitespeakai",
+  displayName: "SiteSpeakAI",
   description: "Integrate with Sitespeakai to leverage AI-powered chatbots and enhance user interactions on your website.",
   auth: SiteSpeakAuth,
   minimumSupportedRelease: '0.36.1',

@@ -7,7 +7,7 @@ import { chatbotIdDropdown } from "../common/dropdown";
 export const createFinetune = createAction({
   auth: SiteSpeakAuth,
   name: 'create_finetune',
-  displayName: 'Create Finetune Entry (Echo)',
+  displayName: 'Create Finetune',
   description: 'Adds a new fine-tune (question + suggested answer) for the specified chatbot in SiteSpeakAI.',
   props: {
     chatbotId: chatbotIdDropdown,
