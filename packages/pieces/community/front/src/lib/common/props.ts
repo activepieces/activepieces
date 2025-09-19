@@ -1,5 +1,5 @@
 import { Property, DropdownState } from '@activepieces/pieces-framework';
-import { makeRequest, makeRequestFirstPage } from './client';
+import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 interface FrontLink {
@@ -219,9 +219,7 @@ export const frontProps = {
             ? `?q[any]=${encodeURIComponent(searchValue)}`
             : '';
 
-        const response = await makeRequestFirstPage<{
-          _results: FrontConversation[];
-        }>( 
+        const response = await makeRequest<{ _results: FrontConversation[] }>( // Use the correct makeRequest function
           auth as string,
           HttpMethod.GET,
           `/conversations${query}`
@@ -229,7 +227,7 @@ export const frontProps = {
 
         return {
           disabled: false,
-          options: response._results.map((convo) => ({
+          options: response._results.map((convo: FrontConversation) => ({
             label:
               convo.subject ||
               convo.last_message?.blurb ||
