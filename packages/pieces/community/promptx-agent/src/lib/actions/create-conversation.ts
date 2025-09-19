@@ -1,11 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { PromptXAuthType } from '../common/types';
+import { promptxAuth } from '../common/auth';
 import {
   createConversation,
   fetchAgents,
   getAgentXToken,
 } from '../common/helper';
-import { promptxAuth } from '../common/auth';
+import { PromptXAuthType } from '../common/types';
 
 export const createConversationAction = createAction({
   auth: promptxAuth,

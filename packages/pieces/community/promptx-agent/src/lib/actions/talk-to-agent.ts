@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { promptxAuth } from '../common/auth';
-import { PromptXAuthType } from '../common/types';
 import { getAgentXToken, postChatMessage } from '../common/helper';
+import { PromptXAuthType } from '../common/types';
 
 export const talkToAgent = createAction({
   auth: promptxAuth,

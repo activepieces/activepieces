@@ -1,4 +1,5 @@
 import { isNil } from '@activepieces/shared';
+import querystring from 'querystring';
 import {
   Agent,
   AgentXLoginResponseType,
@@ -6,39 +7,47 @@ import {
   PromptXAuthType,
   PromptXLoginResponseType,
   PromptXUserResponseType,
+  Server,
 } from './types';
-import querystring from 'querystring';
 
-export const urlMap = {
-  production: {
-    loginUrl: 'https://centerapp.io/center/auth/login',
-    myProfileUrl: 'https://centerapp.io/center//api/v1/users/me',
-    agentXTokenUrl: 'https://test.oneweb.tech/zero-service//pmtx/sign-jwt',
-    agentXBaseUrl: 'https://test.oneweb.tech/agentx/v1',
-  },
-  staging: {
-    loginUrl: 'https://test.oneweb.tech/zero-service/pmtx/login',
-    myProfileUrl: 'https://mocha.centerapp.io/center//api/v1/users/me',
-    agentXTokenUrl: 'https://test.oneweb.tech/zero-service//pmtx/sign-jwt',
-    agentXBaseUrl: 'https://test.oneweb.tech/agentx/v1',
-  },
+const STAGING_AUTH_URL = 'https://mocha.centerapp.io';
+const PRODUCTION_AUTH_URL = 'https://centerapp.io';
+const STAGING_APP_URL = 'https://test.oneweb.tech';
+const PRODUCTION_APP_URL = 'https://promptxai.com';
+
+export const fetchUrls = (
+  server: Server,
+  customAuthUrl?: string,
+  customAppUrl?: string
+) => {
+  const authUrl =
+    customAuthUrl ??
+    (server === 'staging' ? STAGING_AUTH_URL : PRODUCTION_AUTH_URL);
+  const appUrl =
+    customAppUrl ??
+    (server === 'staging' ? STAGING_APP_URL : PRODUCTION_APP_URL);
+  const urlMap = {
+    loginUrl: `${authUrl}/center/auth/login`,
+    myProfileUrl: `${authUrl}/center/api/v1/users/me`,
+    agentXTokenUrl: `${appUrl}/zero-service/pmtx/sign-jwt`,
+    agentXBaseUrl: `${appUrl}/agentx/v1`,
+  };
+  return urlMap;
 };
 
 export const getAccessToken = async (auth: PromptXAuthType) => {
-  const { server, username, password } = auth;
-  const isStaging = server === 'staging';
-  const body = isStaging
-    ? new URLSearchParams({ username, password }).toString()
-    : JSON.stringify({ username, password });
-  const headers = {
-    'Content-Type': isStaging
-      ? 'application/x-www-form-urlencoded'
-      : 'application/json',
-  };
-  const response = await fetch(urlMap[server].loginUrl, {
+  const {
+    server = 'production',
+    customAuthUrl,
+    customAppUrl,
+    username,
+    password,
+  } = auth;
+  const urls = fetchUrls(server, customAuthUrl, customAppUrl);
+  const response = await fetch(urls.loginUrl, {
     method: 'POST',
-    body,
-    headers,
+    body: JSON.stringify({ username, password }),
+    headers: { 'Content-Type': 'application/json' },
   });
   const data: PromptXLoginResponseType = await response.json();
   if (response.status !== 200) {
@@ -52,8 +61,14 @@ export const getUserProfile = async (auth: PromptXAuthType) => {
   if (isNil(auth.accessToken)) {
     throw new Error('Access token is missing to fetch user profile');
   }
-  const { server, accessToken } = auth;
-  const response = await fetch(urlMap[server].myProfileUrl, {
+  const {
+    server = 'production',
+    customAuthUrl,
+    customAppUrl,
+    accessToken,
+  } = auth;
+  const urls = fetchUrls(server, customAuthUrl, customAppUrl);
+  const response = await fetch(urls.myProfileUrl, {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
@@ -68,10 +83,11 @@ export const getUserProfile = async (auth: PromptXAuthType) => {
 };
 
 export const getAgentXToken = async (auth: PromptXAuthType) => {
-  const { server } = auth;
+  const { server = 'production', customAuthUrl, customAppUrl } = auth;
+  const urls = fetchUrls(server, customAuthUrl, customAppUrl);
   const accessToken = await getAccessToken(auth);
   const profile = await getUserProfile({ ...auth, accessToken });
-  const response = await fetch(urlMap[server].agentXTokenUrl, {
+  const response = await fetch(urls.agentXTokenUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -96,7 +112,9 @@ export const fetchAgents = async (auth: PromptXAuthType) => {
   if (isNil(auth.agentXToken)) {
     throw new Error('Token is missing to fetch agents');
   }
-  const baseUrl = `${urlMap[auth.server].agentXBaseUrl}/agents`;
+  const { server = 'production', customAuthUrl, customAppUrl } = auth;
+  const urls = fetchUrls(server, customAuthUrl, customAppUrl);
+  const baseUrl = `${urls.agentXBaseUrl}/agents`;
   const response = await fetch(baseUrl, {
     headers: {
       Authorization: `Bearer ${auth.agentXToken}`,
@@ -114,7 +132,9 @@ export const fetchConversations = async (
   if (isNil(auth.agentXToken)) {
     throw new Error('Token is missing to fetch conversations');
   }
-  let baseUrl = `${urlMap[auth.server].agentXBaseUrl}/conversations`;
+  const { server = 'production', customAuthUrl, customAppUrl } = auth;
+  const urls = fetchUrls(server, customAuthUrl, customAppUrl);
+  let baseUrl = `${urls.agentXBaseUrl}/conversations`;
   if (params.slug) {
     baseUrl += `?${querystring.stringify(params)}`;
   }
@@ -135,7 +155,9 @@ export const createConversation = async (
   if (isNil(auth.agentXToken)) {
     throw new Error('Token is missing to create conversation');
   }
-  const baseUrl = `${urlMap[auth.server].agentXBaseUrl}/conversations`;
+  const { server = 'production', customAuthUrl, customAppUrl } = auth;
+  const urls = fetchUrls(server, customAuthUrl, customAppUrl);
+  const baseUrl = `${urls.agentXBaseUrl}/conversations`;
   const response = await fetch(baseUrl, {
     method: 'POST',
     headers: {
@@ -160,7 +182,9 @@ export const postChatMessage = async (
   if (isNil(auth.agentXToken)) {
     throw new Error('Token is missing to post chat message');
   }
-  const baseUrl = `${urlMap[auth.server].agentXBaseUrl}/chat`;
+  const { server = 'production', customAuthUrl, customAppUrl } = auth;
+  const urls = fetchUrls(server, customAuthUrl, customAppUrl);
+  const baseUrl = `${urls.agentXBaseUrl}/chat`;
   const response = await fetch(baseUrl, {
     method: 'POST',
     headers: {

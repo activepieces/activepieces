@@ -1,6 +1,6 @@
 {
   "name": "@avalant/piece-promptx-agent",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts"

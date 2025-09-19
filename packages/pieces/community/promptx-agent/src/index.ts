@@ -1,9 +1,9 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { promptxAuth } from './lib/common/auth';
 import { PieceCategory } from '@activepieces/shared';
-import { talkToAgent } from './lib/actions/talk-to-agent';
-import { fetchConversationsAction } from './lib/actions/fetch-conversations';
 import { createConversationAction } from './lib/actions/create-conversation';
+import { fetchConversationsAction } from './lib/actions/fetch-conversations';
+import { talkToAgent } from './lib/actions/talk-to-agent';
+import { promptxAuth } from './lib/common/auth';
 
 export const promptxAgent = createPiece({
   displayName: 'PromptX Agent',
