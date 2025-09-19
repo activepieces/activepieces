@@ -20,7 +20,7 @@ const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { name: string }
     const { website_url, username, password } = (auth as DrupalAuthType);
     const body: any = {
       name: propsValue['name'],
-      timestamp: lastFetchEpochMS,
+      timestamp: lastFetchEpochMS / 1000,
     };
     const response = await httpClient.sendRequest<DrupalPollItem[]>({
       method: HttpMethod.POST,
@@ -33,7 +33,7 @@ const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { name: string }
     });
     console.debug('Poll response', response);
     return response.body.map((item) => ({
-      epochMilliSeconds: item.timestamp,
+      epochMilliSeconds: item.timestamp * 1000,
       data: item,
     }));
   },
